@@ -14,41 +14,47 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-## Set global include directories ##
-include_directories(
-  # for ospcommon
-  ${OSPRAY_INCLUDE_DIRS}
+## Find OSPRay dependency, which we need for ospcommon ##
+find_package(ospray 1.7.1 REQUIRED)
+include(${OSPRAY_USE_FILE})
 
-  ${CMAKE_SOURCE_DIR}/volley/include
-  ${CMAKE_SOURCE_DIR}/volley
-  ${CMAKE_SOURCE_DIR}
-  ${PROJECT_BINARY_DIR}
-)
-
-## Build the Volley library ##
-set(VOLLEY_SOURCES
+## Configure Volley library build ##
+add_library(volley SHARED
   api/API.cpp
   api/Driver.cpp
 
   common/logging.cpp
+  common/ManagedObject.cpp
   common/VLYCommon.cpp
 )
 
-set(VOLLEY_LIBRARIES
-  # for ospcommon
-  ${OSPRAY_LIBRARIES}
-
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
+target_link_libraries(volley
+  PUBLIC
+    # for ospcommon
+    ${OSPRAY_LIBRARIES}
 )
 
-ospray_create_library(volley
-  ${VOLLEY_SOURCES}
-LINK
-  ${VOLLEY_LIBRARIES}
-COMPONENT
-  lib
+target_include_directories(volley
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+
+    # for ospcommon
+    $<BUILD_INTERFACE:${OSPRAY_INCLUDE_DIRS}>
 )
 
-## Build Volley drivers ##
+## Configure Volley installation ##
+install(TARGETS volley
+  EXPORT volleyConfig
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+
+install(EXPORT volleyConfig DESTINATION .)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/volley/include/volley
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING PATTERN "*.h"
+)
+
+## Add Volley drivers ##
 add_subdirectory(drivers)

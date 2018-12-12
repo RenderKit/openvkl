@@ -17,17 +17,15 @@
 option(BUILD_SCALAR_DRIVER "Build scalar driver" ON)
 if (BUILD_SCALAR_DRIVER)
 
-  ospray_create_library(volley_module_scalar_driver
+  add_library(volley_module_scalar_driver SHARED
     api/ScalarDriver.cpp
-  LINK
-    volley
-  COMPONENT
-    lib
+    volume/SimpleProceduralVolume.cpp
   )
 
-  target_include_directories(volley_module_scalar_driver
-  PRIVATE
-    ${VOLLEY_INCLUDE_DIRS}
+  target_link_libraries(volley_module_scalar_driver PRIVATE volley)
+
+  install(TARGETS volley_module_scalar_driver
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 
 endif (BUILD_SCALAR_DRIVER)

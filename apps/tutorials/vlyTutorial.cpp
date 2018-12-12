@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <iostream>
+#include <vector>
 #include "volley/volley.h"
 
 int main()
@@ -24,7 +26,25 @@ int main()
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
-  VLYVolume volume = vlyNewVolume("structured_volume");
+  VLYVolume volume = vlyNewVolume("simple_procedural_volume");
+
+  const size_t numValues = 10;
+
+  std::vector<vly_vec3f> worldCoordinates;
+
+  for (size_t i = 0; i < numValues; i++) {
+    worldCoordinates.push_back(vly_vec3f{float(i), float(i), float(i)});
+  }
+
+  std::vector<float> results;
+  results.resize(numValues);
+
+  vlySampleVolume(
+      volume, VLY_SAMPLE_LINEAR, numValues, worldCoordinates.data(), results.data());
+
+  for (const auto &result : results) {
+    std::cout << result << std::endl;
+  }
 
   return 0;
 }

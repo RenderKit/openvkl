@@ -50,10 +50,14 @@ namespace volley {
 
       // all drivers must implement the following API calls
       virtual VLYError loadModule(const char *moduleName) = 0;
-      virtual VLYVolume newVolume(const char *type) = 0;
+      virtual VLYVolume newVolume(const char *type)       = 0;
+      virtual void sampleVolume(VLYVolume volume,
+                                VLYSamplingType samplingType,
+                                size_t numValues,
+                                const vly_vec3f *worldCoordinates,
+                                float *results)           = 0;
 
-    private:
-
+     private:
       bool committed = false;
     };
 

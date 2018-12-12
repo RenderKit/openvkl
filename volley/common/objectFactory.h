@@ -19,7 +19,7 @@
 #include "VLYCommon.h"
 #include "logging.h"
 #include "volley/VLYDataType.h"
-
+#include "ospcommon/library.h"
 #include <map>
 
 namespace volley {
@@ -37,8 +37,9 @@ namespace volley {
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
-      postLogMessage(VLY_LOG_DEBUG) << "trying to look up " << type_string << " type '"
-                << type << "' for the first time";
+      postLogMessage(VLY_LOG_DEBUG)
+          << "trying to look up " << type_string << " type '" << type
+          << "' for the first time";
 
       // Construct the name of the creation function to look for.
       std::string creationFunctionName =
@@ -51,8 +52,9 @@ namespace volley {
       // The named function may not be found if the requested subtype is not
       // known.
       if (!symbolRegistry[type]) {
-        postLogMessage(VLY_LOG_WARNING) << "WARNING: unrecognized " << type_string << " type '"
-                  << type << "'.";
+        postLogMessage(VLY_LOG_WARNING)
+            << "WARNING: unrecognized " << type_string << " type '" << type
+            << "'.";
       }
     }
 

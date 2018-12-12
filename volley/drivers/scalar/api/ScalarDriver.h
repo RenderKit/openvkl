@@ -23,7 +23,7 @@ namespace volley {
 
     struct ScalarDriver : public api::Driver
     {
-      ScalarDriver() = default;
+      ScalarDriver()           = default;
       ~ScalarDriver() override = default;
 
       virtual void commit() override;
@@ -32,6 +32,11 @@ namespace volley {
 
       VLYVolume newVolume(const char *type) override;
 
+      void sampleVolume(VLYVolume volume,
+                        VLYSamplingType samplingType,
+                        size_t numValues,
+                        const vly_vec3f *worldCoordinates,
+                        float *results) override;
     };
-  }
-}
+  }  // namespace scalar_driver
+}  // namespace volley

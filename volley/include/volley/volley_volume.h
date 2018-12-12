@@ -16,15 +16,38 @@
 
 #pragma once
 
+#include <cstdlib>
+#include <cstdint>
+
 struct Volume;
 
 typedef Volume *VLYVolume;
+
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  VLY_SAMPLE_NEAREST = 100,
+  VLY_SAMPLE_LINEAR  = 200,
+} VLYSamplingType;
+
+typedef struct
+{
+  float x, y, z;
+} vly_vec3f;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 VLYVolume vlyNewVolume(const char *type);
+
+void vlySampleVolume(VLYVolume volume,
+                     VLYSamplingType samplingType,
+                     size_t numValues,
+                     const vly_vec3f *worldCoordinates,
+                     float *results);
 
 #ifdef __cplusplus
 }  // extern "C"

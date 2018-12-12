@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ScalarDriver.h"
+#include "../volume/Volume.h"
 
 namespace volley {
   namespace scalar_driver {
@@ -26,13 +27,24 @@ namespace volley {
 
     VLYError ScalarDriver::loadModule(const char *moduleName)
     {
-      volley::loadLocalModule(moduleName);
-      return VLY_NO_ERROR;
+      return volley::loadLocalModule(moduleName);
     }
 
     VLYVolume ScalarDriver::newVolume(const char *type)
     {
-      return nullptr;
+      return (VLYVolume)Volume::createInstance(type);
+    }
+
+    void ScalarDriver::sampleVolume(VLYVolume volume,
+                                    VLYSamplingType samplingType,
+                                    size_t numValues,
+                                    const vly_vec3f *worldCoordinates,
+                                    float *results)
+    {
+      // TODO: dummy values for API plumbing
+      for (size_t i=0; i<numValues; i++) {
+        results[i] = float(i);
+      }
     }
 
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)

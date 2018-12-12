@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #include "Driver.h"
-#include "volley/volley.h"
 #include "common/logging.h"
 #include "ospcommon/utility/OnScopeExit.h"
+#include "volley/volley.h"
 
 #define TRACE_PREFIX "[volley] "
 
@@ -31,39 +31,49 @@ inline std::string getPidString()
 void postTraceMessage(const std::string &message)
 {
   if (volley::api::driverIsSet()) {
-    volley::api::currentDriver().traceFunction((TRACE_PREFIX + message + '\n').c_str());
-  }
-  else {
-      std::cout << TRACE_PREFIX << message << std::endl;
+    volley::api::currentDriver().traceFunction(
+        (TRACE_PREFIX + message + '\n').c_str());
+  } else {
+    std::cout << TRACE_PREFIX << message << std::endl;
   }
 }
 
-#define ASSERT_DRIVER() if (!volley::api::driverIsSet())                      \
-    throw std::runtime_error("Volley not yet initialized "                    \
-                             "(most likely this means you tried to "          \
-                             "call a Volley API function before "             \
-                             "first calling vlyInit())" + getPidString());
+#define ASSERT_DRIVER()                         \
+  if (!volley::api::driverIsSet())              \
+    throw std::runtime_error(                   \
+        "Volley not yet initialized "           \
+        "(most likely this means you tried to " \
+        "call a Volley API function before "    \
+        "first calling vlyInit())" +            \
+        getPidString());
 
-#define VOLLEY_CATCH_BEGIN try {                                              \
-  auto *fcn_name_ = __PRETTY_FUNCTION__;                                      \
-  ospcommon::utility::OnScopeExit guard([&]() {                               \
-    postTraceMessage(fcn_name_);                                              \
-  });
+#define VOLLEY_CATCH_BEGIN                 \
+  try {                                    \
+    auto *fcn_name_ = __PRETTY_FUNCTION__; \
+    ospcommon::utility::OnScopeExit guard( \
+        [&]() { postTraceMessage(fcn_name_); });
 
-#define VOLLEY_CATCH_END(a)                                                   \
-  } catch (const std::bad_alloc &) {                                          \
-    volley::handleError(VLY_OUT_OF_MEMORY, "Volley was unable to allocate memory");\
-    return a;                                                                 \
-  } catch (const std::exception &e) {                                         \
-    volley::handleError(VLY_UNKNOWN_ERROR, e.what());                         \
-    return a;                                                                 \
-  } catch (...) {                                                             \
-    volley::handleError(VLY_UNKNOWN_ERROR, "an unrecognized exception was caught");\
-    return a;                                                                 \
+#define VOLLEY_CATCH_END(a)                                      \
+  }                                                              \
+  catch (const std::bad_alloc &)                                 \
+  {                                                              \
+    volley::handleError(VLY_OUT_OF_MEMORY,                       \
+                        "Volley was unable to allocate memory"); \
+    return a;                                                    \
+  }                                                              \
+  catch (const std::exception &e)                                \
+  {                                                              \
+    volley::handleError(VLY_UNKNOWN_ERROR, e.what());            \
+    return a;                                                    \
+  }                                                              \
+  catch (...)                                                    \
+  {                                                              \
+    volley::handleError(VLY_UNKNOWN_ERROR,                       \
+                        "an unrecognized exception was caught"); \
+    return a;                                                    \
   }
 
-extern "C" VLYError vlyLoadModule(const char *moduleName)
-VOLLEY_CATCH_BEGIN
+extern "C" VLYError vlyLoadModule(const char *moduleName) VOLLEY_CATCH_BEGIN
 {
   if (volley::api::driverIsSet()) {
     return (VLYError)volley::api::currentDriver().loadModule(moduleName);
@@ -73,23 +83,20 @@ VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(VLY_UNKNOWN_ERROR)
 
-extern "C" VLYDriver vlyNewDriver(const char *driverName)
-VOLLEY_CATCH_BEGIN
+extern "C" VLYDriver vlyNewDriver(const char *driverName) VOLLEY_CATCH_BEGIN
 {
   return (VLYDriver)volley::api::Driver::createDriver(driverName);
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" void vlyCommitDriver(VLYDriver driver)
-VOLLEY_CATCH_BEGIN
+extern "C" void vlyCommitDriver(VLYDriver driver) VOLLEY_CATCH_BEGIN
 {
   auto *object = (volley::api::Driver *)driver;
   object->commit();
 }
 VOLLEY_CATCH_END()
 
-extern "C" void vlySetCurrentDriver(VLYDriver driver)
-VOLLEY_CATCH_BEGIN
+extern "C" void vlySetCurrentDriver(VLYDriver driver) VOLLEY_CATCH_BEGIN
 {
   auto *object = (volley::api::Driver *)driver;
 
@@ -101,16 +108,28 @@ VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END()
 
-extern "C" VLYVolume vlyNewVolume(const char *type)
-VOLLEY_CATCH_BEGIN
+extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   Assert(type != nullptr && "invalid volume type identifier in vlyNewVolume");
   VLYVolume volume = volley::api::currentDriver().newVolume(type);
   if (volume == nullptr) {
-    postLogMessage(volley::VLY_LOG_ERROR) << "could not create volume '" << type << "'";
+    postLogMessage(volley::VLY_LOG_ERROR)
+        << "could not create volume '" << type << "'";
   }
 
   return volume;
 }
 VOLLEY_CATCH_END(nullptr)
+
+extern "C" void vlySampleVolume(VLYVolume volume,
+                                VLYSamplingType samplingType,
+                                size_t numValues,
+                                const vly_vec3f *worldCoordinates,
+                                float *results) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().sampleVolume(
+      volume, samplingType, numValues, worldCoordinates, results);
+}
+VOLLEY_CATCH_END()

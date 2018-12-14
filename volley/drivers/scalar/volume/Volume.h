@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "volley/volley.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 
@@ -37,6 +38,11 @@ namespace volley {
       {
         ManagedObject::commit();
       }
+
+      virtual void sample(VLYSamplingType samplingType,
+                          size_t numValues,
+                          const vly_vec3f *worldCoordinates,
+                          float *results) = 0;
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

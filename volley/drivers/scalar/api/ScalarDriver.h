@@ -38,5 +38,6 @@ namespace volley {
                         const vly_vec3f *worldCoordinates,
                         float *results) override;
     };
+
   }  // namespace scalar_driver
 }  // namespace volley

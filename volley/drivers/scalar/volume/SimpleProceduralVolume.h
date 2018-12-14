@@ -25,6 +25,11 @@ namespace volley {
     struct SimpleProceduralVolume : public Volume
     {
       void commit() override;
+
+      void sample(VLYSamplingType samplingType,
+                  size_t numValues,
+                  const vly_vec3f *worldCoordinates,
+                  float *results) override;
     };
 
   }  // namespace scalar_driver

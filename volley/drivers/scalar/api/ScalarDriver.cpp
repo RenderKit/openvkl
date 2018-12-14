@@ -41,13 +41,12 @@ namespace volley {
                                     const vly_vec3f *worldCoordinates,
                                     float *results)
     {
-      // TODO: dummy values for API plumbing
-      for (size_t i=0; i<numValues; i++) {
-        results[i] = float(i);
-      }
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      volumeObject.sample(samplingType, numValues, worldCoordinates, results);
     }
 
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)
+
   }  // namespace scalar_driver
 }  // namespace volley
 

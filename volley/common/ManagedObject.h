@@ -60,4 +60,10 @@ namespace volley {
 
     return object;
   }
+
+  template <typename VOLLEY_CLASS, typename VOLLEY_HANDLE>
+  VOLLEY_CLASS &referenceFromHandle(VOLLEY_HANDLE handle)
+  {
+    return *((VOLLEY_CLASS *)handle);
+  }
 }  // namespace volley

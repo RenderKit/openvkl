@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "SimpleProceduralVolume.h"
+#include <cmath>
 
 namespace volley {
   namespace scalar_driver {
@@ -22,6 +23,16 @@ namespace volley {
     void SimpleProceduralVolume::commit()
     {
       Volume::commit();
+    }
+
+    void SimpleProceduralVolume::sample(VLYSamplingType samplingType,
+                                        size_t numValues,
+                                        const vly_vec3f *worldCoordinates,
+                                        float *results)
+    {
+      for (size_t i=0; i<numValues; i++) {
+        results[i] = sinf(worldCoordinates[i].x);
+      }
     }
 
     VLY_REGISTER_VOLUME(SimpleProceduralVolume, simple_procedural_volume)

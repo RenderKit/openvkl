@@ -54,7 +54,6 @@ namespace volley {
       // setup default logging functions
       installMessageFunction(*this, std::cout);
       installErrorMessageFunction(*this, std::cerr);
-      installTraceFunction(*this, std::cout);
 
       committed = true;
     }

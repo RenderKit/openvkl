@@ -33,8 +33,6 @@ void postTraceMessage(const std::string &message)
   if (volley::api::driverIsSet()) {
     volley::api::currentDriver().traceFunction(
         (TRACE_PREFIX + message + '\n').c_str());
-  } else {
-    std::cout << TRACE_PREFIX << message << std::endl;
   }
 }
 

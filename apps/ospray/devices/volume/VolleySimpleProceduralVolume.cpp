@@ -41,7 +41,7 @@ namespace ospray {
       vlyVolume = vlyNewVolume("simple_procedural_volume");
 
       // TODO
-      samplingStep = 0.05f;
+      samplingStep = 0.01f;
     }
 
     bool VolleySimpleProceduralVolume::intersect(Ray &ray) const

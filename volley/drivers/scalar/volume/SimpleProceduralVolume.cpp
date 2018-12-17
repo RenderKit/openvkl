@@ -38,10 +38,11 @@ namespace volley {
       range1f rangeLimit(0.f, inf);
 
       for (size_t i = 0; i < numValues; i++) {
-        auto hits = intersectBox(*reinterpret_cast<const vec3f *>(&origins[i]),
-                                 *reinterpret_cast<const vec3f *>(&directions[i]),
-                                 boundingBox,
-                                 rangeLimit);
+        auto hits =
+            intersectBox(*reinterpret_cast<const vec3f *>(&origins[i]),
+                         *reinterpret_cast<const vec3f *>(&directions[i]),
+                         boundingBox,
+                         rangeLimit);
 
         if (hits.first < hits.second && hits.first < rangeLimit.upper) {
           ranges[i].lower = hits.first;
@@ -57,8 +58,20 @@ namespace volley {
                                         const vly_vec3f *worldCoordinates,
                                         float *results)
     {
+      const float M  = 1.f;
+      const float G  = 1.f;
+      const float XM = 1.f;
+      const float YM = 1.f;
+      const float ZM = 1.f;
+      const float XF = 3.f;
+      const float YF = 3.f;
+      const float ZF = 3.f;
+
       for (size_t i = 0; i < numValues; i++) {
-        results[i] = sinf(worldCoordinates[i].x);
+        results[i] = M * G *
+                     (XM * sinf(XF * worldCoordinates[i].x) +
+                      YM * sinf(YF * worldCoordinates[i].y) +
+                      ZM * cosf(ZF * worldCoordinates[i].z));
       }
     }
 

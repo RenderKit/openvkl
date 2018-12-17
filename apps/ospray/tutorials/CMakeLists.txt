@@ -14,13 +14,26 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-## "Hello world" Volley tutorial ##
-add_executable(vlyTutorial
-  vlyTutorial.cpp
+## ImGui dependency ##
+add_subdirectory(imgui)
+
+## OpenGL dependency ##
+set(OpenGL_GL_PREFERENCE "LEGACY")
+find_package(OpenGL 2 REQUIRED)
+
+## OSPRay-based Volley tutorial ##
+ospray_create_application(ospTutorialVolleyVolume
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  ospTutorialVolleyVolume.cpp
+  imgui_impl_glfw_gl3.cpp
+LINK
+  glfw
+  ospray_imgui
+  ospray_testing_volley
+  ${OPENGL_LIBRARIES}
 )
 
-target_link_libraries(vlyTutorial PRIVATE volley)
-
-install(TARGETS vlyTutorial
+install(TARGETS ospTutorialVolleyVolume
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

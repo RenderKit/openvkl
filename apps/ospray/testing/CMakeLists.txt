@@ -24,14 +24,8 @@ if(BUILD_OSPRAY_TESTING)
     volume/VolleySimpleProceduralVolume.cpp
 
   LINK
-    ${OSPRAY_LIBRARIES}
-  )
-
-  target_link_libraries(ospray_testing_volley volley)
-
-  target_include_directories(ospray_testing_volley
-  PRIVATE
-    ${OSPRAY_INCLUDE_DIRS}
+    volley
+    ${OSPRAY_TESTING_LIBRARY}
   )
 
 endif()

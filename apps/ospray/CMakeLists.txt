@@ -14,5 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+## Include ospcommon dependency ##
+find_package(ospray 1.7.1 REQUIRED)
+include(${OSPRAY_USE_FILE})
+
 add_subdirectory(devices)
 add_subdirectory(testing)
+add_subdirectory(tutorials)

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2018 Intel Corporation                                         ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,13 +14,34 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-## "Hello world" Volley tutorial ##
-add_executable(vlyTutorial
-  vlyTutorial.cpp
+add_library(ospray_imgui SHARED
+  imgui.cpp
+  imgui_draw.cpp
+  imgui_demo.cpp
+  imguifilesystem/imguifilesystem.cpp
 )
 
-target_link_libraries(vlyTutorial PRIVATE volley)
-
-install(TARGETS vlyTutorial
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+target_include_directories(ospray_imgui
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/imguifilesystem>
+  PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
 )
+
+## Include ospcommon dependency ##
+find_package(ospray 1.7.1 REQUIRED)
+include(${OSPRAY_USE_FILE})
+
+target_link_libraries(ospray_imgui
+  PUBLIC
+    ${OSPRAY_LIBRARIES}
+)
+
+foreach(dir IN ITEMS ${OSPRAY_INCLUDE_DIRS})
+  target_include_directories(ospray_imgui
+    PUBLIC
+      $<BUILD_INTERFACE:${dir}>
+  )
+endforeach(dir)

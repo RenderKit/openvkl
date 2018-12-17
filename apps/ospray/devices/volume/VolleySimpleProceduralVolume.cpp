@@ -68,10 +68,24 @@ namespace ospray {
     {
       float sample;
 
-      vlySampleVolume(
-          vlyVolume, VLY_SAMPLE_LINEAR, 1, (vly_vec3f *)&worldCoordinates, &sample);
+      vlySampleVolume(vlyVolume,
+                      VLY_SAMPLE_LINEAR,
+                      1,
+                      (vly_vec3f *)&worldCoordinates,
+                      &sample);
 
       return sample;
+    }
+
+    std::vector<float> VolleySimpleProceduralVolume::computeSamples(
+        const std::vector<vec3f> &worldCoordinates) const
+    {
+      std::vector<float> samples;
+      samples.resize(worldCoordinates.size());
+
+      vlySampleVolume(vlyVolume, VLY_SAMPLE_LINEAR, worldCoordinates.size(), (vly_vec3f *)worldCoordinates.data(), (float *)samples.data());
+
+      return samples;
     }
 
     void VolleySimpleProceduralVolume::advance(Ray &ray) const

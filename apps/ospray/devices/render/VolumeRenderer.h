@@ -32,6 +32,9 @@ namespace ospray {
 
      protected:
       Volume *volume{nullptr};
+
+      void renderTileNormal(Tile &tile);
+      void renderTileWide(Tile &tile);
     };
 
   }  // namespace scalar_volley_device

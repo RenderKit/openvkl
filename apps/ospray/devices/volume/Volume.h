@@ -36,6 +36,9 @@ namespace ospray {
       virtual float computeSample(
           const ospcommon::vec3f &worldCoordinates) const = 0;
 
+      virtual std::vector<float> computeSamples(
+          const std::vector<vec3f> &worldCoordinates) const = 0;
+
       // advance the given ray by a step appropriate to the volume
       virtual void advance(Ray &ray) const = 0;
 

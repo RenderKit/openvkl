@@ -40,6 +40,9 @@ namespace ospray {
       // computes a sample at the world-space coordinate within the volume
       float computeSample(const vec3f &worldCoordinates) const override;
 
+      std::vector<float> computeSamples(
+          const std::vector<vec3f> &worldCoordinates) const override;
+
       // advance the given ray by a step appropriate to the volume
       void advance(Ray &ray) const override;
 

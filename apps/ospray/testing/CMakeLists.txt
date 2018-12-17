@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2018 Intel Corporation                                         ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,5 +14,24 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(devices)
-add_subdirectory(testing)
+option(BUILD_OSPRAY_TESTING "Build OSPRay Volley testing components" ON)
+
+if(BUILD_OSPRAY_TESTING)
+
+  find_package(volley REQUIRED)
+
+  ospray_create_library(ospray_testing_volley
+    volume/VolleySimpleProceduralVolume.cpp
+
+  LINK
+    ${OSPRAY_LIBRARIES}
+  )
+
+  target_link_libraries(ospray_testing_volley volley)
+
+  target_include_directories(ospray_testing_volley
+  PRIVATE
+    ${OSPRAY_INCLUDE_DIRS}
+  )
+
+endif()

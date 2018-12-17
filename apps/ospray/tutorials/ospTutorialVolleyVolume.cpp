@@ -75,7 +75,7 @@ int main(int argc, const char **argv)
   // create a GLFW OSPRay window: this object will create and manage the OSPRay
   // frame buffer and camera directly
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
-      new GLFWOSPRayWindow(vec2i{1024, 768},
+      new GLFWOSPRayWindow(vec2i{512, 512},
                            reinterpret_cast<box3f &>(test_data.bounds),
                            world,
                            renderer));

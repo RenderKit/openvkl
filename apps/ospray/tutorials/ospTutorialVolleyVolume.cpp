@@ -28,10 +28,15 @@ int main(int argc, const char **argv)
 {
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
-  OSPError initError = ospInit(&argc, argv);
+  // OSPError initError = ospInit(&argc, argv);
 
-  if (initError != OSP_NO_ERROR)
-    return initError;
+  // if (initError != OSP_NO_ERROR)
+  //   return initError;
+
+  // For now, default to the volley device
+  OSPDevice volleyDevice = ospNewDevice("scalar_volley_device");
+  ospDeviceCommit(volleyDevice);
+  ospSetCurrentDevice(volleyDevice);
 
   // set an error callback to catch any OSPRay errors and exit the application
   ospDeviceSetErrorFunc(

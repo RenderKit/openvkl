@@ -31,6 +31,7 @@ LINK
   glfw
   ospray_imgui
   ospray_testing_volley
+  ospray_module_scalar_volley_device
   ${OPENGL_LIBRARIES}
 )
 

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2018 Intel Corporation                                         ##
+## Copyright 2009-2017 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,5 +14,44 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(ospray)
-add_subdirectory(tutorials)
+option(BUILD_SCALAR_VOLLEY_DEVICE "Build scalar volley device" ON)
+
+if(BUILD_SCALAR_VOLLEY_DEVICE)
+
+  find_package(volley REQUIRED)
+
+  ospray_create_library(ospray_module_scalar_volley_device
+    moduleInit.cpp
+
+    api/ScalarVolleyDevice.cpp
+
+    camera/Camera.cpp
+
+    common/Data.cpp
+    common/Model.cpp
+
+    fb/FrameBuffer.cpp
+    fb/Tile.cpp
+
+    render/Renderer.cpp
+    render/VolumeRenderer.cpp
+
+    transferFunction/TransferFunction.cpp
+
+    volume/BlockBrickedVolume.cpp
+    volume/StructuredVolume.cpp
+    volume/VolleySimpleProceduralVolume.cpp
+    volume/Volume.cpp
+
+  LINK
+    ${OSPRAY_LIBRARIES}
+  )
+
+  target_link_libraries(ospray_module_scalar_volley_device volley)
+
+  target_include_directories(ospray_module_scalar_volley_device
+  PRIVATE
+    ${OSPRAY_INCLUDE_DIRS}
+  )
+
+endif()

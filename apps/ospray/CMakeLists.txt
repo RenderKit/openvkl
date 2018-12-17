@@ -14,5 +14,4 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(ospray)
-add_subdirectory(tutorials)
+add_subdirectory(devices)

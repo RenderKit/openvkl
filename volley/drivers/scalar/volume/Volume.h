@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "volley/volley.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
+#include "volley/volley.h"
 
 namespace volley {
 
@@ -38,6 +38,11 @@ namespace volley {
       {
         ManagedObject::commit();
       }
+
+      virtual void intersect(size_t numValues,
+                             const vly_vec3f *origins,
+                             const vly_vec3f *directions,
+                             vly_range1f *ranges) = 0;
 
       virtual void sample(VLYSamplingType samplingType,
                           size_t numValues,

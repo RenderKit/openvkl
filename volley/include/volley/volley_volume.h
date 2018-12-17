@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <cstdlib>
 #include <cstdint>
+#include <cstdlib>
 
 struct Volume;
 
@@ -37,11 +37,22 @@ typedef struct
   float x, y, z;
 } vly_vec3f;
 
+typedef struct
+{
+  float lower, upper;
+} vly_range1f;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 VLYVolume vlyNewVolume(const char *type);
+
+void vlyIntersectVolume(VLYVolume volume,
+                        size_t numValues,
+                        const vly_vec3f *origins,
+                        const vly_vec3f *directions,
+                        vly_range1f *ranges);
 
 void vlySampleVolume(VLYVolume volume,
                      VLYSamplingType samplingType,

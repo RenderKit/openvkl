@@ -16,26 +16,23 @@
 
 #pragma once
 
-#include "Volume.h"
+#include <ospray/ospcommon/box.h>
+#include <ospray/ospcommon/vec.h>
 
 namespace volley {
 
-  namespace scalar_driver {
+  using namespace ospcommon;
 
-    struct SimpleProceduralVolume : public Volume
-    {
-      void commit() override;
+  inline std::pair<float, float> intersectBox(const vec3f &origin,
+                                              const vec3f &direction,
+                                              const box3f &box,
+                                              const range1f &rangeLimit)
+  {
+    const vec3f mins = (box.lower - origin) * rcp(direction);
+    const vec3f maxs = (box.upper - origin) * rcp(direction);
 
-      void intersect(size_t numValues,
-                     const vly_vec3f *origins,
-                     const vly_vec3f *directions,
-                     vly_range1f *ranges) override;
+    return {reduce_max(vec4f{min(mins, maxs), rangeLimit.lower}),
+            reduce_min(vec4f{max(mins, maxs), rangeLimit.upper})};
+  }
 
-      void sample(VLYSamplingType samplingType,
-                  size_t numValues,
-                  const vly_vec3f *worldCoordinates,
-                  float *results) override;
-    };
-
-  }  // namespace scalar_driver
 }  // namespace volley

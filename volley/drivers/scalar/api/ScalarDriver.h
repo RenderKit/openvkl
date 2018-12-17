@@ -32,6 +32,12 @@ namespace volley {
 
       VLYVolume newVolume(const char *type) override;
 
+      void intersectVolume(VLYVolume volume,
+                           size_t numValues,
+                           const vly_vec3f *origins,
+                           const vly_vec3f *directions,
+                           vly_range1f *ranges) override;
+
       void sampleVolume(VLYVolume volume,
                         VLYSamplingType samplingType,
                         size_t numValues,

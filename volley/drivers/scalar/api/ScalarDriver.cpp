@@ -35,6 +35,16 @@ namespace volley {
       return (VLYVolume)Volume::createInstance(type);
     }
 
+    void ScalarDriver::intersectVolume(VLYVolume volume,
+                                       size_t numValues,
+                                       const vly_vec3f *origins,
+                                       const vly_vec3f *directions,
+                                       vly_range1f *ranges)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      volumeObject.intersect(numValues, origins, directions, ranges);
+    }
+
     void ScalarDriver::sampleVolume(VLYVolume volume,
                                     VLYSamplingType samplingType,
                                     size_t numValues,

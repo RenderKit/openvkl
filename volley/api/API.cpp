@@ -122,6 +122,18 @@ extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(nullptr)
 
+extern "C" void vlyIntersectVolume(VLYVolume volume,
+                                   size_t numValues,
+                                   const vly_vec3f *origins,
+                                   const vly_vec3f *directions,
+                                   vly_range1f *ranges) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().intersectVolume(
+      volume, numValues, origins, directions, ranges);
+}
+VOLLEY_CATCH_END()
+
 extern "C" void vlySampleVolume(VLYVolume volume,
                                 VLYSamplingType samplingType,
                                 size_t numValues,

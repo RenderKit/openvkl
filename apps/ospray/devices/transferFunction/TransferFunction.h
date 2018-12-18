@@ -29,10 +29,11 @@ namespace ospray {
       TransferFunction() = default;
 
       void commit();
-      vec4f getColor(float value) const;
+      vec4f getColorAndOpacity(float value) const;
 
      private:
-      std::vector<vec4f> colors;
+      std::vector<vec3f> colors;
+      std::vector<float> opacities;
 
       range1f valueRange;
     };

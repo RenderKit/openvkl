@@ -73,7 +73,7 @@ namespace ospray {
                 volume->computeSample(ray.org + ray.t0 * ray.dir);
 
             // apply transfer function
-            vec4f sampleColor = transferFunction.getColor(sample);
+            vec4f sampleColor = transferFunction.getColorAndOpacity(sample);
 
             // accumulate contribution
             const float clampedOpacity =
@@ -167,7 +167,7 @@ namespace ospray {
 
         // apply transfer function and accumulate contributions
         for (size_t s = 0; s < samples.size(); s++) {
-          vec4f sampleColor = transferFunction.getColor(samples[s]);
+          vec4f sampleColor = transferFunction.getColorAndOpacity(samples[s]);
 
           // accumulate contribution
           const float clampedOpacity =

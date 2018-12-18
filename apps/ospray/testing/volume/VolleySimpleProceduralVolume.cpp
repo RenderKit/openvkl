@@ -37,7 +37,7 @@ namespace ospray {
     {
       OSPVolume volume = ospNewVolume("volley::simple_procedural_volume");
 
-      range1f voxelRange{-1.f, 1.f};
+      range1f voxelRange{-2.f, 2.f};
 
       const auto range  = voxelRange.toVec2f();
       const auto bounds = box3f(vec3f(-1.f), vec3f(1.f));

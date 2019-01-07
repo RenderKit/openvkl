@@ -21,6 +21,9 @@ add_subdirectory(imgui)
 set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL 2 REQUIRED)
 
+## GLFW dependency ##
+find_package(glfw3 REQUIRED)
+
 ## OSPRay-based Volley tutorial ##
 ospray_create_application(ospTutorialVolleyVolume
   ArcballCamera.cpp

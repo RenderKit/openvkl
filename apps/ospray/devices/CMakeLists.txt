@@ -18,7 +18,8 @@ option(BUILD_SCALAR_VOLLEY_DEVICE "Build scalar volley device" ON)
 
 if(BUILD_SCALAR_VOLLEY_DEVICE)
 
-  find_package(volley REQUIRED)
+  # will need to be uncommented if this code is moved outside of Volley
+  #find_package(volley REQUIRED)
 
   ospray_create_library(ospray_module_scalar_volley_device
     moduleInit.cpp

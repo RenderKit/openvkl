@@ -18,7 +18,8 @@ option(BUILD_OSPRAY_TESTING "Build OSPRay Volley testing components" ON)
 
 if(BUILD_OSPRAY_TESTING)
 
-  find_package(volley REQUIRED)
+  # will need to be uncommented if this code is moved outside of Volley
+  #find_package(volley REQUIRED)
 
   ospray_create_library(ospray_testing_volley
     volume/VolleySimpleProceduralVolume.cpp

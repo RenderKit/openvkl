@@ -38,6 +38,9 @@ LINK
   ${OPENGL_LIBRARIES}
 )
 
+## mute OSX Mojave OpenGL deprecation warnings ##
+target_compile_definitions(ospTutorialVolleyVolume PRIVATE GL_SILENCE_DEPRECATION)
+
 install(TARGETS ospTutorialVolleyVolume
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

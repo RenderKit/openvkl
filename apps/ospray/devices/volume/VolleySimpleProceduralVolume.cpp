@@ -39,9 +39,6 @@ namespace ospray {
       }
 
       vlyVolume = vlyNewVolume("simple_procedural_volume");
-
-      // TODO
-      samplingStep = 0.01f;
     }
 
     bool VolleySimpleProceduralVolume::intersect(Ray &ray) const
@@ -83,14 +80,23 @@ namespace ospray {
       std::vector<float> samples;
       samples.resize(worldCoordinates.size());
 
-      vlySampleVolume(vlyVolume, VLY_SAMPLE_LINEAR, worldCoordinates.size(), (vly_vec3f *)worldCoordinates.data(), (float *)samples.data());
+      vlySampleVolume(vlyVolume,
+                      VLY_SAMPLE_LINEAR,
+                      worldCoordinates.size(),
+                      (vly_vec3f *)worldCoordinates.data(),
+                      (float *)samples.data());
 
       return samples;
     }
 
     void VolleySimpleProceduralVolume::advance(Ray &ray) const
     {
-      ray.t0 += samplingStep;
+      vlyAdvanceRays(vlyVolume,
+                     samplingRate,
+                     1,
+                     (const vly_vec3f *)&ray.org,
+                     (const vly_vec3f *)&ray.dir,
+                     &ray.t0);
     }
 
     int VolleySimpleProceduralVolume::setRegion(const void *,

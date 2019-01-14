@@ -48,6 +48,7 @@ extern "C" {
 
 VLYVolume vlyNewVolume(const char *type);
 
+// returned ranges will be NaN if rays do not intersect
 void vlyIntersectVolume(VLYVolume volume,
                         size_t numValues,
                         const vly_vec3f *origins,
@@ -60,6 +61,14 @@ void vlySampleVolume(VLYVolume volume,
                      const vly_vec3f *worldCoordinates,
                      float *results);
 
+// returned t values will be NaN if rays do not intersect or are no longer
+// within volume after advancement.
+void vlyAdvanceRays(VLYVolume volume,
+                    float samplingRate,
+                    size_t numValues,
+                    const vly_vec3f *origins,
+                    const vly_vec3f *directions,
+                    float *t);
 #ifdef __cplusplus
 }  // extern "C"
 #endif

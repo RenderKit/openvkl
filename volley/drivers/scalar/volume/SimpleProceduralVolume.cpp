@@ -75,6 +75,39 @@ namespace volley {
       }
     }
 
+    void SimpleProceduralVolume::advanceRays(float samplingRate,
+                                             size_t numValues,
+                                             const vly_vec3f *origins,
+                                             const vly_vec3f *directions,
+                                             float *t)
+    {
+      // nominal voxel size for [(-1, -1, -1), (1, 1, 1)] procedural volume
+      // mapping to a resolution of 100x100x100
+      const float voxelSize = 2.f / 100.f;
+
+      // constant step size within volume, considering sampling rate
+      const float step = voxelSize / samplingRate;
+
+      // intersect volume to get feasible t range
+      std::vector<vly_range1f> ranges(numValues);
+      intersect(numValues, origins, directions, ranges.data());
+
+      for (size_t i = 0; i < numValues; i++) {
+        if (ranges[i].lower == (float)ospcommon::nan) {
+          // ray does not intersect volume
+          t[i] = ospcommon::nan;
+        } else if (t[i] < ranges[i].lower) {
+          // ray has not yet entered volume; advance to entry point
+          t[i] = ranges[i].lower;
+        } else if (t[i] + step > ranges[i].upper) {
+          // ray has or will have exited the volume
+          t[i] = ospcommon::nan;
+        } else {
+          t[i] += step;
+        }
+      }
+    }
+
     VLY_REGISTER_VOLUME(SimpleProceduralVolume, simple_procedural_volume)
 
   }  // namespace scalar_driver

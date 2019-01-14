@@ -35,6 +35,12 @@ namespace volley {
                   size_t numValues,
                   const vly_vec3f *worldCoordinates,
                   float *results) override;
+
+      void advanceRays(float samplingRate,
+                       size_t numValues,
+                       const vly_vec3f *origins,
+                       const vly_vec3f *directions,
+                       float *t) override;
     };
 
   }  // namespace scalar_driver

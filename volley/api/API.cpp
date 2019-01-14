@@ -143,3 +143,16 @@ extern "C" void vlySampleVolume(VLYVolume volume,
       volume, samplingType, numValues, worldCoordinates, results);
 }
 VOLLEY_CATCH_END()
+
+extern "C" void vlyAdvanceRays(VLYVolume volume,
+                               float samplingRate,
+                               size_t numValues,
+                               const vly_vec3f *origins,
+                               const vly_vec3f *directions,
+                               float *t) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().advanceRays(
+      volume, samplingRate, numValues, origins, directions, t);
+}
+VOLLEY_CATCH_END()

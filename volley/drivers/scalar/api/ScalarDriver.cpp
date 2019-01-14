@@ -55,6 +55,17 @@ namespace volley {
       volumeObject.sample(samplingType, numValues, worldCoordinates, results);
     }
 
+    void ScalarDriver::advanceRays(VLYVolume volume,
+                                   float samplingRate,
+                                   size_t numValues,
+                                   const vly_vec3f *origins,
+                                   const vly_vec3f *directions,
+                                   float *t)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      volumeObject.advanceRays(samplingRate, numValues, origins, directions, t);
+    }
+
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)
 
   }  // namespace scalar_driver

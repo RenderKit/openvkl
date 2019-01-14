@@ -61,6 +61,12 @@ namespace volley {
                                 size_t numValues,
                                 const vly_vec3f *worldCoordinates,
                                 float *results)           = 0;
+      virtual void advanceRays(VLYVolume volume,
+                               float samplingRate,
+                               size_t numValues,
+                               const vly_vec3f *origins,
+                               const vly_vec3f *directions,
+                               float *t)                  = 0;
 
      private:
       bool committed = false;

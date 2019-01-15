@@ -39,6 +39,8 @@ namespace ospray {
       }
 
       vlyVolume = vlyNewVolume("simple_procedural_volume");
+
+      vlySamplingType = VLYSamplingType(getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
     }
 
     bool VolleySimpleProceduralVolume::intersect(Ray &ray) const
@@ -66,7 +68,7 @@ namespace ospray {
       float sample;
 
       vlySampleVolume(vlyVolume,
-                      VLY_SAMPLE_LINEAR,
+                      vlySamplingType,
                       1,
                       (vly_vec3f *)&worldCoordinates,
                       &sample);
@@ -81,7 +83,7 @@ namespace ospray {
       samples.resize(worldCoordinates.size());
 
       vlySampleVolume(vlyVolume,
-                      VLY_SAMPLE_LINEAR,
+                      vlySamplingType,
                       worldCoordinates.size(),
                       (vly_vec3f *)worldCoordinates.data(),
                       (float *)samples.data());

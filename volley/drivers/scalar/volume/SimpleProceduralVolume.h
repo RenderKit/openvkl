@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Volume.h"
+#include "common/math.h"
 
 namespace volley {
 
@@ -41,6 +42,10 @@ namespace volley {
                        const vly_vec3f *origins,
                        const vly_vec3f *directions,
                        float *t) override;
+
+     protected:
+      box3f boundingBox;
+      float voxelSize;
     };
 
   }  // namespace scalar_driver

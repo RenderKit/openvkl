@@ -52,6 +52,7 @@ namespace ospray {
 
      private:
       VLYVolume vlyVolume = nullptr;
+      VLYSamplingType vlySamplingType = VLY_SAMPLE_LINEAR;
     };
 
   }  // namespace scalar_volley_device

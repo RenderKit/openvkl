@@ -14,13 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <imgui.h>
 #include <memory>
 #include <random>
 #include "GLFWOSPRayWindow.h"
 
 #include <ospray/ospray_testing/ospray_testing.h>
-
-#include <imgui.h>
+#include <volley/volley.h>
 
 using namespace ospcommon;
 
@@ -91,6 +91,23 @@ int main(int argc, const char **argv)
     static float samplingRate = 1.f;
     if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 2.f)) {
       ospSet1f(test_data.volume, "samplingRate", samplingRate);
+      ospCommit(test_data.volume);
+    }
+
+    static VLYSamplingType vlySamplingType = VLY_SAMPLE_LINEAR;
+    if (ImGui::RadioButton("Linear sampling",
+                           vlySamplingType == VLY_SAMPLE_LINEAR)) {
+      vlySamplingType = VLY_SAMPLE_LINEAR;
+
+      ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
+      ospCommit(test_data.volume);
+    }
+    ImGui::SameLine();
+    if (ImGui::RadioButton("Nearest sampling",
+                           vlySamplingType == VLY_SAMPLE_NEAREST)) {
+      vlySamplingType = VLY_SAMPLE_NEAREST;
+
+      ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
       ospCommit(test_data.volume);
     }
   });

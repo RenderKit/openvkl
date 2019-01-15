@@ -16,7 +16,6 @@
 
 #include "SimpleProceduralVolume.h"
 #include <cmath>
-#include "common/math.h"
 
 namespace volley {
   namespace scalar_driver {
@@ -24,6 +23,13 @@ namespace volley {
     void SimpleProceduralVolume::commit()
     {
       Volume::commit();
+
+      // hardcoded bounding box for now
+      boundingBox = box3f(vec3f(-1.f), vec3f(1.f));
+
+      // nominal voxel size for [(-1, -1, -1), (1, 1, 1)] procedural volume
+      // mapping to a resolution of 32x32x32
+      voxelSize = 2.f / 32.f;
     }
 
     void SimpleProceduralVolume::intersect(size_t numValues,
@@ -31,9 +37,6 @@ namespace volley {
                                            const vly_vec3f *directions,
                                            vly_range1f *ranges)
     {
-      // hardcoded bounding box for now
-      const box3f boundingBox(vec3f(-1.f), vec3f(1.f));
-
       // no limits on returned intersections
       range1f rangeLimit(0.f, inf);
 
@@ -58,6 +61,7 @@ namespace volley {
                                         const vly_vec3f *worldCoordinates,
                                         float *results)
     {
+      // wavelet parameters
       const float M  = 1.f;
       const float G  = 1.f;
       const float XM = 1.f;
@@ -67,11 +71,32 @@ namespace volley {
       const float YF = 3.f;
       const float ZF = 3.f;
 
-      for (size_t i = 0; i < numValues; i++) {
-        results[i] = M * G *
-                     (XM * sinf(XF * worldCoordinates[i].x) +
-                      YM * sinf(YF * worldCoordinates[i].y) +
-                      ZM * cosf(ZF * worldCoordinates[i].z));
+      if (samplingType == VLY_SAMPLE_LINEAR) {
+        for (size_t i = 0; i < numValues; i++) {
+          results[i] = M * G *
+                       (XM * sinf(XF * worldCoordinates[i].x) +
+                        YM * sinf(YF * worldCoordinates[i].y) +
+                        ZM * cosf(ZF * worldCoordinates[i].z));
+        }
+      } else if (samplingType == VLY_SAMPLE_NEAREST) {
+        for (size_t i = 0; i < numValues; i++) {
+          // generate modified world coordinates to approximate "nearest"
+          // filtering in an actual data-based structured volume
+          const vec3i logicalCoordinates =
+              (*reinterpret_cast<const vec3f *>(&worldCoordinates[i]) -
+               boundingBox.lower) /
+              voxelSize;
+
+          const vec3f nearestCoordinates = -1.f + logicalCoordinates * voxelSize;
+
+          results[i] = M * G *
+                       (XM * sinf(XF * nearestCoordinates.x) +
+                        YM * sinf(YF * nearestCoordinates.y) +
+                        ZM * cosf(ZF * nearestCoordinates.z));
+        }
+      } else {
+        throw std::runtime_error(
+            "sample() called with unimplemented sampling type");
       }
     }
 
@@ -81,10 +106,6 @@ namespace volley {
                                              const vly_vec3f *directions,
                                              float *t)
     {
-      // nominal voxel size for [(-1, -1, -1), (1, 1, 1)] procedural volume
-      // mapping to a resolution of 100x100x100
-      const float voxelSize = 2.f / 100.f;
-
       // constant step size within volume, considering sampling rate
       const float step = voxelSize / samplingRate;
 

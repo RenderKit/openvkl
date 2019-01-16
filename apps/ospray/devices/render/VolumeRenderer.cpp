@@ -15,11 +15,80 @@
 // ======================================================================== //
 
 #include "VolumeRenderer.h"
+#include "../volume/VolleySimpleProceduralVolume.h"
+
 // ospcommon
 #include <ospray/ospcommon/tasking/parallel_for.h>
 
 namespace ospray {
   namespace scalar_volley_device {
+
+    struct RayUserData
+    {
+      const VolleySimpleProceduralVolume *volleySimpleProceduralVolume;
+
+      struct PixelData
+      {
+        size_t index;
+        vec4f color;
+      };
+
+      std::vector<PixelData> pixelData;
+
+      RayUserData(
+          const VolleySimpleProceduralVolume *volleySimpleProceduralVolume,
+          const Tile &tile,
+          const vec4f &backgroundColor)
+          : volleySimpleProceduralVolume(volleySimpleProceduralVolume)
+      {
+        pixelData.resize(tile.size.x * tile.size.y);
+
+        for (int y = 0; y < tile.size.y; y++) {
+          for (int x = 0; x < tile.size.x; x++) {
+            const size_t index = tile.indexOf(vec2i{x, y});
+
+            pixelData[index].index = index;
+            pixelData[index].color = backgroundColor;
+          }
+        }
+      }
+    };
+
+    void integrationStepFunction(size_t numValues,
+                                 const vly_vec3f *worldCoordinates,
+                                 const float *samples,
+                                 void *_rayUserData,
+                                 bool *earlyTerminationMask)
+    {
+      RayUserData *rayUserData = (RayUserData *)_rayUserData;
+
+      for (size_t i = 0; i < numValues; i++) {
+        if (earlyTerminationMask[i]) {
+          continue;
+        }
+
+        // apply transfer function
+        vec4f sampleColor =
+            rayUserData->volleySimpleProceduralVolume->getTransferFunction()
+                .getColorAndOpacity(samples[i]);
+
+        // accumulate contribution
+        const float clampedOpacity =
+            clamp(sampleColor.w /
+                  rayUserData->volleySimpleProceduralVolume->getSamplingRate());
+
+        sampleColor *= clampedOpacity;
+        sampleColor.w = clampedOpacity;
+
+        rayUserData->pixelData[i].color +=
+            (1.f - rayUserData->pixelData[i].color.w) * sampleColor;
+
+        // early termination
+        if (rayUserData->pixelData[i].color.w >= 0.99f) {
+          earlyTerminationMask[i] = true;
+        }
+      }
+    }
 
     void VolumeRenderer::commit()
     {
@@ -36,11 +105,9 @@ namespace ospray {
 
     void VolumeRenderer::renderTile(Tile &tile)
     {
-#if 0
-      renderTileNormal(tile);
-#else
-      renderTileWide(tile);
-#endif
+      // renderTileNormal(tile);
+      // renderTileWide(tile);
+      renderTileVolleyIntegration(tile);
     }
 
     void VolumeRenderer::renderTileNormal(Tile &tile)
@@ -207,5 +274,79 @@ namespace ospray {
       }
     }
 
+    void VolumeRenderer::renderTileVolleyIntegration(Tile &tile)
+    {
+      VolleySimpleProceduralVolume *volleySimpleProceduralVolume =
+          dynamic_cast<VolleySimpleProceduralVolume *>(volume);
+
+      if (!volleySimpleProceduralVolume) {
+        throw std::runtime_error(
+            "only Volley-based volumes supported in this renderer");
+      }
+
+      VLYVolume vlyVolume = volleySimpleProceduralVolume->getVLYVolume();
+
+      // generate initial ray user data state that will be sent to Volley
+      RayUserData rayUserData(
+          volleySimpleProceduralVolume, tile, backgroundColor);
+
+      // generate initial rays to be sent to Volley
+      VolleyRays volleyRays = getCameraRays(tile);
+
+      // intersect Volley volume, which will return ray t ranges
+      vlyIntersectVolume(vlyVolume,
+                         volleyRays.numRays,
+                         (const vly_vec3f *)volleyRays.origins.data(),
+                         (const vly_vec3f *)volleyRays.directions.data(),
+                         (vly_range1f *)volleyRays.ranges.data());
+
+      // integrate over the Volley volume over the full ray t ranges
+      vlyIntegrateVolume(vlyVolume,
+                         volleySimpleProceduralVolume->getVLYSamplingType(),
+                         volume->getSamplingRate(),
+                         volleyRays.numRays,
+                         (const vly_vec3f *)volleyRays.origins.data(),
+                         (const vly_vec3f *)volleyRays.directions.data(),
+                         (const vly_range1f *)volleyRays.ranges.data(),
+                         &rayUserData,
+                         &integrationStepFunction);
+
+      // save final integrated color values to tile
+      std::for_each(rayUserData.pixelData.begin(),
+                    rayUserData.pixelData.end(),
+                    [&](RayUserData::PixelData &pixelData) {
+                      tile.colorBuffer[pixelData.index] = pixelData.color;
+                    });
+    }
+
+    VolleyRays VolumeRenderer::getCameraRays(const Tile &tile)
+    {
+      VolleyRays volleyRays(tile.size.x * tile.size.y);
+
+      // generate initial tile samples from camera
+      for (int y = 0; y < tile.size.y; y++) {
+        for (int x = 0; x < tile.size.x; x++) {
+          // camera sample in [0-1] screen space
+          CameraSample cameraSample{vec2f{
+              (tile.origin.x + x) * rcp(float(currentFrameBuffer->size().x)),
+              (tile.origin.y + y) * rcp(float(currentFrameBuffer->size().y))}};
+
+          // ray from camera sample
+          Ray ray;
+          currentCamera->getRay(cameraSample, ray);
+
+          const size_t index = tile.indexOf(vec2i{x, y});
+
+          volleyRays.origins[index]    = ray.org;
+          volleyRays.directions[index] = ray.dir;
+          volleyRays.ranges[index].x   = 0.f;
+          volleyRays.ranges[index].y   = ospcommon::inf;
+        }
+      }
+
+      return volleyRays;
+    }
+
   }  // namespace scalar_volley_device
+
 }  // namespace ospray

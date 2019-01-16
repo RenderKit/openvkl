@@ -46,8 +46,8 @@ namespace ospray {
                             const vec3i &index,
                             const vec3i &count) = 0;
 
-      inline float getSamplingStep();
-      inline float getSamplingRate();
+      inline float getSamplingStep() const;
+      inline float getSamplingRate() const;
 
       const TransferFunction &getTransferFunction() const;
 
@@ -62,12 +62,12 @@ namespace ospray {
 
     // Inlined members ////////////////////////////////////////////////////////
 
-    inline float Volume::getSamplingStep()
+    inline float Volume::getSamplingStep() const
     {
       return samplingStep;
     }
 
-    inline float Volume::getSamplingRate()
+    inline float Volume::getSamplingRate() const
     {
       return samplingRate;
     }

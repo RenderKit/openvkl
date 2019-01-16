@@ -31,7 +31,7 @@ namespace ospray {
 
       void clear(const vec4f &backgroundColor);
 
-      size_t indexOf(const vec2i &coords);
+      size_t indexOf(const vec2i &coords) const;
 
       // color buffer for this tile
       containers::AlignedVector<vec4f> colorBuffer;
@@ -45,7 +45,7 @@ namespace ospray {
 
     // Inlined members ////////////////////////////////////////////////////////
 
-    inline size_t Tile::indexOf(const vec2i &coords)
+    inline size_t Tile::indexOf(const vec2i &coords) const
     {
       return coords.y * size.x + coords.x;
     }

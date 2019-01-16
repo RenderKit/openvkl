@@ -87,7 +87,8 @@ namespace volley {
                boundingBox.lower) /
               voxelSize;
 
-          const vec3f nearestCoordinates = -1.f + logicalCoordinates * voxelSize;
+          const vec3f nearestCoordinates =
+              -1.f + logicalCoordinates * voxelSize;
 
           results[i] = M * G *
                        (XM * sinf(XF * nearestCoordinates.x) +
@@ -126,6 +127,73 @@ namespace volley {
         } else {
           t[i] += step;
         }
+      }
+    }
+
+    void SimpleProceduralVolume::integrate(
+        VLYSamplingType samplingType,
+        float samplingRate,
+        size_t numValues,
+        const vly_vec3f *origins,
+        const vly_vec3f *directions,
+        const vly_range1f *ranges,
+        void *rayUserData,
+        IntegrationStepFunction integrationStepFunction)
+    {
+      // pre-allocate storage used in integration step callback
+      std::vector<vly_vec3f> worldCoordinates(numValues);
+      std::vector<float> samples(numValues);
+
+      // std::vector<bool> provides no direct data() access...
+      std::unique_ptr<bool[]> earlyTerminationMask(new bool[numValues]);
+
+      // initial values for all rays
+      std::vector<float> t(numValues);
+
+      for (size_t i = 0; i < numValues; i++) {
+        t[i] = ranges[i].lower;
+        earlyTerminationMask[i] = isnan(t[i]);
+      }
+
+      size_t numActiveRays = numValues;
+
+      while (numActiveRays) {
+        // reset counter
+        numActiveRays = 0;
+
+        // generate world coordinates for all active rays
+        for (size_t i = 0; i < numValues; i++) {
+
+          if (isnan(t[i])) {
+            earlyTerminationMask[i] = true;
+          }
+
+          if (!earlyTerminationMask[i]) {
+            numActiveRays++;
+
+            const vec3f temp =
+                (*reinterpret_cast<const vec3f *>(&origins[i])) +
+                t[i] * (*reinterpret_cast<const vec3f *>(&directions[i]));
+
+            worldCoordinates[i] = (*reinterpret_cast<const vly_vec3f *>(&temp));
+          }
+        }
+
+        // generate samples
+        // TODO: this only needs to be done for *active* rays
+        sample(
+            samplingType, numValues, worldCoordinates.data(), samples.data());
+
+        // call user-provided integration step function
+        integrationStepFunction(worldCoordinates.size(),
+                                worldCoordinates.data(),
+                                samples.data(),
+                                rayUserData,
+                                earlyTerminationMask.get());
+
+        // advance rays
+        // TODO: this only needs to be done for *active* rays
+        advanceRays(samplingRate, numValues, origins, directions, t.data());
       }
     }
 

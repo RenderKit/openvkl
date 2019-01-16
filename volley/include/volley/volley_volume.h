@@ -69,6 +69,22 @@ void vlyAdvanceRays(VLYVolume volume,
                     const vly_vec3f *origins,
                     const vly_vec3f *directions,
                     float *t);
+
+typedef void (*IntegrationStepFunction)(size_t numValues,
+                                        const vly_vec3f *worldCoordinates,
+                                        const float *samples,
+                                        void *rayUserData,
+                                        bool *earlyTerminationMask);
+
+void vlyIntegrateVolume(VLYVolume volume,
+                        VLYSamplingType samplingType,
+                        float samplingRate,
+                        size_t numValues,
+                        const vly_vec3f *origins,
+                        const vly_vec3f *directions,
+                        const vly_range1f *ranges,
+                        void *rayUserData,
+                        IntegrationStepFunction integrationStepFunction);
 #ifdef __cplusplus
 }  // extern "C"
 #endif

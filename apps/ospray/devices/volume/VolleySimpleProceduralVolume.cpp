@@ -40,7 +40,8 @@ namespace ospray {
 
       vlyVolume = vlyNewVolume("simple_procedural_volume");
 
-      vlySamplingType = VLYSamplingType(getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
+      vlySamplingType =
+          VLYSamplingType(getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
     }
 
     bool VolleySimpleProceduralVolume::intersect(Ray &ray) const
@@ -107,6 +108,16 @@ namespace ospray {
     {
       // no-op
       return 0;
+    }
+
+    VLYVolume VolleySimpleProceduralVolume::getVLYVolume()
+    {
+      return vlyVolume;
+    }
+
+    VLYSamplingType VolleySimpleProceduralVolume::getVLYSamplingType()
+    {
+      return vlySamplingType;
     }
 
   }  // namespace scalar_volley_device

@@ -22,6 +22,22 @@
 namespace ospray {
   namespace scalar_volley_device {
 
+    struct VolleyRays
+    {
+      size_t numRays;
+
+      std::vector<vec3f> origins;
+      std::vector<vec3f> directions;
+      std::vector<vec2f> ranges;
+
+      VolleyRays(const size_t numRays) : numRays(numRays)
+      {
+        origins.resize(numRays);
+        directions.resize(numRays);
+        ranges.resize(numRays);
+      }
+    };
+
     struct VolumeRenderer : public Renderer
     {
       VolumeRenderer() = default;
@@ -33,8 +49,14 @@ namespace ospray {
      protected:
       Volume *volume{nullptr};
 
+      // experimental renderTile() implementations, facilitating experimentation
+      // with different Volley use cases. For simpicity (and temporarily), these
+      // are included in the same renderer.
       void renderTileNormal(Tile &tile);
       void renderTileWide(Tile &tile);
+      void renderTileVolleyIntegration(Tile &tile);
+
+      VolleyRays getCameraRays(const Tile &tile);
     };
 
   }  // namespace scalar_volley_device

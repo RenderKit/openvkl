@@ -43,6 +43,15 @@ namespace volley {
                        const vly_vec3f *directions,
                        float *t) override;
 
+      void integrate(VLYSamplingType samplingType,
+                     float samplingRate,
+                     size_t numValues,
+                     const vly_vec3f *origins,
+                     const vly_vec3f *directions,
+                     const vly_range1f *ranges,
+                     void *rayUserData,
+                     IntegrationStepFunction integrationStepFunction) override;
+
      protected:
       box3f boundingBox;
       float voxelSize;

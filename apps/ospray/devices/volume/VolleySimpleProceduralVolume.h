@@ -50,6 +50,10 @@ namespace ospray {
                     const vec3i &index,
                     const vec3i &count) override;
 
+      VLYVolume getVLYVolume();
+
+      VLYSamplingType getVLYSamplingType();
+
      private:
       VLYVolume vlyVolume = nullptr;
       VLYSamplingType vlySamplingType = VLY_SAMPLE_LINEAR;

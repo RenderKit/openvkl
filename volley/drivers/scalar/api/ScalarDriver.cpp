@@ -66,6 +66,28 @@ namespace volley {
       volumeObject.advanceRays(samplingRate, numValues, origins, directions, t);
     }
 
+    void ScalarDriver::integrateVolume(
+        VLYVolume volume,
+        VLYSamplingType samplingType,
+        float samplingRate,
+        size_t numValues,
+        const vly_vec3f *origins,
+        const vly_vec3f *directions,
+        const vly_range1f *ranges,
+        void *rayUserData,
+        IntegrationStepFunction integrationStepFunction)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      volumeObject.integrate(samplingType,
+                             samplingRate,
+                             numValues,
+                             origins,
+                             directions,
+                             ranges,
+                             rayUserData,
+                             integrationStepFunction);
+    }
+
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)
 
   }  // namespace scalar_driver

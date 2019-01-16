@@ -55,6 +55,15 @@ namespace volley {
                                const vly_vec3f *directions,
                                float *t) = 0;
 
+      virtual void integrate(
+          VLYSamplingType samplingType,
+          float samplingRate,
+          size_t numValues,
+          const vly_vec3f *origins,
+          const vly_vec3f *directions,
+          const vly_range1f *ranges,
+          void *rayUserData,
+          IntegrationStepFunction integrationStepFunction) = 0;
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

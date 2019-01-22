@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "VolumeRenderer.h"
-#include "../volume/VolleySimpleProceduralVolume.h"
+#include "../volume/VolleyVolumeWrapper.h"
 
 // ospcommon
 #include <ospray/ospcommon/tasking/parallel_for.h>
@@ -25,7 +25,7 @@ namespace ospray {
 
     struct RayUserData
     {
-      const VolleySimpleProceduralVolume *volleySimpleProceduralVolume;
+      const VolleyVolumeWrapper *volleyVolumeWrapper;
 
       struct PixelData
       {
@@ -36,10 +36,10 @@ namespace ospray {
       std::vector<PixelData> pixelData;
 
       RayUserData(
-          const VolleySimpleProceduralVolume *volleySimpleProceduralVolume,
+          const VolleyVolumeWrapper *volleyVolumeWrapper,
           const Tile &tile,
           const vec4f &backgroundColor)
-          : volleySimpleProceduralVolume(volleySimpleProceduralVolume)
+          : volleyVolumeWrapper(volleyVolumeWrapper)
       {
         pixelData.resize(tile.size.x * tile.size.y);
 
@@ -69,13 +69,13 @@ namespace ospray {
 
         // apply transfer function
         vec4f sampleColor =
-            rayUserData->volleySimpleProceduralVolume->getTransferFunction()
+            rayUserData->volleyVolumeWrapper->getTransferFunction()
                 .getColorAndOpacity(samples[i]);
 
         // accumulate contribution
         const float clampedOpacity =
             clamp(sampleColor.w /
-                  rayUserData->volleySimpleProceduralVolume->getSamplingRate());
+                  rayUserData->volleyVolumeWrapper->getSamplingRate());
 
         sampleColor *= clampedOpacity;
         sampleColor.w = clampedOpacity;
@@ -276,19 +276,19 @@ namespace ospray {
 
     void VolumeRenderer::renderTileVolleyIntegration(Tile &tile)
     {
-      VolleySimpleProceduralVolume *volleySimpleProceduralVolume =
-          dynamic_cast<VolleySimpleProceduralVolume *>(volume);
+      VolleyVolumeWrapper *volleyVolumeWrapper =
+          dynamic_cast<VolleyVolumeWrapper *>(volume);
 
-      if (!volleySimpleProceduralVolume) {
+      if (!volleyVolumeWrapper) {
         throw std::runtime_error(
             "only Volley-based volumes supported in this renderer");
       }
 
-      VLYVolume vlyVolume = volleySimpleProceduralVolume->getVLYVolume();
+      VLYVolume vlyVolume = volleyVolumeWrapper->getVLYVolume();
 
       // generate initial ray user data state that will be sent to Volley
       RayUserData rayUserData(
-          volleySimpleProceduralVolume, tile, backgroundColor);
+          volleyVolumeWrapper, tile, backgroundColor);
 
       // generate initial rays to be sent to Volley
       VolleyRays volleyRays = getCameraRays(tile);
@@ -302,7 +302,7 @@ namespace ospray {
 
       // integrate over the Volley volume over the full ray t ranges
       vlyIntegrateVolume(vlyVolume,
-                         volleySimpleProceduralVolume->getVLYSamplingType(),
+                         volleyVolumeWrapper->getVLYSamplingType(),
                          volume->getSamplingRate(),
                          volleyRays.numRays,
                          (const vly_vec3f *)volleyRays.origins.data(),

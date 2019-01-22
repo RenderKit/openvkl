@@ -14,13 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VolleySimpleProceduralVolume.h"
+#include "VolleyVolumeWrapper.h"
 #include "../common/Data.h"
 
 namespace ospray {
   namespace scalar_volley_device {
 
-    void VolleySimpleProceduralVolume::commit()
+    void VolleyVolumeWrapper::commit()
     {
       Volume::commit();
 
@@ -44,7 +44,7 @@ namespace ospray {
           VLYSamplingType(getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
     }
 
-    bool VolleySimpleProceduralVolume::intersect(Ray &ray) const
+    bool VolleyVolumeWrapper::intersect(Ray &ray) const
     {
       vly_range1f range;
 
@@ -63,7 +63,7 @@ namespace ospray {
       }
     }
 
-    float VolleySimpleProceduralVolume::computeSample(
+    float VolleyVolumeWrapper::computeSample(
         const vec3f &worldCoordinates) const
     {
       float sample;
@@ -77,7 +77,7 @@ namespace ospray {
       return sample;
     }
 
-    std::vector<float> VolleySimpleProceduralVolume::computeSamples(
+    std::vector<float> VolleyVolumeWrapper::computeSamples(
         const std::vector<vec3f> &worldCoordinates) const
     {
       std::vector<float> samples;
@@ -92,7 +92,7 @@ namespace ospray {
       return samples;
     }
 
-    void VolleySimpleProceduralVolume::advance(Ray &ray) const
+    void VolleyVolumeWrapper::advance(Ray &ray) const
     {
       vlyAdvanceRays(vlyVolume,
                      samplingRate,
@@ -102,7 +102,7 @@ namespace ospray {
                      &ray.t0);
     }
 
-    int VolleySimpleProceduralVolume::setRegion(const void *,
+    int VolleyVolumeWrapper::setRegion(const void *,
                                                 const vec3i &,
                                                 const vec3i &)
     {
@@ -110,12 +110,12 @@ namespace ospray {
       return 0;
     }
 
-    VLYVolume VolleySimpleProceduralVolume::getVLYVolume()
+    VLYVolume VolleyVolumeWrapper::getVLYVolume()
     {
       return vlyVolume;
     }
 
-    VLYSamplingType VolleySimpleProceduralVolume::getVLYSamplingType()
+    VLYSamplingType VolleyVolumeWrapper::getVLYSamplingType()
     {
       return vlySamplingType;
     }

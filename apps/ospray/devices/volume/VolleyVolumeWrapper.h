@@ -26,10 +26,10 @@
 namespace ospray {
   namespace scalar_volley_device {
 
-    struct VolleySimpleProceduralVolume : public Volume
+    struct VolleyVolumeWrapper : public Volume
     {
-      VolleySimpleProceduralVolume()  = default;
-      ~VolleySimpleProceduralVolume() = default;
+      VolleyVolumeWrapper()  = default;
+      ~VolleyVolumeWrapper() = default;
 
       void commit() override;
 

@@ -24,7 +24,7 @@
 #include "../transferFunction/TransferFunction.h"
 #include "../volume/BlockBrickedVolume.h"
 #include "../volume/StructuredVolume.h"
-#include "../volume/VolleySimpleProceduralVolume.h"
+#include "../volume/VolleyVolumeWrapper.h"
 
 namespace ospray {
   namespace scalar_volley_device {
@@ -283,7 +283,7 @@ namespace ospray {
         bool useVolleyVolume   = type == "volley::simple_procedural_volume";
 
         if (useVolleyVolume) {
-          auto volume = createRegisteredObject<VolleySimpleProceduralVolume>();
+          auto volume = createRegisteredObject<VolleyVolumeWrapper>();
           return getHandleForAPI<OSPVolume>(volume);
         } else {
           throw std::runtime_error("only Volley volumes supported by this device");

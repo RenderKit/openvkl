@@ -41,7 +41,7 @@ if(BUILD_SCALAR_VOLLEY_DEVICE)
 
     volume/BlockBrickedVolume.cpp
     volume/StructuredVolume.cpp
-    volume/VolleySimpleProceduralVolume.cpp
+    volume/VolleyVolumeWrapper.cpp
     volume/Volume.cpp
 
   LINK

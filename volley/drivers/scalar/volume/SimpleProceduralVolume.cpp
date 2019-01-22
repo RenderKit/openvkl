@@ -151,7 +151,7 @@ namespace volley {
       std::vector<float> t(numValues);
 
       for (size_t i = 0; i < numValues; i++) {
-        t[i] = ranges[i].lower;
+        t[i]                    = ranges[i].lower;
         earlyTerminationMask[i] = isnan(t[i]);
       }
 
@@ -163,7 +163,6 @@ namespace volley {
 
         // generate world coordinates for all active rays
         for (size_t i = 0; i < numValues; i++) {
-
           if (isnan(t[i])) {
             earlyTerminationMask[i] = true;
           }

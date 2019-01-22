@@ -28,6 +28,8 @@ namespace volley {
 
       virtual void commit() override;
 
+      virtual void commit(VLYObject object) override;
+
       VLYError loadModule(const char *moduleName) override;
 
       VLYVolume newVolume(const char *type) override;

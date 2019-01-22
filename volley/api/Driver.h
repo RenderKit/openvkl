@@ -19,7 +19,7 @@
 #include <ospcommon/utility/ParameterizedObject.h>
 #include <memory>
 #include "common/VLYCommon.h"
-#include "volley/volley_volume.h"
+#include "volley/volley.h"
 
 namespace volley {
   namespace api {
@@ -49,6 +49,7 @@ namespace volley {
       bool isCommitted();
 
       // all drivers must implement the following API calls
+      virtual void commit(VLYObject object)               = 0;
       virtual VLYError loadModule(const char *moduleName) = 0;
       virtual VLYVolume newVolume(const char *type)       = 0;
       virtual void intersectVolume(VLYVolume volume,

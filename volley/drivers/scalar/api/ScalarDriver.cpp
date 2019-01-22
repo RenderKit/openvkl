@@ -25,6 +25,12 @@ namespace volley {
       Driver::commit();
     }
 
+    void ScalarDriver::commit(VLYObject object)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->commit();
+    }
+
     VLYError ScalarDriver::loadModule(const char *moduleName)
     {
       return volley::loadLocalModule(moduleName);

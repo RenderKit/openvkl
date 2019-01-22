@@ -38,10 +38,17 @@ namespace ospray {
         volleyInitialized = true;
       }
 
-      vlyVolume = vlyNewVolume("simple_procedural_volume");
+      if (!vlyVolume) {
+        vlyVolume = vlyNewVolume("simple_procedural_volume");
+      }
 
       vlySamplingType =
           VLYSamplingType(getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
+
+      // TODO: pass through any values that need to be committed to the Volley
+      // volume
+
+      vlyCommit(vlyVolume);
     }
 
     bool VolleyVolumeWrapper::intersect(Ray &ray) const
@@ -103,8 +110,8 @@ namespace ospray {
     }
 
     int VolleyVolumeWrapper::setRegion(const void *,
-                                                const vec3i &,
-                                                const vec3i &)
+                                       const vec3i &,
+                                       const vec3i &)
     {
       // no-op
       return 0;

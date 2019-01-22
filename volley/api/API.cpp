@@ -106,6 +106,14 @@ extern "C" void vlySetCurrentDriver(VLYDriver driver) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlyCommit(VLYObject object) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  Assert(object && "invalid object handle to commit to");
+  volley::api::currentDriver().commit(object);
+}
+VOLLEY_CATCH_END()
+
 extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();

@@ -17,8 +17,10 @@
 #pragma once
 
 struct Driver;
-
 typedef Driver *VLYDriver;
+
+struct ManagedObject;
+typedef ManagedObject *VLYObject;
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,6 +29,8 @@ extern "C" {
 VLYDriver vlyNewDriver(const char *driverName);
 void vlyCommitDriver(VLYDriver driver);
 void vlySetCurrentDriver(VLYDriver driver);
+
+void vlyCommit(VLYObject object);
 
 #ifdef __cplusplus
 }  // extern "C"

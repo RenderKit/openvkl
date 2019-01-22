@@ -27,6 +27,7 @@ int main()
   vlySetCurrentDriver(driver);
 
   VLYVolume volume = vlyNewVolume("simple_procedural_volume");
+  vlyCommit(volume);
 
   const size_t numValues = 10;
 

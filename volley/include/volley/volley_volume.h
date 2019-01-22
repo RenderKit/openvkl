@@ -19,7 +19,8 @@
 #include <cstdint>
 #include <cstdlib>
 
-struct Volume;
+struct ManagedObject {};
+struct Volume : public ManagedObject {};
 
 typedef Volume *VLYVolume;
 

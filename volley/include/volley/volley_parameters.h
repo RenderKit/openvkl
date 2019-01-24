@@ -16,12 +16,16 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+#include "volley_common.h"
 
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_parameters.h"
-#include "volley_version.h"
-#include "volley_volume.h"
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void vlySet1i(VLYObject, const char *id, int x);
+void vlySet1f(VLYObject, const char *id, float x);
+void vlySetVoidPtr(VLYObject, const char *id, void *v);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

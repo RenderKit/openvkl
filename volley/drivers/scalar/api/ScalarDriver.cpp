@@ -99,6 +99,24 @@ namespace volley {
                                  integrationStepFunction);
     }
 
+    void ScalarDriver::set1i(VLYObject object, const char *name, const int x)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, x);
+    }
+
+    void ScalarDriver::set1f(VLYObject object, const char *name, const float x)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, x);
+    }
+
+    void ScalarDriver::setVoidPtr(VLYObject object, const char *name, void *v)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, v);
+    }
+
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)
 
   }  // namespace scalar_driver

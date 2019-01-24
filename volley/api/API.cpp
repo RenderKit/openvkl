@@ -71,6 +71,10 @@ void postTraceMessage(const std::string &message)
     return a;                                                    \
   }
 
+///////////////////////////////////////////////////////////////////////////////
+// Module /////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 extern "C" VLYError vlyLoadModule(const char *moduleName) VOLLEY_CATCH_BEGIN
 {
   if (volley::api::driverIsSet()) {
@@ -80,6 +84,10 @@ extern "C" VLYError vlyLoadModule(const char *moduleName) VOLLEY_CATCH_BEGIN
   }
 }
 VOLLEY_CATCH_END(VLY_UNKNOWN_ERROR)
+
+///////////////////////////////////////////////////////////////////////////////
+// Driver /////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 extern "C" VLYDriver vlyNewDriver(const char *driverName) VOLLEY_CATCH_BEGIN
 {
@@ -113,6 +121,10 @@ extern "C" void vlyCommit(VLYObject object) VOLLEY_CATCH_BEGIN
   volley::api::currentDriver().commit(object);
 }
 VOLLEY_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Volume /////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 {
@@ -165,6 +177,10 @@ extern "C" void vlyAdvanceRays(VLYVolume volume,
 }
 VOLLEY_CATCH_END()
 
+///////////////////////////////////////////////////////////////////////////////
+// Integrator /////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 extern "C" VLYIntegrator vlyNewIntegrator(const char *type) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
@@ -199,5 +215,36 @@ extern "C" void vlyIntegrateVolume(
                                                ranges,
                                                rayUserData,
                                                integrationStepFunction);
+}
+VOLLEY_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Parameters /////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" void vlySet1f(VLYObject object,
+                         const char *id,
+                         float x) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().set1f(object, id, x);
+}
+VOLLEY_CATCH_END()
+
+extern "C" void vlySeti(VLYObject object,
+                        const char *id,
+                        int x) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().set1i(object, id, x);
+}
+VOLLEY_CATCH_END()
+
+extern "C" void vlySetVoidPtr(VLYObject object,
+                              const char *id,
+                              void *v) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().setVoidPtr(object, id, v);
 }
 VOLLEY_CATCH_END()

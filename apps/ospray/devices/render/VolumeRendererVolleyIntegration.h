@@ -17,20 +17,33 @@
 #pragma once
 
 #include "../volume/Volume.h"
-#include "Renderer.h"
+#include "VolumeRenderer.h"
 
 namespace ospray {
   namespace scalar_volley_device {
 
-    struct VolumeRenderer : public Renderer
+    struct VolleyRays
     {
-      VolumeRenderer() = default;
+      size_t numRays;
 
-      void renderFrame(FrameBuffer &frameBuffer) override;
-      virtual void renderTile(Tile &tile) override = 0;
+      std::vector<vec3f> origins;
+      std::vector<vec3f> directions;
+      std::vector<vec2f> ranges;
+
+      VolleyRays(const size_t numRays) : numRays(numRays)
+      {
+        origins.resize(numRays);
+        directions.resize(numRays);
+        ranges.resize(numRays);
+      }
+    };
+
+    struct VolumeRendererVolleyIntegration : public VolumeRenderer
+    {
+      void renderTile(Tile &tile) override;
 
      protected:
-      Volume *volume{nullptr};
+      VolleyRays getCameraRays(const Tile &tile);
     };
 
   }  // namespace scalar_volley_device

@@ -17,20 +17,14 @@
 #pragma once
 
 #include "../volume/Volume.h"
-#include "Renderer.h"
+#include "VolumeRenderer.h"
 
 namespace ospray {
   namespace scalar_volley_device {
 
-    struct VolumeRenderer : public Renderer
+    struct VolumeRendererDefault : public VolumeRenderer
     {
-      VolumeRenderer() = default;
-
-      void renderFrame(FrameBuffer &frameBuffer) override;
-      virtual void renderTile(Tile &tile) override = 0;
-
-     protected:
-      Volume *volume{nullptr};
+      void renderTile(Tile &tile) override;
     };
 
   }  // namespace scalar_volley_device

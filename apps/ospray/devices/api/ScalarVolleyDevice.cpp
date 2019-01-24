@@ -20,7 +20,9 @@
 #include "../common/Data.h"
 #include "../common/Model.h"
 #include "../fb/FrameBuffer.h"
-#include "../render/VolumeRenderer.h"
+#include "../render/VolumeRendererDefault.h"
+#include "../render/VolumeRendererStream.h"
+#include "../render/VolumeRendererVolleyIntegration.h"
 #include "../transferFunction/TransferFunction.h"
 #include "../volume/BlockBrickedVolume.h"
 #include "../volume/StructuredVolume.h"
@@ -88,10 +90,22 @@ namespace ospray {
         return createPlaceholderObject<OSPPixelOp>();
       }
 
-      OSPRenderer newRenderer(const char *) override
+      OSPRenderer newRenderer(const char *renderer_type) override
       {
-        auto renderer = createRegisteredObject<VolumeRenderer>();
-        return getHandleForAPI<OSPRenderer>(renderer);
+        std::string rendererTypeString(renderer_type);
+
+        if (rendererTypeString == "volume_renderer_default") {
+          return getHandleForAPI<OSPRenderer>(createRegisteredObject<VolumeRendererDefault>());
+        }
+        else if (rendererTypeString == "volume_renderer_stream") {
+          return getHandleForAPI<OSPRenderer>(createRegisteredObject<VolumeRendererStream>());
+        }
+        else if (rendererTypeString == "volume_renderer_volley_integration") {
+          return getHandleForAPI<OSPRenderer>(createRegisteredObject<VolumeRendererVolleyIntegration>());
+        }
+        else {
+          throw std::runtime_error("unknown renderer type string");
+        }
       }
 
       OSPModel newModel() override

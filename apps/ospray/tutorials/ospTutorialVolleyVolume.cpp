@@ -26,6 +26,11 @@ using namespace ospcommon;
 
 int main(int argc, const char **argv)
 {
+  if (argc != 2) {
+    std::cerr << "usage: " << argv[0] << " <volume_renderer_default | volume_renderer_stream | volume_renderer_volley_integration>" << std::endl;
+    return 1;
+  }
+
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
   // OSPError initError = ospInit(&argc, argv);
@@ -65,7 +70,9 @@ int main(int argc, const char **argv)
   ospCommit(world);
 
   // create OSPRay renderer
-  OSPRenderer renderer = ospNewRenderer("scivis");
+  std::cout << "using renderer: " << argv[1] << std::endl;
+
+  OSPRenderer renderer = ospNewRenderer(argv[1]);
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);

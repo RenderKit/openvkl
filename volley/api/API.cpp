@@ -168,29 +168,29 @@ VOLLEY_CATCH_END(VLY_UNKNOWN_ERROR)
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" void vlySet1f(VLYObject object,
-                         const char *id,
+                         const char *name,
                          float x) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().set1f(object, id, x);
+  volley::api::currentDriver().set1f(object, name, x);
 }
 VOLLEY_CATCH_END()
 
-extern "C" void vlySeti(VLYObject object,
-                        const char *id,
+extern "C" void vlySet1i(VLYObject object,
+                        const char *name,
                         int x) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().set1i(object, id, x);
+  volley::api::currentDriver().set1i(object, name, x);
 }
 VOLLEY_CATCH_END()
 
 extern "C" void vlySetVoidPtr(VLYObject object,
-                              const char *id,
+                              const char *name,
                               void *v) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().setVoidPtr(object, id, v);
+  volley::api::currentDriver().setVoidPtr(object, name, v);
 }
 VOLLEY_CATCH_END()
 

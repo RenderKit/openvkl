@@ -36,8 +36,8 @@ namespace volley {
                      IntegrationStepFunction integrationStepFunction) override;
 
      protected:
-      VLYSamplingType samplingType = VLY_SAMPLE_LINEAR;
-      float samplingRate = 1.f;
+      float samplingRate;
+      VLYSamplingType samplingType;
     };
 
   }  // namespace scalar_driver

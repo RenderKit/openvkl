@@ -22,6 +22,9 @@ namespace volley {
     void RayMarchingIntegrator::commit()
     {
       Integrator::commit();
+
+      samplingRate = getParam<float>("samplingRate", 1.f);
+      samplingType = VLYSamplingType(getParam<int>("samplingType", VLY_SAMPLE_LINEAR));
     }
 
     void RayMarchingIntegrator::integrate(

@@ -50,13 +50,16 @@ namespace ospray {
                     const vec3i &index,
                     const vec3i &count) override;
 
+      VLYIntegrator getVLYIntegrator();
       VLYVolume getVLYVolume();
 
-      VLYSamplingType getVLYSamplingType();
-
      private:
-      VLYVolume vlyVolume = nullptr;
-      VLYSamplingType vlySamplingType = VLY_SAMPLE_LINEAR;
+      VLYIntegrator vlyIntegrator = nullptr;
+      VLYVolume vlyVolume         = nullptr;
+
+      // this gets set on the integrator directly, but is also used in some of
+      // the above wrapper methods
+      float samplingRate;
     };
 
   }  // namespace scalar_volley_device

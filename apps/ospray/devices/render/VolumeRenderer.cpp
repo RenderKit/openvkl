@@ -283,13 +283,7 @@ namespace ospray {
             "only Volley-based volumes supported in this renderer");
       }
 
-      static VLYIntegrator vlyIntegrator = nullptr;
-
-      if (!vlyIntegrator) {
-        vlyIntegrator = vlyNewIntegrator("ray_marching_integrator");
-        vlyCommit(vlyIntegrator);
-      }
-
+      VLYIntegrator vlyIntegrator = volleyVolumeWrapper->getVLYIntegrator();
       VLYVolume vlyVolume = volleyVolumeWrapper->getVLYVolume();
 
       // generate initial ray user data state that will be sent to Volley

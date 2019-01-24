@@ -35,20 +35,23 @@ namespace ospray {
         vlyCommitDriver(driver);
         vlySetCurrentDriver(driver);
 
+        vlyIntegrator = vlyNewIntegrator("ray_marching_integrator");
+
+        vlyVolume = vlyNewVolume("simple_procedural_volume");
+        vlyCommit(vlyVolume);
+
         volleyInitialized = true;
       }
 
-      if (!vlyVolume) {
-        vlyVolume = vlyNewVolume("simple_procedural_volume");
-      }
+      // update parameters
+      samplingRate = getParam<float>("samplingRate", 1.f);
 
-      vlySamplingType =
-          VLYSamplingType(getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
-
-      // TODO: pass through any values that need to be committed to the Volley
-      // volume
-
-      vlyCommit(vlyVolume);
+      // commit parameters on integrator
+      vlySet1f(vlyIntegrator, "samplingRate", samplingRate);
+      vlySet1i(vlyIntegrator,
+               "samplingType",
+               getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
+      vlyCommit(vlyIntegrator);
     }
 
     bool VolleyVolumeWrapper::intersect(Ray &ray) const
@@ -76,7 +79,7 @@ namespace ospray {
       float sample;
 
       vlySampleVolume(vlyVolume,
-                      vlySamplingType,
+                      VLY_SAMPLE_LINEAR,
                       1,
                       (vly_vec3f *)&worldCoordinates,
                       &sample);
@@ -91,7 +94,7 @@ namespace ospray {
       samples.resize(worldCoordinates.size());
 
       vlySampleVolume(vlyVolume,
-                      vlySamplingType,
+                      VLY_SAMPLE_LINEAR,
                       worldCoordinates.size(),
                       (vly_vec3f *)worldCoordinates.data(),
                       (float *)samples.data());
@@ -117,14 +120,14 @@ namespace ospray {
       return 0;
     }
 
+    VLYIntegrator VolleyVolumeWrapper::getVLYIntegrator()
+    {
+      return vlyIntegrator;
+    }
+
     VLYVolume VolleyVolumeWrapper::getVLYVolume()
     {
       return vlyVolume;
-    }
-
-    VLYSamplingType VolleyVolumeWrapper::getVLYSamplingType()
-    {
-      return vlySamplingType;
     }
 
   }  // namespace scalar_volley_device

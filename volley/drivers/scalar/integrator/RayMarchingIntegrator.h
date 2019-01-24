@@ -16,11 +16,29 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+#include "Integrator.h"
+#include "common/math.h"
 
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_version.h"
-#include "volley_volume.h"
+namespace volley {
+
+  namespace scalar_driver {
+
+    struct RayMarchingIntegrator : public Integrator
+    {
+      void commit() override;
+
+      void integrate(const Volume &volume,
+                     size_t numValues,
+                     const vly_vec3f *origins,
+                     const vly_vec3f *directions,
+                     const vly_range1f *ranges,
+                     void *rayUserData,
+                     IntegrationStepFunction integrationStepFunction) override;
+
+     protected:
+      VLYSamplingType samplingType = VLY_SAMPLE_LINEAR;
+      float samplingRate = 1.f;
+    };
+
+  }  // namespace scalar_driver
+}  // namespace volley

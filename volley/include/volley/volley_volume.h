@@ -18,9 +18,11 @@
 
 #include <cstdint>
 #include <cstdlib>
+#include "volley_common.h"
 
-struct ManagedObject {};
-struct Volume : public ManagedObject {};
+struct Volume : public ManagedObject
+{
+};
 
 typedef Volume *VLYVolume;
 
@@ -32,16 +34,6 @@ typedef enum
   VLY_SAMPLE_NEAREST = 100,
   VLY_SAMPLE_LINEAR  = 200,
 } VLYSamplingType;
-
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
-
-typedef struct
-{
-  float lower, upper;
-} vly_range1f;
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,21 +63,8 @@ void vlyAdvanceRays(VLYVolume volume,
                     const vly_vec3f *directions,
                     float *t);
 
-typedef void (*IntegrationStepFunction)(size_t numValues,
-                                        const vly_vec3f *worldCoordinates,
-                                        const float *samples,
-                                        void *rayUserData,
-                                        bool *earlyTerminationMask);
 
-void vlyIntegrateVolume(VLYVolume volume,
-                        VLYSamplingType samplingType,
-                        float samplingRate,
-                        size_t numValues,
-                        const vly_vec3f *origins,
-                        const vly_vec3f *directions,
-                        const vly_range1f *ranges,
-                        void *rayUserData,
-                        IntegrationStepFunction integrationStepFunction);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #include "VLYCommon.h"
-#include "api/Driver.h"
 #include <iostream>
 #include <sstream>
+#include "api/Driver.h"
 
 namespace volley {
 
@@ -27,13 +27,13 @@ namespace volley {
     ospcommon::loadLibrary(libName);
 
     std::string initSymName = "volley_init_module_" + moduleName;
-    void*initSym = ospcommon::getSymbol(initSymName);
+    void *initSym           = ospcommon::getSymbol(initSymName);
     if (!initSym) {
-      throw std::runtime_error("#osp:api: could not find module initializer "
-                               +initSymName);
+      throw std::runtime_error("#vly:api: could not find module initializer " +
+                               initSymName);
     }
 
-    void (*initMethod)() = (void(*)())initSym;
+    void (*initMethod)() = (void (*)())initSym;
 
     if (!initMethod)
       return VLY_INVALID_ARGUMENT;
@@ -46,7 +46,6 @@ namespace volley {
 
     return VLY_NO_ERROR;
   }
-
 
   std::string stringForType(VLYDataType type)
   {
@@ -63,6 +62,8 @@ namespace volley {
       return "transfer_function";
     case VLY_VOLUME:
       return "volume";
+    case VLY_INTEGRATOR:
+      return "integrator";
     case VLY_STRING:
       return "string";
     case VLY_CHAR:
@@ -138,8 +139,8 @@ namespace volley {
     if (api::driverIsSet()) {
       auto &driver = api::currentDriver();
 
-      driver.lastErrorCode = e;
-      driver.lastErrorMessage  = message;
+      driver.lastErrorCode    = e;
+      driver.lastErrorMessage = message;
 
       driver.errorFunction(e, message.c_str());
     } else {

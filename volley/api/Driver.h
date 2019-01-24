@@ -51,28 +51,31 @@ namespace volley {
       // all drivers must implement the following API calls
       virtual void commit(VLYObject object)               = 0;
       virtual VLYError loadModule(const char *moduleName) = 0;
-      virtual VLYVolume newVolume(const char *type)       = 0;
+
+      // Volume
+      virtual VLYVolume newVolume(const char *type)     = 0;
       virtual void intersectVolume(VLYVolume volume,
                                    size_t numValues,
                                    const vly_vec3f *origins,
                                    const vly_vec3f *directions,
-                                   vly_range1f *ranges)   = 0;
+                                   vly_range1f *ranges) = 0;
       virtual void sampleVolume(VLYVolume volume,
                                 VLYSamplingType samplingType,
                                 size_t numValues,
                                 const vly_vec3f *worldCoordinates,
-                                float *results)           = 0;
+                                float *results)         = 0;
       virtual void advanceRays(VLYVolume volume,
                                float samplingRate,
                                size_t numValues,
                                const vly_vec3f *origins,
                                const vly_vec3f *directions,
-                               float *t)                  = 0;
+                               float *t)                = 0;
 
+      // Integrator
+      virtual VLYIntegrator newIntegrator(const char *type) = 0;
       virtual void integrateVolume(
+          VLYIntegrator integrator,
           VLYVolume volume,
-          VLYSamplingType samplingType,
-          float samplingRate,
           size_t numValues,
           const vly_vec3f *origins,
           const vly_vec3f *directions,

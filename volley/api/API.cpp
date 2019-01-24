@@ -165,10 +165,24 @@ extern "C" void vlyAdvanceRays(VLYVolume volume,
 }
 VOLLEY_CATCH_END()
 
+extern "C" VLYIntegrator vlyNewIntegrator(const char *type) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  Assert(type != nullptr &&
+         "invalid integrator type identifier in vlyNewIntegrator");
+  VLYIntegrator integrator = volley::api::currentDriver().newIntegrator(type);
+  if (integrator == nullptr) {
+    postLogMessage(volley::VLY_LOG_ERROR)
+        << "could not create integrator '" << type << "'";
+  }
+
+  return integrator;
+}
+VOLLEY_CATCH_END(nullptr)
+
 extern "C" void vlyIntegrateVolume(
+    VLYIntegrator integrator,
     VLYVolume volume,
-    VLYSamplingType samplingType,
-    float samplingRate,
     size_t numValues,
     const vly_vec3f *origins,
     const vly_vec3f *directions,
@@ -177,9 +191,8 @@ extern "C" void vlyIntegrateVolume(
     IntegrationStepFunction integrationStepFunction) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().integrateVolume(volume,
-                                               samplingType,
-                                               samplingRate,
+  volley::api::currentDriver().integrateVolume(integrator,
+                                               volume,
                                                numValues,
                                                origins,
                                                directions,

@@ -16,11 +16,42 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+#include "../volume/Volume.h"
+#include "common/ManagedObject.h"
+#include "common/objectFactory.h"
+#include "volley/volley.h"
 
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_version.h"
-#include "volley_volume.h"
+namespace volley {
+
+  namespace scalar_driver {
+
+    struct Integrator : public ManagedObject
+    {
+      Integrator()                   = default;
+      virtual ~Integrator() override = default;
+
+      static Integrator *createInstance(const std::string &type)
+      {
+        return createInstanceHelper<Integrator, VLY_INTEGRATOR>(type);
+      }
+
+      virtual void commit() override
+      {
+        ManagedObject::commit();
+      }
+
+      virtual void integrate(
+          const Volume &volume,
+          size_t numValues,
+          const vly_vec3f *origins,
+          const vly_vec3f *directions,
+          const vly_range1f *ranges,
+          void *rayUserData,
+          IntegrationStepFunction integrationStepFunction) = 0;
+    };
+
+#define VLY_REGISTER_INTEGRATOR(InternalClass, external_name) \
+  VLY_REGISTER_OBJECT(Integrator, integrator, InternalClass, external_name)
+
+  }  // namespace scalar_driver
+}  // namespace volley

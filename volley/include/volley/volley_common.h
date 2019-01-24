@@ -16,11 +16,16 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+struct ManagedObject
+{
+};
 
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_version.h"
-#include "volley_volume.h"
+typedef struct
+{
+  float x, y, z;
+} vly_vec3f;
+
+typedef struct
+{
+  float lower, upper;
+} vly_range1f;

@@ -30,27 +30,18 @@ namespace volley {
       void intersect(size_t numValues,
                      const vly_vec3f *origins,
                      const vly_vec3f *directions,
-                     vly_range1f *ranges) override;
+                     vly_range1f *ranges) const override;
 
       void sample(VLYSamplingType samplingType,
                   size_t numValues,
                   const vly_vec3f *worldCoordinates,
-                  float *results) override;
+                  float *results) const override;
 
       void advanceRays(float samplingRate,
                        size_t numValues,
                        const vly_vec3f *origins,
                        const vly_vec3f *directions,
-                       float *t) override;
-
-      void integrate(VLYSamplingType samplingType,
-                     float samplingRate,
-                     size_t numValues,
-                     const vly_vec3f *origins,
-                     const vly_vec3f *directions,
-                     const vly_range1f *ranges,
-                     void *rayUserData,
-                     IntegrationStepFunction integrationStepFunction) override;
+                       float *t) const override;
 
      protected:
       box3f boundingBox;

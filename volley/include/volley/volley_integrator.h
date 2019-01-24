@@ -16,11 +16,36 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
-
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_version.h"
+#include "volley_common.h"
 #include "volley_volume.h"
+
+struct Integrator : public ManagedObject
+{
+};
+
+typedef Integrator *VLYIntegrator;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+VLYIntegrator vlyNewIntegrator(const char *type);
+
+typedef void (*IntegrationStepFunction)(size_t numValues,
+                                        const vly_vec3f *worldCoordinates,
+                                        const float *samples,
+                                        void *rayUserData,
+                                        bool *earlyTerminationMask);
+
+void vlyIntegrateVolume(VLYIntegrator integrator,
+                        VLYVolume volume,
+                        size_t numValues,
+                        const vly_vec3f *origins,
+                        const vly_vec3f *directions,
+                        const vly_range1f *ranges,
+                        void *rayUserData,
+                        IntegrationStepFunction integrationStepFunction);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

@@ -40,6 +40,7 @@ typedef enum
   VLY_DATA,
   VLY_TRANSFER_FUNCTION,
   VLY_VOLUME,
+  VLY_INTEGRATOR,
 
   //! Pointer to a C-style NULL-terminated character string.
   VLY_STRING = 1500,

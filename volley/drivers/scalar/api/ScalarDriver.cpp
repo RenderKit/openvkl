@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ScalarDriver.h"
+#include "../integrator/Integrator.h"
 #include "../volume/Volume.h"
 
 namespace volley {
@@ -72,10 +73,14 @@ namespace volley {
       volumeObject.advanceRays(samplingRate, numValues, origins, directions, t);
     }
 
+    VLYIntegrator ScalarDriver::newIntegrator(const char *type)
+    {
+      return (VLYIntegrator)Integrator::createInstance(type);
+    }
+
     void ScalarDriver::integrateVolume(
+        VLYIntegrator integrator,
         VLYVolume volume,
-        VLYSamplingType samplingType,
-        float samplingRate,
         size_t numValues,
         const vly_vec3f *origins,
         const vly_vec3f *directions,
@@ -83,15 +88,15 @@ namespace volley {
         void *rayUserData,
         IntegrationStepFunction integrationStepFunction)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.integrate(samplingType,
-                             samplingRate,
-                             numValues,
-                             origins,
-                             directions,
-                             ranges,
-                             rayUserData,
-                             integrationStepFunction);
+      auto &integratorObject = referenceFromHandle<Integrator>(integrator);
+      auto &volumeObject     = referenceFromHandle<Volume>(volume);
+      integratorObject.integrate(volumeObject,
+                                 numValues,
+                                 origins,
+                                 directions,
+                                 ranges,
+                                 rayUserData,
+                                 integrationStepFunction);
     }
 
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)

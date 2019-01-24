@@ -32,6 +32,7 @@ namespace volley {
 
       VLYError loadModule(const char *moduleName) override;
 
+      // Volume
       VLYVolume newVolume(const char *type) override;
 
       void intersectVolume(VLYVolume volume,
@@ -53,10 +54,12 @@ namespace volley {
                        const vly_vec3f *directions,
                        float *t) override;
 
+      // Integrator
+      VLYIntegrator newIntegrator(const char *type) override;
+
       void integrateVolume(
+          VLYIntegrator integrator,
           VLYVolume volume,
-          VLYSamplingType samplingType,
-          float samplingRate,
           size_t numValues,
           const vly_vec3f *origins,
           const vly_vec3f *directions,

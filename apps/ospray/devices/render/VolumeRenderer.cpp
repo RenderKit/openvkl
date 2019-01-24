@@ -35,10 +35,9 @@ namespace ospray {
 
       std::vector<PixelData> pixelData;
 
-      RayUserData(
-          const VolleyVolumeWrapper *volleyVolumeWrapper,
-          const Tile &tile,
-          const vec4f &backgroundColor)
+      RayUserData(const VolleyVolumeWrapper *volleyVolumeWrapper,
+                  const Tile &tile,
+                  const vec4f &backgroundColor)
           : volleyVolumeWrapper(volleyVolumeWrapper)
       {
         pixelData.resize(tile.size.x * tile.size.y);
@@ -284,11 +283,17 @@ namespace ospray {
             "only Volley-based volumes supported in this renderer");
       }
 
+      static VLYIntegrator vlyIntegrator = nullptr;
+
+      if (!vlyIntegrator) {
+        vlyIntegrator = vlyNewIntegrator("ray_marching_integrator");
+        vlyCommit(vlyIntegrator);
+      }
+
       VLYVolume vlyVolume = volleyVolumeWrapper->getVLYVolume();
 
       // generate initial ray user data state that will be sent to Volley
-      RayUserData rayUserData(
-          volleyVolumeWrapper, tile, backgroundColor);
+      RayUserData rayUserData(volleyVolumeWrapper, tile, backgroundColor);
 
       // generate initial rays to be sent to Volley
       VolleyRays volleyRays = getCameraRays(tile);
@@ -301,9 +306,8 @@ namespace ospray {
                          (vly_range1f *)volleyRays.ranges.data());
 
       // integrate over the Volley volume over the full ray t ranges
-      vlyIntegrateVolume(vlyVolume,
-                         volleyVolumeWrapper->getVLYSamplingType(),
-                         volume->getSamplingRate(),
+      vlyIntegrateVolume(vlyIntegrator,
+                         vlyVolume,
                          volleyRays.numRays,
                          (const vly_vec3f *)volleyRays.origins.data(),
                          (const vly_vec3f *)volleyRays.directions.data(),

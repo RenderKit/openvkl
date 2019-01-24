@@ -42,28 +42,19 @@ namespace volley {
       virtual void intersect(size_t numValues,
                              const vly_vec3f *origins,
                              const vly_vec3f *directions,
-                             vly_range1f *ranges) = 0;
+                             vly_range1f *ranges) const = 0;
 
       virtual void sample(VLYSamplingType samplingType,
                           size_t numValues,
                           const vly_vec3f *worldCoordinates,
-                          float *results) = 0;
+                          float *results) const = 0;
 
       virtual void advanceRays(float samplingRate,
                                size_t numValues,
                                const vly_vec3f *origins,
                                const vly_vec3f *directions,
-                               float *t) = 0;
+                               float *t) const = 0;
 
-      virtual void integrate(
-          VLYSamplingType samplingType,
-          float samplingRate,
-          size_t numValues,
-          const vly_vec3f *origins,
-          const vly_vec3f *directions,
-          const vly_range1f *ranges,
-          void *rayUserData,
-          IntegrationStepFunction integrationStepFunction) = 0;
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

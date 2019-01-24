@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-void vlySet1i(VLYObject, const char *id, int x);
-void vlySet1f(VLYObject, const char *id, float x);
-void vlySetVoidPtr(VLYObject, const char *id, void *v);
+void vlySet1f(VLYObject object, const char *name, float x);
+void vlySet1i(VLYObject object, const char *name, int x);
+void vlySetVoidPtr(VLYObject object, const char *name, void *v);
 
 #ifdef __cplusplus
 }  // extern "C"

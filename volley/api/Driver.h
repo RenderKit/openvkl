@@ -47,15 +47,37 @@ namespace volley {
 
       virtual void commit();
       bool isCommitted();
-
-      // all drivers must implement the following API calls
       virtual void commit(VLYObject object) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Integrator ///////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VLYIntegrator newIntegrator(const char *type) = 0;
+
+      virtual void integrateVolume(
+          VLYIntegrator integrator,
+          VLYVolume volume,
+          size_t numValues,
+          const vly_vec3f *origins,
+          const vly_vec3f *directions,
+          const vly_range1f *ranges,
+          void *rayUserData,
+          IntegrationStepFunction integrationStepFunction) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
       virtual VLYError loadModule(const char *moduleName) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Parameters ///////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual void set1f(VLYObject object, const char *name, const float x) = 0;
+      virtual void set1i(VLYObject object, const char *name, const int x)   = 0;
+      virtual void setVoidPtr(VLYObject object, const char *name, void *v)  = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -81,30 +103,6 @@ namespace volley {
                                const vly_vec3f *origins,
                                const vly_vec3f *directions,
                                float *t) = 0;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Integrator ///////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      virtual VLYIntegrator newIntegrator(const char *type) = 0;
-
-      virtual void integrateVolume(
-          VLYIntegrator integrator,
-          VLYVolume volume,
-          size_t numValues,
-          const vly_vec3f *origins,
-          const vly_vec3f *directions,
-          const vly_range1f *ranges,
-          void *rayUserData,
-          IntegrationStepFunction integrationStepFunction) = 0;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Parameters ///////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      virtual void set1f(VLYObject object, const char *name, const float x) = 0;
-      virtual void set1i(VLYObject object, const char *name, const int x)   = 0;
-      virtual void setVoidPtr(VLYObject object, const char *name, void *v)  = 0;
 
      private:
       bool committed = false;

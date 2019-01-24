@@ -31,10 +31,34 @@ namespace volley {
       virtual void commit(VLYObject object) override;
 
       /////////////////////////////////////////////////////////////////////////
+      // Integrator ///////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      VLYIntegrator newIntegrator(const char *type) override;
+
+      void integrateVolume(
+          VLYIntegrator integrator,
+          VLYVolume volume,
+          size_t numValues,
+          const vly_vec3f *origins,
+          const vly_vec3f *directions,
+          const vly_range1f *ranges,
+          void *rayUserData,
+          IntegrationStepFunction integrationStepFunction) override;
+
+      /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
       VLYError loadModule(const char *moduleName) override;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Parameters ///////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      void set1f(VLYObject object, const char *name, const float x) override;
+      void set1i(VLYObject object, const char *name, const int x) override;
+      void setVoidPtr(VLYObject object, const char *name, void *v) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -60,30 +84,6 @@ namespace volley {
                        const vly_vec3f *origins,
                        const vly_vec3f *directions,
                        float *t) override;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Integrator ///////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      VLYIntegrator newIntegrator(const char *type) override;
-
-      void integrateVolume(
-          VLYIntegrator integrator,
-          VLYVolume volume,
-          size_t numValues,
-          const vly_vec3f *origins,
-          const vly_vec3f *directions,
-          const vly_range1f *ranges,
-          void *rayUserData,
-          IntegrationStepFunction integrationStepFunction) override;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Parameters ///////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      void set1f(VLYObject object, const char *name, const float x) override;
-      void set1i(VLYObject object, const char *name, const int x) override;
-      void setVoidPtr(VLYObject object, const char *name, void *v) override;
     };
 
   }  // namespace scalar_driver

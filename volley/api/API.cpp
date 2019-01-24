@@ -72,20 +72,6 @@ void postTraceMessage(const std::string &message)
   }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Module /////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-extern "C" VLYError vlyLoadModule(const char *moduleName) VOLLEY_CATCH_BEGIN
-{
-  if (volley::api::driverIsSet()) {
-    return (VLYError)volley::api::currentDriver().loadModule(moduleName);
-  } else {
-    return volley::loadLocalModule(moduleName);
-  }
-}
-VOLLEY_CATCH_END(VLY_UNKNOWN_ERROR)
-
-///////////////////////////////////////////////////////////////////////////////
 // Driver /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -119,6 +105,92 @@ extern "C" void vlyCommit(VLYObject object) VOLLEY_CATCH_BEGIN
   ASSERT_DRIVER();
   Assert(object && "invalid object handle to commit to");
   volley::api::currentDriver().commit(object);
+}
+VOLLEY_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Integrator /////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VLYIntegrator vlyNewIntegrator(const char *type) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  Assert(type != nullptr &&
+         "invalid integrator type identifier in vlyNewIntegrator");
+  VLYIntegrator integrator = volley::api::currentDriver().newIntegrator(type);
+  if (integrator == nullptr) {
+    postLogMessage(volley::VLY_LOG_ERROR)
+        << "could not create integrator '" << type << "'";
+  }
+
+  return integrator;
+}
+VOLLEY_CATCH_END(nullptr)
+
+extern "C" void vlyIntegrateVolume(
+    VLYIntegrator integrator,
+    VLYVolume volume,
+    size_t numValues,
+    const vly_vec3f *origins,
+    const vly_vec3f *directions,
+    const vly_range1f *ranges,
+    void *rayUserData,
+    IntegrationStepFunction integrationStepFunction) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().integrateVolume(integrator,
+                                               volume,
+                                               numValues,
+                                               origins,
+                                               directions,
+                                               ranges,
+                                               rayUserData,
+                                               integrationStepFunction);
+}
+VOLLEY_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Module /////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VLYError vlyLoadModule(const char *moduleName) VOLLEY_CATCH_BEGIN
+{
+  if (volley::api::driverIsSet()) {
+    return (VLYError)volley::api::currentDriver().loadModule(moduleName);
+  } else {
+    return volley::loadLocalModule(moduleName);
+  }
+}
+VOLLEY_CATCH_END(VLY_UNKNOWN_ERROR)
+
+///////////////////////////////////////////////////////////////////////////////
+// Parameters /////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" void vlySet1f(VLYObject object,
+                         const char *id,
+                         float x) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().set1f(object, id, x);
+}
+VOLLEY_CATCH_END()
+
+extern "C" void vlySeti(VLYObject object,
+                        const char *id,
+                        int x) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().set1i(object, id, x);
+}
+VOLLEY_CATCH_END()
+
+extern "C" void vlySetVoidPtr(VLYObject object,
+                              const char *id,
+                              void *v) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().setVoidPtr(object, id, v);
 }
 VOLLEY_CATCH_END()
 
@@ -174,77 +246,5 @@ extern "C" void vlyAdvanceRays(VLYVolume volume,
   ASSERT_DRIVER();
   volley::api::currentDriver().advanceRays(
       volume, samplingRate, numValues, origins, directions, t);
-}
-VOLLEY_CATCH_END()
-
-///////////////////////////////////////////////////////////////////////////////
-// Integrator /////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-extern "C" VLYIntegrator vlyNewIntegrator(const char *type) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  Assert(type != nullptr &&
-         "invalid integrator type identifier in vlyNewIntegrator");
-  VLYIntegrator integrator = volley::api::currentDriver().newIntegrator(type);
-  if (integrator == nullptr) {
-    postLogMessage(volley::VLY_LOG_ERROR)
-        << "could not create integrator '" << type << "'";
-  }
-
-  return integrator;
-}
-VOLLEY_CATCH_END(nullptr)
-
-extern "C" void vlyIntegrateVolume(
-    VLYIntegrator integrator,
-    VLYVolume volume,
-    size_t numValues,
-    const vly_vec3f *origins,
-    const vly_vec3f *directions,
-    const vly_range1f *ranges,
-    void *rayUserData,
-    IntegrationStepFunction integrationStepFunction) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  volley::api::currentDriver().integrateVolume(integrator,
-                                               volume,
-                                               numValues,
-                                               origins,
-                                               directions,
-                                               ranges,
-                                               rayUserData,
-                                               integrationStepFunction);
-}
-VOLLEY_CATCH_END()
-
-///////////////////////////////////////////////////////////////////////////////
-// Parameters /////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-extern "C" void vlySet1f(VLYObject object,
-                         const char *id,
-                         float x) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  volley::api::currentDriver().set1f(object, id, x);
-}
-VOLLEY_CATCH_END()
-
-extern "C" void vlySeti(VLYObject object,
-                        const char *id,
-                        int x) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  volley::api::currentDriver().set1i(object, id, x);
-}
-VOLLEY_CATCH_END()
-
-extern "C" void vlySetVoidPtr(VLYObject object,
-                              const char *id,
-                              void *v) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  volley::api::currentDriver().setVoidPtr(object, id, v);
 }
 VOLLEY_CATCH_END()

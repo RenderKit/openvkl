@@ -73,6 +73,35 @@ namespace ospray {
             rayUserData->volleyVolumeWrapper->getTransferFunction()
                 .getColorAndOpacity(samples[i]);
 
+        // compute lighting if we have gradient information; reference:
+        // http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch39.html
+        if (gradients) {
+          const vec3f direction =
+              *reinterpret_cast<const vec3f *>(&directions[i]);
+
+          const vec3f gradient =
+              safe_normalize((*reinterpret_cast<const vec3f *>(&gradients[i])));
+
+          // light parameters
+          const float Il = 1.f;
+          const vec3f lightDirection{-1.f, -1.f, -1.f};
+          const vec3f Kd{sampleColor.x, sampleColor.y, sampleColor.z};
+          const vec3f Ka = 0.1f * Kd;
+          const vec3f Ks{0.5f, 0.5f, 0.5f};
+          const float Ns = 10.f;
+
+          // two-sided lighting
+          float cosNL = fabs(dot(lightDirection, gradient));
+
+          const vec3f H     = normalize(lightDirection - direction);
+          const float cosNH = dot(H, gradient);
+
+          const vec3f litColor = Ka + Il * (Kd * cosNL + Ks * powf(cosNH, Ns));
+
+          sampleColor =
+              vec4f(litColor.x, litColor.y, litColor.z, sampleColor.w);
+        }
+
         // accumulate contribution
         const float clampedOpacity =
             clamp(sampleColor.w /

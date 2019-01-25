@@ -96,7 +96,7 @@ int main(int argc, const char **argv)
     }
 
     static float samplingRate = 1.f;
-    if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 2.f)) {
+    if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
       ospSet1f(test_data.volume, "samplingRate", samplingRate);
       ospCommit(test_data.volume);
     }

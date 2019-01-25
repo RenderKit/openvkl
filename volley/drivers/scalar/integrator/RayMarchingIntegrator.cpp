@@ -95,6 +95,7 @@ namespace volley {
         // call user-provided integration step function
         integrationStepFunction(worldCoordinates.size(),
                                 worldCoordinates.data(),
+                                directions,
                                 samples.data(),
                                 gradients.data(),
                                 rayUserData,

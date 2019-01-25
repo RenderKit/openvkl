@@ -55,6 +55,7 @@ namespace ospray {
 
     void integrationStepFunction(size_t numValues,
                                  const vly_vec3f *worldCoordinates,
+                                 const vly_vec3f *directions,
                                  const float *samples,
                                  const vly_vec3f *gradients,
                                  void *_rayUserData,

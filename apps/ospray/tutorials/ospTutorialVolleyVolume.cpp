@@ -111,6 +111,13 @@ int main(int argc, const char **argv)
       ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
       ospCommit(test_data.volume);
     }
+
+    static bool vlyComputeGradients = true;
+    if (ImGui::Checkbox("Compute gradients", &vlyComputeGradients)) {
+      ospSet1i(
+          test_data.volume, "vlyComputeGradients", int(vlyComputeGradients));
+      ospCommit(test_data.volume);
+    }
   });
 
   // start the GLFW main loop, which will continuously render

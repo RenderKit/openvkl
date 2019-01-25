@@ -118,6 +118,13 @@ int main(int argc, const char **argv)
           test_data.volume, "vlyComputeGradients", int(vlyComputeGradients));
       ospCommit(test_data.volume);
     }
+
+    static bool rendererAdaptiveSampling = false;
+    if (ImGui::Checkbox("Renderer adaptive sampling", &rendererAdaptiveSampling)) {
+      ospSet1i(
+          test_data.volume, "adaptiveSampling", int(rendererAdaptiveSampling));
+      ospCommit(test_data.volume);
+    }
   });
 
   // start the GLFW main loop, which will continuously render

@@ -53,6 +53,8 @@ namespace ospray {
       VLYIntegrator getVLYIntegrator();
       VLYVolume getVLYVolume();
 
+      bool getAdaptiveSampling() const;
+
      private:
       VLYIntegrator vlyIntegrator = nullptr;
       VLYVolume vlyVolume         = nullptr;
@@ -60,6 +62,8 @@ namespace ospray {
       // this gets set on the integrator directly, but is also used in some of
       // the above wrapper methods
       float samplingRate;
+
+      bool adaptiveSampling;
     };
 
   }  // namespace scalar_volley_device

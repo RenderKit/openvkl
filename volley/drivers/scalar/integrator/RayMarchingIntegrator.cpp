@@ -53,9 +53,13 @@ namespace volley {
       std::vector<float> t(numValues);
 
       for (size_t i = 0; i < numValues; i++) {
-        t[i]                    = ranges[i].lower;
+        t[i]                  = ranges[i].lower;
         rayTerminationMask[i] = isnan(t[i]);
       }
+
+      // temporary buffer for projected future t values
+      std::vector<float>currentDeltaT(numValues);
+      std::vector<float>nextDeltaT(numValues);
 
       size_t numActiveRays = numValues;
 
@@ -92,19 +96,38 @@ namespace volley {
                           gradients.data());
         }
 
+        // pre-compute ray advancement, so we can pass this information to the
+        // integration step function for possible modification by the
+        // application
+        // TODO: this only needs to be done for *active* rays
+        nextDeltaT = t;
+
+        volume.advanceRays(
+            samplingRate, numValues, origins, directions, nextDeltaT.data());
+
+        std::transform(nextDeltaT.begin(),
+                       nextDeltaT.end(),
+                       t.begin(),
+                       nextDeltaT.begin(),
+                       std::minus<float>());
+
         // call user-provided integration step function
         integrationStepFunction(worldCoordinates.size(),
                                 worldCoordinates.data(),
                                 directions,
+                                currentDeltaT.data(),
                                 samples.data(),
                                 gradients.data(),
                                 rayUserData,
+                                nextDeltaT.data(),
                                 rayTerminationMask.get());
 
-        // advance rays
-        // TODO: this only needs to be done for *active* rays
-        volume.advanceRays(
-            samplingRate, numValues, origins, directions, t.data());
+        // add current deltaT values to previous t for next iteration's samples
+        std::transform(
+            t.begin(), t.end(), nextDeltaT.begin(), t.begin(), std::plus<float>());
+        
+        // save "current" deltaT for next integration step function call
+        currentDeltaT = nextDeltaT;
       }
     }
 

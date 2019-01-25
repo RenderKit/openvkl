@@ -56,9 +56,11 @@ namespace ospray {
     void integrationStepFunction(size_t numValues,
                                  const vly_vec3f *worldCoordinates,
                                  const vly_vec3f *directions,
+                                 const float *currentDeltaT,
                                  const float *samples,
                                  const vly_vec3f *gradients,
                                  void *_rayUserData,
+                                 float *nextDeltaT,
                                  bool *rayTerminationMask)
     {
       RayUserData *rayUserData = (RayUserData *)_rayUserData;
@@ -73,6 +75,9 @@ namespace ospray {
             rayUserData->volleyVolumeWrapper->getTransferFunction()
                 .getColorAndOpacity(samples[i]);
 
+        // save sample opacity for use in adaptive sampling
+        const float sampleOpacity = sampleColor.w;
+
         // compute lighting if we have gradient information; reference:
         // http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch39.html
         if (gradients) {
@@ -85,16 +90,46 @@ namespace ospray {
               vec4f(litColor.x, litColor.y, litColor.z, sampleColor.w);
         }
 
-        // accumulate contribution
+        // accumulate contribution according to an "effective" sampling rate
+        // TODO: this is only accurate for constant step-size volume advancement
+        float effectiveSamplingRate =
+            rayUserData->volleyVolumeWrapper->getSamplingRate();
+
+        if (!isnan(nextDeltaT[i]) && !isnan(currentDeltaT[i])) {
+          effectiveSamplingRate *= nextDeltaT[i] / currentDeltaT[i];
+        }
+
         const float clampedOpacity =
-            clamp(sampleColor.w /
-                  rayUserData->volleyVolumeWrapper->getSamplingRate());
+            clamp(sampleColor.w / effectiveSamplingRate);
 
         sampleColor *= clampedOpacity;
         sampleColor.w = clampedOpacity;
 
         rayUserData->pixelData[i].color +=
             (1.f - rayUserData->pixelData[i].color.w) * sampleColor;
+
+        // adaptive sampling
+        if (rayUserData->volleyVolumeWrapper->getAdaptiveSampling()) {
+          const float opacityScale = 0.1f;
+          const float minSamplingRate =
+              rayUserData->volleyVolumeWrapper->getSamplingRate();
+          const float maxSamplingRate = 4.f;
+
+          float adaptiveSamplingRate =
+              sampleOpacity / opacityScale * maxSamplingRate;
+
+          // clamp to bounds
+          adaptiveSamplingRate = min(adaptiveSamplingRate, maxSamplingRate);
+          adaptiveSamplingRate = max(adaptiveSamplingRate, minSamplingRate);
+
+          // proposed deltaT values correspond to the volume's nominal
+          // sampling rate, so we are scaling that value in proportion to that
+          const float deltaTscale =
+              rayUserData->volleyVolumeWrapper->getSamplingRate() /
+              adaptiveSamplingRate;
+
+          nextDeltaT[i] *= deltaTscale;
+        }
 
         // early termination
         if (rayUserData->pixelData[i].color.w >= 0.99f) {

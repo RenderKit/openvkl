@@ -45,6 +45,7 @@ namespace ospray {
 
       // update parameters
       samplingRate = getParam<float>("samplingRate", 1.f);
+      adaptiveSampling = bool(getParam<int>("adaptiveSampling", 0));
 
       // commit parameters on integrator
       vlySet1f(vlyIntegrator, "samplingRate", samplingRate);
@@ -133,6 +134,11 @@ namespace ospray {
     VLYVolume VolleyVolumeWrapper::getVLYVolume()
     {
       return vlyVolume;
+    }
+
+    bool VolleyVolumeWrapper::getAdaptiveSampling() const
+    {
+      return adaptiveSampling;
     }
 
   }  // namespace scalar_volley_device

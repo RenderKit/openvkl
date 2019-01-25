@@ -34,9 +34,11 @@ VLYIntegrator vlyNewIntegrator(const char *type);
 typedef void (*IntegrationStepFunction)(size_t numValues,
                                         const vly_vec3f *worldCoordinates,
                                         const vly_vec3f *directions,
+                                        const float *deltaT,
                                         const float *samples,
                                         const vly_vec3f *gradients,
                                         void *rayUserData,
+                                        float *nextDeltaT,
                                         bool *rayTerminationMask);
 
 void vlyIntegrateVolume(VLYIntegrator integrator,

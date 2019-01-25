@@ -89,12 +89,6 @@ int main(int argc, const char **argv)
                            renderer));
 
   glfwOSPRayWindow->registerImGuiCallback([=]() {
-    static int spp = 1;
-    if (ImGui::SliderInt("spp", &spp, 1, 64)) {
-      ospSet1i(renderer, "spp", spp);
-      ospCommit(renderer);
-    }
-
     static float samplingRate = 1.f;
     if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
       ospSet1f(test_data.volume, "samplingRate", samplingRate);

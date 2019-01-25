@@ -49,12 +49,16 @@ namespace volley {
                           const vly_vec3f *worldCoordinates,
                           float *results) const = 0;
 
+      virtual void gradient(VLYSamplingType samplingType,
+                            size_t numValues,
+                            const vly_vec3f *worldCoordinates,
+                            vly_vec3f *results) const = 0;
+
       virtual void advanceRays(float samplingRate,
                                size_t numValues,
                                const vly_vec3f *origins,
                                const vly_vec3f *directions,
                                float *t) const = 0;
-
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

@@ -24,7 +24,8 @@ namespace volley {
       Integrator::commit();
 
       samplingRate = getParam<float>("samplingRate", 1.f);
-      samplingType = VLYSamplingType(getParam<int>("samplingType", VLY_SAMPLE_LINEAR));
+      samplingType =
+          VLYSamplingType(getParam<int>("samplingType", VLY_SAMPLE_LINEAR));
     }
 
     void RayMarchingIntegrator::integrate(
@@ -39,6 +40,11 @@ namespace volley {
       // pre-allocate storage used in integration step callback
       std::vector<vly_vec3f> worldCoordinates(numValues);
       std::vector<float> samples(numValues);
+      std::vector<vly_vec3f> gradients;
+
+      if (computeGradients) {
+        gradients.resize(numValues);
+      }
 
       // std::vector<bool> provides no direct data() access...
       std::unique_ptr<bool[]> earlyTerminationMask(new bool[numValues]);
@@ -79,10 +85,18 @@ namespace volley {
         volume.sample(
             samplingType, numValues, worldCoordinates.data(), samples.data());
 
+        if (computeGradients) {
+          volume.gradient(samplingType,
+                          numValues,
+                          worldCoordinates.data(),
+                          gradients.data());
+        }
+
         // call user-provided integration step function
         integrationStepFunction(worldCoordinates.size(),
                                 worldCoordinates.data(),
                                 samples.data(),
+                                gradients.data(),
                                 rayUserData,
                                 earlyTerminationMask.get());
 

@@ -37,6 +37,11 @@ namespace volley {
                   const vly_vec3f *worldCoordinates,
                   float *results) const override;
 
+      void gradient(VLYSamplingType samplingType,
+                    size_t numValues,
+                    const vly_vec3f *worldCoordinates,
+                    vly_vec3f *results) const override;
+
       void advanceRays(float samplingRate,
                        size_t numValues,
                        const vly_vec3f *origins,
@@ -46,6 +51,16 @@ namespace volley {
      protected:
       box3f boundingBox;
       float voxelSize;
+
+      // wavelet parameters
+      const float M  = 1.f;
+      const float G  = 1.f;
+      const float XM = 1.f;
+      const float YM = 1.f;
+      const float ZM = 1.f;
+      const float XF = 3.f;
+      const float YF = 3.f;
+      const float ZF = 3.f;
     };
 
   }  // namespace scalar_driver

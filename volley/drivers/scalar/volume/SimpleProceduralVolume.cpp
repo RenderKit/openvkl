@@ -61,16 +61,6 @@ namespace volley {
                                         const vly_vec3f *worldCoordinates,
                                         float *results) const
     {
-      // wavelet parameters
-      const float M  = 1.f;
-      const float G  = 1.f;
-      const float XM = 1.f;
-      const float YM = 1.f;
-      const float ZM = 1.f;
-      const float XF = 3.f;
-      const float YF = 3.f;
-      const float ZF = 3.f;
-
       if (samplingType == VLY_SAMPLE_LINEAR) {
         for (size_t i = 0; i < numValues; i++) {
           results[i] = M * G *
@@ -98,6 +88,26 @@ namespace volley {
       } else {
         throw std::runtime_error(
             "sample() called with unimplemented sampling type");
+      }
+    }
+
+    void SimpleProceduralVolume::gradient(VLYSamplingType samplingType,
+                                          size_t numValues,
+                                          const vly_vec3f *worldCoordinates,
+                                          vly_vec3f *results) const
+    {
+      // TODO: samplingType not considered for gradients; do we need it?
+
+      for (size_t i = 0; i < numValues; i++) {
+        /*results[i] = M * G *
+                     (XM * sinf(XF * worldCoordinates[i].x) +
+                      YM * sinf(YF * worldCoordinates[i].y) +
+                      ZM * cosf(ZF * worldCoordinates[i].z)); */
+
+        results[i].x = M * G * (XM * cosf(XF * worldCoordinates[i].x) * XF);
+        results[i].y = M * G * (YM * cosf(YF * worldCoordinates[i].y) * YF);
+        results[i].z =
+            M * G * (ZM * -1.f * sinf(ZF * worldCoordinates[i].z) * ZF);
       }
     }
 

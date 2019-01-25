@@ -38,6 +38,8 @@ namespace volley {
       virtual void commit() override
       {
         ManagedObject::commit();
+
+        computeGradients = bool(getParam<int>("computeGradients", 0));
       }
 
       virtual void integrate(
@@ -48,6 +50,9 @@ namespace volley {
           const vly_range1f *ranges,
           void *rayUserData,
           IntegrationStepFunction integrationStepFunction) = 0;
+
+     protected:
+      bool computeGradients;
     };
 
 #define VLY_REGISTER_INTEGRATOR(InternalClass, external_name) \

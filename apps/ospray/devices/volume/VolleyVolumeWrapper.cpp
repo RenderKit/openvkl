@@ -51,6 +51,9 @@ namespace ospray {
       vlySet1i(vlyIntegrator,
                "samplingType",
                getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
+
+      vlySet1i(vlyIntegrator, "computeGradients", 1);
+
       vlyCommit(vlyIntegrator);
     }
 

@@ -55,5 +55,26 @@ namespace ospray {
       }
     }
 
+    vec3f Renderer::computeLighting(const vec3f &rayDirection,
+                                    const vec3f &normal,
+                                    const vec3f &color)
+    {
+      // light parameters
+      const float Il = 1.f;
+      const vec3f lightDirection{-1.f, -1.f, -1.f};
+      const vec3f Kd = color;
+      const vec3f Ka = 0.1f * Kd;
+      const vec3f Ks{0.5f, 0.5f, 0.5f};
+      const float Ns = 10.f;
+
+      // two-sided lighting
+      float cosNL = fabs(dot(lightDirection, normal));
+
+      const vec3f H     = normalize(lightDirection - rayDirection);
+      const float cosNH = dot(H, normal);
+
+      return Ka + Il * (Kd * cosNL + Ks * powf(cosNH, Ns));
+    }
+
   }  // namespace scalar_volley_device
 }  // namespace ospray

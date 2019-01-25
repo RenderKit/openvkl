@@ -34,6 +34,10 @@ namespace ospray {
       // this should be overridden by actual renderer implementations
       virtual void renderTile(Tile &tile);
 
+      static vec3f computeLighting(const vec3f &rayDirection,
+                                   const vec3f &normal,
+                                   const vec3f &color);
+
       vec4f backgroundColor{0.f};
 
      protected:

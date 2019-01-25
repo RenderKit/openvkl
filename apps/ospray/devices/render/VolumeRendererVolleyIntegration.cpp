@@ -59,12 +59,12 @@ namespace ospray {
                                  const float *samples,
                                  const vly_vec3f *gradients,
                                  void *_rayUserData,
-                                 bool *earlyTerminationMask)
+                                 bool *rayTerminationMask)
     {
       RayUserData *rayUserData = (RayUserData *)_rayUserData;
 
       for (size_t i = 0; i < numValues; i++) {
-        if (earlyTerminationMask[i]) {
+        if (rayTerminationMask[i]) {
           continue;
         }
 
@@ -98,7 +98,7 @@ namespace ospray {
 
         // early termination
         if (rayUserData->pixelData[i].color.w >= 0.99f) {
-          earlyTerminationMask[i] = true;
+          rayTerminationMask[i] = true;
         }
       }
     }

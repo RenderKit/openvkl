@@ -37,7 +37,7 @@ typedef void (*IntegrationStepFunction)(size_t numValues,
                                         const float *samples,
                                         const vly_vec3f *gradients,
                                         void *rayUserData,
-                                        bool *earlyTerminationMask);
+                                        bool *rayTerminationMask);
 
 void vlyIntegrateVolume(VLYIntegrator integrator,
                         VLYVolume volume,

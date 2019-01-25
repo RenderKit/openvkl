@@ -47,14 +47,14 @@ namespace volley {
       }
 
       // std::vector<bool> provides no direct data() access...
-      std::unique_ptr<bool[]> earlyTerminationMask(new bool[numValues]);
+      std::unique_ptr<bool[]> rayTerminationMask(new bool[numValues]);
 
       // initial values for all rays
       std::vector<float> t(numValues);
 
       for (size_t i = 0; i < numValues; i++) {
         t[i]                    = ranges[i].lower;
-        earlyTerminationMask[i] = isnan(t[i]);
+        rayTerminationMask[i] = isnan(t[i]);
       }
 
       size_t numActiveRays = numValues;
@@ -66,10 +66,10 @@ namespace volley {
         // generate world coordinates for all active rays
         for (size_t i = 0; i < numValues; i++) {
           if (isnan(t[i])) {
-            earlyTerminationMask[i] = true;
+            rayTerminationMask[i] = true;
           }
 
-          if (!earlyTerminationMask[i]) {
+          if (!rayTerminationMask[i]) {
             numActiveRays++;
 
             const vec3f temp =
@@ -99,7 +99,7 @@ namespace volley {
                                 samples.data(),
                                 gradients.data(),
                                 rayUserData,
-                                earlyTerminationMask.get());
+                                rayTerminationMask.get());
 
         // advance rays
         // TODO: this only needs to be done for *active* rays

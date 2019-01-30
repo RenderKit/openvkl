@@ -119,8 +119,8 @@ namespace ospray {
               sampleOpacity / opacityScale * maxSamplingRate;
 
           // clamp to bounds
-          adaptiveSamplingRate = min(adaptiveSamplingRate, maxSamplingRate);
-          adaptiveSamplingRate = max(adaptiveSamplingRate, minSamplingRate);
+          adaptiveSamplingRate =
+              max(min(adaptiveSamplingRate, maxSamplingRate), minSamplingRate);
 
           // proposed deltaT values correspond to the volume's nominal
           // sampling rate, so we are scaling that value in proportion to that

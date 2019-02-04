@@ -33,7 +33,7 @@ typedef enum
 {
   VLY_SAMPLE_NEAREST = 100,
   VLY_SAMPLE_LINEAR  = 200,
-} VLYSamplingType;
+} VLYSamplingMethod;
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,29 +41,11 @@ extern "C" {
 
 VLYVolume vlyNewVolume(const char *type);
 
-// returned ranges will be NaN if rays do not intersect
-void vlyIntersectVolume(VLYVolume volume,
-                        size_t numValues,
-                        const vly_vec3f *origins,
-                        const vly_vec3f *directions,
-                        vly_range1f *ranges);
-
-void vlySampleVolume(VLYVolume volume,
-                     VLYSamplingType samplingType,
-                     size_t numValues,
-                     const vly_vec3f *worldCoordinates,
-                     float *results);
-
-// returned t values will be NaN if rays do not intersect or are no longer
-// within volume after advancement.
-void vlyAdvanceRays(VLYVolume volume,
-                    float samplingRate,
-                    size_t numValues,
-                    const vly_vec3f *origins,
-                    const vly_vec3f *directions,
-                    float *t);
+float vlySampleVolume(VLYVolume volume,
+                      const vly_vec3f *objectCoordinates);
 
 
+vly_box3f vlyGetBoundingBox(VLYVolume volume);
 
 #ifdef __cplusplus
 }  // extern "C"

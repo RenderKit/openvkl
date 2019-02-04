@@ -177,8 +177,8 @@ extern "C" void vlySet1f(VLYObject object,
 VOLLEY_CATCH_END()
 
 extern "C" void vlySet1i(VLYObject object,
-                        const char *name,
-                        int x) VOLLEY_CATCH_BEGIN
+                         const char *name,
+                         int x) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   volley::api::currentDriver().set1i(object, name, x);
@@ -212,39 +212,19 @@ extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" void vlyIntersectVolume(VLYVolume volume,
-                                   size_t numValues,
-                                   const vly_vec3f *origins,
-                                   const vly_vec3f *directions,
-                                   vly_range1f *ranges) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  volley::api::currentDriver().intersectVolume(
-      volume, numValues, origins, directions, ranges);
-}
-VOLLEY_CATCH_END()
 
-extern "C" void vlySampleVolume(VLYVolume volume,
-                                VLYSamplingType samplingType,
-                                size_t numValues,
-                                const vly_vec3f *worldCoordinates,
-                                float *results) VOLLEY_CATCH_BEGIN
+extern "C" float vlySampleVolume(
+    VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().sampleVolume(
-      volume, samplingType, numValues, worldCoordinates, results);
+  return volley::api::currentDriver().sampleVolume(volume, objectCoordinates);
 }
-VOLLEY_CATCH_END()
+VOLLEY_CATCH_END(ospcommon::nan)
 
-extern "C" void vlyAdvanceRays(VLYVolume volume,
-                               float samplingRate,
-                               size_t numValues,
-                               const vly_vec3f *origins,
-                               const vly_vec3f *directions,
-                               float *t) VOLLEY_CATCH_BEGIN
+
+extern "C" vly_box3f vlyGetBoundingBox(VLYVolume volume) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().advanceRays(
-      volume, samplingRate, numValues, origins, directions, t);
+  return volley::api::currentDriver().getBoundingBox(volume);
 }
-VOLLEY_CATCH_END()
+VOLLEY_CATCH_END(vly_box3f{ospcommon::nan})

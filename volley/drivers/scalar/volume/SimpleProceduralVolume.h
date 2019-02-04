@@ -27,28 +27,16 @@ namespace volley {
     {
       void commit() override;
 
-      void intersect(size_t numValues,
-                     const vly_vec3f *origins,
-                     const vly_vec3f *directions,
-                     vly_range1f *ranges) const override;
+      float sample(const vly_vec3f *objectCoordinates) const override;
 
-      void sample(VLYSamplingType samplingType,
-                  size_t numValues,
-                  const vly_vec3f *worldCoordinates,
-                  float *results) const override;
+      vly_vec3f gradient(const vly_vec3f *objectCoordinates) const override;
 
-      void gradient(VLYSamplingType samplingType,
-                    size_t numValues,
-                    const vly_vec3f *worldCoordinates,
-                    vly_vec3f *results) const override;
-
-      void advanceRays(float samplingRate,
-                       size_t numValues,
-                       const vly_vec3f *origins,
-                       const vly_vec3f *directions,
-                       float *t) const override;
+      vly_box3f getBoundingBox() const override;
 
      protected:
+
+      // parameters to be updated on commit
+      VLYSamplingMethod samplingMethod = VLY_SAMPLE_LINEAR;
       box3f boundingBox;
       float voxelSize;
 

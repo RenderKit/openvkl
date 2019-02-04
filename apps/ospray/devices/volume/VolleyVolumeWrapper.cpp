@@ -44,37 +44,31 @@ namespace ospray {
       }
 
       // update parameters
-      samplingRate = getParam<float>("samplingRate", 1.f);
+      samplingRate     = getParam<float>("samplingRate", 1.f);
       adaptiveSampling = bool(getParam<int>("adaptiveSampling", 0));
 
-      // commit parameters on integrator
-      vlySet1f(vlyIntegrator, "samplingRate", samplingRate);
-      vlySet1i(vlyIntegrator,
-               "samplingType",
-               getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
+      // commit parameters on volume
+      vlySet1f(vlyVolume, "samplingRate", samplingRate);
+      vlySet1i(vlyVolume,
+               "samplingMethod",
+               getParam<int>("vlySamplingMethod", VLY_SAMPLE_LINEAR));
 
-      vlySet1i(vlyIntegrator,
-               "computeGradients",
-               getParam<int>("vlyComputeGradients", 1));
-
-      vlyCommit(vlyIntegrator);
+      vlyCommit(vlyVolume);
     }
 
     bool VolleyVolumeWrapper::intersect(Ray &ray) const
     {
-      vly_range1f range;
+      vly_box3f boundingBox = vlyGetBoundingBox(vlyVolume);
 
-      vlyIntersectVolume(vlyVolume,
-                         1,
-                         (const vly_vec3f *)&ray.org,
-                         (const vly_vec3f *)&ray.dir,
-                         &range);
+      auto hits =
+          intersectBox(ray, *reinterpret_cast<const box3f *>(&boundingBox));
 
-      if (range.lower < range.upper) {  // should be nan check
-        ray.t0 = range.lower;
-        ray.t  = range.upper;
+      if (hits.first < hits.second) {
+        ray.t0 = hits.first;
+        ray.t  = hits.second;
         return true;
       } else {
+        ray.t0 = ray.t = ospcommon::nan;
         return false;
       }
     }
@@ -82,15 +76,7 @@ namespace ospray {
     float VolleyVolumeWrapper::computeSample(
         const vec3f &worldCoordinates) const
     {
-      float sample;
-
-      vlySampleVolume(vlyVolume,
-                      VLY_SAMPLE_LINEAR,
-                      1,
-                      (vly_vec3f *)&worldCoordinates,
-                      &sample);
-
-      return sample;
+      return vlySampleVolume(vlyVolume, (vly_vec3f *)&worldCoordinates);
     }
 
     std::vector<float> VolleyVolumeWrapper::computeSamples(
@@ -99,11 +85,12 @@ namespace ospray {
       std::vector<float> samples;
       samples.resize(worldCoordinates.size());
 
-      vlySampleVolume(vlyVolume,
-                      VLY_SAMPLE_LINEAR,
-                      worldCoordinates.size(),
-                      (vly_vec3f *)worldCoordinates.data(),
-                      (float *)samples.data());
+      std::transform(worldCoordinates.begin(),
+                     worldCoordinates.end(),
+                     samples.begin(),
+                     [&](const vec3f &c) {
+                       return vlySampleVolume(vlyVolume, (vly_vec3f *)&c);
+                     });
 
       return samples;
     }

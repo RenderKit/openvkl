@@ -102,35 +102,17 @@ namespace volley {
       return (VLYVolume)Volume::createInstance(type);
     }
 
-    void ScalarDriver::intersectVolume(VLYVolume volume,
-                                       size_t numValues,
-                                       const vly_vec3f *origins,
-                                       const vly_vec3f *directions,
-                                       vly_range1f *ranges)
+    float ScalarDriver::sampleVolume(VLYVolume volume,
+                                     const vly_vec3f *objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.intersect(numValues, origins, directions, ranges);
+      return volumeObject.sample(objectCoordinates);
     }
 
-    void ScalarDriver::sampleVolume(VLYVolume volume,
-                                    VLYSamplingType samplingType,
-                                    size_t numValues,
-                                    const vly_vec3f *worldCoordinates,
-                                    float *results)
+    vly_box3f ScalarDriver::getBoundingBox(VLYVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.sample(samplingType, numValues, worldCoordinates, results);
-    }
-
-    void ScalarDriver::advanceRays(VLYVolume volume,
-                                   float samplingRate,
-                                   size_t numValues,
-                                   const vly_vec3f *origins,
-                                   const vly_vec3f *directions,
-                                   float *t)
-    {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.advanceRays(samplingRate, numValues, origins, directions, t);
+      return volumeObject.getBoundingBox();
     }
 
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)

@@ -24,6 +24,9 @@ namespace volley {
     {
       Volume::commit();
 
+      // update user-provided parameters
+      samplingMethod = VLYSamplingMethod(getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
+
       // hardcoded bounding box for now
       boundingBox = box3f(vec3f(-1.f), vec3f(1.f));
 
@@ -32,113 +35,54 @@ namespace volley {
       voxelSize = 2.f / 32.f;
     }
 
-    void SimpleProceduralVolume::intersect(size_t numValues,
-                                           const vly_vec3f *origins,
-                                           const vly_vec3f *directions,
-                                           vly_range1f *ranges) const
+    float SimpleProceduralVolume::sample(
+        const vly_vec3f *objectCoordinates) const
     {
-      // no limits on returned intersections
-      range1f rangeLimit(0.f, inf);
+      if (samplingMethod == VLY_SAMPLE_LINEAR) {
+        return M * G *
+               (XM * sinf(XF * objectCoordinates->x) +
+                YM * sinf(YF * objectCoordinates->y) +
+                ZM * cosf(ZF * objectCoordinates->z));
 
-      for (size_t i = 0; i < numValues; i++) {
-        auto hits =
-            intersectBox(*reinterpret_cast<const vec3f *>(&origins[i]),
-                         *reinterpret_cast<const vec3f *>(&directions[i]),
-                         boundingBox,
-                         rangeLimit);
+      } else if (samplingMethod == VLY_SAMPLE_NEAREST) {
+        // generate modified world coordinates to approximate "nearest"
+        // filtering in an actual data-based structured volume
+        const vec3i logicalCoordinates =
+            (*reinterpret_cast<const vec3f *>(objectCoordinates) -
+             boundingBox.lower) /
+            voxelSize;
 
-        if (hits.first < hits.second && hits.first < rangeLimit.upper) {
-          ranges[i].lower = hits.first;
-          ranges[i].upper = hits.second;
-        } else {
-          ranges[i].lower = ranges[i].upper = ospcommon::nan;
-        }
-      }
-    }
+        const vec3f nearestCoordinates = -1.f + logicalCoordinates * voxelSize;
 
-    void SimpleProceduralVolume::sample(VLYSamplingType samplingType,
-                                        size_t numValues,
-                                        const vly_vec3f *worldCoordinates,
-                                        float *results) const
-    {
-      if (samplingType == VLY_SAMPLE_LINEAR) {
-        for (size_t i = 0; i < numValues; i++) {
-          results[i] = M * G *
-                       (XM * sinf(XF * worldCoordinates[i].x) +
-                        YM * sinf(YF * worldCoordinates[i].y) +
-                        ZM * cosf(ZF * worldCoordinates[i].z));
-        }
-      } else if (samplingType == VLY_SAMPLE_NEAREST) {
-        for (size_t i = 0; i < numValues; i++) {
-          // generate modified world coordinates to approximate "nearest"
-          // filtering in an actual data-based structured volume
-          const vec3i logicalCoordinates =
-              (*reinterpret_cast<const vec3f *>(&worldCoordinates[i]) -
-               boundingBox.lower) /
-              voxelSize;
-
-          const vec3f nearestCoordinates =
-              -1.f + logicalCoordinates * voxelSize;
-
-          results[i] = M * G *
-                       (XM * sinf(XF * nearestCoordinates.x) +
-                        YM * sinf(YF * nearestCoordinates.y) +
-                        ZM * cosf(ZF * nearestCoordinates.z));
-        }
+        return M * G *
+               (XM * sinf(XF * nearestCoordinates.x) +
+                YM * sinf(YF * nearestCoordinates.y) +
+                ZM * cosf(ZF * nearestCoordinates.z));
       } else {
         throw std::runtime_error(
             "sample() called with unimplemented sampling type");
       }
     }
 
-    void SimpleProceduralVolume::gradient(VLYSamplingType samplingType,
-                                          size_t numValues,
-                                          const vly_vec3f *worldCoordinates,
-                                          vly_vec3f *results) const
+    vly_vec3f SimpleProceduralVolume::gradient(
+        const vly_vec3f *objectCoordinates) const
     {
-      // TODO: samplingType not considered for gradients; do we need it?
+      // TODO: samplingMethod not considered for gradients; do we need it?
 
-      for (size_t i = 0; i < numValues; i++) {
-        /*results[i] = M * G *
-                     (XM * sinf(XF * worldCoordinates[i].x) +
-                      YM * sinf(YF * worldCoordinates[i].y) +
-                      ZM * cosf(ZF * worldCoordinates[i].z)); */
+      vly_vec3f gradient;
 
-        results[i].x = M * G * (XM * cosf(XF * worldCoordinates[i].x) * XF);
-        results[i].y = M * G * (YM * cosf(YF * worldCoordinates[i].y) * YF);
-        results[i].z =
-            M * G * (ZM * -1.f * sinf(ZF * worldCoordinates[i].z) * ZF);
-      }
+      gradient.x = M * G * (XM * cosf(XF * objectCoordinates->x) * XF);
+      gradient.y = M * G * (YM * cosf(YF * objectCoordinates->y) * YF);
+      gradient.z = M * G * (ZM * -1.f * sinf(ZF * objectCoordinates->z) * ZF);
+
+      return gradient;
     }
 
-    void SimpleProceduralVolume::advanceRays(float samplingRate,
-                                             size_t numValues,
-                                             const vly_vec3f *origins,
-                                             const vly_vec3f *directions,
-                                             float *t) const
+    vly_box3f SimpleProceduralVolume::getBoundingBox() const
     {
-      // constant step size within volume, considering sampling rate
-      const float step = voxelSize / samplingRate;
-
-      // intersect volume to get feasible t range
-      std::vector<vly_range1f> ranges(numValues);
-      intersect(numValues, origins, directions, ranges.data());
-
-      for (size_t i = 0; i < numValues; i++) {
-        if (ranges[i].lower == (float)ospcommon::nan) {
-          // ray does not intersect volume
-          t[i] = ospcommon::nan;
-        } else if (t[i] < ranges[i].lower) {
-          // ray has not yet entered volume; advance to entry point
-          t[i] = ranges[i].lower;
-        } else if (t[i] + step > ranges[i].upper) {
-          // ray has or will have exited the volume
-          t[i] = ospcommon::nan;
-        } else {
-          t[i] += step;
-        }
-      }
+      return reinterpret_cast<const vly_box3f &>(boundingBox);
     }
+
 
     VLY_REGISTER_VOLUME(SimpleProceduralVolume, simple_procedural_volume)
 

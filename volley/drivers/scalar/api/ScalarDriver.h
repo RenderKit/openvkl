@@ -66,24 +66,10 @@ namespace volley {
 
       VLYVolume newVolume(const char *type) override;
 
-      void intersectVolume(VLYVolume volume,
-                           size_t numValues,
-                           const vly_vec3f *origins,
-                           const vly_vec3f *directions,
-                           vly_range1f *ranges) override;
+      float sampleVolume(VLYVolume volume,
+                         const vly_vec3f *objectCoordinates) override;
 
-      void sampleVolume(VLYVolume volume,
-                        VLYSamplingType samplingType,
-                        size_t numValues,
-                        const vly_vec3f *worldCoordinates,
-                        float *results) override;
-
-      void advanceRays(VLYVolume volume,
-                       float samplingRate,
-                       size_t numValues,
-                       const vly_vec3f *origins,
-                       const vly_vec3f *directions,
-                       float *t) override;
+      vly_box3f getBoundingBox(VLYVolume volume) override;
     };
 
   }  // namespace scalar_driver

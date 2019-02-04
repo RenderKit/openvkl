@@ -20,6 +20,8 @@ struct ManagedObject
 {
 };
 
+typedef ManagedObject *VLYObject;
+
 typedef struct
 {
   float x, y, z;
@@ -29,3 +31,8 @@ typedef struct
 {
   float lower, upper;
 } vly_range1f;
+
+typedef struct
+{
+  vly_vec3f lower, upper;
+} vly_box3f;

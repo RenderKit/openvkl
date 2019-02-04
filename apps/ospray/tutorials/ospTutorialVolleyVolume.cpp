@@ -95,20 +95,20 @@ int main(int argc, const char **argv)
       ospCommit(test_data.volume);
     }
 
-    static VLYSamplingType vlySamplingType = VLY_SAMPLE_LINEAR;
+    static VLYSamplingMethod vlySamplingMethod = VLY_SAMPLE_LINEAR;
     if (ImGui::RadioButton("Linear sampling",
-                           vlySamplingType == VLY_SAMPLE_LINEAR)) {
-      vlySamplingType = VLY_SAMPLE_LINEAR;
+                           vlySamplingMethod == VLY_SAMPLE_LINEAR)) {
+      vlySamplingMethod = VLY_SAMPLE_LINEAR;
 
-      ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
+      ospSet1i(test_data.volume, "vlySamplingMethod", vlySamplingMethod);
       ospCommit(test_data.volume);
     }
     ImGui::SameLine();
     if (ImGui::RadioButton("Nearest sampling",
-                           vlySamplingType == VLY_SAMPLE_NEAREST)) {
-      vlySamplingType = VLY_SAMPLE_NEAREST;
+                           vlySamplingMethod == VLY_SAMPLE_NEAREST)) {
+      vlySamplingMethod = VLY_SAMPLE_NEAREST;
 
-      ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
+      ospSet1i(test_data.volume, "vlySamplingMethod", vlySamplingMethod);
       ospCommit(test_data.volume);
     }
 

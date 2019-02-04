@@ -39,26 +39,11 @@ namespace volley {
         ManagedObject::commit();
       }
 
-      virtual void intersect(size_t numValues,
-                             const vly_vec3f *origins,
-                             const vly_vec3f *directions,
-                             vly_range1f *ranges) const = 0;
+      virtual float sample(const vly_vec3f *objectCoordinates) const = 0;
 
-      virtual void sample(VLYSamplingType samplingType,
-                          size_t numValues,
-                          const vly_vec3f *worldCoordinates,
-                          float *results) const = 0;
+      virtual vly_vec3f gradient(const vly_vec3f *objectCoordinates) const = 0;
 
-      virtual void gradient(VLYSamplingType samplingType,
-                            size_t numValues,
-                            const vly_vec3f *worldCoordinates,
-                            vly_vec3f *results) const = 0;
-
-      virtual void advanceRays(float samplingRate,
-                               size_t numValues,
-                               const vly_vec3f *origins,
-                               const vly_vec3f *directions,
-                               float *t) const = 0;
+      virtual vly_box3f getBoundingBox() const = 0;
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

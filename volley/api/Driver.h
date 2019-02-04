@@ -85,24 +85,10 @@ namespace volley {
 
       virtual VLYVolume newVolume(const char *type) = 0;
 
-      virtual void intersectVolume(VLYVolume volume,
-                                   size_t numValues,
-                                   const vly_vec3f *origins,
-                                   const vly_vec3f *directions,
-                                   vly_range1f *ranges) = 0;
+      virtual float sampleVolume(VLYVolume volume,
+                                 const vly_vec3f *objectCoordinates) = 0;
 
-      virtual void sampleVolume(VLYVolume volume,
-                                VLYSamplingType samplingType,
-                                size_t numValues,
-                                const vly_vec3f *worldCoordinates,
-                                float *results) = 0;
-
-      virtual void advanceRays(VLYVolume volume,
-                               float samplingRate,
-                               size_t numValues,
-                               const vly_vec3f *origins,
-                               const vly_vec3f *directions,
-                               float *t) = 0;
+      virtual vly_box3f getBoundingBox(VLYVolume volume) = 0;
 
      private:
       bool committed = false;

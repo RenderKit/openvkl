@@ -16,11 +16,10 @@
 
 #pragma once
 
+#include "volley_common.h"
+
 struct Driver;
 typedef Driver *VLYDriver;
-
-struct ManagedObject;
-typedef ManagedObject *VLYObject;
 
 #ifdef __cplusplus
 extern "C" {

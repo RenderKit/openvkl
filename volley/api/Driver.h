@@ -88,6 +88,9 @@ namespace volley {
       virtual float sampleVolume(VLYVolume volume,
                                  const vly_vec3f *objectCoordinates) = 0;
 
+      virtual vly_vec3f computeGradient(VLYVolume volume,
+                                        const vly_vec3f *objectCoordinates) = 0;
+
       virtual vly_box3f getBoundingBox(VLYVolume volume) = 0;
 
      private:

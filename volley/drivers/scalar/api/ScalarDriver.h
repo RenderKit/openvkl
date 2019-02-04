@@ -69,6 +69,9 @@ namespace volley {
       float sampleVolume(VLYVolume volume,
                          const vly_vec3f *objectCoordinates) override;
 
+      vly_vec3f computeGradient(VLYVolume volume,
+                                const vly_vec3f *objectCoordinates) override;
+
       vly_box3f getBoundingBox(VLYVolume volume) override;
     };
 

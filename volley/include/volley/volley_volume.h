@@ -41,9 +41,10 @@ extern "C" {
 
 VLYVolume vlyNewVolume(const char *type);
 
-float vlySampleVolume(VLYVolume volume,
-                      const vly_vec3f *objectCoordinates);
+float vlySampleVolume(VLYVolume volume, const vly_vec3f *objectCoordinates);
 
+vly_vec3f vlyComputeGradient(VLYVolume volume,
+                             const vly_vec3f *objectCoordinates);
 
 vly_box3f vlyGetBoundingBox(VLYVolume volume);
 

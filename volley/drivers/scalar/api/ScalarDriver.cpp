@@ -109,6 +109,13 @@ namespace volley {
       return volumeObject.sample(objectCoordinates);
     }
 
+    vly_vec3f ScalarDriver::computeGradient(VLYVolume volume,
+                                            const vly_vec3f *objectCoordinates)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      return volumeObject.gradient(objectCoordinates);
+    }
+
     vly_box3f ScalarDriver::getBoundingBox(VLYVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);

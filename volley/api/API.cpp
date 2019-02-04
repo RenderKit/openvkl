@@ -212,7 +212,6 @@ extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(nullptr)
 
-
 extern "C" float vlySampleVolume(
     VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
@@ -221,6 +220,13 @@ extern "C" float vlySampleVolume(
 }
 VOLLEY_CATCH_END(ospcommon::nan)
 
+extern "C" vly_vec3f vlyComputeGradient(
+    VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  return volley::api::currentDriver().computeGradient(volume,
+                                                      objectCoordinates);
+} VOLLEY_CATCH_END(vly_vec3f{ospcommon::nan})
 
 extern "C" vly_box3f vlyGetBoundingBox(VLYVolume volume) VOLLEY_CATCH_BEGIN
 {

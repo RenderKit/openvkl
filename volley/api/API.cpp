@@ -14,10 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <ospcommon/utility/OnScopeExit.h>
+#include <ospcommon/vec.h>
 #include "Driver.h"
 #include "common/logging.h"
-#include "ospcommon/utility/OnScopeExit.h"
 #include "volley/volley.h"
+
+using namespace ospcommon;
 
 #define TRACE_PREFIX "[volley] "
 
@@ -173,6 +176,17 @@ extern "C" void vlySet1f(VLYObject object,
 {
   ASSERT_DRIVER();
   volley::api::currentDriver().set1f(object, name, x);
+}
+VOLLEY_CATCH_END()
+
+extern "C" void vlySet3f(VLYObject object,
+                         const char *name,
+                         float x,
+                         float y,
+                         float z) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().setVec3f(object, name, vec3f(x, y, z));
 }
 VOLLEY_CATCH_END()
 

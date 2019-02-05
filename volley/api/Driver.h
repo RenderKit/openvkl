@@ -17,9 +17,12 @@
 #pragma once
 
 #include <ospcommon/utility/ParameterizedObject.h>
+#include <ospcommon/vec.h>
 #include <memory>
 #include "common/VLYCommon.h"
 #include "volley/volley.h"
+
+using namespace ospcommon;
 
 namespace volley {
   namespace api {
@@ -77,6 +80,9 @@ namespace volley {
 
       virtual void set1f(VLYObject object, const char *name, const float x) = 0;
       virtual void set1i(VLYObject object, const char *name, const int x)   = 0;
+      virtual void setVec3f(VLYObject object,
+                            const char *name,
+                            const vec3f &v)                                 = 0;
       virtual void setVoidPtr(VLYObject object, const char *name, void *v)  = 0;
 
       /////////////////////////////////////////////////////////////////////////

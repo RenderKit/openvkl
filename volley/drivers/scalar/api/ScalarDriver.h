@@ -58,6 +58,9 @@ namespace volley {
 
       void set1f(VLYObject object, const char *name, const float x) override;
       void set1i(VLYObject object, const char *name, const int x) override;
+      void setVec3f(VLYObject object,
+                    const char *name,
+                    const vec3f &v) override;
       void setVoidPtr(VLYObject object, const char *name, void *v) override;
 
       /////////////////////////////////////////////////////////////////////////

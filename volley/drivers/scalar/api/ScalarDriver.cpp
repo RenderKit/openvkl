@@ -87,6 +87,14 @@ namespace volley {
       managedObject->setParam(name, x);
     }
 
+    void ScalarDriver::setVec3f(VLYObject object,
+                                const char *name,
+                                const vec3f &v)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, v);
+    }
+
     void ScalarDriver::setVoidPtr(VLYObject object, const char *name, void *v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;

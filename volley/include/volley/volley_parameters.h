@@ -23,6 +23,7 @@ extern "C" {
 #endif
 
 void vlySet1f(VLYObject object, const char *name, float x);
+void vlySet3f(VLYObject, const char *name, float x, float y, float z);
 void vlySet1i(VLYObject object, const char *name, int x);
 void vlySetVoidPtr(VLYObject object, const char *name, void *v);
 

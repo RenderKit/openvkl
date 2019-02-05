@@ -55,7 +55,7 @@ int main(int argc, const char **argv)
 
   // add in generated volume and transfer function
   OSPTestingVolume test_data =
-      ospTestingNewVolume("volley_simple_procedural_volume");
+      ospTestingNewVolume("volley_wavelet_analytical_volume");
 
   OSPTransferFunction tfn =
       ospTestingNewTransferFunction(test_data.voxelRange, "jet");

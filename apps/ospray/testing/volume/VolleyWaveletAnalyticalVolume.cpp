@@ -23,19 +23,19 @@ using namespace ospcommon;
 namespace ospray {
   namespace testing {
 
-    struct VolleySimpleProceduralVolume : public Volume
+    struct VolleyWaveletAnalyticalVolume : public Volume
     {
-      VolleySimpleProceduralVolume()           = default;
-      ~VolleySimpleProceduralVolume() override = default;
+      VolleyWaveletAnalyticalVolume()           = default;
+      ~VolleyWaveletAnalyticalVolume() override = default;
 
       OSPTestingVolume createVolume() const override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    OSPTestingVolume VolleySimpleProceduralVolume::createVolume() const
+    OSPTestingVolume VolleyWaveletAnalyticalVolume::createVolume() const
     {
-      OSPVolume volume = ospNewVolume("volley::simple_procedural_volume");
+      OSPVolume volume = ospNewVolume("volley::wavelet_analytical_volume");
 
       range1f voxelRange{-2.f, 2.f};
 
@@ -50,8 +50,8 @@ namespace ospray {
       return retval;
     }
 
-    OSP_REGISTER_TESTING_VOLUME(VolleySimpleProceduralVolume,
-                                volley_simple_procedural_volume);
+    OSP_REGISTER_TESTING_VOLUME(VolleyWaveletAnalyticalVolume,
+                                volley_wavelet_analytical_volume);
 
   }  // namespace testing
 }  // namespace ospray

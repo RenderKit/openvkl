@@ -37,7 +37,7 @@ namespace ospray {
 
         vlyIntegrator = vlyNewIntegrator("ray_marching_integrator");
 
-        vlyVolume = vlyNewVolume("simple_procedural_volume");
+        vlyVolume = vlyNewVolume("wavelet_analytical_volume");
         vlyCommit(vlyVolume);
 
         volleyInitialized = true;

@@ -14,13 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "SimpleProceduralVolume.h"
+#include "WaveletAnalyticalVolume.h"
 #include <cmath>
 
 namespace volley {
   namespace scalar_driver {
 
-    void SimpleProceduralVolume::commit()
+    void WaveletAnalyticalVolume::commit()
     {
       Volume::commit();
 
@@ -35,7 +35,7 @@ namespace volley {
       voxelSize = 2.f / 32.f;
     }
 
-    float SimpleProceduralVolume::sample(
+    float WaveletAnalyticalVolume::sample(
         const vly_vec3f *objectCoordinates) const
     {
       if (samplingMethod == VLY_SAMPLE_LINEAR) {
@@ -64,7 +64,7 @@ namespace volley {
       }
     }
 
-    vly_vec3f SimpleProceduralVolume::gradient(
+    vly_vec3f WaveletAnalyticalVolume::gradient(
         const vly_vec3f *objectCoordinates) const
     {
       // TODO: samplingMethod not considered for gradients; do we need it?
@@ -78,13 +78,13 @@ namespace volley {
       return gradient;
     }
 
-    vly_box3f SimpleProceduralVolume::getBoundingBox() const
+    vly_box3f WaveletAnalyticalVolume::getBoundingBox() const
     {
       return reinterpret_cast<const vly_box3f &>(boundingBox);
     }
 
 
-    VLY_REGISTER_VOLUME(SimpleProceduralVolume, simple_procedural_volume)
+    VLY_REGISTER_VOLUME(WaveletAnalyticalVolume, wavelet_analytical_volume)
 
   }  // namespace scalar_driver
 }  // namespace volley

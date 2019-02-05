@@ -294,7 +294,7 @@ namespace ospray {
       OSPVolume newVolume(const char *_type) override
       {
         std::string type = _type;
-        bool useVolleyVolume   = type == "volley::simple_procedural_volume";
+        bool useVolleyVolume   = (type.find("volley") != std::string::npos);
 
         if (useVolleyVolume) {
           auto volume = createRegisteredObject<VolleyVolumeWrapper>();

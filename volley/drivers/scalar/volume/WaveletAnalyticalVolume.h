@@ -23,7 +23,7 @@ namespace volley {
 
   namespace scalar_driver {
 
-    struct SimpleProceduralVolume : public Volume
+    struct WaveletAnalyticalVolume : public Volume
     {
       void commit() override;
 

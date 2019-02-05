@@ -26,7 +26,7 @@ int main()
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
-  VLYVolume volume = vlyNewVolume("simple_procedural_volume");
+  VLYVolume volume = vlyNewVolume("wavelet_analytical_volume");
   vlyCommit(volume);
 
   vly_vec3f objectCoordinates{1.f, 1.f, 1.f};

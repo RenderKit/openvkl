@@ -83,6 +83,9 @@ namespace volley {
       virtual void setVec3f(VLYObject object,
                             const char *name,
                             const vec3f &v)                                 = 0;
+      virtual void setVec3i(VLYObject object,
+                            const char *name,
+                            const vec3i &v)                                 = 0;
       virtual void setVoidPtr(VLYObject object, const char *name, void *v)  = 0;
 
       /////////////////////////////////////////////////////////////////////////

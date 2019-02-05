@@ -21,6 +21,7 @@ if (BUILD_SCALAR_DRIVER)
     api/ScalarDriver.cpp
     integrator/RayMarchingIntegrator.cpp
     volume/WaveletAnalyticalVolume.cpp
+    volume/WaveletProceduralVolume.cpp
   )
 
   target_link_libraries(volley_module_scalar_driver PRIVATE volley)

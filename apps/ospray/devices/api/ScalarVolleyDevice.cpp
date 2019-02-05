@@ -95,15 +95,15 @@ namespace ospray {
         std::string rendererTypeString(renderer_type);
 
         if (rendererTypeString == "volume_renderer_default") {
-          return getHandleForAPI<OSPRenderer>(createRegisteredObject<VolumeRendererDefault>());
-        }
-        else if (rendererTypeString == "volume_renderer_stream") {
-          return getHandleForAPI<OSPRenderer>(createRegisteredObject<VolumeRendererStream>());
-        }
-        else if (rendererTypeString == "volume_renderer_volley_integration") {
-          return getHandleForAPI<OSPRenderer>(createRegisteredObject<VolumeRendererVolleyIntegration>());
-        }
-        else {
+          return getHandleForAPI<OSPRenderer>(
+              createRegisteredObject<VolumeRendererDefault>());
+        } else if (rendererTypeString == "volume_renderer_stream") {
+          return getHandleForAPI<OSPRenderer>(
+              createRegisteredObject<VolumeRendererStream>());
+        } else if (rendererTypeString == "volume_renderer_volley_integration") {
+          return getHandleForAPI<OSPRenderer>(
+              createRegisteredObject<VolumeRendererVolleyIntegration>());
+        } else {
           throw std::runtime_error("unknown renderer type string");
         }
       }
@@ -294,13 +294,20 @@ namespace ospray {
       OSPVolume newVolume(const char *_type) override
       {
         std::string type = _type;
-        bool useVolleyVolume   = (type.find("volley") != std::string::npos);
+
+        std::string volleyQualifier = "volley::";
+        bool useVolleyVolume =
+            (type.find(volleyQualifier) != std::string::npos);
 
         if (useVolleyVolume) {
-          auto volume = createRegisteredObject<VolleyVolumeWrapper>();
+          std::string volleyVolumeType =
+              std::string(type, volleyQualifier.length());
+          auto volume =
+              createRegisteredObject<VolleyVolumeWrapper>(volleyVolumeType);
           return getHandleForAPI<OSPVolume>(volume);
         } else {
-          throw std::runtime_error("only Volley volumes supported by this device");
+          throw std::runtime_error(
+              "only Volley volumes supported by this device");
           return nullptr;
         }
       }

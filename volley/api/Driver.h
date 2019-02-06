@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <ospcommon/box.h>
 #include <ospcommon/utility/ParameterizedObject.h>
 #include <ospcommon/vec.h>
 #include <memory>
@@ -94,13 +95,13 @@ namespace volley {
 
       virtual VLYVolume newVolume(const char *type) = 0;
 
-      virtual float sampleVolume(VLYVolume volume,
-                                 const vly_vec3f *objectCoordinates) = 0;
+      virtual float computeSample(VLYVolume volume,
+                                  const vec3f &objectCoordinates) = 0;
 
-      virtual vly_vec3f computeGradient(VLYVolume volume,
-                                        const vly_vec3f *objectCoordinates) = 0;
+      virtual vec3f computeGradient(VLYVolume volume,
+                                    const vec3f &objectCoordinates) = 0;
 
-      virtual vly_box3f getBoundingBox(VLYVolume volume) = 0;
+      virtual box3f getBoundingBox(VLYVolume volume) = 0;
 
      private:
       bool committed = false;

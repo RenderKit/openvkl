@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <ospcommon/box.h>
 #include <ospcommon/utility/OnScopeExit.h>
 #include <ospcommon/vec.h>
 #include "Driver.h"
@@ -199,11 +200,8 @@ extern "C" void vlySet1i(VLYObject object,
 }
 VOLLEY_CATCH_END()
 
-extern "C" void vlySet3i(VLYObject object,
-                         const char *name,
-                         int x,
-                         int y,
-                         int z) VOLLEY_CATCH_BEGIN
+extern "C" void vlySet3i(
+    VLYObject object, const char *name, int x, int y, int z) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   volley::api::currentDriver().setVec3i(object, name, vec3i(x, y, z));
@@ -237,11 +235,12 @@ extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" float vlySampleVolume(
+extern "C" float vlyComputeSample(
     VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  return volley::api::currentDriver().sampleVolume(volume, objectCoordinates);
+  return volley::api::currentDriver().computeSample(
+      volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
 }
 VOLLEY_CATCH_END(ospcommon::nan)
 
@@ -249,13 +248,16 @@ extern "C" vly_vec3f vlyComputeGradient(
     VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  return volley::api::currentDriver().computeGradient(volume,
-                                                      objectCoordinates);
-} VOLLEY_CATCH_END(vly_vec3f{ospcommon::nan})
+  const vec3f result = volley::api::currentDriver().computeGradient(
+      volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
+  return reinterpret_cast<const vly_vec3f &>(result);
+}
+VOLLEY_CATCH_END(vly_vec3f{ospcommon::nan})
 
 extern "C" vly_box3f vlyGetBoundingBox(VLYVolume volume) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  return volley::api::currentDriver().getBoundingBox(volume);
+  const box3f result = volley::api::currentDriver().getBoundingBox(volume);
+  return reinterpret_cast<const vly_box3f &>(result);
 }
 VOLLEY_CATCH_END(vly_box3f{ospcommon::nan})

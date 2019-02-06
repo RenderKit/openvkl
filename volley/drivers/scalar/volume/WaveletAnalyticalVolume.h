@@ -27,14 +27,11 @@ namespace volley {
     {
       void commit() override;
 
-      float sample(const vly_vec3f *objectCoordinates) const override;
-
-      vly_vec3f gradient(const vly_vec3f *objectCoordinates) const override;
-
-      vly_box3f getBoundingBox() const override;
+      float computeSample(const vec3f &objectCoordinates) const override;
+      vec3f computeGradient(const vec3f &objectCoordinates) const override;
+      box3f getBoundingBox() const override;
 
      protected:
-
       // parameters to be updated on commit
       VLYSamplingMethod samplingMethod = VLY_SAMPLE_LINEAR;
       box3f boundingBox;

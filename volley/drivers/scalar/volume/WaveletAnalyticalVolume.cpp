@@ -25,7 +25,8 @@ namespace volley {
       Volume::commit();
 
       // update user-provided parameters
-      samplingMethod = VLYSamplingMethod(getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
+      samplingMethod =
+          VLYSamplingMethod(getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
 
       // hardcoded bounding box for now
       boundingBox = box3f(vec3f(-1.f), vec3f(1.f));
@@ -35,22 +36,20 @@ namespace volley {
       voxelSize = 2.f / 32.f;
     }
 
-    float WaveletAnalyticalVolume::sample(
-        const vly_vec3f *objectCoordinates) const
+    float WaveletAnalyticalVolume::computeSample(
+        const vec3f &objectCoordinates) const
     {
       if (samplingMethod == VLY_SAMPLE_LINEAR) {
         return M * G *
-               (XM * sinf(XF * objectCoordinates->x) +
-                YM * sinf(YF * objectCoordinates->y) +
-                ZM * cosf(ZF * objectCoordinates->z));
+               (XM * sinf(XF * objectCoordinates.x) +
+                YM * sinf(YF * objectCoordinates.y) +
+                ZM * cosf(ZF * objectCoordinates.z));
 
       } else if (samplingMethod == VLY_SAMPLE_NEAREST) {
         // generate modified world coordinates to approximate "nearest"
         // filtering in an actual data-based structured volume
         const vec3i logicalCoordinates =
-            (*reinterpret_cast<const vec3f *>(objectCoordinates) -
-             boundingBox.lower) /
-            voxelSize;
+            (objectCoordinates - boundingBox.lower) / voxelSize;
 
         const vec3f nearestCoordinates = -1.f + logicalCoordinates * voxelSize;
 
@@ -64,25 +63,24 @@ namespace volley {
       }
     }
 
-    vly_vec3f WaveletAnalyticalVolume::gradient(
-        const vly_vec3f *objectCoordinates) const
+    vec3f WaveletAnalyticalVolume::computeGradient(
+        const vec3f &objectCoordinates) const
     {
       // TODO: samplingMethod not considered for gradients; do we need it?
 
-      vly_vec3f gradient;
+      vec3f gradient;
 
-      gradient.x = M * G * (XM * cosf(XF * objectCoordinates->x) * XF);
-      gradient.y = M * G * (YM * cosf(YF * objectCoordinates->y) * YF);
-      gradient.z = M * G * (ZM * -1.f * sinf(ZF * objectCoordinates->z) * ZF);
+      gradient.x = M * G * (XM * cosf(XF * objectCoordinates.x) * XF);
+      gradient.y = M * G * (YM * cosf(YF * objectCoordinates.y) * YF);
+      gradient.z = M * G * (ZM * -1.f * sinf(ZF * objectCoordinates.z) * ZF);
 
       return gradient;
     }
 
-    vly_box3f WaveletAnalyticalVolume::getBoundingBox() const
+    box3f WaveletAnalyticalVolume::getBoundingBox() const
     {
-      return reinterpret_cast<const vly_box3f &>(boundingBox);
+      return boundingBox;
     }
-
 
     VLY_REGISTER_VOLUME(WaveletAnalyticalVolume, wavelet_analytical_volume)
 

@@ -118,21 +118,21 @@ namespace volley {
       return (VLYVolume)Volume::createInstance(type);
     }
 
-    float ScalarDriver::sampleVolume(VLYVolume volume,
-                                     const vly_vec3f *objectCoordinates)
+    float ScalarDriver::computeSample(VLYVolume volume,
+                                      const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      return volumeObject.sample(objectCoordinates);
+      return volumeObject.computeSample(objectCoordinates);
     }
 
-    vly_vec3f ScalarDriver::computeGradient(VLYVolume volume,
-                                            const vly_vec3f *objectCoordinates)
+    vec3f ScalarDriver::computeGradient(VLYVolume volume,
+                                        const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      return volumeObject.gradient(objectCoordinates);
+      return volumeObject.computeGradient(objectCoordinates);
     }
 
-    vly_box3f ScalarDriver::getBoundingBox(VLYVolume volume)
+    box3f ScalarDriver::getBoundingBox(VLYVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return volumeObject.getBoundingBox();

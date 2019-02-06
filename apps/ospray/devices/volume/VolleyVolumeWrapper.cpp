@@ -76,7 +76,7 @@ namespace ospray {
     float VolleyVolumeWrapper::computeSample(
         const vec3f &worldCoordinates) const
     {
-      return vlySampleVolume(vlyVolume, (vly_vec3f *)&worldCoordinates);
+      return vlyComputeSample(vlyVolume, (vly_vec3f *)&worldCoordinates);
     }
 
     std::vector<float> VolleyVolumeWrapper::computeSamples(
@@ -89,7 +89,7 @@ namespace ospray {
                      worldCoordinates.end(),
                      samples.begin(),
                      [&](const vec3f &c) {
-                       return vlySampleVolume(vlyVolume, (vly_vec3f *)&c);
+                       return vlyComputeSample(vlyVolume, (vly_vec3f *)&c);
                      });
 
       return samples;

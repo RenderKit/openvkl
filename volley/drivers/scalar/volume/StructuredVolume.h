@@ -16,38 +16,45 @@
 
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
-#include "volley_common.h"
+#include "Volume.h"
+#include "common/math.h"
 
-struct Volume : public ManagedObject
-{
-};
+namespace volley {
+  namespace scalar_driver {
 
-typedef Volume *VLYVolume;
+    struct StructuredVolume : public Volume
+    {
+      virtual void commit() override
+      {
+        Volume::commit();
 
-typedef enum
-#if __cplusplus >= 201103L
-    : uint32_t
-#endif
-{
-  VLY_SAMPLE_NEAREST = 100,
-  VLY_SAMPLE_LINEAR  = 200,
-} VLYSamplingMethod;
+        gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
+        gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
+      }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+      box3f getBoundingBox() const override
+      {
+        return box3f(gridOrigin, gridOrigin + dimensions * gridSpacing);
+      }
 
-VLYVolume vlyNewVolume(const char *type);
+     protected:
+      vec3f transformLocalToObject(const vec3f &localCoordinates)
+      {
+        return gridOrigin + localCoordinates * gridSpacing;
+      }
 
-float vlyComputeSample(VLYVolume volume, const vly_vec3f *objectCoordinates);
+      vec3f transformObjectToLocal(const vec3f &objectCoordinates)
+      {
+        return rcp(gridSpacing) * (objectCoordinates - gridOrigin);
+      }
 
-vly_vec3f vlyComputeGradient(VLYVolume volume,
-                             const vly_vec3f *objectCoordinates);
+      // must be set by any derived types
+      vec3i dimensions;
 
-vly_box3f vlyGetBoundingBox(VLYVolume volume);
+      // TODO: to be replaced with more general affine transformation
+      vec3f gridOrigin;
+      vec3f gridSpacing;
+    };
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif
+  }  // namespace scalar_driver
+}  // namespace volley

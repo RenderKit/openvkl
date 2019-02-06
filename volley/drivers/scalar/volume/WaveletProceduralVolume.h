@@ -16,24 +16,23 @@
 
 #pragma once
 
-#include "Volume.h"
+#include "StructuredVolume.h"
 #include "common/math.h"
 
 namespace volley {
 
   namespace scalar_driver {
 
-    struct WaveletProceduralVolume : public Volume
+    struct WaveletProceduralVolume : public StructuredVolume
     {
       void commit() override;
 
-      float sample(const vly_vec3f *objectCoordinates) const override;
 
-      vly_vec3f gradient(const vly_vec3f *objectCoordinates) const override;
-
-      vly_box3f getBoundingBox() const override;
+      float computeSample(const vec3f &objectCoordinates) const override;
+      vec3f computeGradient(const vec3f &objectCoordinates) const override;
 
      protected:
+      float getVoxel(const vec3i &index);
 
       // parameters to be updated on commit
       VLYSamplingMethod samplingMethod = VLY_SAMPLE_LINEAR;

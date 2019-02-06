@@ -72,13 +72,13 @@ namespace volley {
 
       VLYVolume newVolume(const char *type) override;
 
-      float sampleVolume(VLYVolume volume,
-                         const vly_vec3f *objectCoordinates) override;
+      float computeSample(VLYVolume volume,
+                          const vec3f &objectCoordinates) override;
 
-      vly_vec3f computeGradient(VLYVolume volume,
-                                const vly_vec3f *objectCoordinates) override;
+      vec3f computeGradient(VLYVolume volume,
+                            const vec3f &objectCoordinates) override;
 
-      vly_box3f getBoundingBox(VLYVolume volume) override;
+      box3f getBoundingBox(VLYVolume volume) override;
     };
 
   }  // namespace scalar_driver

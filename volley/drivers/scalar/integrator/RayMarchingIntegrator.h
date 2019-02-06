@@ -37,7 +37,7 @@ namespace volley {
 
      protected:
       float samplingRate;
-      VLYSamplingType samplingType;
+      VLYSamplingMethod samplingMethod;
     };
 
   }  // namespace scalar_driver

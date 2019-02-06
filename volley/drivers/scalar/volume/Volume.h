@@ -16,12 +16,14 @@
 
 #pragma once
 
+#include <ospcommon/box.h>
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 #include "volley/volley.h"
 
-namespace volley {
+using namespace ospcommon;
 
+namespace volley {
   namespace scalar_driver {
 
     struct Volume : public ManagedObject
@@ -39,11 +41,9 @@ namespace volley {
         ManagedObject::commit();
       }
 
-      virtual float sample(const vly_vec3f *objectCoordinates) const = 0;
-
-      virtual vly_vec3f gradient(const vly_vec3f *objectCoordinates) const = 0;
-
-      virtual vly_box3f getBoundingBox() const = 0;
+      virtual float computeSample(const vec3f &objectCoordinates) const   = 0;
+      virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
+      virtual box3f getBoundingBox() const                                = 0;
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

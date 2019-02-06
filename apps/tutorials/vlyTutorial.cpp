@@ -31,7 +31,7 @@ int main()
 
   vly_vec3f objectCoordinates{1.f, 1.f, 1.f};
 
-  float sample = vlySampleVolume(volume, &objectCoordinates);
+  float sample = vlyComputeSample(volume, &objectCoordinates);
 
   std::cout << sample << std::endl;
 

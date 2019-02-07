@@ -43,6 +43,34 @@ namespace ospray {
         volleyInitialized = true;
       }
 
+      // pass all supported parameters through to Volley volume object
+      std::for_each(
+          params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
+            auto &param = *p;
+
+            if (param.data.is<vec3f>()) {
+              std::cerr << "[VolleyVolumeWrapper] passing through parameter: "
+                        << param.name << std::endl;
+              vlySet3f(vlyVolume,
+                       param.name.c_str(),
+                       param.data.get<vec3f>().x,
+                       param.data.get<vec3f>().y,
+                       param.data.get<vec3f>().z);
+            } else if (param.data.is<vec3i>()) {
+              std::cerr << "[VolleyVolumeWrapper] passing through parameter: "
+                        << param.name << std::endl;
+              vlySet3i(vlyVolume,
+                       param.name.c_str(),
+                       param.data.get<vec3i>().x,
+                       param.data.get<vec3i>().y,
+                       param.data.get<vec3i>().z);
+            } else {
+              std::cerr << "[VolleyVolumeWrapper] ignoring unsupported "
+                           "parameter type: "
+                        << param.name << std::endl;
+            }
+          });
+
       // update parameters
       samplingRate     = getParam<float>("samplingRate", 1.f);
       adaptiveSampling = bool(getParam<int>("adaptiveSampling", 0));

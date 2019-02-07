@@ -37,6 +37,14 @@ namespace ospray {
     {
       OSPVolume volume = ospNewVolume("volley::wavelet_procedural_volume");
 
+      vec3i dimensions(128);
+      vec3f gridOrigin(-1.f);
+      vec3f gridSpacing(2.f / float(dimensions.x));
+
+      ospSet3iv(volume, "dimensions", &dimensions.x);
+      ospSet3fv(volume, "gridOrigin", &gridOrigin.x);
+      ospSet3fv(volume, "gridSpacing", &gridSpacing.x);
+
       range1f voxelRange{-2.f, 2.f};
 
       const auto range  = voxelRange.toVec2f();

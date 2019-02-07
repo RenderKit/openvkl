@@ -18,6 +18,7 @@
 
 #include <ospray/ospcommon/box.h>
 #include <ospray/ospcommon/vec.h>
+#include <cmath>
 
 namespace volley {
 
@@ -33,6 +34,12 @@ namespace volley {
 
     return {reduce_max(vec4f{min(mins, maxs), rangeLimit.lower}),
             reduce_min(vec4f{max(mins, maxs), rangeLimit.upper})};
+  }
+
+  inline vec3f nextafter(const vec3i &a, const vec3i &b)
+  {
+    return vec3f(
+        nextafterf(a.x, b.x), nextafterf(a.y, b.y), nextafterf(a.z, b.z));
   }
 
 }  // namespace volley

@@ -24,59 +24,40 @@ namespace volley {
     {
       StructuredVolume::commit();
 
-      // update user-provided parameters
-      samplingMethod =
-          VLYSamplingMethod(getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
+      // this volume is generated on commit based on the user-provided
+      // dimensions
+      dimensions = getParam<vec3i>("dimensions", vec3i(128, 128, 128));
+      localCoordinatesUpperBound = nextafter(dimensions, vec3i(0, 0, 0));
 
-      // hardcoded bounding box for now
-      boundingBox = box3f(vec3f(-1.f), vec3f(1.f));
+      volumeData.resize(dimensions.x * dimensions.y * dimensions.z);
 
-      // nominal voxel size for [(-1, -1, -1), (1, 1, 1)] procedural volume
-      // mapping to a resolution of 32x32x32
-      voxelSize = 2.f / 32.f;
-    }
-
-    float WaveletProceduralVolume::computeSample(
-        const vec3f &objectCoordinates) const
-    {
-      if (samplingMethod == VLY_SAMPLE_LINEAR) {
-        return M * G *
-               (XM * sinf(XF * objectCoordinates.x) +
-                YM * sinf(YF * objectCoordinates.y) +
-                ZM * cosf(ZF * objectCoordinates.z));
-
-      } else if (samplingMethod == VLY_SAMPLE_NEAREST) {
-        // generate modified world coordinates to approximate "nearest"
-        // filtering in an actual data-based structured volume
-        const vec3i logicalCoordinates =
-            (objectCoordinates - boundingBox.lower) / voxelSize;
-
-        const vec3f nearestCoordinates = -1.f + logicalCoordinates * voxelSize;
-
-        return M * G *
-               (XM * sinf(XF * nearestCoordinates.x) +
-                YM * sinf(YF * nearestCoordinates.y) +
-                ZM * cosf(ZF * nearestCoordinates.z));
-      } else {
-        throw std::runtime_error(
-            "sample() called with unimplemented sampling type");
+      for (size_t z = 0; z < dimensions.z; z++) {
+        for (size_t y = 0; y < dimensions.y; y++) {
+          for (size_t x = 0; x < dimensions.x; x++) {
+            size_t index =
+                z * dimensions.y * dimensions.x + y * dimensions.x + x;
+            vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
+            volumeData[index]       = getWaveletValue(objectCoordinates);
+          }
+        }
       }
     }
 
-    vec3f WaveletProceduralVolume::computeGradient(
-        const vec3f &objectCoordinates) const
+    float WaveletProceduralVolume::getVoxel(const vec3i &localCoordinates) const
     {
-      // TODO: samplingMethod not considered for gradients; do we need it?
-
-      vec3f gradient;
-
-      gradient.x = M * G * (XM * cosf(XF * objectCoordinates.x) * XF);
-      gradient.y = M * G * (YM * cosf(YF * objectCoordinates.y) * YF);
-      gradient.z = M * G * (ZM * -1.f * sinf(ZF * objectCoordinates.z) * ZF);
-
-      return gradient;
+      size_t index = localCoordinates.z * dimensions.y * dimensions.x +
+                     localCoordinates.y * dimensions.x + localCoordinates.x;
+      return volumeData[index];
     }
 
+    float WaveletProceduralVolume::getWaveletValue(
+        const vec3f &objectCoordinates) const
+    {
+      return M * G *
+             (XM * sinf(XF * objectCoordinates.x) +
+              YM * sinf(YF * objectCoordinates.y) +
+              ZM * cosf(ZF * objectCoordinates.z));
+    }
 
     VLY_REGISTER_VOLUME(WaveletProceduralVolume, wavelet_procedural_volume)
 

@@ -27,17 +27,11 @@ namespace volley {
     {
       void commit() override;
 
-
-      float computeSample(const vec3f &objectCoordinates) const override;
-      vec3f computeGradient(const vec3f &objectCoordinates) const override;
-
      protected:
-      float getVoxel(const vec3i &index);
+      float getVoxel(const vec3i &index) const override;
+      float getWaveletValue(const vec3f &objectCoordinates) const;
 
-      // parameters to be updated on commit
-      VLYSamplingMethod samplingMethod = VLY_SAMPLE_LINEAR;
-      box3f boundingBox;
-      float voxelSize;
+      std::vector<float> volumeData;
 
       // wavelet parameters
       const float M  = 1.f;

@@ -16,13 +16,37 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+#include <ospcommon/utility/ArrayView.h>
+#include <ospcommon/range.h>
+#include "common/ManagedObject.h"
+#include "common/objectFactory.h"
+#include "volley/volley.h"
 
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_parameters.h"
-#include "volley_samples_mask.h"
-#include "volley_version.h"
-#include "volley_volume.h"
+using namespace ospcommon;
+
+namespace volley {
+  namespace scalar_driver {
+
+    struct SamplesMask : public ManagedObject
+    {
+      SamplesMask()                   = default;
+      virtual ~SamplesMask() override = default;
+
+      static SamplesMask *createInstance()
+      {
+        return createInstanceHelper<SamplesMask, VLY_SAMPLES_MASK>("base");
+      }
+
+      virtual void commit() override
+      {
+        ManagedObject::commit();
+      }
+
+      void addRanges(const utility::ArrayView<const range1f> &ranges);
+    };
+
+#define VLY_REGISTER_SAMPLES_MASK(InternalClass, external_name) \
+  VLY_REGISTER_OBJECT(SamplesMask, samples_mask, InternalClass, external_name)
+
+  }  // namespace scalar_driver
+}  // namespace volley

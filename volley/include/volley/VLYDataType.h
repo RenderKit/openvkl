@@ -38,7 +38,7 @@ typedef enum
 
   //! Object reference subtypes.
   VLY_DATA,
-  VLY_TRANSFER_FUNCTION,
+  VLY_SAMPLES_MASK,
   VLY_VOLUME,
   VLY_INTEGRATOR,
 

@@ -14,15 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "SamplesMask.h"
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+namespace volley {
+  namespace scalar_driver {
 
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_parameters.h"
-#include "volley_samples_mask.h"
-#include "volley_version.h"
-#include "volley_volume.h"
+    void SamplesMask::addRanges(const utility::ArrayView<const range1f> &ranges)
+    {
+      for (const auto &r : ranges) {
+        this->ranges.push_back(r);
+      }
+    }
+
+    VLY_REGISTER_SAMPLES_MASK(SamplesMask, base_samples_mask)
+
+  }  // namespace scalar_driver
+}  // namespace volley

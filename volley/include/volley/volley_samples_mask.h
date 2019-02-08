@@ -16,13 +16,38 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
-
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_module.h"
-#include "volley_parameters.h"
-#include "volley_samples_mask.h"
-#include "volley_version.h"
+#include "volley_common.h"
 #include "volley_volume.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct SamplesMask;
+typedef SamplesMask *VLYSamplesMask;
+
+VLYSamplesMask vlyNewSamplesMask();
+
+void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
+                             size_t numRanges,
+                             const vly_range1f *ranges);
+
+void vlySamplesMaskAddValues(VLYSamplesMask samplesMask,
+                             size_t numValues,
+                             const float *values);
+
+vly_range1f vlySamplesMaskExtents(const VLYSamplesMask samplesMask);
+
+void vlySamplesMaskTestRanges(VLYSamplesMask samplesMask,
+                              size_t numRanges,
+                              const vly_range1f *ranges,
+                              bool *results);
+
+void vlySamplesMaskTestValues(const VLYSamplesMask samplesMask,
+                              size_t numValues,
+                              const float *values,
+                              bool *results);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

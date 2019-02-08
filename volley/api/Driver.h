@@ -17,6 +17,7 @@
 #pragma once
 
 #include <ospcommon/box.h>
+#include <ospcommon/utility/ArrayView.h>
 #include <ospcommon/utility/ParameterizedObject.h>
 #include <ospcommon/vec.h>
 #include <memory>
@@ -88,6 +89,16 @@ namespace volley {
                             const char *name,
                             const vec3i &v)                                 = 0;
       virtual void setVoidPtr(VLYObject object, const char *name, void *v)  = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Samples mask /////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VLYSamplesMask newSamplesMask() = 0;
+
+      virtual void samplesMaskAddRanges(
+          VLYSamplesMask samplesMask,
+          const utility::ArrayView<const range1f> &ranges) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////

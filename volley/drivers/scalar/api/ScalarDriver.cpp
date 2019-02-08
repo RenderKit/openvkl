@@ -16,6 +16,7 @@
 
 #include "ScalarDriver.h"
 #include "../integrator/Integrator.h"
+#include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
 
 namespace volley {
@@ -107,6 +108,23 @@ namespace volley {
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+    // Samples mask /////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    VLYSamplesMask ScalarDriver::newSamplesMask()
+    {
+      return (VLYSamplesMask)SamplesMask::createInstance();
+    }
+
+    void ScalarDriver::samplesMaskAddRanges(
+        VLYSamplesMask samplesMask,
+        const utility::ArrayView<const range1f> &ranges)
+    {
+      auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
+      samplesMaskObject.addRanges(ranges);
     }
 
     ///////////////////////////////////////////////////////////////////////////

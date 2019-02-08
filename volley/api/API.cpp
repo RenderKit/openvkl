@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include <ospcommon/box.h>
+#include <ospcommon/utility/ArrayView.h>
 #include <ospcommon/utility/OnScopeExit.h>
 #include <ospcommon/vec.h>
 #include "Driver.h"
@@ -214,6 +215,35 @@ extern "C" void vlySetVoidPtr(VLYObject object,
 {
   ASSERT_DRIVER();
   volley::api::currentDriver().setVoidPtr(object, name, v);
+}
+VOLLEY_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Samples mask ///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VLYSamplesMask vlyNewSamplesMask() VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  VLYSamplesMask samplesMask = volley::api::currentDriver().newSamplesMask();
+  if (samplesMask == nullptr) {
+    postLogMessage(volley::VLY_LOG_ERROR) << "could not create samples mask";
+  }
+
+  return samplesMask;
+}
+VOLLEY_CATCH_END(nullptr)
+
+extern "C" void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
+                                        size_t numRanges,
+                                        const vly_range1f *ranges)
+    VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().samplesMaskAddRanges(
+      samplesMask,
+      utility::ArrayView<const range1f>(
+          reinterpret_cast<const range1f *>(ranges), numRanges));
 }
 VOLLEY_CATCH_END()
 

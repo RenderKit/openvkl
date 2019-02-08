@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <ospcommon/utility/ArrayView.h>
 #include <ospcommon/range.h>
+#include <ospcommon/utility/ArrayView.h>
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 #include "volley/volley.h"
@@ -34,7 +34,8 @@ namespace volley {
 
       static SamplesMask *createInstance()
       {
-        return createInstanceHelper<SamplesMask, VLY_SAMPLES_MASK>("base");
+        return createInstanceHelper<SamplesMask, VLY_SAMPLES_MASK>(
+            "base_samples_mask");
       }
 
       virtual void commit() override
@@ -43,6 +44,9 @@ namespace volley {
       }
 
       void addRanges(const utility::ArrayView<const range1f> &ranges);
+
+     protected:
+      std::vector<range1f> ranges;
     };
 
 #define VLY_REGISTER_SAMPLES_MASK(InternalClass, external_name) \

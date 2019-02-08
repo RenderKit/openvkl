@@ -64,6 +64,25 @@ namespace volley {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Iterator ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    VLYRayIterator ScalarDriver::newRayIterator(VLYVolume volume,
+                                                const vec3f &origin,
+                                                const vec3f &direction,
+                                                const range1f &tRange,
+                                                VLYSamplesMask samplesMask)
+    {
+#warning not implemented
+    }
+
+    bool ScalarDriver::iterateInterval(VLYRayIterator rayIterator,
+                                       range1f &tRange,
+                                       VLYSamplesMask &intervalSamplesMask){
+#warning not implemented
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // Module /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 

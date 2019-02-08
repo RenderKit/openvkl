@@ -16,14 +16,37 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
-
-#include "volley_driver.h"
-#include "volley_integrator.h"
-#include "volley_iterator.h"
-#include "volley_module.h"
-#include "volley_parameters.h"
+#include "volley_common.h"
 #include "volley_samples_mask.h"
-#include "volley_version.h"
 #include "volley_volume.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct RayIterator;
+typedef RayIterator *VLYRayIterator;
+
+VLYRayIterator vlyNewRayIterator(VLYVolume volume,
+                                 const vly_vec3f *origin,
+                                 const vly_vec3f *direction,
+                                 const vly_range1f *tRange,
+                                 VLYSamplesMask samplesMask);
+
+// returns true while the iterator is still within the volume
+bool vlyIterateInterval(VLYRayIterator rayIterator,
+                        vly_range1f *tRange,
+                        VLYSamplesMask *intervalSamplesMask);
+
+// returns true while the iterator is still within the volume
+bool vlyIterateSurface(VLYRayIterator, float *t, float *sample);
+
+/* TODO:
+
+- need nominalDeltaT to also be returned
+- open whether output sample mask is returned
+*/
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

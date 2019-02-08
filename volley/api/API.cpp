@@ -155,6 +155,39 @@ extern "C" void vlyIntegrateVolume(
 VOLLEY_CATCH_END()
 
 ///////////////////////////////////////////////////////////////////////////////
+// Iterator ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
+                                            const vly_vec3f *origin,
+                                            const vly_vec3f *direction,
+                                            const vly_range1f *tRange,
+                                            VLYSamplesMask samplesMask)
+    VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  return volley::api::currentDriver().newRayIterator(
+      volume,
+      reinterpret_cast<const vec3f &>(*origin),
+      reinterpret_cast<const vec3f &>(*direction),
+      reinterpret_cast<const range1f &>(*tRange),
+      samplesMask);
+}
+VOLLEY_CATCH_END(nullptr)
+
+extern "C" bool vlyIterateInterval(VLYRayIterator rayIterator,
+                                   vly_range1f *tRange,
+                                   VLYSamplesMask *intervalSamplesMask)
+    VOLLEY_CATCH_BEGIN
+{
+  return volley::api::currentDriver().iterateInterval(
+      rayIterator,
+      reinterpret_cast<range1f &>(*tRange),
+      reinterpret_cast<VLYSamplesMask &>(*intervalSamplesMask));
+}
+VOLLEY_CATCH_END(false)
+
+///////////////////////////////////////////////////////////////////////////////
 // Module /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 

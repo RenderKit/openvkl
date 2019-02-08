@@ -71,6 +71,20 @@ namespace volley {
           IntegrationStepFunction integrationStepFunction) = 0;
 
       /////////////////////////////////////////////////////////////////////////
+      // Iterator /////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VLYRayIterator newRayIterator(VLYVolume volume,
+                                            const vec3f &origin,
+                                            const vec3f &direction,
+                                            const range1f &tRange,
+                                            VLYSamplesMask samplesMask) = 0;
+
+      virtual bool iterateInterval(VLYRayIterator rayIterator,
+                                   range1f &tRange,
+                                   VLYSamplesMask &intervalSamplesMask) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 

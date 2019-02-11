@@ -17,39 +17,52 @@
 #pragma once
 
 #include <ospcommon/range.h>
-#include <ospcommon/utility/ArrayView.h>
+#include "../samples_mask/SamplesMask.h"
 #include "common/ManagedObject.h"
-#include "common/objectFactory.h"
 
 using namespace ospcommon;
 
 namespace volley {
   namespace scalar_driver {
 
-    struct SamplesMask : public ManagedObject
+    struct Volume;
+
+    struct RayIterator : public ManagedObject
     {
-      SamplesMask()                   = default;
-      virtual ~SamplesMask() override = default;
-
-      static SamplesMask *createInstance()
+      RayIterator(const volley::scalar_driver::Volume *volume,
+                  const vec3f &origin,
+                  const vec3f &direction,
+                  const range1f &tRange,
+                  const SamplesMask *samplesMask)
+          : volume(volume),
+            origin(origin),
+            direction(direction),
+            tRange(tRange),
+            samplesMask(samplesMask)
       {
-        return createInstanceHelper<SamplesMask, VLY_SAMPLES_MASK>(
-            "base_samples_mask");
       }
 
-      virtual void commit() override
+      virtual ~RayIterator() override = default;
+
+      range1f getCurrentTRange()
       {
-        ManagedObject::commit();
+        return currentTRange;
       }
 
-      void addRanges(const utility::ArrayView<const range1f> &ranges);
+      virtual bool iterateInterval() = 0;
 
      protected:
-      std::vector<range1f> ranges;
-    };
+      // initial state
+      const Volume *volume;
+      const vec3f origin;
+      const vec3f direction;
+      const range1f tRange;
+      const SamplesMask *samplesMask;
 
-#define VLY_REGISTER_SAMPLES_MASK(InternalClass, external_name) \
-  VLY_REGISTER_OBJECT(SamplesMask, samples_mask, InternalClass, external_name)
+      // current state
+      range1f currentTRange = ospcommon::empty;
+      SamplesMask intervalSamplesMask;
+    };
 
   }  // namespace scalar_driver
 }  // namespace volley

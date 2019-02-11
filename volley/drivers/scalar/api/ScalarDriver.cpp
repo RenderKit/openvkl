@@ -73,13 +73,22 @@ namespace volley {
                                                 const range1f &tRange,
                                                 VLYSamplesMask samplesMask)
     {
-#warning not implemented
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      return (VLYRayIterator)volumeObject.newRayIterator(
+          origin,
+          direction,
+          tRange,
+          reinterpret_cast<const SamplesMask *>(samplesMask));
     }
 
     bool ScalarDriver::iterateInterval(VLYRayIterator rayIterator,
                                        range1f &tRange,
-                                       VLYSamplesMask &intervalSamplesMask){
-#warning not implemented
+                                       VLYSamplesMask &intervalSamplesMask)
+    {
+      auto &rayIteratorObject = referenceFromHandle<RayIterator>(rayIterator);
+      bool result             = rayIteratorObject.iterateInterval();
+      tRange                  = rayIteratorObject.getCurrentTRange();
+      return result;
     }
 
     ///////////////////////////////////////////////////////////////////////////

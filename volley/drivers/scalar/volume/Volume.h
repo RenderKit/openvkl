@@ -17,6 +17,7 @@
 #pragma once
 
 #include <ospcommon/box.h>
+#include "../iterator/DumbRayIterator.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 #include "volley/volley.h"
@@ -39,6 +40,18 @@ namespace volley {
       virtual void commit() override
       {
         ManagedObject::commit();
+      }
+
+      // volumes can provide their own ray iterators based on their internal
+      // acceleration structures. the default "dumb" ray iterator assumes no
+      // acceleration structure.
+      virtual RayIterator *newRayIterator(const vec3f &origin,
+                                          const vec3f &direction,
+                                          const range1f &tRange,
+                                          const SamplesMask *samplesMask)
+      {
+        return new DumbRayIterator(
+            this, origin, direction, tRange, samplesMask);
       }
 
       virtual float computeSample(const vec3f &objectCoordinates) const   = 0;

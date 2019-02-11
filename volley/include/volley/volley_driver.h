@@ -31,6 +31,8 @@ void vlySetCurrentDriver(VLYDriver driver);
 
 void vlyCommit(VLYObject object);
 
+void vlyRelease(VLYObject object);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -113,6 +113,14 @@ extern "C" void vlyCommit(VLYObject object) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlyRelease(VLYObject object) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  Assert(object && "invalid object handle to release");
+  volley::api::currentDriver().release(object);
+}
+VOLLEY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Integrator /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

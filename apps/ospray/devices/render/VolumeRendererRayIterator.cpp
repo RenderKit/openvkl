@@ -88,6 +88,8 @@ namespace ospray {
           }
 
           tile.colorBuffer[tile.indexOf(vec2i{x, y})] = color;
+
+          vlyRelease(rayIterator);
         }
       });
     }

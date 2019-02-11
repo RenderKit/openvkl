@@ -24,7 +24,10 @@
 extern "C" {
 #endif
 
-struct RayIterator;
+struct RayIterator : public ManagedObject
+{
+};
+
 typedef RayIterator *VLYRayIterator;
 
 VLYRayIterator vlyNewRayIterator(VLYVolume volume,

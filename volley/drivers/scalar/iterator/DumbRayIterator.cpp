@@ -14,28 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "RayIterator.h"
+#include "DumbRayIterator.h"
+#include "../volume/Volume.h"
+#include "common/math.h"
 
 namespace volley {
   namespace scalar_driver {
 
-    struct Volume;
-
-    struct DumbRayIterator : public RayIterator
+    DumbRayIterator::DumbRayIterator(const Volume *volume,
+                                     const vec3f &origin,
+                                     const vec3f &direction,
+                                     const range1f &tRange,
+                                     const SamplesMask *samplesMask)
+        : RayIterator(volume, origin, direction, tRange, samplesMask)
     {
-      DumbRayIterator(const Volume *volume,
-                      const vec3f &origin,
-                      const vec3f &direction,
-                      const range1f &tRange,
-                      const SamplesMask *samplesMask);
+      box3f boundingBox = volume->getBoundingBox();
 
-      bool iterateInterval() override;
+      auto hits = intersectBox(origin, direction, boundingBox, tRange);
 
-     protected:
-      range1f boundingBoxTRange = ospcommon::empty;
-    };
+      if (hits.first < hits.second) {
+        boundingBoxTRange.lower = hits.first;
+        boundingBoxTRange.upper = hits.second;
+      }
+    }
+
+    bool DumbRayIterator::iterateInterval()
+    {
+      if (boundingBoxTRange.empty()) {
+        return false;
+      }
+
+      static float nominalDeltaT = 0.1f;
+
+      if (currentTRange.empty()) {
+        currentTRange.lower = boundingBoxTRange.lower;
+      } else {
+        currentTRange.lower += nominalDeltaT;
+      }
+
+      currentTRange.upper = std::min(currentTRange.lower + nominalDeltaT,
+                                     boundingBoxTRange.upper);
+
+      return (currentTRange.lower < tRange.upper);
+    }
 
   }  // namespace scalar_driver
 }  // namespace volley

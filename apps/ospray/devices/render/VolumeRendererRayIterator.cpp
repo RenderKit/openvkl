@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../volume/VolleyVolumeWrapper.h"
 #include "VolumeRendererRayIterator.h"
+#include "../volume/VolleyVolumeWrapper.h"
 
 // ospcommon
 #include <ospray/ospcommon/tasking/parallel_for.h>
@@ -25,6 +25,16 @@ namespace ospray {
 
     void VolumeRendererRayIterator::renderTile(Tile &tile)
     {
+      VolleyVolumeWrapper *volleyVolumeWrapper =
+          dynamic_cast<VolleyVolumeWrapper *>(volume);
+
+      if (!volleyVolumeWrapper) {
+        throw std::runtime_error(
+            "only Volley-based volumes supported in this renderer");
+      }
+
+      VLYVolume vlyVolume = volleyVolumeWrapper->getVLYVolume();
+
       auto &transferFunction = volume->getTransferFunction();
 
       tasking::parallel_for(tile.size.y, [&](int y) {
@@ -41,16 +51,24 @@ namespace ospray {
           // the integrated volume value
           vec4f color{0.f, 0.f, 0.f, 0.f};
 
-          // intersect ray with volume
-          if (!volume || !volume->intersect(ray)) {
-            tile.colorBuffer[tile.indexOf(vec2i{x, y})] = vec4f{0.f};
-            continue;
-          }
+          // create volume ray iterator
+          vly_range1f tRange{ray.t0, ray.t};
+          VLYSamplesMask samplesMask;
 
-          while (ray.t0 <= ray.t) {
+          VLYRayIterator rayIterator = vlyNewRayIterator(vlyVolume,
+                                                         (vly_vec3f *)&ray.org,
+                                                         (vly_vec3f *)&ray.dir,
+                                                         &tRange,
+                                                         samplesMask);
+
+          vly_range1f outputTRange;
+          VLYSamplesMask outputSamplesMask;
+
+          while (vlyIterateInterval(
+              rayIterator, &outputTRange, &outputSamplesMask)) {
             // get volume sample
             const float sample =
-                volume->computeSample(ray.org + ray.t0 * ray.dir);
+                volume->computeSample(ray.org + outputTRange.upper * ray.dir);
 
             // apply transfer function
             vec4f sampleColor = transferFunction.getColorAndOpacity(sample);
@@ -67,9 +85,6 @@ namespace ospray {
             // early termination
             if (color.w >= 0.99f)
               break;
-
-            // advance the ray for the next sample
-            volume->advance(ray);
           }
 
           tile.colorBuffer[tile.indexOf(vec2i{x, y})] = color;

@@ -21,6 +21,7 @@
 #include "../common/Model.h"
 #include "../fb/FrameBuffer.h"
 #include "../render/VolumeRendererDefault.h"
+#include "../render/VolumeRendererRayIterator.h"
 #include "../render/VolumeRendererStream.h"
 #include "../render/VolumeRendererVolleyIntegration.h"
 #include "../transferFunction/TransferFunction.h"
@@ -97,6 +98,9 @@ namespace ospray {
         if (rendererTypeString == "volume_renderer_default") {
           return getHandleForAPI<OSPRenderer>(
               createRegisteredObject<VolumeRendererDefault>());
+        } else if (rendererTypeString == "volume_renderer_ray_iterator") {
+          return getHandleForAPI<OSPRenderer>(
+              createRegisteredObject<VolumeRendererRayIterator>());
         } else if (rendererTypeString == "volume_renderer_stream") {
           return getHandleForAPI<OSPRenderer>(
               createRegisteredObject<VolumeRendererStream>());

@@ -55,7 +55,7 @@ namespace volley {
       currentTRange.upper = std::min(currentTRange.lower + nominalDeltaT,
                                      boundingBoxTRange.upper);
 
-      return (currentTRange.lower < tRange.upper);
+      return (currentTRange.lower < boundingBoxTRange.upper);
     }
 
   }  // namespace scalar_driver

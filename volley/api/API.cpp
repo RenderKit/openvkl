@@ -50,11 +50,15 @@ void postTraceMessage(const std::string &message)
         "first calling vlyInit())" +            \
         getPidString());
 
-#define VOLLEY_CATCH_BEGIN                 \
+#warning API tracing disabled
+
+#define VOLLEY_CATCH_BEGIN_TRACE           \
   try {                                    \
     auto *fcn_name_ = __PRETTY_FUNCTION__; \
     ospcommon::utility::OnScopeExit guard( \
         [&]() { postTraceMessage(fcn_name_); });
+
+#define VOLLEY_CATCH_BEGIN try {
 
 #define VOLLEY_CATCH_END(a)                                      \
   }                                                              \

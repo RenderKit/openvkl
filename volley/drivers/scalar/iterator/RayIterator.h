@@ -27,6 +27,12 @@ namespace volley {
 
     struct Volume;
 
+    struct RayInterval
+    {
+      range1f tRange;
+      float nominalDeltaT;
+    };
+
     struct RayIterator : public ManagedObject
     {
       RayIterator(const volley::scalar_driver::Volume *volume,
@@ -44,9 +50,9 @@ namespace volley {
 
       virtual ~RayIterator() override = default;
 
-      range1f getCurrentTRange()
+      const RayInterval *getCurrentRayInterval() const
       {
-        return currentTRange;
+        return &currentRayInterval;
       }
 
       virtual bool iterateInterval() = 0;
@@ -60,8 +66,7 @@ namespace volley {
       const SamplesMask *samplesMask;
 
       // current state
-      range1f currentTRange = ospcommon::empty;
-      SamplesMask intervalSamplesMask;
+      RayInterval currentRayInterval{range1f(ospcommon::empty), 0.f};
     };
 
   }  // namespace scalar_driver

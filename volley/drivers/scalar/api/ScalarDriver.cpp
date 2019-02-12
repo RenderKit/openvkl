@@ -88,12 +88,12 @@ namespace volley {
     }
 
     bool ScalarDriver::iterateInterval(VLYRayIterator rayIterator,
-                                       range1f &tRange,
-                                       VLYSamplesMask &intervalSamplesMask)
+                                       VLYRayInterval &rayInterval)
     {
       auto &rayIteratorObject = referenceFromHandle<RayIterator>(rayIterator);
       bool result             = rayIteratorObject.iterateInterval();
-      tRange                  = rayIteratorObject.getCurrentTRange();
+      rayInterval             = *reinterpret_cast<const VLYRayInterval *>(
+          rayIteratorObject.getCurrentRayInterval());
       return result;
     }
 

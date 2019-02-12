@@ -59,8 +59,7 @@ namespace volley {
                                     VLYSamplesMask samplesMask) override;
 
       bool iterateInterval(VLYRayIterator rayIterator,
-                           range1f &tRange,
-                           VLYSamplesMask &intervalSamplesMask) override;
+                           VLYRayInterval &rayInterval) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////

@@ -183,15 +183,11 @@ extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" bool vlyIterateInterval(VLYRayIterator rayIterator,
-                                   vly_range1f *tRange,
-                                   VLYSamplesMask *intervalSamplesMask)
-    VOLLEY_CATCH_BEGIN
+extern "C" bool vlyIterateInterval(
+    VLYRayIterator rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN
 {
   return volley::api::currentDriver().iterateInterval(
-      rayIterator,
-      reinterpret_cast<range1f &>(*tRange),
-      reinterpret_cast<VLYSamplesMask &>(*intervalSamplesMask));
+      rayIterator, reinterpret_cast<VLYRayInterval &>(*rayInterval));
 }
 VOLLEY_CATCH_END(false)
 

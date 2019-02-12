@@ -46,16 +46,19 @@ namespace volley {
 
       static float nominalDeltaT = 0.1f;
 
-      if (currentTRange.empty()) {
-        currentTRange.lower = boundingBoxTRange.lower;
+      if (currentRayInterval.tRange.empty()) {
+        currentRayInterval.tRange.lower = boundingBoxTRange.lower;
       } else {
-        currentTRange.lower += nominalDeltaT;
+        currentRayInterval.tRange.lower += nominalDeltaT;
       }
 
-      currentTRange.upper = std::min(currentTRange.lower + nominalDeltaT,
-                                     boundingBoxTRange.upper);
+      currentRayInterval.tRange.upper =
+          std::min(currentRayInterval.tRange.lower + nominalDeltaT,
+                   boundingBoxTRange.upper);
 
-      return (currentTRange.lower < boundingBoxTRange.upper);
+      currentRayInterval.nominalDeltaT = 0.05f;
+
+      return (currentRayInterval.tRange.lower < boundingBoxTRange.upper);
     }
 
   }  // namespace scalar_driver

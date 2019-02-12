@@ -36,10 +36,16 @@ VLYRayIterator vlyNewRayIterator(VLYVolume volume,
                                  const vly_range1f *tRange,
                                  VLYSamplesMask samplesMask);
 
+struct VLYRayInterval
+{
+  vly_range1f tRange;
+  float nominalDeltaT;
+  // TODO: output samples mask when needed
+};
+
 // returns true while the iterator is still within the volume
 bool vlyIterateInterval(VLYRayIterator rayIterator,
-                        vly_range1f *tRange,
-                        VLYSamplesMask *intervalSamplesMask);
+                        VLYRayInterval *rayInterval);
 
 // returns true while the iterator is still within the volume
 bool vlyIterateSurface(VLYRayIterator, float *t, float *sample);

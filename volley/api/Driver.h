@@ -83,8 +83,7 @@ namespace volley {
                                             VLYSamplesMask samplesMask) = 0;
 
       virtual bool iterateInterval(VLYRayIterator rayIterator,
-                                   range1f &tRange,
-                                   VLYSamplesMask &intervalSamplesMask) = 0;
+                                   VLYRayInterval &rayInterval) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////

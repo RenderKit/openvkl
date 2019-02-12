@@ -20,6 +20,7 @@
 #include <ospcommon/utility/ArrayView.h>
 #include <ospcommon/utility/ParameterizedObject.h>
 #include <ospcommon/vec.h>
+#include <functional>
 #include <memory>
 #include "common/VLYCommon.h"
 #include "volley/volley.h"

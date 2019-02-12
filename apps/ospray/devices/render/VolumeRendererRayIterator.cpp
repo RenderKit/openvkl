@@ -61,30 +61,49 @@ namespace ospray {
                                                          &tRange,
                                                          samplesMask);
 
-          vly_range1f outputTRange;
-          VLYSamplesMask outputSamplesMask;
+          // the current ray interval
+          VLYRayInterval rayInterval;
 
-          while (vlyIterateInterval(
-              rayIterator, &outputTRange, &outputSamplesMask)) {
-            // get volume sample
-            const float sample =
-                volume->computeSample(ray.org + outputTRange.upper * ray.dir);
+          while (vlyIterateInterval(rayIterator, &rayInterval) &&
+                 color.w < 0.99f) {
+            const float nominalSamplingDt =
+                rayInterval.nominalDeltaT / volume->getSamplingRate();
 
-            // apply transfer function
-            vec4f sampleColor = transferFunction.getColorAndOpacity(sample);
+            // initial sub interval, based on our renderer-defined sampling rate
+            // and the volume's nominal dt
+            range1f subInterval(
+                rayInterval.tRange.lower,
+                std::min(rayInterval.tRange.lower + nominalSamplingDt,
+                         rayInterval.tRange.upper));
 
-            // accumulate contribution
-            const float clampedOpacity =
-                clamp(sampleColor.w / volume->getSamplingRate());
+            // integrate as long as we have valid sub intervals and are not
+            // fully opaque
+            while (subInterval.size() > 0.f && color.w < 0.99f) {
+              const float t  = subInterval.center();
+              const float dt = subInterval.size();
 
-            sampleColor *= clampedOpacity;
-            sampleColor.w = clampedOpacity;
+              // get volume sample
+              const float sample = volume->computeSample(ray.org + t * ray.dir);
 
-            color += (1.f - color.w) * sampleColor;
+              // apply transfer function
+              vec4f sampleColor = transferFunction.getColorAndOpacity(sample);
 
-            // early termination
-            if (color.w >= 0.99f)
-              break;
+              // accumulate contribution
+              // TODO: eliminate magic scaling; this is due to units of transfer
+              // function now being "per unit world length"
+              const float clampedOpacity = clamp(10.f * sampleColor.w * dt);
+
+              sampleColor *= clampedOpacity;
+              sampleColor.w = clampedOpacity;
+
+              color += (1.f - color.w) * sampleColor;
+
+              // compute next sub interval
+              subInterval.lower = subInterval.upper;
+              subInterval.upper =
+                  std::min(subInterval.lower + nominalSamplingDt,
+                           rayInterval.tRange.upper);
+            }
           }
 
           tile.colorBuffer[tile.indexOf(vec2i{x, y})] = color;

@@ -44,7 +44,7 @@ namespace volley {
         return false;
       }
 
-      static float nominalDeltaT = 0.1f;
+      static float nominalDeltaT = 0.25f;
 
       if (currentRayInterval.tRange.empty()) {
         currentRayInterval.tRange.lower = boundingBoxTRange.lower;
@@ -56,7 +56,7 @@ namespace volley {
           std::min(currentRayInterval.tRange.lower + nominalDeltaT,
                    boundingBoxTRange.upper);
 
-      currentRayInterval.nominalDeltaT = 0.05f;
+      currentRayInterval.nominalDeltaT = 0.1f;
 
       return (currentRayInterval.tRange.lower < boundingBoxTRange.upper);
     }

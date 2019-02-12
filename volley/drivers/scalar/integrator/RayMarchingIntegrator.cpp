@@ -103,8 +103,13 @@ namespace volley {
         // TODO: this only needs to be done for *active* rays
         nextDeltaT = t;
 
-        volume.advanceRays(
-            samplingRate, numValues, origins, directions, nextDeltaT.data());
+#warning RayMarchingIntegrator broken due to ray iterator changes
+        /*volume.advanceRays(
+            samplingRate, numValues, origins, directions, nextDeltaT.data());*/
+
+        std::for_each(nextDeltaT.begin(), nextDeltaT.end(), [](float &dt) {
+          dt += 0.01f;
+        });
 
         std::transform(nextDeltaT.begin(),
                        nextDeltaT.end(),

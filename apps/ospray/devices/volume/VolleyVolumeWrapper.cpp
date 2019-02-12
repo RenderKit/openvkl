@@ -125,12 +125,27 @@ namespace ospray {
 
     void VolleyVolumeWrapper::advance(Ray &ray) const
     {
-      vlyAdvanceRays(vlyVolume,
-                     samplingRate,
-                     1,
-                     (const vly_vec3f *)&ray.org,
-                     (const vly_vec3f *)&ray.dir,
-                     &ray.t0);
+#warning VolleyVolumeWrapper advance() method needs to use ray iterators
+
+#if 1
+            ray.t0 += 0.1f;
+            return;
+#else
+      VLYSamplesMask samplesMask;  // = vlyNewSamplesMask();
+      vly_range1f tRange{ray.t0, ray.t};
+
+      VLYRayIterator rayIterator = vlyNewRayIterator(vlyVolume,
+                                                     (vly_vec3f *)&ray.org.x,
+                                                     (vly_vec3f *)&ray.dir.x,
+                                                     &tRange,
+                                                     samplesMask);
+      VLYRayInterval rayInterval;
+      vlyIterateInterval(rayIterator, &rayInterval);
+
+      ray.t0 = rayInterval.tRange.upper;
+
+      vlyRelease(rayIterator);
+#endif
     }
 
     int VolleyVolumeWrapper::setRegion(const void *,

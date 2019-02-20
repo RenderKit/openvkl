@@ -16,23 +16,46 @@
 
 #pragma once
 
-struct ManagedObject
+#include "volley_common.h"
+#include "volley_samples_mask.h"
+#include "volley_volume.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+struct RayIterator : public ManagedObject
 {
 };
 
-typedef ManagedObject *VLYObject;
+typedef RayIterator *VLYRayIterator;
 
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
+VLYRayIterator vlyNewRayIterator(VLYVolume volume,
+                                 const vly_vec3f *origin,
+                                 const vly_vec3f *direction,
+                                 const vly_range1f *tRange,
+                                 VLYSamplesMask samplesMask);
 
-typedef struct
+struct VLYRayInterval
 {
-  float lower, upper;
-} vly_range1f;
+  vly_range1f tRange;
+  float nominalDeltaT;
+  // TODO: output samples mask when needed
+};
 
-typedef struct
-{
-  vly_vec3f lower, upper;
-} vly_box3f;
+// returns true while the iterator is still within the volume
+bool vlyIterateInterval(VLYRayIterator rayIterator,
+                        VLYRayInterval *rayInterval);
+
+// returns true while the iterator is still within the volume
+bool vlyIterateSurface(VLYRayIterator, float *t, float *sample);
+
+/* TODO:
+
+- need nominalDeltaT to also be returned
+- open whether output sample mask is returned
+*/
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

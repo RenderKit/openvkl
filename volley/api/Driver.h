@@ -16,10 +16,16 @@
 
 #pragma once
 
+#include <ospcommon/box.h>
+#include <ospcommon/utility/ArrayView.h>
 #include <ospcommon/utility/ParameterizedObject.h>
+#include <ospcommon/vec.h>
+#include <functional>
 #include <memory>
 #include "common/VLYCommon.h"
 #include "volley/volley.h"
+
+using namespace ospcommon;
 
 namespace volley {
   namespace api {
@@ -49,6 +55,8 @@ namespace volley {
       bool isCommitted();
       virtual void commit(VLYObject object) = 0;
 
+      virtual void release(VLYObject object) = 0;
+
       /////////////////////////////////////////////////////////////////////////
       // Integrator ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
@@ -66,6 +74,19 @@ namespace volley {
           IntegrationStepFunction integrationStepFunction) = 0;
 
       /////////////////////////////////////////////////////////////////////////
+      // Iterator /////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VLYRayIterator newRayIterator(VLYVolume volume,
+                                            const vec3f &origin,
+                                            const vec3f &direction,
+                                            const range1f &tRange,
+                                            VLYSamplesMask samplesMask) = 0;
+
+      virtual bool iterateInterval(VLYRayIterator rayIterator,
+                                   VLYRayInterval &rayInterval) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
@@ -77,7 +98,23 @@ namespace volley {
 
       virtual void set1f(VLYObject object, const char *name, const float x) = 0;
       virtual void set1i(VLYObject object, const char *name, const int x)   = 0;
+      virtual void setVec3f(VLYObject object,
+                            const char *name,
+                            const vec3f &v)                                 = 0;
+      virtual void setVec3i(VLYObject object,
+                            const char *name,
+                            const vec3i &v)                                 = 0;
       virtual void setVoidPtr(VLYObject object, const char *name, void *v)  = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Samples mask /////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VLYSamplesMask newSamplesMask() = 0;
+
+      virtual void samplesMaskAddRanges(
+          VLYSamplesMask samplesMask,
+          const utility::ArrayView<const range1f> &ranges) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -85,24 +122,13 @@ namespace volley {
 
       virtual VLYVolume newVolume(const char *type) = 0;
 
-      virtual void intersectVolume(VLYVolume volume,
-                                   size_t numValues,
-                                   const vly_vec3f *origins,
-                                   const vly_vec3f *directions,
-                                   vly_range1f *ranges) = 0;
+      virtual float computeSample(VLYVolume volume,
+                                  const vec3f &objectCoordinates) = 0;
 
-      virtual void sampleVolume(VLYVolume volume,
-                                VLYSamplingType samplingType,
-                                size_t numValues,
-                                const vly_vec3f *worldCoordinates,
-                                float *results) = 0;
+      virtual vec3f computeGradient(VLYVolume volume,
+                                    const vec3f &objectCoordinates) = 0;
 
-      virtual void advanceRays(VLYVolume volume,
-                               float samplingRate,
-                               size_t numValues,
-                               const vly_vec3f *origins,
-                               const vly_vec3f *directions,
-                               float *t) = 0;
+      virtual box3f getBoundingBox(VLYVolume volume) = 0;
 
      private:
       bool committed = false;

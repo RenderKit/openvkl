@@ -16,23 +16,38 @@
 
 #pragma once
 
-struct ManagedObject
-{
-};
+#include "volley_common.h"
+#include "volley_volume.h"
 
-typedef ManagedObject *VLYObject;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
+struct SamplesMask;
+typedef SamplesMask *VLYSamplesMask;
 
-typedef struct
-{
-  float lower, upper;
-} vly_range1f;
+VLYSamplesMask vlyNewSamplesMask();
 
-typedef struct
-{
-  vly_vec3f lower, upper;
-} vly_box3f;
+void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
+                             size_t numRanges,
+                             const vly_range1f *ranges);
+
+void vlySamplesMaskAddValues(VLYSamplesMask samplesMask,
+                             size_t numValues,
+                             const float *values);
+
+vly_range1f vlySamplesMaskExtents(const VLYSamplesMask samplesMask);
+
+void vlySamplesMaskTestRanges(VLYSamplesMask samplesMask,
+                              size_t numRanges,
+                              const vly_range1f *ranges,
+                              bool *results);
+
+void vlySamplesMaskTestValues(const VLYSamplesMask samplesMask,
+                              size_t numValues,
+                              const float *values,
+                              bool *results);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

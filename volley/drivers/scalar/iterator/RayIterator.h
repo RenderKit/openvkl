@@ -16,28 +16,57 @@
 
 #pragma once
 
-#include "Integrator.h"
-#include "common/math.h"
+#include <ospcommon/range.h>
+#include "../samples_mask/SamplesMask.h"
+#include "common/ManagedObject.h"
+
+using namespace ospcommon;
 
 namespace volley {
-
   namespace scalar_driver {
 
-    struct RayMarchingIntegrator : public Integrator
-    {
-      void commit() override;
+    struct Volume;
 
-      void integrate(const Volume &volume,
-                     size_t numValues,
-                     const vly_vec3f *origins,
-                     const vly_vec3f *directions,
-                     const vly_range1f *ranges,
-                     void *rayUserData,
-                     IntegrationStepFunction integrationStepFunction) override;
+    struct RayInterval
+    {
+      range1f tRange;
+      float nominalDeltaT;
+    };
+
+    struct RayIterator : public ManagedObject
+    {
+      RayIterator(const volley::scalar_driver::Volume *volume,
+                  const vec3f &origin,
+                  const vec3f &direction,
+                  const range1f &tRange,
+                  const SamplesMask *samplesMask)
+          : volume(volume),
+            origin(origin),
+            direction(direction),
+            tRange(tRange),
+            samplesMask(samplesMask)
+      {
+      }
+
+      virtual ~RayIterator() override = default;
+
+      const RayInterval *getCurrentRayInterval() const
+      {
+        return &currentRayInterval;
+      }
+
+      virtual bool iterateInterval() = 0;
 
      protected:
-      float samplingRate;
-      VLYSamplingMethod samplingMethod;
+      // initial state
+      const Volume *volume;
+      const vec3f origin;
+      const vec3f direction;
+      const range1f tRange;
+      const SamplesMask *samplesMask;
+
+      // current state
+      RayInterval currentRayInterval{range1f(ospcommon::empty), 0.f};
     };
 
   }  // namespace scalar_driver

@@ -16,11 +16,10 @@
 
 #pragma once
 
+#include "volley_common.h"
+
 struct Driver;
 typedef Driver *VLYDriver;
-
-struct ManagedObject;
-typedef ManagedObject *VLYObject;
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +30,8 @@ void vlyCommitDriver(VLYDriver driver);
 void vlySetCurrentDriver(VLYDriver driver);
 
 void vlyCommit(VLYObject object);
+
+void vlyRelease(VLYObject object);
 
 #ifdef __cplusplus
 }  // extern "C"

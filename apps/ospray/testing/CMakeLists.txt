@@ -22,7 +22,8 @@ if(BUILD_OSPRAY_TESTING)
   #find_package(volley REQUIRED)
 
   ospray_create_library(ospray_testing_volley
-    volume/VolleySimpleProceduralVolume.cpp
+    volume/VolleyWaveletAnalyticalVolume.cpp
+    volume/VolleyWaveletProceduralVolume.cpp
 
   LINK
     volley

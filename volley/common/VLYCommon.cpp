@@ -58,8 +58,8 @@ namespace volley {
       return "object";
     case VLY_DATA:
       return "data";
-    case VLY_TRANSFER_FUNCTION:
-      return "transfer_function";
+    case VLY_SAMPLES_MASK:
+      return "samples_mask";
     case VLY_VOLUME:
       return "volume";
     case VLY_INTEGRATOR:

@@ -37,44 +37,66 @@ namespace ospray {
 
         vlyIntegrator = vlyNewIntegrator("ray_marching_integrator");
 
-        vlyVolume = vlyNewVolume("simple_procedural_volume");
+        vlyVolume = vlyNewVolume(volleyVolumeType.c_str());
         vlyCommit(vlyVolume);
 
         volleyInitialized = true;
       }
 
+      // pass all supported parameters through to Volley volume object
+      std::for_each(
+          params_begin(), params_end(), [&](std::shared_ptr<Param> &p) {
+            auto &param = *p;
+
+            if (param.data.is<vec3f>()) {
+              std::cerr << "[VolleyVolumeWrapper] passing through parameter: "
+                        << param.name << std::endl;
+              vlySet3f(vlyVolume,
+                       param.name.c_str(),
+                       param.data.get<vec3f>().x,
+                       param.data.get<vec3f>().y,
+                       param.data.get<vec3f>().z);
+            } else if (param.data.is<vec3i>()) {
+              std::cerr << "[VolleyVolumeWrapper] passing through parameter: "
+                        << param.name << std::endl;
+              vlySet3i(vlyVolume,
+                       param.name.c_str(),
+                       param.data.get<vec3i>().x,
+                       param.data.get<vec3i>().y,
+                       param.data.get<vec3i>().z);
+            } else {
+              std::cerr << "[VolleyVolumeWrapper] ignoring unsupported "
+                           "parameter type: "
+                        << param.name << std::endl;
+            }
+          });
+
       // update parameters
-      samplingRate = getParam<float>("samplingRate", 1.f);
+      samplingRate     = getParam<float>("samplingRate", 1.f);
       adaptiveSampling = bool(getParam<int>("adaptiveSampling", 0));
 
-      // commit parameters on integrator
-      vlySet1f(vlyIntegrator, "samplingRate", samplingRate);
-      vlySet1i(vlyIntegrator,
-               "samplingType",
-               getParam<int>("vlySamplingType", VLY_SAMPLE_LINEAR));
+      // commit parameters on volume
+      vlySet1f(vlyVolume, "samplingRate", samplingRate);
+      vlySet1i(vlyVolume,
+               "samplingMethod",
+               getParam<int>("vlySamplingMethod", VLY_SAMPLE_LINEAR));
 
-      vlySet1i(vlyIntegrator,
-               "computeGradients",
-               getParam<int>("vlyComputeGradients", 1));
-
-      vlyCommit(vlyIntegrator);
+      vlyCommit(vlyVolume);
     }
 
     bool VolleyVolumeWrapper::intersect(Ray &ray) const
     {
-      vly_range1f range;
+      vly_box3f boundingBox = vlyGetBoundingBox(vlyVolume);
 
-      vlyIntersectVolume(vlyVolume,
-                         1,
-                         (const vly_vec3f *)&ray.org,
-                         (const vly_vec3f *)&ray.dir,
-                         &range);
+      auto hits =
+          intersectBox(ray, *reinterpret_cast<const box3f *>(&boundingBox));
 
-      if (range.lower < range.upper) {  // should be nan check
-        ray.t0 = range.lower;
-        ray.t  = range.upper;
+      if (hits.first < hits.second) {
+        ray.t0 = hits.first;
+        ray.t  = hits.second;
         return true;
       } else {
+        ray.t0 = ray.t = ospcommon::nan;
         return false;
       }
     }
@@ -82,15 +104,7 @@ namespace ospray {
     float VolleyVolumeWrapper::computeSample(
         const vec3f &worldCoordinates) const
     {
-      float sample;
-
-      vlySampleVolume(vlyVolume,
-                      VLY_SAMPLE_LINEAR,
-                      1,
-                      (vly_vec3f *)&worldCoordinates,
-                      &sample);
-
-      return sample;
+      return vlyComputeSample(vlyVolume, (vly_vec3f *)&worldCoordinates);
     }
 
     std::vector<float> VolleyVolumeWrapper::computeSamples(
@@ -99,23 +113,39 @@ namespace ospray {
       std::vector<float> samples;
       samples.resize(worldCoordinates.size());
 
-      vlySampleVolume(vlyVolume,
-                      VLY_SAMPLE_LINEAR,
-                      worldCoordinates.size(),
-                      (vly_vec3f *)worldCoordinates.data(),
-                      (float *)samples.data());
+      std::transform(worldCoordinates.begin(),
+                     worldCoordinates.end(),
+                     samples.begin(),
+                     [&](const vec3f &c) {
+                       return vlyComputeSample(vlyVolume, (vly_vec3f *)&c);
+                     });
 
       return samples;
     }
 
     void VolleyVolumeWrapper::advance(Ray &ray) const
     {
-      vlyAdvanceRays(vlyVolume,
-                     samplingRate,
-                     1,
-                     (const vly_vec3f *)&ray.org,
-                     (const vly_vec3f *)&ray.dir,
-                     &ray.t0);
+#warning VolleyVolumeWrapper advance() method needs to use ray iterators
+
+#if 1
+            ray.t0 += 0.1f;
+            return;
+#else
+      VLYSamplesMask samplesMask;  // = vlyNewSamplesMask();
+      vly_range1f tRange{ray.t0, ray.t};
+
+      VLYRayIterator rayIterator = vlyNewRayIterator(vlyVolume,
+                                                     (vly_vec3f *)&ray.org.x,
+                                                     (vly_vec3f *)&ray.dir.x,
+                                                     &tRange,
+                                                     samplesMask);
+      VLYRayInterval rayInterval;
+      vlyIterateInterval(rayIterator, &rayInterval);
+
+      ray.t0 = rayInterval.tRange.upper;
+
+      vlyRelease(rayIterator);
+#endif
     }
 
     int VolleyVolumeWrapper::setRegion(const void *,

@@ -26,26 +26,14 @@ int main()
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
-  VLYVolume volume = vlyNewVolume("simple_procedural_volume");
+  VLYVolume volume = vlyNewVolume("wavelet_analytical_volume");
   vlyCommit(volume);
 
-  const size_t numValues = 10;
+  vly_vec3f objectCoordinates{1.f, 1.f, 1.f};
 
-  std::vector<vly_vec3f> worldCoordinates;
+  float sample = vlyComputeSample(volume, &objectCoordinates);
 
-  for (size_t i = 0; i < numValues; i++) {
-    worldCoordinates.push_back(vly_vec3f{float(i), float(i), float(i)});
-  }
-
-  std::vector<float> results;
-  results.resize(numValues);
-
-  vlySampleVolume(
-      volume, VLY_SAMPLE_LINEAR, numValues, worldCoordinates.data(), results.data());
-
-  for (const auto &result : results) {
-    std::cout << result << std::endl;
-  }
+  std::cout << sample << std::endl;
 
   return 0;
 }

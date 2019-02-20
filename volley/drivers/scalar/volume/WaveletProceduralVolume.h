@@ -16,23 +16,33 @@
 
 #pragma once
 
-struct ManagedObject
-{
-};
+#include "StructuredVolume.h"
+#include "common/math.h"
 
-typedef ManagedObject *VLYObject;
+namespace volley {
 
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
+  namespace scalar_driver {
 
-typedef struct
-{
-  float lower, upper;
-} vly_range1f;
+    struct WaveletProceduralVolume : public StructuredVolume
+    {
+      void commit() override;
 
-typedef struct
-{
-  vly_vec3f lower, upper;
-} vly_box3f;
+     protected:
+      float getVoxel(const vec3i &index) const override;
+      float getWaveletValue(const vec3f &objectCoordinates) const;
+
+      std::vector<float> volumeData;
+
+      // wavelet parameters
+      const float M  = 1.f;
+      const float G  = 1.f;
+      const float XM = 1.f;
+      const float YM = 1.f;
+      const float ZM = 1.f;
+      const float XF = 3.f;
+      const float YF = 3.f;
+      const float ZF = 3.f;
+    };
+
+  }  // namespace scalar_driver
+}  // namespace volley

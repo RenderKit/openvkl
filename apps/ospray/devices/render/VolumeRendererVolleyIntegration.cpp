@@ -158,11 +158,27 @@ namespace ospray {
       VolleyRays volleyRays = getCameraRays(tile);
 
       // intersect Volley volume, which will return ray t ranges
-      vlyIntersectVolume(vlyVolume,
+      /*vlyIntersectVolume(vlyVolume,
                          volleyRays.numRays,
                          (const vly_vec3f *)volleyRays.origins.data(),
                          (const vly_vec3f *)volleyRays.directions.data(),
-                         (vly_range1f *)volleyRays.ranges.data());
+                         (vly_range1f *)volleyRays.ranges.data());*/
+
+      vly_box3f boundingBox = vlyGetBoundingBox(vlyVolume);
+
+      for (size_t i = 0; i < volleyRays.numRays; i++) {
+        Ray ray;
+        ray.org = volleyRays.origins[i];
+        ray.dir = volleyRays.directions[i];
+        ray.t0  = volleyRays.ranges[i].x;
+        ray.t   = volleyRays.ranges[i].y;
+
+        auto hits =
+            intersectBox(ray, *reinterpret_cast<const box3f *>(&boundingBox));
+
+        volleyRays.ranges[i].x = hits.first;
+        volleyRays.ranges[i].y = hits.second;
+      }
 
       // integrate over the Volley volume over the full ray t ranges
       vlyIntegrateVolume(vlyIntegrator,

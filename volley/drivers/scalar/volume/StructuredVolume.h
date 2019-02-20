@@ -16,30 +16,45 @@
 
 #pragma once
 
-#include <ospray/ospcommon/box.h>
-#include <ospray/ospcommon/vec.h>
-#include <cmath>
+#include "Volume.h"
+#include "common/math.h"
 
 namespace volley {
+  namespace scalar_driver {
 
-  using namespace ospcommon;
+    struct StructuredVolume : public Volume
+    {
+      virtual void commit() override;
+      float computeSample(const vec3f &objectCoordinates) const override;
+      vec3f computeGradient(const vec3f &objectCoordinates) const override;
 
-  inline std::pair<float, float> intersectBox(const vec3f &origin,
-                                              const vec3f &direction,
-                                              const box3f &box,
-                                              const range1f &rangeLimit)
-  {
-    const vec3f mins = (box.lower - origin) * rcp(direction);
-    const vec3f maxs = (box.upper - origin) * rcp(direction);
+      box3f getBoundingBox() const override
+      {
+        return box3f(gridOrigin, gridOrigin + dimensions * gridSpacing);
+      }
 
-    return {reduce_max(vec4f{min(mins, maxs), rangeLimit.lower}),
-            reduce_min(vec4f{max(mins, maxs), rangeLimit.upper})};
-  }
+     protected:
+      virtual float getVoxel(const vec3i &index) const = 0;
 
-  inline vec3f nextafter(const vec3i &a, const vec3i &b)
-  {
-    return vec3f(
-        nextafterf(a.x, b.x), nextafterf(a.y, b.y), nextafterf(a.z, b.z));
-  }
+      vec3f transformLocalToObject(const vec3f &localCoordinates) const
+      {
+        return gridOrigin + localCoordinates * gridSpacing;
+      }
 
+      vec3f transformObjectToLocal(const vec3f &objectCoordinates) const
+      {
+        return rcp(gridSpacing) * (objectCoordinates - gridOrigin);
+      }
+
+      // parameters set in commit()
+      VLYSamplingMethod samplingMethod;
+      vec3f gridOrigin;  // TODO: replace with more general affine transform
+      vec3f gridSpacing;
+
+      // parameters must be set in derived class commit()s
+      vec3i dimensions;
+      vec3f localCoordinatesUpperBound;
+    };
+
+  }  // namespace scalar_driver
 }  // namespace volley

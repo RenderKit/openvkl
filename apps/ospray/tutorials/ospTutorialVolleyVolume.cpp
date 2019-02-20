@@ -27,7 +27,10 @@ using namespace ospcommon;
 int main(int argc, const char **argv)
 {
   if (argc != 2) {
-    std::cerr << "usage: " << argv[0] << " <volume_renderer_default | volume_renderer_stream | volume_renderer_volley_integration>" << std::endl;
+    std::cerr << "usage: " << argv[0]
+              << " <volume_renderer_default | volume_renderer_ray_iterator | "
+                 "volume_renderer_stream | volume_renderer_volley_integration>"
+              << std::endl;
     return 1;
   }
 
@@ -55,12 +58,13 @@ int main(int argc, const char **argv)
 
   // add in generated volume and transfer function
   OSPTestingVolume test_data =
-      ospTestingNewVolume("volley_simple_procedural_volume");
+      ospTestingNewVolume("volley_wavelet_procedural_volume");
 
   OSPTransferFunction tfn =
       ospTestingNewTransferFunction(test_data.voxelRange, "jet");
 
   ospSetObject(test_data.volume, "transferFunction", tfn);
+
   ospCommit(test_data.volume);
 
   ospAddVolume(world, test_data.volume);
@@ -95,20 +99,20 @@ int main(int argc, const char **argv)
       ospCommit(test_data.volume);
     }
 
-    static VLYSamplingType vlySamplingType = VLY_SAMPLE_LINEAR;
+    static VLYSamplingMethod vlySamplingMethod = VLY_SAMPLE_LINEAR;
     if (ImGui::RadioButton("Linear sampling",
-                           vlySamplingType == VLY_SAMPLE_LINEAR)) {
-      vlySamplingType = VLY_SAMPLE_LINEAR;
+                           vlySamplingMethod == VLY_SAMPLE_LINEAR)) {
+      vlySamplingMethod = VLY_SAMPLE_LINEAR;
 
-      ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
+      ospSet1i(test_data.volume, "vlySamplingMethod", vlySamplingMethod);
       ospCommit(test_data.volume);
     }
     ImGui::SameLine();
     if (ImGui::RadioButton("Nearest sampling",
-                           vlySamplingType == VLY_SAMPLE_NEAREST)) {
-      vlySamplingType = VLY_SAMPLE_NEAREST;
+                           vlySamplingMethod == VLY_SAMPLE_NEAREST)) {
+      vlySamplingMethod = VLY_SAMPLE_NEAREST;
 
-      ospSet1i(test_data.volume, "vlySamplingType", vlySamplingType);
+      ospSet1i(test_data.volume, "vlySamplingMethod", vlySamplingMethod);
       ospCommit(test_data.volume);
     }
 
@@ -120,7 +124,8 @@ int main(int argc, const char **argv)
     }
 
     static bool rendererAdaptiveSampling = false;
-    if (ImGui::Checkbox("Renderer adaptive sampling", &rendererAdaptiveSampling)) {
+    if (ImGui::Checkbox("Renderer adaptive sampling",
+                        &rendererAdaptiveSampling)) {
       ospSet1i(
           test_data.volume, "adaptiveSampling", int(rendererAdaptiveSampling));
       ospCommit(test_data.volume);

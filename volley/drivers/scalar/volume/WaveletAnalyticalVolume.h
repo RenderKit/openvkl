@@ -16,23 +16,37 @@
 
 #pragma once
 
-struct ManagedObject
-{
-};
+#include "Volume.h"
+#include "common/math.h"
 
-typedef ManagedObject *VLYObject;
+namespace volley {
 
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
+  namespace scalar_driver {
 
-typedef struct
-{
-  float lower, upper;
-} vly_range1f;
+    struct WaveletAnalyticalVolume : public Volume
+    {
+      void commit() override;
 
-typedef struct
-{
-  vly_vec3f lower, upper;
-} vly_box3f;
+      float computeSample(const vec3f &objectCoordinates) const override;
+      vec3f computeGradient(const vec3f &objectCoordinates) const override;
+      box3f getBoundingBox() const override;
+
+     protected:
+      // parameters to be updated on commit
+      VLYSamplingMethod samplingMethod = VLY_SAMPLE_LINEAR;
+      box3f boundingBox;
+      float voxelSize;
+
+      // wavelet parameters
+      const float M  = 1.f;
+      const float G  = 1.f;
+      const float XM = 1.f;
+      const float YM = 1.f;
+      const float ZM = 1.f;
+      const float XF = 3.f;
+      const float YF = 3.f;
+      const float ZF = 3.f;
+    };
+
+  }  // namespace scalar_driver
+}  // namespace volley

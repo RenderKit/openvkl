@@ -16,12 +16,15 @@
 
 #pragma once
 
+#include <ospcommon/box.h>
+#include "../iterator/DumbRayIterator.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 #include "volley/volley.h"
 
-namespace volley {
+using namespace ospcommon;
 
+namespace volley {
   namespace scalar_driver {
 
     struct Volume : public ManagedObject
@@ -39,26 +42,21 @@ namespace volley {
         ManagedObject::commit();
       }
 
-      virtual void intersect(size_t numValues,
-                             const vly_vec3f *origins,
-                             const vly_vec3f *directions,
-                             vly_range1f *ranges) const = 0;
+      // volumes can provide their own ray iterators based on their internal
+      // acceleration structures. the default "dumb" ray iterator assumes no
+      // acceleration structure.
+      virtual RayIterator *newRayIterator(const vec3f &origin,
+                                          const vec3f &direction,
+                                          const range1f &tRange,
+                                          const SamplesMask *samplesMask)
+      {
+        return new DumbRayIterator(
+            this, origin, direction, tRange, samplesMask);
+      }
 
-      virtual void sample(VLYSamplingType samplingType,
-                          size_t numValues,
-                          const vly_vec3f *worldCoordinates,
-                          float *results) const = 0;
-
-      virtual void gradient(VLYSamplingType samplingType,
-                            size_t numValues,
-                            const vly_vec3f *worldCoordinates,
-                            vly_vec3f *results) const = 0;
-
-      virtual void advanceRays(float samplingRate,
-                               size_t numValues,
-                               const vly_vec3f *origins,
-                               const vly_vec3f *directions,
-                               float *t) const = 0;
+      virtual float computeSample(const vec3f &objectCoordinates) const   = 0;
+      virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
+      virtual box3f getBoundingBox() const                                = 0;
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \

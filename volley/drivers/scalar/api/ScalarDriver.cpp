@@ -16,6 +16,7 @@
 
 #include "ScalarDriver.h"
 #include "../integrator/Integrator.h"
+#include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
 
 namespace volley {
@@ -30,6 +31,12 @@ namespace volley {
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->commit();
+    }
+
+    void ScalarDriver::release(VLYObject object)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->refDec();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -63,6 +70,34 @@ namespace volley {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Iterator ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    VLYRayIterator ScalarDriver::newRayIterator(VLYVolume volume,
+                                                const vec3f &origin,
+                                                const vec3f &direction,
+                                                const range1f &tRange,
+                                                VLYSamplesMask samplesMask)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      return (VLYRayIterator)volumeObject.newRayIterator(
+          origin,
+          direction,
+          tRange,
+          reinterpret_cast<const SamplesMask *>(samplesMask));
+    }
+
+    bool ScalarDriver::iterateInterval(VLYRayIterator rayIterator,
+                                       VLYRayInterval &rayInterval)
+    {
+      auto &rayIteratorObject = referenceFromHandle<RayIterator>(rayIterator);
+      bool result             = rayIteratorObject.iterateInterval();
+      rayInterval             = *reinterpret_cast<const VLYRayInterval *>(
+          rayIteratorObject.getCurrentRayInterval());
+      return result;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // Module /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
@@ -87,10 +122,43 @@ namespace volley {
       managedObject->setParam(name, x);
     }
 
+    void ScalarDriver::setVec3f(VLYObject object,
+                                const char *name,
+                                const vec3f &v)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, v);
+    }
+
+    void ScalarDriver::setVec3i(VLYObject object,
+                                const char *name,
+                                const vec3i &v)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, v);
+    }
+
     void ScalarDriver::setVoidPtr(VLYObject object, const char *name, void *v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
+    }
+
+    /////////////////////////////////////////////////////////////////////////
+    // Samples mask /////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
+
+    VLYSamplesMask ScalarDriver::newSamplesMask()
+    {
+      return (VLYSamplesMask)SamplesMask::createInstance();
+    }
+
+    void ScalarDriver::samplesMaskAddRanges(
+        VLYSamplesMask samplesMask,
+        const utility::ArrayView<const range1f> &ranges)
+    {
+      auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
+      samplesMaskObject.addRanges(ranges);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -102,35 +170,24 @@ namespace volley {
       return (VLYVolume)Volume::createInstance(type);
     }
 
-    void ScalarDriver::intersectVolume(VLYVolume volume,
-                                       size_t numValues,
-                                       const vly_vec3f *origins,
-                                       const vly_vec3f *directions,
-                                       vly_range1f *ranges)
+    float ScalarDriver::computeSample(VLYVolume volume,
+                                      const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.intersect(numValues, origins, directions, ranges);
+      return volumeObject.computeSample(objectCoordinates);
     }
 
-    void ScalarDriver::sampleVolume(VLYVolume volume,
-                                    VLYSamplingType samplingType,
-                                    size_t numValues,
-                                    const vly_vec3f *worldCoordinates,
-                                    float *results)
+    vec3f ScalarDriver::computeGradient(VLYVolume volume,
+                                        const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.sample(samplingType, numValues, worldCoordinates, results);
+      return volumeObject.computeGradient(objectCoordinates);
     }
 
-    void ScalarDriver::advanceRays(VLYVolume volume,
-                                   float samplingRate,
-                                   size_t numValues,
-                                   const vly_vec3f *origins,
-                                   const vly_vec3f *directions,
-                                   float *t)
+    box3f ScalarDriver::getBoundingBox(VLYVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.advanceRays(samplingRate, numValues, origins, directions, t);
+      return volumeObject.getBoundingBox();
     }
 
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)

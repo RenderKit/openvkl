@@ -16,23 +16,26 @@
 
 #pragma once
 
-struct ManagedObject
-{
-};
+#include "RayIterator.h"
 
-typedef ManagedObject *VLYObject;
+namespace volley {
+  namespace scalar_driver {
 
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
+    struct Volume;
 
-typedef struct
-{
-  float lower, upper;
-} vly_range1f;
+    struct DumbRayIterator : public RayIterator
+    {
+      DumbRayIterator(const Volume *volume,
+                      const vec3f &origin,
+                      const vec3f &direction,
+                      const range1f &tRange,
+                      const SamplesMask *samplesMask);
 
-typedef struct
-{
-  vly_vec3f lower, upper;
-} vly_box3f;
+      bool iterateInterval() override;
+
+     protected:
+      range1f boundingBoxTRange = ospcommon::empty;
+    };
+
+  }  // namespace scalar_driver
+}  // namespace volley

@@ -29,10 +29,12 @@ typedef Integrator *VLYIntegrator;
 extern "C" {
 #endif
 
+// TODO: make this single-wide; future feasibility TBD.
+
 VLYIntegrator vlyNewIntegrator(const char *type);
 
 typedef void (*IntegrationStepFunction)(size_t numValues,
-                                        const vly_vec3f *worldCoordinates,
+                                        const vly_vec3f *objectCoordinates,
                                         const vly_vec3f *directions,
                                         const float *deltaT,
                                         const float *samples,
@@ -46,9 +48,10 @@ void vlyIntegrateVolume(VLYIntegrator integrator,
                         size_t numValues,
                         const vly_vec3f *origins,
                         const vly_vec3f *directions,
-                        const vly_range1f *ranges,
+                        const vly_range1f *tRanges,
                         void *rayUserData,
                         IntegrationStepFunction integrationStepFunction);
+
 
 #ifdef __cplusplus
 }  // extern "C"

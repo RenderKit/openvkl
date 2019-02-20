@@ -30,6 +30,8 @@ namespace volley {
 
       virtual void commit(VLYObject object) override;
 
+      virtual void release(VLYObject object) override;
+
       /////////////////////////////////////////////////////////////////////////
       // Integrator ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
@@ -47,6 +49,19 @@ namespace volley {
           IntegrationStepFunction integrationStepFunction) override;
 
       /////////////////////////////////////////////////////////////////////////
+      // Iterator /////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      VLYRayIterator newRayIterator(VLYVolume volume,
+                                    const vec3f &origin,
+                                    const vec3f &direction,
+                                    const range1f &tRange,
+                                    VLYSamplesMask samplesMask) override;
+
+      bool iterateInterval(VLYRayIterator rayIterator,
+                           VLYRayInterval &rayInterval) override;
+
+      /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
@@ -58,7 +73,23 @@ namespace volley {
 
       void set1f(VLYObject object, const char *name, const float x) override;
       void set1i(VLYObject object, const char *name, const int x) override;
+      void setVec3f(VLYObject object,
+                    const char *name,
+                    const vec3f &v) override;
+      void setVec3i(VLYObject object,
+                    const char *name,
+                    const vec3i &v) override;
       void setVoidPtr(VLYObject object, const char *name, void *v) override;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Samples mask /////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      VLYSamplesMask newSamplesMask() override;
+
+      void samplesMaskAddRanges(
+          VLYSamplesMask samplesMask,
+          const utility::ArrayView<const range1f> &ranges) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -66,24 +97,13 @@ namespace volley {
 
       VLYVolume newVolume(const char *type) override;
 
-      void intersectVolume(VLYVolume volume,
-                           size_t numValues,
-                           const vly_vec3f *origins,
-                           const vly_vec3f *directions,
-                           vly_range1f *ranges) override;
+      float computeSample(VLYVolume volume,
+                          const vec3f &objectCoordinates) override;
 
-      void sampleVolume(VLYVolume volume,
-                        VLYSamplingType samplingType,
-                        size_t numValues,
-                        const vly_vec3f *worldCoordinates,
-                        float *results) override;
+      vec3f computeGradient(VLYVolume volume,
+                            const vec3f &objectCoordinates) override;
 
-      void advanceRays(VLYVolume volume,
-                       float samplingRate,
-                       size_t numValues,
-                       const vly_vec3f *origins,
-                       const vly_vec3f *directions,
-                       float *t) override;
+      box3f getBoundingBox(VLYVolume volume) override;
     };
 
   }  // namespace scalar_driver

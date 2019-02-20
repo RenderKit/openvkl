@@ -14,44 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospcommon/box.h>
-#include <ospray_testing/volume/Volume.h>
-#include <vector>
+#pragma once
 
-using namespace ospcommon;
+#include "../volume/Volume.h"
+#include "VolumeRenderer.h"
 
 namespace ospray {
-  namespace testing {
+  namespace scalar_volley_device {
 
-    struct VolleySimpleProceduralVolume : public Volume
+    struct VolumeRendererRayIterator : public VolumeRenderer
     {
-      VolleySimpleProceduralVolume()           = default;
-      ~VolleySimpleProceduralVolume() override = default;
-
-      OSPTestingVolume createVolume() const override;
+      void renderTile(Tile &tile) override;
     };
 
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    OSPTestingVolume VolleySimpleProceduralVolume::createVolume() const
-    {
-      OSPVolume volume = ospNewVolume("volley::simple_procedural_volume");
-
-      range1f voxelRange{-2.f, 2.f};
-
-      const auto range  = voxelRange.toVec2f();
-      const auto bounds = box3f(vec3f(-1.f), vec3f(1.f));
-
-      OSPTestingVolume retval;
-      retval.volume     = volume;
-      retval.voxelRange = reinterpret_cast<const osp::vec2f &>(range);
-      retval.bounds     = reinterpret_cast<const osp::box3f &>(bounds);
-
-      return retval;
-    }
-
-    OSP_REGISTER_TESTING_VOLUME(VolleySimpleProceduralVolume,
-                                volley_simple_procedural_volume);
-
-  }  // namespace testing
+  }  // namespace scalar_volley_device
 }  // namespace ospray

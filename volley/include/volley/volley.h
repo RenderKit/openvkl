@@ -21,7 +21,9 @@
 
 #include "volley_driver.h"
 #include "volley_integrator.h"
+#include "volley_iterator.h"
 #include "volley_module.h"
 #include "volley_parameters.h"
+#include "volley_samples_mask.h"
 #include "volley_version.h"
 #include "volley_volume.h"

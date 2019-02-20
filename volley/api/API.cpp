@@ -14,10 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <ospcommon/box.h>
+#include <ospcommon/utility/ArrayView.h>
+#include <ospcommon/utility/OnScopeExit.h>
+#include <ospcommon/vec.h>
 #include "Driver.h"
 #include "common/logging.h"
-#include "ospcommon/utility/OnScopeExit.h"
 #include "volley/volley.h"
+
+using namespace ospcommon;
 
 #define TRACE_PREFIX "[volley] "
 
@@ -45,11 +50,15 @@ void postTraceMessage(const std::string &message)
         "first calling vlyInit())" +            \
         getPidString());
 
-#define VOLLEY_CATCH_BEGIN                 \
+#warning API tracing disabled
+
+#define VOLLEY_CATCH_BEGIN_TRACE           \
   try {                                    \
     auto *fcn_name_ = __PRETTY_FUNCTION__; \
     ospcommon::utility::OnScopeExit guard( \
         [&]() { postTraceMessage(fcn_name_); });
+
+#define VOLLEY_CATCH_BEGIN try {
 
 #define VOLLEY_CATCH_END(a)                                      \
   }                                                              \
@@ -108,6 +117,14 @@ extern "C" void vlyCommit(VLYObject object) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlyRelease(VLYObject object) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  Assert(object && "invalid object handle to release");
+  volley::api::currentDriver().release(object);
+}
+VOLLEY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Integrator /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -150,6 +167,35 @@ extern "C" void vlyIntegrateVolume(
 VOLLEY_CATCH_END()
 
 ///////////////////////////////////////////////////////////////////////////////
+// Iterator ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
+                                            const vly_vec3f *origin,
+                                            const vly_vec3f *direction,
+                                            const vly_range1f *tRange,
+                                            VLYSamplesMask samplesMask)
+    VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  return volley::api::currentDriver().newRayIterator(
+      volume,
+      reinterpret_cast<const vec3f &>(*origin),
+      reinterpret_cast<const vec3f &>(*direction),
+      reinterpret_cast<const range1f &>(*tRange),
+      samplesMask);
+}
+VOLLEY_CATCH_END(nullptr)
+
+extern "C" bool vlyIterateInterval(
+    VLYRayIterator rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN
+{
+  return volley::api::currentDriver().iterateInterval(
+      rayIterator, reinterpret_cast<VLYRayInterval &>(*rayInterval));
+}
+VOLLEY_CATCH_END(false)
+
+///////////////////////////////////////////////////////////////////////////////
 // Module /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -176,12 +222,31 @@ extern "C" void vlySet1f(VLYObject object,
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlySet3f(VLYObject object,
+                         const char *name,
+                         float x,
+                         float y,
+                         float z) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().setVec3f(object, name, vec3f(x, y, z));
+}
+VOLLEY_CATCH_END()
+
 extern "C" void vlySet1i(VLYObject object,
-                        const char *name,
-                        int x) VOLLEY_CATCH_BEGIN
+                         const char *name,
+                         int x) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   volley::api::currentDriver().set1i(object, name, x);
+}
+VOLLEY_CATCH_END()
+
+extern "C" void vlySet3i(
+    VLYObject object, const char *name, int x, int y, int z) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().setVec3i(object, name, vec3i(x, y, z));
 }
 VOLLEY_CATCH_END()
 
@@ -191,6 +256,35 @@ extern "C" void vlySetVoidPtr(VLYObject object,
 {
   ASSERT_DRIVER();
   volley::api::currentDriver().setVoidPtr(object, name, v);
+}
+VOLLEY_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Samples mask ///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VLYSamplesMask vlyNewSamplesMask() VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  VLYSamplesMask samplesMask = volley::api::currentDriver().newSamplesMask();
+  if (samplesMask == nullptr) {
+    postLogMessage(volley::VLY_LOG_ERROR) << "could not create samples mask";
+  }
+
+  return samplesMask;
+}
+VOLLEY_CATCH_END(nullptr)
+
+extern "C" void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
+                                        size_t numRanges,
+                                        const vly_range1f *ranges)
+    VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().samplesMaskAddRanges(
+      samplesMask,
+      utility::ArrayView<const range1f>(
+          reinterpret_cast<const range1f *>(ranges), numRanges));
 }
 VOLLEY_CATCH_END()
 
@@ -212,39 +306,29 @@ extern "C" VLYVolume vlyNewVolume(const char *type) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" void vlyIntersectVolume(VLYVolume volume,
-                                   size_t numValues,
-                                   const vly_vec3f *origins,
-                                   const vly_vec3f *directions,
-                                   vly_range1f *ranges) VOLLEY_CATCH_BEGIN
+extern "C" float vlyComputeSample(
+    VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().intersectVolume(
-      volume, numValues, origins, directions, ranges);
+  return volley::api::currentDriver().computeSample(
+      volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
 }
-VOLLEY_CATCH_END()
+VOLLEY_CATCH_END(ospcommon::nan)
 
-extern "C" void vlySampleVolume(VLYVolume volume,
-                                VLYSamplingType samplingType,
-                                size_t numValues,
-                                const vly_vec3f *worldCoordinates,
-                                float *results) VOLLEY_CATCH_BEGIN
+extern "C" vly_vec3f vlyComputeGradient(
+    VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().sampleVolume(
-      volume, samplingType, numValues, worldCoordinates, results);
+  const vec3f result = volley::api::currentDriver().computeGradient(
+      volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
+  return reinterpret_cast<const vly_vec3f &>(result);
 }
-VOLLEY_CATCH_END()
+VOLLEY_CATCH_END(vly_vec3f{ospcommon::nan})
 
-extern "C" void vlyAdvanceRays(VLYVolume volume,
-                               float samplingRate,
-                               size_t numValues,
-                               const vly_vec3f *origins,
-                               const vly_vec3f *directions,
-                               float *t) VOLLEY_CATCH_BEGIN
+extern "C" vly_box3f vlyGetBoundingBox(VLYVolume volume) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().advanceRays(
-      volume, samplingRate, numValues, origins, directions, t);
+  const box3f result = volley::api::currentDriver().getBoundingBox(volume);
+  return reinterpret_cast<const vly_box3f &>(result);
 }
-VOLLEY_CATCH_END()
+VOLLEY_CATCH_END(vly_box3f{ospcommon::nan})

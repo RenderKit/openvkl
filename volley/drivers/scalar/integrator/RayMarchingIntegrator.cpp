@@ -24,8 +24,8 @@ namespace volley {
       Integrator::commit();
 
       samplingRate = getParam<float>("samplingRate", 1.f);
-      samplingType =
-          VLYSamplingType(getParam<int>("samplingType", VLY_SAMPLE_LINEAR));
+      samplingMethod =
+          VLYSamplingMethod(getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
     }
 
     void RayMarchingIntegrator::integrate(
@@ -38,9 +38,9 @@ namespace volley {
         IntegrationStepFunction integrationStepFunction)
     {
       // pre-allocate storage used in integration step callback
-      std::vector<vly_vec3f> worldCoordinates(numValues);
+      std::vector<vec3f> worldCoordinates(numValues);
       std::vector<float> samples(numValues);
-      std::vector<vly_vec3f> gradients;
+      std::vector<vec3f> gradients;
 
       if (computeGradients) {
         gradients.resize(numValues);
@@ -58,8 +58,8 @@ namespace volley {
       }
 
       // temporary buffer for projected future t values
-      std::vector<float>currentDeltaT(numValues);
-      std::vector<float>nextDeltaT(numValues);
+      std::vector<float> currentDeltaT(numValues);
+      std::vector<float> nextDeltaT(numValues);
 
       size_t numActiveRays = numValues;
 
@@ -76,24 +76,25 @@ namespace volley {
           if (!rayTerminationMask[i]) {
             numActiveRays++;
 
-            const vec3f temp =
+            worldCoordinates[i] =
                 (*reinterpret_cast<const vec3f *>(&origins[i])) +
                 t[i] * (*reinterpret_cast<const vec3f *>(&directions[i]));
-
-            worldCoordinates[i] = (*reinterpret_cast<const vly_vec3f *>(&temp));
           }
         }
 
         // generate samples
         // TODO: this only needs to be done for *active* rays
-        volume.sample(
-            samplingType, numValues, worldCoordinates.data(), samples.data());
+        std::transform(worldCoordinates.begin(),
+                       worldCoordinates.end(),
+                       samples.begin(),
+                       [&](const vec3f &c) { return volume.computeSample(c); });
 
         if (computeGradients) {
-          volume.gradient(samplingType,
-                          numValues,
-                          worldCoordinates.data(),
-                          gradients.data());
+          std::transform(
+              worldCoordinates.begin(),
+              worldCoordinates.end(),
+              gradients.begin(),
+              [&](const vec3f &c) { return volume.computeGradient(c); });
         }
 
         // pre-compute ray advancement, so we can pass this information to the
@@ -102,8 +103,13 @@ namespace volley {
         // TODO: this only needs to be done for *active* rays
         nextDeltaT = t;
 
-        volume.advanceRays(
-            samplingRate, numValues, origins, directions, nextDeltaT.data());
+#warning RayMarchingIntegrator broken due to ray iterator changes
+        /*volume.advanceRays(
+            samplingRate, numValues, origins, directions, nextDeltaT.data());*/
+
+        std::for_each(nextDeltaT.begin(), nextDeltaT.end(), [](float &dt) {
+          dt += 0.01f;
+        });
 
         std::transform(nextDeltaT.begin(),
                        nextDeltaT.end(),
@@ -112,20 +118,24 @@ namespace volley {
                        std::minus<float>());
 
         // call user-provided integration step function
-        integrationStepFunction(worldCoordinates.size(),
-                                worldCoordinates.data(),
-                                directions,
-                                currentDeltaT.data(),
-                                samples.data(),
-                                gradients.data(),
-                                rayUserData,
-                                nextDeltaT.data(),
-                                rayTerminationMask.get());
+        integrationStepFunction(
+            worldCoordinates.size(),
+            reinterpret_cast<const vly_vec3f *>(worldCoordinates.data()),
+            directions,
+            currentDeltaT.data(),
+            samples.data(),
+            reinterpret_cast<const vly_vec3f *>(gradients.data()),
+            rayUserData,
+            nextDeltaT.data(),
+            rayTerminationMask.get());
 
         // add current deltaT values to previous t for next iteration's samples
-        std::transform(
-            t.begin(), t.end(), nextDeltaT.begin(), t.begin(), std::plus<float>());
-        
+        std::transform(t.begin(),
+                       t.end(),
+                       nextDeltaT.begin(),
+                       t.begin(),
+                       std::plus<float>());
+
         // save "current" deltaT for next integration step function call
         currentDeltaT = nextDeltaT;
       }

@@ -28,7 +28,11 @@ namespace ospray {
 
     struct VolleyVolumeWrapper : public Volume
     {
-      VolleyVolumeWrapper()  = default;
+      VolleyVolumeWrapper(std::string volleyVolumeType)
+          : volleyVolumeType(volleyVolumeType)
+      {
+      }
+
       ~VolleyVolumeWrapper() = default;
 
       void commit() override;
@@ -56,6 +60,7 @@ namespace ospray {
       bool getAdaptiveSampling() const;
 
      private:
+      std::string volleyVolumeType;
       VLYIntegrator vlyIntegrator = nullptr;
       VLYVolume vlyVolume         = nullptr;
 

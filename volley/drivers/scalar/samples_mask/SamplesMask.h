@@ -16,23 +16,40 @@
 
 #pragma once
 
-struct ManagedObject
-{
-};
+#include <ospcommon/range.h>
+#include <ospcommon/utility/ArrayView.h>
+#include "common/ManagedObject.h"
+#include "common/objectFactory.h"
 
-typedef ManagedObject *VLYObject;
+using namespace ospcommon;
 
-typedef struct
-{
-  float x, y, z;
-} vly_vec3f;
+namespace volley {
+  namespace scalar_driver {
 
-typedef struct
-{
-  float lower, upper;
-} vly_range1f;
+    struct SamplesMask : public ManagedObject
+    {
+      SamplesMask()                   = default;
+      virtual ~SamplesMask() override = default;
 
-typedef struct
-{
-  vly_vec3f lower, upper;
-} vly_box3f;
+      static SamplesMask *createInstance()
+      {
+        return createInstanceHelper<SamplesMask, VLY_SAMPLES_MASK>(
+            "base_samples_mask");
+      }
+
+      virtual void commit() override
+      {
+        ManagedObject::commit();
+      }
+
+      void addRanges(const utility::ArrayView<const range1f> &ranges);
+
+     protected:
+      std::vector<range1f> ranges;
+    };
+
+#define VLY_REGISTER_SAMPLES_MASK(InternalClass, external_name) \
+  VLY_REGISTER_OBJECT(SamplesMask, samples_mask, InternalClass, external_name)
+
+  }  // namespace scalar_driver
+}  // namespace volley

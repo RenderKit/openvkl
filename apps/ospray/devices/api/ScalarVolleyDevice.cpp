@@ -23,7 +23,6 @@
 #include "../render/VolumeRendererDefault.h"
 #include "../render/VolumeRendererRayIterator.h"
 #include "../render/VolumeRendererStream.h"
-#include "../render/VolumeRendererVolleyIntegration.h"
 #include "../transferFunction/TransferFunction.h"
 #include "../volume/BlockBrickedVolume.h"
 #include "../volume/StructuredVolume.h"
@@ -104,9 +103,6 @@ namespace ospray {
         } else if (rendererTypeString == "volume_renderer_stream") {
           return getHandleForAPI<OSPRenderer>(
               createRegisteredObject<VolumeRendererStream>());
-        } else if (rendererTypeString == "volume_renderer_volley_integration") {
-          return getHandleForAPI<OSPRenderer>(
-              createRegisteredObject<VolumeRendererVolleyIntegration>());
         } else {
           throw std::runtime_error("unknown renderer type string");
         }

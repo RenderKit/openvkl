@@ -35,8 +35,6 @@ namespace ospray {
         vlyCommitDriver(driver);
         vlySetCurrentDriver(driver);
 
-        vlyIntegrator = vlyNewIntegrator("ray_marching_integrator");
-
         vlyVolume = vlyNewVolume(volleyVolumeType.c_str());
         vlyCommit(vlyVolume);
 
@@ -154,11 +152,6 @@ namespace ospray {
     {
       // no-op
       return 0;
-    }
-
-    VLYIntegrator VolleyVolumeWrapper::getVLYIntegrator()
-    {
-      return vlyIntegrator;
     }
 
     VLYVolume VolleyVolumeWrapper::getVLYVolume()

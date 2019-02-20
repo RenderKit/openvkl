@@ -19,7 +19,6 @@ if (BUILD_SCALAR_DRIVER)
 
   add_library(volley_module_scalar_driver SHARED
     api/ScalarDriver.cpp
-    integrator/RayMarchingIntegrator.cpp
     iterator/DumbRayIterator.cpp
     samples_mask/SamplesMask.cpp
     volume/StructuredVolume.cpp

@@ -29,7 +29,7 @@ int main(int argc, const char **argv)
   if (argc != 2) {
     std::cerr << "usage: " << argv[0]
               << " <volume_renderer_default | volume_renderer_ray_iterator | "
-                 "volume_renderer_stream | volume_renderer_volley_integration>"
+                 "volume_renderer_stream>"
               << std::endl;
     return 1;
   }

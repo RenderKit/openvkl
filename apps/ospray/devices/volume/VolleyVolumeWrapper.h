@@ -54,14 +54,12 @@ namespace ospray {
                     const vec3i &index,
                     const vec3i &count) override;
 
-      VLYIntegrator getVLYIntegrator();
       VLYVolume getVLYVolume();
 
       bool getAdaptiveSampling() const;
 
      private:
       std::string volleyVolumeType;
-      VLYIntegrator vlyIntegrator = nullptr;
       VLYVolume vlyVolume         = nullptr;
 
       // this gets set on the integrator directly, but is also used in some of

@@ -126,47 +126,6 @@ extern "C" void vlyRelease(VLYObject object) VOLLEY_CATCH_BEGIN
 VOLLEY_CATCH_END()
 
 ///////////////////////////////////////////////////////////////////////////////
-// Integrator /////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-extern "C" VLYIntegrator vlyNewIntegrator(const char *type) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  Assert(type != nullptr &&
-         "invalid integrator type identifier in vlyNewIntegrator");
-  VLYIntegrator integrator = volley::api::currentDriver().newIntegrator(type);
-  if (integrator == nullptr) {
-    postLogMessage(volley::VLY_LOG_ERROR)
-        << "could not create integrator '" << type << "'";
-  }
-
-  return integrator;
-}
-VOLLEY_CATCH_END(nullptr)
-
-extern "C" void vlyIntegrateVolume(
-    VLYIntegrator integrator,
-    VLYVolume volume,
-    size_t numValues,
-    const vly_vec3f *origins,
-    const vly_vec3f *directions,
-    const vly_range1f *ranges,
-    void *rayUserData,
-    IntegrationStepFunction integrationStepFunction) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  volley::api::currentDriver().integrateVolume(integrator,
-                                               volume,
-                                               numValues,
-                                               origins,
-                                               directions,
-                                               ranges,
-                                               rayUserData,
-                                               integrationStepFunction);
-}
-VOLLEY_CATCH_END()
-
-///////////////////////////////////////////////////////////////////////////////
 // Iterator ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 

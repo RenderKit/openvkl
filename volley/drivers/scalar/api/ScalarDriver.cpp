@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "ScalarDriver.h"
-#include "../integrator/Integrator.h"
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
 
@@ -37,36 +36,6 @@ namespace volley {
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->refDec();
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Integrator /////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    VLYIntegrator ScalarDriver::newIntegrator(const char *type)
-    {
-      return (VLYIntegrator)Integrator::createInstance(type);
-    }
-
-    void ScalarDriver::integrateVolume(
-        VLYIntegrator integrator,
-        VLYVolume volume,
-        size_t numValues,
-        const vly_vec3f *origins,
-        const vly_vec3f *directions,
-        const vly_range1f *ranges,
-        void *rayUserData,
-        IntegrationStepFunction integrationStepFunction)
-    {
-      auto &integratorObject = referenceFromHandle<Integrator>(integrator);
-      auto &volumeObject     = referenceFromHandle<Volume>(volume);
-      integratorObject.integrate(volumeObject,
-                                 numValues,
-                                 origins,
-                                 directions,
-                                 ranges,
-                                 rayUserData,
-                                 integrationStepFunction);
     }
 
     ///////////////////////////////////////////////////////////////////////////

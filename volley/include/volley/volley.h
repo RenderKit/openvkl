@@ -20,7 +20,6 @@
 #include "VLYError.h"
 
 #include "volley_driver.h"
-#include "volley_integrator.h"
 #include "volley_iterator.h"
 #include "volley_module.h"
 #include "volley_parameters.h"

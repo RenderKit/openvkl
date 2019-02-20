@@ -62,8 +62,6 @@ namespace volley {
       return "samples_mask";
     case VLY_VOLUME:
       return "volume";
-    case VLY_INTEGRATOR:
-      return "integrator";
     case VLY_STRING:
       return "string";
     case VLY_CHAR:

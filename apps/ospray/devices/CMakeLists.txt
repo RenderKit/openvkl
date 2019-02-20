@@ -39,7 +39,6 @@ if(BUILD_SCALAR_VOLLEY_DEVICE)
     render/VolumeRendererDefault.cpp
     render/VolumeRendererRayIterator.cpp
     render/VolumeRendererStream.cpp
-    render/VolumeRendererVolleyIntegration.cpp
 
     transferFunction/TransferFunction.cpp
 

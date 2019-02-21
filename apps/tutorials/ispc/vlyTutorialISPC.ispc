@@ -14,26 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <iostream>
-#include <vector>
-#include <volley/volley.h>
+#include <volley/volley_volume.isph>
 
-int main()
+export void sample_ispc(uniform VLYVolume volume)
 {
-  vlyLoadModule("scalar_driver");
+  vly_vec3f objectCoordinates;
+  objectCoordinates.x = programIndex*3 + 0;
+  objectCoordinates.y = programIndex*3 + 1;
+  objectCoordinates.z = programIndex*3 + 2;
 
-  VLYDriver driver = vlyNewDriver("scalar_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  varying float sample = vlyComputeSampleV(volume, &objectCoordinates);
 
-  VLYVolume volume = vlyNewVolume("wavelet_analytical_volume");
-  vlyCommit(volume);
-
-  vly_vec3f objectCoordinates{1.f, 1.f, 1.f};
-
-  float sample = vlyComputeSample(volume, &objectCoordinates);
-
-  std::cout << sample << std::endl;
-
-  return 0;
+  print("\nsamples: %\n", sample);
 }

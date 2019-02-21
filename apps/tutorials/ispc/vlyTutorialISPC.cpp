@@ -18,6 +18,8 @@
 #include <vector>
 #include <volley/volley.h>
 
+#include "vlyTutorialISPC_ispc.h"
+
 int main()
 {
   vlyLoadModule("scalar_driver");
@@ -29,11 +31,13 @@ int main()
   VLYVolume volume = vlyNewVolume("wavelet_analytical_volume");
   vlyCommit(volume);
 
-  vly_vec3f objectCoordinates{1.f, 1.f, 1.f};
+  vly_vec3f objectCoordinates{0.f, 1.f, 2.f};
 
   float sample = vlyComputeSample(volume, &objectCoordinates);
 
   std::cout << sample << std::endl;
+
+  ispc::sample_ispc(volume);
 
   return 0;
 }

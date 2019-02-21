@@ -84,6 +84,11 @@ namespace volley {
       float computeSample(VLYVolume volume,
                           const vec3f &objectCoordinates) override;
 
+      void computeSample8(const int *valid,
+                          VLYVolume volume,
+                          const vly_vvec3f8 &objectCoordinates,
+                          float *samples) override;
+
       vec3f computeGradient(VLYVolume volume,
                             const vec3f &objectCoordinates) override;
 

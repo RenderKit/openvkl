@@ -109,6 +109,11 @@ namespace volley {
       virtual float computeSample(VLYVolume volume,
                                   const vec3f &objectCoordinates) = 0;
 
+      virtual void computeSample8(const int *valid,
+                                  VLYVolume volume,
+                                  const vly_vvec3f8 &objectCoordinates,
+                                  float *samples) = 0;
+
       virtual vec3f computeGradient(VLYVolume volume,
                                     const vec3f &objectCoordinates) = 0;
 

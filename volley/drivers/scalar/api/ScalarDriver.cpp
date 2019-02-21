@@ -146,6 +146,23 @@ namespace volley {
       return volumeObject.computeSample(objectCoordinates);
     }
 
+    void ScalarDriver::computeSample8(const int *valid,
+                                      VLYVolume volume,
+                                      const vly_vvec3f8 &objectCoordinates,
+                                      float *samples)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+
+      for (int i = 0; i < 8; i++) {
+        if (valid[i]) {
+          samples[i] =
+              volumeObject.computeSample(vec3f{objectCoordinates.x[i],
+                                               objectCoordinates.y[i],
+                                               objectCoordinates.z[i]});
+        }
+      }
+    }
+
     vec3f ScalarDriver::computeGradient(VLYVolume volume,
                                         const vec3f &objectCoordinates)
     {
@@ -160,7 +177,6 @@ namespace volley {
     }
 
     VLY_REGISTER_DRIVER(ScalarDriver, scalar_driver)
-
   }  // namespace scalar_driver
 }  // namespace volley
 

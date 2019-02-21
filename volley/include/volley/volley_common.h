@@ -29,6 +29,13 @@ typedef struct
 
 typedef struct
 {
+  float x[8];
+  float y[8];
+  float z[8];
+} vly_vvec3f8;
+
+typedef struct
+{
   float lower, upper;
 } vly_range1f;
 

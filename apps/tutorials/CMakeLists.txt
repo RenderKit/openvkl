@@ -24,3 +24,5 @@ target_link_libraries(vlyTutorial PRIVATE volley)
 install(TARGETS vlyTutorial
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+add_subdirectory(ispc)

@@ -274,6 +274,20 @@ extern "C" float vlyComputeSample(
 }
 VOLLEY_CATCH_END(ospcommon::nan)
 
+extern "C" void vlyComputeSample8(const int *valid,
+                                  VLYVolume volume,
+                                  const vly_vvec3f8 *objectCoordinates,
+                                  float *samples) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().computeSample8(
+      valid,
+      volume,
+      reinterpret_cast<const vly_vvec3f8 &>(*objectCoordinates),
+      samples);
+}
+VOLLEY_CATCH_END()
+
 extern "C" vly_vec3f vlyComputeGradient(
     VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {

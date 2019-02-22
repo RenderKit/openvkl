@@ -25,12 +25,15 @@ find_package(OpenGL 2 REQUIRED)
 find_package(glfw3 REQUIRED)
 
 ## OSPRay-based Volley tutorial ##
-ospray_create_application(ospTutorialVolleyVolume
+add_executable(ospTutorialVolleyVolume
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   ospTutorialVolleyVolume.cpp
   imgui_impl_glfw_gl3.cpp
-LINK
+)
+
+target_link_libraries(ospTutorialVolleyVolume
+  volley
   glfw
   ospray_imgui
   ospray_testing_volley

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospcommon/range.h>
+#include <ospray/ospcommon/range.h>
 #include "../samples_mask/SamplesMask.h"
 #include "common/ManagedObject.h"
 

@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospcommon/box.h>
-#include <ospcommon/utility/ArrayView.h>
-#include <ospcommon/utility/OnScopeExit.h>
-#include <ospcommon/vec.h>
+#include <ospray/ospcommon/box.h>
+#include <ospray/ospcommon/utility/ArrayView.h>
+#include <ospray/ospcommon/utility/OnScopeExit.h>
+#include <ospray/ospcommon/vec.h>
 #include "Driver.h"
 #include "common/logging.h"
 #include "volley/volley.h"

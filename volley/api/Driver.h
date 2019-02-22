@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <ospcommon/box.h>
-#include <ospcommon/utility/ArrayView.h>
-#include <ospcommon/utility/ParameterizedObject.h>
-#include <ospcommon/vec.h>
+#include <ospray/ospcommon/box.h>
+#include <ospray/ospcommon/utility/ArrayView.h>
+#include <ospray/ospcommon/utility/ParameterizedObject.h>
+#include <ospray/ospcommon/vec.h>
 #include <functional>
 #include <memory>
 #include "common/VLYCommon.h"

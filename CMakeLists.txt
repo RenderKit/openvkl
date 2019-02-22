@@ -29,6 +29,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 include(GNUInstallDirs)
 
+find_package(ospray 1.8.0 REQUIRED)
+include(${OSPRAY_USE_FILE})
+
+ospray_configure_tasking_system()
+
 ## Add the Volley library ##
 add_subdirectory(volley)
 

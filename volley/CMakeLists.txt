@@ -32,20 +32,12 @@ target_include_directories(volley
 )
 
 ## Include ospcommon dependency ##
-find_package(ospray 1.7.1 REQUIRED)
-include(${OSPRAY_USE_FILE})
-
+# TODO: ospray linked here to fix issue with ospcommon include paths
 target_link_libraries(volley
   PUBLIC
-    ${OSPRAY_LIBRARIES}
+    ospray::ospray
+    ospray::ospray_common
 )
-
-foreach(dir IN ITEMS ${OSPRAY_INCLUDE_DIRS})
-  target_include_directories(volley
-    PUBLIC
-      $<BUILD_INTERFACE:${dir}>
-  )
-endforeach(dir)
 
 ## Configure Volley installation ##
 install(TARGETS volley

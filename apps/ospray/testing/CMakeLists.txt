@@ -21,13 +21,14 @@ if(BUILD_OSPRAY_TESTING)
   # will need to be uncommented if this code is moved outside of Volley
   #find_package(volley REQUIRED)
 
-  ospray_create_library(ospray_testing_volley
+  add_library(ospray_testing_volley SHARED
     volume/VolleyWaveletAnalyticalVolume.cpp
     volume/VolleyWaveletProceduralVolume.cpp
+  )
 
-  LINK
+  target_link_libraries(ospray_testing_volley
     volley
-    ${OSPRAY_TESTING_LIBRARY}
+    ospray::ospray_testing
   )
 
 endif()

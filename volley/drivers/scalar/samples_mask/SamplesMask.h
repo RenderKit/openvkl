@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <ospcommon/range.h>
-#include <ospcommon/utility/ArrayView.h>
+#include <ospray/ospcommon/range.h>
+#include <ospray/ospcommon/utility/ArrayView.h>
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 

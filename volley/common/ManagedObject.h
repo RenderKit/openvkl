@@ -16,10 +16,10 @@
 
 #pragma once
 
+#include <ospray/ospcommon/memory/RefCount.h>
+#include <ospray/ospcommon/utility/ParameterizedObject.h>
 #include "VLYCommon.h"
 #include "objectFactory.h"
-#include "ospcommon/memory/RefCount.h"
-#include "ospcommon/utility/ParameterizedObject.h"
 
 namespace volley {
 

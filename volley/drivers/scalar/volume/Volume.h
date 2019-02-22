@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospcommon/box.h>
+#include <ospray/ospcommon/box.h>
 #include "../iterator/DumbRayIterator.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"

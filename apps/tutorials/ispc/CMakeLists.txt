@@ -1,5 +1,3 @@
-find_package(ospray 1.7.1 REQUIRED)
-include(${OSPRAY_USE_FILE})
 
 include(ispc)
 

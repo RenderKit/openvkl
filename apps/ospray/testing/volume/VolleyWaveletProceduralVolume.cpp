@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospcommon/box.h>
-#include <ospray_testing/volume/Volume.h>
+#include <ospray/ospcommon/box.h>
+#include <ospray/ospray_testing/volume/Volume.h>
 #include <vector>
 
 using namespace ospcommon;

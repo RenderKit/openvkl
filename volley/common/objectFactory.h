@@ -16,11 +16,11 @@
 
 #pragma once
 
+#include <ospray/ospcommon/library.h>
+#include <map>
 #include "VLYCommon.h"
 #include "logging.h"
 #include "volley/VLYDataType.h"
-#include "ospcommon/library.h"
-#include <map>
 
 namespace volley {
 

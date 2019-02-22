@@ -18,10 +18,7 @@ option(BUILD_SCALAR_VOLLEY_DEVICE "Build scalar volley device" ON)
 
 if(BUILD_SCALAR_VOLLEY_DEVICE)
 
-  # will need to be uncommented if this code is moved outside of Volley
-  #find_package(volley REQUIRED)
-
-  ospray_create_library(ospray_module_scalar_volley_device
+  add_library(ospray_module_scalar_volley_device SHARED
     moduleInit.cpp
 
     api/ScalarVolleyDevice.cpp
@@ -46,16 +43,21 @@ if(BUILD_SCALAR_VOLLEY_DEVICE)
     volume/StructuredVolume.cpp
     volume/VolleyVolumeWrapper.cpp
     volume/Volume.cpp
-
-  LINK
-    ${OSPRAY_LIBRARIES}
   )
 
-  target_link_libraries(ospray_module_scalar_volley_device volley)
+  target_link_libraries(ospray_module_scalar_volley_device
+    ospray::ospray
+    ospray::ospray_common
+    volley
+    ${TASKING_SYSTEM_LIBS}
+  )
 
-  target_include_directories(ospray_module_scalar_volley_device
-  PRIVATE
+  target_compile_definitions(ospray_module_scalar_volley_device PRIVATE
+    ${TASKING_SYSTEM_DEFINITIONS}
+  )
+
+  target_include_directories(ospray_module_scalar_volley_device PRIVATE
     ${OSPRAY_INCLUDE_DIRS}
-  )
+    ${TASKING_SYSTEM_INCLUDES})
 
 endif()

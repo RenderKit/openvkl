@@ -30,13 +30,9 @@ target_include_directories(ospray_imgui
     ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
 )
 
-## Include ospcommon dependency ##
-find_package(ospray 1.7.1 REQUIRED)
-include(${OSPRAY_USE_FILE})
-
 target_link_libraries(ospray_imgui
   PUBLIC
-    ${OSPRAY_LIBRARIES}
+    ospray::ospray_common
 )
 
 foreach(dir IN ITEMS ${OSPRAY_INCLUDE_DIRS})

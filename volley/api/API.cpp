@@ -59,7 +59,6 @@ void postTraceMessage(const std::string &message)
         [&]() { postTraceMessage(fcn_name_); });
 
 #define VOLLEY_CATCH_BEGIN try {
-
 #define VOLLEY_CATCH_END(a)                                      \
   }                                                              \
   catch (const std::bad_alloc &)                                 \

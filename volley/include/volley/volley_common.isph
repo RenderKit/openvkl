@@ -14,16 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <volley/volley_volume.isph>
+#pragma once
 
-export void sample_ispc(uniform VLYVolume volume)
+
+struct ManagedObject
 {
-  vly_vec3f objectCoordinates;
-  objectCoordinates.x = programIndex * 3 + 0;
-  objectCoordinates.y = programIndex * 3 + 1;
-  objectCoordinates.z = programIndex * 3 + 2;
+};
 
-  varying float sample = vlyComputeSampleV(volume, &objectCoordinates);
+typedef ManagedObject *uniform VLYObject;
 
-  print("\nsamples: %\n", sample);
-}
+struct vly_vec3f
+{
+  float x, y, z;
+};
+
+struct vly_range1f
+{
+  float lower, upper;
+};
+
+struct vly_box3f
+{
+  vly_vec3f lower, upper;
+};
+

@@ -41,5 +41,10 @@ typedef struct
 
 typedef struct
 {
+  float lower[8], upper[8];
+} vly_vrange1f8;
+
+typedef struct
+{
   vly_vec3f lower, upper;
 } vly_box3f;

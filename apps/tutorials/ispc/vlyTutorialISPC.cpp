@@ -37,7 +37,7 @@ int main()
 
   std::cout << sample << std::endl;
 
-  ispc::sample_ispc(volume);
+  ispc::sample_ispc((ispc::VolleyVolume *)volume);
 
   return 0;
 }

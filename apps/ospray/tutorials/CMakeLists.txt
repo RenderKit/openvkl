@@ -25,14 +25,14 @@ find_package(OpenGL 2 REQUIRED)
 find_package(glfw3 REQUIRED)
 
 ## OSPRay-based Volley tutorial ##
-add_executable(ospTutorialVolleyVolume
+add_executable(ospTutorialScalarVolley
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
-  ospTutorialVolleyVolume.cpp
+  ospTutorialScalarVolley.cpp
   imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospTutorialVolleyVolume
+target_link_libraries(ospTutorialScalarVolley
   volley
   glfw
   ospray_imgui
@@ -41,9 +41,31 @@ target_link_libraries(ospTutorialVolleyVolume
   ${OPENGL_LIBRARIES}
 )
 
-## mute OSX Mojave OpenGL deprecation warnings ##
-target_compile_definitions(ospTutorialVolleyVolume PRIVATE GL_SILENCE_DEPRECATION)
+target_compile_definitions(ospTutorialScalarVolley PRIVATE GL_SILENCE_DEPRECATION)
 
-install(TARGETS ospTutorialVolleyVolume
+install(TARGETS ospTutorialScalarVolley
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+## OSPRay-based Volley tutorial, using ISPC device extensions ##
+add_executable(ospTutorialISPCVolley
+  ArcballCamera.cpp
+  GLFWOSPRayWindow.cpp
+  ospTutorialISPCVolley.cpp
+  imgui_impl_glfw_gl3.cpp
+)
+
+target_link_libraries(ospTutorialISPCVolley
+  volley
+  glfw
+  ospray_imgui
+  ospray_testing_volley
+  ospray_module_ispc_volley
+  ${OPENGL_LIBRARIES}
+)
+
+target_compile_definitions(ospTutorialISPCVolley PRIVATE GL_SILENCE_DEPRECATION)
+
+install(TARGETS ospTutorialISPCVolley
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

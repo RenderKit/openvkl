@@ -47,15 +47,48 @@ VLYVolume createVolleyVolume()
 
   vlyCommit(vlyVolume);
 
-  vlyCommit(vlyVolume);
-
   return vlyVolume;
+}
+
+OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
+{
+  OSPVolume volume = ospNewVolume("shared_structured_volume");
+
+  vec3i dimensions(512);
+  vec3f gridOrigin(-1.f);
+  vec3f gridSpacing(2.f / float(dimensions.x));
+
+  ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  ospSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+  ospSet3f(volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
+
+  ospSetString(volume, "voxelType", "float");
+
+  auto numVoxels = dimensions.product();
+  std::vector<float> voxels(numVoxels);
+
+  std::ifstream in;
+  in.open("wavelet_procedural_volume_512.raw", std::ios::binary);
+  in.read(reinterpret_cast<char *>(voxels.data()),
+          voxels.size() * sizeof(float));
+  in.close();
+
+  OSPData voxelData = ospNewData(numVoxels, OSP_FLOAT, voxels.data());
+  ospSetObject(volume, "voxelData", voxelData);
+  ospRelease(voxelData);
+
+  // required by OSPRay but not used in simple native renderer
+  ospSetObject(volume, "transferFunction", transferFunction);
+
+  ospCommit(volume);
+
+  return volume;
 }
 
 int main(int argc, const char **argv)
 {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <volley> | ..." << std::endl;
+    std::cerr << "usage: " << argv[0] << " <volley> | <native>" << std::endl;
     return 1;
   }
 
@@ -84,16 +117,25 @@ int main(int argc, const char **argv)
   ospCommit(world);
 
   // create OSPRay renderer
-  std::cout << "using renderer: " << argv[1] << std::endl;
+  std::string rendererString(argv[1]);
+  std::cout << "using renderer: " << rendererString << std::endl;
 
-  OSPRenderer renderer = ospNewRenderer(argv[1]);
+  OSPRenderer renderer = ospNewRenderer(rendererString.c_str());
 
   OSPData lightsData = ospTestingNewLights("ambient_only");
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
-  VLYVolume vlyVolume = createVolleyVolume();
-  ospSetVoidPtr(renderer, "vlyVolume", (void *)vlyVolume);
+  if (rendererString == "volley") {
+    VLYVolume vlyVolume = createVolleyVolume();
+    ospSetVoidPtr(renderer, "vlyVolume", (void *)vlyVolume);
+  } else if (rendererString == "native") {
+    OSPVolume volume = createNativeVolume(tfn);
+    ospSetVoidPtr(renderer, "volume", (void *)volume);
+  } else {
+    throw std::runtime_error("unknown volume type");
+  }
+
   ospSetObject(renderer, "transferFunction", tfn);
 
   ospCommit(renderer);

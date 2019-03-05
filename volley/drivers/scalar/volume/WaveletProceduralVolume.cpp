@@ -41,6 +41,16 @@ namespace volley {
           }
         }
       }
+
+#if 0
+      // helper code used to write procedurally-generated data files to disk for
+      // performance comparisons in other volume implementations
+      std::ofstream out;
+      out.open("wavelet_procedural_volume.raw", std::ios::binary);
+      out.write(reinterpret_cast<char *>(volumeData.data()),
+                volumeData.size() * sizeof(float));
+      out.close();
+#endif
     }
 
     float WaveletProceduralVolume::getVoxel(const vec3i &localCoordinates) const

@@ -36,7 +36,7 @@ VLYVolume createVolleyVolume()
 
   VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume");
 
-  vec3i dimensions(128);
+  vec3i dimensions(512);
   vec3f gridOrigin(-1.f);
   vec3f gridSpacing(2.f / float(dimensions.x));
 

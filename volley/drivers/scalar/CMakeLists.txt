@@ -17,27 +17,13 @@
 option(BUILD_SCALAR_DRIVER "Build scalar driver" ON)
 if (BUILD_SCALAR_DRIVER)
 
-  include(ispc)
-
-  # ISPC-side include directories
-  include_directories_ispc(${OSPRAY_INCLUDE_DIRS})
-  include_directories_ispc(${PROJECT_SOURCE_DIR}/volley/include)
-
-  get_target_property(OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES
-                      ospray::ospray_module_ispc
-                      INTERFACE_INCLUDE_DIRECTORIES)
-
-  include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
-
-  ospray_add_library(volley_module_scalar_driver SHARED
+  add_library(volley_module_scalar_driver SHARED
     api/ScalarDriver.cpp
     iterator/DumbRayIterator.cpp
     samples_mask/SamplesMask.cpp
     volume/StructuredVolume.cpp
     volume/WaveletAnalyticalVolume.cpp
     volume/WaveletProceduralVolume.cpp
-    volume/WaveletProceduralVolumeISPC.cpp
-    volume/WaveletProceduralVolumeISPC.ispc
   )
 
   target_link_libraries(volley_module_scalar_driver PRIVATE volley)

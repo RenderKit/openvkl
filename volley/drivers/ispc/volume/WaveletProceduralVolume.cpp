@@ -16,6 +16,7 @@
 
 #include "WaveletProceduralVolume.h"
 #include <cmath>
+#include "WaveletProceduralVolume_ispc.h"
 
 namespace volley {
   namespace ispc_driver {
@@ -51,9 +52,20 @@ namespace volley {
                 volumeData.size() * sizeof(float));
       out.close();
 #endif
+
+      if (!ispcEquivalent) {
+        ispcEquivalent = ispc::WaveletProceduralVolume_create(this);
+      }
+
+      ispc::WaveletProceduralVolume_set(ispcEquivalent,
+                                            volumeData.data(),
+                                            (const ispc::vec3i &)dimensions,
+                                            (const ispc::vec3f &)gridOrigin,
+                                            (const ispc::vec3f &)gridSpacing);
     }
 
-    float WaveletProceduralVolume::getVoxel(const vec3i &localCoordinates) const
+    float WaveletProceduralVolume::getVoxel(
+        const vec3i &localCoordinates) const
     {
       size_t index = localCoordinates.z * dimensions.y * dimensions.x +
                      localCoordinates.y * dimensions.x + localCoordinates.x;
@@ -69,7 +81,8 @@ namespace volley {
               ZM * cosf(ZF * objectCoordinates.z));
     }
 
-    VLY_REGISTER_VOLUME(WaveletProceduralVolume, wavelet_procedural_volume)
+    VLY_REGISTER_VOLUME(WaveletProceduralVolume,
+                        wavelet_procedural_volume_ispc)
 
   }  // namespace ispc_driver
 }  // namespace volley

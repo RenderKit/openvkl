@@ -36,8 +36,7 @@ if (BUILD_ISPC_DRIVER)
     volume/StructuredVolume.cpp
     volume/WaveletAnalyticalVolume.cpp
     volume/WaveletProceduralVolume.cpp
-    volume/WaveletProceduralVolumeISPC.cpp
-    volume/WaveletProceduralVolumeISPC.ispc
+    volume/WaveletProceduralVolume.ispc
   )
 
   target_link_libraries(volley_module_ispc_driver PRIVATE volley)

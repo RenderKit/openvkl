@@ -17,6 +17,7 @@
 #pragma once
 
 #include "StructuredVolume.h"
+#include "WaveletProceduralVolume_ispc.h"
 #include "common/math.h"
 
 namespace volley {
@@ -26,6 +27,14 @@ namespace volley {
     struct WaveletProceduralVolume : public StructuredVolume
     {
       void commit() override;
+
+      void computeSample8(const int *valid,
+                          const vly_vvec3f8 &objectCoordinates,
+                          float *samples) override
+      {
+        ispc::WaveletProceduralVolume_sample_export(
+            valid, ispcEquivalent, (void *)&objectCoordinates, (void *)samples);
+      }
 
      protected:
       float getVoxel(const vec3i &index) const override;
@@ -42,6 +51,8 @@ namespace volley {
       const float XF = 3.f;
       const float YF = 3.f;
       const float ZF = 3.f;
+
+      void *ispcEquivalent{nullptr};
     };
 
   }  // namespace ispc_driver

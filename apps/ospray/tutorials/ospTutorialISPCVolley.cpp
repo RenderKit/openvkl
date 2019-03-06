@@ -34,7 +34,7 @@ VLYVolume createVolleyVolume()
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
-  VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume");
+  VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume_ispc");
 
   vec3i dimensions(512);
   vec3f gridOrigin(-1.f);

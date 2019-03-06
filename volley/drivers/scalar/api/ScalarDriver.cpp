@@ -152,15 +152,7 @@ namespace volley {
                                       float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-
-      for (int i = 0; i < 8; i++) {
-        if (valid[i]) {
-          samples[i] =
-              volumeObject.computeSample(vec3f{objectCoordinates.x[i],
-                                               objectCoordinates.y[i],
-                                               objectCoordinates.z[i]});
-        }
-      }
+      volumeObject.computeSample8(valid, objectCoordinates, samples);
     }
 
     vec3f ScalarDriver::computeGradient(VLYVolume volume,

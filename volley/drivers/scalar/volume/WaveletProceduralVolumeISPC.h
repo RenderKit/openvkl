@@ -33,7 +33,7 @@ namespace volley {
                           float *samples) override
       {
         ispc::WaveletProceduralVolumeISPC_sample_export(
-            ispcEquivalent, (void *)&objectCoordinates, (void *)samples);
+            valid, ispcEquivalent, (void *)&objectCoordinates, (void *)samples);
       }
 
      protected:

@@ -171,16 +171,18 @@ inline varying float WaveletProceduralVolumeISPC_sample(
                  fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);
 }
 
-export void WaveletProceduralVolumeISPC_sample_export(void *uniform _volume,
-                                                      void *uniform
-                                                          _objectCoordinates,
-                                                      void *uniform _samples)
+export void WaveletProceduralVolumeISPC_sample_export(
+    uniform const int *uniform imask,
+    void *uniform _volume,
+    void *uniform _objectCoordinates,
+    void *uniform _samples)
 {
-  // TODO: need to handle input mask
+  cif(imask[programIndex])
+  {
+    const varying vec3f *uniform objectCoordinates =
+        (const varying vec3f *uniform)_objectCoordinates;
+    varying float *uniform samples = (varying float *uniform)_samples;
 
-  const varying vec3f *uniform objectCoordinates =
-      (const varying vec3f *uniform)_objectCoordinates;
-  varying float *uniform samples = (varying float *uniform)_samples;
-
-  WaveletProceduralVolumeISPC_sample(_volume, *objectCoordinates, *samples);
+    WaveletProceduralVolumeISPC_sample(_volume, *objectCoordinates, *samples);
+  }
 }

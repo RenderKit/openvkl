@@ -67,6 +67,16 @@ namespace volley {
                                             const range1f &tRange,
                                             VLYSamplesMask samplesMask) = 0;
 
+      virtual VLYRayIterator newRayIterator8(const int *valid,
+                                             VLYVolume volume,
+                                             const vly_vvec3f8 &origin,
+                                             const vly_vvec3f8 &direction,
+                                             const vly_vrange1f8 &tRange,
+                                             VLYSamplesMask samplesMask)
+      {
+        throw std::runtime_error("newRayIterator8 not yet implemented");
+      }
+
       virtual bool iterateInterval(VLYRayIterator rayIterator,
                                    VLYRayInterval &rayInterval) = 0;
 

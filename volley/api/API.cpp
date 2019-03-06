@@ -145,6 +145,25 @@ extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
 }
 VOLLEY_CATCH_END(nullptr)
 
+extern "C" VLYRayIterator vlyNewRayIterator8(const int *valid,
+                                             VLYVolume volume,
+                                             const vly_vvec3f8 *origin,
+                                             const vly_vvec3f8 *direction,
+                                             const vly_vrange1f8 *tRange,
+                                             VLYSamplesMask samplesMask)
+    VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  return volley::api::currentDriver().newRayIterator8(
+      valid,
+      volume,
+      reinterpret_cast<const vly_vvec3f8 &>(*origin),
+      reinterpret_cast<const vly_vvec3f8 &>(*direction),
+      reinterpret_cast<const vly_vrange1f8 &>(*tRange),
+      samplesMask);
+}
+VOLLEY_CATCH_END(nullptr)
+
 extern "C" bool vlyIterateInterval(
     VLYRayIterator rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN
 {
@@ -279,6 +298,21 @@ extern "C" void vlyComputeSample8(const int *valid,
                                   float *samples) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+
+#if 0
+  std::cout << std::endl << "API::vlyComputeSample8()" << std::endl;
+  std::cout << " &valid: " << valid << std::endl;
+  std::cout << " volume: " << volume << std::endl;
+  std::cout << " &objectCoordinates: " << objectCoordinates << std::endl;
+  std::cout << " &samples: " << samples << std::endl;
+
+  for (int i = 0; i < 8; i++) {
+    std::cout << "(x, y, z): (" << objectCoordinates->x[i] << ", "
+              << objectCoordinates->y[i] << ", " << objectCoordinates->z[i]
+              << ")" << std::endl;
+  }
+#endif
+
   volley::api::currentDriver().computeSample8(
       valid,
       volume,
@@ -304,3 +338,4 @@ extern "C" vly_box3f vlyGetBoundingBox(VLYVolume volume) VOLLEY_CATCH_BEGIN
   return reinterpret_cast<const vly_box3f &>(result);
 }
 VOLLEY_CATCH_END(vly_box3f{ospcommon::nan})
+

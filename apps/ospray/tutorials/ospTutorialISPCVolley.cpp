@@ -28,13 +28,13 @@ VLYVolume createVolleyVolume()
 {
   std::cout << "initializing Volley" << std::endl;
 
-  vlyLoadModule("scalar_driver");
+  vlyLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("scalar_driver");
+  VLYDriver driver = vlyNewDriver("ispc_driver");
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
-  VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume_ispc");
+  VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume");
 
   vec3i dimensions(512);
   vec3f gridOrigin(-1.f);

@@ -82,7 +82,7 @@ namespace volley {
     }
 
     VLY_REGISTER_VOLUME(WaveletProceduralVolume,
-                        wavelet_procedural_volume_ispc)
+                        wavelet_procedural_volume)
 
   }  // namespace ispc_driver
 }  // namespace volley

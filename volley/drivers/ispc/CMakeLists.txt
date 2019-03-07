@@ -34,7 +34,6 @@ if (BUILD_ISPC_DRIVER)
     iterator/DumbRayIterator.cpp
     samples_mask/SamplesMask.cpp
     volume/StructuredVolume.cpp
-    volume/WaveletAnalyticalVolume.cpp
     volume/WaveletProceduralVolume.cpp
     volume/WaveletProceduralVolume.ispc
   )

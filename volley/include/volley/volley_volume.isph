@@ -18,31 +18,29 @@
 
 #include "volley_common.isph"
 
-#if !defined(VLY_API)
-#define VLY_API extern "C" unmasked
-#endif
-
 // TODO: should be able to use "Volume" here directly, but this conflicts with
 // other ispc:: namespaced OSPRay types
 struct VolleyVolume;
 typedef VolleyVolume *uniform VLYVolume;
 
-VLY_API void vlyComputeSample8(const int* uniform valid,
-                       VLYVolume volume,
-                       const varying struct vly_vec3f * uniform objectCoordinates,
-                       varying float* uniform samples);
+VLY_API void vlyComputeSample8(const int *uniform valid,
+                               VLYVolume volume,
+                               const varying struct vly_vec3f *uniform
+                                   objectCoordinates,
+                               varying float *uniform samples);
 
-
-varying float vlyComputeSampleV(VLYVolume volume,
-                                const varying vly_vec3f* uniform objectCoordinates) 
+VLY_FORCEINLINE varying float vlyComputeSampleV(
+    VLYVolume volume, const varying vly_vec3f *uniform objectCoordinates)
 {
   varying bool mask = __mask;
-  unmasked {
+  unmasked
+  {
     varying int imask = mask ? -1 : 0;
   }
   if (sizeof(varying float) == 32) {
     varying float samples;
-    vlyComputeSample8((uniform int* uniform)&imask, volume, objectCoordinates, &samples);
+    vlyComputeSample8(
+        (uniform int *uniform) & imask, volume, objectCoordinates, &samples);
     return samples;
   }
 }

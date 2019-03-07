@@ -16,6 +16,13 @@
 
 #pragma once
 
+#if !defined(VLY_API)
+#define VLY_API extern "C" unmasked
+#endif
+
+#if !defined(VLY_FORCEINLINE)
+#define VLY_FORCEINLINE inline
+#endif
 
 struct ManagedObject
 {
@@ -37,4 +44,3 @@ struct vly_box3f
 {
   vly_vec3f lower, upper;
 };
-

@@ -23,14 +23,17 @@ namespace volley {
 
     void WaveletProceduralVolume::commit()
     {
-      StructuredVolume::commit();
-
-      // this volume is generated on commit based on the user-provided
-      // dimensions
-      dimensions = getParam<vec3i>("dimensions", vec3i(128, 128, 128));
-      localCoordinatesUpperBound = nextafter(dimensions, vec3i(0, 0, 0));
+      // these parameters are typically set in a superclass, but we need these
+      // before we call the superclass commit()
+      dimensions  = getParam<vec3i>("dimensions", vec3i(0));
+      gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
+      gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
 
       volumeData.resize(dimensions.x * dimensions.y * dimensions.z);
+
+      auto transformLocalToObject = [&](const vec3f &localCoordinates) {
+        return gridOrigin + localCoordinates * gridSpacing;
+      };
 
       for (size_t z = 0; z < dimensions.z; z++) {
         for (size_t y = 0; y < dimensions.y; y++) {
@@ -53,23 +56,7 @@ namespace volley {
       out.close();
 #endif
 
-      if (!ispcEquivalent) {
-        ispcEquivalent = ispc::WaveletProceduralVolume_create(this);
-      }
-
-      ispc::WaveletProceduralVolume_set(ispcEquivalent,
-                                            volumeData.data(),
-                                            (const ispc::vec3i &)dimensions,
-                                            (const ispc::vec3f &)gridOrigin,
-                                            (const ispc::vec3f &)gridSpacing);
-    }
-
-    float WaveletProceduralVolume::getVoxel(
-        const vec3i &localCoordinates) const
-    {
-      size_t index = localCoordinates.z * dimensions.y * dimensions.x +
-                     localCoordinates.y * dimensions.x + localCoordinates.x;
-      return volumeData[index];
+      SharedStructuredVolume::commit();
     }
 
     float WaveletProceduralVolume::getWaveletValue(
@@ -81,8 +68,7 @@ namespace volley {
               ZM * cosf(ZF * objectCoordinates.z));
     }
 
-    VLY_REGISTER_VOLUME(WaveletProceduralVolume,
-                        wavelet_procedural_volume)
+    VLY_REGISTER_VOLUME(WaveletProceduralVolume, wavelet_procedural_volume)
 
   }  // namespace ispc_driver
 }  // namespace volley

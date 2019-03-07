@@ -16,28 +16,42 @@
 
 #pragma once
 
-#include "SharedStructuredVolume.h"
+#include "SharedStructuredVolume_ispc.h"
+#include "StructuredVolume.h"
 
 namespace volley {
 
   namespace ispc_driver {
 
-    struct WaveletProceduralVolume : public SharedStructuredVolume
+    struct SharedStructuredVolume : public StructuredVolume
     {
       void commit() override;
 
-     protected:
-      float getWaveletValue(const vec3f &objectCoordinates) const;
+      // TODO: single sample through ISPC methods
+      float computeSample(const vec3f &objectCoordinates) const override
+      {
+        return 0.f;
+      }
 
-      // wavelet parameters
-      const float M  = 1.f;
-      const float G  = 1.f;
-      const float XM = 1.f;
-      const float YM = 1.f;
-      const float ZM = 1.f;
-      const float XF = 3.f;
-      const float YF = 3.f;
-      const float ZF = 3.f;
+      // TODO: const correctness here
+      void computeSample8(const int *valid,
+                          const vly_vvec3f8 &objectCoordinates,
+                          float *samples) override
+      {
+        ispc::SharedStructuredVolume_sample_export(
+            valid, ispcEquivalent, (void *)&objectCoordinates, (void *)samples);
+      }
+
+      // TODO
+      vec3f computeGradient(const vec3f &objectCoordinates) const override
+      {
+        return vec3f(0.f);
+      }
+
+     protected:
+      std::vector<float> volumeData;
+
+      void *ispcEquivalent{nullptr};
     };
 
   }  // namespace ispc_driver

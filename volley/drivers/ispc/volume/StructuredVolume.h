@@ -24,9 +24,16 @@ namespace volley {
 
     struct StructuredVolume : public Volume
     {
-      virtual void commit() override;
-      float computeSample(const vec3f &objectCoordinates) const override;
-      vec3f computeGradient(const vec3f &objectCoordinates) const override;
+      virtual void commit() override
+      {
+        Volume::commit();
+
+        samplingMethod = VLYSamplingMethod(
+            getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
+        dimensions  = getParam<vec3i>("dimensions", vec3i(0));
+        gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
+        gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
+      }
 
       box3f getBoundingBox() const override
       {
@@ -34,26 +41,11 @@ namespace volley {
       }
 
      protected:
-      virtual float getVoxel(const vec3i &index) const = 0;
-
-      vec3f transformLocalToObject(const vec3f &localCoordinates) const
-      {
-        return gridOrigin + localCoordinates * gridSpacing;
-      }
-
-      vec3f transformObjectToLocal(const vec3f &objectCoordinates) const
-      {
-        return rcp(gridSpacing) * (objectCoordinates - gridOrigin);
-      }
-
       // parameters set in commit()
       VLYSamplingMethod samplingMethod;
-      vec3f gridOrigin;  // TODO: replace with more general affine transform
-      vec3f gridSpacing;
-
-      // parameters must be set in derived class commit()s
       vec3i dimensions;
-      vec3f localCoordinatesUpperBound;
+      vec3f gridOrigin;
+      vec3f gridSpacing;
     };
 
   }  // namespace ispc_driver

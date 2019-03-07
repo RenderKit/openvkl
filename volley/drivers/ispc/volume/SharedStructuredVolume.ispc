@@ -17,7 +17,7 @@
 #include "math/vec.ih"
 #include "volley/volley_volume.isph"
 
-struct WaveletProceduralVolume
+struct SharedStructuredVolume
 {
   float *uniform volumeData;
   uniform vec3i dimensions;
@@ -27,21 +27,21 @@ struct WaveletProceduralVolume
   uniform vec3f localCoordinatesUpperBound;
 };
 
-export void *uniform WaveletProceduralVolume_create(void *uniform cppE)
+export void *uniform SharedStructuredVolume_create(void *uniform cppE)
 {
-  uniform WaveletProceduralVolume *uniform self =
-      uniform new uniform WaveletProceduralVolume;
+  uniform SharedStructuredVolume *uniform self =
+      uniform new uniform SharedStructuredVolume;
   return self;
 }
 
-export void WaveletProceduralVolume_set(void *uniform _self,
+export void SharedStructuredVolume_set(void *uniform _self,
                                             float *uniform volumeData,
                                             const uniform vec3i &dimensions,
                                             const uniform vec3f &gridOrigin,
                                             const uniform vec3f &gridSpacing)
 {
-  uniform WaveletProceduralVolume *uniform self =
-      (uniform WaveletProceduralVolume * uniform) _self;
+  uniform SharedStructuredVolume *uniform self =
+      (uniform SharedStructuredVolume * uniform) _self;
 
   self->volumeData  = volumeData;
   self->dimensions  = dimensions;
@@ -52,12 +52,12 @@ export void WaveletProceduralVolume_set(void *uniform _self,
       nextafter(self->dimensions - 1, make_vec3i(0));
 }
 
-inline void WaveletProceduralVolume_getVoxel(void *uniform _self,
+inline void SharedStructuredVolume_getVoxel(void *uniform _self,
                                                  const varying vec3i &index,
                                                  varying float &value)
 { /* Cast to the actual Volume subtype. */
-  WaveletProceduralVolume *uniform self =
-      (WaveletProceduralVolume * uniform) _self;
+  SharedStructuredVolume *uniform self =
+      (SharedStructuredVolume * uniform) _self;
 
   /* Cast to the actual voxel type. */
   const float *uniform volumeData = (const float *uniform)self->volumeData;
@@ -68,8 +68,8 @@ inline void WaveletProceduralVolume_getVoxel(void *uniform _self,
   value = volumeData[addr];
 }
 
-inline void WaveletProceduralVolume_transformObjectToLocal(
-    WaveletProceduralVolume *uniform volume,
+inline void SharedStructuredVolume_transformObjectToLocal(
+    SharedStructuredVolume *uniform volume,
     const varying vec3f &objectCoordinates,
     varying vec3f &localCoordinates)
 {
@@ -77,18 +77,18 @@ inline void WaveletProceduralVolume_transformObjectToLocal(
       rcp(volume->gridSpacing) * (objectCoordinates - volume->gridOrigin);
 }
 
-inline varying float WaveletProceduralVolume_sample(
+inline varying float SharedStructuredVolume_sample(
     void *uniform _volume,
     const varying vec3f &objectCoordinates,
     varying float &volumeSample)
 {
   // Cast to the actual Volume subtype.
-  WaveletProceduralVolume *uniform volume =
-      (WaveletProceduralVolume * uniform) _volume;
+  SharedStructuredVolume *uniform volume =
+      (SharedStructuredVolume * uniform) _volume;
 
   // Transform the sample location into the local coordinate system.
   vec3f localCoordinates;
-  WaveletProceduralVolume_transformObjectToLocal(
+  SharedStructuredVolume_transformObjectToLocal(
       volume, objectCoordinates, localCoordinates);
 
   // Coordinates outside the volume are clamped to the volume bounds.
@@ -114,35 +114,35 @@ inline varying float WaveletProceduralVolume_sample(
   float voxelValue_101;
   float voxelValue_110;
   float voxelValue_111;
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),
       voxelValue_000);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z),
       voxelValue_001);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z),
       voxelValue_010);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z),
       voxelValue_011);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z),
       voxelValue_100);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z),
       voxelValue_101);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z),
       voxelValue_110);
-  WaveletProceduralVolume_getVoxel(
+  SharedStructuredVolume_getVoxel(
       volume,
       make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z),
       voxelValue_111);
@@ -171,7 +171,7 @@ inline varying float WaveletProceduralVolume_sample(
                  fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);
 }
 
-export void WaveletProceduralVolume_sample_export(
+export void SharedStructuredVolume_sample_export(
     uniform const int *uniform imask,
     void *uniform _volume,
     void *uniform _objectCoordinates,
@@ -183,6 +183,6 @@ export void WaveletProceduralVolume_sample_export(
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    WaveletProceduralVolume_sample(_volume, *objectCoordinates, *samples);
+    SharedStructuredVolume_sample(_volume, *objectCoordinates, *samples);
   }
 }

@@ -33,9 +33,9 @@ if (BUILD_ISPC_DRIVER)
     api/ISPCDriver.cpp
     iterator/DumbRayIterator.cpp
     samples_mask/SamplesMask.cpp
-    volume/StructuredVolume.cpp
+    volume/SharedStructuredVolume.cpp
+    volume/SharedStructuredVolume.ispc
     volume/WaveletProceduralVolume.cpp
-    volume/WaveletProceduralVolume.ispc
   )
 
   target_link_libraries(volley_module_ispc_driver PRIVATE volley)

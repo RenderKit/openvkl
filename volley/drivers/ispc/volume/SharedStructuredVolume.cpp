@@ -14,31 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "SharedStructuredVolume.h"
 
 namespace volley {
-
   namespace ispc_driver {
 
-    struct WaveletProceduralVolume : public SharedStructuredVolume
+    void SharedStructuredVolume::commit()
     {
-      void commit() override;
+      StructuredVolume::commit();
 
-     protected:
-      float getWaveletValue(const vec3f &objectCoordinates) const;
+      if (!ispcEquivalent) {
+        ispcEquivalent = ispc::SharedStructuredVolume_create(this);
+      }
 
-      // wavelet parameters
-      const float M  = 1.f;
-      const float G  = 1.f;
-      const float XM = 1.f;
-      const float YM = 1.f;
-      const float ZM = 1.f;
-      const float XF = 3.f;
-      const float YF = 3.f;
-      const float ZF = 3.f;
-    };
+      ispc::SharedStructuredVolume_set(ispcEquivalent,
+                                       volumeData.data(),
+                                       (const ispc::vec3i &)dimensions,
+                                       (const ispc::vec3f &)gridOrigin,
+                                       (const ispc::vec3f &)gridSpacing);
+    }
+
+    VLY_REGISTER_VOLUME(SharedStructuredVolume, shared_structured_volume)
 
   }  // namespace ispc_driver
 }  // namespace volley

@@ -88,7 +88,8 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
 int main(int argc, const char **argv)
 {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0] << " <volley> | <native>" << std::endl;
+    std::cerr << "usage: " << argv[0]
+              << " <volley> | <volley_ray_iterator> | <native>" << std::endl;
     return 1;
   }
 
@@ -126,7 +127,7 @@ int main(int argc, const char **argv)
   ospSetData(renderer, "lights", lightsData);
   ospRelease(lightsData);
 
-  if (rendererString == "volley") {
+  if (rendererString.find("volley") != std::string::npos) {
     VLYVolume vlyVolume = createVolleyVolume();
     ospSetVoidPtr(renderer, "vlyVolume", (void *)vlyVolume);
   } else if (rendererString == "native") {

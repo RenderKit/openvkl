@@ -18,6 +18,7 @@
 #include "common/Ray.ih"
 #include "render/Renderer.ih"
 
+#include <volley/volley_driver.isph>
 #include <volley/volley_iterator.isph>
 #include <volley/volley_volume.isph>
 
@@ -100,7 +101,7 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
     }
   }
 
-  // TODO: vlyRelease(rayIterator);
+  vlyRelease((VLYObject)rayIterator);
 }
 
 void VolleyRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,

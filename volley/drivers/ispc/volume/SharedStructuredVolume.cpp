@@ -24,7 +24,7 @@ namespace volley {
       StructuredVolume::commit();
 
       if (!ispcEquivalent) {
-        ispcEquivalent = ispc::SharedStructuredVolume_create(this);
+        ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
       }
 
       ispc::SharedStructuredVolume_set(ispcEquivalent,

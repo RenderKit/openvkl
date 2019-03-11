@@ -33,10 +33,10 @@ namespace volley {
       box3f boundingBox = volume->getBoundingBox();
 
       ispcEquivalent =
-          ispc::DumbRayIterator_create((const ispc::box3f &)boundingBox,
-                                       (void *)&origin,
-                                       (void *)&direction,
-                                       (void *)&tRange);
+          ispc::DumbRayIterator_Constructor((const ispc::box3f &)boundingBox,
+                                            (void *)&origin,
+                                            (void *)&direction,
+                                            (void *)&tRange);
     }
 
     template <int W>

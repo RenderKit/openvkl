@@ -72,10 +72,11 @@ inline varying box1f intersectBox(const varying vec3f &origin,
   return result;
 }
 
-export void *uniform DumbRayIterator_create(const uniform box3f &boundingBox,
-                                            void *uniform _origin,
-                                            void *uniform _direction,
-                                            void *uniform _tRange)
+export void *uniform
+DumbRayIterator_Constructor(const uniform box3f &boundingBox,
+                            void *uniform _origin,
+                            void *uniform _direction,
+                            void *uniform _tRange)
 {
   uniform DumbRayIterator *uniform self = uniform new uniform DumbRayIterator;
 

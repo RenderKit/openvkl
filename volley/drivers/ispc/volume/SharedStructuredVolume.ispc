@@ -27,7 +27,7 @@ struct SharedStructuredVolume
   uniform vec3f localCoordinatesUpperBound;
 };
 
-export void *uniform SharedStructuredVolume_create(void *uniform cppE)
+export void *uniform SharedStructuredVolume_Constructor()
 {
   uniform SharedStructuredVolume *uniform self =
       uniform new uniform SharedStructuredVolume;
@@ -35,10 +35,10 @@ export void *uniform SharedStructuredVolume_create(void *uniform cppE)
 }
 
 export void SharedStructuredVolume_set(void *uniform _self,
-                                            float *uniform volumeData,
-                                            const uniform vec3i &dimensions,
-                                            const uniform vec3f &gridOrigin,
-                                            const uniform vec3f &gridSpacing)
+                                       float *uniform volumeData,
+                                       const uniform vec3i &dimensions,
+                                       const uniform vec3f &gridOrigin,
+                                       const uniform vec3f &gridSpacing)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -53,8 +53,8 @@ export void SharedStructuredVolume_set(void *uniform _self,
 }
 
 inline void SharedStructuredVolume_getVoxel(void *uniform _self,
-                                                 const varying vec3i &index,
-                                                 varying float &value)
+                                            const varying vec3i &index,
+                                            varying float &value)
 { /* Cast to the actual Volume subtype. */
   SharedStructuredVolume *uniform self =
       (SharedStructuredVolume * uniform) _self;

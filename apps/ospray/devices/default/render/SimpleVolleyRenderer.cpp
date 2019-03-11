@@ -14,23 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "render/Renderer.h"
-#include <volley/volley.h>
+#include "SimpleVolleyRenderer.h"
+#include "SimpleVolleyRenderer_ispc.h"
+#include "transferFunction/TransferFunction.h"
 
 namespace ospray {
 
-  struct VolleyRenderer : public Renderer
+  SimpleVolleyRenderer::SimpleVolleyRenderer()
   {
-    VolleyRenderer();
-    virtual ~VolleyRenderer() override = default;
-    virtual std::string toString() const override;
-    virtual void commit() override;
+    std::cout << "creating OSPRay ISPC device SimpleVolleyRenderer" << std::endl;
 
-  private:
+    setParam<std::string>("externalNameFromAPI", "volley");
 
-    VLYVolume vlyVolume{nullptr};
-  };
+    ispcEquivalent = ispc::SimpleVolleyRenderer_create(this);
+  }
 
-} // ::ospray
+  std::string SimpleVolleyRenderer::toString() const
+  {
+    return "ospray::render::SimpleVolleyRenderer";
+  }
+
+  void SimpleVolleyRenderer::commit()
+  {
+    Renderer::commit();
+
+    VLYVolume vlyVolume = (VLYVolume)getParamVoidPtr("vlyVolume", nullptr);
+
+    TransferFunction *transferFunction =
+        (TransferFunction *)getParamObject("transferFunction", nullptr);
+
+    if (transferFunction == nullptr)
+      throw std::runtime_error(
+          "no transfer function specified on the Volley renderer!");
+
+    ispc::SimpleVolleyRenderer_set(
+        getIE(), (ispc::VolleyVolume *)vlyVolume, transferFunction->getIE());
+  }
+
+  OSP_REGISTER_RENDERER(SimpleVolleyRenderer, simple_volley);
+
+}  // namespace ospray

@@ -17,8 +17,8 @@ ospray_add_library(ospray_module_ispc_volley SHARED
   render/SimpleNativeVolumeRenderer.cpp
   render/SimpleNativeVolumeRenderer.ispc
 
-  render/VolleyRenderer.cpp
-  render/VolleyRenderer.ispc
+  render/SimpleVolleyRenderer.cpp
+  render/SimpleVolleyRenderer.ispc
 
   render/VolleyRayIteratorRenderer.cpp
   render/VolleyRayIteratorRenderer.ispc

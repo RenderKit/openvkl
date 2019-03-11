@@ -20,14 +20,14 @@
 
 #include <volley/volley_volume.isph>
 
-struct VolleyRenderer
+struct SimpleVolleyRenderer
 {
   uniform Renderer super;
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
 };
 
-inline void integrate(uniform VolleyRenderer *uniform self,
+inline void integrate(uniform SimpleVolleyRenderer *uniform self,
                       varying vec3f &color,
                       varying float &alpha,
                       const uniform int accumID,
@@ -72,12 +72,12 @@ inline void integrate(uniform VolleyRenderer *uniform self,
   }
 }
 
-void VolleyRenderer_renderSample(uniform Renderer *uniform _self,
+void SimpleVolleyRenderer_renderSample(uniform Renderer *uniform _self,
                                  void *uniform perFrameData,
                                  varying ScreenSample &sample)
 {
-  uniform VolleyRenderer *uniform self =
-      (uniform VolleyRenderer * uniform) _self;
+  uniform SimpleVolleyRenderer *uniform self =
+      (uniform SimpleVolleyRenderer * uniform) _self;
 
   const uniform int accumID = reduce_max(sample.sampleID.z);
 
@@ -90,20 +90,20 @@ void VolleyRenderer_renderSample(uniform Renderer *uniform _self,
             sample.sampleID.y);
 }
 
-export void *uniform VolleyRenderer_create(void *uniform cppE)
+export void *uniform SimpleVolleyRenderer_create(void *uniform cppE)
 {
-  uniform VolleyRenderer *uniform self = uniform new uniform VolleyRenderer;
+  uniform SimpleVolleyRenderer *uniform self = uniform new uniform SimpleVolleyRenderer;
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
-  self->super.renderSample = VolleyRenderer_renderSample;
+  self->super.renderSample = SimpleVolleyRenderer_renderSample;
   return self;
 }
 
-export void VolleyRenderer_set(void *uniform _self,
+export void SimpleVolleyRenderer_set(void *uniform _self,
                                uniform VLYVolume volume,
                                void *uniform transferFunction)
 {
-  uniform VolleyRenderer *uniform self =
-      (uniform VolleyRenderer * uniform) _self;
+  uniform SimpleVolleyRenderer *uniform self =
+      (uniform SimpleVolleyRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
 }

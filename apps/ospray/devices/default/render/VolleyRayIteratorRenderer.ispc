@@ -18,6 +18,7 @@
 #include "common/Ray.ih"
 #include "render/Renderer.ih"
 
+#include <volley/volley_iterator.isph>
 #include <volley/volley_volume.isph>
 
 struct VolleyRayIteratorRenderer
@@ -38,43 +39,73 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
   color = make_vec3f(self->super.bgColor);
   alpha = self->super.bgColor.w;
 
-  const uniform vly_box3f boundingBox = vlyGetBoundingBox(self->volume);
+  // create volume ray iterator
+  vly_range1f tRange;
+  tRange.lower = ray.t0;
+  tRange.upper = ray.t;
 
-  float tBox0, tBox1;
-  const box3f *uniform bb = (const uniform struct box3f *uniform) & boundingBox;
-  intersectBox(ray, *bb, tBox0, tBox1);
+  VLYSamplesMask samplesMask;
 
-  if (tBox0 > tBox1)
-    return;
+  VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
+                                                  (varying vly_vec3f *)&ray.org,
+                                                  (varying vly_vec3f *)&ray.dir,
+                                                  &tRange,
+                                                  samplesMask);
 
-  uniform int nSamples = 32;
+  // the current ray interval
+  VLYRayInterval rayInterval;
 
-  const varying float dt = (tBox1 - tBox0) / nSamples;
+  // TODO
+  uniform float samplingRate = 1.f;
 
-  for (uniform int i = 0; i < nSamples; i++) {
-    float t = tBox0 + i * dt;
+  while (vlyIterateIntervalV(rayIterator, &rayInterval) && alpha < 0.99f) {
+    const float nominalSamplingDt = rayInterval.nominalDeltaT / samplingRate;
 
-    vec3f c      = ray.org + t * ray.dir;
-    float sample = vlyComputeSampleV(self->volume, (varying vly_vec3f *)&c);
+    // initial sub interval, based on our renderer-defined sampling rate
+    // and the volume's nominal dt
+    box1f subInterval =
+        make_box1f(rayInterval.tRange.lower,
+                   min(rayInterval.tRange.lower + nominalSamplingDt,
+                       rayInterval.tRange.upper));
 
-    vec3f sampleColor = self->transferFunction->getColorForValue(
-        self->transferFunction, sample);
+    // integrate as long as we have valid sub intervals and are not
+    // fully opaque
+    while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
+      const float t  = 0.5f * (subInterval.lower + subInterval.upper);
+      const float dt = subInterval.upper - subInterval.lower;
 
-    const float sampleOpacity = self->transferFunction->getOpacityForValue(
-        self->transferFunction, sample);
+      // get volume sample
+      vec3f c      = ray.org + t * ray.dir;
+      float sample = vlyComputeSampleV(self->volume, (varying vly_vec3f *)&c);
 
-    const float clampedOpacity = clamp(sampleOpacity * dt);
+      // apply transfer function
+      vec3f sampleColor = self->transferFunction->getColorForValue(
+          self->transferFunction, sample);
 
-    sampleColor = sampleColor * clampedOpacity;
+      const float sampleOpacity = self->transferFunction->getOpacityForValue(
+          self->transferFunction, sample);
 
-    color = color + (1.f - alpha) * make_vec3f(sampleColor);
-    alpha = alpha + (1.f - alpha) * clampedOpacity;
+      // accumulate contribution
+      const float clampedOpacity = clamp(sampleOpacity * dt);
+
+      sampleColor = sampleColor * clampedOpacity;
+
+      color = color + (1.f - alpha) * sampleColor;
+      alpha = alpha + (1.f - alpha) * clampedOpacity;
+
+      // compute next sub interval
+      subInterval.lower = subInterval.upper;
+      subInterval.upper =
+          min(subInterval.lower + nominalSamplingDt, rayInterval.tRange.upper);
+    }
   }
+
+  // TODO: vlyRelease(rayIterator);
 }
 
 void VolleyRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,
-                                 void *uniform perFrameData,
-                                 varying ScreenSample &sample)
+                                            void *uniform perFrameData,
+                                            varying ScreenSample &sample)
 {
   uniform VolleyRayIteratorRenderer *uniform self =
       (uniform VolleyRayIteratorRenderer * uniform) _self;
@@ -92,15 +123,16 @@ void VolleyRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,
 
 export void *uniform VolleyRayIteratorRenderer_create(void *uniform cppE)
 {
-  uniform VolleyRayIteratorRenderer *uniform self = uniform new uniform VolleyRayIteratorRenderer;
+  uniform VolleyRayIteratorRenderer *uniform self =
+      uniform new uniform VolleyRayIteratorRenderer;
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
   self->super.renderSample = VolleyRayIteratorRenderer_renderSample;
   return self;
 }
 
 export void VolleyRayIteratorRenderer_set(void *uniform _self,
-                               uniform VLYVolume volume,
-                               void *uniform transferFunction)
+                                          uniform VLYVolume volume,
+                                          void *uniform transferFunction)
 {
   uniform VolleyRayIteratorRenderer *uniform self =
       (uniform VolleyRayIteratorRenderer * uniform) _self;

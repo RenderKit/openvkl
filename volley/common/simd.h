@@ -22,6 +22,9 @@ namespace volley {
   using vfloatn = float[W];
 
   template <int W>
+  using vintn = int[W];
+
+  template <int W>
   struct vrange1fn
   {
     vfloatn<W> lower;

@@ -37,35 +37,20 @@ namespace volley {
                                        (void *)&origin,
                                        (void *)&direction,
                                        (void *)&tRange);
-        }
-
-      if (hits.first < hits.second) {
-        boundingBoxTRange.lower = hits.first;
-        boundingBoxTRange.upper = hits.second;
-      }
     }
 
-    bool DumbRayIterator::iterateInterval()
+    template <int W>
+    const RayInterval<W> *DumbRayIterator<W>::getCurrentRayInterval() const
     {
-      if (boundingBoxTRange.empty()) {
-        return false;
-      }
+      return reinterpret_cast<const RayInterval<W> *>(
+          ispc::DumbRayIterator_getCurrentRayInterval(ispcEquivalent));
+    }
 
-      static float nominalDeltaT = 0.25f;
-
-      if (currentRayInterval.tRange.empty()) {
-        currentRayInterval.tRange.lower = boundingBoxTRange.lower;
-      } else {
-        currentRayInterval.tRange.lower += nominalDeltaT;
-      }
-
-      currentRayInterval.tRange.upper =
-          std::min(currentRayInterval.tRange.lower + nominalDeltaT,
-                   boundingBoxTRange.upper);
-
-      currentRayInterval.nominalDeltaT = 0.1f;
-
-      return (currentRayInterval.tRange.lower < boundingBoxTRange.upper);
+    template <int W>
+    void DumbRayIterator<W>::iterateInterval(const int *valid, vintn<8> &result)
+    {
+      ispc::DumbRayIterator_iterateInterval(
+          valid, ispcEquivalent, (int *)&result);
     }
 
     template class DumbRayIterator<1>;

@@ -88,7 +88,7 @@ export void *uniform DumbRayIterator_create(const uniform box3f &boundingBox,
 
   // initial current ray interval empty
   self->currentRayInterval.tRange.lower = 1.f;
-  self->currentRayInterval.tRange.lower = -1.f;
+  self->currentRayInterval.tRange.upper = -1.f;
 
 #if 0
   print("boundingBox:\n  % % %\n  % % %\n",
@@ -105,12 +105,21 @@ export void *uniform DumbRayIterator_create(const uniform box3f &boundingBox,
   return self;
 }
 
-export void DumbRayIterator_iterateInterval(uniform const int *uniform imask,
-                                            uniform DumbRayIterator *uniform
-                                                self,
-                                            void *uniform _result)
+export void *uniform DumbRayIterator_getCurrentRayInterval(void *uniform _self)
 {
-  varying bool *uniform result = (varying bool *uniform)_result;
+  uniform DumbRayIterator *uniform self =
+      (uniform DumbRayIterator * uniform) _self;
+  return &self->currentRayInterval;
+}
+
+export void DumbRayIterator_iterateInterval(uniform const int *uniform imask,
+                                            void *uniform _self,
+                                            uniform int *uniform _result)
+{
+  uniform DumbRayIterator *uniform self =
+      (uniform DumbRayIterator * uniform) _self;
+
+  varying int *uniform result = (varying int *uniform)_result;
 
   cif(imask[programIndex])
   {

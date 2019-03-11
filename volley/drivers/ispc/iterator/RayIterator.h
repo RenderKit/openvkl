@@ -49,7 +49,7 @@ namespace volley {
 
       virtual const RayInterval<W> *getCurrentRayInterval() const = 0;
 
-      virtual bool iterateInterval() = 0;
+      virtual void iterateInterval(const int *valid, vintn<8> &result) = 0;
     };
 
   }  // namespace ispc_driver

@@ -52,6 +52,11 @@ namespace volley {
       bool iterateInterval(VLYRayIterator rayIterator,
                            VLYRayInterval &rayInterval) override;
 
+      void iterateInterval8(const int *valid,
+                            VLYRayIterator rayIterator,
+                            VLYRayInterval8 &rayInterval,
+                            vintn<8> &result) override;
+
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

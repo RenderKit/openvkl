@@ -32,9 +32,9 @@ namespace volley {
                       const vrange1fn<W> &tRange,
                       const SamplesMask *samplesMask);
 
-      const RayInterval<W> *getCurrentRayInterval() const override {}
+      const RayInterval<W> *getCurrentRayInterval() const override;
 
-      bool iterateInterval() override;
+      void iterateInterval(const int *valid, vintn<8> &result) override;
 
      protected:
       void *ispcEquivalent{nullptr};

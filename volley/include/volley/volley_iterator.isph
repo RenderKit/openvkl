@@ -64,18 +64,32 @@ struct VLYRayInterval
   // TODO: output samples mask when needed
 };
 
-// returns true while the iterator is still within the volume
-bool vlyIterateInterval(VLYRayIterator rayIterator,
-                        VLYRayInterval *rayInterval);
+VLY_API void vlyIterateInterval8(const int *uniform valid,
+                                 VLYRayIterator rayIterator,
+                                 varying VLYRayInterval *uniform rayInterval,
+                                 varying int *uniform result);
 
-// returns true while the iterator is still within the volume
-bool vlyIterateSurface(VLYRayIterator, float *t, float *sample);
+VLY_FORCEINLINE varying bool vlyIterateIntervalV(
+    VLYRayIterator rayIterator, varying VLYRayInterval *uniform rayInterval)
+{
+  varying bool mask = __mask;
+  unmasked
+  {
+    varying int imask = mask ? -1 : 0;
+  }
+  if (sizeof(varying float) == 32) {
+    varying int iresult;
+    vlyIterateInterval8(
+        (uniform int *uniform) & imask, rayIterator, rayInterval, &iresult);
 
-/* TODO:
-
-- need nominalDeltaT to also be returned
-- open whether output sample mask is returned
-*/
+    varying bool result;
+    unmasked
+    {
+      result = iresult ? true : false;
+    }
+    return result;
+  }
+}
 
 #ifdef __cplusplus
 }  // extern "C"

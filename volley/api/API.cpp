@@ -174,6 +174,21 @@ extern "C" bool vlyIterateInterval(
 }
 VOLLEY_CATCH_END(false)
 
+extern "C" void vlyIterateInterval8(const int *valid,
+                                    VLYRayIterator rayIterator,
+                                    VLYRayInterval8 *rayInterval,
+                                    int *result) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+
+  return volley::api::currentDriver().iterateInterval8(
+      valid,
+      rayIterator,
+      reinterpret_cast<VLYRayInterval8 &>(*rayInterval),
+      reinterpret_cast<vintn<8> &>(*result));
+}
+VOLLEY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Module /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

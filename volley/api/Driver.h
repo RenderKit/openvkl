@@ -82,6 +82,15 @@ namespace volley {
       virtual bool iterateInterval(VLYRayIterator rayIterator,
                                    VLYRayInterval &rayInterval) = 0;
 
+      virtual void iterateInterval8(const int *valid,
+                                    VLYRayIterator rayIterator,
+                                    VLYRayInterval8 &rayInterval,
+                                    vintn<8> &result)
+      {
+        throw std::runtime_error(
+            "iterateInterval8() not implemented on this driver");
+      }
+
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

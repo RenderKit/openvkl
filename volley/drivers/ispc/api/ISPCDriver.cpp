@@ -72,13 +72,22 @@ namespace volley {
     }
 
     bool ISPCDriver::iterateInterval(VLYRayIterator rayIterator,
-                                       VLYRayInterval &rayInterval)
+                                     VLYRayInterval &rayInterval)
     {
-      auto &rayIteratorObject = referenceFromHandle<RayIterator>(rayIterator);
-      bool result             = rayIteratorObject.iterateInterval();
-      rayInterval             = *reinterpret_cast<const VLYRayInterval *>(
+      throw std::runtime_error(
+          "iterateInterval() not implemented on this driver!");
+    }
+
+    void ISPCDriver::iterateInterval8(const int *valid,
+                                      VLYRayIterator rayIterator,
+                                      VLYRayInterval8 &rayInterval,
+                                      vintn<8> &result)
+    {
+      auto &rayIteratorObject =
+          referenceFromHandle<RayIterator<8>>(rayIterator);
+      rayIteratorObject.iterateInterval(valid, result);
+      rayInterval = *reinterpret_cast<const VLYRayInterval8 *>(
           rayIteratorObject.getCurrentRayInterval());
-      return result;
     }
 
     ///////////////////////////////////////////////////////////////////////////

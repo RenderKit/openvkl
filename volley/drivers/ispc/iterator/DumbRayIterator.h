@@ -32,6 +32,8 @@ namespace volley {
                       const vrange1fn<W> &tRange,
                       const SamplesMask *samplesMask);
 
+      ~DumbRayIterator();
+
       const RayInterval<W> *getCurrentRayInterval() const override;
 
       void iterateInterval(const int *valid, vintn<8> &result) override;

@@ -40,6 +40,12 @@ namespace volley {
     }
 
     template <int W>
+    DumbRayIterator<W>::~DumbRayIterator()
+    {
+      ispc::DumbRayIterator_Destructor(ispcEquivalent);
+    }
+
+    template <int W>
     const RayInterval<W> *DumbRayIterator<W>::getCurrentRayInterval() const
     {
       return reinterpret_cast<const RayInterval<W> *>(

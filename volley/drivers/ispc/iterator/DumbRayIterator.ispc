@@ -105,6 +105,14 @@ export void *uniform DumbRayIterator_create(const uniform box3f &boundingBox,
   return self;
 }
 
+export void *uniform DumbRayIterator_Destructor(void *uniform _self)
+{
+  uniform DumbRayIterator *uniform self =
+      (uniform DumbRayIterator * uniform) _self;
+
+  delete self;
+}
+
 export void *uniform DumbRayIterator_getCurrentRayInterval(void *uniform _self)
 {
   uniform DumbRayIterator *uniform self =

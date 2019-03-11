@@ -34,6 +34,14 @@ export void *uniform SharedStructuredVolume_Constructor()
   return self;
 }
 
+export void *uniform SharedStructuredVolume_Destructor(void *uniform _self)
+{
+  uniform SharedStructuredVolume *uniform self =
+      (uniform SharedStructuredVolume * uniform) _self;
+
+  delete self;
+}
+
 export void SharedStructuredVolume_set(void *uniform _self,
                                        float *uniform volumeData,
                                        const uniform vec3i &dimensions,

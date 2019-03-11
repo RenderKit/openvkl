@@ -19,6 +19,13 @@
 namespace volley {
   namespace ispc_driver {
 
+    SharedStructuredVolume::~SharedStructuredVolume()
+    {
+      if (ispcEquivalent) {
+        ispc::SharedStructuredVolume_Destructor(ispcEquivalent);
+      }
+    }
+
     void SharedStructuredVolume::commit()
     {
       StructuredVolume::commit();

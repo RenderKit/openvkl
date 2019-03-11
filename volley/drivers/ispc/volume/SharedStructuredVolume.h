@@ -25,6 +25,8 @@ namespace volley {
 
     struct SharedStructuredVolume : public StructuredVolume
     {
+      ~SharedStructuredVolume();
+
       void commit() override;
 
       // TODO: single sample through ISPC methods

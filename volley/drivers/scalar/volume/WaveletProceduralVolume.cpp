@@ -26,7 +26,7 @@ namespace volley {
 
       // this volume is generated on commit based on the user-provided
       // dimensions
-      dimensions = getParam<vec3i>("dimensions", vec3i(128, 128, 128));
+      dimensions = getParam<vec3i>("dimensions", vec3i(128));
       localCoordinatesUpperBound = nextafter(dimensions, vec3i(0, 0, 0));
 
       volumeData.resize(dimensions.x * dimensions.y * dimensions.z);

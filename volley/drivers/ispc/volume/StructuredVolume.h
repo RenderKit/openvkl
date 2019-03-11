@@ -30,7 +30,7 @@ namespace volley {
 
         samplingMethod = VLYSamplingMethod(
             getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
-        dimensions  = getParam<vec3i>("dimensions", vec3i(0));
+        dimensions  = getParam<vec3i>("dimensions", vec3i(128));
         gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
         gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
       }

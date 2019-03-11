@@ -25,7 +25,7 @@ namespace volley {
     {
       // these parameters are typically set in a superclass, but we need these
       // before we call the superclass commit()
-      dimensions  = getParam<vec3i>("dimensions", vec3i(0));
+      dimensions  = getParam<vec3i>("dimensions", vec3i(128));
       gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
 

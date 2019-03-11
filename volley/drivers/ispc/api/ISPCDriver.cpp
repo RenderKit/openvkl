@@ -43,13 +43,28 @@ namespace volley {
     ///////////////////////////////////////////////////////////////////////////
 
     VLYRayIterator ISPCDriver::newRayIterator(VLYVolume volume,
-                                                const vec3f &origin,
-                                                const vec3f &direction,
-                                                const range1f &tRange,
-                                                VLYSamplesMask samplesMask)
+                                              const vec3f &origin,
+                                              const vec3f &direction,
+                                              const range1f &tRange,
+                                              VLYSamplesMask samplesMask)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return (VLYRayIterator)volumeObject.newRayIterator(
+          origin,
+          direction,
+          tRange,
+          reinterpret_cast<const SamplesMask *>(samplesMask));
+    }
+
+    VLYRayIterator ISPCDriver::newRayIterator8(const int *valid,
+                                               VLYVolume volume,
+                                               const vvec3fn<8> &origin,
+                                               const vvec3fn<8> &direction,
+                                               const vrange1fn<8> &tRange,
+                                               VLYSamplesMask samplesMask)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      return (VLYRayIterator)volumeObject.newRayIterator8(
           origin,
           direction,
           tRange,
@@ -92,16 +107,16 @@ namespace volley {
     }
 
     void ISPCDriver::setVec3f(VLYObject object,
-                                const char *name,
-                                const vec3f &v)
+                              const char *name,
+                              const vec3f &v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
     }
 
     void ISPCDriver::setVec3i(VLYObject object,
-                                const char *name,
-                                const vec3i &v)
+                              const char *name,
+                              const vec3i &v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
@@ -140,23 +155,23 @@ namespace volley {
     }
 
     float ISPCDriver::computeSample(VLYVolume volume,
-                                      const vec3f &objectCoordinates)
+                                    const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return volumeObject.computeSample(objectCoordinates);
     }
 
     void ISPCDriver::computeSample8(const int *valid,
-                                      VLYVolume volume,
-                                      const vly_vvec3f8 &objectCoordinates,
-                                      float *samples)
+                                    VLYVolume volume,
+                                    const vly_vvec3f8 &objectCoordinates,
+                                    float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       volumeObject.computeSample8(valid, objectCoordinates, samples);
     }
 
     vec3f ISPCDriver::computeGradient(VLYVolume volume,
-                                        const vec3f &objectCoordinates)
+                                      const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return volumeObject.computeGradient(objectCoordinates);

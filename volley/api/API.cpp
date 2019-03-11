@@ -20,8 +20,10 @@
 #include <ospray/ospcommon/vec.h>
 #include "Driver.h"
 #include "common/logging.h"
+#include "common/simd.h"
 #include "volley/volley.h"
 
+using namespace volley;
 using namespace ospcommon;
 
 #define TRACE_PREFIX "[volley] "
@@ -157,9 +159,9 @@ extern "C" VLYRayIterator vlyNewRayIterator8(const int *valid,
   return volley::api::currentDriver().newRayIterator8(
       valid,
       volume,
-      reinterpret_cast<const vly_vvec3f8 &>(*origin),
-      reinterpret_cast<const vly_vvec3f8 &>(*direction),
-      reinterpret_cast<const vly_vrange1f8 &>(*tRange),
+      reinterpret_cast<const vvec3fn<8> &>(*origin),
+      reinterpret_cast<const vvec3fn<8> &>(*direction),
+      reinterpret_cast<const vrange1fn<8> &>(*tRange),
       samplesMask);
 }
 VOLLEY_CATCH_END(nullptr)
@@ -338,4 +340,3 @@ extern "C" vly_box3f vlyGetBoundingBox(VLYVolume volume) VOLLEY_CATCH_BEGIN
   return reinterpret_cast<const vly_box3f &>(result);
 }
 VOLLEY_CATCH_END(vly_box3f{ospcommon::nan})
-

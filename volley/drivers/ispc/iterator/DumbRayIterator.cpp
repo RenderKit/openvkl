@@ -16,21 +16,28 @@
 
 #include "DumbRayIterator.h"
 #include "../volume/Volume.h"
+#include "DumbRayIterator_ispc.h"
 #include "common/math.h"
 
 namespace volley {
   namespace ispc_driver {
 
-    DumbRayIterator::DumbRayIterator(const Volume *volume,
-                                     const vec3f &origin,
-                                     const vec3f &direction,
-                                     const range1f &tRange,
-                                     const SamplesMask *samplesMask)
-        : RayIterator(volume, origin, direction, tRange, samplesMask)
+    template <int W>
+    DumbRayIterator<W>::DumbRayIterator(const Volume *volume,
+                                        const vvec3fn<W> &origin,
+                                        const vvec3fn<W> &direction,
+                                        const vrange1fn<W> &tRange,
+                                        const SamplesMask *samplesMask)
+        : RayIterator<W>(volume, origin, direction, tRange, samplesMask)
     {
       box3f boundingBox = volume->getBoundingBox();
 
-      auto hits = intersectBox(origin, direction, boundingBox, tRange);
+      ispcEquivalent =
+          ispc::DumbRayIterator_create((const ispc::box3f &)boundingBox,
+                                       (void *)&origin,
+                                       (void *)&direction,
+                                       (void *)&tRange);
+        }
 
       if (hits.first < hits.second) {
         boundingBoxTRange.lower = hits.first;
@@ -60,6 +67,9 @@ namespace volley {
 
       return (currentRayInterval.tRange.lower < boundingBoxTRange.upper);
     }
+
+    template class DumbRayIterator<1>;
+    template class DumbRayIterator<8>;
 
   }  // namespace ispc_driver
 }  // namespace volley

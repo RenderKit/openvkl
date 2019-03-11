@@ -23,18 +23,21 @@ namespace volley {
 
     struct Volume;
 
-    struct DumbRayIterator : public RayIterator
+    template <int W>
+    struct DumbRayIterator : public RayIterator<W>
     {
       DumbRayIterator(const Volume *volume,
-                      const vec3f &origin,
-                      const vec3f &direction,
-                      const range1f &tRange,
+                      const vvec3fn<W> &origin,
+                      const vvec3fn<W> &direction,
+                      const vrange1fn<W> &tRange,
                       const SamplesMask *samplesMask);
+
+      const RayInterval<W> *getCurrentRayInterval() const override {}
 
       bool iterateInterval() override;
 
      protected:
-      range1f boundingBoxTRange = ospcommon::empty;
+      void *ispcEquivalent{nullptr};
     };
 
   }  // namespace ispc_driver

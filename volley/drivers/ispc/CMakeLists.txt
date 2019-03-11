@@ -32,6 +32,7 @@ if (BUILD_ISPC_DRIVER)
   ospray_add_library(volley_module_ispc_driver SHARED
     api/ISPCDriver.cpp
     iterator/DumbRayIterator.cpp
+    iterator/DumbRayIterator.ispc
     samples_mask/SamplesMask.cpp
     volume/SharedStructuredVolume.cpp
     volume/SharedStructuredVolume.ispc

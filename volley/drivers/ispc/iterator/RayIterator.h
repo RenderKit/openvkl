@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include <ospray/ospcommon/range.h>
 #include "../samples_mask/SamplesMask.h"
 #include "common/ManagedObject.h"
+#include "common/simd.h"
 
 using namespace ospcommon;
 
@@ -27,46 +27,29 @@ namespace volley {
 
     struct Volume;
 
+    template <int W>
     struct RayInterval
     {
-      range1f tRange;
-      float nominalDeltaT;
+      vrange1fn<W> tRange;
+      vfloatn<W> nominalDeltaT;
     };
 
+    template <int W>
     struct RayIterator : public ManagedObject
     {
-      RayIterator(const volley::ispc_driver::Volume *volume,
-                  const vec3f &origin,
-                  const vec3f &direction,
-                  const range1f &tRange,
+      RayIterator(const Volume *volume,
+                  const vvec3fn<W> &origin,
+                  const vvec3fn<W> &direction,
+                  const vrange1fn<W> &tRange,
                   const SamplesMask *samplesMask)
-          : volume(volume),
-            origin(origin),
-            direction(direction),
-            tRange(tRange),
-            samplesMask(samplesMask)
       {
       }
 
       virtual ~RayIterator() override = default;
 
-      const RayInterval *getCurrentRayInterval() const
-      {
-        return &currentRayInterval;
-      }
+      virtual const RayInterval<W> *getCurrentRayInterval() const = 0;
 
       virtual bool iterateInterval() = 0;
-
-     protected:
-      // initial state
-      const Volume *volume;
-      const vec3f origin;
-      const vec3f direction;
-      const range1f tRange;
-      const SamplesMask *samplesMask;
-
-      // current state
-      RayInterval currentRayInterval{range1f(ospcommon::empty), 0.f};
     };
 
   }  // namespace ispc_driver

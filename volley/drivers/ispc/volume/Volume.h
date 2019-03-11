@@ -51,6 +51,13 @@ namespace volley {
                                           const SamplesMask *samplesMask)
       {
         return new DumbRayIterator(
+
+      virtual RayIterator<8> *newRayIterator8(const vvec3fn<8> &origin,
+                                              const vvec3fn<8> &direction,
+                                              const vrange1fn<8> &tRange,
+                                              const SamplesMask *samplesMask)
+      {
+        return new DumbRayIterator<8>(
             this, origin, direction, tRange, samplesMask);
       }
 

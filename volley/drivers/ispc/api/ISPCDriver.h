@@ -42,6 +42,13 @@ namespace volley {
                                     const range1f &tRange,
                                     VLYSamplesMask samplesMask) override;
 
+      VLYRayIterator newRayIterator8(const int *valid,
+                                     VLYVolume volume,
+                                     const vvec3fn<8> &origin,
+                                     const vvec3fn<8> &direction,
+                                     const vrange1fn<8> &tRange,
+                                     VLYSamplesMask samplesMask) override;
+
       bool iterateInterval(VLYRayIterator rayIterator,
                            VLYRayInterval &rayInterval) override;
 

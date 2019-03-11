@@ -23,6 +23,7 @@
 #include <functional>
 #include <memory>
 #include "common/VLYCommon.h"
+#include "common/simd.h"
 #include "volley/volley.h"
 
 using namespace ospcommon;
@@ -69,12 +70,13 @@ namespace volley {
 
       virtual VLYRayIterator newRayIterator8(const int *valid,
                                              VLYVolume volume,
-                                             const vly_vvec3f8 &origin,
-                                             const vly_vvec3f8 &direction,
-                                             const vly_vrange1f8 &tRange,
+                                             const vvec3fn<8> &origin,
+                                             const vvec3fn<8> &direction,
+                                             const vrange1fn<8> &tRange,
                                              VLYSamplesMask samplesMask)
       {
-        throw std::runtime_error("newRayIterator8 not yet implemented");
+        throw std::runtime_error(
+            "newRayIterator8() not implemented on this driver");
       }
 
       virtual bool iterateInterval(VLYRayIterator rayIterator,

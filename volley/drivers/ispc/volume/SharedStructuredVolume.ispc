@@ -14,18 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "math/vec.ih"
+#include "SharedStructuredVolume.ih"
 #include "volley/volley_volume.isph"
-
-struct SharedStructuredVolume
-{
-  float *uniform volumeData;
-  uniform vec3i dimensions;
-  uniform vec3f gridOrigin;
-  uniform vec3f gridSpacing;
-
-  uniform vec3f localCoordinatesUpperBound;
-};
 
 export void *uniform SharedStructuredVolume_Constructor()
 {

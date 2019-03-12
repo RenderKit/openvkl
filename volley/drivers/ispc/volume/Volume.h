@@ -45,12 +45,14 @@ namespace volley {
       // volumes can provide their own ray iterators based on their internal
       // acceleration structures. the default "dumb" ray iterator assumes no
       // acceleration structure.
-      virtual RayIterator *newRayIterator(const vec3f &origin,
-                                          const vec3f &direction,
-                                          const range1f &tRange,
-                                          const SamplesMask *samplesMask)
+      virtual RayIterator<1> *newRayIterator(const vec3f &origin,
+                                             const vec3f &direction,
+                                             const range1f &tRange,
+                                             const SamplesMask *samplesMask)
       {
-        return new DumbRayIterator(
+        throw std::runtime_error(
+            "newRayIterator() not implemented in this driver!");
+      }
 
       virtual RayIterator<8> *newRayIterator8(const vvec3fn<8> &origin,
                                               const vvec3fn<8> &direction,

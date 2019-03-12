@@ -34,6 +34,7 @@ if (BUILD_ISPC_DRIVER)
     iterator/DumbRayIterator.cpp
     iterator/DumbRayIterator.ispc
     samples_mask/SamplesMask.cpp
+    volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.cpp
     volume/SharedStructuredVolume.ispc
     volume/WaveletProceduralVolume.cpp

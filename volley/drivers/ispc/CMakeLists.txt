@@ -33,6 +33,8 @@ if (BUILD_ISPC_DRIVER)
     api/ISPCDriver.cpp
     iterator/DumbRayIterator.cpp
     iterator/DumbRayIterator.ispc
+    iterator/GridAcceleratorRayIterator.cpp
+    iterator/GridAcceleratorRayIterator.ispc
     samples_mask/SamplesMask.cpp
     volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.cpp

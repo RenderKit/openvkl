@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "../iterator/GridAcceleratorRayIterator.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
@@ -28,6 +29,15 @@ namespace volley {
       ~SharedStructuredVolume();
 
       void commit() override;
+
+      RayIterator<8> *newRayIterator8(const vvec3fn<8> &origin,
+                                      const vvec3fn<8> &direction,
+                                      const vrange1fn<8> &tRange,
+                                      const SamplesMask *samplesMask) override
+      {
+        return new GridAcceleratorRayIterator<8>(
+            this, origin, direction, tRange, samplesMask);
+      }
 
       // TODO: single sample through ISPC methods
       float computeSample(const vec3f &objectCoordinates) const override

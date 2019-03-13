@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "GridAcceleratorRayIterator.h"
-#include "../volume/Volume.h"
+#include "../volume/SharedStructuredVolume.h"
 #include "GridAcceleratorRayIterator_ispc.h"
 #include "common/math.h"
 
@@ -31,9 +31,13 @@ namespace volley {
         const SamplesMask *samplesMask)
         : RayIterator<W>(volume, origin, direction, tRange, samplesMask)
     {
+      const SharedStructuredVolume *ssv =
+          static_cast<const SharedStructuredVolume *>(volume);
+
       box3f boundingBox = volume->getBoundingBox();
 
       ispcEquivalent = ispc::GridAcceleratorRayIterator_Constructor(
+          ssv->getISPCEquivalent(),
           (const ispc::box3f &)boundingBox,
           (void *)&origin,
           (void *)&direction,

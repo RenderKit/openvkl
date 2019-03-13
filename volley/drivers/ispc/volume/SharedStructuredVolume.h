@@ -60,6 +60,11 @@ namespace volley {
         throw std::runtime_error("computeGradient() not implemented");
       }
 
+      void *getISPCEquivalent() const
+      {
+        return ispcEquivalent;
+      }
+
      protected:
       void buildAccelerator();
 

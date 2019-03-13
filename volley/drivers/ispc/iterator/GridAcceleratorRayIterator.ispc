@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../volume/SharedStructuredVolume.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 #include "volley/volley_iterator.isph"
@@ -32,6 +33,7 @@ struct RayInterval
 
 struct GridAcceleratorRayIterator
 {
+  SharedStructuredVolume *uniform volume;
   varying vec3f origin;
   varying vec3f direction;
   varying box1f tRange;
@@ -74,7 +76,8 @@ inline varying box1f intersectBox(const varying vec3f &origin,
 }
 
 export void *uniform
-GridAcceleratorRayIterator_Constructor(const uniform box3f &boundingBox,
+GridAcceleratorRayIterator_Constructor(void *uniform _volume,
+                                       const uniform box3f &boundingBox,
                                        void *uniform _origin,
                                        void *uniform _direction,
                                        void *uniform _tRange)
@@ -82,6 +85,7 @@ GridAcceleratorRayIterator_Constructor(const uniform box3f &boundingBox,
   uniform GridAcceleratorRayIterator *uniform self =
       uniform new uniform GridAcceleratorRayIterator;
 
+  self->volume    = (uniform SharedStructuredVolume * uniform) _volume;
   self->origin    = *((varying vec3f * uniform) _origin);
   self->direction = *((varying vec3f * uniform) _direction);
   self->tRange    = *((varying box1f * uniform) _tRange);

@@ -32,7 +32,7 @@ namespace volley {
       // TODO: single sample through ISPC methods
       float computeSample(const vec3f &objectCoordinates) const override
       {
-        return 0.f;
+        throw std::runtime_error("computeSample() not implemented");
       }
 
       // TODO: const correctness here
@@ -47,7 +47,7 @@ namespace volley {
       // TODO
       vec3f computeGradient(const vec3f &objectCoordinates) const override
       {
-        return vec3f(0.f);
+        throw std::runtime_error("computeGradient() not implemented");
       }
 
      protected:

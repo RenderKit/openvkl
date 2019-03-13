@@ -38,11 +38,9 @@ struct GridAccelerator {
 
 };
 
-//! Create an instance of the accelerator and encode the volume.
-GridAccelerator *uniform GridAccelerator_createInstance(void *uniform volume);
+GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
 
-//! Destroy an instance of the accelerator and free all associated memory.
-void GridAccelerator_destroy(GridAccelerator *uniform accelerator);
+void GridAccelerator_Destructor(GridAccelerator *uniform accelerator);
 
 //! Step a ray through the accelerator until a cell with visible volumetric
 //! elements is found.

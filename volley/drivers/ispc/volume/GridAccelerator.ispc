@@ -55,7 +55,7 @@ inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator,
   accelerator->cellRange[address] = value;
 }
 
-GridAccelerator *uniform GridAccelerator_createInstance(void *uniform _volume)
+GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
 {
   // Cast to the actual volume type.
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume * uniform) _volume;
@@ -89,13 +89,11 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform _volume)
   return accelerator;
 }
 
-void GridAccelerator_destroy(GridAccelerator *uniform accelerator)
+void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
 {
-  // Free memory allocated by the accelerator.
   if (accelerator->cellRange)
     delete[] accelerator->cellRange;
 
-  // Free the accelerator container.
   delete accelerator;
 }
 

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
 #include "volley/volley_volume.isph"
 
@@ -196,5 +197,24 @@ export void *uniform SharedStructuredVolume_Destructor(void *uniform _self)
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
 
+  if (self->accelerator) {
+    GridAccelerator_Destructor(self->accelerator);
+  }
+
   delete self;
+}
+
+export void *uniform
+SharedStructuredVolume_createAccelerator(void *uniform _self)
+{
+  uniform SharedStructuredVolume *uniform self =
+      (uniform SharedStructuredVolume * uniform) _self;
+
+  if (self->accelerator) {
+    GridAccelerator_Destructor(self->accelerator);
+  }
+
+  self->accelerator = GridAccelerator_Constructor(self);
+
+  return self->accelerator;
 }

@@ -51,8 +51,9 @@ namespace volley {
       }
 
      protected:
-      std::vector<float> volumeData;
+      void buildAccelerator();
 
+      std::vector<float> volumeData;
       void *ispcEquivalent{nullptr};
     };
 

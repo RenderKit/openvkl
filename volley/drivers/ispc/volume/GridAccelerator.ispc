@@ -16,7 +16,7 @@
 
 // ospray
 #include "GridAccelerator.ih"
-#include "StructuredVolume.ih"
+#include "SharedStructuredVolume.ih"
 #include "math/box.ih"
 
 //! Bit count used to represent the brick width.
@@ -58,7 +58,7 @@ inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator,
 GridAccelerator *uniform GridAccelerator_createInstance(void *uniform _volume)
 {
   // Cast to the actual volume type.
-  StructuredVolume *uniform volume = (StructuredVolume * uniform) _volume;
+  SharedStructuredVolume *uniform volume = (SharedStructuredVolume * uniform) _volume;
 
   // The accelerator container.
   GridAccelerator *uniform accelerator = uniform new uniform GridAccelerator;
@@ -100,7 +100,7 @@ void GridAccelerator_destroy(GridAccelerator *uniform accelerator)
 }
 
 inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
-                                            StructuredVolume *uniform volume,
+                                            SharedStructuredVolume *uniform volume,
                                             const uniform vec3i &cellIndex,
                                             uniform vec2f &cellRange)
 {
@@ -133,7 +133,7 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
 //! grid.
 inline void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform
                                                   accelerator,
-                                              StructuredVolume *uniform volume,
+                                              SharedStructuredVolume *uniform volume,
                                               const uniform int taskIndex)
 {
   // Brick index from task index.
@@ -202,20 +202,20 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
                                            const varying vec3i &index)
 {
   // The associated volume.
-  StructuredVolume *uniform volume =
-      (StructuredVolume * uniform) accelerator->volume;
+  SharedStructuredVolume *uniform volume =
+      (SharedStructuredVolume * uniform) accelerator->volume;
 
-  // Coordinates of the lower corner of the cell in world coordinates.
+  // Coordinates of the lower corner of the cell in object coordinates.
   vec3f lower;
-  volume->transformLocalToWorld(
+  volume->transformLocalToObject(
       volume, to_float(index << CELL_WIDTH_BITCOUNT), lower);
 
-  // Coordinates of the upper corner of the cell in world coordinates.
+  // Coordinates of the upper corner of the cell in object coordinates.
   vec3f upper;
-  volume->transformLocalToWorld(
+  volume->transformLocalToObject(
       volume, to_float(index + 1 << CELL_WIDTH_BITCOUNT), upper);
 
-  // The bounding box in world coordinates.
+  // The bounding box in object coordinates.
   return (make_box3f(lower, upper));
 }
 
@@ -246,8 +246,8 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
                              uniform vec2f &valueRange)
 {
   // The associated volume.
-  StructuredVolume *uniform volume =
-      (StructuredVolume * uniform) accelerator->volume;
+  SharedStructuredVolume *uniform volume =
+      (SharedStructuredVolume * uniform) accelerator->volume;
 
   // Tentatively advance the ray.
   ray.t0 += step;
@@ -262,7 +262,7 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
   while (ray.t0 < ray.t) {
     // Compute the hit point in the local coordinate system.
     vec3f localCoordinates;
-    volume->transformWorldToLocal(
+    volume->transformObjectToLocal(
         volume, ray.org + ray.t0 * ray.dir, localCoordinates);
 
     // Compute the 3D index of the cell containing the hit point.
@@ -292,9 +292,9 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
         return;
     }
 
-    // Exit bound of the grid cell in world coordinates.
+    // Exit bound of the grid cell in object coordinates.
     vec3f farBound;
-    volume->transformLocalToWorld(
+    volume->transformLocalToObject(
         volume,
         to_float(cellIndex + nextCellIndex << CELL_WIDTH_BITCOUNT),
         farBound);
@@ -318,8 +318,8 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
                                          varying Ray &ray)
 {
   // The associated volume.
-  StructuredVolume *uniform volume =
-      (StructuredVolume * uniform) accelerator->volume;
+  SharedStructuredVolume *uniform volume =
+      (SharedStructuredVolume * uniform) accelerator->volume;
 
   // Tentatively advance the ray.
   ray.t0 += step;
@@ -328,7 +328,7 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
 
   // Compute the hit point in the local coordinate system.
   vec3f localCoordinates;
-  volume->transformWorldToLocal(
+  volume->transformObjectToLocal(
       volume, ray.org + ray.t0 * ray.dir, localCoordinates);
 
   // Compute the 3D index of the cell containing the hit point.
@@ -356,7 +356,7 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
     }
   }
 
-  // Bounds of the grid cell in world coordinates.
+  // Bounds of the grid cell in object coordinates.
   box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
 
   // Identify the distance along the ray to the entry and exit points on the
@@ -392,7 +392,7 @@ export uniform int GridAccelerator_getBrickCount_z(void *uniform _accel)
 export void GridAccelerator_buildAccelerator(void *uniform _volume,
                                              const uniform int taskIndex)
 {
-  StructuredVolume *uniform volume = (StructuredVolume * uniform) _volume;
+  SharedStructuredVolume *uniform volume = (SharedStructuredVolume * uniform) _volume;
 
   // Compute the volumetric value range per cell.
   GridAccelerator_encodeVolumeBrick(volume->accelerator, volume, taskIndex);

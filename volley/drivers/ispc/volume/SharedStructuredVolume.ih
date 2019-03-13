@@ -18,6 +18,8 @@
 
 #include "math/vec.ih"
 
+struct GridAccelerator;
+
 struct SharedStructuredVolume
 {
   float *uniform volumeData;
@@ -26,4 +28,18 @@ struct SharedStructuredVolume
   uniform vec3f gridSpacing;
 
   uniform vec3f localCoordinatesUpperBound;
+
+  GridAccelerator *uniform accelerator;
+
+  void (*uniform getVoxel)(void *uniform volume,
+                           const varying vec3i &index,
+                           varying float &value);
+
+  void (*uniform transformLocalToObject)(SharedStructuredVolume *uniform volume,
+                                        const varying vec3f &localCoordinates,
+                                        varying vec3f &objectCoordinates);
+
+  void (*uniform transformObjectToLocal)(SharedStructuredVolume *uniform volume,
+                                         const varying vec3f &objectCoordinates,
+                                         varying vec3f &localCoordinates);
 };

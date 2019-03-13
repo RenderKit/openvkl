@@ -17,21 +17,6 @@
 #include "SharedStructuredVolume.ih"
 #include "volley/volley_volume.isph"
 
-export void *uniform SharedStructuredVolume_Constructor()
-{
-  uniform SharedStructuredVolume *uniform self =
-      uniform new uniform SharedStructuredVolume;
-  return self;
-}
-
-export void *uniform SharedStructuredVolume_Destructor(void *uniform _self)
-{
-  uniform SharedStructuredVolume *uniform self =
-      (uniform SharedStructuredVolume * uniform) _self;
-
-  delete self;
-}
-
 export void SharedStructuredVolume_set(void *uniform _self,
                                        float *uniform volumeData,
                                        const uniform vec3i &dimensions,
@@ -64,6 +49,15 @@ inline void SharedStructuredVolume_getVoxel(void *uniform _self,
 
   /* The voxel value at the given index. */
   value = volumeData[addr];
+}
+
+inline void SharedStructuredVolume_transformLocalToObject(
+    SharedStructuredVolume *uniform volume,
+    const varying vec3f &localCoordinates,
+    varying vec3f &objectCoordinates)
+{
+  objectCoordinates =
+      volume->gridOrigin + localCoordinates * volume->gridSpacing;
 }
 
 inline void SharedStructuredVolume_transformObjectToLocal(
@@ -183,4 +177,24 @@ export void SharedStructuredVolume_sample_export(
 
     SharedStructuredVolume_sample(_volume, *objectCoordinates, *samples);
   }
+}
+
+export void *uniform SharedStructuredVolume_Constructor()
+{
+  uniform SharedStructuredVolume *uniform self =
+      uniform new uniform SharedStructuredVolume;
+
+  self->getVoxel               = SharedStructuredVolume_getVoxel;
+  self->transformLocalToObject = SharedStructuredVolume_transformLocalToObject;
+  self->transformObjectToLocal = SharedStructuredVolume_transformObjectToLocal;
+
+  return self;
+}
+
+export void *uniform SharedStructuredVolume_Destructor(void *uniform _self)
+{
+  uniform SharedStructuredVolume *uniform self =
+      (uniform SharedStructuredVolume * uniform) _self;
+
+  delete self;
 }

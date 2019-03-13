@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "../volume/SharedStructuredVolume.ih"
-#include "math/box.ih"
+#include "RayIterator.ih"
 #include "math/vec.ih"
 #include "volley/volley_iterator.isph"
 
@@ -23,13 +23,6 @@ inline varying bool isempty1f(varying box1f &box)
 {
   return box.upper < box.lower;
 }
-
-struct RayInterval
-{
-  varying box1f tRange;
-  varying float nominalDeltaT;
-  // TODO: output samples mask when needed
-};
 
 struct GridAcceleratorRayIterator
 {

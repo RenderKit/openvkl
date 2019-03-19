@@ -14,31 +14,30 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
 #include "math/box.ih"
 
-//! Bit count used to represent the brick width.
+// Bit count used to represent the brick width.
 #define BRICK_WIDTH_BITCOUNT (4)
 
-//! Brick width in grid cells.
+// Brick width in grid cells.
 #define BRICK_WIDTH (1 << BRICK_WIDTH_BITCOUNT)
 
-//! Brick size in cells.
+// Brick size in cells.
 #define BRICK_CELL_COUNT (BRICK_WIDTH * BRICK_WIDTH * BRICK_WIDTH)
 
-//! Bit count used to represent the grid cell width.
+// Bit count used to represent the grid cell width.
 #define CELL_WIDTH_BITCOUNT (4)
 
-//! Grid cell width in volumetric elements.
+// Grid cell width in volumetric elements.
 #define CELL_WIDTH (1 << CELL_WIDTH_BITCOUNT)
 
-//! Compute the 1D address of a cell in the grid.
+// Compute the 1D address of a cell in the grid.
 uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator,
                                       const varying vec3i &index);
 
-//! Get the volumetric value range of a cell.
+// Get the volumetric value range of a cell.
 inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
                                          const varying vec3i &index,
                                          varying vec2f &value)
@@ -47,7 +46,7 @@ inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
   value                = accelerator->cellRange[address];
 }
 
-//! Set the volumetric value range of a cell.
+// Set the volumetric value range of a cell.
 inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator,
                                          uniform uint32 address,
                                          uniform vec2f &value)
@@ -57,10 +56,9 @@ inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator,
 
 GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
 {
-  // Cast to the actual volume type.
-  SharedStructuredVolume *uniform volume = (SharedStructuredVolume * uniform) _volume;
+  SharedStructuredVolume *uniform volume =
+      (SharedStructuredVolume * uniform) _volume;
 
-  // The accelerator container.
   GridAccelerator *uniform accelerator = uniform new uniform GridAccelerator;
 
   // Grid size in cells per dimension after padding out the volume dimensions to
@@ -78,14 +76,11 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
                                    accelerator->brickCount.y *
                                    accelerator->brickCount.z * BRICK_CELL_COUNT;
 
-  // Allocate storage for the volumetric value range per cell.
   accelerator->cellRange =
       (cellCount > 0) ? uniform new uniform vec2f[cellCount] : NULL;
 
-  // Keep a pointer to the volume.
   accelerator->volume = volume;
 
-  // The completed acceleration structure.
   return accelerator;
 }
 
@@ -98,7 +93,8 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
 }
 
 inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
-                                            SharedStructuredVolume *uniform volume,
+                                            SharedStructuredVolume *uniform
+                                                volume,
                                             const uniform vec3i &cellIndex,
                                             uniform vec2f &cellRange)
 {
@@ -127,12 +123,12 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
   }
 }
 
-//! Compute the value range of voxels contained in each cell of a brick in the
-//! grid.
-inline void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform
-                                                  accelerator,
-                                              SharedStructuredVolume *uniform volume,
-                                              const uniform int taskIndex)
+// Compute the value range of voxels contained in each cell of a brick in the
+// grid.
+inline void GridAccelerator_encodeVolumeBrick(
+    GridAccelerator *uniform accelerator,
+    SharedStructuredVolume *uniform volume,
+    const uniform int taskIndex)
 {
   // Brick index from task index.
   const uniform int bx = taskIndex % accelerator->brickCount.x;
@@ -199,7 +195,6 @@ inline uint32 GridAccelerator_getCellAddress(
 inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
                                            const varying vec3i &index)
 {
-  // The associated volume.
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;
 
@@ -243,7 +238,6 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
                              varying Ray &ray,
                              uniform vec2f &valueRange)
 {
-  // The associated volume.
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;
 
@@ -252,6 +246,7 @@ void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
   ray.time = step;
 
   const vec3f ray_rdir = rcp(ray.dir);
+
   // sign of direction determines near/far index
   const vec3i nextCellIndex = make_vec3i(1 - (intbits(ray.dir.x) >> 31),
                                          1 - (intbits(ray.dir.y) >> 31),
@@ -315,7 +310,6 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
                                          uniform int numIsovalues,
                                          varying Ray &ray)
 {
-  // The associated volume.
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;
 
@@ -390,7 +384,8 @@ export uniform int GridAccelerator_getBrickCount_z(void *uniform _accel)
 export void GridAccelerator_buildAccelerator(void *uniform _volume,
                                              const uniform int taskIndex)
 {
-  SharedStructuredVolume *uniform volume = (SharedStructuredVolume * uniform) _volume;
+  SharedStructuredVolume *uniform volume =
+      (SharedStructuredVolume * uniform) _volume;
 
   // Compute the volumetric value range per cell.
   GridAccelerator_encodeVolumeBrick(volume->accelerator, volume, taskIndex);

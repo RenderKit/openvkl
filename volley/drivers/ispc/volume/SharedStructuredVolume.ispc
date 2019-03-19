@@ -39,16 +39,14 @@ export void SharedStructuredVolume_set(void *uniform _self,
 inline void SharedStructuredVolume_getVoxel(void *uniform _self,
                                             const varying vec3i &index,
                                             varying float &value)
-{ /* Cast to the actual Volume subtype. */
+{
   SharedStructuredVolume *uniform self =
       (SharedStructuredVolume * uniform) _self;
 
-  /* Cast to the actual voxel type. */
   const float *uniform volumeData = (const float *uniform)self->volumeData;
   const uint32 addr =
       index.x + self->dimensions.x * (index.y + self->dimensions.y * index.z);
 
-  /* The voxel value at the given index. */
   value = volumeData[addr];
 }
 
@@ -185,6 +183,7 @@ export void *uniform SharedStructuredVolume_Constructor()
   uniform SharedStructuredVolume *uniform self =
       uniform new uniform SharedStructuredVolume;
 
+  self->accelerator            = NULL;
   self->getVoxel               = SharedStructuredVolume_getVoxel;
   self->transformLocalToObject = SharedStructuredVolume_transformLocalToObject;
   self->transformObjectToLocal = SharedStructuredVolume_transformObjectToLocal;

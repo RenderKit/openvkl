@@ -37,7 +37,7 @@ namespace volley {
 
       box3f getBoundingBox() const override
       {
-        return box3f(gridOrigin, gridOrigin + dimensions * gridSpacing);
+        return box3f(gridOrigin, gridOrigin + (dimensions-1) * gridSpacing);
       }
 
      protected:

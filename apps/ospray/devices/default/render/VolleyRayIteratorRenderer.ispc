@@ -27,6 +27,7 @@ struct VolleyRayIteratorRenderer
   uniform Renderer super;
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
+  uniform int maxNumIntervals;
 };
 
 inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
@@ -59,7 +60,11 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
   // TODO
   uniform float samplingRate = 1.f;
 
+  uniform int currentInterval = 0;
+
   while (vlyIterateIntervalV(rayIterator, &rayInterval) && alpha < 0.99f) {
+    currentInterval = currentInterval + 1;
+
     const float nominalSamplingDt = rayInterval.nominalDeltaT / samplingRate;
 
     // initial sub interval, based on our renderer-defined sampling rate
@@ -99,6 +104,10 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
       subInterval.upper =
           min(subInterval.lower + nominalSamplingDt, rayInterval.tRange.upper);
     }
+
+    if (currentInterval >= self->maxNumIntervals) {
+      break;
+    }
   }
 
   vlyRelease((VLYObject)rayIterator);
@@ -133,10 +142,12 @@ export void *uniform VolleyRayIteratorRenderer_create(void *uniform cppE)
 
 export void VolleyRayIteratorRenderer_set(void *uniform _self,
                                           uniform VLYVolume volume,
-                                          void *uniform transferFunction)
+                                          void *uniform transferFunction,
+                                          uniform int maxNumIntervals)
 {
   uniform VolleyRayIteratorRenderer *uniform self =
       (uniform VolleyRayIteratorRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
+  self->maxNumIntervals  = maxNumIntervals;
 }

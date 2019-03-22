@@ -47,8 +47,10 @@ namespace ospray {
       throw std::runtime_error(
           "no transfer function specified on the Volley renderer!");
 
+    int maxNumIntervals = getParam1i("maxNumIntervals", 999999);
+
     ispc::VolleyRayIteratorRenderer_set(
-        getIE(), (ispc::VolleyVolume *)vlyVolume, transferFunction->getIE());
+        getIE(), (ispc::VolleyVolume *)vlyVolume, transferFunction->getIE(), maxNumIntervals);
   }
 
   OSP_REGISTER_RENDERER(VolleyRayIteratorRenderer, volley_ray_iterator);

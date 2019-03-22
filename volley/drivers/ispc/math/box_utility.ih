@@ -18,7 +18,7 @@
 
 inline varying bool isempty1f(varying box1f &box)
 {
-  return box.upper < box.lower;
+  return box.upper <= box.lower;
 }
 
 inline varying box1f intersectBox(const varying vec3f &origin,

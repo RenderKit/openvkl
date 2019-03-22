@@ -148,10 +148,16 @@ int main(int argc, const char **argv)
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{512, 512}, bounds, world, renderer));
 
-  glfwOSPRayWindow->registerImGuiCallback([=]() {
+  glfwOSPRayWindow->registerImGuiCallback([&]() {
     static float samplingRate = 1.f;
     if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
       std::cerr << "WARNING: samplingRate setting not implemented" << std::endl;
+    }
+    static int maxNumIntervals = 1;
+    if (ImGui::SliderInt("maxNumIntervals", &maxNumIntervals, 1, 100)) {
+      ospSet1i(renderer, "maxNumIntervals", maxNumIntervals);
+      ospCommit(renderer);
+      glfwOSPRayWindow->setModel(world); // only for clearing accumulation
     }
   });
 

@@ -16,7 +16,7 @@
 
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
-#include "math/box.ih"
+#include "math/box_utility.ih"
 
 // Bit count used to represent the brick width.
 #define BRICK_WIDTH_BITCOUNT (4)
@@ -212,155 +212,84 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
   return (make_box3f(lower, upper));
 }
 
-inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds,
-                                           const varying Ray &ray)
-{
-  // Intersection interval minimum per axis.
-  const vec3f minimum = rcp(ray.dir) * (bounds.lower - ray.org);
-
-  // Intersection interval maximum per axis.
-  const vec3f maximum = rcp(ray.dir) * (bounds.upper - ray.org);
-
-  // Distance along the ray to the entry point.
-  vec2f interval;
-  interval.x = max(max(ray.t0, min(minimum.x, maximum.x)),
-                   max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
-
-  // Distance along the ray to the exit point.
-  interval.y = min(min(ray.t, max(minimum.x, maximum.x)),
-                   min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));
-
-  return interval;
-}
-
-void GridAccelerator_stepRay(GridAccelerator *uniform accelerator,
-                             const varying float step,
-                             varying Ray &ray,
-                             uniform vec2f &valueRange)
+bool GridAccelerator_iterateInterval(GridAccelerator *uniform accelerator,
+                                     GridAcceleratorRayIterator *uniform
+                                         rayIterator)
 {
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;
 
-  // Tentatively advance the ray.
-  ray.t0 += step;
-  ray.time = step;
-
-  const vec3f ray_rdir = rcp(ray.dir);
-
-  // sign of direction determines near/far index
-  const vec3i nextCellIndex = make_vec3i(1 - (intbits(ray.dir.x) >> 31),
-                                         1 - (intbits(ray.dir.y) >> 31),
-                                         1 - (intbits(ray.dir.z) >> 31));
-
-  while (ray.t0 < ray.t) {
-    // Compute the hit point in the local coordinate system.
+  cif(rayIterator->currentCellIndex.x == -1)
+  {
+    // first iteration
     vec3f localCoordinates;
     volume->transformObjectToLocal(
-        volume, ray.org + ray.t0 * ray.dir, localCoordinates);
-
-    // Compute the 3D index of the cell containing the hit point.
-    vec3i cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
-
-    // If we visited this cell before then it must not be empty.
-    if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y &&
-        ray.instID == cellIndex.z)
-      return;
-
-    // Track the hit cell.
-    ray.geomID = cellIndex.x;
-    ray.primID = cellIndex.y;
-    ray.instID = cellIndex.z;
-
-    // Get the volumetric value range of the cell.
-    vec2f cellRange;
-    GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
-
-    if (!isnan(cellRange.x)) {
-      // Return the hit point if the grid cell overlaps the range of interest;
-      // later a SamplesMask will be used here.
-      bool cellOverlapsValueRange =
-          cellRange.x <= valueRange.y && valueRange.x <= cellRange.y;
-
-      if (cellOverlapsValueRange)
-        return;
-    }
-
-    // Exit bound of the grid cell in object coordinates.
-    vec3f farBound;
-    volume->transformLocalToObject(
         volume,
-        to_float(cellIndex + nextCellIndex << CELL_WIDTH_BITCOUNT),
-        farBound);
+        rayIterator->origin +
+            (rayIterator->boundingBoxTRange.lower) * rayIterator->direction,
+        localCoordinates);
 
-    // Identify the distance along the ray to the exit points on the cell.
-    const vec3f maximum = ray_rdir * (farBound - ray.org);
-    const float exitDist =
-        min(min(ray.t, maximum.x), min(maximum.y, maximum.z));
-
-    // Advance the ray so the next hit point will be outside the empty cell.
-    const float dist = ceil(abs(exitDist - ray.t0) / step) * step;
-    ray.t0 += dist;
-    ray.time = dist;
+    rayIterator->currentCellIndex =
+        to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
   }
-}
+  else
+  {
+    // subsequent iterations: only moving one cell at a time
 
-void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
-                                         uniform float step,
-                                         uniform float *uniform isovalues,
-                                         uniform int numIsovalues,
-                                         varying Ray &ray)
-{
-  SharedStructuredVolume *uniform volume =
-      (SharedStructuredVolume * uniform) accelerator->volume;
+    // transform object-space direction and origin to cell-space
+    const vec3f cellDirection =
+        rayIterator->direction * rcp_safe(volume->gridSpacing) * rcp(16.f);
 
-  // Tentatively advance the ray.
-  ray.t0 += step;
-  if (ray.t0 >= ray.t)
-    return;
+    const vec3f rcpCellDirection = rcp_safe(cellDirection);
 
-  // Compute the hit point in the local coordinate system.
-  vec3f localCoordinates;
-  volume->transformObjectToLocal(
-      volume, ray.org + ray.t0 * ray.dir, localCoordinates);
+    vec3f cellOrigin;
+    volume->transformObjectToLocal(volume, rayIterator->origin, cellOrigin);
+    cellOrigin = cellOrigin * rcp(16.f);
 
-  // Compute the 3D index of the cell containing the hit point.
-  vec3i cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
+    // sign of direction determines index delta (1 or -1 in each dimension) to
+    // far corner cell
+    const vec3i cornerDeltaCellIndex =
+        make_vec3i(1 - 2 * (intbits(cellDirection.x) >> 31),
+                   1 - 2 * (intbits(cellDirection.y) >> 31),
+                   1 - 2 * (intbits(cellDirection.z) >> 31));
 
-  // If we visited this cell before then it must not be empty.
-  if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y &&
-      ray.instID == cellIndex.z)
-    return;
+    // find exit distance within current cell
+    const vec3f t0 = (to_float(rayIterator->currentCellIndex) - cellOrigin) *
+                     rcpCellDirection;
+    const vec3f t1 =
+        (to_float(rayIterator->currentCellIndex + 1) - cellOrigin) *
+        rcpCellDirection;
+    const vec3f tMax = max(t0, t1);
 
-  // Track the hit cell.
-  ray.geomID = cellIndex.x;
-  ray.primID = cellIndex.y;
-  ray.instID = cellIndex.z;
+    const float tExit = reduce_min(tMax);
 
-  // Get the volumetric value range of the cell.
-  vec2f cellRange;
-  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
+    // the next cell corresponds to the exit point (which will be a movement in
+    // one direction only)
+    vec3i deltaCellIndex =
+        make_vec3i(tMax.x == tExit ? cornerDeltaCellIndex.x : 0,
+                   tMax.y == tExit ? cornerDeltaCellIndex.y : 0,
+                   tMax.z == tExit ? cornerDeltaCellIndex.z : 0);
 
-  if (!isnan(cellRange.x)) {
-    // Return the hit point if the grid cell contains an isovalue.
-    for (uniform int i = 0; i < numIsovalues; i++) {
-      if (isovalues[i] >= cellRange.x && isovalues[i] <= cellRange.y)
-        return;
-    }
+    rayIterator->currentCellIndex =
+        rayIterator->currentCellIndex + deltaCellIndex;
   }
 
-  // Bounds of the grid cell in object coordinates.
-  box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
+  box3f cellBounds =
+      GridAccelerator_getCellBounds(accelerator, rayIterator->currentCellIndex);
 
-  // Identify the distance along the ray to the entry and exit points on the
-  // cell.
-  vec2f cellInterval = GridAccelerator_intersectCell(cellBounds, ray);
+  // clamp next cell bounds to ray iterator bounding range
+  box1f cellInterval = intersectBox(rayIterator->origin,
+                                    rayIterator->direction,
+                                    cellBounds,
+                                    rayIterator->boundingBoxTRange);
 
-  // Advance the ray so the next hit point will be outside the empty cell.
-  ray.t0 += floor(abs(cellInterval.y - ray.t0) / step) * step - step;
-
-  // Rinse and repeat.
-  GridAccelerator_intersectIsosurface(
-      accelerator, step, isovalues, numIsovalues, ray);
+  if (isempty1f(cellInterval)) {
+    resetRayInterval(rayIterator->currentRayInterval);
+    return false;
+  } else {
+    rayIterator->currentRayInterval.tRange = cellInterval;
+    return true;
+  }
 }
 
 export uniform int GridAccelerator_getBrickCount_x(void *uniform _accel)

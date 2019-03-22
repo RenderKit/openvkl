@@ -25,3 +25,10 @@ struct RayInterval
   varying float nominalDeltaT;
   // TODO: output samples mask when needed
 };
+
+inline void resetRayInterval(RayInterval &rayInterval)
+{
+  rayInterval.tRange.lower = 1.f;
+  rayInterval.tRange.upper = -1.f;
+  rayInterval.nominalDeltaT = 0.f;
+}

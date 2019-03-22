@@ -14,27 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../volume/SharedStructuredVolume.ih"
-#include "RayIterator.ih"
-#include "math/vec.ih"
-#include "volley/volley_iterator.isph"
-
-inline varying bool isempty1f(varying box1f &box)
-{
-  return box.upper < box.lower;
-}
-
-struct GridAcceleratorRayIterator
-{
-  SharedStructuredVolume *uniform volume;
-  varying vec3f origin;
-  varying vec3f direction;
-  varying box1f tRange;
-
-  // computed
-  varying box1f boundingBoxTRange;
-  varying RayInterval currentRayInterval;
-};
+#include "../math/box_utility.ih"
+#include "../volume/GridAccelerator.ih"
+#include "GridAcceleratorRayIterator.ih"
 
 inline void printGridAcceleratorRayIterator(
     uniform GridAcceleratorRayIterator *uniform self)
@@ -53,21 +35,6 @@ inline void printGridAcceleratorRayIterator(
         self->boundingBoxTRange.upper);
 }
 
-inline varying box1f intersectBox(const varying vec3f &origin,
-                                  const varying vec3f &direction,
-                                  const uniform box3f &box,
-                                  const varying box1f &rangeLimit)
-{
-  const varying vec3f mins = (box.lower - origin) * rcp_safe(direction);
-  const varying vec3f maxs = (box.upper - origin) * rcp_safe(direction);
-
-  varying box1f result;
-  result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
-  result.upper = reduce_min(make_vec4f(max(mins, maxs), rangeLimit.upper));
-
-  return result;
-}
-
 export void *uniform
 GridAcceleratorRayIterator_Constructor(void *uniform _volume,
                                        const uniform box3f &boundingBox,
@@ -83,24 +50,12 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->direction = *((varying vec3f * uniform) _direction);
   self->tRange    = *((varying box1f * uniform) _tRange);
 
+  resetRayInterval(self->currentRayInterval);
+
   self->boundingBoxTRange =
       intersectBox(self->origin, self->direction, boundingBox, self->tRange);
 
-  // initial current ray interval empty
-  self->currentRayInterval.tRange.lower = 1.f;
-  self->currentRayInterval.tRange.upper = -1.f;
-
-#if 0
-  print("boundingBox:\n  % % %\n  % % %\n",
-        boundingBox.lower.x,
-        boundingBox.lower.y,
-        boundingBox.lower.z,
-        boundingBox.upper.x,
-        boundingBox.upper.y,
-        boundingBox.upper.z);
-
-  printGridAcceleratorRayIterator(self);
-#endif
+  self->currentCellIndex = make_vec3i(-1);
 
   return self;
 }
@@ -136,22 +91,14 @@ export void GridAcceleratorRayIterator_iterateInterval(
     if (isempty1f(self->boundingBoxTRange)) {
       *result = false;
     } else {
-      uniform float nominalDeltaT = 0.25f;
+      bool success =
+          GridAccelerator_iterateInterval(self->volume->accelerator, self);
 
-      if (isempty1f(self->currentRayInterval.tRange)) {
-        self->currentRayInterval.tRange.lower = self->boundingBoxTRange.lower;
-      } else {
-        self->currentRayInterval.tRange.lower += nominalDeltaT;
-      }
+      self->currentRayInterval.nominalDeltaT =
+          1.f * (self->currentRayInterval.tRange.upper -
+                 self->currentRayInterval.tRange.lower);
 
-      self->currentRayInterval.tRange.upper =
-          min(self->currentRayInterval.tRange.lower + nominalDeltaT,
-              self->boundingBoxTRange.upper);
-
-      self->currentRayInterval.nominalDeltaT = 0.1f;
-
-      *result = (self->currentRayInterval.tRange.lower <
-                 self->boundingBoxTRange.upper);
+      *result = success;
     }
   }
 }

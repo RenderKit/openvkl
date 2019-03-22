@@ -83,11 +83,8 @@ VLY_FORCEINLINE varying bool vlyIterateIntervalV(
     vlyIterateInterval8(
         (uniform int *uniform) & imask, rayIterator, rayInterval, &iresult);
 
-    varying bool result;
-    unmasked
-    {
-      result = iresult ? true : false;
-    }
+    varying bool result = iresult ? true : false;
+
     return result;
   }
 }

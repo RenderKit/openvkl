@@ -28,11 +28,11 @@ typedef SamplesMask *VLYSamplesMask;
 
 VLYSamplesMask vlyNewSamplesMask(VLYVolume volume);
 
-void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
+void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
                              size_t numRanges,
                              const vly_range1f *ranges);
 
-void vlySamplesMaskAddValues(VLYSamplesMask samplesMask,
+void vlySamplesMaskSetValues(VLYSamplesMask samplesMask,
                              size_t numValues,
                              const float *values);
 

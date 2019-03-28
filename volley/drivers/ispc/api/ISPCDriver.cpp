@@ -143,7 +143,8 @@ namespace volley {
 
     VLYSamplesMask ISPCDriver::newSamplesMask(VLYVolume volume)
     {
-      return (VLYSamplesMask)SamplesMask::createInstance();
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      return (VLYSamplesMask)volumeObject.newSamplesMask();
     }
 
     void ISPCDriver::samplesMaskAddRanges(

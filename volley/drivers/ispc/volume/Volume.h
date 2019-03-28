@@ -51,7 +51,7 @@ namespace volley {
                                              const SamplesMask *samplesMask)
       {
         throw std::runtime_error(
-            "newRayIterator() not implemented in this driver!");
+            "newRayIterator() not implemented in this volume!");
       }
 
       virtual RayIterator<8> *newRayIterator8(const vvec3fn<8> &origin,
@@ -61,6 +61,12 @@ namespace volley {
       {
         return new DumbRayIterator<8>(
             this, origin, direction, tRange, samplesMask);
+      }
+
+      virtual SamplesMask *newSamplesMask()
+      {
+        throw std::runtime_error(
+            "newSamplesMask() not implemented in this volume!");
       }
 
       virtual float computeSample(const vec3f &objectCoordinates) const = 0;

@@ -26,7 +26,7 @@ extern "C" {
 struct SamplesMask;
 typedef SamplesMask *VLYSamplesMask;
 
-VLYSamplesMask vlyNewSamplesMask();
+VLYSamplesMask vlyNewSamplesMask(VLYVolume volume);
 
 void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
                              size_t numRanges,

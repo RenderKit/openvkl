@@ -257,10 +257,11 @@ VOLLEY_CATCH_END()
 // Samples mask ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VLYSamplesMask vlyNewSamplesMask() VOLLEY_CATCH_BEGIN
+extern "C" VLYSamplesMask vlyNewSamplesMask(VLYVolume volume) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  VLYSamplesMask samplesMask = volley::api::currentDriver().newSamplesMask();
+  VLYSamplesMask samplesMask =
+      volley::api::currentDriver().newSamplesMask(volume);
   if (samplesMask == nullptr) {
     postLogMessage(volley::VLY_LOG_ERROR) << "could not create samples mask";
   }

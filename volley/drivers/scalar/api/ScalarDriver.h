@@ -69,7 +69,7 @@ namespace volley {
       // Samples mask /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      VLYSamplesMask newSamplesMask() override;
+      VLYSamplesMask newSamplesMask(VLYVolume volume) override;
 
       void samplesMaskAddRanges(
           VLYSamplesMask samplesMask,

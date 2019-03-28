@@ -141,7 +141,7 @@ namespace volley {
     // Samples mask /////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////
 
-    VLYSamplesMask ISPCDriver::newSamplesMask()
+    VLYSamplesMask ISPCDriver::newSamplesMask(VLYVolume volume)
     {
       return (VLYSamplesMask)SamplesMask::createInstance();
     }

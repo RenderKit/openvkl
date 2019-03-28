@@ -17,6 +17,7 @@
 #pragma once
 
 #include "volley_common.isph"
+#include "volley_volume.isph"
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,6 +25,8 @@ extern "C" {
 
 struct SamplesMask;
 typedef SamplesMask *uniform VLYSamplesMask;
+
+VLY_API VLYSamplesMask vlyNewSamplesMask(VLYVolume volume);
 
 #ifdef __cplusplus
 }  // extern "C"

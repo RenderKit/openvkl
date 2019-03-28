@@ -115,7 +115,7 @@ namespace volley {
       // Samples mask /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual VLYSamplesMask newSamplesMask() = 0;
+      virtual VLYSamplesMask newSamplesMask(VLYVolume volume) = 0;
 
       virtual void samplesMaskAddRanges(
           VLYSamplesMask samplesMask,

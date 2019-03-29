@@ -18,4 +18,6 @@
 
 #include "volley_common.isph"
 
+VLY_API void vlyCommit(VLYObject object);
+
 VLY_API void vlyRelease(VLYObject object);

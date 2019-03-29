@@ -28,6 +28,10 @@ typedef SamplesMask *uniform VLYSamplesMask;
 
 VLY_API VLYSamplesMask vlyNewSamplesMask(VLYVolume volume);
 
+VLY_API void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
+                                     uniform size_t numRanges,
+                                     const vly_range1f *uniform ranges);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

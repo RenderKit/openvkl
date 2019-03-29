@@ -46,7 +46,7 @@ namespace volley {
           (void *)&origin,
           (void *)&direction,
           (void *)&tRange,
-          gasm->getISPCEquivalent());
+          gasm ? gasm->getISPCEquivalent() : nullptr);
     }
 
     template <int W>

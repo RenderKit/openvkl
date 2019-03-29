@@ -50,7 +50,7 @@ vlyNewRayIteratorV(VLYVolume volume,
                               origin,
                               direction,
                               tRange,
-                              NULL);
+                              samplesMask);
   }
 }
 

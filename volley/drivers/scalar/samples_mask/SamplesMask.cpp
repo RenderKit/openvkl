@@ -19,8 +19,10 @@
 namespace volley {
   namespace scalar_driver {
 
-    void SamplesMask::addRanges(const utility::ArrayView<const range1f> &ranges)
+    void SamplesMask::setRanges(const utility::ArrayView<const range1f> &ranges)
     {
+      this->ranges.clear();
+
       for (const auto &r : ranges) {
         this->ranges.push_back(r);
       }

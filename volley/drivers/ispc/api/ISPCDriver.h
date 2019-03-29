@@ -83,7 +83,7 @@ namespace volley {
 
       VLYSamplesMask newSamplesMask(VLYVolume volume) override;
 
-      void samplesMaskAddRanges(
+      void samplesMaskSetRanges(
           VLYSamplesMask samplesMask,
           const utility::ArrayView<const range1f> &ranges) override;
 

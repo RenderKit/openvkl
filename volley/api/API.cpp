@@ -270,13 +270,13 @@ extern "C" VLYSamplesMask vlyNewSamplesMask(VLYVolume volume) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" void vlySamplesMaskAddRanges(VLYSamplesMask samplesMask,
+extern "C" void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
                                         size_t numRanges,
                                         const vly_range1f *ranges)
     VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  volley::api::currentDriver().samplesMaskAddRanges(
+  volley::api::currentDriver().samplesMaskSetRanges(
       samplesMask,
       utility::ArrayView<const range1f>(
           reinterpret_cast<const range1f *>(ranges), numRanges));

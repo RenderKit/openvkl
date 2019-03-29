@@ -117,7 +117,7 @@ namespace volley {
 
       virtual VLYSamplesMask newSamplesMask(VLYVolume volume) = 0;
 
-      virtual void samplesMaskAddRanges(
+      virtual void samplesMaskSetRanges(
           VLYSamplesMask samplesMask,
           const utility::ArrayView<const range1f> &ranges) = 0;
 

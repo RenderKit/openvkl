@@ -122,12 +122,12 @@ namespace volley {
       return (VLYSamplesMask)SamplesMask::createInstance();
     }
 
-    void ScalarDriver::samplesMaskAddRanges(
+    void ScalarDriver::samplesMaskSetRanges(
         VLYSamplesMask samplesMask,
         const utility::ArrayView<const range1f> &ranges)
     {
       auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
-      samplesMaskObject.addRanges(ranges);
+      samplesMaskObject.setRanges(ranges);
     }
 
     ///////////////////////////////////////////////////////////////////////////

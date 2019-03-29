@@ -42,7 +42,7 @@ namespace volley {
         ManagedObject::commit();
       }
 
-      void addRanges(const utility::ArrayView<const range1f> &ranges);
+      void setRanges(const utility::ArrayView<const range1f> &ranges);
 
      protected:
       std::vector<range1f> ranges;

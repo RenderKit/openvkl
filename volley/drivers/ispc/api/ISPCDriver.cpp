@@ -147,12 +147,12 @@ namespace volley {
       return (VLYSamplesMask)volumeObject.newSamplesMask();
     }
 
-    void ISPCDriver::samplesMaskAddRanges(
+    void ISPCDriver::samplesMaskSetRanges(
         VLYSamplesMask samplesMask,
         const utility::ArrayView<const range1f> &ranges)
     {
       auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
-      samplesMaskObject.addRanges(ranges);
+      samplesMaskObject.setRanges(ranges);
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -18,9 +18,15 @@
 
 #include "math/box.ih"
 
-inline varying bool isempty1f(varying box1f &box)
+inline varying bool isempty1f(const varying box1f &box)
 {
   return box.upper <= box.lower;
+}
+
+inline varying bool overlaps1f(const varying box1f &box1,
+                               const varying box1f &box2)
+{
+  return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
 inline varying box1f intersectBox(const varying vec3f &origin,

@@ -31,12 +31,6 @@ namespace volley {
       SamplesMask()                   = default;
       virtual ~SamplesMask() override = default;
 
-      static SamplesMask *createInstance()
-      {
-        return createInstanceHelper<SamplesMask, VLY_SAMPLES_MASK>(
-            "base_samples_mask");
-      }
-
       virtual void commit() override
       {
         ManagedObject::commit();
@@ -47,9 +41,6 @@ namespace volley {
      protected:
       std::vector<range1f> ranges;
     };
-
-#define VLY_REGISTER_SAMPLES_MASK(InternalClass, external_name) \
-  VLY_REGISTER_OBJECT(SamplesMask, samples_mask, InternalClass, external_name)
 
   }  // namespace ispc_driver
 }  // namespace volley

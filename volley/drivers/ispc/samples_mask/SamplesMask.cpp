@@ -28,7 +28,5 @@ namespace volley {
       }
     }
 
-    VLY_REGISTER_SAMPLES_MASK(SamplesMask, base_samples_mask)
-
   }  // namespace ispc_driver
 }  // namespace volley

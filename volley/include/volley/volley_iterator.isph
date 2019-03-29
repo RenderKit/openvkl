@@ -20,10 +20,6 @@
 #include "volley_samples_mask.isph"
 #include "volley_volume.isph"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct RayIterator;
 typedef varying RayIterator *uniform VLYRayIterator;
 
@@ -88,7 +84,3 @@ VLY_FORCEINLINE varying bool vlyIterateIntervalV(
     return result;
   }
 }
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif

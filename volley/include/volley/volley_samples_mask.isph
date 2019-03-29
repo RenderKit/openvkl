@@ -19,10 +19,6 @@
 #include "volley_common.isph"
 #include "volley_volume.isph"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct SamplesMask;
 typedef SamplesMask *uniform VLYSamplesMask;
 
@@ -32,6 +28,3 @@ VLY_API void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
                                      uniform size_t numRanges,
                                      const vly_range1f *uniform ranges);
 
-#ifdef __cplusplus
-}  // extern "C"
-#endif

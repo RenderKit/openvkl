@@ -27,7 +27,7 @@ struct GridAccelerator
   uniform vec3i brickCount;
 
   //! The range of volumetric values within a grid cell.
-  vec2f *uniform cellRange;
+  box1f *uniform cellRange;
 
   //! Grid size in cells per dimension.
   uniform vec3i gridDimensions;

@@ -40,7 +40,7 @@ uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator,
 // Get the volumetric value range of a cell.
 inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
                                          const varying vec3i &index,
-                                         varying vec2f &value)
+                                         varying box1f &value)
 {
   const uint32 address = GridAccelerator_getCellAddress(accelerator, index);
   value                = accelerator->cellRange[address];
@@ -49,7 +49,7 @@ inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
 // Set the volumetric value range of a cell.
 inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator,
                                          uniform uint32 address,
-                                         uniform vec2f &value)
+                                         uniform box1f &value)
 {
   accelerator->cellRange[address] = value;
 }
@@ -77,7 +77,7 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
                                    accelerator->brickCount.z * BRICK_CELL_COUNT;
 
   accelerator->cellRange =
-      (cellCount > 0) ? uniform new uniform vec2f[cellCount] : NULL;
+      (cellCount > 0) ? uniform new uniform box1f[cellCount] : NULL;
 
   accelerator->volume = volume;
 
@@ -96,7 +96,7 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
                                             SharedStructuredVolume *uniform
                                                 volume,
                                             const uniform vec3i &cellIndex,
-                                            uniform vec2f &cellRange)
+                                            uniform box1f &cellRange)
 {
   uniform bool cellEmpty = true;
 
@@ -112,14 +112,14 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
     // Update the volumetric value range of the current cell, ignoring any NaN
     // values.
     if (!isnan(value)) {
-      cellRange.x = min(cellRange.x, reduce_min(value));
-      cellRange.y = max(cellRange.y, reduce_max(value));
+      cellRange.lower = min(cellRange.lower, reduce_min(value));
+      cellRange.upper = max(cellRange.upper, reduce_max(value));
       cellEmpty   = false;
     }
   }
 
   if (cellEmpty) {
-    cellRange.x = cellRange.y = floatbits(0xffffffff); /* NaN */
+    cellRange.lower = cellRange.upper = floatbits(0xffffffff); /* NaN */
   }
 }
 
@@ -161,7 +161,7 @@ inline void GridAccelerator_encodeVolumeBrick(
     uniform vec3i cellIndex = brickIndex * BRICK_WIDTH + make_vec3i(x, y, z);
 
     // The minimum and maximum volumetric values contained in the cell.
-    uniform vec2f cellRange = make_vec2f(99999.0f, -99999.0f);
+    uniform box1f cellRange = make_box1f(99999.0f, -99999.0f);
 
     // Compute the value range over the voxels in the cell.
     GridAccelerator_encodeBrickCell(accelerator, volume, cellIndex, cellRange);

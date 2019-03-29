@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../iterator/GridAcceleratorRayIterator.h"
+#include "../samples_mask/GridAcceleratorSamplesMask.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
@@ -37,6 +38,11 @@ namespace volley {
       {
         return new GridAcceleratorRayIterator<8>(
             this, origin, direction, tRange, samplesMask);
+      }
+
+      SamplesMask *newSamplesMask() override
+      {
+        return new GridAcceleratorSamplesMask(this);
       }
 
       // TODO: single sample through ISPC methods

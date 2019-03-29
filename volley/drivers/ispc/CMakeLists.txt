@@ -36,6 +36,8 @@ if (BUILD_ISPC_DRIVER)
     iterator/GridAcceleratorRayIterator.cpp
     iterator/GridAcceleratorRayIterator.ispc
     samples_mask/SamplesMask.cpp
+    samples_mask/GridAcceleratorSamplesMask.cpp
+    samples_mask/GridAcceleratorSamplesMask.ispc
     volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.cpp
     volume/SharedStructuredVolume.ispc

@@ -212,9 +212,8 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
   return (make_box3f(lower, upper));
 }
 
-bool GridAccelerator_iterateInterval(GridAccelerator *uniform accelerator,
-                                     GridAcceleratorRayIterator *uniform
-                                         rayIterator)
+bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
+                              GridAcceleratorRayIterator *uniform rayIterator)
 {
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;

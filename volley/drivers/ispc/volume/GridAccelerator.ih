@@ -40,6 +40,9 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
 
 void GridAccelerator_Destructor(GridAccelerator *uniform accelerator);
 
-bool GridAccelerator_iterateInterval(GridAccelerator *uniform accelerator,
-                                     GridAcceleratorRayIterator *uniform
-                                         rayIterator);
+bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
+                              GridAcceleratorRayIterator *uniform rayIterator);
+
+void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
+                                  const varying vec3i &index,
+                                  varying box1f &value);

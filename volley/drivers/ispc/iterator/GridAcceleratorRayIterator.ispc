@@ -95,14 +95,38 @@ export void GridAcceleratorRayIterator_iterateInterval(
     if (isempty1f(self->boundingBoxTRange)) {
       *result = false;
     } else {
-      bool success =
-          GridAccelerator_iterateInterval(self->volume->accelerator, self);
+      while (GridAccelerator_nextCell(self->volume->accelerator, self)) {
+        cif(self->samplesMask)
+        {
+          box1f cellRange;
+          GridAccelerator_getCellRange(
+              self->volume->accelerator, self->currentCellIndex, cellRange);
 
-      self->currentRayInterval.nominalDeltaT =
-          1.f * (self->currentRayInterval.tRange.upper -
-                 self->currentRayInterval.tRange.lower);
+          for (int i = 0; i < self->samplesMask->numRanges; i++) {
+            varying box1f r = self->samplesMask->ranges[i];
 
-      *result = success;
+            if (overlaps1f(r, cellRange)) {
+              self->currentRayInterval.nominalDeltaT =
+                  1.f * (self->currentRayInterval.tRange.upper -
+                         self->currentRayInterval.tRange.lower);
+
+              *result = true;
+              return;
+            }
+          }
+        }
+        else
+        {
+          self->currentRayInterval.nominalDeltaT =
+              1.f * (self->currentRayInterval.tRange.upper -
+                     self->currentRayInterval.tRange.lower);
+
+          *result = true;
+          return;
+        }
+      }
+
+      *result = false;
     }
   }
 }

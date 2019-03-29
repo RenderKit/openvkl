@@ -46,7 +46,9 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
   tRange.lower = ray.t0;
   tRange.upper = ray.t;
 
-  VLYSamplesMask samplesMask;
+  VLYSamplesMask samplesMask = vlyNewSamplesMask(self->volume);
+
+  vlyCommit((VLYObject)samplesMask);
 
   VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
                                                   (varying vly_vec3f *)&ray.org,
@@ -110,6 +112,7 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
     }
   }
 
+  vlyRelease((VLYObject)samplesMask);
   vlyRelease((VLYObject)rayIterator);
 }
 

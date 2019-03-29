@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "../math/box_utility.ih"
+#include "../samples_mask/GridAcceleratorSamplesMask.ih"
 #include "../volume/GridAccelerator.ih"
 #include "GridAcceleratorRayIterator.ih"
 
@@ -40,7 +41,8 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
                                        const uniform box3f &boundingBox,
                                        void *uniform _origin,
                                        void *uniform _direction,
-                                       void *uniform _tRange)
+                                       void *uniform _tRange,
+                                       void *uniform _samplesMask)
 {
   uniform GridAcceleratorRayIterator *uniform self =
       uniform new uniform GridAcceleratorRayIterator;
@@ -49,6 +51,8 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->origin    = *((varying vec3f * uniform) _origin);
   self->direction = *((varying vec3f * uniform) _direction);
   self->tRange    = *((varying box1f * uniform) _tRange);
+  self->samplesMask =
+      (uniform GridAcceleratorSamplesMask * uniform) _samplesMask;
 
   resetRayInterval(self->currentRayInterval);
 

@@ -32,6 +32,11 @@ namespace volley {
 
       void commit() override;
 
+      void *getISPCEquivalent() const
+      {
+        return ispcEquivalent;
+      }
+
      protected:
       void *ispcEquivalent{nullptr};
       const SharedStructuredVolume *volume{nullptr};

@@ -20,12 +20,15 @@
 #include "RayIterator.ih"
 #include "math/vec.ih"
 
+struct GridAcceleratorSamplesMask;
+
 struct GridAcceleratorRayIterator
 {
   SharedStructuredVolume *uniform volume;
   varying vec3f origin;
   varying vec3f direction;
   varying box1f tRange;
+  GridAcceleratorSamplesMask *uniform samplesMask;
 
   // computed
   varying RayInterval currentRayInterval;

@@ -17,6 +17,7 @@
 #include "common/Model.ih"
 #include "common/Ray.ih"
 #include "render/Renderer.ih"
+#include "transferFunction/LinearTransferFunction.ih"
 
 #include <volley/volley_driver.isph>
 #include <volley/volley_iterator.isph>
@@ -29,6 +30,51 @@ struct VolleyRayIteratorRenderer
   TransferFunction *uniform transferFunction;
   uniform int maxNumIntervals;
 };
+
+// in the future, sample masks will likely be computed and stored directly with
+// the volume and transfer function
+inline VLYSamplesMask getSamplesMaskForTransferFunction(
+    const uniform VLYVolume volume,
+    const TransferFunction *uniform transferFunction)
+{
+  // assume linear transfer function is always used
+  const LinearTransferFunction *uniform ltf =
+      (const LinearTransferFunction *uniform)transferFunction;
+
+  VLYSamplesMask samplesMask = vlyNewSamplesMask(volume);
+
+  vly_range1f *uniform valueRanges =
+      uniform new uniform vly_range1f[ltf->opacityValueCount - 1];
+
+  uniform int numActiveRanges = 0;
+
+  for (uniform int i = 0; i < ltf->opacityValueCount - 1; i++) {
+    if (ltf->opacityValues[i] > 0.f || ltf->opacityValues[i + 1] > 0.f) {
+      uniform float lowerValue =
+          ltf->super.valueRange.x +
+          (float)i / ((float)ltf->opacityValueCount - 1.f) *
+              (ltf->super.valueRange.y - ltf->super.valueRange.x);
+
+      uniform float upperValue =
+          ltf->super.valueRange.x +
+          (float)(i + 1) / ((float)ltf->opacityValueCount - 1.f) *
+              (ltf->super.valueRange.y - ltf->super.valueRange.x);
+
+      valueRanges[numActiveRanges].lower = lowerValue;
+      valueRanges[numActiveRanges].upper = upperValue;
+
+      numActiveRanges = numActiveRanges + 1;
+    }
+  }
+
+  vlySamplesMaskSetRanges(samplesMask, numActiveRanges, valueRanges);
+
+  vlyCommit((VLYObject)samplesMask);
+
+  delete[] valueRanges;
+
+  return samplesMask;
+}
 
 inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
                       varying vec3f &color,
@@ -46,9 +92,8 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
   tRange.lower = ray.t0;
   tRange.upper = ray.t;
 
-  VLYSamplesMask samplesMask = vlyNewSamplesMask(self->volume);
-
-  vlyCommit((VLYObject)samplesMask);
+  VLYSamplesMask samplesMask =
+      getSamplesMaskForTransferFunction(self->volume, self->transferFunction);
 
   VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
                                                   (varying vly_vec3f *)&ray.org,

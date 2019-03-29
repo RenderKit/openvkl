@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 #include "math/box.ih"
 
 inline varying bool isempty1f(varying box1f &box)

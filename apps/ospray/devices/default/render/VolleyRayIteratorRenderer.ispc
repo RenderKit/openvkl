@@ -43,11 +43,29 @@ inline VLYSamplesMask getSamplesMaskForTransferFunction(
 
   VLYSamplesMask samplesMask = vlyNewSamplesMask(volume);
 
+  // allocate maximum number of needed ranges
   vly_range1f *uniform valueRanges =
-      uniform new uniform vly_range1f[ltf->opacityValueCount - 1];
+      uniform new uniform vly_range1f[ltf->opacityValueCount - 1 + 2];
 
   uniform int numActiveRanges = 0;
 
+  // -inf to min value
+  if (ltf->opacityValues[0] > 0.f) {
+    valueRanges[numActiveRanges].lower = -inf;
+    valueRanges[numActiveRanges].upper = ltf->super.valueRange.x;
+
+    numActiveRanges = numActiveRanges + 1;
+  }
+
+  // max value to inf
+  if (ltf->opacityValues[ltf->opacityValueCount - 1] > 0.f) {
+    valueRanges[numActiveRanges].lower = ltf->super.valueRange.y;
+    valueRanges[numActiveRanges].upper = inf;
+
+    numActiveRanges = numActiveRanges + 1;
+  }
+
+  // inner value ranges
   for (uniform int i = 0; i < ltf->opacityValueCount - 1; i++) {
     if (ltf->opacityValues[i] > 0.f || ltf->opacityValues[i + 1] > 0.f) {
       uniform float lowerValue =

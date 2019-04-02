@@ -36,6 +36,8 @@ class GLFWOSPRayWindow
   OSPModel getModel();
   void setModel(OSPModel newModel);
 
+  void resetAccumulation();
+
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
 

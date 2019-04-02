@@ -134,7 +134,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 GLFWOSPRayWindow::~GLFWOSPRayWindow()
 {
   ImGui_ImplGlfwGL3_Shutdown();
-  // cleanly terminate GLFW
   glfwTerminate();
 }
 
@@ -154,6 +153,11 @@ void GLFWOSPRayWindow::setModel(OSPModel newModel)
   ospCommit(renderer);
 
   // clear frame buffer
+  resetAccumulation();
+}
+
+void GLFWOSPRayWindow::resetAccumulation()
+{
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 

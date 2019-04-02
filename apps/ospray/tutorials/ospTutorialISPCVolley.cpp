@@ -113,7 +113,8 @@ int main(int argc, const char **argv)
   // add in generated volume and transfer function
 
   osp::vec2f voxelRange{-1.f, 1.f};
-  OSPTransferFunction tfn = ospTestingNewTransferFunction(voxelRange, "jet");
+  OSPTransferFunction transferFunction =
+      ospTestingNewTransferFunction(voxelRange, "jet");
 
   ospCommit(world);
 
@@ -131,13 +132,13 @@ int main(int argc, const char **argv)
     VLYVolume vlyVolume = createVolleyVolume();
     ospSetVoidPtr(renderer, "vlyVolume", (void *)vlyVolume);
   } else if (rendererString == "native") {
-    OSPVolume volume = createNativeVolume(tfn);
+    OSPVolume volume = createNativeVolume(transferFunction);
     ospSetVoidPtr(renderer, "volume", (void *)volume);
   } else {
     throw std::runtime_error("unknown volume type");
   }
 
-  ospSetObject(renderer, "transferFunction", tfn);
+  ospSetObject(renderer, "transferFunction", transferFunction);
 
   ospCommit(renderer);
 
@@ -157,7 +158,7 @@ int main(int argc, const char **argv)
     if (ImGui::SliderInt("maxNumIntervals", &maxNumIntervals, 1, 100)) {
       ospSet1i(renderer, "maxNumIntervals", maxNumIntervals);
       ospCommit(renderer);
-      glfwOSPRayWindow->setModel(world); // only for clearing accumulation
+      glfwOSPRayWindow->resetAccumulation();
     }
   });
 

@@ -18,6 +18,7 @@
 #include <memory>
 #include <random>
 #include "GLFWOSPRayWindow.h"
+#include "TransferFunctionWidget.h"
 
 #include <ospray/ospray_testing/ospray_testing.h>
 #include <volley/volley.h>
@@ -149,6 +150,10 @@ int main(int argc, const char **argv)
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{512, 512}, bounds, world, renderer));
 
+  auto transferFunctionUpdatedCallback = [&]() {
+    glfwOSPRayWindow->resetAccumulation();
+  };
+
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static float samplingRate = 1.f;
     if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
@@ -160,6 +165,10 @@ int main(int argc, const char **argv)
       ospCommit(renderer);
       glfwOSPRayWindow->resetAccumulation();
     }
+
+    static TransferFunctionWidget transferFunctionWidget(
+        transferFunction, transferFunctionUpdatedCallback);
+    transferFunctionWidget.updateUI();
   });
 
   // start the GLFW main loop, which will continuously render

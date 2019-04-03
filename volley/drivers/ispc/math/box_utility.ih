@@ -29,6 +29,12 @@ inline varying bool overlaps1f(const varying box1f &box1,
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
+inline varying bool overlaps1f(const uniform box1f &box1,
+                               const varying box1f &box2)
+{
+  return box1.upper >= box2.lower && box1.lower <= box2.upper;
+}
+
 inline varying box1f intersectBox(const varying vec3f &origin,
                                   const varying vec3f &direction,
                                   const varying box3f &box,

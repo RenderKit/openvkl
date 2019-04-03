@@ -102,8 +102,8 @@ export void GridAcceleratorRayIterator_iterateInterval(
           GridAccelerator_getCellRange(
               self->volume->accelerator, self->currentCellIndex, cellRange);
 
-          for (int i = 0; i < self->samplesMask->numRanges; i++) {
-            varying box1f r = self->samplesMask->ranges[i];
+          for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
+            uniform box1f r = self->samplesMask->ranges[i];
 
             if (overlaps1f(r, cellRange)) {
               self->currentRayInterval.nominalDeltaT =

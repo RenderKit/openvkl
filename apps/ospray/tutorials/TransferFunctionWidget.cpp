@@ -99,8 +99,8 @@ TransferFunctionWidget::TransferFunctionWidget(
 
     ospRelease(opacitesData);
 
-    // TODO: ospSet2f(transferFunction, "valueRange", valueRange.x,
-    // valueRange.y);
+    // value range
+    ospSet2f(transferFunction, "valueRange", valueRange.x, valueRange.y);
 
     ospCommit(transferFunction);
 
@@ -151,11 +151,23 @@ void TransferFunctionWidget::updateUI()
   }
 
   ImGui::Separator();
-  ImGui::Separator();
 
   ImGui::Text("Opacity scale");
   ImGui::SameLine();
   if (ImGui::SliderFloat("##OpacityScale", &globalOpacityScale, 0.f, 10.f)) {
+    tfnChanged = true;
+  }
+
+  ImGui::Separator();
+
+  if (ImGui::DragFloatRange2("Value range",
+                             &valueRange.x,
+                             &valueRange.y,
+                             0.1f,
+                             -100.f,
+                             100.0f,
+                             "Min: %.1f",
+                             "Max: %.1f")) {
     tfnChanged = true;
   }
 

@@ -91,6 +91,9 @@ class TransferFunctionWidget
   // scaling factor for generated opacities passed to OSPRay
   float globalOpacityScale{1.f};
 
+  // domain (value range) of transfer function
+  vec2f valueRange{-1.f, 1.f};
+
   // texture for displaying transfer function color palette
   GLuint tfnPaletteTexture{0};
 };

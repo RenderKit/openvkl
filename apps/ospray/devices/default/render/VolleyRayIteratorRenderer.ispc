@@ -31,8 +31,41 @@ struct VolleyRayIteratorRenderer
   uniform int maxNumIntervals;
 };
 
-// in the future, sample masks will likely be computed and stored directly with
-// the volume and transfer function
+// returns the minimal number of [min, max) index intervals for positive values
+inline void getContiguousPositiveIntervalIndices(const float *uniform values,
+                                                 uniform int numValues,
+                                                 uniform int &numIntervals,
+                                                 vec2i *uniform intervals)
+{
+  numIntervals = 0;
+
+  uniform bool rangeActive = false;
+
+  for (uniform int i = 0; i < numValues; i++) {
+    if (values[i] > 0.f && !rangeActive) {
+      rangeActive               = true;
+      intervals[numIntervals].x = i;
+    } else if (values[i] <= 0.f && rangeActive) {
+      rangeActive               = false;
+      intervals[numIntervals].y = i;
+      numIntervals              = numIntervals + 1;
+    }
+  }
+
+  // special case for final value
+  if (values[numValues - 1] > 0.f) {
+    if (rangeActive) {
+      rangeActive               = false;
+      intervals[numIntervals].y = numValues;
+      numIntervals              = numIntervals + 1;
+    } else {
+      print("getContiguousPositiveIntervalIndices() error\n");
+    }
+  }
+}
+
+// in the future, sample masks will likely be computed and stored directly
+// with the volume and transfer function
 inline VLYSamplesMask getSamplesMaskForTransferFunction(
     const uniform VLYVolume volume,
     const TransferFunction *uniform transferFunction)
@@ -45,9 +78,13 @@ inline VLYSamplesMask getSamplesMaskForTransferFunction(
 
   // allocate maximum number of needed ranges
   vly_range1f *uniform valueRanges =
-      uniform new uniform vly_range1f[ltf->opacityValueCount - 1 + 2];
+      uniform new vly_range1f[ltf->opacityValueCount - 1 + 2];
 
   uniform int numActiveRanges = 0;
+
+#if 0
+  // this is a naive implementation that gives a maximum number of intervals;
+  // it is thus good for performance testing the ray iterator interval matching!
 
   // -inf to min value
   if (ltf->opacityValues[0] > 0.f) {
@@ -84,6 +121,50 @@ inline VLYSamplesMask getSamplesMaskForTransferFunction(
       numActiveRanges = numActiveRanges + 1;
     }
   }
+#else
+  // determine contiguous interval indices for positive opacities
+  uniform int numIndexIntervals;
+  vec2i *uniform indexIntervals = uniform new vec2i[ltf->opacityValueCount];
+
+  getContiguousPositiveIntervalIndices(ltf->opacityValues,
+                                       ltf->opacityValueCount,
+                                       numIndexIntervals,
+                                       indexIntervals);
+
+  // convert index intervals to value ranges
+  // note that a positive opacity value has a span of +/-1 due to the linear
+  // interpolation, and returned index ranges are [min, max) intervals
+  for (uniform int i = 0; i < numIndexIntervals; i++) {
+    uniform int minValueIndex = indexIntervals[i].x - 1;
+    uniform int maxValueIndex = indexIntervals[i].y;
+
+    uniform float minValue;
+
+    if (minValueIndex < 0) {
+      minValue = -inf;
+    } else {
+      minValue = ltf->super.valueRange.x +
+                 (float)minValueIndex / ((float)ltf->opacityValueCount - 1.f) *
+                     (ltf->super.valueRange.y - ltf->super.valueRange.x);
+    }
+
+    uniform float maxValue;
+
+    if (maxValueIndex >= ltf->opacityValueCount) {
+      maxValue = inf;
+    } else {
+      maxValue = ltf->super.valueRange.x +
+                 (float)maxValueIndex / ((float)ltf->opacityValueCount - 1.f) *
+                     (ltf->super.valueRange.y - ltf->super.valueRange.x);
+    }
+
+    valueRanges[numActiveRanges].lower = minValue;
+    valueRanges[numActiveRanges].upper = maxValue;
+    numActiveRanges                    = numActiveRanges + 1;
+  }
+
+  delete[] indexIntervals;
+#endif
 
   vlySamplesMaskSetRanges(samplesMask, numActiveRanges, valueRanges);
 

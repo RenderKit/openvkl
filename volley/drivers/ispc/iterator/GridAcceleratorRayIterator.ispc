@@ -94,29 +94,28 @@ export void GridAcceleratorRayIterator_iterateInterval(
   {
     if (isempty1f(self->boundingBoxTRange)) {
       *result = false;
-    } else {
-      while (GridAccelerator_nextCell(self->volume->accelerator, self)) {
-        cif(self->samplesMask)
-        {
-          box1f cellRange;
-          GridAccelerator_getCellRange(
-              self->volume->accelerator, self->currentCellIndex, cellRange);
+      return;
+    }
 
-          for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
-            uniform box1f r = self->samplesMask->ranges[i];
+    while (GridAccelerator_nextCell(self->volume->accelerator, self)) {
+      cif(!self->samplesMask)
+      {
+        self->currentRayInterval.nominalDeltaT =
+            1.f * (self->currentRayInterval.tRange.upper -
+                   self->currentRayInterval.tRange.lower);
 
-            if (overlaps1f(r, cellRange)) {
-              self->currentRayInterval.nominalDeltaT =
-                  1.f * (self->currentRayInterval.tRange.upper -
-                         self->currentRayInterval.tRange.lower);
+        *result = true;
+        return;
+      }
 
-              *result = true;
-              return;
-            }
-          }
-        }
-        else
-        {
+      box1f cellRange;
+      GridAccelerator_getCellRange(
+          self->volume->accelerator, self->currentCellIndex, cellRange);
+
+      for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
+        uniform box1f r = self->samplesMask->ranges[i];
+
+        if (overlaps1f(r, cellRange)) {
           self->currentRayInterval.nominalDeltaT =
               1.f * (self->currentRayInterval.tRange.upper -
                      self->currentRayInterval.tRange.lower);
@@ -125,8 +124,8 @@ export void GridAcceleratorRayIterator_iterateInterval(
           return;
         }
       }
-
-      *result = false;
     }
+
+    *result = false;
   }
 }

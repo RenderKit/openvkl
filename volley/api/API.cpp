@@ -283,6 +283,18 @@ extern "C" void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlySamplesMaskSetValues(VLYSamplesMask samplesMask,
+                                        size_t numValues,
+                                        const float *values) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().samplesMaskSetValues(
+      samplesMask,
+      utility::ArrayView<const float>(reinterpret_cast<const float *>(values),
+                                      numValues));
+}
+VOLLEY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Volume /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

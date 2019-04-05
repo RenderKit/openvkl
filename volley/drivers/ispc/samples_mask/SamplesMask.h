@@ -37,9 +37,11 @@ namespace volley {
       }
 
       void setRanges(const utility::ArrayView<const range1f> &ranges);
+      void setValues(const utility::ArrayView<const float> &values);
 
      protected:
       std::vector<range1f> ranges;
+      std::vector<float> values;
     };
 
   }  // namespace ispc_driver

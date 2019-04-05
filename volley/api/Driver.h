@@ -121,6 +121,10 @@ namespace volley {
           VLYSamplesMask samplesMask,
           const utility::ArrayView<const range1f> &ranges) = 0;
 
+      virtual void samplesMaskSetValues(
+          VLYSamplesMask samplesMask,
+          const utility::ArrayView<const float> &values) = 0;
+
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

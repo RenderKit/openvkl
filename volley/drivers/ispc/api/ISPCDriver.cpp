@@ -155,6 +155,14 @@ namespace volley {
       samplesMaskObject.setRanges(ranges);
     }
 
+    void ISPCDriver::samplesMaskSetValues(
+        VLYSamplesMask samplesMask,
+        const utility::ArrayView<const float> &values)
+    {
+      auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
+      samplesMaskObject.setValues(values);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Volume /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

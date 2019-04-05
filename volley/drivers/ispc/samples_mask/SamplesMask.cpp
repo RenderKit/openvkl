@@ -28,5 +28,14 @@ namespace volley {
       }
     }
 
+    void SamplesMask::setValues(const utility::ArrayView<const float> &values)
+    {
+      this->values.clear();
+
+      for (const auto &v : values) {
+        this->values.push_back(v);
+      }
+    }
+
   }  // namespace ispc_driver
 }  // namespace volley

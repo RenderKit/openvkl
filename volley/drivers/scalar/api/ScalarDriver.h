@@ -75,6 +75,14 @@ namespace volley {
           VLYSamplesMask samplesMask,
           const utility::ArrayView<const range1f> &ranges) override;
 
+      void samplesMaskSetValues(
+          VLYSamplesMask samplesMask,
+          const utility::ArrayView<const float> &values) override
+      {
+        throw std::runtime_error(
+            "samplesMaskSetValues() not implemented for this driver");
+      }
+
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

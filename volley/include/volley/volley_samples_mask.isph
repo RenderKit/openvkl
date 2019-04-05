@@ -28,3 +28,6 @@ VLY_API void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
                                      uniform size_t numRanges,
                                      const vly_range1f *uniform ranges);
 
+VLY_API void vlySamplesMaskSetValues(VLYSamplesMask samplesMask,
+                                     uniform size_t numValues,
+                                     const float *uniform values);

@@ -25,4 +25,7 @@ struct GridAcceleratorSamplesMask
 
   uniform int numRanges;
   box1f *uniform ranges;
+
+  uniform int numValues;
+  float *uniform values;
 };

@@ -20,7 +20,9 @@
 export void *uniform
 GridAcceleratorSamplesMask_Constructor(void *uniform _volume,
                                        const uniform int &numRanges,
-                                       const box1f *uniform ranges)
+                                       const box1f *uniform ranges,
+                                       const uniform int &numValues,
+                                       const float *uniform values)
 {
   uniform GridAcceleratorSamplesMask *uniform self =
       uniform new uniform GridAcceleratorSamplesMask;
@@ -32,6 +34,13 @@ GridAcceleratorSamplesMask_Constructor(void *uniform _volume,
     self->ranges[i] = ranges[i];
   }
 
+  self->numValues = numValues;
+  self->values    = uniform new uniform float[numValues];
+
+  foreach (i = 0 ... numValues) {
+    self->values[i] = values[i];
+  }
+
   return self;
 }
 
@@ -40,5 +49,6 @@ export void *uniform GridAcceleratorSamplesMask_Destructor(void *uniform _self)
   uniform GridAcceleratorSamplesMask *uniform self =
       (uniform GridAcceleratorSamplesMask * uniform) _self;
   delete[] self->ranges;
+  delete[] self->values;
   delete self;
 }

@@ -42,7 +42,9 @@ namespace volley {
       ispcEquivalent = ispc::GridAcceleratorSamplesMask_Constructor(
           volume->getISPCEquivalent(),
           ranges.size(),
-          (const ispc::box1f *)ranges.data());
+          (const ispc::box1f *)ranges.data(),
+          values.size(),
+          (const float *)values.data());
     }
 
   }  // namespace ispc_driver

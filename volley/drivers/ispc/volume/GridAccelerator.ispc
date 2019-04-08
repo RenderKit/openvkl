@@ -114,7 +114,7 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
     if (!isnan(value)) {
       cellRange.lower = min(cellRange.lower, reduce_min(value));
       cellRange.upper = max(cellRange.upper, reduce_max(value));
-      cellEmpty   = false;
+      cellEmpty       = false;
     }
   }
 
@@ -192,8 +192,8 @@ inline uint32 GridAccelerator_getCellAddress(
          cellOffset.y << (BRICK_WIDTH_BITCOUNT) | cellOffset.x;
 }
 
-inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
-                                           const varying vec3i &index)
+inline box3f GridAccelerator_getCellBounds(
+    const GridAccelerator *uniform accelerator, const varying vec3i &index)
 {
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;
@@ -212,13 +212,16 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
   return (make_box3f(lower, upper));
 }
 
-bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
-                              GridAcceleratorRayIterator *uniform rayIterator)
+bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
+                              const GridAcceleratorRayIterator *uniform
+                                  rayIterator,
+                              varying vec3i &cellIndex,
+                              varying RayInterval &rayInterval)
 {
   SharedStructuredVolume *uniform volume =
       (SharedStructuredVolume * uniform) accelerator->volume;
 
-  cif(rayIterator->currentCellIndex.x == -1)
+  cif(cellIndex.x == -1)
   {
     // first iteration
     vec3f localCoordinates;
@@ -228,8 +231,7 @@ bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
             (rayIterator->boundingBoxTRange.lower) * rayIterator->direction,
         localCoordinates);
 
-    rayIterator->currentCellIndex =
-        to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
+    cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
   }
   else
   {
@@ -253,11 +255,8 @@ bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
                    1 - 2 * (intbits(cellDirection.z) >> 31));
 
     // find exit distance within current cell
-    const vec3f t0 = (to_float(rayIterator->currentCellIndex) - cellOrigin) *
-                     rcpCellDirection;
-    const vec3f t1 =
-        (to_float(rayIterator->currentCellIndex + 1) - cellOrigin) *
-        rcpCellDirection;
+    const vec3f t0 = (to_float(cellIndex) - cellOrigin) * rcpCellDirection;
+    const vec3f t1 = (to_float(cellIndex + 1) - cellOrigin) * rcpCellDirection;
     const vec3f tMax = max(t0, t1);
 
     const float tExit = reduce_min(tMax);
@@ -269,12 +268,10 @@ bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
                    tMax.y == tExit ? cornerDeltaCellIndex.y : 0,
                    tMax.z == tExit ? cornerDeltaCellIndex.z : 0);
 
-    rayIterator->currentCellIndex =
-        rayIterator->currentCellIndex + deltaCellIndex;
+    cellIndex = cellIndex + deltaCellIndex;
   }
 
-  box3f cellBounds =
-      GridAccelerator_getCellBounds(accelerator, rayIterator->currentCellIndex);
+  box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
 
   // clamp next cell bounds to ray iterator bounding range
   box1f cellInterval = intersectBox(rayIterator->origin,
@@ -283,10 +280,10 @@ bool GridAccelerator_nextCell(GridAccelerator *uniform accelerator,
                                     rayIterator->boundingBoxTRange);
 
   if (isempty1f(cellInterval)) {
-    resetRayInterval(rayIterator->currentRayInterval);
+    resetRayInterval(rayInterval);
     return false;
   } else {
-    rayIterator->currentRayInterval.tRange = cellInterval;
+    rayInterval.tRange = cellInterval;
     return true;
   }
 }

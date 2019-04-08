@@ -100,7 +100,10 @@ export void GridAcceleratorRayIterator_iterateInterval(
     return;
   }
 
-  while (GridAccelerator_nextCell(self->volume->accelerator, self)) {
+  while (GridAccelerator_nextCell(self->volume->accelerator,
+                                  self,
+                                  self->currentCellIndex,
+                                  self->currentRayInterval)) {
     cif(!self->samplesMask)
     {
       self->currentRayInterval.nominalDeltaT =

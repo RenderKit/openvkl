@@ -36,7 +36,7 @@ namespace volley {
 
       const RayInterval<W> *getCurrentRayInterval() const override;
 
-      void iterateInterval(const int *valid, vintn<8> &result) override;
+      void iterateInterval(const int *valid, vintn<W> &result) override;
 
      protected:
       void *ispcEquivalent{nullptr};

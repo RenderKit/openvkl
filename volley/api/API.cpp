@@ -189,6 +189,21 @@ extern "C" void vlyIterateInterval8(const int *valid,
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlyIterateSurface8(const int *valid,
+                                   VLYRayIterator rayIterator,
+                                   VLYSurfaceHit8 *surfaceHit,
+                                   int *result) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+
+  return volley::api::currentDriver().iterateSurface8(
+      valid,
+      rayIterator,
+      reinterpret_cast<VLYSurfaceHit8 &>(*surfaceHit),
+      reinterpret_cast<vintn<8> &>(*result));
+}
+VOLLEY_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Module /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

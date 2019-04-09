@@ -53,7 +53,7 @@ namespace volley {
     }
 
     template <int W>
-    void DumbRayIterator<W>::iterateInterval(const int *valid, vintn<8> &result)
+    void DumbRayIterator<W>::iterateInterval(const int *valid, vintn<W> &result)
     {
       ispc::DumbRayIterator_iterateInterval(
           valid, ispcEquivalent, (int *)&result);

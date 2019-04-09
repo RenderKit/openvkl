@@ -54,12 +54,14 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->samplesMask =
       (uniform GridAcceleratorSamplesMask * uniform) _samplesMask;
 
-  resetRayInterval(self->currentRayInterval);
-
   self->boundingBoxTRange =
       intersectBox(self->origin, self->direction, boundingBox, self->tRange);
 
+  resetRayInterval(self->currentRayInterval);
   self->currentCellIndex = make_vec3i(-1);
+
+  resetRayInterval(self->currentSurfaceRayInterval);
+  self->currentSurfaceCellIndex = make_vec3i(-1);
 
   return self;
 }
@@ -129,6 +131,73 @@ export void GridAcceleratorRayIterator_iterateInterval(
         *result = true;
         return;
       }
+    }
+  }
+
+  *result = false;
+}
+
+export void *uniform
+GridAcceleratorRayIterator_getCurrentSurfaceHit(void *uniform _self)
+{
+  uniform GridAcceleratorRayIterator *uniform self =
+      (uniform GridAcceleratorRayIterator * uniform) _self;
+  return &self->currentSurfaceHit;
+}
+
+export void GridAcceleratorRayIterator_iterateSurface(
+    uniform const int *uniform imask,
+    void *uniform _self,
+    uniform int *uniform _result)
+{
+  uniform GridAcceleratorRayIterator *uniform self =
+      (uniform GridAcceleratorRayIterator * uniform) _self;
+
+  varying int *uniform result = (varying int *uniform)_result;
+
+  cif(!imask[programIndex])
+  {
+    return;
+  }
+
+  if (isempty1f(self->boundingBoxTRange)) {
+    *result = false;
+    return;
+  }
+
+  cif(!self->samplesMask || self->samplesMask->numValues == 0)
+  {
+    *result = false;
+    return;
+  }
+
+  while (GridAccelerator_nextCell(self->volume->accelerator,
+                                  self,
+                                  self->currentSurfaceCellIndex,
+                                  self->currentSurfaceRayInterval)) {
+    box1f cellRange;
+    GridAccelerator_getCellRange(
+        self->volume->accelerator, self->currentSurfaceCellIndex, cellRange);
+
+    bool cellRangeOverlap = false;
+
+    for (uniform int i = 0; i < self->samplesMask->numValues; i++) {
+      const uniform float value = self->samplesMask->values[i];
+
+      if (value >= cellRange.lower && value <= cellRange.upper) {
+        cellRangeOverlap = true;
+        break;
+      }
+    }
+
+    if (cellRangeOverlap) {
+      // TODO: further iteration to find exact intersection point
+      self->currentSurfaceHit.t =
+          0.5f * (self->currentSurfaceRayInterval.tRange.lower +
+                  self->currentSurfaceRayInterval.tRange.upper);
+      self->currentSurfaceHit.sample = 0.5f;
+      *result                        = true;
+      return;
     }
   }
 

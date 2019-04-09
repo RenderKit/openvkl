@@ -90,6 +90,18 @@ namespace volley {
           rayIteratorObject.getCurrentRayInterval());
     }
 
+    void ISPCDriver::iterateSurface8(const int *valid,
+                                     VLYRayIterator rayIterator,
+                                     VLYSurfaceHit8 &surfaceHit,
+                                     vintn<8> &result)
+    {
+      auto &rayIteratorObject =
+          referenceFromHandle<RayIterator<8>>(rayIterator);
+      rayIteratorObject.iterateSurface(valid, result);
+      surfaceHit = *reinterpret_cast<const VLYSurfaceHit8 *>(
+          rayIteratorObject.getCurrentSurfaceHit());
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Module /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

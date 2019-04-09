@@ -91,6 +91,15 @@ namespace volley {
             "iterateInterval8() not implemented on this driver");
       }
 
+      virtual void iterateSurface8(const int *valid,
+                                   VLYRayIterator rayIterator,
+                                   VLYSurfaceHit8 &surfaceHit,
+                                   vintn<8> &result)
+      {
+        throw std::runtime_error(
+            "iterateSurface8() not implemented in this driver");
+      }
+
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

@@ -35,8 +35,10 @@ namespace volley {
       ~GridAcceleratorRayIterator();
 
       const RayInterval<W> *getCurrentRayInterval() const override;
+      void iterateInterval(const int *valid, vintn<W> &result) override;
 
-      void iterateInterval(const int *valid, vintn<8> &result) override;
+      const SurfaceHit<W> *getCurrentSurfaceHit() const override;
+      void iterateSurface(const int *valid, vintn<W> &result) override;
 
      protected:
       void *ispcEquivalent{nullptr};

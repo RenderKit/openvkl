@@ -66,9 +66,26 @@ namespace volley {
 
     template <int W>
     void GridAcceleratorRayIterator<W>::iterateInterval(const int *valid,
-                                                        vintn<8> &result)
+                                                        vintn<W> &result)
     {
       ispc::GridAcceleratorRayIterator_iterateInterval(
+          valid, ispcEquivalent, (int *)&result);
+    }
+
+    template <int W>
+    const SurfaceHit<W> *GridAcceleratorRayIterator<W>::getCurrentSurfaceHit()
+        const
+    {
+      return reinterpret_cast<const SurfaceHit<W> *>(
+          ispc::GridAcceleratorRayIterator_getCurrentSurfaceHit(
+              ispcEquivalent));
+    }
+
+    template <int W>
+    void GridAcceleratorRayIterator<W>::iterateSurface(const int *valid,
+                                                       vintn<W> &result)
+    {
+      ispc::GridAcceleratorRayIterator_iterateSurface(
           valid, ispcEquivalent, (int *)&result);
     }
 

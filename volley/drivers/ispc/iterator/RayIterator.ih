@@ -28,7 +28,13 @@ struct RayInterval
 
 inline void resetRayInterval(RayInterval &rayInterval)
 {
-  rayInterval.tRange.lower = 1.f;
-  rayInterval.tRange.upper = -1.f;
+  rayInterval.tRange.lower  = 1.f;
+  rayInterval.tRange.upper  = -1.f;
   rayInterval.nominalDeltaT = 0.f;
 }
+
+struct SurfaceHit
+{
+  varying float t;
+  varying float sample;
+};

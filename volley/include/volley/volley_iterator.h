@@ -54,8 +54,20 @@ struct VLYRayInterval8
 bool vlyIterateInterval(VLYRayIterator rayIterator,
                         VLYRayInterval *rayInterval);
 
+struct VLYSurfaceHit
+{
+  float t;
+  float sample;
+};
+
+struct VLYSurfaceHit8
+{
+  float t[8];
+  float sample[8];
+};
+
 // returns true while the iterator is still within the volume
-bool vlyIterateSurface(VLYRayIterator, float *t, float *sample);
+bool vlyIterateSurface(VLYRayIterator, VLYSurfaceHit *surfaceHit);
 
 /* TODO:
 

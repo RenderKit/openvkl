@@ -30,8 +30,14 @@ struct GridAcceleratorRayIterator
   varying box1f tRange;
   GridAcceleratorSamplesMask *uniform samplesMask;
 
-  // computed
-  varying RayInterval currentRayInterval;
+  // common state
   varying box1f boundingBoxTRange;
+  // interval iterator state
+  varying RayInterval currentRayInterval;
   varying vec3i currentCellIndex;
+
+  // surface iterator state
+  varying vec3i currentSurfaceCellIndex;
+  varying RayInterval currentSurfaceRayInterval;
+  varying SurfaceHit currentSurfaceHit;
 };

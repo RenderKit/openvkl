@@ -84,3 +84,33 @@ VLY_FORCEINLINE varying bool vlyIterateIntervalV(
     return result;
   }
 }
+
+struct VLYSurfaceHit
+{
+  float t;
+  float sample;
+};
+
+VLY_API void vlyIterateSurface8(const int *uniform valid,
+                                VLYRayIterator rayIterator,
+                                varying VLYSurfaceHit *uniform surfaceHit,
+                                varying int *uniform result);
+
+VLY_FORCEINLINE varying bool vlyIterateSurfaceV(
+    VLYRayIterator rayIterator, varying VLYSurfaceHit *uniform surfaceHit)
+{
+  varying bool mask = __mask;
+  unmasked
+  {
+    varying int imask = mask ? -1 : 0;
+  }
+  if (sizeof(varying float) == 32) {
+    varying int iresult;
+    vlyIterateSurface8(
+        (uniform int *uniform) & imask, rayIterator, surfaceHit, &iresult);
+
+    varying bool result = iresult ? true : false;
+
+    return result;
+  }
+}

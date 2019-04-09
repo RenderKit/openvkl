@@ -35,6 +35,13 @@ namespace volley {
     };
 
     template <int W>
+    struct SurfaceHit
+    {
+      vfloatn<W> t;
+      vfloatn<W> sample;
+    };
+
+    template <int W>
     struct RayIterator : public ManagedObject
     {
       RayIterator(const Volume *volume,
@@ -47,9 +54,11 @@ namespace volley {
 
       virtual ~RayIterator() override = default;
 
-      virtual const RayInterval<W> *getCurrentRayInterval() const = 0;
+      virtual const RayInterval<W> *getCurrentRayInterval() const      = 0;
+      virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;
 
-      virtual void iterateInterval(const int *valid, vintn<8> &result) = 0;
+      virtual const SurfaceHit<W> *getCurrentSurfaceHit() const {};
+      virtual void iterateSurface(const int *valid, vintn<W> &result) {}
     };
 
   }  // namespace ispc_driver

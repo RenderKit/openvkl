@@ -67,7 +67,7 @@ struct VLYSurfaceHit8
 };
 
 // returns true while the iterator is still within the volume
-bool vlyIterateSurface(VLYRayIterator, VLYSurfaceHit *surfaceHit);
+bool vlyIterateSurface(VLYRayIterator rayIterator, VLYSurfaceHit *surfaceHit);
 
 /* TODO:
 

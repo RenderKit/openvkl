@@ -69,9 +69,7 @@ inline void SharedStructuredVolume_transformObjectToLocal(
 }
 
 inline varying float SharedStructuredVolume_sample(
-    void *uniform _volume,
-    const varying vec3f &objectCoordinates,
-    varying float &volumeSample)
+    void *uniform _volume, const varying vec3f &objectCoordinates)
 {
   // Cast to the actual Volume subtype.
   SharedStructuredVolume *uniform volume =
@@ -158,8 +156,8 @@ inline varying float SharedStructuredVolume_sample(
       voxelValue_10 +
       fractionalLocalCoordinates.y * (voxelValue_11 - voxelValue_10);
 
-  volumeSample = voxelValue_0 +
-                 fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);
+  return voxelValue_0 +
+         fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);
 }
 
 export void SharedStructuredVolume_sample_export(
@@ -174,7 +172,7 @@ export void SharedStructuredVolume_sample_export(
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    SharedStructuredVolume_sample(_volume, *objectCoordinates, *samples);
+    *samples = SharedStructuredVolume_sample(_volume, *objectCoordinates);
   }
 }
 
@@ -185,6 +183,7 @@ export void *uniform SharedStructuredVolume_Constructor()
 
   self->accelerator            = NULL;
   self->getVoxel               = SharedStructuredVolume_getVoxel;
+  self->computeSample          = SharedStructuredVolume_sample;
   self->transformLocalToObject = SharedStructuredVolume_transformLocalToObject;
   self->transformObjectToLocal = SharedStructuredVolume_transformObjectToLocal;
 

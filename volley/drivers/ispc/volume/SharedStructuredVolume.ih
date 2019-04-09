@@ -35,9 +35,12 @@ struct SharedStructuredVolume
                            const varying vec3i &index,
                            varying float &value);
 
+  varying float (*uniform computeSample)(
+      void *uniform volume, const varying vec3f &objectCoordinates);
+
   void (*uniform transformLocalToObject)(SharedStructuredVolume *uniform volume,
-                                        const varying vec3f &localCoordinates,
-                                        varying vec3f &objectCoordinates);
+                                         const varying vec3f &localCoordinates,
+                                         varying vec3f &objectCoordinates);
 
   void (*uniform transformObjectToLocal)(SharedStructuredVolume *uniform volume,
                                          const varying vec3f &objectCoordinates,

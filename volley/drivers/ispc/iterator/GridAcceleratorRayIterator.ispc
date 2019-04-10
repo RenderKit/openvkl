@@ -151,10 +151,11 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
                               const varying RayInterval &rayInterval,
                               const uniform int numValues,
                               const float *uniform values,
-                              varying SurfaceHit &surfaceHit)
+                              varying SurfaceHit &surfaceHit,
+                              varying float &surfaceEpsilon)
 {
-  const uniform float step =
-      1e-3f;  // TODO: should be set correctly in ray interval!
+  const uniform float step = 2.f / 512.f;  // (== gridSpacing); TODO: should be
+                                           // set correctly in ray interval!
 
   float t0 = rayInterval.tRange.lower;
   float sample0 =
@@ -162,7 +163,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
 
   float t;
 
-  while (1) {
+  while (true) {
     t = t0 + step;
 
     if (t > rayInterval.tRange.upper + step)
@@ -186,8 +187,8 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
 
           if (tIso < tHit && tIso >= rayInterval.tRange.lower) {
             tHit    = tIso;
-            epsilon = (t - t0) * 0.125f;
             value   = values[i];
+            epsilon = step * 0.125f;
           }
         }
       }
@@ -195,7 +196,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
       if (tHit <= rayInterval.tRange.upper) {
         surfaceHit.t      = tHit;
         surfaceHit.sample = value;
-        // TODO: handle computed epsilon
+        surfaceEpsilon    = epsilon;
         return true;
       }
     }
@@ -233,10 +234,17 @@ export void GridAcceleratorRayIterator_iterateSurface(
     return;
   }
 
-  while (GridAccelerator_nextCell(self->volume->accelerator,
-                                  self,
-                                  self->currentSurfaceCellIndex,
-                                  self->currentSurfaceRayInterval)) {
+  // first iteration
+  cif(self->currentSurfaceCellIndex.x == -1)
+  {
+    self->activeSurfaceCell =
+        GridAccelerator_nextCell(self->volume->accelerator,
+                                 self,
+                                 self->currentSurfaceCellIndex,
+                                 self->currentSurfaceRayInterval);
+  }
+
+  while (self->activeSurfaceCell) {
     box1f cellRange;
     GridAccelerator_getCellRange(
         self->volume->accelerator, self->currentSurfaceCellIndex, cellRange);
@@ -253,19 +261,32 @@ export void GridAcceleratorRayIterator_iterateSurface(
     }
 
     if (cellRangeOverlap) {
+      float surfaceEpsilon;
+
       bool foundHit = intersectSurfaces(self->volume,
                                         self->origin,
                                         self->direction,
                                         self->currentSurfaceRayInterval,
                                         self->samplesMask->numValues,
                                         self->samplesMask->values,
-                                        self->currentSurfaceHit);
+                                        self->currentSurfaceHit,
+                                        surfaceEpsilon);
 
       if (foundHit) {
         *result = true;
+        self->currentSurfaceRayInterval.tRange.lower =
+            self->currentSurfaceHit.t + surfaceEpsilon;
         return;
       }
     }
+
+    // we'll only move forward to the next cell if no hits are found; if a hit
+    // is found we'll stay in the cell to pursue other hits
+    self->activeSurfaceCell =
+        GridAccelerator_nextCell(self->volume->accelerator,
+                                 self,
+                                 self->currentSurfaceCellIndex,
+                                 self->currentSurfaceRayInterval);
   }
 
   *result = false;

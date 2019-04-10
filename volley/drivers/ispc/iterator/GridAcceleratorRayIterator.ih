@@ -37,6 +37,7 @@ struct GridAcceleratorRayIterator
   varying vec3i currentCellIndex;
 
   // surface iterator state
+  varying bool activeSurfaceCell;
   varying vec3i currentSurfaceCellIndex;
   varying RayInterval currentSurfaceRayInterval;
   varying SurfaceHit currentSurfaceHit;

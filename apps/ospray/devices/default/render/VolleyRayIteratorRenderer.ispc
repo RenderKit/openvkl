@@ -33,15 +33,48 @@ struct VolleyRayIteratorRenderer
   uniform float samplingRate;
 };
 
+inline void integrateVolumeInterval(uniform VolleyRayIteratorRenderer *uniform
+                                        self,
+                                    const Ray &ray,
+                                    box1f tRange,
+                                    float nominalSamplingDt,
+                                    vec3f &color,
+                                    float &alpha)
 {
+  // initial sub interval, based on our renderer-defined sampling rate
+  // and the volume's nominal dt
+  box1f subInterval = make_box1f(
+      tRange.lower, min(tRange.lower + nominalSamplingDt, tRange.upper));
 
+  // integrate as long as we have valid sub intervals and are not
+  // fully opaque
+  while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
+    const float t  = 0.5f * (subInterval.lower + subInterval.upper);
+    const float dt = subInterval.upper - subInterval.lower;
 
+    // get volume sample
+    vec3f c      = ray.org + t * ray.dir;
+    float sample = vlyComputeSampleV(self->volume, (varying vly_vec3f *)&c);
 
+    // apply transfer function
+    vec3f sampleColor = self->transferFunction->getColorForValue(
+        self->transferFunction, sample);
 
+    const float sampleOpacity = self->transferFunction->getOpacityForValue(
+        self->transferFunction, sample);
 
+    // accumulate contribution
+    const float clampedOpacity = clamp(sampleOpacity * dt);
 
+    sampleColor = sampleColor * clampedOpacity;
 
+    color = color + (1.f - alpha) * sampleColor;
+    alpha = alpha + (1.f - alpha) * clampedOpacity;
 
+    // compute next sub interval
+    subInterval.lower = subInterval.upper;
+    subInterval.upper =
+        min(subInterval.lower + nominalSamplingDt, tRange.upper);
   }
 }
 
@@ -64,6 +97,11 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
   VLYSamplesMask samplesMask =
       getSamplesMaskForTransferFunction(self->volume, self->transferFunction);
 
+  // add in isovalues of interest
+  uniform float isoValues[] = {0.5f, 1.f};
+  vlySamplesMaskSetValues(samplesMask, 2, isoValues);
+  vlyCommit((VLYObject)samplesMask);
+
   VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
                                                   (varying vly_vec3f *)&ray.org,
                                                   (varying vly_vec3f *)&ray.dir,
@@ -72,55 +110,44 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
 
   // the current ray interval
   VLYRayInterval rayInterval;
+  bool activeInterval = vlyIterateIntervalV(rayIterator, &rayInterval);
 
+  // the current surface hit
+  VLYSurfaceHit surfaceHit;
+  bool activeSurface = vlyIterateSurfaceV(rayIterator, &surfaceHit);
 
-  uniform int currentInterval = 0;
+  while ((activeInterval || activeSurface) && alpha < 0.99f) {
+    float firstHit = min(activeInterval ? rayInterval.tRange.lower : inf,
+                         activeSurface ? surfaceHit.t : inf);
 
-  while (vlyIterateIntervalV(rayIterator, &rayInterval) && alpha < 0.99f) {
-    currentInterval = currentInterval + 1;
+    if (activeInterval && firstHit == rayInterval.tRange.lower) {
+      // volume interval
+      const float nominalSamplingDt =
+          rayInterval.nominalDeltaT / self->samplingRate;
 
-    const float nominalSamplingDt = rayInterval.nominalDeltaT / samplingRate;
+      box1f subInterval = make_box1f(
+          rayInterval.tRange.lower,
+          min(rayInterval.tRange.upper, activeSurface ? surfaceHit.t : inf));
 
-    // initial sub interval, based on our renderer-defined sampling rate
-    // and the volume's nominal dt
-    box1f subInterval =
-        make_box1f(rayInterval.tRange.lower,
-                   min(rayInterval.tRange.lower + nominalSamplingDt,
-                       rayInterval.tRange.upper));
+      integrateVolumeInterval(
+          self, ray, subInterval, nominalSamplingDt, color, alpha);
 
-    // integrate as long as we have valid sub intervals and are not
-    // fully opaque
-    while (subInterval.upper - subInterval.lower > 0.f && alpha < 0.99f) {
-      const float t  = 0.5f * (subInterval.lower + subInterval.upper);
-      const float dt = subInterval.upper - subInterval.lower;
+      if (subInterval.upper == rayInterval.tRange.upper) {
+        activeInterval = vlyIterateIntervalV(rayIterator, &rayInterval);
+      } else {
+        rayInterval.tRange.lower = subInterval.upper + 1e-6f;
+      }
 
-      // get volume sample
-      vec3f c      = ray.org + t * ray.dir;
-      float sample = vlyComputeSampleV(self->volume, (varying vly_vec3f *)&c);
+    } else if (activeSurface && firstHit == surfaceHit.t) {
+      // surface hit
+      const vec3f surfaceColor = self->transferFunction->getColorForValue(
+          self->transferFunction, surfaceHit.sample);
+      const float surfaceOpacity = 0.5f;
 
-      // apply transfer function
-      vec3f sampleColor = self->transferFunction->getColorForValue(
-          self->transferFunction, sample);
+      color = color + (1.f - alpha) * surfaceColor;
+      alpha = alpha + (1.f - alpha) * surfaceOpacity;
 
-      const float sampleOpacity = self->transferFunction->getOpacityForValue(
-          self->transferFunction, sample);
-
-      // accumulate contribution
-      const float clampedOpacity = clamp(sampleOpacity * dt);
-
-      sampleColor = sampleColor * clampedOpacity;
-
-      color = color + (1.f - alpha) * sampleColor;
-      alpha = alpha + (1.f - alpha) * clampedOpacity;
-
-      // compute next sub interval
-      subInterval.lower = subInterval.upper;
-      subInterval.upper =
-          min(subInterval.lower + nominalSamplingDt, rayInterval.tRange.upper);
-    }
-
-    if (currentInterval >= self->maxNumIntervals) {
-      break;
+      activeSurface = vlyIterateSurfaceV(rayIterator, &surfaceHit);
     }
   }
 

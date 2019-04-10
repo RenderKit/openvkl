@@ -41,19 +41,27 @@ namespace ospray {
 
     VLYVolume vlyVolume = (VLYVolume)getParamVoidPtr("vlyVolume", nullptr);
 
+    if (!vlyVolume)
+      throw std::runtime_error("no volume specified on the Volley renderer!");
+
     TransferFunction *transferFunction =
         (TransferFunction *)getParamObject("transferFunction", nullptr);
 
-    if (transferFunction == nullptr)
+    if (!transferFunction)
       throw std::runtime_error(
           "no transfer function specified on the Volley renderer!");
 
     float samplingRate = getParam1f("samplingRate", 1.f);
 
-    ispc::VolleyRayIteratorRenderer_set(getIE(),
-                                        (ispc::VolleyVolume *)vlyVolume,
-                                        transferFunction->getIE(),
-                                        samplingRate);
+    Data *isosurfaces = (Data *)getParamData("isosurfaces", nullptr);
+
+    ispc::VolleyRayIteratorRenderer_set(
+        getIE(),
+        (ispc::VolleyVolume *)vlyVolume,
+        transferFunction->getIE(),
+        samplingRate,
+        isosurfaces ? isosurfaces->size() : 0,
+        isosurfaces ? (float *)isosurfaces->data : nullptr);
   }
 
   OSP_REGISTER_RENDERER(VolleyRayIteratorRenderer, volley_ray_iterator);

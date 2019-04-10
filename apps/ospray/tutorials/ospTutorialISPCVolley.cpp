@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include <imgui.h>
+#include <array>
 #include <memory>
 #include <random>
 #include "GLFWOSPRayWindow.h"
@@ -24,6 +25,20 @@
 #include <volley/volley.h>
 
 using namespace ospcommon;
+
+static constexpr int maxNumIsosurfaces = 3;
+
+struct IsosurfaceParameters
+{
+  bool enabled;
+  float isovalue;
+
+  IsosurfaceParameters()
+  {
+    enabled  = false;
+    isovalue = 0.f;
+  }
+};
 
 VLYVolume createVolleyVolume()
 {
@@ -84,6 +99,29 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
   ospCommit(volume);
 
   return volume;
+}
+
+void updateRendererIsosurfaces(
+    OSPRenderer renderer,
+    bool showIsosurfaces,
+    const std::array<IsosurfaceParameters, maxNumIsosurfaces> &isosurfaces)
+{
+  std::vector<float> activeIsosurfaces;
+
+  if (showIsosurfaces) {
+    for (const auto &isosurface : isosurfaces) {
+      if (isosurface.enabled) {
+        activeIsosurfaces.push_back(isosurface.isovalue);
+      }
+    }
+  }
+
+  OSPData isosurfacesData =
+      ospNewData(activeIsosurfaces.size(), OSP_FLOAT, activeIsosurfaces.data());
+  ospSetObject(renderer, "isosurfaces", isosurfacesData);
+  ospRelease(isosurfacesData);
+
+  ospCommit(renderer);
 }
 
 int main(int argc, const char **argv)
@@ -164,11 +202,52 @@ int main(int argc, const char **argv)
       ospCommit(renderer);
       glfwOSPRayWindow->resetAccumulation();
     }
-    static int maxNumIntervals = 1;
-    if (ImGui::SliderInt("maxNumIntervals", &maxNumIntervals, 1, 100)) {
-      ospSet1i(renderer, "maxNumIntervals", maxNumIntervals);
-      ospCommit(renderer);
-      glfwOSPRayWindow->resetAccumulation();
+
+    // only show isosurface UI if an appropriate renderer is selected
+    if (rendererString == "volley_ray_iterator" ||
+        rendererString == "volley_ray_iterator_surface") {
+      static bool showIsosurfaces = false;
+
+      static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
+
+      bool isosurfacesChanged = false;
+
+      if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
+        isosurfacesChanged = true;
+      }
+
+      if (showIsosurfaces) {
+        int labelCounter = 0;
+
+        for (auto &isosurface : isosurfaces) {
+          std::ostringstream enabledLabel;
+          enabledLabel << "##enabled_isosurface " << labelCounter;
+
+          std::ostringstream isovalueLabel;
+          isovalueLabel << "isosurface " << labelCounter;
+
+          if (ImGui::Checkbox(enabledLabel.str().c_str(),
+                              &isosurface.enabled)) {
+            isosurfacesChanged = true;
+          }
+
+          ImGui::SameLine();
+
+          if (ImGui::SliderFloat(isovalueLabel.str().c_str(),
+                                 &isosurface.isovalue,
+                                 -1.f,
+                                 1.f)) {
+            isosurfacesChanged = true;
+          }
+
+          labelCounter++;
+        }
+      }
+
+      if (isosurfacesChanged) {
+        updateRendererIsosurfaces(renderer, showIsosurfaces, isosurfaces);
+        glfwOSPRayWindow->resetAccumulation();
+      }
     }
 
     static TransferFunctionWidget transferFunctionWidget(

@@ -31,6 +31,8 @@ struct VolleyRayIteratorRenderer
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
   uniform float samplingRate;
+  uniform int numIsovalues;
+  float *uniform isovalues;
 };
 
 inline void integrateVolumeInterval(uniform VolleyRayIteratorRenderer *uniform
@@ -98,8 +100,8 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
       getSamplesMaskForTransferFunction(self->volume, self->transferFunction);
 
   // add in isovalues of interest
-  uniform float isoValues[] = {0.5f, 1.f};
-  vlySamplesMaskSetValues(samplesMask, 2, isoValues);
+  vlySamplesMaskSetValues(samplesMask, self->numIsovalues, self->isovalues);
+
   vlyCommit((VLYObject)samplesMask);
 
   VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
@@ -185,11 +187,15 @@ export void *uniform VolleyRayIteratorRenderer_create(void *uniform cppE)
 export void VolleyRayIteratorRenderer_set(void *uniform _self,
                                           uniform VLYVolume volume,
                                           void *uniform transferFunction,
-                                          uniform float samplingRate)
+                                          uniform float samplingRate,
+                                          uniform int numIsovalues,
+                                          float *uniform isovalues)
 {
   uniform VolleyRayIteratorRenderer *uniform self =
       (uniform VolleyRayIteratorRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->samplingRate     = samplingRate;
+  self->numIsovalues     = numIsovalues;
+  self->isovalues        = isovalues;
 }

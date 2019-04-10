@@ -52,6 +52,6 @@ namespace ospray {
         getIE(), volume->getIE(), transferFunction->getIE());
   }
 
-  OSP_REGISTER_RENDERER(SimpleNativeVolumeRenderer, native);
+  OSP_REGISTER_RENDERER(SimpleNativeVolumeRenderer, simple_native);
 
 }  // namespace ospray

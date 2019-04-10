@@ -1,0 +1,165 @@
+// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include <volley/volley_driver.isph>
+#include <volley/volley_samples_mask.isph>
+#include "transferFunction/LinearTransferFunction.ih"
+
+// returns the minimal number of [min, max) index intervals for positive values
+inline void getContiguousPositiveIntervalIndices(const float *uniform values,
+                                                 uniform int numValues,
+                                                 uniform int &numIntervals,
+                                                 vec2i *uniform intervals)
+{
+  numIntervals = 0;
+
+  uniform bool rangeActive = false;
+
+  for (uniform int i = 0; i < numValues; i++) {
+    if (values[i] > 0.f && !rangeActive) {
+      rangeActive               = true;
+      intervals[numIntervals].x = i;
+    } else if (values[i] <= 0.f && rangeActive) {
+      rangeActive               = false;
+      intervals[numIntervals].y = i;
+      numIntervals              = numIntervals + 1;
+    }
+  }
+
+  // special case for final value
+  if (values[numValues - 1] > 0.f) {
+    if (rangeActive) {
+      rangeActive               = false;
+      intervals[numIntervals].y = numValues;
+      numIntervals              = numIntervals + 1;
+    } else {
+      print("getContiguousPositiveIntervalIndices() error\n");
+    }
+  }
+}
+
+// in the future, sample masks will likely be computed and stored directly
+// with the volume and transfer function
+inline VLYSamplesMask getSamplesMaskForTransferFunction(
+    const uniform VLYVolume volume,
+    const TransferFunction *uniform transferFunction)
+{
+  // assume linear transfer function is always used
+  const LinearTransferFunction *uniform ltf =
+      (const LinearTransferFunction *uniform)transferFunction;
+
+  VLYSamplesMask samplesMask = vlyNewSamplesMask(volume);
+
+  // allocate maximum number of needed ranges
+  vly_range1f *uniform valueRanges =
+      uniform new vly_range1f[ltf->opacityValueCount - 1 + 2];
+
+  uniform int numActiveRanges = 0;
+
+#if 0
+  // this is a naive implementation that gives a maximum number of intervals;
+  // it is thus good for performance testing the ray iterator interval matching!
+
+  // -inf to min value
+  if (ltf->opacityValues[0] > 0.f) {
+    valueRanges[numActiveRanges].lower = -inf;
+    valueRanges[numActiveRanges].upper = ltf->super.valueRange.x;
+
+    numActiveRanges = numActiveRanges + 1;
+  }
+
+  // max value to inf
+  if (ltf->opacityValues[ltf->opacityValueCount - 1] > 0.f) {
+    valueRanges[numActiveRanges].lower = ltf->super.valueRange.y;
+    valueRanges[numActiveRanges].upper = inf;
+
+    numActiveRanges = numActiveRanges + 1;
+  }
+
+  // inner value ranges
+  for (uniform int i = 0; i < ltf->opacityValueCount - 1; i++) {
+    if (ltf->opacityValues[i] > 0.f || ltf->opacityValues[i + 1] > 0.f) {
+      uniform float lowerValue =
+          ltf->super.valueRange.x +
+          (float)i / ((float)ltf->opacityValueCount - 1.f) *
+              (ltf->super.valueRange.y - ltf->super.valueRange.x);
+
+      uniform float upperValue =
+          ltf->super.valueRange.x +
+          (float)(i + 1) / ((float)ltf->opacityValueCount - 1.f) *
+              (ltf->super.valueRange.y - ltf->super.valueRange.x);
+
+      valueRanges[numActiveRanges].lower = lowerValue;
+      valueRanges[numActiveRanges].upper = upperValue;
+
+      numActiveRanges = numActiveRanges + 1;
+    }
+  }
+#else
+  // determine contiguous interval indices for positive opacities
+  uniform int numIndexIntervals;
+  vec2i *uniform indexIntervals = uniform new vec2i[ltf->opacityValueCount];
+
+  getContiguousPositiveIntervalIndices(ltf->opacityValues,
+                                       ltf->opacityValueCount,
+                                       numIndexIntervals,
+                                       indexIntervals);
+
+  // convert index intervals to value ranges
+  // note that a positive opacity value has a span of +/-1 due to the linear
+  // interpolation, and returned index ranges are [min, max) intervals
+  for (uniform int i = 0; i < numIndexIntervals; i++) {
+    uniform int minValueIndex = indexIntervals[i].x - 1;
+    uniform int maxValueIndex = indexIntervals[i].y;
+
+    uniform float minValue;
+
+    if (minValueIndex < 0) {
+      minValue = -inf;
+    } else {
+      minValue = ltf->super.valueRange.x +
+                 (float)minValueIndex / ((float)ltf->opacityValueCount - 1.f) *
+                     (ltf->super.valueRange.y - ltf->super.valueRange.x);
+    }
+
+    uniform float maxValue;
+
+    if (maxValueIndex >= ltf->opacityValueCount) {
+      maxValue = inf;
+    } else {
+      maxValue = ltf->super.valueRange.x +
+                 (float)maxValueIndex / ((float)ltf->opacityValueCount - 1.f) *
+                     (ltf->super.valueRange.y - ltf->super.valueRange.x);
+    }
+
+    valueRanges[numActiveRanges].lower = minValue;
+    valueRanges[numActiveRanges].upper = maxValue;
+    numActiveRanges                    = numActiveRanges + 1;
+  }
+
+  delete[] indexIntervals;
+#endif
+
+  vlySamplesMaskSetRanges(samplesMask, numActiveRanges, valueRanges);
+
+  vlyCommit((VLYObject)samplesMask);
+
+  delete[] valueRanges;
+
+  return samplesMask;
+}

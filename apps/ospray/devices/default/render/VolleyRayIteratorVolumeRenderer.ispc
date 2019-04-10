@@ -22,30 +22,16 @@
 
 #include <volley/volley_driver.isph>
 #include <volley/volley_iterator.isph>
-#include <volley/volley_samples_mask.isph>
 #include <volley/volley_volume.isph>
 
-struct VolleyRayIteratorRenderer
+struct VolleyRayIteratorVolumeRenderer
 {
   uniform Renderer super;
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
-  uniform int maxNumIntervals;
 };
 
-{
-
-
-
-
-
-
-
-
-  }
-}
-
-inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
+inline void integrate(uniform VolleyRayIteratorVolumeRenderer *uniform self,
                       varying vec3f &color,
                       varying float &alpha,
                       const uniform int accumID,
@@ -120,22 +106,19 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
       subInterval.upper =
           min(subInterval.lower + nominalSamplingDt, rayInterval.tRange.upper);
     }
-
-    if (currentInterval >= self->maxNumIntervals) {
-      break;
-    }
   }
 
   vlyRelease((VLYObject)samplesMask);
   vlyRelease((VLYObject)rayIterator);
 }
 
-void VolleyRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,
-                                            void *uniform perFrameData,
-                                            varying ScreenSample &sample)
+void VolleyRayIteratorVolumeRenderer_renderSample(uniform Renderer *uniform
+                                                      _self,
+                                                  void *uniform perFrameData,
+                                                  varying ScreenSample &sample)
 {
-  uniform VolleyRayIteratorRenderer *uniform self =
-      (uniform VolleyRayIteratorRenderer * uniform) _self;
+  uniform VolleyRayIteratorVolumeRenderer *uniform self =
+      (uniform VolleyRayIteratorVolumeRenderer * uniform) _self;
 
   const uniform int accumID = reduce_max(sample.sampleID.z);
 
@@ -148,23 +131,21 @@ void VolleyRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,
             sample.sampleID.y);
 }
 
-export void *uniform VolleyRayIteratorRenderer_create(void *uniform cppE)
+export void *uniform VolleyRayIteratorVolumeRenderer_create(void *uniform cppE)
 {
-  uniform VolleyRayIteratorRenderer *uniform self =
-      uniform new uniform VolleyRayIteratorRenderer;
+  uniform VolleyRayIteratorVolumeRenderer *uniform self =
+      uniform new uniform VolleyRayIteratorVolumeRenderer;
   Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
-  self->super.renderSample = VolleyRayIteratorRenderer_renderSample;
+  self->super.renderSample = VolleyRayIteratorVolumeRenderer_renderSample;
   return self;
 }
 
-export void VolleyRayIteratorRenderer_set(void *uniform _self,
-                                          uniform VLYVolume volume,
-                                          void *uniform transferFunction,
-                                          uniform int maxNumIntervals)
+export void VolleyRayIteratorVolumeRenderer_set(void *uniform _self,
+                                                uniform VLYVolume volume,
+                                                void *uniform transferFunction)
 {
-  uniform VolleyRayIteratorRenderer *uniform self =
-      (uniform VolleyRayIteratorRenderer * uniform) _self;
+  uniform VolleyRayIteratorVolumeRenderer *uniform self =
+      (uniform VolleyRayIteratorVolumeRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
-  self->maxNumIntervals  = maxNumIntervals;
 }

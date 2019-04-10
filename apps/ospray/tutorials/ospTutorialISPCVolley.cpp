@@ -89,8 +89,11 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
 int main(int argc, const char **argv)
 {
   if (argc < 2) {
-    std::cerr << "usage: " << argv[0]
-              << " <volley> | <volley_ray_iterator> | <native>" << std::endl;
+    std::cerr
+        << "usage: " << argv[0]
+        << " <simple_native> | <simple_volley> | <volley_ray_iterator_surface> "
+           "| <volley_ray_iterator_volume> | <volley_ray_iterator>"
+        << std::endl;
     return 1;
   }
 
@@ -132,11 +135,11 @@ int main(int argc, const char **argv)
   if (rendererString.find("volley") != std::string::npos) {
     VLYVolume vlyVolume = createVolleyVolume();
     ospSetVoidPtr(renderer, "vlyVolume", (void *)vlyVolume);
-  } else if (rendererString == "native") {
+  } else if (rendererString == "simple_native") {
     OSPVolume volume = createNativeVolume(transferFunction);
     ospSetVoidPtr(renderer, "volume", (void *)volume);
   } else {
-    throw std::runtime_error("unknown volume type");
+    throw std::runtime_error("cannot determine volume type for given renderer");
   }
 
   ospSetObject(renderer, "transferFunction", transferFunction);

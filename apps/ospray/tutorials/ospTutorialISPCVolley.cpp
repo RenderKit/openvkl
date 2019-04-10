@@ -160,7 +160,9 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static float samplingRate = 1.f;
     if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
-      std::cerr << "WARNING: samplingRate setting not implemented" << std::endl;
+      ospSet1f(renderer, "samplingRate", samplingRate);
+      ospCommit(renderer);
+      glfwOSPRayWindow->resetAccumulation();
     }
     static int maxNumIntervals = 1;
     if (ImGui::SliderInt("maxNumIntervals", &maxNumIntervals, 1, 100)) {

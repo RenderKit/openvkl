@@ -29,6 +29,7 @@ struct VolleyRayIteratorVolumeRenderer
   uniform Renderer super;
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
+  uniform float samplingRate;
 };
 
 inline void integrate(uniform VolleyRayIteratorVolumeRenderer *uniform self,
@@ -59,15 +60,13 @@ inline void integrate(uniform VolleyRayIteratorVolumeRenderer *uniform self,
   // the current ray interval
   VLYRayInterval rayInterval;
 
-  // TODO
-  uniform float samplingRate = 1.f;
-
   uniform int currentInterval = 0;
 
   while (vlyIterateIntervalV(rayIterator, &rayInterval) && alpha < 0.99f) {
     currentInterval = currentInterval + 1;
 
-    const float nominalSamplingDt = rayInterval.nominalDeltaT / samplingRate;
+    const float nominalSamplingDt =
+        rayInterval.nominalDeltaT / self->samplingRate;
 
     // initial sub interval, based on our renderer-defined sampling rate
     // and the volume's nominal dt
@@ -142,10 +141,12 @@ export void *uniform VolleyRayIteratorVolumeRenderer_create(void *uniform cppE)
 
 export void VolleyRayIteratorVolumeRenderer_set(void *uniform _self,
                                                 uniform VLYVolume volume,
-                                                void *uniform transferFunction)
+                                                void *uniform transferFunction,
+                                                uniform float samplingRate)
 {
   uniform VolleyRayIteratorVolumeRenderer *uniform self =
       (uniform VolleyRayIteratorVolumeRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
+  self->samplingRate     = samplingRate;
 }

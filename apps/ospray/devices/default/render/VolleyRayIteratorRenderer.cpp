@@ -22,7 +22,8 @@ namespace ospray {
 
   VolleyRayIteratorRenderer::VolleyRayIteratorRenderer()
   {
-    std::cout << "creating OSPRay ISPC device VolleyRayIteratorRenderer" << std::endl;
+    std::cout << "creating OSPRay ISPC device VolleyRayIteratorRenderer"
+              << std::endl;
 
     setParam<std::string>("externalNameFromAPI", "volley_ray_iterator");
 
@@ -47,10 +48,12 @@ namespace ospray {
       throw std::runtime_error(
           "no transfer function specified on the Volley renderer!");
 
-    int maxNumIntervals = getParam1i("maxNumIntervals", 999999);
+    float samplingRate = getParam1f("samplingRate", 1.f);
 
-    ispc::VolleyRayIteratorRenderer_set(
-        getIE(), (ispc::VolleyVolume *)vlyVolume, transferFunction->getIE(), maxNumIntervals);
+    ispc::VolleyRayIteratorRenderer_set(getIE(),
+                                        (ispc::VolleyVolume *)vlyVolume,
+                                        transferFunction->getIE(),
+                                        samplingRate);
   }
 
   OSP_REGISTER_RENDERER(VolleyRayIteratorRenderer, volley_ray_iterator);

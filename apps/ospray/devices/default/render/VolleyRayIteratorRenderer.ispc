@@ -30,7 +30,7 @@ struct VolleyRayIteratorRenderer
   uniform Renderer super;
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
-  uniform int maxNumIntervals;
+  uniform float samplingRate;
 };
 
 {
@@ -73,8 +73,6 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
   // the current ray interval
   VLYRayInterval rayInterval;
 
-  // TODO
-  uniform float samplingRate = 1.f;
 
   uniform int currentInterval = 0;
 
@@ -160,11 +158,11 @@ export void *uniform VolleyRayIteratorRenderer_create(void *uniform cppE)
 export void VolleyRayIteratorRenderer_set(void *uniform _self,
                                           uniform VLYVolume volume,
                                           void *uniform transferFunction,
-                                          uniform int maxNumIntervals)
+                                          uniform float samplingRate)
 {
   uniform VolleyRayIteratorRenderer *uniform self =
       (uniform VolleyRayIteratorRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
-  self->maxNumIntervals  = maxNumIntervals;
+  self->samplingRate     = samplingRate;
 }

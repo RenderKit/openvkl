@@ -48,8 +48,12 @@ namespace ospray {
       throw std::runtime_error(
           "no transfer function specified on the Volley renderer!");
 
-    ispc::VolleyRayIteratorVolumeRenderer_set(
-        getIE(), (ispc::VolleyVolume *)vlyVolume, transferFunction->getIE());
+    float samplingRate = getParam1f("samplingRate", 1.f);
+
+    ispc::VolleyRayIteratorVolumeRenderer_set(getIE(),
+                                              (ispc::VolleyVolume *)vlyVolume,
+                                              transferFunction->getIE(),
+                                              samplingRate);
   }
 
   OSP_REGISTER_RENDERER(VolleyRayIteratorVolumeRenderer,

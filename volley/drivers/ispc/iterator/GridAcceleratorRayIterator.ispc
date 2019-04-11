@@ -154,8 +154,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
                               varying SurfaceHit &surfaceHit,
                               varying float &surfaceEpsilon)
 {
-  const uniform float step = 2.f / 512.f;  // (== gridSpacing); TODO: should be
-                                           // set correctly in ray interval!
+  const uniform float step = reduce_min(volume->gridSpacing);
 
   float t0 = rayInterval.tRange.lower;
   float sample0 =

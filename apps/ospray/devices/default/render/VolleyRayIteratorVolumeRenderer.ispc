@@ -60,11 +60,7 @@ inline void integrate(uniform VolleyRayIteratorVolumeRenderer *uniform self,
   // the current ray interval
   VLYRayInterval rayInterval;
 
-  uniform int currentInterval = 0;
-
   while (vlyIterateIntervalV(rayIterator, &rayInterval) && alpha < 0.99f) {
-    currentInterval = currentInterval + 1;
-
     const float nominalSamplingDt =
         rayInterval.nominalDeltaT / self->samplingRate;
 

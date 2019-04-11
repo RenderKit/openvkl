@@ -117,8 +117,9 @@ export void GridAcceleratorRayIterator_iterateInterval(
     }
 
     box1f cellRange;
-    GridAccelerator_getCellRange(
-        self->volume->accelerator, self->intervalState.currentCellIndex, cellRange);
+    GridAccelerator_getCellRange(self->volume->accelerator,
+                                 self->intervalState.currentCellIndex,
+                                 cellRange);
 
     for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
       uniform box1f r = self->samplesMask->ranges[i];
@@ -245,8 +246,9 @@ export void GridAcceleratorRayIterator_iterateSurface(
 
   while (self->surfaceState.activeCell) {
     box1f cellRange;
-    GridAccelerator_getCellRange(
-        self->volume->accelerator, self->surfaceState.currentCellIndex, cellRange);
+    GridAccelerator_getCellRange(self->volume->accelerator,
+                                 self->surfaceState.currentCellIndex,
+                                 cellRange);
 
     bool cellRangeOverlap = false;
 

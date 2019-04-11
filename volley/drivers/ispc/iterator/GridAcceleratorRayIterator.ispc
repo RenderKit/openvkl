@@ -57,11 +57,11 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->boundingBoxTRange =
       intersectBox(self->origin, self->direction, boundingBox, self->tRange);
 
-  resetRayInterval(self->currentRayInterval);
-  self->currentCellIndex = make_vec3i(-1);
+  resetRayInterval(self->intervalState.currentRayInterval);
+  self->intervalState.currentCellIndex = make_vec3i(-1);
 
-  resetRayInterval(self->currentSurfaceRayInterval);
-  self->currentSurfaceCellIndex = make_vec3i(-1);
+  resetRayInterval(self->surfaceState.currentRayInterval);
+  self->surfaceState.currentCellIndex = make_vec3i(-1);
 
   return self;
 }
@@ -79,7 +79,7 @@ GridAcceleratorRayIterator_getCurrentRayInterval(void *uniform _self)
 {
   uniform GridAcceleratorRayIterator *uniform self =
       (uniform GridAcceleratorRayIterator * uniform) _self;
-  return &self->currentRayInterval;
+  return &self->intervalState.currentRayInterval;
 }
 
 export void GridAcceleratorRayIterator_iterateInterval(
@@ -104,13 +104,13 @@ export void GridAcceleratorRayIterator_iterateInterval(
 
   while (GridAccelerator_nextCell(self->volume->accelerator,
                                   self,
-                                  self->currentCellIndex,
-                                  self->currentRayInterval)) {
+                                  self->intervalState.currentCellIndex,
+                                  self->intervalState.currentRayInterval)) {
     cif(!self->samplesMask)
     {
-      self->currentRayInterval.nominalDeltaT =
-          1.f * (self->currentRayInterval.tRange.upper -
-                 self->currentRayInterval.tRange.lower);
+      self->intervalState.currentRayInterval.nominalDeltaT =
+          1.f * (self->intervalState.currentRayInterval.tRange.upper -
+                 self->intervalState.currentRayInterval.tRange.lower);
 
       *result = true;
       return;
@@ -118,15 +118,15 @@ export void GridAcceleratorRayIterator_iterateInterval(
 
     box1f cellRange;
     GridAccelerator_getCellRange(
-        self->volume->accelerator, self->currentCellIndex, cellRange);
+        self->volume->accelerator, self->intervalState.currentCellIndex, cellRange);
 
     for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
       uniform box1f r = self->samplesMask->ranges[i];
 
       if (overlaps1f(r, cellRange)) {
-        self->currentRayInterval.nominalDeltaT =
-            1.f * (self->currentRayInterval.tRange.upper -
-                   self->currentRayInterval.tRange.lower);
+        self->intervalState.currentRayInterval.nominalDeltaT =
+            1.f * (self->intervalState.currentRayInterval.tRange.upper -
+                   self->intervalState.currentRayInterval.tRange.lower);
 
         *result = true;
         return;
@@ -142,7 +142,7 @@ GridAcceleratorRayIterator_getCurrentSurfaceHit(void *uniform _self)
 {
   uniform GridAcceleratorRayIterator *uniform self =
       (uniform GridAcceleratorRayIterator * uniform) _self;
-  return &self->currentSurfaceHit;
+  return &self->surfaceState.currentSurfaceHit;
 }
 
 inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
@@ -234,19 +234,19 @@ export void GridAcceleratorRayIterator_iterateSurface(
   }
 
   // first iteration
-  cif(self->currentSurfaceCellIndex.x == -1)
+  cif(self->surfaceState.currentCellIndex.x == -1)
   {
-    self->activeSurfaceCell =
+    self->surfaceState.activeCell =
         GridAccelerator_nextCell(self->volume->accelerator,
                                  self,
-                                 self->currentSurfaceCellIndex,
-                                 self->currentSurfaceRayInterval);
+                                 self->surfaceState.currentCellIndex,
+                                 self->surfaceState.currentRayInterval);
   }
 
-  while (self->activeSurfaceCell) {
+  while (self->surfaceState.activeCell) {
     box1f cellRange;
     GridAccelerator_getCellRange(
-        self->volume->accelerator, self->currentSurfaceCellIndex, cellRange);
+        self->volume->accelerator, self->surfaceState.currentCellIndex, cellRange);
 
     bool cellRangeOverlap = false;
 
@@ -265,27 +265,27 @@ export void GridAcceleratorRayIterator_iterateSurface(
       bool foundHit = intersectSurfaces(self->volume,
                                         self->origin,
                                         self->direction,
-                                        self->currentSurfaceRayInterval,
+                                        self->surfaceState.currentRayInterval,
                                         self->samplesMask->numValues,
                                         self->samplesMask->values,
-                                        self->currentSurfaceHit,
+                                        self->surfaceState.currentSurfaceHit,
                                         surfaceEpsilon);
 
       if (foundHit) {
         *result = true;
-        self->currentSurfaceRayInterval.tRange.lower =
-            self->currentSurfaceHit.t + surfaceEpsilon;
+        self->surfaceState.currentRayInterval.tRange.lower =
+            self->surfaceState.currentSurfaceHit.t + surfaceEpsilon;
         return;
       }
     }
 
     // we'll only move forward to the next cell if no hits are found; if a hit
     // is found we'll stay in the cell to pursue other hits
-    self->activeSurfaceCell =
+    self->surfaceState.activeCell =
         GridAccelerator_nextCell(self->volume->accelerator,
                                  self,
-                                 self->currentSurfaceCellIndex,
-                                 self->currentSurfaceRayInterval);
+                                 self->surfaceState.currentCellIndex,
+                                 self->surfaceState.currentRayInterval);
   }
 
   *result = false;

@@ -22,6 +22,20 @@
 
 struct GridAcceleratorSamplesMask;
 
+struct GridAcceleratorRayIteratorIntervalState
+{
+  RayInterval currentRayInterval;
+  vec3i currentCellIndex;
+};
+
+struct GridAcceleratorRayIteratorSurfaceState
+{
+  bool activeCell;
+  vec3i currentCellIndex;
+  RayInterval currentRayInterval;
+  SurfaceHit currentSurfaceHit;
+};
+
 struct GridAcceleratorRayIterator
 {
   SharedStructuredVolume *uniform volume;
@@ -32,13 +46,10 @@ struct GridAcceleratorRayIterator
 
   // common state
   varying box1f boundingBoxTRange;
+
   // interval iterator state
-  varying RayInterval currentRayInterval;
-  varying vec3i currentCellIndex;
+  varying GridAcceleratorRayIteratorIntervalState intervalState;
 
   // surface iterator state
-  varying bool activeSurfaceCell;
-  varying vec3i currentSurfaceCellIndex;
-  varying RayInterval currentSurfaceRayInterval;
-  varying SurfaceHit currentSurfaceHit;
+  varying GridAcceleratorRayIteratorSurfaceState surfaceState;
 };

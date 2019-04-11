@@ -30,14 +30,8 @@ static constexpr int maxNumIsosurfaces = 3;
 
 struct IsosurfaceParameters
 {
-  bool enabled;
-  float isovalue;
-
-  IsosurfaceParameters()
-  {
-    enabled  = false;
-    isovalue = 0.f;
-  }
+  bool enabled{false};
+  float isovalue{0.f};
 };
 
 VLYVolume createVolleyVolume()

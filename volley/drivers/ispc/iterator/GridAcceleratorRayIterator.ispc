@@ -56,6 +56,10 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->boundingBoxTRange = intersectBox(
       self->origin, self->direction, self->volume->boundingBox, self->tRange);
 
+  const uniform float epsilon = reduce_min(self->volume->gridSpacing) * 0.125f;
+
+  self->boundingBoxTRange.lower += epsilon;
+
   resetRayInterval(self->intervalState.currentRayInterval);
   self->intervalState.currentCellIndex = make_vec3i(-1);
 

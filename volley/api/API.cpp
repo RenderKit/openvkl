@@ -259,6 +259,15 @@ extern "C" void vlySet3i(
 }
 VOLLEY_CATCH_END()
 
+extern "C" void vlySetString(VLYObject object,
+                             const char *name,
+                             const char *s) VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  volley::api::currentDriver().setString(object, name, std::string(s));
+}
+VOLLEY_CATCH_END()
+
 extern "C" void vlySetVoidPtr(VLYObject object,
                               const char *name,
                               void *v) VOLLEY_CATCH_BEGIN

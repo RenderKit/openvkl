@@ -80,6 +80,9 @@ namespace volley {
       void setVec3i(VLYObject object,
                     const char *name,
                     const vec3i &v) override;
+      void setString(VLYObject object,
+                     const char *name,
+                     const std::string &s) override;
       void setVoidPtr(VLYObject object, const char *name, void *v) override;
 
       /////////////////////////////////////////////////////////////////////////

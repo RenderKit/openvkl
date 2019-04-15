@@ -143,6 +143,14 @@ namespace volley {
       managedObject->setParam(name, v);
     }
 
+    void ISPCDriver::setString(VLYObject object,
+                               const char *name,
+                               const std::string &s)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, s);
+    }
+
     void ISPCDriver::setVoidPtr(VLYObject object, const char *name, void *v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;

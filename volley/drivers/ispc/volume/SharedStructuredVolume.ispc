@@ -32,6 +32,9 @@ export void SharedStructuredVolume_set(void *uniform _self,
   self->gridOrigin  = gridOrigin;
   self->gridSpacing = gridSpacing;
 
+  self->boundingBox = make_box3f(
+      gridOrigin, gridOrigin + make_vec3f(dimensions - 1.f) * gridSpacing);
+
   self->localCoordinatesUpperBound =
       nextafter(self->dimensions - 1, make_vec3i(0));
 }

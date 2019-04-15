@@ -17,6 +17,7 @@
 #pragma once
 
 #include "math/vec.ih"
+#include "math/box.ih"
 
 struct GridAccelerator;
 
@@ -26,6 +27,8 @@ struct SharedStructuredVolume
   uniform vec3i dimensions;
   uniform vec3f gridOrigin;
   uniform vec3f gridSpacing;
+
+  uniform box3f boundingBox;
 
   uniform vec3f localCoordinatesUpperBound;
 

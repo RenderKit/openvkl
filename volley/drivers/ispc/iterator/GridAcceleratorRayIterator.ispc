@@ -38,7 +38,6 @@ inline void printGridAcceleratorRayIterator(
 
 export void *uniform
 GridAcceleratorRayIterator_Constructor(void *uniform _volume,
-                                       const uniform box3f &boundingBox,
                                        void *uniform _origin,
                                        void *uniform _direction,
                                        void *uniform _tRange,
@@ -54,8 +53,8 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->samplesMask =
       (uniform GridAcceleratorSamplesMask * uniform) _samplesMask;
 
-  self->boundingBoxTRange =
-      intersectBox(self->origin, self->direction, boundingBox, self->tRange);
+  self->boundingBoxTRange = intersectBox(
+      self->origin, self->direction, self->volume->boundingBox, self->tRange);
 
   resetRayInterval(self->intervalState.currentRayInterval);
   self->intervalState.currentCellIndex = make_vec3i(-1);

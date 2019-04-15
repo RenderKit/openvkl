@@ -42,7 +42,6 @@ namespace volley {
 
       ispcEquivalent = ispc::GridAcceleratorRayIterator_Constructor(
           ssv->getISPCEquivalent(),
-          (const ispc::box3f &)boundingBox,
           (void *)&origin,
           (void *)&direction,
           (void *)&tRange,

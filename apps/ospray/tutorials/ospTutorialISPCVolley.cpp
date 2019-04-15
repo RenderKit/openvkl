@@ -46,7 +46,7 @@ VLYVolume createVolleyVolume()
 
   VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume");
 
-  vec3i dimensions(512);
+  vec3i dimensions(256);
   vec3f gridOrigin(-1.f);
   vec3f gridSpacing(2.f / float(dimensions.x));
 
@@ -68,7 +68,7 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
 {
   OSPVolume volume = ospNewVolume("shared_structured_volume");
 
-  vec3i dimensions(512);
+  vec3i dimensions(256);
   vec3f gridOrigin(-1.f);
   vec3f gridSpacing(2.f / float(dimensions.x));
 
@@ -82,7 +82,7 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
   std::vector<float> voxels(numVoxels);
 
   std::ifstream in;
-  in.open("wavelet_procedural_volume_512.raw", std::ios::binary);
+  in.open("wavelet_procedural_volume_256.raw", std::ios::binary);
   in.read(reinterpret_cast<char *>(voxels.data()),
           voxels.size() * sizeof(float));
   in.close();
@@ -187,7 +187,7 @@ int main(int argc, const char **argv)
   box3f bounds(-1.f, 1.f);
 
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
-      new GLFWOSPRayWindow(vec2i{512, 512}, bounds, world, renderer));
+      new GLFWOSPRayWindow(vec2i{1024, 1024}, bounds, world, renderer));
 
   auto transferFunctionUpdatedCallback = [&]() {
     glfwOSPRayWindow->resetAccumulation();

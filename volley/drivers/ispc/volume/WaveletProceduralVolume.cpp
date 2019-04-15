@@ -46,15 +46,17 @@ namespace volley {
         }
       }
 
-#if 0
       // helper code used to write procedurally-generated data files to disk for
       // performance comparisons in other volume implementations
-      std::ofstream out;
-      out.open("wavelet_procedural_volume.raw", std::ios::binary);
-      out.write(reinterpret_cast<char *>(volumeData.data()),
-                volumeData.size() * sizeof(float));
-      out.close();
-#endif
+      std::string saveFilename = getParam<std::string>("saveFilename", "");
+
+      if (!saveFilename.empty()) {
+        std::ofstream out;
+        out.open(saveFilename, std::ios::binary);
+        out.write(reinterpret_cast<char *>(volumeData.data()),
+                  volumeData.size() * sizeof(float));
+        out.close();
+      }
 
       SharedStructuredVolume::commit();
     }

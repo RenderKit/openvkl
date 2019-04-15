@@ -55,6 +55,10 @@ VLYVolume createVolleyVolume()
   vlySet3f(
       vlyVolume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
+  // the "saveFilename" can be used to dump the procedurally generated volume to
+  // disk:
+  // vlySetString(vlyVolume, "saveFilename", "save.raw");
+
   vlyCommit(vlyVolume);
 
   return vlyVolume;

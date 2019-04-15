@@ -101,7 +101,9 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
   uniform bool cellEmpty = true;
 
   // Loop over voxels in the current cell.
-  foreach (k = 0 ... CELL_WIDTH, j = 0 ... CELL_WIDTH, i = 0 ... CELL_WIDTH) {
+  foreach (k = 0 ... CELL_WIDTH + 1,
+           j = 0 ... CELL_WIDTH + 1,
+           i = 0 ... CELL_WIDTH + 1) {
     // The 3D index of the voxel in the volume.
     const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
 

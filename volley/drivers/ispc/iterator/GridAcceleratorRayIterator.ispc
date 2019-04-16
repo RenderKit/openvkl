@@ -119,15 +119,15 @@ export void GridAcceleratorRayIterator_iterateInterval(
       return;
     }
 
-    box1f cellRange;
-    GridAccelerator_getCellRange(self->volume->accelerator,
+    box1f cellValueRange;
+    GridAccelerator_getCellValueRange(self->volume->accelerator,
                                  self->intervalState.currentCellIndex,
-                                 cellRange);
+                                 cellValueRange);
 
     for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
       uniform box1f r = self->samplesMask->ranges[i];
 
-      if (overlaps1f(r, cellRange)) {
+      if (overlaps1f(r, cellValueRange)) {
         self->intervalState.currentRayInterval.nominalDeltaT =
             1.f * (self->intervalState.currentRayInterval.tRange.upper -
                    self->intervalState.currentRayInterval.tRange.lower);
@@ -248,23 +248,23 @@ export void GridAcceleratorRayIterator_iterateSurface(
   }
 
   while (self->surfaceState.activeCell) {
-    box1f cellRange;
-    GridAccelerator_getCellRange(self->volume->accelerator,
+    box1f cellValueRange;
+    GridAccelerator_getCellValueRange(self->volume->accelerator,
                                  self->surfaceState.currentCellIndex,
-                                 cellRange);
+                                 cellValueRange);
 
-    bool cellRangeOverlap = false;
+    bool cellValueRangeOverlap = false;
 
     for (uniform int i = 0; i < self->samplesMask->numValues; i++) {
       const uniform float value = self->samplesMask->values[i];
 
-      if (value >= cellRange.lower && value <= cellRange.upper) {
-        cellRangeOverlap = true;
+      if (value >= cellValueRange.lower && value <= cellValueRange.upper) {
+        cellValueRangeOverlap = true;
         break;
       }
     }
 
-    if (cellRangeOverlap) {
+    if (cellValueRangeOverlap) {
       float surfaceEpsilon;
 
       bool foundHit = intersectSurfaces(self->volume,

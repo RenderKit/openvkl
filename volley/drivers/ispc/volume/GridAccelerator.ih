@@ -18,22 +18,12 @@
 
 #include "../iterator/GridAcceleratorRayIterator.ih"
 
-//! \brief A spatial acceleration structure over a BlockBrickedVolume, used
-//!  for opacity and variance based space skipping.
-//!
 struct GridAccelerator
 {
-  //! Grid size in bricks per dimension with padding to the nearest brick.
-  uniform vec3i brickCount;
-
-  //! The range of volumetric values within a grid cell.
-  box1f *uniform cellRange;
-
-  //! Grid size in cells per dimension.
-  uniform vec3i gridDimensions;
-
-  //! Pointer to the associated volume.
-  void *uniform volume;
+  uniform vec3i bricksPerDimension;
+  uniform vec3i cellsPerDimension;
+  box1f *uniform cellValueRanges;
+  SharedStructuredVolume *uniform volume;
 };
 
 GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
@@ -46,6 +36,6 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                               varying vec3i &cellIndex,
                               varying RayInterval &rayInterval);
 
-void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
-                                  const varying vec3i &index,
-                                  varying box1f &value);
+void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
+                                       const varying vec3i &cellIndex,
+                                       varying box1f &valueRange);

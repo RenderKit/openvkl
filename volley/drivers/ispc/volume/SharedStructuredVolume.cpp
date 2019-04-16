@@ -50,14 +50,14 @@ namespace volley {
       void *accelerator =
           ispc::SharedStructuredVolume_createAccelerator(ispcEquivalent);
 
-      vec3i brickCount;
-      brickCount.x = ispc::GridAccelerator_getBrickCount_x(accelerator);
-      brickCount.y = ispc::GridAccelerator_getBrickCount_y(accelerator);
-      brickCount.z = ispc::GridAccelerator_getBrickCount_z(accelerator);
+      vec3i bricksPerDimension;
+      bricksPerDimension.x = ispc::GridAccelerator_getBricksPerDimension_x(accelerator);
+      bricksPerDimension.y = ispc::GridAccelerator_getBricksPerDimension_y(accelerator);
+      bricksPerDimension.z = ispc::GridAccelerator_getBricksPerDimension_z(accelerator);
 
-      const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
-      tasking::parallel_for(NTASKS, [&](int taskIndex) {
-        ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
+      const int numTasks = bricksPerDimension.x * bricksPerDimension.y * bricksPerDimension.z;
+      tasking::parallel_for(numTasks, [&](int taskIndex) {
+        ispc::GridAccelerator_build(accelerator, taskIndex);
       });
     }
 

@@ -20,13 +20,13 @@
 
 int main()
 {
-  vlyLoadModule("scalar_driver");
+  vlyLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("scalar_driver");
+  VLYDriver driver = vlyNewDriver("ispc_driver");
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
-  VLYVolume volume = vlyNewVolume("wavelet_analytical_volume");
+  VLYVolume volume = vlyNewVolume("wavelet_procedural_volume");
   vlyCommit(volume);
 
   vly_vec3f objectCoordinates{1.f, 1.f, 1.f};

@@ -15,4 +15,3 @@
 ## ======================================================================== ##
 
 add_subdirectory(default)
-add_subdirectory(scalar_volley)

@@ -41,6 +41,11 @@ namespace volley {
             "SharedStructuredVolume currently only supports VLY_FLOAT volumes");
       }
 
+      if (voxelData->size() != dimensions.x * dimensions.y * dimensions.z) {
+        throw std::runtime_error(
+            "incorrect voxelData size for provided volume dimensions");
+      }
+
       ispc::SharedStructuredVolume_set(ispcEquivalent,
                                        (float *)voxelData->data,
                                        (const ispc::vec3i &)dimensions,

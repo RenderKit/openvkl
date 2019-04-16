@@ -57,8 +57,8 @@ namespace volley {
       virtual const RayInterval<W> *getCurrentRayInterval() const      = 0;
       virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;
 
-      virtual const SurfaceHit<W> *getCurrentSurfaceHit() const {};
-      virtual void iterateSurface(const int *valid, vintn<W> &result) {}
+      virtual const SurfaceHit<W> *getCurrentSurfaceHit() const       = 0;
+      virtual void iterateSurface(const int *valid, vintn<W> &result) = 0;
     };
 
   }  // namespace ispc_driver

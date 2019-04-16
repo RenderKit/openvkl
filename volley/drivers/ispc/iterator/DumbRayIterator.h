@@ -35,8 +35,19 @@ namespace volley {
       ~DumbRayIterator();
 
       const RayInterval<W> *getCurrentRayInterval() const override;
-
       void iterateInterval(const int *valid, vintn<W> &result) override;
+
+      const SurfaceHit<W> *getCurrentSurfaceHit() const override
+      {
+        throw std::runtime_error(
+            "surface iteration not implemented for this iterator type");
+      }
+
+      void iterateSurface(const int *valid, vintn<W> &result) override
+      {
+        throw std::runtime_error(
+            "surface iteration not implemented for this iterator type");
+      }
 
      protected:
       void *ispcEquivalent{nullptr};

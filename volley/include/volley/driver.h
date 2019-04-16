@@ -16,33 +16,23 @@
 
 #pragma once
 
-#include "volley_common.isph"
+#include "common.h"
 
-// TODO: should be able to use "Volume" here directly, but this conflicts with
-// other ispc:: namespaced OSPRay types
-struct VolleyVolume;
-typedef VolleyVolume *uniform VLYVolume;
+struct Driver;
+typedef Driver *VLYDriver;
 
-VLY_API void vlyComputeSample8(const int *uniform valid,
-                               VLYVolume volume,
-                               const varying struct vly_vec3f *uniform
-                                   objectCoordinates,
-                               varying float *uniform samples);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-VLY_FORCEINLINE varying float vlyComputeSampleV(
-    VLYVolume volume, const varying vly_vec3f *uniform objectCoordinates)
-{
-  varying bool mask = __mask;
-  unmasked
-  {
-    varying int imask = mask ? -1 : 0;
-  }
-  if (sizeof(varying float) == 32) {
-    varying float samples;
-    vlyComputeSample8(
-        (uniform int *uniform) & imask, volume, objectCoordinates, &samples);
-    return samples;
-  }
-}
+VLYDriver vlyNewDriver(const char *driverName);
+void vlyCommitDriver(VLYDriver driver);
+void vlySetCurrentDriver(VLYDriver driver);
 
-VLY_API uniform vly_box3f vlyGetBoundingBox(VLYVolume volume);
+void vlyCommit(VLYObject object);
+
+void vlyRelease(VLYObject object);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

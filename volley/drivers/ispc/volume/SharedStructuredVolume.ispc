@@ -16,7 +16,6 @@
 
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
-#include "volley/volley_volume.isph"
 
 export void SharedStructuredVolume_set(void *uniform _self,
                                        float *uniform volumeData,

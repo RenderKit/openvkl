@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include <volley/volley_driver.isph>
-#include <volley/volley_samples_mask.isph>
+#include <volley/volley.isph>
 #include "transferFunction/LinearTransferFunction.ih"
 
 // returns the minimal number of [min, max) index intervals for positive values

@@ -16,18 +16,37 @@
 
 #pragma once
 
-#include "volley_common.h"
+#include "common.h"
+#include "volume.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void vlySet1f(VLYObject object, const char *name, float x);
-void vlySet3f(VLYObject, const char *name, float x, float y, float z);
-void vlySet1i(VLYObject object, const char *name, int x);
-void vlySet3i(VLYObject, const char *name, int x, int y, int z);
-void vlySetString(VLYObject, const char *name, const char *s);
-void vlySetVoidPtr(VLYObject object, const char *name, void *v);
+struct SamplesMask;
+typedef SamplesMask *VLYSamplesMask;
+
+VLYSamplesMask vlyNewSamplesMask(VLYVolume volume);
+
+void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
+                             size_t numRanges,
+                             const vly_range1f *ranges);
+
+void vlySamplesMaskSetValues(VLYSamplesMask samplesMask,
+                             size_t numValues,
+                             const float *values);
+
+vly_range1f vlySamplesMaskExtents(const VLYSamplesMask samplesMask);
+
+void vlySamplesMaskTestRanges(VLYSamplesMask samplesMask,
+                              size_t numRanges,
+                              const vly_range1f *ranges,
+                              bool *results);
+
+void vlySamplesMaskTestValues(const VLYSamplesMask samplesMask,
+                              size_t numValues,
+                              const float *values,
+                              bool *results);
 
 #ifdef __cplusplus
 }  // extern "C"

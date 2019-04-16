@@ -18,7 +18,7 @@
 #include "common/Ray.ih"
 #include "render/Renderer.ih"
 
-#include <volley/volley_volume.isph>
+#include <volley/volley.isph>
 
 struct SimpleVolleyRenderer
 {

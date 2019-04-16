@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "volley_common.isph"
-#include "volley_samples_mask.isph"
-#include "volley_volume.isph"
+#include "common.isph"
+#include "samples_mask.isph"
+#include "volume.isph"
 
 struct RayIterator;
 typedef varying RayIterator *uniform VLYRayIterator;

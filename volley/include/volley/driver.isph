@@ -16,14 +16,8 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+#include "common.isph"
 
-#include "common.h"
-#include "driver.h"
-#include "ray_iterator.h"
-#include "module.h"
-#include "parameters.h"
-#include "samples_mask.h"
-#include "version.h"
-#include "volume.h"
+VLY_API void vlyCommit(VLYObject object);
+
+VLY_API void vlyRelease(VLYObject object);

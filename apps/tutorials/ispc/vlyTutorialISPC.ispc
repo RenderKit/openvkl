@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <volley/volley_volume.isph>
+#include <volley/volley.isph>
 
 export void sample_ispc(uniform VLYVolume volume)
 {

@@ -16,37 +16,64 @@
 
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
-#include "volley_common.h"
-
-struct Volume : public ManagedObject
-{
-};
-
-typedef Volume *VLYVolume;
-
-typedef enum
-#if __cplusplus >= 201103L
-    : uint32_t
-#endif
-{
-  VLY_SAMPLE_NEAREST = 100,
-  VLY_SAMPLE_LINEAR  = 200,
-} VLYSamplingMethod;
+#include "common.h"
+#include "samples_mask.h"
+#include "volume.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-VLYVolume vlyNewVolume(const char *type);
+struct RayIterator : public ManagedObject
+{
+};
 
-float vlyComputeSample(VLYVolume volume, const vly_vec3f *objectCoordinates);
+typedef RayIterator *VLYRayIterator;
 
-vly_vec3f vlyComputeGradient(VLYVolume volume,
-                             const vly_vec3f *objectCoordinates);
+VLYRayIterator vlyNewRayIterator(VLYVolume volume,
+                                 const vly_vec3f *origin,
+                                 const vly_vec3f *direction,
+                                 const vly_range1f *tRange,
+                                 VLYSamplesMask samplesMask);
 
-vly_box3f vlyGetBoundingBox(VLYVolume volume);
+struct VLYRayInterval
+{
+  vly_range1f tRange;
+  float nominalDeltaT;
+  // TODO: output samples mask when needed
+};
+
+struct VLYRayInterval8
+{
+  vly_vrange1f8 tRange;
+  float nominalDeltaT[8];
+  // TODO: output samples mask when needed
+};
+
+// returns true while the iterator is still within the volume
+bool vlyIterateInterval(VLYRayIterator rayIterator,
+                        VLYRayInterval *rayInterval);
+
+struct VLYSurfaceHit
+{
+  float t;
+  float sample;
+};
+
+struct VLYSurfaceHit8
+{
+  float t[8];
+  float sample[8];
+};
+
+// returns true while the iterator is still within the volume
+bool vlyIterateSurface(VLYRayIterator rayIterator, VLYSurfaceHit *surfaceHit);
+
+/* TODO:
+
+- need nominalDeltaT to also be returned
+- open whether output sample mask is returned
+*/
 
 #ifdef __cplusplus
 }  // extern "C"

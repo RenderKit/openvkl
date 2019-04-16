@@ -16,7 +16,6 @@
 
 #include "RayIterator.ih"
 #include "math/vec.ih"
-#include "volley/volley_iterator.isph"
 
 inline varying bool isempty1f(varying box1f &box)
 {

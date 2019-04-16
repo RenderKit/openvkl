@@ -16,18 +16,38 @@
 
 #pragma once
 
-#include "volley_common.isph"
-#include "volley_volume.isph"
+#include <cstdint>
+#include <cstdlib>
+#include "common.h"
 
-struct SamplesMask;
-typedef SamplesMask *uniform VLYSamplesMask;
+struct Volume : public ManagedObject
+{
+};
 
-VLY_API VLYSamplesMask vlyNewSamplesMask(VLYVolume volume);
+typedef Volume *VLYVolume;
 
-VLY_API void vlySamplesMaskSetRanges(VLYSamplesMask samplesMask,
-                                     uniform size_t numRanges,
-                                     const vly_range1f *uniform ranges);
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  VLY_SAMPLE_NEAREST = 100,
+  VLY_SAMPLE_LINEAR  = 200,
+} VLYSamplingMethod;
 
-VLY_API void vlySamplesMaskSetValues(VLYSamplesMask samplesMask,
-                                     uniform size_t numValues,
-                                     const float *uniform values);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+VLYVolume vlyNewVolume(const char *type);
+
+float vlyComputeSample(VLYVolume volume, const vly_vec3f *objectCoordinates);
+
+vly_vec3f vlyComputeGradient(VLYVolume volume,
+                             const vly_vec3f *objectCoordinates);
+
+vly_box3f vlyGetBoundingBox(VLYVolume volume);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

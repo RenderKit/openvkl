@@ -20,9 +20,7 @@
 #include "samples_mask_util.ih"
 #include "transferFunction/LinearTransferFunction.ih"
 
-#include <volley/volley_driver.isph>
-#include <volley/volley_iterator.isph>
-#include <volley/volley_volume.isph>
+#include <volley/volley.isph>
 
 struct VolleyRayIteratorVolumeRenderer
 {

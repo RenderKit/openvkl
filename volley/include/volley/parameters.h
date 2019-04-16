@@ -16,8 +16,19 @@
 
 #pragma once
 
-#include "volley_common.isph"
+#include "common.h"
 
-VLY_API void vlyCommit(VLYObject object);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-VLY_API void vlyRelease(VLYObject object);
+void vlySet1f(VLYObject object, const char *name, float x);
+void vlySet3f(VLYObject, const char *name, float x, float y, float z);
+void vlySet1i(VLYObject object, const char *name, int x);
+void vlySet3i(VLYObject, const char *name, int x, int y, int z);
+void vlySetString(VLYObject, const char *name, const char *s);
+void vlySetVoidPtr(VLYObject object, const char *name, void *v);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

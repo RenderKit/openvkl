@@ -16,7 +16,6 @@
 
 #include "WaveletProceduralVolume.h"
 #include <cmath>
-#include "WaveletProceduralVolume_ispc.h"
 
 namespace volley {
   namespace ispc_driver {

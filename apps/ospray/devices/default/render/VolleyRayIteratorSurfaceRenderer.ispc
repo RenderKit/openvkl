@@ -19,10 +19,7 @@
 #include "render/Renderer.ih"
 #include "transferFunction/LinearTransferFunction.ih"
 
-#include <volley/volley_driver.isph>
-#include <volley/volley_iterator.isph>
-#include <volley/volley_samples_mask.isph>
-#include <volley/volley_volume.isph>
+#include <volley/volley.isph>
 
 struct VolleyRayIteratorSurfaceRenderer
 {

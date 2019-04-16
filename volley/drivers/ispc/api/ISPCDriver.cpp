@@ -17,6 +17,7 @@
 #include "ISPCDriver.h"
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
+#include "common/Data.h"
 
 namespace volley {
   namespace ispc_driver {
@@ -36,6 +37,19 @@ namespace volley {
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->refDec();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Data ///////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    VLYData ISPCDriver::newData(size_t numItems,
+                                VLYDataType dataType,
+                                const void *source,
+                                VLYDataCreationFlags dataCreationFlags)
+    {
+      Data *data = new Data(numItems, dataType, source, dataCreationFlags);
+      return (VLYData)data;
     }
 
     ///////////////////////////////////////////////////////////////////////////

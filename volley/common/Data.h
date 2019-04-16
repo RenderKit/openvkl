@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018 Intel Corporation                                         //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,15 +16,29 @@
 
 #pragma once
 
-#include "VLYDataType.h"
-#include "VLYError.h"
+#include "ManagedObject.h"
+#include "volley/volley.h"
 
-#include "common.h"
-#include "data.h"
-#include "driver.h"
-#include "module.h"
-#include "parameters.h"
-#include "ray_iterator.h"
-#include "samples_mask.h"
-#include "version.h"
-#include "volume.h"
+namespace volley {
+
+  struct Data : public ManagedObject
+  {
+    Data(size_t numItems,
+         VLYDataType dataType,
+         const void *source,
+         VLYDataCreationFlags dataCreationFlags);
+
+    virtual ~Data() override;
+
+    virtual std::string toString() const override;
+
+    size_t size() const;
+
+    size_t numItems;
+    size_t numBytes;
+    VLYDataType dataType;
+    void *data;
+    VLYDataCreationFlags dataCreationFlags;
+  };
+
+}  // namespace volley

@@ -132,6 +132,85 @@ namespace volley {
     throw std::runtime_error(error.str());
   }
 
+  size_t sizeOf(VLYDataType type)
+  {
+    switch (type) {
+    case VLY_DRIVER:
+    case VLY_VOID_PTR:
+    case VLY_OBJECT:
+    case VLY_DATA:
+    case VLY_SAMPLES_MASK:
+    case VLY_VOLUME:
+    case VLY_STRING:
+      return sizeof(void *);
+    case VLY_CHAR:
+      return sizeof(int8);
+    case VLY_UCHAR:
+      return sizeof(uint8);
+    case VLY_UCHAR2:
+      return sizeof(vec2uc);
+    case VLY_UCHAR3:
+      return sizeof(vec3uc);
+    case VLY_UCHAR4:
+      return sizeof(vec4uc);
+    case VLY_SHORT:
+      return sizeof(int16);
+    case VLY_USHORT:
+      return sizeof(uint16);
+    case VLY_INT:
+      return sizeof(int32);
+    case VLY_INT2:
+      return sizeof(vec2i);
+    case VLY_INT3:
+      return sizeof(vec3i);
+    case VLY_INT4:
+      return sizeof(vec4i);
+    case VLY_UINT:
+      return sizeof(uint32);
+    case VLY_UINT2:
+      return sizeof(vec2ui);
+    case VLY_UINT3:
+      return sizeof(vec3ui);
+    case VLY_UINT4:
+      return sizeof(vec4ui);
+    case VLY_LONG:
+      return sizeof(int64);
+    case VLY_LONG2:
+      return sizeof(vec2l);
+    case VLY_LONG3:
+      return sizeof(vec3l);
+    case VLY_LONG4:
+      return sizeof(vec4l);
+    case VLY_ULONG:
+      return sizeof(uint64);
+    case VLY_ULONG2:
+      return sizeof(vec2ul);
+    case VLY_ULONG3:
+      return sizeof(vec3ul);
+    case VLY_ULONG4:
+      return sizeof(vec4ul);
+    case VLY_FLOAT:
+      return sizeof(float);
+    case VLY_FLOAT2:
+      return sizeof(vec2f);
+    case VLY_FLOAT3:
+      return sizeof(vec3f);
+    case VLY_FLOAT4:
+      return sizeof(vec4f);
+    case VLY_FLOAT3A:
+      return sizeof(vec3fa);
+    case VLY_DOUBLE:
+      return sizeof(double);
+    case VLY_UNKNOWN:
+      break;
+    };
+
+    std::stringstream error;
+    error << __FILE__ << ":" << __LINE__ << ": unknown VLYDataType "
+          << (int)type;
+    throw std::runtime_error(error.str());
+  }
+
   void handleError(VLYError e, const std::string &message)
   {
     if (api::driverIsSet()) {

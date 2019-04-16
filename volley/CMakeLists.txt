@@ -19,6 +19,7 @@ add_library(volley SHARED
   api/API.cpp
   api/Driver.cpp
 
+  common/Data.cpp
   common/logging.cpp
   common/ManagedObject.cpp
   common/VLYCommon.cpp

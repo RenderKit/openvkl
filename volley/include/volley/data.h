@@ -16,15 +16,37 @@
 
 #pragma once
 
+#include <cstddef>
 #include "VLYDataType.h"
-#include "VLYError.h"
 
-#include "common.h"
-#include "data.h"
-#include "driver.h"
-#include "module.h"
-#include "parameters.h"
-#include "ray_iterator.h"
-#include "samples_mask.h"
-#include "version.h"
-#include "volume.h"
+// flags that can be passed to vlyNewData(), which can be OR'ed together
+typedef enum
+#if __cplusplus >= 201103L
+    : uint32_t
+#endif
+{
+  VLY_DATA_DEFAULT       = 0,
+  VLY_DATA_SHARED_BUFFER = (1 << 0),
+} VLYDataCreationFlags;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define VLY_DEFAULT_VAL(a) a
+
+struct Data : public ManagedObject
+{
+};
+
+typedef Data *VLYData;
+
+VLYData vlyNewData(size_t numItems,
+                   VLYDataType dataType,
+                   const void *source,
+                   VLYDataCreationFlags dataCreationFlags
+                       VLY_DEFAULT_VAL(= VLY_DATA_DEFAULT));
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

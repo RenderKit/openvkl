@@ -36,8 +36,13 @@ namespace volley {
         ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
       }
 
+      if (voxelData->dataType != VLY_FLOAT) {
+        throw std::runtime_error(
+            "SharedStructuredVolume currently only supports VLY_FLOAT volumes");
+      }
+
       ispc::SharedStructuredVolume_set(ispcEquivalent,
-                                       volumeData.data(),
+                                       (float *)voxelData->data,
                                        (const ispc::vec3i &)dimensions,
                                        (const ispc::vec3f &)gridOrigin,
                                        (const ispc::vec3f &)gridSpacing);
@@ -51,11 +56,15 @@ namespace volley {
           ispc::SharedStructuredVolume_createAccelerator(ispcEquivalent);
 
       vec3i bricksPerDimension;
-      bricksPerDimension.x = ispc::GridAccelerator_getBricksPerDimension_x(accelerator);
-      bricksPerDimension.y = ispc::GridAccelerator_getBricksPerDimension_y(accelerator);
-      bricksPerDimension.z = ispc::GridAccelerator_getBricksPerDimension_z(accelerator);
+      bricksPerDimension.x =
+          ispc::GridAccelerator_getBricksPerDimension_x(accelerator);
+      bricksPerDimension.y =
+          ispc::GridAccelerator_getBricksPerDimension_y(accelerator);
+      bricksPerDimension.z =
+          ispc::GridAccelerator_getBricksPerDimension_z(accelerator);
 
-      const int numTasks = bricksPerDimension.x * bricksPerDimension.y * bricksPerDimension.z;
+      const int numTasks =
+          bricksPerDimension.x * bricksPerDimension.y * bricksPerDimension.z;
       tasking::parallel_for(numTasks, [&](int taskIndex) {
         ispc::GridAccelerator_build(accelerator, taskIndex);
       });

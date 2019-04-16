@@ -20,6 +20,7 @@
 #include "../samples_mask/GridAcceleratorSamplesMask.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
+#include "common/Data.h"
 
 namespace volley {
 
@@ -74,7 +75,7 @@ namespace volley {
      protected:
       void buildAccelerator();
 
-      std::vector<float> volumeData;
+      Data *voxelData{nullptr};
       void *ispcEquivalent{nullptr};
     };
 

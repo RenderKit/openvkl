@@ -28,7 +28,7 @@ namespace volley {
       gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
 
-      volumeData.resize(dimensions.x * dimensions.y * dimensions.z);
+      generatedData.resize(dimensions.x * dimensions.y * dimensions.z);
 
       auto transformLocalToObject = [&](const vec3f &localCoordinates) {
         return gridOrigin + localCoordinates * gridSpacing;
@@ -40,7 +40,7 @@ namespace volley {
             size_t index =
                 z * dimensions.y * dimensions.x + y * dimensions.x + x;
             vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-            volumeData[index]       = getWaveletValue(objectCoordinates);
+            generatedData[index]    = getWaveletValue(objectCoordinates);
           }
         }
       }
@@ -52,10 +52,16 @@ namespace volley {
       if (!saveFilename.empty()) {
         std::ofstream out;
         out.open(saveFilename, std::ios::binary);
-        out.write(reinterpret_cast<char *>(volumeData.data()),
-                  volumeData.size() * sizeof(float));
+        out.write(reinterpret_cast<char *>(generatedData.data()),
+                  generatedData.size() * sizeof(float));
         out.close();
       }
+
+      // populate data object for SharedStructuredVolume
+      voxelData = new Data(generatedData.size(),
+                           VLY_FLOAT,
+                           generatedData.data(),
+                           VLY_DATA_SHARED_BUFFER);
 
       SharedStructuredVolume::commit();
     }

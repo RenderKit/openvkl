@@ -29,6 +29,8 @@ namespace volley {
      protected:
       float getWaveletValue(const vec3f &objectCoordinates) const;
 
+      std::vector<float> generatedData;
+
       // wavelet parameters
       const float M  = 1.f;
       const float G  = 1.f;

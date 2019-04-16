@@ -34,8 +34,9 @@ struct IsosurfaceParameters
   float isovalue{0.f};
 };
 
-VLYVolume createVolleyVolume()
+VLYVolume createProceduralVolleyVolume()
 {
+#warning createProceduralVolleyVolume() not used; add command-line arguments for it
   std::cout << "initializing Volley" << std::endl;
 
   vlyLoadModule("ispc_driver");
@@ -64,6 +65,44 @@ VLYVolume createVolleyVolume()
   return vlyVolume;
 }
 
+VLYVolume createVolleyVolume()
+{
+  std::cout << "initializing Volley" << std::endl;
+
+  vlyLoadModule("ispc_driver");
+
+  VLYDriver driver = vlyNewDriver("ispc_driver");
+  vlyCommitDriver(driver);
+  vlySetCurrentDriver(driver);
+
+  VLYVolume volume = vlyNewVolume("shared_structured_volume");
+
+  vec3i dimensions(256);
+  vec3f gridOrigin(-1.f);
+  vec3f gridSpacing(2.f / float(dimensions.x));
+
+  vlySet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vlySet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+  vlySet3f(volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
+
+  auto numVoxels = dimensions.product();
+  std::vector<float> voxels(numVoxels);
+
+  std::ifstream in;
+  in.open("wavelet_procedural_volume_256.raw", std::ios::binary);
+  in.read(reinterpret_cast<char *>(voxels.data()),
+          voxels.size() * sizeof(float));
+  in.close();
+
+  VLYData voxelData = vlyNewData(numVoxels, VLY_FLOAT, voxels.data());
+  vlySetData(volume, "voxelData", voxelData);
+  vlyRelease(voxelData);
+
+  vlyCommit(volume);
+
+  return volume;
+}
+
 OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
 {
   OSPVolume volume = ospNewVolume("shared_structured_volume");
@@ -88,7 +127,7 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
   in.close();
 
   OSPData voxelData = ospNewData(numVoxels, OSP_FLOAT, voxels.data());
-  ospSetObject(volume, "voxelData", voxelData);
+  ospSetData(volume, "voxelData", voxelData);
   ospRelease(voxelData);
 
   // required by OSPRay but not used in simple native renderer

@@ -23,10 +23,11 @@ extern "C" {
 #endif
 
 void vlySet1f(VLYObject object, const char *name, float x);
-void vlySet3f(VLYObject, const char *name, float x, float y, float z);
+void vlySet3f(VLYObject object, const char *name, float x, float y, float z);
 void vlySet1i(VLYObject object, const char *name, int x);
-void vlySet3i(VLYObject, const char *name, int x, int y, int z);
-void vlySetString(VLYObject, const char *name, const char *s);
+void vlySet3i(VLYObject object, const char *name, int x, int y, int z);
+void vlySetData(VLYObject object, const char *name, VLYData data);
+void vlySetString(VLYObject object, const char *name, const char *s);
 void vlySetVoidPtr(VLYObject object, const char *name, void *v);
 
 #ifdef __cplusplus

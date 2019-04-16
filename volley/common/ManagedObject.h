@@ -67,3 +67,31 @@ namespace volley {
     return *((VOLLEY_CLASS *)handle);
   }
 }  // namespace volley
+
+// Specializations for ISPCDriver /////////////////////////////////////////////
+
+namespace ospcommon {
+  namespace utility {
+
+    template <>
+    inline void ParameterizedObject::Param::set(
+        const volley::ManagedObject::VLY_PTR &object)
+    {
+      std::cerr << "specialization" << std::endl;
+
+      using VLY_PTR = volley::ManagedObject::VLY_PTR;
+
+      if (object)
+        object->refInc();
+
+      if (data.is<VLY_PTR>()) {
+        auto *existingObj = data.get<VLY_PTR>();
+        if (existingObj != nullptr)
+          existingObj->refDec();
+      }
+
+      data = object;
+    }
+
+  }  // namespace utility
+}  // namespace ospcommon

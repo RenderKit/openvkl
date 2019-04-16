@@ -127,6 +127,9 @@ namespace volley {
       virtual void setVec3i(VLYObject object,
                             const char *name,
                             const vec3i &v)                                 = 0;
+      virtual void setObject(VLYObject object,
+                             const char *name,
+                             VLYObject setObject)                           = 0;
       virtual void setString(VLYObject object,
                              const char *name,
                              const std::string &s)                          = 0;

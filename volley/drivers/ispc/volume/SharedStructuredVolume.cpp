@@ -36,12 +36,30 @@ namespace volley {
         ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
       }
 
+      // procedural volumes may set voxelData directly, so don't just override
+      if (getParam<VLY_PTR>("voxelData", nullptr) != nullptr) {
+        // warn for now, but we should probably get rid of the procedural volume
+        // types (in which case this warning is not necessary)
+        if (voxelData) {
+          std::cerr
+              << "warning: voxelData already set on SharedStructuredVolume, "
+                 "overriding with currently set voxelData parameter"
+              << std::endl;
+        }
+
+        voxelData = (Data *)getParam<VLY_PTR>("voxelData", nullptr);
+      }
+
+      if (!voxelData) {
+        throw std::runtime_error("no voxelData set on volume");
+      }
+
       if (voxelData->dataType != VLY_FLOAT) {
         throw std::runtime_error(
             "SharedStructuredVolume currently only supports VLY_FLOAT volumes");
       }
 
-      if (voxelData->size() != dimensions.x * dimensions.y * dimensions.z) {
+      if (voxelData->size() != dimensions.product()) {
         throw std::runtime_error(
             "incorrect voxelData size for provided volume dimensions");
       }

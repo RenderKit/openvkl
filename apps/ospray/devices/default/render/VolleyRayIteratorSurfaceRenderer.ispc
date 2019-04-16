@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "common/Model.ih"
-#include "common/Ray.ih"
-#include "render/Renderer.ih"
-#include "transferFunction/LinearTransferFunction.ih"
+#include "ospray/SDK/common/Model.ih"
+#include "ospray/SDK/common/Ray.ih"
+#include "ospray/SDK/render/Renderer.ih"
+#include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
 
 #include <volley/volley.isph>
 

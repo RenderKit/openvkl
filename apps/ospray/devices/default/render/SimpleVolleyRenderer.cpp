@@ -16,7 +16,7 @@
 
 #include "SimpleVolleyRenderer.h"
 #include "SimpleVolleyRenderer_ispc.h"
-#include "transferFunction/TransferFunction.h"
+#include "ospray/SDK/transferFunction/TransferFunction.h"
 
 namespace ospray {
 

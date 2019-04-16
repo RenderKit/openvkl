@@ -17,7 +17,7 @@
 #pragma once
 
 #include <volley/volley.h>
-#include "render/Renderer.h"
+#include "ospray/SDK/render/Renderer.h"
 
 namespace ospray {
 

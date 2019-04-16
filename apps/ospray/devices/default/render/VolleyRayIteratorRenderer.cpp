@@ -16,7 +16,8 @@
 
 #include "VolleyRayIteratorRenderer.h"
 #include "VolleyRayIteratorRenderer_ispc.h"
-#include "transferFunction/TransferFunction.h"
+#include "ospray/SDK/common/Data.h"
+#include "ospray/SDK/transferFunction/TransferFunction.h"
 
 namespace ospray {
 

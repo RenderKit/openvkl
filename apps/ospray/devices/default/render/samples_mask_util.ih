@@ -17,7 +17,7 @@
 #pragma once
 
 #include <volley/volley.isph>
-#include "transferFunction/LinearTransferFunction.ih"
+#include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
 
 // returns the minimal number of [min, max) index intervals for positive values
 inline void getContiguousPositiveIntervalIndices(const float *uniform values,

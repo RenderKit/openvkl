@@ -114,6 +114,10 @@ TransferFunctionWidget::TransferFunctionWidget(
   tfnEditable      = tfnsEditable[currentMap];
 
   updateTransferFunction(*tfnColorPoints, *tfnOpacityPoints);
+
+  // set ImGui double click time to 1s, so it also works for slower frame rates
+  ImGuiIO& io = ImGui::GetIO();
+  io.MouseDoubleClickTime = 1.f;
 }
 
 TransferFunctionWidget::~TransferFunctionWidget()

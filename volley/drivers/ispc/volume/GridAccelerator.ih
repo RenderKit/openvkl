@@ -16,7 +16,12 @@
 
 #pragma once
 
-#include "../iterator/GridAcceleratorRayIterator.ih"
+#include "../iterator/RayIterator.ih"
+#include "math/box.ih"
+#include "math/vec.ih"
+
+struct GridAcceleratorRayIterator;
+struct SharedStructuredVolume;
 
 struct GridAccelerator
 {

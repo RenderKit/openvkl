@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../iterator/GridAcceleratorRayIterator.ih"
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
 #include "math/box_utility.ih"

@@ -16,11 +16,12 @@
 
 #pragma once
 
-#include "../volume/SharedStructuredVolume.ih"
 #include "RayIterator.ih"
+#include "math/box.ih"
 #include "math/vec.ih"
 
 struct GridAcceleratorSamplesMask;
+struct SharedStructuredVolume;
 
 struct GridAcceleratorRayIteratorIntervalState
 {

@@ -90,6 +90,9 @@ VLYVolume createVolleyVolume()
 
   std::ifstream in;
   in.open("wavelet_procedural_volume_256.raw", std::ios::binary);
+  if (!in.is_open()) {
+    throw std::runtime_error("could not open file");
+  }
   in.read(reinterpret_cast<char *>(voxels.data()),
           voxels.size() * sizeof(float));
   in.close();
@@ -122,6 +125,9 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
 
   std::ifstream in;
   in.open("wavelet_procedural_volume_256.raw", std::ios::binary);
+  if (!in.is_open()) {
+    throw std::runtime_error("could not open file");
+  }
   in.read(reinterpret_cast<char *>(voxels.data()),
           voxels.size() * sizeof(float));
   in.close();

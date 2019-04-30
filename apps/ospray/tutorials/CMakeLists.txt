@@ -37,7 +37,7 @@ target_link_libraries(ospTutorialISPCVolley
   volley
   glfw
   ospray_imgui
-  ospray_testing_volley
+  ospray::ospray_testing
   ospray_module_ispc_volley
   ${OPENGL_LIBRARIES}
 )

@@ -15,5 +15,4 @@
 ## ======================================================================== ##
 
 add_subdirectory(devices)
-add_subdirectory(testing)
 add_subdirectory(tutorials)

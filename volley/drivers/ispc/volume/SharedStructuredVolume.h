@@ -46,10 +46,12 @@ namespace volley {
         return new GridAcceleratorSamplesMask(this);
       }
 
-      // TODO: single sample through ISPC methods
       float computeSample(const vec3f &objectCoordinates) const override
       {
-        throw std::runtime_error("computeSample() not implemented");
+        float sample;
+        ispc::SharedStructuredVolume_sample_scalar_export(
+            ispcEquivalent, (ispc::vec3f *)&objectCoordinates, &sample);
+        return sample;
       }
 
       // TODO: const correctness here

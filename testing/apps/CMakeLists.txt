@@ -14,6 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+# Benchmarks
 add_executable(vlyBenchmarkStructuredVolume
   vlyBenchmarkStructuredVolume.cpp
 )
@@ -24,5 +25,19 @@ target_link_libraries(vlyBenchmarkStructuredVolume
 )
 
 install(TARGETS vlyBenchmarkStructuredVolume
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Functional tests
+add_executable(vlyTests
+  vlyTests.cpp
+  tests/structured_volume_sampling.cpp
+)
+
+target_link_libraries(vlyTests
+  volley_testing
+)
+
+install(TARGETS vlyTests
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

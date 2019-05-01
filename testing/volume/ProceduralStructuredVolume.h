@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <vector>
 #include "ospray/ospcommon/vec.h"
 #include "volley/volley.h"
-#include <vector>
 
 using namespace ospcommon;
 
@@ -32,9 +32,29 @@ namespace volley {
                                  const vec3f &gridOrigin,
                                  const vec3f &gridSpacing);
 
+      inline vec3i getDimensions() const
+      {
+        return dimensions;
+      }
+
+      inline vec3f getGridOrigin() const
+      {
+        return gridOrigin;
+      }
+
+      inline vec3f getGridSpacing() const
+      {
+        return gridSpacing;
+      }
+
       inline VLYVolume getVLYVolume() const
       {
         return volume;
+      }
+
+      inline float computeProceduralValue(const vec3f &objectCoordinates)
+      {
+        return volumeSamplingFunction(objectCoordinates);
       }
 
      protected:

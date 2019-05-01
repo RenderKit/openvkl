@@ -77,8 +77,6 @@ namespace ospcommon {
     inline void ParameterizedObject::Param::set(
         const volley::ManagedObject::VLY_PTR &object)
     {
-      std::cerr << "specialization" << std::endl;
-
       using VLY_PTR = volley::ManagedObject::VLY_PTR;
 
       if (object)

@@ -14,29 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-project(Volley)
+add_executable(vlyBenchmarkStructuredVolume
+  vlyBenchmarkStructuredVolume.cpp
+)
 
-cmake_minimum_required(VERSION 3.12)
+target_link_libraries(vlyBenchmarkStructuredVolume
+  benchmark
+  volley_testing
+)
 
-set(CMAKE_CXX_STANDARD 11)
-
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-
-include(GNUInstallDirs)
-
-find_package(ospray 1.8.0 REQUIRED)
-include(${OSPRAY_USE_FILE})
-
-ospray_configure_tasking_system()
-
-add_subdirectory(volley)
-add_subdirectory(apps)
-add_subdirectory(testing)
-
-## CPack configuration (has to be last) ##
-include(CPack)
+install(TARGETS vlyBenchmarkStructuredVolume
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

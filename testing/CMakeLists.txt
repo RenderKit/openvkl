@@ -14,29 +14,25 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-project(Volley)
+add_library(volley_testing SHARED
+  volume/ProceduralStructuredVolume.cpp
+)
 
-cmake_minimum_required(VERSION 3.12)
+target_link_libraries(volley_testing PUBLIC
+  volley
+  ospray::ospray_common
+)
 
-set(CMAKE_CXX_STANDARD 11)
+target_include_directories(volley_testing
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+)
 
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+install(TARGETS volley_testing
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # don't build tests
+add_subdirectory(external/benchmark)
 
-include(GNUInstallDirs)
-
-find_package(ospray 1.8.0 REQUIRED)
-include(${OSPRAY_USE_FILE})
-
-ospray_configure_tasking_system()
-
-add_subdirectory(volley)
 add_subdirectory(apps)
-add_subdirectory(testing)
-
-## CPack configuration (has to be last) ##
-include(CPack)

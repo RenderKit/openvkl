@@ -35,6 +35,7 @@ add_executable(ospTutorialISPCVolley
 
 target_link_libraries(ospTutorialISPCVolley
   volley
+  volley_testing
   glfw
   ospray_imgui
   ospray::ospray_testing

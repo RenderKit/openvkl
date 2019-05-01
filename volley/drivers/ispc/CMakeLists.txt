@@ -41,7 +41,6 @@ if (BUILD_ISPC_DRIVER)
     volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.cpp
     volume/SharedStructuredVolume.ispc
-    volume/WaveletProceduralVolume.cpp
   )
 
   target_link_libraries(volley_module_ispc_driver PRIVATE volley)

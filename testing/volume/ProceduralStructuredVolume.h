@@ -57,9 +57,11 @@ namespace volley {
         return volumeSamplingFunction(objectCoordinates);
       }
 
-     protected:
+      // allow external access to underlying voxel data (e.g. for conversion to
+      // other volume formats / types)
       std::vector<float> generateVoxels();
 
+     protected:
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;

@@ -21,10 +21,12 @@
 #include "GLFWOSPRayWindow.h"
 #include "TransferFunctionWidget.h"
 
-#include <ospray/ospray_testing/ospray_testing.h>
-#include <volley/volley.h>
+#include "ospray/ospray_testing/ospray_testing.h"
+#include "volley/volley.h"
+#include "volley_testing.h"
 
 using namespace ospcommon;
+using namespace volley::testing;
 
 static constexpr int maxNumIsosurfaces = 3;
 
@@ -34,85 +36,15 @@ struct IsosurfaceParameters
   float isovalue{0.f};
 };
 
-VLYVolume createProceduralVolleyVolume()
-{
-#warning createProceduralVolleyVolume() not used; add command-line arguments for it
-  std::cout << "initializing Volley" << std::endl;
-
-  vlyLoadModule("ispc_driver");
-
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
-
-  VLYVolume vlyVolume = vlyNewVolume("wavelet_procedural_volume");
-
-  vec3i dimensions(256);
-  vec3f gridOrigin(-1.f);
-  vec3f gridSpacing(2.f / float(dimensions.x));
-
-  vlySet3i(vlyVolume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vlySet3f(vlyVolume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-  vlySet3f(
-      vlyVolume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-
-  // the "saveFilename" can be used to dump the procedurally generated volume to
-  // disk:
-  // vlySetString(vlyVolume, "saveFilename", "save.raw");
-
-  vlyCommit(vlyVolume);
-
-  return vlyVolume;
-}
-
-VLYVolume createVolleyVolume()
-{
-  std::cout << "initializing Volley" << std::endl;
-
-  vlyLoadModule("ispc_driver");
-
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
-
-  VLYVolume volume = vlyNewVolume("shared_structured_volume");
-
-  vec3i dimensions(256);
-  vec3f gridOrigin(-1.f);
-  vec3f gridSpacing(2.f / float(dimensions.x));
-
-  vlySet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vlySet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-  vlySet3f(volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-
-  auto numVoxels = dimensions.product();
-  std::vector<float> voxels(numVoxels);
-
-  std::ifstream in;
-  in.open("wavelet_procedural_volume_256.raw", std::ios::binary);
-  if (!in.is_open()) {
-    throw std::runtime_error("could not open file");
-  }
-  in.read(reinterpret_cast<char *>(voxels.data()),
-          voxels.size() * sizeof(float));
-  in.close();
-
-  VLYData voxelData = vlyNewData(numVoxels, VLY_FLOAT, voxels.data());
-  vlySetData(volume, "voxelData", voxelData);
-  vlyRelease(voxelData);
-
-  vlyCommit(volume);
-
-  return volume;
-}
-
-OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
+OSPVolume convertToOSPVolume(
+    std::shared_ptr<WaveletProceduralVolume> proceduralVolume,
+    OSPTransferFunction transferFunction)
 {
   OSPVolume volume = ospNewVolume("shared_structured_volume");
 
-  vec3i dimensions(256);
-  vec3f gridOrigin(-1.f);
-  vec3f gridSpacing(2.f / float(dimensions.x));
+  vec3i dimensions  = proceduralVolume->getDimensions();
+  vec3f gridOrigin  = proceduralVolume->getGridOrigin();
+  vec3f gridSpacing = proceduralVolume->getGridSpacing();
 
   ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
   ospSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
@@ -120,19 +52,9 @@ OSPVolume createNativeVolume(OSPTransferFunction transferFunction)
 
   ospSetString(volume, "voxelType", "float");
 
-  auto numVoxels = dimensions.product();
-  std::vector<float> voxels(numVoxels);
+  std::vector<float> voxels = proceduralVolume->generateVoxels();
 
-  std::ifstream in;
-  in.open("wavelet_procedural_volume_256.raw", std::ios::binary);
-  if (!in.is_open()) {
-    throw std::runtime_error("could not open file");
-  }
-  in.read(reinterpret_cast<char *>(voxels.data()),
-          voxels.size() * sizeof(float));
-  in.close();
-
-  OSPData voxelData = ospNewData(numVoxels, OSP_FLOAT, voxels.data());
+  OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
   ospSetData(volume, "voxelData", voxelData);
   ospRelease(voxelData);
 
@@ -178,6 +100,20 @@ int main(int argc, const char **argv)
     return 1;
   }
 
+  // create the Volley procedural volume
+  vlyLoadModule("ispc_driver");
+
+  VLYDriver driver = vlyNewDriver("ispc_driver");
+  vlyCommitDriver(driver);
+  vlySetCurrentDriver(driver);
+
+  const vec3i dimensions(256);
+  const vec3f gridOrigin(-1.f);
+  const vec3f gridSpacing(2.f / float(dimensions.x));
+
+  std::shared_ptr<WaveletProceduralVolume> proceduralVolume(
+      new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+
   // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
   // e.g. "--osp:debug"
   OSPError initError = ospInit(&argc, argv);
@@ -214,10 +150,10 @@ int main(int argc, const char **argv)
   ospRelease(lightsData);
 
   if (rendererString.find("volley") != std::string::npos) {
-    VLYVolume vlyVolume = createVolleyVolume();
-    ospSetVoidPtr(renderer, "vlyVolume", (void *)vlyVolume);
+    ospSetVoidPtr(
+        renderer, "vlyVolume", (void *)proceduralVolume->getVLYVolume());
   } else if (rendererString == "simple_native") {
-    OSPVolume volume = createNativeVolume(transferFunction);
+    OSPVolume volume = convertToOSPVolume(proceduralVolume, transferFunction);
     ospSetVoidPtr(renderer, "volume", (void *)volume);
   } else {
     throw std::runtime_error("cannot determine volume type for given renderer");

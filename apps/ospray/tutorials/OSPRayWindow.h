@@ -39,6 +39,7 @@ class OSPRayWindow
 
   void resetAccumulation();
 
+  void savePPM(const std::string &filename);
 
  protected:
   virtual void reshape(const ospcommon::vec2i &newWindowSize);

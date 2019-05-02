@@ -17,6 +17,7 @@
 #include "OSPRayWindow.h"
 #include <iostream>
 #include <stdexcept>
+#include "ospray/ospcommon/utility/SaveImage.h"
 
 OSPRayWindow::OSPRayWindow(const ospcommon::vec2i &windowSize,
                            const ospcommon::box3f &worldBounds,
@@ -85,7 +86,11 @@ void OSPRayWindow::resetAccumulation()
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 
+void OSPRayWindow::savePPM(const std::string &filename)
 {
+  uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
+  ospcommon::utility::writePPM(filename, windowSize.x, windowSize.y, fb);
+  ospUnmapFrameBuffer(fb, framebuffer);
 }
 
 void OSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)

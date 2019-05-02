@@ -18,9 +18,6 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <imgui.h>
-#include "imgui_impl_glfw_gl3.h"
-
 OSPRayWindow::OSPRayWindow(const ospcommon::vec2i &windowSize,
                            const ospcommon::box3f &worldBounds,
                            OSPModel model,
@@ -78,15 +75,17 @@ void OSPRayWindow::setModel(OSPModel newModel)
   resetAccumulation();
 }
 
+void OSPRayWindow::render()
+{
+  ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+}
+
 void OSPRayWindow::resetAccumulation()
 {
   ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
 }
 
-void OSPRayWindow::registerDisplayCallback(
-    std::function<void(OSPRayWindow *)> callback)
 {
-  displayCallback = callback;
 }
 
 void OSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
@@ -105,9 +104,4 @@ void OSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
 
   ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
   ospCommit(camera);
-}
-
-void OSPRayWindow::display()
-{
-  ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
 }

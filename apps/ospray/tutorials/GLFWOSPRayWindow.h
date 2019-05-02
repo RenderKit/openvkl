@@ -29,6 +29,8 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   ~GLFWOSPRayWindow();
 
+  void registerDisplayCallback(std::function<void(GLFWOSPRayWindow *)> callback);
+
   void registerImGuiCallback(std::function<void()> callback);
 
   void mainLoop();
@@ -36,7 +38,7 @@ class GLFWOSPRayWindow : public OSPRayWindow
  protected:
   void reshape(const ospcommon::vec2i &newWindowSize) override;
   void motion(const ospcommon::vec2f &position);
-  void display() override;
+  void display();
 
   static GLFWOSPRayWindow *activeWindow;
 
@@ -46,6 +48,9 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   // toggles display of ImGui UI, if an ImGui callback is provided
   bool showUi = true;
+
+  // optional registered display callback, called before every display()
+  std::function<void(GLFWOSPRayWindow *)> displayCallback;
 
   // optional registered ImGui callback, called during every frame to build UI
   std::function<void()> uiCallback;

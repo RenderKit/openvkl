@@ -91,6 +91,12 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
   glfwTerminate();
 }
 
+void GLFWOSPRayWindow::registerDisplayCallback(
+    std::function<void(GLFWOSPRayWindow *)> callback)
+{
+  displayCallback = callback;
+}
+
 void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
 {
   uiCallback = callback;
@@ -192,7 +198,7 @@ void GLFWOSPRayWindow::display()
     displayCallback(this);
   }
 
-  ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  render();
 
   uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 

@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospcommon/AffineSpace.h>
+#include "ospray/ospcommon/AffineSpace.h"
 
 class ArcballCamera
 {

@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include <ospcommon/box.h>
-#include <ospcommon/vec.h>
-#include <ospray/ospray.h>
 #include <functional>
 #include "ArcballCamera.h"
+#include "ospray/ospcommon/box.h"
+#include "ospray/ospcommon/vec.h"
+#include "ospray/ospray.h"
 
 class OSPRayWindow
 {
@@ -35,13 +35,13 @@ class OSPRayWindow
   OSPModel getModel();
   void setModel(OSPModel newModel);
 
+  void render();
+
   void resetAccumulation();
 
-  void registerDisplayCallback(std::function<void(OSPRayWindow *)> callback);
 
  protected:
   virtual void reshape(const ospcommon::vec2i &newWindowSize);
-  virtual void display();
 
   ospcommon::vec2i windowSize;
   ospcommon::box3f worldBounds;
@@ -53,7 +53,4 @@ class OSPRayWindow
   // OSPRay objects managed by this class
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
-
-  // optional registered display callback, called before every display()
-  std::function<void(OSPRayWindow *)> displayCallback;
 };

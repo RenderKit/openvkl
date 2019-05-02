@@ -16,37 +16,44 @@
 
 #pragma once
 
-#include <GLFW/glfw3.h>
-#include "OSPRayWindow.h"
+#include <ospcommon/box.h>
+#include <ospcommon/vec.h>
+#include <ospray/ospray.h>
+#include <functional>
+#include "ArcballCamera.h"
 
-class GLFWOSPRayWindow : public OSPRayWindow
+class OSPRayWindow
 {
  public:
-  GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
-                   const ospcommon::box3f &worldBounds,
-                   OSPModel model,
-                   OSPRenderer renderer);
+  OSPRayWindow(const ospcommon::vec2i &windowSize,
+               const ospcommon::box3f &worldBounds,
+               OSPModel model,
+               OSPRenderer renderer);
 
-  ~GLFWOSPRayWindow();
+  virtual ~OSPRayWindow() = default;
 
-  void registerImGuiCallback(std::function<void()> callback);
+  OSPModel getModel();
+  void setModel(OSPModel newModel);
 
-  void mainLoop();
+  void resetAccumulation();
+
+  void registerDisplayCallback(std::function<void(OSPRayWindow *)> callback);
 
  protected:
-  void reshape(const ospcommon::vec2i &newWindowSize) override;
-  void motion(const ospcommon::vec2f &position);
-  void display() override;
+  virtual void reshape(const ospcommon::vec2i &newWindowSize);
+  virtual void display();
 
-  static GLFWOSPRayWindow *activeWindow;
+  ospcommon::vec2i windowSize;
+  ospcommon::box3f worldBounds;
+  OSPModel model       = nullptr;
+  OSPRenderer renderer = nullptr;
 
-  GLFWwindow *glfwWindow = nullptr;
+  std::unique_ptr<ArcballCamera> arcballCamera;
 
-  GLuint framebufferTexture = 0;
+  // OSPRay objects managed by this class
+  OSPCamera camera           = nullptr;
+  OSPFrameBuffer framebuffer = nullptr;
 
-  // toggles display of ImGui UI, if an ImGui callback is provided
-  bool showUi = true;
-
-  // optional registered ImGui callback, called during every frame to build UI
-  std::function<void()> uiCallback;
+  // optional registered display callback, called before every display()
+  std::function<void(OSPRayWindow *)> displayCallback;
 };

@@ -28,6 +28,7 @@ find_package(glfw3 REQUIRED)
 add_executable(ospTutorialISPCVolley
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
+  OSPRayWindow.cpp
   TransferFunctionWidget.cpp
   ospTutorialISPCVolley.cpp
   imgui_impl_glfw_gl3.cpp

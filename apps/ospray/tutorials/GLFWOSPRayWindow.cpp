@@ -27,21 +27,16 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                                    const ospcommon::box3f &worldBounds,
                                    OSPModel model,
                                    OSPRenderer renderer)
-    : windowSize(windowSize),
-      worldBounds(worldBounds),
-      model(model),
-      renderer(renderer)
+    : OSPRayWindow(windowSize, worldBounds, model, renderer)
 {
   if (activeWindow != nullptr)
-    throw std::runtime_error("Cannot create more than one GLFWOSPRayWindow!");
+    throw std::runtime_error("Cannot create more than one OSPRayWindow!");
 
   activeWindow = this;
 
-  // initialize GLFW
   if (!glfwInit())
     throw std::runtime_error("Failed to initialize GLFW!");
 
-  // create GLFW window
   glfwWindow = glfwCreateWindow(
       windowSize.x, windowSize.y, "OSPRay Tutorial", NULL, NULL);
 
@@ -50,23 +45,19 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
     throw std::runtime_error("Failed to create GLFW window!");
   }
 
-  // make the window's context current
   glfwMakeContextCurrent(glfwWindow);
 
   ImGui_ImplGlfwGL3_Init(glfwWindow, true);
 
-  // set initial OpenGL state
   glEnable(GL_TEXTURE_2D);
   glDisable(GL_LIGHTING);
 
-  // create OpenGL frame buffer texture
   glGenTextures(1, &framebufferTexture);
   glEnable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D, framebufferTexture);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-  // set GLFW callbacks
   glfwSetFramebufferSizeCallback(
       glfwWindow, [](GLFWwindow *, int newWidth, int newHeight) {
         activeWindow->reshape(ospcommon::vec2i{newWidth, newHeight});
@@ -89,43 +80,6 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
                        }
                      });
 
-  // OSPRay setup
-
-  // set the model on the renderer
-  ospSetObject(renderer, "model", model);
-
-  // create the arcball camera model
-  arcballCamera = std::unique_ptr<ArcballCamera>(
-      new ArcballCamera(worldBounds, windowSize));
-
-  // create camera
-  camera = ospNewCamera("perspective");
-  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
-
-  ospSetVec3f(camera,
-              "pos",
-              osp::vec3f{arcballCamera->eyePos().x,
-                         arcballCamera->eyePos().y,
-                         arcballCamera->eyePos().z});
-  ospSetVec3f(camera,
-              "dir",
-              osp::vec3f{arcballCamera->lookDir().x,
-                         arcballCamera->lookDir().y,
-                         arcballCamera->lookDir().z});
-  ospSetVec3f(camera,
-              "up",
-              osp::vec3f{arcballCamera->upDir().x,
-                         arcballCamera->upDir().y,
-                         arcballCamera->upDir().z});
-
-  ospCommit(camera);
-
-  // set camera on the renderer
-  ospSetObject(renderer, "camera", camera);
-
-  // finally, commit the renderer
-  ospCommit(renderer);
-
   // trigger window reshape events with current window size
   glfwGetFramebufferSize(glfwWindow, &this->windowSize.x, &this->windowSize.y);
   reshape(this->windowSize);
@@ -137,36 +91,6 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
   glfwTerminate();
 }
 
-OSPModel GLFWOSPRayWindow::getModel()
-{
-  return model;
-}
-
-void GLFWOSPRayWindow::setModel(OSPModel newModel)
-{
-  model = newModel;
-
-  // set the model on the renderer
-  ospSetObject(renderer, "model", model);
-
-  // commit the renderer
-  ospCommit(renderer);
-
-  // clear frame buffer
-  resetAccumulation();
-}
-
-void GLFWOSPRayWindow::resetAccumulation()
-{
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
-}
-
-void GLFWOSPRayWindow::registerDisplayCallback(
-    std::function<void(GLFWOSPRayWindow *)> callback)
-{
-  displayCallback = callback;
-}
-
 void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
 {
   uiCallback = callback;
@@ -174,42 +98,24 @@ void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
 
 void GLFWOSPRayWindow::mainLoop()
 {
-  // continue until the user closes the window
   while (!glfwWindowShouldClose(glfwWindow)) {
     ImGui_ImplGlfwGL3_NewFrame();
 
     display();
 
-    // poll and process events
     glfwPollEvents();
   }
 }
 
 void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
 {
-  windowSize = newWindowSize;
+  OSPRayWindow::reshape(newWindowSize);
 
-  // release the current frame buffer, if it exists
-  if (framebuffer)
-    ospRelease(framebuffer);
-
-  // create new frame buffer
-  framebuffer = ospNewFrameBuffer(*reinterpret_cast<osp::vec2i *>(&windowSize),
-                                  OSP_FB_SRGBA,
-                                  OSP_FB_COLOR | OSP_FB_ACCUM);
-
-  // reset OpenGL viewport and orthographic projection
   glViewport(0, 0, windowSize.x, windowSize.y);
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
-
-  // update camera
-  arcballCamera->updateWindowSize(windowSize);
-
-  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
-  ospCommit(camera);
 }
 
 void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
@@ -282,16 +188,12 @@ void GLFWOSPRayWindow::display()
     ImGui::End();
   }
 
-  // if a display callback has been registered, call it
   if (displayCallback) {
     displayCallback(this);
   }
 
-  // render OSPRay frame
   ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
-  // map OSPRay frame buffer, update OpenGL texture with its contents, then
-  // unmap
   uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
   glBindTexture(GL_TEXTURE_2D, framebufferTexture);
@@ -307,10 +209,8 @@ void GLFWOSPRayWindow::display()
 
   ospUnmapFrameBuffer(fb, framebuffer);
 
-  // clear current OpenGL color buffer
   glClear(GL_COLOR_BUFFER_BIT);
 
-  // render textured quad with OSPRay frame buffer contents
   glBegin(GL_QUADS);
 
   glTexCoord2f(0.f, 0.f);
@@ -331,7 +231,6 @@ void GLFWOSPRayWindow::display()
     ImGui::Render();
   }
 
-  // swap buffers
   glfwSwapBuffers(glfwWindow);
 
   // display frame rate in window title

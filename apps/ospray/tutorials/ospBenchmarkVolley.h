@@ -17,7 +17,6 @@
 #pragma once
 
 #include "OSPRayWindow.h"
-#include "benchmark/benchmark.h"
 #include "ospray/ospray_testing/ospray_testing.h"
 #include "volley_testing.h"
 

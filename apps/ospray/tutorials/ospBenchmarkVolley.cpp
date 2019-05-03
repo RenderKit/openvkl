@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospBenchmarkVolley.h"
+#include "benchmark/benchmark.h"
 
 void initializeOSPRay()
 {

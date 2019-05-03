@@ -145,10 +145,6 @@ int main(int argc, const char **argv)
 
   OSPRenderer renderer = ospNewRenderer(rendererString.c_str());
 
-  OSPData lightsData = ospTestingNewLights("ambient_only");
-  ospSetData(renderer, "lights", lightsData);
-  ospRelease(lightsData);
-
   if (rendererString.find("volley") != std::string::npos) {
     ospSetVoidPtr(
         renderer, "vlyVolume", (void *)proceduralVolume->getVLYVolume());

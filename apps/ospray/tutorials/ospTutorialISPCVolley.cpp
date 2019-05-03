@@ -19,75 +19,11 @@
 #include <memory>
 #include <random>
 #include "GLFWOSPRayWindow.h"
+#include "OSPRayVolleyTestScene.h"
 #include "TransferFunctionWidget.h"
-
-#include "ospray/ospray_testing/ospray_testing.h"
-#include "volley/volley.h"
-#include "volley_testing.h"
 
 using namespace ospcommon;
 using namespace volley::testing;
-
-static constexpr int maxNumIsosurfaces = 3;
-
-struct IsosurfaceParameters
-{
-  bool enabled{false};
-  float isovalue{0.f};
-};
-
-OSPVolume convertToOSPVolume(
-    std::shared_ptr<WaveletProceduralVolume> proceduralVolume,
-    OSPTransferFunction transferFunction)
-{
-  OSPVolume volume = ospNewVolume("shared_structured_volume");
-
-  vec3i dimensions  = proceduralVolume->getDimensions();
-  vec3f gridOrigin  = proceduralVolume->getGridOrigin();
-  vec3f gridSpacing = proceduralVolume->getGridSpacing();
-
-  ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  ospSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-  ospSet3f(volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-
-  ospSetString(volume, "voxelType", "float");
-
-  std::vector<float> voxels = proceduralVolume->generateVoxels();
-
-  OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
-  ospSetData(volume, "voxelData", voxelData);
-  ospRelease(voxelData);
-
-  // required by OSPRay but not used in simple native renderer
-  ospSetObject(volume, "transferFunction", transferFunction);
-
-  ospCommit(volume);
-
-  return volume;
-}
-
-void updateRendererIsosurfaces(
-    OSPRenderer renderer,
-    bool showIsosurfaces,
-    const std::array<IsosurfaceParameters, maxNumIsosurfaces> &isosurfaces)
-{
-  std::vector<float> activeIsosurfaces;
-
-  if (showIsosurfaces) {
-    for (const auto &isosurface : isosurfaces) {
-      if (isosurface.enabled) {
-        activeIsosurfaces.push_back(isosurface.isovalue);
-      }
-    }
-  }
-
-  OSPData isosurfacesData =
-      ospNewData(activeIsosurfaces.size(), OSP_FLOAT, activeIsosurfaces.data());
-  ospSetObject(renderer, "isosurfaces", isosurfacesData);
-  ospRelease(isosurfacesData);
-
-  ospCommit(renderer);
-}
 
 int main(int argc, const char **argv)
 {
@@ -100,12 +36,8 @@ int main(int argc, const char **argv)
     return 1;
   }
 
-  // create the Volley procedural volume
-  vlyLoadModule("ispc_driver");
-
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  initializeOSPRay();
+  initializeVolley();
 
   const vec3i dimensions(256);
   const vec3f gridOrigin(-1.f);
@@ -114,57 +46,17 @@ int main(int argc, const char **argv)
   std::shared_ptr<WaveletProceduralVolume> proceduralVolume(
       new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-  // initialize OSPRay; OSPRay parses (and removes) its commandline parameters,
-  // e.g. "--osp:debug"
-  OSPError initError = ospInit(&argc, argv);
+  std::string rendererType(argv[1]);
+  std::cout << "using renderer: " << rendererType << std::endl;
 
-  if (initError != OSP_NO_ERROR)
-    return initError;
-
-  // set an error callback to catch any OSPRay errors and exit the application
-  ospDeviceSetErrorFunc(
-      ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-        std::cerr << "OSPRay error: " << errorDetails << std::endl;
-        exit(error);
-      });
-
-  // create the "world" model which will contain all of our geometries / volumes
-  OSPModel world = ospNewModel();
-
-  // add in generated volume and transfer function
-
-  osp::vec2f voxelRange{-1.f, 1.f};
-  OSPTransferFunction transferFunction =
-      ospTestingNewTransferFunction(voxelRange, "jet");
-
-  ospCommit(world);
-
-  // create OSPRay renderer
-  std::string rendererString(argv[1]);
-  std::cout << "using renderer: " << rendererString << std::endl;
-
-  OSPRenderer renderer = ospNewRenderer(rendererString.c_str());
-
-  if (rendererString.find("volley") != std::string::npos) {
-    ospSetVoidPtr(
-        renderer, "vlyVolume", (void *)proceduralVolume->getVLYVolume());
-  } else if (rendererString == "simple_native") {
-    OSPVolume volume = convertToOSPVolume(proceduralVolume, transferFunction);
-    ospSetVoidPtr(renderer, "volume", (void *)volume);
-  } else {
-    throw std::runtime_error("cannot determine volume type for given renderer");
-  }
-
-  ospSetObject(renderer, "transferFunction", transferFunction);
-
-  ospCommit(renderer);
-
-  // create a GLFW OSPRay window: this object will create and manage the OSPRay
-  // frame buffer and camera directly
-  box3f bounds(-1.f, 1.f);
+  std::unique_ptr<OSPRayVolleyTestScene> testScene(
+      new OSPRayVolleyTestScene(rendererType, proceduralVolume));
 
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
-      new GLFWOSPRayWindow(vec2i{1024, 1024}, bounds, world, renderer));
+      new GLFWOSPRayWindow(vec2i{1024, 1024},
+                           testScene->getBoundingBox(),
+                           testScene->getWorld(),
+                           testScene->getRenderer()));
 
   auto transferFunctionUpdatedCallback = [&]() {
     glfwOSPRayWindow->resetAccumulation();
@@ -173,15 +65,23 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     static float samplingRate = 1.f;
     if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
-      ospSet1f(renderer, "samplingRate", samplingRate);
-      ospCommit(renderer);
+      ospSet1f(testScene->getRenderer(), "samplingRate", samplingRate);
+      ospCommit(testScene->getRenderer());
       glfwOSPRayWindow->resetAccumulation();
     }
 
     // only show isosurface UI if an appropriate renderer is selected
-    if (rendererString == "volley_ray_iterator" ||
-        rendererString == "volley_ray_iterator_surface") {
+    if (rendererType == "volley_ray_iterator" ||
+        rendererType == "volley_ray_iterator_surface") {
       static bool showIsosurfaces = false;
+
+      static constexpr int maxNumIsosurfaces = 3;
+
+      struct IsosurfaceParameters
+      {
+        bool enabled{false};
+        float isovalue{0.f};
+      };
 
       static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
 
@@ -220,22 +120,29 @@ int main(int argc, const char **argv)
       }
 
       if (isosurfacesChanged) {
-        updateRendererIsosurfaces(renderer, showIsosurfaces, isosurfaces);
+        std::vector<float> enabledIsovalues;
+
+        if (showIsosurfaces) {
+          for (const auto &isosurface : isosurfaces) {
+            if (isosurface.enabled) {
+              enabledIsovalues.push_back(isosurface.isovalue);
+            }
+          }
+        }
+
+        testScene->setIsovalues(enabledIsovalues);
+
         glfwOSPRayWindow->resetAccumulation();
       }
     }
 
     static TransferFunctionWidget transferFunctionWidget(
-        transferFunction, transferFunctionUpdatedCallback);
+        testScene->getTransferFunction(), transferFunctionUpdatedCallback);
     transferFunctionWidget.updateUI();
   });
 
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
-
-  // cleanup remaining objects
-  ospRelease(world);
-  ospRelease(renderer);
 
   // cleanly shut OSPRay down
   ospShutdown();

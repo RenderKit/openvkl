@@ -23,6 +23,10 @@
 using namespace ospcommon;
 using namespace volley::testing;
 
+OSPVolume convertToOSPVolume(
+    std::shared_ptr<WaveletProceduralVolume> proceduralVolume,
+    OSPTransferFunction transferFunction);
+
 struct OSPRayVolleyTestScene
 {
   OSPRayVolleyTestScene(
@@ -35,13 +39,19 @@ struct OSPRayVolleyTestScene
 
     renderer = ospNewRenderer(rendererType.c_str());
 
-    ospSetVoidPtr(
-        renderer, "vlyVolume", (void *)proceduralVolume->getVLYVolume());
-
-    OSPTransferFunction transferFunction =
+    transferFunction =
         ospTestingNewTransferFunction(osp::vec2f{-1.f, 1.f}, "jet");
     ospSetObject(renderer, "transferFunction", transferFunction);
     ospRelease(transferFunction);
+
+    if (rendererType.find("volley") != std::string::npos) {
+      ospSetVoidPtr(
+          renderer, "vlyVolume", (void *)proceduralVolume->getVLYVolume());
+    } else {
+      // OSPRay native renderer
+      OSPVolume volume = convertToOSPVolume(proceduralVolume, transferFunction);
+      ospSetVoidPtr(renderer, "volume", (void *)volume);
+    }
 
     ospCommit(renderer);
   }
@@ -52,14 +62,31 @@ struct OSPRayVolleyTestScene
     ospRelease(renderer);
   }
 
+  void setIsovalues(const std::vector<float> &isovalues)
+  {
+    OSPData isovaluesData =
+        ospNewData(isovalues.size(), OSP_FLOAT, isovalues.data());
+    ospSetObject(renderer, "isosurfaces", isovaluesData);
+    ospRelease(isovaluesData);
+
+    ospCommit(renderer);
+  }
+
   OSPModel getWorld()
   {
     return world;
   }
+
   OSPRenderer getRenderer()
   {
     return renderer;
   }
+
+  OSPTransferFunction getTransferFunction()
+  {
+    return transferFunction;
+  }
+
   box3f getBoundingBox()
   {
     vly_box3f boundingBox = vlyGetBoundingBox(proceduralVolume->getVLYVolume());
@@ -79,6 +106,7 @@ struct OSPRayVolleyTestScene
 
   OSPModel world;
   OSPRenderer renderer;
+  OSPTransferFunction transferFunction;
 };
 
 void initializeOSPRay()
@@ -114,4 +142,34 @@ void initializeVolley()
 
     initialized = true;
   }
+}
+
+OSPVolume convertToOSPVolume(
+    std::shared_ptr<WaveletProceduralVolume> proceduralVolume,
+    OSPTransferFunction transferFunction)
+{
+  OSPVolume volume = ospNewVolume("shared_structured_volume");
+
+  vec3i dimensions  = proceduralVolume->getDimensions();
+  vec3f gridOrigin  = proceduralVolume->getGridOrigin();
+  vec3f gridSpacing = proceduralVolume->getGridSpacing();
+
+  ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  ospSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+  ospSet3f(volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
+
+  ospSetString(volume, "voxelType", "float");
+
+  std::vector<float> voxels = proceduralVolume->generateVoxels();
+
+  OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
+  ospSetData(volume, "voxelData", voxelData);
+  ospRelease(voxelData);
+
+  // required by OSPRay but not used in simple native renderer
+  ospSetObject(volume, "transferFunction", transferFunction);
+
+  ospCommit(volume);
+
+  return volume;
 }

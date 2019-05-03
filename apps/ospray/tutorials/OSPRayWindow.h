@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include <functional>
 #include "ArcballCamera.h"
 #include "ospray/ospcommon/box.h"
 #include "ospray/ospcommon/vec.h"

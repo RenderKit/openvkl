@@ -17,21 +17,22 @@
 #include "OSPRayVolleyTestScene.h"
 #include "benchmark/benchmark.h"
 
-static void volley_volume_only(benchmark::State &state,
-                               const std::string &rendererType,
-                               const vec2i &windowSize,
-                               int volumeDimension)
+static void volume_render_wavelet(benchmark::State &state,
+                                  const std::string &rendererType,
+                                  const vec2i &windowSize,
+                                  int volumeDimension)
 {
   initializeOSPRay();
   initializeVolley();
 
-  std::shared_ptr<WaveletProceduralVolume> v(new WaveletProceduralVolume(
-      vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension)));
+  std::shared_ptr<WaveletProceduralVolume> proceduralVolume(
+      new WaveletProceduralVolume(
+          vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension)));
 
-  std::unique_ptr<OSPRayVolleyTestScene> ovts(
-      new OSPRayVolleyTestScene(rendererType, v));
+  std::unique_ptr<OSPRayVolleyTestScene> testScene(
+      new OSPRayVolleyTestScene(rendererType, proceduralVolume));
 
-  std::unique_ptr<OSPRayWindow> ow = ovts->getOSPRayWindow(windowSize);
+  std::unique_ptr<OSPRayWindow> ow = testScene->getOSPRayWindow(windowSize);
 
   for (auto _ : state) {
     ow->render();
@@ -41,15 +42,25 @@ static void volley_volume_only(benchmark::State &state,
   ow->savePPM("test.ppm");
 }
 
-BENCHMARK_CAPTURE(
-    volley_volume_only, simple_volley / 512, "simple_volley", vec2i(1024), 512);
+BENCHMARK_CAPTURE(volume_render_wavelet,
+                  simple_native / 512,
+                  "simple_native",
+                  vec2i(1024),
+                  512);
 
-BENCHMARK_CAPTURE(volley_volume_only,
+BENCHMARK_CAPTURE(volume_render_wavelet,
+                  simple_volley / 512,
+                  "simple_volley",
+                  vec2i(1024),
+                  512);
+
+BENCHMARK_CAPTURE(volume_render_wavelet,
                   volley_ray_iterator_volume / 512,
                   "volley_ray_iterator_volume",
                   vec2i(1024),
                   512);
-BENCHMARK_CAPTURE(volley_volume_only,
+
+BENCHMARK_CAPTURE(volume_render_wavelet,
                   volley_ray_iterator / 512,
                   "volley_ray_iterator",
                   vec2i(1024),

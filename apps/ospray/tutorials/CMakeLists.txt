@@ -49,3 +49,21 @@ target_compile_definitions(ospTutorialISPCVolley PRIVATE GL_SILENCE_DEPRECATION)
 install(TARGETS ospTutorialISPCVolley
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+## OSPRay-based Volley benchmark ##
+add_executable(ospBenchmarkVolley
+  ArcballCamera.cpp
+  OSPRayWindow.cpp
+  ospBenchmarkVolley.cpp
+)
+
+target_link_libraries(ospBenchmarkVolley
+  benchmark
+  volley_testing
+  ospray::ospray_testing
+  ospray_module_ispc_volley
+)
+
+install(TARGETS ospBenchmarkVolley
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)

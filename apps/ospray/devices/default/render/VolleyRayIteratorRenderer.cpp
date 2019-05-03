@@ -23,9 +23,6 @@ namespace ospray {
 
   VolleyRayIteratorRenderer::VolleyRayIteratorRenderer()
   {
-    std::cout << "creating OSPRay ISPC device VolleyRayIteratorRenderer"
-              << std::endl;
-
     setParam<std::string>("externalNameFromAPI", "volley_ray_iterator");
 
     ispcEquivalent = ispc::VolleyRayIteratorRenderer_create(this);

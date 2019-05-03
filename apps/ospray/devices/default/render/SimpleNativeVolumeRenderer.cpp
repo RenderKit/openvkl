@@ -22,9 +22,6 @@ namespace ospray {
 
   SimpleNativeVolumeRenderer::SimpleNativeVolumeRenderer()
   {
-    std::cout << "creating OSPRay ISPC device SimpleNativeVolumeRenderer"
-              << std::endl;
-
     setParam<std::string>("externalNameFromAPI", "native");
 
     ispcEquivalent = ispc::SimpleNativeVolumeRenderer_create(this);

@@ -17,41 +17,6 @@
 #include "OSPRayVolleyTestScene.h"
 #include "benchmark/benchmark.h"
 
-void initializeOSPRay()
-{
-  static bool initialized = false;
-
-  if (!initialized) {
-    OSPError initError = ospInit(nullptr, nullptr);
-
-    if (initError != OSP_NO_ERROR)
-      throw std::runtime_error("error initializing OSPRay");
-
-    ospDeviceSetErrorFunc(
-        ospGetCurrentDevice(), [](OSPError error, const char *errorDetails) {
-          std::cerr << "OSPRay error: " << errorDetails << std::endl;
-          exit(error);
-        });
-
-    initialized = true;
-  }
-}
-
-void initializeVolley()
-{
-  static bool initialized = false;
-
-  if (!initialized) {
-    vlyLoadModule("ispc_driver");
-
-    VLYDriver driver = vlyNewDriver("ispc_driver");
-    vlyCommitDriver(driver);
-    vlySetCurrentDriver(driver);
-
-    initialized = true;
-  }
-}
-
 static void volley_volume_only(benchmark::State &state,
                                const std::string &rendererType,
                                const vec2i &windowSize,

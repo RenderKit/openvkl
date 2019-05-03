@@ -52,6 +52,20 @@ struct OSPRayVolleyTestScene
     ospRelease(renderer);
   }
 
+  OSPModel getWorld()
+  {
+    return world;
+  }
+  OSPRenderer getRenderer()
+  {
+    return renderer;
+  }
+  box3f getBoundingBox()
+  {
+    vly_box3f boundingBox = vlyGetBoundingBox(proceduralVolume->getVLYVolume());
+    return reinterpret_cast<box3f &>(boundingBox);
+  }
+
   std::unique_ptr<OSPRayWindow> getOSPRayWindow(const vec2i &windowSize)
   {
     vly_box3f boundingBox = vlyGetBoundingBox(proceduralVolume->getVLYVolume());

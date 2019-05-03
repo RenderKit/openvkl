@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospBenchmarkVolley.h"
+#include "OSPRayVolleyTestScene.h"
 #include "benchmark/benchmark.h"
 
 void initializeOSPRay()

@@ -213,13 +213,13 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
 
     // transform object-space direction and origin to cell-space
     const vec3f cellDirection =
-        rayIterator->direction * rcp_safe(volume->gridSpacing) * rcp(16.f);
+        rayIterator->direction * 1.f / volume->gridSpacing * 1.f / (16.f);
 
-    const vec3f rcpCellDirection = rcp_safe(cellDirection);
+    const vec3f rcpCellDirection = 1.f / cellDirection;
 
     vec3f cellOrigin;
     volume->transformObjectToLocal(volume, rayIterator->origin, cellOrigin);
-    cellOrigin = cellOrigin * rcp(16.f);
+    cellOrigin = cellOrigin * 1.f / (16.f);
 
     // sign of direction determines index delta (1 or -1 in each dimension) to
     // far corner cell

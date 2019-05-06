@@ -67,7 +67,7 @@ inline void SharedStructuredVolume_transformObjectToLocal(
     varying vec3f &localCoordinates)
 {
   localCoordinates =
-      rcp(volume->gridSpacing) * (objectCoordinates - volume->gridOrigin);
+      1.f / (volume->gridSpacing) * (objectCoordinates - volume->gridOrigin);
 }
 
 inline varying float SharedStructuredVolume_sample(

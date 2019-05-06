@@ -182,7 +182,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
     if (!isnan(sample0 + sample) && (sample != sample0)) {
       for (uniform int i = 0; i < numValues; i++) {
         if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {
-          const float rcpSamp = rcpf(sample - sample0);
+          const float rcpSamp = 1.f/(sample - sample0);
           float tIso          = inf;
           if (!isnan(rcpSamp)) {
             tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);

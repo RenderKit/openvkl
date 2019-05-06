@@ -29,7 +29,7 @@ if (BUILD_ISPC_DRIVER)
 
   include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
 
-  ospray_add_library(volley_module_ispc_driver SHARED
+  volley_add_library_ispc(volley_module_ispc_driver SHARED
     api/ISPCDriver.cpp
     iterator/DumbRayIterator.cpp
     iterator/DumbRayIterator.ispc

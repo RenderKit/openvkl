@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2018 Intel Corporation                                         ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,33 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-project(Volley)
-
-cmake_minimum_required(VERSION 3.12)
-
-set(CMAKE_CXX_STANDARD 11)
-
-set(CMAKE_DISABLE_SOURCE_CHANGES ON)
-set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-include(volley_macros)
-include(volley_ispc)
-
-include(GNUInstallDirs)
-
-find_package(ospray 1.8.0 REQUIRED)
-include(${OSPRAY_USE_FILE})
-
-ospray_configure_tasking_system()
-
-add_subdirectory(volley)
-add_subdirectory(apps)
-add_subdirectory(testing)
-
-## CPack configuration (has to be last) ##
-include(CPack)
+macro(volley_add_library_ispc name type)
+  set(ISPC_SOURCES "")
+  set(OTHER_SOURCES "")
+  foreach(src ${ARGN})
+    get_filename_component(ext ${src} EXT)
+    if (ext STREQUAL ".ispc")
+      set(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+    else()
+      set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+    endif ()
+  endforeach()
+  volley_ispc_compile(${ISPC_SOURCES})
+  add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+endmacro()

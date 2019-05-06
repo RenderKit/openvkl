@@ -24,18 +24,18 @@ find_package(OpenGL 2 REQUIRED)
 ## GLFW dependency ##
 find_package(glfw3 REQUIRED)
 
-## OSPRay-based Volley tutorial, using ISPC device extensions ##
-add_executable(ospTutorialISPCVolley
+## OSPRay-based Volley example, using ISPC device extensions ##
+add_executable(ospExampleVolley
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   OSPRayWindow.cpp
   OSPRayVolleyTestScene.cpp
   TransferFunctionWidget.cpp
-  ospTutorialISPCVolley.cpp
+  ospExampleVolley.cpp
   imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospTutorialISPCVolley
+target_link_libraries(ospExampleVolley
   volley
   volley_testing
   glfw
@@ -45,9 +45,9 @@ target_link_libraries(ospTutorialISPCVolley
   ${OPENGL_LIBRARIES}
 )
 
-target_compile_definitions(ospTutorialISPCVolley PRIVATE GL_SILENCE_DEPRECATION)
+target_compile_definitions(ospExampleVolley PRIVATE GL_SILENCE_DEPRECATION)
 
-install(TARGETS ospTutorialISPCVolley
+install(TARGETS ospExampleVolley
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

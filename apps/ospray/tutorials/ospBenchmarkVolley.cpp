@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <sstream>
 #include "OSPRayVolleyTestScene.h"
 #include "benchmark/benchmark.h"
 
@@ -37,9 +38,17 @@ static void volume_render_wavelet(benchmark::State &state,
   for (auto _ : state) {
     ow->render();
   }
+
+  // enables rates in report output
   state.SetItemsProcessed(state.iterations());
 
-  ow->savePPM("test.ppm");
+  // save image on completion of benchmark; note we apparently have no way to
+  // get the formal benchmark name, so we'll create one here
+  static int ppmCounter = 0;
+  std::stringstream ss;
+  ss << "volume_render_wavelet_" << ppmCounter << ".ppm";
+  ow->savePPM(ss.str());
+  ppmCounter++;
 }
 
 BENCHMARK_CAPTURE(volume_render_wavelet,

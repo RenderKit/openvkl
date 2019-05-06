@@ -31,6 +31,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(volley_macros)
 include(volley_ispc)
 
+volley_configure_build_type()
+
 include(GNUInstallDirs)
 
 find_package(ospray 1.8.0 REQUIRED)

@@ -29,6 +29,7 @@ add_executable(ospTutorialISPCVolley
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   OSPRayWindow.cpp
+  OSPRayVolleyTestScene.cpp
   TransferFunctionWidget.cpp
   ospTutorialISPCVolley.cpp
   imgui_impl_glfw_gl3.cpp
@@ -54,6 +55,7 @@ install(TARGETS ospTutorialISPCVolley
 add_executable(ospBenchmarkVolley
   ArcballCamera.cpp
   OSPRayWindow.cpp
+  OSPRayVolleyTestScene.cpp
   ospBenchmarkVolley.cpp
 )
 

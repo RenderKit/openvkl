@@ -73,7 +73,7 @@ namespace volley {
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    float getWaveletValue(const vec3f &objectCoordinates)
+    inline float getWaveletValue(const vec3f &objectCoordinates)
     {
       // wavelet parameters
       constexpr float M  = 1.f;

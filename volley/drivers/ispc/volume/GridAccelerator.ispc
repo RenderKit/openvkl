@@ -34,6 +34,9 @@
 // macrocell width in volume cells
 #define CELL_WIDTH (1 << CELL_WIDTH_BITCOUNT)
 
+// reciprocal of macrocell width in volume cells
+#define RCP_CELL_WIDTH 1.f / CELL_WIDTH
+
 inline uint32 GridAccelerator_getCellAddress(
     GridAccelerator *uniform accelerator, const varying vec3i &cellIndex)
 {
@@ -213,13 +216,13 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
 
     // transform object-space direction and origin to cell-space
     const vec3f cellDirection =
-        rayIterator->direction * 1.f / volume->gridSpacing * 1.f / (16.f);
+        rayIterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH;
 
     const vec3f rcpCellDirection = 1.f / cellDirection;
 
     vec3f cellOrigin;
     volume->transformObjectToLocal(volume, rayIterator->origin, cellOrigin);
-    cellOrigin = cellOrigin * 1.f / (16.f);
+    cellOrigin = cellOrigin * RCP_CELL_WIDTH;
 
     // sign of direction determines index delta (1 or -1 in each dimension) to
     // far corner cell

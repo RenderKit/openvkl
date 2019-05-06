@@ -52,8 +52,8 @@ BENCHMARK_F(VolleyFixture, scalarRandomSample)(benchmark::State &state)
   for (auto _ : state) {
     vly_vec3f objectCoordinates{distX(eng), distY(eng), distZ(eng)};
 
-    float sample =
-        vlyComputeSample(vlyVolume, (const vly_vec3f *)&objectCoordinates);
+    benchmark::DoNotOptimize(
+        vlyComputeSample(vlyVolume, (const vly_vec3f *)&objectCoordinates));
   }
 }
 

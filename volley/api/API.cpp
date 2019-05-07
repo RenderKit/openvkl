@@ -378,34 +378,28 @@ extern "C" float vlyComputeSample(
 }
 VOLLEY_CATCH_END(ospcommon::nan)
 
-extern "C" void vlyComputeSample8(const int *valid,
-                                  VLYVolume volume,
-                                  const vly_vvec3f8 *objectCoordinates,
-                                  float *samples) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
+#define __define_vlyComputeSampleN(WIDTH)                                \
+  extern "C" void vlyComputeSample##WIDTH(                               \
+      const int *valid,                                                  \
+      VLYVolume volume,                                                  \
+      const vly_vvec3f##WIDTH *objectCoordinates,                        \
+      float *samples) VOLLEY_CATCH_BEGIN                                 \
+  {                                                                      \
+    ASSERT_DRIVER();                                                     \
+                                                                         \
+    volley::api::currentDriver().computeSample##WIDTH(                   \
+        valid,                                                           \
+        volume,                                                          \
+        reinterpret_cast<const vly_vvec3f##WIDTH &>(*objectCoordinates), \
+        samples);                                                        \
+  }                                                                      \
+  VOLLEY_CATCH_END()
 
-#if 0
-  std::cout << std::endl << "API::vlyComputeSample8()" << std::endl;
-  std::cout << " &valid: " << valid << std::endl;
-  std::cout << " volume: " << volume << std::endl;
-  std::cout << " &objectCoordinates: " << objectCoordinates << std::endl;
-  std::cout << " &samples: " << samples << std::endl;
+__define_vlyComputeSampleN(4);
+__define_vlyComputeSampleN(8);
+__define_vlyComputeSampleN(16);
 
-  for (int i = 0; i < 8; i++) {
-    std::cout << "(x, y, z): (" << objectCoordinates->x[i] << ", "
-              << objectCoordinates->y[i] << ", " << objectCoordinates->z[i]
-              << ")" << std::endl;
-  }
-#endif
-
-  volley::api::currentDriver().computeSample8(
-      valid,
-      volume,
-      reinterpret_cast<const vly_vvec3f8 &>(*objectCoordinates),
-      samples);
-}
-VOLLEY_CATCH_END()
+#undef __define_vlyComputeSampleN
 
 extern "C" vly_vec3f vlyComputeGradient(
     VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN

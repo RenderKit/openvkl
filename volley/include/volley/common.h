@@ -29,22 +29,29 @@ typedef struct
 
 typedef struct
 {
-  float x[8];
-  float y[8];
-  float z[8];
-} vly_vvec3f8;
-
-typedef struct
-{
   float lower, upper;
 } vly_range1f;
 
 typedef struct
 {
-  float lower[8], upper[8];
-} vly_vrange1f8;
-
-typedef struct
-{
   vly_vec3f lower, upper;
 } vly_box3f;
+
+#define __define_wide_types(WIDTH)    \
+  typedef struct                      \
+  {                                   \
+    float x[WIDTH];                   \
+    float y[WIDTH];                   \
+    float z[WIDTH];                   \
+  } vly_vvec3f##WIDTH;                \
+                                      \
+  typedef struct                      \
+  {                                   \
+    float lower[WIDTH], upper[WIDTH]; \
+  } vly_vrange1f##WIDTH;
+
+__define_wide_types(4);
+__define_wide_types(8);
+__define_wide_types(16);
+
+#undef __define_wide_types

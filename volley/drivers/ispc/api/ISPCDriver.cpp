@@ -222,14 +222,22 @@ namespace volley {
       return volumeObject.computeSample(objectCoordinates);
     }
 
-    void ISPCDriver::computeSample8(const int *valid,
-                                    VLYVolume volume,
-                                    const vly_vvec3f8 &objectCoordinates,
-                                    float *samples)
-    {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
-      volumeObject.computeSample8(valid, objectCoordinates, samples);
-    }
+#define __define_computeSampleN(WIDTH)                                    \
+  void ISPCDriver::computeSample##WIDTH(                                  \
+      const int *valid,                                                   \
+      VLYVolume volume,                                                   \
+      const vly_vvec3f##WIDTH &objectCoordinates,                         \
+      float *samples)                                                     \
+  {                                                                       \
+    auto &volumeObject = referenceFromHandle<Volume>(volume);             \
+    volumeObject.computeSample##WIDTH(valid, objectCoordinates, samples); \
+  }
+
+    __define_computeSampleN(4);
+    __define_computeSampleN(8);
+    __define_computeSampleN(16);
+
+#undef __define_computeSampleN
 
     vec3f ISPCDriver::computeGradient(VLYVolume volume,
                                       const vec3f &objectCoordinates)

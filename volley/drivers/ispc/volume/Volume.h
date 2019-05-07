@@ -71,19 +71,27 @@ namespace volley {
 
       virtual float computeSample(const vec3f &objectCoordinates) const = 0;
 
-      // default implementation if no vector implementations are defined
-      virtual void computeSample8(const int *valid,
-                                  const vly_vvec3f8 &objectCoordinates,
-                                  float *samples)
-      {
-        for (int i = 0; i < 8; i++) {
-          if (valid[i]) {
-            samples[i] = computeSample(vec3f{objectCoordinates.x[i],
-                                             objectCoordinates.y[i],
-                                             objectCoordinates.z[i]});
-          }
-        }
-      }
+// default implementation if no vector implementations are defined
+#define __define_computeSampleN(WIDTH)                             \
+  virtual void computeSample##WIDTH(                               \
+      const int *valid,                                            \
+      const vly_vvec3f##WIDTH &objectCoordinates,                  \
+      float *samples)                                              \
+  {                                                                \
+    for (int i = 0; i < WIDTH; i++) {                              \
+      if (valid[i]) {                                              \
+        samples[i] = computeSample(vec3f{objectCoordinates.x[i],   \
+                                         objectCoordinates.y[i],   \
+                                         objectCoordinates.z[i]}); \
+      }                                                            \
+    }                                                              \
+  }
+
+      __define_computeSampleN(4);
+      __define_computeSampleN(8);
+      __define_computeSampleN(16);
+
+#undef __define_computeSampleN
 
       virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
       virtual box3f getBoundingBox() const                                = 0;

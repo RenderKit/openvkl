@@ -120,10 +120,17 @@ namespace volley {
       float computeSample(VLYVolume volume,
                           const vec3f &objectCoordinates) override;
 
-      void computeSample8(const int *valid,
-                          VLYVolume volume,
-                          const vly_vvec3f8 &objectCoordinates,
-                          float *samples) override;
+#define __define_computeSampleN(WIDTH)                                  \
+  void computeSample##WIDTH(const int *valid,                           \
+                            VLYVolume volume,                           \
+                            const vly_vvec3f##WIDTH &objectCoordinates, \
+                            float *samples) override;
+
+      __define_computeSampleN(4);
+      __define_computeSampleN(8);
+      __define_computeSampleN(16);
+
+#undef __define_computeSampleN
 
       vec3f computeGradient(VLYVolume volume,
                             const vec3f &objectCoordinates) override;

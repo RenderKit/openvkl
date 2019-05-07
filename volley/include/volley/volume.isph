@@ -23,11 +23,23 @@
 struct VolleyVolume;
 typedef VolleyVolume *uniform VLYVolume;
 
+VLY_API void vlyComputeSample4(const int *uniform valid,
+                               VLYVolume volume,
+                               const varying struct vly_vec3f *uniform
+                                   objectCoordinates,
+                               varying float *uniform samples);
+
 VLY_API void vlyComputeSample8(const int *uniform valid,
                                VLYVolume volume,
                                const varying struct vly_vec3f *uniform
                                    objectCoordinates,
                                varying float *uniform samples);
+
+VLY_API void vlyComputeSample16(const int *uniform valid,
+                                VLYVolume volume,
+                                const varying struct vly_vec3f *uniform
+                                    objectCoordinates,
+                                varying float *uniform samples);
 
 VLY_FORCEINLINE varying float vlyComputeSampleV(
     VLYVolume volume, const varying vly_vec3f *uniform objectCoordinates)
@@ -37,12 +49,21 @@ VLY_FORCEINLINE varying float vlyComputeSampleV(
   {
     varying int imask = mask ? -1 : 0;
   }
-  if (sizeof(varying float) == 32) {
-    varying float samples;
+
+  varying float samples;
+
+  if (sizeof(varying float) == 16) {
+    vlyComputeSample4(
+        (uniform int *uniform) & imask, volume, objectCoordinates, &samples);
+  } else if (sizeof(varying float) == 32) {
     vlyComputeSample8(
         (uniform int *uniform) & imask, volume, objectCoordinates, &samples);
-    return samples;
+  } else if (sizeof(varying float) == 64) {
+    vlyComputeSample16(
+        (uniform int *uniform) & imask, volume, objectCoordinates, &samples);
   }
+
+  return samples;
 }
 
 VLY_API uniform vly_box3f vlyGetBoundingBox(VLYVolume volume);

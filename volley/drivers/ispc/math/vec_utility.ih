@@ -1,0 +1,42 @@
+// ======================================================================== //
+// Copyright 2009-2019 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "math_utility.ih"
+#include "math/vec.ih"
+
+#define __lift_unary_fct(F)                             \
+  inline uniform vec2f F(const uniform vec2f v)         \
+  { return make_vec2f(F(v.x),F(v.y)); }                 \
+  inline vec2f F(const vec2f v)                         \
+  { return make_vec2f(F(v.x),F(v.y)); }                 \
+  inline uniform vec3f F(const uniform vec3f v)         \
+  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }          \
+  inline vec3f F(const vec3f v)                         \
+  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }          \
+  inline uniform vec3fa F(const uniform vec3fa v)       \
+  { return make_vec3fa(F(v.x),F(v.y),F(v.z)); }         \
+  inline vec3fa F(const vec3fa v)                       \
+  { return make_vec3fa(F(v.x),F(v.y),F(v.z)); }         \
+  inline uniform vec4f F(const uniform vec4f v)         \
+  { return make_vec4f(F(v.x),F(v.y),F(v.z),F(v.w)); }   \
+  inline vec4f F(const vec4f v)                         \
+  { return make_vec4f(F(v.x),F(v.y),F(v.z),F(v.w)); }
+
+__lift_unary_fct(divide_safe)
+
+#undef __lift_unary_fct

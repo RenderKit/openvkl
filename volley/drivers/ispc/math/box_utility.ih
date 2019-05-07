@@ -17,6 +17,7 @@
 #pragma once
 
 #include "math/box.ih"
+#include "math/vec_utility.ih"
 
 inline varying bool isempty1f(const varying box1f &box)
 {
@@ -40,8 +41,8 @@ inline varying box1f intersectBox(const varying vec3f &origin,
                                   const varying box3f &box,
                                   const varying box1f &rangeLimit)
 {
-  const varying vec3f mins = (box.lower - origin) * rcp_safe(direction);
-  const varying vec3f maxs = (box.upper - origin) * rcp_safe(direction);
+  const varying vec3f mins = (box.lower - origin) * divide_safe(direction);
+  const varying vec3f maxs = (box.upper - origin) * divide_safe(direction);
 
   varying box1f result;
   result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
@@ -55,8 +56,8 @@ inline varying box1f intersectBox(const varying vec3f &origin,
                                   const uniform box3f &box,
                                   const varying box1f &rangeLimit)
 {
-  const varying vec3f mins = (box.lower - origin) * rcp_safe(direction);
-  const varying vec3f maxs = (box.upper - origin) * rcp_safe(direction);
+  const varying vec3f mins = (box.lower - origin) * divide_safe(direction);
+  const varying vec3f maxs = (box.upper - origin) * divide_safe(direction);
 
   varying box1f result;
   result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));

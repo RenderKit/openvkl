@@ -23,9 +23,6 @@ static void volume_render_wavelet(benchmark::State &state,
                                   const vec2i &windowSize,
                                   int volumeDimension)
 {
-  initializeOSPRay();
-  initializeVolley();
-
   std::shared_ptr<WaveletProceduralVolume> proceduralVolume(
       new WaveletProceduralVolume(
           vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension)));
@@ -75,4 +72,17 @@ BENCHMARK_CAPTURE(volume_render_wavelet,
                   vec2i(1024),
                   512);
 
-BENCHMARK_MAIN();
+// based on BENCHMARK_MAIN() macro from benchmark.h
+int main(int argc, char **argv)
+{
+  initializeOSPRay();
+  initializeVolley();
+
+  ::benchmark::Initialize(&argc, argv);
+  if (::benchmark::ReportUnrecognizedArguments(argc, argv))
+    return 1;
+  ::benchmark::RunSpecifiedBenchmarks();
+
+  vlyShutdown();
+  ospShutdown();
+}

@@ -52,6 +52,13 @@ void postTraceMessage(const std::string &message)
         "first calling vlyInit())" +            \
         getPidString());
 
+#define ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH)                                \
+  if (!volley::api::currentDriver().supportsWidth(WIDTH))                  \
+    throw std::runtime_error(                                              \
+        "the current Volley driver does not support the requested vector " \
+        "width " +                                                          \
+        std::string(#WIDTH));
+
 #warning API tracing disabled
 
 #define VOLLEY_CATCH_BEGIN_TRACE           \
@@ -386,6 +393,7 @@ VOLLEY_CATCH_END(ospcommon::nan)
       float *samples) VOLLEY_CATCH_BEGIN                                 \
   {                                                                      \
     ASSERT_DRIVER();                                                     \
+    ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH);                                 \
                                                                          \
     volley::api::currentDriver().computeSample##WIDTH(                   \
         valid,                                                           \

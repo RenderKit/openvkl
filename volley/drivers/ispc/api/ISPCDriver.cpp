@@ -17,10 +17,18 @@
 #include "ISPCDriver.h"
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
+#include "ISPCDriver_ispc.h"
 #include "common/Data.h"
 
 namespace volley {
   namespace ispc_driver {
+
+    bool ISPCDriver::supportsWidth(int width)
+    {
+      static int ispcWidth = ispc::get_programCount();
+
+      return ispcWidth == width;
+    }
 
     void ISPCDriver::commit()
     {

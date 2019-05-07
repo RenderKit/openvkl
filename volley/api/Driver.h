@@ -52,6 +52,11 @@ namespace volley {
       VLYError lastErrorCode       = VLY_NO_ERROR;
       std::string lastErrorMessage = "no error";
 
+      virtual bool supportsWidth(int width)
+      {
+        return false;
+      }
+
       virtual void commit();
       bool isCommitted();
       virtual void commit(VLYObject object) = 0;

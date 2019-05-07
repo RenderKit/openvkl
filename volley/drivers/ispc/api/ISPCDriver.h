@@ -26,6 +26,8 @@ namespace volley {
       ISPCDriver()           = default;
       ~ISPCDriver() override = default;
 
+      virtual bool supportsWidth(int width) override;
+
       virtual void commit() override;
 
       virtual void commit(VLYObject object) override;

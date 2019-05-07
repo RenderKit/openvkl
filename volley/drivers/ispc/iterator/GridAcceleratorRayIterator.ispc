@@ -56,9 +56,14 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
   self->boundingBoxTRange = intersectBox(
       self->origin, self->direction, self->volume->boundingBox, self->tRange);
 
-  const uniform float epsilon = reduce_min(self->volume->gridSpacing) * 0.125f;
+  // if using ISPC fast-math and approximate rcp() functions, an epsilon needs
+  // to be added to the bounding box intersection to prevent artifacts. this is
+  // because the inverse coordinate transformation may land outside a grid cell.
+  // the artifacts may look like speckles, or cross-hairs in orthographic camera
+  // views.
+  /*const uniform float epsilon = reduce_min(self->volume->gridSpacing) * 0.125f;
 
-  self->boundingBoxTRange.lower += epsilon;
+  self->boundingBoxTRange.lower += epsilon;*/
 
   resetRayInterval(self->intervalState.currentRayInterval);
   self->intervalState.currentCellIndex = make_vec3i(-1);
@@ -182,7 +187,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
     if (!isnan(sample0 + sample) && (sample != sample0)) {
       for (uniform int i = 0; i < numValues; i++) {
         if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {
-          const float rcpSamp = 1.f/(sample - sample0);
+          const float rcpSamp = 1.f / (sample - sample0);
           float tIso          = inf;
           if (!isnan(rcpSamp)) {
             tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);

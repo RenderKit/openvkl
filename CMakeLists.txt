@@ -32,6 +32,7 @@ include(volley_macros)
 include(volley_ispc)
 
 volley_configure_build_type()
+volley_configure_ispc_isa()
 
 include(GNUInstallDirs)
 

@@ -15,12 +15,8 @@
 // ======================================================================== //
 
 #include "RayIterator.ih"
+#include "math/box_utility.ih"
 #include "math/vec.ih"
-
-inline varying bool isempty1f(varying box1f &box)
-{
-  return box.upper < box.lower;
-}
 
 struct DumbRayIterator
 {
@@ -47,21 +43,6 @@ inline void printDumbRayIterator(uniform DumbRayIterator *uniform self)
   print("boundingBoxTRange:\n  %\n  %\n",
         self->boundingBoxTRange.lower,
         self->boundingBoxTRange.upper);
-}
-
-inline varying box1f intersectBox(const varying vec3f &origin,
-                                  const varying vec3f &direction,
-                                  const uniform box3f &box,
-                                  const varying box1f &rangeLimit)
-{
-  const varying vec3f mins = (box.lower - origin) * rcp_safe(direction);
-  const varying vec3f maxs = (box.upper - origin) * rcp_safe(direction);
-
-  varying box1f result;
-  result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
-  result.upper = reduce_min(make_vec4f(max(mins, maxs), rangeLimit.upper));
-
-  return result;
 }
 
 export void *uniform

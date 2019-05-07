@@ -33,6 +33,8 @@ void vlyCommit(VLYObject object);
 
 void vlyRelease(VLYObject object);
 
+void vlyShutdown();
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

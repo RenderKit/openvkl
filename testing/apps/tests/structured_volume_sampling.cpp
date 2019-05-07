@@ -48,7 +48,7 @@ TEST_CASE("Structured volume sampling")
                                   << objectCoordinates.z);
       CHECK(
           vlyComputeSample(vlyVolume, (const vly_vec3f *)&objectCoordinates) ==
-          Approx(v->computeProceduralValue(objectCoordinates)).epsilon(0.01));
+          Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
     }
   }
 }

@@ -25,9 +25,14 @@ namespace volley {
 
     bool ISPCDriver::supportsWidth(int width)
     {
-      static int ispcWidth = ispc::get_programCount();
-
+      static int ispcWidth = getNativeWidth();
       return ispcWidth == width;
+    }
+
+    int ISPCDriver::getNativeWidth()
+    {
+      static int ispcWidth = ispc::get_programCount();
+      return ispcWidth;
     }
 
     void ISPCDriver::commit()

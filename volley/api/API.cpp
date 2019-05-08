@@ -56,7 +56,7 @@ void postTraceMessage(const std::string &message)
   if (!volley::api::currentDriver().supportsWidth(WIDTH))                  \
     throw std::runtime_error(                                              \
         "the current Volley driver does not support the requested vector " \
-        "width " +                                                          \
+        "width " +                                                         \
         std::string(#WIDTH));
 
 #warning API tracing disabled
@@ -385,22 +385,22 @@ extern "C" float vlyComputeSample(
 }
 VOLLEY_CATCH_END(ospcommon::nan)
 
-#define __define_vlyComputeSampleN(WIDTH)                                \
-  extern "C" void vlyComputeSample##WIDTH(                               \
-      const int *valid,                                                  \
-      VLYVolume volume,                                                  \
-      const vly_vvec3f##WIDTH *objectCoordinates,                        \
-      float *samples) VOLLEY_CATCH_BEGIN                                 \
-  {                                                                      \
-    ASSERT_DRIVER();                                                     \
-    ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH);                                 \
-                                                                         \
-    volley::api::currentDriver().computeSample##WIDTH(                   \
-        valid,                                                           \
-        volume,                                                          \
-        reinterpret_cast<const vly_vvec3f##WIDTH &>(*objectCoordinates), \
-        samples);                                                        \
-  }                                                                      \
+#define __define_vlyComputeSampleN(WIDTH)                             \
+  extern "C" void vlyComputeSample##WIDTH(                            \
+      const int *valid,                                               \
+      VLYVolume volume,                                               \
+      const vly_vvec3f##WIDTH *objectCoordinates,                     \
+      float *samples) VOLLEY_CATCH_BEGIN                              \
+  {                                                                   \
+    ASSERT_DRIVER();                                                  \
+    ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH);                              \
+                                                                      \
+    volley::api::currentDriver().computeSample##WIDTH(                \
+        valid,                                                        \
+        volume,                                                       \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
+        reinterpret_cast<vfloatn<WIDTH> &>(*samples));                \
+  }                                                                   \
   VOLLEY_CATCH_END()
 
 __define_vlyComputeSampleN(4);

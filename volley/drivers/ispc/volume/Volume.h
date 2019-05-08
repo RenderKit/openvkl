@@ -72,19 +72,18 @@ namespace volley {
       virtual float computeSample(const vec3f &objectCoordinates) const = 0;
 
 // default implementation if no vector implementations are defined
-#define __define_computeSampleN(WIDTH)                             \
-  virtual void computeSample##WIDTH(                               \
-      const int *valid,                                            \
-      const vly_vvec3f##WIDTH &objectCoordinates,                  \
-      float *samples)                                              \
-  {                                                                \
-    for (int i = 0; i < WIDTH; i++) {                              \
-      if (valid[i]) {                                              \
-        samples[i] = computeSample(vec3f{objectCoordinates.x[i],   \
-                                         objectCoordinates.y[i],   \
-                                         objectCoordinates.z[i]}); \
-      }                                                            \
-    }                                                              \
+#define __define_computeSampleN(WIDTH)                                       \
+  virtual void computeSample##WIDTH(const int *valid,                        \
+                                    const vvec3fn<WIDTH> &objectCoordinates, \
+                                    vfloatn<WIDTH> &samples)                 \
+  {                                                                          \
+    for (int i = 0; i < WIDTH; i++) {                                        \
+      if (valid[i]) {                                                        \
+        samples[i] = computeSample(vec3f{objectCoordinates.x[i],             \
+                                         objectCoordinates.y[i],             \
+                                         objectCoordinates.z[i]});           \
+      }                                                                      \
+    }                                                                        \
   }
 
       __define_computeSampleN(4);

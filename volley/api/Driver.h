@@ -163,12 +163,11 @@ namespace volley {
       virtual float computeSample(VLYVolume volume,
                                   const vec3f &objectCoordinates) = 0;
 
-#define __define_computeSampleN(WIDTH)            \
-  virtual void computeSample##WIDTH(              \
-      const int *valid,                           \
-      VLYVolume volume,                           \
-      const vly_vvec3f##WIDTH &objectCoordinates, \
-      float *samples) = 0;
+#define __define_computeSampleN(WIDTH)                                       \
+  virtual void computeSample##WIDTH(const int *valid,                        \
+                                    VLYVolume volume,                        \
+                                    const vvec3fn<WIDTH> &objectCoordinates, \
+                                    vfloatn<WIDTH> &samples) = 0;
 
       __define_computeSampleN(4);
       __define_computeSampleN(8);

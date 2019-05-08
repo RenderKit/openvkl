@@ -234,8 +234,8 @@ namespace volley {
   void ISPCDriver::computeSample##WIDTH(                                  \
       const int *valid,                                                   \
       VLYVolume volume,                                                   \
-      const vly_vvec3f##WIDTH &objectCoordinates,                         \
-      float *samples)                                                     \
+      const vvec3fn<WIDTH> &objectCoordinates,                            \
+      vfloatn<WIDTH> &samples)                                            \
   {                                                                       \
     auto &volumeObject = referenceFromHandle<Volume>(volume);             \
     volumeObject.computeSample##WIDTH(valid, objectCoordinates, samples); \

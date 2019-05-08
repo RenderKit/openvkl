@@ -55,13 +55,13 @@ namespace volley {
       }
 
       // TODO: const correctness here
-#define __define_computeSampleN(WIDTH)                                       \
-  void computeSample##WIDTH(const int *valid,                                \
-                            const vly_vvec3f##WIDTH &objectCoordinates,      \
-                            float *samples) override                         \
-  {                                                                          \
-    ispc::SharedStructuredVolume_sample_export(                              \
-        valid, ispcEquivalent, (void *)&objectCoordinates, (void *)samples); \
+#define __define_computeSampleN(WIDTH)                                        \
+  void computeSample##WIDTH(const int *valid,                                 \
+                            const vvec3fn<WIDTH> &objectCoordinates,          \
+                            vfloatn<WIDTH> &samples) override                 \
+  {                                                                           \
+    ispc::SharedStructuredVolume_sample_export(                               \
+        valid, ispcEquivalent, (void *)&objectCoordinates, (void *)&samples); \
   }
 
       __define_computeSampleN(4);

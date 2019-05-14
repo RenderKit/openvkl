@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "ospray/ospcommon/platform.h"
+
 namespace volley {
 
   template <int W>
@@ -32,7 +34,7 @@ namespace volley {
   };
 
   template <int W>
-  struct vvec3fn
+  struct __aligned(64) vvec3fn
   {
     vfloatn<W> x;
     vfloatn<W> y;

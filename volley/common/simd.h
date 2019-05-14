@@ -43,8 +43,7 @@ namespace volley {
     template <int OW>
     explicit operator vvec3fn<OW>() const
     {
-#warning need to enable static assert for simd type upconversion
-      // static_assert(W < OW, "can only up-convert vvec3fn types");
+      static_assert(W <= OW, "can only up-convert vvec3fn types");
 
       vvec3fn<OW> newVec;
 

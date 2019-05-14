@@ -165,7 +165,7 @@ inline varying float SharedStructuredVolume_sample(
 export void SharedStructuredVolume_sample_export(
     uniform const int *uniform imask,
     void *uniform _volume,
-    void *uniform _objectCoordinates,
+    const void *uniform _objectCoordinates,
     void *uniform _samples)
 {
   cif(imask[programIndex])

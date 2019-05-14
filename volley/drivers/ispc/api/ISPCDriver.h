@@ -139,6 +139,24 @@ namespace volley {
                             const vec3f &objectCoordinates) override;
 
       box3f getBoundingBox(VLYVolume volume) override;
+
+     private:
+      template <int OW>
+      typename std::enable_if<(OW <= W), void>::type computeSampleAnyWidth(
+          const int *valid,
+          VLYVolume volume,
+          const vvec3fn<OW> &objectCoordinates,
+          vfloatn<OW> &samples);
+
+      template <int OW>
+      typename std::enable_if<(OW > W), void>::type computeSampleAnyWidth(
+          const int *valid,
+          VLYVolume volume,
+          const vvec3fn<OW> &objectCoordinates,
+          vfloatn<OW> &samples)
+      {
+        throw std::runtime_error("computeSample() not legal for calling width > native vector width");
+      }
     };
 
   }  // namespace ispc_driver

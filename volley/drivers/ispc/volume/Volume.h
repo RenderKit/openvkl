@@ -71,26 +71,12 @@ namespace volley {
 
       virtual float computeSample(const vec3f &objectCoordinates) const = 0;
 
-// default implementation if no vector implementations are defined
-#define __define_computeSampleN(WIDTH)                                       \
-  virtual void computeSample##WIDTH(const int *valid,                        \
-                                    const vvec3fn<WIDTH> &objectCoordinates, \
-                                    vfloatn<WIDTH> &samples)                 \
-  {                                                                          \
-    for (int i = 0; i < WIDTH; i++) {                                        \
-      if (valid[i]) {                                                        \
-        samples[i] = computeSample(vec3f{objectCoordinates.x[i],             \
-                                         objectCoordinates.y[i],             \
-                                         objectCoordinates.z[i]});           \
-      }                                                                      \
-    }                                                                        \
-  }
-
-      __define_computeSampleN(4);
-      __define_computeSampleN(8);
-      __define_computeSampleN(16);
-
-#undef __define_computeSampleN
+      // assumes parameters match the native ISPC data layout for the native
+      // vector width; we don't use explicit types partly because virtual
+      // template methods are not allowed.
+      virtual void computeSampleV(const int *valid,
+                                  const void *objectCoordinates,
+                                  void *samples) const = 0;
 
       virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
       virtual box3f getBoundingBox() const                                = 0;

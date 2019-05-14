@@ -250,45 +250,15 @@ namespace volley {
       return volumeObject.computeSample(objectCoordinates);
     }
 
-#define __define_computeSampleN(WIDTH)                                        \
-  template <int W>                                                            \
-  void ISPCDriver<W>::computeSample##WIDTH(                                   \
-      const int *valid,                                                       \
-      VLYVolume volume,                                                       \
-      const vvec3fn<WIDTH> &objectCoordinates,                                \
-      vfloatn<WIDTH> &samples)                                                \
-  {                                                                           \
-    auto &volumeObject = referenceFromHandle<Volume>(volume);                 \
-    if (WIDTH != W) {                                                         \
-      switch (W) {                                                            \
-      case 4:                                                                 \
-        break;                                                                \
-      case 8: {                                                               \
-        vvec3fn<8> oc8 = static_cast<vvec3fn<8>>(objectCoordinates);          \
-        vintn<8> valid8;                                                      \
-        for (int i = 0; i < 8; i++)                                           \
-          valid8[i] = i < WIDTH ? valid[i] : 0;                               \
-        vfloatn<8> samples8;                                                  \
-        volumeObject.computeSample8((const int *)&valid8, oc8, samples8);     \
-        for (int i = 0; i < WIDTH; i++)                                       \
-          samples[i] = samples8[i];                                           \
-        break;                                                                \
-      }                                                                       \
-      case 16: {                                                              \
-        vvec3fn<16> oc16 = static_cast<vvec3fn<16>>(objectCoordinates);       \
-        vintn<16> valid16;                                                    \
-        for (int i = 0; i < 16; i++)                                          \
-          valid16[i] = i < WIDTH ? valid[i] : 0;                              \
-        vfloatn<16> samples16;                                                \
-        volumeObject.computeSample16((const int *)&valid16, oc16, samples16); \
-        for (int i = 0; i < WIDTH; i++)                                       \
-          samples[i] = samples16[i];                                          \
-        break;                                                                \
-      }                                                                       \
-      }                                                                       \
-    } else {                                                                  \
-      volumeObject.computeSample##WIDTH(valid, objectCoordinates, samples);   \
-    }                                                                         \
+#define __define_computeSampleN(WIDTH)                                       \
+  template <int W>                                                           \
+  void ISPCDriver<W>::computeSample##WIDTH(                                  \
+      const int *valid,                                                      \
+      VLYVolume volume,                                                      \
+      const vvec3fn<WIDTH> &objectCoordinates,                               \
+      vfloatn<WIDTH> &samples)                                               \
+  {                                                                          \
+    computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
 
     __define_computeSampleN(4);
@@ -312,13 +282,35 @@ namespace volley {
       return volumeObject.getBoundingBox();
     }
 
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW <= W), void>::type
+    ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
+                                         VLYVolume volume,
+                                         const vvec3fn<OW> &objectCoordinates,
+                                         vfloatn<OW> &samples)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      vvec3fn<W> ocW     = static_cast<vvec3fn<W>>(objectCoordinates);
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+      vfloatn<W> samplesW;
+
+      // if constexpr is not available in C++11, therefore all combinations of
+      // W and OW would be compiled here if we conditionally selected the
+      // appropriate volume sampling method; so we need to use void pointers as
+      // the full set of explicit conversions are not legal
+      volumeObject.computeSampleV(
+          (const int *)&validW, (const void *)&ocW, (void *)&samplesW);
+
+      for (int i = 0; i < OW; i++)
+        samples[i] = samplesW[i];
+    }
+
     VLY_REGISTER_DRIVER(ISPCDriver<4>, ispc_driver_4)
     VLY_REGISTER_DRIVER(ISPCDriver<8>, ispc_driver_8)
     VLY_REGISTER_DRIVER(ISPCDriver<16>, ispc_driver_16)
-
-    template class ISPCDriver<4>;
-    template class ISPCDriver<8>;
-    template class ISPCDriver<16>;
 
   }  // namespace ispc_driver
 }  // namespace volley

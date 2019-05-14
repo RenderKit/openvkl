@@ -55,6 +55,20 @@ namespace volley {
 
       return newVec;
     }
+
+    template <int OW>
+    vvec3fn<OW> extract_pack(int packIndex) const
+    {
+      vvec3fn<OW> newVec;
+
+      for (int i = packIndex * OW; i < (packIndex + 1) * OW && i < W; i++) {
+        newVec.x[i - packIndex * OW] = x[i];
+        newVec.y[i - packIndex * OW] = y[i];
+        newVec.z[i - packIndex * OW] = z[i];
+      }
+
+      return newVec;
+    }
   };
 
 }  // namespace volley

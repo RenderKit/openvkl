@@ -15,11 +15,14 @@
 ## ======================================================================== ##
 
 ## Configure Volley library build ##
-add_library(volley SHARED
+include(ispc)
+
+volley_add_library_ispc(volley SHARED
   api/API.cpp
   api/Driver.cpp
 
   common/Data.cpp
+  common/ispc_util.ispc
   common/logging.cpp
   common/ManagedObject.cpp
   common/VLYCommon.cpp

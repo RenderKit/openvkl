@@ -17,36 +17,32 @@
 #include "ISPCDriver.h"
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
-#include "ISPCDriver_ispc.h"
 #include "common/Data.h"
 
 namespace volley {
   namespace ispc_driver {
 
-    bool ISPCDriver::supportsWidth(int width)
+    template <int W>
+    bool ISPCDriver<W>::supportsWidth(int width)
     {
-      static int ispcWidth = getNativeWidth();
-      return ispcWidth >= width;
+      return W >= width;
     }
 
-    int ISPCDriver::getNativeWidth()
-    {
-      static int ispcWidth = ispc::get_programCount();
-      return ispcWidth;
-    }
-
-    void ISPCDriver::commit()
+    template <int W>
+    void ISPCDriver<W>::commit()
     {
       Driver::commit();
     }
 
-    void ISPCDriver::commit(VLYObject object)
+    template <int W>
+    void ISPCDriver<W>::commit(VLYObject object)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->commit();
     }
 
-    void ISPCDriver::release(VLYObject object)
+    template <int W>
+    void ISPCDriver<W>::release(VLYObject object)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->refDec();
@@ -56,10 +52,11 @@ namespace volley {
     // Data ///////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    VLYData ISPCDriver::newData(size_t numItems,
-                                VLYDataType dataType,
-                                const void *source,
-                                VLYDataCreationFlags dataCreationFlags)
+    template <int W>
+    VLYData ISPCDriver<W>::newData(size_t numItems,
+                                   VLYDataType dataType,
+                                   const void *source,
+                                   VLYDataCreationFlags dataCreationFlags)
     {
       Data *data = new Data(numItems, dataType, source, dataCreationFlags);
       return (VLYData)data;
@@ -69,11 +66,12 @@ namespace volley {
     // Iterator ///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    VLYRayIterator ISPCDriver::newRayIterator(VLYVolume volume,
-                                              const vec3f &origin,
-                                              const vec3f &direction,
-                                              const range1f &tRange,
-                                              VLYSamplesMask samplesMask)
+    template <int W>
+    VLYRayIterator ISPCDriver<W>::newRayIterator(VLYVolume volume,
+                                                 const vec3f &origin,
+                                                 const vec3f &direction,
+                                                 const range1f &tRange,
+                                                 VLYSamplesMask samplesMask)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return (VLYRayIterator)volumeObject.newRayIterator(
@@ -83,12 +81,13 @@ namespace volley {
           reinterpret_cast<const SamplesMask *>(samplesMask));
     }
 
-    VLYRayIterator ISPCDriver::newRayIterator8(const int *valid,
-                                               VLYVolume volume,
-                                               const vvec3fn<8> &origin,
-                                               const vvec3fn<8> &direction,
-                                               const vrange1fn<8> &tRange,
-                                               VLYSamplesMask samplesMask)
+    template <int W>
+    VLYRayIterator ISPCDriver<W>::newRayIterator8(const int *valid,
+                                                  VLYVolume volume,
+                                                  const vvec3fn<8> &origin,
+                                                  const vvec3fn<8> &direction,
+                                                  const vrange1fn<8> &tRange,
+                                                  VLYSamplesMask samplesMask)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return (VLYRayIterator)volumeObject.newRayIterator8(
@@ -98,17 +97,19 @@ namespace volley {
           reinterpret_cast<const SamplesMask *>(samplesMask));
     }
 
-    bool ISPCDriver::iterateInterval(VLYRayIterator rayIterator,
-                                     VLYRayInterval &rayInterval)
+    template <int W>
+    bool ISPCDriver<W>::iterateInterval(VLYRayIterator rayIterator,
+                                        VLYRayInterval &rayInterval)
     {
       throw std::runtime_error(
           "iterateInterval() not implemented on this driver!");
     }
 
-    void ISPCDriver::iterateInterval8(const int *valid,
-                                      VLYRayIterator rayIterator,
-                                      VLYRayInterval8 &rayInterval,
-                                      vintn<8> &result)
+    template <int W>
+    void ISPCDriver<W>::iterateInterval8(const int *valid,
+                                         VLYRayIterator rayIterator,
+                                         VLYRayInterval8 &rayInterval,
+                                         vintn<8> &result)
     {
       auto &rayIteratorObject =
           referenceFromHandle<RayIterator<8>>(rayIterator);
@@ -117,10 +118,11 @@ namespace volley {
           rayIteratorObject.getCurrentRayInterval());
     }
 
-    void ISPCDriver::iterateSurface8(const int *valid,
-                                     VLYRayIterator rayIterator,
-                                     VLYSurfaceHit8 &surfaceHit,
-                                     vintn<8> &result)
+    template <int W>
+    void ISPCDriver<W>::iterateSurface8(const int *valid,
+                                        VLYRayIterator rayIterator,
+                                        VLYSurfaceHit8 &surfaceHit,
+                                        vintn<8> &result)
     {
       auto &rayIteratorObject =
           referenceFromHandle<RayIterator<8>>(rayIterator);
@@ -133,7 +135,8 @@ namespace volley {
     // Module /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    VLYError ISPCDriver::loadModule(const char *moduleName)
+    template <int W>
+    VLYError ISPCDriver<W>::loadModule(const char *moduleName)
     {
       return volley::loadLocalModule(moduleName);
     }
@@ -142,52 +145,59 @@ namespace volley {
     // Parameters /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    void ISPCDriver::set1f(VLYObject object, const char *name, const float x)
+    template <int W>
+    void ISPCDriver<W>::set1f(VLYObject object, const char *name, const float x)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, x);
     }
 
-    void ISPCDriver::set1i(VLYObject object, const char *name, const int x)
+    template <int W>
+    void ISPCDriver<W>::set1i(VLYObject object, const char *name, const int x)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, x);
     }
 
-    void ISPCDriver::setVec3f(VLYObject object,
-                              const char *name,
-                              const vec3f &v)
+    template <int W>
+    void ISPCDriver<W>::setVec3f(VLYObject object,
+                                 const char *name,
+                                 const vec3f &v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
     }
 
-    void ISPCDriver::setVec3i(VLYObject object,
-                              const char *name,
-                              const vec3i &v)
+    template <int W>
+    void ISPCDriver<W>::setVec3i(VLYObject object,
+                                 const char *name,
+                                 const vec3i &v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
     }
 
-    void ISPCDriver::setObject(VLYObject object,
-                               const char *name,
-                               VLYObject setObject)
+    template <int W>
+    void ISPCDriver<W>::setObject(VLYObject object,
+                                  const char *name,
+                                  VLYObject setObject)
     {
       ManagedObject *target = (ManagedObject *)object;
       ManagedObject *value  = (ManagedObject *)setObject;
       target->setParam(name, value);
     }
 
-    void ISPCDriver::setString(VLYObject object,
-                               const char *name,
-                               const std::string &s)
+    template <int W>
+    void ISPCDriver<W>::setString(VLYObject object,
+                                  const char *name,
+                                  const std::string &s)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, s);
     }
 
-    void ISPCDriver::setVoidPtr(VLYObject object, const char *name, void *v)
+    template <int W>
+    void ISPCDriver<W>::setVoidPtr(VLYObject object, const char *name, void *v)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
@@ -197,13 +207,15 @@ namespace volley {
     // Samples mask /////////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////
 
-    VLYSamplesMask ISPCDriver::newSamplesMask(VLYVolume volume)
+    template <int W>
+    VLYSamplesMask ISPCDriver<W>::newSamplesMask(VLYVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return (VLYSamplesMask)volumeObject.newSamplesMask();
     }
 
-    void ISPCDriver::samplesMaskSetRanges(
+    template <int W>
+    void ISPCDriver<W>::samplesMaskSetRanges(
         VLYSamplesMask samplesMask,
         const utility::ArrayView<const range1f> &ranges)
     {
@@ -211,7 +223,8 @@ namespace volley {
       samplesMaskObject.setRanges(ranges);
     }
 
-    void ISPCDriver::samplesMaskSetValues(
+    template <int W>
+    void ISPCDriver<W>::samplesMaskSetValues(
         VLYSamplesMask samplesMask,
         const utility::ArrayView<const float> &values)
     {
@@ -223,28 +236,33 @@ namespace volley {
     // Volume /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    VLYVolume ISPCDriver::newVolume(const char *type)
+    template <int W>
+    VLYVolume ISPCDriver<W>::newVolume(const char *type)
     {
       return (VLYVolume)Volume::createInstance(type);
     }
 
-    float ISPCDriver::computeSample(VLYVolume volume,
-                                    const vec3f &objectCoordinates)
+    template <int W>
+    float ISPCDriver<W>::computeSample(VLYVolume volume,
+                                       const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return volumeObject.computeSample(objectCoordinates);
     }
 
 #define __define_computeSampleN(WIDTH)                                        \
-  void ISPCDriver::computeSample##WIDTH(                                      \
+  template <int W>                                                            \
+  void ISPCDriver<W>::computeSample##WIDTH(                                   \
       const int *valid,                                                       \
       VLYVolume volume,                                                       \
       const vvec3fn<WIDTH> &objectCoordinates,                                \
       vfloatn<WIDTH> &samples)                                                \
   {                                                                           \
     auto &volumeObject = referenceFromHandle<Volume>(volume);                 \
-    if (WIDTH != getNativeWidth()) {                                          \
-      switch (getNativeWidth()) {                                             \
+    if (WIDTH != W) {                                                         \
+      switch (W) {                                                            \
+      case 4:                                                                 \
+        break;                                                                \
       case 8: {                                                               \
         vvec3fn<8> oc8 = static_cast<vvec3fn<8>>(objectCoordinates);          \
         vintn<8> valid8;                                                      \
@@ -279,20 +297,29 @@ namespace volley {
 
 #undef __define_computeSampleN
 
-    vec3f ISPCDriver::computeGradient(VLYVolume volume,
-                                      const vec3f &objectCoordinates)
+    template <int W>
+    vec3f ISPCDriver<W>::computeGradient(VLYVolume volume,
+                                         const vec3f &objectCoordinates)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return volumeObject.computeGradient(objectCoordinates);
     }
 
-    box3f ISPCDriver::getBoundingBox(VLYVolume volume)
+    template <int W>
+    box3f ISPCDriver<W>::getBoundingBox(VLYVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
       return volumeObject.getBoundingBox();
     }
 
-    VLY_REGISTER_DRIVER(ISPCDriver, ispc_driver)
+    VLY_REGISTER_DRIVER(ISPCDriver<4>, ispc_driver_4)
+    VLY_REGISTER_DRIVER(ISPCDriver<8>, ispc_driver_8)
+    VLY_REGISTER_DRIVER(ISPCDriver<16>, ispc_driver_16)
+
+    template class ISPCDriver<4>;
+    template class ISPCDriver<8>;
+    template class ISPCDriver<16>;
+
   }  // namespace ispc_driver
 }  // namespace volley
 

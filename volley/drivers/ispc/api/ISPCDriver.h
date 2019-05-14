@@ -21,14 +21,13 @@
 namespace volley {
   namespace ispc_driver {
 
+    template <int W>
     struct ISPCDriver : public api::Driver
     {
       ISPCDriver()           = default;
       ~ISPCDriver() override = default;
 
       bool supportsWidth(int width) override;
-
-      int getNativeWidth();
 
       void commit() override;
 

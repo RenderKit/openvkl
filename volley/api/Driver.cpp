@@ -15,7 +15,9 @@
 // ======================================================================== //
 
 #include "Driver.h"
+#include <sstream>
 #include "common/objectFactory.h"
+#include "ispc_util_ispc.h"
 
 namespace volley {
   namespace api {
@@ -28,7 +30,8 @@ namespace volley {
     }
 
     template <typename OSTREAM_T>
-    static inline void installErrorMessageFunction(Driver& driver, OSTREAM_T &stream)
+    static inline void installErrorMessageFunction(Driver &driver,
+                                                   OSTREAM_T &stream)
     {
       driver.errorFunction = [&](VLYError e, const char *msg) {
         stream << "VOLLEY ERROR [" << e << "]: " << msg << std::endl;
@@ -46,6 +49,19 @@ namespace volley {
 
     Driver *Driver::createDriver(const char *driverName)
     {
+      // special case for ISPC driver selection based on runtime native ISPC
+      // vector width
+      const char *ispcDriverName = "ispc_driver";
+
+      if (strcmp(driverName, ispcDriverName) == 0) {
+        int nativeIspcWidth = ispc::get_programCount();
+
+        std::stringstream ss;
+        ss << ispcDriverName << "_" << nativeIspcWidth;
+
+        return objectFactory<Driver, VLY_DRIVER>(ss.str().c_str());
+      }
+
       return objectFactory<Driver, VLY_DRIVER>(driverName);
     }
 

@@ -37,6 +37,23 @@ namespace volley {
     vfloatn<W> x;
     vfloatn<W> y;
     vfloatn<W> z;
+
+    template <int OW>
+    explicit operator vvec3fn<OW>() const
+    {
+#warning need to enable static assert for simd type upconversion
+      // static_assert(W < OW, "can only up-convert vvec3fn types");
+
+      vvec3fn<OW> newVec;
+
+      for (int i = 0; i < W; i++) {
+        newVec.x[i] = x[i];
+        newVec.y[i] = y[i];
+        newVec.z[i] = z[i];
+      }
+
+      return newVec;
+    }
   };
 
 }  // namespace volley

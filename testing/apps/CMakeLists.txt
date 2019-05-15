@@ -33,6 +33,7 @@ add_executable(vlyTests
   vlyTests.cpp
   tests/simd_type_conversion.cpp
   tests/structured_volume_sampling.cpp
+  tests/vectorized_sampling.cpp
 )
 
 target_link_libraries(vlyTests

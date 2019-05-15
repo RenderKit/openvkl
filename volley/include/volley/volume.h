@@ -43,6 +43,21 @@ VLYVolume vlyNewVolume(const char *type);
 
 float vlyComputeSample(VLYVolume volume, const vly_vec3f *objectCoordinates);
 
+void vlyComputeSample4(const int *valid,
+                       VLYVolume volume,
+                       const vly_vvec3f4 *objectCoordinates,
+                       float *samples);
+
+void vlyComputeSample8(const int *valid,
+                       VLYVolume volume,
+                       const vly_vvec3f8 *objectCoordinates,
+                       float *samples);
+
+void vlyComputeSample16(const int *valid,
+                        VLYVolume volume,
+                        const vly_vvec3f16 *objectCoordinates,
+                        float *samples);
+
 vly_vec3f vlyComputeGradient(VLYVolume volume,
                              const vly_vec3f *objectCoordinates);
 

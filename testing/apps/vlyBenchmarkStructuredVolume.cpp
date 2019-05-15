@@ -16,24 +16,21 @@
 
 #include <random>
 #include "benchmark/benchmark.h"
+#include "common/simd.h"
 #include "volley_testing.h"
 
 using namespace volley::testing;
 
-class VolleyFixture : public benchmark::Fixture
+void initializeVolley()
 {
- public:
-  void SetUp(const ::benchmark::State &state)
-  {
-    vlyLoadModule("ispc_driver");
+  vlyLoadModule("ispc_driver");
 
-    VLYDriver driver = vlyNewDriver("ispc_driver");
-    vlyCommitDriver(driver);
-    vlySetCurrentDriver(driver);
-  }
-};
+  VLYDriver driver = vlyNewDriver("ispc_driver");
+  vlyCommitDriver(driver);
+  vlySetCurrentDriver(driver);
+}
 
-BENCHMARK_F(VolleyFixture, scalarRandomSample)(benchmark::State &state)
+static void scalarRandomSample(benchmark::State &state)
 {
   std::unique_ptr<WaveletProceduralVolume> v(
       new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
@@ -55,6 +52,86 @@ BENCHMARK_F(VolleyFixture, scalarRandomSample)(benchmark::State &state)
     benchmark::DoNotOptimize(
         vlyComputeSample(vlyVolume, (const vly_vec3f *)&objectCoordinates));
   }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
 }
 
-BENCHMARK_MAIN();
+BENCHMARK(scalarRandomSample);
+
+template <int W>
+void vectorRandomSample(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VLYVolume vlyVolume = v->getVLYVolume();
+
+  vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
+
+  int valid[W];
+
+  for (int i = 0; i < W; i++) {
+    valid[i] = 1;
+  }
+
+  struct vvec3f
+  {
+    float x[W];
+    float y[W];
+    float z[W];
+  };
+
+  vvec3f objectCoordinates;
+  float samples[W];
+
+  for (auto _ : state) {
+    for (int i = 0; i < W; i++) {
+      objectCoordinates.x[i] = distX(eng);
+      objectCoordinates.y[i] = distY(eng);
+      objectCoordinates.z[i] = distZ(eng);
+    }
+
+    if (W == 4) {
+      vlyComputeSample4(
+          valid, vlyVolume, (const vly_vvec3f4 *)&objectCoordinates, samples);
+    } else if (W == 8) {
+      vlyComputeSample8(
+          valid, vlyVolume, (const vly_vvec3f8 *)&objectCoordinates, samples);
+    } else if (W == 16) {
+      vlyComputeSample16(
+          valid, vlyVolume, (const vly_vvec3f16 *)&objectCoordinates, samples);
+    } else {
+      throw std::runtime_error(
+          "vectorRandomSample benchmark called with unimplemented calling "
+          "width");
+    }
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * W);
+}
+
+BENCHMARK_TEMPLATE(vectorRandomSample, 4);
+BENCHMARK_TEMPLATE(vectorRandomSample, 8);
+BENCHMARK_TEMPLATE(vectorRandomSample, 16);
+
+// based on BENCHMARK_MAIN() macro from benchmark.h
+int main(int argc, char **argv)
+{
+  initializeVolley();
+
+  ::benchmark::Initialize(&argc, argv);
+  if (::benchmark::ReportUnrecognizedArguments(argc, argv))
+    return 1;
+  ::benchmark::RunSpecifiedBenchmarks();
+
+  vlyShutdown();
+}

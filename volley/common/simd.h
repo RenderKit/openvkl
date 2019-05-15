@@ -21,7 +21,29 @@
 namespace volley {
 
   template <int W>
-  using vfloatn = float[W];
+  struct vfloatn
+  {
+    float v[W];
+
+    vfloatn<W>() = default;
+
+    float &operator[](std::size_t index)
+    {
+      return v[index];
+    }
+
+    const float &operator[](std::size_t index) const
+    {
+      return v[index];
+    }
+
+    vfloatn<W>(const vfloatn<W> &o)
+    {
+      for (int i = 0; i < W; i++) {
+        v[i] = o[i];
+      }
+    }
+  };
 
   template <int W>
   using vintn = int[W];
@@ -39,6 +61,10 @@ namespace volley {
     vfloatn<W> x;
     vfloatn<W> y;
     vfloatn<W> z;
+
+    vvec3fn<W>() = default;
+
+    vvec3fn<W>(const vvec3fn<W> &v) : x(v.x), y(v.y), z(v.z) {}
 
     template <int OW>
     explicit operator vvec3fn<OW>() const

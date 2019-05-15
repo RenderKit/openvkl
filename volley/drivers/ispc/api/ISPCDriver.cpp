@@ -25,7 +25,7 @@ namespace volley {
     template <int W>
     bool ISPCDriver<W>::supportsWidth(int width)
     {
-      return W >= width;
+      return width == W || width == 4 || width == 8 || width == 16;
     }
 
     template <int W>
@@ -291,10 +291,13 @@ namespace volley {
                                          vfloatn<OW> &samples)
     {
       auto &volumeObject = referenceFromHandle<Volume>(volume);
-      vvec3fn<W> ocW     = static_cast<vvec3fn<W>>(objectCoordinates);
+
+      vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
+
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
+
       vfloatn<W> samplesW;
 
       // if constexpr is not available in C++11, therefore all combinations of
@@ -306,6 +309,35 @@ namespace volley {
 
       for (int i = 0; i < OW; i++)
         samples[i] = samplesW[i];
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW > W), void>::type
+    ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
+                                         VLYVolume volume,
+                                         const vvec3fn<OW> &objectCoordinates,
+                                         vfloatn<OW> &samples)
+    {
+      auto &volumeObject = referenceFromHandle<Volume>(volume);
+
+      const int numPacks = OW / W + (OW % W != 0);
+
+      for (int packIndex = 0; packIndex < numPacks; packIndex++) {
+        vvec3fn<W> ocW = objectCoordinates.template extract_pack<W>(packIndex);
+
+        vintn<W> validW;
+        for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
+          validW[i - packIndex * W] = i < OW ? valid[i] : 0;
+
+        vfloatn<W> samplesW;
+
+        volumeObject.computeSampleV(
+            (const int *)&validW, (const void *)&ocW, (void *)&samplesW);
+
+        for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
+          samples[i] = samplesW[i - packIndex * W];
+      }
     }
 
     VLY_REGISTER_DRIVER(ISPCDriver<4>, ispc_driver_4)

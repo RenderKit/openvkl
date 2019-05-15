@@ -153,11 +153,8 @@ namespace volley {
           const int *valid,
           VLYVolume volume,
           const vvec3fn<OW> &objectCoordinates,
-          vfloatn<OW> &samples)
-      {
-        throw std::runtime_error("computeSample() not legal for calling width > native vector width");
-      }
-    };
+          vfloatn<OW> &samples);
+        };
 
   }  // namespace ispc_driver
 }  // namespace volley

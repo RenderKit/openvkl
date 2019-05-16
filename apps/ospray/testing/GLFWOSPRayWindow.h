@@ -17,6 +17,7 @@
 #pragma once
 
 #include <GLFW/glfw3.h>
+#include <functional>
 #include "OSPRayWindow.h"
 
 class GLFWOSPRayWindow : public OSPRayWindow
@@ -29,7 +30,8 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   ~GLFWOSPRayWindow();
 
-  void registerDisplayCallback(std::function<void(GLFWOSPRayWindow *)> callback);
+  void registerDisplayCallback(
+      std::function<void(GLFWOSPRayWindow *)> callback);
 
   void registerImGuiCallback(std::function<void()> callback);
 

@@ -17,6 +17,7 @@
 #pragma once
 
 #include <vector>
+#include "TestingStructuredVolume.h"
 #include "ospray/ospcommon/vec.h"
 #include "volley/volley.h"
 
@@ -26,47 +27,18 @@ namespace volley {
   namespace testing {
 
     template <float volumeSamplingFunction(const vec3f &)>
-    struct ProceduralStructuredVolume
+    struct ProceduralStructuredVolume : public TestingStructuredVolume
     {
       ProceduralStructuredVolume(const vec3i &dimensions,
                                  const vec3f &gridOrigin,
                                  const vec3f &gridSpacing);
-
-      inline vec3i getDimensions() const
-      {
-        return dimensions;
-      }
-
-      inline vec3f getGridOrigin() const
-      {
-        return gridOrigin;
-      }
-
-      inline vec3f getGridSpacing() const
-      {
-        return gridSpacing;
-      }
-
-      inline VLYVolume getVLYVolume() const
-      {
-        return volume;
-      }
 
       inline float computeProceduralValue(const vec3f &objectCoordinates)
       {
         return volumeSamplingFunction(objectCoordinates);
       }
 
-      // allow external access to underlying voxel data (e.g. for conversion to
-      // other volume formats / types)
-      std::vector<float> generateVoxels();
-
-     protected:
-      vec3i dimensions;
-      vec3f gridOrigin;
-      vec3f gridSpacing;
-
-      VLYVolume volume{nullptr};
+      std::vector<float> generateVoxels() override;
     };
 
     ///////////////////////////////////////////////////////////////////////////

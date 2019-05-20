@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2018 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,5 +16,26 @@
 
 #pragma once
 
-#include "volume/ProceduralStructuredVolume.h"
-#include "volume/RawFileStructuredVolume.h"
+#include <fstream>
+#include "TestingStructuredVolume.h"
+
+using namespace ospcommon;
+
+namespace volley {
+  namespace testing {
+
+    struct RawFileStructuredVolume : public TestingStructuredVolume
+    {
+      RawFileStructuredVolume(const std::string &filename,
+                              const vec3i &dimensions,
+                              const vec3f &gridOrigin,
+                              const vec3f &gridSpacing);
+
+      std::vector<float> generateVoxels() override;
+
+     protected:
+      std::string filename;
+    };
+
+  }  // namespace testing
+}  // namespace volley

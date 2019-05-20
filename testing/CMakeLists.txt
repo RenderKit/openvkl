@@ -16,6 +16,7 @@
 
 add_library(volley_testing SHARED
   volume/ProceduralStructuredVolume.cpp
+  volume/RawFileStructuredVolume.cpp
 )
 
 target_link_libraries(volley_testing PUBLIC

@@ -56,7 +56,7 @@ void initializeVolley()
 }
 
 OSPVolume convertToOSPVolume(
-    std::shared_ptr<WaveletProceduralVolume> proceduralVolume,
+    std::shared_ptr<TestingStructuredVolume> proceduralVolume,
     OSPTransferFunction transferFunction)
 {
   OSPVolume volume = ospNewVolume("shared_structured_volume");
@@ -91,7 +91,7 @@ OSPVolume convertToOSPVolume(
 
 OSPRayVolleyTestScene::OSPRayVolleyTestScene(
     const std::string &rendererType,
-    std::shared_ptr<WaveletProceduralVolume> proceduralVolume)
+    std::shared_ptr<TestingStructuredVolume> proceduralVolume)
     : proceduralVolume(proceduralVolume)
 {
   world = ospNewModel();

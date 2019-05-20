@@ -14,17 +14,18 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ProceduralStructuredVolume.h"
+#include "RawFileStructuredVolume.h"
 
 namespace volley {
   namespace testing {
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    ProceduralStructuredVolume<volumeSamplingFunction>::
-        ProceduralStructuredVolume(const vec3i &dimensions,
-                                   const vec3f &gridOrigin,
-                                   const vec3f &gridSpacing)
-        : TestingStructuredVolume(dimensions, gridOrigin, gridSpacing)
+    RawFileStructuredVolume::RawFileStructuredVolume(
+        const std::string &filename,
+        const vec3i &dimensions,
+        const vec3f &gridOrigin,
+        const vec3f &gridSpacing)
+        : filename(filename),
+          TestingStructuredVolume(dimensions, gridOrigin, gridSpacing)
     {
       std::vector<float> voxels = generateVoxels();
 
@@ -42,31 +43,24 @@ namespace volley {
       vlyCommit(volume);
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    std::vector<float>
-    ProceduralStructuredVolume<volumeSamplingFunction>::generateVoxels()
+    std::vector<float> RawFileStructuredVolume::generateVoxels()
     {
       std::vector<float> voxels(dimensions.product());
 
-      auto transformLocalToObject = [&](const vec3f &localCoordinates) {
-        return gridOrigin + localCoordinates * gridSpacing;
-      };
+      std::ifstream input(filename, std::ios::binary);
 
-      for (size_t z = 0; z < dimensions.z; z++) {
-        for (size_t y = 0; y < dimensions.y; y++) {
-          for (size_t x = 0; x < dimensions.x; x++) {
-            size_t index =
-                z * dimensions.y * dimensions.x + y * dimensions.x + x;
-            vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-            voxels[index]           = volumeSamplingFunction(objectCoordinates);
-          }
-        }
+      if (!input) {
+        throw std::runtime_error("error opening raw volume file");
+      }
+
+      input.read((char *)voxels.data(), dimensions.product() * sizeof(float));
+
+      if (!input.good()) {
+        throw std::runtime_error("error reading raw volume file");
       }
 
       return voxels;
     }
 
-    template class ProceduralStructuredVolume<getWaveletValue>;
-    template class ProceduralStructuredVolume<getZValue>;
   }  // namespace testing
 }  // namespace volley

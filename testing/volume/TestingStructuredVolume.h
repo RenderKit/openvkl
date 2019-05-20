@@ -16,42 +16,57 @@
 
 #pragma once
 
-#include "OSPRayWindow.h"
-#include "ospray/ospray_testing/ospray_testing.h"
-#include "volley_testing.h"
+#include <vector>
+#include "ospray/ospcommon/vec.h"
+#include "volley/volley.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
 
-void initializeOSPRay();
-void initializeVolley();
+namespace volley {
+  namespace testing {
 
-OSPVolume convertToOSPVolume(
-    std::shared_ptr<TestingStructuredVolume> proceduralVolume,
-    OSPTransferFunction transferFunction);
+    struct TestingStructuredVolume
+    {
+      TestingStructuredVolume(const vec3i &dimensions,
+                              const vec3f &gridOrigin,
+                              const vec3f &gridSpacing)
+          : dimensions(dimensions),
+            gridOrigin(gridOrigin),
+            gridSpacing(gridSpacing)
+      {
+      }
 
-struct OSPRayVolleyTestScene
-{
-  OSPRayVolleyTestScene(
-      const std::string &rendererType,
-      std::shared_ptr<TestingStructuredVolume> proceduralVolume);
+      inline vec3i getDimensions() const
+      {
+        return dimensions;
+      }
 
-  ~OSPRayVolleyTestScene();
+      inline vec3f getGridOrigin() const
+      {
+        return gridOrigin;
+      }
 
-  void setIsovalues(const std::vector<float> &isovalues);
+      inline vec3f getGridSpacing() const
+      {
+        return gridSpacing;
+      }
 
-  OSPModel getWorld();
-  OSPRenderer getRenderer();
-  OSPTransferFunction getTransferFunction();
+      inline VLYVolume getVLYVolume() const
+      {
+        return volume;
+      }
 
-  box3f getBoundingBox();
+      // allow external access to underlying voxel data (e.g. for conversion to
+      // other volume formats / types)
+      virtual std::vector<float> generateVoxels() = 0;
 
-  std::unique_ptr<OSPRayWindow> getOSPRayWindow(const vec2i &windowSize);
+     protected:
+      vec3i dimensions;
+      vec3f gridOrigin;
+      vec3f gridSpacing;
 
- protected:
-  std::shared_ptr<TestingStructuredVolume> proceduralVolume;
+      VLYVolume volume{nullptr};
+    };
 
-  OSPModel world;
-  OSPRenderer renderer;
-  OSPTransferFunction transferFunction;
-};
+  }  // namespace testing
+}  // namespace volley

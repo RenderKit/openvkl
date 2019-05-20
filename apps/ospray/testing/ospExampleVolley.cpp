@@ -25,13 +25,122 @@
 using namespace ospcommon;
 using namespace volley::testing;
 
+bool addSamplingRateUI(std::shared_ptr<OSPRayVolleyTestScene> testScene)
+{
+  static float samplingRate = 1.f;
+  if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
+    ospSet1f(testScene->getRenderer(), "samplingRate", samplingRate);
+    ospCommit(testScene->getRenderer());
+    return true;
+  }
+  return false;
+}
+
+bool addPathTracerUI(std::shared_ptr<OSPRayVolleyTestScene> testScene)
+{
+  bool changed = false;
+
+  static float sigmaTScale = 1.f;
+  if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
+    ospSet1f(testScene->getRenderer(), "sigmaTScale", sigmaTScale);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static float sigmaSScale = 1.f;
+  if (ImGui::SliderFloat("sigmaSScale", &sigmaSScale, 0.01f, 1.f)) {
+    ospSet1f(testScene->getRenderer(), "sigmaSScale", sigmaSScale);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static int maxNumScatters = 1;
+  if (ImGui::SliderInt("maxNumScatters", &maxNumScatters, 1, 32)) {
+    ospSet1i(testScene->getRenderer(), "maxNumScatters", maxNumScatters);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static float lightIntensity = 1.f;
+  if (ImGui::SliderFloat("lightIntensity", &lightIntensity, 0.01f, 100.f)) {
+    ospSet1f(testScene->getRenderer(), "lightIntensity", lightIntensity);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  return changed;
+}
+
+bool addIsosurfacesUI(std::shared_ptr<OSPRayVolleyTestScene> testScene)
+{
+  static bool showIsosurfaces = false;
+
+  static constexpr int maxNumIsosurfaces = 3;
+
+  struct IsosurfaceParameters
+  {
+    bool enabled{false};
+    float isovalue{0.f};
+  };
+
+  static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
+
+  bool isosurfacesChanged = false;
+
+  if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
+    isosurfacesChanged = true;
+  }
+
+  if (showIsosurfaces) {
+    int labelCounter = 0;
+
+    for (auto &isosurface : isosurfaces) {
+      std::ostringstream enabledLabel;
+      enabledLabel << "##enabled_isosurface " << labelCounter;
+
+      std::ostringstream isovalueLabel;
+      isovalueLabel << "isosurface " << labelCounter;
+
+      if (ImGui::Checkbox(enabledLabel.str().c_str(), &isosurface.enabled)) {
+        isosurfacesChanged = true;
+      }
+
+      ImGui::SameLine();
+
+      if (ImGui::SliderFloat(
+              isovalueLabel.str().c_str(), &isosurface.isovalue, -1.f, 1.f)) {
+        isosurfacesChanged = true;
+      }
+
+      labelCounter++;
+    }
+  }
+
+  if (isosurfacesChanged) {
+    std::vector<float> enabledIsovalues;
+
+    if (showIsosurfaces) {
+      for (const auto &isosurface : isosurfaces) {
+        if (isosurface.enabled) {
+          enabledIsovalues.push_back(isosurface.isovalue);
+        }
+      }
+    }
+
+    testScene->setIsovalues(enabledIsovalues);
+  }
+
+  return isosurfacesChanged;
+}
+
 int main(int argc, const char **argv)
 {
   if (argc < 2) {
     std::cerr
         << "usage: " << argv[0]
-        << " <simple_native> | <simple_volley> | <volley_ray_iterator_surface> "
-           "| <volley_ray_iterator_volume> | <volley_ray_iterator>"
+        << " <simple_native | simple_volley | volley_ray_iterator_surface "
+           "| volley_ray_iterator_volume | volley_ray_iterator | "
+           "volley_pathtracer> [-file <float.raw> <dimX> <dimY> <dimZ>]"
         << std::endl;
     return 1;
   }
@@ -39,18 +148,46 @@ int main(int argc, const char **argv)
   initializeOSPRay();
   initializeVolley();
 
-  const vec3i dimensions(256);
-  const vec3f gridOrigin(-1.f);
-  const vec3f gridSpacing(2.f / float(dimensions.x));
-
-  std::shared_ptr<WaveletProceduralVolume> proceduralVolume(
-      new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
-
   std::string rendererType(argv[1]);
   std::cout << "using renderer: " << rendererType << std::endl;
 
-  std::unique_ptr<OSPRayVolleyTestScene> testScene(
-      new OSPRayVolleyTestScene(rendererType, proceduralVolume));
+  std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
+
+  if (argc == 2) {
+    const vec3i dimensions(256);
+    const vec3f gridOrigin(-1.f);
+    const vec3f gridSpacing(2.f / float(dimensions.x));
+
+    testingStructuredVolume = std::shared_ptr<WaveletProceduralVolume>(
+        new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+  } else if (argc > 2) {
+    std::string switchArg(argv[2]);
+
+    if (switchArg == "-file") {
+      if (argc != 7) {
+        throw std::runtime_error("improper -file arguments");
+      }
+
+      const std::string filename(argv[3]);
+      const std::string dimX(argv[4]);
+      const std::string dimY(argv[5]);
+      const std::string dimZ(argv[6]);
+
+      const vec3i dimensions(stoi(dimX), stoi(dimY), stoi(dimZ));
+      const vec3f gridOrigin(0.f);
+      const vec3f gridSpacing(1.f / float(dimensions.x));
+
+      testingStructuredVolume =
+          std::shared_ptr<RawFileStructuredVolume>(new RawFileStructuredVolume(
+              filename, dimensions, gridOrigin, gridSpacing));
+
+    } else {
+      throw std::runtime_error("unknown switch argument");
+    }
+  }
+
+  std::shared_ptr<OSPRayVolleyTestScene> testScene(
+      new OSPRayVolleyTestScene(rendererType, testingStructuredVolume));
 
   auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{1024, 1024},
@@ -58,87 +195,34 @@ int main(int argc, const char **argv)
                            testScene->getWorld(),
                            testScene->getRenderer()));
 
-  auto transferFunctionUpdatedCallback = [&]() {
-    glfwOSPRayWindow->resetAccumulation();
-  };
-
   glfwOSPRayWindow->registerImGuiCallback([&]() {
-    static float samplingRate = 1.f;
-    if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
-      ospSet1f(testScene->getRenderer(), "samplingRate", samplingRate);
-      ospCommit(testScene->getRenderer());
-      glfwOSPRayWindow->resetAccumulation();
+    bool changed = false;
+
+    if (rendererType == "volley_ray_iterator" ||
+        rendererType == "volley_ray_iterator_volume") {
+      changed = changed || addSamplingRateUI(testScene);
     }
 
-    // only show isosurface UI if an appropriate renderer is selected
+    if (rendererType == "volley_pathtracer") {
+      changed = changed || addPathTracerUI(testScene);
+    }
+
     if (rendererType == "volley_ray_iterator" ||
         rendererType == "volley_ray_iterator_surface") {
-      static bool showIsosurfaces = false;
-
-      static constexpr int maxNumIsosurfaces = 3;
-
-      struct IsosurfaceParameters
-      {
-        bool enabled{false};
-        float isovalue{0.f};
-      };
-
-      static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
-
-      bool isosurfacesChanged = false;
-
-      if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
-        isosurfacesChanged = true;
-      }
-
-      if (showIsosurfaces) {
-        int labelCounter = 0;
-
-        for (auto &isosurface : isosurfaces) {
-          std::ostringstream enabledLabel;
-          enabledLabel << "##enabled_isosurface " << labelCounter;
-
-          std::ostringstream isovalueLabel;
-          isovalueLabel << "isosurface " << labelCounter;
-
-          if (ImGui::Checkbox(enabledLabel.str().c_str(),
-                              &isosurface.enabled)) {
-            isosurfacesChanged = true;
-          }
-
-          ImGui::SameLine();
-
-          if (ImGui::SliderFloat(isovalueLabel.str().c_str(),
-                                 &isosurface.isovalue,
-                                 -1.f,
-                                 1.f)) {
-            isosurfacesChanged = true;
-          }
-
-          labelCounter++;
-        }
-      }
-
-      if (isosurfacesChanged) {
-        std::vector<float> enabledIsovalues;
-
-        if (showIsosurfaces) {
-          for (const auto &isosurface : isosurfaces) {
-            if (isosurface.enabled) {
-              enabledIsovalues.push_back(isosurface.isovalue);
-            }
-          }
-        }
-
-        testScene->setIsovalues(enabledIsovalues);
-
-        glfwOSPRayWindow->resetAccumulation();
-      }
+      changed = changed || addIsosurfacesUI(testScene);
     }
+
+    auto transferFunctionUpdatedCallback = [&]() {
+      glfwOSPRayWindow->resetAccumulation();
+    };
 
     static TransferFunctionWidget transferFunctionWidget(
         testScene->getTransferFunction(), transferFunctionUpdatedCallback);
     transferFunctionWidget.updateUI();
+
+    if (changed) {
+      glfwOSPRayWindow->resetAccumulation();
+    }
   });
 
   // start the GLFW main loop, which will continuously render

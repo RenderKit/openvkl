@@ -28,6 +28,9 @@ ospray_add_library(ospray_module_ispc_volley SHARED
 
   render/VolleyRayIteratorVolumeRenderer.cpp
   render/VolleyRayIteratorVolumeRenderer.ispc
+
+  render/VolleyPathTracer.cpp
+  render/VolleyPathTracer.ispc
 )
 
 # TODO: hack to get proper ospcommon include directory (i.e. to support <ospcommon/...> paths)

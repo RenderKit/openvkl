@@ -38,7 +38,8 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
                            const float tBox0,
                            const float tBox1,
                            float &t,
-                           float &sample)
+                           float &sample,
+                           float &transmittance)
 {
   t                    = tBox0;
   const float sigmaMax = self->sigmaTScale;
@@ -69,6 +70,8 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
     }
   }
 
+  transmittance = 1.f;
+
   return (t <= tBox1);
 }
 
@@ -78,10 +81,6 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
                               vec3f &Le,
                               int scatterIndex)
 {
-  // in Woodcock sampling, the sampled transmittance is always 0 or 1; in the 0
-  // case we exit early. we're leaving the term here for clarity of the math.
-  const float transmittance = 1.f;
-
   // initialize emitted light to 0
   Le = make_vec3f(0.f);
 
@@ -94,8 +93,8 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
   if (tBox0 > tBox1)
     return;
 
-  float t, sample;
-  if (!sampleWoodcock(self, ray, tBox0, tBox1, t, sample)) {
+  float t, sample, transmittance;
+  if (!sampleWoodcock(self, ray, tBox0, tBox1, t, sample, transmittance)) {
     // we passed through the volume, so sample lights
 
     // light is not directly visible

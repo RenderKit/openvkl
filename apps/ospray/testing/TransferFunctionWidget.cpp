@@ -231,6 +231,18 @@ void TransferFunctionWidget::loadDefaultMaps()
 
   tfnsEditable.push_back(true);
   tfnsNames.push_back("Ice Fire");
+
+  // Grayscale
+  colors.clear();
+
+  colors.emplace_back(0.f, 1.f, 1.f, 1.f);
+  colors.emplace_back(1.f, 1.f, 1.f, 1.f);
+
+  tfnsColorPoints.push_back(colors);
+  tfnsOpacityPoints.push_back(opacities);
+
+  tfnsEditable.push_back(true);
+  tfnsNames.push_back("Grayscale");
 };
 
 void TransferFunctionWidget::setMap(int selection)

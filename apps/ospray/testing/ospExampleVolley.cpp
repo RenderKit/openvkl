@@ -196,7 +196,7 @@ int main(int argc, const char **argv)
   std::shared_ptr<OSPRayVolleyTestScene> testScene(
       new OSPRayVolleyTestScene(rendererType, testingStructuredVolume));
 
-  auto glfwOSPRayWindow = std::unique_ptr<GLFWOSPRayWindow>(
+  auto glfwOSPRayWindow = std::shared_ptr<GLFWOSPRayWindow>(
       new GLFWOSPRayWindow(vec2i{1024, 1024},
                            testScene->getBoundingBox(),
                            testScene->getWorld(),

@@ -28,6 +28,10 @@ struct VolleyPathTracer
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
 
+  // if a volume interaction occurs, returns the t and sample value at the
+  // location; in this case a scatter event will occur. if a volume interaction
+  // does not occur, the ray escapes the volume and the transmittance is
+  // returned.
   bool (*uniform sampleVolumeInteraction)(uniform VolleyPathTracer *uniform
                                               self,
                                           const Ray &ray,
@@ -43,10 +47,6 @@ struct VolleyPathTracer
   uniform float lightIntensity;
 };
 
-// if a volume interaction occurs, returns the t and sample value at the
-// location; in this case a scatter event will occur. if a volume interaction
-// does not occur, the ray escapes the volume and the transmittance is
-// returned.
 inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
                            const Ray &ray,
                            const float tBox0,
@@ -156,8 +156,6 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
 
   if (!self->sampleVolumeInteraction(
           self, ray, tBox0, tBox1, t, sample, transmittance)) {
-    // we passed through the volume, so sample lights
-
     // light is not directly visible
     if (scatterIndex == 0) {
       return;

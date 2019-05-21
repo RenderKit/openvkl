@@ -33,6 +33,10 @@ struct VolleyPathTracer
   uniform float lightIntensity;
 };
 
+// if a volume interaction occurs, returns the t and sample value at the
+// location; in this case a scatter event will occur. if a volume interaction
+// does not occur, the ray escapes the volume and the transmittance is
+// returned.
 inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
                            const Ray &ray,
                            const float tBox0,
@@ -53,6 +57,7 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
     t = t + -logf(1.f - randomNumber1) / sigmaMax;
 
     if (t > tBox1) {
+      transmittance = 1.f;
       return false;
     }
 
@@ -70,9 +75,8 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
     }
   }
 
-  transmittance = 1.f;
-
-  return (t <= tBox1);
+  transmittance = 0.f;
+  return true;
 }
 
 inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
@@ -139,7 +143,7 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
 
   const vec3f sigmaSSample = self->sigmaSScale * sampleColor * sampleOpacity;
 
-  Le = Le + transmittance * sigmaSSample * inscatteredLe;
+  Le = Le + sigmaSSample * inscatteredLe;
 }
 
 void VolleyPathTracer_renderSample(uniform Renderer *uniform _self,

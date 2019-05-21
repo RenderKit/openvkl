@@ -27,6 +27,16 @@ struct VolleyPathTracer
   uniform Renderer super;
   uniform VLYVolume volume;
   TransferFunction *uniform transferFunction;
+
+  bool (*uniform sampleVolumeInteraction)(uniform VolleyPathTracer *uniform
+                                              self,
+                                          const Ray &ray,
+                                          const float tBox0,
+                                          const float tBox1,
+                                          float &t,
+                                          float &sample,
+                                          float &transmittance);
+
   uniform float sigmaTScale;
   uniform float sigmaSScale;
   uniform int maxNumScatters;
@@ -79,6 +89,51 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
   return true;
 }
 
+inline bool sampleRatioTracking(uniform VolleyPathTracer *uniform self,
+                                const Ray &ray,
+                                const float tBox0,
+                                const float tBox1,
+                                float &t,
+                                float &sample,
+                                float &transmittance)
+{
+  t             = tBox0;
+  transmittance = 1.f;
+
+  const float sigmaMax = self->sigmaTScale;
+
+  while (true) {
+    float randomNumber1;
+    float randomNumber2;
+    rdrand(&randomNumber1);
+    rdrand(&randomNumber2);
+
+    t = t + -logf(1.f - randomNumber1) / sigmaMax;
+
+    if (t > tBox1) {
+      return false;
+    }
+
+    const vec3f c = ray.org + t * ray.dir;
+    sample        = vlyComputeSampleV(self->volume, (varying vly_vec3f *)&c);
+
+    const float sampleOpacity = self->transferFunction->getOpacityForValue(
+        self->transferFunction, sample);
+
+    // sigmaT must be mono-chromatic for Woodcock sampling
+    const float sigmaTSample = sigmaMax * sampleOpacity;
+
+    if (randomNumber2 < sigmaTSample / sigmaMax) {
+      break;
+    }
+
+    transmittance *= 1.f - sigmaTSample / sigmaMax;
+  }
+
+  transmittance = 0.f;
+  return true;
+}
+
 inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
                               varying RandomTEA *const uniform rng,
                               const Ray &ray,
@@ -98,7 +153,9 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
     return;
 
   float t, sample, transmittance;
-  if (!sampleWoodcock(self, ray, tBox0, tBox1, t, sample, transmittance)) {
+
+  if (!self->sampleVolumeInteraction(
+          self, ray, tBox0, tBox1, t, sample, transmittance)) {
     // we passed through the volume, so sample lights
 
     // light is not directly visible
@@ -181,7 +238,8 @@ export void VolleyPathTracer_set(void *uniform _self,
                                  uniform float sigmaTScale,
                                  uniform float sigmaSScale,
                                  uniform int maxNumScatters,
-                                 uniform float lightIntensity)
+                                 uniform float lightIntensity,
+                                 uniform int useRatioTracking)
 {
   uniform VolleyPathTracer *uniform self =
       (uniform VolleyPathTracer * uniform) _self;
@@ -191,4 +249,10 @@ export void VolleyPathTracer_set(void *uniform _self,
   self->sigmaSScale      = sigmaSScale;
   self->maxNumScatters   = maxNumScatters;
   self->lightIntensity   = lightIntensity;
+
+  if (useRatioTracking) {
+    self->sampleVolumeInteraction = sampleRatioTracking;
+  } else {
+    self->sampleVolumeInteraction = sampleWoodcock;
+  }
 }

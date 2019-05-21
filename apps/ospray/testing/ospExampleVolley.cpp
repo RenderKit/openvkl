@@ -68,6 +68,13 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVolleyTestScene> testScene)
     changed = true;
   }
 
+  static bool useRatioTracking = false;
+  if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
+    ospSet1i(testScene->getRenderer(), "useRatioTracking", useRatioTracking);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
   return changed;
 }
 

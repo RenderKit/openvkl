@@ -49,6 +49,7 @@ namespace ospray {
     float sigmaSScale    = getParam1f("sigmaSScale", 1.f);
     int maxNumScatters   = getParam1i("maxNumScatters", 1);
     float lightIntensity = getParam1f("lightIntensity", 1.f);
+    int useRatioTracking   = getParam1i("useRatioTracking", 0);
 
     ispc::VolleyPathTracer_set(getIE(),
                                (ispc::VolleyVolume *)vlyVolume,
@@ -56,7 +57,8 @@ namespace ospray {
                                sigmaTScale,
                                sigmaSScale,
                                maxNumScatters,
-                               lightIntensity);
+                               lightIntensity,
+                               useRatioTracking);
   }
 
   OSP_REGISTER_RENDERER(VolleyPathTracer, volley_pathtracer);

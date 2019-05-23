@@ -31,8 +31,6 @@ if (BUILD_ISPC_DRIVER)
 
   volley_add_library_ispc(volley_module_ispc_driver SHARED
     api/ISPCDriver.cpp
-    iterator/DumbRayIterator.cpp
-    iterator/DumbRayIterator.ispc
     iterator/GridAcceleratorRayIterator.cpp
     iterator/GridAcceleratorRayIterator.ispc
     samples_mask/SamplesMask.cpp

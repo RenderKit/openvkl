@@ -17,10 +17,10 @@
 #pragma once
 
 #include <ospray/ospcommon/box.h>
-#include "../iterator/DumbRayIterator.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 #include "volley/volley.h"
+#include "../iterator/RayIterator.h"
 
 using namespace ospcommon;
 
@@ -42,9 +42,8 @@ namespace volley {
         ManagedObject::commit();
       }
 
-      // volumes can provide their own ray iterators based on their internal
-      // acceleration structures. the default "dumb" ray iterator assumes no
-      // acceleration structure.
+      // volumes must provide their own ray iterators based on their internal
+      // acceleration structures.
       virtual RayIterator<1> *newRayIterator(const vec3f &origin,
                                              const vec3f &direction,
                                              const range1f &tRange,
@@ -59,8 +58,8 @@ namespace volley {
                                               const vrange1fn<8> &tRange,
                                               const SamplesMask *samplesMask)
       {
-        return new DumbRayIterator<8>(
-            this, origin, direction, tRange, samplesMask);
+        throw std::runtime_error(
+            "newRayIterator8() not implemented in this volume!");
       }
 
       virtual SamplesMask *newSamplesMask()

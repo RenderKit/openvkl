@@ -21,22 +21,25 @@
 namespace volley {
   namespace ispc_driver {
 
-    SharedStructuredVolume::~SharedStructuredVolume()
+    template <int W>
+    SharedStructuredVolume<W>::~SharedStructuredVolume()
     {
       if (ispcEquivalent) {
         ispc::SharedStructuredVolume_Destructor(ispcEquivalent);
       }
     }
 
-    void SharedStructuredVolume::commit()
+    template <int W>
+    void SharedStructuredVolume<W>::commit()
     {
-      StructuredVolume::commit();
+      StructuredVolume<W>::commit();
 
       if (!ispcEquivalent) {
         ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
       }
 
-      voxelData = (Data *)getParam<VLY_PTR>("voxelData", nullptr);
+      voxelData = (Data *)this->template getParam<ManagedObject::VLY_PTR>(
+          "voxelData", nullptr);
 
       if (!voxelData) {
         throw std::runtime_error("no voxelData set on volume");
@@ -47,21 +50,22 @@ namespace volley {
             "SharedStructuredVolume currently only supports VLY_FLOAT volumes");
       }
 
-      if (voxelData->size() != dimensions.product()) {
+      if (voxelData->size() != this->dimensions.product()) {
         throw std::runtime_error(
             "incorrect voxelData size for provided volume dimensions");
       }
 
       ispc::SharedStructuredVolume_set(ispcEquivalent,
                                        (float *)voxelData->data,
-                                       (const ispc::vec3i &)dimensions,
-                                       (const ispc::vec3f &)gridOrigin,
-                                       (const ispc::vec3f &)gridSpacing);
+                                       (const ispc::vec3i &)this->dimensions,
+                                       (const ispc::vec3f &)this->gridOrigin,
+                                       (const ispc::vec3f &)this->gridSpacing);
 
       buildAccelerator();
     }
 
-    void SharedStructuredVolume::buildAccelerator()
+    template <int W>
+    void SharedStructuredVolume<W>::buildAccelerator()
     {
       void *accelerator =
           ispc::SharedStructuredVolume_createAccelerator(ispcEquivalent);
@@ -81,7 +85,9 @@ namespace volley {
       });
     }
 
-    VLY_REGISTER_VOLUME(SharedStructuredVolume, shared_structured_volume)
+    VLY_REGISTER_VOLUME(SharedStructuredVolume<4>, shared_structured_volume_4)
+    VLY_REGISTER_VOLUME(SharedStructuredVolume<8>, shared_structured_volume_8)
+    VLY_REGISTER_VOLUME(SharedStructuredVolume<16>, shared_structured_volume_16)
 
   }  // namespace ispc_driver
 }  // namespace volley

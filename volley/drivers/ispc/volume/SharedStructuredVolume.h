@@ -26,24 +26,25 @@ namespace volley {
 
   namespace ispc_driver {
 
-    struct SharedStructuredVolume : public StructuredVolume
+    template <int W>
+    struct SharedStructuredVolume : public StructuredVolume<W>
     {
       ~SharedStructuredVolume();
 
       void commit() override;
 
-      RayIterator<8> *newRayIterator8(const vvec3fn<8> &origin,
-                                      const vvec3fn<8> &direction,
-                                      const vrange1fn<8> &tRange,
+      RayIterator<W> *newRayIteratorV(const vvec3fn<W> &origin,
+                                      const vvec3fn<W> &direction,
+                                      const vrange1fn<W> &tRange,
                                       const SamplesMask *samplesMask) override
       {
-        return new GridAcceleratorRayIterator<8>(
+        return new GridAcceleratorRayIterator<W>(
             this, origin, direction, tRange, samplesMask);
       }
 
       SamplesMask *newSamplesMask() override
       {
-        return new GridAcceleratorSamplesMask(this);
+        return new GridAcceleratorSamplesMask<W>(this);
       }
 
       float computeSample(const vec3f &objectCoordinates) const override

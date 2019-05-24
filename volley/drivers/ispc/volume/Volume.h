@@ -17,16 +17,17 @@
 #pragma once
 
 #include <ospray/ospcommon/box.h>
+#include "../iterator/RayIterator.h"
 #include "common/ManagedObject.h"
 #include "common/objectFactory.h"
 #include "volley/volley.h"
-#include "../iterator/RayIterator.h"
 
 using namespace ospcommon;
 
 namespace volley {
   namespace ispc_driver {
 
+    template <int W>
     struct Volume : public ManagedObject
     {
       Volume()                   = default;
@@ -34,7 +35,7 @@ namespace volley {
 
       static Volume *createInstance(const std::string &type)
       {
-        return createInstanceHelper<Volume, VLY_VOLUME>(type);
+        return createInstanceHelper<Volume<W>, VLY_VOLUME>(type);
       }
 
       virtual void commit() override
@@ -53,13 +54,13 @@ namespace volley {
             "newRayIterator() not implemented in this volume!");
       }
 
-      virtual RayIterator<8> *newRayIterator8(const vvec3fn<8> &origin,
-                                              const vvec3fn<8> &direction,
-                                              const vrange1fn<8> &tRange,
+      virtual RayIterator<W> *newRayIteratorV(const vvec3fn<W> &origin,
+                                              const vvec3fn<W> &direction,
+                                              const vrange1fn<W> &tRange,
                                               const SamplesMask *samplesMask)
       {
         throw std::runtime_error(
-            "newRayIterator8() not implemented in this volume!");
+            "newRayIteratorV() not implemented in this volume!");
       }
 
       virtual SamplesMask *newSamplesMask()
@@ -82,7 +83,8 @@ namespace volley {
     };
 
 #define VLY_REGISTER_VOLUME(InternalClass, external_name) \
-  VLY_REGISTER_OBJECT(Volume, volume, InternalClass, external_name)
+  VLY_REGISTER_OBJECT(                                    \
+      ::volley::ManagedObject, volume, InternalClass, external_name)
 
   }  // namespace ispc_driver
 }  // namespace volley

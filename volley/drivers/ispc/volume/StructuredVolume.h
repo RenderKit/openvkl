@@ -22,22 +22,23 @@
 namespace volley {
   namespace ispc_driver {
 
-    struct StructuredVolume : public Volume
+    template <int W>
+    struct StructuredVolume : public Volume<W>
     {
       virtual void commit() override
       {
-        Volume::commit();
+        Volume<W>::commit();
 
         samplingMethod = VLYSamplingMethod(
-            getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
-        dimensions  = getParam<vec3i>("dimensions", vec3i(128));
-        gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
-        gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
+            this->template getParam<int>("samplingMethod", VLY_SAMPLE_LINEAR));
+        dimensions  = this->template getParam<vec3i>("dimensions", vec3i(128));
+        gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+        gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       }
 
       box3f getBoundingBox() const override
       {
-        return box3f(gridOrigin, gridOrigin + (dimensions-1) * gridSpacing);
+        return box3f(gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing);
       }
 
      protected:

@@ -82,16 +82,24 @@ namespace volley {
                                             const range1f &tRange,
                                             VLYSamplesMask samplesMask) = 0;
 
-      virtual VLYRayIterator newRayIterator8(const int *valid,
-                                             VLYVolume volume,
-                                             const vvec3fn<8> &origin,
-                                             const vvec3fn<8> &direction,
-                                             const vrange1fn<8> &tRange,
-                                             VLYSamplesMask samplesMask)
-      {
-        throw std::runtime_error(
-            "newRayIterator8() not implemented on this driver");
-      }
+#define __define_newRayIteratorN(WIDTH)                            \
+  virtual VLYRayIterator newRayIterator##WIDTH(                    \
+      const int *valid,                                            \
+      VLYVolume volume,                                            \
+      const vvec3fn<WIDTH> &origin,                                \
+      const vvec3fn<WIDTH> &direction,                             \
+      const vrange1fn<WIDTH> &tRange,                              \
+      VLYSamplesMask samplesMask)                                  \
+  {                                                                \
+    throw std::runtime_error(                                      \
+        "newRayIterator##WIDTH() not implemented on this driver"); \
+  }
+
+      __define_newRayIteratorN(4);
+      __define_newRayIteratorN(8);
+      __define_newRayIteratorN(16);
+
+#undef __define_newRayIteratorN
 
       virtual bool iterateInterval(VLYRayIterator rayIterator,
                                    VLYRayInterval &rayInterval) = 0;

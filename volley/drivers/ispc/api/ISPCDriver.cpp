@@ -73,7 +73,7 @@ namespace volley {
                                                  const range1f &tRange,
                                                  VLYSamplesMask samplesMask)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
       return (VLYRayIterator)volumeObject.newRayIterator(
           origin,
           direction,
@@ -81,21 +81,25 @@ namespace volley {
           reinterpret_cast<const SamplesMask *>(samplesMask));
     }
 
-    template <int W>
-    VLYRayIterator ISPCDriver<W>::newRayIterator8(const int *valid,
-                                                  VLYVolume volume,
-                                                  const vvec3fn<8> &origin,
-                                                  const vvec3fn<8> &direction,
-                                                  const vrange1fn<8> &tRange,
-                                                  VLYSamplesMask samplesMask)
-    {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
-      return (VLYRayIterator)volumeObject.newRayIterator8(
-          origin,
-          direction,
-          tRange,
-          reinterpret_cast<const SamplesMask *>(samplesMask));
-    }
+#define __define_newRayIteratorN(WIDTH)                         \
+  template <int W>                                              \
+  VLYRayIterator ISPCDriver<W>::newRayIterator##WIDTH(          \
+      const int *valid,                                         \
+      VLYVolume volume,                                         \
+      const vvec3fn<WIDTH> &origin,                             \
+      const vvec3fn<WIDTH> &direction,                          \
+      const vrange1fn<WIDTH> &tRange,                           \
+      VLYSamplesMask samplesMask)                               \
+  {                                                             \
+    return newRayIteratorAnyWidth<WIDTH>(                       \
+        valid, volume, origin, direction, tRange, samplesMask); \
+  }
+
+    __define_newRayIteratorN(4);
+    __define_newRayIteratorN(8);
+    __define_newRayIteratorN(16);
+
+#undef __define_newRayIteratorN
 
     template <int W>
     bool ISPCDriver<W>::iterateInterval(VLYRayIterator rayIterator,
@@ -210,7 +214,7 @@ namespace volley {
     template <int W>
     VLYSamplesMask ISPCDriver<W>::newSamplesMask(VLYVolume volume)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
       return (VLYSamplesMask)volumeObject.newSamplesMask();
     }
 
@@ -239,14 +243,16 @@ namespace volley {
     template <int W>
     VLYVolume ISPCDriver<W>::newVolume(const char *type)
     {
-      return (VLYVolume)Volume::createInstance(type);
+      std::stringstream ss;
+      ss << type << "_" << W;
+      return (VLYVolume)Volume<W>::createInstance(ss.str());
     }
 
     template <int W>
     float ISPCDriver<W>::computeSample(VLYVolume volume,
                                        const vec3f &objectCoordinates)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
       return volumeObject.computeSample(objectCoordinates);
     }
 
@@ -271,15 +277,61 @@ namespace volley {
     vec3f ISPCDriver<W>::computeGradient(VLYVolume volume,
                                          const vec3f &objectCoordinates)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
       return volumeObject.computeGradient(objectCoordinates);
     }
 
     template <int W>
     box3f ISPCDriver<W>::getBoundingBox(VLYVolume volume)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
       return volumeObject.getBoundingBox();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Private methods ////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW <= W), VLYRayIterator>::type
+    ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
+                                          VLYVolume volume,
+                                          const vvec3fn<OW> &origin,
+                                          const vvec3fn<OW> &direction,
+                                          const vrange1fn<OW> &tRange,
+                                          VLYSamplesMask samplesMask)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+
+      return (VLYRayIterator)volumeObject.newRayIteratorV(
+          originW,
+          directionW,
+          tRangeW,
+          reinterpret_cast<const SamplesMask *>(samplesMask));
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW > W), VLYRayIterator>::type
+    ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
+                                          VLYVolume volume,
+                                          const vvec3fn<OW> &origin,
+                                          const vvec3fn<OW> &direction,
+                                          const vrange1fn<OW> &tRange,
+                                          VLYSamplesMask samplesMask)
+    {
+      throw std::runtime_error(
+          "ray iterators cannot be created for widths greater than the native "
+          "runtime vector width");
     }
 
     template <int W>
@@ -290,7 +342,7 @@ namespace volley {
                                          const vvec3fn<OW> &objectCoordinates,
                                          vfloatn<OW> &samples)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
 
@@ -319,7 +371,7 @@ namespace volley {
                                          const vvec3fn<OW> &objectCoordinates,
                                          vfloatn<OW> &samples)
     {
-      auto &volumeObject = referenceFromHandle<Volume>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
       const int numPacks = OW / W + (OW % W != 0);
 

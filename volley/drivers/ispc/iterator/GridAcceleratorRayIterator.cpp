@@ -25,18 +25,18 @@ namespace volley {
 
     template <int W>
     GridAcceleratorRayIterator<W>::GridAcceleratorRayIterator(
-        const Volume *volume,
+        const Volume<W> *volume,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
         const SamplesMask *samplesMask)
         : RayIterator<W>(volume, origin, direction, tRange, samplesMask)
     {
-      const SharedStructuredVolume *ssv =
-          static_cast<const SharedStructuredVolume *>(volume);
+      const SharedStructuredVolume<W> *ssv =
+          static_cast<const SharedStructuredVolume<W> *>(volume);
 
-      const GridAcceleratorSamplesMask *gasm =
-          static_cast<const GridAcceleratorSamplesMask *>(samplesMask);
+      const GridAcceleratorSamplesMask<W> *gasm =
+          static_cast<const GridAcceleratorSamplesMask<W> *>(samplesMask);
 
       box3f boundingBox = volume->getBoundingBox();
 
@@ -88,8 +88,9 @@ namespace volley {
           valid, ispcEquivalent, (int *)&result);
     }
 
-    template class GridAcceleratorRayIterator<1>;
+    template class GridAcceleratorRayIterator<4>;
     template class GridAcceleratorRayIterator<8>;
+    template class GridAcceleratorRayIterator<16>;
 
   }  // namespace ispc_driver
 }  // namespace volley

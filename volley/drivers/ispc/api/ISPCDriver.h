@@ -54,12 +54,19 @@ namespace volley {
                                     const range1f &tRange,
                                     VLYSamplesMask samplesMask) override;
 
-      VLYRayIterator newRayIterator8(const int *valid,
-                                     VLYVolume volume,
-                                     const vvec3fn<8> &origin,
-                                     const vvec3fn<8> &direction,
-                                     const vrange1fn<8> &tRange,
-                                     VLYSamplesMask samplesMask) override;
+#define __define_newRayIteratorN(WIDTH)                                 \
+  VLYRayIterator newRayIterator##WIDTH(const int *valid,                \
+                                       VLYVolume volume,                \
+                                       const vvec3fn<WIDTH> &origin,    \
+                                       const vvec3fn<WIDTH> &direction, \
+                                       const vrange1fn<WIDTH> &tRange,  \
+                                       VLYSamplesMask samplesMask) override;
+
+      __define_newRayIteratorN(4);
+      __define_newRayIteratorN(8);
+      __define_newRayIteratorN(16);
+
+#undef __define_newRayIteratorN
 
       bool iterateInterval(VLYRayIterator rayIterator,
                            VLYRayInterval &rayInterval) override;
@@ -142,6 +149,24 @@ namespace volley {
 
      private:
       template <int OW>
+      typename std::enable_if<(OW <= W), VLYRayIterator>::type
+      newRayIteratorAnyWidth(const int *valid,
+                             VLYVolume volume,
+                             const vvec3fn<OW> &origin,
+                             const vvec3fn<OW> &direction,
+                             const vrange1fn<OW> &tRange,
+                             VLYSamplesMask samplesMask);
+
+      template <int OW>
+      typename std::enable_if<(OW > W), VLYRayIterator>::type
+      newRayIteratorAnyWidth(const int *valid,
+                             VLYVolume volume,
+                             const vvec3fn<OW> &origin,
+                             const vvec3fn<OW> &direction,
+                             const vrange1fn<OW> &tRange,
+                             VLYSamplesMask samplesMask);
+
+      template <int OW>
       typename std::enable_if<(OW <= W), void>::type computeSampleAnyWidth(
           const int *valid,
           VLYVolume volume,
@@ -154,7 +179,7 @@ namespace volley {
           VLYVolume volume,
           const vvec3fn<OW> &objectCoordinates,
           vfloatn<OW> &samples);
-        };
+    };
 
   }  // namespace ispc_driver
 }  // namespace volley

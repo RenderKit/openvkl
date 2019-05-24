@@ -49,10 +49,29 @@ namespace volley {
   using vintn = int[W];
 
   template <int W>
-  struct vrange1fn
+  struct __aligned(64) vrange1fn
   {
     vfloatn<W> lower;
     vfloatn<W> upper;
+
+    vrange1fn<W>() = default;
+
+    vrange1fn<W>(const vrange1fn<W> &v) : lower(v.lower), upper(v.upper) {}
+
+    template <int OW>
+    explicit operator vrange1fn<OW>() const
+    {
+      static_assert(W <= OW, "can only up-convert vrange1fn types");
+
+      vrange1fn<OW> newRange;
+
+      for (int i = 0; i < W; i++) {
+        newRange.lower[i] = lower[i];
+        newRange.upper[i] = upper[i];
+      }
+
+      return newRange;
+    }
   };
 
   template <int W>

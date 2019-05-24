@@ -25,6 +25,7 @@ using namespace ospcommon;
 namespace volley {
   namespace ispc_driver {
 
+    template <int W>
     struct Volume;
 
     template <int W>
@@ -44,7 +45,7 @@ namespace volley {
     template <int W>
     struct RayIterator : public ManagedObject
     {
-      RayIterator(const Volume *volume,
+      RayIterator(const Volume<W> *volume,
                   const vvec3fn<W> &origin,
                   const vvec3fn<W> &direction,
                   const vrange1fn<W> &tRange,

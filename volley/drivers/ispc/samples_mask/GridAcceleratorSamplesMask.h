@@ -21,12 +21,16 @@
 namespace volley {
   namespace ispc_driver {
 
+    template <int W>
     struct Volume;
+
+    template <int W>
     struct SharedStructuredVolume;
 
+    template <int W>
     struct GridAcceleratorSamplesMask : public SamplesMask
     {
-      GridAcceleratorSamplesMask(const Volume *volume);
+      GridAcceleratorSamplesMask(const Volume<W> *volume);
 
       ~GridAcceleratorSamplesMask();
 
@@ -39,7 +43,7 @@ namespace volley {
 
      protected:
       void *ispcEquivalent{nullptr};
-      const SharedStructuredVolume *volume{nullptr};
+      const SharedStructuredVolume<W> *volume{nullptr};
     };
 
   }  // namespace ispc_driver

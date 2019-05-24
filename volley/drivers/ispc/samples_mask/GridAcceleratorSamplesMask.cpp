@@ -21,19 +21,23 @@
 namespace volley {
   namespace ispc_driver {
 
-    GridAcceleratorSamplesMask::GridAcceleratorSamplesMask(const Volume *volume)
-        : volume(static_cast<const SharedStructuredVolume *>(volume))
+    template <int W>
+    GridAcceleratorSamplesMask<W>::GridAcceleratorSamplesMask(
+        const Volume<W> *volume)
+        : volume(static_cast<const SharedStructuredVolume<W> *>(volume))
     {
     }
 
-    GridAcceleratorSamplesMask::~GridAcceleratorSamplesMask()
+    template <int W>
+    GridAcceleratorSamplesMask<W>::~GridAcceleratorSamplesMask()
     {
       if (ispcEquivalent) {
         ispc::GridAcceleratorSamplesMask_Destructor(ispcEquivalent);
       }
     }
 
-    void GridAcceleratorSamplesMask::commit()
+    template <int W>
+    void GridAcceleratorSamplesMask<W>::commit()
     {
       if (ispcEquivalent) {
         ispc::GridAcceleratorSamplesMask_Destructor(ispcEquivalent);
@@ -46,6 +50,10 @@ namespace volley {
           values.size(),
           (const float *)values.data());
     }
+
+    template struct GridAcceleratorSamplesMask<4>;
+    template struct GridAcceleratorSamplesMask<8>;
+    template struct GridAcceleratorSamplesMask<16>;
 
   }  // namespace ispc_driver
 }  // namespace volley

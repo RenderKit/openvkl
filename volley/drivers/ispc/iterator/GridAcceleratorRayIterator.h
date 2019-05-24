@@ -21,12 +21,13 @@
 namespace volley {
   namespace ispc_driver {
 
+    template <int W>
     struct Volume;
 
     template <int W>
     struct GridAcceleratorRayIterator : public RayIterator<W>
     {
-      GridAcceleratorRayIterator(const Volume *volume,
+      GridAcceleratorRayIterator(const Volume<W> *volume,
                                  const vvec3fn<W> &origin,
                                  const vvec3fn<W> &direction,
                                  const vrange1fn<W> &tRange,

@@ -45,15 +45,6 @@ namespace volley {
 
       // volumes must provide their own ray iterators based on their internal
       // acceleration structures.
-      virtual RayIterator<1> *newRayIterator(const vec3f &origin,
-                                             const vec3f &direction,
-                                             const range1f &tRange,
-                                             const SamplesMask *samplesMask)
-      {
-        throw std::runtime_error(
-            "newRayIterator() not implemented in this volume!");
-      }
-
       virtual RayIterator<W> *newRayIteratorV(const vvec3fn<W> &origin,
                                               const vvec3fn<W> &direction,
                                               const vrange1fn<W> &tRange,

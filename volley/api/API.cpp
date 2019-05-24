@@ -168,11 +168,13 @@ extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
     VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  return volley::api::currentDriver().newRayIterator(
+  constexpr int valid = 1;
+  return volley::api::currentDriver().newRayIterator1(
+      &valid,
       volume,
-      reinterpret_cast<const vec3f &>(*origin),
-      reinterpret_cast<const vec3f &>(*direction),
-      reinterpret_cast<const range1f &>(*tRange),
+      reinterpret_cast<const vvec3fn<1> &>(*origin),
+      reinterpret_cast<const vvec3fn<1> &>(*direction),
+      reinterpret_cast<const vrange1fn<1> &>(*tRange),
       samplesMask);
 }
 VOLLEY_CATCH_END(nullptr)
@@ -206,8 +208,15 @@ __define_vlyNewRayIteratorN(16);
 extern "C" bool vlyIterateInterval(
     VLYRayIterator rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN
 {
-  return volley::api::currentDriver().iterateInterval(
-      rayIterator, reinterpret_cast<VLYRayInterval &>(*rayInterval));
+  ASSERT_DRIVER();
+  constexpr int valid = 1;
+  int result;
+  volley::api::currentDriver().iterateInterval1(
+      &valid,
+      rayIterator,
+      reinterpret_cast<vVLYRayIntervalN<1> &>(*rayInterval),
+      reinterpret_cast<vintn<1> &>(result));
+  return result;
 }
 VOLLEY_CATCH_END(false)
 

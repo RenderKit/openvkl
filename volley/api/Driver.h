@@ -76,12 +76,6 @@ namespace volley {
       // Iterator /////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual VLYRayIterator newRayIterator(VLYVolume volume,
-                                            const vec3f &origin,
-                                            const vec3f &direction,
-                                            const range1f &tRange,
-                                            VLYSamplesMask samplesMask) = 0;
-
 #define __define_newRayIteratorN(WIDTH)                            \
   virtual VLYRayIterator newRayIterator##WIDTH(                    \
       const int *valid,                                            \
@@ -95,14 +89,12 @@ namespace volley {
         "newRayIterator##WIDTH() not implemented on this driver"); \
   }
 
+      __define_newRayIteratorN(1);
       __define_newRayIteratorN(4);
       __define_newRayIteratorN(8);
       __define_newRayIteratorN(16);
 
 #undef __define_newRayIteratorN
-
-      virtual bool iterateInterval(VLYRayIterator rayIterator,
-                                   VLYRayInterval &rayInterval) = 0;
 
 #define __define_iterateIntervalN(WIDTH)                                    \
   virtual void iterateInterval##WIDTH(const int *valid,                     \
@@ -114,6 +106,7 @@ namespace volley {
         "iterateInterval##WIDTH() not implemented on this driver");         \
   }
 
+      __define_iterateIntervalN(1);
       __define_iterateIntervalN(4);
       __define_iterateIntervalN(8);
       __define_iterateIntervalN(16);

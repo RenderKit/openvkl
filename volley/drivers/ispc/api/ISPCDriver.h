@@ -48,12 +48,6 @@ namespace volley {
       // Iterator /////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      VLYRayIterator newRayIterator(VLYVolume volume,
-                                    const vec3f &origin,
-                                    const vec3f &direction,
-                                    const range1f &tRange,
-                                    VLYSamplesMask samplesMask) override;
-
 #define __define_newRayIteratorN(WIDTH)                                 \
   VLYRayIterator newRayIterator##WIDTH(const int *valid,                \
                                        VLYVolume volume,                \
@@ -62,14 +56,12 @@ namespace volley {
                                        const vrange1fn<WIDTH> &tRange,  \
                                        VLYSamplesMask samplesMask) override;
 
+      __define_newRayIteratorN(1);
       __define_newRayIteratorN(4);
       __define_newRayIteratorN(8);
       __define_newRayIteratorN(16);
 
 #undef __define_newRayIteratorN
-
-      bool iterateInterval(VLYRayIterator rayIterator,
-                           VLYRayInterval &rayInterval) override;
 
 #define __define_iterateIntervalN(WIDTH)                            \
   void iterateInterval##WIDTH(const int *valid,                     \
@@ -77,6 +69,7 @@ namespace volley {
                               vVLYRayIntervalN<WIDTH> &rayInterval, \
                               vintn<WIDTH> &result) override;
 
+      __define_iterateIntervalN(1);
       __define_iterateIntervalN(4);
       __define_iterateIntervalN(8);
       __define_iterateIntervalN(16);

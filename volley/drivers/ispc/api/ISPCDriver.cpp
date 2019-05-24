@@ -66,21 +66,6 @@ namespace volley {
     // Iterator ///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    template <int W>
-    VLYRayIterator ISPCDriver<W>::newRayIterator(VLYVolume volume,
-                                                 const vec3f &origin,
-                                                 const vec3f &direction,
-                                                 const range1f &tRange,
-                                                 VLYSamplesMask samplesMask)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return (VLYRayIterator)volumeObject.newRayIterator(
-          origin,
-          direction,
-          tRange,
-          reinterpret_cast<const SamplesMask *>(samplesMask));
-    }
-
 #define __define_newRayIteratorN(WIDTH)                         \
   template <int W>                                              \
   VLYRayIterator ISPCDriver<W>::newRayIterator##WIDTH(          \
@@ -95,19 +80,12 @@ namespace volley {
         valid, volume, origin, direction, tRange, samplesMask); \
   }
 
+    __define_newRayIteratorN(1);
     __define_newRayIteratorN(4);
     __define_newRayIteratorN(8);
     __define_newRayIteratorN(16);
 
 #undef __define_newRayIteratorN
-
-    template <int W>
-    bool ISPCDriver<W>::iterateInterval(VLYRayIterator rayIterator,
-                                        VLYRayInterval &rayInterval)
-    {
-      throw std::runtime_error(
-          "iterateInterval() not implemented on this driver!");
-    }
 
 #define __define_iterateIntervalN(WIDTH)          \
   template <int W>                                \
@@ -121,6 +99,7 @@ namespace volley {
         valid, rayIterator, rayInterval, result); \
   }
 
+    __define_iterateIntervalN(1);
     __define_iterateIntervalN(4);
     __define_iterateIntervalN(8);
     __define_iterateIntervalN(16);

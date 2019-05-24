@@ -34,6 +34,7 @@ struct VolleyPathTracer
   // returned.
   bool (*uniform sampleVolumeInteraction)(uniform VolleyPathTracer *uniform
                                               self,
+                                          varying RandomTEA *const uniform rng,
                                           const Ray &ray,
                                           const float tBox0,
                                           const float tBox1,
@@ -48,6 +49,7 @@ struct VolleyPathTracer
 };
 
 inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
+                           varying RandomTEA *const uniform rng,
                            const Ray &ray,
                            const float tBox0,
                            const float tBox1,
@@ -59,12 +61,9 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
   const float sigmaMax = self->sigmaTScale;
 
   while (true) {
-    float randomNumber1;
-    float randomNumber2;
-    rdrand(&randomNumber1);
-    rdrand(&randomNumber2);
+    vec2f randomNumbers = RandomTEA__getFloats(rng);
 
-    t = t + -logf(1.f - randomNumber1) / sigmaMax;
+    t = t + -logf(1.f - randomNumbers.x) / sigmaMax;
 
     if (t > tBox1) {
       transmittance = 1.f;
@@ -80,7 +79,7 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
 
-    if (randomNumber2 < sigmaTSample / sigmaMax) {
+    if (randomNumbers.y < sigmaTSample / sigmaMax) {
       break;
     }
   }
@@ -90,6 +89,7 @@ inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
 }
 
 inline bool sampleRatioTracking(uniform VolleyPathTracer *uniform self,
+                                varying RandomTEA *const uniform rng,
                                 const Ray &ray,
                                 const float tBox0,
                                 const float tBox1,
@@ -103,12 +103,9 @@ inline bool sampleRatioTracking(uniform VolleyPathTracer *uniform self,
   const float sigmaMax = self->sigmaTScale;
 
   while (true) {
-    float randomNumber1;
-    float randomNumber2;
-    rdrand(&randomNumber1);
-    rdrand(&randomNumber2);
+    vec2f randomNumbers = RandomTEA__getFloats(rng);
 
-    t = t + -logf(1.f - randomNumber1) / sigmaMax;
+    t = t + -logf(1.f - randomNumbers.x) / sigmaMax;
 
     if (t > tBox1) {
       return false;
@@ -123,7 +120,7 @@ inline bool sampleRatioTracking(uniform VolleyPathTracer *uniform self,
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
 
-    if (randomNumber2 < sigmaTSample / sigmaMax) {
+    if (randomNumbers.y < sigmaTSample / sigmaMax) {
       break;
     }
 
@@ -155,7 +152,7 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
   float t, sample, transmittance;
 
   if (!self->sampleVolumeInteraction(
-          self, ray, tBox0, tBox1, t, sample, transmittance)) {
+          self, rng, ray, tBox0, tBox1, t, sample, transmittance)) {
     // light is not directly visible
     if (scatterIndex == 0) {
       return;

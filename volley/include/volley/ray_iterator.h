@@ -43,11 +43,23 @@ struct VLYRayInterval
   // TODO: output samples mask when needed
 };
 
+struct VLYRayInterval4
+{
+  vly_vrange1f4 tRange;
+  float nominalDeltaT[4];
+  // TODO: output samples mask when needed
+};
+
 struct VLYRayInterval8
 {
   vly_vrange1f8 tRange;
   float nominalDeltaT[8];
-  // TODO: output samples mask when needed
+};
+
+struct VLYRayInterval16
+{
+  vly_vrange1f16 tRange;
+  float nominalDeltaT[16];
 };
 
 // returns true while the iterator is still within the volume

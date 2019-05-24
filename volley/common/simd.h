@@ -116,4 +116,18 @@ namespace volley {
     }
   };
 
+  template <int W>
+  struct vVLYRayIntervalN
+  {
+    vrange1fn<W> tRange;
+    vfloatn<W> nominalDeltaT;
+
+    vVLYRayIntervalN<W>() = default;
+
+    vVLYRayIntervalN<W>(const vVLYRayIntervalN<W> &v)
+        : tRange(v.tRange), nominalDeltaT(v.nominalDeltaT)
+    {
+    }
+  };
+
 }  // namespace volley

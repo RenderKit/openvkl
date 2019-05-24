@@ -109,18 +109,23 @@ namespace volley {
           "iterateInterval() not implemented on this driver!");
     }
 
-    template <int W>
-    void ISPCDriver<W>::iterateInterval8(const int *valid,
-                                         VLYRayIterator rayIterator,
-                                         VLYRayInterval8 &rayInterval,
-                                         vintn<8> &result)
-    {
-      auto &rayIteratorObject =
-          referenceFromHandle<RayIterator<8>>(rayIterator);
-      rayIteratorObject.iterateInterval(valid, result);
-      rayInterval = *reinterpret_cast<const VLYRayInterval8 *>(
-          rayIteratorObject.getCurrentRayInterval());
-    }
+#define __define_iterateIntervalN(WIDTH)          \
+  template <int W>                                \
+  void ISPCDriver<W>::iterateInterval##WIDTH(     \
+      const int *valid,                           \
+      VLYRayIterator rayIterator,                 \
+      vVLYRayIntervalN<WIDTH> &rayInterval,       \
+      vintn<WIDTH> &result)                       \
+  {                                               \
+    return iterateIntervalAnyWidth<WIDTH>(        \
+        valid, rayIterator, rayInterval, result); \
+  }
+
+    __define_iterateIntervalN(4);
+    __define_iterateIntervalN(8);
+    __define_iterateIntervalN(16);
+
+#undef __define_iterateIntervalN
 
     template <int W>
     void ISPCDriver<W>::iterateSurface8(const int *valid,
@@ -331,6 +336,53 @@ namespace volley {
     {
       throw std::runtime_error(
           "ray iterators cannot be created for widths greater than the native "
+          "runtime vector width");
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW <= W), void>::type
+    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
+                                           VLYRayIterator rayIterator,
+                                           vVLYRayIntervalN<OW> &rayInterval,
+                                           vintn<OW> &result)
+    {
+      auto &rayIteratorObject =
+          referenceFromHandle<RayIterator<W>>(rayIterator);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vintn<W> resultW;
+
+      rayIteratorObject.iterateInterval(validW, resultW);
+
+      vVLYRayIntervalN<W> rayIntervalW;
+
+      rayIntervalW = *reinterpret_cast<const vVLYRayIntervalN<W> *>(
+          rayIteratorObject.getCurrentRayInterval());
+
+      for (int i = 0; i < OW; i++) {
+        rayInterval.tRange.lower[i]  = rayIntervalW.tRange.lower[i];
+        rayInterval.tRange.upper[i]  = rayIntervalW.tRange.upper[i];
+        rayInterval.nominalDeltaT[i] = rayIntervalW.nominalDeltaT[i];
+      }
+
+      for (int i = 0; i < OW; i++)
+        result[i] = resultW[i];
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW > W), void>::type
+    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
+                                           VLYRayIterator rayIterator,
+                                           vVLYRayIntervalN<OW> &rayInterval,
+                                           vintn<OW> &result)
+    {
+      throw std::runtime_error(
+          "cannot iterate on ray intervals for widths greater than the native "
           "runtime vector width");
     }
 

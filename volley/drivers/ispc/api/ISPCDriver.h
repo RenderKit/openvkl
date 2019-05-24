@@ -71,10 +71,17 @@ namespace volley {
       bool iterateInterval(VLYRayIterator rayIterator,
                            VLYRayInterval &rayInterval) override;
 
-      void iterateInterval8(const int *valid,
-                            VLYRayIterator rayIterator,
-                            VLYRayInterval8 &rayInterval,
-                            vintn<8> &result) override;
+#define __define_iterateIntervalN(WIDTH)                            \
+  void iterateInterval##WIDTH(const int *valid,                     \
+                              VLYRayIterator rayIterator,           \
+                              vVLYRayIntervalN<WIDTH> &rayInterval, \
+                              vintn<WIDTH> &result) override;
+
+      __define_iterateIntervalN(4);
+      __define_iterateIntervalN(8);
+      __define_iterateIntervalN(16);
+
+#undef __define_iterateIntervalN
 
       void iterateSurface8(const int *valid,
                            VLYRayIterator rayIterator,
@@ -165,6 +172,20 @@ namespace volley {
                              const vvec3fn<OW> &direction,
                              const vrange1fn<OW> &tRange,
                              VLYSamplesMask samplesMask);
+
+      template <int OW>
+      typename std::enable_if<(OW <= W), void>::type iterateIntervalAnyWidth(
+          const int *valid,
+          VLYRayIterator rayIterator,
+          vVLYRayIntervalN<OW> &rayInterval,
+          vintn<OW> &result);
+
+      template <int OW>
+      typename std::enable_if<(OW > W), void>::type iterateIntervalAnyWidth(
+          const int *valid,
+          VLYRayIterator rayIterator,
+          vVLYRayIntervalN<OW> &rayInterval,
+          vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW <= W), void>::type computeSampleAnyWidth(

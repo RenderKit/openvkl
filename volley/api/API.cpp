@@ -211,20 +211,27 @@ extern "C" bool vlyIterateInterval(
 }
 VOLLEY_CATCH_END(false)
 
-extern "C" void vlyIterateInterval8(const int *valid,
-                                    VLYRayIterator rayIterator,
-                                    VLYRayInterval8 *rayInterval,
-                                    int *result) VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
+#define __define_vlyIterateIntervalN(WIDTH)                        \
+  extern "C" void vlyIterateInterval##WIDTH(                       \
+      const int *valid,                                            \
+      VLYRayIterator rayIterator,                                  \
+      VLYRayInterval##WIDTH *rayInterval,                          \
+      int *result) VOLLEY_CATCH_BEGIN                              \
+  {                                                                \
+    ASSERT_DRIVER();                                               \
+    return volley::api::currentDriver().iterateInterval##WIDTH(    \
+        valid,                                                     \
+        rayIterator,                                               \
+        reinterpret_cast<vVLYRayIntervalN<WIDTH> &>(*rayInterval), \
+        reinterpret_cast<vintn<WIDTH> &>(*result));                \
+  }                                                                \
+  VOLLEY_CATCH_END()
 
-  return volley::api::currentDriver().iterateInterval8(
-      valid,
-      rayIterator,
-      reinterpret_cast<VLYRayInterval8 &>(*rayInterval),
-      reinterpret_cast<vintn<8> &>(*result));
-}
-VOLLEY_CATCH_END()
+__define_vlyIterateIntervalN(4);
+__define_vlyIterateIntervalN(8);
+__define_vlyIterateIntervalN(16);
+
+#undef __define_vlyIterateIntervalN
 
 extern "C" void vlyIterateSurface8(const int *valid,
                                    VLYRayIterator rayIterator,

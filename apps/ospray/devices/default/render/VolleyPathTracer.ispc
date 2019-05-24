@@ -159,9 +159,9 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
     }
 
     // hardcoded directional light
-    if (ray.dir.z > 0.f) {
+    if (ray.dir.y > 0.f) {
       const vec3f lightColor = make_vec3f(self->lightIntensity);
-      const float cosTheta   = ray.dir.z;
+      const float cosTheta   = ray.dir.y;
 
       Le = Le + transmittance * lightColor * cosTheta;
     }

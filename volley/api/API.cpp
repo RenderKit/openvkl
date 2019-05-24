@@ -177,24 +177,31 @@ extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
 }
 VOLLEY_CATCH_END(nullptr)
 
-extern "C" VLYRayIterator vlyNewRayIterator8(const int *valid,
-                                             VLYVolume volume,
-                                             const vly_vvec3f8 *origin,
-                                             const vly_vvec3f8 *direction,
-                                             const vly_vrange1f8 *tRange,
-                                             VLYSamplesMask samplesMask)
-    VOLLEY_CATCH_BEGIN
-{
-  ASSERT_DRIVER();
-  return volley::api::currentDriver().newRayIterator8(
-      valid,
-      volume,
-      reinterpret_cast<const vvec3fn<8> &>(*origin),
-      reinterpret_cast<const vvec3fn<8> &>(*direction),
-      reinterpret_cast<const vrange1fn<8> &>(*tRange),
-      samplesMask);
-}
-VOLLEY_CATCH_END(nullptr)
+#define __define_vlyNewRayIteratorN(WIDTH)                     \
+  extern "C" VLYRayIterator vlyNewRayIterator##WIDTH(          \
+      const int *valid,                                        \
+      VLYVolume volume,                                        \
+      const vly_vvec3f##WIDTH *origin,                         \
+      const vly_vvec3f##WIDTH *direction,                      \
+      const vly_vrange1f##WIDTH *tRange,                       \
+      VLYSamplesMask samplesMask) VOLLEY_CATCH_BEGIN           \
+  {                                                            \
+    ASSERT_DRIVER();                                           \
+    return volley::api::currentDriver().newRayIterator##WIDTH( \
+        valid,                                                 \
+        volume,                                                \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),     \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),  \
+        reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),   \
+        samplesMask);                                          \
+  }                                                            \
+  VOLLEY_CATCH_END(nullptr)
+
+__define_vlyNewRayIteratorN(4);
+__define_vlyNewRayIteratorN(8);
+__define_vlyNewRayIteratorN(16);
+
+#undef __define_vlyNewRayIteratorN
 
 extern "C" bool vlyIterateInterval(
     VLYRayIterator rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN

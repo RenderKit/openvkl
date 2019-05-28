@@ -45,11 +45,27 @@ namespace ospray {
       throw std::runtime_error(
           "no transfer function specified on the Volley renderer!");
 
-    float sigmaTScale    = getParam1f("sigmaTScale", 1.f);
-    float sigmaSScale    = getParam1f("sigmaSScale", 1.f);
-    int maxNumScatters   = getParam1i("maxNumScatters", 1);
-    float lightIntensity = getParam1f("lightIntensity", 1.f);
-    int useRatioTracking   = getParam1i("useRatioTracking", 0);
+    float sigmaTScale           = getParam1f("sigmaTScale", 1.f);
+    float sigmaSScale           = getParam1f("sigmaSScale", 1.f);
+    int maxNumScatters          = getParam1i("maxNumScatters", 1);
+    int useRatioTracking        = getParam1i("useRatioTracking", 0);
+
+    float ambientLightIntensity = getParam1f("ambientLightIntensity", 1.f);
+
+    float directionalLightIntensity =
+        getParam1f("directionalLightIntensity", 1.f);
+    float directionalLightAngularDiameter =
+        getParam1f("directionalLightAngularDiameter", 45.f) * M_PI / 180.f;
+    float directionalLightAzimuth =
+        getParam1f("directionalLightAzimuth", 0.f) * M_PI / 180.f;
+    float directionalLightElevation =
+        getParam1f("directionalLightElevation", 90.f) * M_PI / 180.f;
+
+    // use y direction as up for elevation = 90 deg
+    vec3f directionalLightDirection =
+        vec3f(cosf(directionalLightAzimuth) * cosf(directionalLightElevation),
+              sinf(directionalLightElevation),
+              sinf(directionalLightAzimuth) * cosf(directionalLightElevation));
 
     ispc::VolleyPathTracer_set(getIE(),
                                (ispc::VolleyVolume *)vlyVolume,
@@ -57,8 +73,11 @@ namespace ospray {
                                sigmaTScale,
                                sigmaSScale,
                                maxNumScatters,
-                               lightIntensity,
-                               useRatioTracking);
+                               useRatioTracking,
+                               ambientLightIntensity,
+                               directionalLightIntensity,
+                               directionalLightAngularDiameter,
+                               *(ispc::vec3f *)&directionalLightDirection);
   }
 
   OSP_REGISTER_RENDERER(VolleyPathTracer, volley_pathtracer);

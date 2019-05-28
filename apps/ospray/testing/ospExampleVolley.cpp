@@ -61,16 +61,63 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVolleyTestScene> testScene)
     changed = true;
   }
 
-  static float lightIntensity = 1.f;
-  if (ImGui::SliderFloat("lightIntensity", &lightIntensity, 0.01f, 100.f)) {
-    ospSet1f(testScene->getRenderer(), "lightIntensity", lightIntensity);
+  static bool useRatioTracking = false;
+  if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
+    ospSet1i(testScene->getRenderer(), "useRatioTracking", useRatioTracking);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
 
-  static bool useRatioTracking = false;
-  if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
-    ospSet1i(testScene->getRenderer(), "useRatioTracking", useRatioTracking);
+  static float ambientLightIntensity = 1.f;
+  if (ImGui::SliderFloat(
+          "ambientLightIntensity", &ambientLightIntensity, 0.f, 10.f)) {
+    ospSet1f(testScene->getRenderer(),
+             "ambientLightIntensity",
+             ambientLightIntensity);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static float directionalLightIntensity = 1.f;
+  if (ImGui::SliderFloat(
+          "directionalLightIntensity", &directionalLightIntensity, 0.f, 10.f)) {
+    ospSet1f(testScene->getRenderer(),
+             "directionalLightIntensity",
+             directionalLightIntensity);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static float directionalLightAngularDiameter = 45.f;
+  if (ImGui::SliderFloat("directionalLightAngularDiameter",
+                         &directionalLightAngularDiameter,
+                         0.f,
+                         180.f)) {
+    ospSet1f(testScene->getRenderer(),
+             "directionalLightAngularDiameter",
+             directionalLightAngularDiameter);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static float directionalLightAzimuth = 0.f;
+  if (ImGui::SliderFloat(
+          "directionalLightAzimuth", &directionalLightAzimuth, -180.f, 180.f)) {
+    ospSet1f(testScene->getRenderer(),
+             "directionalLightAzimuth",
+             directionalLightAzimuth);
+    ospCommit(testScene->getRenderer());
+    changed = true;
+  }
+
+  static float directionalLightElevation = 90.f;
+  if (ImGui::SliderFloat("directionalLightElevation",
+                         &directionalLightElevation,
+                         -90.f,
+                         90.f)) {
+    ospSet1f(testScene->getRenderer(),
+             "directionalLightElevation",
+             directionalLightElevation);
     ospCommit(testScene->getRenderer());
     changed = true;
   }

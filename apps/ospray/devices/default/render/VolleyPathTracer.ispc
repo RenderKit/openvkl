@@ -22,6 +22,18 @@
 
 #include <volley/volley.isph>
 
+// for very small cones treat as singular light, because float precision is not
+// good enough
+#define COS_ANGLE_MAX 0.99999988f
+
+struct DirectionalLight
+{
+  uniform vec3f power;
+  uniform vec3f direction;
+  uniform float cosAngle;
+  uniform float pdf;
+};
+
 struct VolleyPathTracer
 {
   uniform Renderer super;
@@ -45,8 +57,37 @@ struct VolleyPathTracer
   uniform float sigmaTScale;
   uniform float sigmaSScale;
   uniform int maxNumScatters;
-  uniform float lightIntensity;
+
+  uniform float ambientLightIntensity;
+
+  uniform DirectionalLight directionalLight;
 };
+
+struct LightSample
+{
+  vec3f radiance;  // radiance that arrives at the given point (not weighted by
+                   // pdf)
+  float pdf;  // probability density that the direction would have been sampled
+};
+
+LightSample DirectionalLight_sample(uniform VolleyPathTracer *uniform self,
+                                    const vec3f &origin,
+                                    const vec3f &dir,
+                                    const float minDist,
+                                    const float maxDist)
+{
+  const DirectionalLight *uniform light = &self->directionalLight;
+  LightSample res;
+  res.radiance = make_vec3f(0.f);
+
+  if (inf <= maxDist && light->cosAngle < COS_ANGLE_MAX &&
+      dot(light->direction, dir) > light->cosAngle) {
+    res.radiance = light->power * light->pdf;
+    res.pdf      = light->pdf;
+  }
+
+  return res;
+}
 
 inline bool sampleWoodcock(uniform VolleyPathTracer *uniform self,
                            varying RandomTEA *const uniform rng,
@@ -158,13 +199,15 @@ inline void integrateWoodcock(uniform VolleyPathTracer *uniform self,
       return;
     }
 
-    // hardcoded directional light
-    if (ray.dir.y > 0.f) {
-      const vec3f lightColor = make_vec3f(self->lightIntensity);
-      const float cosTheta   = ray.dir.y;
+    // directional light
+    LightSample lightSample =
+        DirectionalLight_sample(self, ray.org, ray.dir, tBox1, inf);
 
-      Le = Le + transmittance * lightColor * cosTheta;
-    }
+    if (reduce_max(lightSample.radiance) > 0.0f)
+      Le = Le + transmittance * lightSample.radiance;
+
+    // ambient light
+    Le = Le + transmittance * make_vec3f(self->ambientLightIntensity);
 
     return;
   }
@@ -233,8 +276,11 @@ export void VolleyPathTracer_set(void *uniform _self,
                                  uniform float sigmaTScale,
                                  uniform float sigmaSScale,
                                  uniform int maxNumScatters,
-                                 uniform float lightIntensity,
-                                 uniform int useRatioTracking)
+                                 uniform int useRatioTracking,
+                                 uniform float ambientLightIntensity,
+                                 uniform float directionalLightIntensity,
+                                 uniform float directionalLightAngularDiameter,
+                                 const uniform vec3f &directionalLightDirection)
 {
   uniform VolleyPathTracer *uniform self =
       (uniform VolleyPathTracer * uniform) _self;
@@ -243,11 +289,21 @@ export void VolleyPathTracer_set(void *uniform _self,
   self->sigmaTScale      = sigmaTScale;
   self->sigmaSScale      = sigmaSScale;
   self->maxNumScatters   = maxNumScatters;
-  self->lightIntensity   = lightIntensity;
 
   if (useRatioTracking) {
     self->sampleVolumeInteraction = sampleRatioTracking;
   } else {
     self->sampleVolumeInteraction = sampleWoodcock;
   }
+
+  self->ambientLightIntensity = ambientLightIntensity;
+
+  self->directionalLight.power = make_vec3f(directionalLightIntensity);
+
+  const uniform float cosAngle = cosf(0.5f * directionalLightAngularDiameter);
+  self->directionalLight.cosAngle = cosAngle;
+  self->directionalLight.pdf =
+      cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
+
+  self->directionalLight.direction = directionalLightDirection;
 }

@@ -228,8 +228,12 @@ int main(int argc, const char **argv)
       const std::string dimZ(argv[6]);
 
       const vec3i dimensions(stoi(dimX), stoi(dimY), stoi(dimZ));
-      const vec3f gridOrigin(0.f);
-      const vec3f gridSpacing(1.f / float(dimensions.x));
+
+      // fit it into a unit cube
+      const float normalizedGridSpacing = reduce_min(1.f / dimensions);
+
+      const vec3f gridOrigin(-0.5f * dimensions * normalizedGridSpacing);
+      const vec3f gridSpacing(normalizedGridSpacing);
 
       testingStructuredVolume =
           std::shared_ptr<RawFileStructuredVolume>(new RawFileStructuredVolume(

@@ -123,6 +123,39 @@ BENCHMARK_TEMPLATE(vectorRandomSample, 4);
 BENCHMARK_TEMPLATE(vectorRandomSample, 8);
 BENCHMARK_TEMPLATE(vectorRandomSample, 16);
 
+static void scalarRayIteratorConstruction(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VLYVolume vlyVolume = v->getVLYVolume();
+
+  vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
+
+  for (auto _ : state) {
+    vly_vec3f origin{distX(eng), distY(eng), -1.f};
+    vly_vec3f direction{0.f, 0.f, 1.f};
+    vly_range1f tRange{0.f, 1000.f};
+
+    VLYRayIterator rayIterator =
+        vlyNewRayIterator(vlyVolume, &origin, &direction, &tRange, nullptr);
+
+    vlyRelease(rayIterator);
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(scalarRayIteratorConstruction);
+
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {

@@ -76,10 +76,18 @@ namespace volley {
 
 #undef __define_iterateIntervalN
 
-      void iterateSurface8(const int *valid,
-                           VLYRayIterator rayIterator,
-                           VLYSurfaceHit8 &surfaceHit,
-                           vintn<8> &result) override;
+#define __define_iterateSurfaceN(WIDTH)                          \
+  void iterateSurface##WIDTH(const int *valid,                   \
+                             VLYRayIterator &rayIterator,        \
+                             vVLYSurfaceHitN<WIDTH> &surfaceHit, \
+                             vintn<WIDTH> &result) override;
+
+      __define_iterateSurfaceN(1);
+      __define_iterateSurfaceN(4);
+      __define_iterateSurfaceN(8);
+      __define_iterateSurfaceN(16);
+
+#undef __define_iterateSurfaceN
 
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////
@@ -178,6 +186,20 @@ namespace volley {
           const int *valid,
           VLYRayIterator rayIterator,
           vVLYRayIntervalN<OW> &rayInterval,
+          vintn<OW> &result);
+
+      template <int OW>
+      typename std::enable_if<(OW <= W), void>::type iterateSurfaceAnyWidth(
+          const int *valid,
+          VLYRayIterator &rayIterator,
+          vVLYSurfaceHitN<OW> &surfaceHit,
+          vintn<OW> &result);
+
+      template <int OW>
+      typename std::enable_if<(OW > W), void>::type iterateSurfaceAnyWidth(
+          const int *valid,
+          VLYRayIterator &rayIterator,
+          vVLYSurfaceHitN<OW> &surfaceHit,
           vintn<OW> &result);
 
       template <int OW>

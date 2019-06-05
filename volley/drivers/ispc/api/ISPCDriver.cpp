@@ -106,18 +106,23 @@ namespace volley {
 
 #undef __define_iterateIntervalN
 
-    template <int W>
-    void ISPCDriver<W>::iterateSurface8(const int *valid,
-                                        VLYRayIterator rayIterator,
-                                        VLYSurfaceHit8 &surfaceHit,
-                                        vintn<8> &result)
-    {
-      auto &rayIteratorObject =
-          referenceFromHandle<RayIterator<8>>(rayIterator);
-      rayIteratorObject.iterateSurface(valid, result);
-      surfaceHit = *reinterpret_cast<const VLYSurfaceHit8 *>(
-          rayIteratorObject.getCurrentSurfaceHit());
-    }
+#define __define_iterateSurfaceN(WIDTH)                                    \
+  template <int W>                                                         \
+  void ISPCDriver<W>::iterateSurface##WIDTH(                               \
+      const int *valid,                                                    \
+      VLYRayIterator &rayIterator,                                         \
+      vVLYSurfaceHitN<WIDTH> &surfaceHit,                                  \
+      vintn<WIDTH> &result)                                                \
+  {                                                                        \
+    iterateSurfaceAnyWidth<WIDTH>(valid, rayIterator, surfaceHit, result); \
+  }
+
+    __define_iterateSurfaceN(1);
+    __define_iterateSurfaceN(4);
+    __define_iterateSurfaceN(8);
+    __define_iterateSurfaceN(16);
+
+#undef __define_iterateSurfaceN
 
     ///////////////////////////////////////////////////////////////////////////
     // Module /////////////////////////////////////////////////////////////////
@@ -362,6 +367,48 @@ namespace volley {
     {
       throw std::runtime_error(
           "cannot iterate on ray intervals for widths greater than the native "
+          "runtime vector width");
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW <= W), void>::type
+    ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
+                                          VLYRayIterator &rayIterator,
+                                          vVLYSurfaceHitN<OW> &surfaceHit,
+                                          vintn<OW> &result)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(rayIterator.volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vVLYSurfaceHitN<W> surfaceHitW;
+
+      vintn<W> resultW;
+
+      volumeObject.iterateSurfaceV(validW, rayIterator, surfaceHitW, resultW);
+
+      for (int i = 0; i < OW; i++) {
+        surfaceHit.t[i]      = surfaceHitW.t[i];
+        surfaceHit.sample[i] = surfaceHitW.sample[i];
+      }
+
+      for (int i = 0; i < OW; i++)
+        result[i] = resultW[i];
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW > W), void>::type
+    ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
+                                          VLYRayIterator &rayIterator,
+                                          vVLYSurfaceHitN<OW> &surfaceHit,
+                                          vintn<OW> &result)
+    {
+      throw std::runtime_error(
+          "cannot iterate on surfaces for widths greater than the native "
           "runtime vector width");
     }
 

@@ -23,7 +23,6 @@
 #include "common/Data.h"
 
 namespace volley {
-
   namespace ispc_driver {
 
     template <int W>
@@ -40,6 +39,20 @@ namespace volley {
       {
         return new GridAcceleratorRayIterator<W>(
             this, origin, direction, tRange, samplesMask);
+      void iterateSurfaceV(const int *valid,
+                            VLYRayIterator &rayIterator,
+                            vVLYSurfaceHitN<W> &surfaceHit,
+                            vintn<W> &result) override
+      {
+        GridAcceleratorRayIterator<W> ri =
+            fromVLYRayIterator<GridAcceleratorRayIterator<W>>(rayIterator);
+
+        ri.iterateSurface(valid, result);
+
+        surfaceHit = *reinterpret_cast<const vVLYSurfaceHitN<W> *>(
+            ri.getCurrentSurfaceHit());
+
+        rayIterator = toVLYRayIterator(ri);
       }
 
       SamplesMask *newSamplesMask() override

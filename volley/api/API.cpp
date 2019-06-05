@@ -242,20 +242,41 @@ __define_vlyIterateIntervalN(16);
 
 #undef __define_vlyIterateIntervalN
 
-extern "C" void vlyIterateSurface8(const int *valid,
-                                   VLYRayIterator rayIterator,
-                                   VLYSurfaceHit8 *surfaceHit,
-                                   int *result) VOLLEY_CATCH_BEGIN
+extern "C" bool vlyIterateSurface(VLYRayIterator *rayIterator,
+                                  VLYSurfaceHit *surfaceHit) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-
-  return volley::api::currentDriver().iterateSurface8(
-      valid,
-      rayIterator,
-      reinterpret_cast<VLYSurfaceHit8 &>(*surfaceHit),
-      reinterpret_cast<vintn<8> &>(*result));
+  constexpr int valid = 1;
+  int result;
+  volley::api::currentDriver().iterateSurface1(
+      &valid,
+      reinterpret_cast<VLYRayIterator &>(*rayIterator),
+      reinterpret_cast<vVLYSurfaceHitN<1> &>(*surfaceHit),
+      reinterpret_cast<vintn<1> &>(result));
+  return result;
 }
-VOLLEY_CATCH_END()
+VOLLEY_CATCH_END(false)
+
+#define __define_vlyIterateSurfaceN(WIDTH)                                   \
+  extern "C" void vlyIterateSurface##WIDTH(const int *valid,                 \
+                                           VLYRayIterator *rayIterator,      \
+                                           VLYSurfaceHit##WIDTH *surfaceHit, \
+                                           int *result) VOLLEY_CATCH_BEGIN   \
+  {                                                                          \
+    ASSERT_DRIVER();                                                         \
+    return volley::api::currentDriver().iterateSurface##WIDTH(               \
+        valid,                                                               \
+        reinterpret_cast<VLYRayIterator &>(*rayIterator),                    \
+        reinterpret_cast<vVLYSurfaceHitN<WIDTH> &>(*surfaceHit),             \
+        reinterpret_cast<vintn<WIDTH> &>(*result));                          \
+  }                                                                          \
+  VOLLEY_CATCH_END()
+
+__define_vlyIterateSurfaceN(4);
+__define_vlyIterateSurfaceN(8);
+__define_vlyIterateSurfaceN(16);
+
+#undef __define_vlyIterateSurfaceN
 
 ///////////////////////////////////////////////////////////////////////////////
 // Module /////////////////////////////////////////////////////////////////////

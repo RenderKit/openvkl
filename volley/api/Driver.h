@@ -113,14 +113,22 @@ namespace volley {
 
 #undef __define_iterateIntervalN
 
-      virtual void iterateSurface8(const int *valid,
-                                   VLYRayIterator rayIterator,
-                                   VLYSurfaceHit8 &surfaceHit,
-                                   vintn<8> &result)
-      {
-        throw std::runtime_error(
-            "iterateSurface8() not implemented in this driver");
-      }
+#define __define_iterateSurfaceN(WIDTH)                                  \
+  virtual void iterateSurface##WIDTH(const int *valid,                   \
+                                     VLYRayIterator &rayIterator,        \
+                                     vVLYSurfaceHitN<WIDTH> &surfaceHit, \
+                                     vintn<WIDTH> &result)               \
+  {                                                                      \
+    throw std::runtime_error(                                            \
+        "iterateSurface##WIDTH() not implemented on this driver");       \
+  }
+
+      __define_iterateSurfaceN(1);
+      __define_iterateSurfaceN(4);
+      __define_iterateSurfaceN(8);
+      __define_iterateSurfaceN(16);
+
+#undef __define_iterateSurfaceN
 
       /////////////////////////////////////////////////////////////////////////
       // Module ///////////////////////////////////////////////////////////////

@@ -54,6 +54,15 @@ namespace volley {
             "newRayIteratorV() not implemented in this volume!");
       }
 
+      virtual void iterateSurfaceV(const int *valid,
+                                   VLYRayIterator &rayIterator,
+                                   vVLYSurfaceHitN<W> &rayInterval,
+                                   vintn<W> &result)
+      {
+        throw std::runtime_error(
+            "iterateSurfaceV() not implemented in this volume!");
+      }
+
       virtual SamplesMask *newSamplesMask()
       {
         throw std::runtime_error(

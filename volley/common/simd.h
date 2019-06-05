@@ -130,4 +130,18 @@ namespace volley {
     }
   };
 
+  template <int W>
+  struct vVLYSurfaceHitN
+  {
+    vfloatn<W> t;
+    vfloatn<W> sample;
+
+    vVLYSurfaceHitN<W>() = default;
+
+    vVLYSurfaceHitN<W>(const vVLYSurfaceHitN<W> &v)
+        : t(v.t), sample(v.sample)
+    {
+    }
+  };
+
 }  // namespace volley

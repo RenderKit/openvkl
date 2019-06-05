@@ -32,6 +32,7 @@ install(TARGETS vlyBenchmarkStructuredVolume
 add_executable(vlyTests
   vlyTests.cpp
   tests/ray_iterator_intervals.cpp
+  tests/ray_iterator_surfaces.cpp
   tests/simd_type_conversion.cpp
   tests/structured_volume_sampling.cpp
   tests/vectorized_sampling.cpp

@@ -69,5 +69,6 @@ namespace volley {
     }
 
     template class ProceduralStructuredVolume<getWaveletValue>;
+    template class ProceduralStructuredVolume<getZValue>;
   }  // namespace testing
 }  // namespace volley

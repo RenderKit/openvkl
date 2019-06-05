@@ -91,7 +91,13 @@ namespace volley {
               ZM * cosf(ZF * objectCoordinates.z));
     }
 
+    inline float getZValue(const vec3f &objectCoordinates)
+    {
+      return objectCoordinates.z;
+    }
+
     using WaveletProceduralVolume = ProceduralStructuredVolume<getWaveletValue>;
+    using ZProceduralVolume = ProceduralStructuredVolume<getZValue>;
 
   }  // namespace testing
 }  // namespace volley

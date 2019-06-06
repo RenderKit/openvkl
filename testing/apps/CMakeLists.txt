@@ -35,6 +35,7 @@ add_executable(vlyTests
   tests/ray_iterator_surfaces.cpp
   tests/simd_type_conversion.cpp
   tests/structured_volume_sampling.cpp
+  tests/vectorized_iteration.cpp
   tests/vectorized_sampling.cpp
 )
 

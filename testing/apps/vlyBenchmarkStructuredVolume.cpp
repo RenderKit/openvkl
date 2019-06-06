@@ -159,13 +159,13 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
   state.SetItemsProcessed(state.iterations());
 }
 
-BENCHMARK(scalarRayIteratorConstruction);
-BENCHMARK(scalarRayIteratorConstruction)->Threads(3);
-BENCHMARK(scalarRayIteratorConstruction)->Threads(6);
-BENCHMARK(scalarRayIteratorConstruction)->Threads(9);
-BENCHMARK(scalarRayIteratorConstruction)->Threads(12);
-BENCHMARK(scalarRayIteratorConstruction)->Threads(36);
-BENCHMARK(scalarRayIteratorConstruction)->Threads(72);
+BENCHMARK(scalarRayIteratorConstruction)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(3)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(6)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(9)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(12)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(36)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(72)->UseRealTime();
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

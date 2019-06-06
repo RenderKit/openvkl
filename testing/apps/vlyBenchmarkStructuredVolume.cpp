@@ -160,12 +160,120 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
 }
 
 BENCHMARK(scalarRayIteratorConstruction)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(3)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(2)->UseRealTime();
+BENCHMARK(scalarRayIteratorConstruction)->Threads(4)->UseRealTime();
 BENCHMARK(scalarRayIteratorConstruction)->Threads(6)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(9)->UseRealTime();
 BENCHMARK(scalarRayIteratorConstruction)->Threads(12)->UseRealTime();
 BENCHMARK(scalarRayIteratorConstruction)->Threads(36)->UseRealTime();
 BENCHMARK(scalarRayIteratorConstruction)->Threads(72)->UseRealTime();
+
+static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
+{
+  static std::unique_ptr<WaveletProceduralVolume> v;
+  static VLYVolume vlyVolume;
+
+  if (state.thread_index == 0) {
+    v = std::unique_ptr<WaveletProceduralVolume>(
+        new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+    vlyVolume = v->getVLYVolume();
+  }
+
+  vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+  vly_vec3f origin{distX(eng), distY(eng), -1.f};
+  vly_vec3f direction{0.f, 0.f, 1.f};
+  vly_range1f tRange{0.f, 1000.f};
+
+  VLYRayIterator rayIterator =
+      vlyNewRayIterator(vlyVolume, &origin, &direction, &tRange, nullptr);
+
+  VLYRayInterval rayInterval;
+
+  for (auto _ : state) {
+    VLYRayIterator rayIteratorTemp = rayIterator;
+
+    bool success = vlyIterateInterval(&rayIteratorTemp, &rayInterval);
+
+    if (!success) {
+      throw std::runtime_error("vlyIterateInterval() returned false");
+    }
+
+    benchmark::DoNotOptimize(rayInterval);
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(2)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(4)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(6)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(12)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(36)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(72)->UseRealTime();
+
+static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
+{
+  static std::unique_ptr<WaveletProceduralVolume> v;
+  static VLYVolume vlyVolume;
+
+  if (state.thread_index == 0) {
+    v = std::unique_ptr<WaveletProceduralVolume>(
+        new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+    vlyVolume = v->getVLYVolume();
+  }
+
+  vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+  vly_vec3f origin{distX(eng), distY(eng), -1.f};
+  vly_vec3f direction{0.f, 0.f, 1.f};
+  vly_range1f tRange{0.f, 1000.f};
+
+  VLYRayIterator rayIterator =
+      vlyNewRayIterator(vlyVolume, &origin, &direction, &tRange, nullptr);
+
+  // move past first iteration
+  VLYRayInterval rayInterval;
+  vlyIterateInterval(&rayIterator, &rayInterval);
+
+  for (auto _ : state) {
+    VLYRayIterator rayIteratorTemp = rayIterator;
+
+    bool success = vlyIterateInterval(&rayIteratorTemp, &rayInterval);
+
+    if (!success) {
+      throw std::runtime_error("vlyIterateInterval() returned false");
+    }
+
+    benchmark::DoNotOptimize(rayInterval);
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(2)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(4)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(6)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(12)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(36)->UseRealTime();
+BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(72)->UseRealTime();
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

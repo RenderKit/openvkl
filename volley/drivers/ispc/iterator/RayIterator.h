@@ -51,6 +51,15 @@ namespace volley {
       return result;
     }
 
+    template <typename T>
+    inline T *fromVLYRayIterator(VLYRayIterator *x)
+    {
+      static_assert(sizeof(T) <= RAY_ITERATOR_INTERNAL_STATE_SIZE,
+                    "fromVLYRayIterator destination object size must be <= "
+                    "RAY_ITERATOR_INTERNAL_STATE_SIZE");
+      return reinterpret_cast<T *>(&x->internalState[0]);
+    }
+
     template <int W>
     struct Volume;
 

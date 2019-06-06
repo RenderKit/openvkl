@@ -46,31 +46,27 @@ namespace volley {
                             vVLYRayIntervalN<W> &rayInterval,
                             vintn<W> &result) override
       {
-        GridAcceleratorRayIterator<W> ri =
-            fromVLYRayIterator<GridAcceleratorRayIterator<W>>(rayIterator);
+        GridAcceleratorRayIterator<W> *ri =
+            fromVLYRayIterator<GridAcceleratorRayIterator<W>>(&rayIterator);
 
-        ri.iterateInterval(valid, result);
+        ri->iterateInterval(valid, result);
 
         rayInterval = *reinterpret_cast<const vVLYRayIntervalN<W> *>(
-            ri.getCurrentRayInterval());
-
-        rayIterator = toVLYRayIterator(ri);
+            ri->getCurrentRayInterval());
       }
 
       void iterateSurfaceV(const int *valid,
-                            VLYRayIterator &rayIterator,
-                            vVLYSurfaceHitN<W> &surfaceHit,
-                            vintn<W> &result) override
+                           VLYRayIterator &rayIterator,
+                           vVLYSurfaceHitN<W> &surfaceHit,
+                           vintn<W> &result) override
       {
-        GridAcceleratorRayIterator<W> ri =
-            fromVLYRayIterator<GridAcceleratorRayIterator<W>>(rayIterator);
+        GridAcceleratorRayIterator<W> *ri =
+            fromVLYRayIterator<GridAcceleratorRayIterator<W>>(&rayIterator);
 
-        ri.iterateSurface(valid, result);
+        ri->iterateSurface(valid, result);
 
         surfaceHit = *reinterpret_cast<const vVLYSurfaceHitN<W> *>(
-            ri.getCurrentSurfaceHit());
-
-        rayIterator = toVLYRayIterator(ri);
+            ri->getCurrentSurfaceHit());
       }
 
       SamplesMask *newSamplesMask() override

@@ -39,6 +39,27 @@ VLYRayIterator vlyNewRayIterator(VLYVolume volume,
                                  const vly_range1f *tRange,
                                  VLYSamplesMask samplesMask);
 
+VLYRayIterator vlyNewRayIterator4(const int *valid,
+                                  VLYVolume volume,
+                                  const vly_vvec3f4 *origin,
+                                  const vly_vvec3f4 *direction,
+                                  const vly_vrange1f4 *tRange,
+                                  VLYSamplesMask samplesMask);
+
+VLYRayIterator vlyNewRayIterator8(const int *valid,
+                                  VLYVolume volume,
+                                  const vly_vvec3f8 *origin,
+                                  const vly_vvec3f8 *direction,
+                                  const vly_vrange1f8 *tRange,
+                                  VLYSamplesMask samplesMask);
+
+VLYRayIterator vlyNewRayIterator16(const int *valid,
+                                   VLYVolume volume,
+                                   const vly_vvec3f16 *origin,
+                                   const vly_vvec3f16 *direction,
+                                   const vly_vrange1f16 *tRange,
+                                   VLYSamplesMask samplesMask);
+
 struct VLYRayInterval
 {
   vly_range1f tRange;
@@ -69,6 +90,21 @@ struct VLYRayInterval16
 bool vlyIterateInterval(VLYRayIterator *rayIterator,
                         VLYRayInterval *rayInterval);
 
+void vlyIterateInterval4(const int *valid,
+                         VLYRayIterator *rayIterator,
+                         VLYRayInterval4 *rayInterval,
+                         int *result);
+
+void vlyIterateInterval8(const int *valid,
+                         VLYRayIterator *rayIterator,
+                         VLYRayInterval8 *rayInterval,
+                         int *result);
+
+void vlyIterateInterval16(const int *valid,
+                          VLYRayIterator *rayIterator,
+                          VLYRayInterval16 *rayInterval,
+                          int *result);
+
 struct VLYSurfaceHit
 {
   float t;
@@ -95,6 +131,21 @@ struct VLYSurfaceHit16
 
 // returns true while the iterator is still within the volume
 bool vlyIterateSurface(VLYRayIterator *rayIterator, VLYSurfaceHit *surfaceHit);
+
+void vlyIterateSurface4(const int *valid,
+                        VLYRayIterator *rayIterator,
+                        VLYSurfaceHit4 *surfaceHit,
+                        int *result);
+
+void vlyIterateSurface8(const int *valid,
+                        VLYRayIterator *rayIterator,
+                        VLYSurfaceHit8 *surfaceHit,
+                        int *result);
+
+void vlyIterateSurface16(const int *valid,
+                         VLYRayIterator *rayIterator,
+                         VLYSurfaceHit16 *surfaceHit,
+                         int *result);
 
 /* TODO:
 

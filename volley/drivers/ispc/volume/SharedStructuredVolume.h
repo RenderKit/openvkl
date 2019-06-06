@@ -74,14 +74,6 @@ namespace volley {
         return new GridAcceleratorSamplesMask<W>(this);
       }
 
-      float computeSample(const vec3f &objectCoordinates) const override
-      {
-        float sample;
-        ispc::SharedStructuredVolume_sample_scalar_export(
-            ispcEquivalent, (ispc::vec3f *)&objectCoordinates, &sample);
-        return sample;
-      }
-
       void computeSampleV(const int *valid,
                           const void *objectCoordinates,
                           void *samples) const override

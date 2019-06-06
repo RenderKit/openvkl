@@ -135,15 +135,13 @@ namespace volley {
 
       VLYVolume newVolume(const char *type) override;
 
-      float computeSample(VLYVolume volume,
-                          const vec3f &objectCoordinates) override;
-
 #define __define_computeSampleN(WIDTH)                               \
   void computeSample##WIDTH(const int *valid,                        \
                             VLYVolume volume,                        \
                             const vvec3fn<WIDTH> &objectCoordinates, \
                             vfloatn<WIDTH> &samples) override;
 
+      __define_computeSampleN(1);
       __define_computeSampleN(4);
       __define_computeSampleN(8);
       __define_computeSampleN(16);

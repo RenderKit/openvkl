@@ -78,8 +78,6 @@ namespace volley {
             "newSamplesMask() not implemented in this volume!");
       }
 
-      virtual float computeSample(const vec3f &objectCoordinates) const = 0;
-
       // assumes parameters match the native ISPC data layout for the native
       // vector width; we don't use explicit types partly because virtual
       // template methods are not allowed.

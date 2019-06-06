@@ -424,8 +424,14 @@ extern "C" float vlyComputeSample(
     VLYVolume volume, const vly_vec3f *objectCoordinates) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  return volley::api::currentDriver().computeSample(
-      volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
+  constexpr int valid = 1;
+  float sample;
+  volley::api::currentDriver().computeSample1(
+      &valid,
+      volume,
+      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
+      reinterpret_cast<vfloatn<1> &>(sample));
+  return sample;
 }
 VOLLEY_CATCH_END(ospcommon::nan)
 

@@ -178,25 +178,6 @@ export void SharedStructuredVolume_sample_export(
   }
 }
 
-export void SharedStructuredVolume_sample_scalar_export(void *uniform _volume,
-                                                        const vec3f *uniform
-                                                            objectCoordinates,
-                                                        float *uniform sample)
-{
-  if (programIndex == 0) {
-    varying vec3f varyingObjectCoordinates;
-    varyingObjectCoordinates.x = objectCoordinates->x;
-    varyingObjectCoordinates.y = objectCoordinates->y;
-    varyingObjectCoordinates.z = objectCoordinates->z;
-
-    varying float varyingSamples;
-    varyingSamples =
-        SharedStructuredVolume_sample(_volume, varyingObjectCoordinates);
-
-    *sample = extract(varyingSamples, 0);
-  }
-}
-
 export void *uniform SharedStructuredVolume_Constructor()
 {
   uniform SharedStructuredVolume *uniform self =

@@ -236,14 +236,6 @@ namespace volley {
       return (VLYVolume)Volume<W>::createInstance(ss.str());
     }
 
-    template <int W>
-    float ISPCDriver<W>::computeSample(VLYVolume volume,
-                                       const vec3f &objectCoordinates)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return volumeObject.computeSample(objectCoordinates);
-    }
-
 #define __define_computeSampleN(WIDTH)                                       \
   template <int W>                                                           \
   void ISPCDriver<W>::computeSample##WIDTH(                                  \
@@ -255,6 +247,7 @@ namespace volley {
     computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
 
+    __define_computeSampleN(1);
     __define_computeSampleN(4);
     __define_computeSampleN(8);
     __define_computeSampleN(16);

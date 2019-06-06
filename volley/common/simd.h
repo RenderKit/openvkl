@@ -17,6 +17,7 @@
 #pragma once
 
 #include "ospray/ospcommon/platform.h"
+#include "volley/volley.h"
 
 namespace volley {
 
@@ -128,6 +129,60 @@ namespace volley {
         : tRange(v.tRange), nominalDeltaT(v.nominalDeltaT)
     {
     }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 4)>>
+    explicit operator VLYRayInterval()
+    {
+      VLYRayInterval rayInterval1;
+
+      rayInterval1.tRange.lower  = tRange.lower[0];
+      rayInterval1.tRange.upper  = tRange.upper[0];
+      rayInterval1.nominalDeltaT = nominalDeltaT[0];
+
+      return rayInterval1;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 4)>>
+    explicit operator VLYRayInterval4()
+    {
+      VLYRayInterval4 rayInterval4;
+
+      for (int i = 0; i < 4; i++) {
+        rayInterval4.tRange.lower[i]  = tRange.lower[i];
+        rayInterval4.tRange.upper[i]  = tRange.upper[i];
+        rayInterval4.nominalDeltaT[i] = nominalDeltaT[i];
+      }
+
+      return rayInterval4;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 8)>>
+    explicit operator VLYRayInterval8()
+    {
+      VLYRayInterval8 rayInterval8;
+
+      for (int i = 0; i < 8; i++) {
+        rayInterval8.tRange.lower[i]  = tRange.lower[i];
+        rayInterval8.tRange.upper[i]  = tRange.upper[i];
+        rayInterval8.nominalDeltaT[i] = nominalDeltaT[i];
+      }
+
+      return rayInterval8;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 16)>>
+    explicit operator VLYRayInterval16()
+    {
+      VLYRayInterval16 rayInterval16;
+
+      for (int i = 0; i < 16; i++) {
+        rayInterval16.tRange.lower[i]  = tRange.lower[i];
+        rayInterval16.tRange.upper[i]  = tRange.upper[i];
+        rayInterval16.nominalDeltaT[i] = nominalDeltaT[i];
+      }
+
+      return rayInterval16;
+    }
   };
 
   template <int W>
@@ -138,8 +193,7 @@ namespace volley {
 
     vVLYSurfaceHitN<W>() = default;
 
-    vVLYSurfaceHitN<W>(const vVLYSurfaceHitN<W> &v)
-        : t(v.t), sample(v.sample)
+    vVLYSurfaceHitN<W>(const vVLYSurfaceHitN<W> &v) : t(v.t), sample(v.sample)
     {
     }
   };

@@ -210,30 +210,34 @@ extern "C" bool vlyIterateInterval(
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
+  vVLYRayIntervalN<1> rayIntervalInternal;
   int result;
   volley::api::currentDriver().iterateInterval1(
       &valid,
       reinterpret_cast<VLYRayIterator &>(*rayIterator),
-      reinterpret_cast<vVLYRayIntervalN<1> &>(*rayInterval),
+      rayIntervalInternal,
       reinterpret_cast<vintn<1> &>(result));
+  *rayInterval = static_cast<VLYRayInterval>(rayIntervalInternal);
   return result;
 }
 VOLLEY_CATCH_END(false)
 
-#define __define_vlyIterateIntervalN(WIDTH)                        \
-  extern "C" void vlyIterateInterval##WIDTH(                       \
-      const int *valid,                                            \
-      VLYRayIterator *rayIterator,                                 \
-      VLYRayInterval##WIDTH *rayInterval,                          \
-      int *result) VOLLEY_CATCH_BEGIN                              \
-  {                                                                \
-    ASSERT_DRIVER();                                               \
-    return volley::api::currentDriver().iterateInterval##WIDTH(    \
-        valid,                                                     \
-        reinterpret_cast<VLYRayIterator &>(*rayIterator),          \
-        reinterpret_cast<vVLYRayIntervalN<WIDTH> &>(*rayInterval), \
-        reinterpret_cast<vintn<WIDTH> &>(*result));                \
-  }                                                                \
+#define __define_vlyIterateIntervalN(WIDTH)                                 \
+  extern "C" void vlyIterateInterval##WIDTH(                                \
+      const int *valid,                                                     \
+      VLYRayIterator *rayIterator,                                          \
+      VLYRayInterval##WIDTH *rayInterval,                                   \
+      int *result) VOLLEY_CATCH_BEGIN                                       \
+  {                                                                         \
+    ASSERT_DRIVER();                                                        \
+    vVLYRayIntervalN<WIDTH> rayIntervalInternal;                            \
+    volley::api::currentDriver().iterateInterval##WIDTH(                    \
+        valid,                                                              \
+        reinterpret_cast<VLYRayIterator &>(*rayIterator),                   \
+        rayIntervalInternal,                                                \
+        reinterpret_cast<vintn<WIDTH> &>(*result));                         \
+    *rayInterval = static_cast<VLYRayInterval##WIDTH>(rayIntervalInternal); \
+  }                                                                         \
   VOLLEY_CATCH_END()
 
 __define_vlyIterateIntervalN(4);

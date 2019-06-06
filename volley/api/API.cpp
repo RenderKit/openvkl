@@ -177,7 +177,7 @@ extern "C" VLYRayIterator vlyNewRayIterator(VLYVolume volume,
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
       samplesMask);
 }
-VOLLEY_CATCH_END(nullptr)
+VOLLEY_CATCH_END(VLYRayIterator())
 
 #define __define_vlyNewRayIteratorN(WIDTH)                     \
   extern "C" VLYRayIterator vlyNewRayIterator##WIDTH(          \
@@ -197,7 +197,7 @@ VOLLEY_CATCH_END(nullptr)
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),   \
         samplesMask);                                          \
   }                                                            \
-  VOLLEY_CATCH_END(nullptr)
+  VOLLEY_CATCH_END(VLYRayIterator())
 
 __define_vlyNewRayIteratorN(4);
 __define_vlyNewRayIteratorN(8);
@@ -206,14 +206,14 @@ __define_vlyNewRayIteratorN(16);
 #undef __define_vlyNewRayIteratorN
 
 extern "C" bool vlyIterateInterval(
-    VLYRayIterator rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN
+    VLYRayIterator *rayIterator, VLYRayInterval *rayInterval) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
   int result;
   volley::api::currentDriver().iterateInterval1(
       &valid,
-      rayIterator,
+      reinterpret_cast<VLYRayIterator &>(*rayIterator),
       reinterpret_cast<vVLYRayIntervalN<1> &>(*rayInterval),
       reinterpret_cast<vintn<1> &>(result));
   return result;
@@ -223,14 +223,14 @@ VOLLEY_CATCH_END(false)
 #define __define_vlyIterateIntervalN(WIDTH)                        \
   extern "C" void vlyIterateInterval##WIDTH(                       \
       const int *valid,                                            \
-      VLYRayIterator rayIterator,                                  \
+      VLYRayIterator *rayIterator,                                 \
       VLYRayInterval##WIDTH *rayInterval,                          \
       int *result) VOLLEY_CATCH_BEGIN                              \
   {                                                                \
     ASSERT_DRIVER();                                               \
     return volley::api::currentDriver().iterateInterval##WIDTH(    \
         valid,                                                     \
-        rayIterator,                                               \
+        reinterpret_cast<VLYRayIterator &>(*rayIterator),          \
         reinterpret_cast<vVLYRayIntervalN<WIDTH> &>(*rayInterval), \
         reinterpret_cast<vintn<WIDTH> &>(*result));                \
   }                                                                \

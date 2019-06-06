@@ -16,35 +16,4 @@
 
 #pragma once
 
-#include "RayIterator.h"
-
-namespace volley {
-  namespace ispc_driver {
-
-    template <int W>
-    struct Volume;
-
-    template <int W>
-    struct GridAcceleratorRayIterator : public RayIterator<W>
-    {
-      GridAcceleratorRayIterator() {}
-
-      GridAcceleratorRayIterator(const Volume<W> *volume,
-                                 const vvec3fn<W> &origin,
-                                 const vvec3fn<W> &direction,
-                                 const vrange1fn<W> &tRange,
-                                 const SamplesMask *samplesMask);
-
-      const RayInterval<W> *getCurrentRayInterval() const override;
-      void iterateInterval(const int *valid, vintn<W> &result) override;
-
-      const SurfaceHit<W> *getCurrentSurfaceHit() const override;
-      void iterateSurface(const int *valid, vintn<W> &result) override;
-
-     protected:
-#warning need to properly align and size ispcStorage
-      alignas(128) char ispcStorage[1536];
-    };
-
-  }  // namespace ispc_driver
-}  // namespace volley
+#define RAY_ITERATOR_INTERNAL_STATE_SIZE 2048

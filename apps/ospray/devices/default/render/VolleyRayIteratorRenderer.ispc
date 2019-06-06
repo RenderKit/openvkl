@@ -101,19 +101,20 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
 
   vlyCommit((VLYObject)samplesMask);
 
-  VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
-                                                  (varying vly_vec3f *)&ray.org,
-                                                  (varying vly_vec3f *)&ray.dir,
-                                                  &tRange,
-                                                  samplesMask);
+  uniform VLYRayIterator rayIterator =
+      vlyNewRayIteratorV(self->volume,
+                         (varying vly_vec3f *)&ray.org,
+                         (varying vly_vec3f *)&ray.dir,
+                         &tRange,
+                         samplesMask);
 
   // the current ray interval
   VLYRayInterval rayInterval;
-  bool activeInterval = vlyIterateIntervalV(rayIterator, &rayInterval);
+  bool activeInterval = vlyIterateIntervalV(&rayIterator, &rayInterval);
 
   // the current surface hit
   VLYSurfaceHit surfaceHit;
-  bool activeSurface = vlyIterateSurfaceV(rayIterator, &surfaceHit);
+  bool activeSurface = vlyIterateSurfaceV(&rayIterator, &surfaceHit);
 
   while ((activeInterval || activeSurface) && alpha < 0.99f) {
     float firstHit = min(activeInterval ? rayInterval.tRange.lower : inf,
@@ -132,7 +133,7 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
           self, ray, subInterval, nominalSamplingDt, color, alpha);
 
       if (subInterval.upper == rayInterval.tRange.upper) {
-        activeInterval = vlyIterateIntervalV(rayIterator, &rayInterval);
+        activeInterval = vlyIterateIntervalV(&rayIterator, &rayInterval);
       } else {
         rayInterval.tRange.lower = subInterval.upper + 1e-6f;
       }
@@ -146,12 +147,11 @@ inline void integrate(uniform VolleyRayIteratorRenderer *uniform self,
       color = color + (1.f - alpha) * surfaceColor;
       alpha = alpha + (1.f - alpha) * surfaceOpacity;
 
-      activeSurface = vlyIterateSurfaceV(rayIterator, &surfaceHit);
+      activeSurface = vlyIterateSurfaceV(&rayIterator, &surfaceHit);
     }
   }
 
   vlyRelease((VLYObject)samplesMask);
-  vlyRelease((VLYObject)rayIterator);
 }
 
 void VolleyRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,

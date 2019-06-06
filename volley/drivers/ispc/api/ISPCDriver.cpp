@@ -87,16 +87,15 @@ namespace volley {
 
 #undef __define_newRayIteratorN
 
-#define __define_iterateIntervalN(WIDTH)          \
-  template <int W>                                \
-  void ISPCDriver<W>::iterateInterval##WIDTH(     \
-      const int *valid,                           \
-      VLYRayIterator rayIterator,                 \
-      vVLYRayIntervalN<WIDTH> &rayInterval,       \
-      vintn<WIDTH> &result)                       \
-  {                                               \
-    return iterateIntervalAnyWidth<WIDTH>(        \
-        valid, rayIterator, rayInterval, result); \
+#define __define_iterateIntervalN(WIDTH)                                     \
+  template <int W>                                                           \
+  void ISPCDriver<W>::iterateInterval##WIDTH(                                \
+      const int *valid,                                                      \
+      VLYRayIterator &rayIterator,                                           \
+      vVLYRayIntervalN<WIDTH> &rayInterval,                                  \
+      vintn<WIDTH> &result)                                                  \
+  {                                                                          \
+    iterateIntervalAnyWidth<WIDTH>(valid, rayIterator, rayInterval, result); \
   }
 
     __define_iterateIntervalN(1);
@@ -327,25 +326,21 @@ namespace volley {
     template <int OW>
     typename std::enable_if<(OW <= W), void>::type
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           VLYRayIterator rayIterator,
+                                           VLYRayIterator &rayIterator,
                                            vVLYRayIntervalN<OW> &rayInterval,
                                            vintn<OW> &result)
     {
-      auto &rayIteratorObject =
-          referenceFromHandle<RayIterator<W>>(rayIterator);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(rayIterator.volume);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
 
-      vintn<W> resultW;
-
-      rayIteratorObject.iterateInterval(validW, resultW);
-
       vVLYRayIntervalN<W> rayIntervalW;
 
-      rayIntervalW = *reinterpret_cast<const vVLYRayIntervalN<W> *>(
-          rayIteratorObject.getCurrentRayInterval());
+      vintn<W> resultW;
+
+      volumeObject.iterateIntervalV(validW, rayIterator, rayIntervalW, resultW);
 
       for (int i = 0; i < OW; i++) {
         rayInterval.tRange.lower[i]  = rayIntervalW.tRange.lower[i];
@@ -361,7 +356,7 @@ namespace volley {
     template <int OW>
     typename std::enable_if<(OW > W), void>::type
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           VLYRayIterator rayIterator,
+                                           VLYRayIterator &rayIterator,
                                            vVLYRayIntervalN<OW> &rayInterval,
                                            vintn<OW> &result)
     {

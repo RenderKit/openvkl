@@ -17,13 +17,19 @@
 #pragma once
 
 #include "common.isph"
+#include "ray_iterator_size.h"
 #include "samples_mask.isph"
 #include "volume.isph"
 
-struct RayIterator;
-typedef varying RayIterator *uniform VLYRayIterator;
+struct VLYRayIterator
+{
+  const VLYVolume volume;
 
-VLY_API VLYRayIterator
+#warning need to properly size internalState
+  int8 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE];
+};
+
+VLY_API uniform VLYRayIterator
 vlyNewRayIterator8(const int *uniform valid,
                    VLYVolume volume,
                    const varying vly_vec3f *uniform origin,
@@ -31,7 +37,7 @@ vlyNewRayIterator8(const int *uniform valid,
                    const varying vly_range1f *uniform tRange,
                    VLYSamplesMask samplesMask);
 
-VLY_FORCEINLINE VLYRayIterator
+VLY_FORCEINLINE uniform VLYRayIterator
 vlyNewRayIteratorV(VLYVolume volume,
                    const varying vly_vec3f *uniform origin,
                    const varying vly_vec3f *uniform direction,
@@ -62,12 +68,13 @@ struct VLYRayInterval
 };
 
 VLY_API void vlyIterateInterval8(const int *uniform valid,
-                                 VLYRayIterator rayIterator,
+                                 VLYRayIterator *uniform rayIterator,
                                  varying VLYRayInterval *uniform rayInterval,
                                  varying int *uniform result);
 
 VLY_FORCEINLINE varying bool vlyIterateIntervalV(
-    VLYRayIterator rayIterator, varying VLYRayInterval *uniform rayInterval)
+    VLYRayIterator *uniform rayIterator,
+    varying VLYRayInterval *uniform rayInterval)
 {
   varying bool mask = __mask;
   unmasked
@@ -92,12 +99,13 @@ struct VLYSurfaceHit
 };
 
 VLY_API void vlyIterateSurface8(const int *uniform valid,
-                                VLYRayIterator rayIterator,
+                                VLYRayIterator *uniform rayIterator,
                                 varying VLYSurfaceHit *uniform surfaceHit,
                                 varying int *uniform result);
 
 VLY_FORCEINLINE varying bool vlyIterateSurfaceV(
-    VLYRayIterator rayIterator, varying VLYSurfaceHit *uniform surfaceHit)
+    VLYRayIterator *uniform rayIterator,
+    varying VLYSurfaceHit *uniform surfaceHit)
 {
   varying bool mask = __mask;
   unmasked

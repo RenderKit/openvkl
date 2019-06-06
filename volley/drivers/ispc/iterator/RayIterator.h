@@ -19,11 +19,38 @@
 #include "../samples_mask/SamplesMask.h"
 #include "common/ManagedObject.h"
 #include "common/simd.h"
+#include "volley/volley.h"
 
 using namespace ospcommon;
 
 namespace volley {
   namespace ispc_driver {
+
+    template <typename U>
+    inline VLYRayIterator toVLYRayIterator(U &&x)
+    {
+      static_assert(RAY_ITERATOR_INTERNAL_STATE_SIZE >= sizeof(U),
+                    "RAY_ITERATOR_INTERNAL_STATE_SIZE must be >= "
+                    "source object size");
+      VLYRayIterator result{(VLYVolume)x.volume};
+      std::memcpy((void *)std::addressof(result.internalState),
+                  (const void *)std::addressof(x),
+                  sizeof(U));
+      return result;
+    }
+
+    template <typename T>
+    inline T fromVLYRayIterator(VLYRayIterator &x)
+    {
+      static_assert(sizeof(T) <= RAY_ITERATOR_INTERNAL_STATE_SIZE,
+                    "fromVLYRayIterator destination object size must be <= "
+                    "RAY_ITERATOR_INTERNAL_STATE_SIZE");
+      T result;
+      std::memcpy((void *)std::addressof(result),
+                  (const void *)std::addressof(x.internalState),
+                  sizeof(T));
+      return result;
+    }
 
     template <int W>
     struct Volume;
@@ -45,11 +72,14 @@ namespace volley {
     template <int W>
     struct RayIterator : public ManagedObject
     {
+      RayIterator() {}
+
       RayIterator(const Volume<W> *volume,
                   const vvec3fn<W> &origin,
                   const vvec3fn<W> &direction,
                   const vrange1fn<W> &tRange,
                   const SamplesMask *samplesMask)
+          : volume(volume)
       {
       }
 
@@ -60,6 +90,8 @@ namespace volley {
 
       virtual const SurfaceHit<W> *getCurrentSurfaceHit() const       = 0;
       virtual void iterateSurface(const int *valid, vintn<W> &result) = 0;
+
+      const Volume<W> *volume;
     };
 
   }  // namespace ispc_driver

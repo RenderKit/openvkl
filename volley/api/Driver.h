@@ -98,7 +98,7 @@ namespace volley {
 
 #define __define_iterateIntervalN(WIDTH)                                    \
   virtual void iterateInterval##WIDTH(const int *valid,                     \
-                                      VLYRayIterator rayIterator,           \
+                                      VLYRayIterator &rayIterator,          \
                                       vVLYRayIntervalN<WIDTH> &rayInterval, \
                                       vintn<WIDTH> &result)                 \
   {                                                                         \

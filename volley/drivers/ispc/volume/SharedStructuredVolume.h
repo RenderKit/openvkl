@@ -32,13 +32,31 @@ namespace volley {
 
       void commit() override;
 
-      RayIterator<W> *newRayIteratorV(const vvec3fn<W> &origin,
-                                      const vvec3fn<W> &direction,
-                                      const vrange1fn<W> &tRange,
-                                      const SamplesMask *samplesMask) override
+      VLYRayIterator newRayIteratorV(const vvec3fn<W> &origin,
+                                     const vvec3fn<W> &direction,
+                                     const vrange1fn<W> &tRange,
+                                     const SamplesMask *samplesMask) override
       {
-        return new GridAcceleratorRayIterator<W>(
-            this, origin, direction, tRange, samplesMask);
+        return toVLYRayIterator(GridAcceleratorRayIterator<W>(
+            this, origin, direction, tRange, samplesMask));
+      }
+
+      void iterateIntervalV(const int *valid,
+                            VLYRayIterator &rayIterator,
+                            vVLYRayIntervalN<W> &rayInterval,
+                            vintn<W> &result) override
+      {
+        GridAcceleratorRayIterator<W> ri =
+            fromVLYRayIterator<GridAcceleratorRayIterator<W>>(rayIterator);
+
+        ri.iterateInterval(valid, result);
+
+        rayInterval = *reinterpret_cast<const vVLYRayIntervalN<W> *>(
+            ri.getCurrentRayInterval());
+
+        rayIterator = toVLYRayIterator(ri);
+      }
+
       void iterateSurfaceV(const int *valid,
                             VLYRayIterator &rayIterator,
                             vVLYSurfaceHitN<W> &surfaceHit,

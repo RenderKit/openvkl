@@ -17,6 +17,7 @@
 #pragma once
 
 #include "common.h"
+#include "ray_iterator_size.h"
 #include "samples_mask.h"
 #include "volume.h"
 
@@ -24,11 +25,13 @@
 extern "C" {
 #endif
 
-struct RayIterator : public ManagedObject
+struct VLYRayIterator
 {
-};
+  VLYVolume volume;
 
-typedef RayIterator *VLYRayIterator;
+#warning need to properly size internalState
+  char internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE];
+};
 
 VLYRayIterator vlyNewRayIterator(VLYVolume volume,
                                  const vly_vec3f *origin,

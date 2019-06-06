@@ -36,15 +36,20 @@ inline void printGridAcceleratorRayIterator(
         self->boundingBoxTRange.upper);
 }
 
-export void *uniform
-GridAcceleratorRayIterator_Constructor(void *uniform _volume,
-                                       void *uniform _origin,
-                                       void *uniform _direction,
-                                       void *uniform _tRange,
-                                       void *uniform _samplesMask)
+export uniform int GridAcceleratorRayIterator_sizeOf()
+{
+  return sizeof(GridAcceleratorRayIterator);
+}
+
+export void GridAcceleratorRayIterator_Initialize(void *uniform _self,
+                                                  void *uniform _volume,
+                                                  void *uniform _origin,
+                                                  void *uniform _direction,
+                                                  void *uniform _tRange,
+                                                  void *uniform _samplesMask)
 {
   uniform GridAcceleratorRayIterator *uniform self =
-      uniform new uniform GridAcceleratorRayIterator;
+      (uniform GridAcceleratorRayIterator * uniform) _self;
 
   self->volume    = (uniform SharedStructuredVolume * uniform) _volume;
   self->origin    = *((varying vec3f * uniform) _origin);
@@ -70,16 +75,6 @@ GridAcceleratorRayIterator_Constructor(void *uniform _volume,
 
   resetRayInterval(self->surfaceState.currentRayInterval);
   self->surfaceState.currentCellIndex = make_vec3i(-1);
-
-  return self;
-}
-
-export void *uniform GridAcceleratorRayIterator_Destructor(void *uniform _self)
-{
-  uniform GridAcceleratorRayIterator *uniform self =
-      (uniform GridAcceleratorRayIterator * uniform) _self;
-
-  delete self;
 }
 
 export void *uniform

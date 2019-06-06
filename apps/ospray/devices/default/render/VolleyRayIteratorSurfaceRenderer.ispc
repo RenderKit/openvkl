@@ -53,7 +53,7 @@ inline void integrate(uniform VolleyRayIteratorSurfaceRenderer *uniform self,
 
   vlyCommit((VLYObject)samplesMask);
 
-  VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
+  uniform VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
                                                   (varying vly_vec3f *)&ray.org,
                                                   (varying vly_vec3f *)&ray.dir,
                                                   &tRange,
@@ -62,7 +62,7 @@ inline void integrate(uniform VolleyRayIteratorSurfaceRenderer *uniform self,
   // the current surface hit
   VLYSurfaceHit surfaceHit;
 
-  while (vlyIterateSurfaceV(rayIterator, &surfaceHit) && alpha < 0.99f) {
+  while (vlyIterateSurfaceV(&rayIterator, &surfaceHit) && alpha < 0.99f) {
     const vec3f surfaceColor = self->transferFunction->getColorForValue(
         self->transferFunction, surfaceHit.sample);
     const float surfaceOpacity = 0.5f;
@@ -72,7 +72,6 @@ inline void integrate(uniform VolleyRayIteratorSurfaceRenderer *uniform self,
   }
 
   vlyRelease((VLYObject)samplesMask);
-  vlyRelease((VLYObject)rayIterator);
 }
 
 void VolleyRayIteratorSurfaceRenderer_renderSample(uniform Renderer *uniform

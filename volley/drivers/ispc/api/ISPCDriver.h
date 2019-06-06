@@ -65,7 +65,7 @@ namespace volley {
 
 #define __define_iterateIntervalN(WIDTH)                            \
   void iterateInterval##WIDTH(const int *valid,                     \
-                              VLYRayIterator rayIterator,           \
+                              VLYRayIterator &rayIterator,          \
                               vVLYRayIntervalN<WIDTH> &rayInterval, \
                               vintn<WIDTH> &result) override;
 
@@ -177,14 +177,14 @@ namespace volley {
       template <int OW>
       typename std::enable_if<(OW <= W), void>::type iterateIntervalAnyWidth(
           const int *valid,
-          VLYRayIterator rayIterator,
+          VLYRayIterator &rayIterator,
           vVLYRayIntervalN<OW> &rayInterval,
           vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type iterateIntervalAnyWidth(
           const int *valid,
-          VLYRayIterator rayIterator,
+          VLYRayIterator &rayIterator,
           vVLYRayIntervalN<OW> &rayInterval,
           vintn<OW> &result);
 

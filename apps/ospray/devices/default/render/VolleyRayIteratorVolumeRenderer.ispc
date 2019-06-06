@@ -49,16 +49,17 @@ inline void integrate(uniform VolleyRayIteratorVolumeRenderer *uniform self,
   VLYSamplesMask samplesMask =
       getSamplesMaskForTransferFunction(self->volume, self->transferFunction);
 
-  VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
-                                                  (varying vly_vec3f *)&ray.org,
-                                                  (varying vly_vec3f *)&ray.dir,
-                                                  &tRange,
-                                                  samplesMask);
+  uniform VLYRayIterator rayIterator =
+      vlyNewRayIteratorV(self->volume,
+                         (varying vly_vec3f *)&ray.org,
+                         (varying vly_vec3f *)&ray.dir,
+                         &tRange,
+                         samplesMask);
 
   // the current ray interval
   VLYRayInterval rayInterval;
 
-  while (vlyIterateIntervalV(rayIterator, &rayInterval) && alpha < 0.99f) {
+  while (vlyIterateIntervalV(&rayIterator, &rayInterval) && alpha < 0.99f) {
     const float nominalSamplingDt =
         rayInterval.nominalDeltaT / self->samplingRate;
 
@@ -102,7 +103,6 @@ inline void integrate(uniform VolleyRayIteratorVolumeRenderer *uniform self,
   }
 
   vlyRelease((VLYObject)samplesMask);
-  vlyRelease((VLYObject)rayIterator);
 }
 
 void VolleyRayIteratorVolumeRenderer_renderSample(uniform Renderer *uniform

@@ -40,7 +40,8 @@ namespace volley {
 
       box3f boundingBox = volume->getBoundingBox();
 
-      ispcEquivalent = ispc::GridAcceleratorRayIterator_Constructor(
+      ispc::GridAcceleratorRayIterator_Initialize(
+          &ispcStorage[0],
           ssv->getISPCEquivalent(),
           (void *)&origin,
           (void *)&direction,
@@ -49,18 +50,12 @@ namespace volley {
     }
 
     template <int W>
-    GridAcceleratorRayIterator<W>::~GridAcceleratorRayIterator()
-    {
-      ispc::GridAcceleratorRayIterator_Destructor(ispcEquivalent);
-    }
-
-    template <int W>
     const RayInterval<W> *GridAcceleratorRayIterator<W>::getCurrentRayInterval()
         const
     {
       return reinterpret_cast<const RayInterval<W> *>(
           ispc::GridAcceleratorRayIterator_getCurrentRayInterval(
-              ispcEquivalent));
+              (void *)&ispcStorage[0]));
     }
 
     template <int W>
@@ -68,7 +63,7 @@ namespace volley {
                                                         vintn<W> &result)
     {
       ispc::GridAcceleratorRayIterator_iterateInterval(
-          valid, ispcEquivalent, (int *)&result);
+          valid, (void *)&ispcStorage[0], (int *)&result);
     }
 
     template <int W>
@@ -77,7 +72,7 @@ namespace volley {
     {
       return reinterpret_cast<const SurfaceHit<W> *>(
           ispc::GridAcceleratorRayIterator_getCurrentSurfaceHit(
-              ispcEquivalent));
+              (void *)&ispcStorage[0]));
     }
 
     template <int W>
@@ -85,7 +80,7 @@ namespace volley {
                                                        vintn<W> &result)
     {
       ispc::GridAcceleratorRayIterator_iterateSurface(
-          valid, ispcEquivalent, (int *)&result);
+          valid, (void *)&ispcStorage[0], (int *)&result);
     }
 
     template class GridAcceleratorRayIterator<4>;

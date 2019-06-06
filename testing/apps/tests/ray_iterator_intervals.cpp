@@ -49,7 +49,8 @@ TEST_CASE("Ray iterator intervals")
 
     VLYRayInterval rayIntervalPrevious, rayIntervalCurrent;
 
-    for (int i = 0; vlyIterateInterval(rayIterator, &rayIntervalCurrent); i++) {
+    for (int i = 0; vlyIterateInterval(&rayIterator, &rayIntervalCurrent);
+         i++) {
       INFO("rayInterval tRange = " << rayIntervalCurrent.tRange.lower << ", "
                                    << rayIntervalCurrent.tRange.upper);
 

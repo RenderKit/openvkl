@@ -125,10 +125,15 @@ BENCHMARK_TEMPLATE(vectorRandomSample, 16);
 
 static void scalarRayIteratorConstruction(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  static std::unique_ptr<WaveletProceduralVolume> v;
+  static VLYVolume vlyVolume;
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  if (state.thread_index == 0) {
+    v = std::unique_ptr<WaveletProceduralVolume>(
+        new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+    vlyVolume = v->getVLYVolume();
+  }
 
   vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
 
@@ -139,15 +144,15 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
   std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
   std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-  for (auto _ : state) {
-    vly_vec3f origin{distX(eng), distY(eng), -1.f};
-    vly_vec3f direction{0.f, 0.f, 1.f};
-    vly_range1f tRange{0.f, 1000.f};
+  vly_vec3f origin{distX(eng), distY(eng), -1.f};
+  vly_vec3f direction{0.f, 0.f, 1.f};
+  vly_range1f tRange{0.f, 1000.f};
 
+  for (auto _ : state) {
     VLYRayIterator rayIterator =
         vlyNewRayIterator(vlyVolume, &origin, &direction, &tRange, nullptr);
 
-    vlyRelease(rayIterator);
+    benchmark::DoNotOptimize(rayIterator);
   }
 
   // enables rates in report output
@@ -155,6 +160,12 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
 }
 
 BENCHMARK(scalarRayIteratorConstruction);
+BENCHMARK(scalarRayIteratorConstruction)->Threads(3);
+BENCHMARK(scalarRayIteratorConstruction)->Threads(6);
+BENCHMARK(scalarRayIteratorConstruction)->Threads(9);
+BENCHMARK(scalarRayIteratorConstruction)->Threads(12);
+BENCHMARK(scalarRayIteratorConstruction)->Threads(36);
+BENCHMARK(scalarRayIteratorConstruction)->Threads(72);
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

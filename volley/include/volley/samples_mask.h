@@ -36,18 +36,6 @@ void vlySamplesMaskSetValues(VLYSamplesMask samplesMask,
                              size_t numValues,
                              const float *values);
 
-vly_range1f vlySamplesMaskExtents(const VLYSamplesMask samplesMask);
-
-void vlySamplesMaskTestRanges(VLYSamplesMask samplesMask,
-                              size_t numRanges,
-                              const vly_range1f *ranges,
-                              bool *results);
-
-void vlySamplesMaskTestValues(const VLYSamplesMask samplesMask,
-                              size_t numValues,
-                              const float *values,
-                              bool *results);
-
 #ifdef __cplusplus
 }  // extern "C"
 #endif

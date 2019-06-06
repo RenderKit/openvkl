@@ -17,7 +17,6 @@
 #pragma once
 
 #include "../samples_mask/SamplesMask.h"
-#include "common/ManagedObject.h"
 #include "common/simd.h"
 #include "volley/volley.h"
 
@@ -70,7 +69,7 @@ namespace volley {
     };
 
     template <int W>
-    struct RayIterator : public ManagedObject
+    struct RayIterator
     {
       RayIterator() {}
 
@@ -83,7 +82,7 @@ namespace volley {
       {
       }
 
-      virtual ~RayIterator() override = default;
+      virtual ~RayIterator() = default;
 
       virtual const RayInterval<W> *getCurrentRayInterval() const      = 0;
       virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;

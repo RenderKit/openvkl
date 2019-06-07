@@ -130,7 +130,7 @@ namespace volley {
     {
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 4)>>
+    template <int W2 = W, typename = std::enable_if<(W >= 1)>>
     explicit operator VLYRayInterval()
     {
       VLYRayInterval rayInterval1;
@@ -195,6 +195,56 @@ namespace volley {
 
     vVLYSurfaceHitN<W>(const vVLYSurfaceHitN<W> &v) : t(v.t), sample(v.sample)
     {
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 1)>>
+    explicit operator VLYSurfaceHit()
+    {
+      VLYSurfaceHit surfaceHit1;
+
+      surfaceHit1.t      = t[0];
+      surfaceHit1.sample = sample[0];
+
+      return surfaceHit1;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 4)>>
+    explicit operator VLYSurfaceHit4()
+    {
+      VLYSurfaceHit4 surfaceHit4;
+
+      for (int i = 0; i < 4; i++) {
+        surfaceHit4.t[i]      = t[i];
+        surfaceHit4.sample[i] = sample[i];
+      }
+
+      return surfaceHit4;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 8)>>
+    explicit operator VLYSurfaceHit8()
+    {
+      VLYSurfaceHit8 surfaceHit8;
+
+      for (int i = 0; i < 8; i++) {
+        surfaceHit8.t[i]      = t[i];
+        surfaceHit8.sample[i] = sample[i];
+      }
+
+      return surfaceHit8;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W >= 16)>>
+    explicit operator VLYSurfaceHit16()
+    {
+      VLYSurfaceHit16 surfaceHit16;
+
+      for (int i = 0; i < 16; i++) {
+        surfaceHit16.t[i]      = t[i];
+        surfaceHit16.sample[i] = sample[i];
+      }
+
+      return surfaceHit16;
     }
   };
 

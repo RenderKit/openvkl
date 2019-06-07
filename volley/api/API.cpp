@@ -251,12 +251,14 @@ extern "C" bool vlyIterateSurface(VLYRayIterator *rayIterator,
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
+  vVLYSurfaceHitN<1> surfaceHitInternal;
   int result;
   volley::api::currentDriver().iterateSurface1(
       &valid,
       reinterpret_cast<VLYRayIterator &>(*rayIterator),
-      reinterpret_cast<vVLYSurfaceHitN<1> &>(*surfaceHit),
+      surfaceHitInternal,
       reinterpret_cast<vintn<1> &>(result));
+  *surfaceHit = static_cast<VLYSurfaceHit>(surfaceHitInternal);
   return result;
 }
 VOLLEY_CATCH_END(false)
@@ -268,11 +270,13 @@ VOLLEY_CATCH_END(false)
                                            int *result) VOLLEY_CATCH_BEGIN   \
   {                                                                          \
     ASSERT_DRIVER();                                                         \
-    return volley::api::currentDriver().iterateSurface##WIDTH(               \
+    vVLYSurfaceHitN<WIDTH> surfaceHitInternal;                               \
+    volley::api::currentDriver().iterateSurface##WIDTH(                      \
         valid,                                                               \
         reinterpret_cast<VLYRayIterator &>(*rayIterator),                    \
-        reinterpret_cast<vVLYSurfaceHitN<WIDTH> &>(*surfaceHit),             \
+        surfaceHitInternal,                                                  \
         reinterpret_cast<vintn<WIDTH> &>(*result));                          \
+    *surfaceHit = static_cast<VLYSurfaceHit##WIDTH>(surfaceHitInternal);     \
   }                                                                          \
   VOLLEY_CATCH_END()
 

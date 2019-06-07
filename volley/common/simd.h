@@ -50,7 +50,7 @@ namespace volley {
   using vintn = int[W];
 
   template <int W>
-  struct __aligned(64) vrange1fn
+  struct alignas(64) vrange1fn
   {
     vfloatn<W> lower;
     vfloatn<W> upper;
@@ -76,7 +76,7 @@ namespace volley {
   };
 
   template <int W>
-  struct __aligned(64) vvec3fn
+  struct alignas(64) vvec3fn
   {
     vfloatn<W> x;
     vfloatn<W> y;
@@ -118,7 +118,7 @@ namespace volley {
   };
 
   template <int W>
-  struct vVLYRayIntervalN
+  struct alignas(64) vVLYRayIntervalN
   {
     vrange1fn<W> tRange;
     vfloatn<W> nominalDeltaT;
@@ -186,7 +186,7 @@ namespace volley {
   };
 
   template <int W>
-  struct vVLYSurfaceHitN
+  struct alignas(64) vVLYSurfaceHitN
   {
     vfloatn<W> t;
     vfloatn<W> sample;

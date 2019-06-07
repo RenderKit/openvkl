@@ -32,6 +32,22 @@ namespace volley {
         const SamplesMask *samplesMask)
         : RayIterator<W>(volume, origin, direction, tRange, samplesMask)
     {
+      static bool oneTimeChecks = false;
+
+      if (!oneTimeChecks) {
+        int ispcSize = ispc::GridAcceleratorRayIterator_sizeOf();
+
+        if (ispcSize > ISPC_STORAGE_SIZE) {
+          std::cerr << "GridAcceleratorRayIterator required ISPC object size = "
+                    << ispcSize << ", allocated size = " << ISPC_STORAGE_SIZE
+                    << std::endl;
+
+          throw std::runtime_error(
+              "GridAcceleratorRayIterator has insufficient ISPC storage");
+        }
+        oneTimeChecks = true;
+      }
+
       const SharedStructuredVolume<W> *ssv =
           static_cast<const SharedStructuredVolume<W> *>(volume);
 

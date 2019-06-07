@@ -16,6 +16,9 @@
 
 #pragma once
 
+// maximum size ISPC-side object should need (sized for the widest ISA)
+#define ISPC_STORAGE_SIZE 1728
+
 #include "RayIterator.h"
 
 namespace volley {
@@ -43,7 +46,8 @@ namespace volley {
 
      protected:
 #warning need to properly align and size ispcStorage
-      alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char ispcStorage[1728];
+      alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char ispcStorage
+          [ISPC_STORAGE_SIZE];
     };
 
   }  // namespace ispc_driver

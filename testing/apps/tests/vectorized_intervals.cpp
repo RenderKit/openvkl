@@ -22,7 +22,7 @@
 using namespace ospcommon;
 using namespace volley::testing;
 
-TEST_CASE("Vectorized iteration")
+TEST_CASE("Vectorized interval iteration")
 {
   vlyLoadModule("ispc_driver");
 

@@ -95,7 +95,7 @@ export void GridAcceleratorRayIterator_iterateInterval(
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  cif(!imask[programIndex])
+  if(!imask[programIndex])
   {
     return;
   }

@@ -53,11 +53,12 @@ inline void integrate(uniform VolleyRayIteratorSurfaceRenderer *uniform self,
 
   vlyCommit((VLYObject)samplesMask);
 
-  uniform VLYRayIterator rayIterator = vlyNewRayIteratorV(self->volume,
-                                                  (varying vly_vec3f *)&ray.org,
-                                                  (varying vly_vec3f *)&ray.dir,
-                                                  &tRange,
-                                                  samplesMask);
+  uniform VLYRayIterator rayIterator =
+      vlyNewRayIteratorV(self->volume,
+                         (varying vly_vec3f *)&ray.org,
+                         (varying vly_vec3f *)&ray.dir,
+                         &tRange,
+                         samplesMask);
 
   // the current surface hit
   VLYSurfaceHit surfaceHit;

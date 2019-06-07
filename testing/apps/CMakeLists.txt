@@ -37,6 +37,7 @@ add_executable(vlyTests
   tests/structured_volume_sampling.cpp
   tests/vectorized_intervals.cpp
   tests/vectorized_sampling.cpp
+  tests/vectorized_surfaces.cpp
 )
 
 target_link_libraries(vlyTests

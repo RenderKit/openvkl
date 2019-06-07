@@ -43,7 +43,7 @@ namespace volley {
 
      protected:
 #warning need to properly align and size ispcStorage
-      alignas(128) char ispcStorage[1536];
+      alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char ispcStorage[1536];
     };
 
   }  // namespace ispc_driver

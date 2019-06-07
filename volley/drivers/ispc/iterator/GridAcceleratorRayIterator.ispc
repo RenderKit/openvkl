@@ -221,7 +221,7 @@ export void GridAcceleratorRayIterator_iterateSurface(
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  cif(!imask[programIndex])
+  if(!imask[programIndex])
   {
     return;
   }

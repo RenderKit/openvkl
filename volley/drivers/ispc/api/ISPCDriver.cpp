@@ -18,6 +18,7 @@
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
 #include "common/Data.h"
+#include "ispc_util_ispc.h"
 
 namespace volley {
   namespace ispc_driver {
@@ -26,6 +27,12 @@ namespace volley {
     bool ISPCDriver<W>::supportsWidth(int width)
     {
       return width == W || width == 4 || width == 8 || width == 16;
+    }
+
+    template <int W>
+    int ISPCDriver<W>::getNativeSIMDWidth()
+    {
+      return ispc::get_programCount();
     }
 
     template <int W>

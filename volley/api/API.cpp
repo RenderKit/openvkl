@@ -134,6 +134,13 @@ extern "C" void vlySetCurrentDriver(VLYDriver driver) VOLLEY_CATCH_BEGIN
 }
 VOLLEY_CATCH_END()
 
+extern "C" int vlyGetNativeSIMDWidth() VOLLEY_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  return volley::api::currentDriver().getNativeSIMDWidth();
+}
+VOLLEY_CATCH_END(0)
+
 extern "C" void vlyCommit(VLYObject object) VOLLEY_CATCH_BEGIN
 {
   ASSERT_DRIVER();

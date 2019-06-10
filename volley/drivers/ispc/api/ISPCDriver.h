@@ -29,6 +29,8 @@ namespace volley {
 
       bool supportsWidth(int width) override;
 
+      int getNativeSIMDWidth() override;
+
       void commit() override;
 
       void commit(VLYObject object) override;

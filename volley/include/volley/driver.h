@@ -29,6 +29,8 @@ VLYDriver vlyNewDriver(const char *driverName);
 void vlyCommitDriver(VLYDriver driver);
 void vlySetCurrentDriver(VLYDriver driver);
 
+int vlyGetNativeSIMDWidth();
+
 void vlyCommit(VLYObject object);
 
 void vlyRelease(VLYObject object);

@@ -30,6 +30,13 @@ TEST_CASE("Vectorized interval iteration")
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
+  int nativeSIMDWidth = vlyGetNativeSIMDWidth();
+
+  WARN(
+      "only performing SIMD vectorized surface iteration tests for widths <= "
+      "native width: "
+      << nativeSIMDWidth);
+
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   constexpr int DIMENSION      = 128;
   constexpr int MACROCELL_SIZE = 16;
@@ -69,7 +76,7 @@ TEST_CASE("Vectorized interval iteration")
       }
 
       for (const int &callingWidth : nativeWidths) {
-        if (width > callingWidth) {
+        if (width > callingWidth || callingWidth > nativeSIMDWidth) {
           continue;
         }
 

@@ -30,6 +30,13 @@ TEST_CASE("Vectorized surface iteration")
   vlyCommitDriver(driver);
   vlySetCurrentDriver(driver);
 
+  int nativeSIMDWidth = vlyGetNativeSIMDWidth();
+
+  WARN(
+      "only performing SIMD vectorized surface iteration tests for widths <= "
+      "native width: "
+      << nativeSIMDWidth);
+
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   const vec3i dimensions(128);
   const vec3f gridOrigin(0.f);
@@ -78,7 +85,7 @@ TEST_CASE("Vectorized surface iteration")
       }
 
       for (const int &callingWidth : nativeWidths) {
-        if (width > callingWidth) {
+        if (width > callingWidth || callingWidth > nativeSIMDWidth) {
           continue;
         }
 

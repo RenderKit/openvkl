@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018 Intel Corporation                                         //
+// Copyright 2009-2019 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,8 +14,46 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "iterator/RayIterator.ih"
+#include "math/box.ih"
+#include "math/vec.ih"
 
-// aligned and sized for AVX512; see SIMD conformance tests
-#define RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT 64
-#define RAY_ITERATOR_INTERNAL_STATE_SIZE 1792
+export uniform int sizeofVaryingRange1f()
+{
+  return sizeof(varying box1f);
+}
+
+export varying box1f *uniform newVaryingRange1f()
+{
+  return uniform new varying box1f;
+}
+
+export uniform int sizeofVaryingVec3f()
+{
+  return sizeof(varying vec3f);
+}
+
+export varying vec3f *uniform newVaryingVec3f()
+{
+  return uniform new varying vec3f;
+}
+
+export uniform int sizeofVaryingRayInterval()
+{
+  return sizeof(varying RayInterval);
+}
+
+export varying RayInterval *uniform newVaryingRayInterval()
+{
+  return uniform new varying RayInterval;
+}
+
+export uniform int sizeofVaryingSurfaceHit()
+{
+  return sizeof(varying SurfaceHit);
+}
+
+export varying SurfaceHit *uniform newVaryingSurfaceHit()
+{
+  return uniform new varying SurfaceHit;
+}

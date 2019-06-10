@@ -45,7 +45,6 @@ namespace volley {
       void iterateSurface(const int *valid, vintn<W> &result) override;
 
      protected:
-#warning need to properly align and size ispcStorage
       alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char ispcStorage
           [ISPC_STORAGE_SIZE];
     };

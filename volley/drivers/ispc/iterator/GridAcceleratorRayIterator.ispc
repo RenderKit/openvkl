@@ -38,7 +38,7 @@ inline void printGridAcceleratorRayIterator(
 
 export uniform int GridAcceleratorRayIterator_sizeOf()
 {
-  return sizeof(GridAcceleratorRayIterator);
+  return sizeof(uniform GridAcceleratorRayIterator);
 }
 
 export void GridAcceleratorRayIterator_Initialize(void *uniform _self,

@@ -29,7 +29,6 @@ struct VLYRayIterator
 {
   VLYVolume volume;
 
-#warning need to properly size internalState
   alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
       [RAY_ITERATOR_INTERNAL_STATE_SIZE];
 };

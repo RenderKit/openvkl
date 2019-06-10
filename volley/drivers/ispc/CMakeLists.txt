@@ -30,6 +30,7 @@ if (BUILD_ISPC_DRIVER)
   include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
 
   volley_add_library_ispc(volley_module_ispc_driver SHARED
+    simd_conformance.ispc
     api/ISPCDriver.cpp
     iterator/GridAcceleratorRayIterator.cpp
     iterator/GridAcceleratorRayIterator.ispc
@@ -41,7 +42,12 @@ if (BUILD_ISPC_DRIVER)
     volume/SharedStructuredVolume.ispc
   )
 
-  target_link_libraries(volley_module_ispc_driver PRIVATE volley)
+  target_include_directories(volley_module_ispc_driver PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+  )
+
+    target_link_libraries(volley_module_ispc_driver PRIVATE volley)
 
   install(TARGETS volley_module_ispc_driver
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

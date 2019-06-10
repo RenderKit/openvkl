@@ -33,6 +33,7 @@ add_executable(vlyTests
   vlyTests.cpp
   tests/ray_iterator_intervals.cpp
   tests/ray_iterator_surfaces.cpp
+  tests/simd_conformance.cpp
   tests/simd_type_conversion.cpp
   tests/structured_volume_sampling.cpp
   tests/vectorized_intervals.cpp
@@ -42,6 +43,7 @@ add_executable(vlyTests
 
 target_link_libraries(vlyTests
   volley_testing
+  volley_module_ispc_driver
 )
 
 install(TARGETS vlyTests

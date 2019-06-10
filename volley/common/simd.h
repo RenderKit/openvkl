@@ -21,8 +21,24 @@
 
 namespace volley {
 
+  /////////////////////////////////////////////////////////////////////////////
+  // any new types here should have corresponding SIMD conformance tests added!
+  /////////////////////////////////////////////////////////////////////////////
+
+  template <class T>
+  bool is_aligned_for_type(const void *ptr) noexcept
+  {
+    auto iptr = reinterpret_cast<std::uintptr_t>(ptr);
+    return !(iptr % alignof(T));
+  }
+
+  constexpr int simd_alignment_for_width(int W)
+  {
+    return W < 4 ? 0 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
+  }
+
   template <int W>
-  struct vfloatn
+  struct alignas(simd_alignment_for_width(W)) vfloatn
   {
     float v[W];
 
@@ -47,10 +63,37 @@ namespace volley {
   };
 
   template <int W>
-  using vintn = int[W];
+  struct alignas(simd_alignment_for_width(W)) vintn
+  {
+    int v[W];
+
+    vintn<W>() = default;
+
+    int &operator[](std::size_t index)
+    {
+      return v[index];
+    }
+
+    const int &operator[](std::size_t index) const
+    {
+      return v[index];
+    }
+
+    vintn<W>(const vintn<W> &o)
+    {
+      for (int i = 0; i < W; i++) {
+        v[i] = o[i];
+      }
+    }
+
+    operator const int *() const
+    {
+      return &v[0];
+    }
+  };
 
   template <int W>
-  struct alignas(64) vrange1fn
+  struct alignas(simd_alignment_for_width(W)) vrange1fn
   {
     vfloatn<W> lower;
     vfloatn<W> upper;
@@ -76,7 +119,7 @@ namespace volley {
   };
 
   template <int W>
-  struct alignas(64) vvec3fn
+  struct alignas(simd_alignment_for_width(W)) vvec3fn
   {
     vfloatn<W> x;
     vfloatn<W> y;
@@ -118,7 +161,7 @@ namespace volley {
   };
 
   template <int W>
-  struct alignas(64) vVLYRayIntervalN
+  struct alignas(simd_alignment_for_width(W)) vVLYRayIntervalN
   {
     vrange1fn<W> tRange;
     vfloatn<W> nominalDeltaT;
@@ -186,7 +229,7 @@ namespace volley {
   };
 
   template <int W>
-  struct alignas(64) vVLYSurfaceHitN
+  struct alignas(simd_alignment_for_width(W)) vVLYSurfaceHitN
   {
     vfloatn<W> t;
     vfloatn<W> sample;

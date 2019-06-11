@@ -17,20 +17,20 @@
 #include <array>
 #include "../../external/catch.hpp"
 #include "ospray/ospcommon/multidim_index_sequence.h"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
+using namespace openvkl::testing;
 
 TEST_CASE("Vectorized interval iteration")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
-  int nativeSIMDWidth = vlyGetNativeSIMDWidth();
+  int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
   WARN(
       "only performing SIMD vectorized surface iteration tests for widths <= "
@@ -48,11 +48,11 @@ TEST_CASE("Vectorized interval iteration")
   std::unique_ptr<WaveletProceduralVolume> v(
       new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  VKLVolume vklVolume = v->getVKLVolume();
 
   SECTION("randomized interval continuity with no samples mask")
   {
-    vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
     std::random_device rd;
     std::mt19937 eng(rd());
@@ -67,12 +67,12 @@ TEST_CASE("Vectorized interval iteration")
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
       std::vector<vec3f> directions(width);
-      std::vector<vly_range1f> tRanges(width);
+      std::vector<vkl_range1f> tRanges(width);
 
       for (int i = 0; i < width; i++) {
         origins[i]    = vec3f(distX(eng), distY(eng), -1.f);
         directions[i] = vec3f(0.f, 0.f, 1.f);
-        tRanges[i]    = vly_range1f{0.f, inf};
+        tRanges[i]    = vkl_range1f{0.f, inf};
       }
 
       for (const int &callingWidth : nativeWidths) {
@@ -110,21 +110,21 @@ TEST_CASE("Vectorized interval iteration")
         REQUIRE(tRangesSOA.size() == callingWidth * 2);
 
         if (callingWidth == 4) {
-          VLYRayIterator rayIterator =
-              vlyNewRayIterator4(valid.data(),
-                                 vlyVolume,
-                                 (const vly_vvec3f4 *)originsSOA.data(),
-                                 (const vly_vvec3f4 *)directionsSOA.data(),
-                                 (const vly_vrange1f4 *)tRangesSOA.data(),
+          VKLRayIterator rayIterator =
+              vklNewRayIterator4(valid.data(),
+                                 vklVolume,
+                                 (const vkl_vvec3f4 *)originsSOA.data(),
+                                 (const vkl_vvec3f4 *)directionsSOA.data(),
+                                 (const vkl_vrange1f4 *)tRangesSOA.data(),
                                  nullptr);
 
-          VLYRayInterval4 rayIntervalPrevious, rayIntervalCurrent;
+          VKLRayInterval4 rayIntervalPrevious, rayIntervalCurrent;
           int result[callingWidth];
 
           int counter = 0;
 
           while (true) {
-            vlyIterateInterval4(
+            vklIterateInterval4(
                 valid.data(), &rayIterator, &rayIntervalCurrent, result);
 
             int resultSum = 0;
@@ -173,21 +173,21 @@ TEST_CASE("Vectorized interval iteration")
         }
 
         else if (callingWidth == 8) {
-          VLYRayIterator rayIterator =
-              vlyNewRayIterator8(valid.data(),
-                                 vlyVolume,
-                                 (const vly_vvec3f8 *)originsSOA.data(),
-                                 (const vly_vvec3f8 *)directionsSOA.data(),
-                                 (const vly_vrange1f8 *)tRangesSOA.data(),
+          VKLRayIterator rayIterator =
+              vklNewRayIterator8(valid.data(),
+                                 vklVolume,
+                                 (const vkl_vvec3f8 *)originsSOA.data(),
+                                 (const vkl_vvec3f8 *)directionsSOA.data(),
+                                 (const vkl_vrange1f8 *)tRangesSOA.data(),
                                  nullptr);
 
-          VLYRayInterval8 rayIntervalPrevious, rayIntervalCurrent;
+          VKLRayInterval8 rayIntervalPrevious, rayIntervalCurrent;
           int result[callingWidth];
 
           int counter = 0;
 
           while (true) {
-            vlyIterateInterval8(
+            vklIterateInterval8(
                 valid.data(), &rayIterator, &rayIntervalCurrent, result);
 
             int resultSum = 0;
@@ -236,21 +236,21 @@ TEST_CASE("Vectorized interval iteration")
         }
 
         else if (callingWidth == 16) {
-          VLYRayIterator rayIterator =
-              vlyNewRayIterator16(valid.data(),
-                                  vlyVolume,
-                                  (const vly_vvec3f16 *)originsSOA.data(),
-                                  (const vly_vvec3f16 *)directionsSOA.data(),
-                                  (const vly_vrange1f16 *)tRangesSOA.data(),
+          VKLRayIterator rayIterator =
+              vklNewRayIterator16(valid.data(),
+                                  vklVolume,
+                                  (const vkl_vvec3f16 *)originsSOA.data(),
+                                  (const vkl_vvec3f16 *)directionsSOA.data(),
+                                  (const vkl_vrange1f16 *)tRangesSOA.data(),
                                   nullptr);
 
-          VLYRayInterval16 rayIntervalPrevious, rayIntervalCurrent;
+          VKLRayInterval16 rayIntervalPrevious, rayIntervalCurrent;
           int result[callingWidth];
 
           int counter = 0;
 
           while (true) {
-            vlyIterateInterval16(
+            vklIterateInterval16(
                 valid.data(), &rayIterator, &rayIntervalCurrent, result);
 
             int resultSum = 0;

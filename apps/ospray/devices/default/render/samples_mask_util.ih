@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <volley/volley.isph>
+#include <openvkl/openvkl.isph>
 #include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
 
 // returns the minimal number of [min, max) index intervals for positive values
@@ -54,19 +54,19 @@ inline void getContiguousPositiveIntervalIndices(const float *uniform values,
 
 // in the future, sample masks will likely be computed and stored directly
 // with the volume and transfer function
-inline VLYSamplesMask getSamplesMaskForTransferFunction(
-    const uniform VLYVolume volume,
+inline VKLSamplesMask getSamplesMaskForTransferFunction(
+    const uniform VKLVolume volume,
     const TransferFunction *uniform transferFunction)
 {
   // assume linear transfer function is always used
   const LinearTransferFunction *uniform ltf =
       (const LinearTransferFunction *uniform)transferFunction;
 
-  VLYSamplesMask samplesMask = vlyNewSamplesMask(volume);
+  VKLSamplesMask samplesMask = vklNewSamplesMask(volume);
 
   // allocate maximum number of needed ranges
-  vly_range1f *uniform valueRanges =
-      uniform new vly_range1f[ltf->opacityValueCount - 1 + 2];
+  vkl_range1f *uniform valueRanges =
+      uniform new vkl_range1f[ltf->opacityValueCount - 1 + 2];
 
   uniform int numActiveRanges = 0;
 
@@ -154,9 +154,9 @@ inline VLYSamplesMask getSamplesMaskForTransferFunction(
   delete[] indexIntervals;
 #endif
 
-  vlySamplesMaskSetRanges(samplesMask, numActiveRanges, valueRanges);
+  vklSamplesMaskSetRanges(samplesMask, numActiveRanges, valueRanges);
 
-  vlyCommit((VLYObject)samplesMask);
+  vklCommit((VKLObject)samplesMask);
 
   delete[] valueRanges;
 

@@ -16,15 +16,15 @@ macro(add_executable_ispc name)
   add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
 endmacro()
 
-include_directories_ispc(${PROJECT_SOURCE_DIR}/volley/include)
+include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
-add_executable_ispc(vlyTutorialISPC
-  vlyTutorialISPC.ispc
-  vlyTutorialISPC.cpp
+add_executable_ispc(vklTutorialISPC
+  vklTutorialISPC.ispc
+  vklTutorialISPC.cpp
 )
 
-target_link_libraries(vlyTutorialISPC PRIVATE volley)
+target_link_libraries(vklTutorialISPC PRIVATE openvkl)
 
-install(TARGETS vlyTutorialISPC
+install(TARGETS vklTutorialISPC
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

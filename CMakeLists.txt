@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-project(Volley)
+project(OpenVKL)
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -28,11 +28,11 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-include(volley_macros)
-include(volley_ispc)
+include(openvkl_macros)
+include(openvkl_ispc)
 
-volley_configure_build_type()
-volley_configure_ispc_isa()
+openvkl_configure_build_type()
+openvkl_configure_ispc_isa()
 
 include(GNUInstallDirs)
 
@@ -41,7 +41,7 @@ include(${OSPRAY_USE_FILE})
 
 ospray_configure_tasking_system()
 
-add_subdirectory(volley)
+add_subdirectory(openvkl)
 add_subdirectory(apps)
 add_subdirectory(testing)
 

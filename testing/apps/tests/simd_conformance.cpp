@@ -16,14 +16,14 @@
 
 #include "../../external/catch.hpp"
 #include "common/simd.h"
-#include "volley/drivers/ispc/GridAcceleratorRayIterator_ispc.h"
-#include "volley/drivers/ispc/iterator/GridAcceleratorRayIterator.h"
-#include "volley/drivers/ispc/simd_conformance_ispc.h"
-#include "volley_testing.h"
+#include "openvkl/drivers/ispc/GridAcceleratorRayIterator_ispc.h"
+#include "openvkl/drivers/ispc/iterator/GridAcceleratorRayIterator.h"
+#include "openvkl/drivers/ispc/simd_conformance_ispc.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
-using namespace volley;
+using namespace openvkl::testing;
+using namespace openvkl;
 
 template <int W>
 void vrange1fn_conformance_test()
@@ -42,32 +42,32 @@ void vvec3fn_conformance_test()
 }
 
 template <int W>
-void vVLYRayIntervalN_conformance_test()
+void vVKLRayIntervalN_conformance_test()
 {
-  INFO("width = " << W << ", alignment = " << alignof(vVLYRayIntervalN<W>));
-  REQUIRE(sizeof(vVLYRayIntervalN<W>) == ispc::sizeofVaryingRayInterval());
+  INFO("width = " << W << ", alignment = " << alignof(vVKLRayIntervalN<W>));
+  REQUIRE(sizeof(vVKLRayIntervalN<W>) == ispc::sizeofVaryingRayInterval());
   REQUIRE(
-      is_aligned_for_type<vVLYRayIntervalN<W>>(ispc::newVaryingRayInterval()));
+      is_aligned_for_type<vVKLRayIntervalN<W>>(ispc::newVaryingRayInterval()));
 }
 
 template <int W>
-void vVLYSurfaceHitN_conformance_test()
+void vVKLSurfaceHitN_conformance_test()
 {
-  INFO("width = " << W << ", alignment = " << alignof(vVLYSurfaceHitN<W>));
-  REQUIRE(sizeof(vVLYSurfaceHitN<W>) == ispc::sizeofVaryingSurfaceHit());
+  INFO("width = " << W << ", alignment = " << alignof(vVKLSurfaceHitN<W>));
+  REQUIRE(sizeof(vVKLSurfaceHitN<W>) == ispc::sizeofVaryingSurfaceHit());
   REQUIRE(
-      is_aligned_for_type<vVLYSurfaceHitN<W>>(ispc::newVaryingSurfaceHit()));
+      is_aligned_for_type<vVKLSurfaceHitN<W>>(ispc::newVaryingSurfaceHit()));
 }
 
 TEST_CASE("SIMD conformance")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
-  int nativeSIMDWidth = vlyGetNativeSIMDWidth();
+  int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
   WARN("only performing SIMD conformance tests for native width: "
        << nativeSIMDWidth);
@@ -77,8 +77,8 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
-      vVLYRayIntervalN_conformance_test<4>();
-      vVLYSurfaceHitN_conformance_test<4>();
+      vVKLRayIntervalN_conformance_test<4>();
+      vVKLSurfaceHitN_conformance_test<4>();
     }
   }
 
@@ -87,8 +87,8 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
-      vVLYRayIntervalN_conformance_test<8>();
-      vVLYSurfaceHitN_conformance_test<8>();
+      vVKLRayIntervalN_conformance_test<8>();
+      vVKLSurfaceHitN_conformance_test<8>();
     }
   }
 
@@ -97,8 +97,8 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
-      vVLYRayIntervalN_conformance_test<16>();
-      vVLYSurfaceHitN_conformance_test<16>();
+      vVKLRayIntervalN_conformance_test<16>();
+      vVKLSurfaceHitN_conformance_test<16>();
     }
   }
 
@@ -114,7 +114,7 @@ TEST_CASE("SIMD conformance")
           "runtime width");
     } else {
       int ispcSize = ispc::GridAcceleratorRayIterator_sizeOf();
-      REQUIRE(sizeof(volley::ispc_driver::GridAcceleratorRayIterator<16>) <=
+      REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorRayIterator<16>) <=
               RAY_ITERATOR_INTERNAL_STATE_SIZE);
       REQUIRE(ispcSize == ISPC_STORAGE_SIZE);
     }

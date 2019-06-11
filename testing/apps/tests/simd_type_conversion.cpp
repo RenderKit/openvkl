@@ -17,11 +17,11 @@
 #include <array>
 #include "../../external/catch.hpp"
 #include "common/simd.h"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
-using namespace volley;
+using namespace openvkl::testing;
+using namespace openvkl;
 
 template <int sourceWidth, int destWidth>
 void vvec3fn_upconversion_test()
@@ -75,11 +75,11 @@ void vvec3fn_pack_extraction_test()
 
 TEST_CASE("SIMD type conversion")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
   SECTION("vvec3fn upconversion")
   {

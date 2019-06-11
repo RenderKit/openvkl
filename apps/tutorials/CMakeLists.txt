@@ -14,14 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-## "Hello world" Volley tutorial ##
-add_executable(vlyTutorial
-  vlyTutorial.cpp
+## "Hello world" VKL tutorial ##
+add_executable(vklTutorial
+  vklTutorial.cpp
 )
 
-target_link_libraries(vlyTutorial PRIVATE volley)
+target_link_libraries(vklTutorial PRIVATE openvkl)
 
-install(TARGETS vlyTutorial
+install(TARGETS vklTutorial
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 

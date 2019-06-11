@@ -17,27 +17,27 @@
 #include <array>
 #include "../../external/catch.hpp"
 #include "ospray/ospcommon/multidim_index_sequence.h"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
+using namespace openvkl::testing;
 
 TEST_CASE("Vectorized sampling")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
   std::unique_ptr<WaveletProceduralVolume> v(
       new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  VKLVolume vklVolume = v->getVKLVolume();
 
   SECTION("randomized vectorized sampling varying calling width and masks")
   {
-    vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
     std::random_device rd;
     std::mt19937 eng(rd());
@@ -82,28 +82,28 @@ TEST_CASE("Vectorized sampling")
         float samples[callingWidth];
 
         if (callingWidth == 4) {
-          vlyComputeSample4(valid.data(),
-                            vlyVolume,
-                            (const vly_vvec3f4 *)objectCoordinatesSOA.data(),
+          vklComputeSample4(valid.data(),
+                            vklVolume,
+                            (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                             samples);
         } else if (callingWidth == 8) {
-          vlyComputeSample8(valid.data(),
-                            vlyVolume,
-                            (const vly_vvec3f8 *)objectCoordinatesSOA.data(),
+          vklComputeSample8(valid.data(),
+                            vklVolume,
+                            (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                             samples);
 
         } else if (callingWidth == 16) {
-          vlyComputeSample16(valid.data(),
-                             vlyVolume,
-                             (const vly_vvec3f16 *)objectCoordinatesSOA.data(),
+          vklComputeSample16(valid.data(),
+                             vklVolume,
+                             (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                              samples);
         } else {
           throw std::runtime_error("unsupported calling width");
         }
 
         for (int i = 0; i < width; i++) {
-          float sampleTruth = vlyComputeSample(
-              vlyVolume, (const vly_vec3f *)&objectCoordinates[i]);
+          float sampleTruth = vklComputeSample(
+              vklVolume, (const vkl_vec3f *)&objectCoordinates[i]);
 
           INFO("sample = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);

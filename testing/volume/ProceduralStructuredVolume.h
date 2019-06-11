@@ -19,11 +19,11 @@
 #include <vector>
 #include "TestingStructuredVolume.h"
 #include "ospray/ospcommon/vec.h"
-#include "volley/volley.h"
+#include "openvkl/openvkl.h"
 
 using namespace ospcommon;
 
-namespace volley {
+namespace openvkl {
   namespace testing {
 
     template <float volumeSamplingFunction(const vec3f &)>
@@ -72,4 +72,4 @@ namespace volley {
     using ZProceduralVolume = ProceduralStructuredVolume<getZValue>;
 
   }  // namespace testing
-}  // namespace volley
+}  // namespace openvkl

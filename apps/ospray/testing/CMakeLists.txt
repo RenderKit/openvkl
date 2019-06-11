@@ -24,48 +24,48 @@ find_package(OpenGL 2 REQUIRED)
 ## GLFW dependency ##
 find_package(glfw3 REQUIRED)
 
-## OSPRay-based Volley example, using ISPC device extensions ##
-add_executable(ospExampleVolley
+## OSPRay-based VKL example, using ISPC device extensions ##
+add_executable(ospExampleVKL
   ArcballCamera.cpp
   GLFWOSPRayWindow.cpp
   OSPRayWindow.cpp
-  OSPRayVolleyTestScene.cpp
+  OSPRayVKLTestScene.cpp
   TransferFunctionWidget.cpp
-  ospExampleVolley.cpp
+  ospExampleVKL.cpp
   imgui_impl_glfw_gl3.cpp
 )
 
-target_link_libraries(ospExampleVolley
-  volley
-  volley_testing
+target_link_libraries(ospExampleVKL
+  openvkl
+  openvkl_testing
   glfw
   ospray_imgui
   ospray::ospray_testing
-  ospray_module_ispc_volley
+  ospray_module_ispc_openvkl
   ${OPENGL_LIBRARIES}
 )
 
-target_compile_definitions(ospExampleVolley PRIVATE GL_SILENCE_DEPRECATION)
+target_compile_definitions(ospExampleVKL PRIVATE GL_SILENCE_DEPRECATION)
 
-install(TARGETS ospExampleVolley
+install(TARGETS ospExampleVKL
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-## OSPRay-based Volley benchmark ##
-add_executable(ospBenchmarkVolley
+## OSPRay-based VKL benchmark ##
+add_executable(ospBenchmarkVKL
   ArcballCamera.cpp
   OSPRayWindow.cpp
-  OSPRayVolleyTestScene.cpp
-  ospBenchmarkVolley.cpp
+  OSPRayVKLTestScene.cpp
+  ospBenchmarkVKL.cpp
 )
 
-target_link_libraries(ospBenchmarkVolley
+target_link_libraries(ospBenchmarkVKL
   benchmark
-  volley_testing
+  openvkl_testing
   ospray::ospray_testing
-  ospray_module_ispc_volley
+  ospray_module_ispc_openvkl
 )
 
-install(TARGETS ospBenchmarkVolley
+install(TARGETS ospBenchmarkVKL
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

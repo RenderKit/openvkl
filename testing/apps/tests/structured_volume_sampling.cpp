@@ -16,23 +16,23 @@
 
 #include "../../external/catch.hpp"
 #include "ospray/ospcommon/multidim_index_sequence.h"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
+using namespace openvkl::testing;
 
 TEST_CASE("Structured volume sampling")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
   std::unique_ptr<WaveletProceduralVolume> v(
       new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  VKLVolume vklVolume = v->getVKLVolume();
 
   SECTION("scalar sampling on vertices vs procedural values")
   {
@@ -47,7 +47,7 @@ TEST_CASE("Structured volume sampling")
                                   << objectCoordinates.y << " "
                                   << objectCoordinates.z);
       CHECK(
-          vlyComputeSample(vlyVolume, (const vly_vec3f *)&objectCoordinates) ==
+          vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
           Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
     }
   }

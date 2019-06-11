@@ -18,11 +18,11 @@
 
 #include <vector>
 #include "ospray/ospcommon/vec.h"
-#include "volley/volley.h"
+#include "openvkl/openvkl.h"
 
 using namespace ospcommon;
 
-namespace volley {
+namespace openvkl {
   namespace testing {
 
     struct TestingStructuredVolume
@@ -51,7 +51,7 @@ namespace volley {
         return gridSpacing;
       }
 
-      inline VLYVolume getVLYVolume() const
+      inline VKLVolume getVKLVolume() const
       {
         return volume;
       }
@@ -65,8 +65,8 @@ namespace volley {
       vec3f gridOrigin;
       vec3f gridSpacing;
 
-      VLYVolume volume{nullptr};
+      VKLVolume volume{nullptr};
     };
 
   }  // namespace testing
-}  // namespace volley
+}  // namespace openvkl

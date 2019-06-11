@@ -15,18 +15,18 @@
 // ======================================================================== //
 
 #include "../../external/catch.hpp"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
+using namespace openvkl::testing;
 
 TEST_CASE("Ray iterator surfaces")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   const vec3i dimensions(128);
@@ -36,15 +36,15 @@ TEST_CASE("Ray iterator surfaces")
   std::unique_ptr<ZProceduralVolume> v(
       new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  VKLVolume vklVolume = v->getVKLVolume();
 
   SECTION("scalar surface iteration")
   {
-    vly_vec3f origin{0.5f, 0.5f, -1.f};
-    vly_vec3f direction{0.f, 0.f, 1.f};
-    vly_range1f tRange{0.f, inf};
+    vkl_vec3f origin{0.5f, 0.5f, -1.f};
+    vkl_vec3f direction{0.f, 0.f, 1.f};
+    vkl_range1f tRange{0.f, inf};
 
-    VLYSamplesMask samplesMask = vlyNewSamplesMask(vlyVolume);
+    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
 
     std::vector<float> isoValues;
 
@@ -52,18 +52,18 @@ TEST_CASE("Ray iterator surfaces")
       isoValues.push_back(f);
     }
 
-    vlySamplesMaskSetValues(samplesMask, isoValues.size(), isoValues.data());
+    vklSamplesMaskSetValues(samplesMask, isoValues.size(), isoValues.data());
 
-    vlyCommit((VLYObject)samplesMask);
+    vklCommit((VKLObject)samplesMask);
 
-    VLYRayIterator rayIterator =
-        vlyNewRayIterator(vlyVolume, &origin, &direction, &tRange, samplesMask);
+    VKLRayIterator rayIterator =
+        vklNewRayIterator(vklVolume, &origin, &direction, &tRange, samplesMask);
 
-    VLYSurfaceHit surfaceHit;
+    VKLSurfaceHit surfaceHit;
 
     int hitCount = 0;
 
-    while (vlyIterateSurface(&rayIterator, &surfaceHit)) {
+    while (vklIterateSurface(&rayIterator, &surfaceHit)) {
       INFO("surfaceHit t = " << surfaceHit.t
                              << ", sample = " << surfaceHit.sample);
 

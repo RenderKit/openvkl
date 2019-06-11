@@ -15,22 +15,22 @@
 ## ======================================================================== ##
 
 # Benchmarks
-add_executable(vlyBenchmarkStructuredVolume
-  vlyBenchmarkStructuredVolume.cpp
+add_executable(vklBenchmarkStructuredVolume
+  vklBenchmarkStructuredVolume.cpp
 )
 
-target_link_libraries(vlyBenchmarkStructuredVolume
+target_link_libraries(vklBenchmarkStructuredVolume
   benchmark
-  volley_testing
+  openvkl_testing
 )
 
-install(TARGETS vlyBenchmarkStructuredVolume
+install(TARGETS vklBenchmarkStructuredVolume
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 # Functional tests
-add_executable(vlyTests
-  vlyTests.cpp
+add_executable(vklTests
+  vklTests.cpp
   tests/ray_iterator_intervals.cpp
   tests/ray_iterator_surfaces.cpp
   tests/simd_conformance.cpp
@@ -41,11 +41,11 @@ add_executable(vlyTests
   tests/vectorized_surfaces.cpp
 )
 
-target_link_libraries(vlyTests
-  volley_testing
-  volley_module_ispc_driver
+target_link_libraries(vklTests
+  openvkl_testing
+  openvkl_module_ispc_driver
 )
 
-install(TARGETS vlyTests
+install(TARGETS vklTests
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )

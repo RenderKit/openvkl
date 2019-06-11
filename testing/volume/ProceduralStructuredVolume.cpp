@@ -16,7 +16,7 @@
 
 #include "ProceduralStructuredVolume.h"
 
-namespace volley {
+namespace openvkl {
   namespace testing {
 
     template <float volumeSamplingFunction(const vec3f &)>
@@ -28,18 +28,18 @@ namespace volley {
     {
       std::vector<float> voxels = generateVoxels();
 
-      volume = vlyNewVolume("shared_structured_volume");
+      volume = vklNewVolume("shared_structured_volume");
 
-      vlySet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-      vlySet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-      vlySet3f(
+      vklSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+      vklSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+      vklSet3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-      VLYData voxelData = vlyNewData(voxels.size(), VLY_FLOAT, voxels.data());
-      vlySetData(volume, "voxelData", voxelData);
-      vlyRelease(voxelData);
+      VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+      vklSetData(volume, "voxelData", voxelData);
+      vklRelease(voxelData);
 
-      vlyCommit(volume);
+      vklCommit(volume);
     }
 
     template <float volumeSamplingFunction(const vec3f &)>
@@ -69,4 +69,4 @@ namespace volley {
     template class ProceduralStructuredVolume<getWaveletValue>;
     template class ProceduralStructuredVolume<getZValue>;
   }  // namespace testing
-}  // namespace volley
+}  // namespace openvkl

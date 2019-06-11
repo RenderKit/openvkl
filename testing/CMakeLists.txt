@@ -14,22 +14,22 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(volley_testing SHARED
+add_library(openvkl_testing SHARED
   volume/ProceduralStructuredVolume.cpp
   volume/RawFileStructuredVolume.cpp
 )
 
-target_link_libraries(volley_testing PUBLIC
-  volley
+target_link_libraries(openvkl_testing PUBLIC
+  openvkl
   ospray::ospray_common
 )
 
-target_include_directories(volley_testing
+target_include_directories(openvkl_testing
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 
-install(TARGETS volley_testing
+install(TARGETS openvkl_testing
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 

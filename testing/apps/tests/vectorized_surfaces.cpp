@@ -17,20 +17,20 @@
 #include <array>
 #include "../../external/catch.hpp"
 #include "ospray/ospcommon/multidim_index_sequence.h"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
+using namespace openvkl::testing;
 
 TEST_CASE("Vectorized surface iteration")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
-  int nativeSIMDWidth = vlyGetNativeSIMDWidth();
+  int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
   WARN(
       "only performing SIMD vectorized surface iteration tests for widths <= "
@@ -45,11 +45,11 @@ TEST_CASE("Vectorized surface iteration")
   std::unique_ptr<ZProceduralVolume> v(
       new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  VKLVolume vklVolume = v->getVKLVolume();
 
   SECTION("vector surface iteration")
   {
-    VLYSamplesMask samplesMask = vlyNewSamplesMask(vlyVolume);
+    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
 
     std::vector<float> isoValues;
 
@@ -57,11 +57,11 @@ TEST_CASE("Vectorized surface iteration")
       isoValues.push_back(f);
     }
 
-    vlySamplesMaskSetValues(samplesMask, isoValues.size(), isoValues.data());
+    vklSamplesMaskSetValues(samplesMask, isoValues.size(), isoValues.data());
 
-    vlyCommit((VLYObject)samplesMask);
+    vklCommit((VKLObject)samplesMask);
 
-    vly_box3f bbox = vlyGetBoundingBox(vlyVolume);
+    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
     std::random_device rd;
     std::mt19937 eng(rd());
@@ -76,12 +76,12 @@ TEST_CASE("Vectorized surface iteration")
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
       std::vector<vec3f> directions(width);
-      std::vector<vly_range1f> tRanges(width);
+      std::vector<vkl_range1f> tRanges(width);
 
       for (int i = 0; i < width; i++) {
         origins[i]    = vec3f(distX(eng), distY(eng), -1.f);
         directions[i] = vec3f(0.f, 0.f, 1.f);
-        tRanges[i]    = vly_range1f{0.f, inf};
+        tRanges[i]    = vkl_range1f{0.f, inf};
       }
 
       for (const int &callingWidth : nativeWidths) {
@@ -119,21 +119,21 @@ TEST_CASE("Vectorized surface iteration")
         REQUIRE(tRangesSOA.size() == callingWidth * 2);
 
         if (callingWidth == 4) {
-          VLYRayIterator rayIterator =
-              vlyNewRayIterator4(valid.data(),
-                                 vlyVolume,
-                                 (const vly_vvec3f4 *)originsSOA.data(),
-                                 (const vly_vvec3f4 *)directionsSOA.data(),
-                                 (const vly_vrange1f4 *)tRangesSOA.data(),
+          VKLRayIterator rayIterator =
+              vklNewRayIterator4(valid.data(),
+                                 vklVolume,
+                                 (const vkl_vvec3f4 *)originsSOA.data(),
+                                 (const vkl_vvec3f4 *)directionsSOA.data(),
+                                 (const vkl_vrange1f4 *)tRangesSOA.data(),
                                  samplesMask);
 
-          VLYSurfaceHit4 surfaceHit;
+          VKLSurfaceHit4 surfaceHit;
           int result[callingWidth];
 
           int hitCount = 0;
 
           while (true) {
-            vlyIterateSurface4(valid.data(), &rayIterator, &surfaceHit, result);
+            vklIterateSurface4(valid.data(), &rayIterator, &surfaceHit, result);
 
             int resultSum = 0;
 
@@ -165,21 +165,21 @@ TEST_CASE("Vectorized surface iteration")
         }
 
         else if (callingWidth == 8) {
-          VLYRayIterator rayIterator =
-              vlyNewRayIterator8(valid.data(),
-                                 vlyVolume,
-                                 (const vly_vvec3f8 *)originsSOA.data(),
-                                 (const vly_vvec3f8 *)directionsSOA.data(),
-                                 (const vly_vrange1f8 *)tRangesSOA.data(),
+          VKLRayIterator rayIterator =
+              vklNewRayIterator8(valid.data(),
+                                 vklVolume,
+                                 (const vkl_vvec3f8 *)originsSOA.data(),
+                                 (const vkl_vvec3f8 *)directionsSOA.data(),
+                                 (const vkl_vrange1f8 *)tRangesSOA.data(),
                                  samplesMask);
 
-          VLYSurfaceHit8 surfaceHit;
+          VKLSurfaceHit8 surfaceHit;
           int result[callingWidth];
 
           int hitCount = 0;
 
           while (true) {
-            vlyIterateSurface8(valid.data(), &rayIterator, &surfaceHit, result);
+            vklIterateSurface8(valid.data(), &rayIterator, &surfaceHit, result);
 
             int resultSum = 0;
 
@@ -211,21 +211,21 @@ TEST_CASE("Vectorized surface iteration")
         }
 
         else if (callingWidth == 16) {
-          VLYRayIterator rayIterator =
-              vlyNewRayIterator16(valid.data(),
-                                  vlyVolume,
-                                  (const vly_vvec3f16 *)originsSOA.data(),
-                                  (const vly_vvec3f16 *)directionsSOA.data(),
-                                  (const vly_vrange1f16 *)tRangesSOA.data(),
+          VKLRayIterator rayIterator =
+              vklNewRayIterator16(valid.data(),
+                                  vklVolume,
+                                  (const vkl_vvec3f16 *)originsSOA.data(),
+                                  (const vkl_vvec3f16 *)directionsSOA.data(),
+                                  (const vkl_vrange1f16 *)tRangesSOA.data(),
                                   samplesMask);
 
-          VLYSurfaceHit16 surfaceHit;
+          VKLSurfaceHit16 surfaceHit;
           int result[callingWidth];
 
           int hitCount = 0;
 
           while (true) {
-            vlyIterateSurface16(
+            vklIterateSurface16(
                 valid.data(), &rayIterator, &surfaceHit, result);
 
             int resultSum = 0;

@@ -43,7 +43,7 @@ namespace ospray {
 
     if (transferFunction == nullptr)
       throw std::runtime_error(
-          "no transfer function specified on the Volley renderer!");
+          "no transfer function specified on the OpenVKL renderer!");
 
     ispc::SimpleNativeVolumeRenderer_set(
         getIE(), volume->getIE(), transferFunction->getIE());

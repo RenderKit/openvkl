@@ -21,7 +21,7 @@
 
 using namespace ospcommon;
 
-namespace volley {
+namespace openvkl {
   namespace testing {
 
     struct RawFileStructuredVolume : public TestingStructuredVolume
@@ -38,4 +38,4 @@ namespace volley {
     };
 
   }  // namespace testing
-}  // namespace volley
+}  // namespace openvkl

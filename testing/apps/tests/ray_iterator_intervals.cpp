@@ -15,18 +15,18 @@
 // ======================================================================== //
 
 #include "../../external/catch.hpp"
-#include "volley_testing.h"
+#include "openvkl_testing.h"
 
 using namespace ospcommon;
-using namespace volley::testing;
+using namespace openvkl::testing;
 
 TEST_CASE("Ray iterator intervals")
 {
-  vlyLoadModule("ispc_driver");
+  vklLoadModule("ispc_driver");
 
-  VLYDriver driver = vlyNewDriver("ispc_driver");
-  vlyCommitDriver(driver);
-  vlySetCurrentDriver(driver);
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   const vec3i dimensions(128);
@@ -36,20 +36,20 @@ TEST_CASE("Ray iterator intervals")
   std::unique_ptr<WaveletProceduralVolume> v(
       new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-  VLYVolume vlyVolume = v->getVLYVolume();
+  VKLVolume vklVolume = v->getVKLVolume();
 
   SECTION("scalar interval continuity with no samples mask")
   {
-    vly_vec3f origin{0.5f, 0.5f, -1.f};
-    vly_vec3f direction{0.f, 0.f, 1.f};
-    vly_range1f tRange{0.f, inf};
+    vkl_vec3f origin{0.5f, 0.5f, -1.f};
+    vkl_vec3f direction{0.f, 0.f, 1.f};
+    vkl_range1f tRange{0.f, inf};
 
-    VLYRayIterator rayIterator =
-        vlyNewRayIterator(vlyVolume, &origin, &direction, &tRange, nullptr);
+    VKLRayIterator rayIterator =
+        vklNewRayIterator(vklVolume, &origin, &direction, &tRange, nullptr);
 
-    VLYRayInterval rayIntervalPrevious, rayIntervalCurrent;
+    VKLRayInterval rayIntervalPrevious, rayIntervalCurrent;
 
-    for (int i = 0; vlyIterateInterval(&rayIterator, &rayIntervalCurrent);
+    for (int i = 0; vklIterateInterval(&rayIterator, &rayIntervalCurrent);
          i++) {
       INFO("rayInterval tRange = " << rayIntervalCurrent.tRange.lower << ", "
                                    << rayIntervalCurrent.tRange.upper);

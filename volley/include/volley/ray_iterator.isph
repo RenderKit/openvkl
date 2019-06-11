@@ -24,8 +24,6 @@
 struct VLYRayIterator
 {
   const VLYVolume volume;
-
-#warning need to properly size internalState
   int8 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE];
 };
 

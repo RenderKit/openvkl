@@ -34,11 +34,29 @@ GridAcceleratorSamplesMask_Constructor(void *uniform _volume,
     self->ranges[i] = ranges[i];
   }
 
+  self->rangesMinMax = make_box1f(inf, -inf);
+
+  foreach (i = 0... numRanges) {
+    self->rangesMinMax.lower =
+        min(self->rangesMinMax.lower, reduce_min(ranges[i].lower));
+    self->rangesMinMax.upper =
+        max(self->rangesMinMax.upper, reduce_max(ranges[i].upper));
+  }
+
   self->numValues = numValues;
   self->values    = uniform new uniform float[numValues];
 
   foreach (i = 0 ... numValues) {
     self->values[i] = values[i];
+  }
+
+  self->valuesMinMax = make_box1f(inf, -inf);
+
+  foreach (i = 0... numValues) {
+    self->valuesMinMax.lower =
+        min(self->valuesMinMax.lower, reduce_min(values[i]));
+    self->valuesMinMax.upper =
+        max(self->valuesMinMax.upper, reduce_max(values[i]));
   }
 
   return self;

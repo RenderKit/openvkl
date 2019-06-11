@@ -66,7 +66,8 @@ export void GridAcceleratorRayIterator_Initialize(void *uniform _self,
   // because the inverse coordinate transformation may land outside a grid cell.
   // the artifacts may look like speckles, or cross-hairs in orthographic camera
   // views.
-  /*const uniform float epsilon = reduce_min(self->volume->gridSpacing) * 0.125f;
+  /*const uniform float epsilon = reduce_min(self->volume->gridSpacing) *
+  0.125f;
 
   self->boundingBoxTRange.lower += epsilon;*/
 
@@ -95,8 +96,7 @@ export void GridAcceleratorRayIterator_iterateInterval(
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  if(!imask[programIndex])
-  {
+  if (!imask[programIndex]) {
     return;
   }
 
@@ -124,17 +124,13 @@ export void GridAcceleratorRayIterator_iterateInterval(
                                       self->intervalState.currentCellIndex,
                                       cellValueRange);
 
-    for (uniform int i = 0; i < self->samplesMask->numRanges; i++) {
-      uniform box1f r = self->samplesMask->ranges[i];
+    if (overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
+      self->intervalState.currentRayInterval.nominalDeltaT =
+          1.f * (self->intervalState.currentRayInterval.tRange.upper -
+                 self->intervalState.currentRayInterval.tRange.lower);
 
-      if (overlaps1f(r, cellValueRange)) {
-        self->intervalState.currentRayInterval.nominalDeltaT =
-            1.f * (self->intervalState.currentRayInterval.tRange.upper -
-                   self->intervalState.currentRayInterval.tRange.lower);
-
-        *result = true;
-        return;
-      }
+      *result = true;
+      return;
     }
   }
 
@@ -221,8 +217,7 @@ export void GridAcceleratorRayIterator_iterateSurface(
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  if(!imask[programIndex])
-  {
+  if (!imask[programIndex]) {
     return;
   }
 
@@ -253,16 +248,8 @@ export void GridAcceleratorRayIterator_iterateSurface(
                                       self->surfaceState.currentCellIndex,
                                       cellValueRange);
 
-    bool cellValueRangeOverlap = false;
-
-    for (uniform int i = 0; i < self->samplesMask->numValues; i++) {
-      const uniform float value = self->samplesMask->values[i];
-
-      if (value >= cellValueRange.lower && value <= cellValueRange.upper) {
-        cellValueRangeOverlap = true;
-        break;
-      }
-    }
+    bool cellValueRangeOverlap =
+        overlaps1f(self->samplesMask->valuesMinMax, cellValueRange);
 
     if (cellValueRangeOverlap) {
       float surfaceEpsilon;

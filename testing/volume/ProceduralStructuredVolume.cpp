@@ -28,7 +28,7 @@ namespace openvkl {
     {
       std::vector<float> voxels = generateVoxels();
 
-      volume = vklNewVolume("shared_structured_volume");
+      volume = vklNewVolume("structured_regular");
 
       vklSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
       vklSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);

@@ -85,9 +85,9 @@ namespace openvkl {
       });
     }
 
-    VKL_REGISTER_VOLUME(SharedStructuredVolume<4>, shared_structured_volume_4)
-    VKL_REGISTER_VOLUME(SharedStructuredVolume<8>, shared_structured_volume_8)
-    VKL_REGISTER_VOLUME(SharedStructuredVolume<16>, shared_structured_volume_16)
+    VKL_REGISTER_VOLUME(SharedStructuredVolume<4>, structured_regular_4)
+    VKL_REGISTER_VOLUME(SharedStructuredVolume<8>, structured_regular_8)
+    VKL_REGISTER_VOLUME(SharedStructuredVolume<16>, structured_regular_16)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

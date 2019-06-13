@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "ospray/ospcommon/platform.h"
 #include "openvkl/openvkl.h"
+#include "ospray/ospcommon/platform.h"
 
 namespace openvkl {
 
@@ -35,6 +35,14 @@ namespace openvkl {
   constexpr int simd_alignment_for_width(int W)
   {
     return W < 4 ? 0 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
+  }
+
+  constexpr int ray_iterator_internal_state_size_for_width(int W)
+  {
+    return W < 4 ? RAY_ITERATOR_INTERNAL_STATE_SIZE
+                 : (W < 8 ? RAY_ITERATOR_INTERNAL_STATE_SIZE_4
+                          : (W < 16 ? RAY_ITERATOR_INTERNAL_STATE_SIZE_8
+                                    : RAY_ITERATOR_INTERNAL_STATE_SIZE_16));
   }
 
   template <int W>
@@ -157,6 +165,67 @@ namespace openvkl {
       }
 
       return newVec;
+    }
+  };
+
+  template <int W>
+  struct alignas(simd_alignment_for_width(W)) vVKLRayIteratorN
+  {
+    alignas(simd_alignment_for_width(
+        W)) char internalState[ray_iterator_internal_state_size_for_width(W)];
+    VKLVolume volume;
+
+    vVKLRayIteratorN<W>() = default;
+
+    vVKLRayIteratorN<W>(const vVKLRayIteratorN<W> &v) : volume(v.volume)
+    {
+      memcpy(internalState,
+             v.internalState,
+             ray_iterator_internal_state_size_for_width(W));
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W == 1)>>
+    explicit operator VKLRayIterator()
+    {
+      VKLRayIterator rayIterator1;
+      memcpy(rayIterator1.internalState,
+             internalState,
+             ray_iterator_internal_state_size_for_width(W));
+      rayIterator1.volume = volume;
+      return rayIterator1;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W == 4)>>
+    explicit operator VKLRayIterator4()
+    {
+      VKLRayIterator4 rayIterator4;
+      memcpy(rayIterator4.internalState,
+             internalState,
+             ray_iterator_internal_state_size_for_width(W));
+      rayIterator4.volume = volume;
+      return rayIterator4;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W == 8)>>
+    explicit operator VKLRayIterator8()
+    {
+      VKLRayIterator8 rayIterator8;
+      memcpy(rayIterator8.internalState,
+             internalState,
+             ray_iterator_internal_state_size_for_width(W));
+      rayIterator8.volume = volume;
+      return rayIterator8;
+    }
+
+    template <int W2 = W, typename = std::enable_if<(W == 16)>>
+    explicit operator VKLRayIterator16()
+    {
+      VKLRayIterator16 rayIterator16;
+      memcpy(rayIterator16.internalState,
+             internalState,
+             ray_iterator_internal_state_size_for_width(W));
+      rayIterator16.volume = volume;
+      return rayIterator16;
     }
   };
 

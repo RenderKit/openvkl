@@ -16,9 +16,6 @@
 
 #pragma once
 
-// maximum size ISPC-side object should need (sized for the widest ISA)
-#define ISPC_STORAGE_SIZE 1728
-
 #include "RayIterator.h"
 
 namespace openvkl {
@@ -44,9 +41,14 @@ namespace openvkl {
       const SurfaceHit<W> *getCurrentSurfaceHit() const override;
       void iterateSurface(const int *valid, vintn<W> &result) override;
 
+      // required size of ISPC-side object for widths:
+      //   4: 432
+      //   8: 864
+      //  16: 1728
+      static constexpr int ispcStorageSize = 108 * W;
+
      protected:
-      alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char ispcStorage
-          [ISPC_STORAGE_SIZE];
+      alignas(simd_alignment_for_width(W)) char ispcStorage[ispcStorageSize];
     };
 
   }  // namespace ispc_driver

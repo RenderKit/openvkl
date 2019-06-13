@@ -32,17 +32,18 @@ namespace openvkl {
 
       void commit() override;
 
-      VKLRayIterator newRayIteratorV(const vvec3fn<W> &origin,
-                                     const vvec3fn<W> &direction,
-                                     const vrange1fn<W> &tRange,
-                                     const SamplesMask *samplesMask) override
+      vVKLRayIteratorN<W> newRayIteratorV(
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const SamplesMask *samplesMask) override
       {
-        return toVKLRayIterator(GridAcceleratorRayIterator<W>(
+        return toVKLRayIterator<W>(GridAcceleratorRayIterator<W>(
             this, origin, direction, tRange, samplesMask));
       }
 
       void iterateIntervalV(const int *valid,
-                            VKLRayIterator &rayIterator,
+                            vVKLRayIteratorN<W> &rayIterator,
                             vVKLRayIntervalN<W> &rayInterval,
                             vintn<W> &result) override
       {
@@ -56,7 +57,7 @@ namespace openvkl {
       }
 
       void iterateSurfaceV(const int *valid,
-                           VKLRayIterator &rayIterator,
+                           vVKLRayIteratorN<W> &rayIterator,
                            vVKLSurfaceHitN<W> &surfaceHit,
                            vintn<W> &result) override
       {

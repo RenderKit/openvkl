@@ -23,8 +23,9 @@
 
 struct VKLRayIterator
 {
+  // stored as varying int32 to enforce correct alignment
+  varying int32 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
   const VKLVolume volume;
-  int8 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE];
 };
 
 VKL_API uniform VKLRayIterator

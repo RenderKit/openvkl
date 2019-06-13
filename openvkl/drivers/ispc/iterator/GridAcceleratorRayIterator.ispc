@@ -41,6 +41,13 @@ export uniform int GridAcceleratorRayIterator_sizeOf()
   return sizeof(uniform GridAcceleratorRayIterator);
 }
 
+// for tests only
+export uniform GridAcceleratorRayIterator *uniform
+GridAcceleratorRayIterator_new()
+{
+  return uniform new uniform GridAcceleratorRayIterator;
+}
+
 export void GridAcceleratorRayIterator_Initialize(void *uniform _self,
                                                   void *uniform _volume,
                                                   void *uniform _origin,

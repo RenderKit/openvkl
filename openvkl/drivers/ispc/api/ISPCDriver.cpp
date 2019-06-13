@@ -75,7 +75,7 @@ namespace openvkl {
 
 #define __define_newRayIteratorN(WIDTH)                         \
   template <int W>                                              \
-  VKLRayIterator ISPCDriver<W>::newRayIterator##WIDTH(          \
+  vVKLRayIteratorN<WIDTH> ISPCDriver<W>::newRayIterator##WIDTH( \
       const int *valid,                                         \
       VKLVolume volume,                                         \
       const vvec3fn<WIDTH> &origin,                             \
@@ -98,7 +98,7 @@ namespace openvkl {
   template <int W>                                                           \
   void ISPCDriver<W>::iterateInterval##WIDTH(                                \
       const int *valid,                                                      \
-      VKLRayIterator &rayIterator,                                           \
+      vVKLRayIteratorN<WIDTH> &rayIterator,                                  \
       vVKLRayIntervalN<WIDTH> &rayInterval,                                  \
       vintn<WIDTH> &result)                                                  \
   {                                                                          \
@@ -116,7 +116,7 @@ namespace openvkl {
   template <int W>                                                         \
   void ISPCDriver<W>::iterateSurface##WIDTH(                               \
       const int *valid,                                                    \
-      VKLRayIterator &rayIterator,                                         \
+      vVKLRayIteratorN<WIDTH> &rayIterator,                                \
       vVKLSurfaceHitN<WIDTH> &surfaceHit,                                  \
       vintn<WIDTH> &result)                                                \
   {                                                                        \
@@ -282,7 +282,7 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), VKLRayIterator>::type
+    typename std::enable_if<(OW == W), vVKLRayIteratorN<OW>>::type
     ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
                                           VKLVolume volume,
                                           const vvec3fn<OW> &origin,
@@ -300,7 +300,7 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      return (VKLRayIterator)volumeObject.newRayIteratorV(
+      return volumeObject.newRayIteratorV(
           originW,
           directionW,
           tRangeW,
@@ -309,7 +309,7 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW > W), VKLRayIterator>::type
+    typename std::enable_if<(OW != W), vVKLRayIteratorN<OW>>::type
     ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
                                           VKLVolume volume,
                                           const vvec3fn<OW> &origin,
@@ -318,15 +318,15 @@ namespace openvkl {
                                           VKLSamplesMask samplesMask)
     {
       throw std::runtime_error(
-          "ray iterators cannot be created for widths greater than the native "
-          "runtime vector width");
+          "ray iterators cannot be created for widths different than the "
+          "native runtime vector width");
     }
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), void>::type
+    typename std::enable_if<(OW == W), void>::type
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           VKLRayIterator &rayIterator,
+                                           vVKLRayIteratorN<OW> &rayIterator,
                                            vVKLRayIntervalN<OW> &rayInterval,
                                            vintn<OW> &result)
     {
@@ -354,22 +354,22 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW > W), void>::type
+    typename std::enable_if<(OW != W), void>::type
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           VKLRayIterator &rayIterator,
+                                           vVKLRayIteratorN<OW> &rayIterator,
                                            vVKLRayIntervalN<OW> &rayInterval,
                                            vintn<OW> &result)
     {
       throw std::runtime_error(
-          "cannot iterate on ray intervals for widths greater than the native "
-          "runtime vector width");
+          "cannot iterate on ray intervals for widths different than the "
+          "native runtime vector width");
     }
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), void>::type
+    typename std::enable_if<(OW == W), void>::type
     ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
-                                          VKLRayIterator &rayIterator,
+                                          vVKLRayIteratorN<OW> &rayIterator,
                                           vVKLSurfaceHitN<OW> &surfaceHit,
                                           vintn<OW> &result)
     {
@@ -396,14 +396,14 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW > W), void>::type
+    typename std::enable_if<(OW != W), void>::type
     ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
-                                          VKLRayIterator &rayIterator,
+                                          vVKLRayIteratorN<OW> &rayIterator,
                                           vVKLSurfaceHitN<OW> &surfaceHit,
                                           vintn<OW> &result)
     {
       throw std::runtime_error(
-          "cannot iterate on surfaces for widths greater than the native "
+          "cannot iterate on surfaces for widths different than the native "
           "runtime vector width");
     }
 

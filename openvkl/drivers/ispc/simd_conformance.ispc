@@ -17,6 +17,7 @@
 #include "iterator/RayIterator.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
+#include "openvkl/openvkl.isph"
 
 export uniform int sizeofVaryingRange1f()
 {
@@ -36,6 +37,16 @@ export uniform int sizeofVaryingVec3f()
 export varying vec3f *uniform newVaryingVec3f()
 {
   return uniform new varying vec3f;
+}
+
+export uniform int sizeofUniformVKLRayIterator()
+{
+  return sizeof(uniform VKLRayIterator);
+}
+
+export VKLRayIterator *uniform newUniformVKLRayIterator()
+{
+  return uniform new uniform VKLRayIterator;
 }
 
 export uniform int sizeofVaryingRayInterval()

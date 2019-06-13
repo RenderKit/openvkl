@@ -42,6 +42,33 @@ void vvec3fn_conformance_test()
 }
 
 template <int W>
+void vVKLRayIteratorN_conformance_test()
+{
+  INFO("width = " << W << ", alignment = " << alignof(vVKLRayIteratorN<W>));
+
+  REQUIRE(sizeof(vVKLRayIteratorN<W>) == ispc::sizeofUniformVKLRayIterator());
+  REQUIRE(is_aligned_for_type<vVKLRayIteratorN<W>>(
+      ispc::newUniformVKLRayIterator()));
+
+  if (W == 4) {
+    REQUIRE(sizeof(VKLRayIterator4) == sizeof(vVKLRayIteratorN<W>));
+    REQUIRE(alignof(VKLRayIterator4) == alignof(vVKLRayIteratorN<W>));
+  } else if (W == 8) {
+    REQUIRE(sizeof(VKLRayIterator8) == sizeof(vVKLRayIteratorN<W>));
+    REQUIRE(alignof(VKLRayIterator8) == alignof(vVKLRayIteratorN<W>));
+  } else if (W == 16) {
+    REQUIRE(sizeof(VKLRayIterator16) == sizeof(vVKLRayIteratorN<W>));
+    REQUIRE(alignof(VKLRayIterator16) == alignof(vVKLRayIteratorN<W>));
+
+    // special case: scalar ray iterator should match the maximum width (16)
+    REQUIRE(sizeof(VKLRayIterator) == sizeof(vVKLRayIteratorN<W>));
+    REQUIRE(alignof(VKLRayIterator) == alignof(vVKLRayIteratorN<W>));
+  } else {
+    throw std::runtime_error("unsupported native SIMD width for tests");
+  }
+}
+
+template <int W>
 void vVKLRayIntervalN_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vVKLRayIntervalN<W>));
@@ -57,6 +84,21 @@ void vVKLSurfaceHitN_conformance_test()
   REQUIRE(sizeof(vVKLSurfaceHitN<W>) == ispc::sizeofVaryingSurfaceHit());
   REQUIRE(
       is_aligned_for_type<vVKLSurfaceHitN<W>>(ispc::newVaryingSurfaceHit()));
+}
+
+template <int W>
+void GridAcceleratorRayIterator_conformance_test()
+{
+  int ispcSize = ispc::GridAcceleratorRayIterator_sizeOf();
+  REQUIRE(ispcSize ==
+          openvkl::ispc_driver::GridAcceleratorRayIterator<W>::ispcStorageSize);
+
+  REQUIRE(
+      is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorRayIterator<W>>(
+          ispc::GridAcceleratorRayIterator_new()));
+
+  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorRayIterator<W>) <=
+          ray_iterator_internal_state_size_for_width(W));
 }
 
 TEST_CASE("SIMD conformance")
@@ -77,8 +119,10 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
+      vVKLRayIteratorN_conformance_test<4>();
       vVKLRayIntervalN_conformance_test<4>();
       vVKLSurfaceHitN_conformance_test<4>();
+      GridAcceleratorRayIterator_conformance_test<4>();
     }
   }
 
@@ -87,8 +131,10 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
+      vVKLRayIteratorN_conformance_test<8>();
       vVKLRayIntervalN_conformance_test<8>();
       vVKLSurfaceHitN_conformance_test<8>();
+      GridAcceleratorRayIterator_conformance_test<8>();
     }
   }
 
@@ -97,26 +143,14 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
+      vVKLRayIteratorN_conformance_test<16>();
       vVKLRayIntervalN_conformance_test<16>();
       vVKLSurfaceHitN_conformance_test<16>();
+      GridAcceleratorRayIterator_conformance_test<16>();
     }
   }
 
   else {
     throw std::runtime_error("unsupported native SIMD width for tests");
-  }
-
-  SECTION("GridAcceleratorRayIterator sizing (16-wide only)")
-  {
-    if (nativeSIMDWidth != 16) {
-      WARN(
-          "not performing ray iterator sizing test; test only legal on 16-wide "
-          "runtime width");
-    } else {
-      int ispcSize = ispc::GridAcceleratorRayIterator_sizeOf();
-      REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorRayIterator<16>) <=
-              RAY_ITERATOR_INTERNAL_STATE_SIZE);
-      REQUIRE(ispcSize == ISPC_STORAGE_SIZE);
-    }
   }
 }

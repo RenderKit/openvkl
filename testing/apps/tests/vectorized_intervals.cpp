@@ -33,7 +33,7 @@ TEST_CASE("Vectorized interval iteration")
   int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
   WARN(
-      "only performing SIMD vectorized surface iteration tests for widths <= "
+      "only performing SIMD vectorized surface iteration tests for width == "
       "native width: "
       << nativeSIMDWidth);
 
@@ -76,7 +76,7 @@ TEST_CASE("Vectorized interval iteration")
       }
 
       for (const int &callingWidth : nativeWidths) {
-        if (width > callingWidth || callingWidth > nativeSIMDWidth) {
+        if (width > callingWidth || callingWidth != nativeSIMDWidth) {
           continue;
         }
 
@@ -110,7 +110,7 @@ TEST_CASE("Vectorized interval iteration")
         REQUIRE(tRangesSOA.size() == callingWidth * 2);
 
         if (callingWidth == 4) {
-          VKLRayIterator rayIterator =
+          VKLRayIterator4 rayIterator =
               vklNewRayIterator4(valid.data(),
                                  vklVolume,
                                  (const vkl_vvec3f4 *)originsSOA.data(),
@@ -173,7 +173,7 @@ TEST_CASE("Vectorized interval iteration")
         }
 
         else if (callingWidth == 8) {
-          VKLRayIterator rayIterator =
+          VKLRayIterator8 rayIterator =
               vklNewRayIterator8(valid.data(),
                                  vklVolume,
                                  (const vkl_vvec3f8 *)originsSOA.data(),
@@ -236,7 +236,7 @@ TEST_CASE("Vectorized interval iteration")
         }
 
         else if (callingWidth == 16) {
-          VKLRayIterator rayIterator =
+          VKLRayIterator16 rayIterator =
               vklNewRayIterator16(valid.data(),
                                   vklVolume,
                                   (const vkl_vvec3f16 *)originsSOA.data(),

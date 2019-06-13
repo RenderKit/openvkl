@@ -24,6 +24,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
+    constexpr int GridAcceleratorRayIterator<W>::ispcStorageSize;
+
+    template <int W>
     GridAcceleratorRayIterator<W>::GridAcceleratorRayIterator(
         const Volume<W> *volume,
         const vvec3fn<W> &origin,
@@ -37,9 +40,9 @@ namespace openvkl {
       if (!oneTimeChecks) {
         int ispcSize = ispc::GridAcceleratorRayIterator_sizeOf();
 
-        if (ispcSize > ISPC_STORAGE_SIZE) {
+        if (ispcSize > ispcStorageSize) {
           std::cerr << "GridAcceleratorRayIterator required ISPC object size = "
-                    << ispcSize << ", allocated size = " << ISPC_STORAGE_SIZE
+                    << ispcSize << ", allocated size = " << ispcStorageSize
                     << std::endl;
 
           throw std::runtime_error(

@@ -25,38 +25,26 @@ using namespace ospcommon;
 namespace openvkl {
   namespace ispc_driver {
 
-    template <typename U>
-    inline VKLRayIterator toVKLRayIterator(U &&x)
+    template <int W, typename U>
+    inline vVKLRayIteratorN<W> toVKLRayIterator(U &&x)
     {
-      static_assert(RAY_ITERATOR_INTERNAL_STATE_SIZE >= sizeof(U),
-                    "RAY_ITERATOR_INTERNAL_STATE_SIZE must be >= "
+      static_assert(ray_iterator_internal_state_size_for_width(W) >= sizeof(U),
+                    "ray iterator internal state size must be >= "
                     "source object size");
-      VKLRayIterator result{(VKLVolume)x.volume};
+      vVKLRayIteratorN<W> result;
       std::memcpy((void *)std::addressof(result.internalState),
                   (const void *)std::addressof(x),
                   sizeof(U));
+      result.volume = (VKLVolume)x.volume;
       return result;
     }
 
-    template <typename T>
-    inline T fromVKLRayIterator(VKLRayIterator &x)
+    template <typename T, int W>
+    inline T *fromVKLRayIterator(vVKLRayIteratorN<W> *x)
     {
-      static_assert(sizeof(T) <= RAY_ITERATOR_INTERNAL_STATE_SIZE,
+      static_assert(sizeof(T) <= ray_iterator_internal_state_size_for_width(W),
                     "fromVKLRayIterator destination object size must be <= "
-                    "RAY_ITERATOR_INTERNAL_STATE_SIZE");
-      T result;
-      std::memcpy((void *)std::addressof(result),
-                  (const void *)std::addressof(x.internalState),
-                  sizeof(T));
-      return result;
-    }
-
-    template <typename T>
-    inline T *fromVKLRayIterator(VKLRayIterator *x)
-    {
-      static_assert(sizeof(T) <= RAY_ITERATOR_INTERNAL_STATE_SIZE,
-                    "fromVKLRayIterator destination object size must be <= "
-                    "RAY_ITERATOR_INTERNAL_STATE_SIZE");
+                    "ray iterator internal state size");
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
 

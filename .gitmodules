@@ -1,3 +1,6 @@
 [submodule "testing/external/benchmark"]
 	path = testing/external/benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "external/ospcommon"]
+	path = external/ospcommon
+	url = git@gitlab.com:ospray/ospcommon.git

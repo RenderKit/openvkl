@@ -42,6 +42,9 @@ namespace openvkl {
     template <typename T, int W>
     inline T *fromVKLRayIterator(vVKLRayIteratorN<W> *x)
     {
+      static_assert(
+          alignof(T) == alignof(vVKLRayIteratorN<W>),
+          "alignment of destination type must be == alignment of source type");
       static_assert(sizeof(T) <= ray_iterator_internal_state_size_for_width(W),
                     "fromVKLRayIterator destination object size must be <= "
                     "ray iterator internal state size");

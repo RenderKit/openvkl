@@ -279,7 +279,7 @@ namespace openvkl {
     {
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 1)>>
+    template <int W2 = W, typename = std::enable_if<(W == 1)>>
     explicit operator VKLRayInterval()
     {
       VKLRayInterval rayInterval1;
@@ -291,7 +291,7 @@ namespace openvkl {
       return rayInterval1;
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 4)>>
+    template <int W2 = W, typename = std::enable_if<(W == 4)>>
     explicit operator VKLRayInterval4()
     {
       VKLRayInterval4 rayInterval4;
@@ -305,7 +305,7 @@ namespace openvkl {
       return rayInterval4;
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 8)>>
+    template <int W2 = W, typename = std::enable_if<(W == 8)>>
     explicit operator VKLRayInterval8()
     {
       VKLRayInterval8 rayInterval8;
@@ -319,7 +319,7 @@ namespace openvkl {
       return rayInterval8;
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 16)>>
+    template <int W2 = W, typename = std::enable_if<(W == 16)>>
     explicit operator VKLRayInterval16()
     {
       VKLRayInterval16 rayInterval16;
@@ -346,7 +346,7 @@ namespace openvkl {
     {
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 1)>>
+    template <int W2 = W, typename = std::enable_if<(W == 1)>>
     explicit operator VKLSurfaceHit()
     {
       VKLSurfaceHit surfaceHit1;
@@ -357,7 +357,7 @@ namespace openvkl {
       return surfaceHit1;
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 4)>>
+    template <int W2 = W, typename = std::enable_if<(W == 4)>>
     explicit operator VKLSurfaceHit4()
     {
       VKLSurfaceHit4 surfaceHit4;
@@ -370,7 +370,7 @@ namespace openvkl {
       return surfaceHit4;
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 8)>>
+    template <int W2 = W, typename = std::enable_if<(W == 8)>>
     explicit operator VKLSurfaceHit8()
     {
       VKLSurfaceHit8 surfaceHit8;
@@ -383,7 +383,7 @@ namespace openvkl {
       return surfaceHit8;
     }
 
-    template <int W2 = W, typename = std::enable_if<(W >= 16)>>
+    template <int W2 = W, typename = std::enable_if<(W == 16)>>
     explicit operator VKLSurfaceHit16()
     {
       VKLSurfaceHit16 surfaceHit16;

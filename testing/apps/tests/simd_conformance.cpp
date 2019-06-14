@@ -60,9 +60,9 @@ void vVKLRayIteratorN_conformance_test()
     REQUIRE(sizeof(VKLRayIterator16) == sizeof(vVKLRayIteratorN<W>));
     REQUIRE(alignof(VKLRayIterator16) == alignof(vVKLRayIteratorN<W>));
 
-    // special case: scalar ray iterator should match the maximum width (16)
+    // special case: scalar ray iterator should match size of maximum width
+    // (16); alignment doesn't matter since the conversions make copies.
     REQUIRE(sizeof(VKLRayIterator) == sizeof(vVKLRayIteratorN<W>));
-    REQUIRE(alignof(VKLRayIterator) == alignof(vVKLRayIteratorN<W>));
   } else {
     throw std::runtime_error("unsupported native SIMD width for tests");
   }

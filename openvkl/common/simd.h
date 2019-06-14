@@ -184,6 +184,43 @@ namespace openvkl {
              ray_iterator_internal_state_size_for_width(W));
     }
 
+    // vVKLRayIteratorN<1> is maximally sized, so can hold internal state for
+    // any other ray iterator width; this is to support execution of the scalar
+    // APIs through the native vector-wide implementation. therefore we allow
+    // conversion between width=1 and any other width.
+    //
+    // any width => scalar conversion
+    explicit operator vVKLRayIteratorN<1>()
+    {
+      static_assert(
+          ray_iterator_internal_state_size_for_width(1) >=
+              ray_iterator_internal_state_size_for_width(W),
+          "vVKLRayIteratorN<1> is not sufficiently sized to hold wider type");
+
+      vVKLRayIteratorN<1> rayIterator1;
+      memcpy(rayIterator1.internalState,
+             internalState,
+             ray_iterator_internal_state_size_for_width(W));
+      rayIterator1.volume = volume;
+      return rayIterator1;
+    }
+
+    // scalar (width 1) => any width conversion
+    template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
+    explicit operator vVKLRayIteratorN<W2>()
+    {
+      static_assert(ray_iterator_internal_state_size_for_width(W2) <=
+                        ray_iterator_internal_state_size_for_width(W),
+                    "vVKLRayIteratorN<W2> is larger than source type");
+
+      vVKLRayIteratorN<W2> rayIteratorW2;
+      memcpy(rayIteratorW2.internalState,
+             internalState,
+             ray_iterator_internal_state_size_for_width(W2));
+      rayIteratorW2.volume = volume;
+      return rayIteratorW2;
+    }
+
     template <int W2 = W, typename = std::enable_if<(W == 1)>>
     explicit operator VKLRayIterator()
     {

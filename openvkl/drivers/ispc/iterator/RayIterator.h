@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../samples_mask/SamplesMask.h"
-#include "common/simd.h"
+#include "../common/simd.h"
 #include "openvkl/openvkl.h"
 
 using namespace ospcommon;

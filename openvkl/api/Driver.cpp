@@ -16,7 +16,7 @@
 
 #include "Driver.h"
 #include <sstream>
-#include "common/objectFactory.h"
+#include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
 
 namespace openvkl {

@@ -16,7 +16,7 @@
 
 #include <array>
 #include "../../external/catch.hpp"
-#include "common/simd.h"
+#include "../common/simd.h"
 #include "openvkl_testing.h"
 
 using namespace ospcommon;

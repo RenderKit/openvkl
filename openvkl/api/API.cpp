@@ -14,17 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <ospray/ospcommon/box.h>
-#include <ospray/ospcommon/utility/ArrayView.h>
-#include <ospray/ospcommon/utility/OnScopeExit.h>
-#include <ospray/ospcommon/vec.h>
+#include "ospcommon/math/box.h"
+#include "ospcommon/utility/ArrayView.h"
+#include "ospcommon/utility/OnScopeExit.h"
+#include "ospcommon/math/vec.h"
 #include "Driver.h"
-#include "common/logging.h"
-#include "common/simd.h"
+#include "../common/logging.h"
+#include "../common/simd.h"
 #include "openvkl/openvkl.h"
 
 using namespace openvkl;
-using namespace ospcommon;
 
 #define TRACE_PREFIX "[openvkl] "
 
@@ -451,7 +450,7 @@ extern "C" float vklComputeSample(
       reinterpret_cast<vfloatn<1> &>(sample));
   return sample;
 }
-OPENVKL_CATCH_END(ospcommon::nan)
+OPENVKL_CATCH_END(ospcommon::math::nan)
 
 #define __define_vklComputeSampleN(WIDTH)                             \
   extern "C" void vklComputeSample##WIDTH(                            \
@@ -485,7 +484,7 @@ extern "C" vkl_vec3f vklComputeGradient(
       volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
   return reinterpret_cast<const vkl_vec3f &>(result);
 }
-OPENVKL_CATCH_END(vkl_vec3f{ospcommon::nan})
+OPENVKL_CATCH_END(vkl_vec3f{ospcommon::math::nan})
 
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
@@ -493,4 +492,4 @@ extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
   const box3f result = openvkl::api::currentDriver().getBoundingBox(volume);
   return reinterpret_cast<const vkl_box3f &>(result);
 }
-OPENVKL_CATCH_END(vkl_box3f{ospcommon::nan})
+OPENVKL_CATCH_END(vkl_box3f{ospcommon::math::nan})

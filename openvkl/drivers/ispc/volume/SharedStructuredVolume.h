@@ -20,7 +20,7 @@
 #include "../samples_mask/GridAcceleratorSamplesMask.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
-#include "common/Data.h"
+#include "../common/Data.h"
 
 namespace openvkl {
   namespace ispc_driver {

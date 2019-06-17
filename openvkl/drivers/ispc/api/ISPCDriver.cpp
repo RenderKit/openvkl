@@ -17,7 +17,7 @@
 #include "ISPCDriver.h"
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
-#include "common/Data.h"
+#include "../common/Data.h"
 #include "ispc_util_ispc.h"
 
 namespace openvkl {

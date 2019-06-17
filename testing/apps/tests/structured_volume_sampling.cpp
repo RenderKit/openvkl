@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "../../external/catch.hpp"
-#include "ospray/ospcommon/multidim_index_sequence.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 #include "openvkl_testing.h"
 
 using namespace ospcommon;

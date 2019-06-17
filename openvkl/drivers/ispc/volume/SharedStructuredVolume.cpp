@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "SharedStructuredVolume.h"
-#include <ospray/ospcommon/tasking/parallel_for.h>
+#include "ospcommon/tasking/parallel_for.h"
 #include "GridAccelerator_ispc.h"
 
 namespace openvkl {

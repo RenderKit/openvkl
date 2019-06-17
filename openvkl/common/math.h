@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <ospray/ospcommon/box.h>
-#include <ospray/ospcommon/vec.h>
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
 #include <cmath>
 
 namespace openvkl {

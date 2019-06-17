@@ -15,8 +15,7 @@
 ## ======================================================================== ##
 
 ## Configure OpenVKL library build ##
-
-include(ispc)
+include(openvkl_ispc)
 
 openvkl_add_library_ispc(openvkl SHARED
   api/API.cpp
@@ -32,17 +31,13 @@ openvkl_add_library_ispc(openvkl SHARED
 target_include_directories(openvkl
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 
 ## Include ospcommon dependency ##
-
-# TODO: ospray linked here to fix issue with ospcommon include paths
 target_link_libraries(openvkl
-  PUBLIC
-    ospray::ospray
-    ospray::ospray_common
+  PRIVATE
+    ospcommon
 )
 
 ## Configure OpenVKL installation ##

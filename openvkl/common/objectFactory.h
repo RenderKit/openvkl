@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <ospray/ospcommon/library.h>
+#include "ospcommon/os/library.h"
 #include <map>
 #include "VKLCommon.h"
 #include "logging.h"

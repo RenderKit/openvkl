@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include <ospray/ospcommon/box.h>
+#include "ospcommon/math/box.h"
 #include "../iterator/RayIterator.h"
-#include "common/ManagedObject.h"
-#include "common/objectFactory.h"
+#include "../common/ManagedObject.h"
+#include "../common/objectFactory.h"
 #include "openvkl/openvkl.h"
 
 using namespace ospcommon;

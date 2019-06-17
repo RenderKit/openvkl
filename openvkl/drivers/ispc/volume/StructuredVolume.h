@@ -17,7 +17,7 @@
 #pragma once
 
 #include "Volume.h"
-#include "common/math.h"
+#include "../common/math.h"
 
 namespace openvkl {
   namespace ispc_driver {

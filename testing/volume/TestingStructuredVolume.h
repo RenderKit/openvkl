@@ -17,10 +17,10 @@
 #pragma once
 
 #include <vector>
-#include "ospray/ospcommon/vec.h"
+#include "ospcommon/math/vec.h"
 #include "openvkl/openvkl.h"
 
-using namespace ospcommon;
+using namespace ospcommon::math;
 
 namespace openvkl {
   namespace testing {

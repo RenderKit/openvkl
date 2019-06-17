@@ -1,5 +1,5 @@
 
-include(ispc)
+include(openvkl_ispc)
 
 macro(add_executable_ispc name)
   set(ISPC_SOURCES "")
@@ -12,7 +12,7 @@ macro(add_executable_ispc name)
       set(OTHER_SOURCES ${OTHER_SOURCES} ${src})
     endif ()
   endforeach()
-  ospray_ispc_compile(${ISPC_SOURCES})
+  openvkl_ispc_compile(${ISPC_SOURCES})
   add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
 endmacro()
 

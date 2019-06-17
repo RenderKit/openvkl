@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "logging.h"
-#include "api/Driver.h"
+#include "../api/Driver.h"
 
 #define LOG_PREFIX "[openvkl] "
 

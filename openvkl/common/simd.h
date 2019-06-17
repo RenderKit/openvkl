@@ -17,7 +17,7 @@
 #pragma once
 
 #include "openvkl/openvkl.h"
-#include "ospray/ospcommon/platform.h"
+#include "ospcommon/platform.h"
 
 namespace openvkl {
 

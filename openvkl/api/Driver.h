@@ -16,17 +16,18 @@
 
 #pragma once
 
-#include <ospray/ospcommon/box.h>
-#include <ospray/ospcommon/utility/ArrayView.h>
-#include <ospray/ospcommon/utility/ParameterizedObject.h>
-#include <ospray/ospcommon/vec.h>
+#include "ospcommon/math/box.h"
+#include "ospcommon/utility/ArrayView.h"
+#include "ospcommon/utility/ParameterizedObject.h"
+#include "ospcommon/math/vec.h"
 #include <functional>
 #include <memory>
-#include "common/VKLCommon.h"
-#include "common/simd.h"
+#include "../common/VKLCommon.h"
+#include "../common/simd.h"
 #include "openvkl/openvkl.h"
 
 using namespace ospcommon;
+using namespace ospcommon::math;
 
 using VKLRayIterator1 = VKLRayIterator;
 

@@ -14,15 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# ISPC-side include directories
-include_directories_ispc(${OSPRAY_INCLUDE_DIRS})
+include(openvkl_ispc)
+
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
-
-get_target_property(OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES
-                    ospray::ospray_module_ispc
-                    INTERFACE_INCLUDE_DIRECTORIES)
-
-include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
 
 openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   simd_conformance.ispc
@@ -42,7 +36,7 @@ target_include_directories(openvkl_module_ispc_driver PUBLIC
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 )
 
-target_link_libraries(openvkl_module_ispc_driver PRIVATE openvkl)
+target_link_libraries(openvkl_module_ispc_driver PRIVATE openvkl ospcommon)
 
 install(TARGETS openvkl_module_ispc_driver
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -16,7 +16,7 @@
 
 #include <random>
 #include "benchmark/benchmark.h"
-#include "common/simd.h"
+#include "../common/simd.h"
 #include "openvkl_testing.h"
 
 using namespace openvkl::testing;

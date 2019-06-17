@@ -14,5 +14,10 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_subdirectory(ospray)
 add_subdirectory(tutorials)
+
+option(BUILD_OSPRAY_APPS "Build OSPRay apps" OFF)
+
+if (BUILD_OSPRAY_APPS)
+  add_subdirectory(ospray)
+endif (BUILD_OSPRAY_APPS)

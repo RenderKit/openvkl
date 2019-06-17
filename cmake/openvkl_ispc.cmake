@@ -16,7 +16,64 @@
 
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
-set(OPENVKL_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
+# ISPC versions to look for, in decending order (newest first)
+set(ISPC_VERSION_WORKING "1.10.0" "1.9.2" "1.9.1")
+list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
+
+if (NOT ISPC_EXECUTABLE)
+  # try sibling folder as hint for path of ISPC
+  if (APPLE)
+    set(ISPC_DIR_SUFFIX "osx" "Darwin")
+  elseif(WIN32)
+    set(ISPC_DIR_SUFFIX "windows" "win32")
+    if (MSVC_VERSION LESS 1900)
+      message(WARNING "MSVC 12 2013 is not supported anymore.")
+    else()
+      list(APPEND ISPC_DIR_SUFFIX "windows-vs2015")
+    endif()
+  else()
+    set(ISPC_DIR_SUFFIX "linux" "Linux")
+  endif()
+  foreach(v "" "v")
+   foreach(ver ${ISPC_VERSION_WORKING})
+    foreach(suffix ${ISPC_DIR_SUFFIX})
+     foreach(d "" "/bin")
+      list(APPEND ISPC_DIR_HINT ${PROJECT_SOURCE_DIR}/../ispc-${v}${ver}-${suffix}${d})
+     endforeach()
+    endforeach()
+   endforeach()
+  endforeach()
+
+  find_program(ISPC_EXECUTABLE ispc HINTS ${ISPC_DIR_HINT} DOC "Path to the ISPC executable.")
+  if (NOT ISPC_EXECUTABLE)
+    message("********************************************")
+    message("Could not find ISPC (looked in PATH and ${ISPC_DIR_HINT})")
+    message("")
+    message("This version of OpenVKL expects you to have a binary install of ISPC minimum version ${ISPC_VERSION_REQUIRED}, and expects it to be found in 'PATH' or in the sibling directory to where the OSPRay source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
+    message("")
+    message("If you insist on using your own custom install of ISPC, please make sure that the 'ISPC_EXECUTABLE' variable is properly set in CMake.")
+    message("********************************************")
+    message(FATAL_ERROR "Could not find ISPC. Exiting.")
+  else()
+    message(STATUS "Found Intel SPMD Compiler (ISPC): ${ISPC_EXECUTABLE}")
+  endif()
+endif()
+
+if(NOT ISPC_VERSION)
+  execute_process(COMMAND ${ISPC_EXECUTABLE} --version OUTPUT_VARIABLE ISPC_OUTPUT)
+  string(REGEX MATCH " ([0-9]+[.][0-9]+[.][0-9]+)(dev|knl|rc[0-9])? " DUMMY "${ISPC_OUTPUT}")
+  set(ISPC_VERSION ${CMAKE_MATCH_1})
+
+  if (ISPC_VERSION VERSION_LESS ISPC_VERSION_REQUIRED)
+    message(FATAL_ERROR "Need at least version ${ISPC_VERSION_REQUIRED} of Intel SPMD Compiler (ISPC).")
+  endif()
+
+  set(ISPC_VERSION ${ISPC_VERSION} CACHE STRING "ISPC Version")
+  mark_as_advanced(ISPC_VERSION)
+  mark_as_advanced(ISPC_EXECUTABLE)
+endif()
+
+set(OPENVKL_ISPC_ADDRESSING 32 CACHE INT "32 vs 64 bit addressing in ispc")
 set_property(CACHE OPENVKL_ISPC_ADDRESSING PROPERTY STRINGS 32 64)
 mark_as_advanced(OPENVKL_ISPC_ADDRESSING)
 
@@ -24,6 +81,18 @@ if (NOT (OPENVKL_ISPC_ADDRESSING STREQUAL "32" OR
          OPENVKL_ISPC_ADDRESSING STREQUAL "64"))
   message(FATAL_ERROR "OPENVKL_ISPC_ADDRESSING must be set to either '32' or '64'!")
 endif()
+
+get_filename_component(ISPC_DIR ${ISPC_EXECUTABLE} PATH)
+
+set(ISPC_INCLUDE_DIR "")
+macro (include_directories_ISPC)
+  set(ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
+endmacro ()
+
+set(ISPC_DEFINITIONS "")
+macro (add_definitions_ispc)
+  set(ISPC_DEFINITIONS ${ISPC_DEFINITIONS} ${ARGN})
+endmacro ()
 
 macro(openvkl_configure_ispc_isa)
 

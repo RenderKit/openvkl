@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "api/Driver.h"
+#include "../../../api/Driver.h"
 
 namespace openvkl {
   namespace ispc_driver {

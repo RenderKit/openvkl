@@ -40,10 +40,9 @@ openvkl_configure_ispc_isa()
 
 include(GNUInstallDirs)
 
-find_package(ospray 1.8.5 EXACT REQUIRED)
-include(${OSPRAY_USE_FILE})
+add_subdirectory(external/ospcommon)
 
-ospray_configure_tasking_system()
+ospcommon_configure_tasking_system()
 
 add_subdirectory(openvkl)
 add_subdirectory(apps)

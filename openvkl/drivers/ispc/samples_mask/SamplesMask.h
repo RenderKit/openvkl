@@ -16,12 +16,13 @@
 
 #pragma once
 
-#include <ospray/ospcommon/range.h>
-#include <ospray/ospcommon/utility/ArrayView.h>
-#include "common/ManagedObject.h"
-#include "common/objectFactory.h"
+#include "ospcommon/math/range.h"
+#include "ospcommon/utility/ArrayView.h"
+#include "../common/ManagedObject.h"
+#include "../common/objectFactory.h"
 
 using namespace ospcommon;
+using namespace ospcommon::math;
 
 namespace openvkl {
   namespace ispc_driver {

@@ -17,7 +17,7 @@
 #include "VKLCommon.h"
 #include <iostream>
 #include <sstream>
-#include "api/Driver.h"
+#include "../api/Driver.h"
 
 namespace openvkl {
 

@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Data.h"
-#include <ospray/ospcommon/memory/malloc.h>
+#include "ospcommon/memory/malloc.h"
 
 namespace openvkl {
 

@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <ospray/ospcommon/memory/RefCount.h>
-#include <ospray/ospcommon/utility/ParameterizedObject.h>
+#include "ospcommon/memory/RefCount.h"
+#include "ospcommon/utility/ParameterizedObject.h"
 #include "VKLCommon.h"
 #include "objectFactory.h"
 

@@ -21,7 +21,7 @@ add_library(openvkl_testing SHARED
 
 target_link_libraries(openvkl_testing PUBLIC
   openvkl
-  ospray::ospray_common
+  ospcommon
 )
 
 target_include_directories(openvkl_testing

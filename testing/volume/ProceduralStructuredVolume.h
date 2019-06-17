@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "TestingStructuredVolume.h"
-#include "ospray/ospcommon/vec.h"
+#include "ospcommon/math/vec.h"
 #include "openvkl/openvkl.h"
 
 using namespace ospcommon;

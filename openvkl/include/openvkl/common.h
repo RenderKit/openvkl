@@ -24,6 +24,11 @@ typedef ManagedObject *VKLObject;
 
 typedef struct
 {
+  int x, y, z;
+} vkl_vec3i;
+
+typedef struct
+{
   float x, y, z;
 } vkl_vec3f;
 

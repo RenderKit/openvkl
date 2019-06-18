@@ -28,7 +28,25 @@ int main()
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  VKLVolume volume = vklNewVolume("wavelet_procedural_volume");
+  vkl_vec3i dimensions{128, 128, 128};
+
+  VKLVolume volume = vklNewVolume("structured_regular");
+  vklSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vklSet3f(volume, "gridOrigin", 0, 0, 0);
+  vklSet3f(volume, "gridSpacing", 1, 1, 1);
+
+  std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
+
+  for (int k = 0; k < dimensions.z; k++)
+    for (int j = 0; j < dimensions.y; j++)
+      for (int i = 0; i < dimensions.x; i++)
+        voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
+            float(i);
+
+  VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+  vklSetData(volume, "voxelData", voxelData);
+  vklRelease(voxelData);
+
   vklCommit(volume);
 
   ispc::sample_ispc((ispc::OpenVKLVolume *)volume);

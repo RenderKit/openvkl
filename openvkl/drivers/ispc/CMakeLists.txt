@@ -14,43 +14,36 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(BUILD_ISPC_DRIVER "Build ISPC driver" ON)
-if (BUILD_ISPC_DRIVER)
+# ISPC-side include directories
+include_directories_ispc(${OSPRAY_INCLUDE_DIRS})
+include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
-  include(ispc)
+get_target_property(OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES
+                    ospray::ospray_module_ispc
+                    INTERFACE_INCLUDE_DIRECTORIES)
 
-  # ISPC-side include directories
-  include_directories_ispc(${OSPRAY_INCLUDE_DIRS})
-  include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
+include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
 
-  get_target_property(OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES
-                      ospray::ospray_module_ispc
-                      INTERFACE_INCLUDE_DIRECTORIES)
+openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
+  simd_conformance.ispc
+  api/ISPCDriver.cpp
+  iterator/GridAcceleratorRayIterator.cpp
+  iterator/GridAcceleratorRayIterator.ispc
+  samples_mask/SamplesMask.cpp
+  samples_mask/GridAcceleratorSamplesMask.cpp
+  samples_mask/GridAcceleratorSamplesMask.ispc
+  volume/GridAccelerator.ispc
+  volume/SharedStructuredVolume.cpp
+  volume/SharedStructuredVolume.ispc
+)
 
-  include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
+target_include_directories(openvkl_module_ispc_driver PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+)
 
-  openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
-    simd_conformance.ispc
-    api/ISPCDriver.cpp
-    iterator/GridAcceleratorRayIterator.cpp
-    iterator/GridAcceleratorRayIterator.ispc
-    samples_mask/SamplesMask.cpp
-    samples_mask/GridAcceleratorSamplesMask.cpp
-    samples_mask/GridAcceleratorSamplesMask.ispc
-    volume/GridAccelerator.ispc
-    volume/SharedStructuredVolume.cpp
-    volume/SharedStructuredVolume.ispc
-  )
+target_link_libraries(openvkl_module_ispc_driver PRIVATE openvkl)
 
-  target_include_directories(openvkl_module_ispc_driver PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-    $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-  )
-
-    target_link_libraries(openvkl_module_ispc_driver PRIVATE openvkl)
-
-  install(TARGETS openvkl_module_ispc_driver
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  )
-
-endif (BUILD_ISPC_DRIVER)
+install(TARGETS openvkl_module_ispc_driver
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)

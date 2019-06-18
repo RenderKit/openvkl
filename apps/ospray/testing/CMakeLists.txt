@@ -36,12 +36,10 @@ add_executable(ospExampleVKL
 )
 
 target_link_libraries(ospExampleVKL
-  openvkl
   openvkl_testing
   glfw
   ospray_imgui
   ospray::ospray_testing
-  ospray_module_ispc_openvkl
   ${OPENGL_LIBRARIES}
 )
 
@@ -63,7 +61,6 @@ target_link_libraries(ospBenchmarkVKL
   benchmark
   openvkl_testing
   ospray::ospray_testing
-  ospray_module_ispc_openvkl
 )
 
 install(TARGETS ospBenchmarkVKL

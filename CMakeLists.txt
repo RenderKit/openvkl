@@ -36,7 +36,7 @@ openvkl_configure_ispc_isa()
 
 include(GNUInstallDirs)
 
-find_package(ospray 1.8.0 REQUIRED)
+find_package(ospray 1.8.5 EXACT REQUIRED)
 include(${OSPRAY_USE_FILE})
 
 ospray_configure_tasking_system()

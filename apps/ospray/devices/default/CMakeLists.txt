@@ -1,3 +1,18 @@
+## ======================================================================== ##
+## Copyright 2009-2017 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
 
 include(ispc)
 
@@ -12,8 +27,9 @@ get_target_property(OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES
 
 include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
 
-
 ospray_add_library(ospray_module_ispc_openvkl SHARED
+  moduleInit.cpp
+
   render/SimpleNativeVolumeRenderer.cpp
   render/SimpleNativeVolumeRenderer.ispc
 
@@ -43,14 +59,8 @@ target_include_directories(ospray_module_ispc_openvkl PRIVATE
 target_include_directories(ospray_module_ispc_openvkl PRIVATE
   ${EMBREE_INCLUDE_DIRS})
 
-# TODO: hack for pulled in -lembree (with no full path)
-target_link_directories(ospray_module_ispc_openvkl PUBLIC
-                        ${EMBREE_ROOT_DIR}/lib)
-
 target_link_libraries(ospray_module_ispc_openvkl
   PUBLIC
   ospray::ospray_module_ispc
-  ospray::ospray_common
   openvkl
-  ${EMBREE_LIBRARIES}
 )

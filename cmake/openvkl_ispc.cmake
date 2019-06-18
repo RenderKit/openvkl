@@ -14,17 +14,16 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OPTION(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
+option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
-SET(OPENVKL_ISPC_ADDRESSING 32 CACHE INT "32 vs 64 bit addressing in ispc")
-SET_PROPERTY(CACHE OPENVKL_ISPC_ADDRESSING PROPERTY STRINGS 32 64)
-MARK_AS_ADVANCED(OPENVKL_ISPC_ADDRESSING)
+set(OPENVKL_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
+set_property(CACHE OPENVKL_ISPC_ADDRESSING PROPERTY STRINGS 32 64)
+mark_as_advanced(OPENVKL_ISPC_ADDRESSING)
 
-IF (NOT (OPENVKL_ISPC_ADDRESSING STREQUAL "32" OR
+if (NOT (OPENVKL_ISPC_ADDRESSING STREQUAL "32" OR
          OPENVKL_ISPC_ADDRESSING STREQUAL "64"))
-  MESSAGE(FATAL_ERROR "OPENVKL_ISPC_ADDRESSING must be set to either '32' or '64'!")
-ENDIF()
-
+  message(FATAL_ERROR "OPENVKL_ISPC_ADDRESSING must be set to either '32' or '64'!")
+endif()
 
 macro(openvkl_configure_ispc_isa)
 
@@ -88,99 +87,98 @@ macro(openvkl_configure_ispc_isa)
   endif()
 endmacro()
 
+macro (OPENVKL_ISPC_COMPILE)
+  set(ISPC_ADDITIONAL_ARGS "")
+  set(ISPC_TARGETS ${OPENVKL_ISPC_TARGET_LIST})
 
-MACRO (OPENVKL_ISPC_COMPILE)
-  SET(ISPC_ADDITIONAL_ARGS "")
-  SET(ISPC_TARGETS ${OPENVKL_ISPC_TARGET_LIST})
+  set(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
+  string(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
 
-  SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
-  STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
+  if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(ISPC_ARCHITECTURE "x86-64")
+  else()
+    set(ISPC_ARCHITECTURE "x86")
+  endif()
 
-  IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
-    SET(ISPC_ARCHITECTURE "x86-64")
-  ELSE()
-    SET(ISPC_ARCHITECTURE "x86")
-  ENDIF()
+  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  include_directories(${ISPC_TARGET_DIR})
 
-  SET(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  INCLUDE_DIRECTORIES(${ISPC_TARGET_DIR})
-
-  IF(ISPC_INCLUDE_DIR)
-    STRING(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
-    SET(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS})
-  ENDIF()
+  if(ISPC_INCLUDE_DIR)
+    string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
+    set(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS})
+  endif()
 
   #CAUTION: -O0/1 -g with ispc seg faults
-  SET(ISPC_FLAGS_DEBUG "-g" CACHE STRING "ISPC Debug flags")
-  MARK_AS_ADVANCED(ISPC_FLAGS_DEBUG)
-  SET(ISPC_FLAGS_RELEASE "-O3" CACHE STRING "ISPC Release flags")
-  MARK_AS_ADVANCED(ISPC_FLAGS_RELEASE)
-  SET(ISPC_FLAGS_RELWITHDEBINFO "-O2 -g" CACHE STRING "ISPC Release with Debug symbols flags")
-  MARK_AS_ADVANCED(ISPC_FLAGS_RELWITHDEBINFO)
-  IF (WIN32 OR "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELEASE})
-  ELSEIF ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_DEBUG})
-  ELSE()
-    SET(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELWITHDEBINFO})
-  ENDIF()
+  set(ISPC_FLAGS_DEBUG "-g" CACHE STRING "ISPC Debug flags")
+  mark_as_advanced(ISPC_FLAGS_DEBUG)
+  set(ISPC_FLAGS_RELEASE "-O3" CACHE STRING "ISPC Release flags")
+  mark_as_advanced(ISPC_FLAGS_RELEASE)
+  set(ISPC_FLAGS_RELWITHDEBINFO "-O2 -g" CACHE STRING "ISPC Release with Debug symbols flags")
+  mark_as_advanced(ISPC_FLAGS_RELWITHDEBINFO)
+  if (WIN32 OR "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    set(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELEASE})
+  elseif ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    set(ISPC_OPT_FLAGS ${ISPC_FLAGS_DEBUG})
+  else()
+    set(ISPC_OPT_FLAGS ${ISPC_FLAGS_RELWITHDEBINFO})
+  endif()
 
   # turn space sparated list into ';' separated list
-  STRING(REPLACE " " ";" ISPC_OPT_FLAGS "${ISPC_OPT_FLAGS}")
+  string(REPLACE " " ";" ISPC_OPT_FLAGS "${ISPC_OPT_FLAGS}")
 
-  IF (NOT WIN32)
-    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
-  ENDIF()
+  if (NOT WIN32)
+    set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
+  endif()
 
-  IF (NOT OPENVKL_DEBUG_BUILD)
-    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=disable-assertions)
-  ENDIF()
+  if (NOT OPENVKL_DEBUG_BUILD)
+    set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=disable-assertions)
+  endif()
 
-  IF (OPENVKL_ISPC_FAST_MATH)
-    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=fast-math)
-  ENDIF()
+  if (OPENVKL_ISPC_FAST_MATH)
+    set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=fast-math)
+  endif()
 
-  SET(ISPC_OBJECTS "")
+  set(ISPC_OBJECTS "")
 
-  FOREACH(src ${ARGN})
-    GET_FILENAME_COMPONENT(fname ${src} NAME_WE)
-    GET_FILENAME_COMPONENT(dir ${src} PATH)
+  foreach(src ${ARGN})
+    get_filename_component(fname ${src} NAME_WE)
+    get_filename_component(dir ${src} PATH)
 
-    SET(input ${src})
-    IF ("${dir}" MATCHES "^/") # absolute unix-style path to input
-      SET(outdir "${ISPC_TARGET_DIR}/rebased${dir}")
-    ELSEIF ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
-      STRING(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
-    ELSE() # relative path to input
-      SET(outdir "${ISPC_TARGET_DIR}/local_${OPENVKL_ISPC_TARGET_NAME}_${dir}")
-      SET(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
-    ENDIF()
+    set(input ${src})
+    if ("${dir}" MATCHES "^/") # absolute unix-style path to input
+      set(outdir "${ISPC_TARGET_DIR}/rebased${dir}")
+    elseif ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
+      string(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
+    else() # relative path to input
+      set(outdir "${ISPC_TARGET_DIR}/local_${OPENVKL_ISPC_TARGET_NAME}_${dir}")
+      set(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
+    endif()
 
-    SET(deps "")
-    IF (EXISTS ${outdir}/${fname}.dev.idep)
-      FILE(READ ${outdir}/${fname}.dev.idep contents)
-      STRING(REPLACE " " ";"     contents "${contents}")
-      STRING(REPLACE ";" "\\\\;" contents "${contents}")
-      STRING(REPLACE "\n" ";"    contents "${contents}")
-      FOREACH(dep ${contents})
-        IF (EXISTS ${dep})
-          SET(deps ${deps} ${dep})
-        ENDIF (EXISTS ${dep})
-      ENDFOREACH(dep ${contents})
-    ENDIF ()
+    set(deps "")
+    if (EXISTS ${outdir}/${fname}.dev.idep)
+      file(READ ${outdir}/${fname}.dev.idep contents)
+      string(REPLACE " " ";"     contents "${contents}")
+      string(REPLACE ";" "\\\\;" contents "${contents}")
+      string(REPLACE "\n" ";"    contents "${contents}")
+      foreach(dep ${contents})
+        if (EXISTS ${dep})
+          set(deps ${deps} ${dep})
+        endif (EXISTS ${dep})
+      endforeach(dep ${contents})
+    endiF ()
 
-    SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
+    set(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
     # if we have multiple targets add additional object files
-    LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
-    IF (NUM_TARGETS GREATER 1)
-      FOREACH(target ${ISPC_TARGETS})
-        STRING(REPLACE "-i32x16" "" target ${target}) # strip avx512(knl|skx)-i32x16
-        SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
-      ENDFOREACH()
-    ENDIF()
+    list(LENGTH ISPC_TARGETS NUM_TARGETS)
+    if (NUM_TARGETS GREATER 1)
+      foreach(target ${ISPC_TARGETS})
+        string(REPLACE "-i32x16" "" target ${target}) # strip avx512(knl|skx)-i32x16
+        set(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
+      endforeach()
+    endif()
 
-    SET(ISPC_FAST_MATH_ARGUMENTS)
-    ADD_CUSTOM_COMMAND(
+    set(ISPC_FAST_MATH_ARGUMENTS)
+    add_custom_command(
       OUTPUT ${results} ${ISPC_TARGET_DIR}/${fname}_ispc.h
       COMMAND ${CMAKE_COMMAND} -E make_directory ${outdir}
       COMMAND ${ISPC_EXECUTABLE}
@@ -201,6 +199,6 @@ MACRO (OPENVKL_ISPC_COMPILE)
       COMMENT "Building ISPC object ${outdir}/${fname}.dev${ISPC_TARGET_EXT}"
     )
 
-    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
-  ENDFOREACH()
-ENDMACRO()
+    set(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
+  endforeach()
+endmacro()

@@ -15,6 +15,7 @@
 ## ======================================================================== ##
 
 ## Configure OpenVKL library build ##
+
 include(ispc)
 
 openvkl_add_library_ispc(openvkl SHARED
@@ -36,6 +37,7 @@ target_include_directories(openvkl
 )
 
 ## Include ospcommon dependency ##
+
 # TODO: ospray linked here to fix issue with ospcommon include paths
 target_link_libraries(openvkl
   PUBLIC

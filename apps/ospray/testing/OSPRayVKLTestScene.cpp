@@ -25,6 +25,11 @@ void initializeOSPRay()
   static bool initialized = false;
 
   if (!initialized) {
+    // NOTE(jda) - Workaround issue with not exposing 'anchor' feature through
+    //             ospLoadModule().
+    ospcommon::loadLibrary("ospray_module_ispc_openvkl", false);
+    ospLoadModule("ispc_openvkl");
+
     OSPError initError = ospInit(nullptr, nullptr);
 
     if (initError != OSP_NO_ERROR)
@@ -45,6 +50,9 @@ void initializeOpenVKL()
   static bool initialized = false;
 
   if (!initialized) {
+    // NOTE(jda) - Workaround issue with not exposing 'anchor' feature through
+    //             vklLoadModule().
+    ospcommon::loadLibrary("openvkl_module_ispc_driver", false);
     vklLoadModule("ispc_driver");
 
     VKLDriver driver = vklNewDriver("ispc_driver");

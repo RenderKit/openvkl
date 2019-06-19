@@ -78,7 +78,7 @@ TransferFunctionWidget::TransferFunctionWidget(
     }
 
     OSPData colorsData =
-        ospNewData(sampledColors.size(), OSP_FLOAT3, sampledColors.data());
+        ospNewData(sampledColors.size(), OSP_VEC3F, sampledColors.data());
 
     ospSetData(transferFunction, "colors", colorsData);
 
@@ -100,7 +100,7 @@ TransferFunctionWidget::TransferFunctionWidget(
     ospRelease(opacitesData);
 
     // value range
-    ospSet2f(transferFunction, "valueRange", valueRange.x, valueRange.y);
+    ospSetVec2f(transferFunction, "valueRange", valueRange.x, valueRange.y);
 
     ospCommit(transferFunction);
 

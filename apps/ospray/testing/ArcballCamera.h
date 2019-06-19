@@ -16,34 +16,35 @@
 
 #pragma once
 
-#include "ospray/ospcommon/AffineSpace.h"
+#include "ospcommon/math/AffineSpace.h"
+
+using namespace ospcommon::math;
 
 class ArcballCamera
 {
  public:
-  ArcballCamera(const ospcommon::box3f &worldBounds,
-                const ospcommon::vec2i &windowSize);
+  ArcballCamera(const box3f &worldBounds, const vec2i &windowSize);
 
   // All mouse positions passed should be in [-1, 1] normalized screen coords
-  void rotate(const ospcommon::vec2f &from, const ospcommon::vec2f &to);
+  void rotate(const vec2f &from, const vec2f &to);
   void zoom(float amount);
-  void pan(const ospcommon::vec2f &delta);
+  void pan(const vec2f &delta);
 
-  ospcommon::vec3f eyePos() const;
-  ospcommon::vec3f center() const;
-  ospcommon::vec3f lookDir() const;
-  ospcommon::vec3f upDir() const;
+  vec3f eyePos() const;
+  vec3f center() const;
+  vec3f lookDir() const;
+  vec3f upDir() const;
 
-  void updateWindowSize(const ospcommon::vec2i &windowSize);
+  void updateWindowSize(const vec2i &windowSize);
 
  protected:
   void updateCamera();
 
   // Project the point in [-1, 1] screen space onto the arcball sphere
-  ospcommon::Quaternion3f screenToArcball(const ospcommon::vec2f &p);
+  quaternionf screenToArcball(const vec2f &p);
 
   float zoomSpeed;
-  ospcommon::vec2f invWindowSize;
-  ospcommon::AffineSpace3f centerTranslation, translation, invCamera;
-  ospcommon::Quaternion3f rotation;
+  vec2f invWindowSize;
+  AffineSpace3f centerTranslation, translation, invCamera;
+  quaternionf rotation;
 };

@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/SDK/common/Model.ih"
 #include "ospray/SDK/common/Ray.ih"
+#include "ospray/SDK/common/World.ih"
 #include "ospray/SDK/render/Renderer.ih"
 
 #include <openvkl/openvkl.isph>
@@ -72,9 +72,11 @@ inline void integrate(uniform SimpleVKLRenderer *uniform self,
   }
 }
 
-void SimpleVKLRenderer_renderSample(uniform Renderer *uniform _self,
-                                 void *uniform perFrameData,
-                                 varying ScreenSample &sample)
+void SimpleVKLRenderer_renderSample(Renderer *uniform _self,
+                                    FrameBuffer *uniform fb,
+                                    World *uniform world,
+                                    void *uniform perFrameData,
+                                    varying ScreenSample &sample)
 {
   uniform SimpleVKLRenderer *uniform self =
       (uniform SimpleVKLRenderer * uniform) _self;
@@ -92,15 +94,16 @@ void SimpleVKLRenderer_renderSample(uniform Renderer *uniform _self,
 
 export void *uniform SimpleVKLRenderer_create(void *uniform cppE)
 {
-  uniform SimpleVKLRenderer *uniform self = uniform new uniform SimpleVKLRenderer;
-  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
+  uniform SimpleVKLRenderer *uniform self =
+      uniform new uniform SimpleVKLRenderer;
+  Renderer_Constructor(&self->super, cppE, 1);
   self->super.renderSample = SimpleVKLRenderer_renderSample;
   return self;
 }
 
 export void SimpleVKLRenderer_set(void *uniform _self,
-                               uniform VKLVolume volume,
-                               void *uniform transferFunction)
+                                  uniform VKLVolume volume,
+                                  void *uniform transferFunction)
 {
   uniform SimpleVKLRenderer *uniform self =
       (uniform SimpleVKLRenderer * uniform) _self;

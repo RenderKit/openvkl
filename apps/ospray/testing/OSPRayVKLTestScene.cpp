@@ -73,9 +73,10 @@ OSPVolume convertToOSPVolume(
   vec3f gridOrigin  = proceduralVolume->getGridOrigin();
   vec3f gridSpacing = proceduralVolume->getGridSpacing();
 
-  ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  ospSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-  ospSet3f(volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
+  ospSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  ospSetVec3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+  ospSetVec3f(
+      volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
   ospSetString(volume, "voxelType", "float");
 
@@ -102,13 +103,13 @@ OSPRayVKLTestScene::OSPRayVKLTestScene(
     std::shared_ptr<TestingStructuredVolume> proceduralVolume)
     : proceduralVolume(proceduralVolume)
 {
-  world = ospNewModel();
+  world = ospNewWorld();
   ospCommit(world);
 
   renderer = ospNewRenderer(rendererType.c_str());
 
   transferFunction =
-      ospTestingNewTransferFunction(osp::vec2f{-1.f, 1.f}, "jet");
+      ospTestingNewTransferFunction(osp_vec2f{-1.f, 1.f}, "jet");
   ospSetObject(renderer, "transferFunction", transferFunction);
   ospRelease(transferFunction);
 
@@ -140,7 +141,7 @@ void OSPRayVKLTestScene::setIsovalues(const std::vector<float> &isovalues)
   ospCommit(renderer);
 }
 
-OSPModel OSPRayVKLTestScene::getWorld()
+OSPWorld OSPRayVKLTestScene::getWorld()
 {
   return world;
 }

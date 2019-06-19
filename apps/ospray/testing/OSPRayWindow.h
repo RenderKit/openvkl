@@ -17,22 +17,24 @@
 #pragma once
 
 #include "ArcballCamera.h"
-#include "ospray/ospcommon/box.h"
-#include "ospray/ospcommon/vec.h"
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
 #include "ospray/ospray.h"
+
+using namespace ospcommon::math;
 
 class OSPRayWindow
 {
  public:
-  OSPRayWindow(const ospcommon::vec2i &windowSize,
-               const ospcommon::box3f &worldBounds,
-               OSPModel model,
+  OSPRayWindow(const vec2i &windowSize,
+               const box3f &worldBounds,
+               OSPWorld world,
                OSPRenderer renderer);
 
   virtual ~OSPRayWindow() = default;
 
-  OSPModel getModel();
-  void setModel(OSPModel newModel);
+  OSPWorld getWorld();
+  void setWorld(OSPWorld newWorld);
 
   void render();
 
@@ -41,11 +43,11 @@ class OSPRayWindow
   void savePPM(const std::string &filename);
 
  protected:
-  virtual void reshape(const ospcommon::vec2i &newWindowSize);
+  virtual void reshape(const vec2i &newWindowSize);
 
-  ospcommon::vec2i windowSize;
-  ospcommon::box3f worldBounds;
-  OSPModel model       = nullptr;
+  vec2i windowSize;
+  box3f worldBounds;
+  OSPWorld world       = nullptr;
   OSPRenderer renderer = nullptr;
 
   std::unique_ptr<ArcballCamera> arcballCamera;

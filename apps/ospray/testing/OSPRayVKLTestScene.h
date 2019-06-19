@@ -40,7 +40,7 @@ struct OSPRayVKLTestScene
 
   void setIsovalues(const std::vector<float> &isovalues);
 
-  OSPModel getWorld();
+  OSPWorld getWorld();
   OSPRenderer getRenderer();
   OSPTransferFunction getTransferFunction();
 
@@ -51,7 +51,7 @@ struct OSPRayVKLTestScene
  protected:
   std::shared_ptr<TestingStructuredVolume> proceduralVolume;
 
-  OSPModel world;
+  OSPWorld world;
   OSPRenderer renderer;
   OSPTransferFunction transferFunction;
 };

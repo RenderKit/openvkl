@@ -17,40 +17,40 @@
 #include "OSPRayWindow.h"
 #include <iostream>
 #include <stdexcept>
-#include "ospray/ospcommon/utility/SaveImage.h"
+#include "ospcommon/utility/SaveImage.h"
 
-OSPRayWindow::OSPRayWindow(const ospcommon::vec2i &windowSize,
-                           const ospcommon::box3f &worldBounds,
-                           OSPModel model,
+OSPRayWindow::OSPRayWindow(const vec2i &windowSize,
+                           const box3f &worldBounds,
+                           OSPWorld world,
                            OSPRenderer renderer)
     : windowSize(windowSize),
       worldBounds(worldBounds),
-      model(model),
+      world(world),
       renderer(renderer)
 {
-  ospSetObject(renderer, "model", model);
+  ospSetObject(renderer, "world", world);
 
   arcballCamera = std::unique_ptr<ArcballCamera>(
       new ArcballCamera(worldBounds, windowSize));
 
   camera = ospNewCamera("perspective");
-  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
 
   ospSetVec3f(camera,
               "pos",
-              osp::vec3f{arcballCamera->eyePos().x,
-                         arcballCamera->eyePos().y,
-                         arcballCamera->eyePos().z});
+              arcballCamera->eyePos().x,
+              arcballCamera->eyePos().y,
+              arcballCamera->eyePos().z);
   ospSetVec3f(camera,
               "dir",
-              osp::vec3f{arcballCamera->lookDir().x,
-                         arcballCamera->lookDir().y,
-                         arcballCamera->lookDir().z});
+              arcballCamera->lookDir().x,
+              arcballCamera->lookDir().y,
+              arcballCamera->lookDir().z);
   ospSetVec3f(camera,
               "up",
-              osp::vec3f{arcballCamera->upDir().x,
-                         arcballCamera->upDir().y,
-                         arcballCamera->upDir().z});
+              arcballCamera->upDir().x,
+              arcballCamera->upDir().y,
+              arcballCamera->upDir().z);
 
   ospCommit(camera);
 
@@ -61,29 +61,25 @@ OSPRayWindow::OSPRayWindow(const ospcommon::vec2i &windowSize,
   reshape(this->windowSize);
 }
 
-OSPModel OSPRayWindow::getModel()
+OSPWorld OSPRayWindow::getWorld()
 {
-  return model;
+  return world;
 }
 
-void OSPRayWindow::setModel(OSPModel newModel)
+void OSPRayWindow::setWorld(OSPWorld newWorld)
 {
-  model = newModel;
-
-  ospSetObject(renderer, "model", model);
-  ospCommit(renderer);
-
+  world = newWorld;
   resetAccumulation();
 }
 
 void OSPRayWindow::render()
 {
-  ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  ospRenderFrame(framebuffer, renderer, camera, world);
 }
 
 void OSPRayWindow::resetAccumulation()
 {
-  ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+  ospResetAccumulation(framebuffer);
 }
 
 void OSPRayWindow::savePPM(const std::string &filename)
@@ -93,20 +89,19 @@ void OSPRayWindow::savePPM(const std::string &filename)
   ospUnmapFrameBuffer(fb, framebuffer);
 }
 
-void OSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
+void OSPRayWindow::reshape(const vec2i &newWindowSize)
 {
   windowSize = newWindowSize;
 
   if (framebuffer)
     ospRelease(framebuffer);
 
-  framebuffer = ospNewFrameBuffer(*reinterpret_cast<osp::vec2i *>(&windowSize),
-                                  OSP_FB_SRGBA,
-                                  OSP_FB_COLOR | OSP_FB_ACCUM);
+  framebuffer = ospNewFrameBuffer(
+      windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // update camera
   arcballCamera->updateWindowSize(windowSize);
 
-  ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
   ospCommit(camera);
 }

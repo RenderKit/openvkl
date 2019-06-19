@@ -28,10 +28,10 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include <ospcommon/vec.h>
+#include "ospcommon/math/vec.h"
 #include <ospray/ospray.h>
 
-using namespace ospcommon;
+using namespace ospcommon::math;
 
 using ColorPoint   = vec4f;
 using OpacityPoint = vec2f;

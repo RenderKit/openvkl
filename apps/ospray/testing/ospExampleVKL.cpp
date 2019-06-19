@@ -29,7 +29,7 @@ bool addSamplingRateUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
 {
   static float samplingRate = 1.f;
   if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
-    ospSet1f(testScene->getRenderer(), "samplingRate", samplingRate);
+    ospSetFloat(testScene->getRenderer(), "samplingRate", samplingRate);
     ospCommit(testScene->getRenderer());
     return true;
   }
@@ -42,28 +42,28 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
 
   static float sigmaTScale = 1.f;
   if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
-    ospSet1f(testScene->getRenderer(), "sigmaTScale", sigmaTScale);
+    ospSetFloat(testScene->getRenderer(), "sigmaTScale", sigmaTScale);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
 
   static float sigmaSScale = 1.f;
   if (ImGui::SliderFloat("sigmaSScale", &sigmaSScale, 0.01f, 1.f)) {
-    ospSet1f(testScene->getRenderer(), "sigmaSScale", sigmaSScale);
+    ospSetFloat(testScene->getRenderer(), "sigmaSScale", sigmaSScale);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
 
   static int maxNumScatters = 1;
   if (ImGui::SliderInt("maxNumScatters", &maxNumScatters, 1, 32)) {
-    ospSet1i(testScene->getRenderer(), "maxNumScatters", maxNumScatters);
+    ospSetInt(testScene->getRenderer(), "maxNumScatters", maxNumScatters);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
 
   static bool useRatioTracking = false;
   if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
-    ospSet1i(testScene->getRenderer(), "useRatioTracking", useRatioTracking);
+    ospSetInt(testScene->getRenderer(), "useRatioTracking", useRatioTracking);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -71,7 +71,7 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   static float ambientLightIntensity = 1.f;
   if (ImGui::SliderFloat(
           "ambientLightIntensity", &ambientLightIntensity, 0.f, 10.f)) {
-    ospSet1f(testScene->getRenderer(),
+    ospSetFloat(testScene->getRenderer(),
              "ambientLightIntensity",
              ambientLightIntensity);
     ospCommit(testScene->getRenderer());
@@ -81,7 +81,7 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   static float directionalLightIntensity = 1.f;
   if (ImGui::SliderFloat(
           "directionalLightIntensity", &directionalLightIntensity, 0.f, 10.f)) {
-    ospSet1f(testScene->getRenderer(),
+    ospSetFloat(testScene->getRenderer(),
              "directionalLightIntensity",
              directionalLightIntensity);
     ospCommit(testScene->getRenderer());
@@ -93,7 +93,7 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
                          &directionalLightAngularDiameter,
                          0.f,
                          180.f)) {
-    ospSet1f(testScene->getRenderer(),
+    ospSetFloat(testScene->getRenderer(),
              "directionalLightAngularDiameter",
              directionalLightAngularDiameter);
     ospCommit(testScene->getRenderer());
@@ -103,7 +103,7 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   static float directionalLightAzimuth = 0.f;
   if (ImGui::SliderFloat(
           "directionalLightAzimuth", &directionalLightAzimuth, -180.f, 180.f)) {
-    ospSet1f(testScene->getRenderer(),
+    ospSetFloat(testScene->getRenderer(),
              "directionalLightAzimuth",
              directionalLightAzimuth);
     ospCommit(testScene->getRenderer());
@@ -115,7 +115,7 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
                          &directionalLightElevation,
                          -90.f,
                          90.f)) {
-    ospSet1f(testScene->getRenderer(),
+    ospSetFloat(testScene->getRenderer(),
              "directionalLightElevation",
              directionalLightElevation);
     ospCommit(testScene->getRenderer());

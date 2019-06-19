@@ -31,8 +31,8 @@ target_include_directories(ospray_imgui
 )
 
 target_link_libraries(ospray_imgui
-  PUBLIC
-    ospray::ospray_common
+  PRIVATE
+    ospcommon
 )
 
 foreach(dir IN ITEMS ${OSPRAY_INCLUDE_DIRS})

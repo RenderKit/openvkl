@@ -20,12 +20,14 @@
 #include <functional>
 #include "OSPRayWindow.h"
 
+using namespace ospcommon::math;
+
 class GLFWOSPRayWindow : public OSPRayWindow
 {
  public:
-  GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
-                   const ospcommon::box3f &worldBounds,
-                   OSPModel model,
+  GLFWOSPRayWindow(const vec2i &windowSize,
+                   const box3f &worldBounds,
+                   OSPWorld world,
                    OSPRenderer renderer);
 
   ~GLFWOSPRayWindow();
@@ -38,8 +40,8 @@ class GLFWOSPRayWindow : public OSPRayWindow
   void mainLoop();
 
  protected:
-  void reshape(const ospcommon::vec2i &newWindowSize) override;
-  void motion(const ospcommon::vec2f &position);
+  void reshape(const vec2i &newWindowSize) override;
+  void motion(const vec2f &position);
   void display();
 
   static GLFWOSPRayWindow *activeWindow;

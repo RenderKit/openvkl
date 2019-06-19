@@ -62,5 +62,6 @@ target_include_directories(ospray_module_ispc_openvkl PRIVATE
 target_link_libraries(ospray_module_ispc_openvkl
   PUBLIC
   ospray::ospray_module_ispc
+  ospray::ospray_common
   openvkl
 )

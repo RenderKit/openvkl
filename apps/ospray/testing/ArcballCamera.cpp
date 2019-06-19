@@ -16,27 +16,23 @@
 
 #include "ArcballCamera.h"
 
-ArcballCamera::ArcballCamera(const ospcommon::box3f &worldBounds,
-                             const ospcommon::vec2i &windowSize)
+ArcballCamera::ArcballCamera(const box3f &worldBounds, const vec2i &windowSize)
     : zoomSpeed(1),
-      invWindowSize(ospcommon::vec2f(1.0) / ospcommon::vec2f(windowSize)),
-      centerTranslation(ospcommon::one),
-      translation(ospcommon::one),
-      rotation(ospcommon::one)
+      invWindowSize(vec2f(1.0) / vec2f(windowSize)),
+      centerTranslation(one),
+      translation(one),
+      rotation(one)
 {
-  ospcommon::vec3f diag = worldBounds.size();
-  zoomSpeed             = ospcommon::max(length(diag) / 150.0, 0.001);
-  diag = ospcommon::max(diag, ospcommon::vec3f(0.3f * length(diag)));
+  vec3f diag = worldBounds.size();
+  zoomSpeed  = max(length(diag) / 150.0, 0.001);
+  diag       = max(diag, vec3f(0.3f * length(diag)));
 
-  centerTranslation =
-      ospcommon::AffineSpace3f::translate(-worldBounds.center());
-  translation =
-      ospcommon::AffineSpace3f::translate(ospcommon::vec3f(0, 0, length(diag)));
+  centerTranslation = AffineSpace3f::translate(-worldBounds.center());
+  translation       = AffineSpace3f::translate(vec3f(0, 0, length(diag)));
   updateCamera();
 }
 
-void ArcballCamera::rotate(const ospcommon::vec2f &from,
-                           const ospcommon::vec2f &to)
+void ArcballCamera::rotate(const vec2f &from, const vec2f &to)
 {
   rotation = screenToArcball(to) * screenToArcball(from) * rotation;
   updateCamera();
@@ -45,64 +41,60 @@ void ArcballCamera::rotate(const ospcommon::vec2f &from,
 void ArcballCamera::zoom(float amount)
 {
   amount *= zoomSpeed;
-  translation =
-      ospcommon::AffineSpace3f::translate(ospcommon::vec3f(0, 0, amount)) *
-      translation;
+  translation = AffineSpace3f::translate(vec3f(0, 0, amount)) * translation;
   updateCamera();
 }
 
-void ArcballCamera::pan(const ospcommon::vec2f &delta)
+void ArcballCamera::pan(const vec2f &delta)
 {
-  const ospcommon::vec3f t = ospcommon::vec3f(
-      -delta.x * invWindowSize.x, delta.y * invWindowSize.y, 0);
-  const ospcommon::vec3f worldt = translation.p.z * xfmVector(invCamera, t);
-  centerTranslation =
-      ospcommon::AffineSpace3f::translate(worldt) * centerTranslation;
+  const vec3f t =
+      vec3f(-delta.x * invWindowSize.x, delta.y * invWindowSize.y, 0);
+  const vec3f worldt = translation.p.z * xfmVector(invCamera, t);
+  centerTranslation  = AffineSpace3f::translate(worldt) * centerTranslation;
   updateCamera();
 }
 
-ospcommon::vec3f ArcballCamera::eyePos() const
+vec3f ArcballCamera::eyePos() const
 {
-  return xfmPoint(invCamera, ospcommon::vec3f(0, 0, 1));
+  return xfmPoint(invCamera, vec3f(0, 0, 1));
 }
 
-ospcommon::vec3f ArcballCamera::center() const
+vec3f ArcballCamera::center() const
 {
   return -centerTranslation.p;
 }
 
-ospcommon::vec3f ArcballCamera::lookDir() const
+vec3f ArcballCamera::lookDir() const
 {
-  return xfmVector(invCamera, ospcommon::vec3f(0, 0, 1));
+  return xfmVector(invCamera, vec3f(0, 0, 1));
 }
 
-ospcommon::vec3f ArcballCamera::upDir() const
+vec3f ArcballCamera::upDir() const
 {
-  return xfmVector(invCamera, ospcommon::vec3f(0, 1, 0));
+  return xfmVector(invCamera, vec3f(0, 1, 0));
 }
 
 void ArcballCamera::updateCamera()
 {
-  const ospcommon::AffineSpace3f rot    = ospcommon::LinearSpace3f(rotation);
-  const ospcommon::AffineSpace3f camera = translation * rot * centerTranslation;
-  invCamera                             = rcp(camera);
+  const AffineSpace3f rot    = LinearSpace3f(rotation);
+  const AffineSpace3f camera = translation * rot * centerTranslation;
+  invCamera                  = rcp(camera);
 }
 
-void ArcballCamera::updateWindowSize(const ospcommon::vec2i &windowSize)
+void ArcballCamera::updateWindowSize(const vec2i &windowSize)
 {
-  invWindowSize = ospcommon::vec2f(1) / ospcommon::vec2f(windowSize);
+  invWindowSize = vec2f(1) / vec2f(windowSize);
 }
 
-ospcommon::Quaternion3f ArcballCamera::screenToArcball(
-    const ospcommon::vec2f &p)
+quaternionf ArcballCamera::screenToArcball(const vec2f &p)
 {
   const float dist = dot(p, p);
   // If we're on/in the sphere return the point on it
   if (dist <= 1.f) {
-    return ospcommon::Quaternion3f(0, p.x, p.y, std::sqrt(1.f - dist));
+    return quaternionf(0, p.x, p.y, std::sqrt(1.f - dist));
   } else {
     // otherwise we project the point onto the sphere
-    const ospcommon::vec2f unitDir = normalize(p);
-    return ospcommon::Quaternion3f(0, unitDir.x, unitDir.y, 0);
+    const vec2f unitDir = normalize(p);
+    return quaternionf(0, unitDir.x, unitDir.y, 0);
   }
 }

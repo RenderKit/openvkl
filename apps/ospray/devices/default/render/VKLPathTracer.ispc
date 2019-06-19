@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/SDK/common/Model.ih"
 #include "ospray/SDK/common/Ray.ih"
+#include "ospray/SDK/common/World.ih"
 #include "ospray/SDK/math/random.ih"
 #include "ospray/SDK/math/sampling.ih"
 #include "ospray/SDK/render/Renderer.ih"
@@ -44,8 +44,7 @@ struct VKLPathTracer
   // location; in this case a scatter event will occur. if a volume interaction
   // does not occur, the ray escapes the volume and the transmittance is
   // returned.
-  bool (*uniform sampleVolumeInteraction)(uniform VKLPathTracer *uniform
-                                              self,
+  bool (*uniform sampleVolumeInteraction)(uniform VKLPathTracer *uniform self,
                                           varying RandomTEA *const uniform rng,
                                           const Ray &ray,
                                           const float tBox0,
@@ -241,19 +240,20 @@ inline void integrateWoodcock(uniform VKLPathTracer *uniform self,
   Le = Le + sigmaSSample * inscatteredLe;
 }
 
-void VKLPathTracer_renderSample(uniform Renderer *uniform _self,
-                                   void *uniform perFrameData,
-                                   varying ScreenSample &sample)
+void VKLPathTracer_renderSample(Renderer *uniform _self,
+                                FrameBuffer *uniform fb,
+                                World *uniform world,
+                                void *uniform perFrameData,
+                                varying ScreenSample &sample)
 {
-  uniform VKLPathTracer *uniform self =
-      (uniform VKLPathTracer * uniform) _self;
+  uniform VKLPathTracer *uniform self = (uniform VKLPathTracer * uniform) _self;
 
   RandomTEA rng_state;
   varying RandomTEA *const uniform rng = &rng_state;
   RandomTEA__Constructor(
       rng,
       sample.sampleID.z,
-      (self->super.fb->size.x * sample.sampleID.y) + sample.sampleID.x);
+      (fb->size.x * sample.sampleID.y) + sample.sampleID.x);
 
   vec3f Le;
   integrateWoodcock(self, rng, sample.ray, Le, 0);
@@ -265,26 +265,25 @@ void VKLPathTracer_renderSample(uniform Renderer *uniform _self,
 export void *uniform VKLPathTracer_create(void *uniform cppE)
 {
   uniform VKLPathTracer *uniform self = uniform new uniform VKLPathTracer;
-  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
+  Renderer_Constructor(&self->super, cppE, 1);
   self->super.renderSample = VKLPathTracer_renderSample;
   return self;
 }
 
 export void VKLPathTracer_set(void *uniform _self,
-                                 uniform VKLVolume volume,
-                                 void *uniform transferFunction,
-                                 uniform float sigmaTScale,
-                                 uniform float sigmaSScale,
-                                 uniform int maxNumScatters,
-                                 uniform int useRatioTracking,
-                                 uniform float ambientLightIntensity,
-                                 uniform float directionalLightIntensity,
-                                 uniform float directionalLightAngularDiameter,
-                                 const uniform vec3f &directionalLightDirection)
+                              uniform VKLVolume volume,
+                              void *uniform transferFunction,
+                              uniform float sigmaTScale,
+                              uniform float sigmaSScale,
+                              uniform int maxNumScatters,
+                              uniform int useRatioTracking,
+                              uniform float ambientLightIntensity,
+                              uniform float directionalLightIntensity,
+                              uniform float directionalLightAngularDiameter,
+                              const uniform vec3f &directionalLightDirection)
 {
-  uniform VKLPathTracer *uniform self =
-      (uniform VKLPathTracer * uniform) _self;
-  self->volume           = volume;
+  uniform VKLPathTracer *uniform self = (uniform VKLPathTracer * uniform) _self;
+  self->volume                        = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->sigmaTScale      = sigmaTScale;
   self->sigmaSScale      = sigmaSScale;

@@ -14,5 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+find_package(ospray 2.0.0 EXACT REQUIRED)
+include(${OSPRAY_USE_FILE})
+
 add_subdirectory(devices)
 add_subdirectory(testing)

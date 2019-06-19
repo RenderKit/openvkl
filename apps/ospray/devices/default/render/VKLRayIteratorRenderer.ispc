@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/SDK/common/Model.ih"
 #include "ospray/SDK/common/Ray.ih"
+#include "ospray/SDK/common/World.ih"
 #include "ospray/SDK/render/Renderer.ih"
 #include "ospray/SDK/transferFunction/LinearTransferFunction.ih"
 #include "samples_mask_util.ih"
@@ -154,9 +154,11 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
   vklRelease((VKLObject)samplesMask);
 }
 
-void VKLRayIteratorRenderer_renderSample(uniform Renderer *uniform _self,
-                                            void *uniform perFrameData,
-                                            varying ScreenSample &sample)
+void VKLRayIteratorRenderer_renderSample(Renderer *uniform _self,
+                                         FrameBuffer *uniform fb,
+                                         World *uniform world,
+                                         void *uniform perFrameData,
+                                         varying ScreenSample &sample)
 {
   uniform VKLRayIteratorRenderer *uniform self =
       (uniform VKLRayIteratorRenderer * uniform) _self;
@@ -176,17 +178,17 @@ export void *uniform VKLRayIteratorRenderer_create(void *uniform cppE)
 {
   uniform VKLRayIteratorRenderer *uniform self =
       uniform new uniform VKLRayIteratorRenderer;
-  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
+  Renderer_Constructor(&self->super, cppE, 1);
   self->super.renderSample = VKLRayIteratorRenderer_renderSample;
   return self;
 }
 
 export void VKLRayIteratorRenderer_set(void *uniform _self,
-                                          uniform VKLVolume volume,
-                                          void *uniform transferFunction,
-                                          uniform float samplingRate,
-                                          uniform int numIsovalues,
-                                          float *uniform isovalues)
+                                       uniform VKLVolume volume,
+                                       void *uniform transferFunction,
+                                       uniform float samplingRate,
+                                       uniform int numIsovalues,
+                                       float *uniform isovalues)
 {
   uniform VKLRayIteratorRenderer *uniform self =
       (uniform VKLRayIteratorRenderer * uniform) _self;

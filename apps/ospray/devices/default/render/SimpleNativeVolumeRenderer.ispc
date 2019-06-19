@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/SDK/common/Model.ih"
 #include "ospray/SDK/common/Ray.ih"
+#include "ospray/SDK/common/World.ih"
 #include "ospray/SDK/render/Renderer.ih"
 
 struct SimpleNativeVolumeRenderer
@@ -67,7 +67,9 @@ inline void integrate(uniform SimpleNativeVolumeRenderer *uniform self,
   }
 }
 
-void SimpleNativeVolumeRenderer_renderSample(uniform Renderer *uniform _self,
+void SimpleNativeVolumeRenderer_renderSample(Renderer *uniform _self,
+                                             FrameBuffer *uniform fb,
+                                             World *uniform world,
                                              void *uniform perFrameData,
                                              varying ScreenSample &sample)
 {
@@ -89,7 +91,7 @@ export void *uniform SimpleNativeVolumeRenderer_create(void *uniform cppE)
 {
   uniform SimpleNativeVolumeRenderer *uniform self =
       uniform new uniform SimpleNativeVolumeRenderer;
-  Renderer_Constructor(&self->super, cppE, NULL, NULL, 1);
+  Renderer_Constructor(&self->super, cppE, 1);
   self->super.renderSample = SimpleNativeVolumeRenderer_renderSample;
   return self;
 }

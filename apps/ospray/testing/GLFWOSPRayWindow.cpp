@@ -23,11 +23,11 @@
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
-GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
-                                   const ospcommon::box3f &worldBounds,
-                                   OSPModel model,
+GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
+                                   const box3f &worldBounds,
+                                   OSPWorld world,
                                    OSPRenderer renderer)
-    : OSPRayWindow(windowSize, worldBounds, model, renderer)
+    : OSPRayWindow(windowSize, worldBounds, world, renderer)
 {
   if (activeWindow != nullptr)
     throw std::runtime_error("Cannot create more than one OSPRayWindow!");
@@ -60,13 +60,13 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const ospcommon::vec2i &windowSize,
 
   glfwSetFramebufferSizeCallback(
       glfwWindow, [](GLFWwindow *, int newWidth, int newHeight) {
-        activeWindow->reshape(ospcommon::vec2i{newWidth, newHeight});
+        activeWindow->reshape(vec2i{newWidth, newHeight});
       });
 
   glfwSetCursorPosCallback(glfwWindow, [](GLFWwindow *, double x, double y) {
     ImGuiIO &io = ImGui::GetIO();
     if (!io.WantCaptureMouse)
-      activeWindow->motion(ospcommon::vec2f{float(x), float(y)});
+      activeWindow->motion(vec2f{float(x), float(y)});
   });
 
   glfwSetKeyCallback(glfwWindow,
@@ -113,7 +113,7 @@ void GLFWOSPRayWindow::mainLoop()
   }
 }
 
-void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
+void GLFWOSPRayWindow::reshape(const vec2i &newWindowSize)
 {
   OSPRayWindow::reshape(newWindowSize);
 
@@ -124,55 +124,54 @@ void GLFWOSPRayWindow::reshape(const ospcommon::vec2i &newWindowSize)
   glOrtho(0.0, windowSize.x, 0.0, windowSize.y, -1.0, 1.0);
 }
 
-void GLFWOSPRayWindow::motion(const ospcommon::vec2f &position)
+void GLFWOSPRayWindow::motion(const vec2f &position)
 {
-  static ospcommon::vec2f previousMouse(-1);
+  static vec2f previousMouse(-1);
 
-  const ospcommon::vec2f mouse(position.x, position.y);
-  if (previousMouse != ospcommon::vec2f(-1)) {
+  const vec2f mouse(position.x, position.y);
+  if (previousMouse != vec2f(-1)) {
     const bool leftDown =
         glfwGetMouseButton(glfwWindow, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
     const bool rightDown =
         glfwGetMouseButton(glfwWindow, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS;
     const bool middleDown =
         glfwGetMouseButton(glfwWindow, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS;
-    const ospcommon::vec2f prev = previousMouse;
+    const vec2f prev = previousMouse;
 
     bool cameraChanged = leftDown || rightDown || middleDown;
 
     if (leftDown) {
-      const ospcommon::vec2f mouseFrom(
-          ospcommon::clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
-          ospcommon::clamp(prev.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
-      const ospcommon::vec2f mouseTo(
-          ospcommon::clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
-          ospcommon::clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
+      const vec2f mouseFrom(
+          clamp(prev.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
+          clamp(prev.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
+      const vec2f mouseTo(clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
+                          clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
       arcballCamera->rotate(mouseFrom, mouseTo);
     } else if (rightDown) {
       arcballCamera->zoom(mouse.y - prev.y);
     } else if (middleDown) {
-      arcballCamera->pan(ospcommon::vec2f(mouse.x - prev.x, prev.y - mouse.y));
+      arcballCamera->pan(vec2f(mouse.x - prev.x, prev.y - mouse.y));
     }
 
     if (cameraChanged) {
-      ospFrameBufferClear(framebuffer, OSP_FB_COLOR | OSP_FB_ACCUM);
+      ospResetAccumulation(framebuffer);
 
-      ospSetf(camera, "aspect", windowSize.x / float(windowSize.y));
+      ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSetVec3f(camera,
                   "pos",
-                  osp::vec3f{arcballCamera->eyePos().x,
-                             arcballCamera->eyePos().y,
-                             arcballCamera->eyePos().z});
+                  arcballCamera->eyePos().x,
+                  arcballCamera->eyePos().y,
+                  arcballCamera->eyePos().z);
       ospSetVec3f(camera,
                   "dir",
-                  osp::vec3f{arcballCamera->lookDir().x,
-                             arcballCamera->lookDir().y,
-                             arcballCamera->lookDir().z});
+                  arcballCamera->lookDir().x,
+                  arcballCamera->lookDir().y,
+                  arcballCamera->lookDir().z);
       ospSetVec3f(camera,
                   "up",
-                  osp::vec3f{arcballCamera->upDir().x,
-                             arcballCamera->upDir().y,
-                             arcballCamera->upDir().z});
+                  arcballCamera->upDir().x,
+                  arcballCamera->upDir().y,
+                  arcballCamera->upDir().z);
 
       ospCommit(camera);
     }

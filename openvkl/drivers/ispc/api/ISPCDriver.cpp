@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #include "ISPCDriver.h"
+#include "../common/Data.h"
 #include "../samples_mask/SamplesMask.h"
 #include "../volume/Volume.h"
-#include "../common/Data.h"
 #include "ispc_util_ispc.h"
 
 namespace openvkl {
@@ -527,12 +527,7 @@ namespace openvkl {
 
       vfloatn<W> samplesW;
 
-      // if constexpr is not available in C++11, therefore all combinations of
-      // W and OW would be compiled here if we conditionally selected the
-      // appropriate volume sampling method; so we need to use void pointers as
-      // the full set of explicit conversions are not legal
-      volumeObject.computeSampleV(
-          (const int *)&validW, (const void *)&ocW, (void *)&samplesW);
+      volumeObject.computeSampleV((const int *)&validW, ocW, samplesW);
 
       for (int i = 0; i < OW; i++)
         samples[i] = samplesW[i];
@@ -559,8 +554,7 @@ namespace openvkl {
 
         vfloatn<W> samplesW;
 
-        volumeObject.computeSampleV(
-            (const int *)&validW, (const void *)&ocW, (void *)&samplesW);
+        volumeObject.computeSampleV((const int *)&validW, ocW, samplesW);
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           samples[i] = samplesW[i - packIndex * W];

@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "ospcommon/math/box.h"
-#include "../iterator/RayIterator.h"
 #include "../common/ManagedObject.h"
 #include "../common/objectFactory.h"
+#include "../iterator/RayIterator.h"
 #include "openvkl/openvkl.h"
+#include "ospcommon/math/box.h"
 
 using namespace ospcommon;
 
@@ -79,12 +79,9 @@ namespace openvkl {
             "newSamplesMask() not implemented in this volume!");
       }
 
-      // assumes parameters match the native ISPC data layout for the native
-      // vector width; we don't use explicit types partly because virtual
-      // template methods are not allowed.
       virtual void computeSampleV(const int *valid,
-                                  const void *objectCoordinates,
-                                  void *samples) const = 0;
+                                  const vvec3fn<W> &objectCoordinates,
+                                  vfloatn<W> &samples) const = 0;
 
       virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
       virtual box3f getBoundingBox() const                                = 0;

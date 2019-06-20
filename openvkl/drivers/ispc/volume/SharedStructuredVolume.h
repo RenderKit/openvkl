@@ -16,11 +16,11 @@
 
 #pragma once
 
+#include "../common/Data.h"
 #include "../iterator/GridAcceleratorRayIterator.h"
 #include "../samples_mask/GridAcceleratorSamplesMask.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
-#include "../common/Data.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -76,11 +76,11 @@ namespace openvkl {
       }
 
       void computeSampleV(const int *valid,
-                          const void *objectCoordinates,
-                          void *samples) const override
+                          const vvec3fn<W> &objectCoordinates,
+                          vfloatn<W> &samples) const override
       {
         ispc::SharedStructuredVolume_sample_export(
-            valid, ispcEquivalent, objectCoordinates, samples);
+            valid, ispcEquivalent, &objectCoordinates, &samples);
       }
 
       // TODO

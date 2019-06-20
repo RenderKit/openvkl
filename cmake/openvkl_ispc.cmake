@@ -73,7 +73,7 @@ if(NOT ISPC_VERSION)
   mark_as_advanced(ISPC_EXECUTABLE)
 endif()
 
-set(OPENVKL_ISPC_ADDRESSING 32 CACHE INT "32 vs 64 bit addressing in ispc")
+set(OPENVKL_ISPC_ADDRESSING 32 CACHE STRING "32 vs 64 bit addressing in ispc")
 set_property(CACHE OPENVKL_ISPC_ADDRESSING PROPERTY STRINGS 32 64)
 mark_as_advanced(OPENVKL_ISPC_ADDRESSING)
 

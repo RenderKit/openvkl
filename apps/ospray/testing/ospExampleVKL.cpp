@@ -72,8 +72,8 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   if (ImGui::SliderFloat(
           "ambientLightIntensity", &ambientLightIntensity, 0.f, 10.f)) {
     ospSetFloat(testScene->getRenderer(),
-             "ambientLightIntensity",
-             ambientLightIntensity);
+                "ambientLightIntensity",
+                ambientLightIntensity);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -82,8 +82,8 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   if (ImGui::SliderFloat(
           "directionalLightIntensity", &directionalLightIntensity, 0.f, 10.f)) {
     ospSetFloat(testScene->getRenderer(),
-             "directionalLightIntensity",
-             directionalLightIntensity);
+                "directionalLightIntensity",
+                directionalLightIntensity);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -94,8 +94,8 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
                          0.f,
                          180.f)) {
     ospSetFloat(testScene->getRenderer(),
-             "directionalLightAngularDiameter",
-             directionalLightAngularDiameter);
+                "directionalLightAngularDiameter",
+                directionalLightAngularDiameter);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -104,8 +104,8 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   if (ImGui::SliderFloat(
           "directionalLightAzimuth", &directionalLightAzimuth, -180.f, 180.f)) {
     ospSetFloat(testScene->getRenderer(),
-             "directionalLightAzimuth",
-             directionalLightAzimuth);
+                "directionalLightAzimuth",
+                directionalLightAzimuth);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -116,8 +116,8 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
                          -90.f,
                          90.f)) {
     ospSetFloat(testScene->getRenderer(),
-             "directionalLightElevation",
-             directionalLightElevation);
+                "directionalLightElevation",
+                directionalLightElevation);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -196,9 +196,10 @@ int main(int argc, const char **argv)
   if (argc < 2) {
     std::cerr
         << "usage: " << argv[0]
-        << " <simple_native | simple_vkl | vkl_ray_iterator_surface "
-           "| vkl_ray_iterator_volume | vkl_ray_iterator | "
-           "vkl_pathtracer> [-file <float.raw> <dimX> <dimY> <dimZ>]"
+        << " <simple_native | simple_vkl | vkl_ray_iterator_surface | "
+           "vkl_ray_iterator_volume | vkl_ray_iterator | vkl_pathtracer> "
+           "[[-gridType structured_regular | structured_spherical] "
+           "[-gridSpacing <x> <y> <z>] -file <float.raw> <dimX> <dimY> <dimZ>]"
         << std::endl;
     return 1;
   }
@@ -219,32 +220,63 @@ int main(int argc, const char **argv)
     testingStructuredVolume = std::shared_ptr<WaveletProceduralVolume>(
         new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
   } else if (argc > 2) {
-    std::string switchArg(argv[2]);
+    int argIndex = 2;
 
-    if (switchArg == "-file") {
-      if (argc != 7) {
-        throw std::runtime_error("improper -file arguments");
+    std::string gridType("structured_regular");
+    vec3f gridOrigin(0.f);
+    vec3f gridSpacing(-1.f);
+
+    while (argIndex < argc) {
+      std::string switchArg(argv[argIndex++]);
+
+      if (switchArg == "-gridType") {
+        if (argc < argIndex + 1) {
+          throw std::runtime_error("improper -gridType arguments");
+        }
+
+        gridType = std::string(argv[argIndex++]);
       }
 
-      const std::string filename(argv[3]);
-      const std::string dimX(argv[4]);
-      const std::string dimY(argv[5]);
-      const std::string dimZ(argv[6]);
+      else if (switchArg == "-gridSpacing") {
+        if (argc < argIndex + 3) {
+          throw std::runtime_error("improper -gridSpacing arguments");
+        }
 
-      const vec3i dimensions(stoi(dimX), stoi(dimY), stoi(dimZ));
+        const std::string gridSpacingX(argv[argIndex++]);
+        const std::string gridSpacingY(argv[argIndex++]);
+        const std::string gridSpacingZ(argv[argIndex++]);
 
-      // fit it into a unit cube
-      const float normalizedGridSpacing = reduce_min(1.f / dimensions);
+        gridSpacing =
+            vec3f(stof(gridSpacingX), stof(gridSpacingY), stof(gridSpacingZ));
+      }
 
-      const vec3f gridOrigin(-0.5f * dimensions * normalizedGridSpacing);
-      const vec3f gridSpacing(normalizedGridSpacing);
+      else if (switchArg == "-file") {
+        if (argc < argIndex + 4) {
+          throw std::runtime_error("improper -file arguments");
+        }
 
-      testingStructuredVolume =
-          std::shared_ptr<RawFileStructuredVolume>(new RawFileStructuredVolume(
-              filename, dimensions, gridOrigin, gridSpacing));
+        const std::string filename(argv[argIndex++]);
+        const std::string dimX(argv[argIndex++]);
+        const std::string dimY(argv[argIndex++]);
+        const std::string dimZ(argv[argIndex++]);
 
-    } else {
-      throw std::runtime_error("unknown switch argument");
+        const vec3i dimensions(stoi(dimX), stoi(dimY), stoi(dimZ));
+
+        // fit it into a unit cube (if no other grid spacing provided)
+        if (gridSpacing == vec3f(-1.f)) {
+          const float normalizedGridSpacing = reduce_min(1.f / dimensions);
+
+          gridOrigin  = vec3f(-0.5f * dimensions * normalizedGridSpacing);
+          gridSpacing = vec3f(normalizedGridSpacing);
+        }
+
+        testingStructuredVolume = std::shared_ptr<RawFileStructuredVolume>(
+            new RawFileStructuredVolume(
+                filename, gridType, dimensions, gridOrigin, gridSpacing));
+
+      } else {
+        throw std::runtime_error("unknown switch argument");
+      }
     }
   }
 

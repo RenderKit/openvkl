@@ -103,6 +103,21 @@ inline varying float SharedStructuredVolume_sample(
   vec3f localCoordinates;
   volume->transformObjectToLocal(volume, objectCoordinates, localCoordinates);
 
+  // return NaN for local coordinates outside the bounds of the volume; this is
+  // trivial for regular volumes but less so for other (e.g. spherical) volume
+  // types
+  const uniform int NaN_bits   = 0x7fc00000;
+  const uniform float nanValue = floatbits(NaN_bits);
+
+  if (localCoordinates.x < 0.f ||
+      localCoordinates.x > volume->dimensions.x - 1.f ||
+      localCoordinates.y < 0.f ||
+      localCoordinates.y > volume->dimensions.y - 1.f ||
+      localCoordinates.z < 0.f ||
+      localCoordinates.z > volume->dimensions.z - 1.f) {
+    return nanValue;
+  }
+
   // Coordinates outside the volume are clamped to the volume bounds.
   const vec3f clampedLocalCoordinates = clamp(
       localCoordinates, make_vec3f(0.0f), volume->localCoordinatesUpperBound);

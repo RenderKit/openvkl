@@ -27,8 +27,8 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   samples_mask/GridAcceleratorSamplesMask.cpp
   samples_mask/GridAcceleratorSamplesMask.ispc
   volume/GridAccelerator.ispc
-  volume/SharedStructuredVolume.cpp
   volume/SharedStructuredVolume.ispc
+  volume/StructuredRegularVolume.cpp
 )
 
 target_include_directories(openvkl_module_ispc_driver PUBLIC

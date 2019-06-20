@@ -15,10 +15,10 @@
 // ======================================================================== //
 
 #include "GridAcceleratorRayIterator.h"
-#include "../samples_mask/GridAcceleratorSamplesMask.h"
-#include "../volume/SharedStructuredVolume.h"
-#include "GridAcceleratorRayIterator_ispc.h"
 #include "../common/math.h"
+#include "../samples_mask/GridAcceleratorSamplesMask.h"
+#include "../volume/StructuredRegularVolume.h"
+#include "GridAcceleratorRayIterator_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -51,8 +51,8 @@ namespace openvkl {
         oneTimeChecks = true;
       }
 
-      const SharedStructuredVolume<W> *ssv =
-          static_cast<const SharedStructuredVolume<W> *>(volume);
+      const StructuredRegularVolume<W> *srv =
+          static_cast<const StructuredRegularVolume<W> *>(volume);
 
       const GridAcceleratorSamplesMask<W> *gasm =
           static_cast<const GridAcceleratorSamplesMask<W> *>(samplesMask);
@@ -61,7 +61,7 @@ namespace openvkl {
 
       ispc::GridAcceleratorRayIterator_Initialize(
           &ispcStorage[0],
-          ssv->getISPCEquivalent(),
+          srv->getISPCEquivalent(),
           (void *)&origin,
           (void *)&direction,
           (void *)&tRange,

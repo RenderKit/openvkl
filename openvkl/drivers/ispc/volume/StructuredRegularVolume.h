@@ -26,9 +26,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct SharedStructuredVolume : public StructuredVolume<W>
+    struct StructuredRegularVolume : public StructuredVolume<W>
     {
-      ~SharedStructuredVolume();
+      ~StructuredRegularVolume();
 
       void commit() override;
 

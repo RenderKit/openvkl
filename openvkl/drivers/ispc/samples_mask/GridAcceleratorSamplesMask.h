@@ -25,7 +25,7 @@ namespace openvkl {
     struct Volume;
 
     template <int W>
-    struct SharedStructuredVolume;
+    struct StructuredRegularVolume;
 
     template <int W>
     struct GridAcceleratorSamplesMask : public SamplesMask
@@ -43,7 +43,7 @@ namespace openvkl {
 
      protected:
       void *ispcEquivalent{nullptr};
-      const SharedStructuredVolume<W> *volume{nullptr};
+      const StructuredRegularVolume<W> *volume{nullptr};
     };
 
   }  // namespace ispc_driver

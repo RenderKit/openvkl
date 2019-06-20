@@ -14,15 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "SharedStructuredVolume.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "StructuredRegularVolume.h"
 #include "GridAccelerator_ispc.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    SharedStructuredVolume<W>::~SharedStructuredVolume()
+    StructuredRegularVolume<W>::~StructuredRegularVolume()
     {
       if (ispcEquivalent) {
         ispc::SharedStructuredVolume_Destructor(ispcEquivalent);
@@ -30,7 +30,7 @@ namespace openvkl {
     }
 
     template <int W>
-    void SharedStructuredVolume<W>::commit()
+    void StructuredRegularVolume<W>::commit()
     {
       StructuredVolume<W>::commit();
 
@@ -47,7 +47,8 @@ namespace openvkl {
 
       if (voxelData->dataType != VKL_FLOAT) {
         throw std::runtime_error(
-            "SharedStructuredVolume currently only supports VKL_FLOAT volumes");
+            "StructuredRegularVolume currently only supports VKL_FLOAT "
+            "volumes");
       }
 
       if (voxelData->size() != this->dimensions.product()) {
@@ -65,7 +66,7 @@ namespace openvkl {
     }
 
     template <int W>
-    void SharedStructuredVolume<W>::buildAccelerator()
+    void StructuredRegularVolume<W>::buildAccelerator()
     {
       void *accelerator =
           ispc::SharedStructuredVolume_createAccelerator(ispcEquivalent);
@@ -85,9 +86,9 @@ namespace openvkl {
       });
     }
 
-    VKL_REGISTER_VOLUME(SharedStructuredVolume<4>, structured_regular_4)
-    VKL_REGISTER_VOLUME(SharedStructuredVolume<8>, structured_regular_8)
-    VKL_REGISTER_VOLUME(SharedStructuredVolume<16>, structured_regular_16)
+    VKL_REGISTER_VOLUME(StructuredRegularVolume<4>, structured_regular_4)
+    VKL_REGISTER_VOLUME(StructuredRegularVolume<8>, structured_regular_8)
+    VKL_REGISTER_VOLUME(StructuredRegularVolume<16>, structured_regular_16)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

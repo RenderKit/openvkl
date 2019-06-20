@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "GridAcceleratorSamplesMask.h"
-#include "../volume/SharedStructuredVolume.h"
+#include "../volume/StructuredRegularVolume.h"
 #include "GridAcceleratorSamplesMask_ispc.h"
 
 namespace openvkl {
@@ -24,7 +24,7 @@ namespace openvkl {
     template <int W>
     GridAcceleratorSamplesMask<W>::GridAcceleratorSamplesMask(
         const Volume<W> *volume)
-        : volume(static_cast<const SharedStructuredVolume<W> *>(volume))
+        : volume(static_cast<const StructuredRegularVolume<W> *>(volume))
     {
     }
 

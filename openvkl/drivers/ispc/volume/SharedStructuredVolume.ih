@@ -16,10 +16,15 @@
 
 #pragma once
 
-#include "math/vec.ih"
 #include "math/box.ih"
+#include "math/vec.ih"
 
 struct GridAccelerator;
+
+enum SharedStructuredVolumeGridType
+{
+  structured_regular
+};
 
 struct SharedStructuredVolume
 {

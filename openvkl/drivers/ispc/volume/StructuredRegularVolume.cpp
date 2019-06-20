@@ -35,7 +35,13 @@ namespace openvkl {
       StructuredVolume<W>::commit();
 
       if (!ispcEquivalent) {
-        ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
+        ispcEquivalent =
+            ispc::SharedStructuredVolume_Constructor(ispc::structured_regular);
+
+        if (!ispcEquivalent) {
+          throw std::runtime_error(
+              "could not create ISPC-side object for StructuredRegularVolume");
+        }
       }
 
       voxelData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(

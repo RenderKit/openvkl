@@ -32,11 +32,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  ${PROJECT_SOURCE_DIR}/cmake
-  ${PROJECT_SOURCE_DIR}/external/ospcommon/cmake
-)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(openvkl_macros)
 include(openvkl_ispc)
 
@@ -46,8 +42,6 @@ openvkl_configure_ispc_isa()
 include(GNUInstallDirs)
 
 add_subdirectory(external/ospcommon)
-
-ospcommon_configure_tasking_system()
 
 add_subdirectory(openvkl)
 add_subdirectory(apps)

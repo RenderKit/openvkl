@@ -57,11 +57,25 @@ export void SharedStructuredVolume_set(void *uniform _self,
   self->gridOrigin  = gridOrigin;
   self->gridSpacing = gridSpacing;
 
-  self->boundingBox = make_box3f(
-      gridOrigin, gridOrigin + make_vec3f(dimensions - 1.f) * gridSpacing);
+  if (self->gridType == structured_regular) {
+    self->boundingBox = make_box3f(
+        gridOrigin, gridOrigin + make_vec3f(dimensions - 1.f) * gridSpacing);
+  } else {
+    print(
+        "SharedStructuredVolume cannot compute bounding box for unknown "
+        "gridType\n");
+  }
 
   self->localCoordinatesUpperBound =
       nextafter(self->dimensions - 1, make_vec3i(0));
+}
+
+export uniform box3f SharedStructuredVolume_getBoundingBox(void *uniform _self)
+{
+  uniform SharedStructuredVolume *uniform self =
+      (uniform SharedStructuredVolume * uniform) _self;
+
+  return self->boundingBox;
 }
 
 inline void SharedStructuredVolume_getVoxel(void *uniform _self,
@@ -206,6 +220,8 @@ export void *uniform SharedStructuredVolume_Constructor(
   self->accelerator   = NULL;
   self->getVoxel      = SharedStructuredVolume_getVoxel;
   self->computeSample = SharedStructuredVolume_sample;
+
+  self->gridType = gridType;
 
   if (gridType == structured_regular) {
     self->transformLocalToObject = transformLocalToObject_structured_regular;

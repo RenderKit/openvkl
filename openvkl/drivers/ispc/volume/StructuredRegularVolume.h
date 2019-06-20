@@ -89,6 +89,15 @@ namespace openvkl {
         throw std::runtime_error("computeGradient() not implemented");
       }
 
+      box3f getBoundingBox() const override
+      {
+        ispc::box3f bb =
+            ispc::SharedStructuredVolume_getBoundingBox(ispcEquivalent);
+
+        return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
+                     vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
+      }
+
       void *getISPCEquivalent() const
       {
         return ispcEquivalent;

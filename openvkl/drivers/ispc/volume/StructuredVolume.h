@@ -36,11 +36,6 @@ namespace openvkl {
         gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       }
 
-      box3f getBoundingBox() const override
-      {
-        return box3f(gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing);
-      }
-
      protected:
       // parameters set in commit()
       VKLSamplingMethod samplingMethod;

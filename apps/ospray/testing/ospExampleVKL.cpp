@@ -133,11 +133,15 @@ bool addIsosurfacesUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
 
   struct IsosurfaceParameters
   {
-    bool enabled{false};
+    bool enabled{true};
     float isovalue{0.f};
   };
 
   static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
+
+  isosurfaces[0].isovalue = -1.f;
+  isosurfaces[1].isovalue = 0.f;
+  isosurfaces[2].isovalue = 1.f;
 
   bool isosurfacesChanged = false;
 

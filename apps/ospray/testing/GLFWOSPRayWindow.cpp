@@ -69,6 +69,12 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
       activeWindow->motion(vec2f{float(x), float(y)});
   });
 
+  glfwSetCharCallback(glfwWindow, [](GLFWwindow *, unsigned int c) {
+    ImGuiIO &io = ImGui::GetIO();
+    if (c > 0 && c < 0x10000)
+      io.AddInputCharacter((unsigned short)c);
+  });
+
   glfwSetKeyCallback(glfwWindow,
                      [](GLFWwindow *, int key, int, int action, int) {
                        if (action == GLFW_PRESS) {

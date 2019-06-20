@@ -14,9 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-project(OpenVKL)
-
 cmake_minimum_required(VERSION 3.1)
+
+project(OpenVKL)
 
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW) # since 3.12
@@ -26,6 +26,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})

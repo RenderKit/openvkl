@@ -27,6 +27,7 @@ namespace openvkl {
     struct RawFileStructuredVolume : public TestingStructuredVolume
     {
       RawFileStructuredVolume(const std::string &filename,
+                              const std::string &gridType,
                               const vec3i &dimensions,
                               const vec3f &gridOrigin,
                               const vec3f &gridSpacing);

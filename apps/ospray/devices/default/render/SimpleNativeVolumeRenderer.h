@@ -26,9 +26,6 @@ namespace ospray {
     virtual ~SimpleNativeVolumeRenderer() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
-
-   private:
-    Volume *volume{nullptr};
   };
 
 }  // namespace ospray

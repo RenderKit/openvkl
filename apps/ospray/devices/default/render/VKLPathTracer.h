@@ -27,10 +27,6 @@ namespace ospray {
     virtual ~VKLPathTracer() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
-
-  private:
-
-    VKLVolume vklVolume{nullptr};
   };
 
 } // ::ospray

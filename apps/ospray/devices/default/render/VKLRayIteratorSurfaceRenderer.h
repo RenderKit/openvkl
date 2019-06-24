@@ -27,9 +27,6 @@ namespace ospray {
     virtual ~VKLRayIteratorSurfaceRenderer() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
-
-   private:
-    VKLVolume vklVolume{nullptr};
   };
 
 }  // namespace ospray

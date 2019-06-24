@@ -61,9 +61,11 @@ namespace help {
 
 TransferFunctionWidget::TransferFunctionWidget(
     OSPTransferFunction _transferFunction,
-    std::function<void()> _transferFunctionUpdatedCallback)
+    std::function<void()> _transferFunctionUpdatedCallback,
+    const std::string &_widgetName)
     : transferFunction(_transferFunction),
-      transferFunctionUpdatedCallback(_transferFunctionUpdatedCallback)
+      transferFunctionUpdatedCallback(_transferFunctionUpdatedCallback),
+      widgetName(_widgetName)
 {
   updateTransferFunction = [&](const std::vector<ColorPoint> &c,
                                const std::vector<OpacityPoint> &a) {
@@ -116,7 +118,7 @@ TransferFunctionWidget::TransferFunctionWidget(
   updateTransferFunction(*tfnColorPoints, *tfnOpacityPoints);
 
   // set ImGui double click time to 1s, so it also works for slower frame rates
-  ImGuiIO& io = ImGui::GetIO();
+  ImGuiIO &io             = ImGui::GetIO();
   io.MouseDoubleClickTime = 1.f;
 }
 
@@ -135,7 +137,8 @@ void TransferFunctionWidget::updateUI()
     tfnChanged = false;
   }
 
-  if (!ImGui::Begin("Transfer Function Widget")) {
+  // need a unique ImGui group name per widget
+  if (!ImGui::Begin(widgetName.c_str())) {
     ImGui::End();
     return;
   }

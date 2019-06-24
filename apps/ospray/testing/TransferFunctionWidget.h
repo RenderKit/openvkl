@@ -28,8 +28,8 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include "ospcommon/math/vec.h"
 #include <ospray/ospray.h>
+#include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
 
@@ -40,7 +40,8 @@ class TransferFunctionWidget
 {
  public:
   TransferFunctionWidget(OSPTransferFunction transferFunction,
-                         std::function<void()> transferFunctionUpdatedCallback);
+                         std::function<void()> transferFunctionUpdatedCallback,
+                         const std::string &widgetName = "Transfer Function");
   ~TransferFunctionWidget();
 
   // update UI and process any UI events
@@ -96,4 +97,7 @@ class TransferFunctionWidget
 
   // texture for displaying transfer function color palette
   GLuint tfnPaletteTexture{0};
+
+  // widget name (use different names to support multiple concurrent widgets)
+  std::string widgetName;
 };

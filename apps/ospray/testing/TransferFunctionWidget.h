@@ -41,6 +41,7 @@ class TransferFunctionWidget
  public:
   TransferFunctionWidget(OSPTransferFunction transferFunction,
                          std::function<void()> transferFunctionUpdatedCallback,
+                         const vec2f &valueRange = vec2f(-1.f, 1.f),
                          const std::string &widgetName = "Transfer Function");
   ~TransferFunctionWidget();
 

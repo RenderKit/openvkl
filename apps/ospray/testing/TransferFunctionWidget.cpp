@@ -62,9 +62,11 @@ namespace help {
 TransferFunctionWidget::TransferFunctionWidget(
     OSPTransferFunction _transferFunction,
     std::function<void()> _transferFunctionUpdatedCallback,
+    const vec2f &_valueRange,
     const std::string &_widgetName)
     : transferFunction(_transferFunction),
       transferFunctionUpdatedCallback(_transferFunctionUpdatedCallback),
+      valueRange(_valueRange),
       widgetName(_widgetName)
 {
   updateTransferFunction = [&](const std::vector<ColorPoint> &c,
@@ -171,10 +173,10 @@ void TransferFunctionWidget::updateUI()
                              &valueRange.x,
                              &valueRange.y,
                              0.1f,
-                             -100.f,
-                             100.0f,
-                             "Min: %.1f",
-                             "Max: %.1f")) {
+                             -10000.f,
+                             10000.0f,
+                             "Min: %.7f",
+                             "Max: %.7f")) {
     tfnChanged = true;
   }
 

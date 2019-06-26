@@ -72,6 +72,22 @@ void OSPRayWindow::setWorld(OSPWorld newWorld)
   resetAccumulation();
 }
 
+void OSPRayWindow::setTimestep(int timestep)
+{
+  if (currentTimestep == timestep) {
+    return;
+  }
+
+  currentTimestep = timestep;
+
+  if (framebuffersPerTimestep.count(currentTimestep) == 0) {
+    framebuffersPerTimestep[currentTimestep] = ospNewFrameBuffer(
+        windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+  }
+
+  framebuffer = framebuffersPerTimestep[currentTimestep];
+}
+
 void OSPRayWindow::render()
 {
   ospRenderFrame(framebuffer, renderer, camera, world);
@@ -79,7 +95,9 @@ void OSPRayWindow::render()
 
 void OSPRayWindow::resetAccumulation()
 {
-  ospResetAccumulation(framebuffer);
+  for (auto &kv : framebuffersPerTimestep) {
+    ospResetAccumulation(kv.second);
+  }
 }
 
 void OSPRayWindow::savePPM(const std::string &filename)
@@ -93,11 +111,16 @@ void OSPRayWindow::reshape(const vec2i &newWindowSize)
 {
   windowSize = newWindowSize;
 
-  if (framebuffer)
+  for (auto &kv : framebuffersPerTimestep) {
     ospRelease(framebuffer);
+  }
 
-  framebuffer = ospNewFrameBuffer(
+  framebuffersPerTimestep.clear();
+
+  framebuffersPerTimestep[currentTimestep] = ospNewFrameBuffer(
       windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+
+  framebuffer = framebuffersPerTimestep[currentTimestep];
 
   // update camera
   arcballCamera->updateWindowSize(windowSize);

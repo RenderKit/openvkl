@@ -32,6 +32,8 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   ~GLFWOSPRayWindow();
 
+  static GLFWOSPRayWindow * getActiveWindow();
+
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
 

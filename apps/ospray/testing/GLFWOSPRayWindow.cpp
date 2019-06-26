@@ -97,6 +97,11 @@ GLFWOSPRayWindow::~GLFWOSPRayWindow()
   glfwTerminate();
 }
 
+GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
+{
+  return activeWindow;
+}
+
 void GLFWOSPRayWindow::registerDisplayCallback(
     std::function<void(GLFWOSPRayWindow *)> callback)
 {
@@ -160,7 +165,7 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
     }
 
     if (cameraChanged) {
-      ospResetAccumulation(framebuffer);
+      resetAccumulation();
 
       ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSetVec3f(camera,

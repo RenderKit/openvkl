@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include "ArcballCamera.h"
 #include "ospcommon/math/box.h"
 #include "ospcommon/math/vec.h"
@@ -36,6 +37,8 @@ class OSPRayWindow
   OSPWorld getWorld();
   void setWorld(OSPWorld newWorld);
 
+  void setTimestep(int timestep);
+
   void render();
 
   void resetAccumulation();
@@ -55,4 +58,11 @@ class OSPRayWindow
   // OSPRay objects managed by this class
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
+
+  // frame buffers can be tracked per time step. accumulation will not be reset
+  // when changing time steps, only when resetAccumulation() is called
+  // explicitly. this allows time series renderings to continually refine over
+  // multiple playback loops, for example.
+  int currentTimestep = 0;
+  std::unordered_map<int, OSPFrameBuffer> framebuffersPerTimestep;
 };

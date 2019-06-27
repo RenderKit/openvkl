@@ -39,6 +39,8 @@ class OSPRayWindow
 
   void setTimestep(int timestep);
 
+  void setPauseRendering(bool set);
+
   void render();
 
   void resetAccumulation();
@@ -65,4 +67,8 @@ class OSPRayWindow
   // multiple playback loops, for example.
   int currentTimestep = 0;
   std::unordered_map<int, OSPFrameBuffer> framebuffersPerTimestep;
+
+  // allow window to redraw but do not render new frames (display current
+  // framebuffer only)
+  bool pauseRendering = false;
 };

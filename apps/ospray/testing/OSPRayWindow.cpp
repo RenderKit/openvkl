@@ -88,9 +88,16 @@ void OSPRayWindow::setTimestep(int timestep)
   framebuffer = framebuffersPerTimestep[currentTimestep];
 }
 
+void OSPRayWindow::setPauseRendering(bool set)
+{
+  pauseRendering = set;
+}
+
 void OSPRayWindow::render()
 {
-  ospRenderFrame(framebuffer, renderer, camera, world);
+  if (!pauseRendering) {
+    ospRenderFrame(framebuffer, renderer, camera, world);
+  }
 }
 
 void OSPRayWindow::resetAccumulation()

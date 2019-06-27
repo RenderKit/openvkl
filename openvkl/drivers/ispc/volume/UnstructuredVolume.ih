@@ -16,6 +16,38 @@
 
 #pragma once
 
-#include "volume/ProceduralStructuredVolume.h"
-#include "volume/RawFileStructuredVolume.h"
-#include "volume/ProceduralUnstructuredVolume.h"
+#include "MinMaxBVH2.ih"
+
+typedef enum
+{
+  VKL_TETRAHEDRON = 10,
+  VKL_HEXAHEDRON = 12,
+  VKL_WEDGE = 13,
+  VKL_PYRAMID = 14
+} CellType;
+
+struct VKLUnstructuredVolume
+{
+  // vertex data
+  const vec3f* uniform vertex;
+  const float* uniform vertexValue; // attribute value at each vertex
+
+  // index data
+  const uint32* uniform index;      // indices into vertices array
+  uniform bool index32Bit;          // true if index is 32-bit integer, false if 64-bit
+
+  // cell data
+  const uint32* uniform cell;       // cell offsets in indices array
+  uniform bool cell32Bit;           // true if cell offset is 32-bit integer, false if 64-bit
+  uniform uint32 cellSkipIds;       // skip indices when index array contain other data e.g. size
+  const uint8* uniform cellType;    // cell type array
+  const float* uniform cellValue;   // attribute value at each cell
+
+  const vec3f* uniform faceNormals;
+
+  uniform box3f boundingBox;
+
+  uniform MinMaxBVH2 bvh;
+
+  uniform bool hexIterative;
+};

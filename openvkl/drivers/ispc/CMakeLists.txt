@@ -33,6 +33,10 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/StructuredRegularVolume.cpp
+  volume/UnstructuredVolume.cpp
+  volume/MinMaxBVH2.cpp
+  volume/MinMaxBVH2.ispc
+  volume/UnstructuredVolume.ispc
   ${DEFS_FILE}
 )
 

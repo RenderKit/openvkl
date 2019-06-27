@@ -22,7 +22,7 @@
 
 namespace openvkl {
 
-  using namespace ospcommon;
+  using namespace ospcommon::math;
 
   inline size_t longProduct(const vec3i &dims)
   {

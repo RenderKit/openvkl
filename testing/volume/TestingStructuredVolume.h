@@ -100,7 +100,7 @@ namespace openvkl {
       virtual std::vector<unsigned char> generateVoxels() = 0;
 
      protected:
-      void generateVKLVolume();
+      virtual void generateVKLVolume();
 
       std::string gridType = "structured_reular";
       vec3i dimensions;

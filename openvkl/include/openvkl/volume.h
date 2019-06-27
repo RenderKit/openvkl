@@ -36,6 +36,18 @@ typedef ManagedObject Volume;
 
 typedef Volume *VKLVolume;
 
+// cell types definition for unstructured volumes, values are set to match VTK
+typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
+{
+  VKL_TETRAHEDRON = 10,
+  VKL_HEXAHEDRON = 12,
+  VKL_WEDGE = 13,
+  VKL_PYRAMID = 14
+} VKLUnstructuredCellType;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -256,8 +256,8 @@ void TransferFunctionWidget::setMap(int selection)
     currentMap = selection;
     // Remember to update other constructors as well
     tfnColorPoints = &(tfnsColorPoints[selection]);
-#if 0  // NOTE(jda) - this will use the first tf's opacities for all color maps
-    tfnOpacityPoints       = &(tfnsOpacityPoints[selection]);
+#if 1  // NOTE(jda) - this will use the first tf's opacities for all color maps
+    tfnOpacityPoints = &(tfnsOpacityPoints[selection]);
 #endif
     tfnEditable = tfnsEditable[selection];
     tfnChanged  = true;

@@ -21,6 +21,8 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
+#include "cereal/archives/xml.hpp"
+#include "cereal/types/vector.hpp"
 
 namespace help {
 
@@ -58,6 +60,33 @@ namespace help {
   }
 
 }  // namespace help
+
+namespace cereal {
+  template <class Archive>
+  void serialize(Archive &archive, vec4f &m)
+  {
+    archive(m.x, m.y, m.z, m.w);
+  }
+
+  template <class Archive>
+  void serialize(Archive &archive, vec2f &m)
+  {
+    archive(m.x, m.y);
+  }
+
+  struct SerializedTransferFunction
+  {
+    std::vector<ColorPoint> tfnColorPoints;
+    std::vector<OpacityPoint> tfnOpacityPoints;
+
+    template <class Archive>
+    void serialize(Archive &archive)
+    {
+      archive(tfnColorPoints, tfnOpacityPoints);
+    }
+  };
+
+}  // namespace cereal
 
 TransferFunctionWidget::TransferFunctionWidget(
     OSPTransferFunction _transferFunction,
@@ -131,6 +160,55 @@ TransferFunctionWidget::~TransferFunctionWidget()
   }
 }
 
+void TransferFunctionWidget::saveTransferFunction(const std::string &filename)
+{
+  std::ofstream ofs(filename);
+
+  if (!ofs.good()) {
+    std::cerr << "unable to open output file: " << filename << std::endl;
+    return;
+  }
+
+  {
+    cereal::XMLOutputArchive oarchive(ofs);
+
+    cereal::SerializedTransferFunction stf;
+    stf.tfnColorPoints   = *tfnColorPoints;
+    stf.tfnOpacityPoints = *tfnOpacityPoints;
+
+    oarchive(stf);
+  }
+
+  std::cout << "saved transfer function to: " << filename << std::endl;
+}
+
+void TransferFunctionWidget::loadTransferFunction(const std::string &filename)
+{
+  std::ifstream ifs;
+  ifs.open(filename, std::ifstream::in);
+
+  if (!ifs.good()) {
+    std::cerr << "unable to open input file: " << filename << std::endl;
+    return;
+  }
+
+  cereal::SerializedTransferFunction stf;
+
+  {
+    cereal::XMLInputArchive iarchive(ifs);
+    iarchive(stf);
+  }
+
+  tfnsNames.push_back(filename);
+  tfnsColorPoints.push_back(stf.tfnColorPoints);
+  tfnsOpacityPoints.push_back(stf.tfnOpacityPoints);
+  tfnsEditable.push_back(true);
+
+  setMap(tfnsNames.size() - 1);
+
+  std::cout << "loaded transfer function from: " << filename << std::endl;
+}
+
 void TransferFunctionWidget::updateUI()
 {
   if (tfnChanged) {
@@ -146,6 +224,16 @@ void TransferFunctionWidget::updateUI()
   }
 
   ImGui::Text("Linear Transfer Function");
+
+  ImGui::InputText("filename", filenameInput.data(), filenameInput.size() - 1);
+
+  if (ImGui::Button("Save")) {
+    saveTransferFunction(std::string(filenameInput.data()));
+  }
+  ImGui::SameLine();
+  if (ImGui::Button("Load")) {
+    loadTransferFunction(std::string(filenameInput.data()));
+  }
 
   ImGui::Separator();
   std::vector<const char *> names(tfnsNames.size(), nullptr);

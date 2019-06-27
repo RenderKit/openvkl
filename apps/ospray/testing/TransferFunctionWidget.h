@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <array>
 #include <functional>
 #include <string>
 #include <vector>
@@ -41,9 +42,12 @@ class TransferFunctionWidget
  public:
   TransferFunctionWidget(OSPTransferFunction transferFunction,
                          std::function<void()> transferFunctionUpdatedCallback,
-                         const vec2f &valueRange = vec2f(-1.f, 1.f),
+                         const vec2f &valueRange       = vec2f(-1.f, 1.f),
                          const std::string &widgetName = "Transfer Function");
   ~TransferFunctionWidget();
+
+  void saveTransferFunction(const std::string &filename);
+  void loadTransferFunction(const std::string &filename);
 
   // update UI and process any UI events
   void updateUI();
@@ -101,4 +105,7 @@ class TransferFunctionWidget
 
   // widget name (use different names to support multiple concurrent widgets)
   std::string widgetName;
+
+  // input dialog for save / load filename
+  std::array<char, 512> filenameInput{'\0'};
 };

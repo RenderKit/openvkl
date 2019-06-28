@@ -218,12 +218,26 @@ void TransferFunctionWidget::loadArchive(cereal::XMLInputArchive &iarchive)
     iarchive(stf);
   }
 
-  tfnsNames.push_back(stf.tfnName);
-  tfnsColorPoints.push_back(stf.tfnColorPoints);
-  tfnsOpacityPoints.push_back(stf.tfnOpacityPoints);
-  tfnsEditable.push_back(true);
+  // replace transfer function entry of the same name if it exists
+  auto it = std::find(tfnsNames.begin(), tfnsNames.end(), stf.tfnName);
 
-  setMap(tfnsNames.size() - 1);
+  if (it != tfnsNames.end()) {
+    int index = it - tfnsNames.begin();
+
+    tfnsColorPoints[index]   = stf.tfnColorPoints;
+    tfnsOpacityPoints[index] = stf.tfnOpacityPoints;
+    tfnsEditable[index]      = true;
+
+    setMap(index);
+
+  } else {
+    tfnsNames.push_back(stf.tfnName);
+    tfnsColorPoints.push_back(stf.tfnColorPoints);
+    tfnsOpacityPoints.push_back(stf.tfnOpacityPoints);
+    tfnsEditable.push_back(true);
+
+    setMap(tfnsNames.size() - 1);
+  }
 }
 
 void TransferFunctionWidget::updateUI()

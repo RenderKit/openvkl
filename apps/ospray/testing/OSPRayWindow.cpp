@@ -119,7 +119,7 @@ void OSPRayWindow::reshape(const vec2i &newWindowSize)
   windowSize = newWindowSize;
 
   for (auto &kv : framebuffersPerTimestep) {
-    ospRelease(framebuffer);
+    ospRelease(kv.second);
   }
 
   framebuffersPerTimestep.clear();

@@ -20,6 +20,7 @@
 #include <functional>
 #include <string>
 #include <vector>
+#include "cereal/archives/xml.hpp"
 
 #include <GLFW/glfw3.h>
 #ifdef _WIN32
@@ -46,8 +47,12 @@ class TransferFunctionWidget
                          const std::string &widgetName = "Transfer Function");
   ~TransferFunctionWidget();
 
-  void saveTransferFunction(const std::string &filename);
-  void loadTransferFunction(const std::string &filename);
+  void saveFile(const std::string &filename);
+  void loadFile(const std::string &filename);
+
+  void saveArchive(cereal::XMLOutputArchive &oarchive,
+                   std::string tfnName = "");
+  void loadArchive(cereal::XMLInputArchive &iarchive);
 
   // update UI and process any UI events
   void updateUI();

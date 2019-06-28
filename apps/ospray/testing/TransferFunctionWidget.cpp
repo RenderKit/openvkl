@@ -21,7 +21,6 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-#include "cereal/archives/xml.hpp"
 #include "cereal/types/vector.hpp"
 
 namespace help {
@@ -76,13 +75,14 @@ namespace cereal {
 
   struct SerializedTransferFunction
   {
+    std::string tfnName;
     std::vector<ColorPoint> tfnColorPoints;
     std::vector<OpacityPoint> tfnOpacityPoints;
 
     template <class Archive>
     void serialize(Archive &archive)
     {
-      archive(tfnColorPoints, tfnOpacityPoints);
+      archive(tfnName, tfnColorPoints, tfnOpacityPoints);
     }
   };
 
@@ -160,7 +160,7 @@ TransferFunctionWidget::~TransferFunctionWidget()
   }
 }
 
-void TransferFunctionWidget::saveTransferFunction(const std::string &filename)
+void TransferFunctionWidget::saveFile(const std::string &filename)
 {
   std::ofstream ofs(filename);
 
@@ -171,18 +171,13 @@ void TransferFunctionWidget::saveTransferFunction(const std::string &filename)
 
   {
     cereal::XMLOutputArchive oarchive(ofs);
-
-    cereal::SerializedTransferFunction stf;
-    stf.tfnColorPoints   = *tfnColorPoints;
-    stf.tfnOpacityPoints = *tfnOpacityPoints;
-
-    oarchive(stf);
+    saveArchive(oarchive, filename);
   }
 
   std::cout << "saved transfer function to: " << filename << std::endl;
 }
 
-void TransferFunctionWidget::loadTransferFunction(const std::string &filename)
+void TransferFunctionWidget::loadFile(const std::string &filename)
 {
   std::ifstream ifs;
   ifs.open(filename, std::ifstream::in);
@@ -192,21 +187,43 @@ void TransferFunctionWidget::loadTransferFunction(const std::string &filename)
     return;
   }
 
+  {
+    cereal::XMLInputArchive iarchive(ifs);
+    loadArchive(iarchive);
+  }
+
+  std::cout << "loaded transfer function from: " << filename << std::endl;
+}
+
+void TransferFunctionWidget::saveArchive(cereal::XMLOutputArchive &oarchive,
+                                         std::string tfnName)
+{
+  if (tfnName.empty()) {
+    tfnName = tfnsNames[currentMap];
+  }
+
+  cereal::SerializedTransferFunction stf;
+  stf.tfnName          = tfnName;
+  stf.tfnColorPoints   = *tfnColorPoints;
+  stf.tfnOpacityPoints = *tfnOpacityPoints;
+
+  oarchive(stf);
+}
+
+void TransferFunctionWidget::loadArchive(cereal::XMLInputArchive &iarchive)
+{
   cereal::SerializedTransferFunction stf;
 
   {
-    cereal::XMLInputArchive iarchive(ifs);
     iarchive(stf);
   }
 
-  tfnsNames.push_back(filename);
+  tfnsNames.push_back(stf.tfnName);
   tfnsColorPoints.push_back(stf.tfnColorPoints);
   tfnsOpacityPoints.push_back(stf.tfnOpacityPoints);
   tfnsEditable.push_back(true);
 
   setMap(tfnsNames.size() - 1);
-
-  std::cout << "loaded transfer function from: " << filename << std::endl;
 }
 
 void TransferFunctionWidget::updateUI()
@@ -228,11 +245,11 @@ void TransferFunctionWidget::updateUI()
   ImGui::InputText("filename", filenameInput.data(), filenameInput.size() - 1);
 
   if (ImGui::Button("Save")) {
-    saveTransferFunction(std::string(filenameInput.data()));
+    saveFile(std::string(filenameInput.data()));
   }
   ImGui::SameLine();
   if (ImGui::Button("Load")) {
-    loadTransferFunction(std::string(filenameInput.data()));
+    loadFile(std::string(filenameInput.data()));
   }
 
   ImGui::Separator();

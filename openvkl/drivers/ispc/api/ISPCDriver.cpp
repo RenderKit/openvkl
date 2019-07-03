@@ -73,26 +73,27 @@ namespace openvkl {
     // Iterator ///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-#define __define_newRayIteratorN(WIDTH)                         \
-  template <int W>                                              \
-  vVKLRayIteratorN<WIDTH> ISPCDriver<W>::newRayIterator##WIDTH( \
-      const int *valid,                                         \
-      VKLVolume volume,                                         \
-      const vvec3fn<WIDTH> &origin,                             \
-      const vvec3fn<WIDTH> &direction,                          \
-      const vrange1fn<WIDTH> &tRange,                           \
-      VKLSamplesMask samplesMask)                               \
-  {                                                             \
-    return newRayIteratorAnyWidth<WIDTH>(                       \
-        valid, volume, origin, direction, tRange, samplesMask); \
+#define __define_initRayIteratorN(WIDTH)                                     \
+  template <int W>                                                           \
+  void ISPCDriver<W>::initRayIterator##WIDTH(                                \
+      const int *valid,                                                      \
+      vVKLRayIteratorN<WIDTH> &rayIterator,                                  \
+      VKLVolume volume,                                                      \
+      const vvec3fn<WIDTH> &origin,                                          \
+      const vvec3fn<WIDTH> &direction,                                       \
+      const vrange1fn<WIDTH> &tRange,                                        \
+      VKLSamplesMask samplesMask)                                            \
+  {                                                                          \
+    return initRayIteratorAnyWidth<WIDTH>(                                   \
+        valid, rayIterator, volume, origin, direction, tRange, samplesMask); \
   }
 
-    __define_newRayIteratorN(1);
-    __define_newRayIteratorN(4);
-    __define_newRayIteratorN(8);
-    __define_newRayIteratorN(16);
+    __define_initRayIteratorN(1);
+    __define_initRayIteratorN(4);
+    __define_initRayIteratorN(8);
+    __define_initRayIteratorN(16);
 
-#undef __define_newRayIteratorN
+#undef __define_initRayIteratorN
 
 #define __define_iterateIntervalN(WIDTH)                                     \
   template <int W>                                                           \
@@ -282,13 +283,14 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW == 1), vVKLRayIteratorN<OW>>::type
-    ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
-                                          VKLVolume volume,
-                                          const vvec3fn<OW> &origin,
-                                          const vvec3fn<OW> &direction,
-                                          const vrange1fn<OW> &tRange,
-                                          VKLSamplesMask samplesMask)
+    typename std::enable_if<(OW == 1), void>::type
+    ISPCDriver<W>::initRayIteratorAnyWidth(const int *valid,
+                                           vVKLRayIteratorN<OW> &rayIterator,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &origin,
+                                           const vvec3fn<OW> &direction,
+                                           const vrange1fn<OW> &tRange,
+                                           VKLSamplesMask samplesMask)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -300,27 +302,28 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      vVKLRayIteratorN<W> rayIteratorW = volumeObject.newRayIteratorV(
+      vVKLRayIteratorN<W> rayIteratorW;
+
+      volumeObject.initRayIteratorV(
+          rayIteratorW,
           originW,
           directionW,
           tRangeW,
           reinterpret_cast<const SamplesMask *>(samplesMask));
 
-      vVKLRayIteratorN<1> rayIterator1 =
-          static_cast<vVKLRayIteratorN<1>>(rayIteratorW);
-
-      return rayIterator1;
+      rayIterator = static_cast<vVKLRayIteratorN<1>>(rayIteratorW);
     }
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW == W), vVKLRayIteratorN<OW>>::type
-    ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
-                                          VKLVolume volume,
-                                          const vvec3fn<OW> &origin,
-                                          const vvec3fn<OW> &direction,
-                                          const vrange1fn<OW> &tRange,
-                                          VKLSamplesMask samplesMask)
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::initRayIteratorAnyWidth(const int *valid,
+                                           vVKLRayIteratorN<OW> &rayIterator,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &origin,
+                                           const vvec3fn<OW> &direction,
+                                           const vrange1fn<OW> &tRange,
+                                           VKLSamplesMask samplesMask)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -332,7 +335,8 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      return volumeObject.newRayIteratorV(
+      volumeObject.initRayIteratorV(
+          rayIterator,
           originW,
           directionW,
           tRangeW,
@@ -341,13 +345,14 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW != W && OW != 1), vVKLRayIteratorN<OW>>::type
-    ISPCDriver<W>::newRayIteratorAnyWidth(const int *valid,
-                                          VKLVolume volume,
-                                          const vvec3fn<OW> &origin,
-                                          const vvec3fn<OW> &direction,
-                                          const vrange1fn<OW> &tRange,
-                                          VKLSamplesMask samplesMask)
+    typename std::enable_if<(OW != W && OW != 1), void>::type
+    ISPCDriver<W>::initRayIteratorAnyWidth(const int *valid,
+                                           vVKLRayIteratorN<OW> &rayIterator,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &origin,
+                                           const vvec3fn<OW> &direction,
+                                           const vrange1fn<OW> &tRange,
+                                           VKLSamplesMask samplesMask)
     {
       throw std::runtime_error(
           "ray iterators cannot be created for widths different than the "

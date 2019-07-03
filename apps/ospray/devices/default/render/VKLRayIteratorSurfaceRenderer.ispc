@@ -53,12 +53,13 @@ inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
 
   vklCommit((VKLObject)samplesMask);
 
-  uniform VKLRayIterator rayIterator =
-      vklNewRayIteratorV(self->volume,
-                         (varying vkl_vec3f *)&ray.org,
-                         (varying vkl_vec3f *)&ray.dir,
-                         &tRange,
-                         samplesMask);
+  uniform VKLRayIterator rayIterator;
+  vklInitRayIteratorV(&rayIterator,
+                      self->volume,
+                      (varying vkl_vec3f *)&ray.org,
+                      (varying vkl_vec3f *)&ray.dir,
+                      &tRange,
+                      samplesMask);
 
   // the current surface hit
   VKLSurfaceHit surfaceHit;

@@ -32,13 +32,13 @@ namespace openvkl {
 
       void commit() override;
 
-      vVKLRayIteratorN<W> newRayIteratorV(
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const SamplesMask *samplesMask) override
+      void initRayIteratorV(vVKLRayIteratorN<W> &rayIterator,
+                            const vvec3fn<W> &origin,
+                            const vvec3fn<W> &direction,
+                            const vrange1fn<W> &tRange,
+                            const SamplesMask *samplesMask) override
       {
-        return toVKLRayIterator<W>(GridAcceleratorRayIterator<W>(
+        rayIterator = toVKLRayIterator<W>(GridAcceleratorRayIterator<W>(
             this, origin, direction, tRange, samplesMask));
       }
 

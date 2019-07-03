@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/ParameterizedObject.h"
-#include "ospcommon/math/vec.h"
 #include <functional>
 #include <memory>
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
+#include "ospcommon/utility/ArrayView.h"
+#include "ospcommon/utility/ParameterizedObject.h"
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -78,25 +78,25 @@ namespace openvkl {
       // Iterator /////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-#define __define_newRayIteratorN(WIDTH)                            \
-  virtual vVKLRayIteratorN<WIDTH> newRayIterator##WIDTH(           \
-      const int *valid,                                            \
-      VKLVolume volume,                                            \
-      const vvec3fn<WIDTH> &origin,                                \
-      const vvec3fn<WIDTH> &direction,                             \
-      const vrange1fn<WIDTH> &tRange,                              \
-      VKLSamplesMask samplesMask)                                  \
-  {                                                                \
-    throw std::runtime_error(                                      \
-        "newRayIterator##WIDTH() not implemented on this driver"); \
+#define __define_initRayIteratorN(WIDTH)                                    \
+  virtual void initRayIterator##WIDTH(const int *valid,                     \
+                                      vVKLRayIteratorN<WIDTH> &rayIterator, \
+                                      VKLVolume volume,                     \
+                                      const vvec3fn<WIDTH> &origin,         \
+                                      const vvec3fn<WIDTH> &direction,      \
+                                      const vrange1fn<WIDTH> &tRange,       \
+                                      VKLSamplesMask samplesMask)           \
+  {                                                                         \
+    throw std::runtime_error(                                               \
+        "initRayIterator##WIDTH() not implemented on this driver");         \
   }
 
-      __define_newRayIteratorN(1);
-      __define_newRayIteratorN(4);
-      __define_newRayIteratorN(8);
-      __define_newRayIteratorN(16);
+      __define_initRayIteratorN(1);
+      __define_initRayIteratorN(4);
+      __define_initRayIteratorN(8);
+      __define_initRayIteratorN(16);
 
-#undef __define_newRayIteratorN
+#undef __define_initRayIteratorN
 
 #define __define_iterateIntervalN(WIDTH)                                    \
   virtual void iterateInterval##WIDTH(const int *valid,                     \

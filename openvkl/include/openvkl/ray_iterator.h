@@ -53,32 +53,36 @@ struct VKLRayIterator16
   VKLVolume volume;
 };
 
-VKLRayIterator vklNewRayIterator(VKLVolume volume,
-                                 const vkl_vec3f *origin,
-                                 const vkl_vec3f *direction,
-                                 const vkl_range1f *tRange,
-                                 VKLSamplesMask samplesMask);
+void vklInitRayIterator(VKLRayIterator *rayIterator,
+                        VKLVolume volume,
+                        const vkl_vec3f *origin,
+                        const vkl_vec3f *direction,
+                        const vkl_range1f *tRange,
+                        VKLSamplesMask samplesMask);
 
-VKLRayIterator4 vklNewRayIterator4(const int *valid,
-                                   VKLVolume volume,
-                                   const vkl_vvec3f4 *origin,
-                                   const vkl_vvec3f4 *direction,
-                                   const vkl_vrange1f4 *tRange,
-                                   VKLSamplesMask samplesMask);
+void vklInitRayIterator4(const int *valid,
+                         VKLRayIterator4 *rayIterator,
+                         VKLVolume volume,
+                         const vkl_vvec3f4 *origin,
+                         const vkl_vvec3f4 *direction,
+                         const vkl_vrange1f4 *tRange,
+                         VKLSamplesMask samplesMask);
 
-VKLRayIterator8 vklNewRayIterator8(const int *valid,
-                                   VKLVolume volume,
-                                   const vkl_vvec3f8 *origin,
-                                   const vkl_vvec3f8 *direction,
-                                   const vkl_vrange1f8 *tRange,
-                                   VKLSamplesMask samplesMask);
+void vklInitRayIterator8(const int *valid,
+                         VKLRayIterator8 *rayIterator,
+                         VKLVolume volume,
+                         const vkl_vvec3f8 *origin,
+                         const vkl_vvec3f8 *direction,
+                         const vkl_vrange1f8 *tRange,
+                         VKLSamplesMask samplesMask);
 
-VKLRayIterator16 vklNewRayIterator16(const int *valid,
-                                     VKLVolume volume,
-                                     const vkl_vvec3f16 *origin,
-                                     const vkl_vvec3f16 *direction,
-                                     const vkl_vrange1f16 *tRange,
-                                     VKLSamplesMask samplesMask);
+void vklInitRayIterator16(const int *valid,
+                          VKLRayIterator16 *rayIterator,
+                          VKLVolume volume,
+                          const vkl_vvec3f16 *origin,
+                          const vkl_vvec3f16 *direction,
+                          const vkl_vrange1f16 *tRange,
+                          VKLSamplesMask samplesMask);
 
 struct VKLRayInterval
 {

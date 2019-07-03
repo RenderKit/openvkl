@@ -16,8 +16,8 @@
 
 #include <array>
 #include "../../external/catch.hpp"
-#include "ospcommon/utility/multidim_index_sequence.h"
 #include "openvkl_testing.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
@@ -110,13 +110,14 @@ TEST_CASE("Vectorized interval iteration")
         REQUIRE(tRangesSOA.size() == callingWidth * 2);
 
         if (callingWidth == 4) {
-          VKLRayIterator4 rayIterator =
-              vklNewRayIterator4(valid.data(),
-                                 vklVolume,
-                                 (const vkl_vvec3f4 *)originsSOA.data(),
-                                 (const vkl_vvec3f4 *)directionsSOA.data(),
-                                 (const vkl_vrange1f4 *)tRangesSOA.data(),
-                                 nullptr);
+          VKLRayIterator4 rayIterator;
+          vklInitRayIterator4(valid.data(),
+                              &rayIterator,
+                              vklVolume,
+                              (const vkl_vvec3f4 *)originsSOA.data(),
+                              (const vkl_vvec3f4 *)directionsSOA.data(),
+                              (const vkl_vrange1f4 *)tRangesSOA.data(),
+                              nullptr);
 
           VKLRayInterval4 rayIntervalPrevious, rayIntervalCurrent;
           int result[callingWidth];
@@ -173,13 +174,14 @@ TEST_CASE("Vectorized interval iteration")
         }
 
         else if (callingWidth == 8) {
-          VKLRayIterator8 rayIterator =
-              vklNewRayIterator8(valid.data(),
-                                 vklVolume,
-                                 (const vkl_vvec3f8 *)originsSOA.data(),
-                                 (const vkl_vvec3f8 *)directionsSOA.data(),
-                                 (const vkl_vrange1f8 *)tRangesSOA.data(),
-                                 nullptr);
+          VKLRayIterator8 rayIterator;
+          vklInitRayIterator8(valid.data(),
+                              &rayIterator,
+                              vklVolume,
+                              (const vkl_vvec3f8 *)originsSOA.data(),
+                              (const vkl_vvec3f8 *)directionsSOA.data(),
+                              (const vkl_vrange1f8 *)tRangesSOA.data(),
+                              nullptr);
 
           VKLRayInterval8 rayIntervalPrevious, rayIntervalCurrent;
           int result[callingWidth];
@@ -236,13 +238,14 @@ TEST_CASE("Vectorized interval iteration")
         }
 
         else if (callingWidth == 16) {
-          VKLRayIterator16 rayIterator =
-              vklNewRayIterator16(valid.data(),
-                                  vklVolume,
-                                  (const vkl_vvec3f16 *)originsSOA.data(),
-                                  (const vkl_vvec3f16 *)directionsSOA.data(),
-                                  (const vkl_vrange1f16 *)tRangesSOA.data(),
-                                  nullptr);
+          VKLRayIterator16 rayIterator;
+          vklInitRayIterator16(valid.data(),
+                               &rayIterator,
+                               vklVolume,
+                               (const vkl_vvec3f16 *)originsSOA.data(),
+                               (const vkl_vvec3f16 *)directionsSOA.data(),
+                               (const vkl_vrange1f16 *)tRangesSOA.data(),
+                               nullptr);
 
           VKLRayInterval16 rayIntervalPrevious, rayIntervalCurrent;
           int result[callingWidth];

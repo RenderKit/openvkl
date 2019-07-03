@@ -49,12 +49,13 @@ inline void integrate(uniform VKLRayIteratorVolumeRenderer *uniform self,
   VKLSamplesMask samplesMask =
       getSamplesMaskForTransferFunction(self->volume, self->transferFunction);
 
-  uniform VKLRayIterator rayIterator =
-      vklNewRayIteratorV(self->volume,
-                         (varying vkl_vec3f *)&ray.org,
-                         (varying vkl_vec3f *)&ray.dir,
-                         &tRange,
-                         samplesMask);
+  uniform VKLRayIterator rayIterator;
+  vklInitRayIteratorV(&rayIterator,
+                      self->volume,
+                      (varying vkl_vec3f *)&ray.org,
+                      (varying vkl_vec3f *)&ray.dir,
+                      &tRange,
+                      samplesMask);
 
   // the current ray interval
   VKLRayInterval rayInterval;

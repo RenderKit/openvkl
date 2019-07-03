@@ -45,11 +45,11 @@ namespace openvkl {
 
       // volumes must provide their own ray iterators based on their internal
       // acceleration structures.
-      virtual vVKLRayIteratorN<W> newRayIteratorV(
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const SamplesMask *samplesMask)
+      virtual void initRayIteratorV(vVKLRayIteratorN<W> &rayIterator,
+                                    const vvec3fn<W> &origin,
+                                    const vvec3fn<W> &direction,
+                                    const vrange1fn<W> &tRange,
+                                    const SamplesMask *samplesMask)
       {
         throw std::runtime_error(
             "newRayIteratorV() not implemented in this volume!");

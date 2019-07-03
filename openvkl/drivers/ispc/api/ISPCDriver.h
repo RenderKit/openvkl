@@ -50,21 +50,21 @@ namespace openvkl {
       // Iterator /////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-#define __define_newRayIteratorN(WIDTH)          \
-  vVKLRayIteratorN<WIDTH> newRayIterator##WIDTH( \
-      const int *valid,                          \
-      VKLVolume volume,                          \
-      const vvec3fn<WIDTH> &origin,              \
-      const vvec3fn<WIDTH> &direction,           \
-      const vrange1fn<WIDTH> &tRange,            \
-      VKLSamplesMask samplesMask) override;
+#define __define_initRayIteratorN(WIDTH)                            \
+  void initRayIterator##WIDTH(const int *valid,                     \
+                              vVKLRayIteratorN<WIDTH> &rayIterator, \
+                              VKLVolume volume,                     \
+                              const vvec3fn<WIDTH> &origin,         \
+                              const vvec3fn<WIDTH> &direction,      \
+                              const vrange1fn<WIDTH> &tRange,       \
+                              VKLSamplesMask samplesMask) override;
 
-      __define_newRayIteratorN(1);
-      __define_newRayIteratorN(4);
-      __define_newRayIteratorN(8);
-      __define_newRayIteratorN(16);
+      __define_initRayIteratorN(1);
+      __define_initRayIteratorN(4);
+      __define_initRayIteratorN(8);
+      __define_initRayIteratorN(16);
 
-#undef __define_newRayIteratorN
+#undef __define_initRayIteratorN
 
 #define __define_iterateIntervalN(WIDTH)                            \
   void iterateInterval##WIDTH(const int *valid,                     \
@@ -158,31 +158,34 @@ namespace openvkl {
 
      private:
       template <int OW>
-      typename std::enable_if<(OW == 1), vVKLRayIteratorN<OW>>::type
-      newRayIteratorAnyWidth(const int *valid,
-                             VKLVolume volume,
-                             const vvec3fn<OW> &origin,
-                             const vvec3fn<OW> &direction,
-                             const vrange1fn<OW> &tRange,
-                             VKLSamplesMask samplesMask);
+      typename std::enable_if<(OW == 1), void>::type initRayIteratorAnyWidth(
+          const int *valid,
+          vVKLRayIteratorN<OW> &rayIterator,
+          VKLVolume volume,
+          const vvec3fn<OW> &origin,
+          const vvec3fn<OW> &direction,
+          const vrange1fn<OW> &tRange,
+          VKLSamplesMask samplesMask);
 
       template <int OW>
-      typename std::enable_if<(OW == W), vVKLRayIteratorN<OW>>::type
-      newRayIteratorAnyWidth(const int *valid,
-                             VKLVolume volume,
-                             const vvec3fn<OW> &origin,
-                             const vvec3fn<OW> &direction,
-                             const vrange1fn<OW> &tRange,
-                             VKLSamplesMask samplesMask);
+      typename std::enable_if<(OW == W), void>::type initRayIteratorAnyWidth(
+          const int *valid,
+          vVKLRayIteratorN<OW> &rayIterator,
+          VKLVolume volume,
+          const vvec3fn<OW> &origin,
+          const vvec3fn<OW> &direction,
+          const vrange1fn<OW> &tRange,
+          VKLSamplesMask samplesMask);
 
       template <int OW>
-      typename std::enable_if<(OW != W && OW != 1), vVKLRayIteratorN<OW>>::type
-      newRayIteratorAnyWidth(const int *valid,
-                             VKLVolume volume,
-                             const vvec3fn<OW> &origin,
-                             const vvec3fn<OW> &direction,
-                             const vrange1fn<OW> &tRange,
-                             VKLSamplesMask samplesMask);
+      typename std::enable_if<(OW != W && OW != 1), void>::type
+      initRayIteratorAnyWidth(const int *valid,
+                              vVKLRayIteratorN<OW> &rayIterator,
+                              VKLVolume volume,
+                              const vvec3fn<OW> &origin,
+                              const vvec3fn<OW> &direction,
+                              const vrange1fn<OW> &tRange,
+                              VKLSamplesMask samplesMask);
 
       template <int OW>
       typename std::enable_if<(OW == 1), void>::type iterateIntervalAnyWidth(

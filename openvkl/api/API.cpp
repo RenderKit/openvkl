@@ -14,14 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/OnScopeExit.h"
-#include "ospcommon/math/vec.h"
-#include "Driver.h"
 #include "../common/logging.h"
 #include "../common/simd.h"
+#include "Driver.h"
 #include "openvkl/openvkl.h"
+#include "ospcommon/math/box.h"
+#include "ospcommon/math/vec.h"
+#include "ospcommon/utility/ArrayView.h"
+#include "ospcommon/utility/OnScopeExit.h"
 
 using namespace openvkl;
 
@@ -166,51 +166,54 @@ OPENVKL_CATCH_END()
 // Iterator ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VKLRayIterator vklNewRayIterator(VKLVolume volume,
-                                            const vkl_vec3f *origin,
-                                            const vkl_vec3f *direction,
-                                            const vkl_range1f *tRange,
-                                            VKLSamplesMask samplesMask)
+extern "C" void vklInitRayIterator(VKLRayIterator *rayIterator,
+                                   VKLVolume volume,
+                                   const vkl_vec3f *origin,
+                                   const vkl_vec3f *direction,
+                                   const vkl_range1f *tRange,
+                                   VKLSamplesMask samplesMask)
     OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
-  return (VKLRayIterator)openvkl::api::currentDriver().newRayIterator1(
+  return openvkl::api::currentDriver().initRayIterator1(
       &valid,
+      reinterpret_cast<vVKLRayIteratorN<1> &>(*rayIterator),
       volume,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
       samplesMask);
 }
-OPENVKL_CATCH_END(VKLRayIterator())
+OPENVKL_CATCH_END()
 
-#define __define_vklNewRayIteratorN(WIDTH)                        \
-  extern "C" VKLRayIterator##WIDTH vklNewRayIterator##WIDTH(      \
-      const int *valid,                                           \
-      VKLVolume volume,                                           \
-      const vkl_vvec3f##WIDTH *origin,                            \
-      const vkl_vvec3f##WIDTH *direction,                         \
-      const vkl_vrange1f##WIDTH *tRange,                          \
-      VKLSamplesMask samplesMask) OPENVKL_CATCH_BEGIN             \
-  {                                                               \
-    ASSERT_DRIVER();                                              \
-    return (VKLRayIterator##WIDTH)openvkl::api::currentDriver()   \
-        .newRayIterator##WIDTH(                                   \
-            valid,                                                \
-            volume,                                               \
-            reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),    \
-            reinterpret_cast<const vvec3fn<WIDTH> &>(*direction), \
-            reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),  \
-            samplesMask);                                         \
-  }                                                               \
-  OPENVKL_CATCH_END(VKLRayIterator##WIDTH())
+#define __define_vklInitRayIteratorN(WIDTH)                        \
+  extern "C" void vklInitRayIterator##WIDTH(                       \
+      const int *valid,                                            \
+      VKLRayIterator##WIDTH *rayIterator,                          \
+      VKLVolume volume,                                            \
+      const vkl_vvec3f##WIDTH *origin,                             \
+      const vkl_vvec3f##WIDTH *direction,                          \
+      const vkl_vrange1f##WIDTH *tRange,                           \
+      VKLSamplesMask samplesMask) OPENVKL_CATCH_BEGIN              \
+  {                                                                \
+    ASSERT_DRIVER();                                               \
+    return openvkl::api::currentDriver().initRayIterator##WIDTH(   \
+        valid,                                                     \
+        reinterpret_cast<vVKLRayIteratorN<WIDTH> &>(*rayIterator), \
+        volume,                                                    \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),         \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),      \
+        reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),       \
+        samplesMask);                                              \
+  }                                                                \
+  OPENVKL_CATCH_END()
 
-__define_vklNewRayIteratorN(4);
-__define_vklNewRayIteratorN(8);
-__define_vklNewRayIteratorN(16);
+__define_vklInitRayIteratorN(4);
+__define_vklInitRayIteratorN(8);
+__define_vklInitRayIteratorN(16);
 
-#undef __define_vklNewRayIteratorN
+#undef __define_vklInitRayIteratorN
 
 extern "C" bool vklIterateInterval(VKLRayIterator *rayIterator,
                                    VKLRayInterval *rayInterval)

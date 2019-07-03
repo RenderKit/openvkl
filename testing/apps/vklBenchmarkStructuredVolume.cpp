@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include <random>
-#include "benchmark/benchmark.h"
 #include "../common/simd.h"
+#include "benchmark/benchmark.h"
 #include "openvkl_testing.h"
 
 using namespace openvkl::testing;
@@ -149,8 +149,9 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
   vkl_range1f tRange{0.f, 1000.f};
 
   for (auto _ : state) {
-    VKLRayIterator rayIterator =
-        vklNewRayIterator(vklVolume, &origin, &direction, &tRange, nullptr);
+    VKLRayIterator rayIterator;
+    vklInitRayIterator(
+        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
     benchmark::DoNotOptimize(rayIterator);
   }
@@ -191,8 +192,9 @@ static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
 
-  VKLRayIterator rayIterator =
-      vklNewRayIterator(vklVolume, &origin, &direction, &tRange, nullptr);
+  VKLRayIterator rayIterator;
+  vklInitRayIterator(
+      &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
   VKLRayInterval rayInterval;
 
@@ -244,8 +246,9 @@ static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
 
-  VKLRayIterator rayIterator =
-      vklNewRayIterator(vklVolume, &origin, &direction, &tRange, nullptr);
+  VKLRayIterator rayIterator;
+  vklInitRayIterator(
+      &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
   // move past first iteration
   VKLRayInterval rayInterval;

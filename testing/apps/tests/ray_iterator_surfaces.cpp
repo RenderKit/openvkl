@@ -56,8 +56,9 @@ TEST_CASE("Ray iterator surfaces")
 
     vklCommit((VKLObject)samplesMask);
 
-    VKLRayIterator rayIterator =
-        vklNewRayIterator(vklVolume, &origin, &direction, &tRange, samplesMask);
+    VKLRayIterator rayIterator;
+    vklInitRayIterator(
+        &rayIterator, vklVolume, &origin, &direction, &tRange, samplesMask);
 
     VKLSurfaceHit surfaceHit;
 

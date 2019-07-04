@@ -17,6 +17,7 @@
 #include "SimpleNativeVolumeRenderer.h"
 #include "SimpleNativeVolumeRenderer_ispc.h"
 #include "ospray/SDK/transferFunction/TransferFunction.h"
+#include "ospray/SDK/volume/Volume.h"
 
 namespace ospray {
 

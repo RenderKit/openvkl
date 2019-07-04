@@ -49,19 +49,14 @@ ospray_add_library(ospray_module_ispc_openvkl SHARED
   render/VKLPathTracer.ispc
 )
 
-# TODO: hack to get proper ospcommon include directory (i.e. to support <ospcommon/...> paths)
-get_target_property(OSPRAY_COMMON_INCLUDE_DIRECTORY
-                    ospray::ospray_common
-                    INTERFACE_INCLUDE_DIRECTORIES)
-target_include_directories(ospray_module_ispc_openvkl PRIVATE
-  "${OSPRAY_COMMON_INCLUDE_DIRECTORY}/../")
-
-target_include_directories(ospray_module_ispc_openvkl PRIVATE
-  ${EMBREE_INCLUDE_DIRS})
+target_include_directories(ospray_module_ispc_openvkl
+  PRIVATE
+    ${EMBREE_INCLUDE_DIRS}
+)
 
 target_link_libraries(ospray_module_ispc_openvkl
   PUBLIC
-  ospray::ospray_module_ispc
-  ospray::ospray_common
-  openvkl
+    ospray::ospray_module_ispc
+    ospray::ospray_common
+    openvkl
 )

@@ -322,7 +322,10 @@ int main(int argc, const char **argv)
   // start the GLFW main loop, which will continuously render
   glfwOSPRayWindow->mainLoop();
 
-  // cleanly shut OSPRay down
+  // cleanly shut VKL and OSPRay down
+  testScene.reset();
+  glfwOSPRayWindow.reset();
+  vklShutdown();
   ospShutdown();
 
   return 0;

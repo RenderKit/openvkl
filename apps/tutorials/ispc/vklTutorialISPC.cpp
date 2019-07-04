@@ -51,5 +51,7 @@ int main()
 
   ispc::sample_ispc((ispc::OpenVKLVolume *)volume);
 
+  vklShutdown();
+
   return 0;
 }

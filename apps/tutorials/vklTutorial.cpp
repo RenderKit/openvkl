@@ -53,5 +53,7 @@ int main()
 
   std::cout << sample << std::endl;
 
+  vklShutdown();
+
   return 0;
 }

@@ -43,8 +43,19 @@ namespace openvkl {
         ManagedObject::commit();
       }
 
-      // volumes must provide their own ray iterators based on their internal
-      // acceleration structures.
+      // volumes must provide their own ray iterator implementations based on
+      // their internal acceleration structures.
+
+      // initialize a new rayIterator for the given input rays (specified by
+      // origin, direction and tRange) and optional samplesMask indicating
+      // volume sample values of interest. if no samplesMask is provided, all
+      // intervals intersecting the volume should be (iteratively) returned by
+      // iterateIntervalV(), and no surfaces should be returned by
+      // iterateSurfaceV().
+      //
+      // the rayIterator object can be casted to volume-specific iterator types,
+      // and may maintain internal state as desired, e.g. for current state
+      // within an acceleration structure, etc.
       virtual void initRayIteratorV(vVKLRayIteratorN<W> &rayIterator,
                                     const vvec3fn<W> &origin,
                                     const vvec3fn<W> &direction,
@@ -55,6 +66,12 @@ namespace openvkl {
             "newRayIteratorV() not implemented in this volume!");
       }
 
+      // for each active lane / ray (indicated by valid), iterate once for the
+      // given rayIterator and return the next interval (if any) satisfying the
+      // ray iterator's samplesMask in rayInterval. result (0 or 1) should
+      // indicate if a new interval was found for each active lane.
+      //
+      // rayIterator may be modified to track any internal state as desired.
       virtual void iterateIntervalV(const int *valid,
                                     vVKLRayIteratorN<W> &rayIterator,
                                     vVKLRayIntervalN<W> &rayInterval,
@@ -64,9 +81,15 @@ namespace openvkl {
             "iterateIntervalV() not implemented in this volume!");
       }
 
+      // for each active lane / ray (indicated by valid), iterate once for the
+      // given rayIterator and return the next surface hit (if any) satisfying
+      // the ray iterator's samplesMask in surfaceHit. result (0 or 1) should
+      // indicate if a new surface hit was found for each active lane.
+      //
+      // rayIterator may be modified to track any internal state as desired.
       virtual void iterateSurfaceV(const int *valid,
                                    vVKLRayIteratorN<W> &rayIterator,
-                                   vVKLSurfaceHitN<W> &rayInterval,
+                                   vVKLSurfaceHitN<W> &surfaceHit,
                                    vintn<W> &result)
       {
         throw std::runtime_error(

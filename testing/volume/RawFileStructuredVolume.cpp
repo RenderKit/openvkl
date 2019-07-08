@@ -26,22 +26,8 @@ namespace openvkl {
         const vec3f &gridOrigin,
         const vec3f &gridSpacing)
         : filename(filename),
-          TestingStructuredVolume(dimensions, gridOrigin, gridSpacing)
+          TestingStructuredVolume(gridType, dimensions, gridOrigin, gridSpacing)
     {
-      std::vector<float> voxels = generateVoxels();
-
-      volume = vklNewVolume(gridType.c_str());
-
-      vklSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-      vklSet3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-      vklSet3f(
-          volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-
-      VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
-      vklSetData(volume, "voxelData", voxelData);
-      vklRelease(voxelData);
-
-      vklCommit(volume);
     }
 
     std::vector<float> RawFileStructuredVolume::generateVoxels()

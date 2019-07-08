@@ -17,8 +17,8 @@
 #pragma once
 
 #include <vector>
-#include "ospcommon/math/vec.h"
 #include "openvkl/openvkl.h"
+#include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
 
@@ -27,10 +27,12 @@ namespace openvkl {
 
     struct TestingStructuredVolume
     {
-      TestingStructuredVolume(const vec3i &dimensions,
+      TestingStructuredVolume(const std::string gridType,
+                              const vec3i &dimensions,
                               const vec3f &gridOrigin,
                               const vec3f &gridSpacing)
-          : dimensions(dimensions),
+          : gridType(gridType),
+            dimensions(dimensions),
             gridOrigin(gridOrigin),
             gridSpacing(gridSpacing)
       {
@@ -51,8 +53,12 @@ namespace openvkl {
         return gridSpacing;
       }
 
-      inline VKLVolume getVKLVolume() const
+      inline VKLVolume getVKLVolume()
       {
+        if (!volume) {
+          generateVKLVolume();
+        }
+
         return volume;
       }
 
@@ -61,6 +67,27 @@ namespace openvkl {
       virtual std::vector<float> generateVoxels() = 0;
 
      protected:
+      void generateVKLVolume()
+      {
+        std::vector<float> voxels = generateVoxels();
+
+        volume = vklNewVolume(gridType.c_str());
+
+        vklSet3i(
+            volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+        vklSet3f(
+            volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+        vklSet3f(
+            volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
+
+        VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+        vklSetData(volume, "voxelData", voxelData);
+        vklRelease(voxelData);
+
+        vklCommit(volume);
+      }
+
+      std::string gridType = "structured_reular";
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;

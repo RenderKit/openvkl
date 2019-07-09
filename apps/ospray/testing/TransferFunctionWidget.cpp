@@ -78,11 +78,17 @@ namespace cereal {
     std::string tfnName;
     std::vector<ColorPoint> tfnColorPoints;
     std::vector<OpacityPoint> tfnOpacityPoints;
+    float globalOpacityScale;
+    vec2f valueRange;
 
     template <class Archive>
     void serialize(Archive &archive)
     {
-      archive(tfnName, tfnColorPoints, tfnOpacityPoints);
+      archive(tfnName,
+              tfnColorPoints,
+              tfnOpacityPoints,
+              globalOpacityScale,
+              valueRange);
     }
   };
 
@@ -203,9 +209,11 @@ void TransferFunctionWidget::saveArchive(cereal::XMLOutputArchive &oarchive,
   }
 
   cereal::SerializedTransferFunction stf;
-  stf.tfnName          = tfnName;
-  stf.tfnColorPoints   = *tfnColorPoints;
-  stf.tfnOpacityPoints = *tfnOpacityPoints;
+  stf.tfnName            = tfnName;
+  stf.tfnColorPoints     = *tfnColorPoints;
+  stf.tfnOpacityPoints   = *tfnOpacityPoints;
+  stf.globalOpacityScale = globalOpacityScale;
+  stf.valueRange         = valueRange;
 
   oarchive(stf);
 }
@@ -238,6 +246,9 @@ void TransferFunctionWidget::loadArchive(cereal::XMLInputArchive &iarchive)
 
     setMap(tfnsNames.size() - 1);
   }
+
+  globalOpacityScale = stf.globalOpacityScale;
+  valueRange         = stf.valueRange;
 }
 
 void TransferFunctionWidget::updateUI()

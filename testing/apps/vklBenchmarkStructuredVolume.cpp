@@ -289,4 +289,6 @@ int main(int argc, char **argv)
   ::benchmark::RunSpecifiedBenchmarks();
 
   vklShutdown();
+
+  return 0;
 }

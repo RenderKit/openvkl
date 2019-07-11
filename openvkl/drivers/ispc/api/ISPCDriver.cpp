@@ -84,7 +84,7 @@ namespace openvkl {
       const vrange1fn<WIDTH> &tRange,                                        \
       VKLSamplesMask samplesMask)                                            \
   {                                                                          \
-    return initRayIteratorAnyWidth<WIDTH>(                                   \
+    initRayIteratorAnyWidth<WIDTH>(                                          \
         valid, rayIterator, volume, origin, direction, tRange, samplesMask); \
   }
 

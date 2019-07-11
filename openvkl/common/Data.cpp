@@ -29,10 +29,13 @@ namespace openvkl {
         dataCreationFlags(dataCreationFlags)
   {
     if (dataCreationFlags & VKL_DATA_SHARED_BUFFER) {
-      Assert2(source != NULL, "shared buffer is NULL");
+      if (source == nullptr)
+        throw std::runtime_error("shared buffer is NULL");
       data = const_cast<void *>(source);
     } else {
       data = ospcommon::memory::alignedMalloc(numBytes + 16);
+      if (data == nullptr)
+        throw std::runtime_error("data is NULL");
       if (source)
         memcpy(data, source, numBytes);
       else if (dataType == VKL_OBJECT)

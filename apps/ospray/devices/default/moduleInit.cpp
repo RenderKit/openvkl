@@ -15,8 +15,17 @@
 // ======================================================================== //
 
 #include <iostream>
+#include "openvkl/openvkl.h"
+#include "ospcommon/library.h"
 
 extern "C" void ospray_init_module_ispc_openvkl()
 {
   std::cout << "#osp: initializing the 'ispc_openvkl' module" << std::endl;
+
+  ospcommon::loadLibrary("openvkl_module_ispc_driver", false);
+  vklLoadModule("ispc_driver");
+
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
 }

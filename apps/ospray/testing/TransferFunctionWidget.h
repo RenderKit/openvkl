@@ -112,5 +112,5 @@ class TransferFunctionWidget
   std::string widgetName;
 
   // input dialog for save / load filename
-  std::array<char, 512> filenameInput{'\0'};
+  std::array<char, 512> filenameInput{{'\0'}};
 };

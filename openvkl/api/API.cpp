@@ -315,6 +315,15 @@ OPENVKL_CATCH_END(VKL_UNKNOWN_ERROR)
 // Parameters /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+extern "C" void vklSetBool(VKLObject object,
+                           const char *name,
+                           bool b) OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  openvkl::api::currentDriver().setBool(object, name, b);
+}
+OPENVKL_CATCH_END()
+
 extern "C" void vklSet1f(VKLObject object,
                          const char *name,
                          float x) OPENVKL_CATCH_BEGIN

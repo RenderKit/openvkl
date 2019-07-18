@@ -145,6 +145,14 @@ namespace openvkl {
     // Parameters /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
+
+    template <int W>
+    void ISPCDriver<W>::setBool(VKLObject object, const char *name, const bool b)
+    {
+      ManagedObject *managedObject = (ManagedObject *)object;
+      managedObject->setParam(name, b);
+    }
+
     template <int W>
     void ISPCDriver<W>::set1f(VKLObject object, const char *name, const float x)
     {

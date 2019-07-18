@@ -142,6 +142,9 @@ namespace openvkl {
       // Parameters ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      virtual void setBool(VKLObject object,
+                           const char *name,
+                           const bool b)                                    = 0;
       virtual void set1f(VKLObject object, const char *name, const float x) = 0;
       virtual void set1i(VKLObject object, const char *name, const int x)   = 0;
       virtual void setVec3f(VKLObject object,

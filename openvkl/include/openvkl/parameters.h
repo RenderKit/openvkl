@@ -22,6 +22,7 @@
 extern "C" {
 #endif
 
+void vklSetBool(VKLObject object, const char *name, bool b);
 void vklSet1f(VKLObject object, const char *name, float x);
 void vklSet3f(VKLObject object, const char *name, float x, float y, float z);
 void vklSet1i(VKLObject object, const char *name, int x);

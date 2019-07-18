@@ -102,6 +102,7 @@ namespace openvkl {
       // Parameters ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      void setBool(VKLObject object, const char *name, const bool b) override;
       void set1f(VKLObject object, const char *name, const float x) override;
       void set1i(VKLObject object, const char *name, const int x) override;
       void setVec3f(VKLObject object,

@@ -49,6 +49,8 @@ class OSPRayWindow
 
   void resetCamera();
 
+  void setFramebufferScale(float scale);
+
   void savePPM(const std::string &filename);
 
  protected:
@@ -66,6 +68,9 @@ class OSPRayWindow
   // OSPRay objects managed by this class
   OSPCamera camera           = nullptr;
   OSPFrameBuffer framebuffer = nullptr;
+
+  float framebufferScale = 1.f;
+  vec2i framebufferSize;
 
   // frame buffers can be tracked per time step. accumulation will not be reset
   // when changing time steps, only when resetAccumulation() is called

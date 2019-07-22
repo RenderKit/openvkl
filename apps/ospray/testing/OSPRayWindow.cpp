@@ -86,8 +86,11 @@ void OSPRayWindow::setTimestep(int timestep)
   currentTimestep = timestep;
 
   if (framebuffersPerTimestep.count(currentTimestep) == 0) {
-    framebuffersPerTimestep[currentTimestep] = ospNewFrameBuffer(
-        windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+    framebuffersPerTimestep[currentTimestep] =
+        ospNewFrameBuffer(framebufferSize.x,
+                          framebufferSize.y,
+                          OSP_FB_SRGBA,
+                          OSP_FB_COLOR | OSP_FB_ACCUM);
   }
 
   framebuffer = framebuffersPerTimestep[currentTimestep];
@@ -142,16 +145,25 @@ void OSPRayWindow::updateCamera()
   ospCommit(camera);
 }
 
+void OSPRayWindow::setFramebufferScale(float scale)
+{
+  framebufferScale = scale;
+
+  reshape(windowSize);
+}
+
 void OSPRayWindow::savePPM(const std::string &filename)
 {
   uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  ospcommon::utility::writePPM(filename, windowSize.x, windowSize.y, fb);
+  ospcommon::utility::writePPM(
+      filename, framebufferSize.x, framebufferSize.y, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 }
 
 void OSPRayWindow::reshape(const vec2i &newWindowSize)
 {
-  windowSize = newWindowSize;
+  windowSize      = newWindowSize;
+  framebufferSize = framebufferScale * windowSize;
 
   for (auto &kv : framebuffersPerTimestep) {
     ospRelease(kv.second);
@@ -159,8 +171,11 @@ void OSPRayWindow::reshape(const vec2i &newWindowSize)
 
   framebuffersPerTimestep.clear();
 
-  framebuffersPerTimestep[currentTimestep] = ospNewFrameBuffer(
-      windowSize.x, windowSize.y, OSP_FB_SRGBA, OSP_FB_COLOR | OSP_FB_ACCUM);
+  framebuffersPerTimestep[currentTimestep] =
+      ospNewFrameBuffer(framebufferSize.x,
+                        framebufferSize.y,
+                        OSP_FB_SRGBA,
+                        OSP_FB_COLOR | OSP_FB_ACCUM);
 
   framebuffer = framebuffersPerTimestep[currentTimestep];
 

@@ -34,6 +34,10 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   static GLFWOSPRayWindow *getActiveWindow();
 
+  void setWindowTitle(const std::string &newWindowTitle);
+
+  void setShowFrameRate(bool set);
+
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
 
@@ -58,6 +62,12 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   // toggles display of ImGui UI, if an ImGui callback is provided
   bool showUi = true;
+
+  // window title base string (may be added to)
+  std::string windowTitle = "OSPRay";
+
+  // toggles display of frame rate in title
+  bool showFrameRate = true;
 
   // optional registered display callback, called before every display()
   std::function<void(GLFWOSPRayWindow *)> displayCallback;

@@ -107,6 +107,16 @@ GLFWOSPRayWindow *GLFWOSPRayWindow::getActiveWindow()
   return activeWindow;
 }
 
+void GLFWOSPRayWindow::setWindowTitle(const std::string &newWindowTitle)
+{
+  windowTitle = newWindowTitle;
+}
+
+void GLFWOSPRayWindow::setShowFrameRate(bool set)
+{
+  showFrameRate = set;
+}
+
 void GLFWOSPRayWindow::registerDisplayCallback(
     std::function<void(GLFWOSPRayWindow *)> callback)
 {
@@ -243,7 +253,6 @@ void GLFWOSPRayWindow::display()
 
   glfwSwapBuffers(glfwWindow);
 
-  // display frame rate in window title
   auto displayEnd = std::chrono::high_resolution_clock::now();
   auto durationMilliseconds =
       std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
@@ -252,8 +261,12 @@ void GLFWOSPRayWindow::display()
 
   const float frameRate = 1000.f / float(durationMilliseconds.count());
 
-  std::stringstream windowTitle;
-  windowTitle << "OSPRay: " << std::setprecision(3) << frameRate << " fps";
+  std::stringstream displayWindowTitle;
+  displayWindowTitle << windowTitle;
 
-  glfwSetWindowTitle(glfwWindow, windowTitle.str().c_str());
+  if (showFrameRate) {
+    displayWindowTitle << ": " << std::setprecision(3) << frameRate << " fps";
+  }
+
+  glfwSetWindowTitle(glfwWindow, displayWindowTitle.str().c_str());
 }

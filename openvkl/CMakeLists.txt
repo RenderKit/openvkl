@@ -51,7 +51,9 @@ install(EXPORT openvklConfig DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/openvkl)
 
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/openvkl/include/openvkl
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  FILES_MATCHING PATTERN "*.h"
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.isph"
 )
 
 ## Add OpenVKL drivers ##

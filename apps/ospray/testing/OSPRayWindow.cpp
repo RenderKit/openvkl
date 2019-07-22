@@ -72,6 +72,11 @@ void OSPRayWindow::setWorld(OSPWorld newWorld)
   resetAccumulation();
 }
 
+OSPRenderer OSPRayWindow::getRenderer()
+{
+  return renderer;
+}
+
 void OSPRayWindow::setTimestep(int timestep)
 {
   if (currentTimestep == timestep) {

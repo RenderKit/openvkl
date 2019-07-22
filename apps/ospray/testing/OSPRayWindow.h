@@ -37,6 +37,8 @@ class OSPRayWindow
   OSPWorld getWorld();
   void setWorld(OSPWorld newWorld);
 
+  OSPRenderer getRenderer();
+
   void setTimestep(int timestep);
 
   void setPauseRendering(bool set);

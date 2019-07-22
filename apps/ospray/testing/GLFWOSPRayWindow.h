@@ -32,12 +32,16 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   ~GLFWOSPRayWindow();
 
-  static GLFWOSPRayWindow * getActiveWindow();
+  static GLFWOSPRayWindow *getActiveWindow();
 
   void registerDisplayCallback(
       std::function<void(GLFWOSPRayWindow *)> callback);
 
   void registerImGuiCallback(std::function<void()> callback);
+
+  void registerKeyCallback(
+      std::function<void(
+          GLFWOSPRayWindow *, int key, int scancode, int action, int mods)>);
 
   void mainLoop();
 
@@ -60,4 +64,9 @@ class GLFWOSPRayWindow : public OSPRayWindow
 
   // optional registered ImGui callback, called during every frame to build UI
   std::function<void()> uiCallback;
+
+  // optional registered key callback, called when keys are pressed
+  std::function<void(
+      GLFWOSPRayWindow *, int key, int scancode, int action, int mods)>
+      keyCallback;
 };

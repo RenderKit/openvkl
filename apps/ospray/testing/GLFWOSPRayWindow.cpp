@@ -75,16 +75,21 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
       io.AddInputCharacter((unsigned short)c);
   });
 
-  glfwSetKeyCallback(glfwWindow,
-                     [](GLFWwindow *, int key, int, int action, int) {
-                       if (action == GLFW_PRESS) {
-                         switch (key) {
-                         case GLFW_KEY_G:
-                           activeWindow->showUi = !(activeWindow->showUi);
-                           break;
-                         }
-                       }
-                     });
+  glfwSetKeyCallback(
+      glfwWindow,
+      [](GLFWwindow *, int key, int scancode, int action, int mods) {
+        if (action == GLFW_PRESS) {
+          switch (key) {
+          case GLFW_KEY_G:
+            activeWindow->showUi = !(activeWindow->showUi);
+            break;
+          }
+        }
+
+        if (activeWindow->keyCallback) {
+          activeWindow->keyCallback(activeWindow, key, scancode, action, mods);
+        }
+      });
 
   // trigger window reshape events with current window size
   glfwGetFramebufferSize(glfwWindow, &this->windowSize.x, &this->windowSize.y);
@@ -111,6 +116,14 @@ void GLFWOSPRayWindow::registerDisplayCallback(
 void GLFWOSPRayWindow::registerImGuiCallback(std::function<void()> callback)
 {
   uiCallback = callback;
+}
+
+void GLFWOSPRayWindow::registerKeyCallback(
+    std::function<
+        void(GLFWOSPRayWindow *, int key, int scancode, int action, int mods)>
+        callback)
+{
+  keyCallback = callback;
 }
 
 void GLFWOSPRayWindow::mainLoop()

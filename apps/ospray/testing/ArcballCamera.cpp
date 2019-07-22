@@ -23,13 +23,7 @@ ArcballCamera::ArcballCamera(const box3f &worldBounds, const vec2i &windowSize)
       translation(one),
       rotation(one)
 {
-  vec3f diag = worldBounds.size();
-  zoomSpeed  = max(length(diag) / 150.0, 0.001);
-  diag       = max(diag, vec3f(0.3f * length(diag)));
-
-  centerTranslation = AffineSpace3f::translate(-worldBounds.center());
-  translation       = AffineSpace3f::translate(vec3f(0, 0, length(diag)));
-  updateCamera();
+  resetCamera(worldBounds);
 }
 
 void ArcballCamera::rotate(const vec2f &from, const vec2f &to)
@@ -72,6 +66,19 @@ vec3f ArcballCamera::lookDir() const
 vec3f ArcballCamera::upDir() const
 {
   return xfmVector(invCamera, vec3f(0, 1, 0));
+}
+
+void ArcballCamera::resetCamera(const box3f &worldBounds)
+{
+  vec3f diag = worldBounds.size();
+  zoomSpeed  = max(length(diag) / 150.0, 0.001);
+  diag       = max(diag, vec3f(0.3f * length(diag)));
+
+  centerTranslation = AffineSpace3f::translate(-worldBounds.center());
+  translation       = AffineSpace3f::translate(vec3f(0, 0, length(diag)));
+  rotation          = one;
+
+  updateCamera();
 }
 
 void ArcballCamera::updateCamera()

@@ -165,26 +165,7 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
     }
 
     if (cameraChanged) {
-      resetAccumulation();
-
-      ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
-      ospSetVec3f(camera,
-                  "position",
-                  arcballCamera->eyePos().x,
-                  arcballCamera->eyePos().y,
-                  arcballCamera->eyePos().z);
-      ospSetVec3f(camera,
-                  "direction",
-                  arcballCamera->lookDir().x,
-                  arcballCamera->lookDir().y,
-                  arcballCamera->lookDir().z);
-      ospSetVec3f(camera,
-                  "up",
-                  arcballCamera->upDir().x,
-                  arcballCamera->upDir().y,
-                  arcballCamera->upDir().z);
-
-      ospCommit(camera);
+      updateCamera();
     }
   }
 

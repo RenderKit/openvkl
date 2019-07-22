@@ -35,6 +35,8 @@ class ArcballCamera
   vec3f lookDir() const;
   vec3f upDir() const;
 
+  void resetCamera(const box3f &worldBounds);
+
   void updateWindowSize(const vec2i &windowSize);
 
  protected:

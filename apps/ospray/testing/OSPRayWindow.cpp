@@ -107,6 +107,36 @@ void OSPRayWindow::resetAccumulation()
   }
 }
 
+void OSPRayWindow::resetCamera()
+{
+  arcballCamera->resetCamera(worldBounds);
+  updateCamera();
+}
+
+void OSPRayWindow::updateCamera()
+{
+  resetAccumulation();
+
+  ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
+  ospSetVec3f(camera,
+              "pos",
+              arcballCamera->eyePos().x,
+              arcballCamera->eyePos().y,
+              arcballCamera->eyePos().z);
+  ospSetVec3f(camera,
+              "dir",
+              arcballCamera->lookDir().x,
+              arcballCamera->lookDir().y,
+              arcballCamera->lookDir().z);
+  ospSetVec3f(camera,
+              "up",
+              arcballCamera->upDir().x,
+              arcballCamera->upDir().y,
+              arcballCamera->upDir().z);
+
+  ospCommit(camera);
+}
+
 void OSPRayWindow::savePPM(const std::string &filename)
 {
   uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);

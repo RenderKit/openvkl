@@ -45,10 +45,14 @@ class OSPRayWindow
 
   void resetAccumulation();
 
+  void resetCamera();
+
   void savePPM(const std::string &filename);
 
  protected:
   virtual void reshape(const vec2i &newWindowSize);
+
+  void updateCamera();
 
   vec2i windowSize;
   box3f worldBounds;

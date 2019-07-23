@@ -249,6 +249,8 @@ void TransferFunctionWidget::loadArchive(cereal::XMLInputArchive &iarchive)
 
   globalOpacityScale = stf.globalOpacityScale;
   valueRange         = stf.valueRange;
+
+  tfnChanged = true;
 }
 
 void TransferFunctionWidget::updateUI()

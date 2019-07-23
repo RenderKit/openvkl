@@ -91,9 +91,17 @@ void OSPRayWindow::setTimestep(int timestep)
                           framebufferSize.y,
                           OSP_FB_SRGBA,
                           OSP_FB_COLOR | OSP_FB_ACCUM);
+
+    framebufferLastReset[currentTimestep] = ospcommon::utility::TimeStamp();
   }
 
   framebuffer = framebuffersPerTimestep[currentTimestep];
+
+  if (framebufferLastReset.count(currentTimestep) == 0 ||
+      framebufferLastReset[currentTimestep] < framebufferResetRequired) {
+    ospResetAccumulation(framebuffer);
+    framebufferLastReset[currentTimestep] = ospcommon::utility::TimeStamp();
+  }
 }
 
 void OSPRayWindow::setPauseRendering(bool set)
@@ -110,8 +118,12 @@ void OSPRayWindow::render()
 
 void OSPRayWindow::resetAccumulation()
 {
-  for (auto &kv : framebuffersPerTimestep) {
-    ospResetAccumulation(kv.second);
+  framebufferResetRequired = ospcommon::utility::TimeStamp();
+
+  // reset accumulation for current frame buffer only
+  if (framebuffer) {
+    ospResetAccumulation(framebuffer);
+    framebufferLastReset[currentTimestep] = framebufferResetRequired;
   }
 }
 
@@ -170,12 +182,15 @@ void OSPRayWindow::reshape(const vec2i &newWindowSize)
   }
 
   framebuffersPerTimestep.clear();
+  framebufferLastReset.clear();
 
   framebuffersPerTimestep[currentTimestep] =
       ospNewFrameBuffer(framebufferSize.x,
                         framebufferSize.y,
                         OSP_FB_SRGBA,
                         OSP_FB_COLOR | OSP_FB_ACCUM);
+
+  framebufferLastReset[currentTimestep] = ospcommon::utility::TimeStamp();
 
   framebuffer = framebuffersPerTimestep[currentTimestep];
 

@@ -20,6 +20,7 @@
 #include "ArcballCamera.h"
 #include "ospcommon/math/box.h"
 #include "ospcommon/math/vec.h"
+#include "ospcommon/utility/TimeStamp.h"
 #include "ospray/ospray.h"
 
 using namespace ospcommon::math;
@@ -78,6 +79,12 @@ class OSPRayWindow
   // multiple playback loops, for example.
   int currentTimestep = 0;
   std::unordered_map<int, OSPFrameBuffer> framebuffersPerTimestep;
+
+  // last time at which reset accumulation was required
+  ospcommon::utility::TimeStamp framebufferResetRequired;
+
+  // indicates when frame buffer for given time step was last reset
+  std::unordered_map<int, ospcommon::utility::TimeStamp> framebufferLastReset;
 
   // allow window to redraw but do not render new frames (display current
   // framebuffer only)

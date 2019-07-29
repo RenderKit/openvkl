@@ -40,7 +40,7 @@ namespace openvkl {
 
       std::vector<VOXEL_TYPE> generateVoxels() override
       {
-        std::vector<VOXEL_TYPE> voxels(this->dimensions.product());
+        std::vector<VOXEL_TYPE> voxels(longProduct(this->dimensions));
 
         std::ifstream input(filename, std::ios::binary);
 
@@ -49,7 +49,7 @@ namespace openvkl {
         }
 
         input.read((char *)voxels.data(),
-                   this->dimensions.product() * sizeof(VOXEL_TYPE));
+                   longProduct(this->dimensions) * sizeof(VOXEL_TYPE));
 
         if (!input.good()) {
           throw std::runtime_error("error reading raw volume file");

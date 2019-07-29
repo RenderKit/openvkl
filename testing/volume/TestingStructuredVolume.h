@@ -25,6 +25,11 @@ using namespace ospcommon::math;
 namespace openvkl {
   namespace testing {
 
+    inline size_t longProduct(const vec3i &dims)
+    {
+      return dims.x * size_t(dims.y) * dims.z;
+    }
+
     template <typename T>
     VKLDataType getVKLDataType()
     {

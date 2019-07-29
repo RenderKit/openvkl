@@ -41,7 +41,7 @@ namespace openvkl {
         throw std::runtime_error("no voxelData set on volume");
       }
 
-      if (voxelData->size() != this->dimensions.product()) {
+      if (voxelData->size() != longProduct(this->dimensions)) {
         throw std::runtime_error(
             "incorrect voxelData size for provided volume dimensions");
       }

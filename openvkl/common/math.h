@@ -16,13 +16,18 @@
 
 #pragma once
 
+#include <cmath>
 #include "ospcommon/math/box.h"
 #include "ospcommon/math/vec.h"
-#include <cmath>
 
 namespace openvkl {
 
   using namespace ospcommon;
+
+  inline size_t longProduct(const vec3i &dims)
+  {
+    return dims.x * size_t(dims.y) * dims.z;
+  }
 
   inline std::pair<float, float> intersectBox(const vec3f &origin,
                                               const vec3f &direction,

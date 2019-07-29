@@ -47,7 +47,7 @@ namespace openvkl {
       std::vector<VOXEL_TYPE> generateVoxels() override
       {
         {
-          std::vector<VOXEL_TYPE> voxels(this->dimensions.product());
+          std::vector<VOXEL_TYPE> voxels(longProduct(this->dimensions));
 
           auto transformLocalToObject = [&](const vec3f &localCoordinates) {
             return this->gridOrigin + localCoordinates * this->gridSpacing;

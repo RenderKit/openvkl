@@ -169,12 +169,12 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
       ospSetFloat(camera, "aspect", windowSize.x / float(windowSize.y));
       ospSetVec3f(camera,
-                  "pos",
+                  "position",
                   arcballCamera->eyePos().x,
                   arcballCamera->eyePos().y,
                   arcballCamera->eyePos().z);
       ospSetVec3f(camera,
-                  "dir",
+                  "direction",
                   arcballCamera->lookDir().x,
                   arcballCamera->lookDir().y,
                   arcballCamera->lookDir().z);

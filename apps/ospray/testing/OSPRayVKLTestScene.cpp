@@ -78,7 +78,7 @@ OSPVolume convertToOSPVolume(
   ospSetVec3f(
       volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-  ospSetString(volume, "voxelType", "float");
+  ospSetInt(volume, "voxelType", OSP_FLOAT);
 
   std::vector<float> voxels = proceduralVolume->generateVoxels();
 

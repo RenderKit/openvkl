@@ -198,7 +198,7 @@ int main(int argc, const char **argv)
         << "usage: " << argv[0]
         << " <simple_native | simple_vkl | vkl_ray_iterator_surface | "
            "vkl_ray_iterator_volume | vkl_ray_iterator | vkl_pathtracer> "
-           "[[-gridType structured_regular | structured_spherical] "
+           "[[-gridType structured_regular] "
            "[-gridSpacing <x> <y> <z>] -file <float.raw> <dimX> <dimY> <dimZ>]"
         << std::endl;
     return 1;
@@ -291,6 +291,12 @@ int main(int argc, const char **argv)
 
   glfwOSPRayWindow->registerImGuiCallback([&]() {
     bool changed = false;
+
+    static int spp = 1;
+    if (ImGui::SliderInt("spp", &spp, 1, 16)) {
+      ospSetInt(testScene->getRenderer(), "spp", spp);
+      ospCommit(testScene->getRenderer());
+    }
 
     if (rendererType == "vkl_ray_iterator" ||
         rendererType == "vkl_ray_iterator_volume") {

@@ -191,92 +191,108 @@ bool addIsosurfacesUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
   return isosurfacesChanged;
 }
 
+void usage(const char *progname)
+{
+  std::cerr << "usage: " << progname << "\n"
+            << "\t-renderer simple_native | simple_vkl | "
+               "vkl_ray_iterator_surface | "
+               "vkl_ray_iterator_volume | vkl_ray_iterator | vkl_pathtracer\n"
+               "\t-gridType structured_regular\n"
+               "\t-gridSpacing <x> <y> <z>\n"
+               "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
+               "\t-file <float.raw>"
+            << std::endl;
+}
+
 int main(int argc, const char **argv)
 {
-  if (argc < 2) {
-    std::cerr
-        << "usage: " << argv[0]
-        << " <simple_native | simple_vkl | vkl_ray_iterator_surface | "
-           "vkl_ray_iterator_volume | vkl_ray_iterator | vkl_pathtracer> "
-           "[[-gridType structured_regular] "
-           "[-gridSpacing <x> <y> <z>] -file <float.raw> <dimX> <dimY> <dimZ>]"
-        << std::endl;
-    return 1;
-  }
-
   initializeOSPRay();
   initializeOpenVKL();
 
-  std::string rendererType(argv[1]);
-  std::cout << "using renderer: " << rendererType << std::endl;
-
   std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
 
-  if (argc == 2) {
-    const vec3i dimensions(256);
-    const vec3f gridOrigin(-1.f);
-    const vec3f gridSpacing(2.f / float(dimensions.x));
+  std::string rendererType("vkl_pathtracer");
+  std::string gridType("structured_regular");
+  vec3i dimensions(100);
+  vec3f gridOrigin(-1.f);
+  vec3f gridSpacing(-1.f);
+  std::string filename;
 
-    testingStructuredVolume = std::shared_ptr<WaveletProceduralVolume>(
-        new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
-  } else if (argc > 2) {
-    int argIndex = 2;
+  int argIndex = 1;
+  while (argIndex < argc) {
+    std::string switchArg(argv[argIndex++]);
 
-    std::string gridType("structured_regular");
-    vec3f gridOrigin(0.f);
-    vec3f gridSpacing(-1.f);
-
-    while (argIndex < argc) {
-      std::string switchArg(argv[argIndex++]);
-
-      if (switchArg == "-gridType") {
-        if (argc < argIndex + 1) {
-          throw std::runtime_error("improper -gridType arguments");
-        }
-
-        gridType = std::string(argv[argIndex++]);
+    if (switchArg == "-gridType") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -gridType arguments");
       }
 
-      else if (switchArg == "-gridSpacing") {
-        if (argc < argIndex + 3) {
-          throw std::runtime_error("improper -gridSpacing arguments");
-        }
-
-        const std::string gridSpacingX(argv[argIndex++]);
-        const std::string gridSpacingY(argv[argIndex++]);
-        const std::string gridSpacingZ(argv[argIndex++]);
-
-        gridSpacing =
-            vec3f(stof(gridSpacingX), stof(gridSpacingY), stof(gridSpacingZ));
+      gridType = std::string(argv[argIndex++]);
+    } else if (switchArg == "-gridSpacing") {
+      if (argc < argIndex + 3) {
+        throw std::runtime_error("improper -gridSpacing arguments");
       }
 
-      else if (switchArg == "-file") {
-        if (argc < argIndex + 4) {
-          throw std::runtime_error("improper -file arguments");
-        }
+      const std::string gridSpacingX(argv[argIndex++]);
+      const std::string gridSpacingY(argv[argIndex++]);
+      const std::string gridSpacingZ(argv[argIndex++]);
 
-        const std::string filename(argv[argIndex++]);
-        const std::string dimX(argv[argIndex++]);
-        const std::string dimY(argv[argIndex++]);
-        const std::string dimZ(argv[argIndex++]);
-
-        const vec3i dimensions(stoi(dimX), stoi(dimY), stoi(dimZ));
-
-        // fit it into a unit cube (if no other grid spacing provided)
-        if (gridSpacing == vec3f(-1.f)) {
-          const float normalizedGridSpacing = reduce_min(1.f / dimensions);
-
-          gridOrigin  = vec3f(-0.5f * dimensions * normalizedGridSpacing);
-          gridSpacing = vec3f(normalizedGridSpacing);
-        }
-
-        testingStructuredVolume = std::shared_ptr<RawFileStructuredVolume>(
-            new RawFileStructuredVolume(
-                filename, gridType, dimensions, gridOrigin, gridSpacing));
-
-      } else {
-        throw std::runtime_error("unknown switch argument");
+      gridSpacing =
+          vec3f(stof(gridSpacingX), stof(gridSpacingY), stof(gridSpacingZ));
+    } else if (switchArg == "-gridDimensions") {
+      if (argc < argIndex + 3) {
+        throw std::runtime_error("improper -gridDimensions arguments");
       }
+
+      const std::string dimX(argv[argIndex++]);
+      const std::string dimY(argv[argIndex++]);
+      const std::string dimZ(argv[argIndex++]);
+
+      dimensions = vec3i(stoi(dimX), stoi(dimY), stoi(dimZ));
+    } else if (switchArg == "-file") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -file arguments");
+      }
+
+      filename = argv[argIndex++];
+    } else if (switchArg == "-renderer") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -renderer arguments");
+      }
+
+      rendererType = argv[argIndex++];
+    } else if (switchArg == "-help") {
+      usage(argv[0]);
+      return 0;
+    } else {
+      std::cerr << "unknown argument " << switchArg << std::endl;
+      usage(argv[0]);
+      throw std::runtime_error("unknown switch argument");
+    }
+  }
+
+  if (gridSpacing == vec3f(-1.f)) {
+    const float normalizedGridSpacing = reduce_min(1.f / dimensions);
+
+    gridOrigin  = vec3f(-1.f * dimensions * normalizedGridSpacing);
+    gridSpacing = vec3f(2.f * normalizedGridSpacing);
+  }
+
+  std::cout << "renderer:       " << rendererType << std::endl;
+  std::cout << "gridType:       " << gridType << std::endl;
+  std::cout << "gridDimensions: " << dimensions << std::endl;
+  std::cout << "gridOrigin:     " << gridOrigin << std::endl;
+  std::cout << "gridSpacing:    " << gridSpacing << std::endl;
+
+  if (!filename.empty()) {
+    std::cout << "filename:       " << filename << std::endl;
+    testingStructuredVolume =
+        std::shared_ptr<RawFileStructuredVolume>(new RawFileStructuredVolume(
+            filename, gridType, dimensions, gridOrigin, gridSpacing));
+  } else {
+    if (gridType == "structured_regular") {
+      testingStructuredVolume = std::shared_ptr<WaveletProceduralVolume>(
+          new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
     }
   }
 

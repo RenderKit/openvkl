@@ -206,11 +206,6 @@ void usage(const char *progname)
 
 int main(int argc, const char **argv)
 {
-  initializeOSPRay();
-  initializeOpenVKL();
-
-  std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
-
   std::string rendererType("vkl_pathtracer");
   std::string gridType("structured_regular");
   vec3i dimensions(100);
@@ -283,6 +278,11 @@ int main(int argc, const char **argv)
   std::cout << "gridDimensions: " << dimensions << std::endl;
   std::cout << "gridOrigin:     " << gridOrigin << std::endl;
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
+
+  initializeOSPRay();
+  initializeOpenVKL();
+
+  std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
 
   if (!filename.empty()) {
     std::cout << "filename:       " << filename << std::endl;

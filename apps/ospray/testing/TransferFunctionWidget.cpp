@@ -21,7 +21,6 @@
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
-#include "cereal/types/vector.hpp"
 
 namespace help {
 
@@ -59,40 +58,6 @@ namespace help {
   }
 
 }  // namespace help
-
-namespace cereal {
-  template <class Archive>
-  void serialize(Archive &archive, vec4f &m)
-  {
-    archive(m.x, m.y, m.z, m.w);
-  }
-
-  template <class Archive>
-  void serialize(Archive &archive, vec2f &m)
-  {
-    archive(m.x, m.y);
-  }
-
-  struct SerializedTransferFunction
-  {
-    std::string tfnName;
-    std::vector<ColorPoint> tfnColorPoints;
-    std::vector<OpacityPoint> tfnOpacityPoints;
-    float globalOpacityScale;
-    vec2f valueRange;
-
-    template <class Archive>
-    void serialize(Archive &archive)
-    {
-      archive(tfnName,
-              tfnColorPoints,
-              tfnOpacityPoints,
-              globalOpacityScale,
-              valueRange);
-    }
-  };
-
-}  // namespace cereal
 
 TransferFunctionWidget::TransferFunctionWidget(
     OSPTransferFunction _transferFunction,
@@ -166,93 +131,6 @@ TransferFunctionWidget::~TransferFunctionWidget()
   }
 }
 
-void TransferFunctionWidget::saveFile(const std::string &filename)
-{
-  std::ofstream ofs(filename);
-
-  if (!ofs.good()) {
-    std::cerr << "unable to open output file: " << filename << std::endl;
-    return;
-  }
-
-  {
-    cereal::XMLOutputArchive oarchive(ofs);
-    saveArchive(oarchive, filename);
-  }
-
-  std::cout << "saved transfer function to: " << filename << std::endl;
-}
-
-void TransferFunctionWidget::loadFile(const std::string &filename)
-{
-  std::ifstream ifs;
-  ifs.open(filename, std::ifstream::in);
-
-  if (!ifs.good()) {
-    std::cerr << "unable to open input file: " << filename << std::endl;
-    return;
-  }
-
-  {
-    cereal::XMLInputArchive iarchive(ifs);
-    loadArchive(iarchive);
-  }
-
-  std::cout << "loaded transfer function from: " << filename << std::endl;
-}
-
-void TransferFunctionWidget::saveArchive(cereal::XMLOutputArchive &oarchive,
-                                         std::string tfnName)
-{
-  if (tfnName.empty()) {
-    tfnName = tfnsNames[currentMap];
-  }
-
-  cereal::SerializedTransferFunction stf;
-  stf.tfnName            = tfnName;
-  stf.tfnColorPoints     = *tfnColorPoints;
-  stf.tfnOpacityPoints   = *tfnOpacityPoints;
-  stf.globalOpacityScale = globalOpacityScale;
-  stf.valueRange         = valueRange;
-
-  oarchive(stf);
-}
-
-void TransferFunctionWidget::loadArchive(cereal::XMLInputArchive &iarchive)
-{
-  cereal::SerializedTransferFunction stf;
-
-  {
-    iarchive(stf);
-  }
-
-  // replace transfer function entry of the same name if it exists
-  auto it = std::find(tfnsNames.begin(), tfnsNames.end(), stf.tfnName);
-
-  if (it != tfnsNames.end()) {
-    int index = it - tfnsNames.begin();
-
-    tfnsColorPoints[index]   = stf.tfnColorPoints;
-    tfnsOpacityPoints[index] = stf.tfnOpacityPoints;
-    tfnsEditable[index]      = true;
-
-    setMap(index);
-
-  } else {
-    tfnsNames.push_back(stf.tfnName);
-    tfnsColorPoints.push_back(stf.tfnColorPoints);
-    tfnsOpacityPoints.push_back(stf.tfnOpacityPoints);
-    tfnsEditable.push_back(true);
-
-    setMap(tfnsNames.size() - 1);
-  }
-
-  globalOpacityScale = stf.globalOpacityScale;
-  valueRange         = stf.valueRange;
-
-  tfnChanged = true;
-}
-
 void TransferFunctionWidget::updateUI()
 {
   if (tfnChanged) {
@@ -268,16 +146,6 @@ void TransferFunctionWidget::updateUI()
   }
 
   ImGui::Text("Linear Transfer Function");
-
-  ImGui::InputText("filename", filenameInput.data(), filenameInput.size() - 1);
-
-  if (ImGui::Button("Save")) {
-    saveFile(std::string(filenameInput.data()));
-  }
-  ImGui::SameLine();
-  if (ImGui::Button("Load")) {
-    loadFile(std::string(filenameInput.data()));
-  }
 
   ImGui::Separator();
   std::vector<const char *> names(tfnsNames.size(), nullptr);

@@ -24,10 +24,6 @@ find_package(OpenGL 2 REQUIRED)
 ## GLFW dependency ##
 find_package(glfw3 REQUIRED)
 
-## Cereal dependency ##
-add_library(cereal INTERFACE)
-target_include_directories(cereal INTERFACE ./cereal/include)
-
 ## OSPRay-based VKL example, using ISPC device extensions ##
 add_executable(ospExampleVKL
   ArcballCamera.cpp
@@ -42,7 +38,6 @@ add_executable(ospExampleVKL
 target_link_libraries(ospExampleVKL
   openvkl_testing
   glfw
-  cereal
   ospray_imgui
   ospray::ospray_testing
   ${OPENGL_LIBRARIES}

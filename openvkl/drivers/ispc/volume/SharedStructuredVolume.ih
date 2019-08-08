@@ -18,6 +18,7 @@
 
 #include "math/box.ih"
 #include "math/vec.ih"
+#include "openvkl/VKLDataType.h"
 
 struct GridAccelerator;
 
@@ -28,10 +29,12 @@ enum SharedStructuredVolumeGridType
 
 struct SharedStructuredVolume
 {
-  float *uniform volumeData;
+  const void *uniform voxelData;
+  uniform VKLDataType voxelType;
+
+  uniform vec3i dimensions;
 
   uniform SharedStructuredVolumeGridType gridType;
-  uniform vec3i dimensions;
   uniform vec3f gridOrigin;
   uniform vec3f gridSpacing;
 
@@ -41,18 +44,31 @@ struct SharedStructuredVolume
 
   GridAccelerator *uniform accelerator;
 
-  void (*uniform getVoxel)(void *uniform volume,
+  // number of bytes for one x/y slice of the data, used to compute offsets for
+  // slices with different z values.
+  uniform uint64 bytesPerVoxel, bytesPerLine, bytesPerSlice;
+
+  // offsets, in bytes, for one step in x,y,z direction; ONLY valid if
+  // bytesPerSlice < 2G.
+  varying uint32 voxelOfs_dx;
+  varying uint32 voxelOfs_dy;
+  varying uint32 voxelOfs_dz;
+
+  void (*uniform transformLocalToObject)(const SharedStructuredVolume *uniform
+                                             self,
+                                         const varying vec3f &localCoordinates,
+                                         varying vec3f &objectCoordinates);
+
+  void (*uniform transformObjectToLocal)(const SharedStructuredVolume *uniform
+                                             self,
+                                         const varying vec3f &objectCoordinates,
+                                         varying vec3f &localCoordinates);
+
+  void (*uniform getVoxel)(const SharedStructuredVolume *uniform self,
                            const varying vec3i &index,
                            varying float &value);
 
   varying float (*uniform computeSample)(
-      void *uniform volume, const varying vec3f &objectCoordinates);
-
-  void (*uniform transformLocalToObject)(SharedStructuredVolume *uniform volume,
-                                         const varying vec3f &localCoordinates,
-                                         varying vec3f &objectCoordinates);
-
-  void (*uniform transformObjectToLocal)(SharedStructuredVolume *uniform volume,
-                                         const varying vec3f &objectCoordinates,
-                                         varying vec3f &localCoordinates);
+      const SharedStructuredVolume *uniform self,
+      const varying vec3f &objectCoordinates);
 };

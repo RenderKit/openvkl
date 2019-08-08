@@ -165,7 +165,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
 
   float t0 = rayInterval.tRange.lower;
   float sample0 =
-      volume->computeSample((void *uniform)volume, origin + t0 * direction);
+      volume->computeSample(volume, origin + t0 * direction);
 
   float t;
 
@@ -176,7 +176,7 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
       return false;
 
     const float sample =
-        volume->computeSample((void *uniform)volume, origin + t * direction);
+        volume->computeSample(volume, origin + t * direction);
 
     float tHit    = inf;
     float epsilon = inf;

@@ -34,16 +34,6 @@ namespace openvkl {
     {
       StructuredVolume<W>::commit();
 
-      if (!ispcEquivalent) {
-        ispcEquivalent =
-            ispc::SharedStructuredVolume_Constructor(ispc::structured_regular);
-
-        if (!ispcEquivalent) {
-          throw std::runtime_error(
-              "could not create ISPC-side object for StructuredRegularVolume");
-        }
-      }
-
       voxelData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "voxelData", nullptr);
 
@@ -51,22 +41,35 @@ namespace openvkl {
         throw std::runtime_error("no voxelData set on volume");
       }
 
-      if (voxelData->dataType != VKL_FLOAT) {
-        throw std::runtime_error(
-            "StructuredRegularVolume currently only supports VKL_FLOAT "
-            "volumes");
-      }
-
       if (voxelData->size() != this->dimensions.product()) {
         throw std::runtime_error(
             "incorrect voxelData size for provided volume dimensions");
       }
 
-      ispc::SharedStructuredVolume_set(ispcEquivalent,
-                                       (float *)voxelData->data,
-                                       (const ispc::vec3i &)this->dimensions,
-                                       (const ispc::vec3f &)this->gridOrigin,
-                                       (const ispc::vec3f &)this->gridSpacing);
+      if (!ispcEquivalent) {
+        ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
+
+        if (!ispcEquivalent) {
+          throw std::runtime_error(
+              "could not create ISPC-side object for StructuredRegularVolume");
+        }
+      }
+
+      bool success = ispc::SharedStructuredVolume_set(
+          ispcEquivalent,
+          (float *)voxelData->data,
+          VKL_FLOAT,
+          (const ispc::vec3i &)this->dimensions,
+          ispc::structured_regular,
+          (const ispc::vec3f &)this->gridOrigin,
+          (const ispc::vec3f &)this->gridSpacing);
+
+      if (!success) {
+        ispc::SharedStructuredVolume_Destructor(ispcEquivalent);
+        ispcEquivalent = nullptr;
+
+        throw std::runtime_error("failed to commit StructuredRegularVolume");
+      }
 
       buildAccelerator();
     }

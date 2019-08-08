@@ -18,27 +18,56 @@
 
 #include <vector>
 #include "TestingStructuredVolume.h"
-#include "ospcommon/math/vec.h"
 #include "openvkl/openvkl.h"
+#include "ospcommon/math/vec.h"
 
 using namespace ospcommon;
 
 namespace openvkl {
   namespace testing {
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    struct ProceduralStructuredVolume : public TestingStructuredVolume
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
+    struct ProceduralStructuredVolume
+        : public TestingStructuredVolume<VOXEL_TYPE>
     {
       ProceduralStructuredVolume(const vec3i &dimensions,
                                  const vec3f &gridOrigin,
-                                 const vec3f &gridSpacing);
+                                 const vec3f &gridSpacing)
+          : TestingStructuredVolume<VOXEL_TYPE>(
+                "structured_regular", dimensions, gridOrigin, gridSpacing)
+      {
+      }
 
-      inline float computeProceduralValue(const vec3f &objectCoordinates)
+      inline VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates)
       {
         return volumeSamplingFunction(objectCoordinates);
       }
 
-      std::vector<float> generateVoxels() override;
+      std::vector<VOXEL_TYPE> generateVoxels() override
+      {
+        {
+          std::vector<VOXEL_TYPE> voxels(this->dimensions.product());
+
+          auto transformLocalToObject = [&](const vec3f &localCoordinates) {
+            return this->gridOrigin + localCoordinates * this->gridSpacing;
+          };
+
+          for (size_t z = 0; z < this->dimensions.z; z++) {
+            for (size_t y = 0; y < this->dimensions.y; y++) {
+              for (size_t x = 0; x < this->dimensions.x; x++) {
+                size_t index = z * this->dimensions.y * this->dimensions.x +
+                               y * this->dimensions.x + x;
+                vec3f objectCoordinates =
+                    transformLocalToObject(vec3f(x, y, z));
+                voxels[index] = volumeSamplingFunction(objectCoordinates);
+              }
+            }
+          }
+
+          return voxels;
+        }
+      }
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -68,8 +97,10 @@ namespace openvkl {
       return objectCoordinates.z;
     }
 
-    using WaveletProceduralVolume = ProceduralStructuredVolume<getWaveletValue>;
-    using ZProceduralVolume = ProceduralStructuredVolume<getZValue>;
+    using WaveletProceduralVolume =
+        ProceduralStructuredVolume<float, getWaveletValue>;
+
+    using ZProceduralVolume = ProceduralStructuredVolume<float, getZValue>;
 
   }  // namespace testing
 }  // namespace openvkl

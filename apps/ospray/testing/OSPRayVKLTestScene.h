@@ -17,8 +17,8 @@
 #pragma once
 
 #include "OSPRayWindow.h"
-#include "ospray/ospray_testing/ospray_testing.h"
 #include "openvkl_testing.h"
+#include "ospray/ospray_testing/ospray_testing.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
@@ -27,14 +27,14 @@ void initializeOSPRay();
 void initializeOpenVKL();
 
 OSPVolume convertToOSPVolume(
-    std::shared_ptr<TestingStructuredVolume> proceduralVolume,
+    std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume,
     OSPTransferFunction transferFunction);
 
 struct OSPRayVKLTestScene
 {
   OSPRayVKLTestScene(
       const std::string &rendererType,
-      std::shared_ptr<TestingStructuredVolume> proceduralVolume);
+      std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume);
 
   ~OSPRayVKLTestScene();
 
@@ -49,7 +49,7 @@ struct OSPRayVKLTestScene
   std::unique_ptr<OSPRayWindow> getOSPRayWindow(const vec2i &windowSize);
 
  protected:
-  std::shared_ptr<TestingStructuredVolume> proceduralVolume;
+  std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume;
 
   OSPWorld world;
   OSPRenderer renderer;

@@ -14,18 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(openvkl_testing SHARED
-  volume/ProceduralStructuredVolume.cpp
-  volume/RawFileStructuredVolume.cpp
-)
+add_library(openvkl_testing INTERFACE)
 
-target_link_libraries(openvkl_testing PUBLIC
+target_link_libraries(openvkl_testing INTERFACE
   openvkl
   ospcommon
 )
 
 target_include_directories(openvkl_testing
-  PUBLIC
+  INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 

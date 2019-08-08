@@ -24,15 +24,39 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    struct RawFileStructuredVolume : public TestingStructuredVolume
+    template <typename VOXEL_TYPE>
+    struct RawFileStructuredVolume : public TestingStructuredVolume<VOXEL_TYPE>
     {
       RawFileStructuredVolume(const std::string &filename,
                               const std::string &gridType,
                               const vec3i &dimensions,
                               const vec3f &gridOrigin,
-                              const vec3f &gridSpacing);
+                              const vec3f &gridSpacing)
+          : filename(filename),
+            TestingStructuredVolume<VOXEL_TYPE>(
+                gridType, dimensions, gridOrigin, gridSpacing)
+      {
+      }
 
-      std::vector<float> generateVoxels() override;
+      std::vector<VOXEL_TYPE> generateVoxels() override
+      {
+        std::vector<VOXEL_TYPE> voxels(this->dimensions.product());
+
+        std::ifstream input(filename, std::ios::binary);
+
+        if (!input) {
+          throw std::runtime_error("error opening raw volume file");
+        }
+
+        input.read((char *)voxels.data(),
+                   this->dimensions.product() * sizeof(VOXEL_TYPE));
+
+        if (!input.good()) {
+          throw std::runtime_error("error reading raw volume file");
+        }
+
+        return voxels;
+      }
 
      protected:
       std::string filename;

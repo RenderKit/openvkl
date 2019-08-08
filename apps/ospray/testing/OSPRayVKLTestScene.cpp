@@ -64,7 +64,7 @@ void initializeOpenVKL()
 }
 
 OSPVolume convertToOSPVolume(
-    std::shared_ptr<TestingStructuredVolume> proceduralVolume,
+    std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume,
     OSPTransferFunction transferFunction)
 {
   OSPVolume volume = ospNewVolume("shared_structured_volume");
@@ -100,7 +100,7 @@ OSPVolume convertToOSPVolume(
 
 OSPRayVKLTestScene::OSPRayVKLTestScene(
     const std::string &rendererType,
-    std::shared_ptr<TestingStructuredVolume> proceduralVolume)
+    std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume)
     : proceduralVolume(proceduralVolume)
 {
   world = ospNewWorld();
@@ -108,8 +108,7 @@ OSPRayVKLTestScene::OSPRayVKLTestScene(
 
   renderer = ospNewRenderer(rendererType.c_str());
 
-  transferFunction =
-      ospTestingNewTransferFunction(osp_vec2f{-1.f, 1.f}, "jet");
+  transferFunction = ospTestingNewTransferFunction(osp_vec2f{-1.f, 1.f}, "jet");
   ospSetObject(renderer, "transferFunction", transferFunction);
   ospRelease(transferFunction);
 

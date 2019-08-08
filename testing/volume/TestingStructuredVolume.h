@@ -25,6 +25,25 @@ using namespace ospcommon::math;
 namespace openvkl {
   namespace testing {
 
+    template <typename T>
+    VKLDataType getVKLDataType()
+    {
+      if (std::is_same<T, unsigned char>::value) {
+        return VKL_UCHAR;
+      } else if (std::is_same<T, short>::value) {
+        return VKL_SHORT;
+      } else if (std::is_same<T, unsigned short>::value) {
+        return VKL_USHORT;
+      } else if (std::is_same<T, float>::value) {
+        return VKL_FLOAT;
+      } else if (std::is_same<T, double>::value) {
+        return VKL_DOUBLE;
+      } else {
+        return VKL_UNKNOWN;
+      }
+    }
+
+    template <typename VOXEL_TYPE>
     struct TestingStructuredVolume
     {
       TestingStructuredVolume(const std::string gridType,
@@ -36,6 +55,17 @@ namespace openvkl {
             gridOrigin(gridOrigin),
             gridSpacing(gridSpacing)
       {
+        voxelType = getVKLDataType<VOXEL_TYPE>();
+
+        if (voxelType == VKL_UNKNOWN) {
+          throw std::runtime_error(
+              "unsupported VOXEL_TYPE for TestingStructuredVolume");
+        }
+      }
+
+      inline VKLDataType getVoxelType() const
+      {
+        return voxelType;
       }
 
       inline vec3i getDimensions() const
@@ -64,12 +94,12 @@ namespace openvkl {
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
-      virtual std::vector<float> generateVoxels() = 0;
+      virtual std::vector<VOXEL_TYPE> generateVoxels() = 0;
 
      protected:
       void generateVKLVolume()
       {
-        std::vector<float> voxels = generateVoxels();
+        std::vector<VOXEL_TYPE> voxels = generateVoxels();
 
         volume = vklNewVolume(gridType.c_str());
 
@@ -80,12 +110,14 @@ namespace openvkl {
         vklSet3f(
             volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-        VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+        VKLData voxelData = vklNewData(voxels.size(), voxelType, voxels.data());
         vklSetData(volume, "voxelData", voxelData);
         vklRelease(voxelData);
 
         vklCommit(volume);
       }
+
+      VKLDataType voxelType;
 
       std::string gridType = "structured_reular";
       vec3i dimensions;

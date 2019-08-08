@@ -282,12 +282,12 @@ int main(int argc, const char **argv)
   initializeOSPRay();
   initializeOpenVKL();
 
-  std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
+  std::shared_ptr<TestingStructuredVolume<float>> testingStructuredVolume;
 
   if (!filename.empty()) {
     std::cout << "filename:       " << filename << std::endl;
-    testingStructuredVolume =
-        std::shared_ptr<RawFileStructuredVolume>(new RawFileStructuredVolume(
+    testingStructuredVolume = std::shared_ptr<RawFileStructuredVolume<float>>(
+        new RawFileStructuredVolume<float>(
             filename, gridType, dimensions, gridOrigin, gridSpacing));
   } else {
     if (gridType == "structured_regular") {

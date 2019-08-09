@@ -23,7 +23,7 @@ using namespace openvkl::testing;
 
 template <typename VOXEL_TYPE>
 void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
-                                                      int step = 1)
+                                                      vec3i step = vec3i(1))
 {
   std::unique_ptr<
       ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
@@ -118,6 +118,19 @@ TEST_CASE("Structured volume sampling")
     SECTION("double")
     {
       scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(513), 16);
+    }
+  }
+
+  // these are necessarily longer-running tests, so should maybe be split out
+  // into a "large" test suite later.
+  SECTION("64-bit addressing")
+  {
+    // only do double tests here for now; larger grids incur even more grid
+    // accelerator build overhead, which we need to resolve.
+    SECTION("double")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<double>(
+          vec3i(11586, 11586, 2), vec3i(16, 16, 1));
     }
   }
 }

@@ -22,21 +22,26 @@ using namespace ospcommon;
 using namespace openvkl::testing;
 
 template <typename VOXEL_TYPE>
-void scalar_sampling_on_vertices_vs_procedural_values()
+void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
+                                                      int step = 1)
 {
   std::unique_ptr<
       ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
       v(new ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>(
-          vec3i(128), vec3f(0.f), vec3f(1.f)));
+          dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
-  multidim_index_sequence<3> mis(v->getDimensions());
+  multidim_index_sequence<3> mis(v->getDimensions() / step);
 
   for (const auto &offset : mis) {
-    vec3f objectCoordinates = v->getGridOrigin() + offset * v->getGridSpacing();
+    const auto offsetWithStep = offset * step;
 
-    INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+    vec3f objectCoordinates =
+        v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
+
+    INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                     << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
@@ -54,28 +59,65 @@ TEST_CASE("Structured volume sampling")
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  SECTION("unsigned char")
+  SECTION("32-bit addressing")
   {
-    scalar_sampling_on_vertices_vs_procedural_values<unsigned char>();
+    SECTION("unsigned char")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<unsigned char>(
+          vec3i(128));
+    }
+
+    SECTION("short")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<short>(vec3i(128));
+    }
+
+    SECTION("unsigned short")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<unsigned short>(
+          vec3i(128));
+    }
+
+    SECTION("float")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<float>(vec3i(128));
+    }
+
+    SECTION("double")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(128));
+    }
   }
 
-  SECTION("short")
+  // these are necessarily longer-running tests, so should maybe be split out
+  // into a "large" test suite later.
+  SECTION("64/32-bit addressing")
   {
-    scalar_sampling_on_vertices_vs_procedural_values<short>();
-  }
+    SECTION("unsigned char")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<unsigned char>(
+          vec3i(1025), 16);
+    }
 
-  SECTION("unsigned short")
-  {
-    scalar_sampling_on_vertices_vs_procedural_values<unsigned short>();
-  }
+    SECTION("short")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<short>(vec3i(813), 16);
+    }
 
-  SECTION("float")
-  {
-    scalar_sampling_on_vertices_vs_procedural_values<float>();
-  }
+    SECTION("unsigned short")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<unsigned short>(
+          vec3i(813), 16);
+    }
 
-  SECTION("double")
-  {
-    scalar_sampling_on_vertices_vs_procedural_values<double>();
+    SECTION("float")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<float>(vec3i(646), 16);
+    }
+
+    SECTION("double")
+    {
+      scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(513), 16);
+    }
   }
 }

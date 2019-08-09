@@ -462,17 +462,22 @@ export uniform bool SharedStructuredVolume_set(
 
   uniform uint64 bytesPerVoxel;
 
-  if (voxelType == VKL_UCHAR)
+  if (voxelType == VKL_UCHAR) {
+    print("#vkl:shared_structured_volume: using VKL_UCHAR voxelType\n");
     bytesPerVoxel = sizeof(uniform uint8);
-  else if (voxelType == VKL_SHORT)
+  } else if (voxelType == VKL_SHORT) {
+    print("#vkl:shared_structured_volume: using VKL_SHORT voxelType\n");
     bytesPerVoxel = sizeof(uniform int16);
-  else if (voxelType == VKL_USHORT)
+  } else if (voxelType == VKL_USHORT) {
+    print("#vkl:shared_structured_volume: using VKL_USHORT voxelType\n");
     bytesPerVoxel = sizeof(uniform uint16);
-  else if (voxelType == VKL_FLOAT)
+  } else if (voxelType == VKL_FLOAT) {
+    print("#vkl:shared_structured_volume: using VKL_FLOAT voxelType\n");
     bytesPerVoxel = sizeof(uniform float);
-  else if (voxelType == VKL_DOUBLE)
+  } else if (voxelType == VKL_DOUBLE) {
+    print("#vkl:shared_structured_volume: using VKL_DOUBLE voxelType\n");
     bytesPerVoxel = sizeof(uniform double);
-  else {
+  } else {
     print("#vkl:shared_structured_volume: unknown voxelType\n");
     return false;
   }

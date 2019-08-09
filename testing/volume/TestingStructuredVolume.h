@@ -63,6 +63,13 @@ namespace openvkl {
         }
       }
 
+      virtual ~TestingStructuredVolume()
+      {
+        if (volume) {
+          vklRelease(volume);
+        }
+      }
+
       inline VKLDataType getVoxelType() const
       {
         return voxelType;

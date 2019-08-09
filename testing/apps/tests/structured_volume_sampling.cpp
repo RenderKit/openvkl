@@ -15,11 +15,36 @@
 // ======================================================================== //
 
 #include "../../external/catch.hpp"
-#include "ospcommon/utility/multidim_index_sequence.h"
 #include "openvkl_testing.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
+
+template <typename VOXEL_TYPE>
+void scalar_sampling_on_vertices_vs_procedural_values()
+{
+  std::unique_ptr<
+      ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
+      v(new ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>(
+          vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  multidim_index_sequence<3> mis(v->getDimensions());
+
+  for (const auto &offset : mis) {
+    vec3f objectCoordinates = v->getGridOrigin() + offset * v->getGridSpacing();
+
+    INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+    INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                << objectCoordinates.y << " "
+                                << objectCoordinates.z);
+    REQUIRE(
+        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
+        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
+  }
+}
 
 TEST_CASE("Structured volume sampling")
 {
@@ -29,26 +54,28 @@ TEST_CASE("Structured volume sampling")
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
-
-  VKLVolume vklVolume = v->getVKLVolume();
-
-  SECTION("scalar sampling on vertices vs procedural values")
+  SECTION("unsigned char")
   {
-    multidim_index_sequence<3> mis(v->getDimensions());
+    scalar_sampling_on_vertices_vs_procedural_values<unsigned char>();
+  }
 
-    for (const auto &offset : mis) {
-      vec3f objectCoordinates =
-          v->getGridOrigin() + offset * v->getGridSpacing();
+  SECTION("short")
+  {
+    scalar_sampling_on_vertices_vs_procedural_values<short>();
+  }
 
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
-      CHECK(
-          vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
-          Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
-    }
+  SECTION("unsigned short")
+  {
+    scalar_sampling_on_vertices_vs_procedural_values<unsigned short>();
+  }
+
+  SECTION("float")
+  {
+    scalar_sampling_on_vertices_vs_procedural_values<float>();
+  }
+
+  SECTION("double")
+  {
+    scalar_sampling_on_vertices_vs_procedural_values<double>();
   }
 }

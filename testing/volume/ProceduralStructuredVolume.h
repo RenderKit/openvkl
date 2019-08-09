@@ -74,22 +74,33 @@ namespace openvkl {
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    inline float getWaveletValue(const vec3f &objectCoordinates)
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getWaveletValue(const vec3f &objectCoordinates)
     {
       // wavelet parameters
-      constexpr float M  = 1.f;
-      constexpr float G  = 1.f;
-      constexpr float XM = 1.f;
-      constexpr float YM = 1.f;
-      constexpr float ZM = 1.f;
-      constexpr float XF = 3.f;
-      constexpr float YF = 3.f;
-      constexpr float ZF = 3.f;
+      constexpr double M  = 1.f;
+      constexpr double G  = 1.f;
+      constexpr double XM = 1.f;
+      constexpr double YM = 1.f;
+      constexpr double ZM = 1.f;
+      constexpr double XF = 3.f;
+      constexpr double YF = 3.f;
+      constexpr double ZF = 3.f;
 
-      return M * G *
-             (XM * sinf(XF * objectCoordinates.x) +
-              YM * sinf(YF * objectCoordinates.y) +
-              ZM * cosf(ZF * objectCoordinates.z));
+      double value = M * G *
+                     (XM * ::sin(XF * objectCoordinates.x) +
+                      YM * ::sin(YF * objectCoordinates.y) +
+                      ZM * ::cos(ZF * objectCoordinates.z));
+
+      if (std::is_unsigned<VOXEL_TYPE>::value) {
+        value = fabs(value);
+      }
+
+      value = clamp(value,
+                    double(std::numeric_limits<VOXEL_TYPE>::min()),
+                    double(std::numeric_limits<VOXEL_TYPE>::max()));
+
+      return VOXEL_TYPE(value);
     }
 
     inline float getZValue(const vec3f &objectCoordinates)
@@ -98,7 +109,7 @@ namespace openvkl {
     }
 
     using WaveletProceduralVolume =
-        ProceduralStructuredVolume<float, getWaveletValue>;
+        ProceduralStructuredVolume<float, getWaveletValue<float>>;
 
     using ZProceduralVolume = ProceduralStructuredVolume<float, getZValue>;
 

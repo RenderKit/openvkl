@@ -57,8 +57,8 @@ namespace openvkl {
 
       bool success = ispc::SharedStructuredVolume_set(
           ispcEquivalent,
-          (float *)voxelData->data,
-          VKL_FLOAT,
+          voxelData->data,
+          voxelData->dataType,
           (const ispc::vec3i &)this->dimensions,
           ispc::structured_regular,
           (const ispc::vec3f &)this->gridOrigin,

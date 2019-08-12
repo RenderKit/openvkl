@@ -28,14 +28,16 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
-    struct ProceduralStructuredVolume
-        : public TestingStructuredVolume<VOXEL_TYPE>
+    struct ProceduralStructuredVolume : public TestingStructuredVolume
     {
       ProceduralStructuredVolume(const vec3i &dimensions,
                                  const vec3f &gridOrigin,
                                  const vec3f &gridSpacing)
-          : TestingStructuredVolume<VOXEL_TYPE>(
-                "structured_regular", dimensions, gridOrigin, gridSpacing)
+          : TestingStructuredVolume("structured_regular",
+                                    dimensions,
+                                    gridOrigin,
+                                    gridSpacing,
+                                    getVKLDataType<VOXEL_TYPE>())
       {
       }
 
@@ -44,10 +46,13 @@ namespace openvkl {
         return volumeSamplingFunction(objectCoordinates);
       }
 
-      std::vector<VOXEL_TYPE> generateVoxels() override
+      std::vector<char> generateVoxels() override
       {
         {
-          std::vector<VOXEL_TYPE> voxels(longProduct(this->dimensions));
+          std::vector<char> voxels(longProduct(this->dimensions) *
+                                   sizeof(VOXEL_TYPE));
+
+          VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
 
           auto transformLocalToObject = [&](const vec3f &localCoordinates) {
             return this->gridOrigin + localCoordinates * this->gridSpacing;
@@ -60,7 +65,7 @@ namespace openvkl {
                                y * this->dimensions.x + x;
                 vec3f objectCoordinates =
                     transformLocalToObject(vec3f(x, y, z));
-                voxels[index] = volumeSamplingFunction(objectCoordinates);
+                voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
               }
             }
           }
@@ -110,6 +115,23 @@ namespace openvkl {
 
     using WaveletProceduralVolume =
         ProceduralStructuredVolume<float, getWaveletValue<float>>;
+
+    using WaveletProceduralVolumeUchar =
+        ProceduralStructuredVolume<unsigned char,
+                                   getWaveletValue<unsigned char>>;
+
+    using WaveletProceduralVolumeShort =
+        ProceduralStructuredVolume<short, getWaveletValue<short>>;
+
+    using WaveletProceduralVolumeUshort =
+        ProceduralStructuredVolume<unsigned short,
+                                   getWaveletValue<unsigned short>>;
+
+    using WaveletProceduralVolumeFloat =
+        ProceduralStructuredVolume<float, getWaveletValue<float>>;
+
+    using WaveletProceduralVolumeDouble =
+        ProceduralStructuredVolume<double, getWaveletValue<double>>;
 
     using ZProceduralVolume = ProceduralStructuredVolume<float, getZValue>;
 

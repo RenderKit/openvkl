@@ -16,6 +16,7 @@
 
 #include <imgui.h>
 #include <array>
+#include <map>
 #include <memory>
 #include <random>
 #include "GLFWOSPRayWindow.h"
@@ -200,6 +201,7 @@ void usage(const char *progname)
                "\t-gridType structured_regular\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
+               "\t-voxelType uchar | short | ushort | float | double\n"
                "\t-file <float.raw>"
             << std::endl;
 }
@@ -211,6 +213,8 @@ int main(int argc, const char **argv)
   vec3i dimensions(100);
   vec3f gridOrigin(-1.f);
   vec3f gridSpacing(-1.f);
+  std::string voxelTypeString("float");
+  VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
 
   int argIndex = 1;
@@ -244,6 +248,25 @@ int main(int argc, const char **argv)
       const std::string dimZ(argv[argIndex++]);
 
       dimensions = vec3i(stoi(dimX), stoi(dimY), stoi(dimZ));
+    } else if (switchArg == "-voxelType") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -file arguments");
+      }
+
+      std::map<std::string, VKLDataType> stringToVKLDataType = {
+          {"uchar", VKL_UCHAR},
+          {"short", VKL_SHORT},
+          {"ushort", VKL_USHORT},
+          {"float", VKL_FLOAT},
+          {"double", VKL_DOUBLE}};
+
+      voxelTypeString = std::string(argv[argIndex++]);
+
+      if (!stringToVKLDataType.count(voxelTypeString)) {
+        throw std::runtime_error("unsupported -voxelType specified");
+      }
+
+      voxelType = stringToVKLDataType[voxelTypeString];
     } else if (switchArg == "-file") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -file arguments");
@@ -278,21 +301,48 @@ int main(int argc, const char **argv)
   std::cout << "gridDimensions: " << dimensions << std::endl;
   std::cout << "gridOrigin:     " << gridOrigin << std::endl;
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
+  std::cout << "voxelType:      " << voxelTypeString << std::endl;
 
   initializeOSPRay();
   initializeOpenVKL();
 
-  std::shared_ptr<TestingStructuredVolume<float>> testingStructuredVolume;
+  std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
 
   if (!filename.empty()) {
     std::cout << "filename:       " << filename << std::endl;
-    testingStructuredVolume = std::shared_ptr<RawFileStructuredVolume<float>>(
-        new RawFileStructuredVolume<float>(
-            filename, gridType, dimensions, gridOrigin, gridSpacing));
+    testingStructuredVolume = std::shared_ptr<RawFileStructuredVolume>(
+        new RawFileStructuredVolume(filename,
+                                    gridType,
+                                    dimensions,
+                                    gridOrigin,
+                                    gridSpacing,
+                                    voxelType));
   } else {
     if (gridType == "structured_regular") {
-      testingStructuredVolume = std::shared_ptr<WaveletProceduralVolume>(
-          new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+      if (voxelType == VKL_UCHAR) {
+        testingStructuredVolume =
+            std::make_shared<WaveletProceduralVolumeUchar>(
+                dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_SHORT) {
+        testingStructuredVolume =
+            std::make_shared<WaveletProceduralVolumeShort>(
+                dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_USHORT) {
+        testingStructuredVolume =
+            std::make_shared<WaveletProceduralVolumeUshort>(
+                dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_FLOAT) {
+        testingStructuredVolume =
+            std::make_shared<WaveletProceduralVolumeFloat>(
+                dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_DOUBLE) {
+        testingStructuredVolume =
+            std::make_shared<WaveletProceduralVolumeDouble>(
+                dimensions, gridOrigin, gridSpacing);
+      } else {
+        throw std::runtime_error(
+            "cannot create procedural volume for unknown voxel type");
+      }
     }
   }
 

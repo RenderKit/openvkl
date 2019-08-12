@@ -63,8 +63,31 @@ void initializeOpenVKL()
   }
 }
 
+OSPDataType getOSPDataType(VKLDataType dataType)
+{
+  switch (dataType) {
+  case VKL_UCHAR:
+    return OSP_UCHAR;
+  case VKL_SHORT:
+    return OSP_SHORT;
+  case VKL_USHORT:
+    return OSP_USHORT;
+  case VKL_FLOAT:
+    return OSP_FLOAT;
+  case VKL_DOUBLE:
+    return OSP_DOUBLE;
+  case VKL_UNKNOWN:
+    break;
+  default:
+    break;
+  };
+
+  throw std::runtime_error(
+      "cannot find OSPDataType corresponding to VKLDataType");
+}
+
 OSPVolume convertToOSPVolume(
-    std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume,
+    std::shared_ptr<TestingStructuredVolume> proceduralVolume,
     OSPTransferFunction transferFunction)
 {
   OSPVolume volume = ospNewVolume("shared_structured_volume");
@@ -73,16 +96,20 @@ OSPVolume convertToOSPVolume(
   vec3f gridOrigin  = proceduralVolume->getGridOrigin();
   vec3f gridSpacing = proceduralVolume->getGridSpacing();
 
+  OSPDataType ospDataType = getOSPDataType(proceduralVolume->getVoxelType());
+
   ospSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
   ospSetVec3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
   ospSetVec3f(
       volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-  ospSetInt(volume, "voxelType", OSP_FLOAT);
+  ospSetInt(volume, "voxelType", ospDataType);
 
-  std::vector<float> voxels = proceduralVolume->generateVoxels();
+  std::vector<char> voxels = proceduralVolume->generateVoxels();
 
-  OSPData voxelData = ospNewData(voxels.size(), OSP_FLOAT, voxels.data());
+  OSPData voxelData = ospNewData(longProduct(proceduralVolume->getDimensions()),
+                                 ospDataType,
+                                 voxels.data());
   ospSetData(volume, "voxelData", voxelData);
   ospRelease(voxelData);
 
@@ -100,7 +127,7 @@ OSPVolume convertToOSPVolume(
 
 OSPRayVKLTestScene::OSPRayVKLTestScene(
     const std::string &rendererType,
-    std::shared_ptr<TestingStructuredVolume<float>> proceduralVolume)
+    std::shared_ptr<TestingStructuredVolume> proceduralVolume)
     : proceduralVolume(proceduralVolume)
 {
   world = ospNewWorld();

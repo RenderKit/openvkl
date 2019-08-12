@@ -31,7 +31,7 @@ namespace openvkl {
     }
 
     template <typename T>
-    VKLDataType getVKLDataType()
+    inline VKLDataType getVKLDataType()
     {
       if (std::is_same<T, unsigned char>::value) {
         return VKL_UCHAR;
@@ -48,24 +48,41 @@ namespace openvkl {
       }
     }
 
-    template <typename VOXEL_TYPE>
+    inline size_t sizeOfVKLDataType(VKLDataType dataType)
+    {
+      switch (dataType) {
+      case VKL_UCHAR:
+        return sizeof(unsigned char);
+      case VKL_SHORT:
+        return sizeof(short);
+      case VKL_USHORT:
+        return sizeof(unsigned short);
+      case VKL_FLOAT:
+        return sizeof(float);
+      case VKL_DOUBLE:
+        return sizeof(double);
+      case VKL_UNKNOWN:
+        break;
+      default:
+        break;
+      };
+
+      throw std::runtime_error("cannot compute size of unknown VKLDataType");
+    }
+
     struct TestingStructuredVolume
     {
-      TestingStructuredVolume(const std::string gridType,
+      TestingStructuredVolume(const std::string &gridType,
                               const vec3i &dimensions,
                               const vec3f &gridOrigin,
-                              const vec3f &gridSpacing)
+                              const vec3f &gridSpacing,
+                              VKLDataType voxelType)
           : gridType(gridType),
             dimensions(dimensions),
             gridOrigin(gridOrigin),
-            gridSpacing(gridSpacing)
+            gridSpacing(gridSpacing),
+            voxelType(voxelType)
       {
-        voxelType = getVKLDataType<VOXEL_TYPE>();
-
-        if (voxelType == VKL_UNKNOWN) {
-          throw std::runtime_error(
-              "unsupported VOXEL_TYPE for TestingStructuredVolume");
-        }
       }
 
       virtual ~TestingStructuredVolume()
@@ -106,12 +123,12 @@ namespace openvkl {
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
-      virtual std::vector<VOXEL_TYPE> generateVoxels() = 0;
+      virtual std::vector<char> generateVoxels() = 0;
 
      protected:
       void generateVKLVolume()
       {
-        std::vector<VOXEL_TYPE> voxels = generateVoxels();
+        std::vector<char> voxels = generateVoxels();
 
         volume = vklNewVolume(gridType.c_str());
 
@@ -122,19 +139,20 @@ namespace openvkl {
         vklSet3f(
             volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-        VKLData voxelData = vklNewData(voxels.size(), voxelType, voxels.data());
+        VKLData voxelData =
+            vklNewData(longProduct(dimensions), voxelType, voxels.data());
         vklSetData(volume, "voxelData", voxelData);
         vklRelease(voxelData);
 
         vklCommit(volume);
       }
 
-      VKLDataType voxelType;
-
       std::string gridType = "structured_reular";
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
+
+      VKLDataType voxelType;
 
       VKLVolume volume{nullptr};
     };

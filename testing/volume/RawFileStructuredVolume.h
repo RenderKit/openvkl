@@ -24,23 +24,24 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <typename VOXEL_TYPE>
-    struct RawFileStructuredVolume : public TestingStructuredVolume<VOXEL_TYPE>
+    struct RawFileStructuredVolume : public TestingStructuredVolume
     {
       RawFileStructuredVolume(const std::string &filename,
                               const std::string &gridType,
                               const vec3i &dimensions,
                               const vec3f &gridOrigin,
-                              const vec3f &gridSpacing)
+                              const vec3f &gridSpacing,
+                              VKLDataType voxelType)
           : filename(filename),
-            TestingStructuredVolume<VOXEL_TYPE>(
-                gridType, dimensions, gridOrigin, gridSpacing)
+            TestingStructuredVolume(
+                gridType, dimensions, gridOrigin, gridSpacing, voxelType)
       {
       }
 
-      std::vector<VOXEL_TYPE> generateVoxels() override
+      std::vector<char> generateVoxels() override
       {
-        std::vector<VOXEL_TYPE> voxels(longProduct(this->dimensions));
+        std::vector<char> voxels(longProduct(this->dimensions) *
+                                 sizeOfVKLDataType(voxelType));
 
         std::ifstream input(filename, std::ios::binary);
 
@@ -48,8 +49,9 @@ namespace openvkl {
           throw std::runtime_error("error opening raw volume file");
         }
 
-        input.read((char *)voxels.data(),
-                   longProduct(this->dimensions) * sizeof(VOXEL_TYPE));
+        input.read(
+            (char *)voxels.data(),
+            longProduct(this->dimensions) * sizeOfVKLDataType(voxelType));
 
         if (!input.good()) {
           throw std::runtime_error("error reading raw volume file");

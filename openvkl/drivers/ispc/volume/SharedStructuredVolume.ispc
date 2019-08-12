@@ -17,6 +17,9 @@
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
 
+// #define PRINT_DEBUG_ENABLE
+#include "common/print_debug.ih"
+
 ///////////////////////////////////////////////////////////////////////////////
 // Coordinate transformations for all supported structured volume types ///////
 ///////////////////////////////////////////////////////////////////////////////
@@ -463,19 +466,19 @@ export uniform bool SharedStructuredVolume_set(
   uniform uint64 bytesPerVoxel;
 
   if (voxelType == VKL_UCHAR) {
-    print("#vkl:shared_structured_volume: using VKL_UCHAR voxelType\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_UCHAR voxelType\n");
     bytesPerVoxel = sizeof(uniform uint8);
   } else if (voxelType == VKL_SHORT) {
-    print("#vkl:shared_structured_volume: using VKL_SHORT voxelType\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_SHORT voxelType\n");
     bytesPerVoxel = sizeof(uniform int16);
   } else if (voxelType == VKL_USHORT) {
-    print("#vkl:shared_structured_volume: using VKL_USHORT voxelType\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_USHORT voxelType\n");
     bytesPerVoxel = sizeof(uniform uint16);
   } else if (voxelType == VKL_FLOAT) {
-    print("#vkl:shared_structured_volume: using VKL_FLOAT voxelType\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_FLOAT voxelType\n");
     bytesPerVoxel = sizeof(uniform float);
   } else if (voxelType == VKL_DOUBLE) {
-    print("#vkl:shared_structured_volume: using VKL_DOUBLE voxelType\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_DOUBLE voxelType\n");
     bytesPerVoxel = sizeof(uniform double);
   } else {
     print("#vkl:shared_structured_volume: unknown voxelType\n");
@@ -498,7 +501,7 @@ export uniform bool SharedStructuredVolume_set(
 
   if (bytesPerVolume <= (1ULL << 30)) {
     // in this case, we know ALL addressing can be 32-bit.
-    print("#vkl:shared_structured_volume: using 32-bit mode\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
 
     if (voxelType == VKL_UCHAR) {
       self->getVoxel      = SSV_getVoxel_uint8_32;
@@ -520,7 +523,7 @@ export uniform bool SharedStructuredVolume_set(
   } else if (bytesPerSlice <= (1ULL << 30)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice begins
-    print("#vkl:shared_structured_volume: using 64/32-bit mode\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
 
     if (voxelType == VKL_UCHAR) {
       self->getVoxel      = SSV_getVoxel_uint8_64_32;
@@ -541,7 +544,7 @@ export uniform bool SharedStructuredVolume_set(
   } else {
     // in this case, even a single slice is too big to do 32-bit
     // addressing, and we have to do 64-bit throughout
-    print("#vkl:shared_structured_volume: using 64-bit mode\n");
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 64-bit mode\n");
 
     if (voxelType == VKL_UCHAR)
       self->getVoxel = SSV_getVoxel_uint8_64;

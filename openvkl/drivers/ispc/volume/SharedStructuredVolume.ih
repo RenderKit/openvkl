@@ -50,9 +50,7 @@ struct SharedStructuredVolume
 
   // offsets, in bytes, for one step in x,y,z direction; ONLY valid if
   // bytesPerSlice < 2G.
-  varying uint32 voxelOfs_dx;
-  varying uint32 voxelOfs_dy;
-  varying uint32 voxelOfs_dz;
+  uniform uint32 voxelOfs_dx, voxelOfs_dy, voxelOfs_dz;
 
   void (*uniform transformLocalToObject)(const SharedStructuredVolume *uniform
                                              self,

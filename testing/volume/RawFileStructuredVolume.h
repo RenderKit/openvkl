@@ -38,10 +38,10 @@ namespace openvkl {
       {
       }
 
-      std::vector<char> generateVoxels() override
+      std::vector<unsigned char> generateVoxels() override
       {
-        std::vector<char> voxels(longProduct(this->dimensions) *
-                                 sizeOfVKLDataType(voxelType));
+        std::vector<unsigned char> voxels(longProduct(this->dimensions) *
+                                          sizeOfVKLDataType(voxelType));
 
         std::ifstream input(filename, std::ios::binary);
 

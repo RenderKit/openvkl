@@ -123,12 +123,12 @@ namespace openvkl {
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
-      virtual std::vector<char> generateVoxels() = 0;
+      virtual std::vector<unsigned char> generateVoxels() = 0;
 
      protected:
       void generateVKLVolume()
       {
-        std::vector<char> voxels = generateVoxels();
+        std::vector<unsigned char> voxels = generateVoxels();
 
         volume = vklNewVolume(gridType.c_str());
 

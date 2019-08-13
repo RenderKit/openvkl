@@ -105,7 +105,7 @@ OSPVolume convertToOSPVolume(
 
   ospSetInt(volume, "voxelType", ospDataType);
 
-  std::vector<char> voxels = proceduralVolume->generateVoxels();
+  std::vector<unsigned char> voxels = proceduralVolume->generateVoxels();
 
   OSPData voxelData = ospNewData(longProduct(proceduralVolume->getDimensions()),
                                  ospDataType,

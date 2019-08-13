@@ -46,11 +46,11 @@ namespace openvkl {
         return volumeSamplingFunction(objectCoordinates);
       }
 
-      std::vector<char> generateVoxels() override
+      std::vector<unsigned char> generateVoxels() override
       {
         {
-          std::vector<char> voxels(longProduct(this->dimensions) *
-                                   sizeof(VOXEL_TYPE));
+          std::vector<unsigned char> voxels(longProduct(this->dimensions) *
+                                            sizeof(VOXEL_TYPE));
 
           VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
 

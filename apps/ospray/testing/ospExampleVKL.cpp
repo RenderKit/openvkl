@@ -250,7 +250,7 @@ int main(int argc, const char **argv)
       dimensions = vec3i(stoi(dimX), stoi(dimY), stoi(dimZ));
     } else if (switchArg == "-voxelType") {
       if (argc < argIndex + 1) {
-        throw std::runtime_error("improper -file arguments");
+        throw std::runtime_error("improper -voxelType argument");
       }
 
       std::map<std::string, VKLDataType> stringToVKLDataType = {

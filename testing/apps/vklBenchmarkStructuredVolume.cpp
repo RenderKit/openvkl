@@ -123,6 +123,87 @@ BENCHMARK_TEMPLATE(vectorRandomSample, 4);
 BENCHMARK_TEMPLATE(vectorRandomSample, 8);
 BENCHMARK_TEMPLATE(vectorRandomSample, 16);
 
+static void scalarFixedSample(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  vkl_vec3f objectCoordinates{0.1701f, 0.1701f, 0.1701f};
+
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(
+        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(scalarFixedSample);
+
+template <int W>
+void vectorFixedSample(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  int valid[W];
+
+  for (int i = 0; i < W; i++) {
+    valid[i] = 1;
+  }
+
+  struct vvec3f
+  {
+    float x[W];
+    float y[W];
+    float z[W];
+  };
+
+  // use fixed coordinates for all benchmark iterations
+  vvec3f objectCoordinates;
+
+  for (int i = 0; i < W; i++) {
+    objectCoordinates.x[i] = 0.1701f;
+    objectCoordinates.y[i] = 0.1701f;
+    objectCoordinates.z[i] = 0.1701f;
+  }
+
+  float samples[W];
+
+  for (auto _ : state) {
+    if (W == 4) {
+      vklComputeSample4(
+          valid, vklVolume, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+    } else if (W == 8) {
+      vklComputeSample8(
+          valid, vklVolume, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+    } else if (W == 16) {
+      vklComputeSample16(
+          valid, vklVolume, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+    } else {
+      throw std::runtime_error(
+          "vectorFixedSample benchmark called with unimplemented calling "
+          "width");
+    }
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * W);
+}
+
+BENCHMARK_TEMPLATE(vectorFixedSample, 4);
+BENCHMARK_TEMPLATE(vectorFixedSample, 8);
+BENCHMARK_TEMPLATE(vectorFixedSample, 16);
+
 static void scalarRayIteratorConstruction(benchmark::State &state)
 {
   static std::unique_ptr<WaveletProceduralVolume> v;

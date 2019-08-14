@@ -395,6 +395,7 @@ int main(int argc, const char **argv)
   glfwOSPRayWindow->mainLoop();
 
   // cleanly shut VKL and OSPRay down
+  testingStructuredVolume.reset();
   testScene.reset();
   glfwOSPRayWindow.reset();
   vklShutdown();

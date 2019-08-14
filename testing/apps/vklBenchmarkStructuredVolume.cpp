@@ -209,23 +209,26 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
   static std::unique_ptr<WaveletProceduralVolume> v;
   static VKLVolume vklVolume;
 
+  static vkl_vec3f origin;
+
+  // global setup only in first thread
   if (state.thread_index == 0) {
     v = std::unique_ptr<WaveletProceduralVolume>(
         new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     vklVolume = v->getVKLVolume();
+
+    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+    std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+    std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+    std::random_device rd;
+    std::mt19937 eng(rd());
+
+    origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
   }
 
-  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
-
-  std::random_device rd;
-  std::mt19937 eng(rd());
-
-  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
-  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
-  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
-
-  vkl_vec3f origin{distX(eng), distY(eng), -1.f};
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
 
@@ -235,6 +238,11 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
         &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
     benchmark::DoNotOptimize(rayIterator);
+  }
+
+  // global teardown only in first thread
+  if (state.thread_index == 0) {
+    v = nullptr;
   }
 
   // enables rates in report output
@@ -254,28 +262,30 @@ static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
   static std::unique_ptr<WaveletProceduralVolume> v;
   static VKLVolume vklVolume;
 
+  static VKLRayIterator rayIterator;
+
+  // global setup only in first thread
   if (state.thread_index == 0) {
     v = std::unique_ptr<WaveletProceduralVolume>(
         new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     vklVolume = v->getVKLVolume();
+
+    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+    std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+    std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+    std::random_device rd;
+    std::mt19937 eng(rd());
+
+    vkl_vec3f origin{distX(eng), distY(eng), -1.f};
+    vkl_vec3f direction{0.f, 0.f, 1.f};
+    vkl_range1f tRange{0.f, 1000.f};
+
+    vklInitRayIterator(
+        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
   }
-
-  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
-
-  std::random_device rd;
-  std::mt19937 eng(rd());
-
-  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
-  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
-
-  vkl_vec3f origin{distX(eng), distY(eng), -1.f};
-  vkl_vec3f direction{0.f, 0.f, 1.f};
-  vkl_range1f tRange{0.f, 1000.f};
-
-  VKLRayIterator rayIterator;
-  vklInitRayIterator(
-      &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
   VKLRayInterval rayInterval;
 
@@ -289,6 +299,11 @@ static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
     }
 
     benchmark::DoNotOptimize(rayInterval);
+  }
+
+  // global teardown only in first thread
+  if (state.thread_index == 0) {
+    v = nullptr;
   }
 
   // enables rates in report output
@@ -308,32 +323,36 @@ static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
   static std::unique_ptr<WaveletProceduralVolume> v;
   static VKLVolume vklVolume;
 
+  static VKLRayIterator rayIterator;
+
+  // global setup only in first thread
   if (state.thread_index == 0) {
     v = std::unique_ptr<WaveletProceduralVolume>(
         new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     vklVolume = v->getVKLVolume();
+
+    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+    std::random_device rd;
+    std::mt19937 eng(rd());
+
+    std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+    std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+    vkl_vec3f origin{distX(eng), distY(eng), -1.f};
+    vkl_vec3f direction{0.f, 0.f, 1.f};
+    vkl_range1f tRange{0.f, 1000.f};
+
+    vklInitRayIterator(
+        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
+
+    // move past first iteration
+    VKLRayInterval rayInterval;
+    vklIterateInterval(&rayIterator, &rayInterval);
   }
 
-  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
-
-  std::random_device rd;
-  std::mt19937 eng(rd());
-
-  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
-  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
-
-  vkl_vec3f origin{distX(eng), distY(eng), -1.f};
-  vkl_vec3f direction{0.f, 0.f, 1.f};
-  vkl_range1f tRange{0.f, 1000.f};
-
-  VKLRayIterator rayIterator;
-  vklInitRayIterator(
-      &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
-
-  // move past first iteration
   VKLRayInterval rayInterval;
-  vklIterateInterval(&rayIterator, &rayInterval);
 
   for (auto _ : state) {
     VKLRayIterator rayIteratorTemp = rayIterator;
@@ -345,6 +364,11 @@ static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
     }
 
     benchmark::DoNotOptimize(rayInterval);
+  }
+
+  // global teardown only in first thread
+  if (state.thread_index == 0) {
+    v = nullptr;
   }
 
   // enables rates in report output

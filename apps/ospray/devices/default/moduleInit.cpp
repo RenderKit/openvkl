@@ -16,7 +16,7 @@
 
 #include <iostream>
 #include "openvkl/openvkl.h"
-#include "ospcommon/library.h"
+#include "ospcommon/os/library.h"
 
 extern "C" void ospray_init_module_ispc_openvkl()
 {

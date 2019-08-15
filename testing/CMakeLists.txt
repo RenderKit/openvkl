@@ -18,7 +18,7 @@ add_library(openvkl_testing INTERFACE)
 
 target_link_libraries(openvkl_testing INTERFACE
   openvkl
-  ospcommon
+  ospcommon::ospcommon
 )
 
 target_include_directories(openvkl_testing

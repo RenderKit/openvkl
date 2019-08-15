@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "GLFWOSPRayWindow.h"
+#include <chrono>
 #include <iostream>
 #include <stdexcept>
 #include <chrono>

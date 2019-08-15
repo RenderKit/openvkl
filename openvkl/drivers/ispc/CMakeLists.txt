@@ -36,7 +36,11 @@ target_include_directories(openvkl_module_ispc_driver PUBLIC
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 )
 
-target_link_libraries(openvkl_module_ispc_driver PRIVATE openvkl ospcommon)
+target_link_libraries(openvkl_module_ispc_driver
+PRIVATE
+  openvkl
+  ospcommon::ospcommon
+)
 
 install(TARGETS openvkl_module_ispc_driver
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

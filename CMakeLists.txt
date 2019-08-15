@@ -41,7 +41,7 @@ openvkl_configure_ispc_isa()
 
 include(GNUInstallDirs)
 
-add_subdirectory(external/ospcommon)
+find_package(ospcommon 1.0.0 REQUIRED)
 
 add_subdirectory(openvkl)
 add_subdirectory(apps)

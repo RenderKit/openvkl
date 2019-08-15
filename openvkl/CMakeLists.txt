@@ -37,7 +37,7 @@ target_include_directories(openvkl
 ## Include ospcommon dependency ##
 target_link_libraries(openvkl
   PRIVATE
-    ospcommon
+    ospcommon::ospcommon
 )
 
 ## Configure OpenVKL installation ##

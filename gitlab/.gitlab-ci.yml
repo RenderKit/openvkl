@@ -2,9 +2,10 @@ variables:
   KW_PROJECT_NAME: openvkl
 
 stages:
-  - stage1
-  - stage2
-  - stage3
+  - build
+  - test
+  - scan1
+  - scan2
 
 before_script:
   - git submodule sync
@@ -12,7 +13,7 @@ before_script:
   - git submodule update
 
 build-centos7:
-  type: stage1
+  type: build
   image: openvkl/openvkl:centos7
   script:
     - gitlab/build.sh
@@ -22,8 +23,18 @@ build-centos7:
   tags:
     - docker
 
+test-functional-centos7:
+  type: test
+  image: openvkl/openvkl:centos7
+  script:
+    - ./build/vklTests
+  dependencies:
+    - build-centos7
+  tags:
+    - docker
+
 build-kw-scan:
-  type: stage1
+  type: scan1
   image: openvkl/openvkl:centos7
   script:
     - gitlab/build-kw-scan.sh
@@ -36,7 +47,7 @@ build-kw-scan:
   dependencies: []
 
 source-protex-scan:
-  type: stage1
+  type: scan1
   image: openvkl/openvkl:centos7
   script:
     - gitlab/source-scan-protex.sh
@@ -46,7 +57,7 @@ source-protex-scan:
   allow_failure: true
 
 test-kw-critical:
-  type: stage2
+  type: scan2
   image: openvkl/openvkl:centos7
   script:
     - gitlab/test-kw-critical.sh
@@ -54,13 +65,3 @@ test-kw-critical:
     - build-kw-scan
   tags:
     - kw-scan-docker
-
-test-functional-centos7:
-  type: stage3
-  image: openvkl/openvkl:centos7
-  script:
-    - ./build/vklTests
-  dependencies:
-    - build-centos7
-  tags:
-    - docker

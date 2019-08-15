@@ -31,7 +31,8 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   volume/StructuredRegularVolume.cpp
 )
 
-target_include_directories(openvkl_module_ispc_driver PUBLIC
+target_include_directories(openvkl_module_ispc_driver
+PUBLIC
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
 )

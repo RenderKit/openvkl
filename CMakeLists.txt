@@ -14,38 +14,71 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-cmake_minimum_required(VERSION 3.1)
+## Global CMake options ##
 
-project(OpenVKL)
+cmake_minimum_required(VERSION 3.1)
 
 if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW) # since 3.12
 endif()
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+include(GNUInstallDirs)
+
+## Establish project ##
+
+project(openvkl VERSION 0.1.0 LANGUAGES C CXX)
+
+## Add openvkl specific macros ##
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(openvkl_macros)
 include(openvkl_ispc)
 
+## openvkl specific configuration ##
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+
 openvkl_configure_build_type()
 openvkl_configure_ispc_isa()
 
-include(GNUInstallDirs)
-
 find_package(ospcommon 1.0.0 REQUIRED)
 
-add_subdirectory(openvkl)
-add_subdirectory(apps)
-add_subdirectory(testing)
+## Build library, tests, and apps ##
 
-## CPack configuration (has to be last) ##
+subdirs(openvkl apps testing)
+
+## Configure CMake find_package() config files ##
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+  "${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in"
+  "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ospcommon
+)
+
+write_basic_package_version_file(
+  "${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+  ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+DESTINATION
+  ${CMAKE_INSTALL_LIBDIR}/cmake/openvkl-${PROJECT_VERSION}
+)
+
+# Must be last
 include(CPack)

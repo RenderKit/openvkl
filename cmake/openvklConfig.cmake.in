@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2018 Intel Corporation                                         ##
+## Copyright 2009-2019 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,46 +14,18 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-include(openvkl_ispc)
+@PACKAGE_INIT@
 
-openvkl_add_library_ispc(${PROJECT_NAME} SHARED
-  api/API.cpp
-  api/Driver.cpp
+include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@_Exports.cmake")
 
-  common/Data.cpp
-  common/ispc_util.ispc
-  common/logging.cpp
-  common/ManagedObject.cpp
-  common/VKLCommon.cpp
-)
+check_required_components("@PROJECT_NAME@")
 
-target_include_directories(${PROJECT_NAME}
-  PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include>
-)
+## Find ospcommon ##
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ospcommon::ospcommon)
+if (NOT TARGET ospcommon::ospcommon)
+  find_dependency(ospcommon)
+endif()
 
-## Configure OpenVKL installation ##
+## Standard signal that the package was found ##
 
-install(TARGETS ${PROJECT_NAME}
-  EXPORT ${PROJECT_NAME}_Exports
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
-
-install(EXPORT ${PROJECT_NAME}_Exports
-  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
-
-install(DIRECTORY
-  ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/include/${PROJECT_NAME}
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-  FILES_MATCHING
-  PATTERN "*.h"
-  PATTERN "*.isph"
-)
-
-## Add OpenVKL drivers ##
-
-add_subdirectory(drivers)
+set(@PROJECT_NAME@_FOUND TRUE)

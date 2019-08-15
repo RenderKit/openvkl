@@ -18,10 +18,6 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW) # since 3.12
-endif()
-
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)

@@ -143,7 +143,7 @@ OPENVKL_CATCH_END(0)
 extern "C" void vklCommit(VKLObject object) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  Assert(object && "invalid object handle to commit to");
+  assert(object && "invalid object handle to commit to");
   openvkl::api::currentDriver().commit(object);
 }
 OPENVKL_CATCH_END()
@@ -151,7 +151,7 @@ OPENVKL_CATCH_END()
 extern "C" void vklRelease(VKLObject object) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  Assert(object && "invalid object handle to release");
+  assert(object && "invalid object handle to release");
   openvkl::api::currentDriver().release(object);
 }
 OPENVKL_CATCH_END()
@@ -438,7 +438,7 @@ OPENVKL_CATCH_END()
 extern "C" VKLVolume vklNewVolume(const char *type) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  Assert(type != nullptr && "invalid volume type identifier in vklNewVolume");
+  assert(type != nullptr && "invalid volume type identifier in vklNewVolume");
   VKLVolume volume = openvkl::api::currentDriver().newVolume(type);
   if (volume == nullptr) {
     postLogMessage(openvkl::VKL_LOG_ERROR)

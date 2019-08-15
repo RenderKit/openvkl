@@ -16,6 +16,8 @@
 
 #include "ManagedObject.h"
 
+#include <algorithm>
+
 namespace openvkl {
 
   ManagedObject::~ManagedObject()

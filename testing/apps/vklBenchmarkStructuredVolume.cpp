@@ -204,7 +204,7 @@ BENCHMARK_TEMPLATE(vectorFixedSample, 4);
 BENCHMARK_TEMPLATE(vectorFixedSample, 8);
 BENCHMARK_TEMPLATE(vectorFixedSample, 16);
 
-static void scalarRayIteratorConstruction(benchmark::State &state)
+static void scalarIntervalIteratorConstruction(benchmark::State &state)
 {
   static std::unique_ptr<WaveletProceduralVolume> v;
   static VKLVolume vklVolume;
@@ -233,11 +233,11 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
   vkl_range1f tRange{0.f, 1000.f};
 
   for (auto _ : state) {
-    VKLRayIterator rayIterator;
-    vklInitRayIterator(
-        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
+    VKLIntervalIterator iterator;
+    vklInitIntervalIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
-    benchmark::DoNotOptimize(rayIterator);
+    benchmark::DoNotOptimize(iterator);
   }
 
   // global teardown only in first thread
@@ -249,20 +249,20 @@ static void scalarRayIteratorConstruction(benchmark::State &state)
   state.SetItemsProcessed(state.iterations());
 }
 
-BENCHMARK(scalarRayIteratorConstruction)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(2)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(4)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(6)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(12)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(36)->UseRealTime();
-BENCHMARK(scalarRayIteratorConstruction)->Threads(72)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->Threads(2)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->Threads(4)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->Threads(6)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->Threads(12)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->Threads(36)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorConstruction)->Threads(72)->UseRealTime();
 
-static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
+static void scalarIntervalIteratorIterateFirst(benchmark::State &state)
 {
   static std::unique_ptr<WaveletProceduralVolume> v;
   static VKLVolume vklVolume;
 
-  static VKLRayIterator rayIterator;
+  static VKLIntervalIterator iterator;
 
   // global setup only in first thread
   if (state.thread_index == 0) {
@@ -283,16 +283,16 @@ static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
     vkl_vec3f direction{0.f, 0.f, 1.f};
     vkl_range1f tRange{0.f, 1000.f};
 
-    vklInitRayIterator(
-        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
+    vklInitIntervalIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
   }
 
   VKLInterval interval;
 
   for (auto _ : state) {
-    VKLRayIterator rayIteratorTemp = rayIterator;
+    VKLIntervalIterator iteratorTemp = iterator;
 
-    bool success = vklIterateInterval(&rayIteratorTemp, &interval);
+    bool success = vklIterateInterval(&iteratorTemp, &interval);
 
     if (!success) {
       throw std::runtime_error("vklIterateInterval() returned false");
@@ -310,20 +310,20 @@ static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
   state.SetItemsProcessed(state.iterations());
 }
 
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(2)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(4)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(6)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(12)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(36)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalFirst)->Threads(72)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(2)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(4)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(6)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(12)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(36)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(72)->UseRealTime();
 
-static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
+static void scalarIntervalIteratorIterateSecond(benchmark::State &state)
 {
   static std::unique_ptr<WaveletProceduralVolume> v;
   static VKLVolume vklVolume;
 
-  static VKLRayIterator rayIterator;
+  static VKLIntervalIterator iterator;
 
   // global setup only in first thread
   if (state.thread_index == 0) {
@@ -344,20 +344,20 @@ static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
     vkl_vec3f direction{0.f, 0.f, 1.f};
     vkl_range1f tRange{0.f, 1000.f};
 
-    vklInitRayIterator(
-        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
+    vklInitIntervalIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
     // move past first iteration
     VKLInterval interval;
-    vklIterateInterval(&rayIterator, &interval);
+    vklIterateInterval(&iterator, &interval);
   }
 
   VKLInterval interval;
 
   for (auto _ : state) {
-    VKLRayIterator rayIteratorTemp = rayIterator;
+    VKLIntervalIterator iteratorTemp = iterator;
 
-    bool success = vklIterateInterval(&rayIteratorTemp, &interval);
+    bool success = vklIterateInterval(&iteratorTemp, &interval);
 
     if (!success) {
       throw std::runtime_error("vklIterateInterval() returned false");
@@ -375,13 +375,13 @@ static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
   state.SetItemsProcessed(state.iterations());
 }
 
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(2)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(4)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(6)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(12)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(36)->UseRealTime();
-BENCHMARK(scalarRayIteratorIterateIntervalSecond)->Threads(72)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->Threads(2)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->Threads(4)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->Threads(6)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->Threads(12)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->Threads(36)->UseRealTime();
+BENCHMARK(scalarIntervalIteratorIterateSecond)->Threads(72)->UseRealTime();
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

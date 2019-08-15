@@ -20,7 +20,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Ray iterator surfaces")
+TEST_CASE("Hit iterator")
 {
   vklLoadModule("ispc_driver");
 
@@ -38,7 +38,7 @@ TEST_CASE("Ray iterator surfaces")
 
   VKLVolume vklVolume = v->getVKLVolume();
 
-  SECTION("scalar surface iteration")
+  SECTION("scalar hit iteration")
   {
     vkl_vec3f origin{0.5f, 0.5f, -1.f};
     vkl_vec3f direction{0.f, 0.f, 1.f};
@@ -56,15 +56,15 @@ TEST_CASE("Ray iterator surfaces")
 
     vklCommit((VKLObject)samplesMask);
 
-    VKLRayIterator rayIterator;
-    vklInitRayIterator(
-        &rayIterator, vklVolume, &origin, &direction, &tRange, samplesMask);
+    VKLHitIterator iterator;
+    vklInitHitIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, samplesMask);
 
     VKLHit hit;
 
     int hitCount = 0;
 
-    while (vklIterateSurface(&rayIterator, &hit)) {
+    while (vklIterateHit(&iterator, &hit)) {
       INFO("hit t = " << hit.t << ", sample = " << hit.sample);
 
       REQUIRE(hit.t == 1.f + isoValues[hitCount]);

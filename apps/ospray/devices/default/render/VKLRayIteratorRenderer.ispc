@@ -88,7 +88,7 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
   color = make_vec3f(self->super.bgColor);
   alpha = self->super.bgColor.w;
 
-  // create volume ray iterator
+  // create volume iterators
   vkl_range1f tRange;
   tRange.lower = ray.t0;
   tRange.upper = ray.t;
@@ -101,25 +101,33 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
 
   vklCommit((VKLObject)samplesMask);
 
-  uniform VKLRayIterator rayIterator;
-  vklInitRayIteratorV(&rayIterator,
+  uniform VKLIntervalIterator intervalIterator;
+  vklInitIntervalIteratorV(&intervalIterator,
+                           self->volume,
+                           (varying vkl_vec3f *)&ray.org,
+                           (varying vkl_vec3f *)&ray.dir,
+                           &tRange,
+                           samplesMask);
+
+  // the current ray interval
+  VKLInterval interval;
+  bool activeInterval = vklIterateIntervalV(&intervalIterator, &interval);
+
+  uniform VKLHitIterator hitIterator;
+  vklInitHitIteratorV(&hitIterator,
                       self->volume,
                       (varying vkl_vec3f *)&ray.org,
                       (varying vkl_vec3f *)&ray.dir,
                       &tRange,
                       samplesMask);
 
-  // the current ray interval
-  VKLInterval interval;
-  bool activeInterval = vklIterateIntervalV(&rayIterator, &interval);
-
   // the current surface hit
   VKLHit hit;
-  bool activeSurface = vklIterateSurfaceV(&rayIterator, &hit);
+  bool activeHit = vklIterateHitV(&hitIterator, &hit);
 
-  while ((activeInterval || activeSurface) && alpha < 0.99f) {
+  while ((activeInterval || activeHit) && alpha < 0.99f) {
     float firstHit = min(activeInterval ? interval.tRange.lower : inf,
-                         activeSurface ? hit.t : inf);
+                         activeHit ? hit.t : inf);
 
     if (activeInterval && firstHit == interval.tRange.lower) {
       // volume interval
@@ -128,18 +136,18 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
 
       box1f subInterval =
           make_box1f(interval.tRange.lower,
-                     min(interval.tRange.upper, activeSurface ? hit.t : inf));
+                     min(interval.tRange.upper, activeHit ? hit.t : inf));
 
       integrateVolumeInterval(
           self, ray, subInterval, nominalSamplingDt, color, alpha);
 
       if (subInterval.upper == interval.tRange.upper) {
-        activeInterval = vklIterateIntervalV(&rayIterator, &interval);
+        activeInterval = vklIterateIntervalV(&intervalIterator, &interval);
       } else {
         interval.tRange.lower = subInterval.upper + 1e-6f;
       }
 
-    } else if (activeSurface && firstHit == hit.t) {
+    } else if (activeHit && firstHit == hit.t) {
       // surface hit
       const vec3f surfaceColor = self->transferFunction->getColorForValue(
           self->transferFunction, hit.sample);
@@ -148,7 +156,7 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
       color = color + (1.f - alpha) * surfaceColor;
       alpha = alpha + (1.f - alpha) * surfaceOpacity;
 
-      activeSurface = vklIterateSurfaceV(&rayIterator, &hit);
+      activeHit = vklIterateHitV(&hitIterator, &hit);
     }
   }
 

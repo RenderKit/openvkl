@@ -81,8 +81,8 @@ export void GridAcceleratorRayIterator_Initialize(void *uniform _self,
   resetInterval(self->intervalState.currentInterval);
   self->intervalState.currentCellIndex = make_vec3i(-1);
 
-  resetInterval(self->surfaceState.currentInterval);
-  self->surfaceState.currentCellIndex = make_vec3i(-1);
+  resetInterval(self->hitState.currentInterval);
+  self->hitState.currentCellIndex = make_vec3i(-1);
 }
 
 export void *uniform
@@ -149,7 +149,7 @@ GridAcceleratorRayIterator_getCurrentHit(void *uniform _self)
 {
   uniform GridAcceleratorRayIterator *uniform self =
       (uniform GridAcceleratorRayIterator * uniform) _self;
-  return &self->surfaceState.currentHit;
+  return &self->hitState.currentHit;
 }
 
 inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
@@ -212,10 +212,10 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
   return false;
 }
 
-export void GridAcceleratorRayIterator_iterateSurface(
-    uniform const int *uniform imask,
-    void *uniform _self,
-    uniform int *uniform _result)
+export void GridAcceleratorRayIterator_iterateHit(uniform const int *uniform
+                                                      imask,
+                                                  void *uniform _self,
+                                                  uniform int *uniform _result)
 {
   uniform GridAcceleratorRayIterator *uniform self =
       (uniform GridAcceleratorRayIterator * uniform) _self;
@@ -238,19 +238,19 @@ export void GridAcceleratorRayIterator_iterateSurface(
   }
 
   // first iteration
-  cif(self->surfaceState.currentCellIndex.x == -1)
+  cif(self->hitState.currentCellIndex.x == -1)
   {
-    self->surfaceState.activeCell =
+    self->hitState.activeCell =
         GridAccelerator_nextCell(self->volume->accelerator,
                                  self,
-                                 self->surfaceState.currentCellIndex,
-                                 self->surfaceState.currentInterval);
+                                 self->hitState.currentCellIndex,
+                                 self->hitState.currentInterval);
   }
 
-  while (self->surfaceState.activeCell) {
+  while (self->hitState.activeCell) {
     box1f cellValueRange;
     GridAccelerator_getCellValueRange(self->volume->accelerator,
-                                      self->surfaceState.currentCellIndex,
+                                      self->hitState.currentCellIndex,
                                       cellValueRange);
 
     bool cellValueRangeOverlap =
@@ -262,27 +262,27 @@ export void GridAcceleratorRayIterator_iterateSurface(
       bool foundHit = intersectSurfaces(self->volume,
                                         self->origin,
                                         self->direction,
-                                        self->surfaceState.currentInterval,
+                                        self->hitState.currentInterval,
                                         self->samplesMask->numValues,
                                         self->samplesMask->values,
-                                        self->surfaceState.currentHit,
+                                        self->hitState.currentHit,
                                         surfaceEpsilon);
 
       if (foundHit) {
         *result = true;
-        self->surfaceState.currentInterval.tRange.lower =
-            self->surfaceState.currentHit.t + surfaceEpsilon;
+        self->hitState.currentInterval.tRange.lower =
+            self->hitState.currentHit.t + surfaceEpsilon;
         return;
       }
     }
 
     // we'll only move forward to the next cell if no hits are found; if a hit
     // is found we'll stay in the cell to pursue other hits
-    self->surfaceState.activeCell =
+    self->hitState.activeCell =
         GridAccelerator_nextCell(self->volume->accelerator,
                                  self,
-                                 self->surfaceState.currentCellIndex,
-                                 self->surfaceState.currentInterval);
+                                 self->hitState.currentCellIndex,
+                                 self->hitState.currentInterval);
   }
 
   *result = false;

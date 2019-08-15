@@ -93,10 +93,10 @@ namespace openvkl {
     }
 
     template <int W>
-    void GridAcceleratorRayIterator<W>::iterateSurface(const int *valid,
-                                                       vintn<W> &result)
+    void GridAcceleratorRayIterator<W>::iterateHit(const int *valid,
+                                                   vintn<W> &result)
     {
-      ispc::GridAcceleratorRayIterator_iterateSurface(
+      ispc::GridAcceleratorRayIterator_iterateHit(
           valid, (void *)&ispcStorage[0], (int *)&result);
     }
 

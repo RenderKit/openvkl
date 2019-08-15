@@ -42,27 +42,57 @@ void vvec3fn_conformance_test()
 }
 
 template <int W>
-void vVKLRayIteratorN_conformance_test()
+void vVKLIntervalIteratorN_conformance_test()
 {
-  INFO("width = " << W << ", alignment = " << alignof(vVKLRayIteratorN<W>));
+  INFO("width = " << W
+                  << ", alignment = " << alignof(vVKLIntervalIteratorN<W>));
 
-  REQUIRE(sizeof(vVKLRayIteratorN<W>) == ispc::sizeofUniformVKLRayIterator());
-  REQUIRE(is_aligned_for_type<vVKLRayIteratorN<W>>(
-      ispc::newUniformVKLRayIterator()));
+  REQUIRE(sizeof(vVKLIntervalIteratorN<W>) ==
+          ispc::sizeofUniformVKLIntervalIterator());
+  REQUIRE(is_aligned_for_type<vVKLIntervalIteratorN<W>>(
+      ispc::newUniformVKLIntervalIterator()));
 
   if (W == 4) {
-    REQUIRE(sizeof(VKLRayIterator4) == sizeof(vVKLRayIteratorN<W>));
-    REQUIRE(alignof(VKLRayIterator4) == alignof(vVKLRayIteratorN<W>));
+    REQUIRE(sizeof(VKLIntervalIterator4) == sizeof(vVKLIntervalIteratorN<W>));
+    REQUIRE(alignof(VKLIntervalIterator4) == alignof(vVKLIntervalIteratorN<W>));
   } else if (W == 8) {
-    REQUIRE(sizeof(VKLRayIterator8) == sizeof(vVKLRayIteratorN<W>));
-    REQUIRE(alignof(VKLRayIterator8) == alignof(vVKLRayIteratorN<W>));
+    REQUIRE(sizeof(VKLIntervalIterator8) == sizeof(vVKLIntervalIteratorN<W>));
+    REQUIRE(alignof(VKLIntervalIterator8) == alignof(vVKLIntervalIteratorN<W>));
   } else if (W == 16) {
-    REQUIRE(sizeof(VKLRayIterator16) == sizeof(vVKLRayIteratorN<W>));
-    REQUIRE(alignof(VKLRayIterator16) == alignof(vVKLRayIteratorN<W>));
+    REQUIRE(sizeof(VKLIntervalIterator16) == sizeof(vVKLIntervalIteratorN<W>));
+    REQUIRE(alignof(VKLIntervalIterator16) ==
+            alignof(vVKLIntervalIteratorN<W>));
 
     // special case: scalar ray iterator should match size of maximum width
     // (16); alignment doesn't matter since the conversions make copies.
-    REQUIRE(sizeof(VKLRayIterator) == sizeof(vVKLRayIteratorN<W>));
+    REQUIRE(sizeof(VKLIntervalIterator) == sizeof(vVKLIntervalIteratorN<W>));
+  } else {
+    throw std::runtime_error("unsupported native SIMD width for tests");
+  }
+}
+
+template <int W>
+void vVKLHitIteratorN_conformance_test()
+{
+  INFO("width = " << W << ", alignment = " << alignof(vVKLHitIteratorN<W>));
+
+  REQUIRE(sizeof(vVKLHitIteratorN<W>) == ispc::sizeofUniformVKLHitIterator());
+  REQUIRE(is_aligned_for_type<vVKLHitIteratorN<W>>(
+      ispc::newUniformVKLHitIterator()));
+
+  if (W == 4) {
+    REQUIRE(sizeof(VKLHitIterator4) == sizeof(vVKLHitIteratorN<W>));
+    REQUIRE(alignof(VKLHitIterator4) == alignof(vVKLHitIteratorN<W>));
+  } else if (W == 8) {
+    REQUIRE(sizeof(VKLHitIterator8) == sizeof(vVKLHitIteratorN<W>));
+    REQUIRE(alignof(VKLHitIterator8) == alignof(vVKLHitIteratorN<W>));
+  } else if (W == 16) {
+    REQUIRE(sizeof(VKLHitIterator16) == sizeof(vVKLHitIteratorN<W>));
+    REQUIRE(alignof(VKLHitIterator16) == alignof(vVKLHitIteratorN<W>));
+
+    // special case: scalar ray iterator should match size of maximum width
+    // (16); alignment doesn't matter since the conversions make copies.
+    REQUIRE(sizeof(VKLHitIterator) == sizeof(vVKLHitIteratorN<W>));
   } else {
     throw std::runtime_error("unsupported native SIMD width for tests");
   }
@@ -117,7 +147,8 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
-      vVKLRayIteratorN_conformance_test<4>();
+      vVKLIntervalIteratorN_conformance_test<4>();
+      vVKLHitIteratorN_conformance_test<4>();
       vVKLIntervalN_conformance_test<4>();
       vVKLHitN_conformance_test<4>();
       GridAcceleratorRayIterator_conformance_test<4>();
@@ -129,7 +160,8 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
-      vVKLRayIteratorN_conformance_test<8>();
+      vVKLIntervalIteratorN_conformance_test<8>();
+      vVKLHitIteratorN_conformance_test<8>();
       vVKLIntervalN_conformance_test<8>();
       vVKLHitN_conformance_test<8>();
       GridAcceleratorRayIterator_conformance_test<8>();
@@ -141,7 +173,8 @@ TEST_CASE("SIMD conformance")
     {
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
-      vVKLRayIteratorN_conformance_test<16>();
+      vVKLIntervalIteratorN_conformance_test<16>();
+      vVKLHitIteratorN_conformance_test<16>();
       vVKLIntervalN_conformance_test<16>();
       vVKLHitN_conformance_test<16>();
       GridAcceleratorRayIterator_conformance_test<16>();

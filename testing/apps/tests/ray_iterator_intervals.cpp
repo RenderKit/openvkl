@@ -20,7 +20,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Ray iterator intervals")
+TEST_CASE("Interval iterator")
 {
   vklLoadModule("ispc_driver");
 
@@ -44,13 +44,13 @@ TEST_CASE("Ray iterator intervals")
     vkl_vec3f direction{0.f, 0.f, 1.f};
     vkl_range1f tRange{0.f, inf};
 
-    VKLRayIterator rayIterator;
-    vklInitRayIterator(
-        &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
+    VKLIntervalIterator iterator;
+    vklInitIntervalIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
     VKLInterval intervalPrevious, intervalCurrent;
 
-    for (int i = 0; vklIterateInterval(&rayIterator, &intervalCurrent); i++) {
+    for (int i = 0; vklIterateInterval(&iterator, &intervalCurrent); i++) {
       INFO("interval tRange = " << intervalCurrent.tRange.lower << ", "
                                 << intervalCurrent.tRange.upper);
 

@@ -41,7 +41,7 @@ inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
   color = make_vec3f(self->super.bgColor);
   alpha = self->super.bgColor.w;
 
-  // create volume ray iterator
+  // create volume iterator
   vkl_range1f tRange;
   tRange.lower = ray.t0;
   tRange.upper = ray.t;
@@ -53,8 +53,8 @@ inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
 
   vklCommit((VKLObject)samplesMask);
 
-  uniform VKLRayIterator rayIterator;
-  vklInitRayIteratorV(&rayIterator,
+  uniform VKLHitIterator iterator;
+  vklInitHitIteratorV(&iterator,
                       self->volume,
                       (varying vkl_vec3f *)&ray.org,
                       (varying vkl_vec3f *)&ray.dir,
@@ -64,7 +64,7 @@ inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
   // the current surface hit
   VKLHit hit;
 
-  while (vklIterateSurfaceV(&rayIterator, &hit) && alpha < 0.99f) {
+  while (vklIterateHitV(&iterator, &hit) && alpha < 0.99f) {
     const vec3f surfaceColor = self->transferFunction->getColorForValue(
         self->transferFunction, hit.sample);
     const float surfaceOpacity = 0.5f;

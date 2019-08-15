@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "../samples_mask/SamplesMask.h"
 #include "../common/simd.h"
+#include "../samples_mask/SamplesMask.h"
 #include "openvkl/openvkl.h"
 
 using namespace ospcommon;
@@ -26,12 +26,12 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W, typename U>
-    inline vVKLRayIteratorN<W> toVKLRayIterator(U &&x)
+    inline vVKLIntervalIteratorN<W> toVKLIntervalIterator(U &&x)
     {
       static_assert(ray_iterator_internal_state_size_for_width(W) >= sizeof(U),
                     "ray iterator internal state size must be >= "
                     "source object size");
-      vVKLRayIteratorN<W> result;
+      vVKLIntervalIteratorN<W> result;
       std::memcpy((void *)std::addressof(result.internalState),
                   (const void *)std::addressof(x),
                   sizeof(U));
@@ -40,13 +40,40 @@ namespace openvkl {
     }
 
     template <typename T, int W>
-    inline T *fromVKLRayIterator(vVKLRayIteratorN<W> *x)
+    inline T *fromVKLIntervalIterator(vVKLIntervalIteratorN<W> *x)
     {
       static_assert(
-          alignof(T) == alignof(vVKLRayIteratorN<W>),
+          alignof(T) == alignof(vVKLIntervalIteratorN<W>),
+          "alignment of destination type must be == alignment of source type");
+      static_assert(
+          sizeof(T) <= ray_iterator_internal_state_size_for_width(W),
+          "fromVKLIntervalIterator destination object size must be <= "
+          "ray iterator internal state size");
+      return reinterpret_cast<T *>(&x->internalState[0]);
+    }
+
+    template <int W, typename U>
+    inline vVKLHitIteratorN<W> toVKLHitIterator(U &&x)
+    {
+      static_assert(ray_iterator_internal_state_size_for_width(W) >= sizeof(U),
+                    "ray iterator internal state size must be >= "
+                    "source object size");
+      vVKLHitIteratorN<W> result;
+      std::memcpy((void *)std::addressof(result.internalState),
+                  (const void *)std::addressof(x),
+                  sizeof(U));
+      result.volume = (VKLVolume)x.volume;
+      return result;
+    }
+
+    template <typename T, int W>
+    inline T *fromVKLHitIterator(vVKLHitIteratorN<W> *x)
+    {
+      static_assert(
+          alignof(T) == alignof(vVKLHitIteratorN<W>),
           "alignment of destination type must be == alignment of source type");
       static_assert(sizeof(T) <= ray_iterator_internal_state_size_for_width(W),
-                    "fromVKLRayIterator destination object size must be <= "
+                    "fromVKLHitIterator destination object size must be <= "
                     "ray iterator internal state size");
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
@@ -87,8 +114,8 @@ namespace openvkl {
       virtual const Interval<W> *getCurrentInterval() const            = 0;
       virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;
 
-      virtual const Hit<W> *getCurrentHit() const                     = 0;
-      virtual void iterateSurface(const int *valid, vintn<W> &result) = 0;
+      virtual const Hit<W> *getCurrentHit() const                 = 0;
+      virtual void iterateHit(const int *valid, vintn<W> &result) = 0;
 
       const Volume<W> *volume;
     };

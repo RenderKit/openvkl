@@ -39,7 +39,7 @@ namespace openvkl {
       void iterateInterval(const int *valid, vintn<W> &result) override;
 
       const Hit<W> *getCurrentHit() const override;
-      void iterateSurface(const int *valid, vintn<W> &result) override;
+      void iterateHit(const int *valid, vintn<W> &result) override;
 
       // required size of ISPC-side object for widths:
       //   4: 432

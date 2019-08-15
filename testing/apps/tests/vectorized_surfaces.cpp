@@ -22,7 +22,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Vectorized surface iteration")
+TEST_CASE("Vectorized hit iteration")
 {
   vklLoadModule("ispc_driver");
 
@@ -33,7 +33,7 @@ TEST_CASE("Vectorized surface iteration")
   int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
   WARN(
-      "only performing SIMD vectorized surface iteration tests for widths == "
+      "only performing SIMD vectorized hit iteration tests for widths == "
       "native width: "
       << nativeSIMDWidth);
 
@@ -47,7 +47,7 @@ TEST_CASE("Vectorized surface iteration")
 
   VKLVolume vklVolume = v->getVKLVolume();
 
-  SECTION("vector surface iteration")
+  SECTION("vector hit iteration")
   {
     VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
 
@@ -119,9 +119,9 @@ TEST_CASE("Vectorized surface iteration")
         REQUIRE(tRangesSOA.size() == callingWidth * 2);
 
         if (callingWidth == 4) {
-          VKLRayIterator4 rayIterator;
-          vklInitRayIterator4(valid.data(),
-                              &rayIterator,
+          VKLHitIterator4 iterator;
+          vklInitHitIterator4(valid.data(),
+                              &iterator,
                               vklVolume,
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
@@ -134,7 +134,7 @@ TEST_CASE("Vectorized surface iteration")
           int hitCount = 0;
 
           while (true) {
-            vklIterateSurface4(valid.data(), &rayIterator, &hit, result);
+            vklIterateHit4(valid.data(), &iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -166,9 +166,9 @@ TEST_CASE("Vectorized surface iteration")
         }
 
         else if (callingWidth == 8) {
-          VKLRayIterator8 rayIterator;
-          vklInitRayIterator8(valid.data(),
-                              &rayIterator,
+          VKLHitIterator8 iterator;
+          vklInitHitIterator8(valid.data(),
+                              &iterator,
                               vklVolume,
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
@@ -181,7 +181,7 @@ TEST_CASE("Vectorized surface iteration")
           int hitCount = 0;
 
           while (true) {
-            vklIterateSurface8(valid.data(), &rayIterator, &hit, result);
+            vklIterateHit8(valid.data(), &iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -213,9 +213,9 @@ TEST_CASE("Vectorized surface iteration")
         }
 
         else if (callingWidth == 16) {
-          VKLRayIterator16 rayIterator;
-          vklInitRayIterator16(valid.data(),
-                               &rayIterator,
+          VKLHitIterator16 iterator;
+          vklInitHitIterator16(valid.data(),
+                               &iterator,
                                vklVolume,
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
@@ -228,7 +228,7 @@ TEST_CASE("Vectorized surface iteration")
           int hitCount = 0;
 
           while (true) {
-            vklIterateSurface16(valid.data(), &rayIterator, &hit, result);
+            vklIterateHit16(valid.data(), &iterator, &hit, result);
 
             int resultSum = 0;
 

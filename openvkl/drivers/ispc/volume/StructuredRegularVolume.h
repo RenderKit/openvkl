@@ -32,23 +32,23 @@ namespace openvkl {
 
       void commit() override;
 
-      void initRayIteratorV(vVKLRayIteratorN<W> &rayIterator,
-                            const vvec3fn<W> &origin,
-                            const vvec3fn<W> &direction,
-                            const vrange1fn<W> &tRange,
-                            const SamplesMask *samplesMask) override
+      void initIntervalIteratorV(vVKLIntervalIteratorN<W> &iterator,
+                                 const vvec3fn<W> &origin,
+                                 const vvec3fn<W> &direction,
+                                 const vrange1fn<W> &tRange,
+                                 const SamplesMask *samplesMask) override
       {
-        rayIterator = toVKLRayIterator<W>(GridAcceleratorRayIterator<W>(
+        iterator = toVKLIntervalIterator<W>(GridAcceleratorRayIterator<W>(
             this, origin, direction, tRange, samplesMask));
       }
 
       void iterateIntervalV(const int *valid,
-                            vVKLRayIteratorN<W> &rayIterator,
+                            vVKLIntervalIteratorN<W> &iterator,
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override
       {
         GridAcceleratorRayIterator<W> *ri =
-            fromVKLRayIterator<GridAcceleratorRayIterator<W>>(&rayIterator);
+            fromVKLIntervalIterator<GridAcceleratorRayIterator<W>>(&iterator);
 
         ri->iterateInterval(valid, result);
 
@@ -56,15 +56,26 @@ namespace openvkl {
             ri->getCurrentInterval());
       }
 
-      void iterateSurfaceV(const int *valid,
-                           vVKLRayIteratorN<W> &rayIterator,
-                           vVKLHitN<W> &hit,
-                           vintn<W> &result) override
+      void initHitIteratorV(vVKLHitIteratorN<W> &iterator,
+                            const vvec3fn<W> &origin,
+                            const vvec3fn<W> &direction,
+                            const vrange1fn<W> &tRange,
+                            const SamplesMask *samplesMask) override
+      {
+        iterator = toVKLHitIterator<W>(GridAcceleratorRayIterator<W>(
+            this, origin, direction, tRange, samplesMask));
+      }
+
+
+      void iterateHitV(const int *valid,
+                       vVKLHitIteratorN<W> &iterator,
+                       vVKLHitN<W> &hit,
+                       vintn<W> &result) override
       {
         GridAcceleratorRayIterator<W> *ri =
-            fromVKLRayIterator<GridAcceleratorRayIterator<W>>(&rayIterator);
+            fromVKLHitIterator<GridAcceleratorRayIterator<W>>(&iterator);
 
-        ri->iterateSurface(valid, result);
+        ri->iterateHit(valid, result);
 
         hit = *reinterpret_cast<const vVKLHitN<W> *>(ri->getCurrentHit());
       }

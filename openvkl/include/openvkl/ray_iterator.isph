@@ -21,39 +21,52 @@
 #include "samples_mask.isph"
 #include "volume.isph"
 
-struct VKLRayIterator
+///////////////////////////////////////////////////////////////////////////////
+// Interval iterators /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+struct VKLIntervalIterator
 {
   // stored as varying int32 to enforce correct alignment
   varying int32 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
   const VKLVolume volume;
 };
 
-VKL_API void vklInitRayIterator4(const int *uniform valid,
-                                 VKLRayIterator *uniform rayIterator,
-                                 VKLVolume volume,
-                                 const varying vkl_vec3f *uniform origin,
-                                 const varying vkl_vec3f *uniform direction,
-                                 const varying vkl_range1f *uniform tRange,
-                                 VKLSamplesMask samplesMask);
+struct VKLInterval
+{
+  vkl_range1f tRange;
+  float nominalDeltaT;
+};
 
-VKL_API void vklInitRayIterator8(const int *uniform valid,
-                                 VKLRayIterator *uniform rayIterator,
-                                 VKLVolume volume,
-                                 const varying vkl_vec3f *uniform origin,
-                                 const varying vkl_vec3f *uniform direction,
-                                 const varying vkl_range1f *uniform tRange,
-                                 VKLSamplesMask samplesMask);
+VKL_API void vklInitIntervalIterator4(const int *uniform valid,
+                                      VKLIntervalIterator *uniform iterator,
+                                      VKLVolume volume,
+                                      const varying vkl_vec3f *uniform origin,
+                                      const varying vkl_vec3f *uniform
+                                          direction,
+                                      const varying vkl_range1f *uniform tRange,
+                                      VKLSamplesMask samplesMask);
 
-VKL_API void vklInitRayIterator16(const int *uniform valid,
-                                  VKLRayIterator *uniform rayIterator,
-                                  VKLVolume volume,
-                                  const varying vkl_vec3f *uniform origin,
-                                  const varying vkl_vec3f *uniform direction,
-                                  const varying vkl_range1f *uniform tRange,
-                                  VKLSamplesMask samplesMask);
+VKL_API void vklInitIntervalIterator8(const int *uniform valid,
+                                      VKLIntervalIterator *uniform iterator,
+                                      VKLVolume volume,
+                                      const varying vkl_vec3f *uniform origin,
+                                      const varying vkl_vec3f *uniform
+                                          direction,
+                                      const varying vkl_range1f *uniform tRange,
+                                      VKLSamplesMask samplesMask);
 
-VKL_FORCEINLINE void vklInitRayIteratorV(
-    VKLRayIterator *uniform rayIterator,
+VKL_API void vklInitIntervalIterator16(
+    const int *uniform valid,
+    VKLIntervalIterator *uniform iterator,
+    VKLVolume volume,
+    const varying vkl_vec3f *uniform origin,
+    const varying vkl_vec3f *uniform direction,
+    const varying vkl_range1f *uniform tRange,
+    VKLSamplesMask samplesMask);
+
+VKL_FORCEINLINE void vklInitIntervalIteratorV(
+    VKLIntervalIterator *uniform iterator,
     VKLVolume volume,
     const varying vkl_vec3f *uniform origin,
     const varying vkl_vec3f *uniform direction,
@@ -67,56 +80,50 @@ VKL_FORCEINLINE void vklInitRayIteratorV(
   }
 
   if (sizeof(varying float) == 16) {
-    vklInitRayIterator4((uniform int *uniform) & imask,
-                        rayIterator,
-                        volume,
-                        origin,
-                        direction,
-                        tRange,
-                        samplesMask);
+    vklInitIntervalIterator4((uniform int *uniform) & imask,
+                             iterator,
+                             volume,
+                             origin,
+                             direction,
+                             tRange,
+                             samplesMask);
   } else if (sizeof(varying float) == 32) {
-    vklInitRayIterator8((uniform int *uniform) & imask,
-                        rayIterator,
-                        volume,
-                        origin,
-                        direction,
-                        tRange,
-                        samplesMask);
+    vklInitIntervalIterator8((uniform int *uniform) & imask,
+                             iterator,
+                             volume,
+                             origin,
+                             direction,
+                             tRange,
+                             samplesMask);
   } else if (sizeof(varying float) == 64) {
-    vklInitRayIterator16((uniform int *uniform) & imask,
-                         rayIterator,
-                         volume,
-                         origin,
-                         direction,
-                         tRange,
-                         samplesMask);
+    vklInitIntervalIterator16((uniform int *uniform) & imask,
+                              iterator,
+                              volume,
+                              origin,
+                              direction,
+                              tRange,
+                              samplesMask);
   }
 }
 
-struct VKLInterval
-{
-  vkl_range1f tRange;
-  float nominalDeltaT;
-  // TODO: output samples mask when needed
-};
-
 VKL_API void vklIterateInterval4(const int *uniform valid,
-                                 VKLRayIterator *uniform rayIterator,
+                                 VKLIntervalIterator *uniform iterator,
                                  varying VKLInterval *uniform interval,
                                  varying int *uniform result);
 
 VKL_API void vklIterateInterval8(const int *uniform valid,
-                                 VKLRayIterator *uniform rayIterator,
+                                 VKLIntervalIterator *uniform iterator,
                                  varying VKLInterval *uniform interval,
                                  varying int *uniform result);
 
 VKL_API void vklIterateInterval16(const int *uniform valid,
-                                  VKLRayIterator *uniform rayIterator,
+                                  VKLIntervalIterator *uniform iterator,
                                   varying VKLInterval *uniform interval,
                                   varying int *uniform result);
 
 VKL_FORCEINLINE varying bool vklIterateIntervalV(
-    VKLRayIterator *uniform rayIterator, varying VKLInterval *uniform interval)
+    VKLIntervalIterator *uniform iterator,
+    varying VKLInterval *uniform interval)
 {
   varying bool mask = __mask;
   unmasked
@@ -126,23 +133,34 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
   if (sizeof(varying float) == 16) {
     varying int iresult;
     vklIterateInterval4(
-        (uniform int *uniform) & imask, rayIterator, interval, &iresult);
+        (uniform int *uniform) & imask, iterator, interval, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 32) {
     varying int iresult;
     vklIterateInterval8(
-        (uniform int *uniform) & imask, rayIterator, interval, &iresult);
+        (uniform int *uniform) & imask, iterator, interval, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 64) {
     varying int iresult;
     vklIterateInterval16(
-        (uniform int *uniform) & imask, rayIterator, interval, &iresult);
+        (uniform int *uniform) & imask, iterator, interval, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   }
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Hit iterators //////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+struct VKLHitIterator
+{
+  // stored as varying int32 to enforce correct alignment
+  varying int32 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
+  const VKLVolume volume;
+};
 
 struct VKLHit
 {
@@ -150,23 +168,88 @@ struct VKLHit
   float sample;
 };
 
-VKL_API void vklIterateSurface4(const int *uniform valid,
-                                VKLRayIterator *uniform rayIterator,
-                                varying VKLHit *uniform hit,
-                                varying int *uniform result);
+VKL_API void vklInitHitIterator4(const int *uniform valid,
+                                 VKLHitIterator *uniform iterator,
+                                 VKLVolume volume,
+                                 const varying vkl_vec3f *uniform origin,
+                                 const varying vkl_vec3f *uniform direction,
+                                 const varying vkl_range1f *uniform tRange,
+                                 VKLSamplesMask samplesMask);
 
-VKL_API void vklIterateSurface8(const int *uniform valid,
-                                VKLRayIterator *uniform rayIterator,
-                                varying VKLHit *uniform hit,
-                                varying int *uniform result);
+VKL_API void vklInitHitIterator8(const int *uniform valid,
+                                 VKLHitIterator *uniform iterator,
+                                 VKLVolume volume,
+                                 const varying vkl_vec3f *uniform origin,
+                                 const varying vkl_vec3f *uniform direction,
+                                 const varying vkl_range1f *uniform tRange,
+                                 VKLSamplesMask samplesMask);
 
-VKL_API void vklIterateSurface16(const int *uniform valid,
-                                 VKLRayIterator *uniform rayIterator,
-                                 varying VKLHit *uniform hit,
-                                 varying int *uniform result);
+VKL_API void vklInitHitIterator16(const int *uniform valid,
+                                  VKLHitIterator *uniform iterator,
+                                  VKLVolume volume,
+                                  const varying vkl_vec3f *uniform origin,
+                                  const varying vkl_vec3f *uniform direction,
+                                  const varying vkl_range1f *uniform tRange,
+                                  VKLSamplesMask samplesMask);
 
-VKL_FORCEINLINE varying bool vklIterateSurfaceV(
-    VKLRayIterator *uniform rayIterator, varying VKLHit *uniform hit)
+VKL_FORCEINLINE void vklInitHitIteratorV(
+    VKLHitIterator *uniform iterator,
+    VKLVolume volume,
+    const varying vkl_vec3f *uniform origin,
+    const varying vkl_vec3f *uniform direction,
+    const varying vkl_range1f *uniform tRange,
+    VKLSamplesMask samplesMask)
+{
+  varying bool mask = __mask;
+  unmasked
+  {
+    varying int imask = mask ? -1 : 0;
+  }
+
+  if (sizeof(varying float) == 16) {
+    vklInitHitIterator4((uniform int *uniform) & imask,
+                        iterator,
+                        volume,
+                        origin,
+                        direction,
+                        tRange,
+                        samplesMask);
+  } else if (sizeof(varying float) == 32) {
+    vklInitHitIterator8((uniform int *uniform) & imask,
+                        iterator,
+                        volume,
+                        origin,
+                        direction,
+                        tRange,
+                        samplesMask);
+  } else if (sizeof(varying float) == 64) {
+    vklInitHitIterator16((uniform int *uniform) & imask,
+                         iterator,
+                         volume,
+                         origin,
+                         direction,
+                         tRange,
+                         samplesMask);
+  }
+}
+
+VKL_API void vklIterateHit4(const int *uniform valid,
+                            VKLHitIterator *uniform iterator,
+                            varying VKLHit *uniform hit,
+                            varying int *uniform result);
+
+VKL_API void vklIterateHit8(const int *uniform valid,
+                            VKLHitIterator *uniform iterator,
+                            varying VKLHit *uniform hit,
+                            varying int *uniform result);
+
+VKL_API void vklIterateHit16(const int *uniform valid,
+                             VKLHitIterator *uniform iterator,
+                             varying VKLHit *uniform hit,
+                             varying int *uniform result);
+
+VKL_FORCEINLINE varying bool vklIterateHitV(VKLHitIterator *uniform iterator,
+                                            varying VKLHit *uniform hit)
 {
   varying bool mask = __mask;
   unmasked
@@ -175,20 +258,17 @@ VKL_FORCEINLINE varying bool vklIterateSurfaceV(
   }
   if (sizeof(varying float) == 16) {
     varying int iresult;
-    vklIterateSurface4(
-        (uniform int *uniform) & imask, rayIterator, hit, &iresult);
+    vklIterateHit4((uniform int *uniform) & imask, iterator, hit, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 32) {
     varying int iresult;
-    vklIterateSurface8(
-        (uniform int *uniform) & imask, rayIterator, hit, &iresult);
+    vklIterateHit8((uniform int *uniform) & imask, iterator, hit, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 64) {
     varying int iresult;
-    vklIterateSurface16(
-        (uniform int *uniform) & imask, rayIterator, hit, &iresult);
+    vklIterateHit16((uniform int *uniform) & imask, iterator, hit, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   }

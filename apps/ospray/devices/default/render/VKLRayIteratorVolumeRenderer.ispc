@@ -41,7 +41,7 @@ inline void integrate(uniform VKLRayIteratorVolumeRenderer *uniform self,
   color = make_vec3f(self->super.bgColor);
   alpha = self->super.bgColor.w;
 
-  // create volume ray iterator
+  // create volume iterator
   vkl_range1f tRange;
   tRange.lower = ray.t0;
   tRange.upper = ray.t;
@@ -49,18 +49,18 @@ inline void integrate(uniform VKLRayIteratorVolumeRenderer *uniform self,
   VKLSamplesMask samplesMask =
       getSamplesMaskForTransferFunction(self->volume, self->transferFunction);
 
-  uniform VKLRayIterator rayIterator;
-  vklInitRayIteratorV(&rayIterator,
-                      self->volume,
-                      (varying vkl_vec3f *)&ray.org,
-                      (varying vkl_vec3f *)&ray.dir,
-                      &tRange,
-                      samplesMask);
+  uniform VKLIntervalIterator iterator;
+  vklInitIntervalIteratorV(&iterator,
+                           self->volume,
+                           (varying vkl_vec3f *)&ray.org,
+                           (varying vkl_vec3f *)&ray.dir,
+                           &tRange,
+                           samplesMask);
 
   // the current ray interval
   VKLInterval interval;
 
-  while (vklIterateIntervalV(&rayIterator, &interval) && alpha < 0.99f) {
+  while (vklIterateIntervalV(&iterator, &interval) && alpha < 0.99f) {
     const float nominalSamplingDt = interval.nominalDeltaT / self->samplingRate;
 
     // initial sub interval, based on our renderer-defined sampling rate

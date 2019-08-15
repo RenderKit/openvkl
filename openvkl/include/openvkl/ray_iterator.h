@@ -25,77 +25,48 @@
 extern "C" {
 #endif
 
-struct VKLRayIterator
+///////////////////////////////////////////////////////////////////////////////
+// Interval iterators /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+struct VKLIntervalIterator
 {
   alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
       [RAY_ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
-struct VKLRayIterator4
+struct VKLIntervalIterator4
 {
   alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
       [RAY_ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
-struct VKLRayIterator8
+struct VKLIntervalIterator8
 {
   alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
       [RAY_ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
-struct VKLRayIterator16
+struct VKLIntervalIterator16
 {
   alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
       [RAY_ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
 
-void vklInitRayIterator(VKLRayIterator *rayIterator,
-                        VKLVolume volume,
-                        const vkl_vec3f *origin,
-                        const vkl_vec3f *direction,
-                        const vkl_range1f *tRange,
-                        VKLSamplesMask samplesMask);
-
-void vklInitRayIterator4(const int *valid,
-                         VKLRayIterator4 *rayIterator,
-                         VKLVolume volume,
-                         const vkl_vvec3f4 *origin,
-                         const vkl_vvec3f4 *direction,
-                         const vkl_vrange1f4 *tRange,
-                         VKLSamplesMask samplesMask);
-
-void vklInitRayIterator8(const int *valid,
-                         VKLRayIterator8 *rayIterator,
-                         VKLVolume volume,
-                         const vkl_vvec3f8 *origin,
-                         const vkl_vvec3f8 *direction,
-                         const vkl_vrange1f8 *tRange,
-                         VKLSamplesMask samplesMask);
-
-void vklInitRayIterator16(const int *valid,
-                          VKLRayIterator16 *rayIterator,
-                          VKLVolume volume,
-                          const vkl_vvec3f16 *origin,
-                          const vkl_vvec3f16 *direction,
-                          const vkl_vrange1f16 *tRange,
-                          VKLSamplesMask samplesMask);
-
 struct VKLInterval
 {
   vkl_range1f tRange;
   float nominalDeltaT;
-  // TODO: output samples mask when needed
 };
 
 struct VKLInterval4
 {
   vkl_vrange1f4 tRange;
   float nominalDeltaT[4];
-  // TODO: output samples mask when needed
 };
 
 struct VKLInterval8
@@ -110,23 +81,86 @@ struct VKLInterval16
   float nominalDeltaT[16];
 };
 
+void vklInitIntervalIterator(VKLIntervalIterator *iterator,
+                             VKLVolume volume,
+                             const vkl_vec3f *origin,
+                             const vkl_vec3f *direction,
+                             const vkl_range1f *tRange,
+                             VKLSamplesMask samplesMask);
+
+void vklInitIntervalIterator4(const int *valid,
+                              VKLIntervalIterator4 *iterator,
+                              VKLVolume volume,
+                              const vkl_vvec3f4 *origin,
+                              const vkl_vvec3f4 *direction,
+                              const vkl_vrange1f4 *tRange,
+                              VKLSamplesMask samplesMask);
+
+void vklInitIntervalIterator8(const int *valid,
+                              VKLIntervalIterator8 *iterator,
+                              VKLVolume volume,
+                              const vkl_vvec3f8 *origin,
+                              const vkl_vvec3f8 *direction,
+                              const vkl_vrange1f8 *tRange,
+                              VKLSamplesMask samplesMask);
+
+void vklInitIntervalIterator16(const int *valid,
+                               VKLIntervalIterator16 *iterator,
+                               VKLVolume volume,
+                               const vkl_vvec3f16 *origin,
+                               const vkl_vvec3f16 *direction,
+                               const vkl_vrange1f16 *tRange,
+                               VKLSamplesMask samplesMask);
+
 // returns true while the iterator is still within the volume
-bool vklIterateInterval(VKLRayIterator *rayIterator, VKLInterval *interval);
+bool vklIterateInterval(VKLIntervalIterator *iterator, VKLInterval *interval);
 
 void vklIterateInterval4(const int *valid,
-                         VKLRayIterator4 *rayIterator,
+                         VKLIntervalIterator4 *iterator,
                          VKLInterval4 *interval,
                          int *result);
 
 void vklIterateInterval8(const int *valid,
-                         VKLRayIterator8 *rayIterator,
+                         VKLIntervalIterator8 *iterator,
                          VKLInterval8 *interval,
                          int *result);
 
 void vklIterateInterval16(const int *valid,
-                          VKLRayIterator16 *rayIterator,
+                          VKLIntervalIterator16 *iterator,
                           VKLInterval16 *interval,
                           int *result);
+
+///////////////////////////////////////////////////////////////////////////////
+// Hit iterators //////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+struct VKLHitIterator
+{
+  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
+      [RAY_ITERATOR_INTERNAL_STATE_SIZE];
+  VKLVolume volume;
+};
+
+struct VKLHitIterator4
+{
+  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
+      [RAY_ITERATOR_INTERNAL_STATE_SIZE_4];
+  VKLVolume volume;
+};
+
+struct VKLHitIterator8
+{
+  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
+      [RAY_ITERATOR_INTERNAL_STATE_SIZE_8];
+  VKLVolume volume;
+};
+
+struct VKLHitIterator16
+{
+  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
+      [RAY_ITERATOR_INTERNAL_STATE_SIZE_16];
+  VKLVolume volume;
+};
 
 struct VKLHit
 {
@@ -152,29 +186,54 @@ struct VKLHit16
   float sample[16];
 };
 
+void vklInitHitIterator(VKLHitIterator *iterator,
+                        VKLVolume volume,
+                        const vkl_vec3f *origin,
+                        const vkl_vec3f *direction,
+                        const vkl_range1f *tRange,
+                        VKLSamplesMask samplesMask);
+
+void vklInitHitIterator4(const int *valid,
+                         VKLHitIterator4 *iterator,
+                         VKLVolume volume,
+                         const vkl_vvec3f4 *origin,
+                         const vkl_vvec3f4 *direction,
+                         const vkl_vrange1f4 *tRange,
+                         VKLSamplesMask samplesMask);
+
+void vklInitHitIterator8(const int *valid,
+                         VKLHitIterator8 *iterator,
+                         VKLVolume volume,
+                         const vkl_vvec3f8 *origin,
+                         const vkl_vvec3f8 *direction,
+                         const vkl_vrange1f8 *tRange,
+                         VKLSamplesMask samplesMask);
+
+void vklInitHitIterator16(const int *valid,
+                          VKLHitIterator16 *iterator,
+                          VKLVolume volume,
+                          const vkl_vvec3f16 *origin,
+                          const vkl_vvec3f16 *direction,
+                          const vkl_vrange1f16 *tRange,
+                          VKLSamplesMask samplesMask);
+
 // returns true while the iterator is still within the volume
-bool vklIterateSurface(VKLRayIterator *rayIterator, VKLHit *hit);
+bool vklIterateHit(VKLHitIterator *iterator, VKLHit *hit);
 
-void vklIterateSurface4(const int *valid,
-                        VKLRayIterator4 *rayIterator,
-                        VKLHit4 *hit,
-                        int *result);
+void vklIterateHit4(const int *valid,
+                    VKLHitIterator4 *iterator,
+                    VKLHit4 *hit,
+                    int *result);
 
-void vklIterateSurface8(const int *valid,
-                        VKLRayIterator8 *rayIterator,
-                        VKLHit8 *hit,
-                        int *result);
+void vklIterateHit8(const int *valid,
+                    VKLHitIterator8 *iterator,
+                    VKLHit8 *hit,
+                    int *result);
 
-void vklIterateSurface16(const int *valid,
-                         VKLRayIterator16 *rayIterator,
-                         VKLHit16 *hit,
-                         int *result);
-
-/* TODO:
-
-- need nominalDeltaT to also be returned
-- open whether output sample mask is returned
-*/
+void vklIterateHit16(const int *valid,
+                     VKLHitIterator16 *iterator,
+                     VKLHit16 *hit,
+                     int *result);
 
 #ifdef __cplusplus
 }  // extern "C"

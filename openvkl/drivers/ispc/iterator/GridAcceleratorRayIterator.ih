@@ -29,7 +29,7 @@ struct GridAcceleratorRayIteratorIntervalState
   vec3i currentCellIndex;
 };
 
-struct GridAcceleratorRayIteratorSurfaceState
+struct GridAcceleratorRayIteratorHitState
 {
   bool activeCell;
   vec3i currentCellIndex;
@@ -51,6 +51,6 @@ struct GridAcceleratorRayIterator
   // interval iterator state
   varying GridAcceleratorRayIteratorIntervalState intervalState;
 
-  // surface iterator state
-  varying GridAcceleratorRayIteratorSurfaceState surfaceState;
+  // hit iterator state
+  varying GridAcceleratorRayIteratorHitState hitState;
 };

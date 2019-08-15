@@ -70,40 +70,40 @@ namespace openvkl {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // Iterator ///////////////////////////////////////////////////////////////
+    // Interval iterator //////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-#define __define_initRayIteratorN(WIDTH)                                     \
-  template <int W>                                                           \
-  void ISPCDriver<W>::initRayIterator##WIDTH(                                \
-      const int *valid,                                                      \
-      vVKLRayIteratorN<WIDTH> &rayIterator,                                  \
-      VKLVolume volume,                                                      \
-      const vvec3fn<WIDTH> &origin,                                          \
-      const vvec3fn<WIDTH> &direction,                                       \
-      const vrange1fn<WIDTH> &tRange,                                        \
-      VKLSamplesMask samplesMask)                                            \
-  {                                                                          \
-    initRayIteratorAnyWidth<WIDTH>(                                          \
-        valid, rayIterator, volume, origin, direction, tRange, samplesMask); \
+#define __define_initIntervalIteratorN(WIDTH)                             \
+  template <int W>                                                        \
+  void ISPCDriver<W>::initIntervalIterator##WIDTH(                        \
+      const int *valid,                                                   \
+      vVKLIntervalIteratorN<WIDTH> &iterator,                             \
+      VKLVolume volume,                                                   \
+      const vvec3fn<WIDTH> &origin,                                       \
+      const vvec3fn<WIDTH> &direction,                                    \
+      const vrange1fn<WIDTH> &tRange,                                     \
+      VKLSamplesMask samplesMask)                                         \
+  {                                                                       \
+    initIntervalIteratorAnyWidth<WIDTH>(                                  \
+        valid, iterator, volume, origin, direction, tRange, samplesMask); \
   }
 
-    __define_initRayIteratorN(1);
-    __define_initRayIteratorN(4);
-    __define_initRayIteratorN(8);
-    __define_initRayIteratorN(16);
+    __define_initIntervalIteratorN(1);
+    __define_initIntervalIteratorN(4);
+    __define_initIntervalIteratorN(8);
+    __define_initIntervalIteratorN(16);
 
-#undef __define_initRayIteratorN
+#undef __define_initIntervalIteratorN
 
-#define __define_iterateIntervalN(WIDTH)                                  \
-  template <int W>                                                        \
-  void ISPCDriver<W>::iterateInterval##WIDTH(                             \
-      const int *valid,                                                   \
-      vVKLRayIteratorN<WIDTH> &rayIterator,                               \
-      vVKLIntervalN<WIDTH> &interval,                                     \
-      vintn<WIDTH> &result)                                               \
-  {                                                                       \
-    iterateIntervalAnyWidth<WIDTH>(valid, rayIterator, interval, result); \
+#define __define_iterateIntervalN(WIDTH)                               \
+  template <int W>                                                     \
+  void ISPCDriver<W>::iterateInterval##WIDTH(                          \
+      const int *valid,                                                \
+      vVKLIntervalIteratorN<WIDTH> &iterator,                          \
+      vVKLIntervalN<WIDTH> &interval,                                  \
+      vintn<WIDTH> &result)                                            \
+  {                                                                    \
+    iterateIntervalAnyWidth<WIDTH>(valid, iterator, interval, result); \
   }
 
     __define_iterateIntervalN(1);
@@ -113,23 +113,48 @@ namespace openvkl {
 
 #undef __define_iterateIntervalN
 
-#define __define_iterateSurfaceN(WIDTH)                             \
-  template <int W>                                                  \
-  void ISPCDriver<W>::iterateSurface##WIDTH(                        \
-      const int *valid,                                             \
-      vVKLRayIteratorN<WIDTH> &rayIterator,                         \
-      vVKLHitN<WIDTH> &hit,                                         \
-      vintn<WIDTH> &result)                                         \
-  {                                                                 \
-    iterateSurfaceAnyWidth<WIDTH>(valid, rayIterator, hit, result); \
+    ///////////////////////////////////////////////////////////////////////////
+    // Hit iterator ///////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+#define __define_initHitIteratorN(WIDTH)                                  \
+  template <int W>                                                        \
+  void ISPCDriver<W>::initHitIterator##WIDTH(                             \
+      const int *valid,                                                   \
+      vVKLHitIteratorN<WIDTH> &iterator,                                  \
+      VKLVolume volume,                                                   \
+      const vvec3fn<WIDTH> &origin,                                       \
+      const vvec3fn<WIDTH> &direction,                                    \
+      const vrange1fn<WIDTH> &tRange,                                     \
+      VKLSamplesMask samplesMask)                                         \
+  {                                                                       \
+    initHitIteratorAnyWidth<WIDTH>(                                       \
+        valid, iterator, volume, origin, direction, tRange, samplesMask); \
   }
 
-    __define_iterateSurfaceN(1);
-    __define_iterateSurfaceN(4);
-    __define_iterateSurfaceN(8);
-    __define_iterateSurfaceN(16);
+    __define_initHitIteratorN(1);
+    __define_initHitIteratorN(4);
+    __define_initHitIteratorN(8);
+    __define_initHitIteratorN(16);
 
-#undef __define_iterateSurfaceN
+#undef __define_initHitIteratorN
+
+#define __define_iterateHitN(WIDTH)                                        \
+  template <int W>                                                         \
+  void ISPCDriver<W>::iterateHit##WIDTH(const int *valid,                  \
+                                        vVKLHitIteratorN<WIDTH> &iterator, \
+                                        vVKLHitN<WIDTH> &hit,              \
+                                        vintn<WIDTH> &result)              \
+  {                                                                        \
+    iterateHitAnyWidth<WIDTH>(valid, iterator, hit, result);               \
+  }
+
+    __define_iterateHitN(1);
+    __define_iterateHitN(4);
+    __define_iterateHitN(8);
+    __define_iterateHitN(16);
+
+#undef __define_iterateHitN
 
     ///////////////////////////////////////////////////////////////////////////
     // Module /////////////////////////////////////////////////////////////////
@@ -144,7 +169,6 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
     // Parameters /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-
 
     template <int W>
     void ISPCDriver<W>::setBool(VKLObject object, const char *name, const bool b)
@@ -292,8 +316,167 @@ namespace openvkl {
     template <int W>
     template <int OW>
     typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::initRayIteratorAnyWidth(const int *valid,
-                                           vVKLRayIteratorN<OW> &rayIterator,
+    ISPCDriver<W>::initIntervalIteratorAnyWidth(
+        const int *valid,
+        vVKLIntervalIteratorN<OW> &iterator,
+        VKLVolume volume,
+        const vvec3fn<OW> &origin,
+        const vvec3fn<OW> &direction,
+        const vrange1fn<OW> &tRange,
+        VKLSamplesMask samplesMask)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+
+      vVKLIntervalIteratorN<W> iteratorW;
+
+      volumeObject.initIntervalIteratorV(
+          iteratorW,
+          originW,
+          directionW,
+          tRangeW,
+          reinterpret_cast<const SamplesMask *>(samplesMask));
+
+      iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::initIntervalIteratorAnyWidth(
+        const int *valid,
+        vVKLIntervalIteratorN<OW> &iterator,
+        VKLVolume volume,
+        const vvec3fn<OW> &origin,
+        const vvec3fn<OW> &direction,
+        const vrange1fn<OW> &tRange,
+        VKLSamplesMask samplesMask)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+
+      volumeObject.initIntervalIteratorV(
+          iterator,
+          originW,
+          directionW,
+          tRangeW,
+          reinterpret_cast<const SamplesMask *>(samplesMask));
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW != W && OW != 1), void>::type
+    ISPCDriver<W>::initIntervalIteratorAnyWidth(
+        const int *valid,
+        vVKLIntervalIteratorN<OW> &iterator,
+        VKLVolume volume,
+        const vvec3fn<OW> &origin,
+        const vvec3fn<OW> &direction,
+        const vrange1fn<OW> &tRange,
+        VKLSamplesMask samplesMask)
+    {
+      throw std::runtime_error(
+          "interval iterators cannot be created for widths different than the "
+          "native runtime vector width");
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == 1), void>::type
+    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
+                                           vVKLIntervalIteratorN<OW> &iterator1,
+                                           vVKLIntervalN<OW> &interval,
+                                           vintn<OW> &result)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator1.volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vVKLIntervalN<W> intervalW;
+
+      vintn<W> resultW;
+
+      vVKLIntervalIteratorN<W> iteratorW =
+          static_cast<vVKLIntervalIteratorN<W>>(iterator1);
+
+      volumeObject.iterateIntervalV(validW, iteratorW, intervalW, resultW);
+
+      iterator1 = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
+
+      for (int i = 0; i < OW; i++) {
+        interval.tRange.lower[i]  = intervalW.tRange.lower[i];
+        interval.tRange.upper[i]  = intervalW.tRange.upper[i];
+        interval.nominalDeltaT[i] = intervalW.nominalDeltaT[i];
+      }
+
+      for (int i = 0; i < OW; i++)
+        result[i] = resultW[i];
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
+                                           vVKLIntervalIteratorN<OW> &iterator,
+                                           vVKLIntervalN<OW> &interval,
+                                           vintn<OW> &result)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vVKLIntervalN<W> intervalW;
+
+      vintn<W> resultW;
+
+      volumeObject.iterateIntervalV(validW, iterator, intervalW, resultW);
+
+      for (int i = 0; i < OW; i++) {
+        interval.tRange.lower[i]  = intervalW.tRange.lower[i];
+        interval.tRange.upper[i]  = intervalW.tRange.upper[i];
+        interval.nominalDeltaT[i] = intervalW.nominalDeltaT[i];
+      }
+
+      for (int i = 0; i < OW; i++)
+        result[i] = resultW[i];
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW != W && OW != 1), void>::type
+    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
+                                           vVKLIntervalIteratorN<OW> &iterator,
+                                           vVKLIntervalN<OW> &interval,
+                                           vintn<OW> &result)
+    {
+      throw std::runtime_error(
+          "cannot iterate on intervals for widths different than the "
+          "native runtime vector width");
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == 1), void>::type
+    ISPCDriver<W>::initHitIteratorAnyWidth(const int *valid,
+                                           vVKLHitIteratorN<OW> &iterator,
                                            VKLVolume volume,
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
@@ -310,23 +493,23 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      vVKLRayIteratorN<W> rayIteratorW;
+      vVKLHitIteratorN<W> iteratorW;
 
-      volumeObject.initRayIteratorV(
-          rayIteratorW,
+      volumeObject.initHitIteratorV(
+          iteratorW,
           originW,
           directionW,
           tRangeW,
           reinterpret_cast<const SamplesMask *>(samplesMask));
 
-      rayIterator = static_cast<vVKLRayIteratorN<1>>(rayIteratorW);
+      iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
     }
 
     template <int W>
     template <int OW>
     typename std::enable_if<(OW == W), void>::type
-    ISPCDriver<W>::initRayIteratorAnyWidth(const int *valid,
-                                           vVKLRayIteratorN<OW> &rayIterator,
+    ISPCDriver<W>::initHitIteratorAnyWidth(const int *valid,
+                                           vVKLHitIteratorN<OW> &iterator,
                                            VKLVolume volume,
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
@@ -343,8 +526,8 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      volumeObject.initRayIteratorV(
-          rayIterator,
+      volumeObject.initHitIteratorV(
+          iterator,
           originW,
           directionW,
           tRangeW,
@@ -354,8 +537,8 @@ namespace openvkl {
     template <int W>
     template <int OW>
     typename std::enable_if<(OW != W && OW != 1), void>::type
-    ISPCDriver<W>::initRayIteratorAnyWidth(const int *valid,
-                                           vVKLRayIteratorN<OW> &rayIterator,
+    ISPCDriver<W>::initHitIteratorAnyWidth(const int *valid,
+                                           vVKLHitIteratorN<OW> &iterator,
                                            VKLVolume volume,
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
@@ -363,97 +546,19 @@ namespace openvkl {
                                            VKLSamplesMask samplesMask)
     {
       throw std::runtime_error(
-          "ray iterators cannot be created for widths different than the "
+          "hit iterators cannot be created for widths different than the "
           "native runtime vector width");
     }
 
     template <int W>
     template <int OW>
     typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           vVKLRayIteratorN<OW> &rayIterator1,
-                                           vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
+    ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
+                                      vVKLHitIteratorN<OW> &iterator1,
+                                      vVKLHitN<OW> &hit,
+                                      vintn<OW> &result)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(rayIterator1.volume);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLIntervalN<W> intervalW;
-
-      vintn<W> resultW;
-
-      vVKLRayIteratorN<W> rayIteratorW =
-          static_cast<vVKLRayIteratorN<W>>(rayIterator1);
-
-      volumeObject.iterateIntervalV(validW, rayIteratorW, intervalW, resultW);
-
-      rayIterator1 = static_cast<vVKLRayIteratorN<1>>(rayIteratorW);
-
-      for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]  = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]  = intervalW.tRange.upper[i];
-        interval.nominalDeltaT[i] = intervalW.nominalDeltaT[i];
-      }
-
-      for (int i = 0; i < OW; i++)
-        result[i] = resultW[i];
-    }
-
-    template <int W>
-    template <int OW>
-    typename std::enable_if<(OW == W), void>::type
-    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           vVKLRayIteratorN<OW> &rayIterator,
-                                           vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(rayIterator.volume);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLIntervalN<W> intervalW;
-
-      vintn<W> resultW;
-
-      volumeObject.iterateIntervalV(validW, rayIterator, intervalW, resultW);
-
-      for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]  = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]  = intervalW.tRange.upper[i];
-        interval.nominalDeltaT[i] = intervalW.nominalDeltaT[i];
-      }
-
-      for (int i = 0; i < OW; i++)
-        result[i] = resultW[i];
-    }
-
-    template <int W>
-    template <int OW>
-    typename std::enable_if<(OW != W && OW != 1), void>::type
-    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           vVKLRayIteratorN<OW> &rayIterator,
-                                           vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
-    {
-      throw std::runtime_error(
-          "cannot iterate on ray intervals for widths different than the "
-          "native runtime vector width");
-    }
-
-    template <int W>
-    template <int OW>
-    typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
-                                          vVKLRayIteratorN<OW> &rayIterator1,
-                                          vVKLHitN<OW> &hit,
-                                          vintn<OW> &result)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(rayIterator1.volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator1.volume);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
@@ -463,12 +568,12 @@ namespace openvkl {
 
       vintn<W> resultW;
 
-      vVKLRayIteratorN<W> rayIteratorW =
-          static_cast<vVKLRayIteratorN<W>>(rayIterator1);
+      vVKLHitIteratorN<W> iteratorW =
+          static_cast<vVKLHitIteratorN<W>>(iterator1);
 
-      volumeObject.iterateSurfaceV(validW, rayIteratorW, hitW, resultW);
+      volumeObject.iterateHitV(validW, iteratorW, hitW, resultW);
 
-      rayIterator1 = static_cast<vVKLRayIteratorN<1>>(rayIteratorW);
+      iterator1 = static_cast<vVKLHitIteratorN<1>>(iteratorW);
 
       for (int i = 0; i < OW; i++) {
         hit.t[i]      = hitW.t[i];
@@ -482,12 +587,12 @@ namespace openvkl {
     template <int W>
     template <int OW>
     typename std::enable_if<(OW == W), void>::type
-    ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
-                                          vVKLRayIteratorN<OW> &rayIterator,
-                                          vVKLHitN<OW> &hit,
-                                          vintn<OW> &result)
+    ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
+                                      vVKLHitIteratorN<OW> &iterator,
+                                      vVKLHitN<OW> &hit,
+                                      vintn<OW> &result)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(rayIterator.volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
@@ -497,7 +602,7 @@ namespace openvkl {
 
       vintn<W> resultW;
 
-      volumeObject.iterateSurfaceV(validW, rayIterator, hitW, resultW);
+      volumeObject.iterateHitV(validW, iterator, hitW, resultW);
 
       for (int i = 0; i < OW; i++) {
         hit.t[i]      = hitW.t[i];
@@ -511,13 +616,13 @@ namespace openvkl {
     template <int W>
     template <int OW>
     typename std::enable_if<(OW != W && OW != 1), void>::type
-    ISPCDriver<W>::iterateSurfaceAnyWidth(const int *valid,
-                                          vVKLRayIteratorN<OW> &rayIterator,
-                                          vVKLHitN<OW> &hit,
-                                          vintn<OW> &result)
+    ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
+                                      vVKLHitIteratorN<OW> &iterator,
+                                      vVKLHitN<OW> &hit,
+                                      vintn<OW> &result)
     {
       throw std::runtime_error(
-          "cannot iterate on surfaces for widths different than the native "
+          "cannot iterate on hits for widths different than the native "
           "runtime vector width");
     }
 

@@ -119,14 +119,14 @@ TEST_CASE("Vectorized interval iteration")
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
                               nullptr);
 
-          VKLRayInterval4 rayIntervalPrevious, rayIntervalCurrent;
+          VKLInterval4 intervalPrevious, intervalCurrent;
           int result[callingWidth];
 
           int counter = 0;
 
           while (true) {
             vklIterateInterval4(
-                valid.data(), &rayIterator, &rayIntervalCurrent, result);
+                valid.data(), &rayIterator, &intervalCurrent, result);
 
             int resultSum = 0;
 
@@ -142,23 +142,23 @@ TEST_CASE("Vectorized interval iteration")
             }
 
             for (int i = 0; i < width; i++) {
-              INFO("rayInterval iteration "
-                   << counter << " lane[" << i << "] tRange = "
-                   << rayIntervalCurrent.tRange.lower[i] << ", "
-                   << rayIntervalCurrent.tRange.upper[i] << " nominalDeltaT = "
-                   << rayIntervalCurrent.nominalDeltaT[i]);
+              INFO("interval iteration "
+                   << counter << " lane[" << i
+                   << "] tRange = " << intervalCurrent.tRange.lower[i] << ", "
+                   << intervalCurrent.tRange.upper[i]
+                   << " nominalDeltaT = " << intervalCurrent.nominalDeltaT[i]);
 
               if (counter == 0) {
                 // first interval at expected beginning
-                REQUIRE(rayIntervalCurrent.tRange.lower[i] == 1.f);
+                REQUIRE(intervalCurrent.tRange.lower[i] == 1.f);
               } else {
                 // interval continuity
-                REQUIRE(rayIntervalCurrent.tRange.lower[i] ==
-                        rayIntervalPrevious.tRange.upper[i]);
+                REQUIRE(intervalCurrent.tRange.lower[i] ==
+                        intervalPrevious.tRange.upper[i]);
               }
             }
 
-            rayIntervalPrevious = rayIntervalCurrent;
+            intervalPrevious = intervalCurrent;
 
             counter++;
           }
@@ -169,7 +169,7 @@ TEST_CASE("Vectorized interval iteration")
 
           // last interval at expected ending
           for (int i = 0; i < width; i++) {
-            REQUIRE(rayIntervalPrevious.tRange.upper[i] == 2.f);
+            REQUIRE(intervalPrevious.tRange.upper[i] == 2.f);
           }
         }
 
@@ -183,14 +183,14 @@ TEST_CASE("Vectorized interval iteration")
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
                               nullptr);
 
-          VKLRayInterval8 rayIntervalPrevious, rayIntervalCurrent;
+          VKLInterval8 intervalPrevious, intervalCurrent;
           int result[callingWidth];
 
           int counter = 0;
 
           while (true) {
             vklIterateInterval8(
-                valid.data(), &rayIterator, &rayIntervalCurrent, result);
+                valid.data(), &rayIterator, &intervalCurrent, result);
 
             int resultSum = 0;
 
@@ -206,23 +206,23 @@ TEST_CASE("Vectorized interval iteration")
             }
 
             for (int i = 0; i < width; i++) {
-              INFO("rayInterval iteration "
-                   << counter << " lane[" << i << "] tRange = "
-                   << rayIntervalCurrent.tRange.lower[i] << ", "
-                   << rayIntervalCurrent.tRange.upper[i] << " nominalDeltaT = "
-                   << rayIntervalCurrent.nominalDeltaT[i]);
+              INFO("interval iteration "
+                   << counter << " lane[" << i
+                   << "] tRange = " << intervalCurrent.tRange.lower[i] << ", "
+                   << intervalCurrent.tRange.upper[i]
+                   << " nominalDeltaT = " << intervalCurrent.nominalDeltaT[i]);
 
               if (counter == 0) {
                 // first interval at expected beginning
-                REQUIRE(rayIntervalCurrent.tRange.lower[i] == 1.f);
+                REQUIRE(intervalCurrent.tRange.lower[i] == 1.f);
               } else {
                 // interval continuity
-                REQUIRE(rayIntervalCurrent.tRange.lower[i] ==
-                        rayIntervalPrevious.tRange.upper[i]);
+                REQUIRE(intervalCurrent.tRange.lower[i] ==
+                        intervalPrevious.tRange.upper[i]);
               }
             }
 
-            rayIntervalPrevious = rayIntervalCurrent;
+            intervalPrevious = intervalCurrent;
 
             counter++;
           }
@@ -233,7 +233,7 @@ TEST_CASE("Vectorized interval iteration")
 
           // last interval at expected ending
           for (int i = 0; i < width; i++) {
-            REQUIRE(rayIntervalPrevious.tRange.upper[i] == 2.f);
+            REQUIRE(intervalPrevious.tRange.upper[i] == 2.f);
           }
         }
 
@@ -247,14 +247,14 @@ TEST_CASE("Vectorized interval iteration")
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
                                nullptr);
 
-          VKLRayInterval16 rayIntervalPrevious, rayIntervalCurrent;
+          VKLInterval16 intervalPrevious, intervalCurrent;
           int result[callingWidth];
 
           int counter = 0;
 
           while (true) {
             vklIterateInterval16(
-                valid.data(), &rayIterator, &rayIntervalCurrent, result);
+                valid.data(), &rayIterator, &intervalCurrent, result);
 
             int resultSum = 0;
 
@@ -270,23 +270,23 @@ TEST_CASE("Vectorized interval iteration")
             }
 
             for (int i = 0; i < width; i++) {
-              INFO("rayInterval iteration "
-                   << counter << " lane[" << i << "] tRange = "
-                   << rayIntervalCurrent.tRange.lower[i] << ", "
-                   << rayIntervalCurrent.tRange.upper[i] << " nominalDeltaT = "
-                   << rayIntervalCurrent.nominalDeltaT[i]);
+              INFO("interval iteration "
+                   << counter << " lane[" << i
+                   << "] tRange = " << intervalCurrent.tRange.lower[i] << ", "
+                   << intervalCurrent.tRange.upper[i]
+                   << " nominalDeltaT = " << intervalCurrent.nominalDeltaT[i]);
 
               if (counter == 0) {
                 // first interval at expected beginning
-                REQUIRE(rayIntervalCurrent.tRange.lower[i] == 1.f);
+                REQUIRE(intervalCurrent.tRange.lower[i] == 1.f);
               } else {
                 // interval continuity
-                REQUIRE(rayIntervalCurrent.tRange.lower[i] ==
-                        rayIntervalPrevious.tRange.upper[i]);
+                REQUIRE(intervalCurrent.tRange.lower[i] ==
+                        intervalPrevious.tRange.upper[i]);
               }
             }
 
-            rayIntervalPrevious = rayIntervalCurrent;
+            intervalPrevious = intervalCurrent;
 
             counter++;
           }
@@ -297,7 +297,7 @@ TEST_CASE("Vectorized interval iteration")
 
           // last interval at expected ending
           for (int i = 0; i < width; i++) {
-            REQUIRE(rayIntervalPrevious.tRange.upper[i] == 2.f);
+            REQUIRE(intervalPrevious.tRange.upper[i] == 2.f);
           }
         }
 

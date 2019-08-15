@@ -267,133 +267,131 @@ namespace openvkl {
   };
 
   template <int W>
-  struct alignas(simd_alignment_for_width(W)) vVKLRayIntervalN
+  struct alignas(simd_alignment_for_width(W)) vVKLIntervalN
   {
     vrange1fn<W> tRange;
     vfloatn<W> nominalDeltaT;
 
-    vVKLRayIntervalN<W>() = default;
+    vVKLIntervalN<W>() = default;
 
-    vVKLRayIntervalN<W>(const vVKLRayIntervalN<W> &v)
+    vVKLIntervalN<W>(const vVKLIntervalN<W> &v)
         : tRange(v.tRange), nominalDeltaT(v.nominalDeltaT)
     {
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    explicit operator VKLRayInterval()
+    explicit operator VKLInterval()
     {
-      VKLRayInterval rayInterval1;
+      VKLInterval interval1;
 
-      rayInterval1.tRange.lower  = tRange.lower[0];
-      rayInterval1.tRange.upper  = tRange.upper[0];
-      rayInterval1.nominalDeltaT = nominalDeltaT[0];
+      interval1.tRange.lower  = tRange.lower[0];
+      interval1.tRange.upper  = tRange.upper[0];
+      interval1.nominalDeltaT = nominalDeltaT[0];
 
-      return rayInterval1;
+      return interval1;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    explicit operator VKLRayInterval4()
+    explicit operator VKLInterval4()
     {
-      VKLRayInterval4 rayInterval4;
+      VKLInterval4 interval4;
 
       for (int i = 0; i < 4; i++) {
-        rayInterval4.tRange.lower[i]  = tRange.lower[i];
-        rayInterval4.tRange.upper[i]  = tRange.upper[i];
-        rayInterval4.nominalDeltaT[i] = nominalDeltaT[i];
+        interval4.tRange.lower[i]  = tRange.lower[i];
+        interval4.tRange.upper[i]  = tRange.upper[i];
+        interval4.nominalDeltaT[i] = nominalDeltaT[i];
       }
 
-      return rayInterval4;
+      return interval4;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    explicit operator VKLRayInterval8()
+    explicit operator VKLInterval8()
     {
-      VKLRayInterval8 rayInterval8;
+      VKLInterval8 interval8;
 
       for (int i = 0; i < 8; i++) {
-        rayInterval8.tRange.lower[i]  = tRange.lower[i];
-        rayInterval8.tRange.upper[i]  = tRange.upper[i];
-        rayInterval8.nominalDeltaT[i] = nominalDeltaT[i];
+        interval8.tRange.lower[i]  = tRange.lower[i];
+        interval8.tRange.upper[i]  = tRange.upper[i];
+        interval8.nominalDeltaT[i] = nominalDeltaT[i];
       }
 
-      return rayInterval8;
+      return interval8;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    explicit operator VKLRayInterval16()
+    explicit operator VKLInterval16()
     {
-      VKLRayInterval16 rayInterval16;
+      VKLInterval16 interval16;
 
       for (int i = 0; i < 16; i++) {
-        rayInterval16.tRange.lower[i]  = tRange.lower[i];
-        rayInterval16.tRange.upper[i]  = tRange.upper[i];
-        rayInterval16.nominalDeltaT[i] = nominalDeltaT[i];
+        interval16.tRange.lower[i]  = tRange.lower[i];
+        interval16.tRange.upper[i]  = tRange.upper[i];
+        interval16.nominalDeltaT[i] = nominalDeltaT[i];
       }
 
-      return rayInterval16;
+      return interval16;
     }
   };
 
   template <int W>
-  struct alignas(simd_alignment_for_width(W)) vVKLSurfaceHitN
+  struct alignas(simd_alignment_for_width(W)) vVKLHitN
   {
     vfloatn<W> t;
     vfloatn<W> sample;
 
-    vVKLSurfaceHitN<W>() = default;
+    vVKLHitN<W>() = default;
 
-    vVKLSurfaceHitN<W>(const vVKLSurfaceHitN<W> &v) : t(v.t), sample(v.sample)
-    {
-    }
+    vVKLHitN<W>(const vVKLHitN<W> &v) : t(v.t), sample(v.sample) {}
 
     template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    explicit operator VKLSurfaceHit()
+    explicit operator VKLHit()
     {
-      VKLSurfaceHit surfaceHit1;
+      VKLHit hit1;
 
-      surfaceHit1.t      = t[0];
-      surfaceHit1.sample = sample[0];
+      hit1.t      = t[0];
+      hit1.sample = sample[0];
 
-      return surfaceHit1;
+      return hit1;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    explicit operator VKLSurfaceHit4()
+    explicit operator VKLHit4()
     {
-      VKLSurfaceHit4 surfaceHit4;
+      VKLHit4 hit4;
 
       for (int i = 0; i < 4; i++) {
-        surfaceHit4.t[i]      = t[i];
-        surfaceHit4.sample[i] = sample[i];
+        hit4.t[i]      = t[i];
+        hit4.sample[i] = sample[i];
       }
 
-      return surfaceHit4;
+      return hit4;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    explicit operator VKLSurfaceHit8()
+    explicit operator VKLHit8()
     {
-      VKLSurfaceHit8 surfaceHit8;
+      VKLHit8 hit8;
 
       for (int i = 0; i < 8; i++) {
-        surfaceHit8.t[i]      = t[i];
-        surfaceHit8.sample[i] = sample[i];
+        hit8.t[i]      = t[i];
+        hit8.sample[i] = sample[i];
       }
 
-      return surfaceHit8;
+      return hit8;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    explicit operator VKLSurfaceHit16()
+    explicit operator VKLHit16()
     {
-      VKLSurfaceHit16 surfaceHit16;
+      VKLHit16 hit16;
 
       for (int i = 0; i < 16; i++) {
-        surfaceHit16.t[i]      = t[i];
-        surfaceHit16.sample[i] = sample[i];
+        hit16.t[i]      = t[i];
+        hit16.sample[i] = sample[i];
       }
 
-      return surfaceHit16;
+      return hit16;
     }
   };
 

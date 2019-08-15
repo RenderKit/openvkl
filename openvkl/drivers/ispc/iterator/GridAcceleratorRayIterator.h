@@ -35,10 +35,10 @@ namespace openvkl {
                                  const vrange1fn<W> &tRange,
                                  const SamplesMask *samplesMask);
 
-      const RayInterval<W> *getCurrentRayInterval() const override;
+      const Interval<W> *getCurrentInterval() const override;
       void iterateInterval(const int *valid, vintn<W> &result) override;
 
-      const SurfaceHit<W> *getCurrentSurfaceHit() const override;
+      const Hit<W> *getCurrentHit() const override;
       void iterateSurface(const int *valid, vintn<W> &result) override;
 
       // required size of ISPC-side object for widths:

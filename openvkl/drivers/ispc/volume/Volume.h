@@ -68,13 +68,13 @@ namespace openvkl {
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given rayIterator and return the next interval (if any) satisfying the
-      // ray iterator's samplesMask in rayInterval. result (0 or 1) should
+      // ray iterator's samplesMask in interval. result (0 or 1) should
       // indicate if a new interval was found for each active lane.
       //
       // rayIterator may be modified to track any internal state as desired.
       virtual void iterateIntervalV(const int *valid,
                                     vVKLRayIteratorN<W> &rayIterator,
-                                    vVKLRayIntervalN<W> &rayInterval,
+                                    vVKLIntervalN<W> &interval,
                                     vintn<W> &result)
       {
         throw std::runtime_error(
@@ -83,13 +83,13 @@ namespace openvkl {
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given rayIterator and return the next surface hit (if any) satisfying
-      // the ray iterator's samplesMask in surfaceHit. result (0 or 1) should
+      // the ray iterator's samplesMask in hit. result (0 or 1) should
       // indicate if a new surface hit was found for each active lane.
       //
       // rayIterator may be modified to track any internal state as desired.
       virtual void iterateSurfaceV(const int *valid,
                                    vVKLRayIteratorN<W> &rayIterator,
-                                   vVKLSurfaceHitN<W> &surfaceHit,
+                                   vVKLHitN<W> &hit,
                                    vintn<W> &result)
       {
         throw std::runtime_error(

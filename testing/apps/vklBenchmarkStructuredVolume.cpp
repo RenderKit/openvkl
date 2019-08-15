@@ -287,18 +287,18 @@ static void scalarRayIteratorIterateIntervalFirst(benchmark::State &state)
         &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
   }
 
-  VKLRayInterval rayInterval;
+  VKLInterval interval;
 
   for (auto _ : state) {
     VKLRayIterator rayIteratorTemp = rayIterator;
 
-    bool success = vklIterateInterval(&rayIteratorTemp, &rayInterval);
+    bool success = vklIterateInterval(&rayIteratorTemp, &interval);
 
     if (!success) {
       throw std::runtime_error("vklIterateInterval() returned false");
     }
 
-    benchmark::DoNotOptimize(rayInterval);
+    benchmark::DoNotOptimize(interval);
   }
 
   // global teardown only in first thread
@@ -348,22 +348,22 @@ static void scalarRayIteratorIterateIntervalSecond(benchmark::State &state)
         &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
     // move past first iteration
-    VKLRayInterval rayInterval;
-    vklIterateInterval(&rayIterator, &rayInterval);
+    VKLInterval interval;
+    vklIterateInterval(&rayIterator, &interval);
   }
 
-  VKLRayInterval rayInterval;
+  VKLInterval interval;
 
   for (auto _ : state) {
     VKLRayIterator rayIteratorTemp = rayIterator;
 
-    bool success = vklIterateInterval(&rayIteratorTemp, &rayInterval);
+    bool success = vklIterateInterval(&rayIteratorTemp, &interval);
 
     if (!success) {
       throw std::runtime_error("vklIterateInterval() returned false");
     }
 
-    benchmark::DoNotOptimize(rayInterval);
+    benchmark::DoNotOptimize(interval);
   }
 
   // global teardown only in first thread

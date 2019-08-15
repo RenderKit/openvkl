@@ -93,7 +93,7 @@ VKL_FORCEINLINE void vklInitRayIteratorV(
   }
 }
 
-struct VKLRayInterval
+struct VKLInterval
 {
   vkl_range1f tRange;
   float nominalDeltaT;
@@ -102,22 +102,21 @@ struct VKLRayInterval
 
 VKL_API void vklIterateInterval4(const int *uniform valid,
                                  VKLRayIterator *uniform rayIterator,
-                                 varying VKLRayInterval *uniform rayInterval,
+                                 varying VKLInterval *uniform interval,
                                  varying int *uniform result);
 
 VKL_API void vklIterateInterval8(const int *uniform valid,
                                  VKLRayIterator *uniform rayIterator,
-                                 varying VKLRayInterval *uniform rayInterval,
+                                 varying VKLInterval *uniform interval,
                                  varying int *uniform result);
 
 VKL_API void vklIterateInterval16(const int *uniform valid,
                                   VKLRayIterator *uniform rayIterator,
-                                  varying VKLRayInterval *uniform rayInterval,
+                                  varying VKLInterval *uniform interval,
                                   varying int *uniform result);
 
 VKL_FORCEINLINE varying bool vklIterateIntervalV(
-    VKLRayIterator *uniform rayIterator,
-    varying VKLRayInterval *uniform rayInterval)
+    VKLRayIterator *uniform rayIterator, varying VKLInterval *uniform interval)
 {
   varying bool mask = __mask;
   unmasked
@@ -127,25 +126,25 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
   if (sizeof(varying float) == 16) {
     varying int iresult;
     vklIterateInterval4(
-        (uniform int *uniform) & imask, rayIterator, rayInterval, &iresult);
+        (uniform int *uniform) & imask, rayIterator, interval, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 32) {
     varying int iresult;
     vklIterateInterval8(
-        (uniform int *uniform) & imask, rayIterator, rayInterval, &iresult);
+        (uniform int *uniform) & imask, rayIterator, interval, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 64) {
     varying int iresult;
     vklIterateInterval16(
-        (uniform int *uniform) & imask, rayIterator, rayInterval, &iresult);
+        (uniform int *uniform) & imask, rayIterator, interval, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   }
 }
 
-struct VKLSurfaceHit
+struct VKLHit
 {
   float t;
   float sample;
@@ -153,22 +152,21 @@ struct VKLSurfaceHit
 
 VKL_API void vklIterateSurface4(const int *uniform valid,
                                 VKLRayIterator *uniform rayIterator,
-                                varying VKLSurfaceHit *uniform surfaceHit,
+                                varying VKLHit *uniform hit,
                                 varying int *uniform result);
 
 VKL_API void vklIterateSurface8(const int *uniform valid,
                                 VKLRayIterator *uniform rayIterator,
-                                varying VKLSurfaceHit *uniform surfaceHit,
+                                varying VKLHit *uniform hit,
                                 varying int *uniform result);
 
 VKL_API void vklIterateSurface16(const int *uniform valid,
                                  VKLRayIterator *uniform rayIterator,
-                                 varying VKLSurfaceHit *uniform surfaceHit,
+                                 varying VKLHit *uniform hit,
                                  varying int *uniform result);
 
 VKL_FORCEINLINE varying bool vklIterateSurfaceV(
-    VKLRayIterator *uniform rayIterator,
-    varying VKLSurfaceHit *uniform surfaceHit)
+    VKLRayIterator *uniform rayIterator, varying VKLHit *uniform hit)
 {
   varying bool mask = __mask;
   unmasked
@@ -178,19 +176,19 @@ VKL_FORCEINLINE varying bool vklIterateSurfaceV(
   if (sizeof(varying float) == 16) {
     varying int iresult;
     vklIterateSurface4(
-        (uniform int *uniform) & imask, rayIterator, surfaceHit, &iresult);
+        (uniform int *uniform) & imask, rayIterator, hit, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 32) {
     varying int iresult;
     vklIterateSurface8(
-        (uniform int *uniform) & imask, rayIterator, surfaceHit, &iresult);
+        (uniform int *uniform) & imask, rayIterator, hit, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   } else if (sizeof(varying float) == 64) {
     varying int iresult;
     vklIterateSurface16(
-        (uniform int *uniform) & imask, rayIterator, surfaceHit, &iresult);
+        (uniform int *uniform) & imask, rayIterator, hit, &iresult);
     varying bool result = iresult ? true : false;
     return result;
   }

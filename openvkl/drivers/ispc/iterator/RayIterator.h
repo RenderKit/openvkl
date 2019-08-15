@@ -55,14 +55,14 @@ namespace openvkl {
     struct Volume;
 
     template <int W>
-    struct RayInterval
+    struct Interval
     {
       vrange1fn<W> tRange;
       vfloatn<W> nominalDeltaT;
     };
 
     template <int W>
-    struct SurfaceHit
+    struct Hit
     {
       vfloatn<W> t;
       vfloatn<W> sample;
@@ -84,10 +84,10 @@ namespace openvkl {
 
       virtual ~RayIterator() = default;
 
-      virtual const RayInterval<W> *getCurrentRayInterval() const      = 0;
+      virtual const Interval<W> *getCurrentInterval() const            = 0;
       virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;
 
-      virtual const SurfaceHit<W> *getCurrentSurfaceHit() const       = 0;
+      virtual const Hit<W> *getCurrentHit() const                     = 0;
       virtual void iterateSurface(const int *valid, vintn<W> &result) = 0;
 
       const Volume<W> *volume;

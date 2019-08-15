@@ -228,39 +228,38 @@ __define_vklInitRayIteratorN(16);
 #undef __define_vklInitRayIteratorN
 
 extern "C" bool vklIterateInterval(VKLRayIterator *rayIterator,
-                                   VKLRayInterval *rayInterval)
-    OPENVKL_CATCH_BEGIN
+                                   VKLInterval *interval) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
-  vVKLRayIntervalN<1> rayIntervalInternal;
+  vVKLIntervalN<1> intervalInternal;
   int result;
   openvkl::api::currentDriver().iterateInterval1(
       &valid,
       reinterpret_cast<vVKLRayIteratorN<1> &>(*rayIterator),
-      rayIntervalInternal,
+      intervalInternal,
       reinterpret_cast<vintn<1> &>(result));
-  *rayInterval = static_cast<VKLRayInterval>(rayIntervalInternal);
+  *interval = static_cast<VKLInterval>(intervalInternal);
   return result;
 }
 OPENVKL_CATCH_END(false)
 
-#define __define_vklIterateIntervalN(WIDTH)                                 \
-  extern "C" void vklIterateInterval##WIDTH(                                \
-      const int *valid,                                                     \
-      VKLRayIterator##WIDTH *rayIterator,                                   \
-      VKLRayInterval##WIDTH *rayInterval,                                   \
-      int *result) OPENVKL_CATCH_BEGIN                                      \
-  {                                                                         \
-    ASSERT_DRIVER();                                                        \
-    vVKLRayIntervalN<WIDTH> rayIntervalInternal;                            \
-    openvkl::api::currentDriver().iterateInterval##WIDTH(                   \
-        valid,                                                              \
-        reinterpret_cast<vVKLRayIteratorN<WIDTH> &>(*rayIterator),          \
-        rayIntervalInternal,                                                \
-        reinterpret_cast<vintn<WIDTH> &>(*result));                         \
-    *rayInterval = static_cast<VKLRayInterval##WIDTH>(rayIntervalInternal); \
-  }                                                                         \
+#define __define_vklIterateIntervalN(WIDTH)                        \
+  extern "C" void vklIterateInterval##WIDTH(                       \
+      const int *valid,                                            \
+      VKLRayIterator##WIDTH *rayIterator,                          \
+      VKLInterval##WIDTH *interval,                                \
+      int *result) OPENVKL_CATCH_BEGIN                             \
+  {                                                                \
+    ASSERT_DRIVER();                                               \
+    vVKLIntervalN<WIDTH> intervalInternal;                         \
+    openvkl::api::currentDriver().iterateInterval##WIDTH(          \
+        valid,                                                     \
+        reinterpret_cast<vVKLRayIteratorN<WIDTH> &>(*rayIterator), \
+        intervalInternal,                                          \
+        reinterpret_cast<vintn<WIDTH> &>(*result));                \
+    *interval = static_cast<VKLInterval##WIDTH>(intervalInternal); \
+  }                                                                \
   OPENVKL_CATCH_END()
 
 __define_vklIterateIntervalN(4);
@@ -270,18 +269,18 @@ __define_vklIterateIntervalN(16);
 #undef __define_vklIterateIntervalN
 
 extern "C" bool vklIterateSurface(VKLRayIterator *rayIterator,
-                                  VKLSurfaceHit *surfaceHit) OPENVKL_CATCH_BEGIN
+                                  VKLHit *hit) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
-  vVKLSurfaceHitN<1> surfaceHitInternal;
+  vVKLHitN<1> hitInternal;
   int result;
   openvkl::api::currentDriver().iterateSurface1(
       &valid,
       reinterpret_cast<vVKLRayIteratorN<1> &>(*rayIterator),
-      surfaceHitInternal,
+      hitInternal,
       reinterpret_cast<vintn<1> &>(result));
-  *surfaceHit = static_cast<VKLSurfaceHit>(surfaceHitInternal);
+  *hit = static_cast<VKLHit>(hitInternal);
   return result;
 }
 OPENVKL_CATCH_END(false)
@@ -289,17 +288,17 @@ OPENVKL_CATCH_END(false)
 #define __define_vklIterateSurfaceN(WIDTH)                                     \
   extern "C" void vklIterateSurface##WIDTH(const int *valid,                   \
                                            VKLRayIterator##WIDTH *rayIterator, \
-                                           VKLSurfaceHit##WIDTH *surfaceHit,   \
+                                           VKLHit##WIDTH *hit,                 \
                                            int *result) OPENVKL_CATCH_BEGIN    \
   {                                                                            \
     ASSERT_DRIVER();                                                           \
-    vVKLSurfaceHitN<WIDTH> surfaceHitInternal;                                 \
+    vVKLHitN<WIDTH> hitInternal;                                               \
     openvkl::api::currentDriver().iterateSurface##WIDTH(                       \
         valid,                                                                 \
         reinterpret_cast<vVKLRayIteratorN<WIDTH> &>(*rayIterator),             \
-        surfaceHitInternal,                                                    \
+        hitInternal,                                                           \
         reinterpret_cast<vintn<WIDTH> &>(*result));                            \
-    *surfaceHit = static_cast<VKLSurfaceHit##WIDTH>(surfaceHitInternal);       \
+    *hit = static_cast<VKLHit##WIDTH>(hitInternal);                            \
   }                                                                            \
   OPENVKL_CATCH_END()
 

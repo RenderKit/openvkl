@@ -44,7 +44,7 @@ namespace openvkl {
 
       void iterateIntervalV(const int *valid,
                             vVKLRayIteratorN<W> &rayIterator,
-                            vVKLRayIntervalN<W> &rayInterval,
+                            vVKLIntervalN<W> &interval,
                             vintn<W> &result) override
       {
         GridAcceleratorRayIterator<W> *ri =
@@ -52,13 +52,13 @@ namespace openvkl {
 
         ri->iterateInterval(valid, result);
 
-        rayInterval = *reinterpret_cast<const vVKLRayIntervalN<W> *>(
-            ri->getCurrentRayInterval());
+        interval = *reinterpret_cast<const vVKLIntervalN<W> *>(
+            ri->getCurrentInterval());
       }
 
       void iterateSurfaceV(const int *valid,
                            vVKLRayIteratorN<W> &rayIterator,
-                           vVKLSurfaceHitN<W> &surfaceHit,
+                           vVKLHitN<W> &hit,
                            vintn<W> &result) override
       {
         GridAcceleratorRayIterator<W> *ri =
@@ -66,8 +66,7 @@ namespace openvkl {
 
         ri->iterateSurface(valid, result);
 
-        surfaceHit = *reinterpret_cast<const vVKLSurfaceHitN<W> *>(
-            ri->getCurrentSurfaceHit());
+        hit = *reinterpret_cast<const vVKLHitN<W> *>(ri->getCurrentHit());
       }
 
       SamplesMask *newSamplesMask() override

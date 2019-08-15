@@ -190,7 +190,7 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                               const GridAcceleratorRayIterator *uniform
                                   rayIterator,
                               varying vec3i &cellIndex,
-                              varying RayInterval &rayInterval)
+                              varying Interval &interval)
 {
   SharedStructuredVolume *uniform volume = accelerator->volume;
 
@@ -257,10 +257,10 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                                     rayIterator->boundingBoxTRange);
 
   if (isempty1f(cellInterval)) {
-    resetRayInterval(rayInterval);
+    resetInterval(interval);
     return false;
   } else {
-    rayInterval.tRange = cellInterval;
+    interval.tRange = cellInterval;
     return true;
   }
 }

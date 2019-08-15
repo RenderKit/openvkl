@@ -49,22 +49,22 @@ export VKLRayIterator *uniform newUniformVKLRayIterator()
   return uniform new uniform VKLRayIterator;
 }
 
-export uniform int sizeofVaryingRayInterval()
+export uniform int sizeofVaryingInterval()
 {
-  return sizeof(varying RayInterval);
+  return sizeof(varying Interval);
 }
 
-export varying RayInterval *uniform newVaryingRayInterval()
+export varying Interval *uniform newVaryingInterval()
 {
-  return uniform new varying RayInterval;
+  return uniform new varying Interval;
 }
 
-export uniform int sizeofVaryingSurfaceHit()
+export uniform int sizeofVaryingHit()
 {
-  return sizeof(varying SurfaceHit);
+  return sizeof(varying Hit);
 }
 
-export varying SurfaceHit *uniform newVaryingSurfaceHit()
+export varying Hit *uniform newVaryingHit()
 {
-  return uniform new varying SurfaceHit;
+  return uniform new varying Hit;
 }

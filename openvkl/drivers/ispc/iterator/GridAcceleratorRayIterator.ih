@@ -25,7 +25,7 @@ struct SharedStructuredVolume;
 
 struct GridAcceleratorRayIteratorIntervalState
 {
-  RayInterval currentRayInterval;
+  Interval currentInterval;
   vec3i currentCellIndex;
 };
 
@@ -33,8 +33,8 @@ struct GridAcceleratorRayIteratorSurfaceState
 {
   bool activeCell;
   vec3i currentCellIndex;
-  RayInterval currentRayInterval;
-  SurfaceHit currentSurfaceHit;
+  Interval currentInterval;
+  Hit currentHit;
 };
 
 struct GridAcceleratorRayIterator

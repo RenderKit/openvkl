@@ -101,7 +101,7 @@ namespace openvkl {
 #define __define_iterateIntervalN(WIDTH)                                    \
   virtual void iterateInterval##WIDTH(const int *valid,                     \
                                       vVKLRayIteratorN<WIDTH> &rayIterator, \
-                                      vVKLRayIntervalN<WIDTH> &rayInterval, \
+                                      vVKLIntervalN<WIDTH> &interval,       \
                                       vintn<WIDTH> &result)                 \
   {                                                                         \
     throw std::runtime_error(                                               \
@@ -118,7 +118,7 @@ namespace openvkl {
 #define __define_iterateSurfaceN(WIDTH)                                    \
   virtual void iterateSurface##WIDTH(const int *valid,                     \
                                      vVKLRayIteratorN<WIDTH> &rayIterator, \
-                                     vVKLSurfaceHitN<WIDTH> &surfaceHit,   \
+                                     vVKLHitN<WIDTH> &hit,                 \
                                      vintn<WIDTH> &result)                 \
   {                                                                        \
     throw std::runtime_error(                                              \

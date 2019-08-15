@@ -48,26 +48,24 @@ TEST_CASE("Ray iterator intervals")
     vklInitRayIterator(
         &rayIterator, vklVolume, &origin, &direction, &tRange, nullptr);
 
-    VKLRayInterval rayIntervalPrevious, rayIntervalCurrent;
+    VKLInterval intervalPrevious, intervalCurrent;
 
-    for (int i = 0; vklIterateInterval(&rayIterator, &rayIntervalCurrent);
-         i++) {
-      INFO("rayInterval tRange = " << rayIntervalCurrent.tRange.lower << ", "
-                                   << rayIntervalCurrent.tRange.upper);
+    for (int i = 0; vklIterateInterval(&rayIterator, &intervalCurrent); i++) {
+      INFO("interval tRange = " << intervalCurrent.tRange.lower << ", "
+                                << intervalCurrent.tRange.upper);
 
       if (i == 0) {
         // first interval at expected beginning
-        REQUIRE(rayIntervalCurrent.tRange.lower == 1.f);
+        REQUIRE(intervalCurrent.tRange.lower == 1.f);
       } else {
         // interval continuity
-        REQUIRE(rayIntervalCurrent.tRange.lower ==
-                rayIntervalPrevious.tRange.upper);
+        REQUIRE(intervalCurrent.tRange.lower == intervalPrevious.tRange.upper);
       }
 
-      rayIntervalPrevious = rayIntervalCurrent;
+      intervalPrevious = intervalCurrent;
     }
 
     // last interval at expected ending
-    REQUIRE(rayIntervalPrevious.tRange.upper == 2.f);
+    REQUIRE(intervalPrevious.tRange.upper == 2.f);
   }
 }

@@ -128,13 +128,13 @@ TEST_CASE("Vectorized surface iteration")
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
                               samplesMask);
 
-          VKLSurfaceHit4 surfaceHit;
+          VKLHit4 hit;
           int result[callingWidth];
 
           int hitCount = 0;
 
           while (true) {
-            vklIterateSurface4(valid.data(), &rayIterator, &surfaceHit, result);
+            vklIterateSurface4(valid.data(), &rayIterator, &hit, result);
 
             int resultSum = 0;
 
@@ -150,12 +150,12 @@ TEST_CASE("Vectorized surface iteration")
             }
 
             for (int i = 0; i < width; i++) {
-              INFO("surfaceHit iteration "
-                   << hitCount << " lane[" << i << "] t = " << surfaceHit.t[i]
-                   << ", sample =" << surfaceHit.sample[i]);
+              INFO("hit iteration " << hitCount << " lane[" << i
+                                    << "] t = " << hit.t[i]
+                                    << ", sample =" << hit.sample[i]);
 
-              REQUIRE(surfaceHit.t[i] == 1.f + isoValues[hitCount]);
-              REQUIRE(surfaceHit.sample[i] == isoValues[hitCount]);
+              REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
+              REQUIRE(hit.sample[i] == isoValues[hitCount]);
             }
 
             hitCount++;
@@ -175,13 +175,13 @@ TEST_CASE("Vectorized surface iteration")
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
                               samplesMask);
 
-          VKLSurfaceHit8 surfaceHit;
+          VKLHit8 hit;
           int result[callingWidth];
 
           int hitCount = 0;
 
           while (true) {
-            vklIterateSurface8(valid.data(), &rayIterator, &surfaceHit, result);
+            vklIterateSurface8(valid.data(), &rayIterator, &hit, result);
 
             int resultSum = 0;
 
@@ -197,12 +197,12 @@ TEST_CASE("Vectorized surface iteration")
             }
 
             for (int i = 0; i < width; i++) {
-              INFO("surfaceHit iteration "
-                   << hitCount << " lane[" << i << "] t = " << surfaceHit.t[i]
-                   << ", sample =" << surfaceHit.sample[i]);
+              INFO("hit iteration " << hitCount << " lane[" << i
+                                    << "] t = " << hit.t[i]
+                                    << ", sample =" << hit.sample[i]);
 
-              REQUIRE(surfaceHit.t[i] == 1.f + isoValues[hitCount]);
-              REQUIRE(surfaceHit.sample[i] == isoValues[hitCount]);
+              REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
+              REQUIRE(hit.sample[i] == isoValues[hitCount]);
             }
 
             hitCount++;
@@ -222,14 +222,13 @@ TEST_CASE("Vectorized surface iteration")
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
                                samplesMask);
 
-          VKLSurfaceHit16 surfaceHit;
+          VKLHit16 hit;
           int result[callingWidth];
 
           int hitCount = 0;
 
           while (true) {
-            vklIterateSurface16(
-                valid.data(), &rayIterator, &surfaceHit, result);
+            vklIterateSurface16(valid.data(), &rayIterator, &hit, result);
 
             int resultSum = 0;
 
@@ -245,12 +244,12 @@ TEST_CASE("Vectorized surface iteration")
             }
 
             for (int i = 0; i < width; i++) {
-              INFO("surfaceHit iteration "
-                   << hitCount << " lane[" << i << "] t = " << surfaceHit.t[i]
-                   << ", sample =" << surfaceHit.sample[i]);
+              INFO("hit iteration " << hitCount << " lane[" << i
+                                    << "] t = " << hit.t[i]
+                                    << ", sample =" << hit.sample[i]);
 
-              REQUIRE(surfaceHit.t[i] == 1.f + isoValues[hitCount]);
-              REQUIRE(surfaceHit.sample[i] == isoValues[hitCount]);
+              REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
+              REQUIRE(hit.sample[i] == isoValues[hitCount]);
             }
 
             hitCount++;

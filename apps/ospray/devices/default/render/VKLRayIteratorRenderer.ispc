@@ -110,45 +110,45 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
                       samplesMask);
 
   // the current ray interval
-  VKLRayInterval rayInterval;
-  bool activeInterval = vklIterateIntervalV(&rayIterator, &rayInterval);
+  VKLInterval interval;
+  bool activeInterval = vklIterateIntervalV(&rayIterator, &interval);
 
   // the current surface hit
-  VKLSurfaceHit surfaceHit;
-  bool activeSurface = vklIterateSurfaceV(&rayIterator, &surfaceHit);
+  VKLHit hit;
+  bool activeSurface = vklIterateSurfaceV(&rayIterator, &hit);
 
   while ((activeInterval || activeSurface) && alpha < 0.99f) {
-    float firstHit = min(activeInterval ? rayInterval.tRange.lower : inf,
-                         activeSurface ? surfaceHit.t : inf);
+    float firstHit = min(activeInterval ? interval.tRange.lower : inf,
+                         activeSurface ? hit.t : inf);
 
-    if (activeInterval && firstHit == rayInterval.tRange.lower) {
+    if (activeInterval && firstHit == interval.tRange.lower) {
       // volume interval
       const float nominalSamplingDt =
-          rayInterval.nominalDeltaT / self->samplingRate;
+          interval.nominalDeltaT / self->samplingRate;
 
-      box1f subInterval = make_box1f(
-          rayInterval.tRange.lower,
-          min(rayInterval.tRange.upper, activeSurface ? surfaceHit.t : inf));
+      box1f subInterval =
+          make_box1f(interval.tRange.lower,
+                     min(interval.tRange.upper, activeSurface ? hit.t : inf));
 
       integrateVolumeInterval(
           self, ray, subInterval, nominalSamplingDt, color, alpha);
 
-      if (subInterval.upper == rayInterval.tRange.upper) {
-        activeInterval = vklIterateIntervalV(&rayIterator, &rayInterval);
+      if (subInterval.upper == interval.tRange.upper) {
+        activeInterval = vklIterateIntervalV(&rayIterator, &interval);
       } else {
-        rayInterval.tRange.lower = subInterval.upper + 1e-6f;
+        interval.tRange.lower = subInterval.upper + 1e-6f;
       }
 
-    } else if (activeSurface && firstHit == surfaceHit.t) {
+    } else if (activeSurface && firstHit == hit.t) {
       // surface hit
       const vec3f surfaceColor = self->transferFunction->getColorForValue(
-          self->transferFunction, surfaceHit.sample);
+          self->transferFunction, hit.sample);
       const float surfaceOpacity = 0.5f;
 
       color = color + (1.f - alpha) * surfaceColor;
       alpha = alpha + (1.f - alpha) * surfaceOpacity;
 
-      activeSurface = vklIterateSurfaceV(&rayIterator, &surfaceHit);
+      activeSurface = vklIterateSurfaceV(&rayIterator, &hit);
     }
   }
 

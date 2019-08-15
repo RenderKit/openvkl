@@ -18,22 +18,22 @@
 
 #include "math/box.ih"
 
-// this should match the layout of VKLRayInterval
-struct RayInterval
+// this should match the layout of VKLInterval
+struct Interval
 {
   varying box1f tRange;
   varying float nominalDeltaT;
   // TODO: output samples mask when needed
 };
 
-inline void resetRayInterval(RayInterval &rayInterval)
+inline void resetInterval(Interval &interval)
 {
-  rayInterval.tRange.lower  = 1.f;
-  rayInterval.tRange.upper  = -1.f;
-  rayInterval.nominalDeltaT = 0.f;
+  interval.tRange.lower  = 1.f;
+  interval.tRange.upper  = -1.f;
+  interval.nominalDeltaT = 0.f;
 }
 
-struct SurfaceHit
+struct Hit
 {
   varying float t;
   varying float sample;

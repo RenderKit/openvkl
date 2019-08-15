@@ -69,11 +69,10 @@ namespace openvkl {
     }
 
     template <int W>
-    const RayInterval<W> *GridAcceleratorRayIterator<W>::getCurrentRayInterval()
-        const
+    const Interval<W> *GridAcceleratorRayIterator<W>::getCurrentInterval() const
     {
-      return reinterpret_cast<const RayInterval<W> *>(
-          ispc::GridAcceleratorRayIterator_getCurrentRayInterval(
+      return reinterpret_cast<const Interval<W> *>(
+          ispc::GridAcceleratorRayIterator_getCurrentInterval(
               (void *)&ispcStorage[0]));
     }
 
@@ -86,11 +85,10 @@ namespace openvkl {
     }
 
     template <int W>
-    const SurfaceHit<W> *GridAcceleratorRayIterator<W>::getCurrentSurfaceHit()
-        const
+    const Hit<W> *GridAcceleratorRayIterator<W>::getCurrentHit() const
     {
-      return reinterpret_cast<const SurfaceHit<W> *>(
-          ispc::GridAcceleratorRayIterator_getCurrentSurfaceHit(
+      return reinterpret_cast<const Hit<W> *>(
+          ispc::GridAcceleratorRayIterator_getCurrentHit(
               (void *)&ispcStorage[0]));
     }
 

@@ -62,11 +62,11 @@ inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
                       samplesMask);
 
   // the current surface hit
-  VKLSurfaceHit surfaceHit;
+  VKLHit hit;
 
-  while (vklIterateSurfaceV(&rayIterator, &surfaceHit) && alpha < 0.99f) {
+  while (vklIterateSurfaceV(&rayIterator, &hit) && alpha < 0.99f) {
     const vec3f surfaceColor = self->transferFunction->getColorForValue(
-        self->transferFunction, surfaceHit.sample);
+        self->transferFunction, hit.sample);
     const float surfaceOpacity = 0.5f;
 
     color = color + (1.f - alpha) * surfaceColor;

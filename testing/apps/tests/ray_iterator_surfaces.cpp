@@ -60,16 +60,15 @@ TEST_CASE("Ray iterator surfaces")
     vklInitRayIterator(
         &rayIterator, vklVolume, &origin, &direction, &tRange, samplesMask);
 
-    VKLSurfaceHit surfaceHit;
+    VKLHit hit;
 
     int hitCount = 0;
 
-    while (vklIterateSurface(&rayIterator, &surfaceHit)) {
-      INFO("surfaceHit t = " << surfaceHit.t
-                             << ", sample = " << surfaceHit.sample);
+    while (vklIterateSurface(&rayIterator, &hit)) {
+      INFO("hit t = " << hit.t << ", sample = " << hit.sample);
 
-      REQUIRE(surfaceHit.t == 1.f + isoValues[hitCount]);
-      REQUIRE(surfaceHit.sample == isoValues[hitCount]);
+      REQUIRE(hit.t == 1.f + isoValues[hitCount]);
+      REQUIRE(hit.sample == isoValues[hitCount]);
 
       hitCount++;
     }

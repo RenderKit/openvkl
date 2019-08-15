@@ -58,18 +58,16 @@ inline void integrate(uniform VKLRayIteratorVolumeRenderer *uniform self,
                       samplesMask);
 
   // the current ray interval
-  VKLRayInterval rayInterval;
+  VKLInterval interval;
 
-  while (vklIterateIntervalV(&rayIterator, &rayInterval) && alpha < 0.99f) {
-    const float nominalSamplingDt =
-        rayInterval.nominalDeltaT / self->samplingRate;
+  while (vklIterateIntervalV(&rayIterator, &interval) && alpha < 0.99f) {
+    const float nominalSamplingDt = interval.nominalDeltaT / self->samplingRate;
 
     // initial sub interval, based on our renderer-defined sampling rate
     // and the volume's nominal dt
-    box1f subInterval =
-        make_box1f(rayInterval.tRange.lower,
-                   min(rayInterval.tRange.lower + nominalSamplingDt,
-                       rayInterval.tRange.upper));
+    box1f subInterval = make_box1f(
+        interval.tRange.lower,
+        min(interval.tRange.lower + nominalSamplingDt, interval.tRange.upper));
 
     // integrate as long as we have valid sub intervals and are not
     // fully opaque
@@ -99,7 +97,7 @@ inline void integrate(uniform VKLRayIteratorVolumeRenderer *uniform self,
       // compute next sub interval
       subInterval.lower = subInterval.upper;
       subInterval.upper =
-          min(subInterval.lower + nominalSamplingDt, rayInterval.tRange.upper);
+          min(subInterval.lower + nominalSamplingDt, interval.tRange.upper);
     }
   }
 

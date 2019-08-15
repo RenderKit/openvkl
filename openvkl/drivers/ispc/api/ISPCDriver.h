@@ -69,7 +69,7 @@ namespace openvkl {
 #define __define_iterateIntervalN(WIDTH)                            \
   void iterateInterval##WIDTH(const int *valid,                     \
                               vVKLRayIteratorN<WIDTH> &rayIterator, \
-                              vVKLRayIntervalN<WIDTH> &rayInterval, \
+                              vVKLIntervalN<WIDTH> &interval,       \
                               vintn<WIDTH> &result) override;
 
       __define_iterateIntervalN(1);
@@ -82,7 +82,7 @@ namespace openvkl {
 #define __define_iterateSurfaceN(WIDTH)                            \
   void iterateSurface##WIDTH(const int *valid,                     \
                              vVKLRayIteratorN<WIDTH> &rayIterator, \
-                             vVKLSurfaceHitN<WIDTH> &surfaceHit,   \
+                             vVKLHitN<WIDTH> &hit,                 \
                              vintn<WIDTH> &result) override;
 
       __define_iterateSurfaceN(1);
@@ -192,42 +192,42 @@ namespace openvkl {
       typename std::enable_if<(OW == 1), void>::type iterateIntervalAnyWidth(
           const int *valid,
           vVKLRayIteratorN<OW> &rayIterator1,
-          vVKLRayIntervalN<OW> &rayInterval,
+          vVKLIntervalN<OW> &interval,
           vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type iterateIntervalAnyWidth(
           const int *valid,
           vVKLRayIteratorN<OW> &rayIterator,
-          vVKLRayIntervalN<OW> &rayInterval,
+          vVKLIntervalN<OW> &interval,
           vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW != W && OW != 1), void>::type
       iterateIntervalAnyWidth(const int *valid,
                               vVKLRayIteratorN<OW> &rayIterator,
-                              vVKLRayIntervalN<OW> &rayInterval,
+                              vVKLIntervalN<OW> &interval,
                               vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW == 1), void>::type iterateSurfaceAnyWidth(
           const int *valid,
           vVKLRayIteratorN<OW> &rayIterator1,
-          vVKLSurfaceHitN<OW> &surfaceHit,
+          vVKLHitN<OW> &hit,
           vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type iterateSurfaceAnyWidth(
           const int *valid,
           vVKLRayIteratorN<OW> &rayIterator,
-          vVKLSurfaceHitN<OW> &surfaceHit,
+          vVKLHitN<OW> &hit,
           vintn<OW> &result);
 
       template <int OW>
       typename std::enable_if<(OW != W && OW != 1), void>::type
       iterateSurfaceAnyWidth(const int *valid,
                              vVKLRayIteratorN<OW> &rayIterator,
-                             vVKLSurfaceHitN<OW> &surfaceHit,
+                             vVKLHitN<OW> &hit,
                              vintn<OW> &result);
 
       template <int OW>

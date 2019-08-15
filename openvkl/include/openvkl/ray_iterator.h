@@ -84,91 +84,90 @@ void vklInitRayIterator16(const int *valid,
                           const vkl_vrange1f16 *tRange,
                           VKLSamplesMask samplesMask);
 
-struct VKLRayInterval
+struct VKLInterval
 {
   vkl_range1f tRange;
   float nominalDeltaT;
   // TODO: output samples mask when needed
 };
 
-struct VKLRayInterval4
+struct VKLInterval4
 {
   vkl_vrange1f4 tRange;
   float nominalDeltaT[4];
   // TODO: output samples mask when needed
 };
 
-struct VKLRayInterval8
+struct VKLInterval8
 {
   vkl_vrange1f8 tRange;
   float nominalDeltaT[8];
 };
 
-struct VKLRayInterval16
+struct VKLInterval16
 {
   vkl_vrange1f16 tRange;
   float nominalDeltaT[16];
 };
 
 // returns true while the iterator is still within the volume
-bool vklIterateInterval(VKLRayIterator *rayIterator,
-                        VKLRayInterval *rayInterval);
+bool vklIterateInterval(VKLRayIterator *rayIterator, VKLInterval *interval);
 
 void vklIterateInterval4(const int *valid,
                          VKLRayIterator4 *rayIterator,
-                         VKLRayInterval4 *rayInterval,
+                         VKLInterval4 *interval,
                          int *result);
 
 void vklIterateInterval8(const int *valid,
                          VKLRayIterator8 *rayIterator,
-                         VKLRayInterval8 *rayInterval,
+                         VKLInterval8 *interval,
                          int *result);
 
 void vklIterateInterval16(const int *valid,
                           VKLRayIterator16 *rayIterator,
-                          VKLRayInterval16 *rayInterval,
+                          VKLInterval16 *interval,
                           int *result);
 
-struct VKLSurfaceHit
+struct VKLHit
 {
   float t;
   float sample;
 };
 
-struct VKLSurfaceHit4
+struct VKLHit4
 {
   float t[4];
   float sample[4];
 };
 
-struct VKLSurfaceHit8
+struct VKLHit8
 {
   float t[8];
   float sample[8];
 };
 
-struct VKLSurfaceHit16
+struct VKLHit16
 {
   float t[16];
   float sample[16];
 };
 
 // returns true while the iterator is still within the volume
-bool vklIterateSurface(VKLRayIterator *rayIterator, VKLSurfaceHit *surfaceHit);
+bool vklIterateSurface(VKLRayIterator *rayIterator, VKLHit *hit);
 
 void vklIterateSurface4(const int *valid,
                         VKLRayIterator4 *rayIterator,
-                        VKLSurfaceHit4 *surfaceHit,
+                        VKLHit4 *hit,
                         int *result);
 
 void vklIterateSurface8(const int *valid,
                         VKLRayIterator8 *rayIterator,
-                        VKLSurfaceHit8 *surfaceHit,
+                        VKLHit8 *hit,
                         int *result);
 
 void vklIterateSurface16(const int *valid,
                          VKLRayIterator16 *rayIterator,
-                         VKLSurfaceHit16 *surfaceHit,
+                         VKLHit16 *hit,
                          int *result);
 
 /* TODO:

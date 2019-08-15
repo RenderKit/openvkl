@@ -39,7 +39,7 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                               const GridAcceleratorRayIterator *uniform
                                   rayIterator,
                               varying vec3i &cellIndex,
-                              varying RayInterval &rayInterval);
+                              varying Interval &interval);
 
 void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
                                        const varying vec3i &cellIndex,

@@ -69,21 +69,19 @@ void vVKLRayIteratorN_conformance_test()
 }
 
 template <int W>
-void vVKLRayIntervalN_conformance_test()
+void vVKLIntervalN_conformance_test()
 {
-  INFO("width = " << W << ", alignment = " << alignof(vVKLRayIntervalN<W>));
-  REQUIRE(sizeof(vVKLRayIntervalN<W>) == ispc::sizeofVaryingRayInterval());
-  REQUIRE(
-      is_aligned_for_type<vVKLRayIntervalN<W>>(ispc::newVaryingRayInterval()));
+  INFO("width = " << W << ", alignment = " << alignof(vVKLIntervalN<W>));
+  REQUIRE(sizeof(vVKLIntervalN<W>) == ispc::sizeofVaryingInterval());
+  REQUIRE(is_aligned_for_type<vVKLIntervalN<W>>(ispc::newVaryingInterval()));
 }
 
 template <int W>
-void vVKLSurfaceHitN_conformance_test()
+void vVKLHitN_conformance_test()
 {
-  INFO("width = " << W << ", alignment = " << alignof(vVKLSurfaceHitN<W>));
-  REQUIRE(sizeof(vVKLSurfaceHitN<W>) == ispc::sizeofVaryingSurfaceHit());
-  REQUIRE(
-      is_aligned_for_type<vVKLSurfaceHitN<W>>(ispc::newVaryingSurfaceHit()));
+  INFO("width = " << W << ", alignment = " << alignof(vVKLHitN<W>));
+  REQUIRE(sizeof(vVKLHitN<W>) == ispc::sizeofVaryingHit());
+  REQUIRE(is_aligned_for_type<vVKLHitN<W>>(ispc::newVaryingHit()));
 }
 
 template <int W>
@@ -120,8 +118,8 @@ TEST_CASE("SIMD conformance")
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
       vVKLRayIteratorN_conformance_test<4>();
-      vVKLRayIntervalN_conformance_test<4>();
-      vVKLSurfaceHitN_conformance_test<4>();
+      vVKLIntervalN_conformance_test<4>();
+      vVKLHitN_conformance_test<4>();
       GridAcceleratorRayIterator_conformance_test<4>();
     }
   }
@@ -132,8 +130,8 @@ TEST_CASE("SIMD conformance")
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
       vVKLRayIteratorN_conformance_test<8>();
-      vVKLRayIntervalN_conformance_test<8>();
-      vVKLSurfaceHitN_conformance_test<8>();
+      vVKLIntervalN_conformance_test<8>();
+      vVKLHitN_conformance_test<8>();
       GridAcceleratorRayIterator_conformance_test<8>();
     }
   }
@@ -144,8 +142,8 @@ TEST_CASE("SIMD conformance")
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
       vVKLRayIteratorN_conformance_test<16>();
-      vVKLRayIntervalN_conformance_test<16>();
-      vVKLSurfaceHitN_conformance_test<16>();
+      vVKLIntervalN_conformance_test<16>();
+      vVKLHitN_conformance_test<16>();
       GridAcceleratorRayIterator_conformance_test<16>();
     }
   }

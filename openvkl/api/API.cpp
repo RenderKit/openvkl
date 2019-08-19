@@ -58,6 +58,15 @@ void postTraceMessage(const std::string &message)
         "width " +                                                          \
         std::string(#WIDTH));
 
+#define THROW_IF_NULL(obj, name)                         \
+  if (obj == nullptr)                                    \
+  throw std::runtime_error(std::string("null ") + name + \
+                           std::string(" provided to ") + __FUNCTION__)
+
+// convenience macros for repeated use of the above
+#define THROW_IF_NULL_OBJECT(obj) THROW_IF_NULL(obj, "handle")
+#define THROW_IF_NULL_STRING(str) THROW_IF_NULL(str, "string")
+
 #warning API tracing disabled
 
 #define OPENVKL_CATCH_BEGIN_TRACE          \
@@ -110,12 +119,14 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" VKLDriver vklNewDriver(const char *driverName) OPENVKL_CATCH_BEGIN
 {
+  THROW_IF_NULL_STRING(driverName);
   return (VKLDriver)openvkl::api::Driver::createDriver(driverName);
 }
 OPENVKL_CATCH_END(nullptr)
 
 extern "C" void vklCommitDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
 {
+  THROW_IF_NULL_OBJECT(driver);
   auto *object = (openvkl::api::Driver *)driver;
   object->commit();
 }
@@ -123,6 +134,7 @@ OPENVKL_CATCH_END()
 
 extern "C" void vklSetCurrentDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
 {
+  THROW_IF_NULL_OBJECT(driver);
   auto *object = (openvkl::api::Driver *)driver;
 
   if (!object->isCommitted()) {
@@ -143,7 +155,7 @@ OPENVKL_CATCH_END(0)
 extern "C" void vklCommit(VKLObject object) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  assert(object && "invalid object handle to commit to");
+  THROW_IF_NULL_OBJECT(object);
   openvkl::api::currentDriver().commit(object);
 }
 OPENVKL_CATCH_END()
@@ -151,7 +163,7 @@ OPENVKL_CATCH_END()
 extern "C" void vklRelease(VKLObject object) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  assert(object && "invalid object handle to release");
+  THROW_IF_NULL_OBJECT(object);
   openvkl::api::currentDriver().release(object);
 }
 OPENVKL_CATCH_END()
@@ -303,6 +315,7 @@ __define_vklIterateSurfaceN(16);
 
 extern "C" VKLError vklLoadModule(const char *moduleName) OPENVKL_CATCH_BEGIN
 {
+  THROW_IF_NULL_STRING(moduleName);
   if (openvkl::api::driverIsSet()) {
     return (VKLError)openvkl::api::currentDriver().loadModule(moduleName);
   } else {
@@ -320,6 +333,8 @@ extern "C" void vklSetBool(VKLObject object,
                            bool b) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().setBool(object, name, b);
 }
 OPENVKL_CATCH_END()
@@ -329,6 +344,8 @@ extern "C" void vklSet1f(VKLObject object,
                          float x) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().set1f(object, name, x);
 }
 OPENVKL_CATCH_END()
@@ -340,6 +357,8 @@ extern "C" void vklSet3f(VKLObject object,
                          float z) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().setVec3f(object, name, vec3f(x, y, z));
 }
 OPENVKL_CATCH_END()
@@ -349,6 +368,8 @@ extern "C" void vklSet1i(VKLObject object,
                          int x) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().set1i(object, name, x);
 }
 OPENVKL_CATCH_END()
@@ -357,6 +378,8 @@ extern "C" void vklSet3i(
     VKLObject object, const char *name, int x, int y, int z) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().setVec3i(object, name, vec3i(x, y, z));
 }
 OPENVKL_CATCH_END()
@@ -366,6 +389,8 @@ extern "C" void vklSetData(VKLObject object,
                            VKLData data) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().setObject(object, name, (VKLObject)data);
 }
 OPENVKL_CATCH_END()
@@ -375,6 +400,8 @@ extern "C" void vklSetString(VKLObject object,
                              const char *s) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().setString(object, name, std::string(s));
 }
 OPENVKL_CATCH_END()
@@ -384,6 +411,8 @@ extern "C" void vklSetVoidPtr(VKLObject object,
                               void *v) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(object);
+  THROW_IF_NULL_STRING(name);
   openvkl::api::currentDriver().setVoidPtr(object, name, v);
 }
 OPENVKL_CATCH_END()
@@ -438,7 +467,7 @@ OPENVKL_CATCH_END()
 extern "C" VKLVolume vklNewVolume(const char *type) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  assert(type != nullptr && "invalid volume type identifier in vklNewVolume");
+  THROW_IF_NULL_STRING(type);
   VKLVolume volume = openvkl::api::currentDriver().newVolume(type);
   if (volume == nullptr) {
     postLogMessage(openvkl::VKL_LOG_ERROR)

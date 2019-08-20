@@ -17,7 +17,7 @@
 #pragma once
 
 #include "common.h"
-#include "ray_iterator_size.h"
+#include "iterator_size.h"
 #include "samples_mask.h"
 #include "volume.h"
 
@@ -31,29 +31,29 @@ extern "C" {
 
 struct VKLIntervalIterator
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator4
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE_4];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator8
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE_8];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator16
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE_16];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
 
@@ -136,29 +136,29 @@ void vklIterateInterval16(const int *valid,
 
 struct VKLHitIterator
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
 struct VKLHitIterator4
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE_4];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
 struct VKLHitIterator8
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE_8];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
 struct VKLHitIterator16
 {
-  alignas(RAY_ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
-      [RAY_ITERATOR_INTERNAL_STATE_SIZE_16];
+  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
+      [ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
 

@@ -39,10 +39,10 @@ namespace openvkl {
 
   constexpr int iterator_internal_state_size_for_width(int W)
   {
-    return W < 4 ? RAY_ITERATOR_INTERNAL_STATE_SIZE
-                 : (W < 8 ? RAY_ITERATOR_INTERNAL_STATE_SIZE_4
-                          : (W < 16 ? RAY_ITERATOR_INTERNAL_STATE_SIZE_8
-                                    : RAY_ITERATOR_INTERNAL_STATE_SIZE_16));
+    return W < 4 ? ITERATOR_INTERNAL_STATE_SIZE
+                 : (W < 8 ? ITERATOR_INTERNAL_STATE_SIZE_4
+                          : (W < 16 ? ITERATOR_INTERNAL_STATE_SIZE_8
+                                    : ITERATOR_INTERNAL_STATE_SIZE_16));
   }
 
   template <int W>

@@ -18,6 +18,6 @@
 
 #include "common.isph"
 #include "driver.isph"
-#include "ray_iterator.isph"
+#include "iterator.isph"
 #include "samples_mask.isph"
 #include "volume.isph"

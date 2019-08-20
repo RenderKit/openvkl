@@ -17,7 +17,7 @@
 #pragma once
 
 #include "common.isph"
-#include "ray_iterator_size.h"
+#include "iterator_size.h"
 #include "samples_mask.isph"
 #include "volume.isph"
 
@@ -28,7 +28,7 @@
 struct VKLIntervalIterator
 {
   // stored as varying int32 to enforce correct alignment
-  varying int32 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
+  varying int32 internalState[ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
   const VKLVolume volume;
 };
 
@@ -158,7 +158,7 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
 struct VKLHitIterator
 {
   // stored as varying int32 to enforce correct alignment
-  varying int32 internalState[RAY_ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
+  varying int32 internalState[ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
   const VKLVolume volume;
 };
 

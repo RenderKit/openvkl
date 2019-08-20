@@ -14,26 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VKLRayIteratorVolumeRenderer.h"
-#include "VKLRayIteratorVolumeRenderer_ispc.h"
+#include "VKLIntervalIteratorRenderer.h"
+#include "VKLIntervalIteratorRenderer_ispc.h"
 #include "ospray/SDK/common/Data.h"
 #include "ospray/SDK/transferFunction/TransferFunction.h"
 
 namespace ospray {
 
-  VKLRayIteratorVolumeRenderer::VKLRayIteratorVolumeRenderer()
+  VKLIntervalIteratorRenderer::VKLIntervalIteratorRenderer()
   {
-    setParam<std::string>("externalNameFromAPI", "vkl_ray_iterator");
+    setParam<std::string>("externalNameFromAPI", "vkl_interval_iterator");
 
-    ispcEquivalent = ispc::VKLRayIteratorVolumeRenderer_create(this);
+    ispcEquivalent = ispc::VKLIntervalIteratorRenderer_create(this);
   }
 
-  std::string VKLRayIteratorVolumeRenderer::toString() const
+  std::string VKLIntervalIteratorRenderer::toString() const
   {
-    return "ospray::render::VKLRayIteratorVolumeRenderer";
+    return "ospray::render::VKLIntervalIteratorRenderer";
   }
 
-  void VKLRayIteratorVolumeRenderer::commit()
+  void VKLIntervalIteratorRenderer::commit()
   {
     Renderer::commit();
 
@@ -48,13 +48,12 @@ namespace ospray {
 
     float samplingRate = getParam1f("samplingRate", 1.f);
 
-    ispc::VKLRayIteratorVolumeRenderer_set(getIE(),
-                                              (ispc::OpenVKLVolume *)vklVolume,
-                                              transferFunction->getIE(),
-                                              samplingRate);
+    ispc::VKLIntervalIteratorRenderer_set(getIE(),
+                                          (ispc::OpenVKLVolume *)vklVolume,
+                                          transferFunction->getIE(),
+                                          samplingRate);
   }
 
-  OSP_REGISTER_RENDERER(VKLRayIteratorVolumeRenderer,
-                        vkl_ray_iterator_volume);
+  OSP_REGISTER_RENDERER(VKLIntervalIteratorRenderer, vkl_interval_iterator);
 
 }  // namespace ospray

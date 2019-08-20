@@ -196,8 +196,8 @@ void usage(const char *progname)
 {
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer simple_native | simple_vkl | "
-               "vkl_ray_iterator_surface | "
-               "vkl_ray_iterator_volume | vkl_ray_iterator | vkl_pathtracer\n"
+               "vkl_hit_iterator | vkl_interval_iterator | vkl_iterator | "
+               "vkl_pathtracer\n"
                "\t-gridType structured_regular\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
@@ -364,8 +364,8 @@ int main(int argc, const char **argv)
       ospCommit(testScene->getRenderer());
     }
 
-    if (rendererType == "vkl_ray_iterator" ||
-        rendererType == "vkl_ray_iterator_volume") {
+    if (rendererType == "vkl_iterator" ||
+        rendererType == "vkl_interval_iterator") {
       changed = changed || addSamplingRateUI(testScene);
     }
 
@@ -373,8 +373,7 @@ int main(int argc, const char **argv)
       changed = changed || addPathTracerUI(testScene);
     }
 
-    if (rendererType == "vkl_ray_iterator" ||
-        rendererType == "vkl_ray_iterator_surface") {
+    if (rendererType == "vkl_iterator" || rendererType == "vkl_hit_iterator") {
       changed = changed || addIsosurfacesUI(testScene);
     }
 

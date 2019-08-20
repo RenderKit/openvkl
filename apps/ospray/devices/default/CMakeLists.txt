@@ -36,14 +36,14 @@ ospray_add_library(ospray_module_ispc_openvkl SHARED
   render/SimpleVKLRenderer.cpp
   render/SimpleVKLRenderer.ispc
 
-  render/VKLRayIteratorRenderer.cpp
-  render/VKLRayIteratorRenderer.ispc
+  render/VKLIteratorRenderer.cpp
+  render/VKLIteratorRenderer.ispc
 
-  render/VKLRayIteratorSurfaceRenderer.cpp
-  render/VKLRayIteratorSurfaceRenderer.ispc
+  render/VKLHitIteratorRenderer.cpp
+  render/VKLHitIteratorRenderer.ispc
 
-  render/VKLRayIteratorVolumeRenderer.cpp
-  render/VKLRayIteratorVolumeRenderer.ispc
+  render/VKLIntervalIteratorRenderer.cpp
+  render/VKLIntervalIteratorRenderer.ispc
 
   render/VKLPathTracer.cpp
   render/VKLPathTracer.ispc

@@ -21,7 +21,7 @@
 
 #include <openvkl/openvkl.isph>
 
-struct VKLRayIteratorSurfaceRenderer
+struct VKLHitIteratorRenderer
 {
   uniform Renderer super;
   uniform VKLVolume volume;
@@ -30,7 +30,7 @@ struct VKLRayIteratorSurfaceRenderer
   float *uniform isovalues;
 };
 
-inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
+inline void integrate(uniform VKLHitIteratorRenderer *uniform self,
                       varying vec3f &color,
                       varying float &alpha,
                       const uniform int accumID,
@@ -76,14 +76,14 @@ inline void integrate(uniform VKLRayIteratorSurfaceRenderer *uniform self,
   vklRelease((VKLObject)samplesMask);
 }
 
-void VKLRayIteratorSurfaceRenderer_renderSample(Renderer *uniform _self,
-                                                FrameBuffer *uniform fb,
-                                                World *uniform world,
-                                                void *uniform perFrameData,
-                                                varying ScreenSample &sample)
+void VKLHitIteratorRenderer_renderSample(Renderer *uniform _self,
+                                         FrameBuffer *uniform fb,
+                                         World *uniform world,
+                                         void *uniform perFrameData,
+                                         varying ScreenSample &sample)
 {
-  uniform VKLRayIteratorSurfaceRenderer *uniform self =
-      (uniform VKLRayIteratorSurfaceRenderer * uniform) _self;
+  uniform VKLHitIteratorRenderer *uniform self =
+      (uniform VKLHitIteratorRenderer * uniform) _self;
 
   const uniform int accumID = reduce_max(sample.sampleID.z);
 
@@ -96,23 +96,23 @@ void VKLRayIteratorSurfaceRenderer_renderSample(Renderer *uniform _self,
             sample.sampleID.y);
 }
 
-export void *uniform VKLRayIteratorSurfaceRenderer_create(void *uniform cppE)
+export void *uniform VKLHitIteratorRenderer_create(void *uniform cppE)
 {
-  uniform VKLRayIteratorSurfaceRenderer *uniform self =
-      uniform new uniform VKLRayIteratorSurfaceRenderer;
+  uniform VKLHitIteratorRenderer *uniform self =
+      uniform new uniform VKLHitIteratorRenderer;
   Renderer_Constructor(&self->super, cppE, 1);
-  self->super.renderSample = VKLRayIteratorSurfaceRenderer_renderSample;
+  self->super.renderSample = VKLHitIteratorRenderer_renderSample;
   return self;
 }
 
-export void VKLRayIteratorSurfaceRenderer_set(void *uniform _self,
-                                              uniform VKLVolume volume,
-                                              void *uniform transferFunction,
-                                              uniform int numIsovalues,
-                                              float *uniform isovalues)
+export void VKLHitIteratorRenderer_set(void *uniform _self,
+                                       uniform VKLVolume volume,
+                                       void *uniform transferFunction,
+                                       uniform int numIsovalues,
+                                       float *uniform isovalues)
 {
-  uniform VKLRayIteratorSurfaceRenderer *uniform self =
-      (uniform VKLRayIteratorSurfaceRenderer * uniform) _self;
+  uniform VKLHitIteratorRenderer *uniform self =
+      (uniform VKLHitIteratorRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->numIsovalues     = numIsovalues;

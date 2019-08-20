@@ -22,7 +22,7 @@
 
 #include <openvkl/openvkl.isph>
 
-struct VKLRayIteratorRenderer
+struct VKLIteratorRenderer
 {
   uniform Renderer super;
   uniform VKLVolume volume;
@@ -32,8 +32,7 @@ struct VKLRayIteratorRenderer
   float *uniform isovalues;
 };
 
-inline void integrateVolumeInterval(uniform VKLRayIteratorRenderer *uniform
-                                        self,
+inline void integrateVolumeInterval(uniform VKLIteratorRenderer *uniform self,
                                     const Ray &ray,
                                     box1f tRange,
                                     float nominalSamplingDt,
@@ -77,7 +76,7 @@ inline void integrateVolumeInterval(uniform VKLRayIteratorRenderer *uniform
   }
 }
 
-inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
+inline void integrate(uniform VKLIteratorRenderer *uniform self,
                       varying vec3f &color,
                       varying float &alpha,
                       const uniform int accumID,
@@ -163,14 +162,14 @@ inline void integrate(uniform VKLRayIteratorRenderer *uniform self,
   vklRelease((VKLObject)samplesMask);
 }
 
-void VKLRayIteratorRenderer_renderSample(Renderer *uniform _self,
-                                         FrameBuffer *uniform fb,
-                                         World *uniform world,
-                                         void *uniform perFrameData,
-                                         varying ScreenSample &sample)
+void VKLIteratorRenderer_renderSample(Renderer *uniform _self,
+                                      FrameBuffer *uniform fb,
+                                      World *uniform world,
+                                      void *uniform perFrameData,
+                                      varying ScreenSample &sample)
 {
-  uniform VKLRayIteratorRenderer *uniform self =
-      (uniform VKLRayIteratorRenderer * uniform) _self;
+  uniform VKLIteratorRenderer *uniform self =
+      (uniform VKLIteratorRenderer * uniform) _self;
 
   const uniform int accumID = reduce_max(sample.sampleID.z);
 
@@ -183,24 +182,24 @@ void VKLRayIteratorRenderer_renderSample(Renderer *uniform _self,
             sample.sampleID.y);
 }
 
-export void *uniform VKLRayIteratorRenderer_create(void *uniform cppE)
+export void *uniform VKLIteratorRenderer_create(void *uniform cppE)
 {
-  uniform VKLRayIteratorRenderer *uniform self =
-      uniform new uniform VKLRayIteratorRenderer;
+  uniform VKLIteratorRenderer *uniform self =
+      uniform new uniform VKLIteratorRenderer;
   Renderer_Constructor(&self->super, cppE, 1);
-  self->super.renderSample = VKLRayIteratorRenderer_renderSample;
+  self->super.renderSample = VKLIteratorRenderer_renderSample;
   return self;
 }
 
-export void VKLRayIteratorRenderer_set(void *uniform _self,
-                                       uniform VKLVolume volume,
-                                       void *uniform transferFunction,
-                                       uniform float samplingRate,
-                                       uniform int numIsovalues,
-                                       float *uniform isovalues)
+export void VKLIteratorRenderer_set(void *uniform _self,
+                                    uniform VKLVolume volume,
+                                    void *uniform transferFunction,
+                                    uniform float samplingRate,
+                                    uniform int numIsovalues,
+                                    float *uniform isovalues)
 {
-  uniform VKLRayIteratorRenderer *uniform self =
-      (uniform VKLRayIteratorRenderer * uniform) _self;
+  uniform VKLIteratorRenderer *uniform self =
+      (uniform VKLIteratorRenderer * uniform) _self;
   self->volume           = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
   self->samplingRate     = samplingRate;

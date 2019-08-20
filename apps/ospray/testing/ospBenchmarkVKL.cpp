@@ -54,21 +54,18 @@ BENCHMARK_CAPTURE(volume_render_wavelet,
                   vec2i(1024),
                   512);
 
+BENCHMARK_CAPTURE(
+    volume_render_wavelet, simple_vkl / 512, "simple_vkl", vec2i(1024), 512);
+
 BENCHMARK_CAPTURE(volume_render_wavelet,
-                  simple_vkl / 512,
-                  "simple_vkl",
+                  vkl_interval_iterator / 512,
+                  "vkl_interval_iterator",
                   vec2i(1024),
                   512);
 
 BENCHMARK_CAPTURE(volume_render_wavelet,
-                  vkl_ray_iterator_volume / 512,
-                  "vkl_ray_iterator_volume",
-                  vec2i(1024),
-                  512);
-
-BENCHMARK_CAPTURE(volume_render_wavelet,
-                  vkl_ray_iterator / 512,
-                  "vkl_ray_iterator",
+                  vkl_iterator / 512,
+                  "vkl_iterator",
                   vec2i(1024),
                   512);
 

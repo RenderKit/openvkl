@@ -21,10 +21,10 @@
 
 namespace ospray {
 
-  struct VKLRayIteratorSurfaceRenderer : public Renderer
+  struct VKLIntervalIteratorRenderer : public Renderer
   {
-    VKLRayIteratorSurfaceRenderer();
-    virtual ~VKLRayIteratorSurfaceRenderer() override = default;
+    VKLIntervalIteratorRenderer();
+    virtual ~VKLIntervalIteratorRenderer() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
   };

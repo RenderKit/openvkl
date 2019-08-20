@@ -14,26 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VKLRayIteratorRenderer.h"
-#include "VKLRayIteratorRenderer_ispc.h"
+#include "VKLHitIteratorRenderer.h"
+#include "VKLHitIteratorRenderer_ispc.h"
 #include "ospray/SDK/common/Data.h"
 #include "ospray/SDK/transferFunction/TransferFunction.h"
 
 namespace ospray {
 
-  VKLRayIteratorRenderer::VKLRayIteratorRenderer()
+  VKLHitIteratorRenderer::VKLHitIteratorRenderer()
   {
-    setParam<std::string>("externalNameFromAPI", "vkl_ray_iterator");
+    setParam<std::string>("externalNameFromAPI", "vkl_hit_iterator");
 
-    ispcEquivalent = ispc::VKLRayIteratorRenderer_create(this);
+    ispcEquivalent = ispc::VKLHitIteratorRenderer_create(this);
   }
 
-  std::string VKLRayIteratorRenderer::toString() const
+  std::string VKLHitIteratorRenderer::toString() const
   {
-    return "ospray::render::VKLRayIteratorRenderer";
+    return "ospray::render::VKLHitIteratorRenderer";
   }
 
-  void VKLRayIteratorRenderer::commit()
+  void VKLHitIteratorRenderer::commit()
   {
     Renderer::commit();
 
@@ -49,19 +49,16 @@ namespace ospray {
       throw std::runtime_error(
           "no transfer function specified on the OpenVKL renderer!");
 
-    float samplingRate = getParam1f("samplingRate", 1.f);
-
     Data *isosurfaces = (Data *)getParamData("isosurfaces", nullptr);
 
-    ispc::VKLRayIteratorRenderer_set(
+    ispc::VKLHitIteratorRenderer_set(
         getIE(),
         (ispc::OpenVKLVolume *)vklVolume,
         transferFunction->getIE(),
-        samplingRate,
         isosurfaces ? isosurfaces->size() : 0,
         isosurfaces ? (float *)isosurfaces->data : nullptr);
   }
 
-  OSP_REGISTER_RENDERER(VKLRayIteratorRenderer, vkl_ray_iterator);
+  OSP_REGISTER_RENDERER(VKLHitIteratorRenderer, vkl_hit_iterator);
 
 }  // namespace ospray

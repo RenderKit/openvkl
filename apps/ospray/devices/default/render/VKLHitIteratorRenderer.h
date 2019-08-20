@@ -16,17 +16,17 @@
 
 #pragma once
 
-#include "ospray/SDK/render/Renderer.h"
 #include <openvkl/openvkl.h>
+#include "ospray/SDK/render/Renderer.h"
 
 namespace ospray {
 
-  struct VKLRayIteratorRenderer : public Renderer
+  struct VKLHitIteratorRenderer : public Renderer
   {
-    VKLRayIteratorRenderer();
-    virtual ~VKLRayIteratorRenderer() override = default;
+    VKLHitIteratorRenderer();
+    virtual ~VKLHitIteratorRenderer() override = default;
     virtual std::string toString() const override;
     virtual void commit() override;
   };
 
-} // ::ospray
+}  // namespace ospray

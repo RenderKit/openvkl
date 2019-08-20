@@ -38,7 +38,7 @@ namespace openvkl {
                                  const vrange1fn<W> &tRange,
                                  const SamplesMask *samplesMask) override
       {
-        iterator = toVKLIntervalIterator<W>(GridAcceleratorRayIterator<W>(
+        iterator = toVKLIntervalIterator<W>(GridAcceleratorIterator<W>(
             this, origin, direction, tRange, samplesMask));
       }
 
@@ -47,8 +47,8 @@ namespace openvkl {
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override
       {
-        GridAcceleratorRayIterator<W> *ri =
-            fromVKLIntervalIterator<GridAcceleratorRayIterator<W>>(&iterator);
+        GridAcceleratorIterator<W> *ri =
+            fromVKLIntervalIterator<GridAcceleratorIterator<W>>(&iterator);
 
         ri->iterateInterval(valid, result);
 
@@ -62,18 +62,17 @@ namespace openvkl {
                             const vrange1fn<W> &tRange,
                             const SamplesMask *samplesMask) override
       {
-        iterator = toVKLHitIterator<W>(GridAcceleratorRayIterator<W>(
+        iterator = toVKLHitIterator<W>(GridAcceleratorIterator<W>(
             this, origin, direction, tRange, samplesMask));
       }
-
 
       void iterateHitV(const int *valid,
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override
       {
-        GridAcceleratorRayIterator<W> *ri =
-            fromVKLHitIterator<GridAcceleratorRayIterator<W>>(&iterator);
+        GridAcceleratorIterator<W> *ri =
+            fromVKLHitIterator<GridAcceleratorIterator<W>>(&iterator);
 
         ri->iterateHit(valid, result);
 

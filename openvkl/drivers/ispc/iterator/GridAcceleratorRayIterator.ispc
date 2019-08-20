@@ -19,8 +19,8 @@
 #include "../volume/GridAccelerator.ih"
 #include "GridAcceleratorRayIterator.ih"
 
-inline void printGridAcceleratorRayIterator(
-    uniform GridAcceleratorRayIterator *uniform self)
+inline void printGridAcceleratorIterator(
+    uniform GridAcceleratorIterator *uniform self)
 {
   print("origin:\n  %\n  %\n  %\n",
         self->origin.x,
@@ -36,27 +36,26 @@ inline void printGridAcceleratorRayIterator(
         self->boundingBoxTRange.upper);
 }
 
-export uniform int GridAcceleratorRayIterator_sizeOf()
+export uniform int GridAcceleratorIterator_sizeOf()
 {
-  return sizeof(uniform GridAcceleratorRayIterator);
+  return sizeof(uniform GridAcceleratorIterator);
 }
 
 // for tests only
-export uniform GridAcceleratorRayIterator *uniform
-GridAcceleratorRayIterator_new()
+export uniform GridAcceleratorIterator *uniform GridAcceleratorIterator_new()
 {
-  return uniform new uniform GridAcceleratorRayIterator;
+  return uniform new uniform GridAcceleratorIterator;
 }
 
-export void GridAcceleratorRayIterator_Initialize(void *uniform _self,
-                                                  void *uniform _volume,
-                                                  void *uniform _origin,
-                                                  void *uniform _direction,
-                                                  void *uniform _tRange,
-                                                  void *uniform _samplesMask)
+export void GridAcceleratorIterator_Initialize(void *uniform _self,
+                                               void *uniform _volume,
+                                               void *uniform _origin,
+                                               void *uniform _direction,
+                                               void *uniform _tRange,
+                                               void *uniform _samplesMask)
 {
-  uniform GridAcceleratorRayIterator *uniform self =
-      (uniform GridAcceleratorRayIterator * uniform) _self;
+  uniform GridAcceleratorIterator *uniform self =
+      (uniform GridAcceleratorIterator * uniform) _self;
 
   self->volume    = (uniform SharedStructuredVolume * uniform) _volume;
   self->origin    = *((varying vec3f * uniform) _origin);
@@ -86,20 +85,20 @@ export void GridAcceleratorRayIterator_Initialize(void *uniform _self,
 }
 
 export void *uniform
-GridAcceleratorRayIterator_getCurrentInterval(void *uniform _self)
+GridAcceleratorIterator_getCurrentInterval(void *uniform _self)
 {
-  uniform GridAcceleratorRayIterator *uniform self =
-      (uniform GridAcceleratorRayIterator * uniform) _self;
+  uniform GridAcceleratorIterator *uniform self =
+      (uniform GridAcceleratorIterator * uniform) _self;
   return &self->intervalState.currentInterval;
 }
 
-export void GridAcceleratorRayIterator_iterateInterval(
+export void GridAcceleratorIterator_iterateInterval(
     uniform const int *uniform imask,
     void *uniform _self,
     uniform int *uniform _result)
 {
-  uniform GridAcceleratorRayIterator *uniform self =
-      (uniform GridAcceleratorRayIterator * uniform) _self;
+  uniform GridAcceleratorIterator *uniform self =
+      (uniform GridAcceleratorIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
 
@@ -144,11 +143,10 @@ export void GridAcceleratorRayIterator_iterateInterval(
   *result = false;
 }
 
-export void *uniform
-GridAcceleratorRayIterator_getCurrentHit(void *uniform _self)
+export void *uniform GridAcceleratorIterator_getCurrentHit(void *uniform _self)
 {
-  uniform GridAcceleratorRayIterator *uniform self =
-      (uniform GridAcceleratorRayIterator * uniform) _self;
+  uniform GridAcceleratorIterator *uniform self =
+      (uniform GridAcceleratorIterator * uniform) _self;
   return &self->hitState.currentHit;
 }
 
@@ -212,13 +210,12 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
   return false;
 }
 
-export void GridAcceleratorRayIterator_iterateHit(uniform const int *uniform
-                                                      imask,
-                                                  void *uniform _self,
-                                                  uniform int *uniform _result)
+export void GridAcceleratorIterator_iterateHit(uniform const int *uniform imask,
+                                               void *uniform _self,
+                                               uniform int *uniform _result)
 {
-  uniform GridAcceleratorRayIterator *uniform self =
-      (uniform GridAcceleratorRayIterator * uniform) _self;
+  uniform GridAcceleratorIterator *uniform self =
+      (uniform GridAcceleratorIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
 

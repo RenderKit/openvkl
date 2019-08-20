@@ -95,21 +95,22 @@ namespace openvkl {
       vfloatn<W> sample;
     };
 
+    // a general iterator that handles both interval and hit iteration
     template <int W>
-    struct RayIterator
+    struct Iterator
     {
-      RayIterator() {}
+      Iterator() {}
 
-      RayIterator(const Volume<W> *volume,
-                  const vvec3fn<W> &origin,
-                  const vvec3fn<W> &direction,
-                  const vrange1fn<W> &tRange,
-                  const SamplesMask *samplesMask)
+      Iterator(const Volume<W> *volume,
+               const vvec3fn<W> &origin,
+               const vvec3fn<W> &direction,
+               const vrange1fn<W> &tRange,
+               const SamplesMask *samplesMask)
           : volume(volume)
       {
       }
 
-      virtual ~RayIterator() = default;
+      virtual ~Iterator() = default;
 
       virtual const Interval<W> *getCurrentInterval() const            = 0;
       virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;

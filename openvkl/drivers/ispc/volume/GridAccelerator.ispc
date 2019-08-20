@@ -187,8 +187,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
 }
 
 bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
-                              const GridAcceleratorRayIterator *uniform
-                                  rayIterator,
+                              const GridAcceleratorIterator *uniform iterator,
                               varying vec3i &cellIndex,
                               varying Interval &interval)
 {
@@ -200,8 +199,8 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
     vec3f localCoordinates;
     volume->transformObjectToLocal(
         volume,
-        rayIterator->origin +
-            (rayIterator->boundingBoxTRange.lower) * rayIterator->direction,
+        iterator->origin +
+            (iterator->boundingBoxTRange.lower) * iterator->direction,
         localCoordinates);
 
     cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
@@ -216,12 +215,12 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
 
     // transform object-space direction and origin to cell-space
     const vec3f cellDirection =
-        rayIterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH;
+        iterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH;
 
     const vec3f rcpCellDirection = 1.f / cellDirection;
 
     vec3f cellOrigin;
-    volume->transformObjectToLocal(volume, rayIterator->origin, cellOrigin);
+    volume->transformObjectToLocal(volume, iterator->origin, cellOrigin);
     cellOrigin = cellOrigin * RCP_CELL_WIDTH;
 
     // sign of direction determines index delta (1 or -1 in each dimension) to
@@ -251,10 +250,10 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
   box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
 
   // clamp next cell bounds to ray iterator bounding range
-  box1f cellInterval = intersectBox(rayIterator->origin,
-                                    rayIterator->direction,
+  box1f cellInterval = intersectBox(iterator->origin,
+                                    iterator->direction,
                                     cellBounds,
-                                    rayIterator->boundingBoxTRange);
+                                    iterator->boundingBoxTRange);
 
   if (isempty1f(cellInterval)) {
     resetInterval(interval);

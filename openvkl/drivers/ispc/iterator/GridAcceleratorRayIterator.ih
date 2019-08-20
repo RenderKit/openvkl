@@ -23,13 +23,13 @@
 struct GridAcceleratorSamplesMask;
 struct SharedStructuredVolume;
 
-struct GridAcceleratorRayIteratorIntervalState
+struct GridAcceleratorIteratorIntervalState
 {
   Interval currentInterval;
   vec3i currentCellIndex;
 };
 
-struct GridAcceleratorRayIteratorHitState
+struct GridAcceleratorIteratorHitState
 {
   bool activeCell;
   vec3i currentCellIndex;
@@ -37,7 +37,7 @@ struct GridAcceleratorRayIteratorHitState
   Hit currentHit;
 };
 
-struct GridAcceleratorRayIterator
+struct GridAcceleratorIterator
 {
   SharedStructuredVolume *uniform volume;
   varying vec3f origin;
@@ -49,8 +49,8 @@ struct GridAcceleratorRayIterator
   varying box1f boundingBoxTRange;
 
   // interval iterator state
-  varying GridAcceleratorRayIteratorIntervalState intervalState;
+  varying GridAcceleratorIteratorIntervalState intervalState;
 
   // hit iterator state
-  varying GridAcceleratorRayIteratorHitState hitState;
+  varying GridAcceleratorIteratorHitState hitState;
 };

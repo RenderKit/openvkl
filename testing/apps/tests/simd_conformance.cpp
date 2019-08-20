@@ -115,17 +115,16 @@ void vVKLHitN_conformance_test()
 }
 
 template <int W>
-void GridAcceleratorRayIterator_conformance_test()
+void GridAcceleratorIterator_conformance_test()
 {
-  int ispcSize = ispc::GridAcceleratorRayIterator_sizeOf();
+  int ispcSize = ispc::GridAcceleratorIterator_sizeOf();
   REQUIRE(ispcSize ==
-          openvkl::ispc_driver::GridAcceleratorRayIterator<W>::ispcStorageSize);
+          openvkl::ispc_driver::GridAcceleratorIterator<W>::ispcStorageSize);
 
-  REQUIRE(
-      is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorRayIterator<W>>(
-          ispc::GridAcceleratorRayIterator_new()));
+  REQUIRE(is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIterator<W>>(
+      ispc::GridAcceleratorIterator_new()));
 
-  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorRayIterator<W>) <=
+  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIterator<W>) <=
           ray_iterator_internal_state_size_for_width(W));
 }
 
@@ -151,7 +150,7 @@ TEST_CASE("SIMD conformance")
       vVKLHitIteratorN_conformance_test<4>();
       vVKLIntervalN_conformance_test<4>();
       vVKLHitN_conformance_test<4>();
-      GridAcceleratorRayIterator_conformance_test<4>();
+      GridAcceleratorIterator_conformance_test<4>();
     }
   }
 
@@ -164,7 +163,7 @@ TEST_CASE("SIMD conformance")
       vVKLHitIteratorN_conformance_test<8>();
       vVKLIntervalN_conformance_test<8>();
       vVKLHitN_conformance_test<8>();
-      GridAcceleratorRayIterator_conformance_test<8>();
+      GridAcceleratorIterator_conformance_test<8>();
     }
   }
 
@@ -177,7 +176,7 @@ TEST_CASE("SIMD conformance")
       vVKLHitIteratorN_conformance_test<16>();
       vVKLIntervalN_conformance_test<16>();
       vVKLHitN_conformance_test<16>();
-      GridAcceleratorRayIterator_conformance_test<16>();
+      GridAcceleratorIterator_conformance_test<16>();
     }
   }
 

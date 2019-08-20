@@ -25,15 +25,15 @@ namespace openvkl {
     struct Volume;
 
     template <int W>
-    struct GridAcceleratorRayIterator : public RayIterator<W>
+    struct GridAcceleratorIterator : public Iterator<W>
     {
-      GridAcceleratorRayIterator() {}
+      GridAcceleratorIterator() {}
 
-      GridAcceleratorRayIterator(const Volume<W> *volume,
-                                 const vvec3fn<W> &origin,
-                                 const vvec3fn<W> &direction,
-                                 const vrange1fn<W> &tRange,
-                                 const SamplesMask *samplesMask);
+      GridAcceleratorIterator(const Volume<W> *volume,
+                              const vvec3fn<W> &origin,
+                              const vvec3fn<W> &direction,
+                              const vrange1fn<W> &tRange,
+                              const SamplesMask *samplesMask);
 
       const Interval<W> *getCurrentInterval() const override;
       void iterateInterval(const int *valid, vintn<W> &result) override;

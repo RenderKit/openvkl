@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "RayIterator.ih"
+#include "Iterator.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 

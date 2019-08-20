@@ -21,8 +21,8 @@ include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   simd_conformance.ispc
   api/ISPCDriver.cpp
-  iterator/GridAcceleratorRayIterator.cpp
-  iterator/GridAcceleratorRayIterator.ispc
+  iterator/GridAcceleratorIterator.cpp
+  iterator/GridAcceleratorIterator.ispc
   samples_mask/SamplesMask.cpp
   samples_mask/GridAcceleratorSamplesMask.cpp
   samples_mask/GridAcceleratorSamplesMask.ispc

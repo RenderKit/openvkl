@@ -18,7 +18,7 @@
 
 #include "../common/ManagedObject.h"
 #include "../common/objectFactory.h"
-#include "../iterator/RayIterator.h"
+#include "../iterator/Iterator.h"
 #include "openvkl/openvkl.h"
 #include "ospcommon/math/box.h"
 

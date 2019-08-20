@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "RayIterator.h"
+#include "Iterator.h"
 
 namespace openvkl {
   namespace ispc_driver {

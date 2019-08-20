@@ -17,7 +17,7 @@
 #include "../math/box_utility.ih"
 #include "../samples_mask/GridAcceleratorSamplesMask.ih"
 #include "../volume/GridAccelerator.ih"
-#include "GridAcceleratorRayIterator.ih"
+#include "GridAcceleratorIterator.ih"
 
 inline void printGridAcceleratorIterator(
     uniform GridAcceleratorIterator *uniform self)

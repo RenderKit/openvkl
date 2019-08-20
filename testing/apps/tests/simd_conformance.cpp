@@ -16,8 +16,8 @@
 
 #include "../../external/catch.hpp"
 #include "../common/simd.h"
-#include "openvkl/drivers/ispc/GridAcceleratorRayIterator_ispc.h"
-#include "openvkl/drivers/ispc/iterator/GridAcceleratorRayIterator.h"
+#include "openvkl/drivers/ispc/GridAcceleratorIterator_ispc.h"
+#include "openvkl/drivers/ispc/iterator/GridAcceleratorIterator.h"
 #include "openvkl/drivers/ispc/simd_conformance_ispc.h"
 #include "openvkl_testing.h"
 

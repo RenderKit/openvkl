@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "iterator/RayIterator.ih"
+#include "iterator/Iterator.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 #include "openvkl/openvkl.isph"

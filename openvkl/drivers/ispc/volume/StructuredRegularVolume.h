@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../common/Data.h"
-#include "../iterator/GridAcceleratorRayIterator.h"
+#include "../iterator/GridAcceleratorIterator.h"
 #include "../samples_mask/GridAcceleratorSamplesMask.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"

@@ -14,11 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "GridAcceleratorRayIterator.h"
+#include "GridAcceleratorIterator.h"
 #include "../common/math.h"
 #include "../samples_mask/GridAcceleratorSamplesMask.h"
 #include "../volume/StructuredRegularVolume.h"
-#include "GridAcceleratorRayIterator_ispc.h"
+#include "GridAcceleratorIterator_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {

@@ -28,9 +28,9 @@ namespace openvkl {
     template <int W, typename U>
     inline vVKLIntervalIteratorN<W> toVKLIntervalIterator(U &&x)
     {
-      static_assert(ray_iterator_internal_state_size_for_width(W) >= sizeof(U),
-                    "ray iterator internal state size must be >= "
-                    "source object size");
+      static_assert(
+          iterator_internal_state_size_for_width(W) >= sizeof(U),
+          "iterator internal state size must be >= source object size");
       vVKLIntervalIteratorN<W> result;
       std::memcpy((void *)std::addressof(result.internalState),
                   (const void *)std::addressof(x),
@@ -46,18 +46,18 @@ namespace openvkl {
           alignof(T) == alignof(vVKLIntervalIteratorN<W>),
           "alignment of destination type must be == alignment of source type");
       static_assert(
-          sizeof(T) <= ray_iterator_internal_state_size_for_width(W),
+          sizeof(T) <= iterator_internal_state_size_for_width(W),
           "fromVKLIntervalIterator destination object size must be <= "
-          "ray iterator internal state size");
+          "iterator internal state size");
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
 
     template <int W, typename U>
     inline vVKLHitIteratorN<W> toVKLHitIterator(U &&x)
     {
-      static_assert(ray_iterator_internal_state_size_for_width(W) >= sizeof(U),
-                    "ray iterator internal state size must be >= "
-                    "source object size");
+      static_assert(
+          iterator_internal_state_size_for_width(W) >= sizeof(U),
+          "iterator internal state size must be >= source object size");
       vVKLHitIteratorN<W> result;
       std::memcpy((void *)std::addressof(result.internalState),
                   (const void *)std::addressof(x),
@@ -72,9 +72,9 @@ namespace openvkl {
       static_assert(
           alignof(T) == alignof(vVKLHitIteratorN<W>),
           "alignment of destination type must be == alignment of source type");
-      static_assert(sizeof(T) <= ray_iterator_internal_state_size_for_width(W),
+      static_assert(sizeof(T) <= iterator_internal_state_size_for_width(W),
                     "fromVKLHitIterator destination object size must be <= "
-                    "ray iterator internal state size");
+                    "iterator internal state size");
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
 

@@ -31,14 +31,14 @@ install(TARGETS vklBenchmarkStructuredVolume
 # Functional tests
 add_executable(vklTests
   vklTests.cpp
-  tests/ray_iterator_intervals.cpp
-  tests/ray_iterator_surfaces.cpp
+  tests/hit_iterator.cpp
+  tests/interval_iterator.cpp
   tests/simd_conformance.cpp
   tests/simd_type_conversion.cpp
   tests/structured_volume_sampling.cpp
-  tests/vectorized_intervals.cpp
+  tests/vectorized_hit_iterator.cpp
+  tests/vectorized_interval_iterator.cpp
   tests/vectorized_sampling.cpp
-  tests/vectorized_surfaces.cpp
 )
 
 target_link_libraries(vklTests

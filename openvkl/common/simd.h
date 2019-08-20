@@ -37,7 +37,7 @@ namespace openvkl {
     return W < 4 ? 0 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
-  constexpr int ray_iterator_internal_state_size_for_width(int W)
+  constexpr int iterator_internal_state_size_for_width(int W)
   {
     return W < 4 ? RAY_ITERATOR_INTERNAL_STATE_SIZE
                  : (W < 8 ? RAY_ITERATOR_INTERNAL_STATE_SIZE_4
@@ -172,7 +172,7 @@ namespace openvkl {
   struct alignas(simd_alignment_for_width(W)) vVKLIntervalIteratorN
   {
     alignas(simd_alignment_for_width(
-        W)) char internalState[ray_iterator_internal_state_size_for_width(W)];
+        W)) char internalState[iterator_internal_state_size_for_width(W)];
     VKLVolume volume;
 
     vVKLIntervalIteratorN<W>() = default;
@@ -182,7 +182,7 @@ namespace openvkl {
     {
       memcpy(internalState,
              v.internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
     }
 
     // vVKLIntervalIteratorN<1> is maximally sized, so can hold internal state
@@ -193,15 +193,15 @@ namespace openvkl {
     // any width => scalar conversion
     explicit operator vVKLIntervalIteratorN<1>()
     {
-      static_assert(ray_iterator_internal_state_size_for_width(1) >=
-                        ray_iterator_internal_state_size_for_width(W),
+      static_assert(iterator_internal_state_size_for_width(1) >=
+                        iterator_internal_state_size_for_width(W),
                     "vVKLIntervalIteratorN<1> is not sufficiently sized to "
                     "hold wider type");
 
       vVKLIntervalIteratorN<1> iterator1;
       memcpy(iterator1.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator1.volume = volume;
       return iterator1;
     }
@@ -210,14 +210,14 @@ namespace openvkl {
     template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
     explicit operator vVKLIntervalIteratorN<W2>()
     {
-      static_assert(ray_iterator_internal_state_size_for_width(W2) <=
-                        ray_iterator_internal_state_size_for_width(W),
+      static_assert(iterator_internal_state_size_for_width(W2) <=
+                        iterator_internal_state_size_for_width(W),
                     "vVKLIntervalIteratorN<W2> is larger than source type");
 
       vVKLIntervalIteratorN<W2> iteratorW2;
       memcpy(iteratorW2.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W2));
+             iterator_internal_state_size_for_width(W2));
       iteratorW2.volume = volume;
       return iteratorW2;
     }
@@ -228,7 +228,7 @@ namespace openvkl {
       VKLIntervalIterator iterator1;
       memcpy(iterator1.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator1.volume = volume;
       return iterator1;
     }
@@ -239,7 +239,7 @@ namespace openvkl {
       VKLIntervalIterator4 iterator4;
       memcpy(iterator4.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator4.volume = volume;
       return iterator4;
     }
@@ -250,7 +250,7 @@ namespace openvkl {
       VKLIntervalIterator8 iterator8;
       memcpy(iterator8.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator8.volume = volume;
       return iterator8;
     }
@@ -261,7 +261,7 @@ namespace openvkl {
       VKLIntervalIterator16 iterator16;
       memcpy(iterator16.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator16.volume = volume;
       return iterator16;
     }
@@ -339,7 +339,7 @@ namespace openvkl {
   struct alignas(simd_alignment_for_width(W)) vVKLHitIteratorN
   {
     alignas(simd_alignment_for_width(
-        W)) char internalState[ray_iterator_internal_state_size_for_width(W)];
+        W)) char internalState[iterator_internal_state_size_for_width(W)];
     VKLVolume volume;
 
     vVKLHitIteratorN<W>() = default;
@@ -348,7 +348,7 @@ namespace openvkl {
     {
       memcpy(internalState,
              v.internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
     }
 
     // vVKLHitIteratorN<1> is maximally sized, so can hold internal state for
@@ -360,14 +360,14 @@ namespace openvkl {
     explicit operator vVKLHitIteratorN<1>()
     {
       static_assert(
-          ray_iterator_internal_state_size_for_width(1) >=
-              ray_iterator_internal_state_size_for_width(W),
+          iterator_internal_state_size_for_width(1) >=
+              iterator_internal_state_size_for_width(W),
           "vVKLHitIteratorN<1> is not sufficiently sized to hold wider type");
 
       vVKLHitIteratorN<1> iterator1;
       memcpy(iterator1.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator1.volume = volume;
       return iterator1;
     }
@@ -376,14 +376,14 @@ namespace openvkl {
     template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
     explicit operator vVKLHitIteratorN<W2>()
     {
-      static_assert(ray_iterator_internal_state_size_for_width(W2) <=
-                        ray_iterator_internal_state_size_for_width(W),
+      static_assert(iterator_internal_state_size_for_width(W2) <=
+                        iterator_internal_state_size_for_width(W),
                     "vVKLHitIteratorN<W2> is larger than source type");
 
       vVKLHitIteratorN<W2> iteratorW2;
       memcpy(iteratorW2.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W2));
+             iterator_internal_state_size_for_width(W2));
       iteratorW2.volume = volume;
       return iteratorW2;
     }
@@ -394,7 +394,7 @@ namespace openvkl {
       VKLHitIterator iterator1;
       memcpy(iterator1.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator1.volume = volume;
       return iterator1;
     }
@@ -405,7 +405,7 @@ namespace openvkl {
       VKLHitIterator4 iterator4;
       memcpy(iterator4.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator4.volume = volume;
       return iterator4;
     }
@@ -416,7 +416,7 @@ namespace openvkl {
       VKLHitIterator8 iterator8;
       memcpy(iterator8.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator8.volume = volume;
       return iterator8;
     }
@@ -427,7 +427,7 @@ namespace openvkl {
       VKLHitIterator16 iterator16;
       memcpy(iterator16.internalState,
              internalState,
-             ray_iterator_internal_state_size_for_width(W));
+             iterator_internal_state_size_for_width(W));
       iterator16.volume = volume;
       return iterator16;
     }

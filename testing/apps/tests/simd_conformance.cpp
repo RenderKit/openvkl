@@ -125,7 +125,7 @@ void GridAcceleratorIterator_conformance_test()
       ispc::GridAcceleratorIterator_new()));
 
   REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIterator<W>) <=
-          ray_iterator_internal_state_size_for_width(W));
+          iterator_internal_state_size_for_width(W));
 }
 
 TEST_CASE("SIMD conformance")

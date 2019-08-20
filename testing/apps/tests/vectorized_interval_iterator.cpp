@@ -22,7 +22,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Vectorized interval iteration")
+TEST_CASE("Vectorized interval iterator")
 {
   vklLoadModule("ispc_driver");
 

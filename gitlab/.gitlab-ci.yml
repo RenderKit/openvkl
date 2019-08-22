@@ -8,11 +8,6 @@ stages:
   - scan1
   - scan2
 
-before_script:
-  - git submodule sync
-  - git submodule init
-  - git submodule update
-
 ## Job Templates ##
 
 .job_template: &base_build_job
@@ -23,6 +18,10 @@ before_script:
     paths:
     - build/install
     - build/openvkl/build
+  before_script:
+    - git submodule sync
+    - git submodule init
+    - git submodule update
 
 .job_template: &build_job_docker
   <<: *base_build_job

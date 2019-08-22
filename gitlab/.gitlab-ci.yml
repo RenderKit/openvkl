@@ -58,6 +58,14 @@ build-arch:
   <<: *build_job_docker
   image: ospray/docker-images:arch
 
+build-arch-clang:
+  <<: *build_job_docker
+  image: ospray/docker-images:arch
+  script:
+    - export CC=clang
+    - export CXX=clang++
+    - gitlab/build.sh -G Ninja
+
 build-macOS:
   <<: *base_build_job
   stage: build

@@ -1,4 +1,5 @@
 variables:
+  GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
 
 stages:
@@ -12,26 +13,91 @@ before_script:
   - git submodule init
   - git submodule update
 
-build-centos7:
-  type: build
-  image: openvkl/openvkl:centos7
+## Job Templates ##
+
+.job_template: &base_build_job
+  stage: build
   script:
     - gitlab/build.sh
   artifacts:
     paths:
-    - build/
+    - build/install
+
+.job_template: &build_job_docker
+  <<: *base_build_job
   tags:
     - docker
 
-test-functional-centos7:
+.job_template: &base_functional_test_job
   type: test
-  image: openvkl/openvkl:centos7
   script:
-    - ./build/vklTests
-  dependencies:
-    - build-centos7
+    - ./build/openvkl/build/vklTests # NOTE(jda) - base this on install later
+
+.job_template: &test_functional_job_docker
+  <<: *base_functional_test_job
   tags:
     - docker
+
+## Build Jobs ##
+
+build-centos7:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos7
+
+build-ubuntu16.04:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu16.04
+
+build-ubuntu18.04:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu18.04
+
+build-arch:
+  <<: *build_job_docker
+  image: ospray/docker-images:arch
+
+build-macOS:
+  <<: *base_build_job
+  stage: build
+  tags:
+    - osx
+    - clang
+
+## Functional Test Jobs ##
+
+test-functional-centos7:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:centos7
+  dependencies:
+    - build-centos7
+
+test-functional-ubuntu16.04:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:ubuntu16.04
+  dependencies:
+    - build-ubuntu16.04
+
+test-functional-ubuntu18.04:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:ubuntu18.04
+  dependencies:
+    - build-ubuntu18.04
+
+test-functional-arch:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:arch
+  dependencies:
+    - build-arch
+
+test-functional-macOS:
+  <<: *base_functional_test_job
+  dependencies:
+    - build-macOS
+  tags:
+    - osx
+    - clang
+
+## KW Jobs ##
 
 build-kw-scan:
   type: scan1
@@ -45,15 +111,6 @@ build-kw-scan:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 1 day
   dependencies: []
-
-source-protex-scan:
-  type: scan1
-  image: openvkl/openvkl:centos7
-  script:
-    - gitlab/source-scan-protex.sh
-  tags:
-    - docker
-  dependencies: []
   allow_failure: true
 
 test-kw-critical:
@@ -65,3 +122,16 @@ test-kw-critical:
     - build-kw-scan
   tags:
     - kw-scan-docker
+  allow_failure: true
+
+## Protex Job ##
+
+source-protex-scan:
+  type: scan1
+  image: openvkl/openvkl:centos7
+  script:
+    - gitlab/source-scan-protex.sh
+  tags:
+    - docker
+  dependencies: []
+  allow_failure: true

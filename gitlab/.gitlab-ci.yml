@@ -18,7 +18,7 @@ before_script:
 .job_template: &base_build_job
   stage: build
   script:
-    - gitlab/build.sh
+    - gitlab/build.sh -G Ninja # NOTE(jda) - default assumes ninja is installed
   artifacts:
     paths:
     - build/install
@@ -40,13 +40,15 @@ before_script:
 
 ## Build Jobs ##
 
-build-centos7:
-  <<: *build_job_docker
-  image: ospray/docker-images:centos7
+#build-centos7:
+#  <<: *build_job_docker
+#  script:
+#    - gitlab/build.sh
+#  image: ospray/docker-images:centos7
 
-build-ubuntu16.04:
-  <<: *build_job_docker
-  image: ospray/docker-images:ubuntu16.04
+#build-ubuntu16.04:
+#  <<: *build_job_docker
+#  image: ospray/docker-images:ubuntu16.04
 
 build-ubuntu18.04:
   <<: *build_job_docker
@@ -59,23 +61,25 @@ build-arch:
 build-macOS:
   <<: *base_build_job
   stage: build
+  script:
+    - gitlab/build.sh
   tags:
     - osx
     - clang
 
 ## Functional Test Jobs ##
 
-test-functional-centos7:
-  <<: *test_functional_job_docker
-  image: ospray/docker-images:centos7
-  dependencies:
-    - build-centos7
+#test-functional-centos7:
+#  <<: *test_functional_job_docker
+#  image: ospray/docker-images:centos7
+#  dependencies:
+#    - build-centos7
 
-test-functional-ubuntu16.04:
-  <<: *test_functional_job_docker
-  image: ospray/docker-images:ubuntu16.04
-  dependencies:
-    - build-ubuntu16.04
+#test-functional-ubuntu16.04:
+#  <<: *test_functional_job_docker
+#  image: ospray/docker-images:ubuntu16.04
+#  dependencies:
+#    - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
   <<: *test_functional_job_docker

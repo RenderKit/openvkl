@@ -87,12 +87,18 @@ build-macOS:
 #test-functional-ubuntu16.04:
 #  <<: *test_functional_job_docker
 #  image: ospray/docker-images:ubuntu16.04
+#  script:
+#    - export LD_LIBRARY_PATH=./build/install/tbb/lib
+#    - ./build/openvkl/build/vklTests
 #  dependencies:
 #    - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
   <<: *test_functional_job_docker
   image: ospray/docker-images:ubuntu18.04
+  script:
+    - export LD_LIBRARY_PATH=./build/install/tbb/lib
+    - ./build/openvkl/build/vklTests
   dependencies:
     - build-ubuntu18.04
 
@@ -101,6 +107,12 @@ test-functional-arch:
   image: ospray/docker-images:arch
   dependencies:
     - build-arch
+
+test-functional-arch-clang:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:arch
+  dependencies:
+    - build-arch-clang
 
 test-functional-macOS:
   <<: *base_functional_test_job

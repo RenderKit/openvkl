@@ -128,6 +128,10 @@ build-kw-scan:
   image: openvkl/openvkl:centos7
   script:
     - gitlab/build-kw-scan.sh
+  before_script:
+    - git submodule sync
+    - git submodule init
+    - git submodule update
   tags:
     - kw-scan-docker
   artifacts:

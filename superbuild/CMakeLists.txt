@@ -62,6 +62,8 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
   set(PARALLEL_JOBS_OPTS -j ${NUM_BUILD_JOBS})
 endif()
 
+option(BUILD_DEPENDENCIES_ONLY "Don't build OpenVKL itself, only its dependencies" OFF)
+
 set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS})
 
 ## Build dependencies ##

@@ -41,10 +41,31 @@ echo "$KW_SERVER_IP;$KW_SERVER_PORT;$KW_USER;$KW_LTOKEN" > $KLOCWORK_LTOKEN
 
 mkdir build
 cd build
-cmake ..
+
+# NOTE(jda) - Some Linux OSs need to have TBB on LD_LIBRARY_PATH at build time
+export LD_LIBRARY_PATH=`pwd`/install/tbb/lib:${LD_LIBRARY_PATH}
+
+cmake --version
+
+cmake \
+  -DBUILD_JOBS=`nproc` \
+  -DBUILD_DEPENDENCIES_ONLY=ON \
+  "$@" ../superbuild
+
+cmake --build .
+
+mkdir openvkl_build
+cd openvkl_build
+
+export OSPCOMMON_TBB_ROOT=`pwd`/../install/tbb
+export ospcommon_DIR=`pwd`/../install/ospcommon
+
+cmake \
+ -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc \
+  ../..
 
 # build
-$KW_CLIENT_PATH/bin/kwinject make -j `nproc` 
+$KW_CLIENT_PATH/bin/kwinject make -j `nproc`
 
 retry_cmd 60 $KW_SERVER_PATH/bin/kwbuildproject --url http://$KW_SERVER_IP:$KW_SERVER_PORT/$KW_PROJECT_NAME --tables-directory $CI_PROJECT_DIR/kw_tables kwinject.out
 retry_cmd 60 $KW_SERVER_PATH/bin/kwadmin --url http://$KW_SERVER_IP:$KW_SERVER_PORT/ load $KW_PROJECT_NAME $CI_PROJECT_DIR/kw_tables | tee project_load_log

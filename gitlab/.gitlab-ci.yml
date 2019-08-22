@@ -22,6 +22,7 @@ before_script:
   artifacts:
     paths:
     - build/install
+    - build/openvkl/build
 
 .job_template: &build_job_docker
   <<: *base_build_job

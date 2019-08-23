@@ -44,6 +44,12 @@ include(openvkl_ispc)
 
 ## openvkl specific configuration ##
 
+include(CTest)
+
+if (BUILD_TESTING)
+  enable_testing()
+endif()
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
@@ -55,7 +61,12 @@ find_package(ospcommon 1.0.0 REQUIRED)
 
 ## Build library, tests, and apps ##
 
-subdirs(openvkl apps testing)
+add_subdirectory(openvkl)
+add_subdirectory(apps)
+
+if (BUILD_TESTING)
+  add_subdirectory(testing)
+endif()
 
 ## Configure CMake find_package() config files ##
 

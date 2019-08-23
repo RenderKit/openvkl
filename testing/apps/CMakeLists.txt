@@ -49,3 +49,10 @@ target_link_libraries(vklTests
 install(TARGETS vklTests
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
+
+## Expose tests to CTest ##
+
+add_test(NAME "simd_conformance"   COMMAND vklTests "[simd_conformance]")
+add_test(NAME "interval_iterators" COMMAND vklTests "[interval_iterators]")
+add_test(NAME "hit_iterators"      COMMAND vklTests "[hit_iterators]")
+add_test(NAME "volume_sampling"    COMMAND vklTests "[volume_sampling]")

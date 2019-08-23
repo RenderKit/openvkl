@@ -51,7 +51,7 @@ void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
   }
 }
 
-TEST_CASE("Structured volume sampling")
+TEST_CASE("Structured volume sampling", "[volume_sampling]")
 {
   vklLoadModule("ispc_driver");
 

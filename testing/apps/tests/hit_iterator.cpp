@@ -20,7 +20,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Hit iterator")
+TEST_CASE("Hit iterator", "[hit_iterators]")
 {
   vklLoadModule("ispc_driver");
 

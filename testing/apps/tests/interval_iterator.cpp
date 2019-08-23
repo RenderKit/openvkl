@@ -20,7 +20,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Interval iterator")
+TEST_CASE("Interval iterator", "[interval_iterators]")
 {
   vklLoadModule("ispc_driver");
 

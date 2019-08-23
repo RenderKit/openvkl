@@ -22,7 +22,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Vectorized sampling")
+TEST_CASE("Vectorized sampling", "[volume_sampling]")
 {
   vklLoadModule("ispc_driver");
 

@@ -73,7 +73,7 @@ void vvec3fn_pack_extraction_test()
   }
 };
 
-TEST_CASE("SIMD type conversion")
+TEST_CASE("SIMD type conversion", "[simd_conformance]")
 {
   vklLoadModule("ispc_driver");
 

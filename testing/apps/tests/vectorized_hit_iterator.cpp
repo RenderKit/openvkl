@@ -22,7 +22,7 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Vectorized hit iterator")
+TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 {
   vklLoadModule("ispc_driver");
 

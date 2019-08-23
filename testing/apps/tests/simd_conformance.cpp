@@ -128,7 +128,7 @@ void GridAcceleratorIterator_conformance_test()
           iterator_internal_state_size_for_width(W));
 }
 
-TEST_CASE("SIMD conformance")
+TEST_CASE("SIMD conformance", "[simd_conformance]")
 {
   vklLoadModule("ispc_driver");
 

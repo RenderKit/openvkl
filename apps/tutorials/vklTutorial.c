@@ -36,6 +36,11 @@ int main()
 
   float *voxels = malloc(numVoxels * sizeof(float));
 
+  if (!voxels) {
+    printf("failed to allocate voxel memory!\n");
+    return 1;
+  }
+
   for (int k = 0; k < dimensions[2]; k++)
     for (int j = 0; j < dimensions[1]; j++)
       for (int i = 0; i < dimensions[0]; i++)

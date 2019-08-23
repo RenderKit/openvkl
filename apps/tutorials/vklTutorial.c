@@ -30,9 +30,10 @@ int main()
   const int numVoxels = dimensions[0] * dimensions[1] * dimensions[2];
 
   VKLVolume volume = vklNewVolume("structured_regular");
-  vklSet3i(volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
-  vklSet3f(volume, "gridOrigin", 0, 0, 0);
-  vklSet3f(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3i(
+      volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
+  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
   float *voxels = malloc(numVoxels * sizeof(float));
 
@@ -55,7 +56,7 @@ int main()
 
   float objectCoordinates[] = {1.f, 1.f, 1.f};
 
-  float sample = vklComputeSample(volume, (const vkl_vec3f*)objectCoordinates);
+  float sample = vklComputeSample(volume, (const vkl_vec3f *)objectCoordinates);
 
   printf("%f\n", sample);
 

@@ -391,9 +391,9 @@ extern "C" void vklSetBool(VKLObject object,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSet1f(VKLObject object,
-                         const char *name,
-                         float x) OPENVKL_CATCH_BEGIN
+extern "C" void vklSetFloat(VKLObject object,
+                            const char *name,
+                            float x) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   THROW_IF_NULL_OBJECT(object);
@@ -402,11 +402,11 @@ extern "C" void vklSet1f(VKLObject object,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSet3f(VKLObject object,
-                         const char *name,
-                         float x,
-                         float y,
-                         float z) OPENVKL_CATCH_BEGIN
+extern "C" void vklSetVec3f(VKLObject object,
+                            const char *name,
+                            float x,
+                            float y,
+                            float z) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   THROW_IF_NULL_OBJECT(object);
@@ -415,9 +415,9 @@ extern "C" void vklSet3f(VKLObject object,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSet1i(VKLObject object,
-                         const char *name,
-                         int x) OPENVKL_CATCH_BEGIN
+extern "C" void vklSetInt(VKLObject object,
+                          const char *name,
+                          int x) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   THROW_IF_NULL_OBJECT(object);
@@ -426,7 +426,7 @@ extern "C" void vklSet1i(VKLObject object,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSet3i(
+extern "C" void vklSetVec3i(
     VKLObject object, const char *name, int x, int y, int z) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();

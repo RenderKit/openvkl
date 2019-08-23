@@ -23,10 +23,10 @@ extern "C" {
 #endif
 
 void vklSetBool(VKLObject object, const char *name, int b);
-void vklSet1f(VKLObject object, const char *name, float x);
-void vklSet3f(VKLObject object, const char *name, float x, float y, float z);
-void vklSet1i(VKLObject object, const char *name, int x);
-void vklSet3i(VKLObject object, const char *name, int x, int y, int z);
+void vklSetFloat(VKLObject object, const char *name, float x);
+void vklSetVec3f(VKLObject object, const char *name, float x, float y, float z);
+void vklSetInt(VKLObject object, const char *name, int x);
+void vklSetVec3i(VKLObject object, const char *name, int x, int y, int z);
 void vklSetData(VKLObject object, const char *name, VKLData data);
 void vklSetString(VKLObject object, const char *name, const char *s);
 void vklSetVoidPtr(VKLObject object, const char *name, void *v);

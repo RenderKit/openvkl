@@ -31,9 +31,9 @@ int main()
   vkl_vec3i dimensions{128, 128, 128};
 
   VKLVolume volume = vklNewVolume("structured_regular");
-  vklSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vklSet3f(volume, "gridOrigin", 0, 0, 0);
-  vklSet3f(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
   std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
 

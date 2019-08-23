@@ -132,11 +132,11 @@ namespace openvkl {
 
         volume = vklNewVolume(gridType.c_str());
 
-        vklSet3i(
+        vklSetVec3i(
             volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-        vklSet3f(
+        vklSetVec3f(
             volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-        vklSet3f(
+        vklSetVec3f(
             volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
         VKLData voxelData =

@@ -227,8 +227,8 @@ __define_vklInitIntervalIteratorN(16);
 
 #undef __define_vklInitIntervalIteratorN
 
-extern "C" bool vklIterateInterval(VKLIntervalIterator *iterator,
-                                   VKLInterval *interval) OPENVKL_CATCH_BEGIN
+extern "C" int vklIterateInterval(VKLIntervalIterator *iterator,
+                                  VKLInterval *interval) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
@@ -321,8 +321,8 @@ __define_vklInitHitIteratorN(16);
 
 #undef __define_vklInitHitIteratorN
 
-extern "C" bool vklIterateHit(VKLHitIterator *iterator,
-                              VKLHit *hit) OPENVKL_CATCH_BEGIN
+extern "C" int vklIterateHit(VKLHitIterator *iterator,
+                             VKLHit *hit) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   constexpr int valid = 1;
@@ -382,12 +382,12 @@ OPENVKL_CATCH_END(VKL_UNKNOWN_ERROR)
 
 extern "C" void vklSetBool(VKLObject object,
                            const char *name,
-                           bool b) OPENVKL_CATCH_BEGIN
+                           int b) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setBool(object, name, b);
+  openvkl::api::currentDriver().setBool(object, name, static_cast<bool>(b));
 }
 OPENVKL_CATCH_END()
 

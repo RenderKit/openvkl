@@ -16,9 +16,25 @@
 
 #pragma once
 
+#ifdef __cplusplus
+#define VKL_DEFAULT_VAL(a) a
+#else
+#define VKL_DEFAULT_VAL(a)
+#endif
+
+#ifdef _WIN32
+#  define VKL_ALIGN(...) __declspec(align(__VA_ARGS__))
+#else
+#  define VKL_ALIGN(...) __attribute__((aligned(__VA_ARGS__)))
+#endif
+
+#ifdef __cplusplus
 struct ManagedObject
 {
 };
+#else
+typedef void ManagedObject;
+#endif
 
 typedef ManagedObject *VKLObject;
 

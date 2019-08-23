@@ -16,13 +16,23 @@
 
 #pragma once
 
+#ifdef __cplusplus
 #include <cstdint>
 #include <cstdlib>
+#else
+#include <stdint.h>
+#include <stdlib.h>
+#endif
+
 #include "common.h"
 
+#ifdef __cplusplus
 struct Volume : public ManagedObject
 {
 };
+#else
+typedef ManagedObject Volume;
+#endif
 
 typedef Volume *VKLVolume;
 

@@ -16,10 +16,6 @@
 
 #pragma once
 
-struct Driver;
-
-typedef Driver *VKLDriver;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

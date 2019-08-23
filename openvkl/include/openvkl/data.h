@@ -16,7 +16,12 @@
 
 #pragma once
 
+#ifdef __cplusplus
 #include <cstddef>
+#else
+#include <stddef.h>
+#endif
+
 #include "VKLDataType.h"
 
 // flags that can be passed to vklNewData(), which can be OR'ed together
@@ -33,11 +38,13 @@ typedef enum
 extern "C" {
 #endif
 
-#define VKL_DEFAULT_VAL(a) a
-
+#ifdef __cplusplus
 struct Data : public ManagedObject
 {
 };
+#else
+typedef ManagedObject Data;
+#endif
 
 typedef Data *VKLData;
 

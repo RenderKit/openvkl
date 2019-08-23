@@ -14,15 +14,17 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-## "Hello world" VKL tutorial ##
-add_executable(vklTutorial
-  vklTutorial.cpp
-)
+## "Hello world" VKL tutorials ##
+
+add_executable(vklTutorial vklTutorial.c)
+add_executable(vklTutorialCpp vklTutorial.cpp)
 
 target_link_libraries(vklTutorial PRIVATE openvkl)
+target_link_libraries(vklTutorialCpp PRIVATE openvkl)
 
-install(TARGETS vklTutorial
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+install(TARGETS vklTutorial RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(TARGETS vklTutorialCpp RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+## ISPC tutorial ##
 
 add_subdirectory(ispc)

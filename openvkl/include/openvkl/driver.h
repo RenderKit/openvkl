@@ -19,7 +19,7 @@
 #include "common.h"
 
 struct Driver;
-typedef Driver *VKLDriver;
+typedef struct Driver *VKLDriver;
 
 #ifdef __cplusplus
 extern "C" {

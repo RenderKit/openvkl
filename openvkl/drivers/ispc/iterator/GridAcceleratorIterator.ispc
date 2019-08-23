@@ -42,7 +42,7 @@ export uniform int GridAcceleratorIterator_sizeOf()
 }
 
 // for tests only
-export uniform GridAcceleratorIterator *uniform GridAcceleratorIterator_new()
+export void *uniform GridAcceleratorIterator_new()
 {
   return uniform new uniform GridAcceleratorIterator;
 }

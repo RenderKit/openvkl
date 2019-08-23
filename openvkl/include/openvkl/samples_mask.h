@@ -24,7 +24,7 @@ extern "C" {
 #endif
 
 struct SamplesMask;
-typedef SamplesMask *VKLSamplesMask;
+typedef struct SamplesMask *VKLSamplesMask;
 
 VKLSamplesMask vklNewSamplesMask(VKLVolume volume);
 

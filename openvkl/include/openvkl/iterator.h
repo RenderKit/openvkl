@@ -31,28 +31,28 @@ extern "C" {
 
 struct VKLIntervalIterator
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator4
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator8
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator16
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
@@ -81,7 +81,7 @@ struct VKLInterval16
   float nominalDeltaT[16];
 };
 
-void vklInitIntervalIterator(VKLIntervalIterator *iterator,
+void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
                              VKLVolume volume,
                              const vkl_vec3f *origin,
                              const vkl_vec3f *direction,
@@ -89,7 +89,7 @@ void vklInitIntervalIterator(VKLIntervalIterator *iterator,
                              VKLSamplesMask samplesMask);
 
 void vklInitIntervalIterator4(const int *valid,
-                              VKLIntervalIterator4 *iterator,
+                              struct VKLIntervalIterator4 *iterator,
                               VKLVolume volume,
                               const vkl_vvec3f4 *origin,
                               const vkl_vvec3f4 *direction,
@@ -97,7 +97,7 @@ void vklInitIntervalIterator4(const int *valid,
                               VKLSamplesMask samplesMask);
 
 void vklInitIntervalIterator8(const int *valid,
-                              VKLIntervalIterator8 *iterator,
+                              struct VKLIntervalIterator8 *iterator,
                               VKLVolume volume,
                               const vkl_vvec3f8 *origin,
                               const vkl_vvec3f8 *direction,
@@ -105,7 +105,7 @@ void vklInitIntervalIterator8(const int *valid,
                               VKLSamplesMask samplesMask);
 
 void vklInitIntervalIterator16(const int *valid,
-                               VKLIntervalIterator16 *iterator,
+                               struct VKLIntervalIterator16 *iterator,
                                VKLVolume volume,
                                const vkl_vvec3f16 *origin,
                                const vkl_vvec3f16 *direction,
@@ -113,21 +113,22 @@ void vklInitIntervalIterator16(const int *valid,
                                VKLSamplesMask samplesMask);
 
 // returns true while the iterator is still within the volume
-bool vklIterateInterval(VKLIntervalIterator *iterator, VKLInterval *interval);
+int vklIterateInterval(struct VKLIntervalIterator *iterator,
+                       struct VKLInterval *interval);
 
 void vklIterateInterval4(const int *valid,
-                         VKLIntervalIterator4 *iterator,
-                         VKLInterval4 *interval,
+                         struct VKLIntervalIterator4 *iterator,
+                         struct VKLInterval4 *interval,
                          int *result);
 
 void vklIterateInterval8(const int *valid,
-                         VKLIntervalIterator8 *iterator,
-                         VKLInterval8 *interval,
+                         struct VKLIntervalIterator8 *iterator,
+                         struct VKLInterval8 *interval,
                          int *result);
 
 void vklIterateInterval16(const int *valid,
-                          VKLIntervalIterator16 *iterator,
-                          VKLInterval16 *interval,
+                          struct VKLIntervalIterator16 *iterator,
+                          struct VKLInterval16 *interval,
                           int *result);
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -136,28 +137,28 @@ void vklIterateInterval16(const int *valid,
 
 struct VKLHitIterator
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
 struct VKLHitIterator4
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
 struct VKLHitIterator8
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
 struct VKLHitIterator16
 {
-  alignas(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
       [ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
@@ -186,7 +187,7 @@ struct VKLHit16
   float sample[16];
 };
 
-void vklInitHitIterator(VKLHitIterator *iterator,
+void vklInitHitIterator(struct VKLHitIterator *iterator,
                         VKLVolume volume,
                         const vkl_vec3f *origin,
                         const vkl_vec3f *direction,
@@ -194,7 +195,7 @@ void vklInitHitIterator(VKLHitIterator *iterator,
                         VKLSamplesMask samplesMask);
 
 void vklInitHitIterator4(const int *valid,
-                         VKLHitIterator4 *iterator,
+                         struct VKLHitIterator4 *iterator,
                          VKLVolume volume,
                          const vkl_vvec3f4 *origin,
                          const vkl_vvec3f4 *direction,
@@ -202,7 +203,7 @@ void vklInitHitIterator4(const int *valid,
                          VKLSamplesMask samplesMask);
 
 void vklInitHitIterator8(const int *valid,
-                         VKLHitIterator8 *iterator,
+                         struct VKLHitIterator8 *iterator,
                          VKLVolume volume,
                          const vkl_vvec3f8 *origin,
                          const vkl_vvec3f8 *direction,
@@ -210,7 +211,7 @@ void vklInitHitIterator8(const int *valid,
                          VKLSamplesMask samplesMask);
 
 void vklInitHitIterator16(const int *valid,
-                          VKLHitIterator16 *iterator,
+                          struct VKLHitIterator16 *iterator,
                           VKLVolume volume,
                           const vkl_vvec3f16 *origin,
                           const vkl_vvec3f16 *direction,
@@ -218,21 +219,21 @@ void vklInitHitIterator16(const int *valid,
                           VKLSamplesMask samplesMask);
 
 // returns true while the iterator is still within the volume
-bool vklIterateHit(VKLHitIterator *iterator, VKLHit *hit);
+int vklIterateHit(struct VKLHitIterator *iterator, struct VKLHit *hit);
 
 void vklIterateHit4(const int *valid,
-                    VKLHitIterator4 *iterator,
-                    VKLHit4 *hit,
+                    struct VKLHitIterator4 *iterator,
+                    struct VKLHit4 *hit,
                     int *result);
 
 void vklIterateHit8(const int *valid,
-                    VKLHitIterator8 *iterator,
-                    VKLHit8 *hit,
+                    struct VKLHitIterator8 *iterator,
+                    struct VKLHit8 *hit,
                     int *result);
 
 void vklIterateHit16(const int *valid,
-                     VKLHitIterator16 *iterator,
-                     VKLHit16 *hit,
+                     struct VKLHitIterator16 *iterator,
+                     struct VKLHit16 *hit,
                      int *result);
 
 #ifdef __cplusplus

@@ -29,7 +29,7 @@
 #if __cplusplus >= 201103L
 typedef enum : uint32_t
 #else
-enum VKLDataType
+typedef enum
 #endif
 {
   // Driver reference type.
@@ -82,8 +82,4 @@ enum VKLDataType
   // Guard value.
   VKL_UNKNOWN = 22222,
 
-}
-#if __cplusplus >= 201103L
-VKLDataType
-#endif
-;
+} VKLDataType;

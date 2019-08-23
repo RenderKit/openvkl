@@ -36,15 +36,6 @@ typedef ManagedObject Volume;
 
 typedef Volume *VKLVolume;
 
-typedef enum
-#if __cplusplus >= 201103L
-    : uint32_t
-#endif
-{
-  VKL_SAMPLE_NEAREST = 100,
-  VKL_SAMPLE_LINEAR  = 200,
-} VKLSamplingMethod;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

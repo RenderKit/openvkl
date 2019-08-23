@@ -29,8 +29,6 @@ namespace openvkl {
       {
         Volume<W>::commit();
 
-        samplingMethod = VKLSamplingMethod(
-            this->template getParam<int>("samplingMethod", VKL_SAMPLE_LINEAR));
         dimensions  = this->template getParam<vec3i>("dimensions", vec3i(128));
         gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
         gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
@@ -38,7 +36,6 @@ namespace openvkl {
 
      protected:
       // parameters set in commit()
-      VKLSamplingMethod samplingMethod;
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;

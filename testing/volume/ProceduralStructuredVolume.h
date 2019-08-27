@@ -102,7 +102,7 @@ namespace openvkl {
       }
 
       value = clamp(value,
-                    double(std::numeric_limits<VOXEL_TYPE>::min()),
+                    double(std::numeric_limits<VOXEL_TYPE>::lowest()),
                     double(std::numeric_limits<VOXEL_TYPE>::max()));
 
       return VOXEL_TYPE(value);

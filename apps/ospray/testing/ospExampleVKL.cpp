@@ -140,9 +140,15 @@ bool addIsosurfacesUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
 
   static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
 
-  isosurfaces[0].isovalue = -1.f;
-  isosurfaces[1].isovalue = 0.f;
-  isosurfaces[2].isovalue = 1.f;
+  static bool initialized = false;
+
+  if (!initialized) {
+    isosurfaces[0].isovalue = -1.f;
+    isosurfaces[1].isovalue = 0.f;
+    isosurfaces[2].isovalue = 1.f;
+
+    initialized = true;
+  }
 
   bool isosurfacesChanged = false;
 

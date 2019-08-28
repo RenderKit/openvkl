@@ -99,16 +99,13 @@ namespace openvkl {
     template <int W>
     struct Iterator
     {
-      Iterator() {}
+      Iterator() = default;
 
       Iterator(const Volume<W> *volume,
                const vvec3fn<W> &origin,
                const vvec3fn<W> &direction,
                const vrange1fn<W> &tRange,
-               const SamplesMask *samplesMask)
-          : volume(volume)
-      {
-      }
+               const SamplesMask *samplesMask);
 
       virtual ~Iterator() = default;
 
@@ -120,6 +117,18 @@ namespace openvkl {
 
       const Volume<W> *volume;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline Iterator<W>::Iterator(const Volume<W> *volume,
+                                 const vvec3fn<W> &origin,
+                                 const vvec3fn<W> &direction,
+                                 const vrange1fn<W> &tRange,
+                                 const SamplesMask *samplesMask)
+        : volume(volume)
+    {
+    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

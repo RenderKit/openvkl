@@ -32,11 +32,6 @@ namespace openvkl {
       SamplesMask()                   = default;
       virtual ~SamplesMask() override = default;
 
-      virtual void commit() override
-      {
-        ManagedObject::commit();
-      }
-
       void setRanges(const utility::ArrayView<const range1f> &ranges);
       void setValues(const utility::ArrayView<const float> &values);
 

@@ -36,15 +36,20 @@ namespace openvkl {
 
       void commit() override;
 
-      void *getISPCEquivalent() const
-      {
-        return ispcEquivalent;
-      }
+      void *getISPCEquivalent() const;
 
      protected:
       void *ispcEquivalent{nullptr};
       const StructuredRegularVolume<W> *volume{nullptr};
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline void *GridAcceleratorSamplesMask<W>::getISPCEquivalent() const
+    {
+      return ispcEquivalent;
+    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

@@ -33,15 +33,7 @@ namespace openvkl {
       Volume()                   = default;
       virtual ~Volume() override = default;
 
-      static Volume *createInstance(const std::string &type)
-      {
-        return createInstanceHelper<Volume<W>, VKL_VOLUME>(type);
-      }
-
-      virtual void commit() override
-      {
-        ManagedObject::commit();
-      }
+      static Volume *createInstance(const std::string &type);
 
       // volumes must provide their own iterator implementations based on
       // their internal acceleration structures.
@@ -60,11 +52,7 @@ namespace openvkl {
                                          const vvec3fn<W> &origin,
                                          const vvec3fn<W> &direction,
                                          const vrange1fn<W> &tRange,
-                                         const SamplesMask *samplesMask)
-      {
-        throw std::runtime_error(
-            "initIntervalIteratorV() not implemented in this volume!");
-      }
+                                         const SamplesMask *samplesMask);
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given iterator and return the next interval (if any) satisfying the
@@ -75,21 +63,13 @@ namespace openvkl {
       virtual void iterateIntervalV(const int *valid,
                                     vVKLIntervalIteratorN<W> &iterator,
                                     vVKLIntervalN<W> &interval,
-                                    vintn<W> &result)
-      {
-        throw std::runtime_error(
-            "iterateIntervalV() not implemented in this volume!");
-      }
+                                    vintn<W> &result);
 
       virtual void initHitIteratorV(vVKLHitIteratorN<W> &iterator,
                                     const vvec3fn<W> &origin,
                                     const vvec3fn<W> &direction,
                                     const vrange1fn<W> &tRange,
-                                    const SamplesMask *samplesMask)
-      {
-        throw std::runtime_error(
-            "initHitIteratorV() not implemented in this volume!");
-      }
+                                    const SamplesMask *samplesMask);
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given iterator and return the next hit (if any) satisfying
@@ -100,17 +80,9 @@ namespace openvkl {
       virtual void iterateHitV(const int *valid,
                                vVKLHitIteratorN<W> &iterator,
                                vVKLHitN<W> &hit,
-                               vintn<W> &result)
-      {
-        throw std::runtime_error(
-            "iterateHitV() not implemented in this volume!");
-      }
+                               vintn<W> &result);
 
-      virtual SamplesMask *newSamplesMask()
-      {
-        throw std::runtime_error(
-            "newSamplesMask() not implemented in this volume!");
-      }
+      virtual SamplesMask *newSamplesMask();
 
       virtual void computeSampleV(const int *valid,
                                   const vvec3fn<W> &objectCoordinates,
@@ -119,6 +91,63 @@ namespace openvkl {
       virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
       virtual box3f getBoundingBox() const                                = 0;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline Volume<W> *Volume<W>::createInstance(const std::string &type)
+    {
+      return createInstanceHelper<Volume<W>, VKL_VOLUME>(type);
+    }
+
+    template <int W>
+    inline void Volume<W>::initIntervalIteratorV(
+        vVKLIntervalIteratorN<W> &iterator,
+        const vvec3fn<W> &origin,
+        const vvec3fn<W> &direction,
+        const vrange1fn<W> &tRange,
+        const SamplesMask *samplesMask)
+    {
+      throw std::runtime_error(
+          "initIntervalIteratorV() not implemented in this volume!");
+    }
+
+    template <int W>
+    inline void Volume<W>::iterateIntervalV(const int *valid,
+                                            vVKLIntervalIteratorN<W> &iterator,
+                                            vVKLIntervalN<W> &interval,
+                                            vintn<W> &result)
+    {
+      throw std::runtime_error(
+          "iterateIntervalV() not implemented in this volume!");
+    }
+
+    template <int W>
+    inline void Volume<W>::initHitIteratorV(vVKLHitIteratorN<W> &iterator,
+                                            const vvec3fn<W> &origin,
+                                            const vvec3fn<W> &direction,
+                                            const vrange1fn<W> &tRange,
+                                            const SamplesMask *samplesMask)
+    {
+      throw std::runtime_error(
+          "initHitIteratorV() not implemented in this volume!");
+    }
+
+    template <int W>
+    inline void Volume<W>::iterateHitV(const int *valid,
+                                       vVKLHitIteratorN<W> &iterator,
+                                       vVKLHitN<W> &hit,
+                                       vintn<W> &result)
+    {
+      throw std::runtime_error("iterateHitV() not implemented in this volume!");
+    }
+
+    template <int W>
+    inline SamplesMask *Volume<W>::newSamplesMask()
+    {
+      throw std::runtime_error(
+          "newSamplesMask() not implemented in this volume!");
+    }
 
 #define VKL_REGISTER_VOLUME(InternalClass, external_name) \
   VKL_REGISTER_OBJECT(                                    \

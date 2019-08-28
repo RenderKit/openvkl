@@ -25,14 +25,7 @@ namespace openvkl {
     template <int W>
     struct StructuredVolume : public Volume<W>
     {
-      virtual void commit() override
-      {
-        Volume<W>::commit();
-
-        dimensions  = this->template getParam<vec3i>("dimensions", vec3i(128));
-        gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
-        gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
-      }
+      virtual void commit() override;
 
      protected:
       // parameters set in commit()
@@ -40,6 +33,16 @@ namespace openvkl {
       vec3f gridOrigin;
       vec3f gridSpacing;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline void StructuredVolume<W>::commit()
+    {
+      dimensions  = this->template getParam<vec3i>("dimensions", vec3i(128));
+      gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+      gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

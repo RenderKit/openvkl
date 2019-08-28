@@ -115,22 +115,13 @@ export void GridAcceleratorIterator_iterateInterval(
                                   self,
                                   self->intervalState.currentCellIndex,
                                   self->intervalState.currentInterval)) {
-    cif(!self->samplesMask)
-    {
-      self->intervalState.currentInterval.nominalDeltaT =
-          1.f * (self->intervalState.currentInterval.tRange.upper -
-                 self->intervalState.currentInterval.tRange.lower);
-
-      *result = true;
-      return;
-    }
-
     box1f cellValueRange;
     GridAccelerator_getCellValueRange(self->volume->accelerator,
                                       self->intervalState.currentCellIndex,
                                       cellValueRange);
 
-    if (overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
+    if (!self->samplesMask ||
+        overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
       self->intervalState.currentInterval.valueRange = cellValueRange;
       self->intervalState.currentInterval.nominalDeltaT =
           1.f * (self->intervalState.currentInterval.tRange.upper -

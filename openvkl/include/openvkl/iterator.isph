@@ -35,6 +35,7 @@ struct VKLIntervalIterator
 struct VKLInterval
 {
   vkl_range1f tRange;
+  vkl_range1f valueRange;
   float nominalDeltaT;
 };
 

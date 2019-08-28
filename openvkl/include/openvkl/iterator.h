@@ -60,24 +60,28 @@ struct VKLIntervalIterator16
 struct VKLInterval
 {
   vkl_range1f tRange;
+  vkl_range1f valueRange;
   float nominalDeltaT;
 };
 
 struct VKLInterval4
 {
   vkl_vrange1f4 tRange;
+  vkl_vrange1f4 valueRange;
   float nominalDeltaT[4];
 };
 
 struct VKLInterval8
 {
   vkl_vrange1f8 tRange;
+  vkl_vrange1f8 valueRange;
   float nominalDeltaT[8];
 };
 
 struct VKLInterval16
 {
   vkl_vrange1f16 tRange;
+  vkl_vrange1f16 valueRange;
   float nominalDeltaT[16];
 };
 

@@ -22,15 +22,18 @@
 struct Interval
 {
   varying box1f tRange;
+  varying box1f valueRange;
   varying float nominalDeltaT;
   // TODO: output samples mask when needed
 };
 
 inline void resetInterval(Interval &interval)
 {
-  interval.tRange.lower  = 1.f;
-  interval.tRange.upper  = -1.f;
-  interval.nominalDeltaT = 0.f;
+  interval.tRange.lower     = 1.f;
+  interval.tRange.upper     = -1.f;
+  interval.valueRange.lower = 0.f;
+  interval.valueRange.upper = 0.f;
+  interval.nominalDeltaT    = 0.f;
 }
 
 struct Hit

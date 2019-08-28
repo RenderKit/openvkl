@@ -171,7 +171,9 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    void ISPCDriver<W>::setBool(VKLObject object, const char *name, const bool b)
+    void ISPCDriver<W>::setBool(VKLObject object,
+                                const char *name,
+                                const bool b)
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, b);
@@ -420,9 +422,11 @@ namespace openvkl {
       iterator1 = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
 
       for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]  = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]  = intervalW.tRange.upper[i];
-        interval.nominalDeltaT[i] = intervalW.nominalDeltaT[i];
+        interval.tRange.lower[i]     = intervalW.tRange.lower[i];
+        interval.tRange.upper[i]     = intervalW.tRange.upper[i];
+        interval.valueRange.lower[i] = intervalW.valueRange.lower[i];
+        interval.valueRange.upper[i] = intervalW.valueRange.upper[i];
+        interval.nominalDeltaT[i]    = intervalW.nominalDeltaT[i];
       }
 
       for (int i = 0; i < OW; i++)
@@ -450,9 +454,11 @@ namespace openvkl {
       volumeObject.iterateIntervalV(validW, iterator, intervalW, resultW);
 
       for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]  = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]  = intervalW.tRange.upper[i];
-        interval.nominalDeltaT[i] = intervalW.nominalDeltaT[i];
+        interval.tRange.lower[i]     = intervalW.tRange.lower[i];
+        interval.tRange.upper[i]     = intervalW.tRange.upper[i];
+        interval.valueRange.lower[i] = intervalW.valueRange.lower[i];
+        interval.valueRange.upper[i] = intervalW.valueRange.upper[i];
+        interval.nominalDeltaT[i]    = intervalW.nominalDeltaT[i];
       }
 
       for (int i = 0; i < OW; i++)

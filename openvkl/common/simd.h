@@ -271,12 +271,15 @@ namespace openvkl {
   struct alignas(simd_alignment_for_width(W)) vVKLIntervalN
   {
     vrange1fn<W> tRange;
+    vrange1fn<W> valueRange;
     vfloatn<W> nominalDeltaT;
 
     vVKLIntervalN<W>() = default;
 
     vVKLIntervalN<W>(const vVKLIntervalN<W> &v)
-        : tRange(v.tRange), nominalDeltaT(v.nominalDeltaT)
+        : tRange(v.tRange),
+          valueRange(v.valueRange),
+          nominalDeltaT(v.nominalDeltaT)
     {
     }
 
@@ -285,9 +288,11 @@ namespace openvkl {
     {
       VKLInterval interval1;
 
-      interval1.tRange.lower  = tRange.lower[0];
-      interval1.tRange.upper  = tRange.upper[0];
-      interval1.nominalDeltaT = nominalDeltaT[0];
+      interval1.tRange.lower     = tRange.lower[0];
+      interval1.tRange.upper     = tRange.upper[0];
+      interval1.valueRange.lower = valueRange.lower[0];
+      interval1.valueRange.upper = valueRange.upper[0];
+      interval1.nominalDeltaT    = nominalDeltaT[0];
 
       return interval1;
     }
@@ -298,9 +303,11 @@ namespace openvkl {
       VKLInterval4 interval4;
 
       for (int i = 0; i < 4; i++) {
-        interval4.tRange.lower[i]  = tRange.lower[i];
-        interval4.tRange.upper[i]  = tRange.upper[i];
-        interval4.nominalDeltaT[i] = nominalDeltaT[i];
+        interval4.tRange.lower[i]     = tRange.lower[i];
+        interval4.tRange.upper[i]     = tRange.upper[i];
+        interval4.valueRange.lower[i] = valueRange.lower[i];
+        interval4.valueRange.upper[i] = valueRange.upper[i];
+        interval4.nominalDeltaT[i]    = nominalDeltaT[i];
       }
 
       return interval4;
@@ -312,9 +319,11 @@ namespace openvkl {
       VKLInterval8 interval8;
 
       for (int i = 0; i < 8; i++) {
-        interval8.tRange.lower[i]  = tRange.lower[i];
-        interval8.tRange.upper[i]  = tRange.upper[i];
-        interval8.nominalDeltaT[i] = nominalDeltaT[i];
+        interval8.tRange.lower[i]     = tRange.lower[i];
+        interval8.tRange.upper[i]     = tRange.upper[i];
+        interval8.valueRange.lower[i] = valueRange.lower[i];
+        interval8.valueRange.upper[i] = valueRange.upper[i];
+        interval8.nominalDeltaT[i]    = nominalDeltaT[i];
       }
 
       return interval8;
@@ -326,9 +335,11 @@ namespace openvkl {
       VKLInterval16 interval16;
 
       for (int i = 0; i < 16; i++) {
-        interval16.tRange.lower[i]  = tRange.lower[i];
-        interval16.tRange.upper[i]  = tRange.upper[i];
-        interval16.nominalDeltaT[i] = nominalDeltaT[i];
+        interval16.tRange.lower[i]     = tRange.lower[i];
+        interval16.tRange.upper[i]     = tRange.upper[i];
+        interval16.valueRange.lower[i] = valueRange.lower[i];
+        interval16.valueRange.upper[i] = valueRange.upper[i];
+        interval16.nominalDeltaT[i]    = nominalDeltaT[i];
       }
 
       return interval16;

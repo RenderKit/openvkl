@@ -131,6 +131,7 @@ export void GridAcceleratorIterator_iterateInterval(
                                       cellValueRange);
 
     if (overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
+      self->intervalState.currentInterval.valueRange = cellValueRange;
       self->intervalState.currentInterval.nominalDeltaT =
           1.f * (self->intervalState.currentInterval.tRange.upper -
                  self->intervalState.currentInterval.tRange.lower);

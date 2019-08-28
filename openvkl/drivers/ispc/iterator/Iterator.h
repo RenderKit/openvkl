@@ -85,6 +85,7 @@ namespace openvkl {
     struct Interval
     {
       vrange1fn<W> tRange;
+      vrange1fn<W> valueRange;
       vfloatn<W> nominalDeltaT;
     };
 

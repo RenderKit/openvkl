@@ -20,6 +20,32 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
+vkl_range1f computeIntervalValueRange(VKLVolume volume,
+                                      const vkl_vec3f &origin,
+                                      const vkl_vec3f &direction,
+                                      const vkl_range1f &tRange)
+{
+  vkl_range1f sampledValueRange{inf, neg_inf};
+
+  constexpr int numValueRangeSamples = 100;
+
+  for (int i = 0; i < numValueRangeSamples; i++) {
+    float t = tRange.lower + float(i) / float(numValueRangeSamples - 1) *
+                                 (tRange.upper - tRange.lower);
+
+    vkl_vec3f c{origin.x + t * direction.x,
+                origin.y + t * direction.y,
+                origin.z + t * direction.z};
+
+    float sample = vklComputeSample(volume, &c);
+
+    sampledValueRange.lower = std::min(sampledValueRange.lower, sample);
+    sampledValueRange.upper = std::max(sampledValueRange.upper, sample);
+  }
+
+  return sampledValueRange;
+}
+
 TEST_CASE("Interval iterator", "[interval_iterators]")
 {
   vklLoadModule("ispc_driver");
@@ -67,5 +93,53 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
     // last interval at expected ending
     REQUIRE(intervalPrevious.tRange.upper == 2.f);
+  }
+
+  SECTION("scalar interval value ranges with no samples mask")
+  {
+    vkl_vec3f origin{0.5f, 0.5f, -1.f};
+    vkl_vec3f direction{0.f, 0.f, 1.f};
+    vkl_range1f tRange{0.f, inf};
+
+    VKLIntervalIterator iterator;
+    vklInitIntervalIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
+
+    VKLInterval interval;
+
+    int intervalCount = 0;
+
+    while (vklIterateInterval(&iterator, &interval)) {
+      INFO("interval tRange = " << interval.tRange.lower << ", "
+                                << interval.tRange.upper
+                                << " valueRange = " << interval.valueRange.lower
+                                << ", " << interval.valueRange.upper);
+
+      vkl_range1f sampledValueRange = computeIntervalValueRange(
+          vklVolume, origin, direction, interval.tRange);
+
+      INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                    << sampledValueRange.upper);
+
+      // the sampled value range should be completely within the returned
+      // interval value range
+      REQUIRE(sampledValueRange.lower >= interval.valueRange.lower);
+      REQUIRE(sampledValueRange.upper <= interval.valueRange.upper);
+
+      float rangeOverlapFraction =
+          (sampledValueRange.upper - sampledValueRange.lower) /
+          (interval.valueRange.upper - interval.valueRange.lower);
+
+      // warn if we have overly conservative returned interval value range
+      if (rangeOverlapFraction < 0.25f) {
+        WARN("sampled value range is less than "
+             << rangeOverlapFraction << "x the returned interval value range");
+      }
+
+      intervalCount++;
+    }
+
+    // make sure we had at least one interval...
+    REQUIRE(intervalCount > 0);
   }
 }

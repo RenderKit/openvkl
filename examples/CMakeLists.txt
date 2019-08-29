@@ -28,3 +28,7 @@ install(TARGETS vklTutorialCpp RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 ## ISPC tutorial ##
 
 add_subdirectory(ispc)
+
+## Interacive Examples ##
+
+add_subdirectory(interactive)

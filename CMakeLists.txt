@@ -44,7 +44,7 @@ include(openvkl_ispc)
 
 ## openvkl specific configuration ##
 
-option(BUILD_APPS "Build example applications." ON)
+option(BUILD_EXAMPLES "Build example applications." ON)
 
 include(CTest) # Adds 'BUILD_TESTING' variable
 
@@ -65,8 +65,9 @@ find_package(ospcommon 1.0.0 REQUIRED)
 
 add_subdirectory(openvkl)
 
-if (BUILD_APPS)
+if (BUILD_EXAMPLES)
   add_subdirectory(apps)
+  add_subdirectory(examples)
 endif()
 
 if (BUILD_TESTING)

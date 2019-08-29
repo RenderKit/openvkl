@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2018 Intel Corporation                                         ##
+## Copyright 2009-2018 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,8 +14,30 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-option(BUILD_OSPRAY_EXAMPLES "Build example apps" OFF)
+add_library(openvkl_imgui SHARED
+  imgui.cpp
+  imgui_draw.cpp
+  imgui_demo.cpp
+  imguifilesystem/imguifilesystem.cpp
+)
 
-if (BUILD_OSPRAY_EXAMPLES)
-  add_subdirectory(ospray)
-endif (BUILD_OSPRAY_EXAMPLES)
+target_include_directories(openvkl_imgui
+  INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/imguifilesystem>
+  PRIVATE
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
+)
+
+target_link_libraries(openvkl_imgui
+  PRIVATE
+    ospcommon::ospcommon
+)
+
+foreach(dir IN ITEMS ${OSPRAY_INCLUDE_DIRS})
+  target_include_directories(openvkl_imgui
+    PUBLIC
+      $<BUILD_INTERFACE:${dir}>
+  )
+endforeach(dir)

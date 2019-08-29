@@ -32,5 +32,5 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 find_package(openvkl REQUIRED)
 
-add_executable(vklTutorial ${CMAKE_SOURCE_DIR}/../vklTutorial.cpp)
+add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.cpp)
 target_link_libraries(vklTutorial openvkl::openvkl)

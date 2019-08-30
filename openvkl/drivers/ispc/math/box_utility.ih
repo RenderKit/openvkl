@@ -19,47 +19,58 @@
 #include "math/box.ih"
 #include "math/vec_utility.ih"
 
-inline varying bool isempty1f(const varying box1f &box)
+inline bool isempty1f(const box1f &box)
 {
   return box.upper <= box.lower;
 }
 
-inline varying bool overlaps1f(const varying box1f &box1,
-                               const varying box1f &box2)
+inline bool overlaps1f(const box1f &box1, const box1f &box2)
 {
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
-inline varying bool overlaps1f(const uniform box1f &box1,
-                               const varying box1f &box2)
+inline bool overlaps1f(const uniform box1f &box1, const box1f &box2)
 {
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
-inline varying box1f intersectBox(const varying vec3f &origin,
-                                  const varying vec3f &direction,
-                                  const varying box3f &box,
-                                  const varying box1f &rangeLimit)
+inline bool overlapsAny1f(const box1f &r,
+                          const uniform int &numRanges,
+                          const box1f *uniform ranges)
 {
-  const varying vec3f mins = (box.lower - origin) * divide_safe(direction);
-  const varying vec3f maxs = (box.upper - origin) * divide_safe(direction);
+  for (uniform int i = 0; i < numRanges; i++) {
+    if (overlaps1f(ranges[i], r)) {
+      return true;
+    }
+  }
 
-  varying box1f result;
+  return false;
+}
+
+inline box1f intersectBox(const vec3f &origin,
+                          const vec3f &direction,
+                          const box3f &box,
+                          const box1f &rangeLimit)
+{
+  const vec3f mins = (box.lower - origin) * divide_safe(direction);
+  const vec3f maxs = (box.upper - origin) * divide_safe(direction);
+
+  box1f result;
   result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
   result.upper = reduce_min(make_vec4f(max(mins, maxs), rangeLimit.upper));
 
   return result;
 }
 
-inline varying box1f intersectBox(const varying vec3f &origin,
-                                  const varying vec3f &direction,
-                                  const uniform box3f &box,
-                                  const varying box1f &rangeLimit)
+inline box1f intersectBox(const vec3f &origin,
+                          const vec3f &direction,
+                          const uniform box3f &box,
+                          const box1f &rangeLimit)
 {
-  const varying vec3f mins = (box.lower - origin) * divide_safe(direction);
-  const varying vec3f maxs = (box.upper - origin) * divide_safe(direction);
+  const vec3f mins = (box.lower - origin) * divide_safe(direction);
+  const vec3f maxs = (box.upper - origin) * divide_safe(direction);
 
-  varying box1f result;
+  box1f result;
   result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
   result.upper = reduce_min(make_vec4f(max(mins, maxs), rangeLimit.upper));
 

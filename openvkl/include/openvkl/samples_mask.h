@@ -23,8 +23,15 @@
 extern "C" {
 #endif
 
-struct SamplesMask;
-typedef struct SamplesMask *VKLSamplesMask;
+#ifdef __cplusplus
+struct SamplesMask : public ManagedObject
+{
+};
+#else
+typedef ManagedObject SamplesMask;
+#endif
+
+typedef SamplesMask *VKLSamplesMask;
 
 VKLSamplesMask vklNewSamplesMask(VKLVolume volume);
 

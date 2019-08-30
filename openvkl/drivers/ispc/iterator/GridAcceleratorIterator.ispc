@@ -120,8 +120,21 @@ export void GridAcceleratorIterator_iterateInterval(
                                       self->intervalState.currentCellIndex,
                                       cellValueRange);
 
-    if (!self->samplesMask ||
-        overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
+    bool returnInterval = false;
+
+    if (!self->samplesMask) {
+      returnInterval = true;
+    } else {
+      if (overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
+        if (overlapsAny1f(cellValueRange,
+                          self->samplesMask->numRanges,
+                          self->samplesMask->ranges)) {
+          returnInterval = true;
+        }
+      }
+    }
+
+    if (returnInterval) {
       self->intervalState.currentInterval.valueRange = cellValueRange;
       self->intervalState.currentInterval.nominalDeltaT =
           1.f * (self->intervalState.currentInterval.tRange.upper -

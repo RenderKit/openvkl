@@ -16,11 +16,53 @@
 
 #include <array>
 #include "../../external/catch.hpp"
+#include "iterator_utility.h"
 #include "openvkl_testing.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
+
+std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
+                                 int callingWidth)
+{
+  std::vector<float> output;
+
+  int width = input.size();
+
+  for (int i = 0; i < callingWidth; i++)
+    output.push_back(i < width ? input[i].x : 0.f);
+
+  for (int i = 0; i < callingWidth; i++)
+    output.push_back(i < width ? input[i].y : 0.f);
+
+  for (int i = 0; i < callingWidth; i++)
+    output.push_back(i < width ? input[i].z : 0.f);
+
+  if (output.size() != callingWidth * 3)
+    throw std::runtime_error("improper AOS to SOA conversion");
+
+  return output;
+}
+
+std::vector<float> AOStoSOArange1f(const std::vector<vkl_range1f> &input,
+                                   int callingWidth)
+{
+  std::vector<float> output;
+
+  int width = input.size();
+
+  for (int i = 0; i < callingWidth; i++)
+    output.push_back(i < width ? input[i].lower : 0.f);
+
+  for (int i = 0; i < callingWidth; i++)
+    output.push_back(i < width ? input[i].upper : 0.f);
+
+  if (output.size() != callingWidth * 2)
+    throw std::runtime_error("improper AOS to SOA conversion");
+
+  return output;
+}
 
 TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 {
@@ -50,20 +92,20 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   VKLVolume vklVolume = v->getVKLVolume();
 
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+  const int maxWidth = 16;
+
+  std::array<int, 3> nativeWidths{4, 8, 16};
+
   SECTION("randomized interval continuity with no samples mask")
   {
-    vkl_box3f bbox = vklGetBoundingBox(vklVolume);
-
-    std::random_device rd;
-    std::mt19937 eng(rd());
-
-    std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
-    std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
-
-    const int maxWidth = 16;
-
-    std::array<int, 3> nativeWidths{4, 8, 16};
-
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
       std::vector<vec3f> directions(width);
@@ -83,31 +125,10 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA;
-        std::vector<float> directionsSOA;
-        std::vector<float> tRangesSOA;
-
-        for (int i = 0; i < callingWidth; i++) {
-          originsSOA.push_back(i < width ? origins[i].x : 0.f);
-          directionsSOA.push_back(i < width ? directions[i].x : 0.f);
-          tRangesSOA.push_back(i < width ? tRanges[i].lower : 0.f);
-        }
-
-        for (int i = 0; i < callingWidth; i++) {
-          originsSOA.push_back(i < width ? origins[i].y : 0.f);
-          directionsSOA.push_back(i < width ? directions[i].y : 0.f);
-          tRangesSOA.push_back(i < width ? tRanges[i].upper : 0.f);
-        }
-
-        for (int i = 0; i < callingWidth; i++) {
-          originsSOA.push_back(i < width ? origins[i].z : 0.f);
-          directionsSOA.push_back(i < width ? directions[i].z : 0.f);
-        }
-
-        // sanity check on SOA conversion
-        REQUIRE(originsSOA.size() == callingWidth * 3);
-        REQUIRE(directionsSOA.size() == callingWidth * 3);
-        REQUIRE(tRangesSOA.size() == callingWidth * 2);
+        std::vector<float> originsSOA = AOStoSOAvec3f(origins, callingWidth);
+        std::vector<float> directionsSOA =
+            AOStoSOAvec3f(directions, callingWidth);
+        std::vector<float> tRangesSOA = AOStoSOArange1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLIntervalIterator4 iterator;
@@ -299,6 +320,225 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
           for (int i = 0; i < width; i++) {
             REQUIRE(intervalPrevious.tRange.upper[i] == 2.f);
           }
+        }
+
+        else {
+          throw std::runtime_error("unsupported calling width");
+        }
+      }
+    }
+  }
+
+  SECTION("randomized interval value ranges with no samples mask")
+  {
+    for (int width = 1; width < maxWidth; width++) {
+      std::vector<vec3f> origins(width);
+      std::vector<vec3f> directions(width);
+      std::vector<vkl_range1f> tRanges(width);
+
+      for (int i = 0; i < width; i++) {
+        origins[i]    = vec3f(distX(eng), distY(eng), -1.f);
+        directions[i] = vec3f(0.f, 0.f, 1.f);
+        tRanges[i]    = vkl_range1f{0.f, inf};
+      }
+
+      for (const int &callingWidth : nativeWidths) {
+        if (width > callingWidth || callingWidth != nativeSIMDWidth) {
+          continue;
+        }
+
+        std::vector<int> valid(callingWidth, 0);
+        std::fill(valid.begin(), valid.begin() + width, 1);
+
+        std::vector<float> originsSOA = AOStoSOAvec3f(origins, callingWidth);
+        std::vector<float> directionsSOA =
+            AOStoSOAvec3f(directions, callingWidth);
+        std::vector<float> tRangesSOA = AOStoSOArange1f(tRanges, callingWidth);
+
+        if (callingWidth == 4) {
+          VKLIntervalIterator4 iterator;
+          vklInitIntervalIterator4(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f4 *)originsSOA.data(),
+                                   (const vkl_vvec3f4 *)directionsSOA.data(),
+                                   (const vkl_vrange1f4 *)tRangesSOA.data(),
+                                   nullptr);
+
+          VKLInterval4 interval;
+          int result[callingWidth];
+
+          int intervalCount = 0;
+
+          while (true) {
+            vklIterateInterval4(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            // we should have the same result for all active lanes
+            REQUIRE((resultSum == width || resultSum == 0));
+
+            if (!result[0]) {
+              break;
+            }
+
+            for (int i = 0; i < width; i++) {
+              INFO("interval iteration "
+                   << intervalCount << " lane[" << i
+                   << "] tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]
+                   << " valueRange = " << interval.valueRange.lower[i] << ", "
+                   << interval.valueRange.upper[i]);
+
+              vkl_range1f sampledValueRange = computeIntervalValueRange(
+                  vklVolume,
+                  reinterpret_cast<vkl_vec3f &>(origins[i]),
+                  reinterpret_cast<vkl_vec3f &>(directions[i]),
+                  vkl_range1f{interval.tRange.lower[i],
+                              interval.tRange.upper[i]});
+
+              INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                            << sampledValueRange.upper);
+
+              // the sampled value range should be completely within the
+              // returned interval value range
+              REQUIRE(sampledValueRange.lower >= interval.valueRange.lower[i]);
+              REQUIRE(sampledValueRange.upper <= interval.valueRange.upper[i]);
+            }
+
+            intervalCount++;
+          }
+
+          // make sure we had at least one interval...
+          REQUIRE(intervalCount > 0);
+        }
+
+        else if (callingWidth == 8) {
+          VKLIntervalIterator8 iterator;
+          vklInitIntervalIterator8(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f8 *)originsSOA.data(),
+                                   (const vkl_vvec3f8 *)directionsSOA.data(),
+                                   (const vkl_vrange1f8 *)tRangesSOA.data(),
+                                   nullptr);
+
+          VKLInterval8 interval;
+          int result[callingWidth];
+
+          int intervalCount = 0;
+
+          while (true) {
+            vklIterateInterval8(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            // we should have the same result for all active lanes
+            REQUIRE((resultSum == width || resultSum == 0));
+
+            if (!result[0]) {
+              break;
+            }
+
+            for (int i = 0; i < width; i++) {
+              INFO("interval iteration "
+                   << intervalCount << " lane[" << i
+                   << "] tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]
+                   << " valueRange = " << interval.valueRange.lower[i] << ", "
+                   << interval.valueRange.upper[i]);
+
+              vkl_range1f sampledValueRange = computeIntervalValueRange(
+                  vklVolume,
+                  reinterpret_cast<vkl_vec3f &>(origins[i]),
+                  reinterpret_cast<vkl_vec3f &>(directions[i]),
+                  vkl_range1f{interval.tRange.lower[i],
+                              interval.tRange.upper[i]});
+
+              INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                            << sampledValueRange.upper);
+
+              // the sampled value range should be completely within the
+              // returned interval value range
+              REQUIRE(sampledValueRange.lower >= interval.valueRange.lower[i]);
+              REQUIRE(sampledValueRange.upper <= interval.valueRange.upper[i]);
+            }
+
+            intervalCount++;
+          }
+
+          // make sure we had at least one interval...
+          REQUIRE(intervalCount > 0);
+        }
+
+        else if (callingWidth == 16) {
+          VKLIntervalIterator16 iterator;
+          vklInitIntervalIterator16(valid.data(),
+                                    &iterator,
+                                    vklVolume,
+                                    (const vkl_vvec3f16 *)originsSOA.data(),
+                                    (const vkl_vvec3f16 *)directionsSOA.data(),
+                                    (const vkl_vrange1f16 *)tRangesSOA.data(),
+                                    nullptr);
+
+          VKLInterval16 interval;
+          int result[callingWidth];
+
+          int intervalCount = 0;
+
+          while (true) {
+            vklIterateInterval16(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            // we should have the same result for all active lanes
+            REQUIRE((resultSum == width || resultSum == 0));
+
+            if (!result[0]) {
+              break;
+            }
+
+            for (int i = 0; i < width; i++) {
+              INFO("interval iteration "
+                   << intervalCount << " lane[" << i
+                   << "] tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]
+                   << " valueRange = " << interval.valueRange.lower[i] << ", "
+                   << interval.valueRange.upper[i]);
+
+              vkl_range1f sampledValueRange = computeIntervalValueRange(
+                  vklVolume,
+                  reinterpret_cast<vkl_vec3f &>(origins[i]),
+                  reinterpret_cast<vkl_vec3f &>(directions[i]),
+                  vkl_range1f{interval.tRange.lower[i],
+                              interval.tRange.upper[i]});
+
+              INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                            << sampledValueRange.upper);
+
+              // the sampled value range should be completely within the
+              // returned interval value range
+              REQUIRE(sampledValueRange.lower >= interval.valueRange.lower[i]);
+              REQUIRE(sampledValueRange.upper <= interval.valueRange.upper[i]);
+            }
+
+            intervalCount++;
+          }
+
+          // make sure we had at least one interval...
+          REQUIRE(intervalCount > 0);
         }
 
         else {

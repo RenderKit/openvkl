@@ -46,6 +46,11 @@ vkl_range1f computeIntervalValueRange(VKLVolume volume,
   return sampledValueRange;
 }
 
+bool rangesIntersect(const vkl_range1f &range1, const vkl_range1f &range2)
+{
+  return range1.upper >= range2.lower && range1.lower <= range2.upper;
+}
+
 TEST_CASE("Interval iterator", "[interval_iterators]")
 {
   vklLoadModule("ispc_driver");
@@ -141,5 +146,77 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
     // make sure we had at least one interval...
     REQUIRE(intervalCount > 0);
+  }
+
+  SECTION("scalar interval value ranges with samples mask")
+  {
+    vkl_vec3f origin{0.5f, 0.5f, -1.f};
+    vkl_vec3f direction{0.f, 0.f, 1.f};
+    vkl_range1f tRange{0.f, inf};
+
+    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
+
+    // will trigger intervals covering individual ranges separately
+    std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
+
+    vklSamplesMaskSetRanges(
+        samplesMask, valueRanges.size(), valueRanges.data());
+
+    vklCommit(samplesMask);
+
+    VKLIntervalIterator iterator;
+    vklInitIntervalIterator(
+        &iterator, vklVolume, &origin, &direction, &tRange, samplesMask);
+
+    VKLInterval interval;
+
+    int intervalCount = 0;
+
+    while (vklIterateInterval(&iterator, &interval)) {
+      INFO("interval tRange = " << interval.tRange.lower << ", "
+                                << interval.tRange.upper
+                                << " valueRange = " << interval.valueRange.lower
+                                << ", " << interval.valueRange.upper);
+
+      vkl_range1f sampledValueRange = computeIntervalValueRange(
+          vklVolume, origin, direction, interval.tRange);
+
+      INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                    << sampledValueRange.upper);
+
+      // the sampled value range should be completely within the returned
+      // interval value range
+      REQUIRE(sampledValueRange.lower >= interval.valueRange.lower);
+      REQUIRE(sampledValueRange.upper <= interval.valueRange.upper);
+
+      float rangeOverlapFraction =
+          (sampledValueRange.upper - sampledValueRange.lower) /
+          (interval.valueRange.upper - interval.valueRange.lower);
+
+      // warn if we have overly conservative returned interval value range
+      if (rangeOverlapFraction < 0.25f) {
+        WARN("sampled value range is less than "
+             << rangeOverlapFraction << "x the returned interval value range");
+      }
+
+      // the interval value range should overlap the samples mask value range(s)
+      bool rangeIntersectsSamplesMask = false;
+
+      for (const auto &r : valueRanges) {
+        if (rangesIntersect(r, interval.valueRange)) {
+          rangeIntersectsSamplesMask = true;
+          break;
+        }
+      }
+
+      REQUIRE(rangeIntersectsSamplesMask);
+
+      intervalCount++;
+    }
+
+    // make sure we had at least one interval...
+    REQUIRE(intervalCount > 0);
+
+    vklRelease(samplesMask);
   }
 }

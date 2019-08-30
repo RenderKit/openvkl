@@ -24,7 +24,6 @@ struct Interval
   varying box1f tRange;
   varying box1f valueRange;
   varying float nominalDeltaT;
-  // TODO: output samples mask when needed
 };
 
 inline void resetInterval(Interval &interval)

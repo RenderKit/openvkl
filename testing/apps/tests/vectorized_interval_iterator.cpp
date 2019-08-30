@@ -406,8 +406,9 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               // the sampled value range should be completely within the
               // returned interval value range
-              REQUIRE(sampledValueRange.lower >= interval.valueRange.lower[i]);
-              REQUIRE(sampledValueRange.upper <= interval.valueRange.upper[i]);
+              REQUIRE(
+                  (sampledValueRange.lower >= interval.valueRange.lower[i] &&
+                   sampledValueRange.upper <= interval.valueRange.upper[i]));
             }
 
             intervalCount++;
@@ -468,8 +469,9 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               // the sampled value range should be completely within the
               // returned interval value range
-              REQUIRE(sampledValueRange.lower >= interval.valueRange.lower[i]);
-              REQUIRE(sampledValueRange.upper <= interval.valueRange.upper[i]);
+              REQUIRE(
+                  (sampledValueRange.lower >= interval.valueRange.lower[i] &&
+                   sampledValueRange.upper <= interval.valueRange.upper[i]));
             }
 
             intervalCount++;
@@ -530,8 +532,292 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               // the sampled value range should be completely within the
               // returned interval value range
-              REQUIRE(sampledValueRange.lower >= interval.valueRange.lower[i]);
-              REQUIRE(sampledValueRange.upper <= interval.valueRange.upper[i]);
+              REQUIRE(
+                  (sampledValueRange.lower >= interval.valueRange.lower[i] &&
+                   sampledValueRange.upper <= interval.valueRange.upper[i]));
+            }
+
+            intervalCount++;
+          }
+
+          // make sure we had at least one interval...
+          REQUIRE(intervalCount > 0);
+        }
+
+        else {
+          throw std::runtime_error("unsupported calling width");
+        }
+      }
+    }
+  }
+
+  SECTION("randomized interval value ranges with samples mask")
+  {
+    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
+
+    // will trigger intervals covering individual ranges separately
+    std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
+
+    vklSamplesMaskSetRanges(
+        samplesMask, valueRanges.size(), valueRanges.data());
+
+    vklCommit(samplesMask);
+
+    for (int width = 1; width < maxWidth; width++) {
+      std::vector<vec3f> origins(width);
+      std::vector<vec3f> directions(width);
+      std::vector<vkl_range1f> tRanges(width);
+
+      for (int i = 0; i < width; i++) {
+        origins[i]    = vec3f(distX(eng), distY(eng), -1.f);
+        directions[i] = vec3f(0.f, 0.f, 1.f);
+        tRanges[i]    = vkl_range1f{0.f, inf};
+      }
+
+      for (const int &callingWidth : nativeWidths) {
+        if (width > callingWidth || callingWidth != nativeSIMDWidth) {
+          continue;
+        }
+
+        std::vector<int> valid(callingWidth, 0);
+        std::fill(valid.begin(), valid.begin() + width, 1);
+
+        std::vector<float> originsSOA = AOStoSOAvec3f(origins, callingWidth);
+        std::vector<float> directionsSOA =
+            AOStoSOAvec3f(directions, callingWidth);
+        std::vector<float> tRangesSOA = AOStoSOArange1f(tRanges, callingWidth);
+
+        if (callingWidth == 4) {
+          VKLIntervalIterator4 iterator;
+          vklInitIntervalIterator4(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f4 *)originsSOA.data(),
+                                   (const vkl_vvec3f4 *)directionsSOA.data(),
+                                   (const vkl_vrange1f4 *)tRangesSOA.data(),
+                                   samplesMask);
+
+          VKLInterval4 interval;
+          int result[callingWidth];
+
+          int intervalCount = 0;
+
+          while (true) {
+            vklIterateInterval4(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            if (!resultSum) {
+              break;
+            }
+
+            for (int i = 0; i < width; i++) {
+              if (!result[i]) {
+                break;
+              }
+
+              INFO("interval iteration "
+                   << intervalCount << " lane[" << i
+                   << "] tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]
+                   << " valueRange = " << interval.valueRange.lower[i] << ", "
+                   << interval.valueRange.upper[i]);
+
+              vkl_range1f sampledValueRange = computeIntervalValueRange(
+                  vklVolume,
+                  reinterpret_cast<vkl_vec3f &>(origins[i]),
+                  reinterpret_cast<vkl_vec3f &>(directions[i]),
+                  vkl_range1f{interval.tRange.lower[i],
+                              interval.tRange.upper[i]});
+
+              INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                            << sampledValueRange.upper);
+
+              // the sampled value range should be completely within the
+              // returned interval value range
+              REQUIRE(
+                  (sampledValueRange.lower >= interval.valueRange.lower[i] &&
+                   sampledValueRange.upper <= interval.valueRange.upper[i]));
+
+              // the interval value range should overlap the samples mask value
+              // range(s)
+              bool rangeIntersectsSamplesMask = false;
+
+              for (const auto &r : valueRanges) {
+                if (rangesIntersect(
+                        r,
+                        vkl_range1f{interval.valueRange.lower[i],
+                                    interval.valueRange.upper[i]})) {
+                  rangeIntersectsSamplesMask = true;
+                  break;
+                }
+              }
+
+              REQUIRE(rangeIntersectsSamplesMask);
+            }
+
+            intervalCount++;
+          }
+
+          // make sure we had at least one interval...
+          REQUIRE(intervalCount > 0);
+        }
+
+        else if (callingWidth == 8) {
+          VKLIntervalIterator8 iterator;
+          vklInitIntervalIterator8(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f8 *)originsSOA.data(),
+                                   (const vkl_vvec3f8 *)directionsSOA.data(),
+                                   (const vkl_vrange1f8 *)tRangesSOA.data(),
+                                   samplesMask);
+
+          VKLInterval8 interval;
+          int result[callingWidth];
+
+          int intervalCount = 0;
+
+          while (true) {
+            vklIterateInterval8(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            if (!resultSum) {
+              break;
+            }
+
+            for (int i = 0; i < width; i++) {
+              if (!result[i]) {
+                break;
+              }
+
+              INFO("interval iteration "
+                   << intervalCount << " lane[" << i
+                   << "] tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]
+                   << " valueRange = " << interval.valueRange.lower[i] << ", "
+                   << interval.valueRange.upper[i]);
+
+              vkl_range1f sampledValueRange = computeIntervalValueRange(
+                  vklVolume,
+                  reinterpret_cast<vkl_vec3f &>(origins[i]),
+                  reinterpret_cast<vkl_vec3f &>(directions[i]),
+                  vkl_range1f{interval.tRange.lower[i],
+                              interval.tRange.upper[i]});
+
+              INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                            << sampledValueRange.upper);
+
+              // the sampled value range should be completely within the
+              // returned interval value range
+              REQUIRE(
+                  (sampledValueRange.lower >= interval.valueRange.lower[i] &&
+                   sampledValueRange.upper <= interval.valueRange.upper[i]));
+
+              // the interval value range should overlap the samples mask value
+              // range(s)
+              bool rangeIntersectsSamplesMask = false;
+
+              for (const auto &r : valueRanges) {
+                if (rangesIntersect(
+                        r,
+                        vkl_range1f{interval.valueRange.lower[i],
+                                    interval.valueRange.upper[i]})) {
+                  rangeIntersectsSamplesMask = true;
+                  break;
+                }
+              }
+
+              REQUIRE(rangeIntersectsSamplesMask);
+            }
+
+            intervalCount++;
+          }
+
+          // make sure we had at least one interval...
+          REQUIRE(intervalCount > 0);
+        }
+
+        else if (callingWidth == 16) {
+          VKLIntervalIterator16 iterator;
+          vklInitIntervalIterator16(valid.data(),
+                                    &iterator,
+                                    vklVolume,
+                                    (const vkl_vvec3f16 *)originsSOA.data(),
+                                    (const vkl_vvec3f16 *)directionsSOA.data(),
+                                    (const vkl_vrange1f16 *)tRangesSOA.data(),
+                                    samplesMask);
+
+          VKLInterval16 interval;
+          int result[callingWidth];
+
+          int intervalCount = 0;
+
+          while (true) {
+            vklIterateInterval16(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            if (!resultSum) {
+              break;
+            }
+
+            for (int i = 0; i < width; i++) {
+              if (!result[i]) {
+                break;
+              }
+
+              INFO("interval iteration "
+                   << intervalCount << " lane[" << i
+                   << "] tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]
+                   << " valueRange = " << interval.valueRange.lower[i] << ", "
+                   << interval.valueRange.upper[i]);
+
+              vkl_range1f sampledValueRange = computeIntervalValueRange(
+                  vklVolume,
+                  reinterpret_cast<vkl_vec3f &>(origins[i]),
+                  reinterpret_cast<vkl_vec3f &>(directions[i]),
+                  vkl_range1f{interval.tRange.lower[i],
+                              interval.tRange.upper[i]});
+
+              INFO("sampled value range = " << sampledValueRange.lower << ", "
+                                            << sampledValueRange.upper);
+
+              // the sampled value range should be completely within the
+              // returned interval value range
+              REQUIRE(
+                  (sampledValueRange.lower >= interval.valueRange.lower[i] &&
+                   sampledValueRange.upper <= interval.valueRange.upper[i]));
+
+              // the interval value range should overlap the samples mask value
+              // range(s)
+              bool rangeIntersectsSamplesMask = false;
+
+              for (const auto &r : valueRanges) {
+                if (rangesIntersect(
+                        r,
+                        vkl_range1f{interval.valueRange.lower[i],
+                                    interval.valueRange.upper[i]})) {
+                  rangeIntersectsSamplesMask = true;
+                  break;
+                }
+              }
+
+              REQUIRE(rangeIntersectsSamplesMask);
             }
 
             intervalCount++;

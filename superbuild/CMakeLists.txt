@@ -51,6 +51,8 @@ option(INSTALL_IN_SEPARATE_DIRECTORIES
   ON
 )
 
+option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" ON)
+
 ## Setup top-level variables ##
 
 set(installDir ${CMAKE_INSTALL_PREFIX})
@@ -70,6 +72,9 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 
 include(dep_ispc)
 include(dep_tbb)
+if (BUILD_GLFW)
+  include(dep_glfw)
+endif()
 include(dep_ospcommon)
 
 ## Build OSPRay ##
@@ -89,9 +94,15 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       -DISPC_EXECUTABLE=${ISPC_PATH}
       -DOSPCOMMON_TBB_ROOT=${TBB_PATH} # NOTE(jda)- can't use env var here
+      $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF
   )
 
-  ExternalProject_Add_StepDependencies(openvkl configure ospcommon ispc)
+  ExternalProject_Add_StepDependencies(openvkl
+  configure
+    ospcommon
+    ispc
+    $<$<BOOL:${BUILD_GLFW}>:glfw>
+  )
 endif()

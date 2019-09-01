@@ -62,7 +62,7 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
     changed = true;
   }
 
-  static bool useRatioTracking = false;
+  static bool useRatioTracking = true;
   if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
     ospSetInt(testScene->getRenderer(), "useRatioTracking", useRatioTracking);
     ospCommit(testScene->getRenderer());
@@ -75,50 +75,6 @@ bool addPathTracerUI(std::shared_ptr<OSPRayVKLTestScene> testScene)
     ospSetFloat(testScene->getRenderer(),
                 "ambientLightIntensity",
                 ambientLightIntensity);
-    ospCommit(testScene->getRenderer());
-    changed = true;
-  }
-
-  static float directionalLightIntensity = 1.f;
-  if (ImGui::SliderFloat(
-          "directionalLightIntensity", &directionalLightIntensity, 0.f, 10.f)) {
-    ospSetFloat(testScene->getRenderer(),
-                "directionalLightIntensity",
-                directionalLightIntensity);
-    ospCommit(testScene->getRenderer());
-    changed = true;
-  }
-
-  static float directionalLightAngularDiameter = 45.f;
-  if (ImGui::SliderFloat("directionalLightAngularDiameter",
-                         &directionalLightAngularDiameter,
-                         0.f,
-                         180.f)) {
-    ospSetFloat(testScene->getRenderer(),
-                "directionalLightAngularDiameter",
-                directionalLightAngularDiameter);
-    ospCommit(testScene->getRenderer());
-    changed = true;
-  }
-
-  static float directionalLightAzimuth = 0.f;
-  if (ImGui::SliderFloat(
-          "directionalLightAzimuth", &directionalLightAzimuth, -180.f, 180.f)) {
-    ospSetFloat(testScene->getRenderer(),
-                "directionalLightAzimuth",
-                directionalLightAzimuth);
-    ospCommit(testScene->getRenderer());
-    changed = true;
-  }
-
-  static float directionalLightElevation = 90.f;
-  if (ImGui::SliderFloat("directionalLightElevation",
-                         &directionalLightElevation,
-                         -90.f,
-                         90.f)) {
-    ospSetFloat(testScene->getRenderer(),
-                "directionalLightElevation",
-                directionalLightElevation);
     ospCommit(testScene->getRenderer());
     changed = true;
   }
@@ -389,7 +345,10 @@ int main(int argc, const char **argv)
 
     static TransferFunctionWidget transferFunctionWidget(
         testScene->getTransferFunction(), transferFunctionUpdatedCallback);
-    transferFunctionWidget.updateUI();
+    if (rendererType == "vkl_iterator" ||
+        rendererType == "vkl_interval_iterator") {
+      transferFunctionWidget.updateUI();
+    }
 
     if (changed) {
       glfwOSPRayWindow->resetAccumulation();

@@ -18,10 +18,12 @@
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
-#include <chrono>
 
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
+
+// ospcommon
+#include "ospcommon/utility/CodeTimer.h"
 
 GLFWOSPRayWindow *GLFWOSPRayWindow::activeWindow = nullptr;
 
@@ -199,8 +201,10 @@ void GLFWOSPRayWindow::motion(const vec2f &position)
 
 void GLFWOSPRayWindow::display()
 {
-  // clock used to compute frame rate
-  static auto displayStart = std::chrono::high_resolution_clock::now();
+  static ospcommon::utility::CodeTimer displayTimer;
+  static ospcommon::utility::CodeTimer renderTimer;
+
+  displayTimer.start();
 
   if (showUi && uiCallback) {
     ImGuiWindowFlags flags = ImGuiWindowFlags_AlwaysAutoResize;
@@ -214,7 +218,9 @@ void GLFWOSPRayWindow::display()
     displayCallback(this);
   }
 
+  renderTimer.start();
   render();
+  renderTimer.stop();
 
   uint32_t *fb = (uint32_t *)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
 
@@ -255,20 +261,13 @@ void GLFWOSPRayWindow::display()
 
   glfwSwapBuffers(glfwWindow);
 
-  auto displayEnd = std::chrono::high_resolution_clock::now();
-  auto durationMilliseconds =
-      std::chrono::duration_cast<std::chrono::milliseconds>(displayEnd -
-                                                            displayStart);
-  displayStart = displayEnd;
-
-  const float frameRate = 1000.f / float(durationMilliseconds.count());
+  displayTimer.stop();
 
   std::stringstream displayWindowTitle;
-  displayWindowTitle << windowTitle;
-
-  if (showFrameRate) {
-    displayWindowTitle << ": " << std::setprecision(3) << frameRate << " fps";
-  }
+  displayWindowTitle << windowTitle << ": " << std::setprecision(3)
+                     << displayTimer.perSecond() << " fps | "
+                     << std::setprecision(3) << renderTimer.perSecond()
+                     << " vkl";
 
   glfwSetWindowTitle(glfwWindow, displayWindowTitle.str().c_str());
 }

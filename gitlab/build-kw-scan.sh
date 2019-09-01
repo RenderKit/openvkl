@@ -50,6 +50,7 @@ cmake --version
 cmake \
   -DBUILD_JOBS=`nproc` \
   -DBUILD_DEPENDENCIES_ONLY=ON \
+  -DBUILD_GLFW=OFF \
   "$@" ../superbuild
 
 cmake --build .
@@ -62,6 +63,7 @@ export ospcommon_DIR=`pwd`/../install/ospcommon
 
 cmake \
  -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc \
+ -DBUILD_EXAMPLES=OFF \
   ../..
 
 # build

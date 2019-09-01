@@ -24,8 +24,8 @@ namespace openvkl {
 
     struct DensityPathTracer : public Renderer
     {
-      DensityPathTracer()  = default;
-      ~DensityPathTracer() = default;
+      DensityPathTracer();
+      ~DensityPathTracer() override = default;
 
       void commit() override;
 

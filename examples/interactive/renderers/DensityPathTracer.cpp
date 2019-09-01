@@ -15,9 +15,16 @@
 // ======================================================================== //
 
 #include "DensityPathTracer.h"
+// ispc
+#include "DensityPathTracer_ispc.h"
 
 namespace openvkl {
   namespace examples {
+
+    DensityPathTracer::DensityPathTracer()
+    {
+      ispcEquivalent = ispc::DensityPathTracer_create();
+    }
 
     inline vec3f cartesian(const float phi,
                            const float sinTheta,
@@ -127,6 +134,13 @@ namespace openvkl {
       useRatioTracking = getParam<bool>("useRatioTracking", true);
 
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
+
+      ispc::DensityPathTracer_set(ispcEquivalent,
+                                  sigmaTScale,
+                                  sigmaSScale,
+                                  maxNumScatters,
+                                  useRatioTracking,
+                                  ambientLightIntensity);
     }
 
     void DensityPathTracer::integrate(RNG &rng,

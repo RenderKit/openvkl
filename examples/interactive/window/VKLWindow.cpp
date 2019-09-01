@@ -39,8 +39,8 @@ namespace openvkl {
           arcballCamera(volumeBounds, windowSize)
     {
       // TODO: create a real renderer based on 'rendererType'
-      renderer = std::unique_ptr<Renderer>(new IntersectBounds);
-      // renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
+      // renderer = std::unique_ptr<Renderer>(new IntersectBounds);
+      renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
 
       renderer->commit();
 

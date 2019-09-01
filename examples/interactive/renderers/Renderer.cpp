@@ -116,7 +116,7 @@ namespace openvkl {
       const box3f volumeBounds = (const box3f &)vkl_bounds;
 
       for (int i = 0; i < spp; ++i) {
-        float accumScale = 1.f / frameID;
+        float accumScale = 1.f / (frameID + 1);
 
         tasking::parallel_for(pixelIndices.total_indices(), [&](size_t i) {
           auto pixel = pixelIndices.reshape(i);
@@ -160,7 +160,7 @@ namespace openvkl {
           pixelIndices.total_indices() / ispc::Renderer_pixelsPerJob();
 
       for (int i = 0; i < spp; ++i) {
-        float accumScale = 1.f / frameID;
+        float accumScale = 1.f / (frameID + 1);
 
         tasking::parallel_for(numJobs, [&](size_t i) {
           ispc::Renderer_renderPixel(ispcEquivalent,

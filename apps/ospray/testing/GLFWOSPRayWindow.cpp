@@ -87,6 +87,9 @@ GLFWOSPRayWindow::GLFWOSPRayWindow(const vec2i &windowSize,
           case GLFW_KEY_G:
             activeWindow->showUi = !(activeWindow->showUi);
             break;
+          case GLFW_KEY_Q:
+            std::exit(0);
+            break;
           }
         }
 

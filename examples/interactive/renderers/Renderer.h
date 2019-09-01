@@ -31,7 +31,8 @@ namespace openvkl {
     using namespace ospcommon;
     using namespace ospcommon::math;
 
-    using FrameBuffer = std::vector<vec3f>;
+    using FrameBuffer  = std::vector<vec3f>;
+    using ColorChannel = std::vector<float>;
 
     struct Ray
     {
@@ -89,7 +90,9 @@ namespace openvkl {
 
       index_sequence_2D pixelIndices{vec2i(0)};
       FrameBuffer framebuffer;
-      FrameBuffer accumulation;
+      ColorChannel accum_r;
+      ColorChannel accum_g;
+      ColorChannel accum_b;
       int spp{1};
       int frameID{0};
     };

@@ -37,12 +37,12 @@ namespace openvkl {
     }
 
     bool DensityPathTracer::sampleWoodcock(RNG &rng,
-                                               VKLVolume volume,
-                                               const Ray &ray,
-                                               const range1f &hits,
-                                               float &t,
-                                               float &sample,
-                                               float &transmittance)
+                                           VKLVolume volume,
+                                           const Ray &ray,
+                                           const range1f &hits,
+                                           float &t,
+                                           float &sample,
+                                           float &transmittance)
     {
       t = hits.lower;
 
@@ -76,12 +76,12 @@ namespace openvkl {
     }
 
     bool DensityPathTracer::sampleRatioTracking(RNG &rng,
-                                                    VKLVolume volume,
-                                                    const Ray &ray,
-                                                    const range1f &hits,
-                                                    float &t,
-                                                    float &sample,
-                                                    float &transmittance)
+                                                VKLVolume volume,
+                                                const Ray &ray,
+                                                const range1f &hits,
+                                                float &t,
+                                                float &sample,
+                                                float &transmittance)
     {
       t = hits.lower;
 
@@ -130,11 +130,11 @@ namespace openvkl {
     }
 
     void DensityPathTracer::integrate(RNG &rng,
-                                          VKLVolume volume,
-                                          const box3f &volumeBounds,
-                                          const Ray &ray,
-                                          vec3f &Le,
-                                          int scatterIndex)
+                                      VKLVolume volume,
+                                      const box3f &volumeBounds,
+                                      const Ray &ray,
+                                      vec3f &Le,
+                                      int scatterIndex)
     {
       // initialize emitted light to 0
       Le = vec3f(0.f);
@@ -194,10 +194,10 @@ namespace openvkl {
     }
 
     vec3f DensityPathTracer::renderPixel(VKLVolume volume,
-                                             const box3f &volumeBounds,
-                                             VKLSamplesMask,
-                                             Ray &ray,
-                                             const vec4i &sampleID)
+                                         const box3f &volumeBounds,
+                                         VKLSamplesMask,
+                                         Ray &ray,
+                                         const vec4i &sampleID)
     {
       RNG rng(sampleID.z, (sampleID.w * sampleID.y) + sampleID.x);
       vec3f Le;

@@ -54,7 +54,9 @@ namespace openvkl {
 
       const auto numPixels = pixelIndices.total_indices();
       framebuffer.resize(numPixels);
-      accumulation.resize(numPixels);
+      accum_r.resize(numPixels);
+      accum_g.resize(numPixels);
+      accum_b.resize(numPixels);
     }
 
     vec2i Renderer::frameSize() const
@@ -64,7 +66,9 @@ namespace openvkl {
 
     void Renderer::resetAccumulation()
     {
-      std::fill(accumulation.begin(), accumulation.end(), vec3f(0));
+      std::fill(accum_r.begin(), accum_r.end(), 0.f);
+      std::fill(accum_g.begin(), accum_g.end(), 0.f);
+      std::fill(accum_b.begin(), accum_b.end(), 0.f);
       frameID = 0;
     }
 
@@ -98,8 +102,16 @@ namespace openvkl {
                                     vec4i(pixel.x, pixel.y, frameID, fbDims.x));
 
           auto index = pixelIndices.flatten(pixel);
-          accumulation[index] += color;
-          framebuffer[index] = accumulation[index] * accumScale;
+
+          float &ar = accum_r[index];
+          float &ag = accum_g[index];
+          float &ab = accum_b[index];
+
+          ar += color.x;
+          ag += color.y;
+          ab += color.z;
+
+          framebuffer[index] = vec3f(ar, ag, ab) * accumScale;
         });
 
         frameID++;

@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "window/GLFWVKLWindow.h"
-//#include "TransferFunctionWidget.h"
 #include "AppInit.h"
 // openvkl_testing
 #include "openvkl_testing.h"
@@ -160,9 +159,7 @@ bool addIsosurfacesUI(Renderer &renderer)
 void usage(const char *progname)
 {
   std::cerr << "usage: " << progname << "\n"
-            << "\t-renderer simple_native | simple_vkl | "
-               "vkl_hit_iterator | vkl_interval_iterator | vkl_iterator | "
-               "vkl_pathtracer\n"
+            << "\t-renderer density_pathtracer\n"
                "\t-gridType structured_regular\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
@@ -173,7 +170,7 @@ void usage(const char *progname)
 
 int main(int argc, const char **argv)
 {
-  std::string rendererType("vkl_pathtracer");
+  std::string rendererType("density_pathtracer");
   std::string gridType("structured_regular");
   vec3i dimensions(100);
   vec3f gridOrigin(-1.f);
@@ -338,23 +335,13 @@ int main(int argc, const char **argv)
       changed |= addSamplingRateUI(renderer);
     }
 
-    if (rendererType == "vkl_pathtracer") {
+    if (rendererType == "density_pathtracer") {
       changed |= addPathTracerUI(renderer);
     }
 
     if (rendererType == "vkl_iterator" || rendererType == "vkl_hit_iterator") {
       changed |= addIsosurfacesUI(renderer);
     }
-
-#if 0
-    auto transferFunctionUpdatedCallback = [&]() {
-      glfwVKLWindow->resetAccumulation();
-    };
-
-    static TransferFunctionWidget transferFunctionWidget(
-        testScene->getTransferFunction(), transferFunctionUpdatedCallback);
-    transferFunctionWidget.updateUI();
-#endif
 
     if (changed) {
       glfwVKLWindow->resetAccumulation();

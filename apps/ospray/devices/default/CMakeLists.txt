@@ -30,9 +30,6 @@ include_directories_ispc(${OSPRAY_MODULE_ISPC_INCLUDE_DIRECTORIES})
 ospray_add_library(ospray_module_ispc_openvkl SHARED
   moduleInit.cpp
 
-  render/SimpleNativeVolumeRenderer.cpp
-  render/SimpleNativeVolumeRenderer.ispc
-
   render/SimpleVKLRenderer.cpp
   render/SimpleVKLRenderer.ispc
 

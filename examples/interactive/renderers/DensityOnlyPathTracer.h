@@ -21,14 +21,6 @@
 namespace openvkl {
   namespace examples {
 
-    struct DirectionalLight
-    {
-      vec3f power;
-      vec3f direction;
-      float cosAngle;
-      float pdf;
-    };
-
     struct DensityOnlyPathTracer : public Renderer
     {
       DensityOnlyPathTracer()  = default;
@@ -62,8 +54,6 @@ namespace openvkl {
       int maxNumScatters{0};
 
       float ambientLightIntensity{0.f};
-
-      DirectionalLight light;
     };
 
   }  // namespace examples

@@ -64,52 +64,18 @@ bool addPathTracerUI(Renderer &renderer)
     changed = true;
   }
 
+#if 0
   static bool useRatioTracking = false;
   if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
     renderer.setParam<int>("useRatioTracking", useRatioTracking);
     changed = true;
   }
+#endif
 
   static float ambientLightIntensity = 1.f;
   if (ImGui::SliderFloat(
           "ambientLightIntensity", &ambientLightIntensity, 0.f, 10.f)) {
     renderer.setParam<float>("ambientLightIntensity", ambientLightIntensity);
-    changed = true;
-  }
-
-  static float directionalLightIntensity = 1.f;
-  if (ImGui::SliderFloat(
-          "directionalLightIntensity", &directionalLightIntensity, 0.f, 10.f)) {
-    renderer.setParam<float>("directionalLightIntensity",
-                             directionalLightIntensity);
-    changed = true;
-  }
-
-  static float directionalLightAngularDiameter = 45.f;
-  if (ImGui::SliderFloat("directionalLightAngularDiameter",
-                         &directionalLightAngularDiameter,
-                         0.f,
-                         180.f)) {
-    renderer.setParam<float>("directionalLightAngularDiameter",
-                             directionalLightAngularDiameter);
-    changed = true;
-  }
-
-  static float directionalLightAzimuth = 0.f;
-  if (ImGui::SliderFloat(
-          "directionalLightAzimuth", &directionalLightAzimuth, -180.f, 180.f)) {
-    renderer.setParam<float>("directionalLightAzimuth",
-                             directionalLightAzimuth);
-    changed = true;
-  }
-
-  static float directionalLightElevation = 90.f;
-  if (ImGui::SliderFloat("directionalLightElevation",
-                         &directionalLightElevation,
-                         -90.f,
-                         90.f)) {
-    renderer.setParam<float>("directionalLightElevation",
-                             directionalLightElevation);
     changed = true;
   }
 

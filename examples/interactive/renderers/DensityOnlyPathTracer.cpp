@@ -21,24 +21,12 @@
 namespace openvkl {
   namespace examples {
 
-    static thread_local std::minstd_rand g_rng;
-    static std::uniform_real_distribution<float> g_distribution{0.f, 1.f};
-
-// for very small cones treat as singular light, because float precision is not
-// good enough
-#define COS_ANGLE_MAX 0.99999988f
-
-    struct LightSample
-    {
-      // radiance that arrives at the given point (not weighted by pdf)
-      vec3f radiance{0.f};
-      // probability density that the direction would have been sampled
-      float pdf{inf};
-    };
-
     static float getRandomUniform()
     {
-      return g_distribution(g_rng);
+      static thread_local std::minstd_rand rng;
+      static std::uniform_real_distribution<float> distribution{0.f, 1.f};
+
+      return distribution(rng);
     }
 
     inline vec3f cartesian(const float phi,
@@ -56,26 +44,6 @@ namespace openvkl {
       const float cosTheta = radius * (1.f - 2.f * s.y);
       const float sinTheta = 2.f * radius * sqrt(s.y * (1.f - s.y));
       return cartesian(phi, sinTheta, cosTheta);
-    }
-
-    static float uniformSampleConePDF(const float cosAngle)
-    {
-      return rcp(float(two_pi) * (1.0f - cosAngle));
-    }
-
-    static LightSample sampleDirectionalLight(const DirectionalLight &light,
-                                              const vec3f &origin,
-                                              const vec3f &dir)
-    {
-      LightSample res;
-
-      if (light.cosAngle < COS_ANGLE_MAX &&
-          dot(light.direction, dir) > light.cosAngle) {
-        res.radiance = light.power * light.pdf;
-        res.pdf      = light.pdf;
-      }
-
-      return res;
     }
 
     bool DensityOnlyPathTracer::sampleWoodcock(VKLVolume volume,
@@ -122,29 +90,9 @@ namespace openvkl {
 
       sigmaTScale    = getParam<float>("sigmaTScale", 1.f);
       sigmaSScale    = getParam<float>("sigmaSScale", 1.f);
-      maxNumScatters = getParam<float>("maxNumScatters", 1);
+      maxNumScatters = getParam<int>("maxNumScatters", 1);
 
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
-
-      light.power = vec3f(getParam<float>("directionalLightIntensity", 1.f));
-      float directionalLightAngularDiameter =
-          getParam<float>("directionalLightAngularDiameter", 45.f) * M_PI /
-          180.f;
-      float directionalLightAzimuth =
-          getParam<float>("directionalLightAzimuth", 0.f) * M_PI / 180.f;
-      float directionalLightElevation =
-          getParam<float>("directionalLightElevation", 90.f) * M_PI / 180.f;
-
-      light.direction = vec3f(
-          cosf(directionalLightAzimuth) * cosf(directionalLightElevation),
-          sinf(directionalLightElevation),
-          sinf(directionalLightAzimuth) * cosf(directionalLightElevation));
-
-      const float cosAngle = cosf(0.5f * directionalLightAngularDiameter);
-
-      light.cosAngle = cosAngle;
-      light.pdf =
-          cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
     }
 
     void DensityOnlyPathTracer::integrateWoodcock(VKLVolume volume,
@@ -168,13 +116,6 @@ namespace openvkl {
 
         // ambient light
         Le += transmittance * vec3f(ambientLightIntensity);
-
-        // directional light
-        LightSample lightSample =
-            sampleDirectionalLight(light, ray.org, ray.dir);
-
-        if (reduce_max(lightSample.radiance) > 0.0f)
-          Le += transmittance * lightSample.radiance;
 
         return;
       }

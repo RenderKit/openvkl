@@ -23,8 +23,8 @@ namespace openvkl {
 
     struct IntersectBounds : public Renderer
     {
-      IntersectBounds()  = default;
-      ~IntersectBounds() = default;
+      IntersectBounds();
+      ~IntersectBounds() override = default;
 
       vec3f renderPixel(VKLVolume volume,
                         const box3f &volumeBounds,

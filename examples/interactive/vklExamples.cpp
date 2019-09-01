@@ -322,6 +322,11 @@ int main(int argc, const char **argv)
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
 
+    static bool useISPC = false;
+    if (ImGui::Checkbox("useISPC", &useISPC)){
+      glfwVKLWindow->setUseISPC(useISPC);
+    }
+
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 16)) {
       renderer.setParam<int>("spp", spp);

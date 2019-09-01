@@ -19,9 +19,17 @@
 #include <algorithm>
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
+// ispc
+#include "Renderer_ispc.h"
 
 namespace openvkl {
   namespace examples {
+
+    Renderer::~Renderer()
+    {
+      if (ispcEquivalent)
+        ispc::Renderer_freeRenderer(ispcEquivalent);
+    }
 
     void Renderer::commit()
     {
@@ -46,6 +54,15 @@ namespace openvkl {
       dir_dv *= imgPlane_size_y;
 
       dir_00 = dir - .5f * dir_du - .5f * dir_dv;
+
+      if (!ispcEquivalent)
+        return;
+
+      ispc::Renderer_setCamera(ispcEquivalent,
+                               (ispc::vec3f &)camPos,
+                               (ispc::vec3f &)dir_00,
+                               (ispc::vec3f &)dir_du,
+                               (ispc::vec3f &)dir_dv);
     }
 
     void Renderer::setFrameSize(const vec2i &dims)
@@ -57,6 +74,15 @@ namespace openvkl {
       accum_r.resize(numPixels);
       accum_g.resize(numPixels);
       accum_b.resize(numPixels);
+
+      if (!ispcEquivalent)
+        return;
+
+      ispc::Renderer_setFrameBuffer(ispcEquivalent,
+                                    (ispc::vec3f *)framebuffer.data(),
+                                    accum_r.data(),
+                                    accum_g.data(),
+                                    accum_b.data());
     }
 
     vec2i Renderer::frameSize() const
@@ -70,6 +96,11 @@ namespace openvkl {
       std::fill(accum_g.begin(), accum_g.end(), 0.f);
       std::fill(accum_b.begin(), accum_b.end(), 0.f);
       frameID = 0;
+
+      if (!ispcEquivalent)
+        return;
+
+      ispc::Renderer_setFrameID(ispcEquivalent, frameID);
     }
 
     const FrameBuffer &Renderer::frameBuffer() const
@@ -112,6 +143,34 @@ namespace openvkl {
           ab += color.z;
 
           framebuffer[index] = vec3f(ar, ag, ab) * accumScale;
+        });
+
+        frameID++;
+      }
+    }
+
+    void Renderer::renderFrame_ispc(VKLVolume volume, VKLSamplesMask mask)
+    {
+      auto fbDims = pixelIndices.dimensions();
+
+      const auto vkl_bounds    = vklGetBoundingBox(volume);
+      const box3f volumeBounds = (const box3f &)vkl_bounds;
+
+      const size_t numJobs =
+          pixelIndices.total_indices() / ispc::Renderer_pixelsPerJob();
+
+      for (int i = 0; i < spp; ++i) {
+        float accumScale = 1.f / frameID;
+
+        tasking::parallel_for(numJobs, [&](size_t i) {
+          ispc::Renderer_renderPixel(ispcEquivalent,
+                                     volume,
+                                     (ispc::box3f &)volumeBounds,
+                                     mask,
+                                     (ispc::vec2i &)fbDims,
+                                     frameID,
+                                     accumScale,
+                                     i);
         });
 
         frameID++;

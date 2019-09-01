@@ -14,27 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "IntersectBounds.h"
-// ispc
-#include "IntersectBounds_ispc.h"
+#include "Renderer.ih"
 
-namespace openvkl {
-  namespace examples {
+struct IntersectBounds
+{
+  Renderer super;
+};
 
-    IntersectBounds::IntersectBounds()
-    {
-      ispcEquivalent = ispc::IntersectBounds_create();
-    }
+vec3f IntersectBounds_renderPixel(uniform Renderer *uniform self,
+                                  uniform VKLVolume volume,
+                                  const uniform box3f &volumeBounds,
+                                  uniform VKLSamplesMask,
+                                  Ray &ray,
+                                  const vec2i &pixel,
+                                  const uniform int &frameID,
+                                  const uniform int &fbWidth)
+{
+  float tBox0, tBox1;
+  const box3f *uniform bb =
+      (const uniform struct box3f *uniform) & volumeBounds;
+  intersectBox(ray, *bb, tBox0, tBox1);
 
-    vec3f IntersectBounds::renderPixel(VKLVolume volume,
-                                       const box3f &volumeBounds,
-                                       VKLSamplesMask,
-                                       Ray &ray,
-                                       const vec4i &)
-    {
-      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
-      return ray.t.empty() ? vec3f(0.f) : vec3f(0.f, 0.f, 1.f);
-    }
+  if (tBox0 > tBox1)
+    return make_vec3f(0.f);
+  else
+    return make_vec3f(0.f, 0.f, 1.f);
+}
 
-  }  // namespace examples
-}  // namespace openvkl
+export void *uniform IntersectBounds_create()
+{
+  IntersectBounds *uniform self = uniform new IntersectBounds;
+  self->super.renderPixel       = IntersectBounds_renderPixel;
+  return self;
+}

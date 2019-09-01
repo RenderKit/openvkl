@@ -39,8 +39,8 @@ namespace openvkl {
           arcballCamera(volumeBounds, windowSize)
     {
       // TODO: create a real renderer based on 'rendererType'
-      // renderer = std::unique_ptr<Renderer>(new IntersectBounds);
-      renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
+      renderer = std::unique_ptr<Renderer>(new IntersectBounds);
+      // renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
 
       renderer->commit();
 
@@ -49,7 +49,10 @@ namespace openvkl {
 
     void VKLWindow::render()
     {
-      renderer->renderFrame(volume, mask);
+      if (useISPC)
+        renderer->renderFrame_ispc(volume, mask);
+      else
+        renderer->renderFrame(volume, mask);
     }
 
     Renderer &VKLWindow::currentRenderer()
@@ -76,6 +79,11 @@ namespace openvkl {
                           arcballCamera.lookDir(),
                           arcballCamera.upDir(),
                           windowSize.x / float(windowSize.y));
+    }
+
+    void VKLWindow::setUseISPC(bool enabled)
+    {
+      useISPC = enabled;
     }
 
     void VKLWindow::savePPM(const std::string &filename)

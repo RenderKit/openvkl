@@ -44,8 +44,8 @@ namespace openvkl {
 
     struct Renderer : public utility::ParameterizedObject
     {
-      Renderer()          = default;
-      virtual ~Renderer() = default;
+      Renderer() = default;
+      virtual ~Renderer();
 
       // Parameters //
 
@@ -69,6 +69,7 @@ namespace openvkl {
       // Render a frame //
 
       void renderFrame(VKLVolume volume, VKLSamplesMask mask);
+      void renderFrame_ispc(VKLVolume volume, VKLSamplesMask mask);
 
      protected:
       virtual vec3f renderPixel(VKLVolume volume,
@@ -95,6 +96,9 @@ namespace openvkl {
       ColorChannel accum_b;
       int spp{1};
       int frameID{0};
+
+      // Renderer data //
+      void *ispcEquivalent{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

@@ -45,7 +45,7 @@ namespace openvkl {
 
       void resetCamera();
 
-      void setFramebufferScale(float scale);
+      void setUseISPC(bool enabled);
 
       void savePPM(const std::string &filename);
 
@@ -53,6 +53,8 @@ namespace openvkl {
       virtual void reshape(const vec2i &newWindowSize);
 
       void updateCamera();
+
+      bool useISPC{false};
 
       vec2i windowSize;
       box3f volumeBounds;

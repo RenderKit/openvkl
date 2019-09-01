@@ -29,11 +29,19 @@ find_package(glfw3 REQUIRED)
 
 ## Example renderers ##
 
-add_library(vkl_example_renderers STATIC
+include_directories_ispc(
+  ${CMAKE_SOURCE_DIR}/openvkl/include
+  ${CMAKE_SOURCE_DIR}/openvkl/drivers/ispc/math
+)
+
+openvkl_add_library_ispc(vkl_example_renderers STATIC
   renderers/Renderer.cpp
+  renderers/Renderer.ih
+  renderers/Renderer.ispc
 
   renderers/DensityPathTracer.cpp
   renderers/IntersectBounds.cpp
+  renderers/IntersectBounds.ispc
 )
 
 target_link_libraries(vkl_example_renderers PUBLIC openvkl ospcommon::ospcommon)

@@ -19,6 +19,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ospcommon
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/math/box.h"
 #include "ospcommon/utility/ParameterizedObject.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
@@ -31,8 +32,8 @@ namespace openvkl {
     using namespace ospcommon;
     using namespace ospcommon::math;
 
-    using FrameBuffer  = std::vector<vec3f>;
-    using ColorChannel = std::vector<float>;
+    using FrameBuffer  = containers::AlignedVector<vec3f>;
+    using ColorChannel = containers::AlignedVector<float>;
 
     struct Ray
     {

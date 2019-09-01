@@ -22,10 +22,10 @@
 namespace openvkl {
   namespace examples {
 
-    struct DensityOnlyPathTracer : public Renderer
+    struct DensityPathTracer : public Renderer
     {
-      DensityOnlyPathTracer()  = default;
-      ~DensityOnlyPathTracer() = default;
+      DensityPathTracer()  = default;
+      ~DensityPathTracer() = default;
 
       void commit() override;
 

@@ -21,7 +21,7 @@
 // ospcommon
 #include "ospcommon/utility/SaveImage.h"
 
-#include "renderers/DensityOnlyPathTracer.h"
+#include "renderers/DensityPathTracer.h"
 #include "renderers/IntersectBounds.h"
 
 namespace openvkl {
@@ -40,7 +40,7 @@ namespace openvkl {
     {
       // TODO: create a real renderer based on 'rendererType'
       // renderer = std::unique_ptr<Renderer>(new IntersectBounds);
-      renderer = std::unique_ptr<Renderer>(new DensityOnlyPathTracer);
+      renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
 
       renderer->commit();
 

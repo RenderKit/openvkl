@@ -32,7 +32,7 @@ find_package(glfw3 REQUIRED)
 add_library(vkl_example_renderers STATIC
   renderers/Renderer.cpp
 
-  renderers/DensityOnlyPathTracer.cpp
+  renderers/DensityPathTracer.cpp
   renderers/IntersectBounds.cpp
 )
 

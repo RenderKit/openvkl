@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "DensityOnlyPathTracer.h"
+#include "DensityPathTracer.h"
 
 namespace openvkl {
   namespace examples {
@@ -36,7 +36,7 @@ namespace openvkl {
       return cartesian(phi, sinTheta, cosTheta);
     }
 
-    bool DensityOnlyPathTracer::sampleWoodcock(RNG &rng,
+    bool DensityPathTracer::sampleWoodcock(RNG &rng,
                                                VKLVolume volume,
                                                const Ray &ray,
                                                const range1f &hits,
@@ -75,7 +75,7 @@ namespace openvkl {
       return true;
     }
 
-    bool DensityOnlyPathTracer::sampleRatioTracking(RNG &rng,
+    bool DensityPathTracer::sampleRatioTracking(RNG &rng,
                                                     VKLVolume volume,
                                                     const Ray &ray,
                                                     const range1f &hits,
@@ -116,7 +116,7 @@ namespace openvkl {
       return true;
     }
 
-    void DensityOnlyPathTracer::commit()
+    void DensityPathTracer::commit()
     {
       Renderer::commit();
 
@@ -129,7 +129,7 @@ namespace openvkl {
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
     }
 
-    void DensityOnlyPathTracer::integrate(RNG &rng,
+    void DensityPathTracer::integrate(RNG &rng,
                                           VKLVolume volume,
                                           const box3f &volumeBounds,
                                           const Ray &ray,
@@ -193,7 +193,7 @@ namespace openvkl {
       Le = Le + sigmaSSample * inscatteredLe;
     }
 
-    vec3f DensityOnlyPathTracer::renderPixel(VKLVolume volume,
+    vec3f DensityPathTracer::renderPixel(VKLVolume volume,
                                              const box3f &volumeBounds,
                                              VKLSamplesMask,
                                              Ray &ray,

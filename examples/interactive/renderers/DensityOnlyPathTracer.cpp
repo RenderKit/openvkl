@@ -66,8 +66,7 @@ namespace openvkl {
         }
 
         const vec3f c = ray.org + t * ray.dir;
-
-        sample = vklComputeSample(volume, (const vkl_vec3f *)&c);
+        sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
 
         // NOTE(jda) - this should scale based on an input value range
         const float sampleOpacity = sample;
@@ -75,9 +74,46 @@ namespace openvkl {
         // sigmaT must be mono-chromatic for Woodcock sampling
         const float sigmaTSample = sigmaMax * sampleOpacity;
 
-        if (getRandomUniform() < sigmaTSample / sigmaMax) {
+        if (getRandomUniform() < sigmaTSample / sigmaMax)
           break;
-        }
+      }
+
+      transmittance = 0.f;
+      return true;
+    }
+
+    bool DensityOnlyPathTracer::sampleRatioTracking(VKLVolume volume,
+                                                    const Ray &ray,
+                                                    const range1f &hits,
+                                                    float &t,
+                                                    float &sample,
+                                                    float &transmittance)
+    {
+      t = hits.lower;
+
+      const float sigmaMax = sigmaTScale;
+
+      transmittance = 1.f;
+
+      while (true) {
+        t = t + -log(1.f - getRandomUniform()) / sigmaMax;
+
+        if (t > hits.upper)
+          return false;
+
+        const vec3f c = ray.org + t * ray.dir;
+        sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
+
+        // NOTE(jda) - this should scale based on an input value range
+        const float sampleOpacity = sample;
+
+        // sigmaT must be mono-chromatic for Woodcock sampling
+        const float sigmaTSample = sigmaMax * sampleOpacity;
+
+        if (getRandomUniform() < sigmaTSample / sigmaMax)
+          break;
+
+        transmittance *= 1.f - sigmaTSample / sigmaMax;
       }
 
       transmittance = 0.f;
@@ -92,14 +128,16 @@ namespace openvkl {
       sigmaSScale    = getParam<float>("sigmaSScale", 1.f);
       maxNumScatters = getParam<int>("maxNumScatters", 1);
 
+      useRatioTracking = getParam<bool>("useRatioTracking", true);
+
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
     }
 
-    void DensityOnlyPathTracer::integrateWoodcock(VKLVolume volume,
-                                                  const box3f &volumeBounds,
-                                                  const Ray &ray,
-                                                  vec3f &Le,
-                                                  int scatterIndex)
+    void DensityOnlyPathTracer::integrate(VKLVolume volume,
+                                          const box3f &volumeBounds,
+                                          const Ray &ray,
+                                          vec3f &Le,
+                                          int scatterIndex)
     {
       // initialize emitted light to 0
       Le = vec3f(0.f);
@@ -110,7 +148,12 @@ namespace openvkl {
 
       float t, sample, transmittance;
 
-      if (!sampleWoodcock(volume, ray, hits, t, sample, transmittance)) {
+      bool scatterEvent =
+          useRatioTracking
+              ? sampleRatioTracking(volume, ray, hits, t, sample, transmittance)
+              : sampleWoodcock(volume, ray, hits, t, sample, transmittance);
+
+      if (!scatterEvent) {
         if (scatterIndex == 0)
           return;  // light is not directly visible
 
@@ -140,7 +183,7 @@ namespace openvkl {
           1.f, vec2f(getRandomUniform(), getRandomUniform()));
 
       vec3f inscatteredLe;
-      integrateWoodcock(
+      integrate(
           volume, volumeBounds, scatteringRay, inscatteredLe, scatterIndex + 1);
 
       const vec3f sigmaSSample = sigmaSScale * sampleColor * sampleOpacity;
@@ -154,7 +197,7 @@ namespace openvkl {
                                              Ray &ray)
     {
       vec3f Le;
-      integrateWoodcock(volume, volumeBounds, ray, Le, 0);
+      integrate(volume, volumeBounds, ray, Le, 0);
       return Le;
     }
 

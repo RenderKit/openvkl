@@ -41,17 +41,26 @@ namespace openvkl {
                           float &sample,
                           float &transmittance);
 
-      void integrateWoodcock(VKLVolume volume,
-                             const box3f &volumeBounds,
-                             const Ray &ray,
-                             vec3f &Le,
-                             int scatterIndex);
+      bool sampleRatioTracking(VKLVolume volume,
+                               const Ray &ray,
+                               const range1f &hits,
+                               float &t,
+                               float &sample,
+                               float &transmittance);
+
+      void integrate(VKLVolume volume,
+                     const box3f &volumeBounds,
+                     const Ray &ray,
+                     vec3f &Le,
+                     int scatterIndex);
 
       // Data //
 
       float sigmaTScale{0.f};
       float sigmaSScale{0.f};
       int maxNumScatters{0};
+
+      bool useRatioTracking{true};
 
       float ambientLightIntensity{0.f};
     };

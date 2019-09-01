@@ -64,13 +64,11 @@ bool addPathTracerUI(Renderer &renderer)
     changed = true;
   }
 
-#if 0
-  static bool useRatioTracking = false;
+  static bool useRatioTracking = true;
   if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
-    renderer.setParam<int>("useRatioTracking", useRatioTracking);
+    renderer.setParam<bool>("useRatioTracking", useRatioTracking);
     changed = true;
   }
-#endif
 
   static float ambientLightIntensity = 1.f;
   if (ImGui::SliderFloat(

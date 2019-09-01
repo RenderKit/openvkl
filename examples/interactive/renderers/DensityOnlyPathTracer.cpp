@@ -15,19 +15,9 @@
 // ======================================================================== //
 
 #include "DensityOnlyPathTracer.h"
-// std
-#include <random>
 
 namespace openvkl {
   namespace examples {
-
-    static float getRandomUniform()
-    {
-      static thread_local std::minstd_rand rng;
-      static std::uniform_real_distribution<float> distribution{0.f, 1.f};
-
-      return distribution(rng);
-    }
 
     inline vec3f cartesian(const float phi,
                            const float sinTheta,
@@ -46,7 +36,8 @@ namespace openvkl {
       return cartesian(phi, sinTheta, cosTheta);
     }
 
-    bool DensityOnlyPathTracer::sampleWoodcock(VKLVolume volume,
+    bool DensityOnlyPathTracer::sampleWoodcock(RNG &rng,
+                                               VKLVolume volume,
                                                const Ray &ray,
                                                const range1f &hits,
                                                float &t,
@@ -58,7 +49,9 @@ namespace openvkl {
       const float sigmaMax = sigmaTScale;
 
       while (true) {
-        t = t + -log(1.f - getRandomUniform()) / sigmaMax;
+        vec2f randomNumbers = rng.getFloats();
+
+        t = t + -log(1.f - randomNumbers.x) / sigmaMax;
 
         if (t > hits.upper) {
           transmittance = 1.f;
@@ -74,7 +67,7 @@ namespace openvkl {
         // sigmaT must be mono-chromatic for Woodcock sampling
         const float sigmaTSample = sigmaMax * sampleOpacity;
 
-        if (getRandomUniform() < sigmaTSample / sigmaMax)
+        if (randomNumbers.y < sigmaTSample / sigmaMax)
           break;
       }
 
@@ -82,7 +75,8 @@ namespace openvkl {
       return true;
     }
 
-    bool DensityOnlyPathTracer::sampleRatioTracking(VKLVolume volume,
+    bool DensityOnlyPathTracer::sampleRatioTracking(RNG &rng,
+                                                    VKLVolume volume,
                                                     const Ray &ray,
                                                     const range1f &hits,
                                                     float &t,
@@ -96,7 +90,9 @@ namespace openvkl {
       transmittance = 1.f;
 
       while (true) {
-        t = t + -log(1.f - getRandomUniform()) / sigmaMax;
+        vec2f randomNumbers = rng.getFloats();
+
+        t = t + -log(1.f - randomNumbers.x) / sigmaMax;
 
         if (t > hits.upper)
           return false;
@@ -110,7 +106,7 @@ namespace openvkl {
         // sigmaT must be mono-chromatic for Woodcock sampling
         const float sigmaTSample = sigmaMax * sampleOpacity;
 
-        if (getRandomUniform() < sigmaTSample / sigmaMax)
+        if (randomNumbers.y < sigmaTSample / sigmaMax)
           break;
 
         transmittance *= 1.f - sigmaTSample / sigmaMax;
@@ -133,7 +129,8 @@ namespace openvkl {
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
     }
 
-    void DensityOnlyPathTracer::integrate(VKLVolume volume,
+    void DensityOnlyPathTracer::integrate(RNG &rng,
+                                          VKLVolume volume,
                                           const box3f &volumeBounds,
                                           const Ray &ray,
                                           vec3f &Le,
@@ -150,8 +147,10 @@ namespace openvkl {
 
       bool scatterEvent =
           useRatioTracking
-              ? sampleRatioTracking(volume, ray, hits, t, sample, transmittance)
-              : sampleWoodcock(volume, ray, hits, t, sample, transmittance);
+              ? sampleRatioTracking(
+                    rng, volume, ray, hits, t, sample, transmittance)
+              : sampleWoodcock(
+                    rng, volume, ray, hits, t, sample, transmittance);
 
       if (!scatterEvent) {
         if (scatterIndex == 0)
@@ -179,12 +178,15 @@ namespace openvkl {
       scatteringRay.tnear = 0.f;
       scatteringRay.tfar  = inf;
       scatteringRay.org   = c;
-      scatteringRay.dir   = uniformSampleSphere(
-          1.f, vec2f(getRandomUniform(), getRandomUniform()));
+      scatteringRay.dir   = uniformSampleSphere(1.f, rng.getFloats());
 
       vec3f inscatteredLe;
-      integrate(
-          volume, volumeBounds, scatteringRay, inscatteredLe, scatterIndex + 1);
+      integrate(rng,
+                volume,
+                volumeBounds,
+                scatteringRay,
+                inscatteredLe,
+                scatterIndex + 1);
 
       const vec3f sigmaSSample = sigmaSScale * sampleColor * sampleOpacity;
 
@@ -194,10 +196,12 @@ namespace openvkl {
     vec3f DensityOnlyPathTracer::renderPixel(VKLVolume volume,
                                              const box3f &volumeBounds,
                                              VKLSamplesMask,
-                                             Ray &ray)
+                                             Ray &ray,
+                                             const vec4i &sampleID)
     {
+      RNG rng(sampleID.z, (sampleID.w * sampleID.y) + sampleID.x);
       vec3f Le;
-      integrate(volume, volumeBounds, ray, Le, 0);
+      integrate(rng, volume, volumeBounds, ray, Le, 0);
       return Le;
     }
 

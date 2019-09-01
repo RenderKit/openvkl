@@ -29,7 +29,8 @@ namespace openvkl {
       vec3f renderPixel(VKLVolume volume,
                         const box3f &volumeBounds,
                         VKLSamplesMask mask,
-                        Ray &ray) override;
+                        Ray &ray,
+                        const vec4i &sampleID) override;
     };
 
   }  // namespace examples

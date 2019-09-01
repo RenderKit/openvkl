@@ -91,7 +91,11 @@ namespace openvkl {
 
           Ray ray = computeRay(screen);
 
-          vec3f color = renderPixel(volume, volumeBounds, mask, ray);
+          vec3f color = renderPixel(volume,
+                                    volumeBounds,
+                                    mask,
+                                    ray,
+                                    vec4i(pixel.x, pixel.y, frameID, fbDims.x));
 
           auto index = pixelIndices.flatten(pixel);
           accumulation[index] += color;

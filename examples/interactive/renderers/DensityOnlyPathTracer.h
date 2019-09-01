@@ -17,6 +17,7 @@
 #pragma once
 
 #include "Renderer.h"
+#include "random.h"
 
 namespace openvkl {
   namespace examples {
@@ -31,24 +32,28 @@ namespace openvkl {
       vec3f renderPixel(VKLVolume volume,
                         const box3f &volumeBounds,
                         VKLSamplesMask mask,
-                        Ray &ray) override;
+                        Ray &ray,
+                        const vec4i &sampleID) override;
 
      private:
-      bool sampleWoodcock(VKLVolume volume,
+      bool sampleWoodcock(RNG &rng,
+                          VKLVolume volume,
                           const Ray &ray,
                           const range1f &hits,
                           float &t,
                           float &sample,
                           float &transmittance);
 
-      bool sampleRatioTracking(VKLVolume volume,
+      bool sampleRatioTracking(RNG &rng,
+                               VKLVolume volume,
                                const Ray &ray,
                                const range1f &hits,
                                float &t,
                                float &sample,
                                float &transmittance);
 
-      void integrate(VKLVolume volume,
+      void integrate(RNG &rng,
+                     VKLVolume volume,
                      const box3f &volumeBounds,
                      const Ray &ray,
                      vec3f &Le,

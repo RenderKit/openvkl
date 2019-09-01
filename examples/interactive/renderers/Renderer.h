@@ -73,7 +73,8 @@ namespace openvkl {
       virtual vec3f renderPixel(VKLVolume volume,
                                 const box3f &volumeBounds,
                                 VKLSamplesMask mask,
-                                Ray &ray) = 0;
+                                Ray &ray,
+                                const vec4i &sampleID) = 0;
 
       Ray computeRay(const vec2f &screenCoords) const;
 

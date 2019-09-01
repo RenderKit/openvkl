@@ -22,7 +22,8 @@ namespace openvkl {
     vec3f IntersectBounds::renderPixel(VKLVolume volume,
                                        const box3f &volumeBounds,
                                        VKLSamplesMask,
-                                       Ray &ray)
+                                       Ray &ray,
+                                       const vec4i &)
     {
       const auto results = intersectRayBox(ray.org, ray.dir, volumeBounds);
       return results.empty() ? vec3f(0.f) : vec3f(1.f);

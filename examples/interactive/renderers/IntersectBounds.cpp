@@ -25,8 +25,8 @@ namespace openvkl {
                                        Ray &ray,
                                        const vec4i &)
     {
-      const auto results = intersectRayBox(ray.org, ray.dir, volumeBounds);
-      return results.empty() ? vec3f(0.f) : vec3f(1.f);
+      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+      return ray.t.empty() ? vec3f(0.f) : vec3f(1.f);
     }
 
   }  // namespace examples

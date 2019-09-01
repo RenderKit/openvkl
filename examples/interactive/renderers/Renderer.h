@@ -39,8 +39,7 @@ namespace openvkl {
     {
       vec3f org;
       vec3f dir;
-      float tnear;
-      float tfar;
+      range1f t;
     };
 
     struct Renderer : public utility::ParameterizedObject
@@ -107,10 +106,9 @@ namespace openvkl {
 
       Ray ray;
 
-      ray.org   = org;
-      ray.dir   = normalize(dir);
-      ray.tnear = 0.f;
-      ray.tfar  = ospcommon::inf;
+      ray.org = org;
+      ray.dir = normalize(dir);
+      ray.t   = range1f(0.f, ospcommon::inf);
 
       return ray;
     }

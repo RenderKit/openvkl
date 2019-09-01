@@ -55,7 +55,7 @@ namespace openvkl {
       void integrate(RNG &rng,
                      VKLVolume volume,
                      const box3f &volumeBounds,
-                     const Ray &ray,
+                     Ray &ray,
                      vec3f &Le,
                      int scatterIndex);
 

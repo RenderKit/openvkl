@@ -132,15 +132,15 @@ namespace openvkl {
     void DensityPathTracer::integrate(RNG &rng,
                                       VKLVolume volume,
                                       const box3f &volumeBounds,
-                                      const Ray &ray,
+                                      Ray &ray,
                                       vec3f &Le,
                                       int scatterIndex)
     {
       // initialize emitted light to 0
       Le = vec3f(0.f);
 
-      const auto hits = intersectRayBox(ray.org, ray.dir, volumeBounds);
-      if (hits.empty())
+      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+      if (ray.t.empty())
         return;
 
       float t, sample, transmittance;
@@ -148,9 +148,9 @@ namespace openvkl {
       bool scatterEvent =
           useRatioTracking
               ? sampleRatioTracking(
-                    rng, volume, ray, hits, t, sample, transmittance)
+                    rng, volume, ray, ray.t, t, sample, transmittance)
               : sampleWoodcock(
-                    rng, volume, ray, hits, t, sample, transmittance);
+                    rng, volume, ray, ray.t, t, sample, transmittance);
 
       if (!scatterEvent) {
         if (scatterIndex == 0)
@@ -175,10 +175,9 @@ namespace openvkl {
       const float sampleOpacity = sample;
 
       Ray scatteringRay;
-      scatteringRay.tnear = 0.f;
-      scatteringRay.tfar  = inf;
-      scatteringRay.org   = c;
-      scatteringRay.dir   = uniformSampleSphere(1.f, rng.getFloats());
+      scatteringRay.t   = range1f(0.f, inf);
+      scatteringRay.org = c;
+      scatteringRay.dir = uniformSampleSphere(1.f, rng.getFloats());
 
       vec3f inscatteredLe;
       integrate(rng,

@@ -45,8 +45,6 @@ openvkl_add_library_ispc(vkl_example_renderers STATIC
   renderers/DensityPathTracer.ispc
   renderers/HitIterator.cpp
   renderers/HitIterator.ispc
-  renderers/IntersectBounds.cpp
-  renderers/IntersectBounds.ispc
   renderers/RayMarchIterator.cpp
   renderers/RayMarchIterator.ispc
 )

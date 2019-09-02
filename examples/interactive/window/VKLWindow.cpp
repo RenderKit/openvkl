@@ -23,7 +23,6 @@
 
 #include "renderers/DensityPathTracer.h"
 #include "renderers/HitIterator.h"
-#include "renderers/IntersectBounds.h"
 #include "renderers/RayMarchIterator.h"
 
 namespace openvkl {

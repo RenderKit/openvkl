@@ -21,21 +21,6 @@ struct DensityPathTracer
 {
   Renderer super;
 
-  // if a volume interaction occurs, returns the t and sample value at the
-  // location; in this case a scatter event will occur. if a volume interaction
-  // does not occur, the ray escapes the volume and the transmittance is
-  // returned.
-  bool (*uniform sampleVolumeInteraction)(uniform DensityPathTracer *uniform
-                                              self,
-                                          varying RandomTEA *const uniform rng,
-                                          VKLVolume volume,
-                                          const Ray &ray,
-                                          const float tBox0,
-                                          const float tBox1,
-                                          float &t,
-                                          float &sample,
-                                          float &transmittance);
-
   float sigmaTScale;
   float sigmaSScale;
   int maxNumScatters;
@@ -100,49 +85,6 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
   return true;
 }
 
-inline bool sampleRatioTracking(DensityPathTracer *uniform self,
-                                varying RandomTEA *const uniform rng,
-                                VKLVolume volume,
-                                const Ray &ray,
-                                const float tBox0,
-                                const float tBox1,
-                                float &t,
-                                float &sample,
-                                float &transmittance)
-{
-  t             = tBox0;
-  transmittance = 1.f;
-
-  const float sigmaMax = self->sigmaTScale;
-
-  while (true) {
-    vec2f randomNumbers = RandomTEA__getFloats(rng);
-
-    t = t + -logf(1.f - randomNumbers.x) / sigmaMax;
-
-    if (t > tBox1) {
-      return false;
-    }
-
-    const vec3f c = ray.org + t * ray.dir;
-    sample        = vklComputeSampleV(volume, (varying vkl_vec3f *)&c);
-
-    const float sampleOpacity = sample;
-
-    // sigmaT must be mono-chromatic for Woodcock sampling
-    const float sigmaTSample = sigmaMax * sampleOpacity;
-
-    if (randomNumbers.y < sigmaTSample / sigmaMax) {
-      break;
-    }
-
-    transmittance *= 1.f - sigmaTSample / sigmaMax;
-  }
-
-  transmittance = 0.f;
-  return true;
-}
-
 inline static void integrate(DensityPathTracer *uniform self,
                              varying RandomTEA *const uniform rng,
                              uniform VKLVolume volume,
@@ -164,7 +106,7 @@ inline static void integrate(DensityPathTracer *uniform self,
 
   float t, sample, transmittance;
 
-  if (!self->sampleVolumeInteraction(
+  if (!sampleWoodcock(
           self, rng, volume, ray, tBox0, tBox1, t, sample, transmittance)) {
     // light is not directly visible
     if (scatterIndex == 0) {
@@ -232,8 +174,7 @@ export void *uniform DensityPathTracer_create()
 {
   DensityPathTracer *uniform self = uniform new DensityPathTracer;
 
-  self->super.renderPixel       = DensityPathTracer_renderPixel;
-  self->sampleVolumeInteraction = sampleRatioTracking;
+  self->super.renderPixel = DensityPathTracer_renderPixel;
 
   return self;
 }
@@ -242,7 +183,6 @@ export void DensityPathTracer_set(void *uniform _self,
                                   const uniform float sigmaTScale,
                                   const uniform float sigmaSScale,
                                   const uniform int maxNumScatters,
-                                  const uniform int useRatioTracking,
                                   const uniform float ambientLightIntensity)
 {
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
@@ -250,11 +190,6 @@ export void DensityPathTracer_set(void *uniform _self,
   self->sigmaTScale    = sigmaTScale;
   self->sigmaSScale    = sigmaSScale;
   self->maxNumScatters = maxNumScatters;
-
-  if (useRatioTracking)
-    self->sampleVolumeInteraction = sampleRatioTracking;
-  else
-    self->sampleVolumeInteraction = sampleWoodcock;
 
   self->ambientLightIntensity = ambientLightIntensity;
 }

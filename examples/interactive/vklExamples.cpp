@@ -67,12 +67,6 @@ bool addPathTracerUI(GLFWVKLWindow &window)
     changed = true;
   }
 
-  static bool useRatioTracking = true;
-  if (ImGui::Checkbox("useRatioTracking", &useRatioTracking)) {
-    renderer.setParam<bool>("useRatioTracking", useRatioTracking);
-    changed = true;
-  }
-
   static float ambientLightIntensity = 1.f;
   if (ImGui::SliderFloat(
           "ambientLightIntensity", &ambientLightIntensity, 0.f, 10.f)) {

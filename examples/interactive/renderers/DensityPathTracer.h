@@ -44,14 +44,6 @@ namespace openvkl {
                           float &sample,
                           float &transmittance);
 
-      bool sampleRatioTracking(RNG &rng,
-                               VKLVolume volume,
-                               const Ray &ray,
-                               const range1f &hits,
-                               float &t,
-                               float &sample,
-                               float &transmittance);
-
       void integrate(RNG &rng,
                      VKLVolume volume,
                      const box3f &volumeBounds,

@@ -82,47 +82,6 @@ namespace openvkl {
       return true;
     }
 
-    bool DensityPathTracer::sampleRatioTracking(RNG &rng,
-                                                VKLVolume volume,
-                                                const Ray &ray,
-                                                const range1f &hits,
-                                                float &t,
-                                                float &sample,
-                                                float &transmittance)
-    {
-      t = hits.lower;
-
-      const float sigmaMax = sigmaTScale;
-
-      transmittance = 1.f;
-
-      while (true) {
-        vec2f randomNumbers = rng.getFloats();
-
-        t = t + -log(1.f - randomNumbers.x) / sigmaMax;
-
-        if (t > hits.upper)
-          return false;
-
-        const vec3f c = ray.org + t * ray.dir;
-        sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
-
-        // NOTE(jda) - this should scale based on an input value range
-        const float sampleOpacity = sample;
-
-        // sigmaT must be mono-chromatic for Woodcock sampling
-        const float sigmaTSample = sigmaMax * sampleOpacity;
-
-        if (randomNumbers.y < sigmaTSample / sigmaMax)
-          break;
-
-        transmittance *= 1.f - sigmaTSample / sigmaMax;
-      }
-
-      transmittance = 0.f;
-      return true;
-    }
-
     void DensityPathTracer::commit()
     {
       Renderer::commit();
@@ -131,15 +90,12 @@ namespace openvkl {
       sigmaSScale    = getParam<float>("sigmaSScale", 1.f);
       maxNumScatters = getParam<int>("maxNumScatters", 1);
 
-      useRatioTracking = getParam<bool>("useRatioTracking", true);
-
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
 
       ispc::DensityPathTracer_set(ispcEquivalent,
                                   sigmaTScale,
                                   sigmaSScale,
                                   maxNumScatters,
-                                  useRatioTracking,
                                   ambientLightIntensity);
     }
 
@@ -159,14 +115,7 @@ namespace openvkl {
 
       float t, sample, transmittance;
 
-      bool scatterEvent =
-          useRatioTracking
-              ? sampleRatioTracking(
-                    rng, volume, ray, ray.t, t, sample, transmittance)
-              : sampleWoodcock(
-                    rng, volume, ray, ray.t, t, sample, transmittance);
-
-      if (!scatterEvent) {
+      if (!sampleWoodcock(rng, volume, ray, ray.t, t, sample, transmittance)) {
         if (scatterIndex == 0)
           return;  // light is not directly visible
 

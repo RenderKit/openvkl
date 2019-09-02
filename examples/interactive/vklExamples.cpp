@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "window/GLFWVKLWindow.h"
 #include "AppInit.h"
+#include "window/GLFWVKLWindow.h"
 // openvkl_testing
 #include "openvkl_testing.h"
 // imgui
@@ -313,12 +313,11 @@ int main(int argc, const char **argv)
     }
   }
 
-  VKLVolume volume    = testingStructuredVolume->getVKLVolume();
-  VKLSamplesMask mask = vklNewSamplesMask(volume);
-  auto bounds         = vklGetBoundingBox(volume);
+  VKLVolume volume = testingStructuredVolume->getVKLVolume();
+  auto bounds      = vklGetBoundingBox(volume);
 
   auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
-      vec2i{1024, 1024}, (box3f &)bounds, volume, mask, rendererType);
+      vec2i{1024, 1024}, (box3f &)bounds, volume, nullptr, rendererType);
 
   auto &renderer = glfwVKLWindow->currentRenderer();
 
@@ -326,7 +325,7 @@ int main(int argc, const char **argv)
     bool changed = false;
 
     static bool useISPC = false;
-    if (ImGui::Checkbox("useISPC", &useISPC)){
+    if (ImGui::Checkbox("useISPC", &useISPC)) {
       glfwVKLWindow->setUseISPC(useISPC);
     }
 

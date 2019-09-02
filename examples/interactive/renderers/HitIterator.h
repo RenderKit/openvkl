@@ -35,7 +35,7 @@ namespace openvkl {
                         const vec4i &sampleID) override;
 
      private:
-       float *isovalues{nullptr};
+       const float *isovalues{nullptr};
        int numIsovalues{0};
     };
 

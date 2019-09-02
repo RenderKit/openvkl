@@ -20,12 +20,10 @@ struct HitIterator
 {
   Renderer super;
 
-  float value1;
-  float value2;
-  float value3;
+  const float *isovalues;
 };
 
-vec3f HitIterator_renderPixel(uniform Renderer *uniform,
+vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
                               uniform VKLVolume volume,
                               const uniform box3f &,
                               uniform VKLSamplesMask samplesMask,
@@ -34,8 +32,13 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform,
                               const uniform int &,
                               const uniform int &)
 {
+  HitIterator *uniform self = (HitIterator * uniform) _self;
+
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
+
+  if (samplesMask == NULL)
+    return color;
 
   // create volume iterator
   vkl_range1f tRange;
@@ -55,12 +58,12 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform,
 
   int numHits = 0;
 
-  while (vklIterateHitV(&iterator, &hit) && alpha < 0.99f && numHits < 3) {
+  while (vklIterateHitV(&iterator, &hit) && alpha < 0.99f) {
     vec3f surfaceColor;
 
-    if (numHits < 1)
+    if (hit.sample == self->isovalues[0])
       surfaceColor = make_vec3f(1.f, 0.f, 0.f);
-    else if (numHits < 2)
+    else if (hit.sample == self->isovalues[1])
       surfaceColor = make_vec3f(0.f, 1.f, 0.f);
     else
       surfaceColor = make_vec3f(0.f, 0.f, 1.f);
@@ -79,4 +82,12 @@ export void *uniform HitIterator_create()
   HitIterator *uniform self = uniform new HitIterator;
   self->super.renderPixel   = HitIterator_renderPixel;
   return self;
+}
+
+export void *uniform HitIterator_set(void *uniform _self,
+                                     const float *uniform isovalues)
+{
+  HitIterator *uniform self = (HitIterator * uniform) _self;
+
+  self->isovalues = isovalues;
 }

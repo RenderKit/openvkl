@@ -98,6 +98,9 @@ namespace openvkl {
         vklSamplesMaskSetValues(samplesMask, numValues, values);
         vklCommit((VKLObject)samplesMask);
       }
+
+      renderer->setParam<const float*>("isovalues", values);
+      renderer->commit();
     }
 
     void VKLWindow::savePPM(const std::string &filename)

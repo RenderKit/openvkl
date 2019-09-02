@@ -30,18 +30,59 @@ namespace openvkl {
     {
       Renderer::commit();
 
-      isovalues    = getParam<float *>("isovalues", nullptr);
+      isovalues    = getParam<const float *>("isovalues", nullptr);
       numIsovalues = getParam<int>("numIsovalues", 0);
+
+      ispc::HitIterator_set(ispcEquivalent, isovalues);
     }
 
     vec3f HitIterator::renderPixel(VKLVolume volume,
                                    const box3f &volumeBounds,
-                                   VKLSamplesMask,
+                                   VKLSamplesMask samplesMask,
                                    Ray &ray,
                                    const vec4i &)
     {
-      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
-      return ray.t.empty() ? vec3f(0.f) : vec3f(0.f, 0.f, 1.f);
+      vec3f color(0.f);
+      float alpha = 0.f;
+
+      if (samplesMask == nullptr)
+        return color;
+
+      // create volume iterator
+      vkl_range1f tRange;
+      tRange.lower = ray.t.lower;
+      tRange.upper = ray.t.upper;
+
+      VKLHitIterator iterator;
+      vklInitHitIterator(&iterator,
+                         volume,
+                         (vkl_vec3f *)&ray.org,
+                         (vkl_vec3f *)&ray.dir,
+                         &tRange,
+                         samplesMask);
+
+      // the current surface hit
+      VKLHit hit;
+
+      int numHits = 0;
+
+      while (vklIterateHit(&iterator, &hit) && alpha < 0.99f && numHits <= 3) {
+        vec3f surfaceColor;
+
+        if (hit.sample == isovalues[0])
+          surfaceColor = vec3f(1.f, 0.f, 0.f);
+        else if (hit.sample == isovalues[1])
+          surfaceColor = vec3f(0.f, 1.f, 0.f);
+        else
+          surfaceColor = vec3f(0.f, 0.f, 1.f);
+
+        color = color + (1.f - alpha) * surfaceColor;
+        alpha = alpha + (1.f - alpha) * 0.25f;
+
+        numHits++;
+      }
+
+      return color;
     }
 
   }  // namespace examples

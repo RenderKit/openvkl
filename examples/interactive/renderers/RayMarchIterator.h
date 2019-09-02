@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018 Intel Corporation                                         //
+// Copyright 2019 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,58 +16,26 @@
 
 #pragma once
 
-#include "ArcballCamera.h"
-#include "renderers/Renderer.h"
-// ospcommon
-#include "ospcommon/math/box.h"
-// std
-#include <string>
+#include "Renderer.h"
 
 namespace openvkl {
   namespace examples {
 
-    class VKLWindow
+    struct RayMarchIterator : public Renderer
     {
-     public:
-      VKLWindow(const vec2i &windowSize,
-                const box3f &volumeBounds,
-                VKLVolume volume,
-                VKLSamplesMask mask,
-                std::string rendererType);
+      RayMarchIterator();
+      ~RayMarchIterator() override = default;
 
-      virtual ~VKLWindow();
+      void commit() override;
 
-      void render();
+      vec3f renderPixel(VKLVolume volume,
+                        const box3f &volumeBounds,
+                        VKLSamplesMask mask,
+                        Ray &ray,
+                        const vec4i &sampleID) override;
 
-      Renderer &currentRenderer();
-
-      void resetAccumulation();
-
-      void resetCamera();
-
-      void setUseISPC(bool enabled);
-
-      void setIsovalues(int numValues, const float *values);
-
-      void setLimitedSamplesMask(bool enabled);
-
-      void savePPM(const std::string &filename);
-
-     protected:
-      virtual void reshape(const vec2i &newWindowSize);
-
-      void updateCamera();
-
-      bool useISPC{true};
-
-      vec2i windowSize;
-      box3f volumeBounds;
-      VKLVolume volume{nullptr};
-      VKLSamplesMask samplesMask{nullptr};
-
-      std::unique_ptr<Renderer> renderer;
-
-      ArcballCamera arcballCamera;
+     private:
+      float samplingRate{1.f};
     };
 
   }  // namespace examples

@@ -47,6 +47,8 @@ openvkl_add_library_ispc(vkl_example_renderers STATIC
   renderers/HitIterator.ispc
   renderers/IntersectBounds.cpp
   renderers/IntersectBounds.ispc
+  renderers/RayMarchIterator.cpp
+  renderers/RayMarchIterator.ispc
 )
 
 target_link_libraries(vkl_example_renderers PUBLIC openvkl ospcommon::ospcommon)

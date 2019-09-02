@@ -40,6 +40,13 @@ bool addSamplingRateUI(GLFWVKLWindow &window)
     renderer.commit();
     return true;
   }
+
+  static bool limitedMask = false;
+  if (ImGui::Checkbox("set subset of values", &limitedMask)) {
+    window.setLimitedSamplesMask(limitedMask);
+    return true;
+  }
+
   return false;
 }
 
@@ -159,7 +166,8 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
 void usage(const char *progname)
 {
   std::cerr << "usage: " << progname << "\n"
-            << "\t-renderer density_pathtracer | hit_iterator\n"
+            << "\t-renderer density_pathtracer | hit_iterator |"
+               " ray_march_iterator\n"
                "\t-gridType structured_regular\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
@@ -318,9 +326,10 @@ int main(int argc, const char **argv)
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
 
-    static bool useISPC = false;
-    if (ImGui::Checkbox("useISPC", &useISPC)) {
+    static bool useISPC = true;
+    if (ImGui::Checkbox("use ISPC version", &useISPC)) {
       glfwVKLWindow->setUseISPC(useISPC);
+      changed = true;
     }
 
     static int spp = 1;
@@ -329,8 +338,7 @@ int main(int argc, const char **argv)
       renderer.commit();
     }
 
-    if (rendererType == "vkl_iterator" ||
-        rendererType == "vkl_interval_iterator") {
+    if (rendererType == "ray_march_iterator") {
       changed |= addSamplingRateUI(*glfwVKLWindow);
     }
 

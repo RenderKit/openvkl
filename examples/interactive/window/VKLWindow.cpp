@@ -24,6 +24,7 @@
 #include "renderers/DensityPathTracer.h"
 #include "renderers/HitIterator.h"
 #include "renderers/IntersectBounds.h"
+#include "renderers/RayMarchIterator.h"
 
 namespace openvkl {
   namespace examples {
@@ -41,12 +42,27 @@ namespace openvkl {
     {
       if (rendererType == "hit_iterator")
         renderer = std::unique_ptr<Renderer>(new HitIterator);
+      else if (rendererType == "ray_march_iterator")
+        renderer = std::unique_ptr<Renderer>(new RayMarchIterator);
       else
         renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
 
       renderer->commit();
 
+      samplesMask = vklNewSamplesMask(volume);
+      vec2f valueRange(0.f, 1.f);
+      vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&valueRange);
+      vklCommit((VKLObject)samplesMask);
+
       reshape(this->windowSize);
+    }
+
+    VKLWindow::~VKLWindow()
+    {
+      if (samplesMask) {
+        vklRelease((VKLObject)samplesMask);
+        samplesMask = nullptr;
+      }
     }
 
     void VKLWindow::render()
@@ -90,8 +106,10 @@ namespace openvkl {
 
     void VKLWindow::setIsovalues(int numValues, const float *values)
     {
-      vklRelease((VKLObject)samplesMask);
-      samplesMask = nullptr;
+      if (samplesMask) {
+        vklRelease((VKLObject)samplesMask);
+        samplesMask = nullptr;
+      }
 
       if (numValues > 0) {
         samplesMask = vklNewSamplesMask(volume);
@@ -99,8 +117,22 @@ namespace openvkl {
         vklCommit((VKLObject)samplesMask);
       }
 
-      renderer->setParam<const float*>("isovalues", values);
+      renderer->setParam<const float *>("isovalues", values);
       renderer->commit();
+    }
+
+    void VKLWindow::setLimitedSamplesMask(bool enabled)
+    {
+      if (samplesMask) {
+        vklRelease((VKLObject)samplesMask);
+        samplesMask = nullptr;
+      }
+
+      samplesMask = vklNewSamplesMask(volume);
+
+      vec2f valueRange = enabled ? vec2f(0.1f, 0.3f) : vec2f(0.f, 1.f);
+      vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&valueRange);
+      vklCommit((VKLObject)samplesMask);
     }
 
     void VKLWindow::savePPM(const std::string &filename)

@@ -21,17 +21,12 @@
 namespace openvkl {
   namespace examples {
 
-    DensityPathTracer::DensityPathTracer()
-    {
-      ispcEquivalent = ispc::DensityPathTracer_create();
-    }
-
-    inline vec3f cartesian(const float phi,
+    static vec3f cartesian(const float phi,
                            const float sinTheta,
                            const float cosTheta)
     {
-      float sinPhi = sin(phi);
-      float cosPhi = cos(phi);
+      float sinPhi = std::sin(phi);
+      float cosPhi = std::cos(phi);
       return vec3f(cosPhi * sinTheta, sinPhi * sinTheta, cosTheta);
     }
 
@@ -39,47 +34,15 @@ namespace openvkl {
     {
       const float phi      = float(two_pi) * s.x;
       const float cosTheta = radius * (1.f - 2.f * s.y);
-      const float sinTheta = 2.f * radius * sqrt(s.y * (1.f - s.y));
+      const float sinTheta = 2.f * radius * std::sqrt(s.y * (1.f - s.y));
       return cartesian(phi, sinTheta, cosTheta);
     }
 
-    bool DensityPathTracer::sampleWoodcock(RNG &rng,
-                                           VKLVolume volume,
-                                           const Ray &ray,
-                                           const range1f &hits,
-                                           float &t,
-                                           float &sample,
-                                           float &transmittance)
+    // DensityPathTracer definitions //////////////////////////////////////////
+
+    DensityPathTracer::DensityPathTracer()
     {
-      t = hits.lower;
-
-      const float sigmaMax = sigmaTScale;
-
-      while (true) {
-        vec2f randomNumbers = rng.getFloats();
-
-        t = t + -log(1.f - randomNumbers.x) / sigmaMax;
-
-        if (t > hits.upper) {
-          transmittance = 1.f;
-          return false;
-        }
-
-        const vec3f c = ray.org + t * ray.dir;
-        sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
-
-        // NOTE(jda) - this should scale based on an input value range
-        const float sampleOpacity = sample;
-
-        // sigmaT must be mono-chromatic for Woodcock sampling
-        const float sigmaTSample = sigmaMax * sampleOpacity;
-
-        if (randomNumbers.y < sigmaTSample / sigmaMax)
-          break;
-      }
-
-      transmittance = 0.f;
-      return true;
+      ispcEquivalent = ispc::DensityPathTracer_create();
     }
 
     void DensityPathTracer::commit()
@@ -97,6 +60,45 @@ namespace openvkl {
                                   sigmaSScale,
                                   maxNumScatters,
                                   ambientLightIntensity);
+    }
+
+    bool DensityPathTracer::sampleWoodcock(RNG &rng,
+                                           VKLVolume volume,
+                                           const Ray &ray,
+                                           const range1f &hits,
+                                           float &t,
+                                           float &sample,
+                                           float &transmittance)
+    {
+      t = hits.lower;
+
+      const float sigmaMax = sigmaTScale;
+
+      while (true) {
+        vec2f randomNumbers = rng.getFloats();
+
+        t = t + -std::log(1.f - randomNumbers.x) / sigmaMax;
+
+        if (t > hits.upper) {
+          transmittance = 1.f;
+          return false;
+        }
+
+        const vec3f c = ray.org + t * ray.dir;
+        sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
+
+        const float sampleOpacity =
+            (sample * voxelRange.size()) + voxelRange.lower;
+
+        // sigmaT must be mono-chromatic for Woodcock sampling
+        const float sigmaTSample = sigmaMax * sampleOpacity;
+
+        if (randomNumbers.y < sigmaTSample / sigmaMax)
+          break;
+      }
+
+      transmittance = 0.f;
+      return true;
     }
 
     void DensityPathTracer::integrate(RNG &rng,
@@ -133,8 +135,6 @@ namespace openvkl {
 
       const vec3f c = ray.org + t * ray.dir;
 
-      const vec3f sampleColor(1.f);
-
       const float sampleOpacity =
           (sample * voxelRange.size()) + voxelRange.lower;
 
@@ -151,7 +151,7 @@ namespace openvkl {
                 inscatteredLe,
                 scatterIndex + 1);
 
-      const vec3f sigmaSSample = sigmaSScale * sampleColor * sampleOpacity;
+      const vec3f sigmaSSample(sigmaSScale  * sampleOpacity);
 
       Le = Le + sigmaSSample * inscatteredLe;
     }

@@ -77,9 +77,8 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
 
-    if (randomNumbers.y < sigmaTSample / sigmaMax) {
+    if (randomNumbers.y < sigmaTSample / sigmaMax)
       break;
-    }
   }
 
   transmittance = 0.f;
@@ -109,10 +108,8 @@ inline static void integrate(DensityPathTracer *uniform self,
 
   if (!sampleWoodcock(
           self, rng, volume, ray, tBox0, tBox1, t, sample, transmittance)) {
-    // light is not directly visible
-    if (scatterIndex == 0) {
-      return;
-    }
+    if (scatterIndex == 0)
+      return; // light is not directly visible
 
     // ambient light
     Le = Le + transmittance * make_vec3f(self->ambientLightIntensity);
@@ -123,9 +120,8 @@ inline static void integrate(DensityPathTracer *uniform self,
   // new scattering event at sample point
   scatterIndex++;
 
-  if (scatterIndex > self->maxNumScatters) {
+  if (scatterIndex > self->maxNumScatters)
     return;
-  }
 
   const vec3f c = ray.org + t * ray.dir;
 

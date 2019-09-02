@@ -126,17 +126,15 @@ namespace openvkl {
                                     ray,
                                     vec4i(pixel.x, pixel.y, frameID, fbDims.x));
 
-          auto index = pixelIndices.flatten(pixel);
-
-          float &ar = accum_r[index];
-          float &ag = accum_g[index];
-          float &ab = accum_b[index];
+          float &ar = accum_r[i];
+          float &ag = accum_g[i];
+          float &ab = accum_b[i];
 
           ar += color.x;
           ag += color.y;
           ab += color.z;
 
-          framebuffer[index] = vec3f(ar, ag, ab) * accumScale;
+          framebuffer[i] = vec3f(ar, ag, ab) * accumScale;
         });
 
         frameID++;

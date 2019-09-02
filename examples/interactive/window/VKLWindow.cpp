@@ -41,15 +41,19 @@ namespace openvkl {
           samplesMask(m),
           arcballCamera(volumeBounds, windowSize)
     {
-      if (rendererType == "hit_iterator")
-        renderer = std::unique_ptr<Renderer>(new HitIterator);
-      else if (rendererType == "ray_march_iterator")
-        renderer = std::unique_ptr<Renderer>(new RayMarchIterator);
-      else
-        renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
+      renderer_hit_iterator = std::unique_ptr<Renderer>(new HitIterator);
+      renderer_ray_marcher  = std::unique_ptr<Renderer>(new RayMarchIterator);
+      renderer_pathtracer   = std::unique_ptr<Renderer>(new DensityPathTracer);
 
-      renderer->setParam<range1f>("voxelRange", voxelRange);
-      renderer->commit();
+      setActiveRenderer(rendererType);
+
+      renderer_hit_iterator->setParam<range1f>("voxelRange", voxelRange);
+      renderer_ray_marcher->setParam<range1f>("voxelRange", voxelRange);
+      renderer_pathtracer->setParam<range1f>("voxelRange", voxelRange);
+
+      renderer_hit_iterator->commit();
+      renderer_ray_marcher->commit();
+      renderer_pathtracer->commit();
 
       samplesMask = vklNewSamplesMask(volume);
       vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&voxelRange);
@@ -115,6 +119,8 @@ namespace openvkl {
       if (numValues > 0) {
         samplesMask = vklNewSamplesMask(volume);
         vklSamplesMaskSetValues(samplesMask, numValues, values);
+        vklSamplesMaskSetRanges(
+            samplesMask, 1, (const vkl_range1f *)&voxelRange);
         vklCommit((VKLObject)samplesMask);
       }
 
@@ -146,11 +152,25 @@ namespace openvkl {
       utility::writePFM(filename, windowSize.x, windowSize.y, fb.data());
     }
 
+    void VKLWindow::setActiveRenderer(const std::string &rendererType)
+    {
+      if (rendererType == "hit_iterator")
+        renderer = renderer_hit_iterator.get();
+      else if (rendererType == "ray_march_iterator")
+        renderer = renderer_ray_marcher.get();
+      else
+        renderer = renderer_pathtracer.get();
+
+      updateCamera();
+    }
+
     void VKLWindow::reshape(const vec2i &newWindowSize)
     {
       windowSize = newWindowSize;
 
-      renderer->setFrameSize(windowSize);
+      renderer_hit_iterator->setFrameSize(windowSize);
+      renderer_ray_marcher->setFrameSize(windowSize);
+      renderer_pathtracer->setFrameSize(windowSize);
 
       // update camera
       arcballCamera.updateWindowSize(windowSize);

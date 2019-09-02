@@ -54,6 +54,8 @@ namespace openvkl {
 
       void savePPM(const std::string &filename);
 
+      void setActiveRenderer(const std::string &rendererType);
+
      protected:
       virtual void reshape(const vec2i &newWindowSize);
 
@@ -69,7 +71,11 @@ namespace openvkl {
 
       VKLSamplesMask samplesMask{nullptr};
 
-      std::unique_ptr<Renderer> renderer;
+      Renderer *renderer;
+
+      std::unique_ptr<Renderer> renderer_hit_iterator;
+      std::unique_ptr<Renderer> renderer_ray_marcher;
+      std::unique_ptr<Renderer> renderer_pathtracer;
 
       ArcballCamera arcballCamera;
     };

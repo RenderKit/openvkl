@@ -320,7 +320,6 @@ int main(int argc, const char **argv)
   std::cout << "voxelType:      " << voxelTypeString << std::endl;
   std::cout << "voxelRange:     " << voxelRange.toVec2() << std::endl;
 
-
   auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(vec2i{1024, 1024},
                                                              (box3f &)bounds,
                                                              volume,
@@ -332,6 +331,27 @@ int main(int argc, const char **argv)
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
+
+    static int whichRenderer = 0;
+    if (ImGui::Combo("renderer",
+                     &whichRenderer,
+                     "pathtracer\0hit_iterator\0ray_march_iterator\0\0")) {
+      switch (whichRenderer) {
+      case 0:
+        rendererType = "density_pathtracer";
+        break;
+      case 1:
+        rendererType = "hit_iterator";
+        break;
+      case 2:
+        rendererType = "ray_march_iterator";
+        break;
+      default:
+        break;
+      }
+
+      glfwVKLWindow->setActiveRenderer(rendererType);
+    }
 
     static bool useISPC = true;
     if (ImGui::Checkbox("use ISPC version", &useISPC)) {

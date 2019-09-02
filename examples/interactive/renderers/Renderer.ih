@@ -43,6 +43,8 @@ struct Renderer
 
   int frameID;
 
+  vec2f voxelRange;
+
   vec3f (*uniform renderPixel)(uniform Renderer *uniform self,
                                uniform VKLVolume volume,
                                const uniform box3f &volumeBounds,

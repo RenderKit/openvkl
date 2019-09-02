@@ -134,8 +134,9 @@ namespace openvkl {
       const vec3f c = ray.org + t * ray.dir;
 
       const vec3f sampleColor(1.f);
-      // NOTE(jda) - this should scale based on an input value range
-      const float sampleOpacity = sample;
+
+      const float sampleOpacity =
+          (sample * voxelRange.size()) + voxelRange.lower;
 
       Ray scatteringRay;
       scatteringRay.t   = range1f(0.f, inf);

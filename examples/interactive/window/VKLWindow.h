@@ -32,6 +32,7 @@ namespace openvkl {
       VKLWindow(const vec2i &windowSize,
                 const box3f &volumeBounds,
                 VKLVolume volume,
+                const range1f &voxelRange,
                 VKLSamplesMask mask,
                 std::string rendererType);
 
@@ -63,6 +64,9 @@ namespace openvkl {
       vec2i windowSize;
       box3f volumeBounds;
       VKLVolume volume{nullptr};
+
+      range1f voxelRange;
+
       VKLSamplesMask samplesMask{nullptr};
 
       std::unique_ptr<Renderer> renderer;

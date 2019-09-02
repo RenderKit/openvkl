@@ -31,11 +31,13 @@ namespace openvkl {
     VKLWindow::VKLWindow(const vec2i &windowSize,
                          const box3f &volumeBounds,
                          VKLVolume v,
+                         const range1f &vRange,
                          VKLSamplesMask m,
                          std::string rendererType)
         : windowSize(windowSize),
           volumeBounds(volumeBounds),
           volume(v),
+          voxelRange(vRange),
           samplesMask(m),
           arcballCamera(volumeBounds, windowSize)
     {
@@ -46,11 +48,11 @@ namespace openvkl {
       else
         renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
 
+      renderer->setParam<range1f>("voxelRange", voxelRange);
       renderer->commit();
 
       samplesMask = vklNewSamplesMask(volume);
-      vec2f valueRange(0.f, 1.f);
-      vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&valueRange);
+      vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&voxelRange);
       vklCommit((VKLObject)samplesMask);
 
       reshape(this->windowSize);
@@ -129,7 +131,11 @@ namespace openvkl {
 
       samplesMask = vklNewSamplesMask(volume);
 
-      vec2f valueRange = enabled ? vec2f(0.1f, 0.3f) : vec2f(0.f, 1.f);
+      float voxelRangeSize = voxelRange.size();
+      range1f scaledRange((0.1 * voxelRangeSize) + voxelRange.lower,
+                          (0.3 * voxelRangeSize) + voxelRange.lower);
+
+      vec2f valueRange = (enabled ? scaledRange : voxelRange).toVec2();
       vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&valueRange);
       vklCommit((VKLObject)samplesMask);
     }

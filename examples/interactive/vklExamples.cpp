@@ -266,13 +266,6 @@ int main(int argc, const char **argv)
     gridSpacing = vec3f(2.f * normalizedGridSpacing);
   }
 
-  std::cout << "renderer:       " << rendererType << std::endl;
-  std::cout << "gridType:       " << gridType << std::endl;
-  std::cout << "gridDimensions: " << dimensions << std::endl;
-  std::cout << "gridOrigin:     " << gridOrigin << std::endl;
-  std::cout << "gridSpacing:    " << gridSpacing << std::endl;
-  std::cout << "voxelType:      " << voxelTypeString << std::endl;
-
   initializeOpenVKL();
 
   std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
@@ -317,9 +310,23 @@ int main(int argc, const char **argv)
 
   VKLVolume volume = testingStructuredVolume->getVKLVolume();
   auto bounds      = vklGetBoundingBox(volume);
+  auto voxelRange  = testingStructuredVolume->getVoxelRange();
 
-  auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
-      vec2i{1024, 1024}, (box3f &)bounds, volume, nullptr, rendererType);
+  std::cout << "renderer:       " << rendererType << std::endl;
+  std::cout << "gridType:       " << gridType << std::endl;
+  std::cout << "gridDimensions: " << dimensions << std::endl;
+  std::cout << "gridOrigin:     " << gridOrigin << std::endl;
+  std::cout << "gridSpacing:    " << gridSpacing << std::endl;
+  std::cout << "voxelType:      " << voxelTypeString << std::endl;
+  std::cout << "voxelRange:     " << voxelRange.toVec2() << std::endl;
+
+
+  auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(vec2i{1024, 1024},
+                                                             (box3f &)bounds,
+                                                             volume,
+                                                             voxelRange,
+                                                             nullptr,
+                                                             rendererType);
 
   auto &renderer = glfwVKLWindow->currentRenderer();
 

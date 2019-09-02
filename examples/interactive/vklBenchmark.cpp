@@ -41,9 +41,10 @@ static void volume_render_wavelet(benchmark::State &state,
   VKLVolume volume    = proceduralVolume->getVKLVolume();
   VKLSamplesMask mask = vklNewSamplesMask(volume);
   auto bounds         = vklGetBoundingBox(volume);
+  auto voxelRange     = proceduralVolume->getVoxelRange();
 
   auto ow = ospcommon::make_unique<VKLWindow>(
-      windowSize, (box3f &)bounds, volume, mask, rendererType);
+      windowSize, (box3f &)bounds, volume, voxelRange, mask, rendererType);
 
   for (auto _ : state) {
     ow->render();

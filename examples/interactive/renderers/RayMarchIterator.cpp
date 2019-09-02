@@ -28,6 +28,8 @@ namespace openvkl {
 
     void RayMarchIterator::commit()
     {
+      Renderer::commit();
+
       samplingRate = getParam<float>("samplingRate", 1.f);
 
       ispc::RayMarchIterator_set(ispcEquivalent, samplingRate);
@@ -59,8 +61,7 @@ namespace openvkl {
       VKLInterval interval;
 
       while (vklIterateInterval(&iterator, &interval) && alpha < 0.99f) {
-        const float nominalSamplingDt =
-            interval.nominalDeltaT / samplingRate;
+        const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
         // initial sub interval, based on our renderer-defined sampling rate
         // and the volume's nominal dt
@@ -79,8 +80,8 @@ namespace openvkl {
           float sample = vklComputeSample(volume, (vkl_vec3f *)&c);
 
           vec3f sampleColor(1.f);
-          // NOTE(jda) - this should scale based on an input value range
-          const float sampleOpacity = sample;
+          const float sampleOpacity =
+              (sample * voxelRange.size()) + voxelRange.lower;
 
           // accumulate contribution
           const float clampedOpacity = clamp(sampleOpacity * dt);

@@ -99,6 +99,7 @@ namespace openvkl {
 
       // Renderer data //
       void *ispcEquivalent{nullptr};
+      range1f voxelRange;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

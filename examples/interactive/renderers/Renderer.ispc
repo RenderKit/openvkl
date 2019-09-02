@@ -57,6 +57,14 @@ export void Renderer_setFrameID(void *uniform _self, uniform int frameID)
   self->frameID = frameID;
 }
 
+export void Renderer_setVoxelRange(void *uniform _self,
+                                   uniform vec2f &voxelRange)
+{
+  Renderer *uniform self = (Renderer * uniform) _self;
+
+  self->voxelRange = voxelRange;
+}
+
 export void Renderer_renderPixel(void *uniform _self,
                                  void *uniform _volume,
                                  const uniform box3f &volumeBounds,

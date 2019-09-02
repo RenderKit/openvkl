@@ -32,9 +32,11 @@ namespace openvkl {
     GLFWVKLWindow::GLFWVKLWindow(const vec2i &windowSize,
                                  const box3f &volumeBounds,
                                  VKLVolume volume,
+                                 const range1f &vRange,
                                  VKLSamplesMask mask,
                                  std::string rendererType)
-        : VKLWindow(windowSize, volumeBounds, volume, mask, rendererType)
+        : VKLWindow(
+              windowSize, volumeBounds, volume, vRange, mask, rendererType)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("Cannot create more than one VKLWindow!");

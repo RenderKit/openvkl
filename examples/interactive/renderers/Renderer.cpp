@@ -27,13 +27,16 @@ namespace openvkl {
 
     Renderer::~Renderer()
     {
-      if (ispcEquivalent)
-        ispc::Renderer_freeRenderer(ispcEquivalent);
+      ispc::Renderer_freeRenderer(ispcEquivalent);
     }
 
     void Renderer::commit()
     {
-      spp = getParam<int>("spp", 1);
+      spp        = getParam<int>("spp", 1);
+      voxelRange = getParam<range1f>("voxelRange", range1f(0.f, 1.f));
+
+      auto range = voxelRange.toVec2();
+      ispc::Renderer_setVoxelRange(ispcEquivalent, (ispc::vec2f &)range);
     }
 
     void Renderer::setCamera(const vec3f &pos,
@@ -55,9 +58,6 @@ namespace openvkl {
 
       dir_00 = dir - .5f * dir_du - .5f * dir_dv;
 
-      if (!ispcEquivalent)
-        return;
-
       ispc::Renderer_setCamera(ispcEquivalent,
                                (ispc::vec3f &)camPos,
                                (ispc::vec3f &)dir_00,
@@ -74,9 +74,6 @@ namespace openvkl {
       accum_r.resize(numPixels);
       accum_g.resize(numPixels);
       accum_b.resize(numPixels);
-
-      if (!ispcEquivalent)
-        return;
 
       ispc::Renderer_setFrameBuffer(ispcEquivalent,
                                     (ispc::vec3f *)framebuffer.data(),
@@ -96,9 +93,6 @@ namespace openvkl {
       std::fill(accum_g.begin(), accum_g.end(), 0.f);
       std::fill(accum_b.begin(), accum_b.end(), 0.f);
       frameID = 0;
-
-      if (!ispcEquivalent)
-        return;
 
       ispc::Renderer_setFrameID(ispcEquivalent, frameID);
     }

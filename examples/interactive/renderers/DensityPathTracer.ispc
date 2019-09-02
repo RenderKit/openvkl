@@ -71,7 +71,9 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     const vec3f c = ray.org + t * ray.dir;
     sample        = vklComputeSampleV(volume, (varying vkl_vec3f *)&c);
 
-    const float sampleOpacity = sample;
+    const float sampleOpacity =
+        (sample * (self->super.voxelRange.y - self->super.voxelRange.x)) +
+        self->super.voxelRange.x;
 
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
@@ -128,7 +130,9 @@ inline static void integrate(DensityPathTracer *uniform self,
 
   const vec3f c = ray.org + t * ray.dir;
 
-  const float sampleOpacity = sample;
+  const float sampleOpacity =
+      (sample * (self->super.voxelRange.y - self->super.voxelRange.x)) +
+      self->super.voxelRange.x;
 
   Ray scatteringRay;
   scatteringRay.tnear = 0.f;

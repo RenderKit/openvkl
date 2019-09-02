@@ -20,6 +20,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ospcommon
+#include "ospcommon/math/range.h"
 #include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
@@ -82,15 +83,17 @@ namespace openvkl {
 
       virtual ~TestingStructuredVolume();
 
-      inline VKLDataType getVoxelType() const;
+      VKLDataType getVoxelType() const;
 
-      inline vec3i getDimensions() const;
+      vec3i getDimensions() const;
 
-      inline vec3f getGridOrigin() const;
+      vec3f getGridOrigin() const;
 
-      inline vec3f getGridSpacing() const;
+      vec3f getGridSpacing() const;
 
-      inline VKLVolume getVKLVolume();
+      range1f getVoxelRange() const;
+
+      VKLVolume getVKLVolume();
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
@@ -103,6 +106,8 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
+
+      range1f voxelRange;
 
       VKLDataType voxelType;
 
@@ -150,6 +155,11 @@ namespace openvkl {
     inline vec3f TestingStructuredVolume::getGridSpacing() const
     {
       return gridSpacing;
+    }
+
+    inline range1f TestingStructuredVolume::getVoxelRange() const
+    {
+      return voxelRange;
     }
 
     inline VKLVolume TestingStructuredVolume::getVKLVolume()

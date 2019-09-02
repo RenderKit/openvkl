@@ -16,8 +16,10 @@
 
 #pragma once
 
-#include <fstream>
 #include "TestingStructuredVolume.h"
+// std
+#include <algorithm>
+#include <fstream>
 
 using namespace ospcommon;
 
@@ -36,6 +38,9 @@ namespace openvkl {
       std::vector<unsigned char> generateVoxels() override;
 
      private:
+      template <typename T>
+      void computeVoxelRange(const void *data, size_t numValues);
+
       std::string filename;
     };
 
@@ -56,7 +61,8 @@ namespace openvkl {
 
     inline std::vector<unsigned char> RawFileStructuredVolume::generateVoxels()
     {
-      std::vector<unsigned char> voxels(longProduct(this->dimensions) *
+      auto numValues = longProduct(this->dimensions);
+      std::vector<unsigned char> voxels(numValues *
                                         sizeOfVKLDataType(voxelType));
 
       std::ifstream input(filename, std::ios::binary);
@@ -72,7 +78,30 @@ namespace openvkl {
         throw std::runtime_error("error reading raw volume file");
       }
 
+      if (voxelType == VKL_UCHAR)
+        computeVoxelRange<unsigned char>(voxels.data(), numValues);
+      else if (voxelType == VKL_SHORT)
+        computeVoxelRange<short>(voxels.data(), numValues);
+      else if (voxelType == VKL_USHORT)
+        computeVoxelRange<unsigned short>(voxels.data(), numValues);
+      else if (voxelType == VKL_FLOAT)
+        computeVoxelRange<float>(voxels.data(), numValues);
+      else if (voxelType == VKL_DOUBLE)
+        computeVoxelRange<double>(voxels.data(), numValues);
+
       return voxels;
+    }
+
+    template <typename T>
+    inline void RawFileStructuredVolume::computeVoxelRange(const void *data,
+                                                           size_t numValues)
+    {
+      const T *voxelsTyped = (const T *)data;
+
+      auto minmax = std::minmax_element(voxelsTyped, voxelsTyped + numValues);
+
+      voxelRange.lower = *minmax.first;
+      voxelRange.upper = *minmax.second;
     }
 
   }  // namespace testing

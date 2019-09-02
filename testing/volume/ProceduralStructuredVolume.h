@@ -16,12 +16,15 @@
 
 #pragma once
 
-#include <vector>
 #include "TestingStructuredVolume.h"
+// openvkl
 #include "openvkl/openvkl.h"
 // ospcommon
 #include "ospcommon/math/vec.h"
 #include "ospcommon/tasking/parallel_for.h"
+// std
+#include <algorithm>
+#include <vector>
 
 using namespace ospcommon;
 
@@ -36,7 +39,7 @@ namespace openvkl {
                                  const vec3f &gridOrigin,
                                  const vec3f &gridSpacing);
 
-      inline VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
+      VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
 
       std::vector<unsigned char> generateVoxels() override;
     };
@@ -73,8 +76,8 @@ namespace openvkl {
                                volumeSamplingFunction>::generateVoxels()
     {
       {
-        std::vector<unsigned char> voxels(longProduct(this->dimensions) *
-                                          sizeof(VOXEL_TYPE));
+        auto numValues = longProduct(this->dimensions);
+        std::vector<unsigned char> voxels(numValues * sizeof(VOXEL_TYPE));
 
         VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
 
@@ -92,6 +95,11 @@ namespace openvkl {
             }
           }
         });
+
+        auto minmax = std::minmax_element(voxelsTyped, voxelsTyped + numValues);
+
+        voxelRange.lower = *minmax.first;
+        voxelRange.upper = *minmax.second;
 
         return voxels;
       }

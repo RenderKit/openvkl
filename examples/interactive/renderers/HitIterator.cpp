@@ -64,9 +64,7 @@ namespace openvkl {
       // the current surface hit
       VKLHit hit;
 
-      int numHits = 0;
-
-      while (vklIterateHit(&iterator, &hit) && alpha < 0.99f && numHits <= 3) {
+      while (vklIterateHit(&iterator, &hit) && alpha < 0.99f) {
         vec3f surfaceColor;
 
         if (hit.sample == isovalues[0])
@@ -78,8 +76,6 @@ namespace openvkl {
 
         color = color + (1.f - alpha) * surfaceColor;
         alpha = alpha + (1.f - alpha) * 0.25f;
-
-        numHits++;
       }
 
       return color;

@@ -56,8 +56,6 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
   // the current surface hit
   VKLHit hit;
 
-  int numHits = 0;
-
   while (vklIterateHitV(&iterator, &hit) && alpha < 0.99f) {
     vec3f surfaceColor;
 
@@ -70,8 +68,6 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
 
     color = color + (1.f - alpha) * surfaceColor;
     alpha = alpha + (1.f - alpha) * 0.25f;
-
-    numHits++;
   }
 
   return color;

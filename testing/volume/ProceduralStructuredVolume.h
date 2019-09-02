@@ -34,48 +34,68 @@ namespace openvkl {
     {
       ProceduralStructuredVolume(const vec3i &dimensions,
                                  const vec3f &gridOrigin,
-                                 const vec3f &gridSpacing)
-          : TestingStructuredVolume("structured_regular",
-                                    dimensions,
-                                    gridOrigin,
-                                    gridSpacing,
-                                    getVKLDataType<VOXEL_TYPE>())
-      {
-      }
+                                 const vec3f &gridSpacing);
 
-      inline VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates)
-      {
-        return volumeSamplingFunction(objectCoordinates);
-      }
+      inline VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
 
-      std::vector<unsigned char> generateVoxels() override
-      {
-        {
-          std::vector<unsigned char> voxels(longProduct(this->dimensions) *
-                                            sizeof(VOXEL_TYPE));
-
-          VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
-
-          auto transformLocalToObject = [&](const vec3f &localCoordinates) {
-            return this->gridOrigin + localCoordinates * this->gridSpacing;
-          };
-
-          ospcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
-            for (size_t y = 0; y < this->dimensions.y; y++) {
-              for (size_t x = 0; x < this->dimensions.x; x++) {
-                size_t index = z * this->dimensions.y * this->dimensions.x +
-                               y * this->dimensions.x + x;
-                vec3f objectCoordinates =
-                    transformLocalToObject(vec3f(x, y, z));
-                voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
-              }
-            }
-          });
-
-          return voxels;
-        }
-      }
+      std::vector<unsigned char> generateVoxels() override;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
+    inline ProceduralStructuredVolume<VOXEL_TYPE, volumeSamplingFunction>::
+        ProceduralStructuredVolume(const vec3i &dimensions,
+                                   const vec3f &gridOrigin,
+                                   const vec3f &gridSpacing)
+        : TestingStructuredVolume("structured_regular",
+                                  dimensions,
+                                  gridOrigin,
+                                  gridSpacing,
+                                  getVKLDataType<VOXEL_TYPE>())
+    {
+    }
+
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
+    inline VOXEL_TYPE
+    ProceduralStructuredVolume<VOXEL_TYPE, volumeSamplingFunction>::
+        computeProceduralValue(const vec3f &objectCoordinates)
+    {
+      return volumeSamplingFunction(objectCoordinates);
+    }
+
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
+    inline std::vector<unsigned char>
+    ProceduralStructuredVolume<VOXEL_TYPE,
+                               volumeSamplingFunction>::generateVoxels()
+    {
+      {
+        std::vector<unsigned char> voxels(longProduct(this->dimensions) *
+                                          sizeof(VOXEL_TYPE));
+
+        VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
+
+        auto transformLocalToObject = [&](const vec3f &localCoordinates) {
+          return this->gridOrigin + localCoordinates * this->gridSpacing;
+        };
+
+        ospcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
+          for (size_t y = 0; y < this->dimensions.y; y++) {
+            for (size_t x = 0; x < this->dimensions.x; x++) {
+              size_t index = z * this->dimensions.y * this->dimensions.x +
+                             y * this->dimensions.x + x;
+              vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
+              voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
+            }
+          }
+        });
+
+        return voxels;
+      }
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Procedural volume types ////////////////////////////////////////////////

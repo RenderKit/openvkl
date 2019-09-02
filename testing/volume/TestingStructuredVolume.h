@@ -17,7 +17,9 @@
 #pragma once
 
 #include <vector>
+// openvkl
 #include "openvkl/openvkl.h"
+// ospcommon
 #include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
@@ -76,76 +78,26 @@ namespace openvkl {
                               const vec3i &dimensions,
                               const vec3f &gridOrigin,
                               const vec3f &gridSpacing,
-                              VKLDataType voxelType)
-          : gridType(gridType),
-            dimensions(dimensions),
-            gridOrigin(gridOrigin),
-            gridSpacing(gridSpacing),
-            voxelType(voxelType)
-      {
-      }
+                              VKLDataType voxelType);
 
-      virtual ~TestingStructuredVolume()
-      {
-        if (volume) {
-          vklRelease(volume);
-        }
-      }
+      virtual ~TestingStructuredVolume();
 
-      inline VKLDataType getVoxelType() const
-      {
-        return voxelType;
-      }
+      inline VKLDataType getVoxelType() const;
 
-      inline vec3i getDimensions() const
-      {
-        return dimensions;
-      }
+      inline vec3i getDimensions() const;
 
-      inline vec3f getGridOrigin() const
-      {
-        return gridOrigin;
-      }
+      inline vec3f getGridOrigin() const;
 
-      inline vec3f getGridSpacing() const
-      {
-        return gridSpacing;
-      }
+      inline vec3f getGridSpacing() const;
 
-      inline VKLVolume getVKLVolume()
-      {
-        if (!volume) {
-          generateVKLVolume();
-        }
-
-        return volume;
-      }
+      inline VKLVolume getVKLVolume();
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
       virtual std::vector<unsigned char> generateVoxels() = 0;
 
      protected:
-      void generateVKLVolume()
-      {
-        std::vector<unsigned char> voxels = generateVoxels();
-
-        volume = vklNewVolume(gridType.c_str());
-
-        vklSetVec3i(
-            volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-        vklSetVec3f(
-            volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-        vklSetVec3f(
-            volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-
-        VKLData voxelData =
-            vklNewData(longProduct(dimensions), voxelType, voxels.data());
-        vklSetData(volume, "voxelData", voxelData);
-        vklRelease(voxelData);
-
-        vklCommit(volume);
-      }
+      void generateVKLVolume();
 
       std::string gridType = "structured_reular";
       vec3i dimensions;
@@ -156,6 +108,79 @@ namespace openvkl {
 
       VKLVolume volume{nullptr};
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline TestingStructuredVolume::TestingStructuredVolume(
+        const std::string &gridType,
+        const vec3i &dimensions,
+        const vec3f &gridOrigin,
+        const vec3f &gridSpacing,
+        VKLDataType voxelType)
+        : gridType(gridType),
+          dimensions(dimensions),
+          gridOrigin(gridOrigin),
+          gridSpacing(gridSpacing),
+          voxelType(voxelType)
+    {
+    }
+
+    inline TestingStructuredVolume::~TestingStructuredVolume()
+    {
+      if (volume) {
+        vklRelease(volume);
+      }
+    }
+
+    inline VKLDataType TestingStructuredVolume::getVoxelType() const
+    {
+      return voxelType;
+    }
+
+    inline vec3i TestingStructuredVolume::getDimensions() const
+    {
+      return dimensions;
+    }
+
+    inline vec3f TestingStructuredVolume::getGridOrigin() const
+    {
+      return gridOrigin;
+    }
+
+    inline vec3f TestingStructuredVolume::getGridSpacing() const
+    {
+      return gridSpacing;
+    }
+
+    inline VKLVolume TestingStructuredVolume::getVKLVolume()
+    {
+      if (!volume) {
+        generateVKLVolume();
+      }
+
+      return volume;
+    }
+
+    inline void TestingStructuredVolume::generateVKLVolume()
+    {
+      std::vector<unsigned char> voxels = generateVoxels();
+
+      volume = vklNewVolume(gridType.c_str());
+
+      vklSetVec3i(
+          volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+      vklSetVec3f(
+          volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+      vklSetVec3f(
+          volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
+
+      VKLData voxelData =
+          vklNewData(longProduct(dimensions), voxelType, voxels.data());
+      vklSetData(volume, "voxelData", voxelData);
+      vklRelease(voxelData);
+
+      vklCommit(volume);
+    }
 
   }  // namespace testing
 }  // namespace openvkl

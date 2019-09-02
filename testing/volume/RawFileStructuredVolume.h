@@ -31,38 +31,49 @@ namespace openvkl {
                               const vec3i &dimensions,
                               const vec3f &gridOrigin,
                               const vec3f &gridSpacing,
-                              VKLDataType voxelType)
-          : filename(filename),
-            TestingStructuredVolume(
-                gridType, dimensions, gridOrigin, gridSpacing, voxelType)
-      {
-      }
+                              VKLDataType voxelType);
 
-      std::vector<unsigned char> generateVoxels() override
-      {
-        std::vector<unsigned char> voxels(longProduct(this->dimensions) *
-                                          sizeOfVKLDataType(voxelType));
+      std::vector<unsigned char> generateVoxels() override;
 
-        std::ifstream input(filename, std::ios::binary);
-
-        if (!input) {
-          throw std::runtime_error("error opening raw volume file");
-        }
-
-        input.read(
-            (char *)voxels.data(),
-            longProduct(this->dimensions) * sizeOfVKLDataType(voxelType));
-
-        if (!input.good()) {
-          throw std::runtime_error("error reading raw volume file");
-        }
-
-        return voxels;
-      }
-
-     protected:
+     private:
       std::string filename;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    inline RawFileStructuredVolume::RawFileStructuredVolume(
+        const std::string &filename,
+        const std::string &gridType,
+        const vec3i &dimensions,
+        const vec3f &gridOrigin,
+        const vec3f &gridSpacing,
+        VKLDataType voxelType)
+        : filename(filename),
+          TestingStructuredVolume(
+              gridType, dimensions, gridOrigin, gridSpacing, voxelType)
+    {
+    }
+
+    inline std::vector<unsigned char> RawFileStructuredVolume::generateVoxels()
+    {
+      std::vector<unsigned char> voxels(longProduct(this->dimensions) *
+                                        sizeOfVKLDataType(voxelType));
+
+      std::ifstream input(filename, std::ios::binary);
+
+      if (!input) {
+        throw std::runtime_error("error opening raw volume file");
+      }
+
+      input.read((char *)voxels.data(),
+                 longProduct(this->dimensions) * sizeOfVKLDataType(voxelType));
+
+      if (!input.good()) {
+        throw std::runtime_error("error reading raw volume file");
+      }
+
+      return voxels;
+    }
 
   }  // namespace testing
 }  // namespace openvkl

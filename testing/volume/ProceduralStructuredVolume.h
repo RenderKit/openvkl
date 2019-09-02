@@ -19,7 +19,9 @@
 #include <vector>
 #include "TestingStructuredVolume.h"
 #include "openvkl/openvkl.h"
+// ospcommon
 #include "ospcommon/math/vec.h"
+#include "ospcommon/tasking/parallel_for.h"
 
 using namespace ospcommon;
 
@@ -58,7 +60,7 @@ namespace openvkl {
             return this->gridOrigin + localCoordinates * this->gridSpacing;
           };
 
-          for (size_t z = 0; z < this->dimensions.z; z++) {
+          ospcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
             for (size_t y = 0; y < this->dimensions.y; y++) {
               for (size_t x = 0; x < this->dimensions.x; x++) {
                 size_t index = z * this->dimensions.y * this->dimensions.x +
@@ -68,7 +70,7 @@ namespace openvkl {
                 voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
               }
             }
-          }
+          });
 
           return voxels;
         }

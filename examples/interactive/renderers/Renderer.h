@@ -134,9 +134,9 @@ namespace openvkl {
       return distribution(rng);
     }
 
-    template <typename T>
     struct RandomSTD
     {
+      template <typename T>
       RandomSTD(const T &, const T &) {}
 
       vec2f getFloats()
@@ -145,7 +145,7 @@ namespace openvkl {
       }
     };
 
-    using RNG = RandomSTD<unsigned int>;
+    using RNG = RandomSTD;
 #else
 
     // TEA - Random numbers based on Tiny Encryption Algorithm //

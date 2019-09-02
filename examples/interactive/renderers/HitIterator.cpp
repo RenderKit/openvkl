@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2018 Intel Corporation                                         //
+// Copyright 2019 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,59 +14,35 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "ArcballCamera.h"
-#include "renderers/Renderer.h"
-// ospcommon
-#include "ospcommon/math/box.h"
-// std
-#include <string>
+#include "HitIterator.h"
+// ispc
+#include "HitIterator_ispc.h"
 
 namespace openvkl {
   namespace examples {
 
-    class VKLWindow
+    HitIterator::HitIterator()
     {
-     public:
-      VKLWindow(const vec2i &windowSize,
-                const box3f &volumeBounds,
-                VKLVolume volume,
-                VKLSamplesMask mask,
-                std::string rendererType);
+      ispcEquivalent = ispc::HitIterator_create();
+    }
 
-      virtual ~VKLWindow() = default;
+    void HitIterator::commit()
+    {
+      Renderer::commit();
 
-      void render();
+      isovalues    = getParam<float *>("isovalues", nullptr);
+      numIsovalues = getParam<int>("numIsovalues", 0);
+    }
 
-      Renderer &currentRenderer();
-
-      void resetAccumulation();
-
-      void resetCamera();
-
-      void setUseISPC(bool enabled);
-
-      void setIsovalues(int numValues, const float *values);
-
-      void savePPM(const std::string &filename);
-
-     protected:
-      virtual void reshape(const vec2i &newWindowSize);
-
-      void updateCamera();
-
-      bool useISPC{false};
-
-      vec2i windowSize;
-      box3f volumeBounds;
-      VKLVolume volume{nullptr};
-      VKLSamplesMask samplesMask{nullptr};
-
-      std::unique_ptr<Renderer> renderer;
-
-      ArcballCamera arcballCamera;
-    };
+    vec3f HitIterator::renderPixel(VKLVolume volume,
+                                   const box3f &volumeBounds,
+                                   VKLSamplesMask,
+                                   Ray &ray,
+                                   const vec4i &)
+    {
+      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+      return ray.t.empty() ? vec3f(0.f) : vec3f(0.f, 0.f, 1.f);
+    }
 
   }  // namespace examples
 }  // namespace openvkl

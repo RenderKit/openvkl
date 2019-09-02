@@ -22,6 +22,7 @@
 #include "ospcommon/utility/SaveImage.h"
 
 #include "renderers/DensityPathTracer.h"
+#include "renderers/HitIterator.h"
 #include "renderers/IntersectBounds.h"
 
 namespace openvkl {
@@ -35,12 +36,13 @@ namespace openvkl {
         : windowSize(windowSize),
           volumeBounds(volumeBounds),
           volume(v),
-          mask(m),
+          samplesMask(m),
           arcballCamera(volumeBounds, windowSize)
     {
-      // TODO: create a real renderer based on 'rendererType'
-      // renderer = std::unique_ptr<Renderer>(new IntersectBounds);
-      renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
+      if (rendererType == "hit_iterator")
+        renderer = std::unique_ptr<Renderer>(new HitIterator);
+      else
+        renderer = std::unique_ptr<Renderer>(new DensityPathTracer);
 
       renderer->commit();
 
@@ -50,9 +52,9 @@ namespace openvkl {
     void VKLWindow::render()
     {
       if (useISPC)
-        renderer->renderFrame_ispc(volume, mask);
+        renderer->renderFrame_ispc(volume, samplesMask);
       else
-        renderer->renderFrame(volume, mask);
+        renderer->renderFrame(volume, samplesMask);
     }
 
     Renderer &VKLWindow::currentRenderer()
@@ -84,6 +86,18 @@ namespace openvkl {
     void VKLWindow::setUseISPC(bool enabled)
     {
       useISPC = enabled;
+    }
+
+    void VKLWindow::setIsovalues(int numValues, const float *values)
+    {
+      vklRelease((VKLObject)samplesMask);
+      samplesMask = nullptr;
+
+      if (numValues > 0) {
+        samplesMask = vklNewSamplesMask(volume);
+        vklSamplesMaskSetValues(samplesMask, numValues, values);
+        vklCommit((VKLObject)samplesMask);
+      }
     }
 
     void VKLWindow::savePPM(const std::string &filename)

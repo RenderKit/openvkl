@@ -30,8 +30,10 @@ using namespace ospcommon;
 using namespace openvkl::testing;
 using namespace openvkl::examples;
 
-bool addSamplingRateUI(Renderer &renderer)
+bool addSamplingRateUI(GLFWVKLWindow &window)
 {
+  auto &renderer = window.currentRenderer();
+
   static float samplingRate = 1.f;
   if (ImGui::SliderFloat("samplingRate", &samplingRate, 0.01f, 4.f)) {
     renderer.setParam<float>("samplingRate", samplingRate);
@@ -41,8 +43,10 @@ bool addSamplingRateUI(Renderer &renderer)
   return false;
 }
 
-bool addPathTracerUI(Renderer &renderer)
+bool addPathTracerUI(GLFWVKLWindow &window)
 {
+  auto &renderer = window.currentRenderer();
+
   bool changed = false;
 
   static float sigmaTScale = 1.f;
@@ -83,8 +87,10 @@ bool addPathTracerUI(Renderer &renderer)
   return changed;
 }
 
-bool addIsosurfacesUI(Renderer &renderer)
+bool addIsosurfacesUI(GLFWVKLWindow &window)
 {
+  auto &renderer = window.currentRenderer();
+
   static bool showIsosurfaces = false;
 
   static constexpr int maxNumIsosurfaces = 3;
@@ -139,7 +145,8 @@ bool addIsosurfacesUI(Renderer &renderer)
   }
 
   if (isosurfacesChanged) {
-    std::vector<float> enabledIsovalues;
+    static std::vector<float> enabledIsovalues;
+    enabledIsovalues.clear();
 
     if (showIsosurfaces) {
       for (const auto &isosurface : isosurfaces) {
@@ -149,8 +156,7 @@ bool addIsosurfacesUI(Renderer &renderer)
       }
     }
 
-    renderer.setParam<std::vector<float>>("isovalues", enabledIsovalues);
-    renderer.commit();
+    window.setIsovalues(enabledIsovalues.size(), enabledIsovalues.data());
   }
 
   return isosurfacesChanged;
@@ -159,7 +165,7 @@ bool addIsosurfacesUI(Renderer &renderer)
 void usage(const char *progname)
 {
   std::cerr << "usage: " << progname << "\n"
-            << "\t-renderer density_pathtracer\n"
+            << "\t-renderer density_pathtracer | hit_iterator\n"
                "\t-gridType structured_regular\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
@@ -332,15 +338,15 @@ int main(int argc, const char **argv)
 
     if (rendererType == "vkl_iterator" ||
         rendererType == "vkl_interval_iterator") {
-      changed |= addSamplingRateUI(renderer);
+      changed |= addSamplingRateUI(*glfwVKLWindow);
     }
 
     if (rendererType == "density_pathtracer") {
-      changed |= addPathTracerUI(renderer);
+      changed |= addPathTracerUI(*glfwVKLWindow);
     }
 
-    if (rendererType == "vkl_iterator" || rendererType == "vkl_hit_iterator") {
-      changed |= addIsosurfacesUI(renderer);
+    if (rendererType == "hit_iterator") {
+      changed |= addIsosurfacesUI(*glfwVKLWindow);
     }
 
     if (changed) {

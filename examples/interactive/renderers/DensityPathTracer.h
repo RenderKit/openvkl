@@ -17,7 +17,6 @@
 #pragma once
 
 #include "Renderer.h"
-#include "random.h"
 
 namespace openvkl {
   namespace examples {

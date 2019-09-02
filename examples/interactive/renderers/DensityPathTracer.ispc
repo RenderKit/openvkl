@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Renderer.ih"
-#include "random.ih"
 
 struct DensityPathTracer
 {

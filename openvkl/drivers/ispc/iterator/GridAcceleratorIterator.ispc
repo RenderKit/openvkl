@@ -20,7 +20,7 @@
 #include "GridAcceleratorIterator.ih"
 
 inline void printGridAcceleratorIterator(
-    uniform GridAcceleratorIterator *uniform self)
+    varying GridAcceleratorIterator *uniform self)
 {
   print("origin:\n  %\n  %\n  %\n",
         self->origin.x,
@@ -38,13 +38,13 @@ inline void printGridAcceleratorIterator(
 
 export uniform int GridAcceleratorIterator_sizeOf()
 {
-  return sizeof(uniform GridAcceleratorIterator);
+  return sizeof(varying GridAcceleratorIterator);
 }
 
 // for tests only
 export void *uniform GridAcceleratorIterator_new()
 {
-  return uniform new uniform GridAcceleratorIterator;
+  return uniform new varying GridAcceleratorIterator;
 }
 
 export void GridAcceleratorIterator_Initialize(const int *uniform imask,
@@ -59,8 +59,8 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
     return;
   }
 
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
+  varying GridAcceleratorIterator *uniform self =
+      (varying GridAcceleratorIterator * uniform) _self;
 
   self->volume    = (uniform SharedStructuredVolume * uniform) _volume;
   self->origin    = *((varying vec3f * uniform) _origin);
@@ -92,8 +92,8 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
 export void *uniform
 GridAcceleratorIterator_getCurrentInterval(void *uniform _self)
 {
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
+  varying GridAcceleratorIterator *uniform self =
+      (varying GridAcceleratorIterator * uniform) _self;
   return &self->intervalState.currentInterval;
 }
 
@@ -104,8 +104,8 @@ export void GridAcceleratorIterator_iterateInterval(
     return;
   }
 
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
+  varying GridAcceleratorIterator *uniform self =
+      (varying GridAcceleratorIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
 
@@ -153,8 +153,8 @@ export void GridAcceleratorIterator_iterateInterval(
 
 export void *uniform GridAcceleratorIterator_getCurrentHit(void *uniform _self)
 {
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
+  varying GridAcceleratorIterator *uniform self =
+      (varying GridAcceleratorIterator * uniform) _self;
   return &self->hitState.currentHit;
 }
 
@@ -226,8 +226,8 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
     return;
   }
 
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
+  varying GridAcceleratorIterator *uniform self =
+      (varying GridAcceleratorIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
 

@@ -40,17 +40,17 @@ struct GridAcceleratorIteratorHitState
 struct GridAcceleratorIterator
 {
   SharedStructuredVolume *uniform volume;
-  varying vec3f origin;
-  varying vec3f direction;
-  varying box1f tRange;
+  vec3f origin;
+  vec3f direction;
+  box1f tRange;
   GridAcceleratorSamplesMask *uniform samplesMask;
 
   // common state
-  varying box1f boundingBoxTRange;
+  box1f boundingBoxTRange;
 
   // interval iterator state
-  varying GridAcceleratorIteratorIntervalState intervalState;
+  GridAcceleratorIteratorIntervalState intervalState;
 
   // hit iterator state
-  varying GridAcceleratorIteratorHitState hitState;
+  GridAcceleratorIteratorHitState hitState;
 };

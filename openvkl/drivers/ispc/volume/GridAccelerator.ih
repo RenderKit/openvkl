@@ -36,7 +36,7 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
 void GridAccelerator_Destructor(GridAccelerator *uniform accelerator);
 
 bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
-                              const GridAcceleratorIterator *uniform iterator,
+                              const varying GridAcceleratorIterator *uniform iterator,
                               varying vec3i &cellIndex,
                               varying Interval &interval);
 

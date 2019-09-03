@@ -41,10 +41,7 @@ namespace openvkl {
       const Hit<W> *getCurrentHit() const override;
       void iterateHit(const int *valid, vintn<W> &result) override;
 
-      // required size of ISPC-side object for widths:
-      //   4: 464
-      //   8: 928
-      //  16: 1856
+      // required size of ISPC-side object for width
       static constexpr int ispcStorageSize = 124 * W;
 
      protected:

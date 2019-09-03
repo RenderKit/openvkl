@@ -74,7 +74,7 @@ bool addPathTracerUI(GLFWVKLWindow &window)
     changed = true;
   }
 
-  static float ambientLightIntensity = 1.f;
+  static float ambientLightIntensity = 4.f;
   if (ImGui::SliderFloat(
           "ambientLightIntensity", &ambientLightIntensity, 0.f, 10.f)) {
     renderer.setParam<float>("ambientLightIntensity", ambientLightIntensity);

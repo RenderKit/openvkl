@@ -53,7 +53,7 @@ namespace openvkl {
       sigmaSScale    = getParam<float>("sigmaSScale", 1.f);
       maxNumScatters = getParam<int>("maxNumScatters", 1);
 
-      ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
+      ambientLightIntensity = getParam<float>("ambientLightIntensity", 4.f);
 
       ispc::DensityPathTracer_set(ispcEquivalent,
                                   sigmaTScale,
@@ -88,7 +88,7 @@ namespace openvkl {
         sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
 
         const float sampleOpacity =
-            (sample * voxelRange.size()) + voxelRange.lower;
+            (sample - voxelRange.lower) / voxelRange.size();
 
         // sigmaT must be mono-chromatic for Woodcock sampling
         const float sigmaTSample = sigmaMax * sampleOpacity;
@@ -136,7 +136,7 @@ namespace openvkl {
       const vec3f c = ray.org + t * ray.dir;
 
       const float sampleOpacity =
-          (sample * voxelRange.size()) + voxelRange.lower;
+          (sample - voxelRange.lower) / voxelRange.size();
 
       Ray scatteringRay;
       scatteringRay.t   = range1f(0.f, inf);
@@ -151,7 +151,7 @@ namespace openvkl {
                 inscatteredLe,
                 scatterIndex + 1);
 
-      const vec3f sigmaSSample(sigmaSScale  * sampleOpacity);
+      const vec3f sigmaSSample(sigmaSScale * sampleOpacity);
 
       Le = Le + sigmaSSample * inscatteredLe;
     }

@@ -72,9 +72,11 @@ vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
       float sample = vklComputeSampleV(volume, (varying vkl_vec3f *)&c);
 
       vec3f sampleColor = make_vec3f(1.f);
-      const float sampleOpacity =
-          (sample * (self->super.voxelRange.y - self->super.voxelRange.x)) +
-          self->super.voxelRange.x;
+
+      const float vr_low = self->super.voxelRange.x;
+      const float vr_hi  = self->super.voxelRange.y;
+
+      const float sampleOpacity = (sample - vr_low) / (vr_hi - vr_low);
 
       // accumulate contribution
       const float clampedOpacity = clamp(sampleOpacity * dt);

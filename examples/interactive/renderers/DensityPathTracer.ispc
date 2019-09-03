@@ -70,9 +70,10 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     const vec3f c = ray.org + t * ray.dir;
     sample        = vklComputeSampleV(volume, (varying vkl_vec3f *)&c);
 
-    const float sampleOpacity =
-        (sample * (self->super.voxelRange.y - self->super.voxelRange.x)) +
-        self->super.voxelRange.x;
+    const float vr_low = self->super.voxelRange.x;
+    const float vr_hi  = self->super.voxelRange.y;
+
+    const float sampleOpacity = (sample - vr_low) / (vr_hi - vr_low);
 
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
@@ -109,7 +110,7 @@ inline static void integrate(DensityPathTracer *uniform self,
   if (!sampleWoodcock(
           self, rng, volume, ray, tBox0, tBox1, t, sample, transmittance)) {
     if (scatterIndex == 0)
-      return; // light is not directly visible
+      return;  // light is not directly visible
 
     // ambient light
     Le = Le + transmittance * make_vec3f(self->ambientLightIntensity);
@@ -125,9 +126,10 @@ inline static void integrate(DensityPathTracer *uniform self,
 
   const vec3f c = ray.org + t * ray.dir;
 
-  const float sampleOpacity =
-      (sample * (self->super.voxelRange.y - self->super.voxelRange.x)) +
-      self->super.voxelRange.x;
+  const float vr_low = self->super.voxelRange.x;
+  const float vr_hi  = self->super.voxelRange.y;
+
+  const float sampleOpacity = (sample - vr_low) / (vr_hi - vr_low);
 
   Ray scatteringRay;
   scatteringRay.tnear = 0.f;

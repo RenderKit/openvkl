@@ -80,8 +80,9 @@ namespace openvkl {
           float sample = vklComputeSample(volume, (vkl_vec3f *)&c);
 
           vec3f sampleColor(1.f);
+
           const float sampleOpacity =
-              (sample * voxelRange.size()) + voxelRange.lower;
+              (sample - voxelRange.lower) / voxelRange.size();
 
           // accumulate contribution
           const float clampedOpacity = clamp(sampleOpacity * dt);

@@ -22,11 +22,23 @@
 
 #include <openvkl/openvkl.isph>
 
+// for very small cones treat as singular light, because float precision is not
+// good enough
+#define COS_ANGLE_MAX 0.99999988f
+
+struct DirectionalLight
+{
+  uniform vec3f power;
+  uniform vec3f direction;
+  uniform float cosAngle;
+  uniform float pdf;
+};
+
 struct VKLPathTracer
 {
-  Renderer super;
-  VKLVolume volume;
-  TransferFunction *transferFunction;
+  uniform Renderer super;
+  uniform VKLVolume volume;
+  TransferFunction *uniform transferFunction;
 
   // if a volume interaction occurs, returns the t and sample value at the
   // location; in this case a scatter event will occur. if a volume interaction
@@ -41,11 +53,13 @@ struct VKLPathTracer
                                           float &sample,
                                           float &transmittance);
 
-  float sigmaTScale;
-  float sigmaSScale;
-  int maxNumScatters;
+  uniform float sigmaTScale;
+  uniform float sigmaSScale;
+  uniform int maxNumScatters;
 
-  float ambientLightIntensity;
+  uniform float ambientLightIntensity;
+
+  uniform DirectionalLight directionalLight;
 };
 
 struct LightSample
@@ -54,6 +68,25 @@ struct LightSample
                    // pdf)
   float pdf;  // probability density that the direction would have been sampled
 };
+
+LightSample DirectionalLight_sample(uniform VKLPathTracer *uniform self,
+                                    const vec3f &origin,
+                                    const vec3f &dir,
+                                    const float minDist,
+                                    const float maxDist)
+{
+  const DirectionalLight *uniform light = &self->directionalLight;
+  LightSample res;
+  res.radiance = make_vec3f(0.f);
+
+  if (inf <= maxDist && light->cosAngle < COS_ANGLE_MAX &&
+      dot(light->direction, dir) > light->cosAngle) {
+    res.radiance = light->power * light->pdf;
+    res.pdf      = light->pdf;
+  }
+
+  return res;
+}
 
 inline bool sampleWoodcock(uniform VKLPathTracer *uniform self,
                            varying RandomTEA *const uniform rng,
@@ -80,7 +113,8 @@ inline bool sampleWoodcock(uniform VKLPathTracer *uniform self,
     const vec3f c = ray.org + t * ray.dir;
     sample        = vklComputeSampleV(self->volume, (varying vkl_vec3f *)&c);
 
-    const float sampleOpacity = sample;
+    const float sampleOpacity = self->transferFunction->getOpacityForValue(
+        self->transferFunction, sample);
 
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
@@ -120,7 +154,8 @@ inline bool sampleRatioTracking(uniform VKLPathTracer *uniform self,
     const vec3f c = ray.org + t * ray.dir;
     sample        = vklComputeSampleV(self->volume, (varying vkl_vec3f *)&c);
 
-    const float sampleOpacity = sample;
+    const float sampleOpacity = self->transferFunction->getOpacityForValue(
+        self->transferFunction, sample);
 
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleOpacity;
@@ -163,6 +198,13 @@ inline void integrateWoodcock(uniform VKLPathTracer *uniform self,
       return;
     }
 
+    // directional light
+    LightSample lightSample =
+        DirectionalLight_sample(self, ray.org, ray.dir, tBox1, inf);
+
+    if (reduce_max(lightSample.radiance) > 0.0f)
+      Le = Le + transmittance * lightSample.radiance;
+
     // ambient light
     Le = Le + transmittance * make_vec3f(self->ambientLightIntensity);
 
@@ -178,7 +220,11 @@ inline void integrateWoodcock(uniform VKLPathTracer *uniform self,
 
   const vec3f c = ray.org + t * ray.dir;
 
-  const float sampleOpacity = sample;
+  const vec3f sampleColor =
+      self->transferFunction->getColorForValue(self->transferFunction, sample);
+
+  const float sampleOpacity = self->transferFunction->getOpacityForValue(
+      self->transferFunction, sample);
 
   Ray scatteringRay;
   scatteringRay.t0  = 0.f;
@@ -189,7 +235,7 @@ inline void integrateWoodcock(uniform VKLPathTracer *uniform self,
   vec3f inscatteredLe;
   integrateWoodcock(self, rng, scatteringRay, inscatteredLe, scatterIndex + 1);
 
-  const vec3f sigmaSSample = make_vec3f(self->sigmaSScale * sampleOpacity);
+  const vec3f sigmaSSample = self->sigmaSScale * sampleColor * sampleOpacity;
 
   Le = Le + sigmaSSample * inscatteredLe;
 }
@@ -204,14 +250,15 @@ void VKLPathTracer_renderSample(Renderer *uniform _self,
 
   RandomTEA rng_state;
   varying RandomTEA *const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng,
-                         sample.sampleID.z,
-                         (fb->size.x * sample.sampleID.y) + sample.sampleID.x);
+  RandomTEA__Constructor(
+      rng,
+      sample.sampleID.z,
+      (fb->size.x * sample.sampleID.y) + sample.sampleID.x);
 
   vec3f Le;
   integrateWoodcock(self, rng, sample.ray, Le, 0);
 
-  sample.rgb = Le;
+  sample.rgb   = Le;
   sample.alpha = 1.f;
 }
 
@@ -230,14 +277,17 @@ export void VKLPathTracer_set(void *uniform _self,
                               uniform float sigmaSScale,
                               uniform int maxNumScatters,
                               uniform int useRatioTracking,
-                              uniform float ambientLightIntensity)
+                              uniform float ambientLightIntensity,
+                              uniform float directionalLightIntensity,
+                              uniform float directionalLightAngularDiameter,
+                              const uniform vec3f &directionalLightDirection)
 {
   uniform VKLPathTracer *uniform self = (uniform VKLPathTracer * uniform) _self;
-  self->volume = volume;
+  self->volume                        = volume;
   self->transferFunction = (TransferFunction * uniform) transferFunction;
-  self->sigmaTScale = sigmaTScale;
-  self->sigmaSScale = sigmaSScale;
-  self->maxNumScatters = maxNumScatters;
+  self->sigmaTScale      = sigmaTScale;
+  self->sigmaSScale      = sigmaSScale;
+  self->maxNumScatters   = maxNumScatters;
 
   if (useRatioTracking) {
     self->sampleVolumeInteraction = sampleRatioTracking;
@@ -246,4 +296,13 @@ export void VKLPathTracer_set(void *uniform _self,
   }
 
   self->ambientLightIntensity = ambientLightIntensity;
+
+  self->directionalLight.power = make_vec3f(directionalLightIntensity);
+
+  const uniform float cosAngle = cosf(0.5f * directionalLightAngularDiameter);
+  self->directionalLight.cosAngle = cosAngle;
+  self->directionalLight.pdf =
+      cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : inf;
+
+  self->directionalLight.direction = directionalLightDirection;
 }

@@ -62,6 +62,12 @@ static void volume_render_wavelet(benchmark::State &state,
   ppmCounter++;
 }
 
+BENCHMARK_CAPTURE(volume_render_wavelet,
+                  simple_native / 512,
+                  "simple_native",
+                  vec2i(1024),
+                  512);
+
 BENCHMARK_CAPTURE(
     volume_render_wavelet, simple_vkl / 512, "simple_vkl", vec2i(1024), 512);
 

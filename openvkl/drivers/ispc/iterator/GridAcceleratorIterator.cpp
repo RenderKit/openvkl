@@ -28,12 +28,13 @@ namespace openvkl {
 
     template <int W>
     GridAcceleratorIterator<W>::GridAcceleratorIterator(
+        const vintn<W> &valid,
         const Volume<W> *volume,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
         const SamplesMask *samplesMask)
-        : Iterator<W>(volume, origin, direction, tRange, samplesMask)
+        : Iterator<W>(valid, volume, origin, direction, tRange, samplesMask)
     {
       static bool oneTimeChecks = false;
 
@@ -60,6 +61,7 @@ namespace openvkl {
       box3f boundingBox = volume->getBoundingBox();
 
       ispc::GridAcceleratorIterator_Initialize(
+          (const int *)&valid,
           &ispcStorage[0],
           srv->getISPCEquivalent(),
           (void *)&origin,

@@ -102,7 +102,8 @@ namespace openvkl {
     {
       Iterator() = default;
 
-      Iterator(const Volume<W> *volume,
+      Iterator(const vintn<W> &valid,
+               const Volume<W> *volume,
                const vvec3fn<W> &origin,
                const vvec3fn<W> &direction,
                const vrange1fn<W> &tRange,
@@ -122,7 +123,8 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline Iterator<W>::Iterator(const Volume<W> *volume,
+    inline Iterator<W>::Iterator(const vintn<W> &valid,
+                                 const Volume<W> *volume,
                                  const vvec3fn<W> &origin,
                                  const vvec3fn<W> &direction,
                                  const vrange1fn<W> &tRange,

@@ -52,7 +52,8 @@ namespace openvkl {
       // and may maintain internal state as desired, e.g. for current state
       // within an acceleration structure, etc.
 
-      virtual void initIntervalIteratorV(vVKLIntervalIteratorN<W> &iterator,
+      virtual void initIntervalIteratorV(const vintn<W> &valid,
+                                         vVKLIntervalIteratorN<W> &iterator,
                                          const vvec3fn<W> &origin,
                                          const vvec3fn<W> &direction,
                                          const vrange1fn<W> &tRange,
@@ -69,7 +70,8 @@ namespace openvkl {
                                     vVKLIntervalN<W> &interval,
                                     vintn<W> &result);
 
-      virtual void initHitIteratorV(vVKLHitIteratorN<W> &iterator,
+      virtual void initHitIteratorV(const vintn<W> &valid,
+                                    vVKLHitIteratorN<W> &iterator,
                                     const vvec3fn<W> &origin,
                                     const vvec3fn<W> &direction,
                                     const vrange1fn<W> &tRange,
@@ -106,6 +108,7 @@ namespace openvkl {
 
     template <int W>
     inline void Volume<W>::initIntervalIteratorV(
+        const vintn<W> &valid,
         vVKLIntervalIteratorN<W> &iterator,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
@@ -125,7 +128,8 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void Volume<W>::initHitIteratorV(vVKLHitIteratorN<W> &iterator,
+    inline void Volume<W>::initHitIteratorV(const vintn<W> &valid,
+                                            vVKLHitIteratorN<W> &iterator,
                                             const vvec3fn<W> &origin,
                                             const vvec3fn<W> &direction,
                                             const vrange1fn<W> &tRange,

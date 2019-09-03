@@ -340,6 +340,7 @@ namespace openvkl {
       vVKLIntervalIteratorN<W> iteratorW;
 
       volumeObject.initIntervalIteratorV(
+          validW,
           iteratorW,
           originW,
           directionW,
@@ -372,6 +373,7 @@ namespace openvkl {
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
       volumeObject.initIntervalIteratorV(
+          validW,
           iterator,
           originW,
           directionW,
@@ -502,6 +504,7 @@ namespace openvkl {
       vVKLHitIteratorN<W> iteratorW;
 
       volumeObject.initHitIteratorV(
+          validW,
           iteratorW,
           originW,
           directionW,
@@ -533,6 +536,7 @@ namespace openvkl {
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
       volumeObject.initHitIteratorV(
+          validW,
           iterator,
           originW,
           directionW,

@@ -32,7 +32,8 @@ namespace openvkl {
 
       void commit() override;
 
-      void initIntervalIteratorV(vVKLIntervalIteratorN<W> &iterator,
+      void initIntervalIteratorV(const vintn<W> &valid,
+                                 vVKLIntervalIteratorN<W> &iterator,
                                  const vvec3fn<W> &origin,
                                  const vvec3fn<W> &direction,
                                  const vrange1fn<W> &tRange,
@@ -43,7 +44,8 @@ namespace openvkl {
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override;
 
-      void initHitIteratorV(vVKLHitIteratorN<W> &iterator,
+      void initHitIteratorV(const vintn<W> &valid,
+                            vVKLHitIteratorN<W> &iterator,
                             const vvec3fn<W> &origin,
                             const vvec3fn<W> &direction,
                             const vrange1fn<W> &tRange,
@@ -78,6 +80,7 @@ namespace openvkl {
 
     template <int W>
     inline void StructuredRegularVolume<W>::initIntervalIteratorV(
+        const vintn<W> &valid,
         vVKLIntervalIteratorN<W> &iterator,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
@@ -85,7 +88,7 @@ namespace openvkl {
         const SamplesMask *samplesMask)
     {
       iterator = toVKLIntervalIterator<W>(GridAcceleratorIterator<W>(
-          this, origin, direction, tRange, samplesMask));
+          valid, this, origin, direction, tRange, samplesMask));
     }
 
     template <int W>
@@ -106,6 +109,7 @@ namespace openvkl {
 
     template <int W>
     inline void StructuredRegularVolume<W>::initHitIteratorV(
+        const vintn<W> &valid,
         vVKLHitIteratorN<W> &iterator,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
@@ -113,7 +117,7 @@ namespace openvkl {
         const SamplesMask *samplesMask)
     {
       iterator = toVKLHitIterator<W>(GridAcceleratorIterator<W>(
-          this, origin, direction, tRange, samplesMask));
+          valid, this, origin, direction, tRange, samplesMask));
     }
 
     template <int W>

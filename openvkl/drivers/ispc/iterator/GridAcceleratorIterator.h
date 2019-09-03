@@ -29,7 +29,8 @@ namespace openvkl {
     {
       GridAcceleratorIterator() {}
 
-      GridAcceleratorIterator(const Volume<W> *volume,
+      GridAcceleratorIterator(const vintn<W> &valid,
+                              const Volume<W> *volume,
                               const vvec3fn<W> &origin,
                               const vvec3fn<W> &direction,
                               const vrange1fn<W> &tRange,

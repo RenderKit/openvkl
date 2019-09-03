@@ -47,13 +47,18 @@ export void *uniform GridAcceleratorIterator_new()
   return uniform new uniform GridAcceleratorIterator;
 }
 
-export void GridAcceleratorIterator_Initialize(void *uniform _self,
+export void GridAcceleratorIterator_Initialize(const int *uniform imask,
+                                               void *uniform _self,
                                                void *uniform _volume,
                                                void *uniform _origin,
                                                void *uniform _direction,
                                                void *uniform _tRange,
                                                void *uniform _samplesMask)
 {
+  if (!imask[programIndex]) {
+    return;
+  }
+
   uniform GridAcceleratorIterator *uniform self =
       (uniform GridAcceleratorIterator * uniform) _self;
 
@@ -93,18 +98,16 @@ GridAcceleratorIterator_getCurrentInterval(void *uniform _self)
 }
 
 export void GridAcceleratorIterator_iterateInterval(
-    uniform const int *uniform imask,
-    void *uniform _self,
-    uniform int *uniform _result)
+    const int *uniform imask, void *uniform _self, uniform int *uniform _result)
 {
+  if (!imask[programIndex]) {
+    return;
+  }
+
   uniform GridAcceleratorIterator *uniform self =
       (uniform GridAcceleratorIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
-
-  if (!imask[programIndex]) {
-    return;
-  }
 
   if (isempty1f(self->boundingBoxTRange)) {
     *result = false;
@@ -215,18 +218,18 @@ inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
   return false;
 }
 
-export void GridAcceleratorIterator_iterateHit(uniform const int *uniform imask,
+export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
                                                void *uniform _self,
                                                uniform int *uniform _result)
 {
+  if (!imask[programIndex]) {
+    return;
+  }
+
   uniform GridAcceleratorIterator *uniform self =
       (uniform GridAcceleratorIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
-
-  if (!imask[programIndex]) {
-    return;
-  }
 
   if (isempty1f(self->boundingBoxTRange)) {
     *result = false;

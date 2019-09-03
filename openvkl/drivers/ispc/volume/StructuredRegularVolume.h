@@ -39,7 +39,7 @@ namespace openvkl {
                                  const vrange1fn<W> &tRange,
                                  const SamplesMask *samplesMask) override;
 
-      void iterateIntervalV(const int *valid,
+      void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalIteratorN<W> &iterator,
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override;
@@ -51,14 +51,14 @@ namespace openvkl {
                             const vrange1fn<W> &tRange,
                             const SamplesMask *samplesMask) override;
 
-      void iterateHitV(const int *valid,
+      void iterateHitV(const vintn<W> &valid,
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override;
 
       SamplesMask *newSamplesMask() override;
 
-      void computeSampleV(const int *valid,
+      void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples) const override;
 
@@ -93,7 +93,7 @@ namespace openvkl {
 
     template <int W>
     inline void StructuredRegularVolume<W>::iterateIntervalV(
-        const int *valid,
+        const vintn<W> &valid,
         vVKLIntervalIteratorN<W> &iterator,
         vVKLIntervalN<W> &interval,
         vintn<W> &result)
@@ -122,7 +122,7 @@ namespace openvkl {
 
     template <int W>
     inline void StructuredRegularVolume<W>::iterateHitV(
-        const int *valid,
+        const vintn<W> &valid,
         vVKLHitIteratorN<W> &iterator,
         vVKLHitN<W> &hit,
         vintn<W> &result)
@@ -143,12 +143,12 @@ namespace openvkl {
 
     template <int W>
     inline void StructuredRegularVolume<W>::computeSampleV(
-        const int *valid,
+        const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples) const
     {
       ispc::SharedStructuredVolume_sample_export(
-          valid, ispcEquivalent, &objectCoordinates, &samples);
+          (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
     }
 
     template <int W>

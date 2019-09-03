@@ -79,11 +79,11 @@ namespace openvkl {
     }
 
     template <int W>
-    void GridAcceleratorIterator<W>::iterateInterval(const int *valid,
+    void GridAcceleratorIterator<W>::iterateInterval(const vintn<W> &valid,
                                                      vintn<W> &result)
     {
       ispc::GridAcceleratorIterator_iterateInterval(
-          valid, (void *)&ispcStorage[0], (int *)&result);
+          (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
     }
 
     template <int W>
@@ -94,11 +94,11 @@ namespace openvkl {
     }
 
     template <int W>
-    void GridAcceleratorIterator<W>::iterateHit(const int *valid,
+    void GridAcceleratorIterator<W>::iterateHit(const vintn<W> &valid,
                                                 vintn<W> &result)
     {
       ispc::GridAcceleratorIterator_iterateHit(
-          valid, (void *)&ispcStorage[0], (int *)&result);
+          (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
     }
 
     template class GridAcceleratorIterator<4>;

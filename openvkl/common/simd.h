@@ -93,11 +93,6 @@ namespace openvkl {
         v[i] = o[i];
       }
     }
-
-    operator const int *() const
-    {
-      return &v[0];
-    }
   };
 
   template <int W>

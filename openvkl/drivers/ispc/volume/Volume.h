@@ -65,7 +65,7 @@ namespace openvkl {
       // indicate if a new interval was found for each active lane.
       //
       // iterator may be modified to track any internal state as desired.
-      virtual void iterateIntervalV(const int *valid,
+      virtual void iterateIntervalV(const vintn<W> &valid,
                                     vVKLIntervalIteratorN<W> &iterator,
                                     vVKLIntervalN<W> &interval,
                                     vintn<W> &result);
@@ -83,14 +83,14 @@ namespace openvkl {
       // indicate if a new hit was found for each active lane.
       //
       // iterator may be modified to track any internal state as desired.
-      virtual void iterateHitV(const int *valid,
+      virtual void iterateHitV(const vintn<W> &valid,
                                vVKLHitIteratorN<W> &iterator,
                                vVKLHitN<W> &hit,
                                vintn<W> &result);
 
       virtual SamplesMask *newSamplesMask();
 
-      virtual void computeSampleV(const int *valid,
+      virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
                                   vfloatn<W> &samples) const = 0;
 
@@ -119,7 +119,7 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void Volume<W>::iterateIntervalV(const int *valid,
+    inline void Volume<W>::iterateIntervalV(const vintn<W> &valid,
                                             vVKLIntervalIteratorN<W> &iterator,
                                             vVKLIntervalN<W> &interval,
                                             vintn<W> &result)
@@ -139,7 +139,7 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void Volume<W>::iterateHitV(const int *valid,
+    inline void Volume<W>::iterateHitV(const vintn<W> &valid,
                                        vVKLHitIteratorN<W> &iterator,
                                        vVKLHitN<W> &hit,
                                        vintn<W> &result)

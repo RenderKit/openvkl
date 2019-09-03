@@ -37,10 +37,10 @@ namespace openvkl {
                               const SamplesMask *samplesMask);
 
       const Interval<W> *getCurrentInterval() const override;
-      void iterateInterval(const int *valid, vintn<W> &result) override;
+      void iterateInterval(const vintn<W> &valid, vintn<W> &result) override;
 
       const Hit<W> *getCurrentHit() const override;
-      void iterateHit(const int *valid, vintn<W> &result) override;
+      void iterateHit(const vintn<W> &valid, vintn<W> &result) override;
 
       // required size of ISPC-side object for width
       static constexpr int ispcStorageSize = 124 * W;

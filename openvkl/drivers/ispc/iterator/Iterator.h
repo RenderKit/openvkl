@@ -111,11 +111,11 @@ namespace openvkl {
 
       virtual ~Iterator() = default;
 
-      virtual const Interval<W> *getCurrentInterval() const            = 0;
-      virtual void iterateInterval(const int *valid, vintn<W> &result) = 0;
+      virtual const Interval<W> *getCurrentInterval() const                 = 0;
+      virtual void iterateInterval(const vintn<W> &valid, vintn<W> &result) = 0;
 
-      virtual const Hit<W> *getCurrentHit() const                 = 0;
-      virtual void iterateHit(const int *valid, vintn<W> &result) = 0;
+      virtual const Hit<W> *getCurrentHit() const                      = 0;
+      virtual void iterateHit(const vintn<W> &valid, vintn<W> &result) = 0;
 
       const Volume<W> *volume;
     };

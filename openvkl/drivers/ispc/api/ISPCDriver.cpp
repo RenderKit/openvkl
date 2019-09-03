@@ -654,7 +654,7 @@ namespace openvkl {
 
       vfloatn<W> samplesW;
 
-      volumeObject.computeSampleV((const int *)&validW, ocW, samplesW);
+      volumeObject.computeSampleV(validW, ocW, samplesW);
 
       for (int i = 0; i < OW; i++)
         samples[i] = samplesW[i];
@@ -681,7 +681,7 @@ namespace openvkl {
 
         vfloatn<W> samplesW;
 
-        volumeObject.computeSampleV((const int *)&validW, ocW, samplesW);
+        volumeObject.computeSampleV(validW, ocW, samplesW);
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           samples[i] = samplesW[i - packIndex * W];

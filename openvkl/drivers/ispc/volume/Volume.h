@@ -22,6 +22,10 @@
 #include "openvkl/openvkl.h"
 #include "ospcommon/math/box.h"
 
+#define THROW_NOT_IMPLEMENTED                          \
+  throw std::runtime_error(std::string(__FUNCTION__) + \
+                           " not implemented in this volume!")
+
 using namespace ospcommon;
 
 namespace openvkl {
@@ -108,8 +112,7 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const SamplesMask *samplesMask)
     {
-      throw std::runtime_error(
-          "initIntervalIteratorV() not implemented in this volume!");
+      THROW_NOT_IMPLEMENTED;
     }
 
     template <int W>
@@ -118,8 +121,7 @@ namespace openvkl {
                                             vVKLIntervalN<W> &interval,
                                             vintn<W> &result)
     {
-      throw std::runtime_error(
-          "iterateIntervalV() not implemented in this volume!");
+      THROW_NOT_IMPLEMENTED;
     }
 
     template <int W>
@@ -129,8 +131,7 @@ namespace openvkl {
                                             const vrange1fn<W> &tRange,
                                             const SamplesMask *samplesMask)
     {
-      throw std::runtime_error(
-          "initHitIteratorV() not implemented in this volume!");
+      THROW_NOT_IMPLEMENTED;
     }
 
     template <int W>
@@ -139,14 +140,13 @@ namespace openvkl {
                                        vVKLHitN<W> &hit,
                                        vintn<W> &result)
     {
-      throw std::runtime_error("iterateHitV() not implemented in this volume!");
+      THROW_NOT_IMPLEMENTED;
     }
 
     template <int W>
     inline SamplesMask *Volume<W>::newSamplesMask()
     {
-      throw std::runtime_error(
-          "newSamplesMask() not implemented in this volume!");
+      THROW_NOT_IMPLEMENTED;
     }
 
 #define VKL_REGISTER_VOLUME(InternalClass, external_name) \

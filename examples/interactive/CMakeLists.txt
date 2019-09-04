@@ -56,7 +56,7 @@ add_executable(vklExamples
   window/GLFWVKLWindow.cpp
   window/imgui_impl_glfw_gl3.cpp
   window/VKLWindow.cpp
-  #window/TransferFunctionWidget.cpp
+  window/TransferFunctionWidget.cpp
   AppInit.cpp
   vklExamples.cpp
 )

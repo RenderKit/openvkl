@@ -28,7 +28,6 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include <ospray/ospray.h>
 #include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
@@ -39,14 +38,17 @@ using OpacityPoint = vec2f;
 class TransferFunctionWidget
 {
  public:
-  TransferFunctionWidget(OSPTransferFunction transferFunction,
-                         std::function<void()> transferFunctionUpdatedCallback,
-                         const vec2f &valueRange = vec2f(-1.f, 1.f),
+  TransferFunctionWidget(std::function<void()> transferFunctionUpdatedCallback,
+                         const vec2f &valueRange       = vec2f(-1.f, 1.f),
                          const std::string &widgetName = "Transfer Function");
   ~TransferFunctionWidget();
 
   // update UI and process any UI events
   void updateUI();
+
+  // getters for current transfer function data
+  vec2f getValueRange();
+  std::vector<vec4f> getSampledColorsAndOpacities(int numSamples);
 
  private:
   void loadDefaultMaps();
@@ -61,16 +63,8 @@ class TransferFunctionWidget
 
   void drawEditor();
 
-  // transfer function being modified and associated callback whenver it's
-  // updated
-  OSPTransferFunction transferFunction{nullptr};
+  // callback called whenever transfer function is updated
   std::function<void()> transferFunctionUpdatedCallback{nullptr};
-
-  // called to perform actual transfer function updates when control points
-  // change in UI
-  std::function<void(const std::vector<ColorPoint> &,
-                     const std::vector<OpacityPoint> &)>
-      updateTransferFunction{nullptr};
 
   // all available transfer functions
   std::vector<std::string> tfnsNames;
@@ -87,10 +81,7 @@ class TransferFunctionWidget
   // flag indicating transfer function has changed in UI
   bool tfnChanged{true};
 
-  // number of samples for interpolated transfer function passed to OSPRay
-  int numSamples{256};
-
-  // scaling factor for generated opacities passed to OSPRay
+  // scaling factor for generated opacities
   float globalOpacityScale{1.f};
 
   // domain (value range) of transfer function

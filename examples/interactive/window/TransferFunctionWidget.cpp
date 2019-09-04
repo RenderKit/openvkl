@@ -60,64 +60,20 @@ namespace help {
 }  // namespace help
 
 TransferFunctionWidget::TransferFunctionWidget(
-    OSPTransferFunction _transferFunction,
     std::function<void()> _transferFunctionUpdatedCallback,
     const vec2f &_valueRange,
     const std::string &_widgetName)
-    : transferFunction(_transferFunction),
-      transferFunctionUpdatedCallback(_transferFunctionUpdatedCallback),
+    : transferFunctionUpdatedCallback(_transferFunctionUpdatedCallback),
       valueRange(_valueRange),
       widgetName(_widgetName)
 {
-  updateTransferFunction = [&](const std::vector<ColorPoint> &c,
-                               const std::vector<OpacityPoint> &a) {
-    float x0 = 0.f;
-    float dx = (1.f - x0) / (numSamples - 1);
-
-    // update colors
-    std::vector<vec3f> sampledColors;
-
-    for (int i = 0; i < numSamples; i++) {
-      sampledColors.push_back(interpolateColor(c, i * dx));
-    }
-
-    OSPData colorsData =
-        ospNewData(sampledColors.size(), OSP_VEC3F, sampledColors.data());
-
-    ospSetData(transferFunction, "color", colorsData);
-
-    ospRelease(colorsData);
-
-    // update opacities
-    std::vector<float> sampledOpacities;
-
-    for (int i = 0; i < numSamples; i++) {
-      sampledOpacities.push_back(interpolateOpacity(a, i * dx) *
-                                 globalOpacityScale);
-    }
-
-    OSPData opacitesData =
-        ospNewData(sampledOpacities.size(), OSP_FLOAT, sampledOpacities.data());
-
-    ospSetData(transferFunction, "opacity", opacitesData);
-
-    ospRelease(opacitesData);
-
-    // value range
-    ospSetVec2f(transferFunction, "valueRange", valueRange.x, valueRange.y);
-
-    ospCommit(transferFunction);
-
-    transferFunctionUpdatedCallback();
-  };
-
   loadDefaultMaps();
 
   tfnColorPoints   = &(tfnsColorPoints[currentMap]);
   tfnOpacityPoints = &(tfnsOpacityPoints[currentMap]);
   tfnEditable      = tfnsEditable[currentMap];
 
-  updateTransferFunction(*tfnColorPoints, *tfnOpacityPoints);
+  transferFunctionUpdatedCallback();
 
   // set ImGui double click time to 1s, so it also works for slower frame rates
   ImGuiIO &io             = ImGui::GetIO();
@@ -135,7 +91,7 @@ void TransferFunctionWidget::updateUI()
 {
   if (tfnChanged) {
     updateTfnPaletteTexture();
-    updateTransferFunction(*tfnColorPoints, *tfnOpacityPoints);
+    transferFunctionUpdatedCallback();
     tfnChanged = false;
   }
 
@@ -183,6 +139,27 @@ void TransferFunctionWidget::updateUI()
   drawEditor();
 
   ImGui::End();
+}
+
+vec2f TransferFunctionWidget::getValueRange()
+{
+  return valueRange;
+}
+
+std::vector<vec4f> TransferFunctionWidget::getSampledColorsAndOpacities(
+    int numSamples)
+{
+  std::vector<vec4f> sampledColorsAndOpacities;
+
+  const float dx = 1.f / (numSamples - 1);
+
+  for (int i = 0; i < numSamples; i++) {
+    sampledColorsAndOpacities.push_back(vec4f(
+        interpolateColor(*tfnColorPoints, i * dx),
+        interpolateOpacity(*tfnOpacityPoints, i * dx) * globalOpacityScale));
+  }
+
+  return sampledColorsAndOpacities;
 }
 
 void TransferFunctionWidget::loadDefaultMaps()
@@ -308,7 +285,7 @@ float TransferFunctionWidget::interpolateOpacity(
 
 void TransferFunctionWidget::updateTfnPaletteTexture()
 {
-  const size_t textureWidth = numSamples, textureHeight = 1;
+  const size_t textureWidth = 256, textureHeight = 1;
 
   // backup currently bound texture
   GLint prevBinding = 0;

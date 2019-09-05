@@ -33,10 +33,8 @@ namespace openvkl {
     void Renderer::commit()
     {
       spp        = getParam<int>("spp", 1);
-      voxelRange = getParam<range1f>("voxelRange", range1f(0.f, 1.f));
 
-      auto range = voxelRange.toVec2();
-      ispc::Renderer_setVoxelRange(ispcEquivalent, (ispc::vec2f &)range);
+      setTransferFunction(tfValueRange, tfColorsAndOpacities);
     }
 
     void Renderer::setCamera(const vec3f &pos,
@@ -100,6 +98,19 @@ namespace openvkl {
     const FrameBuffer &Renderer::frameBuffer() const
     {
       return framebuffer;
+    }
+
+    void Renderer::setTransferFunction(
+        const range1f &valueRange, const std::vector<vec4f> &colorsAndOpacities)
+    {
+      tfValueRange         = valueRange;
+      tfColorsAndOpacities = colorsAndOpacities;
+
+      ispc::Renderer_setTransferFunction(
+          ispcEquivalent,
+          (ispc::vec2f &)tfValueRange,
+          tfColorsAndOpacities.size(),
+          (ispc::vec4f *)tfColorsAndOpacities.data());
     }
 
     void Renderer::renderFrame(VKLVolume volume, VKLSamplesMask mask)

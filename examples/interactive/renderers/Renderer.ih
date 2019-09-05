@@ -43,7 +43,9 @@ struct Renderer
 
   int frameID;
 
-  vec2f voxelRange;
+  vec2f tfValueRange;
+  int tfColorsAndOpacitiesCount;
+  vec4f *tfColorsAndOpacities;
 
   vec3f (*uniform renderPixel)(uniform Renderer *uniform self,
                                uniform VKLVolume volume,
@@ -69,6 +71,38 @@ inline Ray Renderer_computeRay(uniform Renderer *uniform self,
   ray.tfar  = inf;
 
   return ray;
+}
+
+inline vec4f Renderer_sampleTransferFunction(uniform Renderer *uniform self,
+                                             float value)
+{
+  vec4f colorAndOpacity = make_vec4f(0.f);
+
+  if (isnan(value) || self->tfColorsAndOpacitiesCount == 0) {
+    return colorAndOpacity;
+  }
+
+  if (value <= self->tfValueRange.x) {
+    return self->tfColorsAndOpacities[0];
+  }
+
+  if (value >= self->tfValueRange.y) {
+    return self->tfColorsAndOpacities[self->tfColorsAndOpacitiesCount - 1];
+  }
+
+  // map the value into the range [0, size - 1]
+  value = (value - self->tfValueRange.x) /
+          (self->tfValueRange.y - self->tfValueRange.x) *
+          (self->tfColorsAndOpacitiesCount - 1.f);
+
+  // index and fractional offset
+  const int index       = floor(value);
+  const float remainder = value - index;
+
+  // the final interpolated value
+  return ((1.f - remainder) * self->tfColorsAndOpacities[index] +
+          remainder * self->tfColorsAndOpacities[min(
+                          index + 1, self->tfColorsAndOpacitiesCount - 1)]);
 }
 
 inline void intersectBox(const Ray &ray,

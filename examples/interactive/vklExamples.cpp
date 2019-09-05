@@ -41,12 +41,6 @@ bool addSamplingRateUI(GLFWVKLWindow &window)
     return true;
   }
 
-  static bool limitedMask = false;
-  if (ImGui::Checkbox("set subset of values", &limitedMask)) {
-    window.setLimitedSamplesMask(limitedMask);
-    return true;
-  }
-
   return false;
 }
 

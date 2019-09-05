@@ -57,12 +57,17 @@ export void Renderer_setFrameID(void *uniform _self, uniform int frameID)
   self->frameID = frameID;
 }
 
-export void Renderer_setVoxelRange(void *uniform _self,
-                                   uniform vec2f &voxelRange)
+export void Renderer_setTransferFunction(
+    void *uniform _self,
+    const uniform vec2f &valueRange,
+    const uniform int colorsAndOpacitiesCount,
+    vec4f *uniform colorsAndOpacities)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
 
-  self->voxelRange = voxelRange;
+  self->tfValueRange              = valueRange;
+  self->tfColorsAndOpacitiesCount = colorsAndOpacitiesCount;
+  self->tfColorsAndOpacities      = colorsAndOpacities;
 }
 
 export void Renderer_renderPixel(void *uniform _self,

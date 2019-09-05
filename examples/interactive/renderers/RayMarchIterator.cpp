@@ -79,17 +79,15 @@ namespace openvkl {
           vec3f c      = ray.org + t * ray.dir;
           float sample = vklComputeSample(volume, (vkl_vec3f *)&c);
 
-          vec3f sampleColor(1.f);
-
-          const float sampleOpacity =
-              (sample - voxelRange.lower) / voxelRange.size();
+          // map through transfer function
+          vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
 
           // accumulate contribution
-          const float clampedOpacity = clamp(sampleOpacity * dt);
+          const float clampedOpacity = clamp(sampleColorAndOpacity.w * dt);
 
-          sampleColor = sampleColor * clampedOpacity;
+          sampleColorAndOpacity = sampleColorAndOpacity * clampedOpacity;
 
-          color = color + (1.f - alpha) * sampleColor;
+          color = color + (1.f - alpha) * vec3f(sampleColorAndOpacity);
           alpha = alpha + (1.f - alpha) * clampedOpacity;
 
           // compute next sub interval

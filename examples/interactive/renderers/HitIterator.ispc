@@ -57,16 +57,10 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
   VKLHit hit;
 
   while (vklIterateHitV(&iterator, &hit) && alpha < 0.99f) {
-    vec3f surfaceColor;
+    vec4f surfaceColorAndOpacity =
+        Renderer_sampleTransferFunction(&self->super, hit.sample);
 
-    if (hit.sample == self->isovalues[0])
-      surfaceColor = make_vec3f(1.f, 0.f, 0.f);
-    else if (hit.sample == self->isovalues[1])
-      surfaceColor = make_vec3f(0.f, 1.f, 0.f);
-    else
-      surfaceColor = make_vec3f(0.f, 0.f, 1.f);
-
-    color = color + (1.f - alpha) * surfaceColor;
+    color = color + (1.f - alpha) * make_vec3f(surfaceColorAndOpacity);
     alpha = alpha + (1.f - alpha) * 0.25f;
   }
 

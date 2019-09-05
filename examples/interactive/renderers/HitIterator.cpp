@@ -65,16 +65,10 @@ namespace openvkl {
       VKLHit hit;
 
       while (vklIterateHit(&iterator, &hit) && alpha < 0.99f) {
-        vec3f surfaceColor;
 
-        if (hit.sample == isovalues[0])
-          surfaceColor = vec3f(1.f, 0.f, 0.f);
-        else if (hit.sample == isovalues[1])
-          surfaceColor = vec3f(0.f, 1.f, 0.f);
-        else
-          surfaceColor = vec3f(0.f, 0.f, 1.f);
+        vec4f surfaceColorAndOpacity = sampleTransferFunction(hit.sample);
 
-        color = color + (1.f - alpha) * surfaceColor;
+        color = color + (1.f - alpha) * vec3f(surfaceColorAndOpacity);
         alpha = alpha + (1.f - alpha) * 0.25f;
       }
 

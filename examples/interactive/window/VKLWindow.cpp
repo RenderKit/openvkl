@@ -128,24 +128,6 @@ namespace openvkl {
       renderer->commit();
     }
 
-    void VKLWindow::setLimitedSamplesMask(bool enabled)
-    {
-      if (samplesMask) {
-        vklRelease((VKLObject)samplesMask);
-        samplesMask = nullptr;
-      }
-
-      samplesMask = vklNewSamplesMask(volume);
-
-      float voxelRangeSize = voxelRange.size();
-      range1f scaledRange((0.1 * voxelRangeSize) + voxelRange.lower,
-                          (0.3 * voxelRangeSize) + voxelRange.lower);
-
-      vec2f valueRange = (enabled ? scaledRange : voxelRange).toVec2();
-      vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&valueRange);
-      vklCommit((VKLObject)samplesMask);
-    }
-
     void VKLWindow::savePPM(const std::string &filename)
     {
       const auto &fb = renderer->frameBuffer();

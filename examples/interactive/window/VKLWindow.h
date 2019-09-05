@@ -50,8 +50,6 @@ namespace openvkl {
 
       void setIsovalues(int numValues, const float *values);
 
-      void setLimitedSamplesMask(bool enabled);
-
       void savePPM(const std::string &filename);
 
       void setActiveRenderer(const std::string &rendererType);

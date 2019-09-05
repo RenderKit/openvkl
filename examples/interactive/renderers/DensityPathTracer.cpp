@@ -87,11 +87,10 @@ namespace openvkl {
         const vec3f c = ray.org + t * ray.dir;
         sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
 
-        const float sampleOpacity =
-            (sample - voxelRange.lower) / voxelRange.size();
+        vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
 
         // sigmaT must be mono-chromatic for Woodcock sampling
-        const float sigmaTSample = sigmaMax * sampleOpacity;
+        const float sigmaTSample = sigmaMax * sampleColorAndOpacity.w;
 
         if (randomNumbers.y < sigmaTSample / sigmaMax)
           break;
@@ -135,9 +134,6 @@ namespace openvkl {
 
       const vec3f c = ray.org + t * ray.dir;
 
-      const float sampleOpacity =
-          (sample - voxelRange.lower) / voxelRange.size();
-
       Ray scatteringRay;
       scatteringRay.t   = range1f(0.f, inf);
       scatteringRay.org = c;
@@ -151,7 +147,10 @@ namespace openvkl {
                 inscatteredLe,
                 scatterIndex + 1);
 
-      const vec3f sigmaSSample(sigmaSScale * sampleOpacity);
+      const vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
+
+      const vec3f sigmaSSample =
+          sigmaSScale * vec3f(sampleColorAndOpacity) * sampleColorAndOpacity.w;
 
       Le = Le + sigmaSSample * inscatteredLe;
     }

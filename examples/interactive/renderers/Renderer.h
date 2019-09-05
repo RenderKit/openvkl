@@ -69,6 +69,11 @@ namespace openvkl {
       void resetAccumulation();
       const FrameBuffer &frameBuffer() const;
 
+      // Transfer function setup //
+
+      void setTransferFunction(const range1f &valueRange,
+                               const std::vector<vec4f> &colorsAndOpacities);
+
       // Render a frame //
 
       void renderFrame(VKLVolume volume, VKLSamplesMask mask);
@@ -82,6 +87,8 @@ namespace openvkl {
                                 const vec4i &sampleID) = 0;
 
       Ray computeRay(const vec2f &screenCoords) const;
+
+      vec4f sampleTransferFunction(float value) const;
 
       // Camera data //
 
@@ -100,9 +107,15 @@ namespace openvkl {
       int spp{1};
       int frameID{0};
 
+      // Transfer function data //
+
+      range1f tfValueRange{-1.f, 1.f};
+      std::vector<vec4f> tfColorsAndOpacities{
+          {0.f, 0.f, 1.f, 0.f}, {0.f, 1.f, 0.f, 0.5f}, {1.f, 0.f, 0.f, 1.f}};
+
       // Renderer data //
+
       void *ispcEquivalent{nullptr};
-      range1f voxelRange;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -119,6 +132,38 @@ namespace openvkl {
       ray.t   = range1f(0.f, ospcommon::inf);
 
       return ray;
+    }
+
+    inline vec4f Renderer::sampleTransferFunction(float value) const
+    {
+      vec4f colorAndOpacity{0.f};
+
+      if (isnan(value) || tfColorsAndOpacities.size() == 0) {
+        return colorAndOpacity;
+      }
+
+      if (value <= tfValueRange.lower) {
+        return tfColorsAndOpacities.front();
+      }
+
+      if (value >= tfValueRange.upper) {
+        return tfColorsAndOpacities.back();
+      }
+
+      // map the value into the range [0, size - 1]
+      value = (value - tfValueRange.lower) /
+              (tfValueRange.upper - tfValueRange.lower) *
+              (tfColorsAndOpacities.size() - 1.f);
+
+      // index and fractional offset
+      const int index       = floor(value);
+      const float remainder = value - index;
+
+      // the final interpolated value
+      return ((1.f - remainder) * tfColorsAndOpacities[index] +
+              remainder *
+                  tfColorsAndOpacities[min(
+                      index + 1, int(tfColorsAndOpacities.size() - 1))]);
     }
 
     ///////////////////////////////////////////////////////////////////////////

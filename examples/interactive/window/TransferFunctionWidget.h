@@ -28,6 +28,7 @@
 #include <GLFW/glfw3native.h>
 #endif
 
+#include "ospcommon/math/range.h"
 #include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
@@ -38,17 +39,19 @@ using OpacityPoint = vec2f;
 class TransferFunctionWidget
 {
  public:
-  TransferFunctionWidget(std::function<void()> transferFunctionUpdatedCallback,
-                         const vec2f &valueRange       = vec2f(-1.f, 1.f),
-                         const std::string &widgetName = "Transfer Function");
+  TransferFunctionWidget(
+      std::function<void(const range1f &, const std::vector<vec4f> &)>
+          transferFunctionUpdatedCallback,
+      const range1f &valueRange     = range1f(-1.f, 1.f),
+      const std::string &widgetName = "Transfer Function");
   ~TransferFunctionWidget();
 
   // update UI and process any UI events
   void updateUI();
 
   // getters for current transfer function data
-  vec2f getValueRange();
-  std::vector<vec4f> getSampledColorsAndOpacities(int numSamples);
+  range1f getValueRange();
+  std::vector<vec4f> getSampledColorsAndOpacities(int numSamples = 256);
 
  private:
   void loadDefaultMaps();
@@ -64,7 +67,8 @@ class TransferFunctionWidget
   void drawEditor();
 
   // callback called whenever transfer function is updated
-  std::function<void()> transferFunctionUpdatedCallback{nullptr};
+  std::function<void(const range1f &, const std::vector<vec4f> &)>
+      transferFunctionUpdatedCallback{nullptr};
 
   // all available transfer functions
   std::vector<std::string> tfnsNames;
@@ -85,7 +89,7 @@ class TransferFunctionWidget
   float globalOpacityScale{1.f};
 
   // domain (value range) of transfer function
-  vec2f valueRange{-1.f, 1.f};
+  range1f valueRange{-1.f, 1.f};
 
   // texture for displaying transfer function color palette
   GLuint tfnPaletteTexture{0};

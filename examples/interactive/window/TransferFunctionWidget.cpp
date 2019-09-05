@@ -60,8 +60,9 @@ namespace help {
 }  // namespace help
 
 TransferFunctionWidget::TransferFunctionWidget(
-    std::function<void()> _transferFunctionUpdatedCallback,
-    const vec2f &_valueRange,
+    std::function<void(const range1f &, const std::vector<vec4f> &)>
+        _transferFunctionUpdatedCallback,
+    const range1f &_valueRange,
     const std::string &_widgetName)
     : transferFunctionUpdatedCallback(_transferFunctionUpdatedCallback),
       valueRange(_valueRange),
@@ -73,7 +74,8 @@ TransferFunctionWidget::TransferFunctionWidget(
   tfnOpacityPoints = &(tfnsOpacityPoints[currentMap]);
   tfnEditable      = tfnsEditable[currentMap];
 
-  transferFunctionUpdatedCallback();
+  transferFunctionUpdatedCallback(getValueRange(),
+                                  getSampledColorsAndOpacities());
 
   // set ImGui double click time to 1s, so it also works for slower frame rates
   ImGuiIO &io             = ImGui::GetIO();
@@ -91,7 +93,8 @@ void TransferFunctionWidget::updateUI()
 {
   if (tfnChanged) {
     updateTfnPaletteTexture();
-    transferFunctionUpdatedCallback();
+    transferFunctionUpdatedCallback(getValueRange(),
+                                    getSampledColorsAndOpacities());
     tfnChanged = false;
   }
 
@@ -126,8 +129,8 @@ void TransferFunctionWidget::updateUI()
   ImGui::Separator();
 
   if (ImGui::DragFloatRange2("Value range",
-                             &valueRange.x,
-                             &valueRange.y,
+                             &valueRange.lower,
+                             &valueRange.upper,
                              0.1f,
                              -10000.f,
                              10000.0f,
@@ -141,7 +144,7 @@ void TransferFunctionWidget::updateUI()
   ImGui::End();
 }
 
-vec2f TransferFunctionWidget::getValueRange()
+range1f TransferFunctionWidget::getValueRange()
 {
   return valueRange;
 }

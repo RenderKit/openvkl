@@ -104,9 +104,23 @@ namespace openvkl {
                           windowSize.x / float(windowSize.y));
     }
 
+    void VKLWindow::updateTransferFunction()
+    {
+      renderer->setTransferFunction(transferFunction.valueRange,
+                                    transferFunction.colorsAndOpacities);
+    }
+
     void VKLWindow::setUseISPC(bool enabled)
     {
       useISPC = enabled;
+    }
+
+    void VKLWindow::setTransferFunction(
+        const TransferFunction &transferFunction)
+    {
+      this->transferFunction = transferFunction;
+
+      updateTransferFunction();
     }
 
     void VKLWindow::setIsovalues(int numValues, const float *values)
@@ -144,6 +158,7 @@ namespace openvkl {
         renderer = renderer_pathtracer.get();
 
       updateCamera();
+      updateTransferFunction();
     }
 
     void VKLWindow::reshape(const vec2i &newWindowSize)

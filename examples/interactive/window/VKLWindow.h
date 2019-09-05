@@ -26,6 +26,21 @@
 namespace openvkl {
   namespace examples {
 
+    struct TransferFunction
+    {
+      TransferFunction() = default;
+
+      TransferFunction(const range1f &valueRange,
+                       const std::vector<vec4f> &colorsAndOpacities)
+          : valueRange(valueRange), colorsAndOpacities(colorsAndOpacities)
+      {
+      }
+
+      range1f valueRange{-1.f, 1.f};
+      std::vector<vec4f> colorsAndOpacities{
+          {0.f, 0.f, 1.f, 0.f}, {0.f, 1.f, 0.f, 0.5f}, {1.f, 0.f, 0.f, 1.f}};
+    };
+
     class VKLWindow
     {
      public:
@@ -48,6 +63,8 @@ namespace openvkl {
 
       void setUseISPC(bool enabled);
 
+      void setTransferFunction(const TransferFunction &transferFunction);
+
       void setIsovalues(int numValues, const float *values);
 
       void savePPM(const std::string &filename);
@@ -58,6 +75,8 @@ namespace openvkl {
       virtual void reshape(const vec2i &newWindowSize);
 
       void updateCamera();
+
+      void updateTransferFunction();
 
       bool useISPC{true};
 
@@ -76,6 +95,8 @@ namespace openvkl {
       std::unique_ptr<Renderer> renderer_pathtracer;
 
       ArcballCamera arcballCamera;
+
+      TransferFunction transferFunction;
     };
 
   }  // namespace examples

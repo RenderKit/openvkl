@@ -16,6 +16,7 @@
 
 #include "AppInit.h"
 #include "window/GLFWVKLWindow.h"
+#include "window/TransferFunctionWidget.h"
 // openvkl_testing
 #include "openvkl_testing.h"
 // imgui
@@ -370,6 +371,18 @@ int main(int argc, const char **argv)
     if (rendererType == "hit_iterator") {
       changed |= addIsosurfacesUI(*glfwVKLWindow);
     }
+
+    auto transferFunctionUpdatedCallback =
+        [&](const range1f &valueRange,
+            const std::vector<vec4f> &colorsAndOpacities) {
+          TransferFunction tf{valueRange, colorsAndOpacities};
+          glfwVKLWindow->setTransferFunction(tf);
+          glfwVKLWindow->resetAccumulation();
+        };
+
+    static TransferFunctionWidget transferFunctionWidget(
+        transferFunctionUpdatedCallback);
+    transferFunctionWidget.updateUI();
 
     if (changed) {
       glfwVKLWindow->resetAccumulation();

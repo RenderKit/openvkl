@@ -21,9 +21,6 @@
 #include "openvkl/openvkl.h"
 #include "ospcommon/math/vec.h"
 
-#define INDEX_PREFIX 1
-#define CELL_VALUED 1
-
 using namespace ospcommon;
 
 namespace openvkl {
@@ -32,11 +29,46 @@ namespace openvkl {
     template <float volumeSamplingFunction(const vec3f &)>
     struct ProceduralUnstructuredVolume : public TestingStructuredVolume
     {
-      ProceduralUnstructuredVolume(const vec3i &dimensions,
-                                   const vec3f &gridOrigin,
-                                   const vec3f &gridSpacing)
+     private:
+      VKLUnstructuredCellType primType;
+
+      bool cellValued;
+      bool indexPrefix;
+      bool precomputedNormals;
+      bool hexIterative;
+
+      int vtxPerPrimitive(VKLUnstructuredCellType type) const
+      {
+        switch (type) {
+        case VKL_TETRAHEDRON:
+          return 4;
+        case VKL_HEXAHEDRON:
+          return 8;
+        case VKL_WEDGE:
+          return 6;
+        case VKL_PYRAMID:
+          return 5;
+        }
+        return 0;
+      }
+
+     public:
+      ProceduralUnstructuredVolume(
+          const vec3i &dimensions,
+          const vec3f &gridOrigin,
+          const vec3f &gridSpacing,
+          VKLUnstructuredCellType _primType = VKL_HEXAHEDRON,
+          bool _cellValued                  = true,
+          bool _indexPrefix                 = true,
+          bool _precomputedNormals          = false,
+          bool _hexIterative                = false)
           : TestingStructuredVolume(
-                "unstructured", dimensions, gridOrigin, gridSpacing, VKL_FLOAT)
+                "unstructured", dimensions, gridOrigin, gridSpacing, VKL_FLOAT),
+            primType(_primType),
+            cellValued(_cellValued),
+            indexPrefix(_indexPrefix),
+            precomputedNormals(_precomputedNormals),
+            hexIterative(_hexIterative)
       {
       }
 
@@ -76,47 +108,39 @@ namespace openvkl {
 
       void generateVKLVolume() override
       {
-#if CELL_VALUED
-        std::vector<unsigned char> cellValues = generateVoxels(dimensions);
-#else
-        std::vector<unsigned char> vtxValues = generateVoxels(dimensions + vec3i(1,1,1));
-#endif
-        std::vector<vec3f> vtxPositions       = generateGrid();
-        std::vector<uint32_t> topology        = generateTopology();
+        vec3i valueDimensions = dimensions;
+        if (!cellValued)
+          valueDimensions += vec3i(1, 1, 1);
+        std::vector<unsigned char> values = generateVoxels(valueDimensions);
+
+        std::vector<vec3f> vtxPositions = generateGrid();
+        std::vector<uint32_t> topology  = generateTopology();
         std::vector<uint32_t> cells;
         std::vector<uint8_t> cellType;
 
         volume = vklNewVolume("unstructured");
 
         for (int i = 0; i < dimensions.product(); i++) {
-#if INDEX_PREFIX
-          cells.push_back(i * 9);
-#else
-          cells.push_back(i * 8);
-#endif
-          cellType.push_back(VKL_HEXAHEDRON);
+          cells.push_back(i *
+                          (vtxPerPrimitive(primType) + (indexPrefix ? 1 : 0)));
+          cellType.push_back(primType);
         }
         VKLData cellData = vklNewData(cells.size(), VKL_UINT, cells.data());
         vklSetData(volume, "cell.index", cellData);
         vklRelease(cellData);
-#if !INDEX_PREFIX
-        VKLData celltypeData =
-            vklNewData(cellType.size(), VKL_UCHAR, cellType.data());
-        vklSetData(volume, "cell.type", celltypeData);
-        vklRelease(celltypeData);
-#endif
 
-#if CELL_VALUED
-        VKLData cellValuesData =
-            vklNewData(longProduct(dimensions), VKL_FLOAT, cellValues.data());
-        vklSetData(volume, "cell.value", cellValuesData);
-        vklRelease(cellValuesData);
-#else
-        VKLData vtxValuesData =
-            vklNewData(longProduct(dimensions + vec3i(1,1,1)), VKL_FLOAT, cellValues.data());
-        vklSetData(volume, "cell.value", cellValuesData);
-        vklRelease(cellValuesData);
-#endif
+        if (!indexPrefix) {
+          VKLData celltypeData =
+              vklNewData(cellType.size(), VKL_UCHAR, cellType.data());
+          vklSetData(volume, "cell.type", celltypeData);
+          vklRelease(celltypeData);
+        }
+
+        VKLData valuesData =
+            vklNewData(longProduct(valueDimensions), VKL_FLOAT, values.data());
+        vklSetData(
+            volume, cellValued ? "cell.value" : "vertex.value", valuesData);
+        vklRelease(valuesData);
 
         VKLData vtxPositionsData =
             vklNewData(vtxPositions.size(), VKL_FLOAT3, vtxPositions.data());
@@ -128,22 +152,16 @@ namespace openvkl {
         vklSetData(volume, "index", topologyData);
         vklRelease(topologyData);
 
-#if INDEX_PREFIX
-        vklSetBool(volume, "indexPrefixed", true);
-#else
-        vklSetBool(volume, "indexPrefixed", false);
-#endif
-
-        vklSetBool(volume, "precomputedNormals", true);
-        vklSetBool(volume, "hexIterative", false);
+        vklSetBool(volume, "indexPrefixed", indexPrefix);
+        vklSetBool(volume, "precomputedNormals", precomputedNormals);
+        vklSetBool(volume, "hexIterative", hexIterative);
 
         vklCommit(volume);
       }
 
       std::vector<vec3f> generateGrid()
       {
-        std::vector<vec3f> grid(
-            (dimensions.x + 1) * (dimensions.y + 1) * (dimensions.z + 1), 0);
+        std::vector<vec3f> grid(longProduct(dimensions + vec3i(1, 1, 1)), 0);
 
         for (size_t z = 0; z <= dimensions.z; z++) {
           for (size_t y = 0; y <= dimensions.y; y++) {
@@ -167,17 +185,41 @@ namespace openvkl {
               int layerSize = (dimensions.x + 1) * (dimensions.y + 1);
               int offset    = layerSize * z + (dimensions.x + 1) * y + x;
               int offset2   = offset + layerSize;
-#if INDEX_PREFIX
-              cells.push_back(8);
-#endif
-              cells.push_back(offset + 0);
-              cells.push_back(offset + 1);
-              cells.push_back(offset + (dimensions.x + 1) + 1);
-              cells.push_back(offset + (dimensions.x + 1));
-              cells.push_back(offset2 + 0);
-              cells.push_back(offset2 + 1);
-              cells.push_back(offset2 + (dimensions.x + 1) + 1);
-              cells.push_back(offset2 + (dimensions.x + 1));
+              if (indexPrefix)
+                cells.push_back(vtxPerPrimitive(primType));
+              switch (primType) {
+              case VKL_TETRAHEDRON:
+                cells.push_back(offset + 0);
+                cells.push_back(offset + 1);
+                cells.push_back(offset + (dimensions.x + 1) + 1);
+                cells.push_back(offset2 + 0);
+                break;
+              case VKL_HEXAHEDRON:
+                cells.push_back(offset + 0);
+                cells.push_back(offset + 1);
+                cells.push_back(offset + (dimensions.x + 1) + 1);
+                cells.push_back(offset + (dimensions.x + 1));
+                cells.push_back(offset2 + 0);
+                cells.push_back(offset2 + 1);
+                cells.push_back(offset2 + (dimensions.x + 1) + 1);
+                cells.push_back(offset2 + (dimensions.x + 1));
+                break;
+              case VKL_WEDGE:
+                cells.push_back(offset + 0);
+                cells.push_back(offset + 1);
+                cells.push_back(offset + (dimensions.x + 1) + 1);
+                cells.push_back(offset2 + 0);
+                cells.push_back(offset2 + 1);
+                cells.push_back(offset2 + (dimensions.x + 1) + 1);
+                break;
+              case VKL_PYRAMID:
+                cells.push_back(offset + 0);
+                cells.push_back(offset + 1);
+                cells.push_back(offset + (dimensions.x + 1) + 1);
+                cells.push_back(offset + (dimensions.x + 1));
+                cells.push_back(offset2 + 0);
+                break;
+              }
             }
           }
         }
@@ -189,7 +231,19 @@ namespace openvkl {
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
+    inline float getConstValue(const vec3f &objectCoordinates)
+    {
+      return 0.5;
+    }
+
     using WaveletUnstructuredProceduralVolume =
         ProceduralUnstructuredVolume<getWaveletValue<float>>;
+
+    using ZUnstructuredProceduralVolume =
+        ProceduralUnstructuredVolume<getZValue>;
+
+    using ConstUnstructuredProceduralVolume =
+        ProceduralUnstructuredVolume<getConstValue>;
+
   }  // namespace testing
 }  // namespace openvkl

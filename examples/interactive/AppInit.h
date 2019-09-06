@@ -17,25 +17,3 @@
 #pragma once
 
 void initializeOpenVKL();
-
-#if 0
-struct OSPRayVKLTestScene
-{
-  OSPRayVKLTestScene(
-      const std::string &rendererType,
-      std::shared_ptr<TestingStructuredVolume> proceduralVolume);
-
-  ~OSPRayVKLTestScene();
-
-  void setIsovalues(const std::vector<float> &isovalues);
-
-  std::unique_ptr<OSPRayWindow> getOSPRayWindow(const vec2i &windowSize);
-
- protected:
-  std::shared_ptr<TestingStructuredVolume> proceduralVolume;
-
-  OSPWorld world;
-  OSPRenderer renderer;
-  OSPTransferFunction transferFunction;
-};
-#endif

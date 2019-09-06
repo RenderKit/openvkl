@@ -392,7 +392,7 @@ int main(int argc, const char **argv)
   // start the GLFW main loop, which will continuously render
   glfwVKLWindow->mainLoop();
 
-  // cleanly shut VKL and OSPRay down
+  // cleanly shut VKL down
   testingStructuredVolume.reset();
   glfwVKLWindow.reset();
   vklShutdown();

@@ -34,10 +34,3 @@ target_link_libraries(openvkl_imgui
   PRIVATE
     ospcommon::ospcommon
 )
-
-foreach(dir IN ITEMS ${OSPRAY_INCLUDE_DIRS})
-  target_include_directories(openvkl_imgui
-    PUBLIC
-      $<BUILD_INTERFACE:${dir}>
-  )
-endforeach(dir)

@@ -56,8 +56,6 @@ namespace openvkl {
       float sigmaSScale{0.f};
       int maxNumScatters{0};
 
-      bool useRatioTracking{true};
-
       float ambientLightIntensity{0.f};
     };
 

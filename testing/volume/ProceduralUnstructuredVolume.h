@@ -191,7 +191,7 @@ namespace openvkl {
               case VKL_TETRAHEDRON:
                 cells.push_back(offset + 0);
                 cells.push_back(offset + 1);
-                cells.push_back(offset + (dimensions.x + 1) + 1);
+                cells.push_back(offset + (dimensions.x + 1) + 0);
                 cells.push_back(offset2 + 0);
                 break;
               case VKL_HEXAHEDRON:
@@ -207,10 +207,10 @@ namespace openvkl {
               case VKL_WEDGE:
                 cells.push_back(offset + 0);
                 cells.push_back(offset + 1);
-                cells.push_back(offset + (dimensions.x + 1) + 1);
+                cells.push_back(offset + (dimensions.x + 1) + 0);
                 cells.push_back(offset2 + 0);
                 cells.push_back(offset2 + 1);
-                cells.push_back(offset2 + (dimensions.x + 1) + 1);
+                cells.push_back(offset2 + (dimensions.x + 1) + 0);
                 break;
               case VKL_PYRAMID:
                 cells.push_back(offset + 0);

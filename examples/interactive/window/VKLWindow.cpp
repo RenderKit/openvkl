@@ -154,8 +154,10 @@ namespace openvkl {
         renderer = renderer_hit_iterator.get();
       else if (rendererType == "ray_march_iterator")
         renderer = renderer_ray_marcher.get();
-      else
+      else if (rendererType == "pathtracer")
         renderer = renderer_pathtracer.get();
+      else
+        throw std::runtime_error("VKLWindow: unknown renderer type");
 
       updateCamera();
       updateTransferFunction();

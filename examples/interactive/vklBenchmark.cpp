@@ -63,25 +63,19 @@ static void volume_render_wavelet(benchmark::State &state,
 }
 
 BENCHMARK_CAPTURE(volume_render_wavelet,
-                  simple_native / 512,
-                  "simple_native",
+                  hit_iterator / 512,
+                  "hit_iterator",
+                  vec2i(1024),
+                  512);
+
+BENCHMARK_CAPTURE(volume_render_wavelet,
+                  ray_march_iterator / 512,
+                  "ray_march_iterator",
                   vec2i(1024),
                   512);
 
 BENCHMARK_CAPTURE(
-    volume_render_wavelet, simple_vkl / 512, "simple_vkl", vec2i(1024), 512);
-
-BENCHMARK_CAPTURE(volume_render_wavelet,
-                  vkl_interval_iterator / 512,
-                  "vkl_interval_iterator",
-                  vec2i(1024),
-                  512);
-
-BENCHMARK_CAPTURE(volume_render_wavelet,
-                  vkl_iterator / 512,
-                  "vkl_iterator",
-                  vec2i(1024),
-                  512);
+    volume_render_wavelet, pathtracer / 512, "pathtracer", vec2i(1024), 512);
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

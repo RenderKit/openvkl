@@ -19,8 +19,6 @@
 struct HitIterator
 {
   Renderer super;
-
-  const float *isovalues;
 };
 
 vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
@@ -72,12 +70,4 @@ export void *uniform HitIterator_create()
   HitIterator *uniform self = uniform new HitIterator;
   self->super.renderPixel   = HitIterator_renderPixel;
   return self;
-}
-
-export void *uniform HitIterator_set(void *uniform _self,
-                                     const float *uniform isovalues)
-{
-  HitIterator *uniform self = (HitIterator * uniform) _self;
-
-  self->isovalues = isovalues;
 }

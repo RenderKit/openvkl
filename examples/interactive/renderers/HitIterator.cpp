@@ -29,11 +29,6 @@ namespace openvkl {
     void HitIterator::commit()
     {
       Renderer::commit();
-
-      isovalues    = getParam<const float *>("isovalues", nullptr);
-      numIsovalues = getParam<int>("numIsovalues", 0);
-
-      ispc::HitIterator_set(ispcEquivalent, isovalues);
     }
 
     vec3f HitIterator::renderPixel(VKLVolume volume,
@@ -65,7 +60,6 @@ namespace openvkl {
       VKLHit hit;
 
       while (vklIterateHit(&iterator, &hit) && alpha < 0.99f) {
-
         vec4f surfaceColorAndOpacity = sampleTransferFunction(hit.sample);
 
         color = color + (1.f - alpha) * vec3f(surfaceColorAndOpacity);

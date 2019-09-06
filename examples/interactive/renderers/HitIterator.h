@@ -33,10 +33,6 @@ namespace openvkl {
                         VKLSamplesMask mask,
                         Ray &ray,
                         const vec4i &sampleID) override;
-
-     private:
-       const float *isovalues{nullptr};
-       int numIsovalues{0};
     };
 
   }  // namespace examples

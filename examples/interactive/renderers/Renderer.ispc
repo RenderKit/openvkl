@@ -106,11 +106,17 @@ export void Renderer_renderPixel(void *uniform _self,
   ag += color.y;
   ab += color.z;
 
-  self->framebuffer[pixelID] = make_vec3f(ar, ag, ab) * accumScale;
-
   self->accum_r[pixelID] = ar;
   self->accum_g[pixelID] = ag;
   self->accum_b[pixelID] = ab;
+
+  self->framebuffer[pixelID] = make_vec3f(ar, ag, ab) * accumScale;
+
+  // linear to sRGB color space conversion
+  self->framebuffer[pixelID] =
+      make_vec3f(pow(self->framebuffer[pixelID].x, 1.f / 2.2f),
+                 pow(self->framebuffer[pixelID].y, 1.f / 2.2f),
+                 pow(self->framebuffer[pixelID].z, 1.f / 2.2f));
 }
 
 export void Renderer_freeRenderer(void *uniform self)

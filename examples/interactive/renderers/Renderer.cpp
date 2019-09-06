@@ -32,7 +32,7 @@ namespace openvkl {
 
     void Renderer::commit()
     {
-      spp        = getParam<int>("spp", 1);
+      spp = getParam<int>("spp", 1);
 
       setTransferFunction(tfValueRange, tfColorsAndOpacities);
     }
@@ -146,6 +146,11 @@ namespace openvkl {
           ab += color.z;
 
           framebuffer[i] = vec3f(ar, ag, ab) * accumScale;
+
+          // linear to sRGB color space conversion
+          framebuffer[i] = vec3f(pow(framebuffer[i].x, 1.f / 2.2f),
+                                 pow(framebuffer[i].y, 1.f / 2.2f),
+                                 pow(framebuffer[i].z, 1.f / 2.2f));
         });
 
         frameID++;

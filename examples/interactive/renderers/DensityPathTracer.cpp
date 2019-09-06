@@ -53,7 +53,7 @@ namespace openvkl {
       sigmaSScale    = getParam<float>("sigmaSScale", 1.f);
       maxNumScatters = getParam<int>("maxNumScatters", 1);
 
-      ambientLightIntensity = getParam<float>("ambientLightIntensity", 4.f);
+      ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
 
       ispc::DensityPathTracer_set(ispcEquivalent,
                                   sigmaTScale,

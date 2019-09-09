@@ -30,6 +30,19 @@ if (BUILD_BENCHMARKS)
   )
 endif()
 
+add_executable(vklBenchmarkUnstructuredVolume
+  vklBenchmarkUnstructuredVolume.cpp
+)
+
+target_link_libraries(vklBenchmarkUnstructuredVolume
+  benchmark
+  openvkl_testing
+)
+
+install(TARGETS vklBenchmarkUnstructuredVolume
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
 # Functional tests
 if (BUILD_TESTING)
   add_executable(vklTests

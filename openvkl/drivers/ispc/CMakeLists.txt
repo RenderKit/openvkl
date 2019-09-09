@@ -38,6 +38,15 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   volume/MinMaxBVH2.cpp
   volume/MinMaxBVH2.ispc
   volume/UnstructuredVolume.ispc
+  volume/amr/AMRAccel.cpp
+  volume/amr/AMRData.cpp
+  volume/amr/AMRVolume.cpp
+  volume/amr/AMRVolume.ispc
+  volume/amr/CellRef.ispc
+  volume/amr/DualCell.ispc
+  volume/amr/method_current.ispc
+  volume/amr/method_finest.ispc
+  volume/amr/method_octant.ispc
   ${DEFS_FILE}
 )
 

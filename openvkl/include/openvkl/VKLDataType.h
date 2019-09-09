@@ -79,6 +79,12 @@ typedef enum
   // Double precision floating point scalar type.
   VKL_DOUBLE = 7000,
 
+  // Signed 32-bit integer box types
+  VKL_BOX1I = 8000, VKL_BOX2I, VKL_BOX3I, VKL_BOX4I,
+
+  // Single precision floating point box types
+  VKL_BOX1F = 8000, VKL_BOX2F, VKL_BOX3F, VKL_BOX4F,
+
   // Guard value.
   VKL_UNKNOWN = 22222,
 

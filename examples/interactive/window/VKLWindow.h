@@ -26,21 +26,6 @@
 namespace openvkl {
   namespace examples {
 
-    struct TransferFunction
-    {
-      TransferFunction() = default;
-
-      TransferFunction(const range1f &valueRange,
-                       const std::vector<vec4f> &colorsAndOpacities)
-          : valueRange(valueRange), colorsAndOpacities(colorsAndOpacities)
-      {
-      }
-
-      range1f valueRange{-1.f, 1.f};
-      std::vector<vec4f> colorsAndOpacities{
-          {0.f, 0.f, 1.f, 0.f}, {0.f, 1.f, 0.f, 0.5f}, {1.f, 0.f, 0.f, 1.f}};
-    };
-
     class VKLWindow
     {
      public:

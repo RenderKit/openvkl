@@ -45,7 +45,7 @@ namespace openvkl {
     {
       spp = getParam<int>("spp", 1);
 
-      setTransferFunction(tfValueRange, tfColorsAndOpacities);
+      setTransferFunction(transferFunction);
       setIsovalues(isovalues);
     }
 
@@ -112,17 +112,15 @@ namespace openvkl {
       return framebuffer;
     }
 
-    void Renderer::setTransferFunction(
-        const range1f &valueRange, const std::vector<vec4f> &colorsAndOpacities)
+    void Renderer::setTransferFunction(const TransferFunction &transferFunction)
     {
-      tfValueRange         = valueRange;
-      tfColorsAndOpacities = colorsAndOpacities;
+      this->transferFunction = transferFunction;
 
       ispc::Renderer_setTransferFunction(
           ispcEquivalent,
-          (ispc::vec2f &)tfValueRange,
-          tfColorsAndOpacities.size(),
-          (ispc::vec4f *)tfColorsAndOpacities.data());
+          (ispc::vec2f &)this->transferFunction.valueRange,
+          this->transferFunction.colorsAndOpacities.size(),
+          (ispc::vec4f *)this->transferFunction.colorsAndOpacities.data());
 
       updateSamplesMask();
     }
@@ -206,9 +204,16 @@ namespace openvkl {
 
       samplesMask = vklNewSamplesMask(volume);
 
-      vklSamplesMaskSetRanges(
-          samplesMask, 1, (const vkl_range1f *)&tfValueRange);
+      // set samples mask value ranges based on transfer function positive
+      // opacity intervals
+      std::vector<range1f> valueRanges =
+          transferFunction.getPositiveOpacityValueRanges();
 
+      vklSamplesMaskSetRanges(samplesMask,
+                              valueRanges.size(),
+                              (const vkl_range1f *)valueRanges.data());
+
+      // if we have isovalues, set these values on the samples mask
       if (isovalues.size() > 0) {
         vklSamplesMaskSetValues(
             samplesMask, isovalues.size(), isovalues.data());

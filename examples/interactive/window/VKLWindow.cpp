@@ -88,8 +88,7 @@ namespace openvkl {
         const TransferFunction &transferFunction)
     {
       this->transferFunction = transferFunction;
-      renderer->setTransferFunction(transferFunction.valueRange,
-                                    transferFunction.colorsAndOpacities);
+      renderer->setTransferFunction(transferFunction);
     }
 
     void VKLWindow::setIsovalues(const std::vector<float> &isovalues)
@@ -117,8 +116,7 @@ namespace openvkl {
 
       updateCamera();
 
-      renderer->setTransferFunction(transferFunction.valueRange,
-                                    transferFunction.colorsAndOpacities);
+      renderer->setTransferFunction(transferFunction);
 
       renderer->setIsovalues(isovalues);
     }

@@ -17,6 +17,7 @@
 #pragma once
 
 // openvkl
+#include "TransferFunction.h"
 #include "openvkl/openvkl.h"
 // ospcommon
 #include "ospcommon/containers/AlignedVector.h"
@@ -72,8 +73,7 @@ namespace openvkl {
 
       // Transfer function setup //
 
-      void setTransferFunction(const range1f &valueRange,
-                               const std::vector<vec4f> &colorsAndOpacities);
+      void setTransferFunction(const TransferFunction &transferFunction);
 
       // Isosurfaces setup //
 
@@ -113,9 +113,7 @@ namespace openvkl {
 
       // Transfer function data //
 
-      range1f tfValueRange{-1.f, 1.f};
-      std::vector<vec4f> tfColorsAndOpacities{
-          {0.f, 0.f, 1.f, 0.f}, {0.f, 1.f, 0.f, 0.5f}, {1.f, 0.f, 0.f, 1.f}};
+      TransferFunction transferFunction;
 
       // Isosurfaces data //
 
@@ -148,32 +146,34 @@ namespace openvkl {
     {
       vec4f colorAndOpacity{0.f};
 
-      if (isnan(value) || tfColorsAndOpacities.size() == 0) {
+      if (isnan(value) || transferFunction.colorsAndOpacities.size() == 0) {
         return colorAndOpacity;
       }
 
-      if (value <= tfValueRange.lower) {
-        return tfColorsAndOpacities.front();
+      if (value <= transferFunction.valueRange.lower) {
+        return transferFunction.colorsAndOpacities.front();
       }
 
-      if (value >= tfValueRange.upper) {
-        return tfColorsAndOpacities.back();
+      if (value >= transferFunction.valueRange.upper) {
+        return transferFunction.colorsAndOpacities.back();
       }
 
       // map the value into the range [0, size - 1]
-      value = (value - tfValueRange.lower) /
-              (tfValueRange.upper - tfValueRange.lower) *
-              (tfColorsAndOpacities.size() - 1.f);
+      value = (value - transferFunction.valueRange.lower) /
+              (transferFunction.valueRange.upper -
+               transferFunction.valueRange.lower) *
+              (transferFunction.colorsAndOpacities.size() - 1.f);
 
       // index and fractional offset
       const int index       = floor(value);
       const float remainder = value - index;
 
       // the final interpolated value
-      return ((1.f - remainder) * tfColorsAndOpacities[index] +
+      return ((1.f - remainder) * transferFunction.colorsAndOpacities[index] +
               remainder *
-                  tfColorsAndOpacities[min(
-                      index + 1, int(tfColorsAndOpacities.size() - 1))]);
+                  transferFunction.colorsAndOpacities[min(
+                      index + 1,
+                      int(transferFunction.colorsAndOpacities.size() - 1))]);
     }
 
     ///////////////////////////////////////////////////////////////////////////

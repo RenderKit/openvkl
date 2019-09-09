@@ -30,21 +30,24 @@ using namespace openvkl::examples;
 using namespace openvkl::testing;
 using namespace ospcommon::math;
 
-static void volume_render_wavelet(benchmark::State &state,
-                                  const std::string &rendererType,
-                                  const vec2i &windowSize,
-                                  int volumeDimension)
+static void render_wavelet(benchmark::State &state,
+                           const std::string &rendererType,
+                           const vec2i &windowSize,
+                           int volumeDimension,
+                           bool useISPC)
 {
   auto proceduralVolume = ospcommon::make_unique<WaveletProceduralVolume>(
       vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
-  VKLVolume volume    = proceduralVolume->getVKLVolume();
+  VKLVolume volume = proceduralVolume->getVKLVolume();
 
-  auto ow = ospcommon::make_unique<VKLWindow>(
-      windowSize, volume, rendererType);
+  auto window =
+      ospcommon::make_unique<VKLWindow>(windowSize, volume, rendererType);
+
+  window->setUseISPC(useISPC);
 
   for (auto _ : state) {
-    ow->render();
+    window->render();
   }
 
   // enables rates in report output
@@ -54,25 +57,52 @@ static void volume_render_wavelet(benchmark::State &state,
   // get the formal benchmark name, so we'll create one here
   static int ppmCounter = 0;
   std::stringstream ss;
-  ss << "volume_render_wavelet_" << ppmCounter << ".ppm";
-  ow->savePPM(ss.str());
+  ss << "render_wavelet_" << rendererType << "_" << ppmCounter << ".ppm";
+  window->savePPM(ss.str());
   ppmCounter++;
 }
 
-BENCHMARK_CAPTURE(volume_render_wavelet,
-                  hit_iterator / 512,
+BENCHMARK_CAPTURE(render_wavelet,
+                  density_pathtracer / 512 / scalar,
+                  "density_pathtracer",
+                  vec2i(1024),
+                  512,
+                  false);
+
+BENCHMARK_CAPTURE(render_wavelet,
+                  density_pathtracer / 512 / ispc,
+                  "density_pathtracer",
+                  vec2i(1024),
+                  512,
+                  true);
+
+BENCHMARK_CAPTURE(render_wavelet,
+                  hit_iterator / 512 / scalar,
                   "hit_iterator",
                   vec2i(1024),
-                  512);
+                  512,
+                  false);
 
-BENCHMARK_CAPTURE(volume_render_wavelet,
-                  ray_march_iterator / 512,
+BENCHMARK_CAPTURE(render_wavelet,
+                  hit_iterator / 512 / ispc,
+                  "hit_iterator",
+                  vec2i(1024),
+                  512,
+                  true);
+
+BENCHMARK_CAPTURE(render_wavelet,
+                  ray_march_iterator / 512 / scalar,
                   "ray_march_iterator",
                   vec2i(1024),
-                  512);
+                  512,
+                  false);
 
-BENCHMARK_CAPTURE(
-    volume_render_wavelet, pathtracer / 512, "pathtracer", vec2i(1024), 512);
+BENCHMARK_CAPTURE(render_wavelet,
+                  ray_march_iterator / 512 / ispc,
+                  "ray_march_iterator",
+                  vec2i(1024),
+                  512,
+                  true);
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

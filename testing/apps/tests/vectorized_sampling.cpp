@@ -23,16 +23,11 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-TEST_CASE("Vectorized sampling", "[volume_sampling]")
+template <typename VOLUME_TYPE>
+void test_vectorized_sampling()
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc_driver");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
-
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  std::unique_ptr<VOLUME_TYPE> v(
+      new VOLUME_TYPE(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -100,5 +95,24 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
         }
       }
     }
+  }
+}
+
+TEST_CASE("Vectorized sampling", "[volume_sampling]")
+{
+  vklLoadModule("ispc_driver");
+
+  VKLDriver driver = vklNewDriver("ispc_driver");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
+
+  SECTION("structured")
+  {
+    test_vectorized_sampling<WaveletProceduralVolume>();
+  }
+
+  SECTION("unstructured")
+  {
+    test_vectorized_sampling<WaveletUnstructuredProceduralVolume>();
   }
 }

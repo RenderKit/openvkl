@@ -34,11 +34,53 @@ namespace openvkl {
 
     size_t size() const;
 
+    template <typename T>
+    T *begin();
+
+    template <typename T>
+    T *end();
+
+    template <typename T>
+    const T *begin() const;
+
+    template <typename T>
+    const T *end() const;
+
+    template <typename T>
+    T &at(size_t i);
+
+    template <typename T>
+    const T &at(size_t i) const;
+
     size_t numItems;
     size_t numBytes;
     VKLDataType dataType;
     void *data;
     VKLDataCreationFlags dataCreationFlags;
   };
+
+  template <typename T>
+  inline T *Data::begin()
+  {
+    return static_cast<T *>(data);
+  }
+
+  template <typename T>
+  inline T *Data::end()
+  {
+    return begin<T>() + numItems;
+  }
+
+  template <typename T>
+  inline const T *Data::begin() const
+  {
+    return static_cast<const T *>(data);
+  }
+
+  template <typename T>
+  inline const T *Data::end() const
+  {
+    return begin<const T>() + numItems;
+  }
 
 }  // namespace openvkl

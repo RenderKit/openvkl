@@ -29,53 +29,37 @@ namespace openvkl {
   namespace examples {
 
     VKLWindow::VKLWindow(const vec2i &windowSize,
-                         const box3f &volumeBounds,
-                         VKLVolume v,
-                         const range1f &vRange,
-                         VKLSamplesMask m,
+                         VKLVolume volume,
                          std::string rendererType)
-        : windowSize(windowSize),
-          volumeBounds(volumeBounds),
-          volume(v),
-          voxelRange(vRange),
-          samplesMask(m),
-          arcballCamera(volumeBounds, windowSize)
+        : windowSize(windowSize), volume(volume)
     {
-      renderer_hit_iterator = std::unique_ptr<Renderer>(new HitIterator);
-      renderer_ray_marcher  = std::unique_ptr<Renderer>(new RayMarchIterator);
-      renderer_pathtracer   = std::unique_ptr<Renderer>(new DensityPathTracer);
+      const auto volumeBounds = vklGetBoundingBox(volume);
+
+      arcballCamera = std::unique_ptr<ArcballCamera>(
+          new ArcballCamera((const box3f &)volumeBounds, windowSize));
+
+      renderer_density_pathtracer =
+          std::unique_ptr<Renderer>(new DensityPathTracer(volume));
+      renderer_hit_iterator =
+          std::unique_ptr<Renderer>(new HitIterator(volume));
+      renderer_ray_march_iterator =
+          std::unique_ptr<Renderer>(new RayMarchIterator(volume));
 
       setActiveRenderer(rendererType);
 
-      renderer_hit_iterator->setParam<range1f>("voxelRange", voxelRange);
-      renderer_ray_marcher->setParam<range1f>("voxelRange", voxelRange);
-      renderer_pathtracer->setParam<range1f>("voxelRange", voxelRange);
-
+      renderer_density_pathtracer->commit();
       renderer_hit_iterator->commit();
-      renderer_ray_marcher->commit();
-      renderer_pathtracer->commit();
-
-      samplesMask = vklNewSamplesMask(volume);
-      vklSamplesMaskSetRanges(samplesMask, 1, (const vkl_range1f *)&voxelRange);
-      vklCommit((VKLObject)samplesMask);
+      renderer_ray_march_iterator->commit();
 
       reshape(this->windowSize);
-    }
-
-    VKLWindow::~VKLWindow()
-    {
-      if (samplesMask) {
-        vklRelease((VKLObject)samplesMask);
-        samplesMask = nullptr;
-      }
     }
 
     void VKLWindow::render()
     {
       if (useISPC)
-        renderer->renderFrame_ispc(volume, samplesMask);
+        renderer->renderFrame_ispc();
       else
-        renderer->renderFrame(volume, samplesMask);
+        renderer->renderFrame();
     }
 
     Renderer &VKLWindow::currentRenderer()
@@ -90,24 +74,9 @@ namespace openvkl {
 
     void VKLWindow::resetCamera()
     {
-      arcballCamera.resetCamera(volumeBounds);
+      const auto volumeBounds = vklGetBoundingBox(volume);
+      arcballCamera->resetCamera((const box3f &)volumeBounds);
       updateCamera();
-    }
-
-    void VKLWindow::updateCamera()
-    {
-      resetAccumulation();
-
-      renderer->setCamera(arcballCamera.eyePos(),
-                          arcballCamera.lookDir(),
-                          arcballCamera.upDir(),
-                          windowSize.x / float(windowSize.y));
-    }
-
-    void VKLWindow::updateTransferFunction()
-    {
-      renderer->setTransferFunction(transferFunction.valueRange,
-                                    transferFunction.colorsAndOpacities);
     }
 
     void VKLWindow::setUseISPC(bool enabled)
@@ -119,27 +88,14 @@ namespace openvkl {
         const TransferFunction &transferFunction)
     {
       this->transferFunction = transferFunction;
-
-      updateTransferFunction();
+      renderer->setTransferFunction(transferFunction.valueRange,
+                                    transferFunction.colorsAndOpacities);
     }
 
-    void VKLWindow::setIsovalues(int numValues, const float *values)
+    void VKLWindow::setIsovalues(const std::vector<float> &isovalues)
     {
-      if (samplesMask) {
-        vklRelease((VKLObject)samplesMask);
-        samplesMask = nullptr;
-      }
-
-      if (numValues > 0) {
-        samplesMask = vklNewSamplesMask(volume);
-        vklSamplesMaskSetValues(samplesMask, numValues, values);
-        vklSamplesMaskSetRanges(
-            samplesMask, 1, (const vkl_range1f *)&voxelRange);
-        vklCommit((VKLObject)samplesMask);
-      }
-
-      renderer->setParam<const float *>("isovalues", values);
-      renderer->commit();
+      this->isovalues = isovalues;
+      renderer->setIsovalues(isovalues);
     }
 
     void VKLWindow::savePPM(const std::string &filename)
@@ -150,30 +106,44 @@ namespace openvkl {
 
     void VKLWindow::setActiveRenderer(const std::string &rendererType)
     {
-      if (rendererType == "hit_iterator")
+      if (rendererType == "density_pathtracer")
+        renderer = renderer_density_pathtracer.get();
+      else if (rendererType == "hit_iterator")
         renderer = renderer_hit_iterator.get();
       else if (rendererType == "ray_march_iterator")
-        renderer = renderer_ray_marcher.get();
-      else if (rendererType == "pathtracer")
-        renderer = renderer_pathtracer.get();
+        renderer = renderer_ray_march_iterator.get();
       else
         throw std::runtime_error("VKLWindow: unknown renderer type");
 
       updateCamera();
-      updateTransferFunction();
+
+      renderer->setTransferFunction(transferFunction.valueRange,
+                                    transferFunction.colorsAndOpacities);
+
+      renderer->setIsovalues(isovalues);
     }
 
     void VKLWindow::reshape(const vec2i &newWindowSize)
     {
       windowSize = newWindowSize;
 
+      renderer_density_pathtracer->setFrameSize(windowSize);
       renderer_hit_iterator->setFrameSize(windowSize);
-      renderer_ray_marcher->setFrameSize(windowSize);
-      renderer_pathtracer->setFrameSize(windowSize);
+      renderer_ray_march_iterator->setFrameSize(windowSize);
 
       // update camera
-      arcballCamera.updateWindowSize(windowSize);
+      arcballCamera->updateWindowSize(windowSize);
       updateCamera();
+    }
+
+    void VKLWindow::updateCamera()
+    {
+      resetAccumulation();
+
+      renderer->setCamera(arcballCamera->eyePos(),
+                          arcballCamera->lookDir(),
+                          arcballCamera->upDir(),
+                          windowSize.x / float(windowSize.y));
     }
 
   }  // namespace examples

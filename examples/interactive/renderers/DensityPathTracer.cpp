@@ -40,7 +40,7 @@ namespace openvkl {
 
     // DensityPathTracer definitions //////////////////////////////////////////
 
-    DensityPathTracer::DensityPathTracer()
+    DensityPathTracer::DensityPathTracer(VKLVolume volume) : Renderer(volume)
     {
       ispcEquivalent = ispc::DensityPathTracer_create();
     }
@@ -49,10 +49,9 @@ namespace openvkl {
     {
       Renderer::commit();
 
-      sigmaTScale    = getParam<float>("sigmaTScale", 1.f);
-      sigmaSScale    = getParam<float>("sigmaSScale", 1.f);
-      maxNumScatters = getParam<int>("maxNumScatters", 1);
-
+      sigmaTScale           = getParam<float>("sigmaTScale", 1.f);
+      sigmaSScale           = getParam<float>("sigmaSScale", 1.f);
+      maxNumScatters        = getParam<int>("maxNumScatters", 1);
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
 
       ispc::DensityPathTracer_set(ispcEquivalent,
@@ -155,11 +154,7 @@ namespace openvkl {
       Le = Le + sigmaSSample * inscatteredLe;
     }
 
-    vec3f DensityPathTracer::renderPixel(VKLVolume volume,
-                                         const box3f &volumeBounds,
-                                         VKLSamplesMask,
-                                         Ray &ray,
-                                         const vec4i &sampleID)
+    vec3f DensityPathTracer::renderPixel(Ray &ray, const vec4i &sampleID)
     {
       RNG rng(sampleID.z, (sampleID.w * sampleID.y) + sampleID.x);
       vec3f Le;

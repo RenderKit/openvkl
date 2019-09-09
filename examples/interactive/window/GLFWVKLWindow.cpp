@@ -30,13 +30,9 @@ namespace openvkl {
     GLFWVKLWindow *GLFWVKLWindow::activeWindow = nullptr;
 
     GLFWVKLWindow::GLFWVKLWindow(const vec2i &windowSize,
-                                 const box3f &volumeBounds,
                                  VKLVolume volume,
-                                 const range1f &vRange,
-                                 VKLSamplesMask mask,
                                  std::string rendererType)
-        : VKLWindow(
-              windowSize, volumeBounds, volume, vRange, mask, rendererType)
+        : VKLWindow(windowSize, volume, rendererType)
     {
       if (activeWindow != nullptr)
         throw std::runtime_error("Cannot create more than one VKLWindow!");
@@ -175,11 +171,11 @@ namespace openvkl {
           const vec2f mouseTo(
               clamp(mouse.x * 2.f / windowSize.x - 1.f, -1.f, 1.f),
               clamp(mouse.y * 2.f / windowSize.y - 1.f, -1.f, 1.f));
-          arcballCamera.rotate(mouseFrom, mouseTo);
+          arcballCamera->rotate(mouseFrom, mouseTo);
         } else if (rightDown) {
-          arcballCamera.zoom(mouse.y - prev.y);
+          arcballCamera->zoom(mouse.y - prev.y);
         } else if (middleDown) {
-          arcballCamera.pan(vec2f(mouse.x - prev.x, prev.y - mouse.y));
+          arcballCamera->pan(vec2f(mouse.x - prev.x, prev.y - mouse.y));
         }
 
         if (cameraChanged) {

@@ -21,21 +21,12 @@
 namespace openvkl {
   namespace examples {
 
-    HitIterator::HitIterator()
+    HitIterator::HitIterator(VKLVolume volume) : Renderer(volume)
     {
       ispcEquivalent = ispc::HitIterator_create();
     }
 
-    void HitIterator::commit()
-    {
-      Renderer::commit();
-    }
-
-    vec3f HitIterator::renderPixel(VKLVolume volume,
-                                   const box3f &volumeBounds,
-                                   VKLSamplesMask samplesMask,
-                                   Ray &ray,
-                                   const vec4i &)
+    vec3f HitIterator::renderPixel(Ray &ray, const vec4i &)
     {
       vec3f color(0.f);
       float alpha = 0.f;

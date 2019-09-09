@@ -31,10 +31,7 @@ namespace openvkl {
     {
      public:
       GLFWVKLWindow(const vec2i &windowSize,
-                    const box3f &volumeBounds,
                     VKLVolume volume,
-                    const range1f &voxelRange,
-                    VKLSamplesMask mask,
                     std::string rendererType);
 
       ~GLFWVKLWindow() override;

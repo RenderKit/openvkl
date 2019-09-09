@@ -87,7 +87,7 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
 {
   auto &renderer = window.currentRenderer();
 
-  static bool showIsosurfaces = false;
+  static bool showIsosurfaces = true;
 
   static constexpr int maxNumIsosurfaces = 3;
 
@@ -152,7 +152,7 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
       }
     }
 
-    window.setIsovalues(enabledIsovalues.size(), enabledIsovalues.data());
+    window.setIsovalues(enabledIsovalues);
   }
 
   return isosurfacesChanged;
@@ -304,8 +304,6 @@ int main(int argc, const char **argv)
   }
 
   VKLVolume volume = testingStructuredVolume->getVKLVolume();
-  auto bounds      = vklGetBoundingBox(volume);
-  auto voxelRange  = testingStructuredVolume->getVoxelRange();
 
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
@@ -313,14 +311,9 @@ int main(int argc, const char **argv)
   std::cout << "gridOrigin:     " << gridOrigin << std::endl;
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
   std::cout << "voxelType:      " << voxelTypeString << std::endl;
-  std::cout << "voxelRange:     " << voxelRange.toVec2() << std::endl;
 
-  auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(vec2i{1024, 1024},
-                                                             (box3f &)bounds,
-                                                             volume,
-                                                             voxelRange,
-                                                             nullptr,
-                                                             rendererType);
+  auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
+      vec2i{1024, 1024}, volume, rendererType);
 
   auto &renderer = glfwVKLWindow->currentRenderer();
 
@@ -328,9 +321,10 @@ int main(int argc, const char **argv)
     bool changed = false;
 
     static int whichRenderer = 0;
-    if (ImGui::Combo("renderer",
-                     &whichRenderer,
-                     "pathtracer\0hit_iterator\0ray_march_iterator\0\0")) {
+    if (ImGui::Combo(
+            "renderer",
+            &whichRenderer,
+            "density_pathtracer\0hit_iterator\0ray_march_iterator\0\0")) {
       switch (whichRenderer) {
       case 0:
         rendererType = "density_pathtracer";

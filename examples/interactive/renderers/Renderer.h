@@ -47,7 +47,8 @@ namespace openvkl {
 
     struct Renderer : public utility::ParameterizedObject
     {
-      Renderer() = default;
+      Renderer(VKLVolume volume);
+
       virtual ~Renderer();
 
       // Parameters //
@@ -74,17 +75,20 @@ namespace openvkl {
       void setTransferFunction(const range1f &valueRange,
                                const std::vector<vec4f> &colorsAndOpacities);
 
+      // Isosurfaces setup //
+
+      void setIsovalues(const std::vector<float> &isovalues);
+
       // Render a frame //
 
-      void renderFrame(VKLVolume volume, VKLSamplesMask mask);
-      void renderFrame_ispc(VKLVolume volume, VKLSamplesMask mask);
+      void renderFrame();
+      void renderFrame_ispc();
 
      protected:
-      virtual vec3f renderPixel(VKLVolume volume,
-                                const box3f &volumeBounds,
-                                VKLSamplesMask mask,
-                                Ray &ray,
-                                const vec4i &sampleID) = 0;
+
+      void updateSamplesMask();
+
+      virtual vec3f renderPixel(Ray &ray, const vec4i &sampleID) = 0;
 
       Ray computeRay(const vec2f &screenCoords) const;
 
@@ -113,8 +117,14 @@ namespace openvkl {
       std::vector<vec4f> tfColorsAndOpacities{
           {0.f, 0.f, 1.f, 0.f}, {0.f, 1.f, 0.f, 0.5f}, {1.f, 0.f, 0.f, 1.f}};
 
-      // Renderer data //
+      // Isosurfaces data //
 
+      std::vector<float> isovalues{-1.f, 0.f, 1.f};
+
+      // Renderer data //
+      VKLVolume volume;
+      box3f volumeBounds;
+      VKLSamplesMask samplesMask{nullptr};
       void *ispcEquivalent{nullptr};
     };
 

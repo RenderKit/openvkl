@@ -45,13 +45,10 @@ namespace openvkl {
     {
      public:
       VKLWindow(const vec2i &windowSize,
-                const box3f &volumeBounds,
                 VKLVolume volume,
-                const range1f &voxelRange,
-                VKLSamplesMask mask,
                 std::string rendererType);
 
-      virtual ~VKLWindow();
+      virtual ~VKLWindow() = default;
 
       void render();
 
@@ -65,7 +62,7 @@ namespace openvkl {
 
       void setTransferFunction(const TransferFunction &transferFunction);
 
-      void setIsovalues(int numValues, const float *values);
+      void setIsovalues(const std::vector<float> &isovalues);
 
       void savePPM(const std::string &filename);
 
@@ -76,27 +73,22 @@ namespace openvkl {
 
       void updateCamera();
 
-      void updateTransferFunction();
-
       bool useISPC{true};
 
       vec2i windowSize;
-      box3f volumeBounds;
       VKLVolume volume{nullptr};
-
-      range1f voxelRange;
-
-      VKLSamplesMask samplesMask{nullptr};
 
       Renderer *renderer;
 
+      std::unique_ptr<Renderer> renderer_density_pathtracer;
       std::unique_ptr<Renderer> renderer_hit_iterator;
-      std::unique_ptr<Renderer> renderer_ray_marcher;
-      std::unique_ptr<Renderer> renderer_pathtracer;
+      std::unique_ptr<Renderer> renderer_ray_march_iterator;
 
-      ArcballCamera arcballCamera;
+      std::unique_ptr<ArcballCamera> arcballCamera;
 
       TransferFunction transferFunction;
+
+      std::vector<float> isovalues{-1.f, 0.f, 1.f};
     };
 
   }  // namespace examples

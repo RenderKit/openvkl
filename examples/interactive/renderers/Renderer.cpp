@@ -25,8 +25,19 @@
 namespace openvkl {
   namespace examples {
 
+    Renderer::Renderer(VKLVolume volume) : volume(volume)
+    {
+      const auto vklVolumeBounds = vklGetBoundingBox(volume);
+      volumeBounds               = (const box3f &)vklVolumeBounds;
+    }
+
     Renderer::~Renderer()
     {
+      if (samplesMask) {
+        vklRelease(samplesMask);
+        samplesMask = nullptr;
+      }
+
       ispc::Renderer_freeRenderer(ispcEquivalent);
     }
 
@@ -35,6 +46,7 @@ namespace openvkl {
       spp = getParam<int>("spp", 1);
 
       setTransferFunction(tfValueRange, tfColorsAndOpacities);
+      setIsovalues(isovalues);
     }
 
     void Renderer::setCamera(const vec3f &pos,
@@ -111,14 +123,20 @@ namespace openvkl {
           (ispc::vec2f &)tfValueRange,
           tfColorsAndOpacities.size(),
           (ispc::vec4f *)tfColorsAndOpacities.data());
+
+      updateSamplesMask();
     }
 
-    void Renderer::renderFrame(VKLVolume volume, VKLSamplesMask mask)
+    void Renderer::setIsovalues(const std::vector<float> &isovalues)
+    {
+      this->isovalues = isovalues;
+
+      updateSamplesMask();
+    }
+
+    void Renderer::renderFrame()
     {
       auto fbDims = pixelIndices.dimensions();
-
-      const auto vkl_bounds    = vklGetBoundingBox(volume);
-      const box3f volumeBounds = (const box3f &)vkl_bounds;
 
       for (int i = 0; i < spp; ++i) {
         float accumScale = 1.f / (frameID + 1);
@@ -131,11 +149,8 @@ namespace openvkl {
 
           Ray ray = computeRay(screen);
 
-          vec3f color = renderPixel(volume,
-                                    volumeBounds,
-                                    mask,
-                                    ray,
-                                    vec4i(pixel.x, pixel.y, frameID, fbDims.x));
+          vec3f color =
+              renderPixel(ray, vec4i(pixel.x, pixel.y, frameID, fbDims.x));
 
           float &ar = accum_r[i];
           float &ag = accum_g[i];
@@ -157,12 +172,9 @@ namespace openvkl {
       }
     }
 
-    void Renderer::renderFrame_ispc(VKLVolume volume, VKLSamplesMask mask)
+    void Renderer::renderFrame_ispc()
     {
       auto fbDims = pixelIndices.dimensions();
-
-      const auto vkl_bounds    = vklGetBoundingBox(volume);
-      const box3f volumeBounds = (const box3f &)vkl_bounds;
 
       const size_t numJobs =
           pixelIndices.total_indices() / ispc::Renderer_pixelsPerJob();
@@ -174,7 +186,7 @@ namespace openvkl {
           ispc::Renderer_renderPixel(ispcEquivalent,
                                      volume,
                                      (ispc::box3f &)volumeBounds,
-                                     mask,
+                                     samplesMask,
                                      (ispc::vec2i &)fbDims,
                                      frameID,
                                      accumScale,
@@ -183,6 +195,26 @@ namespace openvkl {
 
         frameID++;
       }
+    }
+
+    void Renderer::updateSamplesMask()
+    {
+      if (samplesMask) {
+        vklRelease(samplesMask);
+        samplesMask = nullptr;
+      }
+
+      samplesMask = vklNewSamplesMask(volume);
+
+      vklSamplesMaskSetRanges(
+          samplesMask, 1, (const vkl_range1f *)&tfValueRange);
+
+      if (isovalues.size() > 0) {
+        vklSamplesMaskSetValues(
+            samplesMask, isovalues.size(), isovalues.data());
+      }
+
+      vklCommit(samplesMask);
     }
 
   }  // namespace examples

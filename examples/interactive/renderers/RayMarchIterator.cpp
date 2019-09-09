@@ -21,7 +21,7 @@
 namespace openvkl {
   namespace examples {
 
-    RayMarchIterator::RayMarchIterator()
+    RayMarchIterator::RayMarchIterator(VKLVolume volume) : Renderer(volume)
     {
       ispcEquivalent = ispc::RayMarchIterator_create();
     }
@@ -35,11 +35,7 @@ namespace openvkl {
       ispc::RayMarchIterator_set(ispcEquivalent, samplingRate);
     }
 
-    vec3f RayMarchIterator::renderPixel(VKLVolume volume,
-                                        const box3f &volumeBounds,
-                                        VKLSamplesMask samplesMask,
-                                        Ray &ray,
-                                        const vec4i &sampleID)
+    vec3f RayMarchIterator::renderPixel(Ray &ray, const vec4i &sampleID)
     {
       vec3f color(0.f);
       float alpha = 0.f;

@@ -23,16 +23,10 @@ namespace openvkl {
 
     struct HitIterator : public Renderer
     {
-      HitIterator();
+      HitIterator(VKLVolume volume);
       ~HitIterator() override = default;
 
-      void commit() override;
-
-      vec3f renderPixel(VKLVolume volume,
-                        const box3f &volumeBounds,
-                        VKLSamplesMask mask,
-                        Ray &ray,
-                        const vec4i &sampleID) override;
+      vec3f renderPixel(Ray &ray, const vec4i &sampleID) override;
     };
 
   }  // namespace examples

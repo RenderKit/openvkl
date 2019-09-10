@@ -51,7 +51,7 @@ option(INSTALL_IN_SEPARATE_DIRECTORIES
   ON
 )
 
-option(BUILD_GLFW "Build glfw for OSPRay examples or use one in existing environment?" ON)
+option(BUILD_GLFW "Build glfw for examples or use one in existing environment?" ON)
 
 ## Setup top-level variables ##
 
@@ -77,7 +77,7 @@ if (BUILD_GLFW)
 endif()
 include(dep_ospcommon)
 
-## Build OSPRay ##
+## Build OpenVKL ##
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
   ExternalProject_Add(openvkl

@@ -22,9 +22,6 @@ struct HitIterator
 };
 
 vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
-                              uniform VKLVolume volume,
-                              const uniform box3f &,
-                              uniform VKLSamplesMask samplesMask,
                               Ray &ray,
                               const vec2i &,
                               const uniform int &,
@@ -35,7 +32,7 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
 
-  if (samplesMask == NULL)
+  if (self->super.samplesMask == NULL)
     return color;
 
   // create volume iterator
@@ -45,11 +42,11 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
 
   uniform VKLHitIterator iterator;
   vklInitHitIteratorV(&iterator,
-                      volume,
+                      self->super.volume,
                       (varying vkl_vec3f *)&ray.org,
                       (varying vkl_vec3f *)&ray.dir,
                       &tRange,
-                      samplesMask);
+                      self->super.samplesMask);
 
   // the current surface hit
   VKLHit hit;
@@ -65,9 +62,14 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
   return color;
 }
 
-export void *uniform HitIterator_create()
+export void *uniform HitIterator_create(void *uniform _volume)
 {
   HitIterator *uniform self = uniform new HitIterator;
-  self->super.renderPixel   = HitIterator_renderPixel;
+
+  VKLVolume volume = (VKLVolume)_volume;
+  Renderer_constructor(&self->super, volume);
+
+  self->super.renderPixel = HitIterator_renderPixel;
+
   return self;
 }

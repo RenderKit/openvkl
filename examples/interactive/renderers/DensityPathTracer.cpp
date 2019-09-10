@@ -42,7 +42,7 @@ namespace openvkl {
 
     DensityPathTracer::DensityPathTracer(VKLVolume volume) : Renderer(volume)
     {
-      ispcEquivalent = ispc::DensityPathTracer_create();
+      ispcEquivalent = ispc::DensityPathTracer_create(volume);
     }
 
     void DensityPathTracer::commit()

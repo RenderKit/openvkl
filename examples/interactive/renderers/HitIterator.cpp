@@ -23,7 +23,7 @@ namespace openvkl {
 
     HitIterator::HitIterator(VKLVolume volume) : Renderer(volume)
     {
-      ispcEquivalent = ispc::HitIterator_create();
+      ispcEquivalent = ispc::HitIterator_create(volume);
     }
 
     vec3f HitIterator::renderPixel(Ray &ray, const vec4i &)

@@ -23,9 +23,6 @@ struct RayMarchIterator
 };
 
 vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
-                                   uniform VKLVolume volume,
-                                   const uniform box3f &volumeBounds,
-                                   uniform VKLSamplesMask samplesMask,
                                    Ray &ray,
                                    const vec2i &pixel,
                                    const uniform int &frameID,
@@ -43,11 +40,11 @@ vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
 
   uniform VKLIntervalIterator iterator;
   vklInitIntervalIteratorV(&iterator,
-                           volume,
+                           self->super.volume,
                            (varying vkl_vec3f *)&ray.org,
                            (varying vkl_vec3f *)&ray.dir,
                            &tRange,
-                           samplesMask);
+                           self->super.samplesMask);
 
   // the current ray interval
   VKLInterval interval;
@@ -68,8 +65,9 @@ vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
       const float dt = subInterval.upper - subInterval.lower;
 
       // get volume sample
-      vec3f c      = ray.org + t * ray.dir;
-      float sample = vklComputeSampleV(volume, (varying vkl_vec3f *)&c);
+      vec3f c = ray.org + t * ray.dir;
+      float sample =
+          vklComputeSampleV(self->super.volume, (varying vkl_vec3f *)&c);
 
       // map through transfer function
       vec4f sampleColorAndOpacity =
@@ -93,9 +91,12 @@ vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
   return color;
 }
 
-export void *uniform RayMarchIterator_create()
+export void *uniform RayMarchIterator_create(void *uniform _volume)
 {
   RayMarchIterator *uniform self = uniform new RayMarchIterator;
+
+  VKLVolume volume = (VKLVolume)_volume;
+  Renderer_constructor(&self->super, volume);
 
   self->super.renderPixel = RayMarchIterator_renderPixel;
   self->samplingRate      = 1.f;

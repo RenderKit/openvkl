@@ -181,14 +181,8 @@ namespace openvkl {
         float accumScale = 1.f / (frameID + 1);
 
         tasking::parallel_for(numJobs, [&](size_t i) {
-          ispc::Renderer_renderPixel(ispcEquivalent,
-                                     volume,
-                                     (ispc::box3f &)volumeBounds,
-                                     samplesMask,
-                                     (ispc::vec2i &)fbDims,
-                                     frameID,
-                                     accumScale,
-                                     i);
+          ispc::Renderer_renderPixel(
+              ispcEquivalent, (ispc::vec2i &)fbDims, frameID, accumScale, i);
         });
 
         frameID++;
@@ -220,6 +214,8 @@ namespace openvkl {
       }
 
       vklCommit(samplesMask);
+
+      ispc::Renderer_setSamplesMask(ispcEquivalent, samplesMask);
     }
 
   }  // namespace examples

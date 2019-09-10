@@ -70,18 +70,21 @@ export void Renderer_setTransferFunction(
   self->tfColorsAndOpacities      = colorsAndOpacities;
 }
 
+export void Renderer_setSamplesMask(void *uniform _self,
+                                    VKLSamplesMask samplesMask)
+{
+  Renderer *uniform self = (Renderer * uniform) _self;
+
+  self->samplesMask = samplesMask;
+}
+
 export void Renderer_renderPixel(void *uniform _self,
-                                 void *uniform _volume,
-                                 const uniform box3f &volumeBounds,
-                                 void *uniform _mask,
                                  const uniform vec2i &fbDims,
                                  const uniform int frameID,
                                  const uniform float accumScale,
                                  const uniform int _taskID)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
-  VKLVolume volume       = (VKLVolume)_volume;
-  VKLSamplesMask mask    = (VKLSamplesMask)_mask;
 
   const int pixelID = _taskID * programCount + programIndex;
 
@@ -95,8 +98,7 @@ export void Renderer_renderPixel(void *uniform _self,
 
   Ray ray = Renderer_computeRay(self, screen);
 
-  vec3f color = self->renderPixel(
-      self, volume, volumeBounds, mask, ray, pixel, frameID, fbDims.x);
+  vec3f color = self->renderPixel(self, ray, pixel, frameID, fbDims.x);
 
   float ar = self->accum_r[pixelID];
   float ag = self->accum_g[pixelID];

@@ -23,7 +23,6 @@ struct DensityPathTracer
   float sigmaTScale;
   float sigmaSScale;
   int maxNumScatters;
-
   float ambientLightIntensity;
 };
 
@@ -151,9 +150,6 @@ inline static void integrate(DensityPathTracer *uniform self,
 }
 
 vec3f DensityPathTracer_renderPixel(uniform Renderer *uniform _self,
-                                    uniform VKLVolume volume,
-                                    const uniform box3f &volumeBounds,
-                                    uniform VKLSamplesMask,
                                     Ray &ray,
                                     const vec2i &pixel,
                                     const uniform int &frameID,
@@ -166,13 +162,17 @@ vec3f DensityPathTracer_renderPixel(uniform Renderer *uniform _self,
   RandomTEA__Constructor(rng, frameID, (fbWidth * pixel.y) + pixel.x);
 
   vec3f Le;
-  integrate(self, rng, volume, volumeBounds, ray, Le, 0);
+  integrate(
+      self, rng, self->super.volume, self->super.volumeBounds, ray, Le, 0);
   return Le;
 }
 
-export void *uniform DensityPathTracer_create()
+export void *uniform DensityPathTracer_create(void *uniform _volume)
 {
   DensityPathTracer *uniform self = uniform new DensityPathTracer;
+
+  VKLVolume volume = (VKLVolume)_volume;
+  Renderer_constructor(&self->super, volume);
 
   self->super.renderPixel = DensityPathTracer_renderPixel;
 
@@ -187,9 +187,8 @@ export void DensityPathTracer_set(void *uniform _self,
 {
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
 
-  self->sigmaTScale    = sigmaTScale;
-  self->sigmaSScale    = sigmaSScale;
-  self->maxNumScatters = maxNumScatters;
-
+  self->sigmaTScale           = sigmaTScale;
+  self->sigmaSScale           = sigmaSScale;
+  self->maxNumScatters        = maxNumScatters;
   self->ambientLightIntensity = ambientLightIntensity;
 }

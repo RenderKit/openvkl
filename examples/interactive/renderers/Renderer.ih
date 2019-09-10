@@ -40,22 +40,32 @@ struct Renderer
   float *accum_r;
   float *accum_g;
   float *accum_b;
-
   int frameID;
 
   vec2f tfValueRange;
   int tfColorsAndOpacitiesCount;
   vec4f *tfColorsAndOpacities;
 
+  VKLVolume volume;
+  box3f volumeBounds;
+  VKLSamplesMask samplesMask;
+
   vec3f (*uniform renderPixel)(uniform Renderer *uniform self,
-                               uniform VKLVolume volume,
-                               const uniform box3f &volumeBounds,
-                               uniform VKLSamplesMask,
                                Ray &ray,
                                const vec2i &pixel,
                                const uniform int &frameID,
                                const uniform int &fbWidth);
 };
+
+inline void Renderer_constructor(Renderer *uniform self, VKLVolume volume)
+{
+  self->volume = volume;
+
+  uniform vkl_box3f volumeBounds = vklGetBoundingBox(volume);
+  const box3f *uniform bb =
+      (const uniform struct box3f *uniform) & volumeBounds;
+  self->volumeBounds = *bb;
+}
 
 inline Ray Renderer_computeRay(uniform Renderer *uniform self,
                                const vec2f &screenCoords)

@@ -23,7 +23,7 @@ namespace openvkl {
 
     RayMarchIterator::RayMarchIterator(VKLVolume volume) : Renderer(volume)
     {
-      ispcEquivalent = ispc::RayMarchIterator_create();
+      ispcEquivalent = ispc::RayMarchIterator_create(volume);
     }
 
     void RayMarchIterator::commit()

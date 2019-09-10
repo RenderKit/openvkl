@@ -61,12 +61,11 @@ openvkl_configure_ispc_isa()
 
 find_package(ospcommon 1.0.0 REQUIRED)
 
-## Build library, tests, and apps ##
+## Build library, examples, and tests ##
 
 add_subdirectory(openvkl)
 
 if (BUILD_EXAMPLES)
-  add_subdirectory(apps)
   add_subdirectory(examples)
 endif()
 

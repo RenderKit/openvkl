@@ -14,36 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "GridAcceleratorSamplesMask.h"
+#include "GridAcceleratorValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
-#include "GridAcceleratorSamplesMask_ispc.h"
+#include "GridAcceleratorValueSelector_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    GridAcceleratorSamplesMask<W>::GridAcceleratorSamplesMask(
+    GridAcceleratorValueSelector<W>::GridAcceleratorValueSelector(
         const Volume<W> *volume)
         : volume(static_cast<const StructuredRegularVolume<W> *>(volume))
     {
     }
 
     template <int W>
-    GridAcceleratorSamplesMask<W>::~GridAcceleratorSamplesMask()
+    GridAcceleratorValueSelector<W>::~GridAcceleratorValueSelector()
     {
       if (ispcEquivalent) {
-        ispc::GridAcceleratorSamplesMask_Destructor(ispcEquivalent);
+        ispc::GridAcceleratorValueSelector_Destructor(ispcEquivalent);
       }
     }
 
     template <int W>
-    void GridAcceleratorSamplesMask<W>::commit()
+    void GridAcceleratorValueSelector<W>::commit()
     {
       if (ispcEquivalent) {
-        ispc::GridAcceleratorSamplesMask_Destructor(ispcEquivalent);
+        ispc::GridAcceleratorValueSelector_Destructor(ispcEquivalent);
       }
 
-      ispcEquivalent = ispc::GridAcceleratorSamplesMask_Constructor(
+      ispcEquivalent = ispc::GridAcceleratorValueSelector_Constructor(
           volume->getISPCEquivalent(),
           ranges.size(),
           (const ispc::box1f *)ranges.data(),
@@ -51,9 +51,9 @@ namespace openvkl {
           (const float *)values.data());
     }
 
-    template struct GridAcceleratorSamplesMask<4>;
-    template struct GridAcceleratorSamplesMask<8>;
-    template struct GridAcceleratorSamplesMask<16>;
+    template struct GridAcceleratorValueSelector<4>;
+    template struct GridAcceleratorValueSelector<8>;
+    template struct GridAcceleratorValueSelector<16>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

@@ -31,7 +31,7 @@ namespace openvkl {
       vec3f color(0.f);
       float alpha = 0.f;
 
-      if (samplesMask == nullptr)
+      if (valueSelector == nullptr)
         return color;
 
       // create volume iterator
@@ -45,7 +45,7 @@ namespace openvkl {
                          (vkl_vec3f *)&ray.org,
                          (vkl_vec3f *)&ray.dir,
                          &tRange,
-                         samplesMask);
+                         valueSelector);
 
       // the current surface hit
       VKLHit hit;

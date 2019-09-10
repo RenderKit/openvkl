@@ -39,7 +39,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
   VKLVolume vklVolume = v->getVKLVolume();
 
-  SECTION("scalar interval continuity with no samples mask")
+  SECTION("scalar interval continuity with no value selector")
   {
     vkl_vec3f origin{0.5f, 0.5f, -1.f};
     vkl_vec3f direction{0.f, 0.f, 1.f};
@@ -70,7 +70,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     REQUIRE(intervalPrevious.tRange.upper == 2.f);
   }
 
-  SECTION("scalar interval value ranges with no samples mask")
+  SECTION("scalar interval value ranges with no value selector")
   {
     vkl_vec3f origin{0.5f, 0.5f, -1.f};
     vkl_vec3f direction{0.f, 0.f, 1.f};
@@ -118,25 +118,25 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     REQUIRE(intervalCount > 0);
   }
 
-  SECTION("scalar interval value ranges with samples mask")
+  SECTION("scalar interval value ranges with value selector")
   {
     vkl_vec3f origin{0.5f, 0.5f, -1.f};
     vkl_vec3f direction{0.f, 0.f, 1.f};
     vkl_range1f tRange{0.f, inf};
 
-    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
+    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
 
     // will trigger intervals covering individual ranges separately
     std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
 
-    vklSamplesMaskSetRanges(
-        samplesMask, valueRanges.size(), valueRanges.data());
+    vklValueSelectorSetRanges(
+        valueSelector, valueRanges.size(), valueRanges.data());
 
-    vklCommit(samplesMask);
+    vklCommit(valueSelector);
 
     VKLIntervalIterator iterator;
     vklInitIntervalIterator(
-        &iterator, vklVolume, &origin, &direction, &tRange, samplesMask);
+        &iterator, vklVolume, &origin, &direction, &tRange, valueSelector);
 
     VKLInterval interval;
 
@@ -169,17 +169,18 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
              << rangeOverlapFraction << "x the returned interval value range");
       }
 
-      // the interval value range should overlap the samples mask value range(s)
-      bool rangeIntersectsSamplesMask = false;
+      // the interval value range should overlap the value selector value
+      // range(s)
+      bool rangeIntersectsValueSelector = false;
 
       for (const auto &r : valueRanges) {
         if (rangesIntersect(r, interval.valueRange)) {
-          rangeIntersectsSamplesMask = true;
+          rangeIntersectsValueSelector = true;
           break;
         }
       }
 
-      REQUIRE(rangeIntersectsSamplesMask);
+      REQUIRE(rangeIntersectsValueSelector);
 
       intervalCount++;
     }
@@ -187,6 +188,6 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     // make sure we had at least one interval...
     REQUIRE(intervalCount > 0);
 
-    vklRelease(samplesMask);
+    vklRelease(valueSelector);
   }
 }

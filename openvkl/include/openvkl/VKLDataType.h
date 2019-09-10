@@ -43,7 +43,7 @@ typedef enum
 
   // Object reference subtypes.
   VKL_DATA,
-  VKL_SAMPLES_MASK,
+  VKL_VALUE_SELECTOR,
   VKL_VOLUME,
 
   // Pointer to a C-style NULL-terminated character string.

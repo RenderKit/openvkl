@@ -20,7 +20,7 @@
 #include "math/box.ih"
 #include "math/vec.ih"
 
-struct GridAcceleratorSamplesMask;
+struct GridAcceleratorValueSelector;
 struct SharedStructuredVolume;
 
 struct GridAcceleratorIteratorIntervalState
@@ -43,7 +43,7 @@ struct GridAcceleratorIterator
   vec3f origin;
   vec3f direction;
   box1f tRange;
-  GridAcceleratorSamplesMask *uniform samplesMask;
+  GridAcceleratorValueSelector *uniform valueSelector;
 
   // common state
   box1f boundingBoxTRange;

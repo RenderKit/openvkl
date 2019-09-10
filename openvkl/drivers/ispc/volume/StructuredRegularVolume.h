@@ -18,7 +18,7 @@
 
 #include "../common/Data.h"
 #include "../iterator/GridAcceleratorIterator.h"
-#include "../samples_mask/GridAcceleratorSamplesMask.h"
+#include "../value_selector/GridAcceleratorValueSelector.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
@@ -37,7 +37,7 @@ namespace openvkl {
                                  const vvec3fn<W> &origin,
                                  const vvec3fn<W> &direction,
                                  const vrange1fn<W> &tRange,
-                                 const SamplesMask *samplesMask) override;
+                                 const ValueSelector *valueSelector) override;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalIteratorN<W> &iterator,
@@ -49,14 +49,14 @@ namespace openvkl {
                             const vvec3fn<W> &origin,
                             const vvec3fn<W> &direction,
                             const vrange1fn<W> &tRange,
-                            const SamplesMask *samplesMask) override;
+                            const ValueSelector *valueSelector) override;
 
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override;
 
-      SamplesMask *newSamplesMask() override;
+      ValueSelector *newValueSelector() override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -85,10 +85,10 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const SamplesMask *samplesMask)
+        const ValueSelector *valueSelector)
     {
       iterator = toVKLIntervalIterator<W>(GridAcceleratorIterator<W>(
-          valid, this, origin, direction, tRange, samplesMask));
+          valid, this, origin, direction, tRange, valueSelector));
     }
 
     template <int W>
@@ -114,10 +114,10 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const SamplesMask *samplesMask)
+        const ValueSelector *valueSelector)
     {
       iterator = toVKLHitIterator<W>(GridAcceleratorIterator<W>(
-          valid, this, origin, direction, tRange, samplesMask));
+          valid, this, origin, direction, tRange, valueSelector));
     }
 
     template <int W>
@@ -136,9 +136,9 @@ namespace openvkl {
     }
 
     template <int W>
-    inline SamplesMask *StructuredRegularVolume<W>::newSamplesMask()
+    inline ValueSelector *StructuredRegularVolume<W>::newValueSelector()
     {
-      return new GridAcceleratorSamplesMask<W>(this);
+      return new GridAcceleratorValueSelector<W>(this);
     }
 
     template <int W>

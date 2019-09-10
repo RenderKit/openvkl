@@ -44,7 +44,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
     vkl_vec3f direction{0.f, 0.f, 1.f};
     vkl_range1f tRange{0.f, inf};
 
-    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
+    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
 
     std::vector<float> isoValues;
 
@@ -52,13 +52,14 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       isoValues.push_back(f);
     }
 
-    vklSamplesMaskSetValues(samplesMask, isoValues.size(), isoValues.data());
+    vklValueSelectorSetValues(
+        valueSelector, isoValues.size(), isoValues.data());
 
-    vklCommit((VKLObject)samplesMask);
+    vklCommit(valueSelector);
 
     VKLHitIterator iterator;
     vklInitHitIterator(
-        &iterator, vklVolume, &origin, &direction, &tRange, samplesMask);
+        &iterator, vklVolume, &origin, &direction, &tRange, valueSelector);
 
     VKLHit hit;
 

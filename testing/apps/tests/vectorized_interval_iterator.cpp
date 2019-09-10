@@ -104,7 +104,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   std::array<int, 3> nativeWidths{4, 8, 16};
 
-  SECTION("randomized interval continuity with no samples mask")
+  SECTION("randomized interval continuity with no value selector")
   {
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -329,7 +329,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     }
   }
 
-  SECTION("randomized interval value ranges with no samples mask")
+  SECTION("randomized interval value ranges with no value selector")
   {
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -551,17 +551,17 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     }
   }
 
-  SECTION("randomized interval value ranges with samples mask")
+  SECTION("randomized interval value ranges with value selector")
   {
-    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
+    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
 
     // will trigger intervals covering individual ranges separately
     std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
 
-    vklSamplesMaskSetRanges(
-        samplesMask, valueRanges.size(), valueRanges.data());
+    vklValueSelectorSetRanges(
+        valueSelector, valueRanges.size(), valueRanges.data());
 
-    vklCommit(samplesMask);
+    vklCommit(valueSelector);
 
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -595,7 +595,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    (const vkl_vvec3f4 *)originsSOA.data(),
                                    (const vkl_vvec3f4 *)directionsSOA.data(),
                                    (const vkl_vrange1f4 *)tRangesSOA.data(),
-                                   samplesMask);
+                                   valueSelector);
 
           VKLInterval4 interval;
           int result[callingWidth];
@@ -643,21 +643,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the samples mask value
-              // range(s)
-              bool rangeIntersectsSamplesMask = false;
+              // the interval value range should overlap the value selector
+              // value range(s)
+              bool rangeIntersectsValueSelector = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsSamplesMask = true;
+                  rangeIntersectsValueSelector = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsSamplesMask);
+              REQUIRE(rangeIntersectsValueSelector);
             }
 
             intervalCount++;
@@ -675,7 +675,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    (const vkl_vvec3f8 *)originsSOA.data(),
                                    (const vkl_vvec3f8 *)directionsSOA.data(),
                                    (const vkl_vrange1f8 *)tRangesSOA.data(),
-                                   samplesMask);
+                                   valueSelector);
 
           VKLInterval8 interval;
           int result[callingWidth];
@@ -723,21 +723,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the samples mask value
-              // range(s)
-              bool rangeIntersectsSamplesMask = false;
+              // the interval value range should overlap the value selector
+              // value range(s)
+              bool rangeIntersectsValueSelector = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsSamplesMask = true;
+                  rangeIntersectsValueSelector = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsSamplesMask);
+              REQUIRE(rangeIntersectsValueSelector);
             }
 
             intervalCount++;
@@ -755,7 +755,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                     (const vkl_vvec3f16 *)originsSOA.data(),
                                     (const vkl_vvec3f16 *)directionsSOA.data(),
                                     (const vkl_vrange1f16 *)tRangesSOA.data(),
-                                    samplesMask);
+                                    valueSelector);
 
           VKLInterval16 interval;
           int result[callingWidth];
@@ -803,21 +803,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the samples mask value
-              // range(s)
-              bool rangeIntersectsSamplesMask = false;
+              // the interval value range should overlap the value selector
+              // value range(s)
+              bool rangeIntersectsValueSelector = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsSamplesMask = true;
+                  rangeIntersectsValueSelector = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsSamplesMask);
+              REQUIRE(rangeIntersectsValueSelector);
             }
 
             intervalCount++;

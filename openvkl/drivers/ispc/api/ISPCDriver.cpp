@@ -16,7 +16,7 @@
 
 #include "ISPCDriver.h"
 #include "../common/Data.h"
-#include "../samples_mask/SamplesMask.h"
+#include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
 #include "ispc_util_ispc.h"
 
@@ -73,19 +73,19 @@ namespace openvkl {
     // Interval iterator //////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-#define __define_initIntervalIteratorN(WIDTH)                             \
-  template <int W>                                                        \
-  void ISPCDriver<W>::initIntervalIterator##WIDTH(                        \
-      const int *valid,                                                   \
-      vVKLIntervalIteratorN<WIDTH> &iterator,                             \
-      VKLVolume volume,                                                   \
-      const vvec3fn<WIDTH> &origin,                                       \
-      const vvec3fn<WIDTH> &direction,                                    \
-      const vrange1fn<WIDTH> &tRange,                                     \
-      VKLSamplesMask samplesMask)                                         \
-  {                                                                       \
-    initIntervalIteratorAnyWidth<WIDTH>(                                  \
-        valid, iterator, volume, origin, direction, tRange, samplesMask); \
+#define __define_initIntervalIteratorN(WIDTH)                               \
+  template <int W>                                                          \
+  void ISPCDriver<W>::initIntervalIterator##WIDTH(                          \
+      const int *valid,                                                     \
+      vVKLIntervalIteratorN<WIDTH> &iterator,                               \
+      VKLVolume volume,                                                     \
+      const vvec3fn<WIDTH> &origin,                                         \
+      const vvec3fn<WIDTH> &direction,                                      \
+      const vrange1fn<WIDTH> &tRange,                                       \
+      VKLValueSelector valueSelector)                                       \
+  {                                                                         \
+    initIntervalIteratorAnyWidth<WIDTH>(                                    \
+        valid, iterator, volume, origin, direction, tRange, valueSelector); \
   }
 
     __define_initIntervalIteratorN(1);
@@ -117,19 +117,19 @@ namespace openvkl {
     // Hit iterator ///////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-#define __define_initHitIteratorN(WIDTH)                                  \
-  template <int W>                                                        \
-  void ISPCDriver<W>::initHitIterator##WIDTH(                             \
-      const int *valid,                                                   \
-      vVKLHitIteratorN<WIDTH> &iterator,                                  \
-      VKLVolume volume,                                                   \
-      const vvec3fn<WIDTH> &origin,                                       \
-      const vvec3fn<WIDTH> &direction,                                    \
-      const vrange1fn<WIDTH> &tRange,                                     \
-      VKLSamplesMask samplesMask)                                         \
-  {                                                                       \
-    initHitIteratorAnyWidth<WIDTH>(                                       \
-        valid, iterator, volume, origin, direction, tRange, samplesMask); \
+#define __define_initHitIteratorN(WIDTH)                                    \
+  template <int W>                                                          \
+  void ISPCDriver<W>::initHitIterator##WIDTH(                               \
+      const int *valid,                                                     \
+      vVKLHitIteratorN<WIDTH> &iterator,                                    \
+      VKLVolume volume,                                                     \
+      const vvec3fn<WIDTH> &origin,                                         \
+      const vvec3fn<WIDTH> &direction,                                      \
+      const vrange1fn<WIDTH> &tRange,                                       \
+      VKLValueSelector valueSelector)                                       \
+  {                                                                         \
+    initHitIteratorAnyWidth<WIDTH>(                                         \
+        valid, iterator, volume, origin, direction, tRange, valueSelector); \
   }
 
     __define_initHitIteratorN(1);
@@ -238,32 +238,34 @@ namespace openvkl {
     }
 
     /////////////////////////////////////////////////////////////////////////
-    // Samples mask /////////////////////////////////////////////////////////
+    // Value selector ///////////////////////////////////////////////////////
     /////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    VKLSamplesMask ISPCDriver<W>::newSamplesMask(VKLVolume volume)
+    VKLValueSelector ISPCDriver<W>::newValueSelector(VKLVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return (VKLSamplesMask)volumeObject.newSamplesMask();
+      return (VKLValueSelector)volumeObject.newValueSelector();
     }
 
     template <int W>
-    void ISPCDriver<W>::samplesMaskSetRanges(
-        VKLSamplesMask samplesMask,
+    void ISPCDriver<W>::valueSelectorSetRanges(
+        VKLValueSelector valueSelector,
         const utility::ArrayView<const range1f> &ranges)
     {
-      auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
-      samplesMaskObject.setRanges(ranges);
+      auto &valueSelectorObject =
+          referenceFromHandle<ValueSelector>(valueSelector);
+      valueSelectorObject.setRanges(ranges);
     }
 
     template <int W>
-    void ISPCDriver<W>::samplesMaskSetValues(
-        VKLSamplesMask samplesMask,
+    void ISPCDriver<W>::valueSelectorSetValues(
+        VKLValueSelector valueSelector,
         const utility::ArrayView<const float> &values)
     {
-      auto &samplesMaskObject = referenceFromHandle<SamplesMask>(samplesMask);
-      samplesMaskObject.setValues(values);
+      auto &valueSelectorObject =
+          referenceFromHandle<ValueSelector>(valueSelector);
+      valueSelectorObject.setValues(values);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -325,7 +327,7 @@ namespace openvkl {
         const vvec3fn<OW> &origin,
         const vvec3fn<OW> &direction,
         const vrange1fn<OW> &tRange,
-        VKLSamplesMask samplesMask)
+        VKLValueSelector valueSelector)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -345,7 +347,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const SamplesMask *>(samplesMask));
+          reinterpret_cast<const ValueSelector *>(valueSelector));
 
       iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
     }
@@ -360,7 +362,7 @@ namespace openvkl {
         const vvec3fn<OW> &origin,
         const vvec3fn<OW> &direction,
         const vrange1fn<OW> &tRange,
-        VKLSamplesMask samplesMask)
+        VKLValueSelector valueSelector)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -378,7 +380,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const SamplesMask *>(samplesMask));
+          reinterpret_cast<const ValueSelector *>(valueSelector));
     }
 
     template <int W>
@@ -391,7 +393,7 @@ namespace openvkl {
         const vvec3fn<OW> &origin,
         const vvec3fn<OW> &direction,
         const vrange1fn<OW> &tRange,
-        VKLSamplesMask samplesMask)
+        VKLValueSelector valueSelector)
     {
       throw std::runtime_error(
           "interval iterators cannot be created for widths different than the "
@@ -489,7 +491,7 @@ namespace openvkl {
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
                                            const vrange1fn<OW> &tRange,
-                                           VKLSamplesMask samplesMask)
+                                           VKLValueSelector valueSelector)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -509,7 +511,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const SamplesMask *>(samplesMask));
+          reinterpret_cast<const ValueSelector *>(valueSelector));
 
       iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
     }
@@ -523,7 +525,7 @@ namespace openvkl {
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
                                            const vrange1fn<OW> &tRange,
-                                           VKLSamplesMask samplesMask)
+                                           VKLValueSelector valueSelector)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -541,7 +543,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const SamplesMask *>(samplesMask));
+          reinterpret_cast<const ValueSelector *>(valueSelector));
     }
 
     template <int W>
@@ -553,7 +555,7 @@ namespace openvkl {
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
                                            const vrange1fn<OW> &tRange,
-                                           VKLSamplesMask samplesMask)
+                                           VKLValueSelector valueSelector)
     {
       throw std::runtime_error(
           "hit iterators cannot be created for widths different than the "

@@ -16,40 +16,18 @@
 
 #pragma once
 
-#include "SamplesMask.h"
+#include "common.isph"
+#include "volume.isph"
 
-namespace openvkl {
-  namespace ispc_driver {
+struct ValueSelector;
+typedef ValueSelector *uniform VKLValueSelector;
 
-    template <int W>
-    struct Volume;
+VKL_API VKLValueSelector vklNewValueSelector(VKLVolume volume);
 
-    template <int W>
-    struct StructuredRegularVolume;
+VKL_API void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
+                                       uniform size_t numRanges,
+                                       const vkl_range1f *uniform ranges);
 
-    template <int W>
-    struct GridAcceleratorSamplesMask : public SamplesMask
-    {
-      GridAcceleratorSamplesMask(const Volume<W> *volume);
-
-      ~GridAcceleratorSamplesMask();
-
-      void commit() override;
-
-      void *getISPCEquivalent() const;
-
-     protected:
-      void *ispcEquivalent{nullptr};
-      const StructuredRegularVolume<W> *volume{nullptr};
-    };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    template <int W>
-    inline void *GridAcceleratorSamplesMask<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
-    }
-
-  }  // namespace ispc_driver
-}  // namespace openvkl
+VKL_API void vklValueSelectorSetValues(VKLValueSelector valueSelector,
+                                       uniform size_t numValues,
+                                       const float *uniform values);

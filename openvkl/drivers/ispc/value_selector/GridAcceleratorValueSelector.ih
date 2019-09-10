@@ -19,7 +19,7 @@
 #include "../volume/SharedStructuredVolume.ih"
 #include "math/box_utility.ih"
 
-struct GridAcceleratorSamplesMask
+struct GridAcceleratorValueSelector
 {
   SharedStructuredVolume *uniform volume;
 

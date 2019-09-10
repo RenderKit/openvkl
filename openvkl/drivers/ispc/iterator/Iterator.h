@@ -17,7 +17,7 @@
 #pragma once
 
 #include "../common/simd.h"
-#include "../samples_mask/SamplesMask.h"
+#include "../value_selector/ValueSelector.h"
 #include "openvkl/openvkl.h"
 
 using namespace ospcommon;
@@ -107,7 +107,7 @@ namespace openvkl {
                const vvec3fn<W> &origin,
                const vvec3fn<W> &direction,
                const vrange1fn<W> &tRange,
-               const SamplesMask *samplesMask);
+               const ValueSelector *valueSelector);
 
       virtual ~Iterator() = default;
 
@@ -128,7 +128,7 @@ namespace openvkl {
                                  const vvec3fn<W> &origin,
                                  const vvec3fn<W> &direction,
                                  const vrange1fn<W> &tRange,
-                                 const SamplesMask *samplesMask)
+                                 const ValueSelector *valueSelector)
         : volume(volume)
     {
     }

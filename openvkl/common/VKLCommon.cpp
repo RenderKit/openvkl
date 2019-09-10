@@ -58,8 +58,8 @@ namespace openvkl {
       return "object";
     case VKL_DATA:
       return "data";
-    case VKL_SAMPLES_MASK:
-      return "samples_mask";
+    case VKL_VALUE_SELECTOR:
+      return "value_selector";
     case VKL_VOLUME:
       return "volume";
     case VKL_STRING:
@@ -139,7 +139,7 @@ namespace openvkl {
     case VKL_VOID_PTR:
     case VKL_OBJECT:
     case VKL_DATA:
-    case VKL_SAMPLES_MASK:
+    case VKL_VALUE_SELECTOR:
     case VKL_VOLUME:
     case VKL_STRING:
       return sizeof(void *);

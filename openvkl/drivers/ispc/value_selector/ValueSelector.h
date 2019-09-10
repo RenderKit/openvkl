@@ -16,10 +16,10 @@
 
 #pragma once
 
-#include "ospcommon/math/range.h"
-#include "ospcommon/utility/ArrayView.h"
 #include "../common/ManagedObject.h"
 #include "../common/objectFactory.h"
+#include "ospcommon/math/range.h"
+#include "ospcommon/utility/ArrayView.h"
 
 using namespace ospcommon;
 using namespace ospcommon::math;
@@ -27,10 +27,10 @@ using namespace ospcommon::math;
 namespace openvkl {
   namespace ispc_driver {
 
-    struct SamplesMask : public ManagedObject
+    struct ValueSelector : public ManagedObject
     {
-      SamplesMask()                   = default;
-      virtual ~SamplesMask() override = default;
+      ValueSelector()                   = default;
+      virtual ~ValueSelector() override = default;
 
       void setRanges(const utility::ArrayView<const range1f> &ranges);
       void setValues(const utility::ArrayView<const float> &values);

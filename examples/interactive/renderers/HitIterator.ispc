@@ -32,7 +32,7 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
 
-  if (self->super.samplesMask == NULL)
+  if (self->super.valueSelector == NULL)
     return color;
 
   // create volume iterator
@@ -46,7 +46,7 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
                       (varying vkl_vec3f *)&ray.org,
                       (varying vkl_vec3f *)&ray.dir,
                       &tRange,
-                      self->super.samplesMask);
+                      self->super.valueSelector);
 
   // the current surface hit
   VKLHit hit;

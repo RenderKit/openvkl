@@ -85,8 +85,7 @@ namespace openvkl {
       void renderFrame_ispc();
 
      protected:
-
-      void updateSamplesMask();
+      void updateValueSelector();
 
       virtual vec3f renderPixel(Ray &ray, const vec4i &sampleID) = 0;
 
@@ -122,7 +121,7 @@ namespace openvkl {
       // Renderer data //
       VKLVolume volume;
       box3f volumeBounds;
-      VKLSamplesMask samplesMask{nullptr};
+      VKLValueSelector valueSelector{nullptr};
       void *ispcEquivalent{nullptr};
     };
 

@@ -48,7 +48,7 @@ struct Renderer
 
   VKLVolume volume;
   box3f volumeBounds;
-  VKLSamplesMask samplesMask;
+  VKLValueSelector valueSelector;
 
   vec3f (*uniform renderPixel)(uniform Renderer *uniform self,
                                Ray &ray,

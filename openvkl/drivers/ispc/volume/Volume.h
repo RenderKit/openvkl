@@ -43,8 +43,8 @@ namespace openvkl {
       // their internal acceleration structures.
 
       // initialize a new iterator for the given input rays (specified by
-      // origin, direction and tRange) and optional samplesMask indicating
-      // volume sample values of interest. if no samplesMask is provided, all
+      // origin, direction and tRange) and optional valueSelector indicating
+      // volume sample values of interest. if no valueSelector is provided, all
       // intervals intersecting the volume should be (iteratively) returned by
       // iterateIntervalV(), and no hits should be returned by iterateHitV().
       //
@@ -57,11 +57,11 @@ namespace openvkl {
                                          const vvec3fn<W> &origin,
                                          const vvec3fn<W> &direction,
                                          const vrange1fn<W> &tRange,
-                                         const SamplesMask *samplesMask);
+                                         const ValueSelector *valueSelector);
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given iterator and return the next interval (if any) satisfying the
-      // iterator's samplesMask in interval. result (0 or 1) should
+      // iterator's valueSelector in interval. result (0 or 1) should
       // indicate if a new interval was found for each active lane.
       //
       // iterator may be modified to track any internal state as desired.
@@ -75,11 +75,11 @@ namespace openvkl {
                                     const vvec3fn<W> &origin,
                                     const vvec3fn<W> &direction,
                                     const vrange1fn<W> &tRange,
-                                    const SamplesMask *samplesMask);
+                                    const ValueSelector *valueSelector);
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given iterator and return the next hit (if any) satisfying
-      // the iterator's samplesMask in hit. result (0 or 1) should
+      // the iterator's valueSelector in hit. result (0 or 1) should
       // indicate if a new hit was found for each active lane.
       //
       // iterator may be modified to track any internal state as desired.
@@ -88,7 +88,7 @@ namespace openvkl {
                                vVKLHitN<W> &hit,
                                vintn<W> &result);
 
-      virtual SamplesMask *newSamplesMask();
+      virtual ValueSelector *newValueSelector();
 
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
@@ -113,7 +113,7 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const SamplesMask *samplesMask)
+        const ValueSelector *valueSelector)
     {
       THROW_NOT_IMPLEMENTED;
     }
@@ -133,7 +133,7 @@ namespace openvkl {
                                             const vvec3fn<W> &origin,
                                             const vvec3fn<W> &direction,
                                             const vrange1fn<W> &tRange,
-                                            const SamplesMask *samplesMask)
+                                            const ValueSelector *valueSelector)
     {
       THROW_NOT_IMPLEMENTED;
     }
@@ -148,7 +148,7 @@ namespace openvkl {
     }
 
     template <int W>
-    inline SamplesMask *Volume<W>::newSamplesMask()
+    inline ValueSelector *Volume<W>::newValueSelector()
     {
       THROW_NOT_IMPLEMENTED;
     }

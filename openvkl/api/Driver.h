@@ -87,7 +87,7 @@ namespace openvkl {
       const vvec3fn<WIDTH> &origin,                                      \
       const vvec3fn<WIDTH> &direction,                                   \
       const vrange1fn<WIDTH> &tRange,                                    \
-      VKLSamplesMask samplesMask)                                        \
+      VKLValueSelector valueSelector)                                    \
   {                                                                      \
     throw std::runtime_error(                                            \
         "initIntervalIterator##WIDTH() not implemented on this driver"); \
@@ -128,7 +128,7 @@ namespace openvkl {
                                       const vvec3fn<WIDTH> &origin,      \
                                       const vvec3fn<WIDTH> &direction,   \
                                       const vrange1fn<WIDTH> &tRange,    \
-                                      VKLSamplesMask samplesMask)        \
+                                      VKLValueSelector valueSelector)    \
   {                                                                      \
     throw std::runtime_error(                                            \
         "initHitIterator##WIDTH() not implemented on this driver");      \
@@ -188,17 +188,17 @@ namespace openvkl {
       virtual void setVoidPtr(VKLObject object, const char *name, void *v)  = 0;
 
       /////////////////////////////////////////////////////////////////////////
-      // Samples mask /////////////////////////////////////////////////////////
+      // Value selector ///////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual VKLSamplesMask newSamplesMask(VKLVolume volume) = 0;
+      virtual VKLValueSelector newValueSelector(VKLVolume volume) = 0;
 
-      virtual void samplesMaskSetRanges(
-          VKLSamplesMask samplesMask,
+      virtual void valueSelectorSetRanges(
+          VKLValueSelector valueSelector,
           const utility::ArrayView<const range1f> &ranges) = 0;
 
-      virtual void samplesMaskSetValues(
-          VKLSamplesMask samplesMask,
+      virtual void valueSelectorSetValues(
+          VKLValueSelector valueSelector,
           const utility::ArrayView<const float> &values) = 0;
 
       /////////////////////////////////////////////////////////////////////////

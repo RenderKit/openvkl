@@ -51,7 +51,7 @@ namespace openvkl {
                               (vkl_vec3f *)&ray.org,
                               (vkl_vec3f *)&ray.dir,
                               &tRange,
-                              samplesMask);
+                              valueSelector);
 
       // the current ray interval
       VKLInterval interval;

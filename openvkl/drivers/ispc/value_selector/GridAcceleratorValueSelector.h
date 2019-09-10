@@ -14,27 +14,41 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "SamplesMask.h"
+#pragma once
+
+#include "ValueSelector.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
-    void SamplesMask::setRanges(const utility::ArrayView<const range1f> &ranges)
+    template <int W>
+    struct Volume;
+
+    template <int W>
+    struct StructuredRegularVolume;
+
+    template <int W>
+    struct GridAcceleratorValueSelector : public ValueSelector
     {
-      this->ranges.clear();
+      GridAcceleratorValueSelector(const Volume<W> *volume);
 
-      for (const auto &r : ranges) {
-        this->ranges.push_back(r);
-      }
-    }
+      ~GridAcceleratorValueSelector();
 
-    void SamplesMask::setValues(const utility::ArrayView<const float> &values)
+      void commit() override;
+
+      void *getISPCEquivalent() const;
+
+     protected:
+      void *ispcEquivalent{nullptr};
+      const StructuredRegularVolume<W> *volume{nullptr};
+    };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline void *GridAcceleratorValueSelector<W>::getISPCEquivalent() const
     {
-      this->values.clear();
-
-      for (const auto &v : values) {
-        this->values.push_back(v);
-      }
+      return ispcEquivalent;
     }
 
   }  // namespace ispc_driver

@@ -16,18 +16,33 @@
 
 #pragma once
 
-#include "common.isph"
-#include "volume.isph"
+#include "common.h"
+#include "volume.h"
 
-struct SamplesMask;
-typedef SamplesMask *uniform VKLSamplesMask;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-VKL_API VKLSamplesMask vklNewSamplesMask(VKLVolume volume);
+#ifdef __cplusplus
+struct ValueSelector : public ManagedObject
+{
+};
+#else
+typedef ManagedObject ValueSelector;
+#endif
 
-VKL_API void vklSamplesMaskSetRanges(VKLSamplesMask samplesMask,
-                                     uniform size_t numRanges,
-                                     const vkl_range1f *uniform ranges);
+typedef ValueSelector *VKLValueSelector;
 
-VKL_API void vklSamplesMaskSetValues(VKLSamplesMask samplesMask,
-                                     uniform size_t numValues,
-                                     const float *uniform values);
+VKLValueSelector vklNewValueSelector(VKLVolume volume);
+
+void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
+                               size_t numRanges,
+                               const vkl_range1f *ranges);
+
+void vklValueSelectorSetValues(VKLValueSelector valueSelector,
+                               size_t numValues,
+                               const float *values);
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif

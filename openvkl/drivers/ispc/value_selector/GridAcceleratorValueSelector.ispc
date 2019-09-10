@@ -15,17 +15,17 @@
 // ======================================================================== //
 
 #include "../volume/GridAccelerator.ih"
-#include "GridAcceleratorSamplesMask.ih"
+#include "GridAcceleratorValueSelector.ih"
 
 export void *uniform
-GridAcceleratorSamplesMask_Constructor(void *uniform _volume,
-                                       const uniform int &numRanges,
-                                       const box1f *uniform ranges,
-                                       const uniform int &numValues,
-                                       const float *uniform values)
+GridAcceleratorValueSelector_Constructor(void *uniform _volume,
+                                         const uniform int &numRanges,
+                                         const box1f *uniform ranges,
+                                         const uniform int &numValues,
+                                         const float *uniform values)
 {
-  uniform GridAcceleratorSamplesMask *uniform self =
-      uniform new uniform GridAcceleratorSamplesMask;
+  uniform GridAcceleratorValueSelector *uniform self =
+      uniform new uniform GridAcceleratorValueSelector;
 
   self->numRanges = numRanges;
   self->ranges    = uniform new uniform box1f[numRanges];
@@ -62,10 +62,11 @@ GridAcceleratorSamplesMask_Constructor(void *uniform _volume,
   return self;
 }
 
-export void *uniform GridAcceleratorSamplesMask_Destructor(void *uniform _self)
+export void *uniform
+GridAcceleratorValueSelector_Destructor(void *uniform _self)
 {
-  uniform GridAcceleratorSamplesMask *uniform self =
-      (uniform GridAcceleratorSamplesMask * uniform) _self;
+  uniform GridAcceleratorValueSelector *uniform self =
+      (uniform GridAcceleratorValueSelector * uniform) _self;
   delete[] self->ranges;
   delete[] self->values;
   delete self;

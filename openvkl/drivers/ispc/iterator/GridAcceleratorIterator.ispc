@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "../math/box_utility.ih"
-#include "../samples_mask/GridAcceleratorSamplesMask.ih"
+#include "../value_selector/GridAcceleratorValueSelector.ih"
 #include "../volume/GridAccelerator.ih"
 #include "GridAcceleratorIterator.ih"
 
@@ -53,7 +53,7 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
                                                void *uniform _origin,
                                                void *uniform _direction,
                                                void *uniform _tRange,
-                                               void *uniform _samplesMask)
+                                               void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
     return;
@@ -66,8 +66,8 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
   self->origin    = *((varying vec3f * uniform) _origin);
   self->direction = *((varying vec3f * uniform) _direction);
   self->tRange    = *((varying box1f * uniform) _tRange);
-  self->samplesMask =
-      (uniform GridAcceleratorSamplesMask * uniform) _samplesMask;
+  self->valueSelector =
+      (uniform GridAcceleratorValueSelector * uniform) _valueSelector;
 
   self->boundingBoxTRange = intersectBox(
       self->origin, self->direction, self->volume->boundingBox, self->tRange);
@@ -125,13 +125,13 @@ export void GridAcceleratorIterator_iterateInterval(
 
     bool returnInterval = false;
 
-    if (!self->samplesMask) {
+    if (!self->valueSelector) {
       returnInterval = true;
     } else {
-      if (overlaps1f(self->samplesMask->rangesMinMax, cellValueRange)) {
+      if (overlaps1f(self->valueSelector->rangesMinMax, cellValueRange)) {
         if (overlapsAny1f(cellValueRange,
-                          self->samplesMask->numRanges,
-                          self->samplesMask->ranges)) {
+                          self->valueSelector->numRanges,
+                          self->valueSelector->ranges)) {
           returnInterval = true;
         }
       }
@@ -236,7 +236,7 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
     return;
   }
 
-  cif(!self->samplesMask || self->samplesMask->numValues == 0)
+  cif(!self->valueSelector || self->valueSelector->numValues == 0)
   {
     *result = false;
     return;
@@ -259,7 +259,7 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
                                       cellValueRange);
 
     bool cellValueRangeOverlap =
-        overlaps1f(self->samplesMask->valuesMinMax, cellValueRange);
+        overlaps1f(self->valueSelector->valuesMinMax, cellValueRange);
 
     if (cellValueRangeOverlap) {
       float surfaceEpsilon;
@@ -268,8 +268,8 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
                                         self->origin,
                                         self->direction,
                                         self->hitState.currentInterval,
-                                        self->samplesMask->numValues,
-                                        self->samplesMask->values,
+                                        self->valueSelector->numValues,
+                                        self->valueSelector->values,
                                         self->hitState.currentHit,
                                         surfaceEpsilon);
 

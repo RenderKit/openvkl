@@ -70,12 +70,12 @@ export void Renderer_setTransferFunction(
   self->tfColorsAndOpacities      = colorsAndOpacities;
 }
 
-export void Renderer_setSamplesMask(void *uniform _self,
-                                    VKLSamplesMask samplesMask)
+export void Renderer_setValueSelector(void *uniform _self,
+                                      VKLValueSelector valueSelector)
 {
   Renderer *uniform self = (Renderer * uniform) _self;
 
-  self->samplesMask = samplesMask;
+  self->valueSelector = valueSelector;
 }
 
 export void Renderer_renderPixel(void *uniform _self,

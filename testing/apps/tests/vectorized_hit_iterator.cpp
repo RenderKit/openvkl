@@ -49,7 +49,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
   SECTION("vector hit iteration")
   {
-    VKLSamplesMask samplesMask = vklNewSamplesMask(vklVolume);
+    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
 
     std::vector<float> isoValues;
 
@@ -57,9 +57,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       isoValues.push_back(f);
     }
 
-    vklSamplesMaskSetValues(samplesMask, isoValues.size(), isoValues.data());
+    vklValueSelectorSetValues(
+        valueSelector, isoValues.size(), isoValues.data());
 
-    vklCommit((VKLObject)samplesMask);
+    vklCommit(valueSelector);
 
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -126,7 +127,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
-                              samplesMask);
+                              valueSelector);
 
           VKLHit4 hit;
           int result[callingWidth];
@@ -173,7 +174,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
-                              samplesMask);
+                              valueSelector);
 
           VKLHit8 hit;
           int result[callingWidth];
@@ -220,7 +221,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
-                               samplesMask);
+                               valueSelector);
 
           VKLHit16 hit;
           int result[callingWidth];

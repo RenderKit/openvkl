@@ -183,7 +183,7 @@ extern "C" void vklInitIntervalIterator(VKLIntervalIterator *iterator,
                                         const vkl_vec3f *origin,
                                         const vkl_vec3f *direction,
                                         const vkl_range1f *tRange,
-                                        VKLSamplesMask samplesMask)
+                                        VKLValueSelector valueSelector)
     OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
@@ -195,7 +195,7 @@ extern "C" void vklInitIntervalIterator(VKLIntervalIterator *iterator,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
-      samplesMask);
+      valueSelector);
 }
 OPENVKL_CATCH_END()
 
@@ -207,7 +207,7 @@ OPENVKL_CATCH_END()
       const vkl_vvec3f##WIDTH *origin,                                \
       const vkl_vvec3f##WIDTH *direction,                             \
       const vkl_vrange1f##WIDTH *tRange,                              \
-      VKLSamplesMask samplesMask) OPENVKL_CATCH_BEGIN                 \
+      VKLValueSelector valueSelector) OPENVKL_CATCH_BEGIN             \
   {                                                                   \
     ASSERT_DRIVER();                                                  \
     return openvkl::api::currentDriver().initIntervalIterator##WIDTH( \
@@ -217,7 +217,7 @@ OPENVKL_CATCH_END()
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),            \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),         \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),          \
-        samplesMask);                                                 \
+        valueSelector);                                               \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -277,7 +277,7 @@ extern "C" void vklInitHitIterator(VKLHitIterator *iterator,
                                    const vkl_vec3f *origin,
                                    const vkl_vec3f *direction,
                                    const vkl_range1f *tRange,
-                                   VKLSamplesMask samplesMask)
+                                   VKLValueSelector valueSelector)
     OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
@@ -289,7 +289,7 @@ extern "C" void vklInitHitIterator(VKLHitIterator *iterator,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
-      samplesMask);
+      valueSelector);
 }
 OPENVKL_CATCH_END()
 
@@ -301,7 +301,7 @@ OPENVKL_CATCH_END()
       const vkl_vvec3f##WIDTH *origin,                           \
       const vkl_vvec3f##WIDTH *direction,                        \
       const vkl_vrange1f##WIDTH *tRange,                         \
-      VKLSamplesMask samplesMask) OPENVKL_CATCH_BEGIN            \
+      VKLValueSelector valueSelector) OPENVKL_CATCH_BEGIN        \
   {                                                              \
     ASSERT_DRIVER();                                             \
     return openvkl::api::currentDriver().initHitIterator##WIDTH( \
@@ -311,7 +311,7 @@ OPENVKL_CATCH_END()
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),       \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),    \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),     \
-        samplesMask);                                            \
+        valueSelector);                                          \
   }                                                              \
   OPENVKL_CATCH_END()
 
@@ -470,43 +470,44 @@ extern "C" void vklSetVoidPtr(VKLObject object,
 OPENVKL_CATCH_END()
 
 ///////////////////////////////////////////////////////////////////////////////
-// Samples mask ///////////////////////////////////////////////////////////////
+// Value selector /////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VKLSamplesMask vklNewSamplesMask(VKLVolume volume)
+extern "C" VKLValueSelector vklNewValueSelector(VKLVolume volume)
     OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  VKLSamplesMask samplesMask =
-      openvkl::api::currentDriver().newSamplesMask(volume);
-  if (samplesMask == nullptr) {
-    postLogMessage(openvkl::VKL_LOG_ERROR) << "could not create samples mask";
+  VKLValueSelector valueSelector =
+      openvkl::api::currentDriver().newValueSelector(volume);
+  if (valueSelector == nullptr) {
+    postLogMessage(openvkl::VKL_LOG_ERROR) << "could not create value selector";
   }
 
-  return samplesMask;
+  return valueSelector;
 }
 OPENVKL_CATCH_END(nullptr)
 
-extern "C" void vklSamplesMaskSetRanges(VKLSamplesMask samplesMask,
-                                        size_t numRanges,
-                                        const vkl_range1f *ranges)
+extern "C" void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
+                                          size_t numRanges,
+                                          const vkl_range1f *ranges)
     OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  openvkl::api::currentDriver().samplesMaskSetRanges(
-      samplesMask,
+  openvkl::api::currentDriver().valueSelectorSetRanges(
+      valueSelector,
       utility::ArrayView<const range1f>(
           reinterpret_cast<const range1f *>(ranges), numRanges));
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSamplesMaskSetValues(VKLSamplesMask samplesMask,
-                                        size_t numValues,
-                                        const float *values) OPENVKL_CATCH_BEGIN
+extern "C" void vklValueSelectorSetValues(VKLValueSelector valueSelector,
+                                          size_t numValues,
+                                          const float *values)
+    OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  openvkl::api::currentDriver().samplesMaskSetValues(
-      samplesMask,
+  openvkl::api::currentDriver().valueSelectorSetValues(
+      valueSelector,
       utility::ArrayView<const float>(reinterpret_cast<const float *>(values),
                                       numValues));
 }

@@ -23,9 +23,9 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   api/ISPCDriver.cpp
   iterator/GridAcceleratorIterator.cpp
   iterator/GridAcceleratorIterator.ispc
-  samples_mask/SamplesMask.cpp
-  samples_mask/GridAcceleratorSamplesMask.cpp
-  samples_mask/GridAcceleratorSamplesMask.ispc
+  value_selector/ValueSelector.cpp
+  value_selector/GridAcceleratorValueSelector.cpp
+  value_selector/GridAcceleratorValueSelector.ispc
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/StructuredRegularVolume.cpp

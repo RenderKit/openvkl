@@ -25,6 +25,6 @@
 #include "iterator.h"
 #include "module.h"
 #include "parameters.h"
-#include "samples_mask.h"
+#include "value_selector.h"
 #include "version.h"
 #include "volume.h"

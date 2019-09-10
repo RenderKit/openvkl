@@ -14,35 +14,29 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "ValueSelector.h"
 
-#include "common.h"
-#include "volume.h"
+namespace openvkl {
+  namespace ispc_driver {
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+    void ValueSelector::setRanges(
+        const utility::ArrayView<const range1f> &ranges)
+    {
+      this->ranges.clear();
 
-#ifdef __cplusplus
-struct SamplesMask : public ManagedObject
-{
-};
-#else
-typedef ManagedObject SamplesMask;
-#endif
+      for (const auto &r : ranges) {
+        this->ranges.push_back(r);
+      }
+    }
 
-typedef SamplesMask *VKLSamplesMask;
+    void ValueSelector::setValues(const utility::ArrayView<const float> &values)
+    {
+      this->values.clear();
 
-VKLSamplesMask vklNewSamplesMask(VKLVolume volume);
+      for (const auto &v : values) {
+        this->values.push_back(v);
+      }
+    }
 
-void vklSamplesMaskSetRanges(VKLSamplesMask samplesMask,
-                             size_t numRanges,
-                             const vkl_range1f *ranges);
-
-void vklSamplesMaskSetValues(VKLSamplesMask samplesMask,
-                             size_t numValues,
-                             const float *values);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
+  }  // namespace ispc_driver
+}  // namespace openvkl

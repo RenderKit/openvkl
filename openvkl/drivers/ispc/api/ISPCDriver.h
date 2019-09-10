@@ -57,7 +57,7 @@ namespace openvkl {
                                    const vvec3fn<WIDTH> &origin,           \
                                    const vvec3fn<WIDTH> &direction,        \
                                    const vrange1fn<WIDTH> &tRange,         \
-                                   VKLSamplesMask samplesMask) override;
+                                   VKLValueSelector valueSelector) override;
 
       __define_initIntervalIteratorN(1);
       __define_initIntervalIteratorN(4);
@@ -90,7 +90,7 @@ namespace openvkl {
                               const vvec3fn<WIDTH> &origin,      \
                               const vvec3fn<WIDTH> &direction,   \
                               const vrange1fn<WIDTH> &tRange,    \
-                              VKLSamplesMask samplesMask) override;
+                              VKLValueSelector valueSelector) override;
 
       __define_initHitIteratorN(1);
       __define_initHitIteratorN(4);
@@ -140,17 +140,17 @@ namespace openvkl {
       void setVoidPtr(VKLObject object, const char *name, void *v) override;
 
       /////////////////////////////////////////////////////////////////////////
-      // Samples mask /////////////////////////////////////////////////////////
+      // Value selector ///////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      VKLSamplesMask newSamplesMask(VKLVolume volume) override;
+      VKLValueSelector newValueSelector(VKLVolume volume) override;
 
-      void samplesMaskSetRanges(
-          VKLSamplesMask samplesMask,
+      void valueSelectorSetRanges(
+          VKLValueSelector valueSelector,
           const utility::ArrayView<const range1f> &ranges) override;
 
-      void samplesMaskSetValues(
-          VKLSamplesMask samplesMask,
+      void valueSelectorSetValues(
+          VKLValueSelector valueSelector,
           const utility::ArrayView<const float> &values) override;
 
       /////////////////////////////////////////////////////////////////////////
@@ -186,7 +186,7 @@ namespace openvkl {
                                    const vvec3fn<OW> &origin,
                                    const vvec3fn<OW> &direction,
                                    const vrange1fn<OW> &tRange,
-                                   VKLSamplesMask samplesMask);
+                                   VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type
@@ -196,7 +196,7 @@ namespace openvkl {
                                    const vvec3fn<OW> &origin,
                                    const vvec3fn<OW> &direction,
                                    const vrange1fn<OW> &tRange,
-                                   VKLSamplesMask samplesMask);
+                                   VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW != W && OW != 1), void>::type
@@ -206,7 +206,7 @@ namespace openvkl {
                                    const vvec3fn<OW> &origin,
                                    const vvec3fn<OW> &direction,
                                    const vrange1fn<OW> &tRange,
-                                   VKLSamplesMask samplesMask);
+                                   VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW == 1), void>::type iterateIntervalAnyWidth(
@@ -237,7 +237,7 @@ namespace openvkl {
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
-          VKLSamplesMask samplesMask);
+          VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type initHitIteratorAnyWidth(
@@ -247,7 +247,7 @@ namespace openvkl {
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
-          VKLSamplesMask samplesMask);
+          VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW != W && OW != 1), void>::type
@@ -257,7 +257,7 @@ namespace openvkl {
                               const vvec3fn<OW> &origin,
                               const vvec3fn<OW> &direction,
                               const vrange1fn<OW> &tRange,
-                              VKLSamplesMask samplesMask);
+                              VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW == 1), void>::type iterateHitAnyWidth(

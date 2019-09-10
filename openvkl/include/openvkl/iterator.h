@@ -18,7 +18,7 @@
 
 #include "common.h"
 #include "iterator_size.h"
-#include "samples_mask.h"
+#include "value_selector.h"
 #include "volume.h"
 
 #ifdef __cplusplus
@@ -90,7 +90,7 @@ void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
                              const vkl_vec3f *origin,
                              const vkl_vec3f *direction,
                              const vkl_range1f *tRange,
-                             VKLSamplesMask samplesMask);
+                             VKLValueSelector valueSelector);
 
 void vklInitIntervalIterator4(const int *valid,
                               struct VKLIntervalIterator4 *iterator,
@@ -98,7 +98,7 @@ void vklInitIntervalIterator4(const int *valid,
                               const vkl_vvec3f4 *origin,
                               const vkl_vvec3f4 *direction,
                               const vkl_vrange1f4 *tRange,
-                              VKLSamplesMask samplesMask);
+                              VKLValueSelector valueSelector);
 
 void vklInitIntervalIterator8(const int *valid,
                               struct VKLIntervalIterator8 *iterator,
@@ -106,7 +106,7 @@ void vklInitIntervalIterator8(const int *valid,
                               const vkl_vvec3f8 *origin,
                               const vkl_vvec3f8 *direction,
                               const vkl_vrange1f8 *tRange,
-                              VKLSamplesMask samplesMask);
+                              VKLValueSelector valueSelector);
 
 void vklInitIntervalIterator16(const int *valid,
                                struct VKLIntervalIterator16 *iterator,
@@ -114,7 +114,7 @@ void vklInitIntervalIterator16(const int *valid,
                                const vkl_vvec3f16 *origin,
                                const vkl_vvec3f16 *direction,
                                const vkl_vrange1f16 *tRange,
-                               VKLSamplesMask samplesMask);
+                               VKLValueSelector valueSelector);
 
 // returns true while the iterator is still within the volume
 int vklIterateInterval(struct VKLIntervalIterator *iterator,
@@ -196,7 +196,7 @@ void vklInitHitIterator(struct VKLHitIterator *iterator,
                         const vkl_vec3f *origin,
                         const vkl_vec3f *direction,
                         const vkl_range1f *tRange,
-                        VKLSamplesMask samplesMask);
+                        VKLValueSelector valueSelector);
 
 void vklInitHitIterator4(const int *valid,
                          struct VKLHitIterator4 *iterator,
@@ -204,7 +204,7 @@ void vklInitHitIterator4(const int *valid,
                          const vkl_vvec3f4 *origin,
                          const vkl_vvec3f4 *direction,
                          const vkl_vrange1f4 *tRange,
-                         VKLSamplesMask samplesMask);
+                         VKLValueSelector valueSelector);
 
 void vklInitHitIterator8(const int *valid,
                          struct VKLHitIterator8 *iterator,
@@ -212,7 +212,7 @@ void vklInitHitIterator8(const int *valid,
                          const vkl_vvec3f8 *origin,
                          const vkl_vvec3f8 *direction,
                          const vkl_vrange1f8 *tRange,
-                         VKLSamplesMask samplesMask);
+                         VKLValueSelector valueSelector);
 
 void vklInitHitIterator16(const int *valid,
                           struct VKLHitIterator16 *iterator,
@@ -220,7 +220,7 @@ void vklInitHitIterator16(const int *valid,
                           const vkl_vvec3f16 *origin,
                           const vkl_vvec3f16 *direction,
                           const vkl_vrange1f16 *tRange,
-                          VKLSamplesMask samplesMask);
+                          VKLValueSelector valueSelector);
 
 // returns true while the iterator is still within the volume
 int vklIterateHit(struct VKLHitIterator *iterator, struct VKLHit *hit);

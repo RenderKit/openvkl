@@ -33,9 +33,9 @@ namespace openvkl {
 
     Renderer::~Renderer()
     {
-      if (samplesMask) {
-        vklRelease(samplesMask);
-        samplesMask = nullptr;
+      if (valueSelector) {
+        vklRelease(valueSelector);
+        valueSelector = nullptr;
       }
 
       ispc::Renderer_freeRenderer(ispcEquivalent);
@@ -122,14 +122,14 @@ namespace openvkl {
           this->transferFunction.colorsAndOpacities.size(),
           (ispc::vec4f *)this->transferFunction.colorsAndOpacities.data());
 
-      updateSamplesMask();
+      updateValueSelector();
     }
 
     void Renderer::setIsovalues(const std::vector<float> &isovalues)
     {
       this->isovalues = isovalues;
 
-      updateSamplesMask();
+      updateValueSelector();
     }
 
     void Renderer::renderFrame()
@@ -189,33 +189,33 @@ namespace openvkl {
       }
     }
 
-    void Renderer::updateSamplesMask()
+    void Renderer::updateValueSelector()
     {
-      if (samplesMask) {
-        vklRelease(samplesMask);
-        samplesMask = nullptr;
+      if (valueSelector) {
+        vklRelease(valueSelector);
+        valueSelector = nullptr;
       }
 
-      samplesMask = vklNewSamplesMask(volume);
+      valueSelector = vklNewValueSelector(volume);
 
-      // set samples mask value ranges based on transfer function positive
+      // set value selector value ranges based on transfer function positive
       // opacity intervals
       std::vector<range1f> valueRanges =
           transferFunction.getPositiveOpacityValueRanges();
 
-      vklSamplesMaskSetRanges(samplesMask,
-                              valueRanges.size(),
-                              (const vkl_range1f *)valueRanges.data());
+      vklValueSelectorSetRanges(valueSelector,
+                                valueRanges.size(),
+                                (const vkl_range1f *)valueRanges.data());
 
-      // if we have isovalues, set these values on the samples mask
+      // if we have isovalues, set these values on the value selector
       if (isovalues.size() > 0) {
-        vklSamplesMaskSetValues(
-            samplesMask, isovalues.size(), isovalues.data());
+        vklValueSelectorSetValues(
+            valueSelector, isovalues.size(), isovalues.data());
       }
 
-      vklCommit(samplesMask);
+      vklCommit(valueSelector);
 
-      ispc::Renderer_setSamplesMask(ispcEquivalent, samplesMask);
+      ispc::Renderer_setValueSelector(ispcEquivalent, valueSelector);
     }
 
   }  // namespace examples

@@ -263,7 +263,7 @@ static bool intersectAndSampleWedge(const void *uniform userData,
          longestEdge = dist;
   }
 
-  const uniform float volumeBound = pow(longestEdge, 3);
+  const uniform float volumeBound = longestEdge * longestEdge * longestEdge;
   const uniform float determinantTolerance =
       1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
@@ -483,7 +483,7 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
          longestDiagonal = dist;
   }
 
-  const uniform float volumeBound = pow(longestDiagonal, 3);
+  const uniform float volumeBound = longestDiagonal * longestDiagonal * longestDiagonal;
   const uniform float determinantTolerance =
       1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
@@ -641,7 +641,7 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
       longestEdge = dist;
   }
 
-  const uniform float volumeBound = pow(longestEdge, 3);
+  const uniform float volumeBound = longestEdge * longestEdge * longestEdge;
   const uniform float determinantTolerance =
     1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 

@@ -298,13 +298,24 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
-    template <int W>
-    vec3f ISPCDriver<W>::computeGradient(VKLVolume volume,
-                                         const vec3f &objectCoordinates)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return volumeObject.computeGradient(objectCoordinates);
-    }
+#define __define_computeGradientN(WIDTH)              \
+  template <int W>                                    \
+  void ISPCDriver<W>::computeGradient##WIDTH(         \
+      const int *valid,                               \
+      VKLVolume volume,                               \
+      const vvec3fn<WIDTH> &objectCoordinates,        \
+      vvec3fn<WIDTH> &gradients)                      \
+  {                                                   \
+    computeGradientAnyWidth<WIDTH>(                   \
+        valid, volume, objectCoordinates, gradients); \
+  }
+
+    __define_computeGradientN(1);
+    __define_computeGradientN(4);
+    __define_computeGradientN(8);
+    __define_computeGradientN(16);
+
+#undef __define_computeGradientN
 
     template <int W>
     box3f ISPCDriver<W>::getBoundingBox(VKLVolume volume)
@@ -687,6 +698,64 @@ namespace openvkl {
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           samples[i] = samplesW[i - packIndex * W];
+      }
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW <= W), void>::type
+    ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &objectCoordinates,
+                                           vvec3fn<OW> &gradients)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      vvec3fn<W> gradientsW;
+
+      volumeObject.computeGradientV(validW, ocW, gradientsW);
+
+      for (int i = 0; i < OW; i++) {
+        gradients.x[i] = gradientsW.x[i];
+        gradients.y[i] = gradientsW.y[i];
+        gradients.z[i] = gradientsW.z[i];
+      }
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW > W), void>::type
+    ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &objectCoordinates,
+                                           vvec3fn<OW> &gradients)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      const int numPacks = OW / W + (OW % W != 0);
+
+      for (int packIndex = 0; packIndex < numPacks; packIndex++) {
+        vvec3fn<W> ocW = objectCoordinates.template extract_pack<W>(packIndex);
+
+        vintn<W> validW;
+        for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
+          validW[i - packIndex * W] = i < OW ? valid[i] : 0;
+
+        vvec3fn<W> gradientsW;
+
+        volumeObject.computeGradientV(validW, ocW, gradientsW);
+
+        for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++) {
+          gradients.x[i] = gradientsW.x[i - packIndex * W];
+          gradients.y[i] = gradientsW.y[i - packIndex * W];
+          gradients.z[i] = gradientsW.z[i - packIndex * W];
+        }
       }
     }
 

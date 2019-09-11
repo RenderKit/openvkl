@@ -574,11 +574,40 @@ extern "C" vkl_vec3f vklComputeGradient(
     VKLVolume volume, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
-  const vec3f result = openvkl::api::currentDriver().computeGradient(
-      volume, reinterpret_cast<const vec3f &>(*objectCoordinates));
-  return reinterpret_cast<const vkl_vec3f &>(result);
+  constexpr int valid = 1;
+  vkl_vec3f gradient;
+  openvkl::api::currentDriver().computeGradient1(
+      &valid,
+      volume,
+      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
+      reinterpret_cast<vvec3fn<1> &>(gradient));
+  return gradient;
 }
 OPENVKL_CATCH_END(vkl_vec3f{ospcommon::math::nan})
+
+#define __define_vklComputeGradientN(WIDTH)                           \
+  extern "C" void vklComputeGradient##WIDTH(                          \
+      const int *valid,                                               \
+      VKLVolume volume,                                               \
+      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
+      vkl_vvec3f##WIDTH *gradients) OPENVKL_CATCH_BEGIN               \
+  {                                                                   \
+    ASSERT_DRIVER();                                                  \
+    ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH);                              \
+                                                                      \
+    openvkl::api::currentDriver().computeGradient##WIDTH(             \
+        valid,                                                        \
+        volume,                                                       \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
+        reinterpret_cast<vvec3fn<WIDTH> &>(*gradients));              \
+  }                                                                   \
+  OPENVKL_CATCH_END()
+
+__define_vklComputeGradientN(4);
+__define_vklComputeGradientN(8);
+__define_vklComputeGradientN(16);
+
+#undef __define_vklComputeGradientN
 
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {

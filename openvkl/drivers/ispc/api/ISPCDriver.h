@@ -172,8 +172,18 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
-      vec3f computeGradient(VKLVolume volume,
-                            const vec3f &objectCoordinates) override;
+#define __define_computeGradientN(WIDTH)                               \
+  void computeGradient##WIDTH(const int *valid,                        \
+                              VKLVolume volume,                        \
+                              const vvec3fn<WIDTH> &objectCoordinates, \
+                              vvec3fn<WIDTH> &gradients) override;
+
+      __define_computeGradientN(1);
+      __define_computeGradientN(4);
+      __define_computeGradientN(8);
+      __define_computeGradientN(16);
+
+#undef __define_computeGradientN
 
       box3f getBoundingBox(VKLVolume volume) override;
 
@@ -293,6 +303,20 @@ namespace openvkl {
           VKLVolume volume,
           const vvec3fn<OW> &objectCoordinates,
           vfloatn<OW> &samples);
+
+      template <int OW>
+      typename std::enable_if<(OW <= W), void>::type computeGradientAnyWidth(
+          const int *valid,
+          VKLVolume volume,
+          const vvec3fn<OW> &objectCoordinates,
+          vvec3fn<OW> &gradients);
+
+      template <int OW>
+      typename std::enable_if<(OW > W), void>::type computeGradientAnyWidth(
+          const int *valid,
+          VKLVolume volume,
+          const vvec3fn<OW> &objectCoordinates,
+          vvec3fn<OW> &gradients);
     };
 
   }  // namespace ispc_driver

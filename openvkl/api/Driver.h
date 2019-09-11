@@ -220,8 +220,18 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
-      virtual vec3f computeGradient(VKLVolume volume,
-                                    const vec3f &objectCoordinates) = 0;
+#define __define_computeGradientN(WIDTH)                                       \
+  virtual void computeGradient##WIDTH(const int *valid,                        \
+                                      VKLVolume volume,                        \
+                                      const vvec3fn<WIDTH> &objectCoordinates, \
+                                      vvec3fn<WIDTH> &gradients) = 0;
+
+      __define_computeGradientN(1);
+      __define_computeGradientN(4);
+      __define_computeGradientN(8);
+      __define_computeGradientN(16);
+
+#undef __define_computeGradientN
 
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
 

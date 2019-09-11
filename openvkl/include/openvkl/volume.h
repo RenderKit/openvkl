@@ -62,6 +62,21 @@ void vklComputeSample16(const int *valid,
 vkl_vec3f vklComputeGradient(VKLVolume volume,
                              const vkl_vec3f *objectCoordinates);
 
+void vklComputeGradient4(const int *valid,
+                         VKLVolume volume,
+                         const vkl_vvec3f4 *objectCoordinates,
+                         vkl_vvec3f4 *gradients);
+
+void vklComputeGradient8(const int *valid,
+                         VKLVolume volume,
+                         const vkl_vvec3f8 *objectCoordinates,
+                         vkl_vvec3f8 *gradients);
+
+void vklComputeGradient16(const int *valid,
+                          VKLVolume volume,
+                          const vkl_vvec3f16 *objectCoordinates,
+                          vkl_vvec3f16 *gradients);
+
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
 #ifdef __cplusplus

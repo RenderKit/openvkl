@@ -94,8 +94,11 @@ namespace openvkl {
                                   const vvec3fn<W> &objectCoordinates,
                                   vfloatn<W> &samples) const = 0;
 
-      virtual vec3f computeGradient(const vec3f &objectCoordinates) const = 0;
-      virtual box3f getBoundingBox() const                                = 0;
+      virtual void computeGradientV(const vintn<W> &valid,
+                                    const vvec3fn<W> &objectCoordinates,
+                                    vvec3fn<W> &gradients) const;
+
+      virtual box3f getBoundingBox() const = 0;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -149,6 +152,14 @@ namespace openvkl {
 
     template <int W>
     inline ValueSelector *Volume<W>::newValueSelector()
+    {
+      THROW_NOT_IMPLEMENTED;
+    }
+
+    template <int W>
+    inline void Volume<W>::computeGradientV(const vintn<W> &valid,
+                                            const vvec3fn<W> &objectCoordinates,
+                                            vvec3fn<W> &gradients) const
     {
       THROW_NOT_IMPLEMENTED;
     }

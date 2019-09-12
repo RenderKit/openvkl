@@ -37,20 +37,15 @@ namespace openvkl {
       bool precomputedNormals;
       bool hexIterative;
 
-      int vtxPerPrimitive(VKLUnstructuredCellType type) const
-      {
-        switch (type) {
-        case VKL_TETRAHEDRON:
-          return 4;
-        case VKL_HEXAHEDRON:
-          return 8;
-        case VKL_WEDGE:
-          return 6;
-        case VKL_PYRAMID:
-          return 5;
-        }
-        return 0;
-      }
+      int vtxPerPrimitive(VKLUnstructuredCellType type) const;
+
+      std::vector<unsigned char> generateVoxels(vec3i dimensions);
+
+      void generateVKLVolume() override;
+
+      std::vector<vec3f> generateGrid();
+
+      std::vector<uint32_t> generateTopology();
 
      public:
       ProceduralUnstructuredVolume(
@@ -61,171 +56,219 @@ namespace openvkl {
           bool _cellValued                  = true,
           bool _indexPrefix                 = true,
           bool _precomputedNormals          = false,
-          bool _hexIterative                = false)
-          : TestingStructuredVolume(
-                "unstructured", dimensions, gridOrigin, gridSpacing, VKL_FLOAT),
-            primType(_primType),
-            cellValued(_cellValued),
-            indexPrefix(_indexPrefix),
-            precomputedNormals(_precomputedNormals),
-            hexIterative(_hexIterative)
-      {
-      }
+          bool _hexIterative                = false);
 
-      inline float computeProceduralValue(const vec3f &objectCoordinates)
-      {
-        return volumeSamplingFunction(objectCoordinates);
-      }
+      float computeProceduralValue(const vec3f &objectCoordinates);
 
-      std::vector<unsigned char> generateVoxels() override
-      {
-        return generateVoxels(dimensions);
-      }
-
-      std::vector<unsigned char> generateVoxels(vec3i dimensions)
-      {
-        std::vector<unsigned char> voxels(longProduct(dimensions) *
-                                          sizeof(float));
-        float *voxelsTyped = (float *)voxels.data();
-
-        auto transformLocalToObject = [&](const vec3f &localCoordinates) {
-          return gridOrigin + localCoordinates * gridSpacing;
-        };
-
-        for (size_t z = 0; z < dimensions.z; z++) {
-          for (size_t y = 0; y < dimensions.y; y++) {
-            for (size_t x = 0; x < dimensions.x; x++) {
-              size_t index =
-                  z * dimensions.y * dimensions.x + y * dimensions.x + x;
-              vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-              voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
-            }
-          }
-        }
-
-        return voxels;
-      }
-
-      void generateVKLVolume() override
-      {
-        vec3i valueDimensions = dimensions;
-        if (!cellValued)
-          valueDimensions += vec3i(1, 1, 1);
-        std::vector<unsigned char> values = generateVoxels(valueDimensions);
-
-        std::vector<vec3f> vtxPositions = generateGrid();
-        std::vector<uint32_t> topology  = generateTopology();
-        std::vector<uint32_t> cells;
-        std::vector<uint8_t> cellType;
-
-        volume = vklNewVolume("unstructured");
-
-        for (int i = 0; i < dimensions.product(); i++) {
-          cells.push_back(i *
-                          (vtxPerPrimitive(primType) + (indexPrefix ? 1 : 0)));
-          cellType.push_back(primType);
-        }
-        VKLData cellData = vklNewData(cells.size(), VKL_UINT, cells.data());
-        vklSetData(volume, "cell.index", cellData);
-        vklRelease(cellData);
-
-        if (!indexPrefix) {
-          VKLData celltypeData =
-              vklNewData(cellType.size(), VKL_UCHAR, cellType.data());
-          vklSetData(volume, "cell.type", celltypeData);
-          vklRelease(celltypeData);
-        }
-
-        VKLData valuesData =
-            vklNewData(longProduct(valueDimensions), VKL_FLOAT, values.data());
-        vklSetData(
-            volume, cellValued ? "cell.value" : "vertex.value", valuesData);
-        vklRelease(valuesData);
-
-        VKLData vtxPositionsData =
-            vklNewData(vtxPositions.size(), VKL_FLOAT3, vtxPositions.data());
-        vklSetData(volume, "vertex.position", vtxPositionsData);
-        vklRelease(vtxPositionsData);
-
-        VKLData topologyData =
-            vklNewData(topology.size(), VKL_UINT, topology.data());
-        vklSetData(volume, "index", topologyData);
-        vklRelease(topologyData);
-
-        vklSetBool(volume, "indexPrefixed", indexPrefix);
-        vklSetBool(volume, "precomputedNormals", precomputedNormals);
-        vklSetBool(volume, "hexIterative", hexIterative);
-
-        vklCommit(volume);
-      }
-
-      std::vector<vec3f> generateGrid()
-      {
-        std::vector<vec3f> grid(longProduct(dimensions + vec3i(1, 1, 1)), 0);
-
-        for (size_t z = 0; z <= dimensions.z; z++) {
-          for (size_t y = 0; y <= dimensions.y; y++) {
-            for (size_t x = 0; x <= dimensions.x; x++) {
-              size_t index = z * (dimensions.y + 1) * (dimensions.x + 1) +
-                             y * (dimensions.x + 1) + x;
-              grid[index] = gridOrigin + gridSpacing * vec3f(x, y, z);
-            }
-          }
-        }
-        return grid;
-      }
-
-      std::vector<uint32_t> generateTopology()
-      {
-        std::vector<uint32_t> cells;
-
-        for (size_t z = 0; z < dimensions.z; z++) {
-          for (size_t y = 0; y < dimensions.y; y++) {
-            for (size_t x = 0; x < dimensions.x; x++) {
-              int layerSize = (dimensions.x + 1) * (dimensions.y + 1);
-              int offset    = layerSize * z + (dimensions.x + 1) * y + x;
-              int offset2   = offset + layerSize;
-              if (indexPrefix)
-                cells.push_back(vtxPerPrimitive(primType));
-              switch (primType) {
-              case VKL_TETRAHEDRON:
-                cells.push_back(offset + 0);
-                cells.push_back(offset + 1);
-                cells.push_back(offset + (dimensions.x + 1) + 0);
-                cells.push_back(offset2 + 0);
-                break;
-              case VKL_HEXAHEDRON:
-                cells.push_back(offset + 0);
-                cells.push_back(offset + 1);
-                cells.push_back(offset + (dimensions.x + 1) + 1);
-                cells.push_back(offset + (dimensions.x + 1));
-                cells.push_back(offset2 + 0);
-                cells.push_back(offset2 + 1);
-                cells.push_back(offset2 + (dimensions.x + 1) + 1);
-                cells.push_back(offset2 + (dimensions.x + 1));
-                break;
-              case VKL_WEDGE:
-                cells.push_back(offset + 0);
-                cells.push_back(offset + 1);
-                cells.push_back(offset + (dimensions.x + 1) + 0);
-                cells.push_back(offset2 + 0);
-                cells.push_back(offset2 + 1);
-                cells.push_back(offset2 + (dimensions.x + 1) + 0);
-                break;
-              case VKL_PYRAMID:
-                cells.push_back(offset + 0);
-                cells.push_back(offset + 1);
-                cells.push_back(offset + (dimensions.x + 1) + 1);
-                cells.push_back(offset + (dimensions.x + 1));
-                cells.push_back(offset2 + 0);
-                break;
-              }
-            }
-          }
-        }
-        return cells;
-      }
+      std::vector<unsigned char> generateVoxels() override;
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline ProceduralUnstructuredVolume<volumeSamplingFunction>::
+        ProceduralUnstructuredVolume(const vec3i &dimensions,
+                                     const vec3f &gridOrigin,
+                                     const vec3f &gridSpacing,
+                                     VKLUnstructuredCellType _primType,
+                                     bool _cellValued,
+                                     bool _indexPrefix,
+                                     bool _precomputedNormals,
+                                     bool _hexIterative)
+        : TestingStructuredVolume(
+              "unstructured", dimensions, gridOrigin, gridSpacing, VKL_FLOAT),
+          primType(_primType),
+          cellValued(_cellValued),
+          indexPrefix(_indexPrefix),
+          precomputedNormals(_precomputedNormals),
+          hexIterative(_hexIterative)
+    {
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline float ProceduralUnstructuredVolume<volumeSamplingFunction>::
+        computeProceduralValue(const vec3f &objectCoordinates)
+    {
+      return volumeSamplingFunction(objectCoordinates);
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline std::vector<unsigned char>
+    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateVoxels()
+    {
+      return generateVoxels(dimensions);
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline int
+    ProceduralUnstructuredVolume<volumeSamplingFunction>::vtxPerPrimitive(
+        VKLUnstructuredCellType type) const
+    {
+      switch (type) {
+      case VKL_TETRAHEDRON:
+        return 4;
+      case VKL_HEXAHEDRON:
+        return 8;
+      case VKL_WEDGE:
+        return 6;
+      case VKL_PYRAMID:
+        return 5;
+      }
+      return 0;
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline std::vector<unsigned char>
+    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateVoxels(
+        vec3i dimensions)
+    {
+      std::vector<unsigned char> voxels(longProduct(dimensions) *
+                                        sizeof(float));
+      float *voxelsTyped = (float *)voxels.data();
+
+      auto transformLocalToObject = [&](const vec3f &localCoordinates) {
+        return gridOrigin + localCoordinates * gridSpacing;
+      };
+
+      for (size_t z = 0; z < dimensions.z; z++) {
+        for (size_t y = 0; y < dimensions.y; y++) {
+          for (size_t x = 0; x < dimensions.x; x++) {
+            size_t index =
+                z * dimensions.y * dimensions.x + y * dimensions.x + x;
+            vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
+            voxelsTyped[index]      = volumeSamplingFunction(objectCoordinates);
+          }
+        }
+      }
+
+      return voxels;
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline void
+    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateVKLVolume()
+    {
+      vec3i valueDimensions = dimensions;
+      if (!cellValued)
+        valueDimensions += vec3i(1, 1, 1);
+      std::vector<unsigned char> values = generateVoxels(valueDimensions);
+
+      std::vector<vec3f> vtxPositions = generateGrid();
+      std::vector<uint32_t> topology  = generateTopology();
+      std::vector<uint32_t> cells;
+      std::vector<uint8_t> cellType;
+
+      volume = vklNewVolume("unstructured");
+
+      for (int i = 0; i < dimensions.product(); i++) {
+        cells.push_back(i *
+                        (vtxPerPrimitive(primType) + (indexPrefix ? 1 : 0)));
+        cellType.push_back(primType);
+      }
+      VKLData cellData = vklNewData(cells.size(), VKL_UINT, cells.data());
+      vklSetData(volume, "cell.index", cellData);
+      vklRelease(cellData);
+
+      if (!indexPrefix) {
+        VKLData celltypeData =
+            vklNewData(cellType.size(), VKL_UCHAR, cellType.data());
+        vklSetData(volume, "cell.type", celltypeData);
+        vklRelease(celltypeData);
+      }
+
+      VKLData valuesData =
+          vklNewData(longProduct(valueDimensions), VKL_FLOAT, values.data());
+      vklSetData(
+          volume, cellValued ? "cell.value" : "vertex.value", valuesData);
+      vklRelease(valuesData);
+
+      VKLData vtxPositionsData =
+          vklNewData(vtxPositions.size(), VKL_FLOAT3, vtxPositions.data());
+      vklSetData(volume, "vertex.position", vtxPositionsData);
+      vklRelease(vtxPositionsData);
+
+      VKLData topologyData =
+          vklNewData(topology.size(), VKL_UINT, topology.data());
+      vklSetData(volume, "index", topologyData);
+      vklRelease(topologyData);
+
+      vklSetBool(volume, "indexPrefixed", indexPrefix);
+      vklSetBool(volume, "precomputedNormals", precomputedNormals);
+      vklSetBool(volume, "hexIterative", hexIterative);
+
+      vklCommit(volume);
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline std::vector<vec3f>
+    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateGrid()
+    {
+      std::vector<vec3f> grid(longProduct(dimensions + vec3i(1, 1, 1)), 0);
+
+      for (size_t z = 0; z <= dimensions.z; z++) {
+        for (size_t y = 0; y <= dimensions.y; y++) {
+          for (size_t x = 0; x <= dimensions.x; x++) {
+            size_t index = z * (dimensions.y + 1) * (dimensions.x + 1) +
+                           y * (dimensions.x + 1) + x;
+            grid[index] = gridOrigin + gridSpacing * vec3f(x, y, z);
+          }
+        }
+      }
+      return grid;
+    }
+
+    template <float volumeSamplingFunction(const vec3f &)>
+    inline std::vector<uint32_t>
+    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateTopology()
+    {
+      std::vector<uint32_t> cells;
+
+      for (size_t z = 0; z < dimensions.z; z++) {
+        for (size_t y = 0; y < dimensions.y; y++) {
+          for (size_t x = 0; x < dimensions.x; x++) {
+            int layerSize = (dimensions.x + 1) * (dimensions.y + 1);
+            int offset    = layerSize * z + (dimensions.x + 1) * y + x;
+            int offset2   = offset + layerSize;
+            if (indexPrefix)
+              cells.push_back(vtxPerPrimitive(primType));
+            switch (primType) {
+            case VKL_TETRAHEDRON:
+              cells.push_back(offset + 0);
+              cells.push_back(offset + 1);
+              cells.push_back(offset + (dimensions.x + 1) + 0);
+              cells.push_back(offset2 + 0);
+              break;
+            case VKL_HEXAHEDRON:
+              cells.push_back(offset + 0);
+              cells.push_back(offset + 1);
+              cells.push_back(offset + (dimensions.x + 1) + 1);
+              cells.push_back(offset + (dimensions.x + 1));
+              cells.push_back(offset2 + 0);
+              cells.push_back(offset2 + 1);
+              cells.push_back(offset2 + (dimensions.x + 1) + 1);
+              cells.push_back(offset2 + (dimensions.x + 1));
+              break;
+            case VKL_WEDGE:
+              cells.push_back(offset + 0);
+              cells.push_back(offset + 1);
+              cells.push_back(offset + (dimensions.x + 1) + 0);
+              cells.push_back(offset2 + 0);
+              cells.push_back(offset2 + 1);
+              cells.push_back(offset2 + (dimensions.x + 1) + 0);
+              break;
+            case VKL_PYRAMID:
+              cells.push_back(offset + 0);
+              cells.push_back(offset + 1);
+              cells.push_back(offset + (dimensions.x + 1) + 1);
+              cells.push_back(offset + (dimensions.x + 1));
+              cells.push_back(offset2 + 0);
+              break;
+            }
+          }
+        }
+      }
+      return cells;
+    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Procedural volume types ////////////////////////////////////////////////

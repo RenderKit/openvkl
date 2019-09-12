@@ -31,8 +31,16 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
+    inline vec3f gradientNotImplemented(const vec3f &)
+    {
+      throw std::runtime_error(
+          "gradient function not implemented for this procedural volume");
+    }
+
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              vec3f volumeGradientFunction(const vec3f &) =
+                  gradientNotImplemented>
     struct ProceduralStructuredVolume : public TestingStructuredVolume
     {
       ProceduralStructuredVolume(const vec3i &dimensions,
@@ -41,14 +49,19 @@ namespace openvkl {
 
       VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
 
+      vec3f computeProceduralGradient(const vec3f &objectCoordinates);
+
       std::vector<unsigned char> generateVoxels() override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
-    inline ProceduralStructuredVolume<VOXEL_TYPE, volumeSamplingFunction>::
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              vec3f volumeGradientFunction(const vec3f &)>
+    inline ProceduralStructuredVolume<VOXEL_TYPE,
+                                      volumeSamplingFunction,
+                                      volumeGradientFunction>::
         ProceduralStructuredVolume(const vec3i &dimensions,
                                    const vec3f &gridOrigin,
                                    const vec3f &gridSpacing)
@@ -61,19 +74,34 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
-    inline VOXEL_TYPE
-    ProceduralStructuredVolume<VOXEL_TYPE, volumeSamplingFunction>::
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              vec3f volumeGradientFunction(const vec3f &)>
+    inline VOXEL_TYPE ProceduralStructuredVolume<VOXEL_TYPE,
+                                                 volumeSamplingFunction,
+                                                 volumeGradientFunction>::
         computeProceduralValue(const vec3f &objectCoordinates)
     {
       return volumeSamplingFunction(objectCoordinates);
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &)>
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              vec3f volumeGradientFunction(const vec3f &)>
+    inline vec3f ProceduralStructuredVolume<VOXEL_TYPE,
+                                            volumeSamplingFunction,
+                                            volumeGradientFunction>::
+        computeProceduralGradient(const vec3f &objectCoordinates)
+    {
+      return volumeGradientFunction(objectCoordinates);
+    }
+
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              vec3f volumeGradientFunction(const vec3f &)>
     inline std::vector<unsigned char>
     ProceduralStructuredVolume<VOXEL_TYPE,
-                               volumeSamplingFunction>::generateVoxels()
+                               volumeSamplingFunction,
+                               volumeGradientFunction>::generateVoxels()
     {
       {
         auto numValues = longProduct(this->dimensions);
@@ -138,13 +166,34 @@ namespace openvkl {
       return VOXEL_TYPE(value);
     }
 
+    inline vec3f getWaveletGradient(const vec3f &objectCoordinates)
+    {
+      // wavelet parameters
+      constexpr double M  = 1.f;
+      constexpr double G  = 1.f;
+      constexpr double XM = 1.f;
+      constexpr double YM = 1.f;
+      constexpr double ZM = 1.f;
+      constexpr double XF = 3.f;
+      constexpr double YF = 3.f;
+      constexpr double ZF = 3.f;
+
+      return M * G *
+             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF,
+                   YM * ::cos(YF * objectCoordinates.y) * YF,
+                   -ZM * ::sin(ZF * objectCoordinates.z) * ZF);
+    }
+
     inline float getZValue(const vec3f &objectCoordinates)
     {
       return objectCoordinates.z;
     }
 
-    using WaveletProceduralVolume =
-        ProceduralStructuredVolume<float, getWaveletValue<float>>;
+    inline vec3f getZGradient(const vec3f &objectCoordinates)
+    {
+      return vec3f(0.f, 0.f, 1.f);
+    }
+
 
     using WaveletProceduralVolumeUchar =
         ProceduralStructuredVolume<unsigned char,
@@ -158,12 +207,17 @@ namespace openvkl {
                                    getWaveletValue<unsigned short>>;
 
     using WaveletProceduralVolumeFloat =
-        ProceduralStructuredVolume<float, getWaveletValue<float>>;
+        ProceduralStructuredVolume<float,
+                                   getWaveletValue<float>,
+                                   getWaveletGradient>;
 
     using WaveletProceduralVolumeDouble =
         ProceduralStructuredVolume<double, getWaveletValue<double>>;
 
-    using ZProceduralVolume = ProceduralStructuredVolume<float, getZValue>;
+    using WaveletProceduralVolume = WaveletProceduralVolumeFloat;
+
+    using ZProceduralVolume =
+        ProceduralStructuredVolume<float, getZValue, getZGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

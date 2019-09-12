@@ -20,21 +20,21 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
+template <typename volumeType>
 void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
                                         bool cellValued,
                                         bool indexPrefix,
                                         bool precomputedNormals,
                                         bool hexIterative)
 {
-  std::unique_ptr<ConstUnstructuredProceduralVolume> v(
-      new ConstUnstructuredProceduralVolume(vec3i(1, 1, 1),
-                                            vec3f(0, 0, 0),
-                                            vec3f(1, 1, 1),
-                                            primType,
-                                            cellValued,
-                                            indexPrefix,
-                                            precomputedNormals,
-                                            hexIterative));
+  std::unique_ptr<volumeType> v(new volumeType(vec3i(1, 1, 1),
+                                               vec3f(0, 0, 0),
+                                               vec3f(1, 1, 1),
+                                               primType,
+                                               cellValued,
+                                               indexPrefix,
+                                               precomputedNormals,
+                                               hexIterative));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -104,11 +104,19 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
       INFO("cellValued = " << cellValued << " indexPrefix = " << indexPrefix
                            << " precomputedNormals = " << precomputedNormals
                            << " hexIterative = " << hexIterative);
-      scalar_sampling_test_prim_geometry(VKL_HEXAHEDRON,
-                                         cellValued,
-                                         indexPrefix,
-                                         precomputedNormals,
-                                         hexIterative);
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume>(
+          VKL_HEXAHEDRON,
+          cellValued,
+          indexPrefix,
+          precomputedNormals,
+          hexIterative);
+      INFO("64-bit");
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume64>(
+          VKL_HEXAHEDRON,
+          cellValued,
+          indexPrefix,
+          precomputedNormals,
+          hexIterative);
     }
   }
 
@@ -121,7 +129,10 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
       std::stringstream ss;
       INFO("cellValued = " << cellValued << " indexPrefix = " << indexPrefix
                            << " precomputedNormals = " << precomputedNormals);
-      scalar_sampling_test_prim_geometry(
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume>(
+          VKL_TETRAHEDRON, cellValued, indexPrefix, precomputedNormals, false);
+      INFO("64-bit");
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume64>(
           VKL_TETRAHEDRON, cellValued, indexPrefix, precomputedNormals, false);
     }
   }
@@ -135,7 +146,10 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
       std::stringstream ss;
       INFO("cellValued = " << cellValued << " indexPrefix = " << indexPrefix
                            << " precomputedNormals = " << precomputedNormals);
-      scalar_sampling_test_prim_geometry(
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume>(
+          VKL_WEDGE, cellValued, indexPrefix, precomputedNormals, false);
+      INFO("64-bit");
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume64>(
           VKL_WEDGE, cellValued, indexPrefix, precomputedNormals, false);
     }
   }
@@ -149,7 +163,10 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
       std::stringstream ss;
       INFO("cellValued = " << cellValued << " indexPrefix = " << indexPrefix
                            << " precomputedNormals = " << precomputedNormals);
-      scalar_sampling_test_prim_geometry(
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume>(
+          VKL_PYRAMID, cellValued, indexPrefix, precomputedNormals, false);
+      INFO("64-bit");
+      scalar_sampling_test_prim_geometry<ConstUnstructuredProceduralVolume64>(
           VKL_PYRAMID, cellValued, indexPrefix, precomputedNormals, false);
     }
   }

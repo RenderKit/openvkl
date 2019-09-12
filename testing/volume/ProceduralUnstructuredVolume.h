@@ -26,7 +26,7 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <float volumeSamplingFunction(const vec3f &)>
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
     struct ProceduralUnstructuredVolume : public TestingStructuredVolume
     {
      private:
@@ -45,7 +45,7 @@ namespace openvkl {
 
       std::vector<vec3f> generateGrid();
 
-      std::vector<uint32_t> generateTopology();
+      std::vector<idxType> generateTopology();
 
      public:
       ProceduralUnstructuredVolume(
@@ -65,8 +65,8 @@ namespace openvkl {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    inline ProceduralUnstructuredVolume<volumeSamplingFunction>::
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline ProceduralUnstructuredVolume<idxType, volumeSamplingFunction>::
         ProceduralUnstructuredVolume(const vec3i &dimensions,
                                      const vec3f &gridOrigin,
                                      const vec3f &gridSpacing,
@@ -85,24 +85,24 @@ namespace openvkl {
     {
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    inline float ProceduralUnstructuredVolume<volumeSamplingFunction>::
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline float ProceduralUnstructuredVolume<idxType, volumeSamplingFunction>::
         computeProceduralValue(const vec3f &objectCoordinates)
     {
       return volumeSamplingFunction(objectCoordinates);
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
     inline std::vector<unsigned char>
-    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateVoxels()
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::generateVoxels()
     {
       return generateVoxels(dimensions);
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    inline int
-    ProceduralUnstructuredVolume<volumeSamplingFunction>::vtxPerPrimitive(
-        VKLUnstructuredCellType type) const
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline int ProceduralUnstructuredVolume<idxType, volumeSamplingFunction>::
+        vtxPerPrimitive(VKLUnstructuredCellType type) const
     {
       switch (type) {
       case VKL_TETRAHEDRON:
@@ -117,10 +117,10 @@ namespace openvkl {
       return 0;
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    inline std::vector<unsigned char>
-    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateVoxels(
-        vec3i dimensions)
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline std::vector<unsigned char> ProceduralUnstructuredVolume<
+        idxType,
+        volumeSamplingFunction>::generateVoxels(vec3i dimensions)
     {
       std::vector<unsigned char> voxels(longProduct(dimensions) *
                                         sizeof(float));
@@ -144,9 +144,10 @@ namespace openvkl {
       return voxels;
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
     inline void
-    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateVKLVolume()
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::generateVKLVolume()
     {
       vec3i valueDimensions = dimensions;
       if (!cellValued)
@@ -154,18 +155,21 @@ namespace openvkl {
       std::vector<unsigned char> values = generateVoxels(valueDimensions);
 
       std::vector<vec3f> vtxPositions = generateGrid();
-      std::vector<uint32_t> topology  = generateTopology();
-      std::vector<uint32_t> cells;
+      std::vector<idxType> topology   = generateTopology();
+      std::vector<idxType> cells;
       std::vector<uint8_t> cellType;
 
       volume = vklNewVolume("unstructured");
 
-      for (int i = 0; i < dimensions.product(); i++) {
+      for (idxType i = 0; i < dimensions.product(); i++) {
         cells.push_back(i *
                         (vtxPerPrimitive(primType) + (indexPrefix ? 1 : 0)));
         cellType.push_back(primType);
       }
-      VKLData cellData = vklNewData(cells.size(), VKL_UINT, cells.data());
+      VKLData cellData = vklNewData(
+          cells.size(),
+          std::is_same<idxType, uint32_t>::value ? VKL_UINT : VKL_ULONG,
+          cells.data());
       vklSetData(volume, "cell.index", cellData);
       vklRelease(cellData);
 
@@ -187,8 +191,10 @@ namespace openvkl {
       vklSetData(volume, "vertex.position", vtxPositionsData);
       vklRelease(vtxPositionsData);
 
-      VKLData topologyData =
-          vklNewData(topology.size(), VKL_UINT, topology.data());
+      VKLData topologyData = vklNewData(
+          topology.size(),
+          std::is_same<idxType, uint32_t>::value ? VKL_UINT : VKL_ULONG,
+          topology.data());
       vklSetData(volume, "index", topologyData);
       vklRelease(topologyData);
 
@@ -199,9 +205,10 @@ namespace openvkl {
       vklCommit(volume);
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
     inline std::vector<vec3f>
-    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateGrid()
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::generateGrid()
     {
       std::vector<vec3f> grid(longProduct(dimensions + vec3i(1, 1, 1)), 0);
 
@@ -217,18 +224,19 @@ namespace openvkl {
       return grid;
     }
 
-    template <float volumeSamplingFunction(const vec3f &)>
-    inline std::vector<uint32_t>
-    ProceduralUnstructuredVolume<volumeSamplingFunction>::generateTopology()
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline std::vector<idxType>
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::generateTopology()
     {
-      std::vector<uint32_t> cells;
+      std::vector<idxType> cells;
 
       for (size_t z = 0; z < dimensions.z; z++) {
         for (size_t y = 0; y < dimensions.y; y++) {
           for (size_t x = 0; x < dimensions.x; x++) {
-            int layerSize = (dimensions.x + 1) * (dimensions.y + 1);
-            int offset    = layerSize * z + (dimensions.x + 1) * y + x;
-            int offset2   = offset + layerSize;
+            idxType layerSize = (dimensions.x + 1) * (dimensions.y + 1);
+            idxType offset    = layerSize * z + (dimensions.x + 1) * y + x;
+            idxType offset2   = offset + layerSize;
             if (indexPrefix)
               cells.push_back(vtxPerPrimitive(primType));
             switch (primType) {
@@ -280,13 +288,22 @@ namespace openvkl {
     }
 
     using WaveletUnstructuredProceduralVolume =
-        ProceduralUnstructuredVolume<getWaveletValue<float>>;
+        ProceduralUnstructuredVolume<uint32_t, getWaveletValue<float>>;
 
     using ZUnstructuredProceduralVolume =
-        ProceduralUnstructuredVolume<getZValue>;
+        ProceduralUnstructuredVolume<uint32_t, getZValue>;
 
     using ConstUnstructuredProceduralVolume =
-        ProceduralUnstructuredVolume<getConstValue>;
+        ProceduralUnstructuredVolume<uint32_t, getConstValue>;
+
+    using WaveletUnstructuredProceduralVolume64 =
+        ProceduralUnstructuredVolume<uint64_t, getWaveletValue<float>>;
+
+    using ZUnstructuredProceduralVolume64 =
+        ProceduralUnstructuredVolume<uint64_t, getZValue>;
+
+    using ConstUnstructuredProceduralVolume64 =
+        ProceduralUnstructuredVolume<uint64_t, getConstValue>;
 
   }  // namespace testing
 }  // namespace openvkl

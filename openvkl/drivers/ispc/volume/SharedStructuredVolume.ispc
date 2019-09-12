@@ -379,6 +379,49 @@ inline float SSV_sample_64(const SharedStructuredVolume *uniform self,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Gradient computation ///////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+inline varying vec3f SharedStructuredVolume_computeGradient(
+    const SharedStructuredVolume *uniform self,
+    const varying vec3f &objectCoordinates)
+{
+  // gradient step in each dimension (object coordinates)
+  uniform vec3f gradientStep = self->gridSpacing;
+
+  // compute via forward or backward differences depending on volume boundary
+  const vec3f gradientExtent = objectCoordinates + gradientStep;
+
+  if (gradientExtent.x >= self->boundingBox.upper.x)
+    gradientStep.x *= -1.f;
+
+  if (gradientExtent.y >= self->boundingBox.upper.y)
+    gradientStep.y *= -1.f;
+
+  if (gradientExtent.z >= self->boundingBox.upper.z)
+    gradientStep.z *= -1.f;
+
+  vec3f gradient;
+
+  float sample = self->computeSample(self, objectCoordinates);
+
+  gradient.x =
+      self->computeSample(
+          self, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
+      sample;
+  gradient.y =
+      self->computeSample(
+          self, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
+      sample;
+  gradient.z =
+      self->computeSample(
+          self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
+      sample;
+
+  return gradient / gradientStep;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // SharedStructuredVolume exported functions //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -405,6 +448,25 @@ export void SharedStructuredVolume_sample_export(
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples = self->computeSample(self, *objectCoordinates);
+  }
+}
+
+export void SharedStructuredVolume_gradient_export(
+    uniform const int *uniform imask,
+    void *uniform _self,
+    const void *uniform _objectCoordinates,
+    void *uniform _gradients)
+{
+  SharedStructuredVolume *uniform self =
+      (SharedStructuredVolume * uniform) _self;
+
+  if (imask[programIndex]) {
+    const varying vec3f *uniform objectCoordinates =
+        (const varying vec3f *uniform)_objectCoordinates;
+    varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
+
+    *gradients =
+        SharedStructuredVolume_computeGradient(self, *objectCoordinates);
   }
 }
 

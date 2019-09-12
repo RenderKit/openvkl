@@ -62,6 +62,10 @@ namespace openvkl {
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples) const override;
 
+      void computeGradientV(const vintn<W> &valid,
+                            const vvec3fn<W> &objectCoordinates,
+                            vvec3fn<W> &gradients) const override;
+
       box3f getBoundingBox() const override;
 
       void *getISPCEquivalent() const;
@@ -146,6 +150,16 @@ namespace openvkl {
     {
       ispc::SharedStructuredVolume_sample_export(
           (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
+    }
+
+    template <int W>
+    inline void StructuredRegularVolume<W>::computeGradientV(
+        const vintn<W> &valid,
+        const vvec3fn<W> &objectCoordinates,
+        vvec3fn<W> &gradients) const
+    {
+      ispc::SharedStructuredVolume_gradient_export(
+          (const int *)&valid, ispcEquivalent, &objectCoordinates, &gradients);
     }
 
     template <int W>

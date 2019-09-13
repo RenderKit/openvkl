@@ -194,6 +194,17 @@ namespace openvkl {
       return vec3f(0.f, 0.f, 1.f);
     }
 
+    inline float getXYZValue(const vec3f &objectCoordinates)
+    {
+      return objectCoordinates.x * objectCoordinates.y * objectCoordinates.z;
+    }
+
+    inline vec3f getXYZGradient(const vec3f &objectCoordinates)
+    {
+      return vec3f(objectCoordinates.y * objectCoordinates.z,
+                   objectCoordinates.x * objectCoordinates.z,
+                   objectCoordinates.x * objectCoordinates.y);
+    }
 
     using WaveletProceduralVolumeUchar =
         ProceduralStructuredVolume<unsigned char,
@@ -218,6 +229,9 @@ namespace openvkl {
 
     using ZProceduralVolume =
         ProceduralStructuredVolume<float, getZValue, getZGradient>;
+
+    using XYZProceduralVolume =
+        ProceduralStructuredVolume<float, getXYZValue, getXYZGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

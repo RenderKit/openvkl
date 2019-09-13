@@ -204,6 +204,196 @@ BENCHMARK_TEMPLATE(vectorFixedSample, 4);
 BENCHMARK_TEMPLATE(vectorFixedSample, 8);
 BENCHMARK_TEMPLATE(vectorFixedSample, 16);
 
+static void scalarRandomGradient(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
+
+  for (auto _ : state) {
+    vkl_vec3f objectCoordinates{distX(eng), distY(eng), distZ(eng)};
+
+    benchmark::DoNotOptimize(
+        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(scalarRandomGradient);
+
+template <int W>
+void vectorRandomGradient(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  std::random_device rd;
+  std::mt19937 eng(rd());
+
+  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
+
+  int valid[W];
+
+  for (int i = 0; i < W; i++) {
+    valid[i] = 1;
+  }
+
+  struct vvec3f
+  {
+    float x[W];
+    float y[W];
+    float z[W];
+  };
+
+  vvec3f objectCoordinates;
+  vkl_vvec3f4 gradient4;
+  vkl_vvec3f8 gradient8;
+  vkl_vvec3f16 gradient16;
+
+  for (auto _ : state) {
+    for (int i = 0; i < W; i++) {
+      objectCoordinates.x[i] = distX(eng);
+      objectCoordinates.y[i] = distY(eng);
+      objectCoordinates.z[i] = distZ(eng);
+    }
+
+    if (W == 4) {
+      vklComputeGradient4(valid,
+                          vklVolume,
+                          (const vkl_vvec3f4 *)&objectCoordinates,
+                          &gradient4);
+    } else if (W == 8) {
+      vklComputeGradient8(valid,
+                          vklVolume,
+                          (const vkl_vvec3f8 *)&objectCoordinates,
+                          &gradient8);
+    } else if (W == 16) {
+      vklComputeGradient16(valid,
+                           vklVolume,
+                           (const vkl_vvec3f16 *)&objectCoordinates,
+                           &gradient16);
+    } else {
+      throw std::runtime_error(
+          "vectorRandomGradient benchmark called with unimplemented calling "
+          "width");
+    }
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * W);
+}
+
+BENCHMARK_TEMPLATE(vectorRandomGradient, 4);
+BENCHMARK_TEMPLATE(vectorRandomGradient, 8);
+BENCHMARK_TEMPLATE(vectorRandomGradient, 16);
+
+static void scalarFixedGradient(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  vkl_vec3f objectCoordinates{0.1701f, 0.1701f, 0.1701f};
+
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(
+        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
+}
+
+BENCHMARK(scalarFixedGradient);
+
+template <int W>
+void vectorFixedGradient(benchmark::State &state)
+{
+  std::unique_ptr<WaveletProceduralVolume> v(
+      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  int valid[W];
+
+  for (int i = 0; i < W; i++) {
+    valid[i] = 1;
+  }
+
+  struct vvec3f
+  {
+    float x[W];
+    float y[W];
+    float z[W];
+  };
+
+  // use fixed coordinates for all benchmark iterations
+  vvec3f objectCoordinates;
+
+  for (int i = 0; i < W; i++) {
+    objectCoordinates.x[i] = 0.1701f;
+    objectCoordinates.y[i] = 0.1701f;
+    objectCoordinates.z[i] = 0.1701f;
+  }
+
+  vkl_vvec3f4 gradient4;
+  vkl_vvec3f8 gradient8;
+  vkl_vvec3f16 gradient16;
+
+  for (auto _ : state) {
+    if (W == 4) {
+      vklComputeGradient4(valid,
+                          vklVolume,
+                          (const vkl_vvec3f4 *)&objectCoordinates,
+                          &gradient4);
+    } else if (W == 8) {
+      vklComputeGradient8(valid,
+                          vklVolume,
+                          (const vkl_vvec3f8 *)&objectCoordinates,
+                          &gradient8);
+    } else if (W == 16) {
+      vklComputeGradient16(valid,
+                           vklVolume,
+                           (const vkl_vvec3f16 *)&objectCoordinates,
+                           &gradient16);
+    } else {
+      throw std::runtime_error(
+          "vectorFixedGradient benchmark called with unimplemented calling "
+          "width");
+    }
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * W);
+}
+
+BENCHMARK_TEMPLATE(vectorFixedGradient, 4);
+BENCHMARK_TEMPLATE(vectorFixedGradient, 8);
+BENCHMARK_TEMPLATE(vectorFixedGradient, 16);
+
 static void scalarIntervalIteratorConstruction(benchmark::State &state)
 {
   static std::unique_ptr<WaveletProceduralVolume> v;

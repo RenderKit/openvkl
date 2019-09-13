@@ -35,6 +35,7 @@ add_executable(vklTests
   tests/interval_iterator.cpp
   tests/simd_conformance.cpp
   tests/simd_type_conversion.cpp
+  tests/structured_volume_gradients.cpp
   tests/structured_volume_sampling.cpp
   tests/vectorized_hit_iterator.cpp
   tests/vectorized_interval_iterator.cpp
@@ -55,4 +56,5 @@ install(TARGETS vklTests
 add_test(NAME "simd_conformance"   COMMAND vklTests "[simd_conformance]")
 add_test(NAME "interval_iterators" COMMAND vklTests "[interval_iterators]")
 add_test(NAME "hit_iterators"      COMMAND vklTests "[hit_iterators]")
+add_test(NAME "volume_gradients"   COMMAND vklTests "[volume_gradients]")
 add_test(NAME "volume_sampling"    COMMAND vklTests "[volume_sampling]")

@@ -16,6 +16,7 @@
 
 #include <array>
 #include "../../external/catch.hpp"
+#include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 
@@ -93,31 +94,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA;
-        std::vector<float> directionsSOA;
-        std::vector<float> tRangesSOA;
-
-        for (int i = 0; i < callingWidth; i++) {
-          originsSOA.push_back(i < width ? origins[i].x : 0.f);
-          directionsSOA.push_back(i < width ? directions[i].x : 0.f);
-          tRangesSOA.push_back(i < width ? tRanges[i].lower : 0.f);
-        }
-
-        for (int i = 0; i < callingWidth; i++) {
-          originsSOA.push_back(i < width ? origins[i].y : 0.f);
-          directionsSOA.push_back(i < width ? directions[i].y : 0.f);
-          tRangesSOA.push_back(i < width ? tRanges[i].upper : 0.f);
-        }
-
-        for (int i = 0; i < callingWidth; i++) {
-          originsSOA.push_back(i < width ? origins[i].z : 0.f);
-          directionsSOA.push_back(i < width ? directions[i].z : 0.f);
-        }
-
-        // sanity check on SOA conversion
-        REQUIRE(originsSOA.size() == callingWidth * 3);
-        REQUIRE(directionsSOA.size() == callingWidth * 3);
-        REQUIRE(tRangesSOA.size() == callingWidth * 2);
+        std::vector<float> originsSOA = AOStoSOAvec3f(origins, callingWidth);
+        std::vector<float> directionsSOA =
+            AOStoSOAvec3f(directions, callingWidth);
+        std::vector<float> tRangesSOA = AOStoSOArange1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLHitIterator4 iterator;

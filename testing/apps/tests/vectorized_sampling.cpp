@@ -16,8 +16,9 @@
 
 #include <array>
 #include "../../external/catch.hpp"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
+#include "ospcommon/utility/multidim_index_sequence.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
@@ -64,20 +65,8 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> objectCoordinatesSOA;
-
-        for (int i = 0; i < callingWidth; i++)
-          objectCoordinatesSOA.push_back(i < width ? objectCoordinates[i].x
-                                                   : 0.f);
-        for (int i = 0; i < callingWidth; i++)
-          objectCoordinatesSOA.push_back(i < width ? objectCoordinates[i].y
-                                                   : 0.f);
-        for (int i = 0; i < callingWidth; i++)
-          objectCoordinatesSOA.push_back(i < width ? objectCoordinates[i].z
-                                                   : 0.f);
-
-        // sanity check on SOA conversion
-        REQUIRE(objectCoordinatesSOA.size() == callingWidth * 3);
+        std::vector<float> objectCoordinatesSOA =
+            AOStoSOAvec3f(objectCoordinates, callingWidth);
 
         float samples[callingWidth];
 

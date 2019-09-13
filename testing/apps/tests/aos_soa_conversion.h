@@ -30,8 +30,8 @@ using namespace ospcommon::math;
 // vector in SOA layout for the given calling width. the input vector may have
 // length < callingWidth.
 
-std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
-                                 int callingWidth)
+inline std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
+                                        int callingWidth)
 {
   if (input.size() > callingWidth) {
     throw std::runtime_error(
@@ -58,8 +58,8 @@ std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
   return output;
 }
 
-std::vector<float> AOStoSOArange1f(const std::vector<vkl_range1f> &input,
-                                   int callingWidth)
+inline std::vector<float> AOStoSOArange1f(const std::vector<vkl_range1f> &input,
+                                          int callingWidth)
 {
   if (input.size() > callingWidth) {
     throw std::runtime_error(

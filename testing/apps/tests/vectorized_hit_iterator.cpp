@@ -94,10 +94,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA = AOStoSOAvec3f(origins, callingWidth);
+        std::vector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
         std::vector<float> directionsSOA =
-            AOStoSOAvec3f(directions, callingWidth);
-        std::vector<float> tRangesSOA = AOStoSOArange1f(tRanges, callingWidth);
+            AOStoSOA_vec3f(directions, callingWidth);
+        std::vector<float> tRangesSOA = AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLHitIterator4 iterator;

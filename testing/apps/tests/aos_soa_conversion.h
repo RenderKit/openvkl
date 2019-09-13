@@ -23,15 +23,15 @@
 using namespace ospcommon::math;
 
 ///////////////////////////////////////////////////////////////////////////////
-// AOS to SOA conversions functions ///////////////////////////////////////////
+// AOS to SOA conversion functions ////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
 // these functions take an input vector in AOS layout and returns a flat output
 // vector in SOA layout for the given calling width. the input vector may have
 // length < callingWidth.
 
-inline std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
-                                        int callingWidth)
+inline std::vector<float> AOStoSOA_vec3f(const std::vector<vec3f> &input,
+                                         int callingWidth)
 {
   if (input.size() > callingWidth) {
     throw std::runtime_error(
@@ -58,8 +58,8 @@ inline std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
   return output;
 }
 
-inline std::vector<float> AOStoSOArange1f(const std::vector<vkl_range1f> &input,
-                                          int callingWidth)
+inline std::vector<float> AOStoSOA_range1f(
+    const std::vector<vkl_range1f> &input, int callingWidth)
 {
   if (input.size() > callingWidth) {
     throw std::runtime_error(
@@ -79,6 +79,43 @@ inline std::vector<float> AOStoSOArange1f(const std::vector<vkl_range1f> &input,
 
   if (output.size() != callingWidth * 2)
     throw std::runtime_error("improper AOS to SOA conversion");
+
+  return output;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// SOA to AOS conversion functions ////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+inline std::vector<vec3f> SOAtoAOS_vvec3f(const vkl_vvec3f4 &input)
+{
+  std::vector<vec3f> output;
+
+  for (int i = 0; i < 4; i++) {
+    output.push_back(vec3f(input.x[i], input.y[i], input.z[i]));
+  }
+
+  return output;
+}
+
+inline std::vector<vec3f> SOAtoAOS_vvec3f(const vkl_vvec3f8 &input)
+{
+  std::vector<vec3f> output;
+
+  for (int i = 0; i < 8; i++) {
+    output.push_back(vec3f(input.x[i], input.y[i], input.z[i]));
+  }
+
+  return output;
+}
+
+inline std::vector<vec3f> SOAtoAOS_vvec3f(const vkl_vvec3f16 &input)
+{
+  std::vector<vec3f> output;
+
+  for (int i = 0; i < 16; i++) {
+    output.push_back(vec3f(input.x[i], input.y[i], input.z[i]));
+  }
 
   return output;
 }

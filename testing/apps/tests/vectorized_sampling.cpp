@@ -66,7 +66,7 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
         std::fill(valid.begin(), valid.begin() + width, 1);
 
         std::vector<float> objectCoordinatesSOA =
-            AOStoSOAvec3f(objectCoordinates, callingWidth);
+            AOStoSOA_vec3f(objectCoordinates, callingWidth);
 
         float samples[callingWidth];
 

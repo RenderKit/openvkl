@@ -16,53 +16,13 @@
 
 #include <array>
 #include "../../external/catch.hpp"
+#include "aos_soa_conversion.h"
 #include "iterator_utility.h"
 #include "openvkl_testing.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
-
-std::vector<float> AOStoSOAvec3f(const std::vector<vec3f> &input,
-                                 int callingWidth)
-{
-  std::vector<float> output;
-
-  int width = input.size();
-
-  for (int i = 0; i < callingWidth; i++)
-    output.push_back(i < width ? input[i].x : 0.f);
-
-  for (int i = 0; i < callingWidth; i++)
-    output.push_back(i < width ? input[i].y : 0.f);
-
-  for (int i = 0; i < callingWidth; i++)
-    output.push_back(i < width ? input[i].z : 0.f);
-
-  if (output.size() != callingWidth * 3)
-    throw std::runtime_error("improper AOS to SOA conversion");
-
-  return output;
-}
-
-std::vector<float> AOStoSOArange1f(const std::vector<vkl_range1f> &input,
-                                   int callingWidth)
-{
-  std::vector<float> output;
-
-  int width = input.size();
-
-  for (int i = 0; i < callingWidth; i++)
-    output.push_back(i < width ? input[i].lower : 0.f);
-
-  for (int i = 0; i < callingWidth; i++)
-    output.push_back(i < width ? input[i].upper : 0.f);
-
-  if (output.size() != callingWidth * 2)
-    throw std::runtime_error("improper AOS to SOA conversion");
-
-  return output;
-}
 
 TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 {

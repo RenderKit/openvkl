@@ -40,15 +40,17 @@ stages:
 
 ## Build Jobs ##
 
-#build-centos7:
-#  <<: *build_job_docker
-#  script:
-#    - gitlab/build.sh
-#  image: ospray/docker-images:centos7
+build-centos7:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos7
+  script:
+  - gitlab/build.sh
 
-#build-ubuntu16.04:
-#  <<: *build_job_docker
-#  image: ospray/docker-images:ubuntu16.04
+build-ubuntu16.04:
+  <<: *build_job_docker
+  image: ospray/docker-images:ubuntu16.04
+  script:
+    - gitlab/build.sh -G Ninja
 
 build-ubuntu18.04:
   <<: *build_job_docker
@@ -77,20 +79,20 @@ build-macOS:
 
 ## Functional Test Jobs ##
 
-#test-functional-centos7:
-#  <<: *test_functional_job_docker
-#  image: ospray/docker-images:centos7
-#  dependencies:
-#    - build-centos7
+test-functional-centos7:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:centos7
+  dependencies:
+    - build-centos7
 
-#test-functional-ubuntu16.04:
-#  <<: *test_functional_job_docker
-#  image: ospray/docker-images:ubuntu16.04
-#  script:
-#    - export LD_LIBRARY_PATH=./build/install/tbb/lib
-#    - ./build/openvkl/build/vklTests
-#  dependencies:
-#    - build-ubuntu16.04
+test-functional-ubuntu16.04:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:ubuntu16.04
+  script:
+    - export LD_LIBRARY_PATH=./build/install/tbb/lib
+    - ./build/openvkl/build/vklTests
+  dependencies:
+    - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
   <<: *test_functional_job_docker

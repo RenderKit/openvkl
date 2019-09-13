@@ -232,7 +232,7 @@ static inline void wedgeInterpolationDerivs(float pcoords[3], float derivs[18])
 
 static const uniform float WEDGE_DIVERGED = 1.e6;
 static const uniform int WEDGE_MAX_ITERATION = 10;
-static const uniform float WEDGE_CONVERGED = 1.e-05;
+static const uniform float WEDGE_CONVERGED = 1.e-04;
 static const uniform float WEDGE_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
 static bool intersectAndSampleWedge(const void *uniform userData,
@@ -611,7 +611,7 @@ static inline void pyramidInterpolationDerivs(float pcoords[3], float derivs[15]
 
 static const uniform float PYRAMID_DIVERGED = 1.e6;
 static const uniform int PYRAMID_MAX_ITERATION = 10;
-static const uniform float PYRAMID_CONVERGED = 1.e-05;
+static const uniform float PYRAMID_CONVERGED = 1.e-04;
 static const uniform float PYRAMID_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
 static bool intersectAndSamplePyramid(const void *uniform userData,

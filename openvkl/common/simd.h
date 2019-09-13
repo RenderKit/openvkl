@@ -34,7 +34,13 @@ namespace openvkl {
 
   constexpr int simd_alignment_for_width(int W)
   {
-    return W < 4 ? 0 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
+    return W < 4 ? 4 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
+  }
+
+  // minimum alignment is 8 if object contains any pointers
+  constexpr int simd_alignment_for_width_with_ptr(int W)
+  {
+    return W < 4 ? 8 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
   constexpr int iterator_internal_state_size_for_width(int W)
@@ -164,7 +170,7 @@ namespace openvkl {
   };
 
   template <int W>
-  struct alignas(simd_alignment_for_width(W)) vVKLIntervalIteratorN
+  struct alignas(simd_alignment_for_width_with_ptr(W)) vVKLIntervalIteratorN
   {
     alignas(simd_alignment_for_width(
         W)) char internalState[iterator_internal_state_size_for_width(W)];
@@ -342,7 +348,7 @@ namespace openvkl {
   };
 
   template <int W>
-  struct alignas(simd_alignment_for_width(W)) vVKLHitIteratorN
+  struct alignas(simd_alignment_for_width_with_ptr(W)) vVKLHitIteratorN
   {
     alignas(simd_alignment_for_width(
         W)) char internalState[iterator_internal_state_size_for_width(W)];

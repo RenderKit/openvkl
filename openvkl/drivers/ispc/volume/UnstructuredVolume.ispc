@@ -358,7 +358,7 @@ static bool intersectAndSampleHexFast(const void *uniform userData,
   for (uniform int plane = 0; plane < 6; plane++) {
     const uniform vec3f v = self->vertex[getVertexId(self, cOffset + plane)];
     dist[plane] = dot(samplePos - v, hexahedronNormal(self, id, plane));
-    if (dist[plane] >= 0.f) // samplePos is outside of the cell
+    if (dist[plane] > 0.f) // samplePos is outside of the cell
       return false;
   }
 

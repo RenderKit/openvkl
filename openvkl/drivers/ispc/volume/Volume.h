@@ -19,6 +19,7 @@
 #include "../common/ManagedObject.h"
 #include "../common/objectFactory.h"
 #include "../iterator/Iterator.h"
+#include "../value_selector/ValueSelector.h"
 #include "openvkl/openvkl.h"
 #include "ospcommon/math/box.h"
 
@@ -154,7 +155,7 @@ namespace openvkl {
     template <int W>
     inline ValueSelector<W> *Volume<W>::newValueSelector()
     {
-      THROW_NOT_IMPLEMENTED;
+      return new ValueSelector<W>(this);
     }
 
     template <int W>

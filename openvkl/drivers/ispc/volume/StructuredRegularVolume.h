@@ -18,7 +18,6 @@
 
 #include "../common/Data.h"
 #include "../iterator/GridAcceleratorIterator.h"
-#include "../value_selector/ValueSelector.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
@@ -56,8 +55,6 @@ namespace openvkl {
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override;
-
-      ValueSelector<W> *newValueSelector() override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -135,12 +132,6 @@ namespace openvkl {
       ri->iterateHit(valid, result);
 
       hit = *reinterpret_cast<const vVKLHitN<W> *>(ri->getCurrentHit());
-    }
-
-    template <int W>
-    inline ValueSelector<W> *StructuredRegularVolume<W>::newValueSelector()
-    {
-      return new ValueSelector<W>(this);
     }
 
     template <int W>

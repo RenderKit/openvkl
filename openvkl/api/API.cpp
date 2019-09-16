@@ -23,6 +23,10 @@
 #include "ospcommon/utility/ArrayView.h"
 #include "ospcommon/utility/OnScopeExit.h"
 
+#ifdef _WIN32
+#include <process.h>  // for getpid
+#endif
+
 using namespace openvkl;
 
 #define TRACE_PREFIX "[openvkl] "
@@ -67,7 +71,9 @@ void postTraceMessage(const std::string &message)
 #define THROW_IF_NULL_OBJECT(obj) THROW_IF_NULL(obj, "handle")
 #define THROW_IF_NULL_STRING(str) THROW_IF_NULL(str, "string")
 
+#ifndef _WIN32
 #warning API tracing disabled
+#endif
 
 #define OPENVKL_CATCH_BEGIN_TRACE          \
   try {                                    \

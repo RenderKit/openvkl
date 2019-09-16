@@ -191,9 +191,6 @@ namespace openvkl {
 
     void Renderer::updateValueSelector()
     {
-      #warning temporary disabling value selection creation
-      return;
-
       if (valueSelector) {
         vklRelease(valueSelector);
         valueSelector = nullptr;

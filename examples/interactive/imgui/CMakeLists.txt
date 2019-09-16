@@ -14,15 +14,12 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(openvkl_imgui SHARED imgui.cpp imgui_draw.cpp imgui_demo.cpp)
+add_library(openvkl_imgui STATIC imgui.cpp imgui_draw.cpp imgui_demo.cpp)
 
 target_include_directories(openvkl_imgui
-  INTERFACE
+  PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_LIST_DIR}/imguifilesystem>
-  PRIVATE
-    ${CMAKE_CURRENT_LIST_DIR}
-    ${CMAKE_CURRENT_LIST_DIR}/imguifilesystem
 )
 
 target_link_libraries(openvkl_imgui PRIVATE ospcommon::ospcommon)

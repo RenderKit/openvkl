@@ -31,29 +31,29 @@ extern "C" {
 
 struct VKLIntervalIterator
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator4
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE_4];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator8
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE_8];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
 struct VKLIntervalIterator16
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE_16];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
 
@@ -85,6 +85,7 @@ struct VKLInterval16
   float nominalDeltaT[16];
 };
 
+OPENVKL_INTERFACE
 void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
                              VKLVolume volume,
                              const vkl_vec3f *origin,
@@ -92,6 +93,7 @@ void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
                              const vkl_range1f *tRange,
                              VKLValueSelector valueSelector);
 
+OPENVKL_INTERFACE
 void vklInitIntervalIterator4(const int *valid,
                               struct VKLIntervalIterator4 *iterator,
                               VKLVolume volume,
@@ -100,6 +102,7 @@ void vklInitIntervalIterator4(const int *valid,
                               const vkl_vrange1f4 *tRange,
                               VKLValueSelector valueSelector);
 
+OPENVKL_INTERFACE
 void vklInitIntervalIterator8(const int *valid,
                               struct VKLIntervalIterator8 *iterator,
                               VKLVolume volume,
@@ -108,6 +111,7 @@ void vklInitIntervalIterator8(const int *valid,
                               const vkl_vrange1f8 *tRange,
                               VKLValueSelector valueSelector);
 
+OPENVKL_INTERFACE
 void vklInitIntervalIterator16(const int *valid,
                                struct VKLIntervalIterator16 *iterator,
                                VKLVolume volume,
@@ -117,19 +121,23 @@ void vklInitIntervalIterator16(const int *valid,
                                VKLValueSelector valueSelector);
 
 // returns true while the iterator is still within the volume
+OPENVKL_INTERFACE
 int vklIterateInterval(struct VKLIntervalIterator *iterator,
                        struct VKLInterval *interval);
 
+OPENVKL_INTERFACE
 void vklIterateInterval4(const int *valid,
                          struct VKLIntervalIterator4 *iterator,
                          struct VKLInterval4 *interval,
                          int *result);
 
+OPENVKL_INTERFACE
 void vklIterateInterval8(const int *valid,
                          struct VKLIntervalIterator8 *iterator,
                          struct VKLInterval8 *interval,
                          int *result);
 
+OPENVKL_INTERFACE
 void vklIterateInterval16(const int *valid,
                           struct VKLIntervalIterator16 *iterator,
                           struct VKLInterval16 *interval,
@@ -141,29 +149,29 @@ void vklIterateInterval16(const int *valid,
 
 struct VKLHitIterator
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
 };
 
 struct VKLHitIterator4
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE_4];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
 };
 
 struct VKLHitIterator8
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE_8];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
 };
 
 struct VKLHitIterator16
 {
-  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16) char internalState
-      [ITERATOR_INTERNAL_STATE_SIZE_16];
+  VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16)
+  char internalState[ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
 };
 
@@ -191,6 +199,7 @@ struct VKLHit16
   float sample[16];
 };
 
+OPENVKL_INTERFACE
 void vklInitHitIterator(struct VKLHitIterator *iterator,
                         VKLVolume volume,
                         const vkl_vec3f *origin,
@@ -198,6 +207,7 @@ void vklInitHitIterator(struct VKLHitIterator *iterator,
                         const vkl_range1f *tRange,
                         VKLValueSelector valueSelector);
 
+OPENVKL_INTERFACE
 void vklInitHitIterator4(const int *valid,
                          struct VKLHitIterator4 *iterator,
                          VKLVolume volume,
@@ -206,6 +216,7 @@ void vklInitHitIterator4(const int *valid,
                          const vkl_vrange1f4 *tRange,
                          VKLValueSelector valueSelector);
 
+OPENVKL_INTERFACE
 void vklInitHitIterator8(const int *valid,
                          struct VKLHitIterator8 *iterator,
                          VKLVolume volume,
@@ -214,6 +225,7 @@ void vklInitHitIterator8(const int *valid,
                          const vkl_vrange1f8 *tRange,
                          VKLValueSelector valueSelector);
 
+OPENVKL_INTERFACE
 void vklInitHitIterator16(const int *valid,
                           struct VKLHitIterator16 *iterator,
                           VKLVolume volume,
@@ -223,18 +235,22 @@ void vklInitHitIterator16(const int *valid,
                           VKLValueSelector valueSelector);
 
 // returns true while the iterator is still within the volume
+OPENVKL_INTERFACE
 int vklIterateHit(struct VKLHitIterator *iterator, struct VKLHit *hit);
 
+OPENVKL_INTERFACE
 void vklIterateHit4(const int *valid,
                     struct VKLHitIterator4 *iterator,
                     struct VKLHit4 *hit,
                     int *result);
 
+OPENVKL_INTERFACE
 void vklIterateHit8(const int *valid,
                     struct VKLHitIterator8 *iterator,
                     struct VKLHit8 *hit,
                     int *result);
 
+OPENVKL_INTERFACE
 void vklIterateHit16(const int *valid,
                      struct VKLHitIterator16 *iterator,
                      struct VKLHit16 *hit,

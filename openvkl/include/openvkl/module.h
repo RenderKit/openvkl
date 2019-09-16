@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+OPENVKL_INTERFACE
 VKLError vklLoadModule(const char *moduleName);
 
 #ifdef __cplusplus

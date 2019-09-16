@@ -21,7 +21,7 @@
 
 namespace openvkl {
 
-  struct Data : public ManagedObject
+  struct OPENVKL_CORE_INTERFACE Data : public ManagedObject
   {
     Data(size_t numItems,
          VKLDataType dataType,

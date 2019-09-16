@@ -33,12 +33,14 @@ typedef ManagedObject ValueSelector;
 
 typedef ValueSelector *VKLValueSelector;
 
-VKLValueSelector vklNewValueSelector(VKLVolume volume);
+OPENVKL_INTERFACE VKLValueSelector vklNewValueSelector(VKLVolume volume);
 
+OPENVKL_INTERFACE
 void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
                                size_t numRanges,
                                const vkl_range1f *ranges);
 
+OPENVKL_INTERFACE
 void vklValueSelectorSetValues(VKLValueSelector valueSelector,
                                size_t numValues,
                                const float *values);

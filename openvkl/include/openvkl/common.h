@@ -28,6 +28,16 @@
 #  define VKL_ALIGN(...) __attribute__((aligned(__VA_ARGS__)))
 #endif
 
+#ifdef _WIN32
+#  ifdef openvkl_EXPORTS
+#    define OPENVKL_INTERFACE __declspec(dllexport)
+#  else
+#    define OPENVKL_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OPENVKL_INTERFACE
+#endif
+
 #ifdef __cplusplus
 struct ManagedObject
 {

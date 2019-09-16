@@ -25,17 +25,17 @@ typedef struct Driver *VKLDriver;
 extern "C" {
 #endif
 
-VKLDriver vklNewDriver(const char *driverName);
-void vklCommitDriver(VKLDriver driver);
-void vklSetCurrentDriver(VKLDriver driver);
+OPENVKL_INTERFACE VKLDriver vklNewDriver(const char *driverName);
+OPENVKL_INTERFACE void vklCommitDriver(VKLDriver driver);
+OPENVKL_INTERFACE void vklSetCurrentDriver(VKLDriver driver);
 
-int vklGetNativeSIMDWidth();
+OPENVKL_INTERFACE int vklGetNativeSIMDWidth();
 
-void vklCommit(VKLObject object);
+OPENVKL_INTERFACE void vklCommit(VKLObject object);
 
-void vklRelease(VKLObject object);
+OPENVKL_INTERFACE void vklRelease(VKLObject object);
 
-void vklShutdown();
+OPENVKL_INTERFACE void vklShutdown();
 
 #ifdef __cplusplus
 }  // extern "C"

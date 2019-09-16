@@ -23,7 +23,7 @@
 
 namespace openvkl {
 
-  struct OPENVKL_SDK_INTERFACE ManagedObject
+  struct OPENVKL_CORE_INTERFACE ManagedObject
       : public ospcommon::memory::RefCount,
         public ospcommon::utility::ParameterizedObject
   {

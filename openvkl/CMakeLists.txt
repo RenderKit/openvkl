@@ -16,6 +16,10 @@
 
 include(openvkl_ispc)
 
+if(WIN32)
+  set(DEF_FILE common/ispc_defs.def)
+endif()
+
 openvkl_add_library_ispc(${PROJECT_NAME} SHARED
   api/API.cpp
   api/Driver.cpp
@@ -25,6 +29,8 @@ openvkl_add_library_ispc(${PROJECT_NAME} SHARED
   common/logging.cpp
   common/ManagedObject.cpp
   common/VKLCommon.cpp
+
+  ${DEF_FILE}
 )
 
 target_include_directories(${PROJECT_NAME}

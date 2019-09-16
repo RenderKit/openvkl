@@ -34,8 +34,6 @@
 
 #define OPENVKL_CORE_INTERFACE OPENVKL_INTERFACE
 
-#define OPENVKL_SDK_INTERFACE
-
 #define VKL_REGISTER_OBJECT(Object, object_name, InternalClass, external_name) \
   extern "C" OPENVKL_DLLEXPORT                                                  \
       Object *openvkl_create_##object_name##__##external_name()                 \

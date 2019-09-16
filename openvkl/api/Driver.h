@@ -35,7 +35,8 @@ using VKLHitIterator1      = VKLHitIterator;
 namespace openvkl {
   namespace api {
 
-    struct Driver : public ospcommon::utility::ParameterizedObject
+    struct OPENVKL_CORE_INTERFACE Driver
+        : public ospcommon::utility::ParameterizedObject
     {
       static std::shared_ptr<Driver> current;
 

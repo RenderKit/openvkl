@@ -48,11 +48,11 @@ typedef ManagedObject Data;
 
 typedef Data *VKLData;
 
-VKLData vklNewData(size_t numItems,
-                   VKLDataType dataType,
-                   const void *source,
-                   VKLDataCreationFlags dataCreationFlags
-                       VKL_DEFAULT_VAL(= VKL_DATA_DEFAULT));
+OPENVKL_INTERFACE VKLData vklNewData(size_t numItems,
+                                     VKLDataType dataType,
+                                     const void *source,
+                                     VKLDataCreationFlags dataCreationFlags
+                                         VKL_DEFAULT_VAL(= VKL_DATA_DEFAULT));
 
 #ifdef __cplusplus
 }  // extern "C"

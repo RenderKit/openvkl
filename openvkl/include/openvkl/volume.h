@@ -40,43 +40,53 @@ typedef Volume *VKLVolume;
 extern "C" {
 #endif
 
+OPENVKL_INTERFACE
 VKLVolume vklNewVolume(const char *type);
 
+OPENVKL_INTERFACE
 float vklComputeSample(VKLVolume volume, const vkl_vec3f *objectCoordinates);
 
+OPENVKL_INTERFACE
 void vklComputeSample4(const int *valid,
                        VKLVolume volume,
                        const vkl_vvec3f4 *objectCoordinates,
                        float *samples);
 
+OPENVKL_INTERFACE
 void vklComputeSample8(const int *valid,
                        VKLVolume volume,
                        const vkl_vvec3f8 *objectCoordinates,
                        float *samples);
 
+OPENVKL_INTERFACE
 void vklComputeSample16(const int *valid,
                         VKLVolume volume,
                         const vkl_vvec3f16 *objectCoordinates,
                         float *samples);
 
+OPENVKL_INTERFACE
 vkl_vec3f vklComputeGradient(VKLVolume volume,
                              const vkl_vec3f *objectCoordinates);
 
+OPENVKL_INTERFACE
 void vklComputeGradient4(const int *valid,
                          VKLVolume volume,
                          const vkl_vvec3f4 *objectCoordinates,
                          vkl_vvec3f4 *gradients);
 
+OPENVKL_INTERFACE
 void vklComputeGradient8(const int *valid,
                          VKLVolume volume,
                          const vkl_vvec3f8 *objectCoordinates,
                          vkl_vvec3f8 *gradients);
 
+OPENVKL_INTERFACE
 void vklComputeGradient16(const int *valid,
                           VKLVolume volume,
                           const vkl_vvec3f16 *objectCoordinates,
                           vkl_vvec3f16 *gradients);
 
+OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
 #ifdef __cplusplus

@@ -20,6 +20,7 @@
 
 varying float AMR_current(const void *uniform _self, const varying vec3f &P)
 {
+  //print("[openvkl::ispc] AMR_current sampling method\n");
   const AMRVolume *uniform self = (const AMRVolume *)_self;
   const AMR *uniform amr = &self->amr;
 
@@ -31,6 +32,8 @@ varying float AMR_current(const void *uniform _self, const varying vec3f &P)
   DualCell D;
   initDualCell(D,lP,C.width);
   findDualCell(amr,D);
+
+  //print("[openvkl::ispc] lerp dual cell %\n", lerp(D));
 
   return lerp(D);
 }
@@ -51,6 +54,6 @@ varying float AMR_currentLevel(const void *uniform _self, const varying vec3f &P
 export void AMR_install_current(void *uniform _self)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  self->sample = AMR_current;
+  self->computeSample = AMR_current;
   self->computeSampleLevel = AMR_currentLevel;
 }

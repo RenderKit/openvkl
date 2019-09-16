@@ -48,12 +48,20 @@ namespace openvkl {
                        const Data &cellWidthsData,
                        const Data &blockDataData)
       {
-        auto numBricks = blockBoundsData.numItems;
+        size_t numBricks;
+        if (blockBoundsData.dataType == VKL_BOX3I) {
+          numBricks = blockBoundsData.numItems;
+        } else {  // assuming VKL_INT
+          numBricks = blockBoundsData.numItems / 6;
+        }
         // ALOK: putting the arrays back into a struct for now
         // TODO: turn this all into arrays
         const box3i *blockBounds    = (const box3i *)blockBoundsData.data;
+        postLogMessage(VKL_LOG_DEBUG) << "bounds[0] " << blockBounds[0];
         const int *refinementLevels = (const int *)refinementLevelsData.data;
+        postLogMessage(VKL_LOG_DEBUG) << "levels[0] " << refinementLevels[0];
         const float *cellWidths     = (const float *)cellWidthsData.data;
+        postLogMessage(VKL_LOG_DEBUG) << "widths[0] " << cellWidths[0];
 
         const Data **allBlocksData = (const Data **)blockDataData.data;
         for (size_t i = 0; i < numBricks; i++) {

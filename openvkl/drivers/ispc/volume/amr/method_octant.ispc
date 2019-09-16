@@ -441,6 +441,6 @@ varying float AMR_octantLevel(const void *uniform _self, const varying vec3f &P)
 export void AMR_install_octant(void *uniform _self)
 {
   AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  self->sample = AMR_octant;
+  self->computeSample = AMR_octant;
   self->computeSampleLevel = AMR_octantLevel;
 }

@@ -48,20 +48,20 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = volume->sample(volume, pos);
+  float sample = volume->computeSample(volume, pos);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->sample(
+  gradient.x = volume->computeSample(
                    volume, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->sample(
+  gradient.y = volume->computeSample(
                    volume, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->sample(
+  gradient.z = volume->computeSample(
                    volume, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
                sample;
 
@@ -94,7 +94,7 @@ export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
       for (varying int ix = 0; ix < numSamplePoints.x; ix += programCount) {
         vec3f relPos    = make_vec3f(ix, iy, iz) / make_vec3f(numSamplePoints);
         vec3f samplePos = lerp(leaf->bounds, relPos);
-        float sampleValue = self->sample(_self, samplePos);
+        float sampleValue = self->computeSample(_self, samplePos);
         extend(leaf->valueRange, sampleValue);
       }
 }
@@ -105,7 +105,7 @@ inline void AMRVolume_transformLocalToWorld(
     varying vec3f &worldCoordinates)
 {
   worldCoordinates =
-      volume->super.gridOrigin + localCoordinates * volume->super.gridSpacing;
+      volume->gridOrigin + localCoordinates * volume->gridSpacing;
 }
 
 inline void AMRVolume_transformWorldToLocal(
@@ -114,7 +114,7 @@ inline void AMRVolume_transformWorldToLocal(
     varying vec3f &localCoordinates)
 {
   localCoordinates =
-      rcp(volume->super.gridSpacing) * (worldCoordinates - volume->super.gridOrigin);
+      rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }
 
 export void AMRVolume_setAMR(void *uniform _self,
@@ -164,7 +164,7 @@ export void AMRVolume_set(void *uniform _self,
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 
-  self->super.boundingBox =
+  self->boundingBox =
       make_box3f(gridOrigin + worldBounds.lower,
                  worldBounds.lower + gridOrigin +
                      (worldBounds.upper - worldBounds.lower) * gridSpacing);
@@ -173,6 +173,25 @@ export void AMRVolume_set(void *uniform _self,
   self->transformLocalToWorld = AMRVolume_transformLocalToWorld;
   self->transformWorldToLocal = AMRVolume_transformWorldToLocal;
 
-  self->super.gridSpacing = gridSpacing;
-  self->super.gridOrigin  = gridOrigin;
+  self->gridSpacing = gridSpacing;
+  self->gridOrigin  = gridOrigin;
+}
+
+export void AMRVolume_sample_export(
+    uniform const int *uniform imask,
+    void *uniform _self,
+    const void *uniform _objectCoordinates,
+    void *uniform _samples)
+{
+  AMRVolume *uniform self = (AMRVolume * uniform) _self;
+
+  if (imask[programIndex]) {
+      //print("[openvkl::ispc] [%]\n", programIndex);
+    const varying vec3f *uniform objectCoordinates =
+        (const varying vec3f *uniform)_objectCoordinates;
+    varying float *uniform samples = (varying float *uniform)_samples;
+
+    *samples = self->computeSample(self, *objectCoordinates);
+    //print("[openvkl::ispc] [%] samples %\n", programIndex, *samples);
+  }
 }

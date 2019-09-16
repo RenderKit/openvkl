@@ -31,24 +31,33 @@
 namespace openvkl {
   namespace ispc_driver {
 
-    AMRVolume::AMRVolume()
+    template <int W>
+    AMRVolume<W>::AMRVolume()
     {
-      ispcEquivalent = ispc::AMRVolume_create(this);
+      this->ispcEquivalent = ispc::AMRVolume_create(this);
     }
 
-    std::string AMRVolume::toString() const
+    template <int W>
+    std::string AMRVolume<W>::toString() const
     {
-      return "ospray::AMRVolume";
+      return "openvkl::AMRVolume";
     }
 
+    template <int W>
     //! Allocate storage and populate the volume.
-    void AMRVolume::commit()
+    void AMRVolume<W>::commit()
     {
-      Volume::commit();
+      StructuredVolume<W>::commit();
 
-      voxelRange = getParam<vec2f>("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
+      voxelRange = this->template getParam<vec2f>("voxelRange",
+                                                  vec2f(FLT_MAX, -FLT_MAX));
 
-      amrMethod = getParam<VKLAMRMethod>("method", VKL_AMR_CURRENT);
+      postLogMessage(VKL_LOG_DEBUG) << "got voxelRange";
+
+      amrMethod =
+          this->template getParam<VKLAMRMethod>("method", VKL_AMR_CURRENT);
+
+      postLogMessage(VKL_LOG_DEBUG) << "got method";
 
       if (amrMethod == VKL_AMR_CURRENT)
         ispc::AMR_install_current(this->ispcEquivalent);
@@ -60,28 +69,50 @@ namespace openvkl {
       if (data != nullptr)  // TODO: support data updates
         return;
 
-      blockBoundsData = (Data *)getParam<ManagedObject::VKL_PTR>("block.bounds", nullptr);
+      blockBoundsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
+          "block.bounds", nullptr);
       if (blockBoundsData.ptr == nullptr)
         throw std::runtime_error("amr volume must have 'block.bounds' array");
 
-      refinementLevelsData = (Data *)getParam<ManagedObject::VKL_PTR>("block.level", nullptr);
+      for (int b = 0; b < 8; b++) {
+          std::cout << ((int *)(blockBoundsData->data))[b] << " ";
+      }
+
+      postLogMessage(VKL_LOG_DEBUG) << "got block bounds";
+
+      refinementLevelsData =
+          (Data *)this->template getParam<ManagedObject::VKL_PTR>("block.level",
+                                                                  nullptr);
       if (refinementLevelsData.ptr == nullptr)
         throw std::runtime_error("amr volume must have 'block.level' array");
 
-      cellWidthsData = (Data *)getParam<ManagedObject::VKL_PTR>("block.cellWidth", nullptr);
+      postLogMessage(VKL_LOG_DEBUG) << "got block levels";
+
+      cellWidthsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
+          "block.cellWidth", nullptr);
       if (cellWidthsData.ptr == nullptr)
         throw std::runtime_error(
             "amr volume must have 'block.cellWidth' array");
 
-      blockDataData = (Data *)getParam<ManagedObject::VKL_PTR>("block.data", nullptr);
+      postLogMessage(VKL_LOG_DEBUG) << "got block cell widths";
+
+      blockDataData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
+          "block.data", nullptr);
       if (blockDataData.ptr == nullptr)
         throw std::runtime_error("amr volume must have 'block.data' array");
 
-      data  = make_unique<amr::AMRData>(*blockBoundsData,
+      postLogMessage(VKL_LOG_DEBUG) << "got block data";
+
+      data = make_unique<amr::AMRData>(*blockBoundsData,
                                        *refinementLevelsData,
                                        *cellWidthsData,
                                        *blockDataData);
+
+      postLogMessage(VKL_LOG_DEBUG) << "created data structure";
+
       accel = make_unique<amr::AMRAccel>(*data);
+
+      postLogMessage(VKL_LOG_DEBUG) << "created acceleration structure";
 
       float coarsestCellWidth = *std::max_element(
           cellWidthsData->begin<float>(), cellWidthsData->end<float>());
@@ -90,10 +121,16 @@ namespace openvkl {
 
       bounds = accel->worldBounds;
 
-      const vec3f gridSpacing = getParam<vec3f>("gridSpacing", vec3f(1.f));
-      const vec3f gridOrigin  = getParam<vec3f>("gridOrigin", vec3f(0.f));
+      const vec3f gridSpacing =
+          this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+      postLogMessage(VKL_LOG_DEBUG) << "got grid spacing";
+      const vec3f gridOrigin =
+          this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+      postLogMessage(VKL_LOG_DEBUG) << "got grid origin";
 
-      voxelType = (VKLDataType)getParam<int>("voxelType", VKL_UNKNOWN);
+      voxelType =
+          (VKLDataType)this->template getParam<int>("voxelType", VKL_UNKNOWN);
+      postLogMessage(VKL_LOG_DEBUG) << "got voxel type";
 
       switch (voxelType) {
       case VKL_UCHAR:
@@ -107,19 +144,23 @@ namespace openvkl {
       case VKL_DOUBLE:
         break;
       default:
-        throw std::runtime_error("amr volume 'voxelType' is invalid type " +
-                                 stringForType(voxelType) +
-                                 ". Must be one of: VKL_UCHAR, VKL_SHORT, "
-                                 "VKL_USHORT, VKL_FLOAT, VKL_DOUBLE");
+        throw std::runtime_error(
+            "amr volume 'voxelType' has invalid type."
+            "Must be one of: VKL_UCHAR, VKL_SHORT, "
+            "VKL_USHORT, VKL_FLOAT, VKL_DOUBLE");
       }
 
-      ispc::AMRVolume_set(ispcEquivalent,
+      postLogMessage(VKL_LOG_DEBUG) << "got all parameters";
+
+      ispc::AMRVolume_set(this->ispcEquivalent,
                           (ispc::box3f &)bounds,
                           samplingStep,
                           (const ispc::vec3f &)gridOrigin,
                           (const ispc::vec3f &)gridSpacing);
 
-      ispc::AMRVolume_setAMR(ispcEquivalent,
+      postLogMessage(VKL_LOG_DEBUG) << "called AMRVolume_set";
+
+      ispc::AMRVolume_setAMR(this->ispcEquivalent,
                              accel->node.size(),
                              &accel->node[0],
                              accel->leaf.size(),
@@ -129,13 +170,44 @@ namespace openvkl {
                              voxelType,
                              (ispc::box3f &)bounds);
 
+      postLogMessage(VKL_LOG_DEBUG) << "called AMRVolume_setAMR";
+
+      for (size_t leafID = 0; leafID < accel->leaf.size(); leafID++)
+        ispc::AMRVolume_computeValueRangeOfLeaf(this->ispcEquivalent, leafID);
+      /*
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
-        ispc::AMRVolume_computeValueRangeOfLeaf(ispcEquivalent, leafID);
+        ispc::AMRVolume_computeValueRangeOfLeaf(this->ispcEquivalent, leafID);
       });
+      */
+
+      postLogMessage(VKL_LOG_DEBUG) << "computed leaves";
     }
 
-    VKL_REGISTER_VOLUME(AMRVolume, AMRVolume);
-    VKL_REGISTER_VOLUME(AMRVolume, amr_volume);
+    template <int W>
+    void AMRVolume<W>::computeSampleV(const int *valid,
+                                      const vvec3fn<W> &objectCoordinates,
+                                      vfloatn<W> &samples) const
+    {
+      postLogMessage(VKL_LOG_DEBUG) << "AMRVolume::computeSampleV";
+      ispc::AMRVolume_sample_export(
+          valid, ispcEquivalent, &objectCoordinates, &samples);
+    }
+
+    template <int W>
+    vec3f AMRVolume<W>::computeGradient(const vec3f &objectCoordinates) const
+    {
+      THROW_NOT_IMPLEMENTED;
+    }
+
+    template <int W>
+    box3f AMRVolume<W>::getBoundingBox() const
+    {
+      return bounds;
+    }
+
+    VKL_REGISTER_VOLUME(AMRVolume<4>, amr_volume_4);
+    VKL_REGISTER_VOLUME(AMRVolume<8>, amr_volume_8);
+    VKL_REGISTER_VOLUME(AMRVolume<16>, amr_volume_16);
 
   }  // namespace ispc_driver
 }  // namespace openvkl

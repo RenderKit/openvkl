@@ -16,8 +16,8 @@
 
 #pragma once
 
+#include "../StructuredVolume.h"
 #include "AMRAccel.h"
-#include "../StructuredRegularVolume.h"
 #include "ospcommon/memory/RefCount.h"
 
 using namespace ospcommon::memory;
@@ -32,7 +32,8 @@ typedef enum
 namespace openvkl {
   namespace ispc_driver {
 
-    struct AMRVolume : public StructuredRegularVolume<4>
+    template <int W>
+    struct AMRVolume : public StructuredVolume<W>
     {
       AMRVolume();
       ~AMRVolume() override = default;
@@ -41,6 +42,12 @@ namespace openvkl {
 
       void commit() override;
 
+      void computeSampleV(const int *valid,
+                          const vvec3fn<W> &objectCoordinates,
+                          vfloatn<W> &samples) const override;
+      vec3f computeGradient(const vec3f &objectCoordinates) const override;
+      box3f getBoundingBox() const override;
+
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 
@@ -48,20 +55,13 @@ namespace openvkl {
       Ref<Data> blockBoundsData;
       Ref<Data> refinementLevelsData;
       Ref<Data> cellWidthsData;
-
       VKLDataType voxelType;
-
-      //! Voxel value range (will be computed if not provided as a parameter).
       vec2f voxelRange;
       box3f bounds;
 
       VKLAMRMethod amrMethod;
 
-      /*! Scale factor for the volume, mostly for internal use or data scaling
-        benchmarking. Note that this must be set **before** calling
-        'ospSetRegion' on the volume as the scaling is applied in that function.
-      */
-      vec3f scaleFactor{1};
+      void *ispcEquivalent{nullptr};
     };
 
   }  // namespace ispc_driver

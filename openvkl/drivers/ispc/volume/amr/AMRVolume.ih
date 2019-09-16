@@ -22,12 +22,16 @@
 
 struct AMRVolume
 {
-  SharedStructuredVolume super;  //!< inherited from superclass
-  float samplingStep;
+  //SharedStructuredVolume super;  //!< inherited from superclass
+  uniform vec3f gridSpacing;
+  uniform vec3f gridOrigin;
+  uniform box3f boundingBox;
+  uniform float samplingStep;
+
   AMR amr;
-  varying float (*sample)(const void *uniform _self,
+  varying float (*uniform computeSample)(const void *uniform _self,
                           const varying vec3f &worldCoordinates);
-  varying vec3f (*computeGradient)(const void *uniform _self,
+  varying vec3f (*uniform computeGradient)(const void *uniform _self,
                                    const varying vec3f &worldCoordinates);
 
   //! The value at the given sample location in world coordinates.

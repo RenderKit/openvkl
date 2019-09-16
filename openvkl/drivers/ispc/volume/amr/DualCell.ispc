@@ -39,6 +39,8 @@ void findDualCell(const AMR *uniform self,
   const varying float *const uniform lo = p0;
   const varying float *const uniform hi = p1;
 
+  //print("lo = %, hi = %\n", lo, hi);
+
 #define STACK_SIZE 64
   uniform FindEightStack stack[STACK_SIZE];
   uniform FindEightStack *uniform stackPtr = &stack[0];

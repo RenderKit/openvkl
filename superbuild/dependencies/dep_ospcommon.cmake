@@ -46,7 +46,7 @@ ExternalProject_Add(${COMPONENT_NAME}
 
 set(OSPCOMMON_PATH "${COMPONENT_PATH}")
 if (NOT WIN32)
-  set(OSPCOMMON_PATH "${OSPCOMMON_PATH}/lib/cmake/ospcommon")
+  set(OSPCOMMON_PATH "${OSPCOMMON_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/ospcommon")
 endif()
 
 ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)

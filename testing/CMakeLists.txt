@@ -23,11 +23,7 @@ target_link_libraries(openvkl_testing INTERFACE
 
 target_include_directories(openvkl_testing
   INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-)
-
-install(TARGETS openvkl_testing
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # don't build tests

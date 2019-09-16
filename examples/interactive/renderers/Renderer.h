@@ -25,6 +25,7 @@
 #include "ospcommon/utility/ParameterizedObject.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 // std
+#include <cmath>
 #include <random>
 #include <vector>
 
@@ -145,7 +146,8 @@ namespace openvkl {
     {
       vec4f colorAndOpacity{0.f};
 
-      if (isnan(value) || transferFunction.colorsAndOpacities.size() == 0) {
+      if (std::isnan(value) ||
+          transferFunction.colorsAndOpacities.size() == 0) {
         return colorAndOpacity;
       }
 

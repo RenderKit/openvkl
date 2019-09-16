@@ -43,7 +43,4 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_ALWAYS OFF
 )
 
-set(GLFW_PATH "${COMPONENT_PATH}")
-if (NOT WIN32)
-  set(GLFW_PATH "${GLFW_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/glfw3")
-endif()
+set(GLFW_PATH "${COMPONENT_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/glfw3")

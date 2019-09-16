@@ -30,8 +30,6 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-include(GNUInstallDirs)
-
 ## Establish project ##
 
 project(openvkl VERSION 0.1.0 LANGUAGES C CXX)
@@ -46,6 +44,7 @@ include(openvkl_ispc)
 
 option(BUILD_EXAMPLES "Build example applications." ON)
 
+include(GNUInstallDirs)
 include(CTest) # Adds 'BUILD_TESTING' variable
 
 if (BUILD_TESTING)

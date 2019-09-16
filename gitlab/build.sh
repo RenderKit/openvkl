@@ -24,7 +24,6 @@ export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 cmake --version
 
 cmake \
-  -DBUILD_JOBS=`nproc` \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   "$@" ../superbuild

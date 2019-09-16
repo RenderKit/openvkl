@@ -39,12 +39,19 @@ project(OpenVKL_superbuild)
 
 include(ExternalProject)
 include(GNUInstallDirs)
+include(ProcessorCount)
 
 ## Superbuild options ##
 
-set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+if(NOT PROCESSOR_COUNT EQUAL 0)
+  set(BUILD_JOBS ${PROCESSOR_COUNT} CACHE STRING "Number of build jobs '-j <n>'")
+else()
+  set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+endif()
 
 set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
+
+option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
@@ -71,10 +78,15 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 ## Build dependencies ##
 
 include(dep_ispc)
-include(dep_tbb)
+
+if (BUILD_TBB_FROM_SOURCE)
+  include(dep_tbb)
+endif()
+
 if (BUILD_GLFW)
   include(dep_glfw)
 endif()
+
 include(dep_ospcommon)
 
 ## Build OpenVKL ##
@@ -93,7 +105,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DCMAKE_INSTALL_PREFIX:PATH=${INSTALL_DIR_ABSOLUTE}/openvkl
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       -DISPC_EXECUTABLE=${ISPC_PATH}
-      -DOSPCOMMON_TBB_ROOT=${TBB_PATH} # NOTE(jda)- can't use env var here
+      $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF

@@ -39,8 +39,6 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
   VKLVolume vklVolume = v->getVKLVolume();
 
-  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
-
   std::random_device rd;
   std::mt19937 eng(rd());
 
@@ -73,6 +71,9 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
         inside = false;
       if (dot(objectCoordinates - vec3f(0, 0, 1), vec3f(0, 1, 1)) > 0)
         inside = false;
+      break;
+    case VKL_HEXAHEDRON:
+      // already handled by bounding box test above
       break;
     }
 

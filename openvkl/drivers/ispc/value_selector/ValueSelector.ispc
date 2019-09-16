@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2019 Intel Corporation                                    //
+// Copyright 2019 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,18 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../volume/GridAccelerator.ih"
-#include "GridAcceleratorValueSelector.ih"
+#include "ValueSelector.ih"
 
-export void *uniform
-GridAcceleratorValueSelector_Constructor(void *uniform _volume,
-                                         const uniform int &numRanges,
-                                         const box1f *uniform ranges,
-                                         const uniform int &numValues,
-                                         const float *uniform values)
+export void *uniform ValueSelector_Constructor(void *uniform volume,
+                                               const uniform int &numRanges,
+                                               const box1f *uniform ranges,
+                                               const uniform int &numValues,
+                                               const float *uniform values)
 {
-  uniform GridAcceleratorValueSelector *uniform self =
-      uniform new uniform GridAcceleratorValueSelector;
+  uniform ValueSelector *uniform self = uniform new uniform ValueSelector;
+
+  self->volume = volume;
 
   self->numRanges = numRanges;
   self->ranges    = uniform new uniform box1f[numRanges];
@@ -62,11 +61,9 @@ GridAcceleratorValueSelector_Constructor(void *uniform _volume,
   return self;
 }
 
-export void *uniform
-GridAcceleratorValueSelector_Destructor(void *uniform _self)
+export void *uniform ValueSelector_Destructor(void *uniform _self)
 {
-  uniform GridAcceleratorValueSelector *uniform self =
-      (uniform GridAcceleratorValueSelector * uniform) _self;
+  uniform ValueSelector *uniform self = (uniform ValueSelector * uniform) _self;
   delete[] self->ranges;
   delete[] self->values;
   delete self;

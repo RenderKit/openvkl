@@ -107,7 +107,7 @@ namespace openvkl {
                const vvec3fn<W> &origin,
                const vvec3fn<W> &direction,
                const vrange1fn<W> &tRange,
-               const ValueSelector *valueSelector);
+               const ValueSelector<W> *valueSelector);
 
       virtual ~Iterator() = default;
 
@@ -128,7 +128,7 @@ namespace openvkl {
                                  const vvec3fn<W> &origin,
                                  const vvec3fn<W> &direction,
                                  const vrange1fn<W> &tRange,
-                                 const ValueSelector *valueSelector)
+                                 const ValueSelector<W> *valueSelector)
         : volume(volume)
     {
     }

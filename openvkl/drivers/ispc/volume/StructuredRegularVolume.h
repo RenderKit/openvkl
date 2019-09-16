@@ -18,7 +18,7 @@
 
 #include "../common/Data.h"
 #include "../iterator/GridAcceleratorIterator.h"
-#include "../value_selector/GridAcceleratorValueSelector.h"
+#include "../value_selector/ValueSelector.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
@@ -32,12 +32,13 @@ namespace openvkl {
 
       void commit() override;
 
-      void initIntervalIteratorV(const vintn<W> &valid,
-                                 vVKLIntervalIteratorN<W> &iterator,
-                                 const vvec3fn<W> &origin,
-                                 const vvec3fn<W> &direction,
-                                 const vrange1fn<W> &tRange,
-                                 const ValueSelector *valueSelector) override;
+      void initIntervalIteratorV(
+          const vintn<W> &valid,
+          vVKLIntervalIteratorN<W> &iterator,
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const ValueSelector<W> *valueSelector) override;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalIteratorN<W> &iterator,
@@ -49,14 +50,14 @@ namespace openvkl {
                             const vvec3fn<W> &origin,
                             const vvec3fn<W> &direction,
                             const vrange1fn<W> &tRange,
-                            const ValueSelector *valueSelector) override;
+                            const ValueSelector<W> *valueSelector) override;
 
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override;
 
-      ValueSelector *newValueSelector() override;
+      ValueSelector<W> *newValueSelector() override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -86,7 +87,7 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector *valueSelector)
+        const ValueSelector<W> *valueSelector)
     {
       iterator = toVKLIntervalIterator<W>(GridAcceleratorIterator<W>(
           valid, this, origin, direction, tRange, valueSelector));
@@ -115,7 +116,7 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector *valueSelector)
+        const ValueSelector<W> *valueSelector)
     {
       iterator = toVKLHitIterator<W>(GridAcceleratorIterator<W>(
           valid, this, origin, direction, tRange, valueSelector));
@@ -137,9 +138,9 @@ namespace openvkl {
     }
 
     template <int W>
-    inline ValueSelector *StructuredRegularVolume<W>::newValueSelector()
+    inline ValueSelector<W> *StructuredRegularVolume<W>::newValueSelector()
     {
-      return new GridAcceleratorValueSelector<W>(this);
+      return new ValueSelector<W>(this);
     }
 
     template <int W>

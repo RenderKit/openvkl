@@ -57,7 +57,7 @@ namespace openvkl {
                                          const vvec3fn<W> &origin,
                                          const vvec3fn<W> &direction,
                                          const vrange1fn<W> &tRange,
-                                         const ValueSelector *valueSelector);
+                                         const ValueSelector<W> *valueSelector);
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given iterator and return the next interval (if any) satisfying the
@@ -75,7 +75,7 @@ namespace openvkl {
                                     const vvec3fn<W> &origin,
                                     const vvec3fn<W> &direction,
                                     const vrange1fn<W> &tRange,
-                                    const ValueSelector *valueSelector);
+                                    const ValueSelector<W> *valueSelector);
 
       // for each active lane / ray (indicated by valid), iterate once for the
       // given iterator and return the next hit (if any) satisfying
@@ -88,7 +88,7 @@ namespace openvkl {
                                vVKLHitN<W> &hit,
                                vintn<W> &result);
 
-      virtual ValueSelector *newValueSelector();
+      virtual ValueSelector<W> *newValueSelector();
 
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
@@ -116,7 +116,7 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector *valueSelector)
+        const ValueSelector<W> *valueSelector)
     {
       THROW_NOT_IMPLEMENTED;
     }
@@ -131,12 +131,13 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void Volume<W>::initHitIteratorV(const vintn<W> &valid,
-                                            vVKLHitIteratorN<W> &iterator,
-                                            const vvec3fn<W> &origin,
-                                            const vvec3fn<W> &direction,
-                                            const vrange1fn<W> &tRange,
-                                            const ValueSelector *valueSelector)
+    inline void Volume<W>::initHitIteratorV(
+        const vintn<W> &valid,
+        vVKLHitIteratorN<W> &iterator,
+        const vvec3fn<W> &origin,
+        const vvec3fn<W> &direction,
+        const vrange1fn<W> &tRange,
+        const ValueSelector<W> *valueSelector)
     {
       THROW_NOT_IMPLEMENTED;
     }
@@ -151,7 +152,7 @@ namespace openvkl {
     }
 
     template <int W>
-    inline ValueSelector *Volume<W>::newValueSelector()
+    inline ValueSelector<W> *Volume<W>::newValueSelector()
     {
       THROW_NOT_IMPLEMENTED;
     }

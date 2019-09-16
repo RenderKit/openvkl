@@ -254,7 +254,7 @@ namespace openvkl {
         const utility::ArrayView<const range1f> &ranges)
     {
       auto &valueSelectorObject =
-          referenceFromHandle<ValueSelector>(valueSelector);
+          referenceFromHandle<ValueSelector<W>>(valueSelector);
       valueSelectorObject.setRanges(ranges);
     }
 
@@ -264,7 +264,7 @@ namespace openvkl {
         const utility::ArrayView<const float> &values)
     {
       auto &valueSelectorObject =
-          referenceFromHandle<ValueSelector>(valueSelector);
+          referenceFromHandle<ValueSelector<W>>(valueSelector);
       valueSelectorObject.setValues(values);
     }
 
@@ -358,7 +358,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const ValueSelector *>(valueSelector));
+          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
 
       iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
     }
@@ -391,7 +391,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const ValueSelector *>(valueSelector));
+          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
     }
 
     template <int W>
@@ -522,7 +522,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const ValueSelector *>(valueSelector));
+          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
 
       iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
     }
@@ -554,7 +554,7 @@ namespace openvkl {
           originW,
           directionW,
           tRangeW,
-          reinterpret_cast<const ValueSelector *>(valueSelector));
+          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
     }
 
     template <int W>

@@ -16,7 +16,7 @@
 
 #include "GridAcceleratorIterator.h"
 #include "../common/math.h"
-#include "../value_selector/GridAcceleratorValueSelector.h"
+#include "../value_selector/ValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
 #include "GridAcceleratorIterator_ispc.h"
 
@@ -33,7 +33,7 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector *valueSelector)
+        const ValueSelector<W> *valueSelector)
         : Iterator<W>(valid, volume, origin, direction, tRange, valueSelector)
     {
       static bool oneTimeChecks = false;
@@ -55,9 +55,6 @@ namespace openvkl {
       const StructuredRegularVolume<W> *srv =
           static_cast<const StructuredRegularVolume<W> *>(volume);
 
-      const GridAcceleratorValueSelector<W> *gasm =
-          static_cast<const GridAcceleratorValueSelector<W> *>(valueSelector);
-
       box3f boundingBox = volume->getBoundingBox();
 
       ispc::GridAcceleratorIterator_Initialize(
@@ -67,7 +64,7 @@ namespace openvkl {
           (void *)&origin,
           (void *)&direction,
           (void *)&tRange,
-          gasm ? gasm->getISPCEquivalent() : nullptr);
+          valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
     template <int W>

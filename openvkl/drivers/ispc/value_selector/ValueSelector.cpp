@@ -15,11 +15,42 @@
 // ======================================================================== //
 
 #include "ValueSelector.h"
+#include "../volume/Volume.h"
+#include "ValueSelector_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
-    void ValueSelector::setRanges(
+    template <int W>
+    ValueSelector<W>::ValueSelector(const Volume<W> *volume) : volume(volume)
+    {
+    }
+
+    template <int W>
+    ValueSelector<W>::~ValueSelector()
+    {
+      if (ispcEquivalent) {
+        ispc::ValueSelector_Destructor(ispcEquivalent);
+      }
+    }
+
+    template <int W>
+    void ValueSelector<W>::commit()
+    {
+      if (ispcEquivalent) {
+        ispc::ValueSelector_Destructor(ispcEquivalent);
+      }
+
+      ispcEquivalent =
+          ispc::ValueSelector_Constructor(nullptr,
+                                          ranges.size(),
+                                          (const ispc::box1f *)ranges.data(),
+                                          values.size(),
+                                          (const float *)values.data());
+    }
+
+    template <int W>
+    void ValueSelector<W>::setRanges(
         const utility::ArrayView<const range1f> &ranges)
     {
       this->ranges.clear();
@@ -29,7 +60,9 @@ namespace openvkl {
       }
     }
 
-    void ValueSelector::setValues(const utility::ArrayView<const float> &values)
+    template <int W>
+    void ValueSelector<W>::setValues(
+        const utility::ArrayView<const float> &values)
     {
       this->values.clear();
 
@@ -37,6 +70,10 @@ namespace openvkl {
         this->values.push_back(v);
       }
     }
+
+    template struct ValueSelector<4>;
+    template struct ValueSelector<8>;
+    template struct ValueSelector<16>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

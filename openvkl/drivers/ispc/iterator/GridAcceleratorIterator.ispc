@@ -15,8 +15,9 @@
 // ======================================================================== //
 
 #include "../math/box_utility.ih"
-#include "../value_selector/GridAcceleratorValueSelector.ih"
+#include "../value_selector/ValueSelector.ih"
 #include "../volume/GridAccelerator.ih"
+#include "../volume/SharedStructuredVolume.ih"
 #include "GridAcceleratorIterator.ih"
 
 inline void printGridAcceleratorIterator(
@@ -62,12 +63,11 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
   varying GridAcceleratorIterator *uniform self =
       (varying GridAcceleratorIterator * uniform) _self;
 
-  self->volume    = (uniform SharedStructuredVolume * uniform) _volume;
-  self->origin    = *((varying vec3f * uniform) _origin);
-  self->direction = *((varying vec3f * uniform) _direction);
-  self->tRange    = *((varying box1f * uniform) _tRange);
-  self->valueSelector =
-      (uniform GridAcceleratorValueSelector * uniform) _valueSelector;
+  self->volume        = (uniform SharedStructuredVolume * uniform) _volume;
+  self->origin        = *((varying vec3f * uniform) _origin);
+  self->direction     = *((varying vec3f * uniform) _direction);
+  self->tRange        = *((varying box1f * uniform) _tRange);
+  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
 
   self->boundingBoxTRange = intersectBox(
       self->origin, self->direction, self->volume->boundingBox, self->tRange);

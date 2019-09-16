@@ -84,7 +84,7 @@ build-windows-msvc15:
     - git submodule init
     - git submodule update
   script:
-    - scripts\build_gitlab\win.bat "Visual Studio 15 2017 Win64" "v141"
+    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141"
   tags:
     - msvc15
     - win7

@@ -17,6 +17,7 @@
 #pragma once
 
 #include "TestingVolume.h"
+#include "procedural_functions.h"
 
 namespace openvkl {
   namespace testing {
@@ -307,11 +308,6 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-
-    inline float getConstValue(const vec3f &objectCoordinates)
-    {
-      return 0.5;
-    }
 
     using WaveletUnstructuredProceduralVolume =
         ProceduralUnstructuredVolume<uint32_t, getWaveletValue<float>>;

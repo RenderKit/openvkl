@@ -17,6 +17,7 @@
 #pragma once
 
 #include "TestingStructuredVolume.h"
+#include "procedural_functions.h"
 // openvkl
 #include "openvkl/openvkl.h"
 // ospcommon
@@ -30,20 +31,6 @@ using namespace ospcommon;
 
 namespace openvkl {
   namespace testing {
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Helper functions ///////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    inline vec3f gradientNotImplemented(const vec3f &)
-    {
-      throw std::runtime_error(
-          "gradient function not implemented for this procedural volume");
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // ProcecuralStructuredVolume /////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE volumeSamplingFunction(const vec3f &),
@@ -139,75 +126,6 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
-
-    template <typename VOXEL_TYPE>
-    inline VOXEL_TYPE getWaveletValue(const vec3f &objectCoordinates)
-    {
-      // wavelet parameters
-      constexpr double M  = 1.f;
-      constexpr double G  = 1.f;
-      constexpr double XM = 1.f;
-      constexpr double YM = 1.f;
-      constexpr double ZM = 1.f;
-      constexpr double XF = 3.f;
-      constexpr double YF = 3.f;
-      constexpr double ZF = 3.f;
-
-      double value = M * G *
-                     (XM * ::sin(XF * objectCoordinates.x) +
-                      YM * ::sin(YF * objectCoordinates.y) +
-                      ZM * ::cos(ZF * objectCoordinates.z));
-
-      if (std::is_unsigned<VOXEL_TYPE>::value) {
-        value = fabs(value);
-      }
-
-      value = clamp(value,
-                    double(std::numeric_limits<VOXEL_TYPE>::lowest()),
-                    double(std::numeric_limits<VOXEL_TYPE>::max()));
-
-      return VOXEL_TYPE(value);
-    }
-
-    inline vec3f getWaveletGradient(const vec3f &objectCoordinates)
-    {
-      // wavelet parameters
-      constexpr double M  = 1.f;
-      constexpr double G  = 1.f;
-      constexpr double XM = 1.f;
-      constexpr double YM = 1.f;
-      constexpr double ZM = 1.f;
-      constexpr double XF = 3.f;
-      constexpr double YF = 3.f;
-      constexpr double ZF = 3.f;
-
-      return M * G *
-             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF,
-                   YM * ::cos(YF * objectCoordinates.y) * YF,
-                   -ZM * ::sin(ZF * objectCoordinates.z) * ZF);
-    }
-
-    inline float getZValue(const vec3f &objectCoordinates)
-    {
-      return objectCoordinates.z;
-    }
-
-    inline vec3f getZGradient(const vec3f &objectCoordinates)
-    {
-      return vec3f(0.f, 0.f, 1.f);
-    }
-
-    inline float getXYZValue(const vec3f &objectCoordinates)
-    {
-      return objectCoordinates.x * objectCoordinates.y * objectCoordinates.z;
-    }
-
-    inline vec3f getXYZGradient(const vec3f &objectCoordinates)
-    {
-      return vec3f(objectCoordinates.y * objectCoordinates.z,
-                   objectCoordinates.x * objectCoordinates.z,
-                   objectCoordinates.x * objectCoordinates.y);
-    }
 
     using WaveletProceduralVolumeUchar =
         ProceduralStructuredVolume<unsigned char,

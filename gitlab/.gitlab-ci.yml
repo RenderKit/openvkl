@@ -138,7 +138,7 @@ test-functional-macOS:
 test-functional-windows-msvc15:
   <<: *base_functional_test_job
   script:
-    - .\build\install\bin\vklTests.exe
+    - gitlab\run_tests.bat
   dependencies:
     - build-windows-msvc15
   tags:

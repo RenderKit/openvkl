@@ -86,7 +86,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         tRanges[i]    = vkl_range1f{0.f, inf};
       }
 
-      for (const int &callingWidth : nativeWidths) {
+      for (auto callingWidth : nativeWidths) {
         if (width > callingWidth || callingWidth != nativeSIMDWidth) {
           continue;
         }
@@ -110,7 +110,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               valueSelector);
 
           VKLHit4 hit;
-          int result[callingWidth];
+          int result[4];
 
           int hitCount = 0;
 
@@ -157,7 +157,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               valueSelector);
 
           VKLHit8 hit;
-          int result[callingWidth];
+          int result[8];
 
           int hitCount = 0;
 
@@ -204,7 +204,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                valueSelector);
 
           VKLHit16 hit;
-          int result[callingWidth];
+          int result[16];
 
           int hitCount = 0;
 

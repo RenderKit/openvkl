@@ -77,7 +77,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         tRanges[i]    = vkl_range1f{0.f, inf};
       }
 
-      for (const int &callingWidth : nativeWidths) {
+      for (auto callingWidth : nativeWidths) {
         if (width > callingWidth || callingWidth != nativeSIMDWidth) {
           continue;
         }
@@ -101,7 +101,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    nullptr);
 
           VKLInterval4 intervalPrevious, intervalCurrent;
-          int result[callingWidth];
+          int result[4];
 
           int counter = 0;
 
@@ -165,7 +165,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    nullptr);
 
           VKLInterval8 intervalPrevious, intervalCurrent;
-          int result[callingWidth];
+          int result[8];
 
           int counter = 0;
 
@@ -229,7 +229,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                     nullptr);
 
           VKLInterval16 intervalPrevious, intervalCurrent;
-          int result[callingWidth];
+          int result[16];
 
           int counter = 0;
 
@@ -302,7 +302,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         tRanges[i]    = vkl_range1f{0.f, inf};
       }
 
-      for (const int &callingWidth : nativeWidths) {
+      for (auto callingWidth : nativeWidths) {
         if (width > callingWidth || callingWidth != nativeSIMDWidth) {
           continue;
         }
@@ -326,7 +326,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    nullptr);
 
           VKLInterval4 interval;
-          int result[callingWidth];
+          int result[4];
 
           int intervalCount = 0;
 
@@ -389,7 +389,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    nullptr);
 
           VKLInterval8 interval;
-          int result[callingWidth];
+          int result[8];
 
           int intervalCount = 0;
 
@@ -452,7 +452,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                     nullptr);
 
           VKLInterval16 interval;
-          int result[callingWidth];
+          int result[16];
 
           int intervalCount = 0;
 
@@ -534,7 +534,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         tRanges[i]    = vkl_range1f{0.f, inf};
       }
 
-      for (const int &callingWidth : nativeWidths) {
+      for (auto callingWidth : nativeWidths) {
         if (width > callingWidth || callingWidth != nativeSIMDWidth) {
           continue;
         }
@@ -558,7 +558,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    valueSelector);
 
           VKLInterval4 interval;
-          int result[callingWidth];
+          int result[4];
 
           int intervalCount = 0;
 
@@ -638,7 +638,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                    valueSelector);
 
           VKLInterval8 interval;
-          int result[callingWidth];
+          int result[8];
 
           int intervalCount = 0;
 
@@ -718,7 +718,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                                     valueSelector);
 
           VKLInterval16 interval;
-          int result[callingWidth];
+          int result[16];
 
           int intervalCount = 0;
 

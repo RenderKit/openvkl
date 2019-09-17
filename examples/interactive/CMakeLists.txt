@@ -14,10 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-## ImGui dependency ##
-
-add_subdirectory(imgui)
-
 ## OpenGL dependency ##
 
 set(OpenGL_GL_PREFERENCE "LEGACY")
@@ -53,23 +49,33 @@ target_link_libraries(vkl_example_renderers PUBLIC openvkl ospcommon::ospcommon)
 
 add_executable(vklExamples
   window/ArcballCamera.cpp
-  window/GLFWVKLWindow.cpp
-  window/imgui_impl_glfw_gl3.cpp
   window/VKLWindow.cpp
-  window/TransferFunctionWidget.cpp
   AppInit.cpp
   vklExamples.cpp
+
+  # ImGui
+  imgui/imgui.cpp
+  imgui/imgui_draw.cpp
+  imgui/imgui_demo.cpp
+
+  # ImGui dependant
+  window/GLFWVKLWindow.cpp
+  window/imgui_impl_glfw_gl3.cpp
+  window/TransferFunctionWidget.cpp
 )
 
 target_link_libraries(vklExamples PRIVATE
   openvkl_testing
   glfw
-  openvkl_imgui
   vkl_example_renderers
   ${OPENGL_LIBRARIES}
 )
 
-target_include_directories(vklExamples PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(vklExamples
+PRIVATE
+  ${CMAKE_CURRENT_LIST_DIR}
+  ${CMAKE_CURRENT_LIST_DIR}/imgui
+)
 
 target_compile_definitions(vklExamples PRIVATE GL_SILENCE_DEPRECATION)
 

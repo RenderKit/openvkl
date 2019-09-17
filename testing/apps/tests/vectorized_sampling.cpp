@@ -57,7 +57,7 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
         oc = vec3f(distX(eng), distY(eng), distZ(eng));
       }
 
-      for (const int &callingWidth : nativeWidths) {
+      for (auto callingWidth : nativeWidths) {
         if (width > callingWidth) {
           continue;
         }
@@ -68,7 +68,7 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
         std::vector<float> objectCoordinatesSOA =
             AOStoSOA_vec3f(objectCoordinates, callingWidth);
 
-        float samples[callingWidth];
+        float samples[16];
 
         if (callingWidth == 4) {
           vklComputeSample4(valid.data(),

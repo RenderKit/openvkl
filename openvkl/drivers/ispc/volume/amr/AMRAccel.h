@@ -22,7 +22,7 @@ namespace openvkl {
   namespace ispc_driver {
     namespace amr {
 
-        using index_t = std::int64_t;
+      using index_t = std::int64_t;
 
       /*! a (kd tree based) acceleration structure over the amr
         data. the structure builds a kdtree over uniform areas
@@ -121,6 +121,8 @@ namespace openvkl {
                       const box3f &bounds,
                       std::vector<const AMRData::Brick *> &brick);
       };
+
+      std::ostream &operator<<(std::ostream &os, const AMRAccel &a);
 
     }  // namespace amr
   }    // namespace ispc_driver

@@ -20,7 +20,7 @@
 
 varying float AMR_current(const void *uniform _self, const varying vec3f &P)
 {
-  //print("[openvkl::ispc] AMR_current sampling method\n");
+  print("[openvkl::ispc] sampling current(): P = %, %, %\n", P.x, P.y, P.z);
   const AMRVolume *uniform self = (const AMRVolume *)_self;
   const AMR *uniform amr = &self->amr;
 

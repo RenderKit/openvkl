@@ -32,6 +32,9 @@ namespace openvkl {
         }
         this->worldBounds = bounds;
 
+        postLogMessage(VKL_LOG_DEBUG)
+            << "AMRAccel(): worldBounds: " << this->worldBounds;
+
         for (auto &b : brickVec) {
           if (b->level >= static_cast<int>(level.size()))
             level.resize(b->level + 1);
@@ -59,6 +62,9 @@ namespace openvkl {
                               const box3f &bounds,
                               const std::vector<const AMRData::Brick *> &brick)
       {
+        postLogMessage(VKL_LOG_DEBUG) << "makeLeaf(): nodeID: " << nodeID;
+        postLogMessage(VKL_LOG_DEBUG) << "makeLeaf(): bounds: " << bounds;
+
         node[nodeID].dim      = 3;
         node[nodeID].ofs      = this->leaf.size();  // item.size();
         node[nodeID].numItems = brick.size();
@@ -110,6 +116,17 @@ namespace openvkl {
             possibleSplits[2].insert(clipped.upper.z);
         }
 
+        for (int i = 0; i < 3; i++) {
+          int s = possibleSplits[i].size();
+          postLogMessage(VKL_LOG_DEBUG)
+              << "buildRec(): possibleSplits[" << i << "] size: " << s;
+          if (s > 0) {
+            for (auto si : possibleSplits[i])
+              postLogMessage(VKL_LOG_DEBUG)
+                  << "buildRec(): possibleSplits[" << i << "]: " << si;
+          }
+        }
+
         int bestDim = -1;
         vec3f width = bounds.size();
         for (int dim = 0; dim < 3; dim++) {
@@ -118,6 +135,8 @@ namespace openvkl {
           if (bestDim == -1 || (width[dim] > width[bestDim]))
             bestDim = dim;
         }
+
+        postLogMessage(VKL_LOG_DEBUG) << "buildRec(): bestDim = " << bestDim;
 
         if (bestDim == -1) {
           // no split dim - make a leaf
@@ -197,6 +216,15 @@ namespace openvkl {
           buildRec(newNodeID + 0, lBounds, l);
           buildRec(newNodeID + 1, rBounds, r);
         }
+      }
+
+      std::ostream &operator<<(std::ostream &os, const AMRAccel &a)
+      {
+        os << "num levels: " << a.level.size() << std::endl;
+        os << "num nodes: " << a.node.size() << std::endl;
+        os << "num leaves: " << a.leaf.size() << std::endl;
+        os << "bounds: " << a.worldBounds;
+        return os;
       }
 
     }  // namespace amr

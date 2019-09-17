@@ -79,10 +79,6 @@ build-macOS:
 
 build-windows-msvc15:
   stage: build
-  before_script:
-    - git submodule sync
-    - git submodule init
-    - git submodule update
   script:
     - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141"
   tags:
@@ -138,6 +134,16 @@ test-functional-macOS:
   tags:
     - osx
     - clang
+
+test-functional-windows-msvc15:
+  <<: *base_functional_test_job
+  script:
+    - .\build\install\bin\vklTests.exe
+  dependencies:
+    - build-windows-msvc15
+  tags:
+    - msvc15
+    - win7
 
 ## KW Jobs ##
 

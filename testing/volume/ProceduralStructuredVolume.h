@@ -33,9 +33,8 @@ namespace openvkl {
   namespace testing {
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
-              vec3f volumeGradientFunction(const vec3f &) =
-                  gradientNotImplemented>
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralStructuredVolume : public TestingStructuredVolume
     {
       ProceduralStructuredVolume(const vec3i &dimensions,
@@ -52,14 +51,14 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
-              vec3f volumeGradientFunction(const vec3f &)>
-    inline ProceduralStructuredVolume<VOXEL_TYPE,
-                                      volumeSamplingFunction,
-                                      volumeGradientFunction>::
-        ProceduralStructuredVolume(const vec3i &dimensions,
-                                   const vec3f &gridOrigin,
-                                   const vec3f &gridSpacing)
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline ProceduralStructuredVolume<
+        VOXEL_TYPE,
+        samplingFunction,
+        gradientFunction>::ProceduralStructuredVolume(const vec3i &dimensions,
+                                                      const vec3f &gridOrigin,
+                                                      const vec3f &gridSpacing)
         : TestingStructuredVolume("structured_regular",
                                   dimensions,
                                   gridOrigin,
@@ -69,34 +68,31 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
-              vec3f volumeGradientFunction(const vec3f &)>
-    inline VOXEL_TYPE ProceduralStructuredVolume<VOXEL_TYPE,
-                                                 volumeSamplingFunction,
-                                                 volumeGradientFunction>::
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline VOXEL_TYPE
+    ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
         computeProceduralValue(const vec3f &objectCoordinates)
     {
-      return volumeSamplingFunction(objectCoordinates);
+      return samplingFunction(objectCoordinates);
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
-              vec3f volumeGradientFunction(const vec3f &)>
-    inline vec3f ProceduralStructuredVolume<VOXEL_TYPE,
-                                            volumeSamplingFunction,
-                                            volumeGradientFunction>::
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline vec3f
+    ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
         computeProceduralGradient(const vec3f &objectCoordinates)
     {
-      return volumeGradientFunction(objectCoordinates);
+      return gradientFunction(objectCoordinates);
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
-              vec3f volumeGradientFunction(const vec3f &)>
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
     inline std::vector<unsigned char>
-    ProceduralStructuredVolume<VOXEL_TYPE,
-                               volumeSamplingFunction,
-                               volumeGradientFunction>::generateVoxels()
+    ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
+        generateVoxels()
     {
       {
         auto numValues = longProduct(this->dimensions);
@@ -114,7 +110,7 @@ namespace openvkl {
               size_t index = z * this->dimensions.y * this->dimensions.x +
                              y * this->dimensions.x + x;
               vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-              voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
+              voxelsTyped[index]      = samplingFunction(objectCoordinates);
             }
           }
         });

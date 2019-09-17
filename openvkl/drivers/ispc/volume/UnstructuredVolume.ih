@@ -47,6 +47,8 @@ struct VKLUnstructuredVolume
 
   uniform box3f boundingBox;
 
+  uniform vec3f gradientStep;
+
   uniform MinMaxBVH2 bvh;
 
   uniform bool hexIterative;

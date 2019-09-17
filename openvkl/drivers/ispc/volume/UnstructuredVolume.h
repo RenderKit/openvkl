@@ -102,7 +102,8 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      throw std::runtime_error("computeGradient() not implemented");
+      ispc::VKLUnstructuredVolume_gradient_export(
+          (const int *)&valid, ispcEquivalent, &objectCoordinates, &gradients);
     }
 
     template <int W>

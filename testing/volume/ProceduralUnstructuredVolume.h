@@ -178,7 +178,11 @@ namespace openvkl {
 
       volume = vklNewVolume("unstructured");
 
-      for (idxType i = 0; i < dimensions.product(); i++) {
+      uint64_t numCells = longProduct(dimensions);
+      cells.reserve(numCells);
+      cellType.reserve(numCells);
+
+      for (idxType i = 0; i < numCells; i++) {
         cells.push_back(i *
                         (vtxPerPrimitive(primType) + (indexPrefix ? 1 : 0)));
         cellType.push_back(primType);
@@ -246,7 +250,11 @@ namespace openvkl {
     ProceduralUnstructuredVolume<idxType,
                                  volumeSamplingFunction>::generateTopology()
     {
+      uint64_t numPerPrim = vtxPerPrimitive(primType);
+      if (indexPrefix)
+        numPerPrim++;
       std::vector<idxType> cells;
+      cells.reserve(longProduct(dimensions) * numPerPrim);
 
       for (size_t z = 0; z < dimensions.z; z++) {
         for (size_t y = 0; y < dimensions.y; y++) {
@@ -292,6 +300,7 @@ namespace openvkl {
           }
         }
       }
+
       return cells;
     }
 

@@ -16,20 +16,35 @@
 
 #pragma once
 
-#include <vector>
-#include "ProceduralStructuredVolume.h"
-#include "openvkl/openvkl.h"
-#include "ospcommon/math/vec.h"
-
-using namespace ospcommon;
+#include "TestingVolume.h"
 
 namespace openvkl {
   namespace testing {
 
     template <typename idxType, float volumeSamplingFunction(const vec3f &)>
-    struct ProceduralUnstructuredVolume : public TestingStructuredVolume
+    struct ProceduralUnstructuredVolume : public TestingVolume
     {
+      ProceduralUnstructuredVolume(
+          const vec3i &dimensions,
+          const vec3f &gridOrigin,
+          const vec3f &gridSpacing,
+          VKLUnstructuredCellType _primType = VKL_HEXAHEDRON,
+          bool _cellValued                  = true,
+          bool _indexPrefix                 = true,
+          bool _precomputedNormals          = false,
+          bool _hexIterative                = false);
+
+      vec3i getDimensions() const;
+      vec3f getGridOrigin() const;
+      vec3f getGridSpacing() const;
+
+      float computeProceduralValue(const vec3f &objectCoordinates);
+
      private:
+      vec3i dimensions;
+      vec3f gridOrigin;
+      vec3f gridSpacing;
+
       VKLUnstructuredCellType primType;
 
       bool cellValued;
@@ -46,21 +61,6 @@ namespace openvkl {
       std::vector<vec3f> generateGrid();
 
       std::vector<idxType> generateTopology();
-
-     public:
-      ProceduralUnstructuredVolume(
-          const vec3i &dimensions,
-          const vec3f &gridOrigin,
-          const vec3f &gridSpacing,
-          VKLUnstructuredCellType _primType = VKL_HEXAHEDRON,
-          bool _cellValued                  = true,
-          bool _indexPrefix                 = true,
-          bool _precomputedNormals          = false,
-          bool _hexIterative                = false);
-
-      float computeProceduralValue(const vec3f &objectCoordinates);
-
-      std::vector<unsigned char> generateVoxels() override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -75,8 +75,9 @@ namespace openvkl {
                                      bool _indexPrefix,
                                      bool _precomputedNormals,
                                      bool _hexIterative)
-        : TestingStructuredVolume(
-              "unstructured", dimensions, gridOrigin, gridSpacing, VKL_FLOAT),
+        : dimensions(dimensions),
+          gridOrigin(gridOrigin),
+          gridSpacing(gridSpacing),
           primType(_primType),
           cellValued(_cellValued),
           indexPrefix(_indexPrefix),
@@ -86,18 +87,34 @@ namespace openvkl {
     }
 
     template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline vec3i
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::getDimensions() const
+    {
+      return dimensions;
+    }
+
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline vec3f
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::getGridOrigin() const
+    {
+      return gridOrigin;
+    }
+
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
+    inline vec3f
+    ProceduralUnstructuredVolume<idxType,
+                                 volumeSamplingFunction>::getGridSpacing() const
+    {
+      return gridSpacing;
+    }
+
+    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
     inline float ProceduralUnstructuredVolume<idxType, volumeSamplingFunction>::
         computeProceduralValue(const vec3f &objectCoordinates)
     {
       return volumeSamplingFunction(objectCoordinates);
-    }
-
-    template <typename idxType, float volumeSamplingFunction(const vec3f &)>
-    inline std::vector<unsigned char>
-    ProceduralUnstructuredVolume<idxType,
-                                 volumeSamplingFunction>::generateVoxels()
-    {
-      return generateVoxels(dimensions);
     }
 
     template <typename idxType, float volumeSamplingFunction(const vec3f &)>

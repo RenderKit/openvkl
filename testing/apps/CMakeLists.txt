@@ -53,6 +53,7 @@ if (BUILD_TESTING)
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
     tests/structured_volume_sampling.cpp
+    tests/unstructured_volume_gradients.cpp
     tests/unstructured_volume_sampling.cpp
     tests/vectorized_gradients.cpp
     tests/vectorized_hit_iterator.cpp

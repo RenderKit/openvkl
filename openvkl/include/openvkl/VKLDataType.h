@@ -83,7 +83,7 @@ typedef enum
   VKL_BOX1I = 8000, VKL_BOX2I, VKL_BOX3I, VKL_BOX4I,
 
   // Single precision floating point box types
-  VKL_BOX1F = 8000, VKL_BOX2F, VKL_BOX3F, VKL_BOX4F,
+  VKL_BOX1F = 9000, VKL_BOX2F, VKL_BOX3F, VKL_BOX4F,
 
   // Guard value.
   VKL_UNKNOWN = 22222,

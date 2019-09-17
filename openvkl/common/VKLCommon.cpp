@@ -123,6 +123,22 @@ namespace openvkl {
       return "float3a";
     case VKL_DOUBLE:
       return "double";
+    case VKL_BOX1I:
+      return "box1i";
+    case VKL_BOX2I:
+      return "box2i";
+    case VKL_BOX3I:
+      return "box3i";
+    case VKL_BOX4I:
+      return "box4i";
+    case VKL_BOX1F:
+      return "box1f";
+    case VKL_BOX2F:
+      return "box2f";
+    case VKL_BOX3F:
+      return "box3f";
+    case VKL_BOX4F:
+      return "box4f";
     case VKL_UNKNOWN:
       break;
     };
@@ -202,6 +218,22 @@ namespace openvkl {
       return sizeof(vec3fa);
     case VKL_DOUBLE:
       return sizeof(double);
+    case VKL_BOX1I:
+      return sizeof(box1i);
+    case VKL_BOX2I:
+      return sizeof(box2i);
+    case VKL_BOX3I:
+      return sizeof(box3i);
+    case VKL_BOX4I:
+      return sizeof(box4i);
+    case VKL_BOX1F:
+      return sizeof(box1f);
+    case VKL_BOX2F:
+      return sizeof(box2f);
+    case VKL_BOX3F:
+      return sizeof(box3f);
+    case VKL_BOX4F:
+      return sizeof(box4f);
     case VKL_UNKNOWN:
       break;
     };

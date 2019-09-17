@@ -65,6 +65,11 @@ typedef struct
 
 typedef struct
 {
+  vkl_vec3i lower, upper;
+} vkl_box3i;
+
+typedef struct
+{
   vkl_vec3f lower, upper;
 } vkl_box3f;
 

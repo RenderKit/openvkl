@@ -163,7 +163,7 @@ void usage(const char *progname)
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
-               "\t-gridType structured_regular unstructured\n"
+               "\t-gridType structured_regular | unstructured\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
@@ -263,11 +263,11 @@ int main(int argc, const char **argv)
 
   initializeOpenVKL();
 
-  std::shared_ptr<TestingStructuredVolume> testingStructuredVolume;
+  std::shared_ptr<TestingVolume> testingVolume;
 
   if (!filename.empty()) {
     std::cout << "filename:       " << filename << std::endl;
-    testingStructuredVolume = std::shared_ptr<RawFileStructuredVolume>(
+    testingVolume = std::shared_ptr<RawFileStructuredVolume>(
         new RawFileStructuredVolume(filename,
                                     gridType,
                                     dimensions,
@@ -277,38 +277,32 @@ int main(int argc, const char **argv)
   } else {
     if (gridType == "structured_regular") {
       if (voxelType == VKL_UCHAR) {
-        testingStructuredVolume =
-            std::make_shared<WaveletProceduralVolumeUchar>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletProceduralVolumeUchar>(
+            dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_SHORT) {
-        testingStructuredVolume =
-            std::make_shared<WaveletProceduralVolumeShort>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletProceduralVolumeShort>(
+            dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_USHORT) {
-        testingStructuredVolume =
-            std::make_shared<WaveletProceduralVolumeUshort>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletProceduralVolumeUshort>(
+            dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_FLOAT) {
-        testingStructuredVolume =
-            std::make_shared<WaveletProceduralVolumeFloat>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletProceduralVolumeFloat>(
+            dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_DOUBLE) {
-        testingStructuredVolume =
-            std::make_shared<WaveletProceduralVolumeDouble>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletProceduralVolumeDouble>(
+            dimensions, gridOrigin, gridSpacing);
       } else {
         throw std::runtime_error(
             "cannot create procedural volume for unknown voxel type");
       }
     } else if (gridType == "unstructured") {
-      testingStructuredVolume =
-          std::shared_ptr<WaveletUnstructuredProceduralVolume>(
-              new WaveletUnstructuredProceduralVolume(
-                  dimensions, gridOrigin, gridSpacing));
+      testingVolume = std::shared_ptr<WaveletUnstructuredProceduralVolume>(
+          new WaveletUnstructuredProceduralVolume(
+              dimensions, gridOrigin, gridSpacing));
     }
   }
 
-  VKLVolume volume = testingStructuredVolume->getVKLVolume();
+  VKLVolume volume = testingVolume->getVKLVolume();
 
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
@@ -392,7 +386,7 @@ int main(int argc, const char **argv)
   glfwVKLWindow->mainLoop();
 
   // cleanly shut VKL down
-  testingStructuredVolume.reset();
+  testingVolume.reset();
   glfwVKLWindow.reset();
   vklShutdown();
 

@@ -31,11 +31,19 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Helper functions ///////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     inline vec3f gradientNotImplemented(const vec3f &)
     {
       throw std::runtime_error(
           "gradient function not implemented for this procedural volume");
     }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // ProcecuralStructuredVolume /////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE volumeSamplingFunction(const vec3f &),
@@ -123,11 +131,6 @@ namespace openvkl {
             }
           }
         });
-
-        auto minmax = std::minmax_element(voxelsTyped, voxelsTyped + numValues);
-
-        voxelRange.lower = *minmax.first;
-        voxelRange.upper = *minmax.second;
 
         return voxels;
       }

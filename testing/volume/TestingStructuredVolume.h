@@ -18,62 +18,14 @@
 
 #include <vector>
 // openvkl
-#include "openvkl/openvkl.h"
+#include "TestingVolume.h"
 // ospcommon
 #include "ospcommon/math/range.h"
-#include "ospcommon/math/vec.h"
-
-using namespace ospcommon::math;
 
 namespace openvkl {
   namespace testing {
 
-    inline size_t longProduct(const vec3i &dims)
-    {
-      return dims.x * size_t(dims.y) * dims.z;
-    }
-
-    template <typename T>
-    inline VKLDataType getVKLDataType()
-    {
-      if (std::is_same<T, unsigned char>::value) {
-        return VKL_UCHAR;
-      } else if (std::is_same<T, short>::value) {
-        return VKL_SHORT;
-      } else if (std::is_same<T, unsigned short>::value) {
-        return VKL_USHORT;
-      } else if (std::is_same<T, float>::value) {
-        return VKL_FLOAT;
-      } else if (std::is_same<T, double>::value) {
-        return VKL_DOUBLE;
-      } else {
-        return VKL_UNKNOWN;
-      }
-    }
-
-    inline size_t sizeOfVKLDataType(VKLDataType dataType)
-    {
-      switch (dataType) {
-      case VKL_UCHAR:
-        return sizeof(unsigned char);
-      case VKL_SHORT:
-        return sizeof(short);
-      case VKL_USHORT:
-        return sizeof(unsigned short);
-      case VKL_FLOAT:
-        return sizeof(float);
-      case VKL_DOUBLE:
-        return sizeof(double);
-      case VKL_UNKNOWN:
-        break;
-      default:
-        break;
-      };
-
-      throw std::runtime_error("cannot compute size of unknown VKLDataType");
-    }
-
-    struct TestingStructuredVolume
+    struct TestingStructuredVolume : public TestingVolume
     {
       TestingStructuredVolume(const std::string &gridType,
                               const vec3i &dimensions,
@@ -81,37 +33,22 @@ namespace openvkl {
                               const vec3f &gridSpacing,
                               VKLDataType voxelType);
 
-      virtual ~TestingStructuredVolume();
-
-      VKLDataType getVoxelType() const;
-
       vec3i getDimensions() const;
-
       vec3f getGridOrigin() const;
-
       vec3f getGridSpacing() const;
-
-      range1f getVoxelRange() const;
-
-      VKLVolume getVKLVolume();
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
       virtual std::vector<unsigned char> generateVoxels() = 0;
 
      protected:
-      virtual void generateVKLVolume();
+      void generateVKLVolume() override;
 
-      std::string gridType = "structured_reular";
+      std::string gridType = "structured_regular";
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
-
-      range1f voxelRange;
-
       VKLDataType voxelType;
-
-      VKLVolume volume{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -130,18 +67,6 @@ namespace openvkl {
     {
     }
 
-    inline TestingStructuredVolume::~TestingStructuredVolume()
-    {
-      if (volume) {
-        vklRelease(volume);
-      }
-    }
-
-    inline VKLDataType TestingStructuredVolume::getVoxelType() const
-    {
-      return voxelType;
-    }
-
     inline vec3i TestingStructuredVolume::getDimensions() const
     {
       return dimensions;
@@ -155,20 +80,6 @@ namespace openvkl {
     inline vec3f TestingStructuredVolume::getGridSpacing() const
     {
       return gridSpacing;
-    }
-
-    inline range1f TestingStructuredVolume::getVoxelRange() const
-    {
-      return voxelRange;
-    }
-
-    inline VKLVolume TestingStructuredVolume::getVKLVolume()
-    {
-      if (!volume) {
-        generateVKLVolume();
-      }
-
-      return volume;
     }
 
     inline void TestingStructuredVolume::generateVKLVolume()

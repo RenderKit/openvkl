@@ -30,56 +30,22 @@ int main()
 
   vkl_vec3i dimensions{128, 128, 128};
 
-  VKLVolume volume = vklNewVolume("amr_volume");
+  VKLVolume volume = vklNewVolume("structured_regular");
   vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
   std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
-  std::vector<std::vector<float>> blockDataVectors(8);
-  std::vector<VKLData> blockData;
 
-  for (int b = 0; b < 8; b++)
-    for (int k = 0; k < dimensions.z / 2; k++)
-      for (int j = 0; j < dimensions.y / 2; j++)
-        for (int i = 0; i < dimensions.x / 2; i++)
-          blockDataVectors[b].push_back(float(i));
+  for (int k = 0; k < dimensions.z; k++)
+    for (int j = 0; j < dimensions.y; j++)
+      for (int i = 0; i < dimensions.x; i++)
+        voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
+            float(i);
 
-  for (auto &bd : blockDataVectors)
-    blockData.push_back(vklNewData(bd.size(), VKL_FLOAT, bd.data()));
-
-  // 8 64^3 boxes
-  std::vector<int> bounds{  0,   0,   0,  63,  63,  63,
-                           64,   0,   0, 127,  63,  63,
-                            0,  64,   0,  63, 127,  63,
-                           64,  64,   0, 127, 127,  63,
-                            0,   0,  64,  63,  63, 127,
-                           64,   0,  64, 127,  63, 127,
-                            0,  64,  64,  63, 127, 127,
-                           64,  64,  64, 127, 127, 127};
-  std::vector<int> levels{0, 0, 0, 0, 0, 0, 0, 0};
-  std::vector<float> widths{1.f};
-
-  VKLData boundsData = vklNewData(bounds.size(), VKL_INT, bounds.data());
-  vklSetData(volume, "block.bounds", boundsData);
-  vklRelease(boundsData);
-
-  VKLData levelsData = vklNewData(levels.size(), VKL_INT, levels.data());
-  vklSetData(volume, "block.level", levelsData);
-  vklRelease(levelsData);
-
-  VKLData cellWidthsData = vklNewData(widths.size(), VKL_FLOAT, widths.data());
-  vklSetData(volume, "block.cellWidth", cellWidthsData);
-  vklRelease(cellWidthsData);
-
-  VKLData blockDataData =
-      vklNewData(blockData.size(), VKL_DATA, blockData.data());
-  vklSetData(volume, "block.data", blockDataData);
-  for (auto &bd : blockData)
-    vklRelease(bd);
-  vklRelease(blockDataData);
-
-  vklSetInt(volume, "voxelType", VKL_FLOAT);
+  VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+  vklSetData(volume, "voxelData", voxelData);
+  vklRelease(voxelData);
 
   vklCommit(volume);
 

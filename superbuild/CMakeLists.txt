@@ -61,6 +61,7 @@ option(INSTALL_IN_SEPARATE_DIRECTORIES
 option(BUILD_GLFW "Build glfw for examples or use one in existing environment?" ON)
 
 option(BUILD_OPENVKL_TESTING "Enable testing targets when building OpenVKL" ON)
+option(BUILD_OPENVKL_BENCHMARKS "Enable benchmark targets when building OpenVKL" ON)
 
 ## Setup top-level variables ##
 
@@ -102,6 +103,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
     BINARY_DIR openvkl/build
     CMAKE_ARGS
       -DBUILD_TESTING=${BUILD_OPENVKL_TESTING}
+      -DBUILD_BENCHMARKS=${BUILD_OPENVKL_BENCHMARKS}
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
       -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
       -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}

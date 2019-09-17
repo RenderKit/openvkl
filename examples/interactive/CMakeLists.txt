@@ -77,20 +77,22 @@ install(TARGETS vklExamples RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 ## Benchmark app ##
 
-add_executable(vklBenchmark
-  window/ArcballCamera.cpp
-  window/VKLWindow.cpp
-  AppInit.cpp
-  vklBenchmark.cpp
-)
+if (BUILD_BENCHMARKS)
+  add_executable(vklBenchmark
+    window/ArcballCamera.cpp
+    window/VKLWindow.cpp
+    AppInit.cpp
+    vklBenchmark.cpp
+  )
 
-target_link_libraries(vklBenchmark
-PRIVATE
-  benchmark
-  openvkl_testing
-  vkl_example_renderers
-)
+  target_link_libraries(vklBenchmark
+  PRIVATE
+    benchmark
+    openvkl_testing
+    vkl_example_renderers
+  )
 
-target_include_directories(vklBenchmark PRIVATE ${CMAKE_CURRENT_LIST_DIR})
+  target_include_directories(vklBenchmark PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
-install(TARGETS vklBenchmark RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(TARGETS vklBenchmark RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()

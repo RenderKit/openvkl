@@ -43,6 +43,7 @@ include(openvkl_ispc)
 ## openvkl specific configuration ##
 
 option(BUILD_EXAMPLES "Build example applications." ON)
+option(BUILD_BENCHMARKS "Build benchmark applications." ON)
 
 include(GNUInstallDirs)
 include(CTest) # Adds 'BUILD_TESTING' variable
@@ -68,9 +69,7 @@ if (BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
 
-if (BUILD_TESTING)
-  add_subdirectory(testing)
-endif()
+add_subdirectory(testing)
 
 ## Configure CMake find_package() config files ##
 

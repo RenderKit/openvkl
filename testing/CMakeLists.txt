@@ -26,7 +26,9 @@ target_include_directories(openvkl_testing
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # don't build tests
-add_subdirectory(external/benchmark)
+if (BUILD_BENCHMARKS)
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # don't build tests
+  add_subdirectory(external/benchmark)
+endif()
 
 add_subdirectory(apps)

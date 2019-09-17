@@ -15,47 +15,51 @@
 ## ======================================================================== ##
 
 # Benchmarks
-add_executable(vklBenchmarkStructuredVolume
-  vklBenchmarkStructuredVolume.cpp
-)
+if (BUILD_BENCHMARKS)
+  add_executable(vklBenchmarkStructuredVolume
+    vklBenchmarkStructuredVolume.cpp
+  )
 
-target_link_libraries(vklBenchmarkStructuredVolume
-  benchmark
-  openvkl_testing
-)
+  target_link_libraries(vklBenchmarkStructuredVolume
+    benchmark
+    openvkl_testing
+  )
 
-install(TARGETS vklBenchmarkStructuredVolume
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+  install(TARGETS vklBenchmarkStructuredVolume
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+endif()
 
 # Functional tests
-add_executable(vklTests
-  vklTests.cpp
-  tests/hit_iterator.cpp
-  tests/interval_iterator.cpp
-  tests/simd_conformance.cpp
-  tests/simd_type_conversion.cpp
-  tests/structured_volume_gradients.cpp
-  tests/structured_volume_sampling.cpp
-  tests/vectorized_gradients.cpp
-  tests/vectorized_hit_iterator.cpp
-  tests/vectorized_interval_iterator.cpp
-  tests/vectorized_sampling.cpp
-)
+if (BUILD_TESTING)
+  add_executable(vklTests
+    vklTests.cpp
+    tests/hit_iterator.cpp
+    tests/interval_iterator.cpp
+    tests/simd_conformance.cpp
+    tests/simd_type_conversion.cpp
+    tests/structured_volume_gradients.cpp
+    tests/structured_volume_sampling.cpp
+    tests/vectorized_gradients.cpp
+    tests/vectorized_hit_iterator.cpp
+    tests/vectorized_interval_iterator.cpp
+    tests/vectorized_sampling.cpp
+  )
 
-target_link_libraries(vklTests
-  openvkl_testing
-  openvkl_module_ispc_driver
-)
+  target_link_libraries(vklTests
+    openvkl_testing
+    openvkl_module_ispc_driver
+  )
 
-install(TARGETS vklTests
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
+  install(TARGETS vklTests
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 
-## Expose tests to CTest ##
+  ## Expose tests to CTest ##
 
-add_test(NAME "simd_conformance"   COMMAND vklTests "[simd_conformance]")
-add_test(NAME "interval_iterators" COMMAND vklTests "[interval_iterators]")
-add_test(NAME "hit_iterators"      COMMAND vklTests "[hit_iterators]")
-add_test(NAME "volume_gradients"   COMMAND vklTests "[volume_gradients]")
-add_test(NAME "volume_sampling"    COMMAND vklTests "[volume_sampling]")
+  add_test(NAME "simd_conformance"   COMMAND vklTests "[simd_conformance]")
+  add_test(NAME "interval_iterators" COMMAND vklTests "[interval_iterators]")
+  add_test(NAME "hit_iterators"      COMMAND vklTests "[hit_iterators]")
+  add_test(NAME "volume_gradients"   COMMAND vklTests "[volume_gradients]")
+  add_test(NAME "volume_sampling"    COMMAND vklTests "[volume_sampling]")
+endif()

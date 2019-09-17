@@ -18,6 +18,10 @@ include(openvkl_ispc)
 
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
+if (WIN32)
+  set(DEFS_FILE ispc_driver_defs.def)
+endif()
+
 openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   simd_conformance.ispc
   api/ISPCDriver.cpp
@@ -29,6 +33,7 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/StructuredRegularVolume.cpp
+  ${DEFS_FILE}
 )
 
 target_include_directories(openvkl_module_ispc_driver

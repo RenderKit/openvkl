@@ -68,5 +68,8 @@ namespace openvkl {
 
   OPENVKL_CORE_INTERFACE size_t sizeOf(VKLDataType type);
 
+  OPENVKL_CORE_INTERFACE bool isManagedObject(VKLDataType type);
+
   OPENVKL_CORE_INTERFACE void handleError(VKLError e, const std::string &message);
-}
+
+}  // namespace openvkl

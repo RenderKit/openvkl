@@ -211,6 +211,12 @@ namespace openvkl {
     throw std::runtime_error(error.str());
   }
 
+  bool isManagedObject(VKLDataType type)
+  {
+    return type == VKL_OBJECT || type == VKL_DATA ||
+           type == VKL_VALUE_SELECTOR || type == VKL_VOLUME;
+  }
+
   void handleError(VKLError e, const std::string &message)
   {
     if (api::driverIsSet()) {

@@ -44,7 +44,7 @@ namespace openvkl {
 
     managedObjectType = VKL_DATA;
 
-    if (dataType == VKL_OBJECT) {
+    if (isManagedObject(dataType)) {
       ManagedObject **child = (ManagedObject **)data;
       for (uint32_t i = 0; i < numItems; i++) {
         if (child[i])
@@ -55,7 +55,7 @@ namespace openvkl {
 
   Data::~Data()
   {
-    if (dataType == VKL_OBJECT) {
+    if (isManagedObject(dataType)) {
       Data **child = (Data **)data;
       for (uint32_t i = 0; i < numItems; i++) {
         if (child[i])

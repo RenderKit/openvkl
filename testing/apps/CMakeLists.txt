@@ -16,6 +16,7 @@
 
 # Benchmarks
 if (BUILD_BENCHMARKS)
+  # Structured volumes
   add_executable(vklBenchmarkStructuredVolume
     vklBenchmarkStructuredVolume.cpp
   )
@@ -28,20 +29,21 @@ if (BUILD_BENCHMARKS)
   install(TARGETS vklBenchmarkStructuredVolume
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
+
+  # Unstructured volumes
+  add_executable(vklBenchmarkUnstructuredVolume
+    vklBenchmarkUnstructuredVolume.cpp
+  )
+
+  target_link_libraries(vklBenchmarkUnstructuredVolume
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkUnstructuredVolume
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 endif()
-
-add_executable(vklBenchmarkUnstructuredVolume
-  vklBenchmarkUnstructuredVolume.cpp
-)
-
-target_link_libraries(vklBenchmarkUnstructuredVolume
-  benchmark
-  openvkl_testing
-)
-
-install(TARGETS vklBenchmarkUnstructuredVolume
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-)
 
 # Functional tests
 if (BUILD_TESTING)

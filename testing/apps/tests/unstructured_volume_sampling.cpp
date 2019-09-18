@@ -44,46 +44,67 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
   std::uniform_real_distribution<float> dist(-0.1, 1.1);
 
+  // matches tolerances defined in unstructured implementation, e.g.
+  // HEX_OUTSIDE_CELL_TOLERANCE
+  constexpr float tolerance = 1e-6f;
+
   for (int i = 0; i < 1000; i++) {
-    vec3f objectCoordinates(dist(eng), dist(eng), dist(eng));
-    float sample =
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates);
+    vec3f oc(dist(eng), dist(eng), dist(eng));
+    float sample = vklComputeSample(vklVolume, (const vkl_vec3f *)&oc);
 
     bool inside = true;
-    if (objectCoordinates.x < 0 || objectCoordinates.x > 1)
-      inside = false;
-    if (objectCoordinates.y < 0 || objectCoordinates.y > 1)
-      inside = false;
-    if (objectCoordinates.z < 0 || objectCoordinates.z > 1)
-      inside = false;
 
-    switch (primType) {
-    case VKL_TETRAHEDRON:
-      if (dot(objectCoordinates - vec3f(1, 0, 0), vec3f(1, 1, 1)) > 0)
-        inside = false;
-      break;
-    case VKL_WEDGE:
-      if (dot(objectCoordinates - vec3f(1, 0, 0), vec3f(1, 1, 0)) > 0)
-        inside = false;
-      break;
-    case VKL_PYRAMID:
-      if (dot(objectCoordinates - vec3f(0, 0, 1), vec3f(1, 0, 1)) > 0)
-        inside = false;
-      if (dot(objectCoordinates - vec3f(0, 0, 1), vec3f(0, 1, 1)) > 0)
-        inside = false;
-      break;
-    case VKL_HEXAHEDRON:
-      // already handled by bounding box test above
-      break;
+    const float objectCoordinateMin = reduce_min(oc);
+    const float objectCoordinateMax = reduce_max(oc);
+
+    // positive values indicate we're outside of the cell, and can be used to
+    // compare against the above tolerance
+    float delta = -1.f;
+
+    // bounding box test, lower bound (0, 0, 0)
+    if ((delta = 0.f - objectCoordinateMin) > 0) {
+      inside = false;
+    }
+    // bounding box test, upper bound (1, 1, 1)
+    else if ((delta = objectCoordinateMax - 1.f) > 0) {
+      inside = false;
+    } else {
+      switch (primType) {
+      case VKL_TETRAHEDRON:
+        if ((delta = dot(oc - vec3f(1, 0, 0), normalize(vec3f(1, 1, 1)))) > 0)
+          inside = false;
+        break;
+      case VKL_WEDGE:
+        if ((delta = dot(oc - vec3f(1, 0, 0), normalize(vec3f(1, 1, 0)))) > 0)
+          inside = false;
+        break;
+      case VKL_PYRAMID:
+        if ((delta = dot(oc - vec3f(0, 0, 1), normalize(vec3f(1, 0, 1)))) > 0)
+          inside = false;
+        else if ((delta = dot(oc - vec3f(0, 0, 1), normalize(vec3f(0, 1, 1)))) >
+                 0)
+          inside = false;
+        break;
+      case VKL_HEXAHEDRON:
+        // already handled by bounding box test above
+        break;
+      }
     }
 
-    INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                << objectCoordinates.y << " "
-                                << objectCoordinates.z);
+    INFO("objectCoordinates = " << oc.x << " " << oc.y << " " << oc.z);
     INFO("inside = " << inside);
+    INFO("delta = " << delta);
     INFO("sample = " << sample);
-    CHECK(
-        (!inside ? std::isnan(sample) : (sample == Approx(0.5).margin(1e-4f))));
+
+    if (delta <= 0.f) {
+      CHECK((inside && sample == Approx(0.5).margin(1e-4f)));
+    } else if (delta > 0.f && delta > tolerance) {
+      CHECK((!inside && std::isnan(sample)));
+    } else {
+      // delta > 0 && delta <= tolerance
+      WARN("ignoring test failure due to convergence tolerance (delta = "
+           << delta << ")");
+    }
   }
 }
 

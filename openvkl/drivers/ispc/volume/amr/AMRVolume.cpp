@@ -44,7 +44,6 @@ namespace openvkl {
     }
 
     template <int W>
-    //! Allocate storage and populate the volume.
     void AMRVolume<W>::commit()
     {
       StructuredVolume<W>::commit();
@@ -70,15 +69,11 @@ namespace openvkl {
       if (blockBoundsData.ptr == nullptr)
         throw std::runtime_error("amr volume must have 'block.bounds' array");
 
-      postLogMessage(VKL_LOG_DEBUG) << "commit(): bounds type: " << stringForType(blockBoundsData.ptr->dataType);
-      postLogMessage(VKL_LOG_DEBUG) << "commit(): bounds num: " << blockBoundsData.ptr->numItems;
-
       refinementLevelsData =
           (Data *)this->template getParam<ManagedObject::VKL_PTR>("block.level",
                                                                   nullptr);
       if (refinementLevelsData.ptr == nullptr)
         throw std::runtime_error("amr volume must have 'block.level' array");
-
 
       cellWidthsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "block.cellWidth", nullptr);
@@ -91,15 +86,19 @@ namespace openvkl {
       if (blockDataData.ptr == nullptr)
         throw std::runtime_error("amr volume must have 'block.data' array");
 
+      // create the AMR data structure. This creates the logical blocks, which
+      // contain the actual data and block-level metadata, such as cell width
+      // and refinement level
       data = make_unique<amr::AMRData>(*blockBoundsData,
                                        *refinementLevelsData,
                                        *cellWidthsData,
                                        *blockDataData);
 
+      // create the AMR acceleration structure. This creates a k-d tree
+      // representation of the blocks in the AMRData object. In short, blocks at
+      // the highest refinement level (i.e. with the most detail) are leaf
+      // nodes, and parents have progressively lower resolution
       accel = make_unique<amr::AMRAccel>(*data);
-
-      std::cout << "AMRAccel:" << std::endl;
-      std::cout << *accel << std::endl;
 
       float coarsestCellWidth = *std::max_element(
           cellWidthsData->begin<float>(), cellWidthsData->end<float>());
@@ -113,6 +112,8 @@ namespace openvkl {
       const vec3f gridOrigin =
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
 
+      // ALOK: can voxelType be removed? we check it against types here but
+      // the implementation assumes float throughout
       voxelType =
           (VKLDataType)this->template getParam<int>("voxelType", VKL_UNKNOWN);
 
@@ -150,17 +151,11 @@ namespace openvkl {
                              voxelType,
                              (ispc::box3f &)bounds);
 
-      postLogMessage(VKL_LOG_DEBUG) << "commit(): num leaves: " << accel->leaf.size();
-
-      for (size_t leafID = 0; leafID < accel->leaf.size(); leafID++)
-        ispc::AMRVolume_computeValueRangeOfLeaf(this->ispcEquivalent, leafID);
-      /*
+      // parse the k-d tree to compute the voxel range of each leaf node.
+      // This enables empty space skipping within the hierarchical structure
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(this->ispcEquivalent, leafID);
       });
-      */
-
-      postLogMessage(VKL_LOG_DEBUG) << "commit(): got past the segfault!";
     }
 
     template <int W>
@@ -168,15 +163,14 @@ namespace openvkl {
                                       const vvec3fn<W> &objectCoordinates,
                                       vfloatn<W> &samples) const
     {
-      postLogMessage(VKL_LOG_DEBUG) << "AMRVolume::computeSampleV";
       ispc::AMRVolume_sample_export(
           (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
     }
 
     template <int W>
     void AMRVolume<W>::computeGradientV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vvec3fn<W> &gradients) const
+                                        const vvec3fn<W> &objectCoordinates,
+                                        vvec3fn<W> &gradients) const
     {
       THROW_NOT_IMPLEMENTED;
     }

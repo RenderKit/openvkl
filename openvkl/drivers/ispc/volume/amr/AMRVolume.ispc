@@ -78,7 +78,6 @@ export void *uniform AMRVolume_create(void *uniform cppE)
 export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
                                               uniform int leafID)
 {
-  print("[openvkl::ispc] computeValueRangeOfLeaf: leafID = %\n", leafID);
   const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
 
   const AMR *uniform amr      = &self->amr;
@@ -89,12 +88,7 @@ export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
   uniform vec3i leafCells =
       make_vec3i((leafSize + 0.5f * leafCellWidth) * rcp(leafCellWidth));
 
-  print("[openvkl::ispc] computeValueRangeOfLeaf: leaf cell width: %\n", leafCellWidth);
-  print("[openvkl::ispc] computeValueRangeOfLeaf: leaf size: %, %, %\n", leafSize.x, leafSize.y, leafSize.z);
-  print("[openvkl::ispc] computeValueRangeOfLeaf: leaf cells: %, %, %\n", leafCells.x, leafCells.y, leafCells.z);
-
   uniform vec3i numSamplePoints = 2 * leafCells + 1;
-  print("[openvkl::ispc] computeValueRangeOfLeaf: num sample points: %, %, %\n", numSamplePoints.x, numSamplePoints.y, numSamplePoints.z);
   for (uniform int iz = 0; iz < numSamplePoints.z; iz++)
     for (uniform int iy = 0; iy < numSamplePoints.y; iy++)
       for (varying int ix = 0; ix < numSamplePoints.x; ix += programCount) {
@@ -192,12 +186,10 @@ export void AMRVolume_sample_export(
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 
   if (imask[programIndex]) {
-      //print("[openvkl::ispc] [%]\n", programIndex);
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples = self->computeSample(self, *objectCoordinates);
-    //print("[openvkl::ispc] [%] samples %\n", programIndex, *samples);
   }
 }

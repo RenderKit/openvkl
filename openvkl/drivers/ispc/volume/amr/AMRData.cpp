@@ -30,15 +30,15 @@ namespace openvkl {
         this->box       = info.box;
         this->level     = info.level;
         this->cellWidth = info.cellWidth;
+        this->value     = data;
+        this->dims      = this->box.size() + vec3i(1);
+        this->f_dims    = vec3f(this->dims);
 
-        this->value            = data;
-        this->dims             = this->box.size() + vec3i(1);
-        this->gridToWorldScale = 1.f / this->cellWidth;
         this->worldBounds =
             box3f(vec3f(this->box.lower) * this->cellWidth,
                   vec3f(this->box.upper + vec3i(1)) * this->cellWidth);
+        this->gridToWorldScale = 1.f / this->cellWidth;
         this->worldToGridScale = rcp(this->worldBounds.size());
-        this->f_dims           = vec3f(this->dims);
       }
 
       /*! this structure defines only the format of the INPUT of amr
@@ -49,20 +49,15 @@ namespace openvkl {
                        const Data &blockDataData)
       {
         size_t numBricks = blockBoundsData.numItems;
+
         // ALOK: putting the arrays back into a struct for now
         // TODO: turn this all into arrays
+
         const box3i *blockBounds    = (const box3i *)blockBoundsData.data;
-        for (size_t i = 0; i < numBricks; i++)
-          postLogMessage(VKL_LOG_DEBUG) << "AMRData(): bounds[" << i << "] = " << blockBounds[i];
-
         const int *refinementLevels = (const int *)refinementLevelsData.data;
-        for (size_t i = 0; i < numBricks; i++)
-          postLogMessage(VKL_LOG_DEBUG) << "AMRData(): levels[" << i << "] = " << refinementLevels[i];
-
         const float *cellWidths     = (const float *)cellWidthsData.data;
-        postLogMessage(VKL_LOG_DEBUG) << "AMRData(): widths[0] = " << cellWidths[0];
+        const Data **allBlocksData  = (const Data **)blockDataData.data;
 
-        const Data **allBlocksData = (const Data **)blockDataData.data;
         for (size_t i = 0; i < numBricks; i++) {
           AMRData::BrickInfo blockInfo;
           blockInfo.box       = blockBounds[i];

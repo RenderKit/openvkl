@@ -14,34 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "CellRef.ih"
 #include "AMRVolume.ih"
+#include "CellRef.ih"
 #include "DualCell.ih"
 
 varying float AMR_finest(const void *uniform _self, const varying vec3f &P)
 {
   const AMRVolume *uniform self = (const AMRVolume *)_self;
-  const AMR *uniform amr = &self->amr;
+  const AMR *uniform amr        = &self->amr;
 
-  vec3f lP;  //local amr space
+  vec3f lP;  // local amr space
   self->transformWorldToLocal(self, P, lP);
 
   DualCell D;
-  initDualCell(D,lP,*amr->finestLevel);
-  findDualCell(amr,D);
+  initDualCell(D, lP, *amr->finestLevel);
+  findDualCell(amr, D);
   return lerp(D);
 }
 
 varying float AMR_finestLevel(const void *uniform _self, const varying vec3f &P)
 {
   const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
-  const AMR *uniform amr = &self->amr;
+  const AMR *uniform amr        = &self->amr;
 
-  vec3f lP;  //local amr space
+  vec3f lP;  // local amr space
   self->transformWorldToLocal(self, P, lP);
 
-  const CellRef C = findLeafCell(amr,lP);
-  float width = C.width;
+  const CellRef C = findLeafCell(amr, lP);
+  float width     = C.width;
   if (isnan(width))
     width = 1.0f;
   return width;
@@ -49,7 +49,7 @@ varying float AMR_finestLevel(const void *uniform _self, const varying vec3f &P)
 
 export void AMR_install_finest(void *uniform _self)
 {
-  AMRVolume *uniform self = (AMRVolume *uniform)_self;
-  self->computeSample = AMR_finest;
+  AMRVolume *uniform self  = (AMRVolume * uniform) _self;
+  self->computeSample      = AMR_finest;
   self->computeSampleLevel = AMR_finestLevel;
 }

@@ -164,17 +164,19 @@ namespace openvkl {
     }
 
     template <int W>
-    void AMRVolume<W>::computeSampleV(const int *valid,
+    void AMRVolume<W>::computeSampleV(const vintn<W> &valid,
                                       const vvec3fn<W> &objectCoordinates,
                                       vfloatn<W> &samples) const
     {
       postLogMessage(VKL_LOG_DEBUG) << "AMRVolume::computeSampleV";
       ispc::AMRVolume_sample_export(
-          valid, ispcEquivalent, &objectCoordinates, &samples);
+          (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
     }
 
     template <int W>
-    vec3f AMRVolume<W>::computeGradient(const vec3f &objectCoordinates) const
+    void AMRVolume<W>::computeGradientV(const vintn<W> &valid,
+                          const vvec3fn<W> &objectCoordinates,
+                          vvec3fn<W> &gradients) const
     {
       THROW_NOT_IMPLEMENTED;
     }

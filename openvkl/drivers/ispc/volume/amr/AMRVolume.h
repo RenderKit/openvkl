@@ -42,10 +42,12 @@ namespace openvkl {
 
       void commit() override;
 
-      void computeSampleV(const int *valid,
+      void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples) const override;
-      vec3f computeGradient(const vec3f &objectCoordinates) const override;
+      void computeGradientV(const vintn<W> &valid,
+                            const vvec3fn<W> &objectCoordinates,
+                            vvec3fn<W> &gradients) const override;
       box3f getBoundingBox() const override;
 
       std::unique_ptr<amr::AMRData> data;

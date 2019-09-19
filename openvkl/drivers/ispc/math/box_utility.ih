@@ -34,6 +34,11 @@ inline bool overlaps1f(const uniform box1f &box1, const box1f &box2)
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
+inline bool overlaps1f(const uniform box1f &box1, const uniform box1f &box2)
+{
+  return box1.upper >= box2.lower && box1.lower <= box2.upper;
+}
+
 inline bool overlapsAny1f(const box1f &r,
                           const uniform int &numRanges,
                           const box1f *uniform ranges)

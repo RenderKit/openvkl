@@ -25,6 +25,8 @@ endif()
 openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   simd_conformance.ispc
   api/ISPCDriver.cpp
+  iterator/DefaultIterator.cpp
+  iterator/DefaultIterator.ispc
   iterator/GridAcceleratorIterator.cpp
   iterator/GridAcceleratorIterator.ispc
   value_selector/ValueSelector.cpp

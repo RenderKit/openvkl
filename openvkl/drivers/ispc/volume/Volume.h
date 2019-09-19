@@ -18,7 +18,7 @@
 
 #include "../common/ManagedObject.h"
 #include "../common/objectFactory.h"
-#include "../iterator/Iterator.h"
+#include "../iterator/DefaultIterator.h"
 #include "../value_selector/ValueSelector.h"
 #include "openvkl/openvkl.h"
 #include "ospcommon/math/box.h"
@@ -121,7 +121,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      THROW_NOT_IMPLEMENTED;
+      iterator = toVKLIntervalIterator<W>(DefaultIterator<W>(
+          valid, this, origin, direction, tRange, valueSelector));
     }
 
     template <int W>
@@ -130,7 +131,13 @@ namespace openvkl {
                                             vVKLIntervalN<W> &interval,
                                             vintn<W> &result)
     {
-      THROW_NOT_IMPLEMENTED;
+      DefaultIterator<W> *i =
+          fromVKLIntervalIterator<DefaultIterator<W>>(&iterator);
+
+      i->iterateInterval(valid, result);
+
+      interval =
+          *reinterpret_cast<const vVKLIntervalN<W> *>(i->getCurrentInterval());
     }
 
     template <int W>

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "Volume.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 #include "openvkl/VKLDataType.h"
@@ -29,6 +30,8 @@ enum SharedStructuredVolumeGridType
 
 struct SharedStructuredVolume
 {
+  Volume super;
+
   const void *uniform voxelData;
   uniform VKLDataType voxelType;
 
@@ -65,8 +68,4 @@ struct SharedStructuredVolume
   void (*uniform getVoxel)(const SharedStructuredVolume *uniform self,
                            const varying vec3i &index,
                            varying float &value);
-
-  varying float (*uniform computeSample)(
-      const SharedStructuredVolume *uniform self,
-      const varying vec3f &objectCoordinates);
 };

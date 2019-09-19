@@ -843,6 +843,8 @@ VKLUnstructuredVolume_Constructor()
 {
   uniform VKLUnstructuredVolume *uniform self = uniform new uniform VKLUnstructuredVolume;
 
+  self->super.computeSample = VKLUnstructuredVolume_sample;
+
   return self;
 }
 

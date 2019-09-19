@@ -17,6 +17,7 @@
 #pragma once
 
 #include "MinMaxBVH2.ih"
+#include "Volume.ih"
 
 typedef enum
 {
@@ -28,6 +29,8 @@ typedef enum
 
 struct VKLUnstructuredVolume
 {
+  Volume super;
+
   // vertex data
   const vec3f* uniform vertex;
   const float* uniform vertexValue; // attribute value at each vertex

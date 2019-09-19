@@ -145,10 +145,12 @@ template_accessArray(double);
 // all the addressing for the getSample (inlined), and thus be about 50% faster
 // (wall-time, meaning even much faster in pure sample speed)
 #define template_sample(type)                                                  \
-  inline float SSV_sample_##type##_32(                                         \
-      const SharedStructuredVolume *uniform self,                              \
-      const varying vec3f &objectCoordinates)                                  \
+  inline float SSV_sample_##type##_32(const void *uniform _self,               \
+                                      const varying vec3f &objectCoordinates)  \
   {                                                                            \
+    const SharedStructuredVolume *uniform self =                               \
+        (const SharedStructuredVolume *uniform)_self;                          \
+                                                                               \
     vec3f localCoordinates;                                                    \
     self->transformObjectToLocal(self, objectCoordinates, localCoordinates);   \
                                                                                \
@@ -211,9 +213,11 @@ template_accessArray(double);
   }                                                                            \
                                                                                \
   inline float SSV_sample_##type##_64_32(                                      \
-      const SharedStructuredVolume *uniform self,                              \
-      const varying vec3f &objectCoordinates)                                  \
+      const void *uniform _self, const varying vec3f &objectCoordinates)       \
   {                                                                            \
+    const SharedStructuredVolume *uniform self =                               \
+        (const SharedStructuredVolume *uniform)_self;                          \
+                                                                               \
     vec3f localCoordinates;                                                    \
     self->transformObjectToLocal(self, objectCoordinates, localCoordinates);   \
                                                                                \
@@ -288,9 +292,12 @@ template_sample(double);
 #undef template_sample
 
 // default sampling function (64-bit addressing)
-inline float SSV_sample_64(const SharedStructuredVolume *uniform self,
+inline float SSV_sample_64(const void *uniform _self,
                            const varying vec3f &objectCoordinates)
 {
+  const SharedStructuredVolume *uniform self =
+      (const SharedStructuredVolume *uniform)_self;
+
   vec3f localCoordinates;
   self->transformObjectToLocal(self, objectCoordinates, localCoordinates);
 
@@ -403,18 +410,18 @@ inline varying vec3f SharedStructuredVolume_computeGradient(
 
   vec3f gradient;
 
-  float sample = self->computeSample(self, objectCoordinates);
+  float sample = self->super.computeSample(self, objectCoordinates);
 
   gradient.x =
-      self->computeSample(
+      self->super.computeSample(
           self, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
       sample;
   gradient.y =
-      self->computeSample(
+      self->super.computeSample(
           self, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
       sample;
   gradient.z =
-      self->computeSample(
+      self->super.computeSample(
           self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
       sample;
 
@@ -447,7 +454,7 @@ export void SharedStructuredVolume_sample_export(
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = self->computeSample(self, *objectCoordinates);
+    *samples = self->super.computeSample(self, *objectCoordinates);
   }
 }
 
@@ -559,27 +566,27 @@ export uniform bool SharedStructuredVolume_set(
   self->voxelOfs_dz   = bytesPerSlice;
 
   // default sampling function (64-bit addressing)
-  self->computeSample = SSV_sample_64;
+  self->super.computeSample = SSV_sample_64;
 
   if (bytesPerVolume <= (1ULL << 30)) {
     // in this case, we know ALL addressing can be 32-bit.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
 
     if (voxelType == VKL_UCHAR) {
-      self->getVoxel      = SSV_getVoxel_uint8_32;
-      self->computeSample = SSV_sample_uint8_32;
+      self->getVoxel            = SSV_getVoxel_uint8_32;
+      self->super.computeSample = SSV_sample_uint8_32;
     } else if (voxelType == VKL_SHORT) {
-      self->getVoxel      = SSV_getVoxel_int16_32;
-      self->computeSample = SSV_sample_int16_32;
+      self->getVoxel            = SSV_getVoxel_int16_32;
+      self->super.computeSample = SSV_sample_int16_32;
     } else if (voxelType == VKL_USHORT) {
-      self->getVoxel      = SSV_getVoxel_uint16_32;
-      self->computeSample = SSV_sample_uint16_32;
+      self->getVoxel            = SSV_getVoxel_uint16_32;
+      self->super.computeSample = SSV_sample_uint16_32;
     } else if (voxelType == VKL_FLOAT) {
-      self->getVoxel      = SSV_getVoxel_float_32;
-      self->computeSample = SSV_sample_float_32;
+      self->getVoxel            = SSV_getVoxel_float_32;
+      self->super.computeSample = SSV_sample_float_32;
     } else if (voxelType == VKL_DOUBLE) {
-      self->getVoxel      = SSV_getVoxel_double_32;
-      self->computeSample = SSV_sample_double_32;
+      self->getVoxel            = SSV_getVoxel_double_32;
+      self->super.computeSample = SSV_sample_double_32;
     }
 
   } else if (bytesPerSlice <= (1ULL << 30)) {
@@ -588,20 +595,20 @@ export uniform bool SharedStructuredVolume_set(
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
 
     if (voxelType == VKL_UCHAR) {
-      self->getVoxel      = SSV_getVoxel_uint8_64_32;
-      self->computeSample = SSV_sample_uint8_64_32;
+      self->getVoxel            = SSV_getVoxel_uint8_64_32;
+      self->super.computeSample = SSV_sample_uint8_64_32;
     } else if (voxelType == VKL_SHORT) {
-      self->getVoxel      = SSV_getVoxel_int16_64_32;
-      self->computeSample = SSV_sample_int16_64_32;
+      self->getVoxel            = SSV_getVoxel_int16_64_32;
+      self->super.computeSample = SSV_sample_int16_64_32;
     } else if (voxelType == VKL_USHORT) {
-      self->getVoxel      = SSV_getVoxel_uint16_64_32;
-      self->computeSample = SSV_sample_uint16_64_32;
+      self->getVoxel            = SSV_getVoxel_uint16_64_32;
+      self->super.computeSample = SSV_sample_uint16_64_32;
     } else if (voxelType == VKL_FLOAT) {
-      self->getVoxel      = SSV_getVoxel_float_64_32;
-      self->computeSample = SSV_sample_float_64_32;
+      self->getVoxel            = SSV_getVoxel_float_64_32;
+      self->super.computeSample = SSV_sample_float_64_32;
     } else if (voxelType == VKL_DOUBLE) {
-      self->getVoxel      = SSV_getVoxel_double_64_32;
-      self->computeSample = SSV_sample_double_64_32;
+      self->getVoxel            = SSV_getVoxel_double_64_32;
+      self->super.computeSample = SSV_sample_double_64_32;
     }
   } else {
     // in this case, even a single slice is too big to do 32-bit

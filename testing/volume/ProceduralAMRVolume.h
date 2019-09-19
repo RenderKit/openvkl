@@ -200,8 +200,6 @@ namespace openvkl {
       vklSetData(volume, "block.cellWidth", widthsData);
 
       vklCommit(volume);
-
-      std::cout << "hi" << std::endl;
     }
   }  // namespace testing
 }  // namespace openvkl

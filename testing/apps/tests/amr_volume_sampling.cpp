@@ -43,9 +43,18 @@ void amr_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
     INFO("objectCoordinates = " << objectCoordinates.x << " "
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
+
+    // the internal data layout for AMR is cell-centered, but the data is
+    // provided with the expectation of vertex-centered. This leads to a small
+    // consistent offset. In the case of using the getZValue procedural function
+    // this is an offset of 0.5 (i.e. objectCoordinates.z - 0.5). The exception
+    // to this is when z == 0, in which case we are at data boundaries and the
+    // value is 0. This occurs with all AMR interpolation methods
     REQUIRE(
         vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
-        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
+        Approx(v->computeProceduralValue(objectCoordinates) -
+               ((objectCoordinates.z == 0.f) ? 0.f : 0.5f))
+            .margin(1e-4f));
   }
 }
 

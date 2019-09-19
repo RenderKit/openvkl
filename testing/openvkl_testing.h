@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "volume/ProceduralAMRVolume.h"
 #include "volume/ProceduralStructuredVolume.h"
-#include "volume/RawFileStructuredVolume.h"
 #include "volume/ProceduralUnstructuredVolume.h"
+#include "volume/RawFileStructuredVolume.h"

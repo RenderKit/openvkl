@@ -48,6 +48,17 @@ typedef enum
   VKL_PYRAMID = 14
 } VKLUnstructuredCellType;
 
+// AMR volume interpolation methods
+typedef enum
+# if __cplusplus >= 201103L
+: uint8_t
+#endif
+{
+  VKL_AMR_CURRENT,
+  VKL_AMR_FINEST,
+  VKL_AMR_OCTANT
+} VKLAMRMethod;
+
 #ifdef __cplusplus
 extern "C" {
 #endif

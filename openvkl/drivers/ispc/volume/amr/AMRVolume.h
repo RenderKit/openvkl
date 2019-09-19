@@ -22,13 +22,6 @@
 
 using namespace ospcommon::memory;
 
-typedef enum
-{
-  VKL_AMR_CURRENT,
-  VKL_AMR_FINEST,
-  VKL_AMR_OCTANT
-} VKLAMRMethod;
-
 namespace openvkl {
   namespace ispc_driver {
 

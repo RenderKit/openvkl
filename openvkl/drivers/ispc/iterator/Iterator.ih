@@ -17,6 +17,7 @@
 #pragma once
 
 #include "math/box.ih"
+#include "../volume/Volume.ih"
 
 // this should match the layout of VKLInterval
 struct Interval
@@ -40,3 +41,62 @@ struct Hit
   varying float t;
   varying float sample;
 };
+
+inline bool intersectSurfaces(const Volume *uniform volume,
+                              const varying vec3f &origin,
+                              const varying vec3f &direction,
+                              const varying box1f &tRange,
+                              const uniform float step,
+                              const uniform int numValues,
+                              const float *uniform values,
+                              varying Hit &hit,
+                              varying float &surfaceEpsilon)
+{
+  float t0      = tRange.lower;
+  float sample0 = volume->computeSample(volume, origin + t0 * direction);
+
+  float t;
+
+  while (true) {
+    t = t0 + step;
+
+    if (t > tRange.upper + step)
+      return false;
+
+    const float sample = volume->computeSample(volume, origin + t * direction);
+
+    float tHit    = inf;
+    float epsilon = inf;
+    float value   = inf;
+
+    if (!isnan(sample0 + sample) && (sample != sample0)) {
+      for (uniform int i = 0; i < numValues; i++) {
+        if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {
+          const float rcpSamp = 1.f / (sample - sample0);
+          float tIso          = inf;
+          if (!isnan(rcpSamp)) {
+            tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);
+          }
+
+          if (tIso < tHit && tIso >= tRange.lower) {
+            tHit    = tIso;
+            value   = values[i];
+            epsilon = step * 0.125f;
+          }
+        }
+      }
+
+      if (tHit <= tRange.upper) {
+        hit.t          = tHit;
+        hit.sample     = value;
+        surfaceEpsilon = epsilon;
+        return true;
+      }
+    }
+
+    t0      = t;
+    sample0 = sample;
+  }
+
+  return false;
+}

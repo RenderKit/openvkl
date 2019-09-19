@@ -158,66 +158,6 @@ export void *uniform GridAcceleratorIterator_getCurrentHit(void *uniform _self)
   return &self->hitState.currentHit;
 }
 
-inline bool intersectSurfaces(const SharedStructuredVolume *uniform volume,
-                              const varying vec3f &origin,
-                              const varying vec3f &direction,
-                              const varying Interval &interval,
-                              const uniform int numValues,
-                              const float *uniform values,
-                              varying Hit &hit,
-                              varying float &surfaceEpsilon)
-{
-  const uniform float step = reduce_min(volume->gridSpacing);
-
-  float t0      = interval.tRange.lower;
-  float sample0 = volume->computeSample(volume, origin + t0 * direction);
-
-  float t;
-
-  while (true) {
-    t = t0 + step;
-
-    if (t > interval.tRange.upper + step)
-      return false;
-
-    const float sample = volume->computeSample(volume, origin + t * direction);
-
-    float tHit    = inf;
-    float epsilon = inf;
-    float value   = inf;
-
-    if (!isnan(sample0 + sample) && (sample != sample0)) {
-      for (uniform int i = 0; i < numValues; i++) {
-        if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {
-          const float rcpSamp = 1.f / (sample - sample0);
-          float tIso          = inf;
-          if (!isnan(rcpSamp)) {
-            tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);
-          }
-
-          if (tIso < tHit && tIso >= interval.tRange.lower) {
-            tHit    = tIso;
-            value   = values[i];
-            epsilon = step * 0.125f;
-          }
-        }
-      }
-
-      if (tHit <= interval.tRange.upper) {
-        hit.t          = tHit;
-        hit.sample     = value;
-        surfaceEpsilon = epsilon;
-        return true;
-      }
-    }
-
-    t0      = t;
-    sample0 = sample;
-  }
-
-  return false;
-}
-
 export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
                                                void *uniform _self,
                                                uniform int *uniform _result)
@@ -252,6 +192,8 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
                                  self->hitState.currentInterval);
   }
 
+  const uniform float step = reduce_min(self->volume->gridSpacing);
+
   while (self->hitState.activeCell) {
     box1f cellValueRange;
     GridAccelerator_getCellValueRange(self->volume->accelerator,
@@ -264,10 +206,11 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
     if (cellValueRangeOverlap) {
       float surfaceEpsilon;
 
-      bool foundHit = intersectSurfaces(self->volume,
+      bool foundHit = intersectSurfaces(&self->volume->super,
                                         self->origin,
                                         self->direction,
-                                        self->hitState.currentInterval,
+                                        self->hitState.currentInterval.tRange,
+                                        step,
                                         self->valueSelector->numValues,
                                         self->valueSelector->values,
                                         self->hitState.currentHit,

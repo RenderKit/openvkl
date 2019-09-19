@@ -231,6 +231,9 @@ namespace openvkl {
       bounds.lower = vec3f(bounds4.lower.x, bounds4.lower.y, bounds4.lower.z);
       bounds.upper = vec3f(bounds4.upper.x, bounds4.upper.y, bounds4.upper.z);
 
+      valueRange.lower = bounds4.lower.w;
+      valueRange.upper = bounds4.upper.w;
+
       bvh.build(primBounds.data(), primID.data(), nCells);
     }
 

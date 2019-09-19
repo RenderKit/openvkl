@@ -100,6 +100,8 @@ namespace openvkl {
                                     vvec3fn<W> &gradients) const;
 
       virtual box3f getBoundingBox() const = 0;
+
+      virtual range1f getValueRange() const;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -162,6 +164,12 @@ namespace openvkl {
     inline void Volume<W>::computeGradientV(const vintn<W> &valid,
                                             const vvec3fn<W> &objectCoordinates,
                                             vvec3fn<W> &gradients) const
+    {
+      THROW_NOT_IMPLEMENTED;
+    }
+
+    template <int W>
+    inline range1f Volume<W>::getValueRange() const
     {
       THROW_NOT_IMPLEMENTED;
     }

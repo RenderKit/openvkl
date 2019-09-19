@@ -42,6 +42,8 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
 
+      range1f getValueRange() const override;
+
       void *getISPCEquivalent() const;
 
      private:
@@ -63,6 +65,7 @@ namespace openvkl {
      protected:
       uint64_t nCells{0};
       box3f bounds{empty};
+      range1f valueRange{empty};
 
       Data *vertexPosition{nullptr};
       Data *vertexValue{nullptr};
@@ -110,6 +113,12 @@ namespace openvkl {
     inline box3f UnstructuredVolume<W>::getBoundingBox() const
     {
       return bounds;
+    }
+
+    template <int W>
+    inline range1f UnstructuredVolume<W>::getValueRange() const
+    {
+      return valueRange;
     }
 
     template <int W>

@@ -30,7 +30,7 @@ struct DefaultIteratorIntervalState
 
 struct DefaultIteratorHitState
 {
-  Interval currentInterval;
+  box1f tRange;
   Hit currentHit;
 };
 

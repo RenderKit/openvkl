@@ -41,7 +41,7 @@ export void DefaultIterator_Initialize(const int *uniform imask,
   varying DefaultIterator *uniform self =
       (varying DefaultIterator * uniform) _self;
 
-  self->volume        = (Volume *uniform)_volume;
+  self->volume        = (Volume * uniform) _volume;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
   self->tRange        = *((varying box1f * uniform) _tRange);
@@ -58,7 +58,8 @@ export void DefaultIterator_Initialize(const int *uniform imask,
   self->nominalIntervalLength = 0.1f * bbMaxDimension;
 
   resetInterval(self->intervalState.currentInterval);
-  resetInterval(self->hitState.currentInterval);
+
+  self->hitState.tRange = self->boundingBoxTRange;
 }
 
 export void *uniform DefaultIterator_getCurrentInterval(void *uniform _self)
@@ -135,6 +136,37 @@ export void DefaultIterator_iterateHit(const int *uniform imask,
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  // TODO: not yet implemented
-  *result = false;
+  if (isempty1f(self->hitState.tRange)) {
+    *result = false;
+    return;
+  }
+
+  cif(!self->valueSelector || self->valueSelector->numValues == 0)
+  {
+    *result = false;
+    return;
+  }
+
+  // this is an estimated step that may yield artifacts
+  const uniform float step = 0.1f * self->nominalIntervalLength;
+
+  float surfaceEpsilon;
+
+  bool foundHit = intersectSurfaces(self->volume,
+                                    self->origin,
+                                    self->direction,
+                                    self->hitState.tRange,
+                                    step,
+                                    self->valueSelector->numValues,
+                                    self->valueSelector->values,
+                                    self->hitState.currentHit,
+                                    surfaceEpsilon);
+
+  if (foundHit) {
+    *result                     = true;
+    self->hitState.tRange.lower = self->hitState.currentHit.t + surfaceEpsilon;
+  } else {
+    *result                     = false;
+    self->hitState.tRange.lower = inf;
+  }
 }

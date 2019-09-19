@@ -154,7 +154,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      THROW_NOT_IMPLEMENTED;
+      iterator = toVKLHitIterator<W>(DefaultIterator<W>(
+          valid, this, origin, direction, tRange, valueSelector));
     }
 
     template <int W>
@@ -163,7 +164,11 @@ namespace openvkl {
                                        vVKLHitN<W> &hit,
                                        vintn<W> &result)
     {
-      THROW_NOT_IMPLEMENTED;
+      DefaultIterator<W> *i = fromVKLHitIterator<DefaultIterator<W>>(&iterator);
+
+      i->iterateHit(valid, result);
+
+      hit = *reinterpret_cast<const vVKLHitN<W> *>(i->getCurrentHit());
     }
 
     template <int W>

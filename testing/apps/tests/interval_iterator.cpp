@@ -17,15 +17,22 @@
 #include "../../external/catch.hpp"
 #include "iterator_utility.h"
 #include "openvkl_testing.h"
+#include "ospcommon/math/box.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
 
 void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
 {
+  const vkl_box3f vklBoundingBox = vklGetBoundingBox(volume);
+  const box3f boundingBox        = (const box3f &)vklBoundingBox;
+
   vkl_vec3f origin{0.5f, 0.5f, -1.f};
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
+
+  range1f expectedTRange = intersectRayBox(
+      (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
   VKLIntervalIterator iterator;
   vklInitIntervalIterator(
@@ -39,7 +46,7 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
 
     if (i == 0) {
       // first interval at expected beginning
-      REQUIRE(intervalCurrent.tRange.lower == 1.f);
+      REQUIRE(intervalCurrent.tRange.lower == Approx(expectedTRange.lower));
     } else {
       // interval continuity
       REQUIRE(intervalCurrent.tRange.lower == intervalPrevious.tRange.upper);
@@ -49,7 +56,7 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
   }
 
   // last interval at expected ending
-  REQUIRE(intervalPrevious.tRange.upper == 2.f);
+  REQUIRE(intervalPrevious.tRange.upper == Approx(expectedTRange.upper));
 }
 
 void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
@@ -87,7 +94,9 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
         (sampledValueRange.upper - sampledValueRange.lower) /
         (interval.valueRange.upper - interval.valueRange.lower);
 
-    // warn if we have overly conservative returned interval value range
+    // warn if we have overly conservative returned interval value range; note
+    // this may trigger frequently for volumes without a native iterator
+    // implementation.
     if (rangeOverlapFraction < 0.25f) {
       WARN("sampled value range is less than "
            << rangeOverlapFraction << "x the returned interval value range");
@@ -181,28 +190,60 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  // for a unit cube physical grid [(0,0,0), (1,1,1)]
-  const vec3i dimensions(128);
-  const vec3f gridOrigin(0.f);
-  const vec3f gridSpacing(1.f / (128.f - 1.f));
-
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
-
-  VKLVolume vklVolume = v->getVKLVolume();
-
-  SECTION("scalar interval continuity with no value selector")
+  SECTION("structured volumes")
   {
-    scalar_interval_continuity_with_no_value_selector(vklVolume);
+    // for a unit cube physical grid [(0,0,0), (1,1,1)]
+    const vec3i dimensions(128);
+    const vec3f gridOrigin(0.f);
+    const vec3f gridSpacing(1.f / (128.f - 1.f));
+
+    std::unique_ptr<WaveletProceduralVolume> v(
+        new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+
+    VKLVolume vklVolume = v->getVKLVolume();
+
+    SECTION("scalar interval continuity with no value selector")
+    {
+      scalar_interval_continuity_with_no_value_selector(vklVolume);
+    }
+
+    SECTION("scalar interval value ranges with no value selector")
+    {
+      scalar_interval_value_ranges_with_no_value_selector(vklVolume);
+    }
+
+    SECTION("scalar interval value ranges with value selector")
+    {
+      scalar_interval_value_ranges_with_value_selector(vklVolume);
+    }
   }
 
-  SECTION("scalar interval value ranges with no value selector")
+  SECTION("unstructured volumes")
   {
-    scalar_interval_value_ranges_with_no_value_selector(vklVolume);
-  }
+    // for a unit cube physical grid [(0,0,0), (1,1,1)]
+    const vec3i dimensions(128);
+    const vec3f gridOrigin(0.f);
+    const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-  SECTION("scalar interval value ranges with value selector")
-  {
-    scalar_interval_value_ranges_with_value_selector(vklVolume);
+    std::unique_ptr<WaveletUnstructuredProceduralVolume> v(
+        new WaveletUnstructuredProceduralVolume(
+            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
+
+    VKLVolume vklVolume = v->getVKLVolume();
+
+    SECTION("scalar interval continuity with no value selector")
+    {
+      scalar_interval_continuity_with_no_value_selector(vklVolume);
+    }
+
+    SECTION("scalar interval value ranges with no value selector")
+    {
+      scalar_interval_value_ranges_with_no_value_selector(vklVolume);
+    }
+
+    SECTION("scalar interval value ranges with value selector")
+    {
+      scalar_interval_value_ranges_with_value_selector(vklVolume);
+    }
   }
 }

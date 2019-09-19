@@ -24,8 +24,8 @@ namespace openvkl {
     template <int W>
     StructuredRegularVolume<W>::~StructuredRegularVolume()
     {
-      if (ispcEquivalent) {
-        ispc::SharedStructuredVolume_Destructor(ispcEquivalent);
+      if (this->ispcEquivalent) {
+        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
       }
     }
 
@@ -46,17 +46,17 @@ namespace openvkl {
             "incorrect voxelData size for provided volume dimensions");
       }
 
-      if (!ispcEquivalent) {
-        ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
+      if (!this->ispcEquivalent) {
+        this->ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
 
-        if (!ispcEquivalent) {
+        if (!this->ispcEquivalent) {
           throw std::runtime_error(
               "could not create ISPC-side object for StructuredRegularVolume");
         }
       }
 
       bool success = ispc::SharedStructuredVolume_set(
-          ispcEquivalent,
+          this->ispcEquivalent,
           voxelData->data,
           voxelData->dataType,
           (const ispc::vec3i &)this->dimensions,
@@ -65,8 +65,8 @@ namespace openvkl {
           (const ispc::vec3f &)this->gridSpacing);
 
       if (!success) {
-        ispc::SharedStructuredVolume_Destructor(ispcEquivalent);
-        ispcEquivalent = nullptr;
+        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
+        this->ispcEquivalent = nullptr;
 
         throw std::runtime_error("failed to commit StructuredRegularVolume");
       }
@@ -78,7 +78,7 @@ namespace openvkl {
     void StructuredRegularVolume<W>::buildAccelerator()
     {
       void *accelerator =
-          ispc::SharedStructuredVolume_createAccelerator(ispcEquivalent);
+          ispc::SharedStructuredVolume_createAccelerator(this->ispcEquivalent);
 
       vec3i bricksPerDimension;
       bricksPerDimension.x =

@@ -102,6 +102,11 @@ namespace openvkl {
       virtual box3f getBoundingBox() const = 0;
 
       virtual range1f getValueRange() const;
+
+      void *getISPCEquivalent() const;
+
+     protected:
+      void *ispcEquivalent{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -179,6 +184,12 @@ namespace openvkl {
     inline range1f Volume<W>::getValueRange() const
     {
       THROW_NOT_IMPLEMENTED;
+    }
+
+    template <int W>
+    inline void *Volume<W>::getISPCEquivalent() const
+    {
+      return ispcEquivalent;
     }
 
 #define VKL_REGISTER_VOLUME(InternalClass, external_name) \

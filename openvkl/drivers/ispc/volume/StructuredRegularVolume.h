@@ -66,13 +66,10 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
 
-      void *getISPCEquivalent() const;
-
      protected:
       void buildAccelerator();
 
       Data *voxelData{nullptr};
-      void *ispcEquivalent{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -140,8 +137,10 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples) const
     {
-      ispc::SharedStructuredVolume_sample_export(
-          (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
+      ispc::SharedStructuredVolume_sample_export((const int *)&valid,
+                                                 this->ispcEquivalent,
+                                                 &objectCoordinates,
+                                                 &samples);
     }
 
     template <int W>
@@ -150,24 +149,20 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      ispc::SharedStructuredVolume_gradient_export(
-          (const int *)&valid, ispcEquivalent, &objectCoordinates, &gradients);
+      ispc::SharedStructuredVolume_gradient_export((const int *)&valid,
+                                                   this->ispcEquivalent,
+                                                   &objectCoordinates,
+                                                   &gradients);
     }
 
     template <int W>
     inline box3f StructuredRegularVolume<W>::getBoundingBox() const
     {
       ispc::box3f bb =
-          ispc::SharedStructuredVolume_getBoundingBox(ispcEquivalent);
+          ispc::SharedStructuredVolume_getBoundingBox(this->ispcEquivalent);
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
-    }
-
-    template <int W>
-    inline void *StructuredRegularVolume<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
     }
 
   }  // namespace ispc_driver

@@ -157,12 +157,12 @@ namespace openvkl {
 
       buildBvhAndCalculateBounds();
 
-      if (!ispcEquivalent) {
-        ispcEquivalent = ispc::VKLUnstructuredVolume_Constructor();
+      if (!this->ispcEquivalent) {
+        this->ispcEquivalent = ispc::VKLUnstructuredVolume_Constructor();
       }
 
       ispc::VKLUnstructuredVolume_set(
-          ispcEquivalent,
+          this->ispcEquivalent,
           (const ispc::box3f &)bounds,
           (const ispc::vec3f *)vertexPosition->data,
           (const uint32_t *)index->data,

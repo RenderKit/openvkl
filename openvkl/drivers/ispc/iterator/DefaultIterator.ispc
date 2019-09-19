@@ -16,6 +16,7 @@
 
 #include "../math/box_utility.ih"
 #include "../value_selector/ValueSelector.ih"
+#include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
 export uniform int DefaultIterator_sizeOf()
@@ -40,7 +41,7 @@ export void DefaultIterator_Initialize(const int *uniform imask,
   varying DefaultIterator *uniform self =
       (varying DefaultIterator * uniform) _self;
 
-  self->volume        = _volume;
+  self->volume        = (Volume *uniform)_volume;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
   self->tRange        = *((varying box1f * uniform) _tRange);

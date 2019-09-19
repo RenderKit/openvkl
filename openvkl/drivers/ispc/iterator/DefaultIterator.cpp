@@ -58,7 +58,7 @@ namespace openvkl {
       ispc::DefaultIterator_Initialize(
           (const int *)&valid,
           &ispcStorage[0],
-          nullptr,  // volume ISPC object not yet used
+          volume->getISPCEquivalent(),
           (void *)&origin,
           (void *)&direction,
           (void *)&tRange,

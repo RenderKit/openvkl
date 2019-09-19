@@ -44,8 +44,6 @@ namespace openvkl {
 
       range1f getValueRange() const override;
 
-      void *getISPCEquivalent() const;
-
      private:
       box4f getCellBBox(size_t id);
       void buildBvhAndCalculateBounds();
@@ -83,8 +81,6 @@ namespace openvkl {
       std::vector<vec3f> faceNormals;
 
       MinMaxBVH2 bvh;
-
-      void *ispcEquivalent{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -95,8 +91,10 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples) const
     {
-      ispc::VKLUnstructuredVolume_sample_export(
-          (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
+      ispc::VKLUnstructuredVolume_sample_export((const int *)&valid,
+                                                this->ispcEquivalent,
+                                                &objectCoordinates,
+                                                &samples);
     }
 
     template <int W>
@@ -105,8 +103,10 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      ispc::VKLUnstructuredVolume_gradient_export(
-          (const int *)&valid, ispcEquivalent, &objectCoordinates, &gradients);
+      ispc::VKLUnstructuredVolume_gradient_export((const int *)&valid,
+                                                  this->ispcEquivalent,
+                                                  &objectCoordinates,
+                                                  &gradients);
     }
 
     template <int W>
@@ -119,12 +119,6 @@ namespace openvkl {
     inline range1f UnstructuredVolume<W>::getValueRange() const
     {
       return valueRange;
-    }
-
-    template <int W>
-    inline void *UnstructuredVolume<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
     }
 
     template <int W>

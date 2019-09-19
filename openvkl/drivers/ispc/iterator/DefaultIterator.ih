@@ -21,6 +21,7 @@
 #include "math/vec.ih"
 
 struct ValueSelector;
+struct Volume;
 
 struct DefaultIteratorIntervalState
 {
@@ -35,7 +36,7 @@ struct DefaultIteratorHitState
 
 struct DefaultIterator
 {
-  void *uniform volume;
+  Volume *uniform volume;
   vec3f origin;
   vec3f direction;
   box1f tRange;

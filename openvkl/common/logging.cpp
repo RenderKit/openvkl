@@ -15,6 +15,9 @@
 // ======================================================================== //
 
 #include "logging.h"
+#include <algorithm>
+#include <cctype>
+#include <cstdlib>
 #include "../api/Driver.h"
 
 #define LOG_PREFIX "[openvkl] "
@@ -23,7 +26,45 @@ namespace openvkl {
 
   VKLLogLevel logLevel()
   {
-    return VKL_LOG_DEBUG;
+    static VKLLogLevel logLevel = VKL_LOG_INFO;
+
+    static bool checkedEnvironment = false;
+
+    if (!checkedEnvironment) {
+      checkedEnvironment = true;
+
+      const char *envLogLevel = getenv("VKL_LOG_LEVEL");
+
+      if (!envLogLevel) {
+        return logLevel;
+      }
+
+      std::string envLogLevelString(envLogLevel);
+
+      if (!envLogLevelString.empty()) {
+        std::transform(envLogLevelString.begin(),
+                       envLogLevelString.end(),
+                       envLogLevelString.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+
+        if (envLogLevelString == "debug") {
+          logLevel = VKL_LOG_DEBUG;
+        } else if (envLogLevelString == "info") {
+          logLevel = VKL_LOG_INFO;
+        } else if (envLogLevelString == "warning") {
+          logLevel = VKL_LOG_WARNING;
+        } else if (envLogLevelString == "error") {
+          logLevel = VKL_LOG_ERROR;
+        } else {
+          postLogMessage(
+              "unknown VKL_LOG_LEVEL env value; must be DEBUG, INFO, WARNING, "
+              "or ERROR",
+              VKL_LOG_ERROR);
+        }
+      }
+    }
+
+    return logLevel;
   }
 
   LogMessageStream postLogMessage(VKLLogLevel postAtLogLevel)

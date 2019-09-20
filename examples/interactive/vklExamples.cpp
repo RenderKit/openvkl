@@ -298,7 +298,7 @@ int main(int argc, const char **argv)
     } else if (gridType == "unstructured") {
       testingVolume = std::shared_ptr<WaveletUnstructuredProceduralVolume>(
           new WaveletUnstructuredProceduralVolume(
-              dimensions, gridOrigin, gridSpacing));
+              dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
     }
   }
 

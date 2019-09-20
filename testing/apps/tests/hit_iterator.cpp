@@ -20,6 +20,44 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
+void scalar_hit_iteration(VKLVolume volume)
+{
+  vkl_vec3f origin{0.5f, 0.5f, -1.f};
+  vkl_vec3f direction{0.f, 0.f, 1.f};
+  vkl_range1f tRange{0.f, inf};
+
+  VKLValueSelector valueSelector = vklNewValueSelector(volume);
+
+  std::vector<float> isoValues;
+
+  for (float f = 0.1f; f < 1.f; f += 0.1f) {
+    isoValues.push_back(f);
+  }
+
+  vklValueSelectorSetValues(valueSelector, isoValues.size(), isoValues.data());
+
+  vklCommit(valueSelector);
+
+  VKLHitIterator iterator;
+  vklInitHitIterator(
+      &iterator, volume, &origin, &direction, &tRange, valueSelector);
+
+  VKLHit hit;
+
+  int hitCount = 0;
+
+  while (vklIterateHit(&iterator, &hit)) {
+    INFO("hit t = " << hit.t << ", sample = " << hit.sample);
+
+    REQUIRE(hit.t == 1.f + isoValues[hitCount]);
+    REQUIRE(hit.sample == isoValues[hitCount]);
+
+    hitCount++;
+  }
+
+  REQUIRE(hitCount == isoValues.size());
+}
+
 TEST_CASE("Hit iterator", "[hit_iterators]")
 {
   vklLoadModule("ispc_driver");
@@ -33,47 +71,27 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-  std::unique_ptr<ZProceduralVolume> v(
-      new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
-
-  VKLVolume vklVolume = v->getVKLVolume();
-
   SECTION("scalar hit iteration")
   {
-    vkl_vec3f origin{0.5f, 0.5f, -1.f};
-    vkl_vec3f direction{0.f, 0.f, 1.f};
-    vkl_range1f tRange{0.f, inf};
+    SECTION("structured volumes")
+    {
+      std::unique_ptr<ZProceduralVolume> v(
+          new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
+      VKLVolume vklVolume = v->getVKLVolume();
 
-    std::vector<float> isoValues;
-
-    for (float f = 0.1f; f < 1.f; f += 0.1f) {
-      isoValues.push_back(f);
+      scalar_hit_iteration(vklVolume);
     }
 
-    vklValueSelectorSetValues(
-        valueSelector, isoValues.size(), isoValues.data());
+    SECTION("unstructured volumes")
+    {
+      std::unique_ptr<ZUnstructuredProceduralVolume> v(
+          new ZUnstructuredProceduralVolume(
+              dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
 
-    vklCommit(valueSelector);
+      VKLVolume vklVolume = v->getVKLVolume();
 
-    VKLHitIterator iterator;
-    vklInitHitIterator(
-        &iterator, vklVolume, &origin, &direction, &tRange, valueSelector);
-
-    VKLHit hit;
-
-    int hitCount = 0;
-
-    while (vklIterateHit(&iterator, &hit)) {
-      INFO("hit t = " << hit.t << ", sample = " << hit.sample);
-
-      REQUIRE(hit.t == 1.f + isoValues[hitCount]);
-      REQUIRE(hit.sample == isoValues[hitCount]);
-
-      hitCount++;
+      scalar_hit_iteration(vklVolume);
     }
-
-    REQUIRE(hitCount == isoValues.size());
   }
 }

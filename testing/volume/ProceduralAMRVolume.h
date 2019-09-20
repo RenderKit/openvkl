@@ -34,7 +34,7 @@ namespace openvkl {
   namespace testing {
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &) =
                   gradientNotImplemented>
     struct ProceduralAMRVolume : public TestingVolume
@@ -60,7 +60,7 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &dimensions),
               vec3f volumeGradientFunction(const vec3f &)>
     inline ProceduralAMRVolume<
         VOXEL_TYPE,
@@ -75,17 +75,17 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &dimensions),
               vec3f gradientFunction(const vec3f &)>
     inline VOXEL_TYPE
     ProceduralAMRVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
         computeProceduralValue(const vec3f &objectCoordinates)
     {
-      return samplingFunction(objectCoordinates);
+      return samplingFunction(objectCoordinates, dimensions);
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &dimensions),
               vec3f gradientFunction(const vec3f &)>
     inline vec3f
     ProceduralAMRVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
@@ -95,7 +95,7 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &dimensions),
               vec3f volumeGradientFunction(const vec3f &)>
     inline std::vector<unsigned char>
     ProceduralAMRVolume<VOXEL_TYPE,
@@ -118,7 +118,7 @@ namespace openvkl {
               size_t index = z * this->dimensions.y * this->dimensions.x +
                              y * this->dimensions.x + x;
               vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-              voxelsTyped[index] = volumeSamplingFunction(objectCoordinates);
+              voxelsTyped[index] = volumeSamplingFunction(objectCoordinates, dimensions);
             }
           }
         });
@@ -130,7 +130,7 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &),
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &dimensions),
               vec3f volumeGradientFunction(const vec3f &)>
     inline void ProceduralAMRVolume<VOXEL_TYPE,
                                     volumeSamplingFunction,

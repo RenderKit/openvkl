@@ -22,39 +22,38 @@ using namespace ospcommon;
 using namespace openvkl::testing;
 
 template <typename VOXEL_TYPE>
-void amr_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
-                                                   vec3i step = vec3i(1))
+void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
 {
-  std::unique_ptr<ProceduralAMRVolume<VOXEL_TYPE, getZValue>>
-      v(new ProceduralAMRVolume<VOXEL_TYPE, getZValue>(
+  std::unique_ptr<ProceduralAMRVolume<VOXEL_TYPE, getShellValue>> v(
+      new ProceduralAMRVolume<VOXEL_TYPE, getShellValue>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
-  multidim_index_sequence<3> mis(v->dimensions / step);
+  std::vector<vec3f> offsets;
+  offsets.emplace_back(0.0f, 0.0f, 0.0f);
+  offsets.emplace_back(0.5f, 0.5f, 0.5f);
+  offsets.emplace_back(1.0f, 1.0f, 1.0f);
+  offsets.emplace_back(28.5f, 28.5f, 28.5f);
+  offsets.emplace_back(29.5f, 29.5f, 29.5f);
+  offsets.emplace_back(42.5f, 42.5f, 42.5f);
+  offsets.emplace_back(43.5f, 43.5f, 43.5f);
+  offsets.emplace_back(84.5f, 84.5f, 84.5f);
+  offsets.emplace_back(85.5f, 85.5f, 85.5f);
 
-  for (const auto &offset : mis) {
+  for (const vec3f &offset : offsets) {
     const auto offsetWithStep = offset * step;
 
     vec3f objectCoordinates = v->gridOrigin + offsetWithStep * v->gridSpacing;
-
     INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
                      << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
 
-    // the internal data layout for AMR is cell-centered, but the data is
-    // provided with the expectation of vertex-centered. This leads to a small
-    // consistent offset. In the case of using the getZValue procedural function
-    // this is an offset of 0.5 (i.e. objectCoordinates.z - 0.5). The exception
-    // to this is when z == 0, in which case we are at data boundaries and the
-    // value is 0. This occurs with all AMR interpolation methods
     REQUIRE(
         vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
-        Approx(v->computeProceduralValue(objectCoordinates) -
-               ((objectCoordinates.z == 0.f) ? 0.f : 0.5f))
-            .margin(1e-4f));
+        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 }
 
@@ -70,7 +69,7 @@ TEST_CASE("AMR volume sampling", "[amr_volume_sampling]")
   {
     SECTION("float")
     {
-      amr_sampling_on_vertices_vs_procedural_values<float>(vec3i(256));
+      amr_sampling_at_shell_boundaries<float>(vec3i(256));
     }
   }
 }

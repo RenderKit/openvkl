@@ -18,7 +18,6 @@
 
 struct Volume
 {
-  // currently only used by DefaultIterator
   varying float (*uniform computeSample)(
       const void *uniform _self, const varying vec3f &objectCoordinates);
 };

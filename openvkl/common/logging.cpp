@@ -15,10 +15,9 @@
 // ======================================================================== //
 
 #include "logging.h"
-#include <algorithm>
-#include <cctype>
-#include <cstdlib>
 #include "../api/Driver.h"
+#include "ospcommon/utility/StringManip.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 #define LOG_PREFIX "[openvkl] "
 
@@ -26,6 +25,8 @@ namespace openvkl {
 
   VKLLogLevel logLevel()
   {
+    using namespace ospcommon::utility;
+
     static VKLLogLevel logLevel = VKL_LOG_INFO;
 
     static bool checkedEnvironment = false;
@@ -33,20 +34,10 @@ namespace openvkl {
     if (!checkedEnvironment) {
       checkedEnvironment = true;
 
-      const char *envLogLevel = getenv("VKL_LOG_LEVEL");
-
-      if (!envLogLevel) {
-        return logLevel;
-      }
-
-      std::string envLogLevelString(envLogLevel);
+      auto envLogLevel       = getEnvVar<std::string>("VKL_LOG_LEVEL");
+      auto envLogLevelString = lowerCase(envLogLevel.value_or(std::string()));
 
       if (!envLogLevelString.empty()) {
-        std::transform(envLogLevelString.begin(),
-                       envLogLevelString.end(),
-                       envLogLevelString.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
-
         if (envLogLevelString == "debug") {
           logLevel = VKL_LOG_DEBUG;
         } else if (envLogLevelString == "info") {
@@ -76,7 +67,8 @@ namespace openvkl {
   {
     if (postAtLogLevel >= logLevel()) {
       if (api::driverIsSet()) {
-        api::Driver::current->messageFunction((LOG_PREFIX + msg + '\n').c_str());
+        api::Driver::current->messageFunction(
+            (LOG_PREFIX + msg + '\n').c_str());
       } else {
         std::cout << LOG_PREFIX << msg << std::endl;
       }

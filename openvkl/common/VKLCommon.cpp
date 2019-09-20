@@ -18,6 +18,7 @@
 #include <iostream>
 #include <sstream>
 #include "../api/Driver.h"
+#include "logging.h"
 
 namespace openvkl {
 
@@ -227,7 +228,8 @@ namespace openvkl {
 
       driver.errorFunction(e, message.c_str());
     } else {
-      std::cerr << "#openvkl: INITIALIZATION ERROR --> " << message << std::endl;
+      LogMessageStream(VKL_LOG_ERROR)
+          << "INITIALIZATION ERROR: " << message << std::endl;
     }
   }
 

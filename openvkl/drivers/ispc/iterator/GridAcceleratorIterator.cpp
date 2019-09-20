@@ -42,13 +42,15 @@ namespace openvkl {
         int ispcSize = ispc::GridAcceleratorIterator_sizeOf();
 
         if (ispcSize > ispcStorageSize) {
-          std::cerr << "GridAcceleratorIterator required ISPC object size = "
-                    << ispcSize << ", allocated size = " << ispcStorageSize
-                    << std::endl;
+          LogMessageStream(VKL_LOG_ERROR)
+              << "GridAcceleratorIterator required ISPC object size = "
+              << ispcSize << ", allocated size = " << ispcStorageSize
+              << std::endl;
 
           throw std::runtime_error(
               "GridAcceleratorIterator has insufficient ISPC storage");
         }
+
         oneTimeChecks = true;
       }
 

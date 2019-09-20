@@ -41,13 +41,14 @@ namespace openvkl {
         int ispcSize = ispc::DefaultIterator_sizeOf();
 
         if (ispcSize > ispcStorageSize) {
-          std::cerr << "DefaultIterator required ISPC object size = "
-                    << ispcSize << ", allocated size = " << ispcStorageSize
-                    << std::endl;
+          LogMessageStream(VKL_LOG_ERROR)
+              << "DefaultIterator required ISPC object size = " << ispcSize
+              << ", allocated size = " << ispcStorageSize << std::endl;
 
           throw std::runtime_error(
               "DefaultIterator has insufficient ISPC storage");
         }
+
         oneTimeChecks = true;
       }
 

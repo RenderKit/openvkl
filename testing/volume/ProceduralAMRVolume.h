@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "../utility/rawToAMR.h"
-#include "TestingVolume.h"
+#include "TestingAMRVolume.h"
 #include "procedural_functions.h"
 // openvkl
 #include "openvkl/openvkl.h"
@@ -37,30 +36,24 @@ namespace openvkl {
               VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &) =
                   gradientNotImplemented>
-    struct ProceduralAMRVolume : public TestingVolume
+    struct ProceduralAMRVolume : public TestingAMRVolume
     {
       ProceduralAMRVolume(const vec3i &_dimensions,
                           const vec3f &_gridOrigin,
                           const vec3f &_gridSpacing);
 
-      vec3i dimensions;
-      vec3f gridOrigin;
-      vec3f gridSpacing;
-
       VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
 
       vec3f computeProceduralGradient(const vec3f &objectCoordinates);
 
-      std::vector<unsigned char> generateVoxels();
-
-     protected:
-      void generateVKLVolume() override;
+      std::vector<unsigned char> generateVoxels() override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &dimensions),
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &,
+                                                const vec3i &),
               vec3f volumeGradientFunction(const vec3f &)>
     inline ProceduralAMRVolume<
         VOXEL_TYPE,
@@ -68,14 +61,15 @@ namespace openvkl {
         volumeGradientFunction>::ProceduralAMRVolume(const vec3i &_dimensions,
                                                      const vec3f &_gridOrigin,
                                                      const vec3f &_gridSpacing)
-        : dimensions(_dimensions),
-          gridOrigin(_gridOrigin),
-          gridSpacing(_gridSpacing)
+        : TestingAMRVolume(_dimensions,
+                           _gridOrigin,
+                           _gridSpacing,
+                           getVKLDataType<VOXEL_TYPE>())
     {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &dimensions),
+              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &),
               vec3f gradientFunction(const vec3f &)>
     inline VOXEL_TYPE
     ProceduralAMRVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
@@ -85,7 +79,7 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &dimensions),
+              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &),
               vec3f gradientFunction(const vec3f &)>
     inline vec3f
     ProceduralAMRVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
@@ -95,7 +89,7 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &dimensions),
+              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &)>
     inline std::vector<unsigned char>
     ProceduralAMRVolume<VOXEL_TYPE,
@@ -127,79 +121,6 @@ namespace openvkl {
 
         return voxels;
       }
-    }
-
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &dimensions),
-              vec3f volumeGradientFunction(const vec3f &)>
-    inline void ProceduralAMRVolume<VOXEL_TYPE,
-                                    volumeSamplingFunction,
-                                    volumeGradientFunction>::generateVKLVolume()
-    {
-      std::vector<unsigned char> voxels = generateVoxels();
-
-      // create AMR representation of procedurally generated voxels
-
-      // input parameters for AMR conversion
-      const int numLevels = 1;   // number of refinement levels to create
-      const int blockSize = 16;  // edge extent of a block (cube)
-      const int refFactor = 4;   // refinement factor, i.e. scale between levels
-      const float threshold = 1.0f;  // value range threshold to refine at
-
-      // output containers from AMR conversion
-      std::vector<box3i> blockBounds;  // object space bounds for AMR blocks
-      std::vector<int> refLevels;      // refinement hierarchy levels for blocks
-      std::vector<float> cellWidths;   // width of cell at refinement level i
-      std::vector<std::vector<float>> blockValues;  // data values per block
-      std::vector<VKLData> blockData;  // data values per block as VKLData
-
-      float *floatData = (float *)voxels.data();
-      std::vector<float> floatVoxels;
-      floatVoxels.assign(floatData, floatData + longProduct(dimensions));
-
-      makeAMR(floatVoxels,
-              dimensions,
-              numLevels,
-              blockSize,
-              refFactor,
-              threshold,
-              blockBounds,
-              refLevels,
-              cellWidths,
-              blockValues);
-
-      // convert vector<float> to VKLData
-      for (const auto &bv : blockValues)
-        blockData.push_back(vklNewData(bv.size(), VKL_FLOAT, bv.data()));
-
-      // create a nested VKLData array. This is what gets passed to AMRVolume
-      VKLData blockDataData =
-          vklNewData(blockData.size(), VKL_DATA, blockData.data());
-
-      // create the other VKLData arrays
-      VKLData boundsData =
-          vklNewData(blockBounds.size(), VKL_BOX3I, blockBounds.data());
-      VKLData levelsData =
-          vklNewData(refLevels.size(), VKL_INT, refLevels.data());
-      VKLData widthsData =
-          vklNewData(cellWidths.size(), VKL_FLOAT, cellWidths.data());
-
-      // create the VKL AMR volume
-      volume = vklNewVolume("amr_volume");
-
-      vklSetVec3i(
-          volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-      vklSetVec3f(
-          volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-      vklSetVec3f(
-          volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-      vklSetInt(volume, "voxelType", VKL_FLOAT);
-      vklSetData(volume, "block.data", blockDataData);
-      vklSetData(volume, "block.bounds", boundsData);
-      vklSetData(volume, "block.level", levelsData);
-      vklSetData(volume, "block.cellWidth", widthsData);
-
-      vklCommit(volume);
     }
   }  // namespace testing
 }  // namespace openvkl

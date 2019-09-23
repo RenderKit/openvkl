@@ -32,17 +32,16 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
+    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &) =
                   gradientNotImplemented>
     struct ProceduralShellsAMRVolume : public TestingAMRVolume
     {
       ProceduralShellsAMRVolume(const vec3i &_dimensions,
-                          const vec3f &_gridOrigin,
-                          const vec3f &_gridSpacing);
+                                const vec3f &_gridOrigin,
+                                const vec3f &_gridSpacing);
 
-      VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
+      float computeProceduralValue(const vec3f &objectCoordinates);
 
       vec3f computeProceduralGradient(const vec3f &objectCoordinates);
 
@@ -54,61 +53,49 @@ namespace openvkl {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
+    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &)>
-    inline ProceduralShellsAMRVolume<
-        VOXEL_TYPE,
-        volumeSamplingFunction,
-        volumeGradientFunction>::ProceduralShellsAMRVolume(const vec3i &_dimensions,
-                                                     const vec3f &_gridOrigin,
-                                                     const vec3f &_gridSpacing)
-        : TestingAMRVolume(_dimensions,
-                           _gridOrigin,
-                           _gridSpacing,
-                           getVKLDataType<VOXEL_TYPE>())
+    inline ProceduralShellsAMRVolume<volumeSamplingFunction,
+                                     volumeGradientFunction>::
+        ProceduralShellsAMRVolume(const vec3i &_dimensions,
+                                  const vec3f &_gridOrigin,
+                                  const vec3f &_gridSpacing)
+        : TestingAMRVolume(_dimensions, _gridOrigin, _gridSpacing)
     {
     }
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &),
+    template <float samplingFunction(const vec3f &, const vec3i &),
               vec3f gradientFunction(const vec3f &)>
-    inline VOXEL_TYPE
-    ProceduralShellsAMRVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
+    inline float ProceduralShellsAMRVolume<samplingFunction, gradientFunction>::
         computeProceduralValue(const vec3f &objectCoordinates)
     {
       return samplingFunction(objectCoordinates, dimensions);
     }
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &, const vec3i &),
+    template <float samplingFunction(const vec3f &, const vec3i &),
               vec3f gradientFunction(const vec3f &)>
-    inline vec3f
-    ProceduralShellsAMRVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
+    inline vec3f ProceduralShellsAMRVolume<samplingFunction, gradientFunction>::
         computeProceduralGradient(const vec3f &objectCoordinates)
     {
       return gradientFunction(objectCoordinates);
     }
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
+    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &)>
     inline std::vector<unsigned char>
-    ProceduralShellsAMRVolume<VOXEL_TYPE,
-                        volumeSamplingFunction,
-                        volumeGradientFunction>::generateVoxels()
+    ProceduralShellsAMRVolume<volumeSamplingFunction,
+                              volumeGradientFunction>::generateVoxels()
     {
       {
         return std::vector<unsigned char>();
       }
     }
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE volumeSamplingFunction(const vec3f &, const vec3i &),
+    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
               vec3f volumeGradientFunction(const vec3f &)>
-    inline void ProceduralShellsAMRVolume<VOXEL_TYPE,
-                                    volumeSamplingFunction,
-                                    volumeGradientFunction>::generateVKLVolume()
+    inline void
+    ProceduralShellsAMRVolume<volumeSamplingFunction,
+                              volumeGradientFunction>::generateVKLVolume()
     {
       std::vector<box3i> blockBounds;
       std::vector<int> refinementLevels;

@@ -21,11 +21,10 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-template <typename VOXEL_TYPE>
 void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
 {
-  std::unique_ptr<ProceduralShellsAMRVolume<VOXEL_TYPE, getShellValue>> v(
-      new ProceduralShellsAMRVolume<VOXEL_TYPE, getShellValue>(
+  std::unique_ptr<ProceduralShellsAMRVolume<getShellValue>> v(
+      new ProceduralShellsAMRVolume<getShellValue>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();
@@ -45,7 +44,8 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
   for (const vec3f &offset : offsets) {
     const auto offsetWithStep = offset * step;
 
-    vec3f objectCoordinates = v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
+    vec3f objectCoordinates =
+        v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
     INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
                      << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
@@ -68,9 +68,6 @@ TEST_CASE("AMR volume sampling", "[amr_volume_sampling]")
 
   SECTION("32-bit addressing")
   {
-    SECTION("float")
-    {
-      amr_sampling_at_shell_boundaries<float>(vec3i(256));
-    }
+    amr_sampling_at_shell_boundaries(vec3i(256));
   }
 }

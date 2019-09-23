@@ -33,8 +33,7 @@ namespace openvkl {
     {
       TestingAMRVolume(const vec3i &dimensions,
                        const vec3f &gridOrigin,
-                       const vec3f &gridSpacing,
-                       VKLDataType voxelType);
+                       const vec3f &gridSpacing);
 
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
@@ -62,19 +61,17 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
-      VKLDataType voxelType;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     inline TestingAMRVolume::TestingAMRVolume(const vec3i &dimensions,
                                               const vec3f &gridOrigin,
-                                              const vec3f &gridSpacing,
-                                              VKLDataType voxelType)
+                                              const vec3f &gridSpacing)
+
         : dimensions(dimensions),
           gridOrigin(gridOrigin),
-          gridSpacing(gridSpacing),
-          voxelType(voxelType)
+          gridSpacing(gridSpacing)
     {
     }
 
@@ -274,4 +271,3 @@ namespace openvkl {
 
   }  // namespace testing
 }  // namespace openvkl
-

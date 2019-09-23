@@ -32,8 +32,7 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
-              vec3f volumeGradientFunction(const vec3f &) =
+    template <vec3f volumeGradientFunction(const vec3f &) =
                   gradientNotImplemented>
     struct ProceduralShellsAMRVolume : public TestingAMRVolume
     {
@@ -53,10 +52,8 @@ namespace openvkl {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
-    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
-              vec3f volumeGradientFunction(const vec3f &)>
-    inline ProceduralShellsAMRVolume<volumeSamplingFunction,
-                                     volumeGradientFunction>::
+    template <vec3f volumeGradientFunction(const vec3f &)>
+    inline ProceduralShellsAMRVolume<volumeGradientFunction>::
         ProceduralShellsAMRVolume(const vec3i &_dimensions,
                                   const vec3f &_gridOrigin,
                                   const vec3f &_gridSpacing)
@@ -64,38 +61,34 @@ namespace openvkl {
     {
     }
 
-    template <float samplingFunction(const vec3f &, const vec3i &),
-              vec3f gradientFunction(const vec3f &)>
-    inline float ProceduralShellsAMRVolume<samplingFunction, gradientFunction>::
-        computeProceduralValue(const vec3f &objectCoordinates)
+    template <vec3f gradientFunction(const vec3f &)>
+    inline float
+    ProceduralShellsAMRVolume<gradientFunction>::computeProceduralValue(
+        const vec3f &objectCoordinates)
     {
-      return samplingFunction(objectCoordinates, dimensions);
+      return getShellValue(objectCoordinates, dimensions);
     }
 
-    template <float samplingFunction(const vec3f &, const vec3i &),
-              vec3f gradientFunction(const vec3f &)>
-    inline vec3f ProceduralShellsAMRVolume<samplingFunction, gradientFunction>::
-        computeProceduralGradient(const vec3f &objectCoordinates)
+    template <vec3f gradientFunction(const vec3f &)>
+    inline vec3f
+    ProceduralShellsAMRVolume<gradientFunction>::computeProceduralGradient(
+        const vec3f &objectCoordinates)
     {
       return gradientFunction(objectCoordinates);
     }
 
-    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
-              vec3f volumeGradientFunction(const vec3f &)>
+    template <vec3f volumeGradientFunction(const vec3f &)>
     inline std::vector<unsigned char>
-    ProceduralShellsAMRVolume<volumeSamplingFunction,
-                              volumeGradientFunction>::generateVoxels()
+    ProceduralShellsAMRVolume<volumeGradientFunction>::generateVoxels()
     {
       {
         return std::vector<unsigned char>();
       }
     }
 
-    template <float volumeSamplingFunction(const vec3f &, const vec3i &),
-              vec3f volumeGradientFunction(const vec3f &)>
+    template <vec3f volumeGradientFunction(const vec3f &)>
     inline void
-    ProceduralShellsAMRVolume<volumeSamplingFunction,
-                              volumeGradientFunction>::generateVKLVolume()
+    ProceduralShellsAMRVolume<volumeGradientFunction>::generateVKLVolume()
     {
       std::vector<box3i> blockBounds;
       std::vector<int> refinementLevels;

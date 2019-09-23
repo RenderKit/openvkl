@@ -23,8 +23,8 @@ using namespace openvkl::testing;
 
 void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
 {
-  std::unique_ptr<ProceduralShellsAMRVolume<getShellValue>> v(
-      new ProceduralShellsAMRVolume<getShellValue>(
+  std::unique_ptr<ProceduralShellsAMRVolume<>> v(
+      new ProceduralShellsAMRVolume<>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();

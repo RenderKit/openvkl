@@ -49,7 +49,7 @@ namespace openvkl {
       std::vector<unsigned char> generateVoxels() override;  // unused
 
      protected:
-      void generateVKLVolume();
+      void generateVKLVolume() override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

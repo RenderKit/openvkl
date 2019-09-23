@@ -48,6 +48,9 @@ namespace openvkl {
 
      protected:
       void generateVKLVolume() override;
+      const int refFactor = 4;
+      const int blockSize = 16;
+      const int numCells  = blockSize * blockSize * blockSize;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -59,6 +62,13 @@ namespace openvkl {
                                   const vec3f &_gridSpacing)
         : TestingAMRVolume(_dimensions, _gridOrigin, _gridSpacing)
     {
+      if (dimensions.x % blockSize != 0 || dimensions.y % blockSize != 0 ||
+          dimensions.z % blockSize != 0) {
+        std::stringstream ss;
+        ss << "ProceduralShellsAMRVolume requires multiple-of-" << blockSize
+           << " dimensions";
+        throw std::runtime_error(ss.str());
+      }
     }
 
     template <vec3f gradientFunction(const vec3f &)>
@@ -90,95 +100,85 @@ namespace openvkl {
     inline void
     ProceduralShellsAMRVolume<volumeGradientFunction>::generateVKLVolume()
     {
+      int numLevels = 0;
+      int minExtent = reduce_min(dimensions);
+      if (minExtent < 128)
+        numLevels = 1;
+      else if (minExtent < 256)
+        numLevels = 2;
+      else
+        numLevels = 3;
+
       std::vector<box3i> blockBounds;
       std::vector<int> refinementLevels;
       std::vector<float> cellWidths;
       std::vector<std::vector<float>> blockDataVectors;
       std::vector<VKLData> blockData;
 
-      // block bound upper bounds are inclusive
+      // block bound upper bounds are inclusive, hence subtracting 1
 
       // outer shell - takes entire world space region
       // lowest refinement level, contains 16^3 cells with cell width 16 to
       // create a 256^3 region
-      blockBounds.emplace_back(vec3i(0), vec3i(15));
+      blockBounds.emplace_back(vec3i(0), vec3i(blockSize - 1));
       refinementLevels.emplace_back(0);
-      cellWidths.emplace_back(16.f);
-      std::vector<float> voxels(4096, 1.f);
+      cellWidths.emplace_back(gridSpacing.x * float(minExtent) / blockSize);
+      std::vector<float> voxels(numCells, -0.5f);
       blockDataVectors.emplace_back(voxels);
 
-      // middle shell - 8 16^3 blocks with cell width 4 at the center of the
-      // region. note that the bounds are scaled by the cell width, so these
-      // blocks take up the area from (64,64,64) to (191, 191, 191)
-      blockBounds.emplace_back(vec3i(16), vec3i(31));
-      refinementLevels.emplace_back(1);
-      cellWidths.emplace_back(4.f);
-      voxels = std::vector<float>(4096, 5.f);
-      blockDataVectors.emplace_back(voxels);
+      // for each subsequent shell, create 8 16^3 blocks with progressively
+      // smaller cell widths
+      for (int level = 1; level < numLevels; level++) {
+        int currentLevelSize =
+            minExtent / std::pow(refFactor, numLevels - level - 1);
+        float cellWidth =
+            gridSpacing.x * float(minExtent) / blockSize / std::pow(refFactor, level);
+        cellWidths.emplace_back(cellWidth);
 
-      blockBounds.emplace_back(vec3i(16, 16, 32), vec3i(31, 31, 47));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        voxels = std::vector<float>(numCells, float(level - 1));
 
-      blockBounds.emplace_back(vec3i(16, 32, 16), vec3i(31, 47, 31));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        int lb = (std::pow(refFactor, level) / 2 - 1) * currentLevelSize /
+                 std::pow(refFactor, level);
+        int ub = lb + blockSize - 1;
 
-      blockBounds.emplace_back(vec3i(16, 32, 32), vec3i(31, 47, 47));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb), vec3i(ub));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      blockBounds.emplace_back(vec3i(32, 16, 16), vec3i(47, 31, 31));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb + blockSize, lb, lb),
+                                 vec3i(ub + blockSize, ub, ub));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      blockBounds.emplace_back(vec3i(32, 16, 32), vec3i(47, 31, 47));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb, lb + blockSize, lb),
+                                 vec3i(ub, ub + blockSize, ub));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      blockBounds.emplace_back(vec3i(32, 32, 16), vec3i(47, 47, 31));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb + blockSize, lb + blockSize, lb),
+                                 vec3i(ub + blockSize, ub + blockSize, ub));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      blockBounds.emplace_back(vec3i(32), vec3i(47));
-      refinementLevels.emplace_back(1);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb, lb, lb + blockSize),
+                                 vec3i(ub, ub, ub + blockSize));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      // core - inner 8 16^3 blocks with cell width 1 at the finest refinement
-      // level, takes world space region (112,112,112) to (144,144,144)
-      blockBounds.emplace_back(vec3i(112), vec3i(127));
-      refinementLevels.emplace_back(2);
-      cellWidths.emplace_back(1.f);
-      voxels = std::vector<float>(4096, 10.f);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb + blockSize, lb, lb + blockSize),
+                                 vec3i(ub + blockSize, ub, ub + blockSize));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      blockBounds.emplace_back(vec3i(112, 112, 128), vec3i(127, 127, 143));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb, lb + blockSize, lb + blockSize),
+                                 vec3i(ub, ub + blockSize, ub + blockSize));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
 
-      blockBounds.emplace_back(vec3i(112, 128, 112), vec3i(127, 143, 127));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
-
-      blockBounds.emplace_back(vec3i(112, 128, 128), vec3i(127, 143, 143));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
-
-      blockBounds.emplace_back(vec3i(128, 112, 112), vec3i(143, 127, 127));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
-
-      blockBounds.emplace_back(vec3i(128, 112, 128), vec3i(143, 127, 143));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
-
-      blockBounds.emplace_back(vec3i(128, 128, 112), vec3i(143, 143, 127));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
-
-      blockBounds.emplace_back(vec3i(128), vec3i(143));
-      refinementLevels.emplace_back(2);
-      blockDataVectors.emplace_back(voxels);
+        blockBounds.emplace_back(vec3i(lb + blockSize), vec3i(ub + blockSize));
+        refinementLevels.emplace_back(level);
+        blockDataVectors.emplace_back(voxels);
+      }
 
       // convert the data above to VKLData objects
 

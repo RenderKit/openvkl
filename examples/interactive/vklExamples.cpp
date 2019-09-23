@@ -163,7 +163,7 @@ void usage(const char *progname)
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
-               "\t-gridType structured_regular | unstructured\n"
+               "\t-gridType structured_regular | unstructured | amr\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
@@ -299,6 +299,9 @@ int main(int argc, const char **argv)
       testingVolume = std::shared_ptr<WaveletUnstructuredProceduralVolume>(
           new WaveletUnstructuredProceduralVolume(
               dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
+    } else if (gridType == "amr") {
+      testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
+          new ProceduralShellsAMRVolume<>(dimensions, gridOrigin, gridSpacing));
     }
   }
 

@@ -33,11 +33,17 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
   offsets.emplace_back(0.0f);
   offsets.emplace_back(0.5f);
   offsets.emplace_back(1.0f);
+
+  offsets.emplace_back(63.0f);
   offsets.emplace_back(63.5f);
   // interpolation in range [64, 66)
   offsets.emplace_back(66.0f);
-  offsets.emplace_back(111.5f);
-  // interpolation in range [112, 114)
+
+  offsets.emplace_back(96.0f);
+  offsets.emplace_back(97.0f);
+
+  offsets.emplace_back(111.0f);
+  // interpolation at [112]
   offsets.emplace_back(114.0f);
   offsets.emplace_back(128.0f);
 

@@ -48,20 +48,20 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = volume->computeSample(volume, pos);
+  float sample = volume->super.computeSample(volume, pos);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->computeSample(
+  gradient.x = volume->super.computeSample(
                    volume, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->computeSample(
+  gradient.y = volume->super.computeSample(
                    volume, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->computeSample(
+  gradient.z = volume->super.computeSample(
                    volume, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
                sample;
 
@@ -94,7 +94,7 @@ export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
       for (varying int ix = 0; ix < numSamplePoints.x; ix += programCount) {
         vec3f relPos    = make_vec3f(ix, iy, iz) / make_vec3f(numSamplePoints);
         vec3f samplePos = lerp(leaf->bounds, relPos);
-        float sampleValue = self->computeSample(_self, samplePos);
+        float sampleValue = self->super.computeSample(_self, samplePos);
         extend(leaf->valueRange, sampleValue);
       }
 }
@@ -177,11 +177,10 @@ export void AMRVolume_set(void *uniform _self,
   self->gridOrigin  = gridOrigin;
 }
 
-export void AMRVolume_sample_export(
-    uniform const int *uniform imask,
-    void *uniform _self,
-    const void *uniform _objectCoordinates,
-    void *uniform _samples)
+export void AMRVolume_sample_export(uniform const int *uniform imask,
+                                    void *uniform _self,
+                                    const void *uniform _objectCoordinates,
+                                    void *uniform _samples)
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 
@@ -190,6 +189,6 @@ export void AMRVolume_sample_export(
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = self->computeSample(self, *objectCoordinates);
+    *samples = self->super.computeSample(self, *objectCoordinates);
   }
 }

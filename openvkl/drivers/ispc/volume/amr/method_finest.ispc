@@ -49,7 +49,7 @@ varying float AMR_finestLevel(const void *uniform _self, const varying vec3f &P)
 
 export void AMR_install_finest(void *uniform _self)
 {
-  AMRVolume *uniform self  = (AMRVolume * uniform) _self;
-  self->computeSample      = AMR_finest;
-  self->computeSampleLevel = AMR_finestLevel;
+  AMRVolume *uniform self   = (AMRVolume * uniform) _self;
+  self->super.computeSample = AMR_finest;
+  self->computeSampleLevel  = AMR_finestLevel;
 }

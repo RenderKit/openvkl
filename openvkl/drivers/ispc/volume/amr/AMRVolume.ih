@@ -16,23 +16,22 @@
 
 #pragma once
 
-// ours
 #include "AMR.ih"
-#include "volume/SharedStructuredVolume.ih"
+#include "../Volume.ih"
 
 struct AMRVolume
 {
-  //SharedStructuredVolume super;  //!< inherited from superclass
+  Volume super;
+
   uniform vec3f gridSpacing;
   uniform vec3f gridOrigin;
   uniform box3f boundingBox;
   uniform float samplingStep;
 
   AMR amr;
-  varying float (*uniform computeSample)(const void *uniform _self,
-                          const varying vec3f &worldCoordinates);
-  varying vec3f (*uniform computeGradient)(const void *uniform _self,
-                                   const varying vec3f &worldCoordinates);
+
+  varying vec3f (*uniform computeGradient)(
+      const void *uniform _self, const varying vec3f &worldCoordinates);
 
   //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSampleLevel)(

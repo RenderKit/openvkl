@@ -165,8 +165,10 @@ namespace openvkl {
                                       const vvec3fn<W> &objectCoordinates,
                                       vfloatn<W> &samples) const
     {
-      ispc::AMRVolume_sample_export(
-          (const int *)&valid, ispcEquivalent, &objectCoordinates, &samples);
+      ispc::AMRVolume_sample_export((const int *)&valid,
+                                    this->ispcEquivalent,
+                                    &objectCoordinates,
+                                    &samples);
     }
 
     template <int W>

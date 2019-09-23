@@ -56,8 +56,6 @@ namespace openvkl {
       box3f bounds;
 
       VKLAMRMethod amrMethod;
-
-      void *ispcEquivalent{nullptr};
     };
 
   }  // namespace ispc_driver

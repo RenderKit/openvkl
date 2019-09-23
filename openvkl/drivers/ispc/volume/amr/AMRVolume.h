@@ -42,6 +42,7 @@ namespace openvkl {
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients) const override;
       box3f getBoundingBox() const override;
+      range1f getValueRange() const override;
 
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
@@ -51,7 +52,7 @@ namespace openvkl {
       Ref<Data> refinementLevelsData;
       Ref<Data> cellWidthsData;
       VKLDataType voxelType;
-      vec2f voxelRange;
+      range1f valueRange{empty};
       box3f bounds;
 
       VKLAMRMethod amrMethod;

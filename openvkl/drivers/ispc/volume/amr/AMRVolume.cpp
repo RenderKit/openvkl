@@ -48,9 +48,6 @@ namespace openvkl {
     {
       StructuredVolume<W>::commit();
 
-      voxelRange = this->template getParam<vec2f>("voxelRange",
-                                                  vec2f(FLT_MAX, -FLT_MAX));
-
       amrMethod =
           this->template getParam<VKLAMRMethod>("method", VKL_AMR_CURRENT);
 
@@ -156,6 +153,11 @@ namespace openvkl {
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
         ispc::AMRVolume_computeValueRangeOfLeaf(this->ispcEquivalent, leafID);
       });
+
+      // compute value range over the full volume
+      for (const auto &l : accel->leaf) {
+        valueRange.extend(l.valueRange);
+      }
     }
 
     template <int W>
@@ -179,6 +181,12 @@ namespace openvkl {
     box3f AMRVolume<W>::getBoundingBox() const
     {
       return bounds;
+    }
+
+    template <int W>
+    range1f AMRVolume<W>::getValueRange() const
+    {
+      return valueRange;
     }
 
     VKL_REGISTER_VOLUME(AMRVolume<4>, amr_volume_4);

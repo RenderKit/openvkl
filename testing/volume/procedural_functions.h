@@ -77,17 +77,16 @@ namespace openvkl {
     inline float getShellValue(const vec3f &objectCoordinates, const vec3i &dimensions)
     {
       const std::vector<box3i> shells{
-          box3i(dimensions / 3, 2 * dimensions / 3),
-          box3i(dimensions / 6, 5 * dimensions / 6),
-          box3i(dimensions / 9, 8 * dimensions / 9)};
-      const std::vector<float> values{5, 3, 1};
+          box3i(7 * dimensions / 16, 9 * dimensions / 16),
+          box3i(dimensions / 4, 3 * dimensions / 4)};
+      const std::vector<float> values{10.f, 5.f};
 
       for (int i = 0; i < shells.size(); i++) {
         if (shells[i].contains(objectCoordinates)) {
           return values[i];
         }
       }
-      return 0.0f;
+      return 1.0f;
     }
 
     inline float getZValue(const vec3f &objectCoordinates)

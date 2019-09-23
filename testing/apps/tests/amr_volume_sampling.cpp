@@ -24,27 +24,28 @@ using namespace openvkl::testing;
 template <typename VOXEL_TYPE>
 void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
 {
-  std::unique_ptr<ProceduralAMRVolume<VOXEL_TYPE, getShellValue>> v(
-      new ProceduralAMRVolume<VOXEL_TYPE, getShellValue>(
+  std::unique_ptr<ProceduralShellsAMRVolume<VOXEL_TYPE, getShellValue>> v(
+      new ProceduralShellsAMRVolume<VOXEL_TYPE, getShellValue>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
   std::vector<vec3f> offsets;
-  offsets.emplace_back(0.0f, 0.0f, 0.0f);
-  offsets.emplace_back(0.5f, 0.5f, 0.5f);
-  offsets.emplace_back(1.0f, 1.0f, 1.0f);
-  offsets.emplace_back(28.5f, 28.5f, 28.5f);
-  offsets.emplace_back(29.5f, 29.5f, 29.5f);
-  offsets.emplace_back(42.5f, 42.5f, 42.5f);
-  offsets.emplace_back(43.5f, 43.5f, 43.5f);
-  offsets.emplace_back(84.5f, 84.5f, 84.5f);
-  offsets.emplace_back(85.5f, 85.5f, 85.5f);
+  offsets.emplace_back(0.0f);
+  offsets.emplace_back(0.5f);
+  offsets.emplace_back(1.0f);
+  offsets.emplace_back(63.5f);
+  // interpolation in range [64, 66)
+  offsets.emplace_back(66.0f);
+  offsets.emplace_back(111.5f);
+  // interpolation in range [112, 114)
+  offsets.emplace_back(114.0f);
+  offsets.emplace_back(128.0f);
 
   for (const vec3f &offset : offsets) {
     const auto offsetWithStep = offset * step;
 
-    vec3f objectCoordinates = v->gridOrigin + offsetWithStep * v->gridSpacing;
+    vec3f objectCoordinates = v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
     INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
                      << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "

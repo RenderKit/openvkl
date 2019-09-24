@@ -30,16 +30,17 @@ void demoScalarAPI(VKLVolume volume)
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
 
-  // iterator setup (note the commit at the end)
+  // value selector setup (note the commit at the end)
   vkl_range1f ranges[2]     = {{10, 20}, {50, 75}};
   int num_ranges            = 2;
-  float isosurfaces[2]      = {32, 96};
-  int num_isosurfaces       = 2;
+  float values[2]           = {32, 96};
+  int num_values            = 2;
   VKLValueSelector selector = vklNewValueSelector(volume);
   vklValueSelectorSetRanges(selector, num_ranges, ranges);
-  vklValueSelectorSetValues(selector, num_isosurfaces, isosurfaces);
+  vklValueSelectorSetValues(selector, num_values, values);
   vklCommit(selector);
 
+  // ray definition for iterators
   vkl_vec3f rayOrigin    = {0, 0, 0};
   vkl_vec3f rayDirection = {1, 0, 0};
   vkl_range1f rayTRange  = {0, 200};
@@ -50,6 +51,7 @@ void demoScalarAPI(VKLVolume volume)
          rayDirection.z);
   printf("\trayTRange = %f %f\n", rayTRange.lower, rayTRange.upper);
 
+  // interval iteration
   VKLIntervalIterator intervalIterator;
   vklInitIntervalIterator(&intervalIterator,
                           volume,
@@ -58,7 +60,7 @@ void demoScalarAPI(VKLVolume volume)
                           &rayTRange,
                           selector);
 
-  printf("\n\tranges {%f %f} {%f %f}\n",
+  printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
          ranges[0].lower,
          ranges[0].upper,
          ranges[1].lower,
@@ -78,11 +80,12 @@ void demoScalarAPI(VKLVolume volume)
         interval.nominalDeltaT);
   }
 
+  // hit iteration
   VKLHitIterator hitIterator;
   vklInitHitIterator(
       &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
 
-  printf("\n\tisosurfaces %f %f\n", isosurfaces[0], isosurfaces[1]);
+  printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
   for (;;) {
     VKLHit hit;
@@ -96,22 +99,23 @@ void demoScalarAPI(VKLVolume volume)
 void demoVectorAPI(VKLVolume volume)
 {
   printf("demo of 4-wide API (8- and 16- follow the same pattern)\n");
+
   vkl_vvec3f4 coord4;  // structure-of-array layout
   int valid[4];
   for (int i = 0; i < 4; i++) {
     coord4.x[i] = coord4.y[i] = coord4.z[i] = i;
     valid[i] = -1;  // valid mask: 0 = not valid, -1 = valid
   }
+
   float sample4[4];
   vkl_vvec3f4 grad4;
   vklComputeSample4(valid, volume, &coord4, sample4);
   vklComputeGradient4(valid, volume, &coord4, &grad4);
+
   for (int i = 0; i < 4; i++) {
-    printf(
-        "\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
+    printf("\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
     printf("\t\tsample[%d] = %f\n", i, sample4[i]);
-    printf(
-        "\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
+    printf("\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
   }
 }
 

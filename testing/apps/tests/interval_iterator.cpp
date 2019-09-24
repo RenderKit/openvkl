@@ -182,6 +182,41 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   vklRelease(valueSelector);
 }
 
+void scalar_interval_nominalDeltaT(VKLVolume volume,
+                                   const vec3f &direction,
+                                   const float expectedNominalDeltaT)
+{
+  // origin far away from the volume in the negative direction
+  const float d = 1000.f;
+  vkl_vec3f origin{-d * direction.x, -d * direction.y, -d * direction.z};
+
+  vkl_range1f tRange{0.f, inf};
+
+  INFO("direction = " << direction.x << " " << direction.y << " "
+                      << direction.z);
+
+  VKLIntervalIterator iterator;
+  vklInitIntervalIterator(&iterator,
+                          volume,
+                          &origin,
+                          &(const vkl_vec3f &)direction,
+                          &tRange,
+                          nullptr);
+
+  VKLInterval interval;
+  bool gotInterval = vklIterateInterval(&iterator, &interval);
+
+  REQUIRE(gotInterval == true);
+
+  INFO("interval tRange = " << interval.tRange.lower << ", "
+                            << interval.tRange.upper
+                            << " valueRange = " << interval.valueRange.lower
+                            << ", " << interval.valueRange.upper
+                            << ", nominalDeltaT = " << interval.nominalDeltaT);
+
+  REQUIRE(interval.nominalDeltaT == Approx(expectedNominalDeltaT));
+}
+
 TEST_CASE("Interval iterator", "[interval_iterators]")
 {
   vklLoadModule("ispc_driver");
@@ -215,6 +250,80 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     SECTION("scalar interval value ranges with value selector")
     {
       scalar_interval_value_ranges_with_value_selector(vklVolume);
+    }
+  }
+
+  SECTION("structured volumes: interval nominalDeltaT")
+  {
+    // use a different volume to facilitate nominalDeltaT tests
+    const vec3i dimensions(128);
+    const vec3f gridOrigin(-64.f);
+    const vec3f gridSpacing(1.f, 2.f, 3.f);
+
+    std::unique_ptr<WaveletProceduralVolume> v(
+        new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+
+    VKLVolume vklVolume = v->getVKLVolume();
+
+    SECTION("normalized directions")
+    {
+      SECTION("unit directions, positive and negative")
+      {
+        scalar_interval_nominalDeltaT(vklVolume, vec3f(1.f, 0.f, 0.f), 1.f);
+        scalar_interval_nominalDeltaT(vklVolume, vec3f(-1.f, 0.f, 0.f), 1.f);
+
+        scalar_interval_nominalDeltaT(vklVolume, vec3f(0.f, 1.f, 0.f), 2.f);
+        scalar_interval_nominalDeltaT(vklVolume, vec3f(0.f, -1.f, 0.f), 2.f);
+
+        scalar_interval_nominalDeltaT(vklVolume, vec3f(0.f, 0.f, 1.f), 3.f);
+        scalar_interval_nominalDeltaT(vklVolume, vec3f(0.f, 0.f, -1.f), 3.f);
+      }
+
+      SECTION("diagonal direction, positive and negative")
+      {
+        scalar_interval_nominalDeltaT(
+            vklVolume, normalize(gridSpacing), length(gridSpacing));
+
+        scalar_interval_nominalDeltaT(
+            vklVolume, -normalize(gridSpacing), length(gridSpacing));
+      }
+    }
+
+    SECTION("non-normalized directions")
+    {
+      // nominalDeltaT should be in ray units, and thus scaled by the direction
+      // magnitude
+
+      const float scale = 10.f;
+
+      SECTION("unit directions, positive and negative")
+      {
+        scalar_interval_nominalDeltaT(
+            vklVolume, scale * vec3f(1.f, 0.f, 0.f), 1.f / scale);
+        scalar_interval_nominalDeltaT(
+            vklVolume, scale * vec3f(-1.f, 0.f, 0.f), 1.f / scale);
+
+        scalar_interval_nominalDeltaT(
+            vklVolume, scale * vec3f(0.f, 1.f, 0.f), 2.f / scale);
+        scalar_interval_nominalDeltaT(
+            vklVolume, scale * vec3f(0.f, -1.f, 0.f), 2.f / scale);
+
+        scalar_interval_nominalDeltaT(
+            vklVolume, scale * vec3f(0.f, 0.f, 1.f), 3.f / scale);
+        scalar_interval_nominalDeltaT(
+            vklVolume, scale * vec3f(0.f, 0.f, -1.f), 3.f / scale);
+      }
+
+      SECTION("diagonal direction, positive and negative")
+      {
+        scalar_interval_nominalDeltaT(vklVolume,
+                                      scale * normalize(gridSpacing),
+                                      length(gridSpacing) / scale);
+
+        scalar_interval_nominalDeltaT(vklVolume,
+                                      -scale * normalize(gridSpacing),
+                                      length(gridSpacing) / scale);
+      }
     }
   }
 

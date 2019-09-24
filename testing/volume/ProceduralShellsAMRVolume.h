@@ -203,7 +203,6 @@ namespace openvkl {
 
       volume = vklNewVolume("amr_volume");
 
-      vklSetInt(volume, "voxelType", VKL_FLOAT);
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", blockBoundsData);
       vklSetData(volume, "block.level", refinementLevelsData);

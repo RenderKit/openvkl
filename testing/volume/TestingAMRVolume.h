@@ -150,7 +150,6 @@ namespace openvkl {
           volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
       vklSetVec3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-      vklSetInt(volume, "voxelType", VKL_FLOAT);
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", boundsData);
       vklSetData(volume, "block.level", levelsData);

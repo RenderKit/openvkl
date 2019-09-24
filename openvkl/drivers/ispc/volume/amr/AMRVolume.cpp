@@ -109,10 +109,17 @@ namespace openvkl {
       const vec3f gridOrigin =
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
 
-      // ALOK: can voxelType be removed? we check it against types here but
-      // the implementation assumes float throughout
-      voxelType =
-          (VKLDataType)this->template getParam<int>("voxelType", VKL_UNKNOWN);
+      // determine voxelType from set of block data; they must all be the same
+      std::set<VKLDataType> blockDataTypes;
+
+      for (int i = 0; i < blockDataData->numItems; i++)
+        blockDataTypes.insert(((Data **)blockDataData->data)[i]->dataType);
+
+      if (blockDataTypes.size() != 1)
+        throw std::runtime_error(
+            "all block.data entries must have same VKLDataType");
+
+      voxelType = *blockDataTypes.begin();
 
       switch (voxelType) {
       case VKL_UCHAR:
@@ -127,8 +134,8 @@ namespace openvkl {
         break;
       default:
         throw std::runtime_error(
-            "amr volume 'voxelType' has invalid type."
-            "Must be one of: VKL_UCHAR, VKL_SHORT, "
+            "AMR volume 'block.data' entries have invalid VKLDataType. "
+            "must be one of: VKL_UCHAR, VKL_SHORT, "
             "VKL_USHORT, VKL_FLOAT, VKL_DOUBLE");
       }
 

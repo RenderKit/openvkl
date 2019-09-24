@@ -344,8 +344,8 @@ int main(int argc, const char **argv)
       glfwVKLWindow->setActiveRenderer(rendererType);
     }
 
-    static bool useISPC = true;
-    if (ImGui::Checkbox("use ISPC version", &useISPC)) {
+    static int useISPC = 1;
+    if (ImGui::Combo("OpenVKL API used", &useISPC, "C scalar\0ISPC\0\0")) {
       glfwVKLWindow->setUseISPC(useISPC);
       changed = true;
     }

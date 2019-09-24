@@ -20,19 +20,13 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-void scalar_hit_iteration(VKLVolume volume)
+void scalar_hit_iteration(VKLVolume volume, const std::vector<float> &isoValues)
 {
   vkl_vec3f origin{0.5f, 0.5f, -1.f};
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
-
-  std::vector<float> isoValues;
-
-  for (float f = 0.1f; f < 1.f; f += 0.1f) {
-    isoValues.push_back(f);
-  }
 
   vklValueSelectorSetValues(valueSelector, isoValues.size(), isoValues.data());
 
@@ -71,6 +65,13 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
+  // default isovalues
+  std::vector<float> defaultIsoValues;
+
+  for (float f = 0.1f; f < 1.f; f += 0.1f) {
+    defaultIsoValues.push_back(f);
+  }
+
   SECTION("scalar hit iteration")
   {
     SECTION("structured volumes")
@@ -80,7 +81,26 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume();
 
-      scalar_hit_iteration(vklVolume);
+      scalar_hit_iteration(vklVolume, defaultIsoValues);
+    }
+
+    SECTION(
+        "structured volumes: isovalues at grid accelerator macrocell "
+        "boundaries")
+    {
+      // macrocells are currently 16**3
+      std::unique_ptr<ZProceduralVolume> v(
+          new ZProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+
+      VKLVolume vklVolume = v->getVKLVolume();
+
+      std::vector<float> macroCellBoundaries;
+
+      for (int i = 0; i < 128; i += 16) {
+        macroCellBoundaries.push_back(float(i));
+      }
+
+      scalar_hit_iteration(vklVolume, macroCellBoundaries);
     }
 
     SECTION("unstructured volumes")
@@ -91,7 +111,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume();
 
-      scalar_hit_iteration(vklVolume);
+      scalar_hit_iteration(vklVolume, defaultIsoValues);
     }
   }
 }

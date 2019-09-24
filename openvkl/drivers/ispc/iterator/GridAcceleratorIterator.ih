@@ -33,7 +33,7 @@ struct GridAcceleratorIteratorHitState
 {
   bool activeCell;
   vec3i currentCellIndex;
-  Interval currentInterval;
+  box1f currentCellTRange;
   Hit currentHit;
 };
 

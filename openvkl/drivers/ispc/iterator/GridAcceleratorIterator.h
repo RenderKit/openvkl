@@ -43,7 +43,7 @@ namespace openvkl {
       void iterateHit(const vintn<W> &valid, vintn<W> &result) override;
 
       // required size of ISPC-side object for width
-      static constexpr int ispcStorageSize = 124 * W;
+      static constexpr int ispcStorageSize = 112 * W;
 
      protected:
       alignas(simd_alignment_for_width(W)) char ispcStorage[ispcStorageSize];

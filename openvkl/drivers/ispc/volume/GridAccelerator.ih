@@ -38,7 +38,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator);
 bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                               const varying GridAcceleratorIterator *uniform iterator,
                               varying vec3i &cellIndex,
-                              varying Interval &interval);
+                              varying box1f &cellTRange);
 
 void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
                                        const varying vec3i &cellIndex,

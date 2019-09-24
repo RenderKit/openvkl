@@ -85,8 +85,8 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
   resetInterval(self->intervalState.currentInterval);
   self->intervalState.currentCellIndex = make_vec3i(-1);
 
-  resetInterval(self->hitState.currentInterval);
-  self->hitState.currentCellIndex = make_vec3i(-1);
+  self->hitState.currentCellIndex  = make_vec3i(-1);
+  self->hitState.currentCellTRange = make_box1f(inf, -inf);
 }
 
 export void *uniform
@@ -117,7 +117,7 @@ export void GridAcceleratorIterator_iterateInterval(
   while (GridAccelerator_nextCell(self->volume->accelerator,
                                   self,
                                   self->intervalState.currentCellIndex,
-                                  self->intervalState.currentInterval)) {
+                                  self->intervalState.currentInterval.tRange)) {
     box1f cellValueRange;
     GridAccelerator_getCellValueRange(self->volume->accelerator,
                                       self->intervalState.currentCellIndex,
@@ -189,7 +189,7 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
         GridAccelerator_nextCell(self->volume->accelerator,
                                  self,
                                  self->hitState.currentCellIndex,
-                                 self->hitState.currentInterval);
+                                 self->hitState.currentCellTRange);
   }
 
   const uniform float step = reduce_min(self->volume->gridSpacing);
@@ -209,7 +209,7 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
       bool foundHit = intersectSurfaces(&self->volume->super,
                                         self->origin,
                                         self->direction,
-                                        self->hitState.currentInterval.tRange,
+                                        self->hitState.currentCellTRange,
                                         step,
                                         self->valueSelector->numValues,
                                         self->valueSelector->values,
@@ -218,19 +218,33 @@ export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
 
       if (foundHit) {
         *result = true;
-        self->hitState.currentInterval.tRange.lower =
+        self->hitState.currentCellTRange.lower =
             self->hitState.currentHit.t + surfaceEpsilon;
+
+        // move to next cell if next t passes the cell boundary
+        if (isempty1f(self->hitState.currentCellTRange)) {
+          self->hitState.activeCell =
+              GridAccelerator_nextCell(self->volume->accelerator,
+                                       self,
+                                       self->hitState.currentCellIndex,
+                                       self->hitState.currentCellTRange);
+
+          // continue where we left off
+          self->hitState.currentCellTRange.lower =
+              self->hitState.currentHit.t + surfaceEpsilon;
+        }
+
         return;
       }
     }
 
-    // we'll only move forward to the next cell if no hits are found; if a hit
-    // is found we'll stay in the cell to pursue other hits
+    // if no hits are found, move to the next cell; if a hit is found we'll stay
+    // in the cell to pursue other hits
     self->hitState.activeCell =
         GridAccelerator_nextCell(self->volume->accelerator,
                                  self,
                                  self->hitState.currentCellIndex,
-                                 self->hitState.currentInterval);
+                                 self->hitState.currentCellTRange);
   }
 
   *result = false;

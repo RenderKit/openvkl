@@ -189,7 +189,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
 bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                               const varying GridAcceleratorIterator *uniform iterator,
                               varying vec3i &cellIndex,
-                              varying Interval &interval)
+                              varying box1f &cellTRange)
 {
   SharedStructuredVolume *uniform volume = accelerator->volume;
 
@@ -256,10 +256,10 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
                                     iterator->boundingBoxTRange);
 
   if (isempty1f(cellInterval)) {
-    resetInterval(interval);
+    cellTRange = make_box1f(inf, -inf);
     return false;
   } else {
-    interval.tRange = cellInterval;
+    cellTRange = cellInterval;
     return true;
   }
 }

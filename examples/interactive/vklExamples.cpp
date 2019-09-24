@@ -175,7 +175,7 @@ int main(int argc, const char **argv)
 {
   std::string rendererType("density_pathtracer");
   std::string gridType("structured_regular");
-  vec3i dimensions(100);
+  vec3i dimensions(128);
   vec3f gridOrigin(-1.f);
   vec3f gridSpacing(-1.f);
   std::string voxelTypeString("float");

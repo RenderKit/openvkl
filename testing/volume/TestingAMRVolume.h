@@ -142,7 +142,7 @@ namespace openvkl {
 
       // create the VKL AMR volume
 
-      volume = vklNewVolume("amr_volume");
+      volume = vklNewVolume("amr");
 
       vklSetVec3i(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);

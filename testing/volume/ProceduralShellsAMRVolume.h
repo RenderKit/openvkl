@@ -200,7 +200,7 @@ namespace openvkl {
 
       // create the AMR volume
 
-      volume = vklNewVolume("amr_volume");
+      volume = vklNewVolume("amr");
 
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", blockBoundsData);

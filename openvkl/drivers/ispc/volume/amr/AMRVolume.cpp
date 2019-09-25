@@ -198,9 +198,9 @@ namespace openvkl {
       return valueRange;
     }
 
-    VKL_REGISTER_VOLUME(AMRVolume<4>, amr_volume_4);
-    VKL_REGISTER_VOLUME(AMRVolume<8>, amr_volume_8);
-    VKL_REGISTER_VOLUME(AMRVolume<16>, amr_volume_16);
+    VKL_REGISTER_VOLUME(AMRVolume<4>, amr_4);
+    VKL_REGISTER_VOLUME(AMRVolume<8>, amr_8);
+    VKL_REGISTER_VOLUME(AMRVolume<16>, amr_16);
 
   }  // namespace ispc_driver
 }  // namespace openvkl

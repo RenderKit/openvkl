@@ -85,10 +85,12 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
   resetInterval(self->intervalState.currentInterval);
   self->intervalState.currentCellIndex = make_vec3i(-1);
 
-  // compute interval nominal deltaT based on gridSpacing and direction
-  const float l = length(self->direction);
+  // compute interval nominal deltaT based on gridSpacing and direction; the
+  // below is equivalent to: dot(abs(normalize(direction)), gridSpacing) /
+  // length(direction)
   self->intervalState.currentInterval.nominalDeltaT =
-      dot(absf(self->direction), self->volume->gridSpacing) / (l * l);
+      dot(absf(self->direction), self->volume->gridSpacing) /
+      dot(self->direction, self->direction);
 
   self->hitState.currentCellIndex  = make_vec3i(-1);
   self->hitState.currentCellTRange = make_box1f(inf, -inf);

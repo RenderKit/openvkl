@@ -64,7 +64,7 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
   }
 }
 
-TEST_CASE("AMR volume sampling", "[amr_volume_sampling]")
+TEST_CASE("AMR volume sampling", "[volume_sampling]")
 {
   vklLoadModule("ispc_driver");
 

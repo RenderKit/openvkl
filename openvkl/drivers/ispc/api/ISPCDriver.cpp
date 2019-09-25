@@ -759,9 +759,9 @@ namespace openvkl {
       }
     }
 
-    VKL_REGISTER_DRIVER(ISPCDriver<4>, ispc_driver_4)
-    VKL_REGISTER_DRIVER(ISPCDriver<8>, ispc_driver_8)
-    VKL_REGISTER_DRIVER(ISPCDriver<16>, ispc_driver_16)
+    VKL_REGISTER_DRIVER(ISPCDriver<4>, ispc_4)
+    VKL_REGISTER_DRIVER(ISPCDriver<8>, ispc_8)
+    VKL_REGISTER_DRIVER(ISPCDriver<16>, ispc_16)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

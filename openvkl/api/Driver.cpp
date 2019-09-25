@@ -51,7 +51,7 @@ namespace openvkl {
     {
       // special case for ISPC driver selection based on runtime native ISPC
       // vector width
-      const char *ispcDriverName = "ispc_driver";
+      const char *ispcDriverName = "ispc";
 
       if (strcmp(driverName, ispcDriverName) == 0) {
         int nativeIspcWidth = ispc::get_programCount();

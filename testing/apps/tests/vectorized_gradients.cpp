@@ -101,7 +101,7 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
 {
   vklLoadModule("ispc_driver");
 
-  VKLDriver driver = vklNewDriver("ispc_driver");
+  VKLDriver driver = vklNewDriver("ispc");
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 

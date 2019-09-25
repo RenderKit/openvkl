@@ -30,7 +30,7 @@ void initializeOpenVKL()
     ospcommon::loadLibrary("openvkl_module_ispc_driver", false);
     vklLoadModule("ispc_driver");
 
-    VKLDriver driver = vklNewDriver("ispc_driver");
+    VKLDriver driver = vklNewDriver("ispc");
     vklCommitDriver(driver);
     vklSetCurrentDriver(driver);
 

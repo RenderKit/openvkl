@@ -49,7 +49,7 @@ int main()
 
   vklCommit(volume);
 
-  ispc::demo_ispc((ispc::OpenVKLVolume *)volume);
+  ispc::demo_ispc(volume);
 
   vklShutdown();
 

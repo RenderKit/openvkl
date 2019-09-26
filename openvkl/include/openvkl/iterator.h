@@ -29,64 +29,64 @@ extern "C" {
 // Interval iterators /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-struct VKLIntervalIterator
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
-};
+} VKLIntervalIterator;
 
-struct VKLIntervalIterator4
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
-};
+} VKLIntervalIterator4;
 
-struct VKLIntervalIterator8
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
-};
+} VKLIntervalIterator8;
 
-struct VKLIntervalIterator16
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
-};
+} VKLIntervalIterator16;
 
-struct VKLInterval
+typedef struct
 {
   vkl_range1f tRange;
   vkl_range1f valueRange;
   float nominalDeltaT;
-};
+} VKLInterval;
 
-struct VKLInterval4
+typedef struct
 {
   vkl_vrange1f4 tRange;
   vkl_vrange1f4 valueRange;
   float nominalDeltaT[4];
-};
+} VKLInterval4;
 
-struct VKLInterval8
+typedef struct
 {
   vkl_vrange1f8 tRange;
   vkl_vrange1f8 valueRange;
   float nominalDeltaT[8];
-};
+} VKLInterval8;
 
-struct VKLInterval16
+typedef struct
 {
   vkl_vrange1f16 tRange;
   vkl_vrange1f16 valueRange;
   float nominalDeltaT[16];
-};
+} VKLInterval16;
 
 OPENVKL_INTERFACE
-void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
+void vklInitIntervalIterator(VKLIntervalIterator *iterator,
                              VKLVolume volume,
                              const vkl_vec3f *origin,
                              const vkl_vec3f *direction,
@@ -95,7 +95,7 @@ void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
 
 OPENVKL_INTERFACE
 void vklInitIntervalIterator4(const int *valid,
-                              struct VKLIntervalIterator4 *iterator,
+                              VKLIntervalIterator4 *iterator,
                               VKLVolume volume,
                               const vkl_vvec3f4 *origin,
                               const vkl_vvec3f4 *direction,
@@ -104,7 +104,7 @@ void vklInitIntervalIterator4(const int *valid,
 
 OPENVKL_INTERFACE
 void vklInitIntervalIterator8(const int *valid,
-                              struct VKLIntervalIterator8 *iterator,
+                              VKLIntervalIterator8 *iterator,
                               VKLVolume volume,
                               const vkl_vvec3f8 *origin,
                               const vkl_vvec3f8 *direction,
@@ -113,7 +113,7 @@ void vklInitIntervalIterator8(const int *valid,
 
 OPENVKL_INTERFACE
 void vklInitIntervalIterator16(const int *valid,
-                               struct VKLIntervalIterator16 *iterator,
+                               VKLIntervalIterator16 *iterator,
                                VKLVolume volume,
                                const vkl_vvec3f16 *origin,
                                const vkl_vvec3f16 *direction,
@@ -122,85 +122,84 @@ void vklInitIntervalIterator16(const int *valid,
 
 // returns true while the iterator is still within the volume
 OPENVKL_INTERFACE
-int vklIterateInterval(struct VKLIntervalIterator *iterator,
-                       struct VKLInterval *interval);
+int vklIterateInterval(VKLIntervalIterator *iterator, VKLInterval *interval);
 
 OPENVKL_INTERFACE
 void vklIterateInterval4(const int *valid,
-                         struct VKLIntervalIterator4 *iterator,
-                         struct VKLInterval4 *interval,
+                         VKLIntervalIterator4 *iterator,
+                         VKLInterval4 *interval,
                          int *result);
 
 OPENVKL_INTERFACE
 void vklIterateInterval8(const int *valid,
-                         struct VKLIntervalIterator8 *iterator,
-                         struct VKLInterval8 *interval,
+                         VKLIntervalIterator8 *iterator,
+                         VKLInterval8 *interval,
                          int *result);
 
 OPENVKL_INTERFACE
 void vklIterateInterval16(const int *valid,
-                          struct VKLIntervalIterator16 *iterator,
-                          struct VKLInterval16 *interval,
+                          VKLIntervalIterator16 *iterator,
+                          VKLInterval16 *interval,
                           int *result);
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hit iterators //////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-struct VKLHitIterator
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE];
   VKLVolume volume;
-};
+} VKLHitIterator;
 
-struct VKLHitIterator4
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_4)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE_4];
   VKLVolume volume;
-};
+} VKLHitIterator4;
 
-struct VKLHitIterator8
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_8)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE_8];
   VKLVolume volume;
-};
+} VKLHitIterator8;
 
-struct VKLHitIterator16
+typedef struct
 {
   VKL_ALIGN(ITERATOR_INTERNAL_STATE_ALIGNMENT_16)
   char internalState[ITERATOR_INTERNAL_STATE_SIZE_16];
   VKLVolume volume;
-};
+} VKLHitIterator16;
 
-struct VKLHit
+typedef struct
 {
   float t;
   float sample;
-};
+} VKLHit;
 
-struct VKLHit4
+typedef struct
 {
   float t[4];
   float sample[4];
-};
+} VKLHit4;
 
-struct VKLHit8
+typedef struct
 {
   float t[8];
   float sample[8];
-};
+} VKLHit8;
 
-struct VKLHit16
+typedef struct
 {
   float t[16];
   float sample[16];
-};
+} VKLHit16;
 
 OPENVKL_INTERFACE
-void vklInitHitIterator(struct VKLHitIterator *iterator,
+void vklInitHitIterator(VKLHitIterator *iterator,
                         VKLVolume volume,
                         const vkl_vec3f *origin,
                         const vkl_vec3f *direction,
@@ -209,7 +208,7 @@ void vklInitHitIterator(struct VKLHitIterator *iterator,
 
 OPENVKL_INTERFACE
 void vklInitHitIterator4(const int *valid,
-                         struct VKLHitIterator4 *iterator,
+                         VKLHitIterator4 *iterator,
                          VKLVolume volume,
                          const vkl_vvec3f4 *origin,
                          const vkl_vvec3f4 *direction,
@@ -218,7 +217,7 @@ void vklInitHitIterator4(const int *valid,
 
 OPENVKL_INTERFACE
 void vklInitHitIterator8(const int *valid,
-                         struct VKLHitIterator8 *iterator,
+                         VKLHitIterator8 *iterator,
                          VKLVolume volume,
                          const vkl_vvec3f8 *origin,
                          const vkl_vvec3f8 *direction,
@@ -227,7 +226,7 @@ void vklInitHitIterator8(const int *valid,
 
 OPENVKL_INTERFACE
 void vklInitHitIterator16(const int *valid,
-                          struct VKLHitIterator16 *iterator,
+                          VKLHitIterator16 *iterator,
                           VKLVolume volume,
                           const vkl_vvec3f16 *origin,
                           const vkl_vvec3f16 *direction,
@@ -236,24 +235,24 @@ void vklInitHitIterator16(const int *valid,
 
 // returns true while the iterator is still within the volume
 OPENVKL_INTERFACE
-int vklIterateHit(struct VKLHitIterator *iterator, struct VKLHit *hit);
+int vklIterateHit(VKLHitIterator *iterator, VKLHit *hit);
 
 OPENVKL_INTERFACE
 void vklIterateHit4(const int *valid,
-                    struct VKLHitIterator4 *iterator,
-                    struct VKLHit4 *hit,
+                    VKLHitIterator4 *iterator,
+                    VKLHit4 *hit,
                     int *result);
 
 OPENVKL_INTERFACE
 void vklIterateHit8(const int *valid,
-                    struct VKLHitIterator8 *iterator,
-                    struct VKLHit8 *hit,
+                    VKLHitIterator8 *iterator,
+                    VKLHit8 *hit,
                     int *result);
 
 OPENVKL_INTERFACE
 void vklIterateHit16(const int *valid,
-                     struct VKLHitIterator16 *iterator,
-                     struct VKLHit16 *hit,
+                     VKLHitIterator16 *iterator,
+                     VKLHit16 *hit,
                      int *result);
 
 #ifdef __cplusplus

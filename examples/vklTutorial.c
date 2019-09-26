@@ -51,7 +51,7 @@ void demoScalarAPI(VKLVolume volume)
   printf("\trayTRange = %f %f\n", rayTRange.lower, rayTRange.upper);
 
   // interval iteration
-  struct VKLIntervalIterator intervalIterator;
+  VKLIntervalIterator intervalIterator;
   vklInitIntervalIterator(&intervalIterator,
                           volume,
                           &rayOrigin,
@@ -66,7 +66,7 @@ void demoScalarAPI(VKLVolume volume)
          ranges[1].upper);
 
   for (;;) {
-    struct VKLInterval interval;
+    VKLInterval interval;
     int result = vklIterateInterval(&intervalIterator, &interval);
     if (!result)
       break;
@@ -80,14 +80,14 @@ void demoScalarAPI(VKLVolume volume)
   }
 
   // hit iteration
-  struct VKLHitIterator hitIterator;
+  VKLHitIterator hitIterator;
   vklInitHitIterator(
       &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
 
   printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
   for (;;) {
-    struct VKLHit hit;
+    VKLHit hit;
     int result = vklIterateHit(&hitIterator, &hit);
     if (!result)
       break;

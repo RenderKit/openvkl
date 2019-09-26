@@ -1,0 +1,524 @@
+Intel Open VKL
+==============
+
+To access the Open VKL API you first need to include the Open VKL header.
+For C99 or C++:
+
+    #include <openvkl/openvkl.h>
+
+For the Intel SPMD Program Compiler (ISPC):
+
+    #include <openvkl/openvkl.isph>
+
+This documentation will discuss the C99/C++ API.  The ISPC version has the same functionality and flavor.  Looking at the headers and this documentation should be enough to figure it out.
+
+Basic data types
+----------------
+
+Open VKL defines 3-component vectors of integer and vector types:
+
+    typedef struct
+    {
+      int x, y, z;
+    } vkl_vec3i;
+
+    typedef struct
+    {
+      float x, y, z;
+    } vkl_vec3f;
+
+Vector versions of these are also defined in structure-of-array format for 4, 8, and 16 wide types.
+
+      typedef struct 
+      {                                   
+        float x[WIDTH];                   
+        float y[WIDTH];                   
+        float z[WIDTH];                   
+      } vkl_vvec3f##WIDTH;               
+                                      
+      typedef struct                      
+      {                                   
+        float lower[WIDTH], upper[WIDTH]; 
+      } vkl_vrange1f##WIDTH;
+
+1-D range and 3-D ranges are defined as ranges and boxes, with no vector versions:
+
+    typedef struct
+    {
+      float lower, upper;
+    } vkl_range1f;
+
+    typedef struct
+    {
+      vkl_vec3f lower, upper;
+    } vkl_box3f;
+
+Object model
+------------
+
+Objects in Open VKL are exposed to the APIs as handles with internal reference counting for lifetime determination.  Objects are created with particular type's `vklNew...` API entry point.
+
+In general, modifyable parameters to objects are modified with string parameterized `vklSet<type>(<object>, <string parameter name>, ...)`.
+
+    void vklSetBool(VKLObject object, const char *name, int b);
+    void vklSetFloat(VKLObject object, const char *name, float x);
+    void vklSetVec3f(VKLObject object, const char *name, float x, float y, float z);
+    void vklSetInt(VKLObject object, const char *name, int x);
+    void vklSetVec3i(VKLObject object, const char *name, int x, int y, int z);
+    void vklSetData(VKLObject object, const char *name, VKLData data);
+    void vklSetString(VKLObject object, const char *name, const char *s);
+    void vklSetVoidPtr(VKLObject object, const char *name, void *v);
+
+The exception to this rule is the `VKLValueSelector` object (described in the iterators section below) which has object-specific set methods.  The reason for this is to align the C99/C++ API with the ISPC API, which can't use a parameter method due to language limitations.
+
+After parameters have been set, `vklCommit` must be called on the object to make them take effect.
+
+Managed data
+------------
+
+Large data is passed to Open VKL via a VKLData handle created with `vklNewData`:
+
+    VKLData vklNewData(size_t numItems,
+                        VKLDataType dataType,
+                        const void *source,
+                        VKLDataCreationFlags dataCreationFlags);
+
+Types accepted are listed in VKLDataType.h; basic types (UCHAR, INT, UINT, LONG, ULONG) exist as both scalar and chunked formats.  The types accepted vary per volume at the moment; read the volume section below for specifics.
+
+Data objects can be created as Open VKL owned (`VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its use, or shared (`VKL_DATA_SHARED_BUFFER`), which will try to use the passed pointer for usage.  The library is allowed to copy data when a volume is committed.
+
+Initialization and shutdown
+---------------------------
+
+To use the API, one of the implemented backends must be loaded.  Currently the only one that exists is the ISPC driver.  ISPC in the name here just refers to the implementation language -- it can also be used from the C99/C++ APIs.  To load the module that implements the ISPC driver:
+
+    vklLoadModule("ispc_driver");
+
+The driver then needs to be selected:
+
+    VKLDriver driver = vklNewDriver("ispc");
+    vklCommitDriver(driver);
+    vklSetCurrentDriver(driver);
+
+When the application is finished with Open VKL or shutting down, call the shutdown function:
+
+    vklShutdown();
+
+Volume types
+------------
+
+Open VKL currently supports structured regular volumes (with user specified spacing on axises); unstructured volumes with tetrahedral, wedge, pyramid, and hexaderal primitive types; and adapteive mesh refinement (AMR) volumes.  These volumes are created with `vlkNewVolume` with the appropriate type string.
+
+In addition to the usual `vklSet...()` and `vklCommit()` APIs, the volume bounding box can be queried:
+
+    vkl_box3f vklGetBoundingBox(VKLVolume volume);
+
+### Structured Volume
+
+Structured volumes only need to store the values of the samples, because
+their addresses in memory can be easily computed from a 3D position. A
+common type of structured volumes are regular grids.  Structured grids are created by passing a type string of `"structured_regular"` to `vklNewVolume`.
+
+The  parameters understood by structured volumes are
+summarized in the table below.
+
+  ------ ----------- -------------  -----------------------------------
+  Type   Name            Default    Description
+  ------ ----------- -------------  -----------------------------------
+  vec3i  dimensions  $(128,128,128) number of voxels in each
+                                    dimension $(x, y, z)$
+
+  data   voxelData                  VKLData object of voxel data,
+                                    supported types are:
+                                    
+                                    `VKL_UCHAR`
+
+                                    `VKL_SHORT`
+
+                                    `VKL_USHORT`
+
+                                    `VKL_FLOAT`
+
+                                    `VKL_DOUBLE`
+
+  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in world-space
+
+  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in
+                                    world-space
+  ------ ----------- -------------  -----------------------------------
+  : Additional configuration parameters for structured volumes.
+
+### Adaptive Mesh Refinement (AMR) Volume
+
+AMR volumes are specified as a list of blocks, which are levels of
+refinement in potentially overlapping regions. There can be any number
+of refinement levels and any number of blocks at any level of
+refinement. An AMR volume type is created by passing the type string
+`"amr"` to `vklNewVolume`.
+
+Blocks are defined by four parameters: their bounds, the refinement level
+in which they reside, their cell width, and the scalar data contained
+within them.
+
+  -------------- --------------- -----------------  -----------------------------------
+  Type           Name                      Default  Description
+  -------------- --------------- -----------------  -----------------------------------
+  range2f        voxelRange              $(∞, -∞)$  minimum and maximum of the scalar
+                                                    values
+
+  `OSPAMRMethod` method          `OSP_AMR_CURRENT`  `OSPAMRMethod` sampling method.
+                                                    Supported methods are:
+
+                                                    `OSP_AMR_CURRENT`
+
+                                                    `OSP_AMR_FINEST`
+
+                                                    `OSP_AMR_OCTANT`
+
+  box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
+                                                    block
+
+  int[]          block.level                  NULL  array of each block's refinement
+                                                    level
+
+  float[]        block.cellWidth              NULL  array of each block's cell width
+
+  OSPData[]      block.data                   NULL  [data] array of OSPData containing
+                                                    the actual scalar voxel data
+
+  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
+
+  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
+                                                    world-space
+
+  string         voxelType               undefined  data type of each voxel,
+                                                    currently supported are:
+
+                                                    `OSP_UCHAR`
+
+                                                    `OSP_SHORT`
+
+                                                    `OSP_USHORT`
+
+                                                    `OSP_FLOAT`
+
+                                                    `OSP_DOUBLE`
+  -------------- --------------- -----------------  -----------------------------------
+  : Additional configuration parameters for AMR volumes.
+
+Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
+like the structured volume equivalent, but they only modify the root
+(coarsest level) of refinement.
+
+### Unstructured Volumes
+
+Unstructured volumes can have their topology and geometry freely defined.
+Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid cell
+types. The data format used is compatible with VTK and consists of multiple
+arrays: vertex positions and values, vertex indices, cell start indices,
+cell types, and cell values. An unstructured volume type is created by
+passing the type string `"unstructured_volume"` to `vklNewVolume`.
+
+Sampled cell values can be specified either per-vertex (`vertex.value`)
+or per-cell (`cell.value`). If both arrays are set, `cell.value` takes
+precedence.
+
+Similar to a mesh, each cell is formed by a group of indices into the
+vertices. For each vertex, the corresponding (by array index) data value
+will be used for sampling when rendering, if specified. The index order
+for a tetrahedron is the same as `VTK_TETRA`: bottom triangle
+counterclockwise, then the top vertex.
+
+For hexahedral cells, each hexahedron is formed by a group of eight
+indices into the vertices and data values. Vertex ordering is the same as
+`VTK_HEXAHEDRON`: four bottom vertices counterclockwise, then top four
+counterclockwise.
+
+For wedge cells, each wedge is formed by a group of six indices into the
+vertices and data values. Vertex ordering is the same as `VTK_WEDGE`:
+three bottom vertices counterclockwise, then top three counterclockwise.
+
+For pyramid cells, each cell is formed by a group of five indices into the
+vertices and data values. Vertex ordering is the same as `VTK_PYRAMID`:
+four bottom vertices counterclockwise, then the top vertex.
+
+To maintain VTK data compatibility an index array may be specified via
+`indexPrefixed` array that allow vertex indices to be interleaved with
+cell sizes in the following format: $n, id_1, ..., id_n, m, id_1, ...,
+id_m$.
+
+  -------------------  ------------------  --------  ---------------------------------------
+  Type                 Name                Default   Description
+  -------------------  ------------------  --------  ---------------------------------------
+  vec3f[]              vertex.position               [data] array of vertex positions
+
+  float[]              vertex.value                  [data] array of vertex data values to
+                                                     be sampled
+
+  uint32[] / uint64[]  index                         [data] array of indices (into the
+                                                     vertex array(s)) that form cells
+
+  uint32[] / uint64[]  indexPrefixed                 alternative [data] array of indices
+                                                     compatible to VTK, where the indices of
+                                                     each cell are prefixed with the number
+                                                     of vertices
+
+  uint32[] / uint64[]  cell                          [data] array of locations (into the
+                                                     index array), specifying the first index
+                                                     of each cell
+
+  float[]              cell.value                    [data] array of cell data values to be
+                                                     sampled
+
+  uint8[]              cell.type                     [data] array of cell types
+                                                     (VTK compatible). Supported types are:
+
+                                                     `VKL_TETRAHEDRON`
+
+                                                     `VKL_HEXAHEDRON`
+
+                                                     `VKL_WEDGE`
+
+                                                     `VKL_PYRAMID`
+
+  bool                 hexIterative           false  hexahedron
+                                                     interpolation method, defaults to fast
+                                                     non-iterative version which could have
+                                                     rendering inaccuracies may appear
+                                                     if hex is not parallelepiped
+
+  bool                 precomputedNormals      true  whether to accelerate by precomputing,
+                                                     at a cost of 12 bytes/face
+  -------------------  ------------------  --------  ---------------------------------------
+  : Additional configuration parameters for unstructured volumes.
+
+
+Sampling
+--------
+
+Computing the value of a volume at an object space coordinate is done using the sampling API.  NaN is returned for probe point(s) outside the volume.
+
+The scalar API just takes a volume and coordinate, and returns a float value.
+
+    float vklComputeSample(VKLVolume volume, const vkl_vec3f *objectCoordinates);
+
+Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on the machine type and Open VKL driver implementation, these can give greater performance.  An active lane mask is passed in as an array of integers; set 0 for lanes to be ignored, -1 for active lanes.
+
+    void vklComputeSample4(const int *valid,
+                           VKLVolume volume,
+                           const vkl_vvec3f4 *objectCoordinates,
+                           float *samples);
+
+    void vklComputeSample8(const int *valid,
+                           VKLVolume volume,
+                           const vkl_vvec3f8 *objectCoordinates,
+                           float *samples);
+
+    void vklComputeSample16(const int *valid,
+                            VKLVolume volume,
+                            const vkl_vvec3f16 *objectCoordinates,
+                            float *samples);
+
+Gradients
+---------
+
+In a very similar API to `vlkComputeSample`, `vlkComputeGradient` queries the value gradient at an object space coordinate.  Again, a scalar API, now returning a vec3f instead of a float.
+
+    vkl_vec3f vklComputeGradient(VKLVolume volume,
+                                 const vkl_vec3f *objectCoordinates);
+                                 
+Vector versions are also provided:
+
+    void vklComputeGradient4(const int *valid,
+                             VKLVolume volume,
+                             const vkl_vvec3f4 *objectCoordinates,
+                             vkl_vvec3f4 *gradients);
+
+    void vklComputeGradient8(const int *valid,
+                             VKLVolume volume,
+                             const vkl_vvec3f8 *objectCoordinates,
+                             vkl_vvec3f8 *gradients);
+
+    void vklComputeGradient16(const int *valid,
+                              VKLVolume volume,
+                              const vkl_vvec3f16 *objectCoordinates,
+                              vkl_vvec3f16 *gradients);
+
+*** outside cell value?
+
+Iterators
+---------
+
+Open VKL has APIs to search for particular volume values along a ray.  Queries can be for ranges of volume values (`vklIterateInterval`) or for particular values (`vklIterateHit`).  The desired values are set in a `VKLValueSelector`, which needs to be created, filled in with values, and then committed.
+
+    VKLValueSelector vklNewValueSelector(VKLVolume volume);
+
+    void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
+                                   size_t numRanges,
+                                   const vkl_range1f *ranges);
+
+    void vklValueSelectorSetValues(VKLValueSelector valueSelector,
+                                   size_t numValues,
+                                   const float *values);
+                                   
+To query an interval, a `VKLIntervalIterator` of the right scalar or vector width must be initialized with `vklInitIntervalIterator`.  The iterator structure is allocated and belongs to the caller, and initialized by the following functions.
+
+    void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
+                                 VKLVolume volume,
+                                 const vkl_vec3f *origin,
+                                 const vkl_vec3f *direction,
+                                 const vkl_range1f *tRange,
+                                 VKLValueSelector valueSelector);
+
+    void vklInitIntervalIterator4(const int *valid,
+                                  struct VKLIntervalIterator4 *iterator,
+                                  VKLVolume volume,
+                                  const vkl_vvec3f4 *origin,
+                                  const vkl_vvec3f4 *direction,
+                                  const vkl_vrange1f4 *tRange,
+                                  VKLValueSelector valueSelector);
+
+    void vklInitIntervalIterator8(const int *valid,
+                                  struct VKLIntervalIterator8 *iterator,
+                                  VKLVolume volume,
+                                  const vkl_vvec3f8 *origin,
+                                  const vkl_vvec3f8 *direction,
+                                  const vkl_vrange1f8 *tRange,
+                                  VKLValueSelector valueSelector);
+
+    void vklInitIntervalIterator16(const int *valid,
+                                   struct VKLIntervalIterator16 *iterator,
+                                   VKLVolume volume,
+                                   const vkl_vvec3f16 *origin,
+                                   const vkl_vvec3f16 *direction,
+                                   const vkl_vrange1f16 *tRange,
+                                   VKLValueSelector valueSelector);
+
+Intervals can then be procesed by calling `vklIterateInterval` as long as the returned lane masks indicates that the iterator is still within the volume:
+
+    int vklIterateInterval(struct VKLIntervalIterator *iterator,
+                           struct VKLInterval *interval);
+
+    void vklIterateInterval4(const int *valid,
+                             struct VKLIntervalIterator4 *iterator,
+                             struct VKLInterval4 *interval,
+                             int *result);
+
+    void vklIterateInterval8(const int *valid,
+                             struct VKLIntervalIterator8 *iterator,
+                             struct VKLInterval8 *interval,
+                             int *result);
+
+    void vklIterateInterval16(const int *valid,
+                              struct VKLIntervalIterator16 *iterator,
+                              struct VKLInterval16 *interval,
+                              int *result);
+                              
+The intervals returned have a t-value range, a value range, and a nominalDeltaT which is approximately the step size that should be used to walk through the interval, if desired.  The number and length of intervals returned is volume type implementation dependent.  There is currently no way of requesting a particular splitting.
+
+    struct VKLInterval
+    {
+      vkl_range1f tRange;
+      vkl_range1f valueRange;
+      float nominalDeltaT;
+    };
+
+    struct VKLInterval4
+    {
+      vkl_vrange1f4 tRange;
+      vkl_vrange1f4 valueRange;
+      float nominalDeltaT[4];
+    };
+
+    struct VKLInterval8
+    {
+      vkl_vrange1f8 tRange;
+      vkl_vrange1f8 valueRange;
+      float nominalDeltaT[8];
+    };
+
+    struct VKLInterval16
+    {
+      vkl_vrange1f16 tRange;
+      vkl_vrange1f16 valueRange;
+      float nominalDeltaT[16];
+    };
+    
+Querying for particular values are done using a `VKLHitIterator` in much the same fashion.  This API could be used, for example, to find isosurfaces.  Again, a user allocated `VKLHitIterator` of the desired width must be initialized:
+  
+    void vklInitHitIterator(struct VKLHitIterator *iterator,
+                            VKLVolume volume,
+                            const vkl_vec3f *origin,
+                            const vkl_vec3f *direction,
+                            const vkl_range1f *tRange,
+                            VKLValueSelector valueSelector);
+
+    void vklInitHitIterator4(const int *valid,
+                             struct VKLHitIterator4 *iterator,
+                             VKLVolume volume,
+                             const vkl_vvec3f4 *origin,
+                             const vkl_vvec3f4 *direction,
+                             const vkl_vrange1f4 *tRange,
+                             VKLValueSelector valueSelector);
+                         
+    void vklInitHitIterator8(const int *valid,
+                             struct VKLHitIterator8 *iterator,
+                             VKLVolume volume,
+                             const vkl_vvec3f8 *origin,
+                             const vkl_vvec3f8 *direction,
+                             const vkl_vrange1f8 *tRange,
+                             VKLValueSelector valueSelector);
+
+    void vklInitHitIterator16(const int *valid,
+                              struct VKLHitIterator16 *iterator,
+                              VKLVolume volume,
+                              const vkl_vvec3f16 *origin,
+                              const vkl_vvec3f16 *direction,
+                              const vkl_vrange1f16 *tRange,
+                              VKLValueSelector valueSelector);
+                              
+Hits are then queried by looping a call to `vklIterateHit` as long as the returned lane mask indicates that the iterator is still within the volume.
+
+    int vklIterateHit(struct VKLHitIterator *iterator, struct VKLHit *hit);
+
+    void vklIterateHit4(const int *valid,
+                        struct VKLHitIterator4 *iterator,
+                        struct VKLHit4 *hit,
+                        int *result);
+
+    void vklIterateHit8(const int *valid,
+                        struct VKLHitIterator8 *iterator,
+                        struct VKLHit8 *hit,
+                        int *result);
+
+    void vklIterateHit16(const int *valid,
+                         struct VKLHitIterator16 *iterator,
+                         struct VKLHit16 *hit,
+                         int *result);
+                         
+Returned hits consist of the t-value and volume value at that location:
+
+    struct VKLHit
+    {
+      float t;
+      float sample;
+    };
+
+    struct VKLHit4
+    {
+      float t[4];
+      float sample[4];
+    };
+
+    struct VKLHit8
+    {
+      float t[8];
+      float sample[8];
+    };
+
+    struct VKLHit16
+    {
+      float t[16];
+      float sample[16];
+    };
+    

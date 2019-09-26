@@ -10,7 +10,7 @@ For the Intel SPMD Program Compiler (ISPC):
 
     #include <openvkl/openvkl.isph>
 
-This documentation will discuss the C99/C++ API.  The ISPC version has the same functionality and flavor.  Looking at the headers and this documentation should be enough to figure it out.
+This documentation will discuss the C99/C++ API.  The ISPC version has the same functionality and flavor.  Looking at the headers, the vklTutorialISPC example, and this documentation should be enough to figure it out.
 
 Basic data types
 ----------------
@@ -363,7 +363,7 @@ Open VKL has APIs to search for particular volume values along a ray.  Queries c
                                    
 To query an interval, a `VKLIntervalIterator` of the right scalar or vector width must be initialized with `vklInitIntervalIterator`.  The iterator structure is allocated and belongs to the caller, and initialized by the following functions.
 
-    void vklInitIntervalIterator(struct VKLIntervalIterator *iterator,
+    void vklInitIntervalIterator(VKLIntervalIterator *iterator,
                                  VKLVolume volume,
                                  const vkl_vec3f *origin,
                                  const vkl_vec3f *direction,
@@ -371,7 +371,7 @@ To query an interval, a `VKLIntervalIterator` of the right scalar or vector widt
                                  VKLValueSelector valueSelector);
 
     void vklInitIntervalIterator4(const int *valid,
-                                  struct VKLIntervalIterator4 *iterator,
+                                  VKLIntervalIterator4 *iterator,
                                   VKLVolume volume,
                                   const vkl_vvec3f4 *origin,
                                   const vkl_vvec3f4 *direction,
@@ -379,7 +379,7 @@ To query an interval, a `VKLIntervalIterator` of the right scalar or vector widt
                                   VKLValueSelector valueSelector);
 
     void vklInitIntervalIterator8(const int *valid,
-                                  struct VKLIntervalIterator8 *iterator,
+                                  VKLIntervalIterator8 *iterator,
                                   VKLVolume volume,
                                   const vkl_vvec3f8 *origin,
                                   const vkl_vvec3f8 *direction,
@@ -387,7 +387,7 @@ To query an interval, a `VKLIntervalIterator` of the right scalar or vector widt
                                   VKLValueSelector valueSelector);
 
     void vklInitIntervalIterator16(const int *valid,
-                                   struct VKLIntervalIterator16 *iterator,
+                                   VKLIntervalIterator16 *iterator,
                                    VKLVolume volume,
                                    const vkl_vvec3f16 *origin,
                                    const vkl_vvec3f16 *direction,
@@ -396,57 +396,57 @@ To query an interval, a `VKLIntervalIterator` of the right scalar or vector widt
 
 Intervals can then be procesed by calling `vklIterateInterval` as long as the returned lane masks indicates that the iterator is still within the volume:
 
-    int vklIterateInterval(struct VKLIntervalIterator *iterator,
-                           struct VKLInterval *interval);
+    int vklIterateInterval(VKLIntervalIterator *iterator,
+                           VKLInterval *interval);
 
     void vklIterateInterval4(const int *valid,
-                             struct VKLIntervalIterator4 *iterator,
-                             struct VKLInterval4 *interval,
+                             VKLIntervalIterator4 *iterator,
+                             VKLInterval4 *interval,
                              int *result);
 
     void vklIterateInterval8(const int *valid,
-                             struct VKLIntervalIterator8 *iterator,
-                             struct VKLInterval8 *interval,
+                             VKLIntervalIterator8 *iterator,
+                             VKLInterval8 *interval,
                              int *result);
 
     void vklIterateInterval16(const int *valid,
-                              struct VKLIntervalIterator16 *iterator,
-                              struct VKLInterval16 *interval,
+                              VKLIntervalIterator16 *iterator,
+                              VKLInterval16 *interval,
                               int *result);
                               
 The intervals returned have a t-value range, a value range, and a nominalDeltaT which is approximately the step size that should be used to walk through the interval, if desired.  The number and length of intervals returned is volume type implementation dependent.  There is currently no way of requesting a particular splitting.
 
-    struct VKLInterval
+    typedef struct
     {
       vkl_range1f tRange;
       vkl_range1f valueRange;
       float nominalDeltaT;
-    };
+    } VKLInterval;
 
-    struct VKLInterval4
+    typedef struct
     {
       vkl_vrange1f4 tRange;
       vkl_vrange1f4 valueRange;
       float nominalDeltaT[4];
-    };
+    } VKLInterval4;
 
-    struct VKLInterval8
+    typedef struct
     {
       vkl_vrange1f8 tRange;
       vkl_vrange1f8 valueRange;
       float nominalDeltaT[8];
-    };
+    } VKLInterval8;
 
-    struct VKLInterval16
+    typedef struct
     {
       vkl_vrange1f16 tRange;
       vkl_vrange1f16 valueRange;
       float nominalDeltaT[16];
-    };
+    } VKLInterval16;
     
 Querying for particular values are done using a `VKLHitIterator` in much the same fashion.  This API could be used, for example, to find isosurfaces.  Again, a user allocated `VKLHitIterator` of the desired width must be initialized:
   
-    void vklInitHitIterator(struct VKLHitIterator *iterator,
+    void vklInitHitIterator(VKLHitIterator *iterator,
                             VKLVolume volume,
                             const vkl_vec3f *origin,
                             const vkl_vec3f *direction,
@@ -454,7 +454,7 @@ Querying for particular values are done using a `VKLHitIterator` in much the sam
                             VKLValueSelector valueSelector);
 
     void vklInitHitIterator4(const int *valid,
-                             struct VKLHitIterator4 *iterator,
+                             VKLHitIterator4 *iterator,
                              VKLVolume volume,
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
@@ -462,7 +462,7 @@ Querying for particular values are done using a `VKLHitIterator` in much the sam
                              VKLValueSelector valueSelector);
                          
     void vklInitHitIterator8(const int *valid,
-                             struct VKLHitIterator8 *iterator,
+                             VKLHitIterator8 *iterator,
                              VKLVolume volume,
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
@@ -470,7 +470,7 @@ Querying for particular values are done using a `VKLHitIterator` in much the sam
                              VKLValueSelector valueSelector);
 
     void vklInitHitIterator16(const int *valid,
-                              struct VKLHitIterator16 *iterator,
+                              VKLHitIterator16 *iterator,
                               VKLVolume volume,
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
@@ -479,46 +479,46 @@ Querying for particular values are done using a `VKLHitIterator` in much the sam
                               
 Hits are then queried by looping a call to `vklIterateHit` as long as the returned lane mask indicates that the iterator is still within the volume.
 
-    int vklIterateHit(struct VKLHitIterator *iterator, struct VKLHit *hit);
+    int vklIterateHit(VKLHitIterator *iterator, VKLHit *hit);
 
     void vklIterateHit4(const int *valid,
-                        struct VKLHitIterator4 *iterator,
-                        struct VKLHit4 *hit,
+                        VKLHitIterator4 *iterator,
+                        VKLHit4 *hit,
                         int *result);
 
     void vklIterateHit8(const int *valid,
-                        struct VKLHitIterator8 *iterator,
-                        struct VKLHit8 *hit,
+                        VKLHitIterator8 *iterator,
+                        VKLHit8 *hit,
                         int *result);
 
     void vklIterateHit16(const int *valid,
-                         struct VKLHitIterator16 *iterator,
-                         struct VKLHit16 *hit,
+                         VKLHitIterator16 *iterator,
+                         VKLHit16 *hit,
                          int *result);
                          
 Returned hits consist of the t-value and volume value at that location:
 
-    struct VKLHit
+    typedef struct
     {
       float t;
       float sample;
-    };
+    } VKLHit;
 
-    struct VKLHit4
+    typedef struct
     {
       float t[4];
       float sample[4];
-    };
+    } VKLHit4;
 
-    struct VKLHit8
+    typedef struct
     {
       float t[8];
       float sample[8];
-    };
+    } VKLHit8;
 
-    struct VKLHit16
+    typedef struct
     {
       float t[16];
       float sample[16];
-    };
+    } VKLHit16;
     

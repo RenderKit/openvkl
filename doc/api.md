@@ -29,16 +29,16 @@ Open VKL defines 3-component vectors of integer and vector types:
 
 Vector versions of these are also defined in structure-of-array format for 4, 8, and 16 wide types.
 
-      typedef struct 
-      {                                   
-        float x[WIDTH];                   
-        float y[WIDTH];                   
-        float z[WIDTH];                   
-      } vkl_vvec3f##WIDTH;               
-                                      
-      typedef struct                      
-      {                                   
-        float lower[WIDTH], upper[WIDTH]; 
+      typedef struct
+      {
+        float x[WIDTH];
+        float y[WIDTH];
+        float z[WIDTH];
+      } vkl_vvec3f##WIDTH;
+
+      typedef struct
+      {
+        float lower[WIDTH], upper[WIDTH];
       } vkl_vrange1f##WIDTH;
 
 1-D range and 3-D ranges are defined as ranges and boxes, with no vector versions:
@@ -79,9 +79,9 @@ Managed data
 Large data is passed to Open VKL via a VKLData handle created with `vklNewData`:
 
     VKLData vklNewData(size_t numItems,
-                        VKLDataType dataType,
-                        const void *source,
-                        VKLDataCreationFlags dataCreationFlags);
+                       VKLDataType dataType,
+                       const void *source,
+                       VKLDataCreationFlags dataCreationFlags);
 
 Types accepted are listed in VKLDataType.h; basic types (UCHAR, INT, UINT, LONG, ULONG) exist as both scalar and chunked formats.  The types accepted vary per volume at the moment; read the volume section below for specifics.
 
@@ -125,12 +125,12 @@ summarized in the table below.
   ------ ----------- -------------  -----------------------------------
   Type   Name            Default    Description
   ------ ----------- -------------  -----------------------------------
-  vec3i  dimensions  $(128,128,128) number of voxels in each
+  vec3i  dimensions                 number of voxels in each
                                     dimension $(x, y, z)$
 
   data   voxelData                  VKLData object of voxel data,
                                     supported types are:
-                                    
+
                                     `VKL_UCHAR`
 
                                     `VKL_SHORT`
@@ -163,9 +163,6 @@ within them.
   -------------- --------------- -----------------  -----------------------------------
   Type           Name                      Default  Description
   -------------- --------------- -----------------  -----------------------------------
-  range2f        voxelRange              $(∞, -∞)$  minimum and maximum of the scalar
-                                                    values
-
   `OSPAMRMethod` method          `OSP_AMR_CURRENT`  `OSPAMRMethod` sampling method.
                                                     Supported methods are:
 
@@ -190,19 +187,6 @@ within them.
 
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
-
-  string         voxelType               undefined  data type of each voxel,
-                                                    currently supported are:
-
-                                                    `OSP_UCHAR`
-
-                                                    `OSP_SHORT`
-
-                                                    `OSP_USHORT`
-
-                                                    `OSP_FLOAT`
-
-                                                    `OSP_DOUBLE`
   -------------- --------------- -----------------  -----------------------------------
   : Additional configuration parameters for AMR volumes.
 
@@ -326,7 +310,7 @@ In a very similar API to `vlkComputeSample`, `vlkComputeGradient` queries the va
 
     vkl_vec3f vklComputeGradient(VKLVolume volume,
                                  const vkl_vec3f *objectCoordinates);
-                                 
+
 Vector versions are also provided:
 
     void vklComputeGradient4(const int *valid,
@@ -360,7 +344,7 @@ Open VKL has APIs to search for particular volume values along a ray.  Queries c
     void vklValueSelectorSetValues(VKLValueSelector valueSelector,
                                    size_t numValues,
                                    const float *values);
-                                   
+
 To query an interval, a `VKLIntervalIterator` of the right scalar or vector width must be initialized with `vklInitIntervalIterator`.  The iterator structure is allocated and belongs to the caller, and initialized by the following functions.
 
     void vklInitIntervalIterator(VKLIntervalIterator *iterator,
@@ -413,7 +397,7 @@ Intervals can then be procesed by calling `vklIterateInterval` as long as the re
                               VKLIntervalIterator16 *iterator,
                               VKLInterval16 *interval,
                               int *result);
-                              
+
 The intervals returned have a t-value range, a value range, and a nominalDeltaT which is approximately the step size that should be used to walk through the interval, if desired.  The number and length of intervals returned is volume type implementation dependent.  There is currently no way of requesting a particular splitting.
 
     typedef struct
@@ -443,9 +427,9 @@ The intervals returned have a t-value range, a value range, and a nominalDeltaT 
       vkl_vrange1f16 valueRange;
       float nominalDeltaT[16];
     } VKLInterval16;
-    
+
 Querying for particular values are done using a `VKLHitIterator` in much the same fashion.  This API could be used, for example, to find isosurfaces.  Again, a user allocated `VKLHitIterator` of the desired width must be initialized:
-  
+
     void vklInitHitIterator(VKLHitIterator *iterator,
                             VKLVolume volume,
                             const vkl_vec3f *origin,
@@ -460,7 +444,7 @@ Querying for particular values are done using a `VKLHitIterator` in much the sam
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
                              VKLValueSelector valueSelector);
-                         
+
     void vklInitHitIterator8(const int *valid,
                              VKLHitIterator8 *iterator,
                              VKLVolume volume,
@@ -476,7 +460,7 @@ Querying for particular values are done using a `VKLHitIterator` in much the sam
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
                               VKLValueSelector valueSelector);
-                              
+
 Hits are then queried by looping a call to `vklIterateHit` as long as the returned lane mask indicates that the iterator is still within the volume.
 
     int vklIterateHit(VKLHitIterator *iterator, VKLHit *hit);
@@ -495,7 +479,7 @@ Hits are then queried by looping a call to `vklIterateHit` as long as the return
                          VKLHitIterator16 *iterator,
                          VKLHit16 *hit,
                          int *result);
-                         
+
 Returned hits consist of the t-value and volume value at that location:
 
     typedef struct
@@ -521,4 +505,3 @@ Returned hits consist of the t-value and volume value at that location:
       float t[16];
       float sample[16];
     } VKLHit16;
-    

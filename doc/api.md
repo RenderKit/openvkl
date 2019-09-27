@@ -275,7 +275,7 @@ implementation [3].
    D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz, T.D. Sternberg
    and B. Van Straalen, Chombo Software Package for AMR Applications - Design
    Document,  Lawrence Berkeley National Laboratory Technical Report
-   LBNL-6616E.  
+   LBNL-6616E.
 3. I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering of
    adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on Visualization
    on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305

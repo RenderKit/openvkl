@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-webpages := $(addprefix www/, $(addsuffix .html, index documentation related_projects legal))
+webpages := $(addprefix www/, $(addsuffix .html, index documentation examples related_projects legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, readme_head))
 
 PANDOC := pandoc
@@ -60,6 +60,7 @@ tmp/api_html.md: api.md tmp/links.md
 
 www/index.html: overview.md changelog.md support.md
 www/documentation.html: tmp/api_html.md
+www/examples.html: examples.md
 www/related_projects.html: related_projects.md
 www/legal.html: legal.md
 
@@ -73,7 +74,7 @@ convert_image_alt_to_caption = perl -0pe 's/!\[((?:\[.*?\]|.)+?)\]\((.*?)\)/![]\
 tmp/api.md: api.md tmp/links.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md tmp/api.md tmp/links.md
+../README.md: tmp/readme_head.md overview.md changelog.md support.md tmp/api.md examples.md related_projects.md tmp/links.md
 	$(PANDOC) $+ -t gfm | $(convert_image_alt_to_caption) > $@
 
 ## ----------------------------------------------------------------------------

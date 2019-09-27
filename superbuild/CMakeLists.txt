@@ -49,7 +49,7 @@ else()
   set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 endif()
 
-set(BUILD_OSPCOMMON_VERSION "master" CACHE STRING "Which version of ospcommon to build?")
+set(BUILD_OSPCOMMON_VERSION "1.0.1" CACHE STRING "Which version of ospcommon to build?")
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 
@@ -61,7 +61,7 @@ option(INSTALL_IN_SEPARATE_DIRECTORIES
 option(BUILD_GLFW "Build glfw for examples or use one in existing environment?" ON)
 
 option(BUILD_OPENVKL_TESTING "Enable testing targets when building OpenVKL" ON)
-option(BUILD_OPENVKL_BENCHMARKS "Enable benchmark targets when building OpenVKL" ON)
+option(BUILD_OPENVKL_BENCHMARKS "Enable benchmark targets when building OpenVKL" OFF)
 
 ## Setup top-level variables ##
 

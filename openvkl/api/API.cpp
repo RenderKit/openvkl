@@ -38,14 +38,6 @@ inline std::string getPidString()
   return s;
 }
 
-void postTraceMessage(const std::string &message)
-{
-  if (openvkl::api::driverIsSet()) {
-    openvkl::api::currentDriver().traceFunction(
-        (TRACE_PREFIX + message + '\n').c_str());
-  }
-}
-
 #define ASSERT_DRIVER()                         \
   if (!openvkl::api::driverIsSet())             \
     throw std::runtime_error(                   \
@@ -70,16 +62,6 @@ void postTraceMessage(const std::string &message)
 // convenience macros for repeated use of the above
 #define THROW_IF_NULL_OBJECT(obj) THROW_IF_NULL(obj, "handle")
 #define THROW_IF_NULL_STRING(str) THROW_IF_NULL(str, "string")
-
-#ifndef _WIN32
-#warning API tracing disabled
-#endif
-
-#define OPENVKL_CATCH_BEGIN_TRACE          \
-  try {                                    \
-    auto *fcn_name_ = __PRETTY_FUNCTION__; \
-    ospcommon::utility::OnScopeExit guard( \
-        [&]() { postTraceMessage(fcn_name_); });
 
 #define OPENVKL_CATCH_BEGIN try {
 #define OPENVKL_CATCH_END(a)                                       \

@@ -11,8 +11,35 @@ For the Intel SPMD Program Compiler (ISPC):
     #include <openvkl/openvkl.isph>
 
 This documentation will discuss the C99/C++ API.  The ISPC version has the same
-functionality and flavor.  Looking at the headers, the vklTutorialISPC example,
-and this documentation should be enough to figure it out.
+functionality and flavor.  Looking at the headers, the `vklTutorialISPC`
+example, and this documentation should be enough to figure it out.
+
+Initialization and shutdown
+---------------------------
+
+To use the API, one of the implemented backends must be loaded.  Currently the
+only one that exists is the ISPC driver.  ISPC in the name here just refers to
+the implementation language -- it can also be used from the C99/C++ APIs.  To
+load the module that implements the ISPC driver:
+
+    vklLoadModule("ispc_driver");
+
+The driver then needs to be selected:
+
+    VKLDriver driver = vklNewDriver("ispc");
+    vklCommitDriver(driver);
+    vklSetCurrentDriver(driver);
+
+Open VKL provides vector-wide versions for several APIs. To determine the native
+vector width for the given driver, call:
+
+    int width = vklGetNativeSIMDWidth();
+
+When the application is finished with Open VKL or shutting down, call the
+shutdown function:
+
+    vklShutdown();
+
 
 Basic data types
 ----------------
@@ -62,10 +89,11 @@ Object model
 
 Objects in Open VKL are exposed to the APIs as handles with internal reference
 counting for lifetime determination.  Objects are created with particular type's
-`vklNew...` API entry point.
+`vklNew...` API entry point. For example, `vklNewData` and `vklNewVolume`.
 
-In general, modifyable parameters to objects are modified with string
-parameterized `vklSet<type>(<object>, <string parameter name>, ...)`.
+In general, modifiable parameters to objects are modified using `vklSet...`
+functions based on the type of the parameter being set. The parameter name is
+passed as a string. Below are all variants of `vklSet...`.
 
     void vklSetBool(VKLObject object, const char *name, int b);
     void vklSetFloat(VKLObject object, const char *name, float x);
@@ -77,69 +105,47 @@ parameterized `vklSet<type>(<object>, <string parameter name>, ...)`.
     void vklSetVoidPtr(VKLObject object, const char *name, void *v);
 
 The exception to this rule is the `VKLValueSelector` object (described in the
-iterators section below) which has object-specific set methods.  The reason for
+iterators section below), which has object-specific set methods.  The reason for
 this is to align the C99/C++ API with the ISPC API, which can't use a parameter
 method due to language limitations.
 
 After parameters have been set, `vklCommit` must be called on the object to make
 them take effect.
 
-Since Open VKL uses reference counting to manage the lifetime of all objects,
-one cannot explicitly "delete" any object. Instead, to indicate that the
-application does not need and does not access the given object anymore, call
+Open VKL uses reference counting to manage the lifetime of all objects.
+Therefore one cannot explicitly "delete" any object.  Instead, one can indicate
+the application does not need or will not access the given object anymore by
+calling
 
     void vklRelease(VKLObject);
 
-This decreases its reference count and if the count reaches `0` the object will
-automatically be deleted.
+This decreases the object's reference count. If the count reaches `0` the
+object will automatically be deleted.
 
 Managed data
 ------------
 
-Large data is passed to Open VKL via a VKLData handle created with `vklNewData`:
+Large data is passed to Open VKL via a `VKLData` handle created with
+`vklNewData`:
 
     VKLData vklNewData(size_t numItems,
                        VKLDataType dataType,
                        const void *source,
                        VKLDataCreationFlags dataCreationFlags);
 
-Types accepted are listed in VKLDataType.h; basic types (UCHAR, INT, UINT, LONG,
-ULONG) exist as both scalar and chunked formats.  The types accepted vary per
-volume at the moment; read the volume section below for specifics.
+Types accepted are listed in `VKLDataType.h`; basic types (`UCHAR`, `INT`,
+`UINT`, `LONG`, `ULONG`) exist as both scalar and chunked formats.  The types
+accepted vary per volume at the moment; read the volume section below for
+specifics.
 
-Data objects can be created as Open VKL owned (`VKL_DATA_DEFAULT`), in which the
-library will make a copy of the data for its use, or shared
-(`VKL_DATA_SHARED_BUFFER`), which will try to use the passed pointer for usage.
-The library is allowed to copy data when a volume is committed.
+Data objects can be created as Open VKL owned (`dataCreationFlags =
+VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its
+use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try
+to use the passed pointer for usage.  The library is allowed to copy data when
+a volume is committed.
 
 As with other object types, when data objects are no longer needed they should
 be released via `vklRelease`.
-
-Initialization and shutdown
----------------------------
-
-To use the API, one of the implemented backends must be loaded.  Currently the
-only one that exists is the ISPC driver.  ISPC in the name here just refers to
-the implementation language -- it can also be used from the C99/C++ APIs.  To
-load the module that implements the ISPC driver:
-
-    vklLoadModule("ispc_driver");
-
-The driver then needs to be selected:
-
-    VKLDriver driver = vklNewDriver("ispc");
-    vklCommitDriver(driver);
-    vklSetCurrentDriver(driver);
-
-Open VKL provides vector-wide versions for several APIs. To determine the native
-vector width for the given driver, call:
-
-    int width = vklGetNativeSIMDWidth();
-
-When the application is finished with Open VKL or shutting down, call the
-shutdown function:
-
-    vklShutdown();
 
 Volume types
 ------------
@@ -197,13 +203,21 @@ $x*y*z$ values must be provided.
 
 ### Adaptive Mesh Refinement (AMR) Volume
 
-AMR volumes are specified as a list of blocks, which are levels of refinement in
-potentially overlapping regions. There can be any number of refinement levels
-and any number of blocks at any level of refinement. An AMR volume type is
-created by passing the type string `"amr"` to `vklNewVolume`.
+AMR volumes are specified as a list of blocks, which exist at levels of
+refinement in potentially overlapping regions.  Blocks exist in a tree
+structure, with coarser refinement level blocks containing finer blocks.  The
+cell width is equal for all blocks at the same refinement level, though blocks
+at a coarser level have a larger cell width than finer levels.
+
+There can be any number of refinement levels and any number of blocks at any
+level of refinement. An AMR volume type is created by passing the type string
+`"amr"` to `vklNewVolume`.
 
 Blocks are defined by four parameters: their bounds, the refinement level in
-which they reside, their cell width, and the scalar data contained within them.
+which they reside, the cell widths for each refinement level, and the scalar
+data contained within each block.
+
+Note that cell widths are defined _per refinement level_, not per block.
 
   -------------- --------------- -----------------  -----------------------------------
   Type           Name                      Default  Description
@@ -239,6 +253,33 @@ Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just like
 the structured volume equivalent, but they only modify the root (coarsest level)
 of refinement.
 
+In particular, Open VKL's AMR implementation was designed to cover
+Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter above
+determines the interpolation method used when sampling the volume.
+
+* `VKL_AMR_CURRENT` finds the finest refinement level at that cell and
+  interpolates through this "current" level
+* `VKL_AMR_FINEST` will interpolate at the closest existing cell in the
+  volume-wide finest refinement level regardless of the sample cell's level
+* `VKL_AMR_OCTANT` interpolates through all available refinement levels at that
+  cell. This method avoids discontinuities at refinement level boundaries at
+  the cost of performance
+
+Details and more information can be found in the publication for the
+implementation [3].
+
+1. M. J. Berger, and P. Colella. "Local adaptive mesh refinement for
+   shock hydrodynamics." Journal of Computational Physics 82.1 (1989): 64-84.
+   DOI: 10.1016/0021-9991(89)90035-1
+2. M. Adams, P. Colella, D. T. Graves, J.N. Johnson, N.D. Keen, T. J. Ligocki.
+   D. F. Martin. P.W. McCorquodale, D. Modiano. P.O. Schwartz, T.D. Sternberg
+   and B. Van Straalen, Chombo Software Package for AMR Applications - Design
+   Document,  Lawrence Berkeley National Laboratory Technical Report
+   LBNL-6616E.  
+3. I. Wald, C. Brownlee, W. Usher, and A. Knoll. CPU volume rendering of
+   adaptive mesh refinement data. SIGGRAPH Asia 2017 Symposium on Visualization
+   on - SA ’17, 18(8), 1–8. DOI: 10.1145/3139295.3139305
+
 ### Unstructured Volumes
 
 Unstructured volumes can have their topology and geometry freely defined.
@@ -246,7 +287,7 @@ Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid cell
 types. The data format used is compatible with VTK and consists of multiple
 arrays: vertex positions and values, vertex indices, cell start indices, cell
 types, and cell values. An unstructured volume type is created by passing the
-type string `"unstructured_volume"` to `vklNewVolume`.
+type string `"unstructured"` to `vklNewVolume`.
 
 Sampled cell values can be specified either per-vertex (`vertex.value`) or
 per-cell (`cell.value`). If both arrays are set, `cell.value` takes precedence.
@@ -268,8 +309,8 @@ For pyramid cells, each cell is formed by a group of five indices into the
 vertices and data values. Vertex ordering is the same as `VTK_PYRAMID`: four
 bottom vertices counterclockwise, then the top vertex.
 
-To maintain VTK data compatibility an index array may be specified via
-`indexPrefixed` array that allow vertex indices to be interleaved with cell
+To maintain VTK data compatibility an index array may be specified via the
+`indexPrefixed` array that allows vertex indices to be interleaved with cell
 sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
 
   -------------------  ------------------  --------  ---------------------------------------
@@ -322,7 +363,7 @@ Sampling
 --------
 
 Computing the value of a volume at an object space coordinate is done using the
-sampling API.  NaN is returned for probe point(s) outside the volume.
+sampling API.  NaN is returned for probe points outside the volume.
 
 The scalar API just takes a volume and coordinate, and returns a float value.
 
@@ -330,8 +371,8 @@ The scalar API just takes a volume and coordinate, and returns a float value.
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
 the machine type and Open VKL driver implementation, these can give greater
-performance.  An active lane mask is passed in as an array of integers; set 0
-for lanes to be ignored, -1 for active lanes.
+performance.  An active lane mask `valid` is passed in as an array of integers;
+set 0 for lanes to be ignored, -1 for active lanes.
 
     void vklComputeSample4(const int *valid,
                            VKLVolume volume,
@@ -435,7 +476,7 @@ and belongs to the caller, and initialized by the following functions.
                                    const vkl_vrange1f16 *tRange,
                                    VKLValueSelector valueSelector);
 
-Intervals can then be procesed by calling `vklIterateInterval` as long as the
+Intervals can then be processed by calling `vklIterateInterval` as long as the
 returned lane masks indicates that the iterator is still within the volume:
 
     int vklIterateInterval(VKLIntervalIterator *iterator,
@@ -456,11 +497,11 @@ returned lane masks indicates that the iterator is still within the volume:
                               VKLInterval16 *interval,
                               int *result);
 
-The intervals returned have a t-value range, a value range, and a nominalDeltaT
-which is approximately the step size that should be used to walk through the
-interval, if desired.  The number and length of intervals returned is volume
-type implementation dependent.  There is currently no way of requesting a
-particular splitting.
+The intervals returned have a t-value range, a value range, and a
+`nominalDeltaT` which is approximately the step size that should be used to
+walk through the interval, if desired.  The number and length of intervals
+returned is volume type implementation dependent.  There is currently no way of
+requesting a particular splitting.
 
     typedef struct
     {
@@ -490,9 +531,10 @@ particular splitting.
       float nominalDeltaT[16];
     } VKLInterval16;
 
-Querying for particular values are done using a `VKLHitIterator` in much the
-same fashion.  This API could be used, for example, to find isosurfaces.  Again,
-a user allocated `VKLHitIterator` of the desired width must be initialized:
+Querying for particular values is done using a `VKLHitIterator` in much the
+same fashion.  This API could be used, for example, to find isosurfaces.
+Again, a user allocated `VKLHitIterator` of the desired width must be
+initialized:
 
     void vklInitHitIterator(VKLHitIterator *iterator,
                             VKLVolume volume,

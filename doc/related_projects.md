@@ -15,4 +15,6 @@ listed here, please let us know.
 Projects that are closely related to Open VKL
 =============================================
 
+-   The [Intel® oneAPI Rendering Toolkit](https://software.intel.com/en-us/rendering-framework)
+
 -   The [Intel® Embree](http://embree.github.io) Ray Tracing Kernel Framework

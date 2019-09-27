@@ -43,7 +43,7 @@ include(openvkl_ispc)
 ## openvkl specific configuration ##
 
 option(BUILD_EXAMPLES "Build example applications." ON)
-option(BUILD_BENCHMARKS "Build benchmark applications." ON)
+option(BUILD_BENCHMARKS "Build benchmark applications." OFF)
 
 include(GNUInstallDirs)
 include(CTest) # Adds 'BUILD_TESTING' variable

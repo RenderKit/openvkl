@@ -73,6 +73,9 @@ namespace openvkl {
       if (!index) {
         throw std::runtime_error("unstructured volume must have 'index'");
       }
+      if (!cellIndex) {
+        throw std::runtime_error("unstructured volume must have 'cellIndex'");
+      }
       if (!vertexValue && !cellValue) {
         throw std::runtime_error(
             "unstructured volume must have 'vertex.value' or 'cell.value'");

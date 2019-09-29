@@ -57,12 +57,14 @@ PUBLIC
 )
 
 target_link_libraries(openvkl_module_ispc_driver
-PRIVATE
+PUBLIC
   openvkl
+PRIVATE
   ospcommon::ospcommon
 )
 
 install(TARGETS openvkl_module_ispc_driver
+  EXPORT ${PROJECT_NAME}_Exports
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

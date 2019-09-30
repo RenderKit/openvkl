@@ -40,7 +40,6 @@ shutdown function:
 
     vklShutdown();
 
-
 Basic data types
 ----------------
 
@@ -353,11 +352,10 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
                                                      rendering inaccuracies may appear
                                                      if hex is not parallelepiped
 
-  bool                 precomputedNormals      true  whether to accelerate by precomputing,
+  bool                 precomputedNormals     false  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
   -------------------  ------------------  --------  ---------------------------------------
   : Additional configuration parameters for unstructured volumes.
-
 
 Sampling
 --------

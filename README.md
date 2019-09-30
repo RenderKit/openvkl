@@ -45,9 +45,8 @@ as-yet-missing features, inconsistencies, or any other issues are still
 possible. Should you find any such issues please report them immediately
 via [Open VKL’s GitHub Issue
 Tracker](https://github.com/OpenVKL/openvkl/issues) (or, if you should
-happen to have a fix for it, you can also send us a pull request); for
-missing features please contact us via email at
-<openvkl@googlegroups.com>.
+happen to have a fix for it, you can also send us a pull request); you
+may also contact us via email at <openvkl@googlegroups.com>.
 
 Join our [mailing
 list](https://groups.google.com/forum/#!forum/openvkl-announce/join) to
@@ -388,7 +387,7 @@ with cell sizes in the following format:
 |                         |                    |         | `VKL_WEDGE`                                                                                                                                             |
 |                         |                    |         | `VKL_PYRAMID`                                                                                                                                           |
 | bool                    | hexIterative       | false   | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
-| bool                    | precomputedNormals | true    | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
+| bool                    | precomputedNormals | false   | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
 
 Additional configuration parameters for unstructured volumes.
 
@@ -687,7 +686,7 @@ usage of the API, as well as full renderers showing recommended usage.
 Simple tutorials can be found in the `examples/` directory. These are:
 
   - `vklTutorial.c` : usage of the C API
-  - `vklTutorial.[cpp,ispc]` : combined usage of the C and ISPC APIs
+  - `vklTutorialISPC.[cpp,ispc]` : combined usage of the C and ISPC APIs
 
 For quick reference, the contents of `vklTutorial.c` are shown below.
 

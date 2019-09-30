@@ -6,8 +6,8 @@ stable release versions a certain number of bugs, as-yet-missing features,
 inconsistencies, or any other issues are still possible. Should you find any
 such issues please report them immediately via [Open VKL's GitHub Issue
 Tracker](https://github.com/OpenVKL/openvkl/issues) (or, if you should happen to
-have a fix for it, you can also send us a pull request); for missing features
-please contact us via email at <openvkl@googlegroups.com>.
+have a fix for it, you can also send us a pull request); you may also contact us
+via email at <openvkl@googlegroups.com>.
 
 Join our [mailing
 list](https://groups.google.com/forum/#!forum/openvkl-announce/join) to receive

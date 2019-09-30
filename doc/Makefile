@@ -2,6 +2,9 @@ SHELL := /bin/bash
 
 webpages := $(addprefix www/, $(addsuffix .html, index documentation examples downloads related_projects legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, readme_head))
+scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
+
+webscripts := $(addprefix www/, $(scripts))
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
@@ -11,7 +14,7 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc
-www: $(webpages) www/stylesheet.css
+www: $(webpages) www/stylesheet.css $(webscripts)
 doc: ../README.md
 
 .PHONY: all www doc clean realclean
@@ -37,6 +40,10 @@ $(webpages) www/stylesheet.css: | wwwdir
 wwwdir:
 	@mkdir -p www
 
+$(webscripts): | wwwscriptdir
+wwwscriptdir:
+	@mkdir -p www/scripts
+
 $(process_version) tmp/version: | tmpdir
 tmpdir:
 	@mkdir -p tmp
@@ -58,12 +65,19 @@ www/stylesheet.css: stylesheet.css
 tmp/api_html.md: api.md tmp/links.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-www/index.html: overview.md changelog.md support.md
+www/index.html: teaser.html overview.md changelog.md support.md
 www/documentation.html: tmp/api_html.md
 www/examples.html: examples.md
 www/downloads.html: compilation.md
 www/related_projects.html: related_projects.md
 www/legal.html: legal.md
+
+## ----------------------------------------------------------------------------
+## Scripts
+## ----------------------------------------------------------------------------
+
+www/scripts/%: scripts/%
+	cp $< $@
 
 ## ----------------------------------------------------------------------------
 ## Markdown

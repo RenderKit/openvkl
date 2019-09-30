@@ -10,7 +10,7 @@ Tutorials
 Simple tutorials can be found in the `examples/` directory. These are:
 
 * `vklTutorial.c` : usage of the C API
-* `vklTutorial.[cpp,ispc]` : combined usage of the C and ISPC APIs
+* `vklTutorialISPC.[cpp,ispc]` : combined usage of the C and ISPC APIs
 
 For quick reference, the contents of `vklTutorial.c` are shown below.
 

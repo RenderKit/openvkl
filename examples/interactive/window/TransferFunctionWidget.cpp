@@ -314,62 +314,18 @@ void TransferFunctionWidget::updateTfnPaletteTexture()
   }
 
   // sample the palette then upload the data
-  std::vector<uint8_t> palette(textureWidth * textureHeight * 4, 0);
-  std::vector<float> colors(3 * textureWidth, 1.f);
-  std::vector<float> alpha(2 * textureWidth, 1.f);
-
-  const float step = 1.0f / (float)(textureWidth - 1);
-
-  for (int i = 0; i < textureWidth; ++i) {
-    const float p = clamp(i * step, 0.0f, 1.0f);
-    int ir, il;
-    float pr, pl;
-    // color
-    ir = help::find_idx(*tfnColorPoints, p);
-    il = ir - 1;
-    pr = (*tfnColorPoints)[ir].x;
-    pl = (*tfnColorPoints)[il].x;
-
-    const float r =
-        help::lerp((*tfnColorPoints)[il].y, (*tfnColorPoints)[ir].y, pl, pr, p);
-    const float g =
-        help::lerp((*tfnColorPoints)[il].z, (*tfnColorPoints)[ir].z, pl, pr, p);
-    const float b =
-        help::lerp((*tfnColorPoints)[il].w, (*tfnColorPoints)[ir].w, pl, pr, p);
-
-    colors[3 * i + 0] = r;
-    colors[3 * i + 1] = g;
-    colors[3 * i + 2] = b;
-
-    // opacity
-    ir = help::find_idx(*tfnOpacityPoints, p);
-    il = ir - 1;
-    pr = (*tfnOpacityPoints)[ir].x;
-    pl = (*tfnOpacityPoints)[il].x;
-
-    const float a = help::lerp(
-        (*tfnOpacityPoints)[il].y, (*tfnOpacityPoints)[ir].y, pl, pr, p);
-
-    alpha[2 * i + 0] = p;
-    alpha[2 * i + 1] = a;
-
-    // palette
-    palette[i * 4 + 0] = static_cast<uint8_t>(r * 255.f);
-    palette[i * 4 + 1] = static_cast<uint8_t>(g * 255.f);
-    palette[i * 4 + 2] = static_cast<uint8_t>(b * 255.f);
-    palette[i * 4 + 3] = 255;
-  }
+  std::vector<vec4f> palette = getSampledColorsAndOpacities(textureWidth);
 
   // save palette to texture
   glBindTexture(GL_TEXTURE_2D, tfnPaletteTexture);
   glTexImage2D(GL_TEXTURE_2D,
                0,
-               GL_RGBA8,
+               GL_RGB,
                textureWidth,
                textureHeight,
                0,
                GL_RGBA,
-               GL_UNSIGNED_BYTE,
+               GL_FLOAT,
                static_cast<const void *>(palette.data()));
 
   // restore previously bound texture

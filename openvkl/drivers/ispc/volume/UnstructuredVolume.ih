@@ -27,6 +27,8 @@ typedef enum
   VKL_PYRAMID = 14
 } CellType;
 
+struct Node;
+
 struct VKLUnstructuredVolume
 {
   Volume super;
@@ -54,6 +56,8 @@ struct VKLUnstructuredVolume
   uniform vec3f gradientStep;
 
   uniform MinMaxBVH2 bvh;
+
+  uniform Node* uniform bvhRoot;
 
   uniform bool hexIterative;
 };

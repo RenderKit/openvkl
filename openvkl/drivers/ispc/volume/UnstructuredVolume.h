@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <embree3/rtcore.h>
 #include "../common/Data.h"
 #include "../common/math.h"
 #include "MinMaxBVH2.h"
@@ -24,6 +25,89 @@
 
 namespace openvkl {
   namespace ispc_driver {
+
+    struct Node
+    {
+      // 1 + 2 float = 3x4 = 18 bytes
+      float nominalLength;  // set to negative for LeafNode;
+      range1f valueRange;
+    };
+
+    struct LeafNode : public Node
+    {
+      // 18 + 8 + 4 * 6 bytes = 50
+      box3fa bounds;
+      uint64_t cellID;
+
+      LeafNode(unsigned id, const box3fa &bounds, const range1f &range)
+          : cellID(id), bounds(bounds)
+      {
+        nominalLength = -reduce_min(bounds.upper - bounds.lower);
+        valueRange    = range;
+      }
+
+      static void *create(RTCThreadLocalAllocator alloc,
+                          const RTCBuildPrimitive *prims,
+                          size_t numPrims,
+                          void *userPtr)
+      {
+        assert(numPrims == 1);
+
+        auto id    = (uint64_t(prims->geomID) << 32) | prims->primID;
+        auto range = ((range1f *)userPtr)[id];
+
+        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(LeafNode), 16);
+        return (void *)new (ptr) LeafNode(id, *(const box3fa *)prims, range);
+      }
+    };
+
+    struct InnerNode : public Node
+    {
+      // 18 + 16 + 2 * 4 * 6 = 82 bytes
+      box3fa bounds[2];
+      Node *children[2];
+
+      InnerNode()
+      {
+        children[0] = children[1] = nullptr;
+        bounds[0] = bounds[1] = empty;
+      }
+
+      static void *create(RTCThreadLocalAllocator alloc,
+                          unsigned int numChildren,
+                          void *userPtr)
+      {
+        assert(numChildren == 2);
+        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(InnerNode), 16);
+        return (void *)new (ptr) InnerNode;
+      }
+
+      static void setChildren(void *nodePtr,
+                              void **childPtr,
+                              unsigned int numChildren,
+                              void *userPtr)
+      {
+        assert(numChildren == 2);
+        auto innerNode = (InnerNode *)nodePtr;
+        for (size_t i = 0; i < 2; i++)
+          innerNode->children[i] = (Node *)childPtr[i];
+        innerNode->nominalLength =
+            min(fabs(innerNode->children[0]->nominalLength),
+                fabs(innerNode->children[1]->nominalLength));
+        innerNode->valueRange = innerNode->children[0]->valueRange;
+        innerNode->valueRange.extend(innerNode->children[1]->valueRange);
+      }
+
+      static void setBounds(void *nodePtr,
+                            const RTCBounds **bounds,
+                            unsigned int numChildren,
+                            void *userPtr)
+      {
+        assert(numChildren == 2);
+        for (size_t i = 0; i < 2; i++)
+          ((InnerNode *)nodePtr)->bounds[i] = *(const box3fa *)bounds[i];
+      }
+    };
 
     template <int W>
     struct UnstructuredVolume : public Volume<W>
@@ -44,8 +128,9 @@ namespace openvkl {
 
       range1f getValueRange() const override;
 
-     private:
       box4f getCellBBox(size_t id);
+
+     private:
       void buildBvhAndCalculateBounds();
 
       // Read 32/64-bit integer value from given array
@@ -88,6 +173,9 @@ namespace openvkl {
       std::vector<float> iterativeTolerance;
 
       MinMaxBVH2 bvh;
+      RTCBVH rtcBVH{0};
+      RTCDevice rtcDevice{0};
+      Node *rtcRoot{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

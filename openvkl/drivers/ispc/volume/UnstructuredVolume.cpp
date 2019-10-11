@@ -15,7 +15,9 @@
 // ======================================================================== //
 
 #include "UnstructuredVolume.h"
+#include <embree3/rtcore.h>
 #include "../common/Data.h"
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/tasking/parallel_for.h"
 
 // Map cell type to its vertices count
@@ -39,9 +41,43 @@ inline uint32_t getVerticesCount(uint8_t cellType)
 namespace openvkl {
   namespace ispc_driver {
 
+    static void tabIndent(int indent)
+    {
+      for (int i = 0; i < indent; i++)
+        std::cerr << "\t";
+    }
+
+    static void dumpBVH(Node *root, int indent = 0)
+    {
+      if (root->nominalLength < 0) {
+        auto leaf = (LeafNode *)root;
+        tabIndent(indent);
+        std::cerr << "id: " << leaf->cellID << " bounds: " << leaf->bounds
+                  << " range: " << leaf->valueRange
+                  << " nom: " << leaf->nominalLength << std::endl;
+      } else {
+        auto inner = (InnerNode *)root;
+        tabIndent(indent);
+        std::cerr << "range: " << inner->valueRange
+                  << " nom: " << inner->nominalLength << std::endl;
+
+        tabIndent(indent);
+        std::cerr << "bounds[0]: " << inner->bounds[0] << std::endl;
+        dumpBVH(inner->children[0], indent + 1);
+
+        tabIndent(indent);
+        std::cerr << "bounds[1]: " << inner->bounds[1] << std::endl;
+        dumpBVH(inner->children[1], indent + 1);
+      }
+    }
+
     template <int W>
     UnstructuredVolume<W>::~UnstructuredVolume()
     {
+      if (rtcBVH)
+        rtcReleaseBVH(rtcBVH);
+      if (rtcDevice)
+        rtcReleaseDevice(rtcDevice);
     }
 
     template <int W>
@@ -68,7 +104,8 @@ namespace openvkl {
           "cell.type", nullptr);
 
       if (!vertexPosition) {
-        throw std::runtime_error("unstructured volume must have 'vertex.position'");
+        throw std::runtime_error(
+            "unstructured volume must have 'vertex.position'");
       }
       if (!index) {
         throw std::runtime_error("unstructured volume must have 'index'");
@@ -189,6 +226,7 @@ namespace openvkl {
           cell32Bit,
           indexPrefixed,
           (const uint8_t *)cellType->data,
+          (void *)(rtcRoot),
           bvh.rootRef(),
           bvh.nodePtr(),
           bvh.itemListPtr(),
@@ -227,6 +265,11 @@ namespace openvkl {
       return bBox;
     }
 
+    void errorFunction(void *userPtr, enum RTCError error, const char *str)
+    {
+      fprintf(stderr, "error %d: %s\n", error, str);
+    }
+
     template <int W>
     void UnstructuredVolume<W>::buildBvhAndCalculateBounds()
     {
@@ -252,22 +295,100 @@ namespace openvkl {
       valueRange.lower = bounds4.lower.w;
       valueRange.upper = bounds4.upper.w;
 
+      // std::cerr << "full volume range: " << valueRange << std::endl;
+
       bvh.build(primBounds.data(), primID.data(), nCells);
+
+      // ------------------------
+
+      // std::cerr << "embree setup...\n";
+      rtcDevice = rtcNewDevice(NULL);
+      if (!rtcDevice) {
+        std::cerr << "cannot create device: " << rtcGetDeviceError(NULL)
+                  << std::endl;
+        return;
+      }
+      rtcSetDeviceErrorFunction(rtcDevice, errorFunction, NULL);
+
+      containers::AlignedVector<RTCBuildPrimitive> prims;
+      containers::AlignedVector<range1f> range;
+      prims.resize(nCells);
+      range.resize(nCells);
+
+      tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
+        box4f bound              = getCellBBox(taskIndex);
+        prims[taskIndex].lower_x = bound.lower.x;
+        prims[taskIndex].lower_y = bound.lower.y;
+        prims[taskIndex].lower_z = bound.lower.z;
+        prims[taskIndex].geomID  = taskIndex >> 32;
+        prims[taskIndex].upper_x = bound.upper.x;
+        prims[taskIndex].upper_y = bound.upper.y;
+        prims[taskIndex].upper_z = bound.upper.z;
+        prims[taskIndex].primID  = taskIndex & 0xffffffff;
+        range[taskIndex]         = range1f(bound.lower.w, bound.upper.w);
+      });
+
+      rtcBVH = rtcNewBVH(rtcDevice);
+      if (!rtcBVH) {
+        std::cerr << "bvh creation failure: " << rtcGetDeviceError(rtcDevice)
+                  << std::endl;
+        return;
+      }
+
+      RTCBuildArguments arguments      = rtcDefaultBuildArguments();
+      arguments.byteSize               = sizeof(arguments);
+      arguments.buildFlags             = RTC_BUILD_FLAG_NONE;
+      arguments.buildQuality           = RTC_BUILD_QUALITY_MEDIUM;
+      arguments.maxBranchingFactor     = 2;
+      arguments.maxDepth               = 1024;
+      arguments.sahBlockSize           = 1;
+      arguments.minLeafSize            = 1;
+      arguments.maxLeafSize            = 1;
+      arguments.traversalCost          = 1.0f;
+      arguments.intersectionCost       = 10.0f;
+      arguments.bvh                    = rtcBVH;
+      arguments.primitives             = prims.data();
+      arguments.primitiveCount         = prims.size();
+      arguments.primitiveArrayCapacity = prims.size();
+      arguments.createNode             = InnerNode::create;
+      arguments.setNodeChildren        = InnerNode::setChildren;
+      arguments.setNodeBounds          = InnerNode::setBounds;
+      arguments.createLeaf             = LeafNode::create;
+      arguments.splitPrimitive         = nullptr;
+      arguments.buildProgress          = nullptr;
+      arguments.userPtr                = range.data();
+
+      rtcRoot = (Node *)rtcBuildBVH(&arguments);
+      if (!rtcRoot) {
+        std::cerr << "bvh build failure: " << rtcGetDeviceError(rtcDevice)
+                  << std::endl;
+        return;
+      }
+
+      if (rtcRoot->nominalLength < 0) {
+        auto &val = ((LeafNode *)rtcRoot)->bounds;
+        bounds    = box3f(val.lower, val.upper);
+      } else {
+        auto &vals = ((InnerNode *)rtcRoot)->bounds;
+        bounds     = box3f(vals[0].lower, vals[0].upper);
+        bounds.extend(box3f(vals[1].lower, vals[1].upper));
+      }
+      valueRange = rtcRoot->valueRange;
     }
 
     template <int W>
     void UnstructuredVolume<W>::calculateIterativeTolerance()
     {
       iterativeTolerance.resize(nCells);
-      const uint32_t wedgeEdges[9][2]  = {{0, 1},
-                                          {1, 2},
-                                          {2, 0},
-                                          {3, 4},
-                                          {4, 5},
-                                          {5, 3},
-                                          {0, 3},
-                                          {1, 4},
-                                          {2, 5}};
+      const uint32_t wedgeEdges[9][2]   = {{0, 1},
+                                         {1, 2},
+                                         {2, 0},
+                                         {3, 4},
+                                         {4, 5},
+                                         {5, 3},
+                                         {0, 3},
+                                         {1, 4},
+                                         {2, 5}};
       const uint32_t pyramidEdges[8][2] = {
           {0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
       const uint32_t hexDiagonals[4][2] = {{0, 6}, {1, 7}, {2, 4}, {3, 5}};

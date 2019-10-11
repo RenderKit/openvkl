@@ -16,7 +16,7 @@
 
 include(openvkl_ispc)
 
-include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
+include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include ${EMBREE_INCLUDE_DIRS})
 
 if (WIN32)
   set(DEFS_FILE ispc_driver_defs.def)
@@ -54,6 +54,7 @@ target_include_directories(openvkl_module_ispc_driver
 PUBLIC
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+  ${EMBREE_INCLUDE_DIRS}
 )
 
 target_link_libraries(openvkl_module_ispc_driver
@@ -61,6 +62,7 @@ PUBLIC
   openvkl
 PRIVATE
   ospcommon::ospcommon
+  $<BUILD_INTERFACE:${EMBREE_LIBRARIES}>
 )
 
 install(TARGETS openvkl_module_ispc_driver

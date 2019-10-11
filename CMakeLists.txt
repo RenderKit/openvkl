@@ -61,6 +61,8 @@ openvkl_configure_ispc_isa()
 
 find_package(ospcommon 1.0.0 REQUIRED)
 
+find_package(embree 3.6.1 REQUIRED)
+
 ## Build library, examples, and tests ##
 
 add_subdirectory(openvkl)

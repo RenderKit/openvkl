@@ -16,6 +16,80 @@
 
 #include "UnstructuredVolume.ih"
 
+struct Node {
+  uniform float nominalLength;
+  uniform box1f valueRange;
+};
+
+struct LeafNode {
+  uniform Node super;
+  uniform box3fa bounds;
+  uniform uint64 cellID;
+};
+
+struct InnerNode {
+  uniform Node super;
+  uniform box3fa bounds[2];
+  uniform Node* uniform children[2];
+};
+
+inline bool pointInAABBTest(const uniform box3fa &box,
+                            const vec3f &point)
+{
+  bool t1 = point.x >= box.lower.x;
+  bool t2 = point.y >= box.lower.y;
+  bool t3 = point.z >= box.lower.z;
+  bool t4 = point.x <= box.upper.x;
+  bool t5 = point.y <= box.upper.y;
+  bool t6 = point.z <= box.upper.z;
+  return t1 & t2 & t3 & t4 & t5 & t6;
+}
+
+void traverseEmbree(uniform Node* uniform root,
+                    const void *uniform userPtr,
+                    uniform intersectAndSamplePrim sampleFunc,
+                    float &result,
+                    const vec3f &samplePos)
+{
+    uniform Node* uniform node = root;
+    uniform Node* uniform nodeStack[32]; // xxx
+    uniform int stackPtr = 0;
+
+    while (1) {
+      uniform bool isLeaf = (node->nominalLength < 0);
+      if (isLeaf) {
+        uniform LeafNode* uniform leaf = (uniform LeafNode* uniform)node;
+        if (sampleFunc(userPtr, leaf->cellID, result, samplePos))
+          return;
+      } else {
+        uniform InnerNode* uniform inner = (uniform InnerNode* uniform)node;
+        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);
+        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);
+
+        if (any(in0)) {
+          if (any(in1)) {
+            nodeStack[stackPtr++] = inner->children[1];
+            node                  = inner->children[0];
+            continue;
+          } else {
+            node = inner->children[0];
+            continue;
+          }
+        } else {
+          if (any(in1)) {
+            node = inner->children[1];
+            continue;
+          } else {
+            // Do nothing, just pop.
+          }
+        }
+      }
+      if (stackPtr == 0)
+        return;
+      node = nodeStack[--stackPtr];
+    }
+}
+
 struct LinearSpace3f
 {
   vec3f vx;
@@ -719,7 +793,7 @@ inline varying float VKLUnstructuredVolume_sample(
 
   float results = floatbits(0xffffffff);  /* NaN */
 
-  traverse(self->bvh, _self, intersectAndSampleCell, results, worldCoordinates);
+  traverseEmbree(self->bvhRoot, _self, intersectAndSampleCell, results, worldCoordinates);
 
   return results;
 }
@@ -818,6 +892,7 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
                                    const uniform bool _cell32Bit,
                                    const uniform uint32 _cellSkipIds,
                                    const uint8* uniform _cellType,
+                                   const void* uniform bvhRoot, // embree bvh
                                    uniform int64 rootRef,
                                    const void* uniform _bvhNode,
                                    const int64* uniform _bvhPrimID,
@@ -845,6 +920,8 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
   self->boundingBox = _bbox;
 
   self->gradientStep = make_vec3f(0.01f * reduce_min(self->boundingBox.upper - self->boundingBox.lower));
+
+  self->bvhRoot = (uniform Node* uniform)bvhRoot;
 
   self->bvh.rootRef = rootRef;
   self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;

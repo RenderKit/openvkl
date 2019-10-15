@@ -143,6 +143,21 @@ namespace openvkl {
         }
       }
 
+      hexIterative = this->template getParam<bool>("hexIterative", false);
+
+      bool needTolerances = false;
+      for (int i = 0; i < nCells; i++) {
+        auto cell = ((uint8_t *)cellType->data)[i];
+        if (cell == VKL_WEDGE || cell == VKL_PYRAMID ||
+            (cell == VKL_HEXAHEDRON && hexIterative)) {
+          needTolerances = true;
+          break;
+        }
+      }
+
+      if (needTolerances)
+        calculateIterativeTolerance();
+
       auto precompute =
           this->template getParam<bool>("precomputedNormals", false);
       if (precompute) {
@@ -155,8 +170,6 @@ namespace openvkl {
           faceNormals.shrink_to_fit();
         }
       }
-
-      auto hexIterative = this->template getParam<bool>("hexIterative", false);
 
       buildBvhAndCalculateBounds();
 
@@ -179,7 +192,9 @@ namespace openvkl {
           bvh.rootRef(),
           bvh.nodePtr(),
           bvh.itemListPtr(),
-          faceNormals.empty() ? nullptr : (const ispc::vec3f *)faceNormals.data(),
+          faceNormals.empty() ? nullptr
+                              : (const ispc::vec3f *)faceNormals.data(),
+          iterativeTolerance.empty() ? nullptr : iterativeTolerance.data(),
           hexIterative);
     }
 
@@ -238,6 +253,67 @@ namespace openvkl {
       valueRange.upper = bounds4.upper.w;
 
       bvh.build(primBounds.data(), primID.data(), nCells);
+    }
+
+    template <int W>
+    void UnstructuredVolume<W>::calculateIterativeTolerance()
+    {
+      iterativeTolerance.resize(nCells);
+      const uint32_t wedgeEdges[9][2]  = {{0, 1},
+                                          {1, 2},
+                                          {2, 0},
+                                          {3, 4},
+                                          {4, 5},
+                                          {5, 3},
+                                          {0, 3},
+                                          {1, 4},
+                                          {2, 5}};
+      const uint32_t pyramidEdges[8][2] = {
+          {0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
+      const uint32_t hexDiagonals[4][2] = {{0, 6}, {1, 7}, {2, 4}, {3, 5}};
+
+      // Build all tolerances
+      uint8_t *typeArray = (uint8_t *)cellType->data;
+      tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
+        switch (typeArray[taskIndex]) {
+        case VKL_HEXAHEDRON:
+          if (!hexIterative)
+            calculateTolerance(taskIndex, hexDiagonals, 4);
+          break;
+        case VKL_WEDGE:
+          calculateTolerance(taskIndex, wedgeEdges, 9);
+          break;
+        case VKL_PYRAMID:
+          calculateTolerance(taskIndex, pyramidEdges, 8);
+          break;
+        default:
+          break;
+        }
+      });
+    }
+
+    template <int W>
+    void UnstructuredVolume<W>::calculateTolerance(const uint64_t cellId,
+                                                   const uint32_t edge[][2],
+                                                   const uint32_t count)
+    {
+      uint64_t cOffset = getCellOffset(cellId);
+
+      float longest = 0;
+      for (int i = 0; i < count; i++) {
+        uint64_t vId0    = getVertexId(cOffset + edge[i][0]);
+        uint64_t vId1    = getVertexId(cOffset + edge[i][1]);
+        const vec3f &v0  = ((const vec3f *)(vertexPosition->data))[vId0];
+        const vec3f &v1  = ((const vec3f *)(vertexPosition->data))[vId1];
+        const float dist = length(v0 - v1);
+        longest          = std::max(longest, dist);
+      }
+
+      const float volumeBound = longest * longest * longest;
+      const float determinantTolerance =
+          1e-20 < .00001 * volumeBound ? 1e-20 : .00001 * volumeBound;
+
+      iterativeTolerance[cellId] = determinantTolerance;
     }
 
     template <int W>

@@ -47,6 +47,7 @@ struct VKLUnstructuredVolume
   const float* uniform cellValue;   // attribute value at each cell
 
   const vec3f* uniform faceNormals;
+  const float* uniform iterativeTolerance;
 
   uniform box3f boundingBox;
 

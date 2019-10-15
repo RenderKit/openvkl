@@ -60,6 +60,11 @@ namespace openvkl {
                                 const uint32_t facesCount);
       void calculateFaceNormals();
 
+      void calculateTolerance(const uint64_t cellId,
+                              const uint32_t edge[][2],
+                              const uint32_t count);
+      void calculateIterativeTolerance();
+
      protected:
       uint64_t nCells{0};
       box3f bounds{empty};
@@ -77,8 +82,10 @@ namespace openvkl {
       bool index32Bit{false};
       bool cell32Bit{false};
       bool indexPrefixed{false};
+      bool hexIterative{false};
 
       std::vector<vec3f> faceNormals;
+      std::vector<float> iterativeTolerance;
 
       MinMaxBVH2 bvh;
     };

@@ -249,22 +249,7 @@ static bool intersectAndSampleWedge(const void *uniform userData,
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
-
-  const uniform int edges[9][2] = { {0,1}, {1,2}, {2,0},
-                                    {3,4}, {4,5}, {5,3},
-                                    {0,3}, {1,4}, {2,5} };
-  uniform float longestEdge = 0;
-  for (uniform int i = 0; i < 9; i++) {
-      const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + edges[i][0])];
-      const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + edges[i][1])];
-      const uniform float dist = distance(p0, p1);
-      if (longestEdge < dist)
-         longestEdge = dist;
-  }
-
-  const uniform float volumeBound = longestEdge * longestEdge * longestEdge;
-  const uniform float determinantTolerance =
-      1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
+  const uniform float determinantTolerance = self->iterativeTolerance[id];
 
   // Enter iteration loop
   bool converged = false;
@@ -472,21 +457,7 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
-
-  // Should precompute these
-  const uniform int diagonals[4][2] = { {0, 6}, {1, 7}, {2, 4}, {3, 5} };
-  uniform float longestDiagonal = 0;
-  for (uniform int i = 0; i < 4; i++) {
-      const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + diagonals[i][0])];
-      const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + diagonals[i][1])];
-      const uniform float dist = distance(p0, p1);
-      if (longestDiagonal < dist)
-         longestDiagonal = dist;
-  }
-
-  const uniform float volumeBound = longestDiagonal * longestDiagonal * longestDiagonal;
-  const uniform float determinantTolerance =
-      1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
+  const uniform float determinantTolerance = self->iterativeTolerance[id];
 
   // Enter iteration loop
   bool converged = false;
@@ -629,21 +600,7 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
-
-  const uniform int edges[8][2] = { {0,1}, {1,2}, {2,3}, {3,0},
-    {0,4}, {1,4}, {2,4}, {3,4} };
-  uniform float longestEdge = 0;
-  for (uniform int i = 0; i < 8; i++) {
-    const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + edges[i][0])];
-    const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + edges[i][1])];
-    const uniform float dist = distance(p0, p1);
-    if (longestEdge < dist)
-      longestEdge = dist;
-  }
-
-  const uniform float volumeBound = longestEdge * longestEdge * longestEdge;
-  const uniform float determinantTolerance =
-    1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
+  const uniform float determinantTolerance = self->iterativeTolerance[id];
 
   // Enter iteration loop
   bool converged = false;
@@ -865,6 +822,7 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
                                    const void* uniform _bvhNode,
                                    const int64* uniform _bvhPrimID,
                                    const vec3f* uniform _faceNormals,
+                                   const float* uniform _iterativeTolerance,
                                    const uniform bool _hexIterative)
 {
   uniform VKLUnstructuredVolume *uniform self =
@@ -881,6 +839,7 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
   self->cellType     = _cellType;
 
   self->faceNormals  = _faceNormals;
+  self->iterativeTolerance = _iterativeTolerance;
   self->hexIterative = _hexIterative;
 
   self->boundingBox = _bbox;

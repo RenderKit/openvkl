@@ -815,8 +815,7 @@ export void VKLUnstructuredVolume_sample_export(
     const void *uniform _objectCoordinates,
     void *uniform _samples)
 {
-  cif(imask[programIndex])
-  {
+  if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
@@ -831,7 +830,7 @@ export void VKLUnstructuredVolume_gradient_export(
     const void *uniform _objectCoordinates,
     void *uniform _gradients)
 {
-  cif (imask[programIndex]) {
+  if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;

@@ -187,6 +187,8 @@ namespace openvkl {
 
       box3f getBoundingBox(VKLVolume volume) override;
 
+      range1f getValueRange(VKLVolume volume) override;
+
      private:
       template <int OW>
       typename std::enable_if<(OW == 1), void>::type

@@ -604,3 +604,11 @@ extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
   return reinterpret_cast<const vkl_box3f &>(result);
 }
 OPENVKL_CATCH_END(vkl_box3f{ospcommon::math::nan})
+
+extern "C" vkl_range1f vklGetValueRange(VKLVolume volume) OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  const range1f result = openvkl::api::currentDriver().getValueRange(volume);
+  return reinterpret_cast<const vkl_range1f &>(result);
+}
+OPENVKL_CATCH_END(vkl_range1f{ospcommon::math::nan})

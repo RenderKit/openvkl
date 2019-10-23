@@ -236,6 +236,8 @@ namespace openvkl {
 
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
 
+      virtual range1f getValueRange(VKLVolume volume) = 0;
+
      private:
       bool committed = false;
     };

@@ -112,6 +112,8 @@ void vklComputeGradient16(const int *valid,
 OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
+OPENVKL_INTERFACE vkl_range1f vklGetValueRange(VKLVolume volume);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

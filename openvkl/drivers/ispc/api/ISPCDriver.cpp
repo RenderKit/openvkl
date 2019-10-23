@@ -324,6 +324,13 @@ namespace openvkl {
       return volumeObject.getBoundingBox();
     }
 
+    template <int W>
+    range1f ISPCDriver<W>::getValueRange(VKLVolume volume)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      return volumeObject.getValueRange();
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Private methods ////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

@@ -110,3 +110,5 @@ VKL_FORCEINLINE varying vkl_vec3f vklComputeGradientV(
 }
 
 VKL_API uniform vkl_box3f vklGetBoundingBox(VKLVolume volume);
+
+VKL_API uniform vkl_range1f vklGetValueRange(VKLVolume volume);

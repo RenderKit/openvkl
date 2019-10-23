@@ -155,6 +155,14 @@ namespace openvkl {
       vklSetData(volume, "block.level", levelsData);
       vklSetData(volume, "block.cellWidth", widthsData);
 
+      vklRelease(blockDataData);
+      vklRelease(boundsData);
+      vklRelease(levelsData);
+      vklRelease(widthsData);
+
+      for (auto &d : blockData)
+        vklRelease(d);
+
       vklCommit(volume);
     }
 

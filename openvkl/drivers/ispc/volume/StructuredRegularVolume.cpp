@@ -93,6 +93,9 @@ namespace openvkl {
       tasking::parallel_for(numTasks, [&](int taskIndex) {
         ispc::GridAccelerator_build(accelerator, taskIndex);
       });
+
+      ispc::GridAccelerator_computeValueRange(
+          accelerator, valueRange.lower, valueRange.upper);
     }
 
     VKL_REGISTER_VOLUME(StructuredRegularVolume<4>, structured_regular_4)

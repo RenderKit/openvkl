@@ -66,8 +66,12 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
 
+      range1f getValueRange() const override;
+
      protected:
       void buildAccelerator();
+
+      range1f valueRange = range1f(ospcommon::math::nan, ospcommon::math::nan);
 
       Data *voxelData{nullptr};
     };
@@ -163,6 +167,12 @@ namespace openvkl {
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
+    }
+
+    template <int W>
+    inline range1f StructuredRegularVolume<W>::getValueRange() const
+    {
+      return valueRange;
     }
 
   }  // namespace ispc_driver

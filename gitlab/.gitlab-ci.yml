@@ -28,6 +28,16 @@ stages:
   tags:
     - docker
 
+.job_template: &base_build_from_install_job
+  type: test
+  script:
+    - gitlab/build-from-install.sh
+
+.job_template: &build_from_install_job_docker
+  <<: *base_build_from_install_job
+  tags:
+    - docker
+
 .job_template: &base_functional_test_job
   type: test
   script:
@@ -88,6 +98,14 @@ build-windows-msvc15:
     paths:
       - build/install
     expire_in: 3 day
+
+## Build From Install Jobs ##
+
+build-from-install-centos7:
+  <<: *build_from_install_job_docker
+  image: ospray/docker-images:centos7
+  dependencies:
+    - build-centos7
 
 ## Functional Test Jobs ##
 

@@ -37,6 +37,8 @@ namespace openvkl {
           bool _precomputedNormals          = false,
           bool _hexIterative                = false);
 
+      range1f getComputedValueRange() const override;
+
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
@@ -46,6 +48,8 @@ namespace openvkl {
       vec3f computeProceduralGradient(const vec3f &objectCoordinates);
 
      private:
+      range1f computedValueRange = range1f(ospcommon::math::empty);
+
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
@@ -93,6 +97,21 @@ namespace openvkl {
           precomputedNormals(_precomputedNormals),
           hexIterative(_hexIterative)
     {
+    }
+
+    template <typename idxType,
+              float samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline range1f
+    ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
+        getComputedValueRange() const
+    {
+      if (computedValueRange.empty()) {
+        throw std::runtime_error(
+            "computedValueRange only available after VKL volume is generated");
+      }
+
+      return computedValueRange;
     }
 
     template <typename idxType,
@@ -261,6 +280,9 @@ namespace openvkl {
       vklSetBool(volume, "hexIterative", hexIterative);
 
       vklCommit(volume);
+
+      computedValueRange = computeValueRange(
+          VKL_FLOAT, values.data(), longProduct(valueDimensions));
     }
 
     template <typename idxType,

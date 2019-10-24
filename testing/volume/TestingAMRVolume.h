@@ -35,6 +35,8 @@ namespace openvkl {
                        const vec3f &gridOrigin,
                        const vec3f &gridSpacing);
 
+      range1f getComputedValueRange() const override;
+
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
@@ -45,6 +47,8 @@ namespace openvkl {
 
      protected:
       void generateVKLVolume() override;
+
+      range1f computedValueRange = range1f(ospcommon::math::empty);
 
       // convert structured volume data to AMR representation
       void makeAMR(const std::vector<float> &voxels,
@@ -73,6 +77,16 @@ namespace openvkl {
           gridOrigin(gridOrigin),
           gridSpacing(gridSpacing)
     {
+    }
+
+    inline range1f TestingAMRVolume::getComputedValueRange() const
+    {
+      if (computedValueRange.empty()) {
+        throw std::runtime_error(
+            "computedValueRange only available after VKL volume is generated");
+      }
+
+      return computedValueRange;
     }
 
     inline vec3i TestingAMRVolume::getDimensions() const
@@ -164,6 +178,10 @@ namespace openvkl {
         vklRelease(d);
 
       vklCommit(volume);
+
+      for (const auto &bv : blockValues)
+        computedValueRange.extend(
+            computeValueRange(VKL_FLOAT, bv.data(), bv.size()));
     }
 
     inline void TestingAMRVolume::makeAMR(

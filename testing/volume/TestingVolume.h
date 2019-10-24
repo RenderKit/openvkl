@@ -118,12 +118,7 @@ namespace openvkl {
 
       // returns an application-side computed value range, for comparison with
       // vklGetValueRange() results
-      // TODO: make this pure virtual
-      virtual range1f getComputedValueRange() const
-      {
-        throw std::runtime_error(
-            "getComputedValueRange() not implemented for this testing volume");
-      }
+      virtual range1f getComputedValueRange() const = 0;
 
      protected:
       virtual void generateVKLVolume() = 0;

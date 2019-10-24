@@ -214,6 +214,10 @@ namespace openvkl {
         vklRelease(d);
 
       vklCommit(volume);
+
+      for (const auto &bdv : blockDataVectors)
+        computedValueRange.extend(
+            computeValueRange(VKL_FLOAT, bdv.data(), bdv.size()));
     }
   }  // namespace testing
 }  // namespace openvkl

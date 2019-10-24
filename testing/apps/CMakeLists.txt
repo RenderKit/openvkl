@@ -64,6 +64,7 @@ if (BUILD_TESTING)
     tests/vectorized_interval_iterator.cpp
     tests/vectorized_sampling.cpp
     tests/amr_volume_sampling.cpp
+    tests/amr_volume_value_range.cpp
   )
 
   target_link_libraries(vklTests

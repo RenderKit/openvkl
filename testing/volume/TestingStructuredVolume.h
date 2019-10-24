@@ -33,6 +33,8 @@ namespace openvkl {
                               const vec3f &gridSpacing,
                               VKLDataType voxelType);
 
+      range1f getComputedValueRange() const override;
+
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
@@ -43,6 +45,8 @@ namespace openvkl {
 
      protected:
       void generateVKLVolume() override;
+
+      range1f computedValueRange = range1f(ospcommon::math::empty);
 
       std::string gridType = "structured_regular";
       vec3i dimensions;
@@ -65,6 +69,16 @@ namespace openvkl {
           gridSpacing(gridSpacing),
           voxelType(voxelType)
     {
+    }
+
+    inline range1f TestingStructuredVolume::getComputedValueRange() const
+    {
+      if (computedValueRange.empty()) {
+        throw std::runtime_error(
+            "computedValueRange only available after VKL volume is generated");
+      }
+
+      return computedValueRange;
     }
 
     inline vec3i TestingStructuredVolume::getDimensions() const
@@ -101,6 +115,9 @@ namespace openvkl {
       vklRelease(voxelData);
 
       vklCommit(volume);
+
+      computedValueRange =
+          computeValueRange(voxelType, voxels.data(), longProduct(dimensions));
     }
 
   }  // namespace testing

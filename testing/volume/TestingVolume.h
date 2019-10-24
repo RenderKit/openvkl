@@ -19,6 +19,7 @@
 // openvkl
 #include "openvkl/openvkl.h"
 // ospcommon
+#include "ospcommon/math/range.h"
 #include "ospcommon/math/vec.h"
 
 using namespace ospcommon::math;
@@ -75,6 +76,35 @@ namespace openvkl {
       throw std::runtime_error("cannot compute size of unknown VKLDataType");
     }
 
+    template <typename T>
+    inline range1f computeValueRange(const void *data, size_t numValues)
+    {
+      const T *valuesTyped = (const T *)data;
+
+      auto minmax = std::minmax_element(valuesTyped, valuesTyped + numValues);
+
+      return range1f(*minmax.first, *minmax.second);
+    }
+
+    inline range1f computeValueRange(VKLDataType dataType,
+                                     const void *data,
+                                     size_t numValues)
+    {
+      if (dataType == VKL_UCHAR)
+        return computeValueRange<unsigned char>(data, numValues);
+      else if (dataType == VKL_SHORT)
+        return computeValueRange<short>(data, numValues);
+      else if (dataType == VKL_USHORT)
+        return computeValueRange<unsigned short>(data, numValues);
+      else if (dataType == VKL_FLOAT)
+        return computeValueRange<float>(data, numValues);
+      else if (dataType == VKL_DOUBLE)
+        return computeValueRange<double>(data, numValues);
+      else
+        throw std::runtime_error(
+            "computeValueRange() called with unsupported data type");
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // TestingVolume //////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -85,6 +115,15 @@ namespace openvkl {
       virtual ~TestingVolume();
 
       VKLVolume getVKLVolume();
+
+      // returns an application-side computed value range, for comparison with
+      // vklGetValueRange() results
+      // TODO: make this pure virtual
+      virtual range1f getComputedValueRange() const
+      {
+        throw std::runtime_error(
+            "getComputedValueRange() not implemented for this testing volume");
+      }
 
      protected:
       virtual void generateVKLVolume() = 0;

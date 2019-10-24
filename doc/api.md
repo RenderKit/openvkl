@@ -159,6 +159,10 @@ bounding box can be queried:
 
     vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
+The value range of the volume can also be queried:
+
+    vkl_range1f vklGetValueRange(VKLVolume volume);
+
 ### Structured Volume
 
 Structured volumes only need to store the values of the samples, because their

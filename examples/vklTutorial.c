@@ -21,6 +21,16 @@ void demoScalarAPI(VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
 
+  // bounding box
+  vkl_box3f bbox = vklGetBoundingBox(volume);
+  printf("\tbounding box\n");
+  printf("\t\tlower = %f %f %f\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
+  printf("\t\tupper = %f %f %f\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
+
+  // value range
+  vkl_range1f valueRange = vklGetValueRange(volume);
+  printf("\tvalue range = (%f %f)\n\n", valueRange.lower, valueRange.upper);
+
   // sample, gradient
   vkl_vec3f coord = {1.f, 1.f, 1.f};
   float sample    = vklComputeSample(volume, &coord);

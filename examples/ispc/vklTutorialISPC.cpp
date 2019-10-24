@@ -51,6 +51,8 @@ int main()
 
   ispc::demo_ispc(volume);
 
+  vklRelease(volume);
+
   vklShutdown();
 
   return 0;

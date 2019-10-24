@@ -93,6 +93,8 @@ void demoScalarAPI(VKLVolume volume)
       break;
     printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
   }
+
+  vklRelease(selector);
 }
 
 void demoVectorAPI(VKLVolume volume)
@@ -157,6 +159,8 @@ int main()
 
   demoScalarAPI(volume);
   demoVectorAPI(volume);
+
+  vklRelease(volume);
 
   vklShutdown();
 

@@ -1,3 +1,4 @@
+#!/bin/bash
 ## ======================================================================== ##
 ## Copyright 2019 Intel Corporation                                         ##
 ##                                                                          ##
@@ -14,27 +15,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# NOTE: This CMakeLists.txt is intended to be used to exercise an OpenVKL
-#       install and demonstrate how external applications can build against
-#       OpenVKL using CMake.
-#
-#       Once you have done a 'make install' of an existing OpenVKL
-#       build, create a separate build directory and invoke CMake on this
-#       directory. If you have 'openvkl_DIR' setup correctly to point to where
-#       you just installed OpenVKL, then this should built the vklTutorial app
-#       from that install and NOT use your local build.
+export ROOT_DIR=`pwd`
 
-cmake_minimum_required(VERSION 3.1)
+export openvkl_DIR="${ROOT_DIR}/build/install/lib/cmake"
 
-set(CMAKE_C_STANDARD 99)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
+export ospcommon_DIR="${ROOT_DIR}/build/install/lib/cmake"
+export OSPCOMMON_TBB_ROOT="${ROOT_DIR}/build/install"
 
-project(vklTutorial LANGUAGES C)
+mkdir build_from_install
+cd build_from_install
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+cmake --version
 
-find_package(openvkl REQUIRED)
+cmake \
+  "$@" ../examples/from_openvkl_install
 
-add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
-target_link_libraries(vklTutorial openvkl::openvkl)
+cmake --build .
+
+./vklTutorial

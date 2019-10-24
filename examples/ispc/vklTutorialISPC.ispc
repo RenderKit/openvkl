@@ -110,4 +110,6 @@ export void demo_ispc(void *uniform _volume)
   while (vklIterateHitV(&hitIterator, &hit)) {
     print("\tt: %\n\tsample %\n\n", hit.t, hit.sample);
   }
+
+  vklRelease((VKLObject)selector);
 }

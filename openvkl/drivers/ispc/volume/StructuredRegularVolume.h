@@ -71,7 +71,7 @@ namespace openvkl {
      protected:
       void buildAccelerator();
 
-      range1f valueRange = range1f(ospcommon::math::nan, ospcommon::math::nan);
+      range1f valueRange{empty};
 
       Data *voxelData{nullptr};
     };

@@ -305,16 +305,10 @@ export void GridAccelerator_computeValueRange(void *uniform _accelerator,
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
 
-  const uniform int NaN_bits   = 0x7fc00000;
-  const uniform float nanValue = floatbits(NaN_bits);
-  uniform box1f valueRange     = make_box1f(nanValue);
+  uniform box1f valueRange = make_box1f(pos_inf, neg_inf);
 
-  if (accelerator->cellCount > 0) {
-    valueRange = accelerator->cellValueRanges[0];
-
-    for (uniform size_t i = 1; i < accelerator->cellCount; i++) {
-      valueRange = box_extend(valueRange, accelerator->cellValueRanges[i]);
-    }
+  for (uniform size_t i = 0; i < accelerator->cellCount; i++) {
+    valueRange = box_extend(valueRange, accelerator->cellValueRanges[i]);
   }
 
   lower = valueRange.lower;

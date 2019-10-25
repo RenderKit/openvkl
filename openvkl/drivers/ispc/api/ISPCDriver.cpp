@@ -665,6 +665,8 @@ namespace openvkl {
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
 
+      ocW.fill_inactive_lanes(validW);
+
       vfloatn<W> samplesW;
 
       volumeObject.computeSampleV(validW, ocW, samplesW);
@@ -692,6 +694,8 @@ namespace openvkl {
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           validW[i - packIndex * W] = i < OW ? valid[i] : 0;
 
+        ocW.fill_inactive_lanes(validW);
+
         vfloatn<W> samplesW;
 
         volumeObject.computeSampleV(validW, ocW, samplesW);
@@ -716,6 +720,8 @@ namespace openvkl {
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
+
+      ocW.fill_inactive_lanes(validW);
 
       vvec3fn<W> gradientsW;
 
@@ -746,6 +752,8 @@ namespace openvkl {
         vintn<W> validW;
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           validW[i - packIndex * W] = i < OW ? valid[i] : 0;
+
+        ocW.fill_inactive_lanes(validW);
 
         vvec3fn<W> gradientsW;
 

@@ -25,7 +25,8 @@ struct GridAccelerator;
 
 enum SharedStructuredVolumeGridType
 {
-  structured_regular
+  structured_regular,
+  structured_spherical
 };
 
 struct SharedStructuredVolume

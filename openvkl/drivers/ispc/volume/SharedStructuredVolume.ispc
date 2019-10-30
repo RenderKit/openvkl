@@ -50,6 +50,58 @@ inline void transformObjectToLocalUniform_structured_regular(
       1.f / (self->gridSpacing) * (objectCoordinates - self->gridOrigin);
 }
 
+inline void transformLocalToObject_structured_spherical(
+    const SharedStructuredVolume *uniform self,
+    const varying vec3f &localCoordinates,
+    varying vec3f &objectCoordinates)
+{
+  // (r, inclination, azimuth) -> (x, y, z)
+
+  const uniform float degToRad = PI / 180.f;
+
+  const float r = self->gridOrigin.x + localCoordinates.x * self->gridSpacing.x;
+
+  const float inclination =
+      (self->gridOrigin.y + localCoordinates.y * self->gridSpacing.y) *
+      degToRad;
+
+  const float azimuth =
+      (self->gridOrigin.z + localCoordinates.z * self->gridSpacing.z) *
+      degToRad;
+
+  objectCoordinates.x = r * sinf(inclination) * cosf(azimuth);
+  objectCoordinates.y = r * sinf(inclination) * sinf(azimuth);
+  objectCoordinates.z = r * cosf(inclination);
+}
+
+inline void transformObjectToLocal_structured_spherical(
+    const SharedStructuredVolume *uniform self,
+    const varying vec3f &objectCoordinates,
+    varying vec3f &localCoordinates)
+{
+  // (x, y, z) -> (r, inclination, azimuth)
+
+  const uniform radToDeg = 180.f / PI;
+
+  const float uncorrectedRadius =
+      sqrtf(objectCoordinates.x * objectCoordinates.x +
+            objectCoordinates.y * objectCoordinates.y +
+            objectCoordinates.z * objectCoordinates.z);
+
+  const float uncorrectedInclination =
+      acos(objectCoordinates.z / uncorrectedRadius) * radToDeg;
+
+  const float uncorrectedAzimuth =
+      atan2(objectCoordinates.y, objectCoordinates.x) * radToDeg;
+
+  localCoordinates.x =
+      1.f / self->gridSpacing.x * (uncorrectedRadius - self->gridOrigin.x);
+  localCoordinates.y =
+      1.f / self->gridSpacing.y * (uncorrectedInclination - self->gridOrigin.y);
+  localCoordinates.z =
+      1.f / self->gridSpacing.z * (uncorrectedAzimuth - self->gridOrigin.z);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // getVoxel functions for all addressing / voxel type combinations ////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -663,6 +715,18 @@ export uniform bool SharedStructuredVolume_set(
 
     self->transformObjectToLocalUniform =
         transformObjectToLocalUniform_structured_regular;
+  } else if (self->gridType == structured_spherical) {
+    // a conservative bounding box
+    // TODO: make this less conservative...
+    const uniform float extent =
+        self->gridOrigin.x + self->gridSpacing.x * (self->dimensions.x - 1);
+
+    self->boundingBox = make_box3f(make_vec3f(-extent, -extent, -extent),
+                                   make_vec3f(extent, extent, extent));
+
+    self->transformLocalToObject = transformLocalToObject_structured_spherical;
+    self->transformObjectToLocal = transformObjectToLocal_structured_spherical;
+
   } else {
     print("#vkl:shared_structured_volume: unknown gridType\n");
     return false;

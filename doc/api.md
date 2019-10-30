@@ -614,3 +614,28 @@ Returned hits consist of the t-value and volume value at that location:
 For both interval and hit iterators, only the vector-wide API for the native
 SIMD width (determined via `vklGetNativeSIMDWidth` can be called. The scalar
 versions are always valid. This restriction will likely be lifted in the future.
+
+Performance Recommendations
+===========================
+
+MXCSR control and status register
+---------------------------------
+
+It is strongly recommended to have the `Flush to Zero` and `Denormals
+are Zero` mode of the MXCSR control and status register enabled for
+each thread before calling the sampling, gradient, or interval API functions.
+Otherwise, under some circumstances special handling of denormalized floating
+point numbers can significantly reduce application and Open VKL performance.
+When using Open VKL together with the Intel® Threading Building Blocks, it is
+sufficient to execute the following code at the beginning of the
+application main thread (before the creation of the
+`tbb::task_scheduler_init` object):
+
+    #include <xmmintrin.h>
+    #include <pmmintrin.h>
+    ...
+    _MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+    _MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+
+If using a different tasking system, make sure each thread calling into
+Open VKL has the proper mode set.

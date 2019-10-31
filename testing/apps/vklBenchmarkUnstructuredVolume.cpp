@@ -14,12 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include <random>
 #include "../common/simd.h"
 #include "benchmark/benchmark.h"
 #include "openvkl_testing.h"
+#include "ospcommon/utility/random.h"
 
 using namespace openvkl::testing;
+using namespace ospcommon::utility;
 
 #define BENCHMARK_ALL_PRIMS(...)                   \
   BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_HEXAHEDRON)  \
@@ -58,15 +59,15 @@ static void scalarRandomSample(benchmark::State &state)
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
-  std::random_device rd;
-  std::mt19937 eng(rd());
-
-  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
-  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
-  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
+  pcg32_biased_float_distribution distX(
+      time(NULL), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(
+      time(NULL), 1, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(
+      time(NULL), 2, bbox.lower.z, bbox.upper.z);
 
   for (auto _ : state) {
-    vkl_vec3f objectCoordinates{distX(eng), distY(eng), distZ(eng)};
+    vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
 
     benchmark::DoNotOptimize(
         vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates));
@@ -96,12 +97,12 @@ void vectorRandomSample(benchmark::State &state)
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
-  std::random_device rd;
-  std::mt19937 eng(rd());
-
-  std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
-  std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
-  std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
+  pcg32_biased_float_distribution distX(
+      time(NULL), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(
+      time(NULL), 1, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(
+      time(NULL), 2, bbox.lower.z, bbox.upper.z);
 
   int valid[W];
 
@@ -121,9 +122,9 @@ void vectorRandomSample(benchmark::State &state)
 
   for (auto _ : state) {
     for (int i = 0; i < W; i++) {
-      objectCoordinates.x[i] = distX(eng);
-      objectCoordinates.y[i] = distY(eng);
-      objectCoordinates.z[i] = distZ(eng);
+      objectCoordinates.x[i] = distX();
+      objectCoordinates.y[i] = distY();
+      objectCoordinates.z[i] = distZ();
     }
 
     if (W == 4) {

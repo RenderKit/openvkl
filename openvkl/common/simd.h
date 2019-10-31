@@ -167,6 +167,22 @@ namespace openvkl {
 
       return newVec;
     }
+
+    void fill_inactive_lanes(vintn<W> &mask)
+    {
+      for (int i = 0; i < W; i++) {
+        if (mask[i]) {
+          for (int k = 0; k < W; k++) {
+            if (!mask[k]) {
+              x[k] = x[i];
+              y[k] = y[i];
+              z[k] = y[i];
+            }
+          }
+          break;
+        }
+      }
+    }
   };
 
   template <int W>

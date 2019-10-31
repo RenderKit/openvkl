@@ -270,6 +270,7 @@ static bool intersectAndSampleWedge(const void *uniform userData,
   // Enter iteration loop
   uniform bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < WEDGE_MAX_ITERATION); iteration++) {
+    unmasked {
     // Calculate element interpolation functions and derivatives
     wedgeInterpolationFunctions(pcoords, weights);
     wedgeInterpolationDerivs(pcoords, derivs);
@@ -291,6 +292,8 @@ static bool intersectAndSampleWedge(const void *uniform userData,
 
     // Compute determinants and generate improvements
     const float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    }
+
     if (absf(d) < determinantTolerance) {
       return false;
     }
@@ -493,6 +496,7 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
   // Enter iteration loop
   bool uniform converged = false;
   for (uniform int iteration = 0; !converged && (iteration < HEX_MAX_ITERATION); iteration++) {
+    unmasked {
     // Calculate element interpolation functions and derivatives
     hexInterpolationFunctions(pcoords, weights);
     hexInterpolationDerivs(pcoords, derivs);
@@ -514,6 +518,8 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
 
     // Compute determinants and generate improvements
     const float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    }
+
     if (absf(d) < determinantTolerance) {
       return false;
     }
@@ -648,6 +654,7 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
   // Enter iteration loop
   uniform bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < PYRAMID_MAX_ITERATION); iteration++) {
+    unmasked {
     // Calculate element interpolation functions and derivatives
     pyramidInterpolationFunctions(pcoords, weights);
     pyramidInterpolationDerivs(pcoords, derivs);
@@ -669,6 +676,8 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
 
     // Compute determinants and generate improvements
     const float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    }
+
     if (absf(d) < determinantTolerance) {
       return false;
     }

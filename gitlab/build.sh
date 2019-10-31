@@ -26,6 +26,7 @@ cmake --version
 cmake \
   -DCMAKE_INSTALL_LIBDIR=lib \
   -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
+  -DBUILD_OPENVKL_BENCHMARKS=ON \
   "$@" ../superbuild
 
 cmake --build .

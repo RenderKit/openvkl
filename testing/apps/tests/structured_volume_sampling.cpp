@@ -27,8 +27,10 @@ void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
                                                vec3i step = vec3i(1))
 {
   std::unique_ptr<
-      ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
-      v(new ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>(
+      ProceduralStructuredRegularVolume<VOXEL_TYPE,
+                                        getWaveletValue<VOXEL_TYPE>>>
+      v(new ProceduralStructuredRegularVolume<VOXEL_TYPE,
+                                              getWaveletValue<VOXEL_TYPE>>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();

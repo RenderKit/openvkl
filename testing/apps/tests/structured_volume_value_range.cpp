@@ -25,8 +25,10 @@ template <typename VOXEL_TYPE>
 void computed_vs_api_value_range(vec3i dimensions)
 {
   std::unique_ptr<
-      ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
-      v(new ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>(
+      ProceduralStructuredRegularVolume<VOXEL_TYPE,
+                                        getWaveletValue<VOXEL_TYPE>>>
+      v(new ProceduralStructuredRegularVolume<VOXEL_TYPE,
+                                              getWaveletValue<VOXEL_TYPE>>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();

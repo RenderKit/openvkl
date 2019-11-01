@@ -18,5 +18,6 @@
 
 #include "volume/ProceduralShellsAMRVolume.h"
 #include "volume/ProceduralStructuredVolume.h"
+#include "volume/ProceduralStructuredRegularVolume.h"
 #include "volume/ProceduralUnstructuredVolume.h"
 #include "volume/RawFileStructuredVolume.h"

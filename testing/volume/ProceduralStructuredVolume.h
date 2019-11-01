@@ -17,15 +17,10 @@
 #pragma once
 
 #include "TestingStructuredVolume.h"
-#include "procedural_functions.h"
-// openvkl
-#include "openvkl/openvkl.h"
 // ospcommon
-#include "ospcommon/math/vec.h"
 #include "ospcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
-#include <vector>
 
 using namespace ospcommon;
 
@@ -37,7 +32,8 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralStructuredVolume : public TestingStructuredVolume
     {
-      ProceduralStructuredVolume(const vec3i &dimensions,
+      ProceduralStructuredVolume(const std::string &gridType,
+                                 const vec3i &dimensions,
                                  const vec3f &gridOrigin,
                                  const vec3f &gridSpacing);
 
@@ -46,6 +42,10 @@ namespace openvkl {
       vec3f computeProceduralGradient(const vec3f &objectCoordinates);
 
       std::vector<unsigned char> generateVoxels() override;
+
+     protected:
+      virtual vec3f transformLocalToObjectCoordinates(
+          const vec3f &localCoordinates) = 0;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -53,13 +53,14 @@ namespace openvkl {
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &),
               vec3f gradientFunction(const vec3f &)>
-    inline ProceduralStructuredVolume<
-        VOXEL_TYPE,
-        samplingFunction,
-        gradientFunction>::ProceduralStructuredVolume(const vec3i &dimensions,
-                                                      const vec3f &gridOrigin,
-                                                      const vec3f &gridSpacing)
-        : TestingStructuredVolume("structured_regular",
+    inline ProceduralStructuredVolume<VOXEL_TYPE,
+                                      samplingFunction,
+                                      gradientFunction>::
+        ProceduralStructuredVolume(const std::string &gridType,
+                                   const vec3i &dimensions,
+                                   const vec3f &gridOrigin,
+                                   const vec3f &gridSpacing)
+        : TestingStructuredVolume(gridType,
                                   dimensions,
                                   gridOrigin,
                                   gridSpacing,
@@ -100,17 +101,14 @@ namespace openvkl {
 
         VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
 
-        auto transformLocalToObject = [&](const vec3f &localCoordinates) {
-          return this->gridOrigin + localCoordinates * this->gridSpacing;
-        };
-
         ospcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
           for (size_t y = 0; y < this->dimensions.y; y++) {
             for (size_t x = 0; x < this->dimensions.x; x++) {
               size_t index = z * this->dimensions.y * this->dimensions.x +
                              y * this->dimensions.x + x;
-              vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-              voxelsTyped[index]      = samplingFunction(objectCoordinates);
+              vec3f objectCoordinates =
+                  transformLocalToObjectCoordinates(vec3f(x, y, z));
+              voxelsTyped[index] = samplingFunction(objectCoordinates);
             }
           }
         });
@@ -118,37 +116,6 @@ namespace openvkl {
         return voxels;
       }
     }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Procedural volume types ////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    using WaveletProceduralVolumeUchar =
-        ProceduralStructuredVolume<unsigned char,
-                                   getWaveletValue<unsigned char>>;
-
-    using WaveletProceduralVolumeShort =
-        ProceduralStructuredVolume<short, getWaveletValue<short>>;
-
-    using WaveletProceduralVolumeUshort =
-        ProceduralStructuredVolume<unsigned short,
-                                   getWaveletValue<unsigned short>>;
-
-    using WaveletProceduralVolumeFloat =
-        ProceduralStructuredVolume<float,
-                                   getWaveletValue<float>,
-                                   getWaveletGradient>;
-
-    using WaveletProceduralVolumeDouble =
-        ProceduralStructuredVolume<double, getWaveletValue<double>>;
-
-    using WaveletProceduralVolume = WaveletProceduralVolumeFloat;
-
-    using ZProceduralVolume =
-        ProceduralStructuredVolume<float, getZValue, getZGradient>;
-
-    using XYZProceduralVolume =
-        ProceduralStructuredVolume<float, getXYZValue, getXYZGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

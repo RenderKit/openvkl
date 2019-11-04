@@ -49,7 +49,7 @@ else()
   set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 endif()
 
-set(BUILD_OSPCOMMON_VERSION "1.0.1" CACHE STRING "Which version of ospcommon to build?")
+set(BUILD_OSPCOMMON_VERSION "devel" CACHE STRING "Which version of ospcommon to build?")
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
 

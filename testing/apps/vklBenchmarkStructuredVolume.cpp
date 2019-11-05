@@ -41,12 +41,10 @@ static void scalarRandomSample(benchmark::State &state)
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
-  pcg32_biased_float_distribution distX(
-      time(NULL), 0, bbox.lower.x, bbox.upper.x);
-  pcg32_biased_float_distribution distY(
-      time(NULL), 1, bbox.lower.y, bbox.upper.y);
-  pcg32_biased_float_distribution distZ(
-      time(NULL), 2, bbox.lower.z, bbox.upper.z);
+  std::random_device rd;
+  pcg32_biased_float_distribution distX(rd(), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
 
   for (auto _ : state) {
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
@@ -71,12 +69,10 @@ void vectorRandomSample(benchmark::State &state)
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
-  pcg32_biased_float_distribution distX(
-      time(NULL), 0, bbox.lower.x, bbox.upper.x);
-  pcg32_biased_float_distribution distY(
-      time(NULL), 1, bbox.lower.y, bbox.upper.y);
-  pcg32_biased_float_distribution distZ(
-      time(NULL), 2, bbox.lower.z, bbox.upper.z);
+  std::random_device rd;
+  pcg32_biased_float_distribution distX(rd(), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
 
   int valid[W];
 
@@ -215,12 +211,10 @@ static void scalarRandomGradient(benchmark::State &state)
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
-  pcg32_biased_float_distribution distX(
-      time(NULL), 0, bbox.lower.x, bbox.upper.x);
-  pcg32_biased_float_distribution distY(
-      time(NULL), 1, bbox.lower.y, bbox.upper.y);
-  pcg32_biased_float_distribution distZ(
-      time(NULL), 2, bbox.lower.z, bbox.upper.z);
+  std::random_device rd;
+  pcg32_biased_float_distribution distX(rd(), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
 
   for (auto _ : state) {
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
@@ -245,12 +239,10 @@ void vectorRandomGradient(benchmark::State &state)
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
-  pcg32_biased_float_distribution distX(
-      time(NULL), 0, bbox.lower.x, bbox.upper.x);
-  pcg32_biased_float_distribution distY(
-      time(NULL), 1, bbox.lower.y, bbox.upper.y);
-  pcg32_biased_float_distribution distZ(
-      time(NULL), 2, bbox.lower.z, bbox.upper.z);
+  std::random_device rd;
+  pcg32_biased_float_distribution distX(rd(), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
 
   int valid[W];
 

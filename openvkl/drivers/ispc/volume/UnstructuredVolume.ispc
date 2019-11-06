@@ -267,7 +267,7 @@ static bool intersectAndSampleWedge(const void *uniform userData,
       1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
   // Enter iteration loop
-  uniform bool converged = false;
+  bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < WEDGE_MAX_ITERATION); iteration++) {
     unmasked {
     // Calculate element interpolation functions and derivatives
@@ -489,7 +489,7 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
       1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
   // Enter iteration loop
-  bool uniform converged = false;
+  bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < HEX_MAX_ITERATION); iteration++) {
     unmasked {
     // Calculate element interpolation functions and derivatives
@@ -646,7 +646,7 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
     1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
 
   // Enter iteration loop
-  uniform bool converged = false;
+  bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < PYRAMID_MAX_ITERATION); iteration++) {
     unmasked {
     // Calculate element interpolation functions and derivatives

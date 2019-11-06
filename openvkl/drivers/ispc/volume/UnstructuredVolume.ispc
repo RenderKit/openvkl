@@ -440,7 +440,7 @@ static inline void hexInterpolationDerivs(float pcoords[3], float derivs[24])
 
 static const uniform float HEX_DIVERGED = 1.e6;
 static const uniform int HEX_MAX_ITERATION = 10;
-static const uniform float HEX_CONVERGED = 1.e-05;
+static const uniform float HEX_CONVERGED = 1.e-04;
 static const uniform float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
 static bool intersectAndSampleHexIterative(const void *uniform userData,

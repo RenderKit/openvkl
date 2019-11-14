@@ -27,9 +27,8 @@
 
 struct VKLIntervalIterator
 {
-  // stored as varying int32 to enforce correct alignment
-  varying int32 internalState[ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
-  const VKLVolume volume;
+  int32 internalState[ITERATOR_VARYING_INTERNAL_STATE_SIZE];
+  uniform const VKLVolume volume;
 };
 
 struct VKLInterval
@@ -39,27 +38,27 @@ struct VKLInterval
   float nominalDeltaT;
 };
 
-VKL_API void vklInitIntervalIterator4(const int *uniform valid,
-                                      VKLIntervalIterator *uniform iterator,
-                                      VKLVolume volume,
-                                      const varying vkl_vec3f *uniform origin,
-                                      const varying vkl_vec3f *uniform
-                                          direction,
-                                      const varying vkl_range1f *uniform tRange,
-                                      VKLValueSelector valueSelector);
+VKL_API void vklInitIntervalIterator4(
+    const int *uniform valid,
+    varying VKLIntervalIterator *uniform iterator,
+    VKLVolume volume,
+    const varying vkl_vec3f *uniform origin,
+    const varying vkl_vec3f *uniform direction,
+    const varying vkl_range1f *uniform tRange,
+    VKLValueSelector valueSelector);
 
-VKL_API void vklInitIntervalIterator8(const int *uniform valid,
-                                      VKLIntervalIterator *uniform iterator,
-                                      VKLVolume volume,
-                                      const varying vkl_vec3f *uniform origin,
-                                      const varying vkl_vec3f *uniform
-                                          direction,
-                                      const varying vkl_range1f *uniform tRange,
-                                      VKLValueSelector valueSelector);
+VKL_API void vklInitIntervalIterator8(
+    const int *uniform valid,
+    varying VKLIntervalIterator *uniform iterator,
+    VKLVolume volume,
+    const varying vkl_vec3f *uniform origin,
+    const varying vkl_vec3f *uniform direction,
+    const varying vkl_range1f *uniform tRange,
+    VKLValueSelector valueSelector);
 
 VKL_API void vklInitIntervalIterator16(
     const int *uniform valid,
-    VKLIntervalIterator *uniform iterator,
+    varying VKLIntervalIterator *uniform iterator,
     VKLVolume volume,
     const varying vkl_vec3f *uniform origin,
     const varying vkl_vec3f *uniform direction,
@@ -67,7 +66,7 @@ VKL_API void vklInitIntervalIterator16(
     VKLValueSelector valueSelector);
 
 VKL_FORCEINLINE void vklInitIntervalIteratorV(
-    VKLIntervalIterator *uniform iterator,
+    varying VKLIntervalIterator *uniform iterator,
     VKLVolume volume,
     const varying vkl_vec3f *uniform origin,
     const varying vkl_vec3f *uniform direction,
@@ -108,22 +107,22 @@ VKL_FORCEINLINE void vklInitIntervalIteratorV(
 }
 
 VKL_API void vklIterateInterval4(const int *uniform valid,
-                                 VKLIntervalIterator *uniform iterator,
+                                 varying VKLIntervalIterator *uniform iterator,
                                  varying VKLInterval *uniform interval,
                                  varying int *uniform result);
 
 VKL_API void vklIterateInterval8(const int *uniform valid,
-                                 VKLIntervalIterator *uniform iterator,
+                                 varying VKLIntervalIterator *uniform iterator,
                                  varying VKLInterval *uniform interval,
                                  varying int *uniform result);
 
 VKL_API void vklIterateInterval16(const int *uniform valid,
-                                  VKLIntervalIterator *uniform iterator,
+                                  varying VKLIntervalIterator *uniform iterator,
                                   varying VKLInterval *uniform interval,
                                   varying int *uniform result);
 
 VKL_FORCEINLINE varying bool vklIterateIntervalV(
-    VKLIntervalIterator *uniform iterator,
+    varying VKLIntervalIterator *uniform iterator,
     varying VKLInterval *uniform interval)
 {
   varying bool mask = __mask;
@@ -159,8 +158,8 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
 struct VKLHitIterator
 {
   // stored as varying int32 to enforce correct alignment
-  varying int32 internalState[ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4];
-  const VKLVolume volume;
+  int32 internalState[ITERATOR_VARYING_INTERNAL_STATE_SIZE];
+  uniform const VKLVolume volume;
 };
 
 struct VKLHit
@@ -170,7 +169,7 @@ struct VKLHit
 };
 
 VKL_API void vklInitHitIterator4(const int *uniform valid,
-                                 VKLHitIterator *uniform iterator,
+                                 varying VKLHitIterator *uniform iterator,
                                  VKLVolume volume,
                                  const varying vkl_vec3f *uniform origin,
                                  const varying vkl_vec3f *uniform direction,
@@ -178,7 +177,7 @@ VKL_API void vklInitHitIterator4(const int *uniform valid,
                                  VKLValueSelector valueSelector);
 
 VKL_API void vklInitHitIterator8(const int *uniform valid,
-                                 VKLHitIterator *uniform iterator,
+                                 varying VKLHitIterator *uniform iterator,
                                  VKLVolume volume,
                                  const varying vkl_vec3f *uniform origin,
                                  const varying vkl_vec3f *uniform direction,
@@ -186,7 +185,7 @@ VKL_API void vklInitHitIterator8(const int *uniform valid,
                                  VKLValueSelector valueSelector);
 
 VKL_API void vklInitHitIterator16(const int *uniform valid,
-                                  VKLHitIterator *uniform iterator,
+                                  varying VKLHitIterator *uniform iterator,
                                   VKLVolume volume,
                                   const varying vkl_vec3f *uniform origin,
                                   const varying vkl_vec3f *uniform direction,
@@ -194,7 +193,7 @@ VKL_API void vklInitHitIterator16(const int *uniform valid,
                                   VKLValueSelector valueSelector);
 
 VKL_FORCEINLINE void vklInitHitIteratorV(
-    VKLHitIterator *uniform iterator,
+    varying VKLHitIterator *uniform iterator,
     VKLVolume volume,
     const varying vkl_vec3f *uniform origin,
     const varying vkl_vec3f *uniform direction,
@@ -235,22 +234,22 @@ VKL_FORCEINLINE void vklInitHitIteratorV(
 }
 
 VKL_API void vklIterateHit4(const int *uniform valid,
-                            VKLHitIterator *uniform iterator,
+                            varying VKLHitIterator *uniform iterator,
                             varying VKLHit *uniform hit,
                             varying int *uniform result);
 
 VKL_API void vklIterateHit8(const int *uniform valid,
-                            VKLHitIterator *uniform iterator,
+                            varying VKLHitIterator *uniform iterator,
                             varying VKLHit *uniform hit,
                             varying int *uniform result);
 
 VKL_API void vklIterateHit16(const int *uniform valid,
-                             VKLHitIterator *uniform iterator,
+                             varying VKLHitIterator *uniform iterator,
                              varying VKLHit *uniform hit,
                              varying int *uniform result);
 
-VKL_FORCEINLINE varying bool vklIterateHitV(VKLHitIterator *uniform iterator,
-                                            varying VKLHit *uniform hit)
+VKL_FORCEINLINE varying bool vklIterateHitV(
+    varying VKLHitIterator *uniform iterator, varying VKLHit *uniform hit)
 {
   varying bool mask = __mask;
   unmasked

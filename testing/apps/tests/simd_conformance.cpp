@@ -48,9 +48,9 @@ void vVKLIntervalIteratorN_conformance_test()
                   << ", alignment = " << alignof(vVKLIntervalIteratorN<W>));
 
   REQUIRE(sizeof(vVKLIntervalIteratorN<W>) ==
-          ispc::sizeofUniformVKLIntervalIterator());
+          ispc::sizeofVaryingVKLIntervalIterator());
   REQUIRE(is_aligned_for_type<vVKLIntervalIteratorN<W>>(
-      ispc::newUniformVKLIntervalIterator()));
+      ispc::newVaryingVKLIntervalIterator()));
 
   if (W == 4) {
     REQUIRE(sizeof(VKLIntervalIterator4) == sizeof(vVKLIntervalIteratorN<W>));
@@ -76,9 +76,10 @@ void vVKLHitIteratorN_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vVKLHitIteratorN<W>));
 
-  REQUIRE(sizeof(vVKLHitIteratorN<W>) == ispc::sizeofUniformVKLHitIterator());
+  REQUIRE(sizeof(vVKLHitIteratorN<W>) ==
+          ispc::sizeofVaryingVKLHitIterator());
   REQUIRE(is_aligned_for_type<vVKLHitIteratorN<W>>(
-      ispc::newUniformVKLHitIterator()));
+      ispc::newVaryingVKLHitIterator()));
 
   if (W == 4) {
     REQUIRE(sizeof(VKLHitIterator4) == sizeof(vVKLHitIteratorN<W>));

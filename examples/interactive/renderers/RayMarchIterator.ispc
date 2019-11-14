@@ -22,7 +22,7 @@ struct RayMarchIterator
   float samplingRate;
 };
 
-vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
+vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
                                    Ray &ray,
                                    const vec2i &pixel,
                                    const uniform int &frameID,
@@ -38,7 +38,7 @@ vec3f RayMarchIterator_renderPixel(uniform Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  uniform VKLIntervalIterator iterator;
+  VKLIntervalIterator iterator;
   vklInitIntervalIteratorV(&iterator,
                            self->super.volume,
                            (varying vkl_vec3f *)&ray.org,

@@ -21,7 +21,7 @@ struct HitIterator
   Renderer super;
 };
 
-vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
+vec3f HitIterator_renderPixel(Renderer *uniform _self,
                               Ray &ray,
                               const vec2i &,
                               const uniform int &,
@@ -40,7 +40,7 @@ vec3f HitIterator_renderPixel(uniform Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  uniform VKLHitIterator iterator;
+  VKLHitIterator iterator;
   vklInitHitIteratorV(&iterator,
                       self->super.volume,
                       (varying vkl_vec3f *)&ray.org,

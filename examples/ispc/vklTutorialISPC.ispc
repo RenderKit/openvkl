@@ -81,7 +81,7 @@ export void demo_ispc(void *uniform _volume)
         rayTRange.upper);
 
   // interval iteration
-  uniform VKLIntervalIterator intervalIterator;
+  VKLIntervalIterator intervalIterator;
   vklInitIntervalIteratorV(&intervalIterator,
                            volume,
                            &rayOrigin,
@@ -107,7 +107,7 @@ export void demo_ispc(void *uniform _volume)
   }
 
   // hit iteration
-  uniform VKLHitIterator hitIterator;
+  VKLHitIterator hitIterator;
   vklInitHitIteratorV(
       &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
 

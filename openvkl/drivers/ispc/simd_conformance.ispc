@@ -39,24 +39,24 @@ export varying vec3f *uniform newVaryingVec3f()
   return uniform new varying vec3f;
 }
 
-export uniform int sizeofUniformVKLIntervalIterator()
+export uniform int sizeofVaryingVKLIntervalIterator()
 {
-  return sizeof(uniform VKLIntervalIterator);
+  return sizeof(varying VKLIntervalIterator);
 }
 
-export VKLIntervalIterator *uniform newUniformVKLIntervalIterator()
+export varying VKLIntervalIterator *uniform newVaryingVKLIntervalIterator()
 {
-  return uniform new uniform VKLIntervalIterator;
+  return uniform new varying VKLIntervalIterator;
 }
 
-export uniform int sizeofUniformVKLHitIterator()
+export uniform int sizeofVaryingVKLHitIterator()
 {
-  return sizeof(uniform VKLHitIterator);
+  return sizeof(varying VKLHitIterator);
 }
 
-export VKLHitIterator *uniform newUniformVKLHitIterator()
+export varying VKLHitIterator *uniform newVaryingVKLHitIterator()
 {
-  return uniform new uniform VKLHitIterator;
+  return uniform new varying VKLHitIterator;
 }
 
 export uniform int sizeofVaryingInterval()

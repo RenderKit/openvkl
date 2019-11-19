@@ -227,7 +227,7 @@ extern "C" int vklIterateInterval(VKLIntervalIterator *iterator,
       reinterpret_cast<vVKLIntervalIteratorN<1> &>(*iterator),
       intervalInternal,
       reinterpret_cast<vintn<1> &>(result));
-  *interval = static_cast<VKLInterval>(intervalInternal);
+  intervalInternal.populateVKLInterval(*interval);
   return result;
 }
 OPENVKL_CATCH_END(false)
@@ -246,7 +246,7 @@ OPENVKL_CATCH_END(false)
         reinterpret_cast<vVKLIntervalIteratorN<WIDTH> &>(*iterator), \
         intervalInternal,                                            \
         reinterpret_cast<vintn<WIDTH> &>(*result));                  \
-    *interval = static_cast<VKLInterval##WIDTH>(intervalInternal);   \
+    intervalInternal.populateVKLInterval##WIDTH(*interval, valid);   \
   }                                                                  \
   OPENVKL_CATCH_END()
 

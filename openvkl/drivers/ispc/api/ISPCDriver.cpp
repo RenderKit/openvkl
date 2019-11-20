@@ -291,12 +291,23 @@ namespace openvkl {
     computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
 
-    __define_computeSampleN(1);
+    //__define_computeSampleN(1);
     __define_computeSampleN(4);
     __define_computeSampleN(8);
     __define_computeSampleN(16);
 
 #undef __define_computeSampleN
+
+    // support a fast path for scalar sampling
+    template <int W>
+    void ISPCDriver<W>::computeSample1(const int *valid,
+                                       VKLVolume volume,
+                                       const vvec3fn<1> &objectCoordinates,
+                                       vfloatn<1> &sample)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      volumeObject.computeSample(objectCoordinates, sample);
+    }
 
 #define __define_computeGradientN(WIDTH)              \
   template <int W>                                    \

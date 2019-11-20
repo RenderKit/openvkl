@@ -462,53 +462,43 @@ namespace openvkl {
     vVKLHitN<W>(const vVKLHitN<W> &v) : t(v.t), sample(v.sample) {}
 
     template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    explicit operator VKLHit()
+    void populateVKLHit(VKLHit &hit) const
     {
-      VKLHit hit1;
-
-      hit1.t      = t[0];
-      hit1.sample = sample[0];
-
-      return hit1;
+      hit.t      = t[0];
+      hit.sample = sample[0];
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    explicit operator VKLHit4()
+    void populateVKLHit4(VKLHit4 &hit, const int *valid) const
     {
-      VKLHit4 hit4;
-
       for (int i = 0; i < 4; i++) {
-        hit4.t[i]      = t[i];
-        hit4.sample[i] = sample[i];
+        if (valid[i]) {
+          hit.t[i]      = t[i];
+          hit.sample[i] = sample[i];
+        }
       }
-
-      return hit4;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    explicit operator VKLHit8()
+    void populateVKLHit8(VKLHit8 &hit, const int *valid) const
     {
-      VKLHit8 hit8;
-
       for (int i = 0; i < 8; i++) {
-        hit8.t[i]      = t[i];
-        hit8.sample[i] = sample[i];
+        if (valid[i]) {
+          hit.t[i]      = t[i];
+          hit.sample[i] = sample[i];
+        }
       }
-
-      return hit8;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    explicit operator VKLHit16()
+    void populateVKLHit16(VKLHit16 &hit, const int *valid) const
     {
-      VKLHit16 hit16;
-
       for (int i = 0; i < 16; i++) {
-        hit16.t[i]      = t[i];
-        hit16.sample[i] = sample[i];
+        if (valid[i]) {
+          hit.t[i]      = t[i];
+          hit.sample[i] = sample[i];
+        }
       }
-
-      return hit16;
     }
   };
 

@@ -321,7 +321,7 @@ extern "C" int vklIterateHit(VKLHitIterator *iterator,
       reinterpret_cast<vVKLHitIteratorN<1> &>(*iterator),
       hitInternal,
       reinterpret_cast<vintn<1> &>(result));
-  *hit = static_cast<VKLHit>(hitInternal);
+  hitInternal.populateVKLHit(*hit);
   return result;
 }
 OPENVKL_CATCH_END(false)
@@ -339,7 +339,7 @@ OPENVKL_CATCH_END(false)
         reinterpret_cast<vVKLHitIteratorN<WIDTH> &>(*iterator),         \
         hitInternal,                                                    \
         reinterpret_cast<vintn<WIDTH> &>(*result));                     \
-    *hit = static_cast<VKLHit##WIDTH>(hitInternal);                     \
+    hitInternal.populateVKLHit##WIDTH(*hit, valid);                     \
   }                                                                     \
   OPENVKL_CATCH_END()
 

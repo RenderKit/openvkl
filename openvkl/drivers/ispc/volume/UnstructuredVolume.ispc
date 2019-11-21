@@ -45,6 +45,11 @@ inline bool pointInAABBTest(const uniform box3fa &box,
   return t1 & t2 & t3 & t4 & t5 & t6;
 }
 
+typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
+                                       uniform uint64 id,
+                                       float &result,
+                                       vec3f samplePos);
+
 void traverseEmbree(uniform Node* uniform root,
                     const void *uniform userPtr,
                     uniform intersectAndSamplePrim sampleFunc,
@@ -892,10 +897,7 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
                                    const uniform bool _cell32Bit,
                                    const uniform uint32 _cellSkipIds,
                                    const uint8* uniform _cellType,
-                                   const void* uniform bvhRoot, // embree bvh
-                                   uniform int64 rootRef,
-                                   const void* uniform _bvhNode,
-                                   const int64* uniform _bvhPrimID,
+                                   const void* uniform bvhRoot,
                                    const vec3f* uniform _faceNormals,
                                    const float* uniform _iterativeTolerance,
                                    const uniform bool _hexIterative)
@@ -922,8 +924,4 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
   self->gradientStep = make_vec3f(0.01f * reduce_min(self->boundingBox.upper - self->boundingBox.lower));
 
   self->bvhRoot = (uniform Node* uniform)bvhRoot;
-
-  self->bvh.rootRef = rootRef;
-  self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;
-  self->bvh.primID  = _bvhPrimID;
 }

@@ -227,9 +227,6 @@ namespace openvkl {
           indexPrefixed,
           (const uint8_t *)cellType->data,
           (void *)(rtcRoot),
-          bvh.rootRef(),
-          bvh.nodePtr(),
-          bvh.itemListPtr(),
           faceNormals.empty() ? nullptr
                               : (const ispc::vec3f *)faceNormals.data(),
           iterativeTolerance.empty() ? nullptr : iterativeTolerance.data(),
@@ -273,35 +270,6 @@ namespace openvkl {
     template <int W>
     void UnstructuredVolume<W>::buildBvhAndCalculateBounds()
     {
-      std::vector<int64> primID(nCells);
-      std::vector<box4f> primBounds(nCells);
-
-      box4f bounds4 = empty;
-
-      for (uint64_t i = 0; i < nCells; i++) {
-        primID[i]       = i;
-        auto cellBounds = getCellBBox(i);
-        if (i == 0) {
-          bounds4 = cellBounds;
-        } else {
-          bounds4.extend(cellBounds);
-        }
-        primBounds[i] = cellBounds;
-      }
-
-      bounds.lower = vec3f(bounds4.lower.x, bounds4.lower.y, bounds4.lower.z);
-      bounds.upper = vec3f(bounds4.upper.x, bounds4.upper.y, bounds4.upper.z);
-
-      valueRange.lower = bounds4.lower.w;
-      valueRange.upper = bounds4.upper.w;
-
-      // std::cerr << "full volume range: " << valueRange << std::endl;
-
-      bvh.build(primBounds.data(), primID.data(), nCells);
-
-      // ------------------------
-
-      // std::cerr << "embree setup...\n";
       rtcDevice = rtcNewDevice(NULL);
       if (!rtcDevice) {
         std::cerr << "cannot create device: " << rtcGetDeviceError(NULL)

@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include "MinMaxBVH2.ih"
+#include "math/vec.ih"
+#include "math/box.ih"
 #include "Volume.ih"
 
 typedef enum
@@ -54,8 +55,6 @@ struct VKLUnstructuredVolume
   uniform box3f boundingBox;
 
   uniform vec3f gradientStep;
-
-  uniform MinMaxBVH2 bvh;
 
   uniform Node* uniform bvhRoot;
 

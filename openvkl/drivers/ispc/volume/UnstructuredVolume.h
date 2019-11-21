@@ -19,7 +19,6 @@
 #include <embree3/rtcore.h>
 #include "../common/Data.h"
 #include "../common/math.h"
-#include "MinMaxBVH2.h"
 #include "UnstructuredVolume_ispc.h"
 #include "Volume.h"
 
@@ -172,7 +171,6 @@ namespace openvkl {
       std::vector<vec3f> faceNormals;
       std::vector<float> iterativeTolerance;
 
-      MinMaxBVH2 bvh;
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};

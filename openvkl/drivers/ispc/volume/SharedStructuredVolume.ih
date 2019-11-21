@@ -68,4 +68,13 @@ struct SharedStructuredVolume
   void (*uniform getVoxel)(const SharedStructuredVolume *uniform self,
                            const varying vec3i &index,
                            varying float &value);
+
+  // required for uniform (scalar) sampling
+  uniform float (*uniform computeSampleUniform)(
+      const void *uniform _self, const uniform vec3f &objectCoordinates);
+
+  void (*uniform transformObjectToLocalUniform)(
+      const SharedStructuredVolume *uniform self,
+      const uniform vec3f &objectCoordinates,
+      uniform vec3f &localCoordinates);
 };

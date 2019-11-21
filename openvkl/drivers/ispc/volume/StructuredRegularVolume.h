@@ -56,6 +56,9 @@ namespace openvkl {
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override;
 
+      void computeSample(const vvec3fn<1> &objectCoordinates,
+                         vfloatn<1> &samples) const override;
+
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples) const override;
@@ -133,6 +136,14 @@ namespace openvkl {
       ri->iterateHit(valid, result);
 
       hit = *reinterpret_cast<const vVKLHitN<W> *>(ri->getCurrentHit());
+    }
+
+    template <int W>
+    inline void StructuredRegularVolume<W>::computeSample(
+        const vvec3fn<1> &objectCoordinates, vfloatn<1> &samples) const
+    {
+      ispc::SharedStructuredVolume_sample_uniform_export(
+          this->ispcEquivalent, &objectCoordinates, &samples);
     }
 
     template <int W>

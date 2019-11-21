@@ -54,15 +54,24 @@ inline void transformObjectToLocalUniform_structured_regular(
 // getVoxel functions for all addressing / voxel type combinations ////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-#define template_getVoxel(type)                                              \
+// used below in template_getVoxel
+#define process_index_z(univary) process_index_z_##univary
+#define process_index_z_varying foreach_unique(z in index.z)
+#define process_index_z_uniform uniform int z = index.z;
+
+#define process_hi28(univary) process_hi28_##univary
+#define process_hi28_varying foreach_unique(hi in hi28)
+#define process_hi28_uniform uniform uint32 hi = hi28;
+
+#define template_getVoxel(type, univary)                                     \
   /* for pure 32-bit addressing. volume *MUST* be smaller than 2G */         \
-  inline void SSV_getVoxel_##type##_32(                                      \
+  inline void SSV_getVoxel_##type##_##univary##_32(                          \
       const SharedStructuredVolume *uniform self,                            \
-      const varying vec3i &index,                                            \
-      varying float &value)                                                  \
+      const univary vec3i &index,                                            \
+      univary float &value)                                                  \
   {                                                                          \
     const type *uniform voxelData = (const type *uniform)self->voxelData;    \
-    const uint32 addr =                                                      \
+    const univary uint32 addr =                                              \
         index.x +                                                            \
         self->dimensions.x * (index.y + self->dimensions.y * index.z);       \
                                                                              \
@@ -70,17 +79,17 @@ inline void transformObjectToLocalUniform_structured_regular(
   }                                                                          \
   /* for 64/32-bit addressing. volume itself can be larger than 2G, but each \
    * slice must be within the 2G limit. */                                   \
-  inline void SSV_getVoxel_##type##_64_32(                                   \
+  inline void SSV_getVoxel_##type##_##univary##_64_32(                       \
       const SharedStructuredVolume *uniform self,                            \
-      const varying vec3i &index,                                            \
-      varying float &value)                                                  \
+      const univary vec3i &index,                                            \
+      univary float &value)                                                  \
   {                                                                          \
     const uniform uint8 *uniform basePtr =                                   \
         (const uniform uint8 *uniform)self->voxelData;                       \
                                                                              \
     /* iterate over slices, then do 32-bit gather in slice */                \
-    const uint32 ofs = index.x + self->dimensions.x * index.y;               \
-    foreach_unique(z in index.z)                                             \
+    const univary uint32 ofs = index.x + self->dimensions.x * index.y;       \
+    process_index_z(univary)                                                 \
     {                                                                        \
       const uniform uint64 byteOffset = z * self->bytesPerSlice;             \
       const uniform type *uniform sliceData =                                \
@@ -89,19 +98,19 @@ inline void transformObjectToLocalUniform_structured_regular(
     }                                                                        \
   }                                                                          \
   /* for full 64-bit addressing, for all dimensions or slice size */         \
-  inline void SSV_getVoxel_##type##_64(                                      \
+  inline void SSV_getVoxel_##type##_##univary##_64(                          \
       const SharedStructuredVolume *uniform self,                            \
-      const varying vec3i &index,                                            \
-      varying float &value)                                                  \
+      const univary vec3i &index,                                            \
+      univary float &value)                                                  \
   {                                                                          \
-    const uint64 index64 =                                                   \
+    const univary uint64 index64 =                                           \
         (uint64)index.x +                                                    \
         self->dimensions.x *                                                 \
             ((int64)index.y + self->dimensions.y * ((uint64)index.z));       \
-    const uint32 hi28 = index64 >> 28;                                       \
-    const uint32 lo28 = index64 & ((1 << 28) - 1);                           \
+    const univary uint32 hi28 = index64 >> 28;                               \
+    const univary uint32 lo28 = index64 & ((1 << 28) - 1);                   \
                                                                              \
-    foreach_unique(hi in hi28)                                               \
+    process_hi28(univary)                                                    \
     {                                                                        \
       const uniform uint64 hi64 = hi;                                        \
       const type *uniform base =                                             \
@@ -110,11 +119,17 @@ inline void transformObjectToLocalUniform_structured_regular(
     }                                                                        \
   }
 
-template_getVoxel(uint8);
-template_getVoxel(int16);
-template_getVoxel(uint16);
-template_getVoxel(float);
-template_getVoxel(double);
+template_getVoxel(uint8, varying);
+template_getVoxel(int16, varying);
+template_getVoxel(uint16, varying);
+template_getVoxel(float, varying);
+template_getVoxel(double, varying);
+
+template_getVoxel(uint8, uniform);
+template_getVoxel(int16, uniform);
+template_getVoxel(uint16, uniform);
+template_getVoxel(float, uniform);
+template_getVoxel(double, uniform);
 #undef template_getVoxel
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -171,6 +186,22 @@ inline void transformObjectToLocalUnivary(
 {
   self->transformObjectToLocalUniform(
       self, objectCoordinates, localCoordinates);
+}
+
+// overloads for both varying and uniform voxel getters, used in templated
+// sampling functions
+inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
+                            const varying vec3i &index,
+                            varying float &value)
+{
+  self->getVoxel(self, index, value);
+}
+
+inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
+                            const uniform vec3i &index,
+                            uniform float &value)
+{
+  self->getVoxelUniform(self, index, value);
 }
 
 // perform trilinear interpolation for given sample. unlike old way of doing
@@ -368,100 +399,112 @@ template_sample_64_32(float, uniform);
 template_sample_64_32(double, uniform);
 #undef template_sample_64_32
 
-// TODO: still needs univary expansion
 // default sampling function (64-bit addressing)
-inline float SSV_sample_64(const void *uniform _self,
-                           const varying vec3f &objectCoordinates)
-{
-  const SharedStructuredVolume *uniform self =
-      (const SharedStructuredVolume *uniform)_self;
-
-  vec3f localCoordinates;
-  self->transformObjectToLocal(self, objectCoordinates, localCoordinates);
-
-  // return NaN for local coordinates outside the bounds of the volume.
-  const uniform int NaN_bits   = 0x7fc00000;
-  const uniform float nanValue = floatbits(NaN_bits);
-
-  if (localCoordinates.x < 0.f ||
-      localCoordinates.x > self->dimensions.x - 1.f ||
-      localCoordinates.y < 0.f ||
-      localCoordinates.y > self->dimensions.y - 1.f ||
-      localCoordinates.z < 0.f ||
-      localCoordinates.z > self->dimensions.z - 1.f) {
-    return nanValue;
+#define template_sample_64(univary)                                            \
+  inline univary float SSV_sample_##univary##_64(                              \
+      const void *uniform _self, const univary vec3f &objectCoordinates)       \
+  {                                                                            \
+    const SharedStructuredVolume *uniform self =                               \
+        (const SharedStructuredVolume *uniform)_self;                          \
+                                                                               \
+    univary vec3f localCoordinates;                                            \
+    transformObjectToLocalUnivary(self, objectCoordinates, localCoordinates);  \
+                                                                               \
+    /* return NaN for local coordinates outside the bounds of the volume. */   \
+    const uniform int NaN_bits   = 0x7fc00000;                                 \
+    const uniform float nanValue = floatbits(NaN_bits);                        \
+                                                                               \
+    if (localCoordinates.x < 0.f ||                                            \
+        localCoordinates.x > self->dimensions.x - 1.f ||                       \
+        localCoordinates.y < 0.f ||                                            \
+        localCoordinates.y > self->dimensions.y - 1.f ||                       \
+        localCoordinates.z < 0.f ||                                            \
+        localCoordinates.z > self->dimensions.z - 1.f) {                       \
+      return nanValue;                                                         \
+    }                                                                          \
+                                                                               \
+    const univary vec3f clampedLocalCoordinates = clamp(                       \
+        localCoordinates, make_vec3f(0.0f), self->localCoordinatesUpperBound); \
+                                                                               \
+    /* lower and upper corners of the box straddling the voxels to be          \
+     interpolated. */                                                          \
+    const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);        \
+    const univary vec3i voxelIndex_1 = voxelIndex_0 + 1;                       \
+                                                                               \
+    /* fractional coordinates within the lower corner voxel used during        \
+     interpolation. */                                                         \
+    const univary vec3f fractionalLocalCoordinates =                           \
+        clampedLocalCoordinates - to_float(voxelIndex_0);                      \
+                                                                               \
+    /* look up the voxel values to be interpolated. */                         \
+    univary float voxelValue_000;                                              \
+    univary float voxelValue_001;                                              \
+    univary float voxelValue_010;                                              \
+    univary float voxelValue_011;                                              \
+    univary float voxelValue_100;                                              \
+    univary float voxelValue_101;                                              \
+    univary float voxelValue_110;                                              \
+    univary float voxelValue_111;                                              \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),            \
+        voxelValue_000);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z),            \
+        voxelValue_001);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z),            \
+        voxelValue_010);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z),            \
+        voxelValue_011);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z),            \
+        voxelValue_100);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z),            \
+        voxelValue_101);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z),            \
+        voxelValue_110);                                                       \
+    getVoxelUnivary(                                                           \
+        self,                                                                  \
+        make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z),            \
+        voxelValue_111);                                                       \
+                                                                               \
+    /* interpolate the voxel values. */                                        \
+    const univary float voxelValue_00 =                                        \
+        voxelValue_000 +                                                       \
+        fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);      \
+    const univary float voxelValue_01 =                                        \
+        voxelValue_010 +                                                       \
+        fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);      \
+    const univary float voxelValue_10 =                                        \
+        voxelValue_100 +                                                       \
+        fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);      \
+    const univary float voxelValue_11 =                                        \
+        voxelValue_110 +                                                       \
+        fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);      \
+    const univary float voxelValue_0 =                                         \
+        voxelValue_00 +                                                        \
+        fractionalLocalCoordinates.y * (voxelValue_01 - voxelValue_00);        \
+    const univary float voxelValue_1 =                                         \
+        voxelValue_10 +                                                        \
+        fractionalLocalCoordinates.y * (voxelValue_11 - voxelValue_10);        \
+                                                                               \
+    return voxelValue_0 +                                                      \
+           fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);       \
   }
 
-  const vec3f clampedLocalCoordinates = clamp(
-      localCoordinates, make_vec3f(0.0f), self->localCoordinatesUpperBound);
-
-  // lower and upper corners of the box straddling the voxels to be
-  // interpolated.
-  const vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);
-  const vec3i voxelIndex_1 = voxelIndex_0 + 1;
-
-  // fractional coordinates within the lower corner voxel used during
-  // interpolation.
-  const vec3f fractionalLocalCoordinates =
-      clampedLocalCoordinates - to_float(voxelIndex_0);
-
-  // look up the voxel values to be interpolated.
-  float voxelValue_000;
-  float voxelValue_001;
-  float voxelValue_010;
-  float voxelValue_011;
-  float voxelValue_100;
-  float voxelValue_101;
-  float voxelValue_110;
-  float voxelValue_111;
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),
-                 voxelValue_000);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z),
-                 voxelValue_001);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z),
-                 voxelValue_010);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z),
-                 voxelValue_011);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z),
-                 voxelValue_100);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z),
-                 voxelValue_101);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z),
-                 voxelValue_110);
-  self->getVoxel(self,
-                 make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z),
-                 voxelValue_111);
-
-  // interpolate the voxel values.
-  const float voxelValue_00 =
-      voxelValue_000 +
-      fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);
-  const float voxelValue_01 =
-      voxelValue_010 +
-      fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);
-  const float voxelValue_10 =
-      voxelValue_100 +
-      fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);
-  const float voxelValue_11 =
-      voxelValue_110 +
-      fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);
-  const float voxelValue_0 =
-      voxelValue_00 +
-      fractionalLocalCoordinates.y * (voxelValue_01 - voxelValue_00);
-  const float voxelValue_1 =
-      voxelValue_10 +
-      fractionalLocalCoordinates.y * (voxelValue_11 - voxelValue_10);
-
-  return voxelValue_0 +
-         fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);
-}
+template_sample_64(varying);
+template_sample_64(uniform);
+#undef template_sample_64
 
 ///////////////////////////////////////////////////////////////////////////////
 // Gradient computation ///////////////////////////////////////////////////////
@@ -662,31 +705,37 @@ export uniform bool SharedStructuredVolume_set(
   self->voxelOfs_dz   = bytesPerSlice;
 
   // default sampling function (64-bit addressing)
-  self->super.computeSample = SSV_sample_64;
+  self->super.computeSample  = SSV_sample_varying_64;
+  self->computeSampleUniform = SSV_sample_uniform_64;
 
   if (bytesPerVolume <= (1ULL << 30)) {
     // in this case, we know ALL addressing can be 32-bit.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
 
     if (voxelType == VKL_UCHAR) {
-      self->getVoxel             = SSV_getVoxel_uint8_32;
+      self->getVoxel             = SSV_getVoxel_uint8_varying_32;
       self->super.computeSample  = SSV_sample_uint8_varying_32;
+      self->getVoxelUniform      = SSV_getVoxel_uint8_uniform_32;
       self->computeSampleUniform = SSV_sample_uint8_uniform_32;
     } else if (voxelType == VKL_SHORT) {
-      self->getVoxel             = SSV_getVoxel_int16_32;
+      self->getVoxel             = SSV_getVoxel_int16_varying_32;
       self->super.computeSample  = SSV_sample_int16_varying_32;
+      self->getVoxelUniform      = SSV_getVoxel_int16_uniform_32;
       self->computeSampleUniform = SSV_sample_int16_uniform_32;
     } else if (voxelType == VKL_USHORT) {
-      self->getVoxel             = SSV_getVoxel_uint16_32;
+      self->getVoxel             = SSV_getVoxel_uint16_varying_32;
       self->super.computeSample  = SSV_sample_uint16_varying_32;
+      self->getVoxelUniform      = SSV_getVoxel_uint16_uniform_32;
       self->computeSampleUniform = SSV_sample_uint16_uniform_32;
     } else if (voxelType == VKL_FLOAT) {
-      self->getVoxel             = SSV_getVoxel_float_32;
+      self->getVoxel             = SSV_getVoxel_float_varying_32;
       self->super.computeSample  = SSV_sample_float_varying_32;
+      self->getVoxelUniform      = SSV_getVoxel_float_uniform_32;
       self->computeSampleUniform = SSV_sample_float_uniform_32;
     } else if (voxelType == VKL_DOUBLE) {
-      self->getVoxel             = SSV_getVoxel_double_32;
+      self->getVoxel             = SSV_getVoxel_double_varying_32;
       self->super.computeSample  = SSV_sample_double_varying_32;
+      self->getVoxelUniform      = SSV_getVoxel_double_uniform_32;
       self->computeSampleUniform = SSV_sample_double_uniform_32;
     }
 
@@ -696,24 +745,29 @@ export uniform bool SharedStructuredVolume_set(
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
 
     if (voxelType == VKL_UCHAR) {
-      self->getVoxel             = SSV_getVoxel_uint8_64_32;
+      self->getVoxel             = SSV_getVoxel_uint8_varying_64_32;
       self->super.computeSample  = SSV_sample_uint8_varying_64_32;
+      self->getVoxelUniform      = SSV_getVoxel_uint8_uniform_64_32;
       self->computeSampleUniform = SSV_sample_uint8_uniform_64_32;
     } else if (voxelType == VKL_SHORT) {
-      self->getVoxel             = SSV_getVoxel_int16_64_32;
+      self->getVoxel             = SSV_getVoxel_int16_varying_64_32;
       self->super.computeSample  = SSV_sample_int16_varying_64_32;
+      self->getVoxelUniform      = SSV_getVoxel_int16_uniform_64_32;
       self->computeSampleUniform = SSV_sample_int16_uniform_64_32;
     } else if (voxelType == VKL_USHORT) {
-      self->getVoxel             = SSV_getVoxel_uint16_64_32;
+      self->getVoxel             = SSV_getVoxel_uint16_varying_64_32;
       self->super.computeSample  = SSV_sample_uint16_varying_64_32;
+      self->getVoxelUniform      = SSV_getVoxel_uint16_uniform_64_32;
       self->computeSampleUniform = SSV_sample_uint16_uniform_64_32;
     } else if (voxelType == VKL_FLOAT) {
-      self->getVoxel             = SSV_getVoxel_float_64_32;
+      self->getVoxel             = SSV_getVoxel_float_varying_64_32;
       self->super.computeSample  = SSV_sample_float_varying_64_32;
+      self->getVoxelUniform      = SSV_getVoxel_float_uniform_64_32;
       self->computeSampleUniform = SSV_sample_float_uniform_64_32;
     } else if (voxelType == VKL_DOUBLE) {
-      self->getVoxel             = SSV_getVoxel_double_64_32;
+      self->getVoxel             = SSV_getVoxel_double_varying_64_32;
       self->super.computeSample  = SSV_sample_double_varying_64_32;
+      self->getVoxelUniform      = SSV_getVoxel_double_uniform_64_32;
       self->computeSampleUniform = SSV_sample_double_uniform_64_32;
     }
   } else {
@@ -721,17 +775,22 @@ export uniform bool SharedStructuredVolume_set(
     // addressing, and we have to do 64-bit throughout
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64-bit mode\n");
 
-    // TODO: need computeSampleUniform versions
-    if (voxelType == VKL_UCHAR)
-      self->getVoxel = SSV_getVoxel_uint8_64;
-    else if (voxelType == VKL_SHORT)
-      self->getVoxel = SSV_getVoxel_int16_64;
-    else if (voxelType == VKL_USHORT)
-      self->getVoxel = SSV_getVoxel_uint16_64;
-    else if (voxelType == VKL_FLOAT)
-      self->getVoxel = SSV_getVoxel_float_64;
-    else if (voxelType == VKL_DOUBLE)
-      self->getVoxel = SSV_getVoxel_double_64;
+    if (voxelType == VKL_UCHAR) {
+      self->getVoxel        = SSV_getVoxel_uint8_varying_64;
+      self->getVoxelUniform = SSV_getVoxel_uint8_uniform_64;
+    } else if (voxelType == VKL_SHORT) {
+      self->getVoxel        = SSV_getVoxel_int16_varying_64;
+      self->getVoxelUniform = SSV_getVoxel_int16_uniform_64;
+    } else if (voxelType == VKL_USHORT) {
+      self->getVoxel        = SSV_getVoxel_uint16_varying_64;
+      self->getVoxelUniform = SSV_getVoxel_uint16_uniform_64;
+    } else if (voxelType == VKL_FLOAT) {
+      self->getVoxel        = SSV_getVoxel_float_varying_64;
+      self->getVoxelUniform = SSV_getVoxel_float_uniform_64;
+    } else if (voxelType == VKL_DOUBLE) {
+      self->getVoxel        = SSV_getVoxel_double_varying_64;
+      self->getVoxelUniform = SSV_getVoxel_double_uniform_64;
+    }
   }
 
   return true;

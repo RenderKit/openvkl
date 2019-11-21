@@ -77,4 +77,8 @@ struct SharedStructuredVolume
       const SharedStructuredVolume *uniform self,
       const uniform vec3f &objectCoordinates,
       uniform vec3f &localCoordinates);
+
+  void (*uniform getVoxelUniform)(const SharedStructuredVolume *uniform self,
+                                  const uniform vec3i &index,
+                                  uniform float &value);
 };

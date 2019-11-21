@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "../../external/catch.hpp"
+#include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
 
@@ -22,8 +23,8 @@ using namespace ospcommon;
 using namespace openvkl::testing;
 
 template <typename VOXEL_TYPE>
-void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
-                                                      vec3i step = vec3i(1))
+void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
+                                               vec3i step = vec3i(1))
 {
   std::unique_ptr<
       ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
@@ -40,14 +41,57 @@ void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
     vec3f objectCoordinates =
         v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
 
+    const float proceduralValue = v->computeProceduralValue(objectCoordinates);
+
     INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
                      << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
-    REQUIRE(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
-        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
+
+    float scalarSampledValue =
+        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates);
+
+    REQUIRE(scalarSampledValue == Approx(proceduralValue).margin(1e-4f));
+
+    // since vklComputeSample() can have a specialized implementation separate
+    // from vector sampling, check the vector APIs as well. we only need to
+    // check for consistency with the scalar API result, as that has already
+    // been validated.
+
+    // first lane active only
+    std::vector<int> valid(16, 0);
+    valid[0] = 1;
+
+    std::vector<vec3f> objectCoordinatesVector;
+    objectCoordinatesVector.push_back(objectCoordinates);
+
+    std::vector<float> objectCoordinatesSOA;
+
+    objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
+    float samples_4[4]   = {0.f};
+    vklComputeSample4(valid.data(),
+                      vklVolume,
+                      (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
+                      samples_4);
+
+    objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
+    float samples_8[8]   = {0.f};
+    vklComputeSample8(valid.data(),
+                      vklVolume,
+                      (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
+                      samples_8);
+
+    objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
+    float samples_16[16] = {0.f};
+    vklComputeSample16(valid.data(),
+                       vklVolume,
+                       (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
+                       samples_16);
+
+    REQUIRE(scalarSampledValue == samples_4[0]);
+    REQUIRE(scalarSampledValue == samples_8[0]);
+    REQUIRE(scalarSampledValue == samples_16[0]);
   }
 }
 
@@ -63,29 +107,27 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned char>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<unsigned char>(vec3i(128));
     }
 
     SECTION("short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<short>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<short>(vec3i(128));
     }
 
     SECTION("unsigned short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned short>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<unsigned short>(vec3i(128));
     }
 
     SECTION("float")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<float>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<float>(vec3i(128));
     }
 
     SECTION("double")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<double>(vec3i(128));
     }
   }
 
@@ -95,29 +137,27 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned char>(
-          vec3i(1025), 16);
+      sampling_on_vertices_vs_procedural_values<unsigned char>(vec3i(1025), 16);
     }
 
     SECTION("short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<short>(vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<short>(vec3i(813), 16);
     }
 
     SECTION("unsigned short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned short>(
-          vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<unsigned short>(vec3i(813), 16);
     }
 
     SECTION("float")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<float>(vec3i(646), 16);
+      sampling_on_vertices_vs_procedural_values<float>(vec3i(646), 16);
     }
 
     SECTION("double")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(513), 16);
+      sampling_on_vertices_vs_procedural_values<double>(vec3i(513), 16);
     }
   }
 
@@ -129,8 +169,8 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
     // accelerator build overhead, which we need to resolve.
     SECTION("double")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<double>(
-          vec3i(11586, 11586, 2), vec3i(16, 16, 1));
+      sampling_on_vertices_vs_procedural_values<double>(vec3i(11586, 11586, 2),
+                                                        vec3i(16, 16, 1));
     }
   }
 }

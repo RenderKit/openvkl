@@ -291,7 +291,6 @@ namespace openvkl {
     computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
 
-    //__define_computeSampleN(1);
     __define_computeSampleN(4);
     __define_computeSampleN(8);
     __define_computeSampleN(16);

@@ -164,6 +164,7 @@ void usage(const char *progname)
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
                "\t-gridType structured_regular | unstructured | amr\n"
+               "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
@@ -192,6 +193,17 @@ int main(int argc, const char **argv)
       }
 
       gridType = std::string(argv[argIndex++]);
+    } else if (switchArg == "-gridOrigin") {
+      if (argc < argIndex + 3) {
+        throw std::runtime_error("improper -gridOrigin arguments");
+      }
+
+      const std::string gridOriginX(argv[argIndex++]);
+      const std::string gridOriginY(argv[argIndex++]);
+      const std::string gridOriginZ(argv[argIndex++]);
+
+      gridOrigin =
+          vec3f(stof(gridOriginX), stof(gridOriginY), stof(gridOriginZ));
     } else if (switchArg == "-gridSpacing") {
       if (argc < argIndex + 3) {
         throw std::runtime_error("improper -gridSpacing arguments");

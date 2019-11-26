@@ -110,14 +110,14 @@ namespace openvkl {
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
       VKLData voxelData =
-          vklNewData(longProduct(dimensions), voxelType, voxels.data());
+          vklNewData(dimensions.long_product(), voxelType, voxels.data());
       vklSetData(volume, "voxelData", voxelData);
       vklRelease(voxelData);
 
       vklCommit(volume);
 
-      computedValueRange =
-          computeValueRange(voxelType, voxels.data(), longProduct(dimensions));
+      computedValueRange = computeValueRange(
+          voxelType, voxels.data(), dimensions.long_product());
     }
 
   }  // namespace testing

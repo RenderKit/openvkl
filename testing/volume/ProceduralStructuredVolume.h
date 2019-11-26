@@ -96,7 +96,7 @@ namespace openvkl {
         generateVoxels()
     {
       {
-        auto numValues = longProduct(this->dimensions);
+        auto numValues = this->dimensions.long_product();
         std::vector<unsigned char> voxels(numValues * sizeof(VOXEL_TYPE));
 
         VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();

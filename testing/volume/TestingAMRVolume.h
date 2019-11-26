@@ -125,7 +125,7 @@ namespace openvkl {
 
       float *floatData = (float *)voxels.data();
       std::vector<float> floatVoxels;
-      floatVoxels.assign(floatData, floatData + longProduct(dimensions));
+      floatVoxels.assign(floatData, floatData + dimensions.long_product());
 
       makeAMR(floatVoxels,
               dimensions,

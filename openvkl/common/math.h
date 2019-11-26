@@ -24,11 +24,6 @@ namespace openvkl {
 
   using namespace ospcommon::math;
 
-  inline size_t longProduct(const vec3i &dims)
-  {
-    return dims.x * size_t(dims.y) * dims.z;
-  }
-
   inline std::pair<float, float> intersectBox(const vec3f &origin,
                                               const vec3f &direction,
                                               const box3f &box,

@@ -46,10 +46,8 @@ namespace openvkl {
     template <int W>
     void AMRVolume<W>::commit()
     {
-      StructuredVolume<W>::commit();
-
-      amrMethod = (VKLAMRMethod)
-          this->template getParam<int>("method", VKL_AMR_CURRENT);
+      amrMethod =
+          (VKLAMRMethod)this->template getParam<int>("method", VKL_AMR_CURRENT);
 
       if (amrMethod == VKL_AMR_CURRENT)
         ispc::AMR_install_current(this->ispcEquivalent);

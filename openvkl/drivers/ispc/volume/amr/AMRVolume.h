@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../StructuredVolume.h"
+#include "../Volume.h"
 #include "AMRAccel.h"
 #include "ospcommon/memory/RefCount.h"
 
@@ -26,7 +26,7 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct AMRVolume : public StructuredVolume<W>
+    struct AMRVolume : public Volume<W>
     {
       AMRVolume();
       ~AMRVolume() override = default;

@@ -79,40 +79,45 @@ inline void transformLocalToObject_structured_spherical(
   objectCoordinates.z = r * cosf(inclination);
 }
 
-inline void transformObjectToLocal_structured_spherical(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3f &objectCoordinates,
-    varying vec3f &localCoordinates)
-{
-  // (x, y, z) -> (r, inclination, azimuth), using the ISO convention for
-  // coordinates and ordering
-
-  const uniform radToDeg = 180.f / PI;
-
-  const float uncorrectedRadius =
-      sqrtf(objectCoordinates.x * objectCoordinates.x +
-            objectCoordinates.y * objectCoordinates.y +
-            objectCoordinates.z * objectCoordinates.z);
-
-  const float uncorrectedInclination =
-      acos(objectCoordinates.z / uncorrectedRadius) * radToDeg;
-
-  float uncorrectedAzimuth =
-      atan2(objectCoordinates.y, objectCoordinates.x) * radToDeg;
-
-  // the above returns [-180, 180], while our azimuth grid convention is [0,
-  // 360]
-  if (uncorrectedAzimuth < 0.f) {
-    uncorrectedAzimuth += 360.f;
+#define template_transformObjectToLocal_structured_spherical(univary)          \
+  inline void transformObjectToLocal_##univary##_structured_spherical(         \
+      const SharedStructuredVolume *uniform self,                              \
+      const univary vec3f &objectCoordinates,                                  \
+      univary vec3f &localCoordinates)                                         \
+  {                                                                            \
+    /* (x, y, z) -> (r, inclination, azimuth), using the ISO convention for    \
+     coordinates and ordering */                                               \
+                                                                               \
+    const uniform radToDeg = 180.f / PI;                                       \
+                                                                               \
+    const univary float uncorrectedRadius =                                    \
+        sqrtf(objectCoordinates.x * objectCoordinates.x +                      \
+              objectCoordinates.y * objectCoordinates.y +                      \
+              objectCoordinates.z * objectCoordinates.z);                      \
+                                                                               \
+    const univary float uncorrectedInclination =                               \
+        acos(objectCoordinates.z / uncorrectedRadius) * radToDeg;              \
+                                                                               \
+    univary float uncorrectedAzimuth =                                         \
+        atan2(objectCoordinates.y, objectCoordinates.x) * radToDeg;            \
+                                                                               \
+    /* the above returns [-180, 180], while our azimuth grid convention is [0, \
+     360] */                                                                   \
+    if (uncorrectedAzimuth < 0.f) {                                            \
+      uncorrectedAzimuth += 360.f;                                             \
+    }                                                                          \
+                                                                               \
+    localCoordinates.x =                                                       \
+        1.f / self->gridSpacing.x * (uncorrectedRadius - self->gridOrigin.x);  \
+    localCoordinates.y = 1.f / self->gridSpacing.y *                           \
+                         (uncorrectedInclination - self->gridOrigin.y);        \
+    localCoordinates.z =                                                       \
+        1.f / self->gridSpacing.z * (uncorrectedAzimuth - self->gridOrigin.z); \
   }
 
-  localCoordinates.x =
-      1.f / self->gridSpacing.x * (uncorrectedRadius - self->gridOrigin.x);
-  localCoordinates.y =
-      1.f / self->gridSpacing.y * (uncorrectedInclination - self->gridOrigin.y);
-  localCoordinates.z =
-      1.f / self->gridSpacing.z * (uncorrectedAzimuth - self->gridOrigin.z);
-}
+template_transformObjectToLocal_structured_spherical(varying);
+template_transformObjectToLocal_structured_spherical(uniform);
+#undef template_transformObjectToLocal_structured_spherical
 
 ///////////////////////////////////////////////////////////////////////////////
 // getVoxel functions for all addressing / voxel type combinations ////////////
@@ -724,9 +729,9 @@ export uniform bool SharedStructuredVolume_set(
 
     self->transformLocalToObject = transformLocalToObject_structured_regular;
     self->transformObjectToLocal = transformObjectToLocal_structured_regular;
-
     self->transformObjectToLocalUniform =
         transformObjectToLocalUniform_structured_regular;
+
   } else if (self->gridType == structured_spherical) {
     // a conservative bounding box
     // TODO: make this less conservative...
@@ -737,7 +742,10 @@ export uniform bool SharedStructuredVolume_set(
                                    make_vec3f(extent, extent, extent));
 
     self->transformLocalToObject = transformLocalToObject_structured_spherical;
-    self->transformObjectToLocal = transformObjectToLocal_structured_spherical;
+    self->transformObjectToLocal =
+        transformObjectToLocal_varying_structured_spherical;
+    self->transformObjectToLocalUniform =
+        transformObjectToLocal_uniform_structured_spherical;
 
   } else {
     print("#vkl:shared_structured_volume: unknown gridType\n");

@@ -116,5 +116,12 @@ namespace openvkl {
       return vec3f(0.f);
     }
 
+    inline float getRadiusValue(const vec3f &objectCoordinates)
+    {
+      return sqrtf(objectCoordinates.x * objectCoordinates.x +
+                   objectCoordinates.y * objectCoordinates.y +
+                   objectCoordinates.z * objectCoordinates.z);
+    }
+
   }  // namespace testing
 }  // namespace openvkl

@@ -54,6 +54,35 @@ namespace openvkl {
         }
       }
 
+      // each object coordinate must correspond to a unique logical coordinate;
+      // we therefore currently require:
+      // - inclination in [0, 180] degrees
+      // - azimuth in [0, 360] degrees
+      const range1f legalInclinationRange(0.f, 180.f);
+      const range1f legalAzimuthRange(0.f, 360.f);
+
+      range1f inclinationRange(
+          this->gridOrigin.y,
+          this->gridOrigin.y + (this->dimensions.y - 1) * this->gridSpacing.y);
+
+      range1f azimuthRange(
+          this->gridOrigin.z,
+          this->gridOrigin.z + (this->dimensions.z - 1) * this->gridSpacing.z);
+
+      if (inclinationRange.lower < legalInclinationRange.lower ||
+          inclinationRange.upper > legalInclinationRange.upper) {
+        throw std::runtime_error(
+            "StructuredSphericalVolume inclination grid values must be in [0, "
+            "180] degrees");
+      }
+
+      if (azimuthRange.lower < legalAzimuthRange.lower ||
+          azimuthRange.upper > legalAzimuthRange.upper) {
+        throw std::runtime_error(
+            "StructuredSphericalVolume azimuth grid values must be in [0, 360] "
+            "degrees");
+      }
+
       bool success = ispc::SharedStructuredVolume_set(
           this->ispcEquivalent,
           voxelData->data,

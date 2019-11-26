@@ -24,6 +24,8 @@
 // Coordinate transformations for all supported structured volume types ///////
 ///////////////////////////////////////////////////////////////////////////////
 
+// Structured regular /////////////////////////////////////////////////////////
+
 inline void transformLocalToObject_structured_regular(
     const SharedStructuredVolume *uniform self,
     const varying vec3f &localCoordinates,
@@ -50,12 +52,15 @@ inline void transformObjectToLocalUniform_structured_regular(
       1.f / (self->gridSpacing) * (objectCoordinates - self->gridOrigin);
 }
 
+// Structured spherical ///////////////////////////////////////////////////////
+
 inline void transformLocalToObject_structured_spherical(
     const SharedStructuredVolume *uniform self,
     const varying vec3f &localCoordinates,
     varying vec3f &objectCoordinates)
 {
-  // (r, inclination, azimuth) -> (x, y, z)
+  // (r, inclination, azimuth) -> (x, y, z), using the ISO convention for
+  // coordinates and ordering
 
   const uniform float degToRad = PI / 180.f;
 
@@ -79,7 +84,8 @@ inline void transformObjectToLocal_structured_spherical(
     const varying vec3f &objectCoordinates,
     varying vec3f &localCoordinates)
 {
-  // (x, y, z) -> (r, inclination, azimuth)
+  // (x, y, z) -> (r, inclination, azimuth), using the ISO convention for
+  // coordinates and ordering
 
   const uniform radToDeg = 180.f / PI;
 
@@ -91,8 +97,14 @@ inline void transformObjectToLocal_structured_spherical(
   const float uncorrectedInclination =
       acos(objectCoordinates.z / uncorrectedRadius) * radToDeg;
 
-  const float uncorrectedAzimuth =
+  float uncorrectedAzimuth =
       atan2(objectCoordinates.y, objectCoordinates.x) * radToDeg;
+
+  // the above returns [-180, 180], while our azimuth grid convention is [0,
+  // 360]
+  if (uncorrectedAzimuth < 0.f) {
+    uncorrectedAzimuth += 360.f;
+  }
 
   localCoordinates.x =
       1.f / self->gridSpacing.x * (uncorrectedRadius - self->gridOrigin.x);

@@ -20,29 +20,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    StructuredSphericalVolume<W>::~StructuredSphericalVolume()
-    {
-      if (this->ispcEquivalent) {
-        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
-      }
-    }
-
-    template <int W>
     void StructuredSphericalVolume<W>::commit()
     {
       StructuredVolume<W>::commit();
-
-      voxelData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "voxelData", nullptr);
-
-      if (!voxelData) {
-        throw std::runtime_error("no voxelData set on volume");
-      }
-
-      if (voxelData->size() != longProduct(this->dimensions)) {
-        throw std::runtime_error(
-            "incorrect voxelData size for provided volume dimensions");
-      }
 
       if (!this->ispcEquivalent) {
         this->ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
@@ -85,8 +65,8 @@ namespace openvkl {
 
       bool success = ispc::SharedStructuredVolume_set(
           this->ispcEquivalent,
-          voxelData->data,
-          voxelData->dataType,
+          this->voxelData->data,
+          this->voxelData->dataType,
           (const ispc::vec3i &)this->dimensions,
           ispc::structured_spherical,
           (const ispc::vec3f &)this->gridOrigin,
@@ -98,6 +78,9 @@ namespace openvkl {
 
         throw std::runtime_error("failed to commit StructuredSphericalVolume");
       }
+
+      // must be last
+      this->buildAccelerator();
     }
 
     VKL_REGISTER_VOLUME(StructuredSphericalVolume<4>, structured_spherical_4)

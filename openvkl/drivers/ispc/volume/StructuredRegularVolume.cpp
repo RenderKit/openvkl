@@ -15,36 +15,14 @@
 // ======================================================================== //
 
 #include "StructuredRegularVolume.h"
-#include "GridAccelerator_ispc.h"
-#include "ospcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    StructuredRegularVolume<W>::~StructuredRegularVolume()
-    {
-      if (this->ispcEquivalent) {
-        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
-      }
-    }
-
-    template <int W>
     void StructuredRegularVolume<W>::commit()
     {
       StructuredVolume<W>::commit();
-
-      voxelData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "voxelData", nullptr);
-
-      if (!voxelData) {
-        throw std::runtime_error("no voxelData set on volume");
-      }
-
-      if (voxelData->size() != longProduct(this->dimensions)) {
-        throw std::runtime_error(
-            "incorrect voxelData size for provided volume dimensions");
-      }
 
       if (!this->ispcEquivalent) {
         this->ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
@@ -57,8 +35,8 @@ namespace openvkl {
 
       bool success = ispc::SharedStructuredVolume_set(
           this->ispcEquivalent,
-          voxelData->data,
-          voxelData->dataType,
+          this->voxelData->data,
+          this->voxelData->dataType,
           (const ispc::vec3i &)this->dimensions,
           ispc::structured_regular,
           (const ispc::vec3f &)this->gridOrigin,
@@ -71,31 +49,8 @@ namespace openvkl {
         throw std::runtime_error("failed to commit StructuredRegularVolume");
       }
 
-      buildAccelerator();
-    }
-
-    template <int W>
-    void StructuredRegularVolume<W>::buildAccelerator()
-    {
-      void *accelerator =
-          ispc::SharedStructuredVolume_createAccelerator(this->ispcEquivalent);
-
-      vec3i bricksPerDimension;
-      bricksPerDimension.x =
-          ispc::GridAccelerator_getBricksPerDimension_x(accelerator);
-      bricksPerDimension.y =
-          ispc::GridAccelerator_getBricksPerDimension_y(accelerator);
-      bricksPerDimension.z =
-          ispc::GridAccelerator_getBricksPerDimension_z(accelerator);
-
-      const int numTasks =
-          bricksPerDimension.x * bricksPerDimension.y * bricksPerDimension.z;
-      tasking::parallel_for(numTasks, [&](int taskIndex) {
-        ispc::GridAccelerator_build(accelerator, taskIndex);
-      });
-
-      ispc::GridAccelerator_computeValueRange(
-          accelerator, valueRange.lower, valueRange.upper);
+      // must be last
+      this->buildAccelerator();
     }
 
     VKL_REGISTER_VOLUME(StructuredRegularVolume<4>, structured_regular_4)

@@ -16,8 +16,6 @@
 
 #pragma once
 
-#include "../common/Data.h"
-#include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
 namespace openvkl {
@@ -26,51 +24,14 @@ namespace openvkl {
     template <int W>
     struct StructuredSphericalVolume : public StructuredVolume<W>
     {
-      ~StructuredSphericalVolume();
-
       void commit() override;
 
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
+      // note, although we construct the GridAccelerator for all structured
+      // volumes (including this one), we only use it here for computing
+      // value range. we don't yet use it for iterators since the nextCell()
+      // implementation is only correct for structured regular volumes.
 
-      box3f getBoundingBox() const override;
-
-      range1f getValueRange() const override;
-
-     protected:
-      Data *voxelData{nullptr};
     };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    template <int W>
-    inline void StructuredSphericalVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
-    {
-      ispc::SharedStructuredVolume_sample_export((const int *)&valid,
-                                                 this->ispcEquivalent,
-                                                 &objectCoordinates,
-                                                 &samples);
-    }
-
-    template <int W>
-    inline box3f StructuredSphericalVolume<W>::getBoundingBox() const
-    {
-      ispc::box3f bb =
-          ispc::SharedStructuredVolume_getBoundingBox(this->ispcEquivalent);
-
-      return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
-                   vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
-    }
-
-    template <int W>
-    inline range1f StructuredSphericalVolume<W>::getValueRange() const
-    {
-      throw std::runtime_error("not implemented");
-    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

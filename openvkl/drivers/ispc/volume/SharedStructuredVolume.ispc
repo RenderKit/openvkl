@@ -60,23 +60,25 @@ inline void transformLocalToObject_structured_spherical(
     varying vec3f &objectCoordinates)
 {
   // (r, inclination, azimuth) -> (x, y, z), using the ISO convention for
-  // coordinates and ordering
-
-  const uniform float degToRad = PI / 180.f;
+  // coordinates and ordering. all angles in radians.
 
   const float r = self->gridOrigin.x + localCoordinates.x * self->gridSpacing.x;
 
   const float inclination =
-      (self->gridOrigin.y + localCoordinates.y * self->gridSpacing.y) *
-      degToRad;
+      self->gridOrigin.y + localCoordinates.y * self->gridSpacing.y;
 
   const float azimuth =
-      (self->gridOrigin.z + localCoordinates.z * self->gridSpacing.z) *
-      degToRad;
+      self->gridOrigin.z + localCoordinates.z * self->gridSpacing.z;
 
-  objectCoordinates.x = r * sinf(inclination) * cosf(azimuth);
-  objectCoordinates.y = r * sinf(inclination) * sinf(azimuth);
-  objectCoordinates.z = r * cosf(inclination);
+  float sinInc, cosInc;
+  sincos(inclination, &sinInc, &cosInc);
+
+  float sinAz, cosAz;
+  sincos(azimuth, &sinAz, &cosAz);
+
+  objectCoordinates.x = r * sinInc * cosAz;
+  objectCoordinates.y = r * sinInc * sinAz;
+  objectCoordinates.z = r * cosInc;
 }
 
 #define template_transformObjectToLocal_structured_spherical(univary)          \
@@ -86,33 +88,26 @@ inline void transformLocalToObject_structured_spherical(
       univary vec3f &localCoordinates)                                         \
   {                                                                            \
     /* (x, y, z) -> (r, inclination, azimuth), using the ISO convention for    \
-     coordinates and ordering */                                               \
+     coordinates and ordering. all angles in radians. */                       \
+    const univary float r = sqrtf(objectCoordinates.x * objectCoordinates.x +  \
+                                  objectCoordinates.y * objectCoordinates.y +  \
+                                  objectCoordinates.z * objectCoordinates.z);  \
                                                                                \
-    const uniform radToDeg = 180.f / PI;                                       \
+    const univary float inclination = acos(objectCoordinates.z / r);           \
                                                                                \
-    const univary float uncorrectedRadius =                                    \
-        sqrtf(objectCoordinates.x * objectCoordinates.x +                      \
-              objectCoordinates.y * objectCoordinates.y +                      \
-              objectCoordinates.z * objectCoordinates.z);                      \
+    univary float azimuth = atan2(objectCoordinates.y, objectCoordinates.x);   \
                                                                                \
-    const univary float uncorrectedInclination =                               \
-        acos(objectCoordinates.z / uncorrectedRadius) * radToDeg;              \
-                                                                               \
-    univary float uncorrectedAzimuth =                                         \
-        atan2(objectCoordinates.y, objectCoordinates.x) * radToDeg;            \
-                                                                               \
-    /* the above returns [-180, 180], while our azimuth grid convention is [0, \
-     360] */                                                                   \
-    if (uncorrectedAzimuth < 0.f) {                                            \
-      uncorrectedAzimuth += 360.f;                                             \
+    /* the above returns [-PI, PI], while our azimuth grid convention is [0,   \
+     * 2*PI] */                                                                \
+    if (azimuth < 0.f) {                                                       \
+      azimuth += 2.f * PI;                                                     \
     }                                                                          \
                                                                                \
-    localCoordinates.x =                                                       \
-        1.f / self->gridSpacing.x * (uncorrectedRadius - self->gridOrigin.x);  \
-    localCoordinates.y = 1.f / self->gridSpacing.y *                           \
-                         (uncorrectedInclination - self->gridOrigin.y);        \
+    localCoordinates.x = 1.f / self->gridSpacing.x * (r - self->gridOrigin.x); \
+    localCoordinates.y =                                                       \
+        1.f / self->gridSpacing.y * (inclination - self->gridOrigin.y);        \
     localCoordinates.z =                                                       \
-        1.f / self->gridSpacing.z * (uncorrectedAzimuth - self->gridOrigin.z); \
+        1.f / self->gridSpacing.z * (azimuth - self->gridOrigin.z);            \
   }
 
 template_transformObjectToLocal_structured_spherical(varying);

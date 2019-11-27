@@ -63,14 +63,20 @@ namespace openvkl {
             "degrees");
       }
 
+      // pre-transform all angles to radians
+      const vec3f gridToRadians(1.f, M_PI / 180.f, M_PI / 180.f);
+
+      const vec3f gridOriginRadians  = this->gridOrigin * gridToRadians;
+      const vec3f gridSpacingRadians = this->gridSpacing * gridToRadians;
+
       bool success = ispc::SharedStructuredVolume_set(
           this->ispcEquivalent,
           this->voxelData->data,
           this->voxelData->dataType,
           (const ispc::vec3i &)this->dimensions,
           ispc::structured_spherical,
-          (const ispc::vec3f &)this->gridOrigin,
-          (const ispc::vec3f &)this->gridSpacing);
+          (const ispc::vec3f &)gridOriginRadians,
+          (const ispc::vec3f &)gridSpacingRadians);
 
       if (!success) {
         ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);

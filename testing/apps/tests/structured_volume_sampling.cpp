@@ -41,7 +41,7 @@ void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
     const auto offsetWithStep = offset * step;
 
     vec3f objectCoordinates =
-        v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
+        v->transformLocalToObjectCoordinates(offsetWithStep);
 
     const float proceduralValue = v->computeProceduralValue(objectCoordinates);
 

@@ -36,7 +36,7 @@ void xyz_scalar_gradients()
 
   for (const auto &offset : mis) {
     const vec3f objectCoordinates =
-        v->getGridOrigin() + offset * v->getGridSpacing();
+        v->transformLocalToObjectCoordinates(offset);
 
     INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
@@ -73,7 +73,7 @@ void wavelet_scalar_gradients()
 
   for (const auto &offset : mis) {
     const vec3f objectCoordinates =
-        v->getGridOrigin() + offset * v->getGridSpacing();
+        v->transformLocalToObjectCoordinates(offset);
 
     INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "

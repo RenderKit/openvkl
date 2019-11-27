@@ -36,7 +36,6 @@ namespace openvkl {
                                         const vec3f &gridOrigin,
                                         const vec3f &gridSpacing);
 
-     protected:
       vec3f transformLocalToObjectCoordinates(
           const vec3f &localCoordinates) override;
     };

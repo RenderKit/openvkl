@@ -43,7 +43,6 @@ namespace openvkl {
 
       std::vector<unsigned char> generateVoxels() override;
 
-     protected:
       virtual vec3f transformLocalToObjectCoordinates(
           const vec3f &localCoordinates) = 0;
     };

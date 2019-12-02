@@ -49,9 +49,14 @@ else()
   set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 endif()
 
+option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
+
 set(BUILD_OSPCOMMON_VERSION "devel" CACHE STRING "Which version of ospcommon to build?")
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
+
+set(BUILD_EMBREE_VERSION "v3.6.1" CACHE STRING "Which version of Embree to build?")
+option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
@@ -91,6 +96,7 @@ if (BUILD_GLFW)
 endif()
 
 include(dep_ospcommon)
+include(dep_embree)
 
 ## Build OpenVKL ##
 
@@ -130,7 +136,8 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   ExternalProject_Add_StepDependencies(openvkl
   configure
     ospcommon
-    ispc
+    embree
     $<$<BOOL:${BUILD_GLFW}>:glfw>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
   )
 endif()

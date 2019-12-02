@@ -60,6 +60,7 @@ cd openvkl_build
 
 export OSPCOMMON_TBB_ROOT=`pwd`/../install/tbb
 export ospcommon_DIR=`pwd`/../install/ospcommon
+export embree_DIR=`pwd`/../install/embree
 
 cmake \
  -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc \

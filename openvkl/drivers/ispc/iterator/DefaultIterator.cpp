@@ -38,6 +38,11 @@ namespace openvkl {
       static bool oneTimeChecks = false;
 
       if (!oneTimeChecks) {
+        LogMessageStream(VKL_LOG_WARNING)
+            << "using DefaultIterator for volume which has no native iterator "
+               "implementation; performance may not be optimal"
+            << std::endl;
+
         int ispcSize = ispc::DefaultIterator_sizeOf();
 
         if (ispcSize > ispcStorageSize) {

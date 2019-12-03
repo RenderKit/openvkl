@@ -48,7 +48,7 @@ namespace openvkl {
 
       range1f computedValueRange = range1f(ospcommon::math::empty);
 
-      std::string gridType = "structured_regular";
+      std::string gridType;
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;

@@ -22,16 +22,15 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-template <typename VOXEL_TYPE>
+template <typename PROCEDURAL_VOLUME_TYPE>
 void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
                                                vec3i step = vec3i(1))
 {
-  std::unique_ptr<
-      ProceduralStructuredRegularVolume<VOXEL_TYPE,
-                                        getWaveletValue<VOXEL_TYPE>>>
-      v(new ProceduralStructuredRegularVolume<VOXEL_TYPE,
-                                              getWaveletValue<VOXEL_TYPE>>(
-          dimensions, vec3f(0.f), vec3f(1.f)));
+  const vec3f gridOrigin(0.f);
+  const vec3f gridSpacing(1.f);
+
+  std::unique_ptr<PROCEDURAL_VOLUME_TYPE> v(
+      new PROCEDURAL_VOLUME_TYPE(dimensions, gridOrigin, gridSpacing));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -97,7 +96,8 @@ void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
   }
 }
 
-TEST_CASE("Structured volume sampling", "[volume_sampling]")
+template <template <typename VOXEL_TYPE> class PROCEDURAL_VOLUME_TYPE>
+void structured_volume_sampling_test_case_template()
 {
   vklLoadModule("ispc_driver");
 
@@ -109,27 +109,32 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      sampling_on_vertices_vs_procedural_values<unsigned char>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          PROCEDURAL_VOLUME_TYPE<unsigned char>>(vec3i(128));
     }
 
     SECTION("short")
     {
-      sampling_on_vertices_vs_procedural_values<short>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<short>>(
+          vec3i(128));
     }
 
     SECTION("unsigned short")
     {
-      sampling_on_vertices_vs_procedural_values<unsigned short>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          PROCEDURAL_VOLUME_TYPE<unsigned short>>(vec3i(128));
     }
 
     SECTION("float")
     {
-      sampling_on_vertices_vs_procedural_values<float>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<float>>(
+          vec3i(128));
     }
 
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<double>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<double>>(
+          vec3i(128));
     }
   }
 
@@ -139,27 +144,32 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      sampling_on_vertices_vs_procedural_values<unsigned char>(vec3i(1025), 16);
+      sampling_on_vertices_vs_procedural_values<
+          PROCEDURAL_VOLUME_TYPE<unsigned char>>(vec3i(1025), 16);
     }
 
     SECTION("short")
     {
-      sampling_on_vertices_vs_procedural_values<short>(vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<short>>(
+          vec3i(813), 16);
     }
 
     SECTION("unsigned short")
     {
-      sampling_on_vertices_vs_procedural_values<unsigned short>(vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<
+          PROCEDURAL_VOLUME_TYPE<unsigned short>>(vec3i(813), 16);
     }
 
     SECTION("float")
     {
-      sampling_on_vertices_vs_procedural_values<float>(vec3i(646), 16);
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<float>>(
+          vec3i(646), 16);
     }
 
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<double>(vec3i(513), 16);
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<double>>(
+          vec3i(513), 16);
     }
   }
 
@@ -171,8 +181,17 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
     // accelerator build overhead, which we need to resolve.
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<double>(vec3i(11586, 11586, 2),
-                                                        vec3i(16, 16, 1));
+      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<double>>(
+          vec3i(11586, 11586, 2), vec3i(16, 16, 1));
     }
   }
 }
+
+template <typename VOXEL_TYPE>
+using WaveletStructuredRegularVolume =
+    ProceduralStructuredRegularVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>;
+
+REGISTER_TEST_CASE(structured_volume_sampling_test_case_template<
+                       WaveletStructuredRegularVolume>,
+                   "Structured regular volume sampling",
+                   "[volume_sampling]");

@@ -65,6 +65,8 @@ namespace openvkl {
                                   gridSpacing,
                                   getVKLDataType<VOXEL_TYPE>())
     {
+      static_assert(!std::is_same<VOXEL_TYPE, void>::value,
+                    "must specify VOXEL_TYPE for ProceduralStructuredVolume");
     }
 
     template <typename VOXEL_TYPE,

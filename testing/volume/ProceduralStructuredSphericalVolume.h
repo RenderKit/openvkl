@@ -24,8 +24,9 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+    template <typename VOXEL_TYPE = void,
+              VOXEL_TYPE samplingFunction(const vec3f &) =
+                  samplingNotImplemented,
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralStructuredSphericalVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
@@ -38,6 +39,11 @@ namespace openvkl {
 
       vec3f transformLocalToObjectCoordinates(
           const vec3f &localCoordinates) override;
+
+      static void generateGridParameters(const vec3i &dimensions,
+                                         const float boundingBoxSize,
+                                         vec3f &gridOrigin,
+                                         vec3f &gridSpacing);
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -84,9 +90,37 @@ namespace openvkl {
                    r * cosf(inclination));
     }
 
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline void ProceduralStructuredSphericalVolume<
+        VOXEL_TYPE,
+        samplingFunction,
+        gradientFunction>::generateGridParameters(const vec3i &dimensions,
+                                                  const float boundingBoxSize,
+                                                  vec3f &gridOrigin,
+                                                  vec3f &gridSpacing)
+    {
+      // generate grid parameters for a bounding box centered at (0,0,0) with a
+      // maximum length boundingBoxSize
+
+      constexpr float epsilon = std::numeric_limits<float>::epsilon();
+
+      gridOrigin  = vec3f(0.f);
+      gridSpacing = vec3f(0.5f * boundingBoxSize / (dimensions.x - 1),
+                          180.f / (dimensions.y - 1) - epsilon,
+                          360.f / (dimensions.z - 1) - epsilon);
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
+
+    template <typename VOXEL_TYPE>
+    using WaveletStructuredSphericalVolume =
+        ProceduralStructuredSphericalVolume<VOXEL_TYPE,
+                                            getWaveletValue<VOXEL_TYPE>,
+                                            getWaveletGradient>;
 
     using RadiusProceduralVolume =
         ProceduralStructuredSphericalVolume<float, getRadiusValue>;

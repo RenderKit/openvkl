@@ -28,6 +28,13 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE samplingNotImplemented(const vec3f &)
+    {
+      throw std::runtime_error(
+          "sampling function not implemented for this procedural volume");
+    }
+
+    template <typename VOXEL_TYPE>
     inline VOXEL_TYPE getWaveletValue(const vec3f &objectCoordinates)
     {
       // wavelet parameters

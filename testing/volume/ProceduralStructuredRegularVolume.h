@@ -24,8 +24,9 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+    template <typename VOXEL_TYPE = void,
+              VOXEL_TYPE samplingFunction(const vec3f &) =
+                  samplingNotImplemented,
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralStructuredRegularVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
@@ -38,6 +39,11 @@ namespace openvkl {
 
       vec3f transformLocalToObjectCoordinates(
           const vec3f &localCoordinates) override;
+
+      static void generateGridParameters(const vec3i &dimensions,
+                                         const float boundingBoxSize,
+                                         vec3f &gridOrigin,
+                                         vec3f &gridSpacing);
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -67,6 +73,27 @@ namespace openvkl {
         transformLocalToObjectCoordinates(const vec3f &localCoordinates)
     {
       return this->gridOrigin + localCoordinates * this->gridSpacing;
+    }
+
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline void ProceduralStructuredRegularVolume<
+        VOXEL_TYPE,
+        samplingFunction,
+        gradientFunction>::generateGridParameters(const vec3i &dimensions,
+                                                  const float boundingBoxSize,
+                                                  vec3f &gridOrigin,
+                                                  vec3f &gridSpacing)
+    {
+      // generate grid parameters for a bounding box centered at (0,0,0) with a
+      // maximum length boundingBoxSize
+
+      const float minGridSpacing =
+          reduce_min(boundingBoxSize / (dimensions - 1));
+
+      gridOrigin  = -0.5f * (dimensions - 1) * minGridSpacing;
+      gridSpacing = vec3f(minGridSpacing);
     }
 
     ///////////////////////////////////////////////////////////////////////////

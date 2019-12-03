@@ -54,7 +54,7 @@ if (BUILD_TESTING)
     tests/simd_conformance.cpp
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
-    tests/structured_volume_sampling.cpp
+    tests/structured_regular_volume_sampling.cpp
     tests/structured_spherical_volume_sampling.cpp
     tests/structured_volume_value_range.cpp
     tests/unstructured_volume_gradients.cpp

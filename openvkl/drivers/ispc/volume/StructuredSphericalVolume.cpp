@@ -36,10 +36,15 @@ namespace openvkl {
 
       // each object coordinate must correspond to a unique logical coordinate;
       // we therefore currently require:
+      // - radius >= 0
       // - inclination in [0, 180] degrees
       // - azimuth in [0, 360] degrees
       const range1f legalInclinationRange(0.f, 180.f);
       const range1f legalAzimuthRange(0.f, 360.f);
+
+      range1f radiusRange(
+          this->gridOrigin.x,
+          this->gridOrigin.x + (this->dimensions.x - 1) * this->gridSpacing.x);
 
       range1f inclinationRange(
           this->gridOrigin.y,
@@ -48,6 +53,11 @@ namespace openvkl {
       range1f azimuthRange(
           this->gridOrigin.z,
           this->gridOrigin.z + (this->dimensions.z - 1) * this->gridSpacing.z);
+
+      if (radiusRange.lower < 0.f || radiusRange.upper < 0.f) {
+        throw std::runtime_error(
+            "StructuredSphericalVolume radius grid values must be >= 0");
+      }
 
       if (inclinationRange.lower < legalInclinationRange.lower ||
           inclinationRange.upper > legalInclinationRange.upper) {

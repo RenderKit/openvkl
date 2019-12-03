@@ -73,26 +73,11 @@ namespace openvkl {
     // Procedural volume types ////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    using WaveletProceduralVolumeUchar =
-        ProceduralStructuredRegularVolume<unsigned char,
-                                          getWaveletValue<unsigned char>>;
-
-    using WaveletProceduralVolumeShort =
-        ProceduralStructuredRegularVolume<short, getWaveletValue<short>>;
-
-    using WaveletProceduralVolumeUshort =
-        ProceduralStructuredRegularVolume<unsigned short,
-                                          getWaveletValue<unsigned short>>;
-
-    using WaveletProceduralVolumeFloat =
-        ProceduralStructuredRegularVolume<float,
-                                          getWaveletValue<float>,
+    template <typename VOXEL_TYPE>
+    using WaveletStructuredRegularVolume =
+        ProceduralStructuredRegularVolume<VOXEL_TYPE,
+                                          getWaveletValue<VOXEL_TYPE>,
                                           getWaveletGradient>;
-
-    using WaveletProceduralVolumeDouble =
-        ProceduralStructuredRegularVolume<double, getWaveletValue<double>>;
-
-    using WaveletProceduralVolume = WaveletProceduralVolumeFloat;
 
     using ZProceduralVolume =
         ProceduralStructuredRegularVolume<float, getZValue, getZGradient>;

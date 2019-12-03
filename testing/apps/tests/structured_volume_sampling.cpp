@@ -29,8 +29,8 @@ void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f);
 
-  std::unique_ptr<PROCEDURAL_VOLUME_TYPE> v(
-      new PROCEDURAL_VOLUME_TYPE(dimensions, gridOrigin, gridSpacing));
+  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+      dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -186,10 +186,6 @@ void structured_volume_sampling_test_case_template()
     }
   }
 }
-
-template <typename VOXEL_TYPE>
-using WaveletStructuredRegularVolume =
-    ProceduralStructuredRegularVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>;
 
 REGISTER_TEST_CASE(structured_volume_sampling_test_case_template<
                        WaveletStructuredRegularVolume>,

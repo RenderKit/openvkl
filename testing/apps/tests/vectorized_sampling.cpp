@@ -26,8 +26,8 @@ using namespace openvkl::testing;
 template <typename VOLUME_TYPE>
 void test_vectorized_sampling()
 {
-  std::unique_ptr<VOLUME_TYPE> v(
-      new VOLUME_TYPE(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v =
+      ospcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -108,7 +108,7 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
 
   SECTION("structured")
   {
-    test_vectorized_sampling<WaveletProceduralVolume>();
+    test_vectorized_sampling<WaveletStructuredRegularVolume<float>>();
   }
 
   SECTION("unstructured")

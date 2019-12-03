@@ -47,8 +47,8 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
 

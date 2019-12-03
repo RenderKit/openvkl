@@ -27,8 +27,8 @@ void xyz_scalar_gradients()
   const vec3i dimensions(128);
   const float boundingBoxSize = 128.f;
 
-  std::unique_ptr<XYZProceduralVolume> v(new XYZProceduralVolume(
-      dimensions, vec3f(0.f), boundingBoxSize / vec3f(dimensions)));
+  auto v = ospcommon::make_unique<XYZProceduralVolume>(
+      dimensions, vec3f(0.f), boundingBoxSize / vec3f(dimensions));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -64,8 +64,8 @@ void wavelet_scalar_gradients()
   const vec3i dimensions(128);
   const float boundingBoxSize = 2.f;
 
-  std::unique_ptr<WaveletProceduralVolume> v(new WaveletProceduralVolume(
-      dimensions, vec3f(0.f), boundingBoxSize / vec3f(dimensions)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      dimensions, vec3f(0.f), boundingBoxSize / vec3f(dimensions));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -108,7 +108,7 @@ TEST_CASE("Structured volume gradients", "[volume_gradients]")
     xyz_scalar_gradients();
   }
 
-  SECTION("WaveletProceduralVolume")
+  SECTION("WaveletStructuredRegularVolume<float>")
   {
     wavelet_scalar_gradients();
   }

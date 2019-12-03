@@ -34,8 +34,8 @@ void initializeOpenVKL()
 
 static void scalarRandomSample(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -62,8 +62,8 @@ BENCHMARK(scalarRandomSample);
 template <int W>
 void vectorRandomSample(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -123,8 +123,8 @@ BENCHMARK_TEMPLATE(vectorRandomSample, 16);
 
 static void scalarFixedSample(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -146,8 +146,8 @@ BENCHMARK(scalarFixedSample);
 template <int W>
 void vectorFixedSample(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -204,8 +204,8 @@ BENCHMARK_TEMPLATE(vectorFixedSample, 16);
 
 static void scalarRandomGradient(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -232,8 +232,8 @@ BENCHMARK(scalarRandomGradient);
 template <int W>
 void vectorRandomGradient(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -301,8 +301,8 @@ BENCHMARK_TEMPLATE(vectorRandomGradient, 16);
 
 static void scalarFixedGradient(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -324,8 +324,8 @@ BENCHMARK(scalarFixedGradient);
 template <int W>
 void vectorFixedGradient(benchmark::State &state)
 {
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -390,15 +390,16 @@ BENCHMARK_TEMPLATE(vectorFixedGradient, 16);
 
 static void scalarIntervalIteratorConstruction(benchmark::State &state)
 {
-  static std::unique_ptr<WaveletProceduralVolume> v;
+  static std::unique_ptr<WaveletStructuredRegularVolume<float>> v;
   static VKLVolume vklVolume;
 
   static vkl_vec3f origin;
 
   // global setup only in first thread
   if (state.thread_index == 0) {
-    v = std::unique_ptr<WaveletProceduralVolume>(
-        new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+    v = std::unique_ptr<WaveletStructuredRegularVolume<float>>(
+        new WaveletStructuredRegularVolume<float>(
+            vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     vklVolume = v->getVKLVolume();
 
@@ -443,15 +444,16 @@ BENCHMARK(scalarIntervalIteratorConstruction)->Threads(72)->UseRealTime();
 
 static void scalarIntervalIteratorIterateFirst(benchmark::State &state)
 {
-  static std::unique_ptr<WaveletProceduralVolume> v;
+  static std::unique_ptr<WaveletStructuredRegularVolume<float>> v;
   static VKLVolume vklVolume;
 
   static VKLIntervalIterator iterator;
 
   // global setup only in first thread
   if (state.thread_index == 0) {
-    v = std::unique_ptr<WaveletProceduralVolume>(
-        new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+    v = std::unique_ptr<WaveletStructuredRegularVolume<float>>(
+        new WaveletStructuredRegularVolume<float>(
+            vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     vklVolume = v->getVKLVolume();
 
@@ -504,15 +506,16 @@ BENCHMARK(scalarIntervalIteratorIterateFirst)->Threads(72)->UseRealTime();
 
 static void scalarIntervalIteratorIterateSecond(benchmark::State &state)
 {
-  static std::unique_ptr<WaveletProceduralVolume> v;
+  static std::unique_ptr<WaveletStructuredRegularVolume<float>> v;
   static VKLVolume vklVolume;
 
   static VKLIntervalIterator iterator;
 
   // global setup only in first thread
   if (state.thread_index == 0) {
-    v = std::unique_ptr<WaveletProceduralVolume>(
-        new WaveletProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+    v = std::unique_ptr<WaveletStructuredRegularVolume<float>>(
+        new WaveletStructuredRegularVolume<float>(
+            vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     vklVolume = v->getVKLVolume();
 

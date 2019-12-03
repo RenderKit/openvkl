@@ -289,20 +289,23 @@ int main(int argc, const char **argv)
   } else {
     if (gridType == "structured_regular") {
       if (voxelType == VKL_UCHAR) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeUchar>(
-            dimensions, gridOrigin, gridSpacing);
+        testingVolume =
+            std::make_shared<WaveletStructuredRegularVolume<unsigned char>>(
+                dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_SHORT) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeShort>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolume<short>>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_USHORT) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeUshort>(
-            dimensions, gridOrigin, gridSpacing);
+        testingVolume =
+            std::make_shared<WaveletStructuredRegularVolume<unsigned short>>(
+                dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_FLOAT) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeFloat>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolume<float>>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_DOUBLE) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeDouble>(
-            dimensions, gridOrigin, gridSpacing);
+        testingVolume =
+            std::make_shared<WaveletStructuredRegularVolume<double>>(
+                dimensions, gridOrigin, gridSpacing);
       } else {
         throw std::runtime_error(
             "cannot create procedural volume for unknown voxel type");

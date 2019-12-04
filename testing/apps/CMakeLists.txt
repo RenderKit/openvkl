@@ -56,6 +56,7 @@ if (BUILD_TESTING)
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
     tests/structured_spherical_volume_sampling.cpp
+    tests/structured_spherical_volume_bounding_box.cpp
     tests/structured_volume_value_range.cpp
     tests/unstructured_volume_gradients.cpp
     tests/unstructured_volume_sampling.cpp
@@ -79,10 +80,11 @@ if (BUILD_TESTING)
 
   ## Expose tests to CTest ##
 
-  add_test(NAME "simd_conformance"   COMMAND vklTests "[simd_conformance]")
-  add_test(NAME "interval_iterators" COMMAND vklTests "[interval_iterators]")
-  add_test(NAME "hit_iterators"      COMMAND vklTests "[hit_iterators]")
-  add_test(NAME "volume_gradients"   COMMAND vklTests "[volume_gradients]")
-  add_test(NAME "volume_sampling"    COMMAND vklTests "[volume_sampling]")
-  add_test(NAME "volume_value_range" COMMAND vklTests "[volume_value_range]")
+  add_test(NAME "simd_conformance"    COMMAND vklTests "[simd_conformance]")
+  add_test(NAME "interval_iterators"  COMMAND vklTests "[interval_iterators]")
+  add_test(NAME "hit_iterators"       COMMAND vklTests "[hit_iterators]")
+  add_test(NAME "volume_bounding_box" COMMAND vklTests "[volume_bounding_box]")
+  add_test(NAME "volume_gradients"    COMMAND vklTests "[volume_gradients]")
+  add_test(NAME "volume_sampling"     COMMAND vklTests "[volume_sampling]")
+  add_test(NAME "volume_value_range"  COMMAND vklTests "[volume_value_range]")
 endif()

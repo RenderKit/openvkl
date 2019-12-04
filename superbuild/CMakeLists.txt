@@ -85,7 +85,9 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 
 ## Build dependencies ##
 
-include(dep_ispc)
+if (DOWNLOAD_ISPC)
+  include(dep_ispc)
+endif()
 
 if (BUILD_TBB_FROM_SOURCE)
   include(dep_tbb)
@@ -127,6 +129,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       -DISPC_EXECUTABLE=${ISPC_PATH}
+      $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}

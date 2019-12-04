@@ -106,11 +106,14 @@ namespace openvkl {
                                           getWaveletValue<VOXEL_TYPE>,
                                           getWaveletGradient>;
 
+    template <typename VOXEL_TYPE>
+    using XYZStructuredRegularVolume =
+        ProceduralStructuredRegularVolume<VOXEL_TYPE,
+                                          getXYZValue<VOXEL_TYPE>,
+                                          getXYZGradient>;
+
     using ZProceduralVolume =
         ProceduralStructuredRegularVolume<float, getZValue, getZGradient>;
-
-    using XYZProceduralVolume =
-        ProceduralStructuredRegularVolume<float, getXYZValue, getXYZGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

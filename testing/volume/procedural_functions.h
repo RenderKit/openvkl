@@ -81,14 +81,41 @@ namespace openvkl {
                    -ZM * ::sin(ZF * objectCoordinates.z) * ZF);
     }
 
-    inline float getShellValue(const vec3f &objectCoordinates, const vec3i &dimensions)
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getXYZValue(const vec3f &objectCoordinates)
     {
-        if(box3i(7 * dimensions / 16, 9 * dimensions / 16).contains(objectCoordinates))
-            return 1.0f;
-        else if (box3i(dimensions / 4, 3 * dimensions / 4).contains(objectCoordinates))
-            return 0.0f;
-        else
-            return -.5f;
+      double value =
+          objectCoordinates.x * objectCoordinates.y * objectCoordinates.z;
+
+      if (std::is_unsigned<VOXEL_TYPE>::value) {
+        value = fabs(value);
+      }
+
+      value = clamp(value,
+                    double(std::numeric_limits<VOXEL_TYPE>::lowest()),
+                    double(std::numeric_limits<VOXEL_TYPE>::max()));
+
+      return VOXEL_TYPE(value);
+    }
+
+    inline vec3f getXYZGradient(const vec3f &objectCoordinates)
+    {
+      return vec3f(objectCoordinates.y * objectCoordinates.z,
+                   objectCoordinates.x * objectCoordinates.z,
+                   objectCoordinates.x * objectCoordinates.y);
+    }
+
+    inline float getShellValue(const vec3f &objectCoordinates,
+                               const vec3i &dimensions)
+    {
+      if (box3i(7 * dimensions / 16, 9 * dimensions / 16)
+              .contains(objectCoordinates))
+        return 1.0f;
+      else if (box3i(dimensions / 4, 3 * dimensions / 4)
+                   .contains(objectCoordinates))
+        return 0.0f;
+      else
+        return -.5f;
     }
 
     inline float getZValue(const vec3f &objectCoordinates)
@@ -99,18 +126,6 @@ namespace openvkl {
     inline vec3f getZGradient(const vec3f &objectCoordinates)
     {
       return vec3f(0.f, 0.f, 1.f);
-    }
-
-    inline float getXYZValue(const vec3f &objectCoordinates)
-    {
-      return objectCoordinates.x * objectCoordinates.y * objectCoordinates.z;
-    }
-
-    inline vec3f getXYZGradient(const vec3f &objectCoordinates)
-    {
-      return vec3f(objectCoordinates.y * objectCoordinates.z,
-                   objectCoordinates.x * objectCoordinates.z,
-                   objectCoordinates.x * objectCoordinates.y);
     }
 
     inline float getConstValue(const vec3f &objectCoordinates)

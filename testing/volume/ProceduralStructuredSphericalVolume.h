@@ -122,6 +122,12 @@ namespace openvkl {
                                             getWaveletValue<VOXEL_TYPE>,
                                             getWaveletGradient>;
 
+    template <typename VOXEL_TYPE>
+    using XYZStructuredSphericalVolume =
+        ProceduralStructuredSphericalVolume<VOXEL_TYPE,
+                                            getXYZValue<VOXEL_TYPE>,
+                                            getXYZGradient>;
+
     using RadiusProceduralVolume =
         ProceduralStructuredSphericalVolume<float, getRadiusValue>;
 

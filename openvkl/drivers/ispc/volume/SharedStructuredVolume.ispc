@@ -642,7 +642,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient(
     const varying vec3f &objectCoordinates)
 {
   // gradient step in each dimension (object coordinates)
-  vec3f gradientStep = self->gridSpacing;
+  vec3f gradientStep = 0.1f * self->gridSpacing;
 
   // compute via forward or backward differences depending on volume boundary
   const vec3f gradientExtent = objectCoordinates + gradientStep;

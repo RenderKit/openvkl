@@ -109,8 +109,9 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
       "randomized vectorized gradients varying calling width and masks: "
       "structured volumes")
   {
-    std::unique_ptr<XYZProceduralVolume> v(
-        new XYZProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
+    std::unique_ptr<XYZStructuredRegularVolume<float>> v(
+        new XYZStructuredRegularVolume<float>(
+            vec3i(128), vec3f(0.f), vec3f(1.f)));
 
     VKLVolume volume = v->getVKLVolume();
 

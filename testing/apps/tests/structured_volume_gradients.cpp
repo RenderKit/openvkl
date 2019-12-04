@@ -22,56 +22,34 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-void xyz_scalar_gradients()
-{
-  const vec3i dimensions(128);
-  const float boundingBoxSize = 128.f;
-
-  auto v = ospcommon::make_unique<XYZProceduralVolume>(
-      dimensions, vec3f(0.f), boundingBoxSize / vec3f(dimensions));
-
-  VKLVolume vklVolume = v->getVKLVolume();
-
-  multidim_index_sequence<3> mis(v->getDimensions());
-
-  for (const auto &offset : mis) {
-    const vec3f objectCoordinates =
-        v->transformLocalToObjectCoordinates(offset);
-
-    INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-    INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                << objectCoordinates.y << " "
-                                << objectCoordinates.z);
-
-    const vkl_vec3f vklGradient =
-        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates);
-    const vec3f gradient = (const vec3f &)vklGradient;
-
-    // compare to analytical gradient
-    const vec3f proceduralGradient =
-        v->computeProceduralGradient(objectCoordinates);
-
-    // gradients should be ~exact on this volume type, so set a tighter
-    // tolerance
-    REQUIRE(gradient.x == Approx(proceduralGradient.x).epsilon(1e-4f));
-    REQUIRE(gradient.y == Approx(proceduralGradient.y).epsilon(1e-4f));
-    REQUIRE(gradient.z == Approx(proceduralGradient.z).epsilon(1e-4f));
-  }
-}
-
-void wavelet_scalar_gradients()
+template <typename PROCEDURAL_VOLUME_TYPE>
+void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
 {
   const vec3i dimensions(128);
   const float boundingBoxSize = 2.f;
 
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
-      dimensions, vec3f(0.f), boundingBoxSize / vec3f(dimensions));
+  vec3f gridOrigin;
+  vec3f gridSpacing;
+
+  // generate legal grid parameters
+  PROCEDURAL_VOLUME_TYPE::generateGridParameters(
+      dimensions, boundingBoxSize, gridOrigin, gridSpacing);
+
+  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+      dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
 
   multidim_index_sequence<3> mis(v->getDimensions());
 
   for (const auto &offset : mis) {
+    // optionally skip boundary vertices
+    if (skipBoundaries &&
+        (reduce_min(offset) == 0 || offset.x == dimensions.x - 1 ||
+         offset.y == dimensions.y - 1 || offset.z == dimensions.z - 1)) {
+      continue;
+    }
+
     const vec3f objectCoordinates =
         v->transformLocalToObjectCoordinates(offset);
 
@@ -88,10 +66,9 @@ void wavelet_scalar_gradients()
     const vec3f proceduralGradient =
         v->computeProceduralGradient(objectCoordinates);
 
-    // wavelet is very high frequency, so set somewhat loose tolerance
-    REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(0.1f));
-    REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(0.1f));
-    REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(0.1f));
+    REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
+    REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
+    REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
   }
 }
 
@@ -103,13 +80,18 @@ TEST_CASE("Structured volume gradients", "[volume_gradients]")
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  SECTION("XYZProceduralVolume")
+  SECTION("XYZStructuredRegularVolume<float>")
   {
-    xyz_scalar_gradients();
+    scalar_gradients<XYZStructuredRegularVolume<float>>();
   }
 
   SECTION("WaveletStructuredRegularVolume<float>")
   {
-    wavelet_scalar_gradients();
+    scalar_gradients<WaveletStructuredRegularVolume<float>>();
+  }
+
+  SECTION("XYZStructuredSphericalVolume<float>")
+  {
+    scalar_gradients<XYZStructuredSphericalVolume<float>>(0.1f, true);
   }
 }

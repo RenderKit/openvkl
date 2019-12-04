@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "UnstructuredVolume.h"
-#include <embree3/rtcore.h>
 #include "../common/Data.h"
 #include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/tasking/parallel_for.h"

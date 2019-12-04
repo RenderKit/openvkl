@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include <embree3/rtcore.h>
+#include "embree3/rtcore.h"
 #include "../common/Data.h"
 #include "../common/math.h"
 #include "UnstructuredVolume_ispc.h"

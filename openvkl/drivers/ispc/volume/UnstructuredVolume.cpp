@@ -263,7 +263,8 @@ namespace openvkl {
 
     void errorFunction(void *userPtr, enum RTCError error, const char *str)
     {
-      fprintf(stderr, "error %d: %s\n", error, str);
+      LogMessageStream(VKL_LOG_WARNING)
+          << "error " << error << ": " << str << std::endl;
     }
 
     template <int W>
@@ -271,9 +272,7 @@ namespace openvkl {
     {
       rtcDevice = rtcNewDevice(NULL);
       if (!rtcDevice) {
-        std::cerr << "cannot create device: " << rtcGetDeviceError(NULL)
-                  << std::endl;
-        return;
+        throw std::runtime_error("cannot create device");
       }
       rtcSetDeviceErrorFunction(rtcDevice, errorFunction, NULL);
 
@@ -297,9 +296,7 @@ namespace openvkl {
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
-        std::cerr << "bvh creation failure: " << rtcGetDeviceError(rtcDevice)
-                  << std::endl;
-        return;
+        throw std::runtime_error("bvh creation failure");
       }
 
       RTCBuildArguments arguments      = rtcDefaultBuildArguments();
@@ -327,9 +324,7 @@ namespace openvkl {
 
       rtcRoot = (Node *)rtcBuildBVH(&arguments);
       if (!rtcRoot) {
-        std::cerr << "bvh build failure: " << rtcGetDeviceError(rtcDevice)
-                  << std::endl;
-        return;
+        throw std::runtime_error("bvh build failure");
       }
 
       if (rtcRoot->nominalLength < 0) {

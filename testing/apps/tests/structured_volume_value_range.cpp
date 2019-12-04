@@ -21,15 +21,20 @@
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-template <typename VOXEL_TYPE>
-void computed_vs_api_value_range(vec3i dimensions)
+template <typename PROCEDURAL_VOLUME_TYPE>
+void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
 {
-  std::unique_ptr<
-      ProceduralStructuredRegularVolume<VOXEL_TYPE,
-                                        getWaveletValue<VOXEL_TYPE>>>
-      v(new ProceduralStructuredRegularVolume<VOXEL_TYPE,
-                                              getWaveletValue<VOXEL_TYPE>>(
-          dimensions, vec3f(0.f), vec3f(1.f)));
+  const float boundingBoxSize = 2.f;
+
+  vec3f gridOrigin;
+  vec3f gridSpacing;
+
+  // generate legal grid parameters
+  PROCEDURAL_VOLUME_TYPE::generateGridParameters(
+      dimensions, boundingBoxSize, gridOrigin, gridSpacing);
+
+  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+      dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -56,26 +61,35 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
 
   SECTION("unsigned char")
   {
-    computed_vs_api_value_range<unsigned char>(vec3i(128));
+    computed_vs_api_value_range<
+        WaveletStructuredRegularVolume<unsigned char>>();
+    computed_vs_api_value_range<
+        WaveletStructuredSphericalVolume<unsigned char>>();
   }
 
   SECTION("short")
   {
-    computed_vs_api_value_range<short>(vec3i(128));
+    computed_vs_api_value_range<WaveletStructuredRegularVolume<short>>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolume<short>>();
   }
 
   SECTION("unsigned short")
   {
-    computed_vs_api_value_range<unsigned short>(vec3i(128));
+    computed_vs_api_value_range<
+        WaveletStructuredRegularVolume<unsigned short>>();
+    computed_vs_api_value_range<
+        WaveletStructuredSphericalVolume<unsigned short>>();
   }
 
   SECTION("float")
   {
-    computed_vs_api_value_range<float>(vec3i(128));
+    computed_vs_api_value_range<WaveletStructuredRegularVolume<float>>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolume<float>>();
   }
 
   SECTION("double")
   {
-    computed_vs_api_value_range<double>(vec3i(128));
+    computed_vs_api_value_range<WaveletStructuredRegularVolume<double>>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolume<double>>();
   }
 }

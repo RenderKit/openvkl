@@ -298,23 +298,20 @@ int main(int argc, const char **argv)
   } else {
     if (gridType == "structured_regular") {
       if (voxelType == VKL_UCHAR) {
-        testingVolume =
-            std::make_shared<WaveletStructuredRegularVolume<unsigned char>>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
+            dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_SHORT) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolume<short>>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeShort>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_USHORT) {
-        testingVolume =
-            std::make_shared<WaveletStructuredRegularVolume<unsigned short>>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeUShort>(
+            dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_FLOAT) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolume<float>>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeFloat>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_DOUBLE) {
-        testingVolume =
-            std::make_shared<WaveletStructuredRegularVolume<double>>(
-                dimensions, gridOrigin, gridSpacing);
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeDouble>(
+            dimensions, gridOrigin, gridSpacing);
       } else {
         throw std::runtime_error(
             "cannot create procedural volume for unknown voxel type");
@@ -322,7 +319,7 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "structured_spherical") {
-      testingVolume = std::make_shared<WaveletStructuredSphericalVolume<float>>(
+      testingVolume = std::make_shared<WaveletStructuredSphericalVolumeFloat>(
           dimensions, gridOrigin, gridSpacing);
     }
 

@@ -24,10 +24,13 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <typename VOXEL_TYPE = void,
-              VOXEL_TYPE samplingFunction(const vec3f &) =
-                  samplingNotImplemented,
-              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
+    template <
+        typename VOXEL_TYPE = VoidType /* should be void (we have static_assert
+                                to prevent such instantiation), but isn't due
+                                to Windows Visual Studio compiler bug */
+        ,
+        VOXEL_TYPE samplingFunction(const vec3f &) = samplingNotImplemented,
+        vec3f gradientFunction(const vec3f &)      = gradientNotImplemented>
     struct ProceduralStructuredSphericalVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,
@@ -130,6 +133,29 @@ namespace openvkl {
 
     using RadiusProceduralVolume =
         ProceduralStructuredSphericalVolume<float, getRadiusValue>;
+
+    // required due to Windows Visual Studio compiler bugs, which prevent us
+    // from writing e.g. WaveletStructuredSphericalVolume<float>
+    using WaveletStructuredSphericalVolumeUChar =
+        ProceduralStructuredSphericalVolume<unsigned char,
+                                            getWaveletValue<unsigned char>,
+                                            getWaveletGradient>;
+    using WaveletStructuredSphericalVolumeShort =
+        ProceduralStructuredSphericalVolume<short,
+                                            getWaveletValue<short>,
+                                            getWaveletGradient>;
+    using WaveletStructuredSphericalVolumeUShort =
+        ProceduralStructuredSphericalVolume<unsigned short,
+                                            getWaveletValue<unsigned short>,
+                                            getWaveletGradient>;
+    using WaveletStructuredSphericalVolumeFloat =
+        ProceduralStructuredSphericalVolume<float,
+                                            getWaveletValue<float>,
+                                            getWaveletGradient>;
+    using WaveletStructuredSphericalVolumeDouble =
+        ProceduralStructuredSphericalVolume<double,
+                                            getWaveletValue<double>,
+                                            getWaveletGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

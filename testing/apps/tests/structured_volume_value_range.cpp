@@ -61,35 +61,31 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
 
   SECTION("unsigned char")
   {
-    computed_vs_api_value_range<
-        WaveletStructuredRegularVolume<unsigned char>>();
-    computed_vs_api_value_range<
-        WaveletStructuredSphericalVolume<unsigned char>>();
+    computed_vs_api_value_range<WaveletStructuredRegularVolumeUChar>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolumeUChar>();
   }
 
   SECTION("short")
   {
-    computed_vs_api_value_range<WaveletStructuredRegularVolume<short>>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolume<short>>();
+    computed_vs_api_value_range<WaveletStructuredRegularVolumeShort>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolumeShort>();
   }
 
   SECTION("unsigned short")
   {
-    computed_vs_api_value_range<
-        WaveletStructuredRegularVolume<unsigned short>>();
-    computed_vs_api_value_range<
-        WaveletStructuredSphericalVolume<unsigned short>>();
+    computed_vs_api_value_range<WaveletStructuredRegularVolumeUShort>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolumeUShort>();
   }
 
   SECTION("float")
   {
-    computed_vs_api_value_range<WaveletStructuredRegularVolume<float>>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolume<float>>();
+    computed_vs_api_value_range<WaveletStructuredRegularVolumeFloat>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolumeFloat>();
   }
 
   SECTION("double")
   {
-    computed_vs_api_value_range<WaveletStructuredRegularVolume<double>>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolume<double>>();
+    computed_vs_api_value_range<WaveletStructuredRegularVolumeDouble>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolumeDouble>();
   }
 }

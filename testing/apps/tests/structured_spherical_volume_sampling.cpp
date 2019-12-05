@@ -70,8 +70,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
   }
 }
 
-template <template <typename VOXEL_TYPE> class PROCEDURAL_VOLUME_TYPE>
-void structured_volume_sampling_test_case_template()
+TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 {
   vklLoadModule("ispc_driver");
 
@@ -84,31 +83,31 @@ void structured_volume_sampling_test_case_template()
     SECTION("unsigned char")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned char>>(vec3i(128));
+          WaveletStructuredSphericalVolumeUChar>(vec3i(128));
     }
 
     SECTION("short")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<short>>(vec3i(128));
+          WaveletStructuredSphericalVolumeShort>(vec3i(128));
     }
 
     SECTION("unsigned short")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned short>>(vec3i(128));
+          WaveletStructuredSphericalVolumeUShort>(vec3i(128));
     }
 
     SECTION("float")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<float>>(vec3i(128));
+          WaveletStructuredSphericalVolumeFloat>(vec3i(128));
     }
 
     SECTION("double")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<double>>(vec3i(128));
+          WaveletStructuredSphericalVolumeDouble>(vec3i(128));
     }
   }
 
@@ -119,31 +118,31 @@ void structured_volume_sampling_test_case_template()
     SECTION("unsigned char")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned char>>(vec3i(1025), 16);
+          WaveletStructuredSphericalVolumeUChar>(vec3i(1025), 16);
     }
 
     SECTION("short")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<short>>(vec3i(813), 16);
+          WaveletStructuredSphericalVolumeShort>(vec3i(813), 16);
     }
 
     SECTION("unsigned short")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned short>>(vec3i(813), 16);
+          WaveletStructuredSphericalVolumeUShort>(vec3i(813), 16);
     }
 
     SECTION("float")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<float>>(vec3i(646), 16);
+          WaveletStructuredSphericalVolumeFloat>(vec3i(646), 16);
     }
 
     SECTION("double")
     {
       sampling_on_interior_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<double>>(vec3i(513), 16);
+          WaveletStructuredSphericalVolumeDouble>(vec3i(513), 16);
     }
   }
 
@@ -154,12 +153,7 @@ void structured_volume_sampling_test_case_template()
     // only do double tests here for now; larger grids incur even more grid
     // accelerator build overhead, which we need to resolve.
     sampling_on_interior_vertices_vs_procedural_values<
-        PROCEDURAL_VOLUME_TYPE<double>>(vec3i(11586, 11586, 2),
-                                        vec3i(16, 16, 1));
+        WaveletStructuredSphericalVolumeDouble>(vec3i(11586, 11586, 2),
+                                                vec3i(16, 16, 1));
   }
 }
-
-REGISTER_TEST_CASE(structured_volume_sampling_test_case_template<
-                       WaveletStructuredSphericalVolume>,
-                   "Structured spherical volume sampling",
-                   "[volume_sampling]");

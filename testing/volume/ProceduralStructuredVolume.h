@@ -49,6 +49,10 @@ namespace openvkl {
 
     // Inlined definitions ////////////////////////////////////////////////////
 
+    struct VoidType
+    {
+    };
+
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &),
               vec3f gradientFunction(const vec3f &)>
@@ -65,7 +69,8 @@ namespace openvkl {
                                   gridSpacing,
                                   getVKLDataType<VOXEL_TYPE>())
     {
-      static_assert(!std::is_same<VOXEL_TYPE, void>::value,
+      // should be void, but isn't due to Windows Visual Studio compiler bug
+      static_assert(!std::is_same<VOXEL_TYPE, VoidType>::value,
                     "must specify VOXEL_TYPE for ProceduralStructuredVolume");
     }
 

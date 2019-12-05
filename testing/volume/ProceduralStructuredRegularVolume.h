@@ -24,7 +24,11 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <typename VOXEL_TYPE = void,
+    template <typename VOXEL_TYPE =
+                  VoidType /* should be void (we have static_assert to
+                          prevent such instantiation), but isn't due
+                          to Windows Visual Studio compiler bug */
+              ,
               VOXEL_TYPE samplingFunction(const vec3f &) =
                   samplingNotImplemented,
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
@@ -114,6 +118,29 @@ namespace openvkl {
 
     using ZProceduralVolume =
         ProceduralStructuredRegularVolume<float, getZValue, getZGradient>;
+
+    // required due to Windows Visual Studio compiler bugs, which prevent us
+    // from writing e.g. WaveletStructuredRegularVolume<float>
+    using WaveletStructuredRegularVolumeUChar =
+        ProceduralStructuredRegularVolume<unsigned char,
+                                          getWaveletValue<unsigned char>,
+                                          getWaveletGradient>;
+    using WaveletStructuredRegularVolumeShort =
+        ProceduralStructuredRegularVolume<short,
+                                          getWaveletValue<short>,
+                                          getWaveletGradient>;
+    using WaveletStructuredRegularVolumeUShort =
+        ProceduralStructuredRegularVolume<unsigned short,
+                                          getWaveletValue<unsigned short>,
+                                          getWaveletGradient>;
+    using WaveletStructuredRegularVolumeFloat =
+        ProceduralStructuredRegularVolume<float,
+                                          getWaveletValue<float>,
+                                          getWaveletGradient>;
+    using WaveletStructuredRegularVolumeDouble =
+        ProceduralStructuredRegularVolume<double,
+                                          getWaveletValue<double>,
+                                          getWaveletGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

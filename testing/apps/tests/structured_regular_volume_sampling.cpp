@@ -55,8 +55,7 @@ void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
   }
 }
 
-template <template <typename VOXEL_TYPE> class PROCEDURAL_VOLUME_TYPE>
-void structured_volume_sampling_test_case_template()
+TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 {
   vklLoadModule("ispc_driver");
 
@@ -69,31 +68,31 @@ void structured_volume_sampling_test_case_template()
     SECTION("unsigned char")
     {
       sampling_on_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned char>>(vec3i(128));
+          WaveletStructuredRegularVolumeUChar>(vec3i(128));
     }
 
     SECTION("short")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<short>>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeShort>(vec3i(128));
     }
 
     SECTION("unsigned short")
     {
       sampling_on_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned short>>(vec3i(128));
+          WaveletStructuredRegularVolumeUShort>(vec3i(128));
     }
 
     SECTION("float")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<float>>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeFloat>(vec3i(128));
     }
 
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<double>>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeDouble>(vec3i(128));
     }
   }
 
@@ -104,31 +103,31 @@ void structured_volume_sampling_test_case_template()
     SECTION("unsigned char")
     {
       sampling_on_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned char>>(vec3i(1025), 16);
+          WaveletStructuredRegularVolumeUChar>(vec3i(1025), 16);
     }
 
     SECTION("short")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<short>>(
-          vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeShort>(vec3i(813), 16);
     }
 
     SECTION("unsigned short")
     {
       sampling_on_vertices_vs_procedural_values<
-          PROCEDURAL_VOLUME_TYPE<unsigned short>>(vec3i(813), 16);
+          WaveletStructuredRegularVolumeUShort>(vec3i(813), 16);
     }
 
     SECTION("float")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<float>>(
-          vec3i(646), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeFloat>(vec3i(646), 16);
     }
 
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<double>>(
-          vec3i(513), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeDouble>(vec3i(513), 16);
     }
   }
 
@@ -140,13 +139,9 @@ void structured_volume_sampling_test_case_template()
     // accelerator build overhead, which we need to resolve.
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<PROCEDURAL_VOLUME_TYPE<double>>(
-          vec3i(11586, 11586, 2), vec3i(16, 16, 1));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeDouble>(vec3i(11586, 11586, 2),
+                                                vec3i(16, 16, 1));
     }
   }
 }
-
-REGISTER_TEST_CASE(structured_volume_sampling_test_case_template<
-                       WaveletStructuredRegularVolume>,
-                   "Structured regular volume sampling",
-                   "[volume_sampling]");

@@ -319,8 +319,27 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "structured_spherical") {
-      testingVolume = std::make_shared<WaveletStructuredSphericalVolumeFloat>(
-          dimensions, gridOrigin, gridSpacing);
+      if (voxelType == VKL_UCHAR) {
+        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeUChar>(
+            dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_SHORT) {
+        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeShort>(
+            dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_USHORT) {
+        testingVolume =
+            std::make_shared<WaveletStructuredSphericalVolumeUShort>(
+                dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_FLOAT) {
+        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeFloat>(
+            dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_DOUBLE) {
+        testingVolume =
+            std::make_shared<WaveletStructuredSphericalVolumeDouble>(
+                dimensions, gridOrigin, gridSpacing);
+      } else {
+        throw std::runtime_error(
+            "cannot create procedural volume for unknown voxel type");
+      }
     }
 
     else if (gridType == "unstructured") {

@@ -112,19 +112,23 @@ TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
   std::vector<int> dimensions = {4, 32};
 
   std::vector<float> radiusOrigins = {0.f, 1.f};
-  std::vector<float> radiusSizes   = {0.1f, 1.f};
+  std::vector<float> radiusSizes   = {0.1f, 1.f, -1.f};
 
   std::vector<float> inclinationOrigins = {0.f, 30.f, 90.f};
-  std::vector<float> inclinationSizes   = {10.f, 90.f};
+  std::vector<float> inclinationSizes   = {10.f, 90.f, -90.f};
 
   std::vector<float> azimuthOrigins = {0.f, 60.f, 180.f};
-  std::vector<float> azimuthSizes   = {10.f, 90.f, 180.f};
+  std::vector<float> azimuthSizes   = {10.f, 90.f, 180.f, -180.f};
 
   // multidim_index_sequence is limited to 3D, so use two of them!
   multidim_index_sequence<3> ijks(vec3i(
       radiusOrigins.size(), radiusSizes.size(), inclinationOrigins.size()));
   multidim_index_sequence<3> lmns(vec3i(
       inclinationSizes.size(), azimuthOrigins.size(), azimuthSizes.size()));
+
+  // legal grid ranges
+  const range1f legalInclinationRange(0.f, 180.f);
+  const range1f legalAzimuthRange(0.f, 360.f);
 
   for (auto dim : dimensions) {
     for (const auto &ijk : ijks) {
@@ -138,8 +142,23 @@ TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
         const float azimuthSize     = azimuthSizes[lmn.z];
 
         // skip illegal grids
-        if (inclinationOrigin + inclinationSize > 180.f ||
-            azimuthOrigin + azimuthSize > 360.f) {
+        range1f radiusRange = empty;
+        radiusRange.extend(radiusOrigin);
+        radiusRange.extend(radiusOrigin + radiusSize);
+
+        range1f inclinationRange;
+        inclinationRange.extend(inclinationOrigin);
+        inclinationRange.extend(inclinationOrigin + inclinationSize);
+
+        range1f azimuthRange;
+        azimuthRange.extend(azimuthOrigin);
+        azimuthRange.extend(azimuthOrigin + azimuthSize);
+
+        if (radiusRange.lower < 0.f ||
+            inclinationRange.lower < legalInclinationRange.lower ||
+            inclinationRange.upper > legalInclinationRange.upper ||
+            azimuthRange.lower < legalAzimuthRange.lower ||
+            azimuthRange.upper > legalAzimuthRange.upper) {
           continue;
         }
 

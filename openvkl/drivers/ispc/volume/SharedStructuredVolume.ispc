@@ -118,32 +118,45 @@ template_transformObjectToLocal_structured_spherical(uniform);
 inline void computeStructuredSphericalBoundingBox(
     const SharedStructuredVolume *uniform self, uniform box3f &boundingBox)
 {
-  const uniform float rMin = self->gridOrigin.x;
-  const uniform float rMax =
-      self->gridOrigin.x + (self->dimensions.x - 1.f) * self->gridSpacing.x;
+  uniform box1f rRange = make_box1f(
+      self->gridOrigin.x,
+      self->gridOrigin.x + (self->dimensions.x - 1.f) * self->gridSpacing.x);
 
-  const uniform float incMin = self->gridOrigin.y;
-  const uniform float incMax =
-      self->gridOrigin.y + (self->dimensions.y - 1.f) * self->gridSpacing.y;
+  uniform box1f incRange = make_box1f(
+      self->gridOrigin.y,
+      self->gridOrigin.y + (self->dimensions.y - 1.f) * self->gridSpacing.y);
 
-  const uniform float azMin = self->gridOrigin.z;
-  const uniform float azMax =
-      self->gridOrigin.z + (self->dimensions.z - 1.f) * self->gridSpacing.z;
+  uniform box1f azRange = make_box1f(
+      self->gridOrigin.z,
+      self->gridOrigin.z + (self->dimensions.z - 1.f) * self->gridSpacing.z);
+
+  // reverse ranges in case of negative gridSpacing values
+  if (isEmpty(rRange)) {
+    rRange = make_box1f(rRange.upper, rRange.lower);
+  }
+
+  if (isEmpty(incRange)) {
+    incRange = make_box1f(incRange.upper, incRange.lower);
+  }
+
+  if (isEmpty(azRange)) {
+    azRange = make_box1f(azRange.upper, azRange.lower);
+  }
 
   // critical values to test
 #define NUM_R_TEST_VALUES 2
 #define NUM_INCLINATION_TEST_VALUES 5
 #define NUM_AZIMUTH_TEST_VALUES 7
 
-  const uniform float rs[NUM_R_TEST_VALUES] = {rMin, rMax};
+  const uniform float rs[NUM_R_TEST_VALUES] = {rRange.lower, rRange.upper};
 
   // inclination grid is guaranteed in [0, PI]
   const uniform float inclinations[NUM_INCLINATION_TEST_VALUES] = {
-      0.f, 0.5f * PI, PI, incMin, incMax};
+      0.f, 0.5f * PI, PI, incRange.lower, incRange.upper};
 
   // azimuth grid is guaranteed in [0, 2*PI]
   const uniform float azimuths[NUM_AZIMUTH_TEST_VALUES] = {
-      0.f, 0.5f * PI, PI, 1.5f * PI, 2.f * PI, azMin, azMax};
+      0.f, 0.5f * PI, PI, 1.5f * PI, 2.f * PI, azRange.lower, azRange.upper};
 
   boundingBox = make_box3f_empty();
 
@@ -156,7 +169,8 @@ inline void computeStructuredSphericalBoundingBox(
         const uniform float az  = azimuths[k];
 
         // skip values outside the grid
-        if (inc < incMin || inc > incMax || az < azMin || az > azMax) {
+        if (inc < incRange.lower || inc > incRange.upper ||
+            az < azRange.lower || az > azRange.upper) {
           continue;
         }
 

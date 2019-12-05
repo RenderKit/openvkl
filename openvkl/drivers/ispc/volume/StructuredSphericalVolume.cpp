@@ -42,19 +42,24 @@ namespace openvkl {
       const range1f legalInclinationRange(0.f, 180.f);
       const range1f legalAzimuthRange(0.f, 360.f);
 
-      range1f radiusRange(
-          this->gridOrigin.x,
-          this->gridOrigin.x + (this->dimensions.x - 1) * this->gridSpacing.x);
+      // we can have negative gridSpacing values, so ensure we construct the
+      // ranges here correctly such that min <= max
+      range1f radiusRange = empty;
+      radiusRange.extend(this->gridOrigin.x);
+      radiusRange.extend(this->gridOrigin.x +
+                         (this->dimensions.x - 1) * this->gridSpacing.x);
 
-      range1f inclinationRange(
-          this->gridOrigin.y,
-          this->gridOrigin.y + (this->dimensions.y - 1) * this->gridSpacing.y);
+      range1f inclinationRange;
+      inclinationRange.extend(this->gridOrigin.y);
+      inclinationRange.extend(this->gridOrigin.y +
+                              (this->dimensions.y - 1) * this->gridSpacing.y);
 
-      range1f azimuthRange(
-          this->gridOrigin.z,
-          this->gridOrigin.z + (this->dimensions.z - 1) * this->gridSpacing.z);
+      range1f azimuthRange;
+      azimuthRange.extend(this->gridOrigin.z);
+      azimuthRange.extend(this->gridOrigin.z +
+                          (this->dimensions.z - 1) * this->gridSpacing.z);
 
-      if (radiusRange.lower < 0.f || radiusRange.upper < 0.f) {
+      if (radiusRange.lower < 0.f) {
         throw std::runtime_error(
             "StructuredSphericalVolume radius grid values must be >= 0");
       }

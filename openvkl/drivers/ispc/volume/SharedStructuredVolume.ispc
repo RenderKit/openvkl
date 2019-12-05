@@ -81,33 +81,34 @@ inline void transformLocalToObject_structured_spherical(
   objectCoordinates.z = r * cosInc;
 }
 
-#define template_transformObjectToLocal_structured_spherical(univary)          \
-  inline void transformObjectToLocal_##univary##_structured_spherical(         \
-      const SharedStructuredVolume *uniform self,                              \
-      const univary vec3f &objectCoordinates,                                  \
-      univary vec3f &localCoordinates)                                         \
-  {                                                                            \
-    /* (x, y, z) -> (r, inclination, azimuth), using the ISO convention for    \
-     coordinates and ordering. all angles in radians. */                       \
-    const univary float r = sqrtf(objectCoordinates.x * objectCoordinates.x +  \
-                                  objectCoordinates.y * objectCoordinates.y +  \
-                                  objectCoordinates.z * objectCoordinates.z);  \
-                                                                               \
-    const univary float inclination = acos(objectCoordinates.z / r);           \
-                                                                               \
-    univary float azimuth = atan2(objectCoordinates.y, objectCoordinates.x);   \
-                                                                               \
-    /* the above returns [-PI, PI], while our azimuth grid convention is [0,   \
-     * 2*PI] */                                                                \
-    if (azimuth < 0.f) {                                                       \
-      azimuth += 2.f * PI;                                                     \
-    }                                                                          \
-                                                                               \
-    localCoordinates.x = 1.f / self->gridSpacing.x * (r - self->gridOrigin.x); \
-    localCoordinates.y =                                                       \
-        1.f / self->gridSpacing.y * (inclination - self->gridOrigin.y);        \
-    localCoordinates.z =                                                       \
-        1.f / self->gridSpacing.z * (azimuth - self->gridOrigin.z);            \
+#define template_transformObjectToLocal_structured_spherical(univary)         \
+  inline void transformObjectToLocal_##univary##_structured_spherical(        \
+      const SharedStructuredVolume *uniform self,                             \
+      const univary vec3f &objectCoordinates,                                 \
+      univary vec3f &localCoordinates)                                        \
+  {                                                                           \
+    /* (x, y, z) -> (r, inclination, azimuth), using the ISO convention for   \
+     coordinates and ordering. all angles in radians. */                      \
+    const univary float r = sqrtf(objectCoordinates.x * objectCoordinates.x + \
+                                  objectCoordinates.y * objectCoordinates.y + \
+                                  objectCoordinates.z * objectCoordinates.z); \
+                                                                              \
+    const univary float inclination = acos(objectCoordinates.z / r);          \
+                                                                              \
+    univary float azimuth = atan2(objectCoordinates.y, objectCoordinates.x);  \
+                                                                              \
+    /* the above returns [-PI, PI], while our azimuth grid convention is [0,  \
+     * 2*PI] */                                                               \
+    if (azimuth < 0.f) {                                                      \
+      azimuth += 2.f * PI;                                                    \
+    }                                                                         \
+                                                                              \
+    localCoordinates.x =                                                      \
+        (1.f / self->gridSpacing.x) * (r - self->gridOrigin.x);               \
+    localCoordinates.y =                                                      \
+        (1.f / self->gridSpacing.y) * (inclination - self->gridOrigin.y);     \
+    localCoordinates.z =                                                      \
+        (1.f / self->gridSpacing.z) * (azimuth - self->gridOrigin.z);         \
   }
 
 template_transformObjectToLocal_structured_spherical(varying);
@@ -155,8 +156,7 @@ inline void computeStructuredSphericalBoundingBox(
         const uniform float az  = azimuths[k];
 
         // skip values outside the grid
-        if (r < rMin || r > rMax || inc < incMin || inc > incMax ||
-            az < azMin || az > azMax) {
+        if (inc < incMin || inc > incMax || az < azMin || az > azMax) {
           continue;
         }
 

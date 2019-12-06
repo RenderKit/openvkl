@@ -38,20 +38,18 @@ inline std::string getPidString()
   return s;
 }
 
-#define ASSERT_DRIVER()                         \
-  if (!openvkl::api::driverIsSet())             \
-    throw std::runtime_error(                   \
-        "OpenVKL not yet initialized "          \
-        "(most likely this means you tried to " \
-        "call a OpenVKL API function before "   \
-        "first calling vklInit())" +            \
+#define ASSERT_DRIVER()                                                      \
+  if (!openvkl::api::driverIsSet())                                          \
+    throw std::runtime_error(                                                \
+        "Open VKL not yet initialized (most likely this means you tried to " \
+        "call an Open VKL API function before first setting a driver)" +     \
         getPidString());
 
-#define ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH)                                 \
-  if (!openvkl::api::currentDriver().supportsWidth(WIDTH))                  \
-    throw std::runtime_error(                                               \
-        "the current OpenVKL driver does not support the requested vector " \
-        "width " +                                                          \
+#define ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH)                                  \
+  if (!openvkl::api::currentDriver().supportsWidth(WIDTH))                   \
+    throw std::runtime_error(                                                \
+        "the current Open VKL driver does not support the requested vector " \
+        "width " +                                                           \
         std::string(#WIDTH));
 
 #define THROW_IF_NULL(obj, name)                         \
@@ -64,24 +62,24 @@ inline std::string getPidString()
 #define THROW_IF_NULL_STRING(str) THROW_IF_NULL(str, "string")
 
 #define OPENVKL_CATCH_BEGIN try {
-#define OPENVKL_CATCH_END(a)                                       \
-  }                                                                \
-  catch (const std::bad_alloc &)                                   \
-  {                                                                \
-    openvkl::handleError(VKL_OUT_OF_MEMORY,                        \
-                         "OpenVKL was unable to allocate memory"); \
-    return a;                                                      \
-  }                                                                \
-  catch (const std::exception &e)                                  \
-  {                                                                \
-    openvkl::handleError(VKL_UNKNOWN_ERROR, e.what());             \
-    return a;                                                      \
-  }                                                                \
-  catch (...)                                                      \
-  {                                                                \
-    openvkl::handleError(VKL_UNKNOWN_ERROR,                        \
-                         "an unrecognized exception was caught");  \
-    return a;                                                      \
+#define OPENVKL_CATCH_END(a)                                        \
+  }                                                                 \
+  catch (const std::bad_alloc &)                                    \
+  {                                                                 \
+    openvkl::handleError(VKL_OUT_OF_MEMORY,                         \
+                         "Open VKL was unable to allocate memory"); \
+    return a;                                                       \
+  }                                                                 \
+  catch (const std::exception &e)                                   \
+  {                                                                 \
+    openvkl::handleError(VKL_UNKNOWN_ERROR, e.what());              \
+    return a;                                                       \
+  }                                                                 \
+  catch (...)                                                       \
+  {                                                                 \
+    openvkl::handleError(VKL_UNKNOWN_ERROR,                         \
+                         "an unrecognized exception was caught");   \
+    return a;                                                       \
   }
 
 ///////////////////////////////////////////////////////////////////////////////

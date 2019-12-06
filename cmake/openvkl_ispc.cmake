@@ -95,64 +95,88 @@ macro (add_definitions_ispc)
 endmacro ()
 
 macro(openvkl_configure_ispc_isa)
+  set(OPENVKL_MAX_ISA "AVX512SKX" CACHE STRING "Selects highest ISA to support.")
+  set_property(CACHE OPENVKL_MAX_ISA PROPERTY STRINGS NONE SSE4 AVX AVX2 AVX512KNL AVX512SKX)
 
-  set(OPENVKL_BUILD_ISA "ALL" CACHE STRING
-      "Target ISA (SSE4, AVX, AVX2, AVX512KNL, AVX512SKX, or ALL)")
-  string(TOUPPER ${OPENVKL_BUILD_ISA} OPENVKL_BUILD_ISA)
-
-  option(OPENVKL_BUILD_ISA_SCALAR
-         "Include 'SCALAR' target (WARNING: may not work!)" OFF)
-  mark_as_advanced(OPENVKL_BUILD_ISA_SCALAR)
-
-  if (OPENVKL_BUILD_ISA_SCALAR)
-    set(OPENVKL_SUPPORTED_ISAS SCALAR)
-  endif()
-
-    set(OPENVKL_SUPPORTED_ISAS ${OPENVKL_SUPPORTED_ISAS} SSE4)
-    set(OPENVKL_SUPPORTED_ISAS ${OPENVKL_SUPPORTED_ISAS} AVX)
-    set(OPENVKL_SUPPORTED_ISAS ${OPENVKL_SUPPORTED_ISAS} AVX2)
-    set(OPENVKL_SUPPORTED_ISAS ${OPENVKL_SUPPORTED_ISAS} AVX512KNL)
-    set(OPENVKL_SUPPORTED_ISAS ${OPENVKL_SUPPORTED_ISAS} AVX512SKX)
-
-  set_property(CACHE OPENVKL_BUILD_ISA PROPERTY STRINGS
-               ALL ${OPENVKL_SUPPORTED_ISAS})
-
-  unset(OPENVKL_ISPC_TARGET_LIST)
-
-  if (OPENVKL_BUILD_ISA STREQUAL "ALL")
-    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} sse4)
-    message(STATUS "OpenVKL SSE4 ISA target enabled.")
-
-    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx)
-    message(STATUS "OpenVKL AVX ISA target enabled.")
-
-    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx2)
-    message(STATUS "OpenVKL AVX2 ISA target enabled.")
-
-    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512knl-i32x16)
-    message(STATUS "OpenVKL AVX512KNL ISA target enabled.")
-
-    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512skx-i32x16)
-    message(STATUS "OpenVKL AVX512SKX ISA target enabled.")
-
-  elseif (OPENVKL_BUILD_ISA STREQUAL "AVX512SKX")
-    set(OPENVKL_ISPC_TARGET_LIST avx512skx-i32x16)
-
-  elseif (OPENVKL_BUILD_ISA STREQUAL "AVX512KNL")
-    set(OPENVKL_ISPC_TARGET_LIST avx512knl-i32x16)
-
-  elseif (OPENVKL_BUILD_ISA STREQUAL "AVX2")
-    set(OPENVKL_ISPC_TARGET_LIST avx2)
-
-  elseif (OPENVKL_BUILD_ISA STREQUAL "AVX")
-    set(OPENVKL_ISPC_TARGET_LIST avx)
-
-  elseif (OPENVKL_BUILD_ISA STREQUAL "SSE4")
-    set(OPENVKL_ISPC_TARGET_LIST sse4)
+  if (OPENVKL_MAX_ISA STREQUAL "NONE")
+    # no maximum specified; support individual specification of ISAs
+    option(OPENVKL_ISA_SSE4 "Enables SSE4 ISA." ON)
+    option(OPENVKL_ISA_AVX "Enables AVX ISA." ON)
+    option(OPENVKL_ISA_AVX2 "Enables AVX2 ISA." ON)
+    option(OPENVKL_ISA_AVX512KNL "Enables AVX512 ISA for Knights Landing." ON)
+    option(OPENVKL_ISA_AVX512SKX "Enables AVX512 ISA for Skylake." ON)
 
   else()
-    message(ERROR "Invalid OPENVKL_BUILD_ISA value. "
-                  "Please select one of ${OPENVKL_SUPPORTED_ISAS}, or ALL.")
+    # support specification of maximum ISA only
+    unset(OPENVKL_ISA_SSE4 CACHE)
+    unset(OPENVKL_ISA_AVX CACHE)
+    unset(OPENVKL_ISA_AVX2 CACHE)
+    unset(OPENVKL_ISA_AVX512KNL CACHE)
+    unset(OPENVKL_ISA_AVX512SKX CACHE)
+
+    if (OPENVKL_MAX_ISA STREQUAL "SSE4")
+      set(ISA 1)
+    elseif (OPENVKL_MAX_ISA STREQUAL "AVX")
+      set(ISA 2)
+    elseif (OPENVKL_MAX_ISA STREQUAL "AVX2")
+      set(ISA 3)
+    elseif (OPENVKL_MAX_ISA STREQUAL "AVX512KNL")
+      set(ISA 4)
+    elseif (OPENVKL_MAX_ISA STREQUAL "AVX512SKX")
+      set(ISA 5)
+    else()
+      message(FATAL_ERROR "Unsupported max ISA specified: " ${OPENVKL_MAX_ISA})
+    endif()
+
+    set(OPENVKL_ISA_SSE4 OFF)
+    set(OPENVKL_ISA_AVX OFF)
+    set(OPENVKL_ISA_AVX2 OFF)
+    set(OPENVKL_ISA_AVX512KNL OFF)
+    set(OPENVKL_ISA_AVX512SKX OFF)
+
+    if (ISA GREATER 0)
+      set(OPENVKL_ISA_SSE4  ON)
+    endif()
+    if (ISA GREATER 1)
+      set(OPENVKL_ISA_AVX  ON)
+    endif()
+    if (ISA GREATER 2)
+      set(OPENVKL_ISA_AVX2  ON)
+    endif()
+    if (ISA GREATER 3)
+      set(OPENVKL_ISA_AVX512KNL  ON)
+    endif()
+    if (ISA GREATER 4)
+      set(OPENVKL_ISA_AVX512SKX  ON)
+    endif()
+  endif()
+
+  # generate final ISPC target list
+  unset(OPENVKL_ISPC_TARGET_LIST)
+
+  if (OPENVKL_ISA_SSE4)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} sse4)
+    message(STATUS "OpenVKL SSE4 ISA target enabled.")
+  endif()
+
+  if (OPENVKL_ISA_AVX)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx)
+    message(STATUS "OpenVKL AVX ISA target enabled.")
+  endif()
+
+  if (OPENVKL_ISA_AVX2)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx2)
+    message(STATUS "OpenVKL AVX2 ISA target enabled.")
+  endif()
+
+  if (OPENVKL_ISA_AVX512KNL)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512knl-i32x16)
+    message(STATUS "OpenVKL AVX512KNL ISA target enabled.")
+  endif()
+
+  if (OPENVKL_ISA_AVX512SKX)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512skx-i32x16)
+    message(STATUS "OpenVKL AVX512SKX ISA target enabled.")
   endif()
 endmacro()
 

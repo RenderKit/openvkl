@@ -2,8 +2,10 @@ SHELL := /bin/bash
 
 webpages := $(addprefix www/, $(addsuffix .html, index documentation examples downloads related_projects legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, readme_head))
+images_png := $(addprefix images/, $(addsuffix .png, structured_spherical_coords))
 scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
+webimages := $(addprefix www/, $(images_png))
 webscripts := $(addprefix www/, $(scripts))
 
 PANDOC := pandoc
@@ -14,10 +16,10 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc
-www: $(webpages) www/stylesheet.css $(webscripts)
+www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
 doc: ../README.md
 
-.PHONY: all www doc clean realclean
+.PHONY: all www doc clean
 
 tmp/version: ../CMakeLists.txt
 	sed -n -e "s/^project(openvkl VERSION \(.*\) LANGUAGES.*)/\1/p" $< | tr -d '\n' > $@
@@ -56,13 +58,17 @@ markdown2web = $(PANDOC) --email-obfuscation=none -f markdown $(filter-out webte
 
 $(webpages): tmp/links.md webtemplate.html
 
+$(webimages): | wwwimgdir
+wwwimgdir:
+	@mkdir -p www/images
+
 www/%.html:
 	$(markdown2web)
 
 www/stylesheet.css: stylesheet.css
 	cp $< $@
 
-tmp/api_html.md: api.md tmp/links.md
+tmp/api_html.md: api.md images.md tmp/links.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
 www/index.html: teaser.html overview.md changelog.md support.md
@@ -71,6 +77,13 @@ www/examples.html: examples.md
 www/downloads.html: compilation.md
 www/related_projects.html: related_projects.md
 www/legal.html: legal.md
+
+## ----------------------------------------------------------------------------
+## Images
+## ----------------------------------------------------------------------------
+
+www/images/%: images/%
+	cp $< $@
 
 ## ----------------------------------------------------------------------------
 ## Scripts
@@ -98,6 +111,3 @@ tmp/api.md: api.md tmp/links.md
 
 clean:
 	rm -rf www tmp changelog.md __pycache__
-
-realclean: clean
-	rm -irf images

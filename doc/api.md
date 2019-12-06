@@ -149,10 +149,10 @@ be released via `vklRelease`.
 Volume types
 ------------
 
-Open VKL currently supports structured regular volumes (with user specified
-spacing on axes); unstructured volumes with tetrahedral, wedge, pyramid, and
-hexaderal primitive types; and adaptive mesh refinement (AMR) volumes.  These
-volumes are created with `vlkNewVolume` with the appropriate type string.
+Open VKL currently supports structured volumes on regular and spherical grids;
+unstructured volumes with tetrahedral, wedge, pyramid, and hexaderal primitive
+types; and adaptive mesh refinement (AMR) volumes.  These volumes are created
+with `vlkNewVolume` with the appropriate type string.
 
 In addition to the usual `vklSet...()` and `vklCommit()` APIs, the volume
 bounding box can be queried:
@@ -163,15 +163,21 @@ The value range of the volume can also be queried:
 
     vkl_range1f vklGetValueRange(VKLVolume volume);
 
-### Structured Volume
+### Structured Volumes
 
 Structured volumes only need to store the values of the samples, because their
-addresses in memory can be easily computed from a 3D position. A common type of
-structured volumes are regular grids.  Structured grids are created by passing a
-type string of `"structured_regular"` to `vklNewVolume`.
+addresses in memory can be easily computed from a 3D position. The dimensions
+for all structured volume types are in units of vertices, not cells. For
+example, a volume with dimensions $(x, y, z)$ will have $(x-1, y-1, z-1)$ cells
+in each dimension. Voxel data provided is assumed vertex-centered, so $x*y*z$
+values must be provided.
 
-The  parameters understood by structured volumes are summarized in the table
-below.
+#### Structured Regular Volumes
+
+A common type of structured volumes are regular grids, which are
+created by passing a type string of `"structured_regular"` to `vklNewVolume`.
+The parameters understood by structured regular volumes are summarized in the
+table below.
 
   ------ ----------- -------------  -----------------------------------
   Type   Name            Default    Description
@@ -197,14 +203,56 @@ below.
   vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in
                                     world-space
   ------ ----------- -------------  -----------------------------------
-  : Additional configuration parameters for structured volumes.
+  : Configuration parameters for structured regular (`"structured_regular"`) volumes.
 
-The dimensions for structured volumes are in terms units vertices, not cells.
-For example, a volume with dimensions $(x, y, z)$ will have $(x-1, y-1, z-1)$
-cells in each dimension. Voxel data provided is assumed vertex-centered, so
-$x*y*z$ values must be provided.
+#### Structured Spherical Volumes
 
-### Adaptive Mesh Refinement (AMR) Volume
+Structured spherical volumes are also supported, which are created by passing a
+type string of `"structured_spherical"` to `vklNewVolume`. The grid dimensions
+and parameters are defined in terms of radial distance ($r$), inclination angle
+($\theta$), and azimuthal angle ($\phi$), conforming with the ISO convention for
+spherical coordinate systems. The coordinate system and parameters understood by
+structured spherical volumes are summarized below.
+
+![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
+
+  ------ ----------- -------------  -----------------------------------
+  Type   Name            Default    Description
+  ------ ----------- -------------  -----------------------------------
+  vec3i  dimensions                 number of voxels in each
+                                    dimension $(r, \theta, \phi)$
+
+  data   voxelData                  VKLData object of voxel data,
+                                    supported types are:
+
+                                    `VKL_UCHAR`
+
+                                    `VKL_SHORT`
+
+                                    `VKL_USHORT`
+
+                                    `VKL_FLOAT`
+
+                                    `VKL_DOUBLE`
+
+  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in units of
+                                    $(r, \theta, \phi)$; angles in degrees
+
+  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of
+                                    $(r, \theta, \phi)$; angles in degrees
+  ------ ----------- -------------  -----------------------------------
+  : Configuration parameters for structured spherical (`"structured_spherical"`) volumes.
+
+These grid parameters support flexible specification of spheres, hemispheres,
+spherical shells, spherical wedges, and so forth. The grid extents (computed as
+$[gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing]$) however must be
+constrained such that:
+
+  * $r \geq 0$
+  * $0 \leq \theta \leq 180$
+  * $0 \leq \phi \leq 360$
+
+### Adaptive Mesh Refinement (AMR) Volumes
 
 AMR volumes are specified as a list of blocks, which exist at levels of
 refinement in potentially overlapping regions.  Blocks exist in a tree
@@ -250,7 +298,7 @@ Note that cell widths are defined _per refinement level_, not per block.
   vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
                                                     world-space
   -------------- --------------- -----------------  -----------------------------------
-  : Additional configuration parameters for AMR volumes.
+  : Configuration parameters for AMR (`"amr"`) volumes.
 
 Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just like
 the structured volume equivalent, but they only modify the root (coarsest level)
@@ -359,7 +407,7 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
   bool                 precomputedNormals     false  whether to accelerate by precomputing,
                                                      at a cost of 12 bytes/face
   -------------------  ------------------  --------  ---------------------------------------
-  : Additional configuration parameters for unstructured volumes.
+  : Configuration parameters for unstructured (`"unstructured"`) volumes.
 
 Sampling
 --------

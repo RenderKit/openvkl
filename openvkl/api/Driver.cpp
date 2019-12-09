@@ -26,14 +26,13 @@ namespace openvkl {
 
     // helper functions
     template <typename OSTREAM_T>
-    static inline void installMessageFunction(Driver &driver, OSTREAM_T &stream)
+    static inline void installLogFunction(Driver &driver, OSTREAM_T &stream)
     {
-      driver.messageFunction = [&](const char *msg) { stream << msg; };
+      driver.logFunction = [&](const char *msg) { stream << msg; };
     }
 
     template <typename OSTREAM_T>
-    static inline void installErrorMessageFunction(Driver &driver,
-                                                   OSTREAM_T &stream)
+    static inline void installErrorFunction(Driver &driver, OSTREAM_T &stream)
     {
       driver.errorFunction = [&](VKLError e, const char *msg) {
         stream << "OPENVKL ERROR [" << e << "]: " << msg << std::endl;
@@ -42,6 +41,14 @@ namespace openvkl {
 
     // Driver definitions
     std::shared_ptr<Driver> Driver::current;
+
+    Driver::Driver()
+    {
+      // setup default logging functions; after the driver is instantiated, they
+      // may be overridden via vklDriverSet*Func().
+      installLogFunction(*this, std::cout);
+      installErrorFunction(*this, std::cerr);
+    }
 
     Driver *Driver::createDriver(const char *driverName)
     {
@@ -63,10 +70,6 @@ namespace openvkl {
 
     void Driver::commit()
     {
-      // setup default logging functions
-      installMessageFunction(*this, std::cout);
-      installErrorMessageFunction(*this, std::cerr);
-
       auto OPENVKL_THREADS = utility::getEnvVar<int>("OPENVKL_THREADS");
       numThreads = OPENVKL_THREADS.value_or(getParam<int>("numThreads", -1));
 

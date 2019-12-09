@@ -67,8 +67,7 @@ namespace openvkl {
   {
     if (postAtLogLevel >= logLevel()) {
       if (api::driverIsSet()) {
-        api::Driver::current->messageFunction(
-            (LOG_PREFIX + msg + '\n').c_str());
+        api::Driver::current->logFunction((LOG_PREFIX + msg + '\n').c_str());
       } else {
         std::cout << LOG_PREFIX << msg << std::endl;
       }

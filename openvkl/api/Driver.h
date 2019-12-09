@@ -40,7 +40,7 @@ namespace openvkl {
     {
       static std::shared_ptr<Driver> current;
 
-      Driver()                   = default;
+      Driver();
       virtual ~Driver() override = default;
 
       static Driver *createDriver(const char *driverName);
@@ -56,14 +56,14 @@ namespace openvkl {
       virtual void commit();
       bool isCommitted();
 
-      virtual void commit(VKLObject object) = 0;
+      virtual void commit(VKLObject object)  = 0;
       virtual void release(VKLObject object) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Driver parameters (updated on commit()) //////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      std::function<void(const char *)> messageFunction{[](const char *) {}};
+      std::function<void(const char *)> logFunction{[](const char *) {}};
       std::function<void(VKLError, const char *)> errorFunction{
           [](VKLError, const char *) {}};
 

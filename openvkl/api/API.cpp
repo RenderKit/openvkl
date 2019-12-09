@@ -108,6 +108,32 @@ extern "C" VKLDriver vklNewDriver(const char *driverName) OPENVKL_CATCH_BEGIN
 }
 OPENVKL_CATCH_END(nullptr)
 
+extern "C" void vklDriverSetLogFunc(VKLDriver driver,
+                                    VKLLogFunc func) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  if (func == nullptr)
+    object->logFunction = [](const char *) {};
+  else
+    object->logFunction = func;
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklDriverSetErrorFunc(VKLDriver driver,
+                                      VKLErrorFunc func) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  if (func == nullptr)
+    object->errorFunction = [](VKLError, const char *) {};
+  else
+    object->errorFunction = func;
+}
+OPENVKL_CATCH_END()
+
 extern "C" void vklDriverSetInt(VKLDriver driver,
                                 const char *name,
                                 int x) OPENVKL_CATCH_BEGIN

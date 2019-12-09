@@ -27,6 +27,12 @@ extern "C" {
 
 OPENVKL_INTERFACE VKLDriver vklNewDriver(const char *driverName);
 
+typedef void (*VKLLogFunc)(const char *message);
+OPENVKL_INTERFACE void vklDriverSetLogFunc(VKLDriver driver, VKLLogFunc func);
+
+typedef void (*VKLErrorFunc)(VKLError error, const char *message);
+OPENVKL_INTERFACE void vklDriverSetErrorFunc(VKLDriver, VKLErrorFunc func);
+
 OPENVKL_INTERFACE void vklDriverSetInt(VKLDriver driver,
                                        const char *name,
                                        int x);

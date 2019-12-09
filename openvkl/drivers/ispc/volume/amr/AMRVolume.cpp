@@ -71,10 +71,9 @@ namespace openvkl {
         throw std::runtime_error("amr volume must have 'block.level' array");
 
       cellWidthsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "block.cellWidth", nullptr);
+          "cellWidth", nullptr);
       if (cellWidthsData.ptr == nullptr)
-        throw std::runtime_error(
-            "amr volume must have 'block.cellWidth' array");
+        throw std::runtime_error("amr volume must have 'cellWidth' array");
 
       blockDataData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "block.data", nullptr);

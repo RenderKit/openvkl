@@ -167,7 +167,7 @@ namespace openvkl {
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", boundsData);
       vklSetData(volume, "block.level", levelsData);
-      vklSetData(volume, "block.cellWidth", widthsData);
+      vklSetData(volume, "cellWidth", widthsData);
 
       vklRelease(blockDataData);
       vklRelease(boundsData);

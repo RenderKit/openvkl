@@ -203,7 +203,7 @@ namespace openvkl {
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", blockBoundsData);
       vklSetData(volume, "block.level", refinementLevelsData);
-      vklSetData(volume, "block.cellWidth", cellWidthsData);
+      vklSetData(volume, "cellWidth", cellWidthsData);
 
       vklRelease(blockDataData);
       vklRelease(blockBoundsData);

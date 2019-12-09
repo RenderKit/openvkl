@@ -254,19 +254,19 @@ constrained such that:
 
 ### Adaptive Mesh Refinement (AMR) Volumes
 
-AMR volumes are specified as a list of blocks, which exist at levels of
-refinement in potentially overlapping regions.  Blocks exist in a tree
-structure, with coarser refinement level blocks containing finer blocks.  The
-cell width is equal for all blocks at the same refinement level, though blocks
-at a coarser level have a larger cell width than finer levels.
+Open VKL currently supports block-structured (Berger-Colella) AMR volumes.
+Volumes are specified as a list of blocks, which exist at levels of refinement
+in potentially overlapping regions.  Blocks exist in a tree structure, with
+coarser refinement level blocks containing finer blocks.  The cell width is
+equal for all blocks at the same refinement level, though blocks at a coarser
+level have a larger cell width than finer levels.
 
 There can be any number of refinement levels and any number of blocks at any
 level of refinement. An AMR volume type is created by passing the type string
 `"amr"` to `vklNewVolume`.
 
-Blocks are defined by four parameters: their bounds, the refinement level in
-which they reside, the cell widths for each refinement level, and the scalar
-data contained within each block.
+Blocks are defined by three parameters: their bounds, the refinement level in
+which they reside, and the scalar data contained within each block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
@@ -282,13 +282,13 @@ Note that cell widths are defined _per refinement level_, not per block.
 
                                                     `VKL_AMR_OCTANT`
 
+  float[]        cellWidth                    NULL  array of each level's cell width
+
   box3f[]        block.bounds                 NULL  [data] array of bounds for each AMR
                                                     block
 
   int[]          block.level                  NULL  array of each block's refinement
                                                     level
-
-  float[]        block.cellWidth              NULL  array of each block's cell width
 
   VKLData[]      block.data                   NULL  [data] array of VKLData containing
                                                     the actual scalar voxel data

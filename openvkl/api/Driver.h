@@ -45,14 +45,6 @@ namespace openvkl {
 
       static Driver *createDriver(const char *driverName);
 
-      // user-provided logging callbacks
-      std::function<void(const char *)> messageFunction{[](const char *) {}};
-
-      std::function<void(VKLError, const char *)> errorFunction{
-          [](VKLError, const char *) {}};
-
-      std::function<void(const char *)> traceFunction{[](const char *) {}};
-
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;
       std::string lastErrorMessage = "no error";
@@ -63,9 +55,17 @@ namespace openvkl {
 
       virtual void commit();
       bool isCommitted();
-      virtual void commit(VKLObject object) = 0;
 
+      virtual void commit(VKLObject object) = 0;
       virtual void release(VKLObject object) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Driver parameters (updated on commit()) //////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      std::function<void(const char *)> messageFunction{[](const char *) {}};
+      std::function<void(VKLError, const char *)> errorFunction{
+          [](VKLError, const char *) {}};
 
       /////////////////////////////////////////////////////////////////////////
       // Data /////////////////////////////////////////////////////////////////

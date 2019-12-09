@@ -38,12 +38,6 @@ namespace openvkl {
       };
     }
 
-    template <typename OSTREAM_T>
-    static inline void installTraceFunction(Driver &driver, OSTREAM_T &stream)
-    {
-      driver.traceFunction = [&](const char *msg) { stream << msg; };
-    }
-
     // Driver definitions
     std::shared_ptr<Driver> Driver::current;
 

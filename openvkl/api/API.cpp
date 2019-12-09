@@ -29,8 +29,6 @@
 
 using namespace openvkl;
 
-#define TRACE_PREFIX "[openvkl] "
-
 inline std::string getPidString()
 {
   char s[100];

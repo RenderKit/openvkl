@@ -26,7 +26,13 @@ extern "C" {
 #endif
 
 OPENVKL_INTERFACE VKLDriver vklNewDriver(const char *driverName);
+
+OPENVKL_INTERFACE void vklDriverSetInt(VKLDriver driver,
+                                       const char *name,
+                                       int x);
+
 OPENVKL_INTERFACE void vklCommitDriver(VKLDriver driver);
+
 OPENVKL_INTERFACE void vklSetCurrentDriver(VKLDriver driver);
 
 OPENVKL_INTERFACE int vklGetNativeSIMDWidth();

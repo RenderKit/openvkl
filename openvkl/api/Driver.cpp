@@ -18,6 +18,8 @@
 #include <sstream>
 #include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
+#include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/getEnvVar.h"
 
 namespace openvkl {
   namespace api {
@@ -64,6 +66,11 @@ namespace openvkl {
       // setup default logging functions
       installMessageFunction(*this, std::cout);
       installErrorMessageFunction(*this, std::cerr);
+
+      auto OPENVKL_THREADS = utility::getEnvVar<int>("OPENVKL_THREADS");
+      numThreads = OPENVKL_THREADS.value_or(getParam<int>("numThreads", -1));
+
+      tasking::initTaskingSystem(numThreads);
 
       committed = true;
     }

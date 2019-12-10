@@ -129,9 +129,16 @@ namespace openvkl {
 
       // threads
       auto OPENVKL_THREADS = utility::getEnvVar<int>("OPENVKL_THREADS");
-      numThreads = OPENVKL_THREADS.value_or(getParam<int>("numThreads", -1));
+      int numThreads =
+          OPENVKL_THREADS.value_or(getParam<int>("numThreads", -1));
 
-      tasking::initTaskingSystem(numThreads);
+      // flush to zero / denormals are zero
+      auto OPENVKL_FLUSH_DENORMALS =
+          utility::getEnvVar<int>("OPENVKL_FLUSH_DENORMALS");
+      bool flushDenormals =
+          OPENVKL_FLUSH_DENORMALS.value_or(getParam<int>("flushDenormals", 0));
+
+      tasking::initTaskingSystem(numThreads, flushDenormals);
 
       committed = true;
     }

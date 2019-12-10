@@ -63,6 +63,8 @@ namespace openvkl {
       // Driver parameters (updated on commit()) //////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      static VKLLogLevel logLevel;
+
       std::function<void(const char *)> logFunction{[](const char *) {}};
       std::function<void(VKLError, const char *)> errorFunction{
           [](VKLError, const char *) {}};

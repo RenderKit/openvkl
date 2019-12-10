@@ -516,7 +516,7 @@ extern "C" VKLValueSelector vklNewValueSelector(VKLVolume volume)
   VKLValueSelector valueSelector =
       openvkl::api::currentDriver().newValueSelector(volume);
   if (valueSelector == nullptr) {
-    postLogMessage(openvkl::VKL_LOG_ERROR) << "could not create value selector";
+    postLogMessage(VKL_LOG_ERROR) << "could not create value selector";
   }
 
   return valueSelector;
@@ -559,8 +559,7 @@ extern "C" VKLVolume vklNewVolume(const char *type) OPENVKL_CATCH_BEGIN
   THROW_IF_NULL_STRING(type);
   VKLVolume volume = openvkl::api::currentDriver().newVolume(type);
   if (volume == nullptr) {
-    postLogMessage(openvkl::VKL_LOG_ERROR)
-        << "could not create volume '" << type << "'";
+    postLogMessage(VKL_LOG_ERROR) << "could not create volume '" << type << "'";
   }
 
   return volume;

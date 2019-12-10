@@ -19,7 +19,10 @@
 #include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
 #include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/StringManip.h"
 #include "ospcommon/utility/getEnvVar.h"
+
+#define LOG_LEVEL_DEFAULT VKL_LOG_INFO
 
 namespace openvkl {
   namespace api {
@@ -41,6 +44,8 @@ namespace openvkl {
 
     // Driver definitions
     std::shared_ptr<Driver> Driver::current;
+
+    VKLLogLevel Driver::logLevel = LOG_LEVEL_DEFAULT;
 
     Driver::Driver()
     {
@@ -70,6 +75,30 @@ namespace openvkl {
 
     void Driver::commit()
     {
+      // log level
+      logLevel = VKLLogLevel(getParam<int>("logLevel", LOG_LEVEL_DEFAULT));
+
+      // environment variable takes precedence
+      auto OPENVKL_LOG_LEVEL = utility::lowerCase(
+          utility::getEnvVar<std::string>("OPENVKL_LOG_LEVEL")
+              .value_or(std::string()));
+
+      if (!OPENVKL_LOG_LEVEL.empty()) {
+        if (OPENVKL_LOG_LEVEL == "debug") {
+          logLevel = VKL_LOG_DEBUG;
+        } else if (OPENVKL_LOG_LEVEL == "info") {
+          logLevel = VKL_LOG_INFO;
+        } else if (OPENVKL_LOG_LEVEL == "warning") {
+          logLevel = VKL_LOG_WARNING;
+        } else if (OPENVKL_LOG_LEVEL == "error") {
+          logLevel = VKL_LOG_ERROR;
+        } else {
+          LogMessageStream(VKL_LOG_ERROR)
+              << "unknown OPENVKL_LOG_LEVEL env value; must be debug, info, "
+                 "warning, or error";
+        }
+      }
+
       // log output
       auto OPENVKL_LOG_OUTPUT =
           utility::getEnvVar<std::string>("OPENVKL_LOG_OUTPUT");

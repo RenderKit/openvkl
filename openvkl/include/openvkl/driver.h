@@ -37,6 +37,10 @@ OPENVKL_INTERFACE void vklDriverSetInt(VKLDriver driver,
                                        const char *name,
                                        int x);
 
+OPENVKL_INTERFACE void vklDriverSetString(VKLDriver driver,
+                                          const char *name,
+                                          const char *s);
+
 OPENVKL_INTERFACE void vklCommitDriver(VKLDriver driver);
 
 OPENVKL_INTERFACE void vklSetCurrentDriver(VKLDriver driver);

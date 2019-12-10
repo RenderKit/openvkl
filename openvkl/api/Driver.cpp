@@ -70,6 +70,35 @@ namespace openvkl {
 
     void Driver::commit()
     {
+      // log output
+      auto OPENVKL_LOG_OUTPUT =
+          utility::getEnvVar<std::string>("OPENVKL_LOG_OUTPUT");
+
+      auto dst =
+          OPENVKL_LOG_OUTPUT.value_or(getParam<std::string>("logOutput", ""));
+
+      if (dst == "cout")
+        installLogFunction(*this, std::cout);
+      else if (dst == "cerr")
+        installLogFunction(*this, std::cerr);
+      else if (dst == "none")
+        logFunction = [](const char *) {};
+
+      // error output
+      auto OPENVKL_ERROR_OUTPUT =
+          utility::getEnvVar<std::string>("OPENVKL_ERROR_OUTPUT");
+
+      dst = OPENVKL_ERROR_OUTPUT.value_or(
+          getParam<std::string>("errorOutput", ""));
+
+      if (dst == "cout")
+        installErrorFunction(*this, std::cout);
+      else if (dst == "cerr")
+        installErrorFunction(*this, std::cerr);
+      else if (dst == "none")
+        errorFunction = [](VKLError, const char *) {};
+
+      // threads
       auto OPENVKL_THREADS = utility::getEnvVar<int>("OPENVKL_THREADS");
       numThreads = OPENVKL_THREADS.value_or(getParam<int>("numThreads", -1));
 

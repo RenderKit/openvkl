@@ -147,6 +147,19 @@ extern "C" void vklDriverSetInt(VKLDriver driver,
 }
 OPENVKL_CATCH_END()
 
+extern "C" void vklDriverSetString(VKLDriver driver,
+                                   const char *name,
+                                   const char *s) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  THROW_IF_NULL_STRING(name);
+
+  object->setParam<std::string>(name, std::string(s));
+}
+OPENVKL_CATCH_END()
+
 extern "C" void vklCommitDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(driver);

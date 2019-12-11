@@ -181,6 +181,12 @@ extern "C" void vklSetCurrentDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
 }
 OPENVKL_CATCH_END()
 
+extern "C" VKLDriver vklGetCurrentDriver() OPENVKL_CATCH_BEGIN
+{
+  return (VKLDriver)openvkl::api::Driver::current.get();
+}
+OPENVKL_CATCH_END(nullptr)
+
 extern "C" VKLError vklDriverGetLastErrorCode(VKLDriver driver)
     OPENVKL_CATCH_BEGIN
 {

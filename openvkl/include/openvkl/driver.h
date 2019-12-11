@@ -45,6 +45,8 @@ OPENVKL_INTERFACE void vklCommitDriver(VKLDriver driver);
 
 OPENVKL_INTERFACE void vklSetCurrentDriver(VKLDriver driver);
 
+OPENVKL_INTERFACE VKLDriver vklGetCurrentDriver();
+
 OPENVKL_INTERFACE VKLError vklDriverGetLastErrorCode(VKLDriver driver);
 
 OPENVKL_INTERFACE const char *vklDriverGetLastErrorMsg(VKLDriver driver);

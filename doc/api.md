@@ -64,6 +64,13 @@ Finally, to use the newly committed driver, you must call
 
     vklSetCurrentDriver(driver);
 
+Users can change parameters on a driver after initialization. In this case the
+driver would need to be re-committed. If changes are made to the driver that is
+already set as the current driver, it does not need to be set as current again.
+The currently set driver can be retrieved at any time by calling
+
+    VKLDriver driver = vklGetCurrentDriver();
+
 Open VKL provides vector-wide versions for several APIs. To determine the native
 vector width for the given driver, call:
 

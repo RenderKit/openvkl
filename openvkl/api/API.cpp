@@ -181,6 +181,26 @@ extern "C" void vklSetCurrentDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
 }
 OPENVKL_CATCH_END()
 
+extern "C" VKLError vklDriverGetLastErrorCode(VKLDriver driver)
+    OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  return object->lastErrorCode;
+}
+OPENVKL_CATCH_END(VKL_NO_ERROR)
+
+extern "C" const char *vklDriverGetLastErrorMsg(VKLDriver driver)
+    OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  return object->lastErrorMessage.c_str();
+}
+OPENVKL_CATCH_END(nullptr)
+
 extern "C" int vklGetNativeSIMDWidth() OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();

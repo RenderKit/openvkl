@@ -24,10 +24,44 @@ load the module that implements the ISPC driver:
 
     vklLoadModule("ispc_driver");
 
-The driver then needs to be selected:
+The driver then needs to be instantiated:
 
     VKLDriver driver = vklNewDriver("ispc");
+
+Once a driver is created, you can call
+
+    void vklDriverSetInt(VKLDriver, const char *name, int val);
+    void vklDriverSetString(VKLDriver, const char *name, const char *val);
+
+to set parameters on the driver. The following parameters are understood by all
+drivers:
+
+  ------ -------------- --------------------------------------------------------
+  Type   Name           Description
+  ------ -------------- --------------------------------------------------------
+  int    logLevel       logging level; valid values are `VKL_LOG_DEBUG`,
+                        `VKL_LOG_INFO`, `VKL_LOG_WARNING` and `VKL_LOG_ERROR`
+
+  string logOutput      convenience for setting where log messages go; valid
+                        values are `cout`, `cerr` and `none`
+
+  string errorOutput    convenience for setting where error messages go; valid
+                        values are `cout`, `cerr` and `none`
+
+  int    numThreads     number of threads which Open VKL can use
+
+  int    flushDenormals sets the `Flush to Zero` and `Denormals are Zero` mode
+                        of the MXCSR control and status register; see
+                        Performance Recommendations section for details
+  ------ -------------- --------------------------------------------------------
+  : Parameters shared by all drivers.
+
+Once parameters are set, the driver must be committed with
+
     vklCommitDriver(driver);
+
+Finally, to use the newly committed driver, you must call
+
     vklSetCurrentDriver(driver);
 
 Open VKL provides vector-wide versions for several APIs. To determine the native
@@ -39,6 +73,84 @@ When the application is finished with Open VKL or shutting down, call the
 shutdown function:
 
     vklShutdown();
+
+### Environment variables
+
+The generic driver parameters can be overridden via environment variables for
+easy changes to Open VKL’s behavior without needing to change the application
+(variables are prefixed by convention with "`OPENVKL_`"):
+
+  ----------------------- ------------------------------------------------------
+  Variable                Description
+  ----------------------- ------------------------------------------------------
+  OPENVKL_LOG_LEVEL       logging level; valid values are `debug`, `info`,
+                          `warning` and `error`
+
+  OPENVKL_LOG_OUTPUT      convenience for setting where log messages go; valid
+                          values are `cout`, `cerr` and `none`
+
+  OPENVKL_ERROR_OUTPUT    convenience for setting where error messages go; valid
+                          values are `cout`, `cerr` and `none`
+
+  OPENVKL_THREADS         number of threads which Open VKL can use
+
+  OPENVKL_FLUSH_DENORMALS sets the `Flush to Zero` and `Denormals are Zero` mode
+                          of the MXCSR control and status register; see
+                          Performance Recommendations section for details
+  ----------------------- ------------------------------------------------------
+  : Environment variables understood by all drivers.
+
+Note that these environment variables take precedence over values set through
+the `vklDriverSet*()` functions.
+
+### Error handling and log messages
+
+The following errors are currently used by Open VKL:
+
+  Name                   Description
+  ---------------------- -------------------------------------------------------
+  VKL_NO_ERROR           no error occurred
+  VKL_UNKNOWN_ERROR      an unknown error occurred
+  VKL_INVALID_ARGUMENT   an invalid argument was specified
+  VKL_INVALID_OPERATION  the operation is not allowed for the specified object
+  VKL_OUT_OF_MEMORY      there is not enough memory to execute the command
+  VKL_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
+  ---------------------- -------------------------------------------------------
+  : Possible error codes, i.e., valid named constants of type `VKLError`.
+
+These error codes are either directly returned by some API functions, or are
+recorded to be later queried by the application via
+
+    VKLError vklDriverGetLastErrorCode(VKLDriver);
+
+A more descriptive error message can be queried by calling
+
+    const char* vklDriverGetLastErrorMsg(VKLDriver);
+
+Alternatively, the application can also register a callback function of type
+
+    typedef void (*VKLErrorFunc)(VKLError, const char* message);
+
+via
+
+    void vklDriverSetErrorFunc(VKLDriver, VKLErrorFunc);
+
+to get notified when errors occur. Applications may be interested in messages
+which Open VKL emits, whether for debugging or logging events. Applications can
+register a callback function of type
+
+    typedef void (*VKLLogFunc)(const char* message);
+
+via
+
+    void vklDriverSetLogFunc(VKLDriver, VKLLogFunc);
+
+which Open VKL will use to emit log messages. Applications can clear either
+callback by passing `nullptr` instead of an actual function pointer. By default,
+Open VKL uses `cout` and `cerr` to emit log and error messages, respectively.
+Note that in addition to setting the above callbacks, this behavior can be
+changed via the driver parameters and environment variables described
+previously.
 
 Basic data types
 ----------------

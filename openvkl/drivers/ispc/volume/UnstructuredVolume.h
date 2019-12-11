@@ -16,11 +16,12 @@
 
 #pragma once
 
-#include "embree3/rtcore.h"
 #include "../common/Data.h"
 #include "../common/math.h"
+#include "../iterator/UnstructuredIterator.h"
 #include "UnstructuredVolume_ispc.h"
 #include "Volume.h"
+#include "embree3/rtcore.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -115,6 +116,19 @@ namespace openvkl {
 
       void commit() override;
 
+      void initIntervalIteratorV(
+          const vintn<W> &valid,
+          vVKLIntervalIteratorN<W> &iterator,
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const ValueSelector<W> *valueSelector) override;
+
+      void iterateIntervalV(const vintn<W> &valid,
+                            vVKLIntervalIteratorN<W> &iterator,
+                            vVKLIntervalN<W> &interval,
+                            vintn<W> &result) override;
+
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples) const override;
@@ -128,6 +142,11 @@ namespace openvkl {
       range1f getValueRange() const override;
 
       box4f getCellBBox(size_t id);
+
+      const Node *getNodeRoot() const
+      {
+        return rtcRoot;
+      }
 
      private:
       void buildBvhAndCalculateBounds();
@@ -188,6 +207,35 @@ namespace openvkl {
                                                 this->ispcEquivalent,
                                                 &objectCoordinates,
                                                 &samples);
+    }
+
+    template <int W>
+    inline void UnstructuredVolume<W>::initIntervalIteratorV(
+        const vintn<W> &valid,
+        vVKLIntervalIteratorN<W> &iterator,
+        const vvec3fn<W> &origin,
+        const vvec3fn<W> &direction,
+        const vrange1fn<W> &tRange,
+        const ValueSelector<W> *valueSelector)
+    {
+      iterator = toVKLIntervalIterator<W>(UnstructuredIterator<W>(
+          valid, this, origin, direction, tRange, valueSelector));
+    }
+
+    template <int W>
+    inline void UnstructuredVolume<W>::iterateIntervalV(
+        const vintn<W> &valid,
+        vVKLIntervalIteratorN<W> &iterator,
+        vVKLIntervalN<W> &interval,
+        vintn<W> &result)
+    {
+      UnstructuredIterator<W> *ri =
+          fromVKLIntervalIterator<UnstructuredIterator<W>>(&iterator);
+
+      ri->iterateInterval(valid, result);
+
+      interval =
+          *reinterpret_cast<const vVKLIntervalN<W> *>(ri->getCurrentInterval());
     }
 
     template <int W>

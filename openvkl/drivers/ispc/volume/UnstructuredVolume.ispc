@@ -16,23 +16,6 @@
 
 #include "UnstructuredVolume.ih"
 
-struct Node {
-  uniform float nominalLength;
-  uniform box1f valueRange;
-};
-
-struct LeafNode {
-  uniform Node super;
-  uniform box3fa bounds;
-  uniform uint64 cellID;
-};
-
-struct InnerNode {
-  uniform Node super;
-  uniform box3fa bounds[2];
-  uniform Node* uniform children[2];
-};
-
 inline bool pointInAABBTest(const uniform box3fa &box,
                             const vec3f &point)
 {

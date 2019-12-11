@@ -28,7 +28,22 @@ typedef enum
   VKL_PYRAMID = 14
 } CellType;
 
-struct Node;
+struct Node {
+  uniform float nominalLength;
+  uniform box1f valueRange;
+};
+
+struct LeafNode {
+  uniform Node super;
+  uniform box3fa bounds;
+  uniform uint64 cellID;
+};
+
+struct InnerNode {
+  uniform Node super;
+  uniform box3fa bounds[2];
+  uniform Node* uniform children[2];
+};
 
 struct VKLUnstructuredVolume
 {

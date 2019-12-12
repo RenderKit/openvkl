@@ -223,7 +223,7 @@ macro (OPENVKL_ISPC_COMPILE)
     set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
   endif()
 
-  if (NOT OPENVKL_DEBUG_BUILD)
+  if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
     set(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=disable-assertions)
   endif()
 

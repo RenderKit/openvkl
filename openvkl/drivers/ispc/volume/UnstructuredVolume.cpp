@@ -122,7 +122,7 @@ namespace openvkl {
             "'indexPrefixed'");
       }
 
-      if (vertexPosition->dataType != VKL_FLOAT3) {
+      if (vertexPosition->dataType != VKL_VEC3F) {
         throw std::runtime_error("unstructured volume unsupported vertex type");
       }
 

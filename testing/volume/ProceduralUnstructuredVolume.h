@@ -264,7 +264,7 @@ namespace openvkl {
       vklRelease(valuesData);
 
       VKLData vtxPositionsData =
-          vklNewData(vtxPositions.size(), VKL_FLOAT3, vtxPositions.data());
+          vklNewData(vtxPositions.size(), VKL_VEC3F, vtxPositions.data());
       vklSetData(volume, "vertex.position", vtxPositionsData);
       vklRelease(vtxPositionsData);
 

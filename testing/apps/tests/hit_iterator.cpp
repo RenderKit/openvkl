@@ -43,7 +43,7 @@ void scalar_hit_iteration(VKLVolume volume, const std::vector<float> &isoValues)
   while (vklIterateHit(&iterator, &hit)) {
     INFO("hit t = " << hit.t << ", sample = " << hit.sample);
 
-    REQUIRE(hit.t == 1.f + isoValues[hitCount]);
+    REQUIRE(hit.t == Approx(1.f + isoValues[hitCount]));
     REQUIRE(hit.sample == isoValues[hitCount]);
 
     hitCount++;

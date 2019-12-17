@@ -304,7 +304,7 @@ table below.
   vec3i  dimensions                 number of voxels in each
                                     dimension $(x, y, z)$
 
-  data   voxelData                  VKLData object of voxel data,
+  data   data                       VKLData object of voxel data,
                                     supported types are:
 
                                     `VKL_UCHAR`
@@ -341,7 +341,7 @@ structured spherical volumes are summarized below.
   vec3i  dimensions                 number of voxels in each
                                     dimension $(r, \theta, \phi)$
 
-  data   voxelData                  VKLData object of voxel data,
+  data   data                       VKLData object of voxel data,
                                     supported types are:
 
                                     `VKL_UCHAR`
@@ -459,8 +459,8 @@ arrays: vertex positions and values, vertex indices, cell start indices, cell
 types, and cell values. An unstructured volume type is created by passing the
 type string `"unstructured"` to `vklNewVolume`.
 
-Sampled cell values can be specified either per-vertex (`vertex.value`) or
-per-cell (`cell.value`). If both arrays are set, `cell.value` takes precedence.
+Sampled cell values can be specified either per-vertex (`vertex.data`) or
+per-cell (`cell.data`). If both arrays are set, `cell.data` takes precedence.
 
 Similar to a mesh, each cell is formed by a group of indices into the vertices.
 For each vertex, the corresponding (by array index) data value will be used for
@@ -488,7 +488,7 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
   -------------------  ------------------  --------  ---------------------------------------
   vec3f[]              vertex.position               [data] array of vertex positions
 
-  float[]              vertex.value                  [data] array of vertex data values to
+  float[]              vertex.data                   [data] array of vertex data values to
                                                      be sampled
 
   uint32[] / uint64[]  index                         [data] array of indices (into the
@@ -503,7 +503,7 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
                                                      index array), specifying the first index
                                                      of each cell
 
-  float[]              cell.value                    [data] array of cell data values to be
+  float[]              cell.data                     [data] array of cell data values to be
                                                      sampled
 
   uint8[]              cell.type                     [data] array of cell types

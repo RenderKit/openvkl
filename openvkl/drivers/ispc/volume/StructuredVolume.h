@@ -78,15 +78,15 @@ namespace openvkl {
       gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
 
       voxelData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "voxelData", nullptr);
+          "data", nullptr);
 
       if (!voxelData) {
-        throw std::runtime_error("no voxelData set on volume");
+        throw std::runtime_error("no data set on volume");
       }
 
       if (voxelData->size() != this->dimensions.long_product()) {
         throw std::runtime_error(
-            "incorrect voxelData size for provided volume dimensions");
+            "incorrect data size for provided volume dimensions");
       }
     }
 

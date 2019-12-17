@@ -89,7 +89,7 @@ namespace openvkl {
       vertexPosition = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "vertex.position", nullptr);
       vertexValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "vertex.value", nullptr);
+          "vertex.data", nullptr);
 
       index = (Data *)this->template getParam<ManagedObject::VKL_PTR>("index",
                                                                       nullptr);
@@ -98,7 +98,7 @@ namespace openvkl {
       cellIndex = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "cell.index", nullptr);
       cellValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.value", nullptr);
+          "cell.data", nullptr);
       cellType = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "cell.type", nullptr);
 
@@ -114,7 +114,7 @@ namespace openvkl {
       }
       if (!vertexValue && !cellValue) {
         throw std::runtime_error(
-            "unstructured volume must have 'vertex.value' or 'cell.value'");
+            "unstructured volume must have 'vertex.data' or 'cell.data'");
       }
       if ((!indexPrefixed && !cellType) || (indexPrefixed && cellType)) {
         throw std::runtime_error(

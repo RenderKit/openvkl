@@ -109,10 +109,10 @@ namespace openvkl {
       vklSetVec3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-      VKLData voxelData =
+      VKLData data =
           vklNewData(dimensions.long_product(), voxelType, voxels.data());
-      vklSetData(volume, "voxelData", voxelData);
-      vklRelease(voxelData);
+      vklSetData(volume, "data", data);
+      vklRelease(data);
 
       vklCommit(volume);
 

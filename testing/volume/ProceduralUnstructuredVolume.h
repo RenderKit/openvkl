@@ -260,7 +260,7 @@ namespace openvkl {
       VKLData valuesData =
           vklNewData(valueDimensions.long_product(), VKL_FLOAT, values.data());
       vklSetData(
-          volume, cellValued ? "cell.value" : "vertex.value", valuesData);
+          volume, cellValued ? "cell.data" : "vertex.data", valuesData);
       vklRelease(valuesData);
 
       VKLData vtxPositionsData =

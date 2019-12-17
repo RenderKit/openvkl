@@ -651,12 +651,12 @@ template_sample_64(uniform);
 // Gradient computation ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-inline varying vec3f SharedStructuredVolume_computeGradient(
+inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
     const SharedStructuredVolume *uniform self,
     const varying vec3f &objectCoordinates)
 {
   // gradient step in each dimension (object coordinates)
-  vec3f gradientStep = 0.1f * self->gridSpacing;
+  vec3f gradientStep = self->gridSpacing;
 
   // compute via forward or backward differences depending on volume boundary
   const vec3f gradientExtent = objectCoordinates + gradientStep;
@@ -686,6 +686,64 @@ inline varying vec3f SharedStructuredVolume_computeGradient(
       self->super.computeSample(
           self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
       sample;
+
+  return gradient / gradientStep;
+}
+
+inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
+    const SharedStructuredVolume *uniform self,
+    const varying vec3f &objectCoordinates)
+{
+  // gradient step in each dimension (object coordinates)
+  vec3f gradientStep = self->gridSpacing;
+
+  // compute via forward or backward differences depending on volume boundary
+  // (as determined by NaN sample values outside the boundary)
+  const vec3f gradientExtent = objectCoordinates + gradientStep;
+
+  vec3f gradient;
+
+  float sample = self->super.computeSample(self, objectCoordinates);
+
+  gradient.x =
+      self->super.computeSample(
+          self, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
+      sample;
+  gradient.y =
+      self->super.computeSample(
+          self, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
+      sample;
+  gradient.z =
+      self->super.computeSample(
+          self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
+      sample;
+
+  if (isnan(gradient.x)) {
+    gradientStep.x *= -1.f;
+
+    gradient.x =
+        self->super.computeSample(
+            self, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
+        sample;
+  }
+
+  if (isnan(gradient.y)) {
+    gradientStep.y *= -1.f;
+
+    gradient.y =
+        self->super.computeSample(
+            self, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
+        sample;
+  }
+
+  if (isnan(gradient.z)) {
+    gradientStep.z *= -1.f;
+
+    gradient.z =
+        self->super.computeSample(
+            self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
+        sample;
+  }
 
   return gradient / gradientStep;
 }
@@ -749,8 +807,7 @@ export void SharedStructuredVolume_gradient_export(
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients =
-        SharedStructuredVolume_computeGradient(self, *objectCoordinates);
+    *gradients = self->computeGradient(self, *objectCoordinates);
   }
 }
 
@@ -804,6 +861,8 @@ export uniform bool SharedStructuredVolume_set(
     self->transformObjectToLocalUniform =
         transformObjectToLocalUniform_structured_regular;
 
+    self->computeGradient = SharedStructuredVolume_computeGradient_bbox_checks;
+
   } else if (self->gridType == structured_spherical) {
     computeStructuredSphericalBoundingBox(self, self->boundingBox);
 
@@ -813,6 +872,7 @@ export uniform bool SharedStructuredVolume_set(
     self->transformObjectToLocalUniform =
         transformObjectToLocal_uniform_structured_spherical;
 
+    self->computeGradient = SharedStructuredVolume_computeGradient_NaN_checks;
   } else {
     print("#vkl:shared_structured_volume: unknown gridType\n");
     return false;

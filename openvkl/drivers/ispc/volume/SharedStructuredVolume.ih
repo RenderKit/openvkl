@@ -70,6 +70,10 @@ struct SharedStructuredVolume
                            const varying vec3i &index,
                            varying float &value);
 
+  varying vec3f (*uniform computeGradient)(
+      const SharedStructuredVolume *uniform self,
+      const varying vec3f &objectCoordinates);
+
   // required for uniform (scalar) sampling
   uniform float (*uniform computeSampleUniform)(
       const void *uniform _self, const uniform vec3f &objectCoordinates);

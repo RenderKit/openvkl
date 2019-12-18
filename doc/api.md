@@ -792,14 +792,15 @@ Performance Recommendations
 MXCSR control and status register
 ---------------------------------
 
-It is strongly recommended to have the `Flush to Zero` and `Denormals
-are Zero` mode of the MXCSR control and status register enabled for
-each thread before calling the sampling, gradient, or interval API functions.
-Otherwise, under some circumstances special handling of denormalized floating
-point numbers can significantly reduce application and Open VKL performance.
-When using Open VKL together with the Intel® Threading Building Blocks, it is
-sufficient to execute the following code at the beginning of the
-application main thread (before the creation of the
+It is strongly recommended to have the `Flush to Zero` and `Denormals are Zero`
+mode of the MXCSR control and status register enabled for each thread before
+calling the sampling, gradient, or interval API functions. Otherwise, under some
+circumstances special handling of denormalized floating point numbers can
+significantly reduce application and Open VKL performance. The driver parameter
+`flushDenormals` or environment variable `OPENVKL_FLUSH_DENORMALS` can be set to
+1 to enable this mode. Alternatively, when using Open VKL together with the
+Intel® Threading Building Blocks, it is sufficient to execute the following code
+at the beginning of the application main thread (before the creation of the
 `tbb::task_scheduler_init` object):
 
     #include <xmmintrin.h>

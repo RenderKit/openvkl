@@ -158,20 +158,22 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
 
   // cells per dimension after padding out the volume dimensions to the nearest
   // cell
-  accelerator->cellsPerDimension =
+  uniform vec3i cellsPerDimension =
       (volume->dimensions + CELL_WIDTH - 1) / CELL_WIDTH;
 
   // bricks per dimension after padding out the cell dimensions to the nearest
   // brick
   accelerator->bricksPerDimension =
-      (accelerator->cellsPerDimension + BRICK_WIDTH - 1) / BRICK_WIDTH;
+      (cellsPerDimension + BRICK_WIDTH - 1) / BRICK_WIDTH;
 
-  const uniform size_t cellCount =
-      accelerator->bricksPerDimension.x * accelerator->bricksPerDimension.y *
-      accelerator->bricksPerDimension.z * BRICK_CELL_COUNT;
+  accelerator->cellCount = accelerator->bricksPerDimension.x *
+                           accelerator->bricksPerDimension.y *
+                           accelerator->bricksPerDimension.z * BRICK_CELL_COUNT;
 
   accelerator->cellValueRanges =
-      (cellCount > 0) ? uniform new uniform box1f[cellCount] : NULL;
+      (accelerator->cellCount > 0)
+          ? uniform new uniform box1f[accelerator->cellCount]
+          : NULL;
 
   accelerator->volume = volume;
 
@@ -294,4 +296,21 @@ export void GridAccelerator_build(void *uniform _accelerator,
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   GridAccelerator_encodeBrick(accelerator, taskIndex);
+}
+
+export void GridAccelerator_computeValueRange(void *uniform _accelerator,
+                                              uniform float &lower,
+                                              uniform float &upper)
+{
+  GridAccelerator *uniform accelerator =
+      (GridAccelerator * uniform) _accelerator;
+
+  uniform box1f valueRange = make_box1f(pos_inf, neg_inf);
+
+  for (uniform size_t i = 0; i < accelerator->cellCount; i++) {
+    valueRange = box_extend(valueRange, accelerator->cellValueRanges[i]);
+  }
+
+  lower = valueRange.lower;
+  upper = valueRange.upper;
 }

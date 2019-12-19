@@ -16,6 +16,68 @@
 
 #include "UnstructuredVolume.ih"
 
+inline bool pointInAABBTest(const uniform box3fa &box,
+                            const vec3f &point)
+{
+  bool t1 = point.x >= box.lower.x;
+  bool t2 = point.y >= box.lower.y;
+  bool t3 = point.z >= box.lower.z;
+  bool t4 = point.x <= box.upper.x;
+  bool t5 = point.y <= box.upper.y;
+  bool t6 = point.z <= box.upper.z;
+  return t1 & t2 & t3 & t4 & t5 & t6;
+}
+
+typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
+                                       uniform uint64 id,
+                                       float &result,
+                                       vec3f samplePos);
+
+void traverseEmbree(uniform Node* uniform root,
+                    const void *uniform userPtr,
+                    uniform intersectAndSamplePrim sampleFunc,
+                    float &result,
+                    const vec3f &samplePos)
+{
+    uniform Node* uniform node = root;
+    uniform Node* uniform nodeStack[32]; // xxx
+    uniform int stackPtr = 0;
+
+    while (1) {
+      uniform bool isLeaf = (node->nominalLength < 0);
+      if (isLeaf) {
+        uniform LeafNode* uniform leaf = (uniform LeafNode* uniform)node;
+        if (sampleFunc(userPtr, leaf->cellID, result, samplePos))
+          return;
+      } else {
+        uniform InnerNode* uniform inner = (uniform InnerNode* uniform)node;
+        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);
+        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);
+
+        if (any(in0)) {
+          if (any(in1)) {
+            nodeStack[stackPtr++] = inner->children[1];
+            node                  = inner->children[0];
+            continue;
+          } else {
+            node = inner->children[0];
+            continue;
+          }
+        } else {
+          if (any(in1)) {
+            node = inner->children[1];
+            continue;
+          } else {
+            // Do nothing, just pop.
+          }
+        }
+      }
+      if (stackPtr == 0)
+        return;
+      node = nodeStack[--stackPtr];
+    }
+}
+
 struct LinearSpace3f
 {
   vec3f vx;
@@ -243,33 +305,18 @@ static bool intersectAndSampleWedge(const void *uniform userData,
 {
   const VKLUnstructuredVolume *uniform self = (const VKLUnstructuredVolume * uniform) userData;
 
-  float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3] = { 0.5, 0.5, 0.5 };
   float derivs[18];
   float weights[6];
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
-
-  const uniform int edges[9][2] = { {0,1}, {1,2}, {2,0},
-                                    {3,4}, {4,5}, {5,3},
-                                    {0,3}, {1,4}, {2,5} };
-  uniform float longestEdge = 0;
-  for (uniform int i = 0; i < 9; i++) {
-      const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + edges[i][0])];
-      const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + edges[i][1])];
-      const uniform float dist = distance(p0, p1);
-      if (longestEdge < dist)
-         longestEdge = dist;
-  }
-
-  const uniform float volumeBound = longestEdge * longestEdge * longestEdge;
-  const uniform float determinantTolerance =
-      1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
+  const uniform float determinantTolerance = self->iterativeTolerance[id];
 
   // Enter iteration loop
-  uniform bool converged = false;
+  bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < WEDGE_MAX_ITERATION); iteration++) {
+    unmasked {
     // Calculate element interpolation functions and derivatives
     wedgeInterpolationFunctions(pcoords, weights);
     wedgeInterpolationDerivs(pcoords, derivs);
@@ -291,27 +338,29 @@ static bool intersectAndSampleWedge(const void *uniform userData,
 
     // Compute determinants and generate improvements
     const float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    }
+
     if (absf(d) < determinantTolerance) {
       return false;
     }
 
-    pcoords[0] = params[0] - det(make_LinearSpace3f(fcol, scol, tcol)) / d;
-    pcoords[1] = params[1] - det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
-    pcoords[2] = params[2] - det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+    const float d0 = det(make_LinearSpace3f(fcol, scol, tcol)) / d;
+    const float d1 = det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
+    const float d2 = det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+
+    pcoords[0] = pcoords[0] - d0;
+    pcoords[1] = pcoords[1] - d1;
+    pcoords[2] = pcoords[2] - d2;
 
     // Convergence/divergence test - if neither, repeat
-    if (((absf(pcoords[0] - params[0])) < WEDGE_CONVERGED) &&
-        ((absf(pcoords[1] - params[1])) < WEDGE_CONVERGED) &&
-        ((absf(pcoords[2] - params[2])) < WEDGE_CONVERGED)) {
+    if ((absf(d0) < WEDGE_CONVERGED) &
+        (absf(d1) < WEDGE_CONVERGED) &
+        (absf(d2) < WEDGE_CONVERGED)) {
       converged = true;
-    } else if ((absf(pcoords[0]) > WEDGE_DIVERGED) ||
-               (absf(pcoords[1]) > WEDGE_DIVERGED) ||
+    } else if ((absf(pcoords[0]) > WEDGE_DIVERGED) |
+               (absf(pcoords[1]) > WEDGE_DIVERGED) |
                (absf(pcoords[2]) > WEDGE_DIVERGED)) {
       return false;
-    } else {
-      params[0] = pcoords[0];
-      params[1] = pcoords[1];
-      params[2] = pcoords[2];
     }
   }
 
@@ -329,12 +378,12 @@ static bool intersectAndSampleWedge(const void *uniform userData,
     if (self->cellValue) {
       result = self->cellValue[id];
     } else {
-      result = 0.f;
-      wedgeInterpolationFunctions(pcoords, weights);
+      float val = 0.f;
       for (uniform int i = 0; i < 6; i++) {
-        result += weights[i] *
+        val += weights[i] *
           self->vertexValue[getVertexId(self, cOffset + i)];
       }
+      result = val;
     }
 
     return true;
@@ -453,7 +502,7 @@ static inline void hexInterpolationDerivs(float pcoords[3], float derivs[24])
 
 static const uniform float HEX_DIVERGED = 1.e6;
 static const uniform int HEX_MAX_ITERATION = 10;
-static const uniform float HEX_CONVERGED = 1.e-05;
+static const uniform float HEX_CONVERGED = 1.e-04;
 static const uniform float HEX_OUTSIDE_CELL_TOLERANCE = 1.e-06;
 
 static bool intersectAndSampleHexIterative(const void *uniform userData,
@@ -464,35 +513,18 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
 {
   const VKLUnstructuredVolume *uniform self = (const VKLUnstructuredVolume * uniform) userData;
 
-  float params[3] = { 0.5, 0.5, 0.5 };
-  float pcoords[3];
+  float pcoords[3] = { 0.5, 0.5, 0.5 };
   float derivs[24];
   float weights[8];
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
-
-  // Should precompute these
-  const uniform int diagonals[4][2] = { {0, 6}, {1, 7}, {2, 4}, {3, 5} };
-  uniform float longestDiagonal = 0;
-  for (uniform int i = 0; i < 4; i++) {
-      const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + diagonals[i][0])];
-      const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + diagonals[i][1])];
-      const uniform float dist = distance(p0, p1);
-      if (longestDiagonal < dist)
-         longestDiagonal = dist;
-  }
-
-  const uniform float volumeBound = longestDiagonal * longestDiagonal * longestDiagonal;
-  const uniform float determinantTolerance =
-      1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
-
-  // Set initial position for Newton's method
-  pcoords[0] = pcoords[1] = pcoords[2] = 0.5;
+  const uniform float determinantTolerance = self->iterativeTolerance[id];
 
   // Enter iteration loop
-  bool uniform converged = false;
+  bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < HEX_MAX_ITERATION); iteration++) {
+    unmasked {
     // Calculate element interpolation functions and derivatives
     hexInterpolationFunctions(pcoords, weights);
     hexInterpolationDerivs(pcoords, derivs);
@@ -514,27 +546,29 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
 
     // Compute determinants and generate improvements
     const float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    }
+
     if (absf(d) < determinantTolerance) {
       return false;
     }
 
-    pcoords[0] = params[0] - det(make_LinearSpace3f(fcol, scol, tcol)) / d;
-    pcoords[1] = params[1] - det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
-    pcoords[2] = params[2] - det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+    const float d0 = det(make_LinearSpace3f(fcol, scol, tcol)) / d;
+    const float d1 = det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
+    const float d2 = det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+
+    pcoords[0] = pcoords[0] - d0;
+    pcoords[1] = pcoords[1] - d1;
+    pcoords[2] = pcoords[2] - d2;
 
     // Convergence/divergence test - if neither, repeat
-    if (((absf(pcoords[0] - params[0])) < HEX_CONVERGED) &&
-        ((absf(pcoords[1] - params[1])) < HEX_CONVERGED) &&
-        ((absf(pcoords[2] - params[2])) < HEX_CONVERGED)) {
+    if ((absf(d0) < HEX_CONVERGED) &
+        (absf(d1) < HEX_CONVERGED) &
+        (absf(d2) < HEX_CONVERGED)) {
       converged = true;
-    } else if ((absf(pcoords[0]) > HEX_DIVERGED) ||
-               (absf(pcoords[1]) > HEX_DIVERGED) ||
+    } else if ((absf(pcoords[0]) > HEX_DIVERGED) |
+               (absf(pcoords[1]) > HEX_DIVERGED) |
                (absf(pcoords[2]) > HEX_DIVERGED)) {
       return false;
-    } else {
-      params[0] = pcoords[0];
-      params[1] = pcoords[1];
-      params[2] = pcoords[2];
     }
   }
 
@@ -552,12 +586,12 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
     if (self->cellValue) {
       result = self->cellValue[id];
     } else {
-      result = 0.f;
-      hexInterpolationFunctions(pcoords, weights);
+      float val = 0.f;
       for (uniform int i = 0; i < 8; i++) {
-        result += weights[i] *
+        val  += weights[i] *
           self->vertexValue[getVertexId(self, cOffset + i)];
       }
+      result = val;
     }
 
     return true;
@@ -622,32 +656,18 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
 {
   const VKLUnstructuredVolume* uniform self = (const VKLUnstructuredVolume* uniform) userData;
 
-  float params[3] = { 0.5, 0.5, 0.5 };
   float pcoords[3] = { 0.5, 0.5, 0.5 };
   float derivs[15];
   float weights[5];
 
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
-
-  const uniform int edges[8][2] = { {0,1}, {1,2}, {2,3}, {3,0},
-    {0,4}, {1,4}, {2,4}, {3,4} };
-  uniform float longestEdge = 0;
-  for (uniform int i = 0; i < 8; i++) {
-    const uniform vec3f p0 = self->vertex[getVertexId(self, cOffset + edges[i][0])];
-    const uniform vec3f p1 = self->vertex[getVertexId(self, cOffset + edges[i][1])];
-    const uniform float dist = distance(p0, p1);
-    if (longestEdge < dist)
-      longestEdge = dist;
-  }
-
-  const uniform float volumeBound = longestEdge * longestEdge * longestEdge;
-  const uniform float determinantTolerance =
-    1e-20 < .00001*volumeBound ? 1e-20 : .00001*volumeBound;
+  const uniform float determinantTolerance = self->iterativeTolerance[id];
 
   // Enter iteration loop
-  uniform bool converged = false;
+  bool converged = false;
   for (uniform int iteration = 0; !converged && (iteration < PYRAMID_MAX_ITERATION); iteration++) {
+    unmasked {
     // Calculate element interpolation functions and derivatives
     pyramidInterpolationFunctions(pcoords, weights);
     pyramidInterpolationDerivs(pcoords, derivs);
@@ -669,27 +689,29 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
 
     // Compute determinants and generate improvements
     const float d = det(make_LinearSpace3f(rcol, scol, tcol));
+    }
+
     if (absf(d) < determinantTolerance) {
       return false;
     }
 
-    pcoords[0] = params[0] - det(make_LinearSpace3f(fcol, scol, tcol)) / d;
-    pcoords[1] = params[1] - det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
-    pcoords[2] = params[2] - det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+    const float d0 = det(make_LinearSpace3f(fcol, scol, tcol)) / d;
+    const float d1 = det(make_LinearSpace3f(rcol, fcol, tcol)) / d;
+    const float d2 = det(make_LinearSpace3f(rcol, scol, fcol)) / d;
+
+    pcoords[0] = pcoords[0] - d0;
+    pcoords[1] = pcoords[1] - d1;
+    pcoords[2] = pcoords[2] - d2;
 
     // Convergence/divergence test - if neither, repeat
-    if (((absf(pcoords[0] - params[0])) < PYRAMID_CONVERGED) &&
-        ((absf(pcoords[1] - params[1])) < PYRAMID_CONVERGED) &&
-        ((absf(pcoords[2] - params[2])) < PYRAMID_CONVERGED)) {
+    if ((absf(d0) < PYRAMID_CONVERGED) &
+        (absf(d1) < PYRAMID_CONVERGED) &
+        (absf(d2) < PYRAMID_CONVERGED)) {
       converged = true;
-    } else if ((absf(pcoords[0]) > PYRAMID_DIVERGED) ||
-               (absf(pcoords[1]) > PYRAMID_DIVERGED) ||
+    } else if ((absf(pcoords[0]) > PYRAMID_DIVERGED) |
+               (absf(pcoords[1]) > PYRAMID_DIVERGED) |
                (absf(pcoords[2]) > PYRAMID_DIVERGED)) {
       return false;
-    } else {
-      params[0] = pcoords[0];
-      params[1] = pcoords[1];
-      params[2] = pcoords[2];
     }
   }
 
@@ -707,12 +729,12 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
     if (self->cellValue) {
       result = self->cellValue[id];
     } else {
-      result = 0.f;
-      pyramidInterpolationFunctions(pcoords, weights);
+      float val = 0.f;
       for (uniform int i = 0; i < 5; i++) {
-        result += weights[i] *
+        val += weights[i] *
           self->vertexValue[getVertexId(self, cOffset + i)];
       }
+      result = val;
     }
 
     return true;
@@ -759,7 +781,7 @@ inline varying float VKLUnstructuredVolume_sample(
 
   float results = floatbits(0xffffffff);  /* NaN */
 
-  traverse(self->bvh, _self, intersectAndSampleCell, results, worldCoordinates);
+  traverseEmbree(self->bvhRoot, _self, intersectAndSampleCell, results, worldCoordinates);
 
   return results;
 }
@@ -812,8 +834,7 @@ export void VKLUnstructuredVolume_sample_export(
     const void *uniform _objectCoordinates,
     void *uniform _samples)
 {
-  cif(imask[programIndex])
-  {
+  if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
@@ -828,7 +849,7 @@ export void VKLUnstructuredVolume_gradient_export(
     const void *uniform _objectCoordinates,
     void *uniform _gradients)
 {
-  cif (imask[programIndex]) {
+  if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
@@ -859,10 +880,9 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
                                    const uniform bool _cell32Bit,
                                    const uniform uint32 _cellSkipIds,
                                    const uint8* uniform _cellType,
-                                   uniform int64 rootRef,
-                                   const void* uniform _bvhNode,
-                                   const int64* uniform _bvhPrimID,
+                                   const void* uniform bvhRoot,
                                    const vec3f* uniform _faceNormals,
+                                   const float* uniform _iterativeTolerance,
                                    const uniform bool _hexIterative)
 {
   uniform VKLUnstructuredVolume *uniform self =
@@ -879,13 +899,12 @@ export void VKLUnstructuredVolume_set(void *uniform _self,
   self->cellType     = _cellType;
 
   self->faceNormals  = _faceNormals;
+  self->iterativeTolerance = _iterativeTolerance;
   self->hexIterative = _hexIterative;
 
   self->boundingBox = _bbox;
 
   self->gradientStep = make_vec3f(0.01f * reduce_min(self->boundingBox.upper - self->boundingBox.lower));
 
-  self->bvh.rootRef = rootRef;
-  self->bvh.node    = (MinMaxBVH2Node * uniform) _bvhNode;
-  self->bvh.primID  = _bvhPrimID;
+  self->bvhRoot = (uniform Node* uniform)bvhRoot;
 }

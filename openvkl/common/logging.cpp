@@ -23,41 +23,6 @@
 
 namespace openvkl {
 
-  VKLLogLevel logLevel()
-  {
-    using namespace ospcommon::utility;
-
-    static VKLLogLevel logLevel = VKL_LOG_INFO;
-
-    static bool checkedEnvironment = false;
-
-    if (!checkedEnvironment) {
-      checkedEnvironment = true;
-
-      auto envLogLevel       = getEnvVar<std::string>("VKL_LOG_LEVEL");
-      auto envLogLevelString = lowerCase(envLogLevel.value_or(std::string()));
-
-      if (!envLogLevelString.empty()) {
-        if (envLogLevelString == "debug") {
-          logLevel = VKL_LOG_DEBUG;
-        } else if (envLogLevelString == "info") {
-          logLevel = VKL_LOG_INFO;
-        } else if (envLogLevelString == "warning") {
-          logLevel = VKL_LOG_WARNING;
-        } else if (envLogLevelString == "error") {
-          logLevel = VKL_LOG_ERROR;
-        } else {
-          postLogMessage(
-              "unknown VKL_LOG_LEVEL env value; must be DEBUG, INFO, WARNING, "
-              "or ERROR",
-              VKL_LOG_ERROR);
-        }
-      }
-    }
-
-    return logLevel;
-  }
-
   LogMessageStream postLogMessage(VKLLogLevel postAtLogLevel)
   {
     return LogMessageStream(postAtLogLevel);
@@ -65,10 +30,9 @@ namespace openvkl {
 
   void postLogMessage(const std::string &msg, VKLLogLevel postAtLogLevel)
   {
-    if (postAtLogLevel >= logLevel()) {
+    if (postAtLogLevel >= api::Driver::logLevel) {
       if (api::driverIsSet()) {
-        api::Driver::current->messageFunction(
-            (LOG_PREFIX + msg + '\n').c_str());
+        api::Driver::current->logFunction((LOG_PREFIX + msg + '\n').c_str());
       } else {
         std::cout << LOG_PREFIX << msg << std::endl;
       }

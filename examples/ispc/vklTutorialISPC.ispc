@@ -20,6 +20,13 @@ export void demo_ispc(void *uniform _volume)
 {
   uniform VKLVolume volume = (uniform VKLVolume)_volume;
 
+  // bounding box
+  uniform vkl_box3f bbox = vklGetBoundingBox(volume);
+  print("bounding box:\n");
+  print("\tlower: % % %\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
+  print("\tupper: % % %\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
+
+  // sampling and gradients
   vkl_vec3f objectCoordinates;
   objectCoordinates.x = programIndex * 3 + 0;
   objectCoordinates.y = programIndex * 3 + 1;
@@ -74,7 +81,7 @@ export void demo_ispc(void *uniform _volume)
         rayTRange.upper);
 
   // interval iteration
-  uniform VKLIntervalIterator intervalIterator;
+  VKLIntervalIterator intervalIterator;
   vklInitIntervalIteratorV(&intervalIterator,
                            volume,
                            &rayOrigin,
@@ -100,7 +107,7 @@ export void demo_ispc(void *uniform _volume)
   }
 
   // hit iteration
-  uniform VKLHitIterator hitIterator;
+  VKLHitIterator hitIterator;
   vklInitHitIteratorV(
       &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
 
@@ -110,4 +117,6 @@ export void demo_ispc(void *uniform _volume)
   while (vklIterateHitV(&hitIterator, &hit)) {
     print("\tt: %\n\tsample %\n\n", hit.t, hit.sample);
   }
+
+  vklRelease((VKLObject)selector);
 }

@@ -33,7 +33,7 @@ namespace openvkl {
 
     // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
-    const auto type_string = stringForType(VKL_TYPE);
+    const auto type_string = stringForHandleType(VKL_TYPE);
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {

@@ -21,6 +21,16 @@ void demoScalarAPI(VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
 
+  // bounding box
+  vkl_box3f bbox = vklGetBoundingBox(volume);
+  printf("\tbounding box\n");
+  printf("\t\tlower = %f %f %f\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
+  printf("\t\tupper = %f %f %f\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
+
+  // value range
+  vkl_range1f valueRange = vklGetValueRange(volume);
+  printf("\tvalue range = (%f %f)\n\n", valueRange.lower, valueRange.upper);
+
   // sample, gradient
   vkl_vec3f coord = {1.f, 1.f, 1.f};
   float sample    = vklComputeSample(volume, &coord);
@@ -93,6 +103,8 @@ void demoScalarAPI(VKLVolume volume)
       break;
     printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
   }
+
+  vklRelease(selector);
 }
 
 void demoVectorAPI(VKLVolume volume)
@@ -149,14 +161,16 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData voxelData = vklNewData(numVoxels, VKL_FLOAT, voxels, 0);
-  vklSetData(volume, "voxelData", voxelData);
-  vklRelease(voxelData);
+  VKLData data = vklNewData(numVoxels, VKL_FLOAT, voxels, 0);
+  vklSetData(volume, "data", data);
+  vklRelease(data);
 
   vklCommit(volume);
 
   demoScalarAPI(volume);
   demoVectorAPI(volume);
+
+  vklRelease(volume);
 
   vklShutdown();
 

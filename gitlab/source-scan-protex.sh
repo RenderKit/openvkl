@@ -11,13 +11,18 @@ export _JAVA_OPTIONS=-Duser.home=$PROTEX_HOME/protex_home
 # enter source code directory before scanning
 cd $SRC_PATH
 
-$BDSTOOL new-project $PROTEX_PROJECT_NAME | tee ip_protex.log
-$BDSTOOL analyze | tee -a ip_protex.log
+$BDSTOOL new-project $PROTEX_PROJECT_NAME |& tee ip_protex.log
+if grep -q "command failed" ip_protex.log; then
+    exit 1
+fi
 
-if grep -E "^Files pending identification: [0-9]+$" ip_protex.log
-then
+$BDSTOOL analyze |& tee -a ip_protex.log
+if grep -q "command failed" ip_protex.log; then
+    exit 1
+fi
+
+if grep -E "^Files pending identification: [0-9]+$" ip_protex.log; then
     echo "Protex scan FAILED!"
-    cat ip_protex.log
     exit 1
 fi
 

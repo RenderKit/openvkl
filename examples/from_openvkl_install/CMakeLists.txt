@@ -26,11 +26,15 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-project(vklTutorial LANGUAGES CXX)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS OFF)
+
+project(vklTutorial LANGUAGES C)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 find_package(openvkl REQUIRED)
 
-add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.cpp)
+add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
 target_link_libraries(vklTutorial openvkl::openvkl)

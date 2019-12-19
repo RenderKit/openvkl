@@ -47,8 +47,8 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-  std::unique_ptr<WaveletProceduralVolume> v(
-      new WaveletProceduralVolume(dimensions, gridOrigin, gridSpacing));
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -785,6 +785,258 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
           // make sure we had at least one interval...
           REQUIRE(intervalCount > 0);
+        }
+
+        else {
+          throw std::runtime_error("unsupported calling width");
+        }
+      }
+    }
+  }
+
+  SECTION("only write intervals for active lanes")
+  {
+    // will be used to initialize all members of interval struct
+    constexpr float initialIntervalValue = 999999.f;
+
+    for (int width = 1; width < maxWidth; width++) {
+      std::vector<vec3f> origins(width);
+      std::vector<vec3f> directions(width);
+      std::vector<vkl_range1f> tRanges(width);
+
+      for (int i = 0; i < width; i++) {
+        origins[i]    = vec3f(distX(eng), distY(eng), -1.f);
+        directions[i] = vec3f(0.f, 0.f, 1.f);
+        tRanges[i]    = vkl_range1f{0.f, inf};
+      }
+
+      for (auto callingWidth : nativeWidths) {
+        if (width > callingWidth || callingWidth != nativeSIMDWidth) {
+          continue;
+        }
+
+        std::vector<int> valid(callingWidth, 0);
+        std::fill(valid.begin(), valid.begin() + width, 1);
+
+        std::vector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
+        std::vector<float> directionsSOA =
+            AOStoSOA_vec3f(directions, callingWidth);
+        std::vector<float> tRangesSOA = AOStoSOA_range1f(tRanges, callingWidth);
+
+        if (callingWidth == 4) {
+          VKLIntervalIterator4 iterator;
+          vklInitIntervalIterator4(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f4 *)originsSOA.data(),
+                                   (const vkl_vvec3f4 *)directionsSOA.data(),
+                                   (const vkl_vrange1f4 *)tRangesSOA.data(),
+                                   nullptr);
+
+          VKLInterval4 interval;
+
+          // initialize interval values; we'll compare after iteration to ensure
+          // data was not overridden for inactive lanes
+          for (int i = 0; i < 4; i++) {
+            interval.tRange.lower[i]     = initialIntervalValue;
+            interval.tRange.upper[i]     = initialIntervalValue;
+            interval.valueRange.lower[i] = initialIntervalValue;
+            interval.valueRange.upper[i] = initialIntervalValue;
+            interval.nominalDeltaT[i]    = initialIntervalValue;
+          }
+
+          int result[4];
+
+          int counter = 0;
+
+          while (true) {
+            vklIterateInterval4(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            // we should have the same result for all active lanes
+            REQUIRE((resultSum == width || resultSum == 0));
+
+            for (int i = 0; i < callingWidth; i++) {
+              INFO("interval iteration "
+                   << counter << " lane[" << i << "] valid = " << valid[i]
+                   << ", tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]);
+
+              if (valid[i]) {
+                // should have interval values overridden
+                REQUIRE(interval.tRange.lower[i] != initialIntervalValue);
+                REQUIRE(interval.tRange.upper[i] != initialIntervalValue);
+                REQUIRE(interval.valueRange.lower[i] != initialIntervalValue);
+                REQUIRE(interval.valueRange.upper[i] != initialIntervalValue);
+                REQUIRE(interval.nominalDeltaT[i] != initialIntervalValue);
+              } else {
+                // should NOT have interval values overridden
+                REQUIRE(interval.tRange.lower[i] == initialIntervalValue);
+                REQUIRE(interval.tRange.upper[i] == initialIntervalValue);
+                REQUIRE(interval.valueRange.lower[i] == initialIntervalValue);
+                REQUIRE(interval.valueRange.upper[i] == initialIntervalValue);
+                REQUIRE(interval.nominalDeltaT[i] == initialIntervalValue);
+              }
+            }
+
+            if (!result[0]) {
+              break;
+            }
+
+            counter++;
+          }
+
+          // ensure at least some intervals were returned
+          REQUIRE(counter > 0);
+        }
+
+        else if (callingWidth == 8) {
+          VKLIntervalIterator8 iterator;
+          vklInitIntervalIterator8(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f8 *)originsSOA.data(),
+                                   (const vkl_vvec3f8 *)directionsSOA.data(),
+                                   (const vkl_vrange1f8 *)tRangesSOA.data(),
+                                   nullptr);
+
+          VKLInterval8 interval;
+
+          // initialize interval values; we'll compare after iteration to ensure
+          // data was not overridden for inactive lanes
+          for (int i = 0; i < 8; i++) {
+            interval.tRange.lower[i]     = initialIntervalValue;
+            interval.tRange.upper[i]     = initialIntervalValue;
+            interval.valueRange.lower[i] = initialIntervalValue;
+            interval.valueRange.upper[i] = initialIntervalValue;
+            interval.nominalDeltaT[i]    = initialIntervalValue;
+          }
+
+          int result[8];
+
+          int counter = 0;
+
+          while (true) {
+            vklIterateInterval8(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            // we should have the same result for all active lanes
+            REQUIRE((resultSum == width || resultSum == 0));
+
+            for (int i = 0; i < callingWidth; i++) {
+              INFO("interval iteration "
+                   << counter << " lane[" << i << "] valid = " << valid[i]
+                   << ", tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]);
+
+              if (valid[i]) {
+                // should have interval values overridden
+                REQUIRE(interval.tRange.lower[i] != initialIntervalValue);
+                REQUIRE(interval.tRange.upper[i] != initialIntervalValue);
+                REQUIRE(interval.valueRange.lower[i] != initialIntervalValue);
+                REQUIRE(interval.valueRange.upper[i] != initialIntervalValue);
+                REQUIRE(interval.nominalDeltaT[i] != initialIntervalValue);
+              } else {
+                // should NOT have interval values overridden
+                REQUIRE(interval.tRange.lower[i] == initialIntervalValue);
+                REQUIRE(interval.tRange.upper[i] == initialIntervalValue);
+                REQUIRE(interval.valueRange.lower[i] == initialIntervalValue);
+                REQUIRE(interval.valueRange.upper[i] == initialIntervalValue);
+                REQUIRE(interval.nominalDeltaT[i] == initialIntervalValue);
+              }
+            }
+
+            if (!result[0]) {
+              break;
+            }
+
+            counter++;
+          }
+
+          // ensure at least some intervals were returned
+          REQUIRE(counter > 0);
+        }
+
+        else if (callingWidth == 16) {
+          VKLIntervalIterator16 iterator;
+          vklInitIntervalIterator16(valid.data(),
+                                   &iterator,
+                                   vklVolume,
+                                   (const vkl_vvec3f16 *)originsSOA.data(),
+                                   (const vkl_vvec3f16 *)directionsSOA.data(),
+                                   (const vkl_vrange1f16 *)tRangesSOA.data(),
+                                   nullptr);
+
+          VKLInterval16 interval;
+
+          // initialize interval values; we'll compare after iteration to ensure
+          // data was not overridden for inactive lanes
+          for (int i = 0; i < 16; i++) {
+            interval.tRange.lower[i]     = initialIntervalValue;
+            interval.tRange.upper[i]     = initialIntervalValue;
+            interval.valueRange.lower[i] = initialIntervalValue;
+            interval.valueRange.upper[i] = initialIntervalValue;
+            interval.nominalDeltaT[i]    = initialIntervalValue;
+          }
+
+          int result[16];
+
+          int counter = 0;
+
+          while (true) {
+            vklIterateInterval16(valid.data(), &iterator, &interval, result);
+
+            int resultSum = 0;
+
+            for (int i = 0; i < width; i++) {
+              resultSum += result[i];
+            }
+
+            // we should have the same result for all active lanes
+            REQUIRE((resultSum == width || resultSum == 0));
+
+            for (int i = 0; i < callingWidth; i++) {
+              INFO("interval iteration "
+                   << counter << " lane[" << i << "] valid = " << valid[i]
+                   << ", tRange = " << interval.tRange.lower[i] << ", "
+                   << interval.tRange.upper[i]);
+
+              if (valid[i]) {
+                // should have interval values overridden
+                REQUIRE(interval.tRange.lower[i] != initialIntervalValue);
+                REQUIRE(interval.tRange.upper[i] != initialIntervalValue);
+                REQUIRE(interval.valueRange.lower[i] != initialIntervalValue);
+                REQUIRE(interval.valueRange.upper[i] != initialIntervalValue);
+                REQUIRE(interval.nominalDeltaT[i] != initialIntervalValue);
+              } else {
+                // should NOT have interval values overridden
+                REQUIRE(interval.tRange.lower[i] == initialIntervalValue);
+                REQUIRE(interval.tRange.upper[i] == initialIntervalValue);
+                REQUIRE(interval.valueRange.lower[i] == initialIntervalValue);
+                REQUIRE(interval.valueRange.upper[i] == initialIntervalValue);
+                REQUIRE(interval.nominalDeltaT[i] == initialIntervalValue);
+              }
+            }
+
+            if (!result[0]) {
+              break;
+            }
+
+            counter++;
+          }
+
+          // ensure at least some intervals were returned
+          REQUIRE(counter > 0);
         }
 
         else {

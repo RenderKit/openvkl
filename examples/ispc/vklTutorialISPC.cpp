@@ -43,13 +43,15 @@ int main()
         voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
             float(i);
 
-  VKLData voxelData = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
-  vklSetData(volume, "voxelData", voxelData);
-  vklRelease(voxelData);
+  VKLData data = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+  vklSetData(volume, "data", data);
+  vklRelease(data);
 
   vklCommit(volume);
 
   ispc::demo_ispc(volume);
+
+  vklRelease(volume);
 
   vklShutdown();
 

@@ -49,9 +49,14 @@ else()
   set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
 endif()
 
-set(BUILD_OSPCOMMON_VERSION "1.0.1" CACHE STRING "Which version of ospcommon to build?")
+option(DOWNLOAD_ISPC "Download ispc or use the one found in ${PATH}?" ON)
+
+set(BUILD_OSPCOMMON_VERSION "v1.1.0" CACHE STRING "Which version of ospcommon to build?")
 
 option(BUILD_TBB_FROM_SOURCE "Build TBB from source or instead use one in the existing environment?" ON)
+
+set(BUILD_EMBREE_VERSION "v3.6.1" CACHE STRING "Which version of Embree to build?")
+option(BUILD_EMBREE_FROM_SOURCE "Build Embree or use pre-built version?" ON)
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"
@@ -80,7 +85,9 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 
 ## Build dependencies ##
 
-include(dep_ispc)
+if (DOWNLOAD_ISPC)
+  include(dep_ispc)
+endif()
 
 if (BUILD_TBB_FROM_SOURCE)
   include(dep_tbb)
@@ -91,6 +98,7 @@ if (BUILD_GLFW)
 endif()
 
 include(dep_ospcommon)
+include(dep_embree)
 
 ## Build OpenVKL ##
 
@@ -121,6 +129,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       -DISPC_EXECUTABLE=${ISPC_PATH}
+      $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
@@ -130,7 +139,8 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   ExternalProject_Add_StepDependencies(openvkl
   configure
     ospcommon
-    ispc
+    embree
     $<$<BOOL:${BUILD_GLFW}>:glfw>
+    $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
   )
 endif()

@@ -1,0 +1,1 @@
+[imgStructuredSphericalCoords]: images/structured_spherical_coords.png

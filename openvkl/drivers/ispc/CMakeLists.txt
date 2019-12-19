@@ -29,14 +29,15 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   iterator/DefaultIterator.ispc
   iterator/GridAcceleratorIterator.cpp
   iterator/GridAcceleratorIterator.ispc
+  iterator/UnstructuredIterator.cpp
+  iterator/UnstructuredIterator.ispc
   value_selector/ValueSelector.cpp
   value_selector/ValueSelector.ispc
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/StructuredRegularVolume.cpp
+  volume/StructuredSphericalVolume.cpp
   volume/UnstructuredVolume.cpp
-  volume/MinMaxBVH2.cpp
-  volume/MinMaxBVH2.ispc
   volume/UnstructuredVolume.ispc
   volume/amr/AMRAccel.cpp
   volume/amr/AMRData.cpp
@@ -54,6 +55,7 @@ target_include_directories(openvkl_module_ispc_driver
 PUBLIC
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
   $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
+  $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
 )
 
 target_link_libraries(openvkl_module_ispc_driver
@@ -61,6 +63,7 @@ PUBLIC
   openvkl
 PRIVATE
   ospcommon::ospcommon
+  $<BUILD_INTERFACE:embree>
 )
 
 install(TARGETS openvkl_module_ispc_driver

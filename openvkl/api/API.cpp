@@ -29,8 +29,6 @@
 
 using namespace openvkl;
 
-#define TRACE_PREFIX "[openvkl] "
-
 inline std::string getPidString()
 {
   char s[100];
@@ -38,20 +36,18 @@ inline std::string getPidString()
   return s;
 }
 
-#define ASSERT_DRIVER()                         \
-  if (!openvkl::api::driverIsSet())             \
-    throw std::runtime_error(                   \
-        "OpenVKL not yet initialized "          \
-        "(most likely this means you tried to " \
-        "call a OpenVKL API function before "   \
-        "first calling vklInit())" +            \
+#define ASSERT_DRIVER()                                                      \
+  if (!openvkl::api::driverIsSet())                                          \
+    throw std::runtime_error(                                                \
+        "Open VKL not yet initialized (most likely this means you tried to " \
+        "call an Open VKL API function before first setting a driver)" +     \
         getPidString());
 
-#define ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH)                                 \
-  if (!openvkl::api::currentDriver().supportsWidth(WIDTH))                  \
-    throw std::runtime_error(                                               \
-        "the current OpenVKL driver does not support the requested vector " \
-        "width " +                                                          \
+#define ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH)                                  \
+  if (!openvkl::api::currentDriver().supportsWidth(WIDTH))                   \
+    throw std::runtime_error(                                                \
+        "the current Open VKL driver does not support the requested vector " \
+        "width " +                                                           \
         std::string(#WIDTH));
 
 #define THROW_IF_NULL(obj, name)                         \
@@ -64,24 +60,24 @@ inline std::string getPidString()
 #define THROW_IF_NULL_STRING(str) THROW_IF_NULL(str, "string")
 
 #define OPENVKL_CATCH_BEGIN try {
-#define OPENVKL_CATCH_END(a)                                       \
-  }                                                                \
-  catch (const std::bad_alloc &)                                   \
-  {                                                                \
-    openvkl::handleError(VKL_OUT_OF_MEMORY,                        \
-                         "OpenVKL was unable to allocate memory"); \
-    return a;                                                      \
-  }                                                                \
-  catch (const std::exception &e)                                  \
-  {                                                                \
-    openvkl::handleError(VKL_UNKNOWN_ERROR, e.what());             \
-    return a;                                                      \
-  }                                                                \
-  catch (...)                                                      \
-  {                                                                \
-    openvkl::handleError(VKL_UNKNOWN_ERROR,                        \
-                         "an unrecognized exception was caught");  \
-    return a;                                                      \
+#define OPENVKL_CATCH_END(a)                                        \
+  }                                                                 \
+  catch (const std::bad_alloc &)                                    \
+  {                                                                 \
+    openvkl::handleError(VKL_OUT_OF_MEMORY,                         \
+                         "Open VKL was unable to allocate memory"); \
+    return a;                                                       \
+  }                                                                 \
+  catch (const std::exception &e)                                   \
+  {                                                                 \
+    openvkl::handleError(VKL_UNKNOWN_ERROR, e.what());              \
+    return a;                                                       \
+  }                                                                 \
+  catch (...)                                                       \
+  {                                                                 \
+    openvkl::handleError(VKL_UNKNOWN_ERROR,                         \
+                         "an unrecognized exception was caught");   \
+    return a;                                                       \
   }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -112,6 +108,58 @@ extern "C" VKLDriver vklNewDriver(const char *driverName) OPENVKL_CATCH_BEGIN
 }
 OPENVKL_CATCH_END(nullptr)
 
+extern "C" void vklDriverSetLogFunc(VKLDriver driver,
+                                    VKLLogFunc func) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  if (func == nullptr)
+    object->logFunction = [](const char *) {};
+  else
+    object->logFunction = func;
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklDriverSetErrorFunc(VKLDriver driver,
+                                      VKLErrorFunc func) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  if (func == nullptr)
+    object->errorFunction = [](VKLError, const char *) {};
+  else
+    object->errorFunction = func;
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklDriverSetInt(VKLDriver driver,
+                                const char *name,
+                                int x) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  THROW_IF_NULL_STRING(name);
+
+  object->setParam<int>(name, x);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklDriverSetString(VKLDriver driver,
+                                   const char *name,
+                                   const char *s) OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  THROW_IF_NULL_STRING(name);
+
+  object->setParam<std::string>(name, std::string(s));
+}
+OPENVKL_CATCH_END()
+
 extern "C" void vklCommitDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(driver);
@@ -132,6 +180,32 @@ extern "C" void vklSetCurrentDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
   openvkl::api::Driver::current.reset(object);
 }
 OPENVKL_CATCH_END()
+
+extern "C" VKLDriver vklGetCurrentDriver() OPENVKL_CATCH_BEGIN
+{
+  return (VKLDriver)openvkl::api::Driver::current.get();
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" VKLError vklDriverGetLastErrorCode(VKLDriver driver)
+    OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  return object->lastErrorCode;
+}
+OPENVKL_CATCH_END(VKL_NO_ERROR)
+
+extern "C" const char *vklDriverGetLastErrorMsg(VKLDriver driver)
+    OPENVKL_CATCH_BEGIN
+{
+  THROW_IF_NULL_OBJECT(driver);
+  auto *object = (openvkl::api::Driver *)driver;
+
+  return object->lastErrorMessage.c_str();
+}
+OPENVKL_CATCH_END(nullptr)
 
 extern "C" int vklGetNativeSIMDWidth() OPENVKL_CATCH_BEGIN
 {
@@ -227,7 +301,7 @@ extern "C" int vklIterateInterval(VKLIntervalIterator *iterator,
       reinterpret_cast<vVKLIntervalIteratorN<1> &>(*iterator),
       intervalInternal,
       reinterpret_cast<vintn<1> &>(result));
-  *interval = static_cast<VKLInterval>(intervalInternal);
+  intervalInternal.populateVKLInterval(*interval);
   return result;
 }
 OPENVKL_CATCH_END(false)
@@ -246,7 +320,7 @@ OPENVKL_CATCH_END(false)
         reinterpret_cast<vVKLIntervalIteratorN<WIDTH> &>(*iterator), \
         intervalInternal,                                            \
         reinterpret_cast<vintn<WIDTH> &>(*result));                  \
-    *interval = static_cast<VKLInterval##WIDTH>(intervalInternal);   \
+    intervalInternal.populateVKLInterval##WIDTH(*interval, valid);   \
   }                                                                  \
   OPENVKL_CATCH_END()
 
@@ -321,7 +395,7 @@ extern "C" int vklIterateHit(VKLHitIterator *iterator,
       reinterpret_cast<vVKLHitIteratorN<1> &>(*iterator),
       hitInternal,
       reinterpret_cast<vintn<1> &>(result));
-  *hit = static_cast<VKLHit>(hitInternal);
+  hitInternal.populateVKLHit(*hit);
   return result;
 }
 OPENVKL_CATCH_END(false)
@@ -339,7 +413,7 @@ OPENVKL_CATCH_END(false)
         reinterpret_cast<vVKLHitIteratorN<WIDTH> &>(*iterator),         \
         hitInternal,                                                    \
         reinterpret_cast<vintn<WIDTH> &>(*result));                     \
-    *hit = static_cast<VKLHit##WIDTH>(hitInternal);                     \
+    hitInternal.populateVKLHit##WIDTH(*hit, valid);                     \
   }                                                                     \
   OPENVKL_CATCH_END()
 
@@ -468,7 +542,7 @@ extern "C" VKLValueSelector vklNewValueSelector(VKLVolume volume)
   VKLValueSelector valueSelector =
       openvkl::api::currentDriver().newValueSelector(volume);
   if (valueSelector == nullptr) {
-    postLogMessage(openvkl::VKL_LOG_ERROR) << "could not create value selector";
+    postLogMessage(VKL_LOG_ERROR) << "could not create value selector";
   }
 
   return valueSelector;
@@ -511,8 +585,7 @@ extern "C" VKLVolume vklNewVolume(const char *type) OPENVKL_CATCH_BEGIN
   THROW_IF_NULL_STRING(type);
   VKLVolume volume = openvkl::api::currentDriver().newVolume(type);
   if (volume == nullptr) {
-    postLogMessage(openvkl::VKL_LOG_ERROR)
-        << "could not create volume '" << type << "'";
+    postLogMessage(VKL_LOG_ERROR) << "could not create volume '" << type << "'";
   }
 
   return volume;
@@ -604,3 +677,11 @@ extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
   return reinterpret_cast<const vkl_box3f &>(result);
 }
 OPENVKL_CATCH_END(vkl_box3f{ospcommon::math::nan})
+
+extern "C" vkl_range1f vklGetValueRange(VKLVolume volume) OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  const range1f result = openvkl::api::currentDriver().getValueRange(volume);
+  return reinterpret_cast<const vkl_range1f &>(result);
+}
+OPENVKL_CATCH_END(vkl_range1f{ospcommon::math::nan})

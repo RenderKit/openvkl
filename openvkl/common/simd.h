@@ -167,6 +167,22 @@ namespace openvkl {
 
       return newVec;
     }
+
+    void fill_inactive_lanes(vintn<W> &mask)
+    {
+      for (int i = 0; i < W; i++) {
+        if (mask[i]) {
+          for (int k = 0; k < W; k++) {
+            if (!mask[k]) {
+              x[k] = x[i];
+              y[k] = y[i];
+              z[k] = y[i];
+            }
+          }
+          break;
+        }
+      }
+    }
   };
 
   template <int W>
@@ -285,65 +301,55 @@ namespace openvkl {
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    explicit operator VKLInterval()
+    void populateVKLInterval(VKLInterval &interval) const
     {
-      VKLInterval interval1;
-
-      interval1.tRange.lower     = tRange.lower[0];
-      interval1.tRange.upper     = tRange.upper[0];
-      interval1.valueRange.lower = valueRange.lower[0];
-      interval1.valueRange.upper = valueRange.upper[0];
-      interval1.nominalDeltaT    = nominalDeltaT[0];
-
-      return interval1;
+      interval.tRange.lower     = tRange.lower[0];
+      interval.tRange.upper     = tRange.upper[0];
+      interval.valueRange.lower = valueRange.lower[0];
+      interval.valueRange.upper = valueRange.upper[0];
+      interval.nominalDeltaT    = nominalDeltaT[0];
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    explicit operator VKLInterval4()
+    void populateVKLInterval4(VKLInterval4 &interval, const int *valid) const
     {
-      VKLInterval4 interval4;
-
       for (int i = 0; i < 4; i++) {
-        interval4.tRange.lower[i]     = tRange.lower[i];
-        interval4.tRange.upper[i]     = tRange.upper[i];
-        interval4.valueRange.lower[i] = valueRange.lower[i];
-        interval4.valueRange.upper[i] = valueRange.upper[i];
-        interval4.nominalDeltaT[i]    = nominalDeltaT[i];
+        if (valid[i]) {
+          interval.tRange.lower[i]     = tRange.lower[i];
+          interval.tRange.upper[i]     = tRange.upper[i];
+          interval.valueRange.lower[i] = valueRange.lower[i];
+          interval.valueRange.upper[i] = valueRange.upper[i];
+          interval.nominalDeltaT[i]    = nominalDeltaT[i];
+        }
       }
-
-      return interval4;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    explicit operator VKLInterval8()
+    void populateVKLInterval8(VKLInterval8 &interval, const int *valid) const
     {
-      VKLInterval8 interval8;
-
       for (int i = 0; i < 8; i++) {
-        interval8.tRange.lower[i]     = tRange.lower[i];
-        interval8.tRange.upper[i]     = tRange.upper[i];
-        interval8.valueRange.lower[i] = valueRange.lower[i];
-        interval8.valueRange.upper[i] = valueRange.upper[i];
-        interval8.nominalDeltaT[i]    = nominalDeltaT[i];
+        if (valid[i]) {
+          interval.tRange.lower[i]     = tRange.lower[i];
+          interval.tRange.upper[i]     = tRange.upper[i];
+          interval.valueRange.lower[i] = valueRange.lower[i];
+          interval.valueRange.upper[i] = valueRange.upper[i];
+          interval.nominalDeltaT[i]    = nominalDeltaT[i];
+        }
       }
-
-      return interval8;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    explicit operator VKLInterval16()
+    void populateVKLInterval16(VKLInterval16 &interval, const int *valid) const
     {
-      VKLInterval16 interval16;
-
       for (int i = 0; i < 16; i++) {
-        interval16.tRange.lower[i]     = tRange.lower[i];
-        interval16.tRange.upper[i]     = tRange.upper[i];
-        interval16.valueRange.lower[i] = valueRange.lower[i];
-        interval16.valueRange.upper[i] = valueRange.upper[i];
-        interval16.nominalDeltaT[i]    = nominalDeltaT[i];
+        if (valid[i]) {
+          interval.tRange.lower[i]     = tRange.lower[i];
+          interval.tRange.upper[i]     = tRange.upper[i];
+          interval.valueRange.lower[i] = valueRange.lower[i];
+          interval.valueRange.upper[i] = valueRange.upper[i];
+          interval.nominalDeltaT[i]    = nominalDeltaT[i];
+        }
       }
-
-      return interval16;
     }
   };
 
@@ -456,53 +462,43 @@ namespace openvkl {
     vVKLHitN<W>(const vVKLHitN<W> &v) : t(v.t), sample(v.sample) {}
 
     template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    explicit operator VKLHit()
+    void populateVKLHit(VKLHit &hit) const
     {
-      VKLHit hit1;
-
-      hit1.t      = t[0];
-      hit1.sample = sample[0];
-
-      return hit1;
+      hit.t      = t[0];
+      hit.sample = sample[0];
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    explicit operator VKLHit4()
+    void populateVKLHit4(VKLHit4 &hit, const int *valid) const
     {
-      VKLHit4 hit4;
-
       for (int i = 0; i < 4; i++) {
-        hit4.t[i]      = t[i];
-        hit4.sample[i] = sample[i];
+        if (valid[i]) {
+          hit.t[i]      = t[i];
+          hit.sample[i] = sample[i];
+        }
       }
-
-      return hit4;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    explicit operator VKLHit8()
+    void populateVKLHit8(VKLHit8 &hit, const int *valid) const
     {
-      VKLHit8 hit8;
-
       for (int i = 0; i < 8; i++) {
-        hit8.t[i]      = t[i];
-        hit8.sample[i] = sample[i];
+        if (valid[i]) {
+          hit.t[i]      = t[i];
+          hit.sample[i] = sample[i];
+        }
       }
-
-      return hit8;
     }
 
     template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    explicit operator VKLHit16()
+    void populateVKLHit16(VKLHit16 &hit, const int *valid) const
     {
-      VKLHit16 hit16;
-
       for (int i = 0; i < 16; i++) {
-        hit16.t[i]      = t[i];
-        hit16.sample[i] = sample[i];
+        if (valid[i]) {
+          hit.t[i]      = t[i];
+          hit.sample[i] = sample[i];
+        }
       }
-
-      return hit16;
     }
   };
 

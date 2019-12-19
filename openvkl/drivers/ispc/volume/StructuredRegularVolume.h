@@ -16,9 +16,7 @@
 
 #pragma once
 
-#include "../common/Data.h"
 #include "../iterator/GridAcceleratorIterator.h"
-#include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 
 namespace openvkl {
@@ -27,8 +25,6 @@ namespace openvkl {
     template <int W>
     struct StructuredRegularVolume : public StructuredVolume<W>
     {
-      ~StructuredRegularVolume();
-
       void commit() override;
 
       void initIntervalIteratorV(
@@ -55,21 +51,6 @@ namespace openvkl {
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override;
-
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
-
-      box3f getBoundingBox() const override;
-
-     protected:
-      void buildAccelerator();
-
-      Data *voxelData{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -129,40 +110,6 @@ namespace openvkl {
       ri->iterateHit(valid, result);
 
       hit = *reinterpret_cast<const vVKLHitN<W> *>(ri->getCurrentHit());
-    }
-
-    template <int W>
-    inline void StructuredRegularVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
-    {
-      ispc::SharedStructuredVolume_sample_export((const int *)&valid,
-                                                 this->ispcEquivalent,
-                                                 &objectCoordinates,
-                                                 &samples);
-    }
-
-    template <int W>
-    inline void StructuredRegularVolume<W>::computeGradientV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
-    {
-      ispc::SharedStructuredVolume_gradient_export((const int *)&valid,
-                                                   this->ispcEquivalent,
-                                                   &objectCoordinates,
-                                                   &gradients);
-    }
-
-    template <int W>
-    inline box3f StructuredRegularVolume<W>::getBoundingBox() const
-    {
-      ispc::box3f bb =
-          ispc::SharedStructuredVolume_getBoundingBox(this->ispcEquivalent);
-
-      return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
-                   vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
     }
 
   }  // namespace ispc_driver

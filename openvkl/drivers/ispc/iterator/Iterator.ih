@@ -52,16 +52,22 @@ inline bool intersectSurfaces(const Volume *uniform volume,
                               varying Hit &hit,
                               varying float &surfaceEpsilon)
 {
-  float t0      = tRange.lower;
+  // our bracketing sample t-values will always be in multiples of `step`, to
+  // avoid artifacts / differences in hits between neighboring rays, or when
+  // moving between macrocell boundaries, for example.
+  //
+  // note that the current approach here takes only one Newton iteration, so
+  // consistent bracketing is especially important for "smooth" results.
+  const int minTIndex = floor(tRange.lower / step);
+  const int maxTIndex = ceil(tRange.upper / step);
+
+  float t0      = minTIndex * step;
   float sample0 = volume->computeSample(volume, origin + t0 * direction);
 
   float t;
 
-  while (true) {
-    t = t0 + step;
-
-    if (t > tRange.upper + step)
-      return false;
+  for (int i = minTIndex; i < maxTIndex; i++) {
+    t = (i + 1) * step;
 
     const float sample = volume->computeSample(volume, origin + t * direction);
 
@@ -78,7 +84,7 @@ inline bool intersectSurfaces(const Volume *uniform volume,
             tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);
           }
 
-          if (tIso < tHit && tIso >= tRange.lower) {
+          if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) {
             tHit    = tIso;
             value   = values[i];
             epsilon = step * 0.125f;
@@ -86,7 +92,7 @@ inline bool intersectSurfaces(const Volume *uniform volume,
         }
       }
 
-      if (tHit <= tRange.upper) {
+      if (tHit < inf) {
         hit.t          = tHit;
         hit.sample     = value;
         surfaceEpsilon = epsilon;

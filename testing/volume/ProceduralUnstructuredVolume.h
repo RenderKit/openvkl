@@ -37,6 +37,8 @@ namespace openvkl {
           bool _precomputedNormals          = false,
           bool _hexIterative                = false);
 
+      range1f getComputedValueRange() const override;
+
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
@@ -46,6 +48,8 @@ namespace openvkl {
       vec3f computeProceduralGradient(const vec3f &objectCoordinates);
 
      private:
+      range1f computedValueRange = range1f(ospcommon::math::empty);
+
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
@@ -93,6 +97,21 @@ namespace openvkl {
           precomputedNormals(_precomputedNormals),
           hexIterative(_hexIterative)
     {
+    }
+
+    template <typename idxType,
+              float samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &)>
+    inline range1f
+    ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
+        getComputedValueRange() const
+    {
+      if (computedValueRange.empty()) {
+        throw std::runtime_error(
+            "computedValueRange only available after VKL volume is generated");
+      }
+
+      return computedValueRange;
     }
 
     template <typename idxType,
@@ -174,7 +193,7 @@ namespace openvkl {
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
         generateVoxels(vec3i dimensions)
     {
-      std::vector<unsigned char> voxels(longProduct(dimensions) *
+      std::vector<unsigned char> voxels(dimensions.long_product() *
                                         sizeof(float));
       float *voxelsTyped = (float *)voxels.data();
 
@@ -215,7 +234,7 @@ namespace openvkl {
 
       volume = vklNewVolume("unstructured");
 
-      uint64_t numCells = longProduct(dimensions);
+      uint64_t numCells = dimensions.long_product();
       cells.reserve(numCells);
       cellType.reserve(numCells);
 
@@ -239,13 +258,13 @@ namespace openvkl {
       }
 
       VKLData valuesData =
-          vklNewData(longProduct(valueDimensions), VKL_FLOAT, values.data());
+          vklNewData(valueDimensions.long_product(), VKL_FLOAT, values.data());
       vklSetData(
-          volume, cellValued ? "cell.value" : "vertex.value", valuesData);
+          volume, cellValued ? "cell.data" : "vertex.data", valuesData);
       vklRelease(valuesData);
 
       VKLData vtxPositionsData =
-          vklNewData(vtxPositions.size(), VKL_FLOAT3, vtxPositions.data());
+          vklNewData(vtxPositions.size(), VKL_VEC3F, vtxPositions.data());
       vklSetData(volume, "vertex.position", vtxPositionsData);
       vklRelease(vtxPositionsData);
 
@@ -261,6 +280,9 @@ namespace openvkl {
       vklSetBool(volume, "hexIterative", hexIterative);
 
       vklCommit(volume);
+
+      computedValueRange = computeValueRange(
+          VKL_FLOAT, values.data(), valueDimensions.long_product());
     }
 
     template <typename idxType,
@@ -270,7 +292,7 @@ namespace openvkl {
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
         generateGrid()
     {
-      std::vector<vec3f> grid(longProduct(dimensions + vec3i(1, 1, 1)), 0);
+      std::vector<vec3f> grid((dimensions + vec3i(1, 1, 1)).long_product(), 0);
 
       for (size_t z = 0; z <= dimensions.z; z++) {
         for (size_t y = 0; y <= dimensions.y; y++) {
@@ -295,7 +317,7 @@ namespace openvkl {
       if (indexPrefix)
         numPerPrim++;
       std::vector<idxType> cells;
-      cells.reserve(longProduct(dimensions) * numPerPrim);
+      cells.reserve(dimensions.long_product() * numPerPrim);
 
       for (size_t z = 0; z < dimensions.z; z++) {
         for (size_t y = 0; y < dimensions.y; y++) {

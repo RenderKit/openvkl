@@ -163,7 +163,9 @@ void usage(const char *progname)
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
-               "\t-gridType structured_regular | unstructured | amr\n"
+               "\t-gridType structured_regular | structured_spherical | "
+               "unstructured | amr\n"
+               "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
@@ -176,8 +178,8 @@ int main(int argc, const char **argv)
   std::string rendererType("density_pathtracer");
   std::string gridType("structured_regular");
   vec3i dimensions(128);
-  vec3f gridOrigin(-1.f);
-  vec3f gridSpacing(-1.f);
+  vec3f gridOrigin(ospcommon::nan);
+  vec3f gridSpacing(ospcommon::nan);
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
@@ -192,6 +194,17 @@ int main(int argc, const char **argv)
       }
 
       gridType = std::string(argv[argIndex++]);
+    } else if (switchArg == "-gridOrigin") {
+      if (argc < argIndex + 3) {
+        throw std::runtime_error("improper -gridOrigin arguments");
+      }
+
+      const std::string gridOriginX(argv[argIndex++]);
+      const std::string gridOriginY(argv[argIndex++]);
+      const std::string gridOriginZ(argv[argIndex++]);
+
+      gridOrigin =
+          vec3f(stof(gridOriginX), stof(gridOriginY), stof(gridOriginZ));
     } else if (switchArg == "-gridSpacing") {
       if (argc < argIndex + 3) {
         throw std::runtime_error("improper -gridSpacing arguments");
@@ -254,11 +267,19 @@ int main(int argc, const char **argv)
     }
   }
 
-  if (gridSpacing == vec3f(-1.f)) {
-    const float normalizedGridSpacing = reduce_min(1.f / dimensions);
+  // generate gridOrigin and gridSpacing if not specified on the command-line
+  if (std::isnan(gridOrigin.x) || std::isnan(gridSpacing.x)) {
+    const float boundingBoxSize = 2.f;
 
-    gridOrigin  = vec3f(-1.f * dimensions * normalizedGridSpacing);
-    gridSpacing = vec3f(2.f * normalizedGridSpacing);
+    if (gridType == "structured_spherical") {
+      ProceduralStructuredSphericalVolume<>::generateGridParameters(
+          dimensions, boundingBoxSize, gridOrigin, gridSpacing);
+    } else {
+      // all other grid types can use values generated for structured regular
+      // volumes
+      ProceduralStructuredRegularVolume<>::generateGridParameters(
+          dimensions, boundingBoxSize, gridOrigin, gridSpacing);
+    }
   }
 
   initializeOpenVKL();
@@ -277,29 +298,57 @@ int main(int argc, const char **argv)
   } else {
     if (gridType == "structured_regular") {
       if (voxelType == VKL_UCHAR) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeUchar>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_SHORT) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeShort>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeShort>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_USHORT) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeUshort>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeUShort>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_FLOAT) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeFloat>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeFloat>(
             dimensions, gridOrigin, gridSpacing);
       } else if (voxelType == VKL_DOUBLE) {
-        testingVolume = std::make_shared<WaveletProceduralVolumeDouble>(
+        testingVolume = std::make_shared<WaveletStructuredRegularVolumeDouble>(
             dimensions, gridOrigin, gridSpacing);
       } else {
         throw std::runtime_error(
             "cannot create procedural volume for unknown voxel type");
       }
-    } else if (gridType == "unstructured") {
+    }
+
+    else if (gridType == "structured_spherical") {
+      if (voxelType == VKL_UCHAR) {
+        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeUChar>(
+            dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_SHORT) {
+        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeShort>(
+            dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_USHORT) {
+        testingVolume =
+            std::make_shared<WaveletStructuredSphericalVolumeUShort>(
+                dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_FLOAT) {
+        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeFloat>(
+            dimensions, gridOrigin, gridSpacing);
+      } else if (voxelType == VKL_DOUBLE) {
+        testingVolume =
+            std::make_shared<WaveletStructuredSphericalVolumeDouble>(
+                dimensions, gridOrigin, gridSpacing);
+      } else {
+        throw std::runtime_error(
+            "cannot create procedural volume for unknown voxel type");
+      }
+    }
+
+    else if (gridType == "unstructured") {
       testingVolume = std::shared_ptr<WaveletUnstructuredProceduralVolume>(
           new WaveletUnstructuredProceduralVolume(
               dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
-    } else if (gridType == "amr") {
+    }
+
+    else if (gridType == "amr") {
       testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
           new ProceduralShellsAMRVolume<>(dimensions, gridOrigin, gridSpacing));
     }
@@ -313,6 +362,13 @@ int main(int argc, const char **argv)
   std::cout << "gridOrigin:     " << gridOrigin << std::endl;
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
   std::cout << "voxelType:      " << voxelTypeString << std::endl;
+
+  vkl_box3f bbox = vklGetBoundingBox(volume);
+
+  std::cout << "boundingBox:    "
+            << "(" << bbox.lower.x << ", " << bbox.lower.y << ", "
+            << bbox.lower.z << ") -> (" << bbox.upper.x << ", " << bbox.upper.y
+            << ", " << bbox.upper.z << ")" << std::endl;
 
   auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
       vec2i{1024, 1024}, volume, rendererType);

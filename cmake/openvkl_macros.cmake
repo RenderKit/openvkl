@@ -45,3 +45,20 @@ macro(openvkl_configure_build_type)
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
   endif()
 endmacro()
+
+macro(openvkl_create_embree_target)
+  if (NOT TARGET embree)
+    add_library(embree INTERFACE) # NOTE(jda) - Cannot be IMPORTED due to CMake
+                                  #             issues found on Ubuntu.
+
+    target_include_directories(embree
+    INTERFACE
+      $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+    )
+
+    target_link_libraries(embree
+    INTERFACE
+      $<BUILD_INTERFACE:${EMBREE_LIBRARY}>
+    )
+  endif()
+endmacro()

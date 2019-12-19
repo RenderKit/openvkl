@@ -91,6 +91,11 @@ namespace openvkl {
 
       virtual ValueSelector<W> *newValueSelector();
 
+      // volumes can optionally define a scalar sampling method; if not
+      // defined then the default implementation will use computeSampleV()
+      virtual void computeSample(const vvec3fn<1> &objectCoordinates,
+                                 vfloatn<1> &samples) const;
+
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
                                   vfloatn<W> &samples) const = 0;
@@ -101,7 +106,7 @@ namespace openvkl {
 
       virtual box3f getBoundingBox() const = 0;
 
-      virtual range1f getValueRange() const;
+      virtual range1f getValueRange() const = 0;
 
       void *getISPCEquivalent() const;
 
@@ -178,15 +183,31 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void Volume<W>::computeGradientV(const vintn<W> &valid,
-                                            const vvec3fn<W> &objectCoordinates,
-                                            vvec3fn<W> &gradients) const
+    inline void Volume<W>::computeSample(const vvec3fn<1> &objectCoordinates,
+                                         vfloatn<1> &sample) const
     {
-      THROW_NOT_IMPLEMENTED;
+      // gracefully degrade to use computeSampleV(); see
+      // ISPCDriver<W>::computeSampleAnyWidth()
+
+      vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i == 0 ? 1 : 0;
+
+      ocW.fill_inactive_lanes(validW);
+
+      vfloatn<W> samplesW;
+
+      computeSampleV(validW, ocW, samplesW);
+
+      sample[0] = samplesW[0];
     }
 
     template <int W>
-    inline range1f Volume<W>::getValueRange() const
+    inline void Volume<W>::computeGradientV(const vintn<W> &valid,
+                                            const vvec3fn<W> &objectCoordinates,
+                                            vvec3fn<W> &gradients) const
     {
       THROW_NOT_IMPLEMENTED;
     }

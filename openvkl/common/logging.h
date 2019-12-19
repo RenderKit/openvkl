@@ -20,16 +20,9 @@
 #include <sstream>
 #include <string>
 #include "VKLCommon.h"
+#include "openvkl/VKLLogLevel.h"
 
 namespace openvkl {
-
-  typedef enum : uint32_t
-  {
-    VKL_LOG_DEBUG   = 100,
-    VKL_LOG_INFO    = 200,
-    VKL_LOG_WARNING = 300,
-    VKL_LOG_ERROR   = 400
-  } VKLLogLevel;
 
   OPENVKL_CORE_INTERFACE VKLLogLevel logLevel();
 

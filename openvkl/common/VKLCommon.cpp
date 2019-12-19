@@ -19,6 +19,7 @@
 #include <sstream>
 #include "../api/Driver.h"
 #include "logging.h"
+#include "ospcommon/math/AffineSpace.h"
 
 namespace openvkl {
 
@@ -48,13 +49,11 @@ namespace openvkl {
     return VKL_NO_ERROR;
   }
 
-  std::string stringForType(VKLDataType type)
+  std::string stringForHandleType(VKLDataType type)
   {
     switch (type) {
     case VKL_DRIVER:
       return "driver";
-    case VKL_VOID_PTR:
-      return "void_ptr";
     case VKL_OBJECT:
       return "object";
     case VKL_DATA:
@@ -63,89 +62,13 @@ namespace openvkl {
       return "value_selector";
     case VKL_VOLUME:
       return "volume";
-    case VKL_STRING:
-      return "string";
-    case VKL_CHAR:
-      return "char";
-    case VKL_UCHAR:
-      return "uchar";
-    case VKL_UCHAR2:
-      return "uchar2";
-    case VKL_UCHAR3:
-      return "uchar3";
-    case VKL_UCHAR4:
-      return "uchar4";
-    case VKL_SHORT:
-      return "short";
-    case VKL_USHORT:
-      return "ushort";
-    case VKL_INT:
-      return "int";
-    case VKL_INT2:
-      return "int2";
-    case VKL_INT3:
-      return "int3";
-    case VKL_INT4:
-      return "int4";
-    case VKL_UINT:
-      return "uint";
-    case VKL_UINT2:
-      return "uint2";
-    case VKL_UINT3:
-      return "uint3";
-    case VKL_UINT4:
-      return "uint4";
-    case VKL_LONG:
-      return "long";
-    case VKL_LONG2:
-      return "long2";
-    case VKL_LONG3:
-      return "long3";
-    case VKL_LONG4:
-      return "long4";
-    case VKL_ULONG:
-      return "ulong";
-    case VKL_ULONG2:
-      return "ulong2";
-    case VKL_ULONG3:
-      return "ulong3";
-    case VKL_ULONG4:
-      return "ulong4";
-    case VKL_FLOAT:
-      return "float";
-    case VKL_FLOAT2:
-      return "float2";
-    case VKL_FLOAT3:
-      return "float3";
-    case VKL_FLOAT4:
-      return "float4";
-    case VKL_FLOAT3A:
-      return "float3a";
-    case VKL_DOUBLE:
-      return "double";
-    case VKL_BOX1I:
-      return "box1i";
-    case VKL_BOX2I:
-      return "box2i";
-    case VKL_BOX3I:
-      return "box3i";
-    case VKL_BOX4I:
-      return "box4i";
-    case VKL_BOX1F:
-      return "box1f";
-    case VKL_BOX2F:
-      return "box2f";
-    case VKL_BOX3F:
-      return "box3f";
-    case VKL_BOX4F:
-      return "box4f";
-    case VKL_UNKNOWN:
+    default:
       break;
     };
 
     std::stringstream error;
-    error << __FILE__ << ":" << __LINE__ << ": unknown VKLDataType "
-          << (int)type;
+    error << __FILE__ << ":" << __LINE__
+          << ": unknown VKLDataType or non-handle type used " << (int)type;
     throw std::runtime_error(error.str());
   }
 
@@ -160,15 +83,17 @@ namespace openvkl {
     case VKL_VOLUME:
     case VKL_STRING:
       return sizeof(void *);
+    case VKL_BOOL:
+      return sizeof(bool);
     case VKL_CHAR:
       return sizeof(int8);
     case VKL_UCHAR:
       return sizeof(uint8);
-    case VKL_UCHAR2:
+    case VKL_VEC2UC:
       return sizeof(vec2uc);
-    case VKL_UCHAR3:
+    case VKL_VEC3UC:
       return sizeof(vec3uc);
-    case VKL_UCHAR4:
+    case VKL_VEC4UC:
       return sizeof(vec4uc);
     case VKL_SHORT:
       return sizeof(int16);
@@ -176,46 +101,44 @@ namespace openvkl {
       return sizeof(uint16);
     case VKL_INT:
       return sizeof(int32);
-    case VKL_INT2:
+    case VKL_VEC2I:
       return sizeof(vec2i);
-    case VKL_INT3:
+    case VKL_VEC3I:
       return sizeof(vec3i);
-    case VKL_INT4:
+    case VKL_VEC4I:
       return sizeof(vec4i);
     case VKL_UINT:
       return sizeof(uint32);
-    case VKL_UINT2:
+    case VKL_VEC2UI:
       return sizeof(vec2ui);
-    case VKL_UINT3:
+    case VKL_VEC3UI:
       return sizeof(vec3ui);
-    case VKL_UINT4:
+    case VKL_VEC4UI:
       return sizeof(vec4ui);
     case VKL_LONG:
       return sizeof(int64);
-    case VKL_LONG2:
+    case VKL_VEC2L:
       return sizeof(vec2l);
-    case VKL_LONG3:
+    case VKL_VEC3L:
       return sizeof(vec3l);
-    case VKL_LONG4:
+    case VKL_VEC4L:
       return sizeof(vec4l);
     case VKL_ULONG:
       return sizeof(uint64);
-    case VKL_ULONG2:
+    case VKL_VEC2UL:
       return sizeof(vec2ul);
-    case VKL_ULONG3:
+    case VKL_VEC3UL:
       return sizeof(vec3ul);
-    case VKL_ULONG4:
+    case VKL_VEC4UL:
       return sizeof(vec4ul);
     case VKL_FLOAT:
       return sizeof(float);
-    case VKL_FLOAT2:
+    case VKL_VEC2F:
       return sizeof(vec2f);
-    case VKL_FLOAT3:
+    case VKL_VEC3F:
       return sizeof(vec3f);
-    case VKL_FLOAT4:
+    case VKL_VEC4F:
       return sizeof(vec4f);
-    case VKL_FLOAT3A:
-      return sizeof(vec3fa);
     case VKL_DOUBLE:
       return sizeof(double);
     case VKL_BOX1I:
@@ -234,7 +157,16 @@ namespace openvkl {
       return sizeof(box3f);
     case VKL_BOX4F:
       return sizeof(box4f);
+    case VKL_LINEAR2F:
+      return sizeof(linear2f);
+    case VKL_LINEAR3F:
+      return sizeof(linear3f);
+    case VKL_AFFINE2F:
+      return sizeof(affine2f);
+    case VKL_AFFINE3F:
+      return sizeof(affine3f);
     case VKL_UNKNOWN:
+    default:
       break;
     };
 

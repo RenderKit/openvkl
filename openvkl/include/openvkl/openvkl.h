@@ -18,6 +18,7 @@
 
 #include "VKLDataType.h"
 #include "VKLError.h"
+#include "VKLLogLevel.h"
 
 #include "common.h"
 #include "data.h"

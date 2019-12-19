@@ -16,7 +16,8 @@
 
 #pragma once
 
-#include "MinMaxBVH2.ih"
+#include "math/vec.ih"
+#include "math/box.ih"
 #include "Volume.ih"
 
 typedef enum
@@ -26,6 +27,23 @@ typedef enum
   VKL_WEDGE = 13,
   VKL_PYRAMID = 14
 } CellType;
+
+struct Node {
+  uniform float nominalLength;
+  uniform box1f valueRange;
+};
+
+struct LeafNode {
+  uniform Node super;
+  uniform box3fa bounds;
+  uniform uint64 cellID;
+};
+
+struct InnerNode {
+  uniform Node super;
+  uniform box3fa bounds[2];
+  uniform Node* uniform children[2];
+};
 
 struct VKLUnstructuredVolume
 {
@@ -47,12 +65,13 @@ struct VKLUnstructuredVolume
   const float* uniform cellValue;   // attribute value at each cell
 
   const vec3f* uniform faceNormals;
+  const float* uniform iterativeTolerance;
 
   uniform box3f boundingBox;
 
   uniform vec3f gradientStep;
 
-  uniform MinMaxBVH2 bvh;
+  uniform Node* uniform bvhRoot;
 
   uniform bool hexIterative;
 };

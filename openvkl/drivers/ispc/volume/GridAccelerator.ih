@@ -26,7 +26,7 @@ struct SharedStructuredVolume;
 struct GridAccelerator
 {
   uniform vec3i bricksPerDimension;
-  uniform vec3i cellsPerDimension;
+  uniform size_t cellCount;
   box1f *uniform cellValueRanges;
   SharedStructuredVolume *uniform volume;
 };

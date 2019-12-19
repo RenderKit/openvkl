@@ -32,7 +32,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## Establish project ##
 
-project(openvkl VERSION 0.7.0 LANGUAGES C CXX)
+project(openvkl VERSION 0.8.0 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -59,7 +59,10 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 openvkl_configure_build_type()
 openvkl_configure_ispc_isa()
 
-find_package(ospcommon 1.0.0 REQUIRED)
+find_package(ospcommon 1.1.0 REQUIRED)
+
+find_package(embree 3.6.1 REQUIRED)
+openvkl_create_embree_target()
 
 ## Build library, examples, and tests ##
 

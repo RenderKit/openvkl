@@ -40,18 +40,10 @@ namespace openvkl {
     {
       static std::shared_ptr<Driver> current;
 
-      Driver()                   = default;
+      Driver();
       virtual ~Driver() override = default;
 
       static Driver *createDriver(const char *driverName);
-
-      // user-provided logging callbacks
-      std::function<void(const char *)> messageFunction{[](const char *) {}};
-
-      std::function<void(VKLError, const char *)> errorFunction{
-          [](VKLError, const char *) {}};
-
-      std::function<void(const char *)> traceFunction{[](const char *) {}};
 
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;
@@ -63,9 +55,19 @@ namespace openvkl {
 
       virtual void commit();
       bool isCommitted();
-      virtual void commit(VKLObject object) = 0;
 
+      virtual void commit(VKLObject object)  = 0;
       virtual void release(VKLObject object) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Driver parameters (updated on commit()) //////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      static VKLLogLevel logLevel;
+
+      std::function<void(const char *)> logFunction{[](const char *) {}};
+      std::function<void(VKLError, const char *)> errorFunction{
+          [](VKLError, const char *) {}};
 
       /////////////////////////////////////////////////////////////////////////
       // Data /////////////////////////////////////////////////////////////////
@@ -235,6 +237,8 @@ namespace openvkl {
 #undef __define_computeGradientN
 
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
+
+      virtual range1f getValueRange(VKLVolume volume) = 0;
 
      private:
       bool committed = false;

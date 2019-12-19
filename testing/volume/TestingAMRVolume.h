@@ -35,6 +35,8 @@ namespace openvkl {
                        const vec3f &gridOrigin,
                        const vec3f &gridSpacing);
 
+      range1f getComputedValueRange() const override;
+
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
@@ -45,6 +47,8 @@ namespace openvkl {
 
      protected:
       void generateVKLVolume() override;
+
+      range1f computedValueRange = range1f(ospcommon::math::empty);
 
       // convert structured volume data to AMR representation
       void makeAMR(const std::vector<float> &voxels,
@@ -73,6 +77,16 @@ namespace openvkl {
           gridOrigin(gridOrigin),
           gridSpacing(gridSpacing)
     {
+    }
+
+    inline range1f TestingAMRVolume::getComputedValueRange() const
+    {
+      if (computedValueRange.empty()) {
+        throw std::runtime_error(
+            "computedValueRange only available after VKL volume is generated");
+      }
+
+      return computedValueRange;
     }
 
     inline vec3i TestingAMRVolume::getDimensions() const
@@ -111,7 +125,7 @@ namespace openvkl {
 
       float *floatData = (float *)voxels.data();
       std::vector<float> floatVoxels;
-      floatVoxels.assign(floatData, floatData + longProduct(dimensions));
+      floatVoxels.assign(floatData, floatData + dimensions.long_product());
 
       makeAMR(floatVoxels,
               dimensions,
@@ -153,9 +167,21 @@ namespace openvkl {
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", boundsData);
       vklSetData(volume, "block.level", levelsData);
-      vklSetData(volume, "block.cellWidth", widthsData);
+      vklSetData(volume, "cellWidth", widthsData);
+
+      vklRelease(blockDataData);
+      vklRelease(boundsData);
+      vklRelease(levelsData);
+      vklRelease(widthsData);
+
+      for (auto &d : blockData)
+        vklRelease(d);
 
       vklCommit(volume);
+
+      for (const auto &bv : blockValues)
+        computedValueRange.extend(
+            computeValueRange(VKL_FLOAT, bv.data(), bv.size()));
     }
 
     inline void TestingAMRVolume::makeAMR(

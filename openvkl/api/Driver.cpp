@@ -18,34 +18,42 @@
 #include <sstream>
 #include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
+#include "ospcommon/tasking/tasking_system_init.h"
+#include "ospcommon/utility/StringManip.h"
+#include "ospcommon/utility/getEnvVar.h"
+
+#define LOG_LEVEL_DEFAULT VKL_LOG_INFO
 
 namespace openvkl {
   namespace api {
 
     // helper functions
     template <typename OSTREAM_T>
-    static inline void installMessageFunction(Driver &driver, OSTREAM_T &stream)
+    static inline void installLogFunction(Driver &driver, OSTREAM_T &stream)
     {
-      driver.messageFunction = [&](const char *msg) { stream << msg; };
+      driver.logFunction = [&](const char *msg) { stream << msg; };
     }
 
     template <typename OSTREAM_T>
-    static inline void installErrorMessageFunction(Driver &driver,
-                                                   OSTREAM_T &stream)
+    static inline void installErrorFunction(Driver &driver, OSTREAM_T &stream)
     {
       driver.errorFunction = [&](VKLError e, const char *msg) {
         stream << "OPENVKL ERROR [" << e << "]: " << msg << std::endl;
       };
     }
 
-    template <typename OSTREAM_T>
-    static inline void installTraceFunction(Driver &driver, OSTREAM_T &stream)
-    {
-      driver.traceFunction = [&](const char *msg) { stream << msg; };
-    }
-
     // Driver definitions
     std::shared_ptr<Driver> Driver::current;
+
+    VKLLogLevel Driver::logLevel = LOG_LEVEL_DEFAULT;
+
+    Driver::Driver()
+    {
+      // setup default logging functions; after the driver is instantiated, they
+      // may be overridden via vklDriverSet*Func().
+      installLogFunction(*this, std::cout);
+      installErrorFunction(*this, std::cerr);
+    }
 
     Driver *Driver::createDriver(const char *driverName)
     {
@@ -67,9 +75,70 @@ namespace openvkl {
 
     void Driver::commit()
     {
-      // setup default logging functions
-      installMessageFunction(*this, std::cout);
-      installErrorMessageFunction(*this, std::cerr);
+      // log level
+      logLevel = VKLLogLevel(getParam<int>("logLevel", LOG_LEVEL_DEFAULT));
+
+      // environment variable takes precedence
+      auto OPENVKL_LOG_LEVEL = utility::lowerCase(
+          utility::getEnvVar<std::string>("OPENVKL_LOG_LEVEL")
+              .value_or(std::string()));
+
+      if (!OPENVKL_LOG_LEVEL.empty()) {
+        if (OPENVKL_LOG_LEVEL == "debug") {
+          logLevel = VKL_LOG_DEBUG;
+        } else if (OPENVKL_LOG_LEVEL == "info") {
+          logLevel = VKL_LOG_INFO;
+        } else if (OPENVKL_LOG_LEVEL == "warning") {
+          logLevel = VKL_LOG_WARNING;
+        } else if (OPENVKL_LOG_LEVEL == "error") {
+          logLevel = VKL_LOG_ERROR;
+        } else {
+          LogMessageStream(VKL_LOG_ERROR)
+              << "unknown OPENVKL_LOG_LEVEL env value; must be debug, info, "
+                 "warning, or error";
+        }
+      }
+
+      // log output
+      auto OPENVKL_LOG_OUTPUT =
+          utility::getEnvVar<std::string>("OPENVKL_LOG_OUTPUT");
+
+      auto dst =
+          OPENVKL_LOG_OUTPUT.value_or(getParam<std::string>("logOutput", ""));
+
+      if (dst == "cout")
+        installLogFunction(*this, std::cout);
+      else if (dst == "cerr")
+        installLogFunction(*this, std::cerr);
+      else if (dst == "none")
+        logFunction = [](const char *) {};
+
+      // error output
+      auto OPENVKL_ERROR_OUTPUT =
+          utility::getEnvVar<std::string>("OPENVKL_ERROR_OUTPUT");
+
+      dst = OPENVKL_ERROR_OUTPUT.value_or(
+          getParam<std::string>("errorOutput", ""));
+
+      if (dst == "cout")
+        installErrorFunction(*this, std::cout);
+      else if (dst == "cerr")
+        installErrorFunction(*this, std::cerr);
+      else if (dst == "none")
+        errorFunction = [](VKLError, const char *) {};
+
+      // threads
+      auto OPENVKL_THREADS = utility::getEnvVar<int>("OPENVKL_THREADS");
+      int numThreads =
+          OPENVKL_THREADS.value_or(getParam<int>("numThreads", -1));
+
+      // flush to zero / denormals are zero
+      auto OPENVKL_FLUSH_DENORMALS =
+          utility::getEnvVar<int>("OPENVKL_FLUSH_DENORMALS");
+      bool flushDenormals =
+          OPENVKL_FLUSH_DENORMALS.value_or(getParam<int>("flushDenormals", 0));
+
+      tasking::initTaskingSystem(numThreads, flushDenormals);
 
       committed = true;
     }

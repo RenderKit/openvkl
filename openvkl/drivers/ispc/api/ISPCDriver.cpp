@@ -291,12 +291,22 @@ namespace openvkl {
     computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
 
-    __define_computeSampleN(1);
     __define_computeSampleN(4);
     __define_computeSampleN(8);
     __define_computeSampleN(16);
 
 #undef __define_computeSampleN
+
+    // support a fast path for scalar sampling
+    template <int W>
+    void ISPCDriver<W>::computeSample1(const int *valid,
+                                       VKLVolume volume,
+                                       const vvec3fn<1> &objectCoordinates,
+                                       vfloatn<1> &sample)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      volumeObject.computeSample(objectCoordinates, sample);
+    }
 
 #define __define_computeGradientN(WIDTH)              \
   template <int W>                                    \
@@ -322,6 +332,13 @@ namespace openvkl {
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
       return volumeObject.getBoundingBox();
+    }
+
+    template <int W>
+    range1f ISPCDriver<W>::getValueRange(VKLVolume volume)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      return volumeObject.getValueRange();
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -665,6 +682,8 @@ namespace openvkl {
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
 
+      ocW.fill_inactive_lanes(validW);
+
       vfloatn<W> samplesW;
 
       volumeObject.computeSampleV(validW, ocW, samplesW);
@@ -692,6 +711,8 @@ namespace openvkl {
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           validW[i - packIndex * W] = i < OW ? valid[i] : 0;
 
+        ocW.fill_inactive_lanes(validW);
+
         vfloatn<W> samplesW;
 
         volumeObject.computeSampleV(validW, ocW, samplesW);
@@ -716,6 +737,8 @@ namespace openvkl {
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
+
+      ocW.fill_inactive_lanes(validW);
 
       vvec3fn<W> gradientsW;
 
@@ -746,6 +769,8 @@ namespace openvkl {
         vintn<W> validW;
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           validW[i - packIndex * W] = i < OW ? valid[i] : 0;
+
+        ocW.fill_inactive_lanes(validW);
 
         vvec3fn<W> gradientsW;
 

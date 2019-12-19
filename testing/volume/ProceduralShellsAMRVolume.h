@@ -181,10 +181,8 @@ namespace openvkl {
 
       // convert the data above to VKLData objects
 
-      for (const std::vector<float> &bd : blockDataVectors) {
-        VKLData data = vklNewData(bd.size(), VKL_FLOAT, bd.data());
-        blockData.push_back(data);
-      }
+      for (const std::vector<float> &bd : blockDataVectors)
+        blockData.push_back(vklNewData(bd.size(), VKL_FLOAT, bd.data()));
 
       VKLData blockDataData =
           vklNewData(blockData.size(), VKL_DATA, blockData.data());
@@ -205,9 +203,21 @@ namespace openvkl {
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", blockBoundsData);
       vklSetData(volume, "block.level", refinementLevelsData);
-      vklSetData(volume, "block.cellWidth", cellWidthsData);
+      vklSetData(volume, "cellWidth", cellWidthsData);
+
+      vklRelease(blockDataData);
+      vklRelease(blockBoundsData);
+      vklRelease(refinementLevelsData);
+      vklRelease(cellWidthsData);
+
+      for (auto &d : blockData)
+        vklRelease(d);
 
       vklCommit(volume);
+
+      for (const auto &bdv : blockDataVectors)
+        computedValueRange.extend(
+            computeValueRange(VKL_FLOAT, bdv.data(), bdv.size()));
     }
   }  // namespace testing
 }  // namespace openvkl

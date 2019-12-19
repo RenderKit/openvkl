@@ -36,8 +36,9 @@ static void render_wavelet(benchmark::State &state,
                            int volumeDimension,
                            bool useISPC)
 {
-  auto proceduralVolume = ospcommon::make_unique<WaveletProceduralVolume>(
-      vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
+  auto proceduralVolume =
+      ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+          vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   VKLVolume volume = proceduralVolume->getVKLVolume();
 

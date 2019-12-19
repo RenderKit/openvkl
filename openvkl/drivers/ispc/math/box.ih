@@ -79,6 +79,8 @@ inline varying box1f make_box1f(const varying float lo, const varying float hi)
 
 inline uniform box1f box_extend(const uniform box1f &a, const uniform box1f &b)
 { return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
+inline varying box1f box_extend(const varying box1f &a, const varying box1f &b)
+{ return make_box1f(min(a.lower,b.lower),max(a.upper,b.upper)); }
 
 inline uniform bool isEmpty(const uniform box1f &bb)
 { return bb.upper < bb.lower; }

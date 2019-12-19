@@ -58,7 +58,7 @@ namespace openvkl {
 
     inline std::vector<unsigned char> RawFileStructuredVolume::generateVoxels()
     {
-      auto numValues = longProduct(this->dimensions);
+      auto numValues = this->dimensions.long_product();
       std::vector<unsigned char> voxels(numValues *
                                         sizeOfVKLDataType(voxelType));
 
@@ -68,8 +68,9 @@ namespace openvkl {
         throw std::runtime_error("error opening raw volume file");
       }
 
-      input.read((char *)voxels.data(),
-                 longProduct(this->dimensions) * sizeOfVKLDataType(voxelType));
+      input.read(
+          (char *)voxels.data(),
+          this->dimensions.long_product() * sizeOfVKLDataType(voxelType));
 
       if (!input.good()) {
         throw std::runtime_error("error reading raw volume file");

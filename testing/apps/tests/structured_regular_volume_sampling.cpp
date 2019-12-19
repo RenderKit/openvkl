@@ -17,18 +17,20 @@
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
 #include "ospcommon/utility/multidim_index_sequence.h"
+#include "sampling_utility.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
 
-template <typename VOXEL_TYPE>
-void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
-                                                      vec3i step = vec3i(1))
+template <typename PROCEDURAL_VOLUME_TYPE>
+void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
+                                               vec3i step = vec3i(1))
 {
-  std::unique_ptr<
-      ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>>
-      v(new ProceduralStructuredVolume<VOXEL_TYPE, getWaveletValue<VOXEL_TYPE>>(
-          dimensions, vec3f(0.f), vec3f(1.f)));
+  const vec3f gridOrigin(0.f);
+  const vec3f gridSpacing(1.f);
+
+  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+      dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -38,20 +40,22 @@ void scalar_sampling_on_vertices_vs_procedural_values(vec3i dimensions,
     const auto offsetWithStep = offset * step;
 
     vec3f objectCoordinates =
-        v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
+        v->transformLocalToObjectCoordinates(offsetWithStep);
+
+    const float proceduralValue = v->computeProceduralValue(objectCoordinates);
 
     INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
                      << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
-    REQUIRE(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
-        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
+
+    test_scalar_and_vector_sampling(
+        vklVolume, objectCoordinates, proceduralValue, 1e-4f);
   }
 }
 
-TEST_CASE("Structured volume sampling", "[volume_sampling]")
+TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 {
   vklLoadModule("ispc_driver");
 
@@ -63,29 +67,32 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned char>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeUChar>(vec3i(128));
     }
 
     SECTION("short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<short>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeShort>(vec3i(128));
     }
 
     SECTION("unsigned short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned short>(
-          vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeUShort>(vec3i(128));
     }
 
     SECTION("float")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<float>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeFloat>(vec3i(128));
     }
 
     SECTION("double")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(128));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeDouble>(vec3i(128));
     }
   }
 
@@ -95,29 +102,32 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned char>(
-          vec3i(1025), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeUChar>(vec3i(1025), 16);
     }
 
     SECTION("short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<short>(vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeShort>(vec3i(813), 16);
     }
 
     SECTION("unsigned short")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<unsigned short>(
-          vec3i(813), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeUShort>(vec3i(813), 16);
     }
 
     SECTION("float")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<float>(vec3i(646), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeFloat>(vec3i(646), 16);
     }
 
     SECTION("double")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<double>(vec3i(513), 16);
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeDouble>(vec3i(513), 16);
     }
   }
 
@@ -129,8 +139,9 @@ TEST_CASE("Structured volume sampling", "[volume_sampling]")
     // accelerator build overhead, which we need to resolve.
     SECTION("double")
     {
-      scalar_sampling_on_vertices_vs_procedural_values<double>(
-          vec3i(11586, 11586, 2), vec3i(16, 16, 1));
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeDouble>(vec3i(11586, 11586, 2),
+                                                vec3i(16, 16, 1));
     }
   }
 }

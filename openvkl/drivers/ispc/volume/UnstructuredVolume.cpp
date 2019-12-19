@@ -16,6 +16,7 @@
 
 #include "UnstructuredVolume.h"
 #include "../common/Data.h"
+#include "ospcommon/containers/AlignedVector.h"
 #include "ospcommon/tasking/parallel_for.h"
 
 // Map cell type to its vertices count
@@ -39,9 +40,43 @@ inline uint32_t getVerticesCount(uint8_t cellType)
 namespace openvkl {
   namespace ispc_driver {
 
+    static void tabIndent(int indent)
+    {
+      for (int i = 0; i < indent; i++)
+        std::cerr << "\t";
+    }
+
+    static void dumpBVH(Node *root, int indent = 0)
+    {
+      if (root->nominalLength < 0) {
+        auto leaf = (LeafNode *)root;
+        tabIndent(indent);
+        std::cerr << "id: " << leaf->cellID << " bounds: " << leaf->bounds
+                  << " range: " << leaf->valueRange
+                  << " nom: " << leaf->nominalLength << std::endl;
+      } else {
+        auto inner = (InnerNode *)root;
+        tabIndent(indent);
+        std::cerr << "range: " << inner->valueRange
+                  << " nom: " << inner->nominalLength << std::endl;
+
+        tabIndent(indent);
+        std::cerr << "bounds[0]: " << inner->bounds[0] << std::endl;
+        dumpBVH(inner->children[0], indent + 1);
+
+        tabIndent(indent);
+        std::cerr << "bounds[1]: " << inner->bounds[1] << std::endl;
+        dumpBVH(inner->children[1], indent + 1);
+      }
+    }
+
     template <int W>
     UnstructuredVolume<W>::~UnstructuredVolume()
     {
+      if (rtcBVH)
+        rtcReleaseBVH(rtcBVH);
+      if (rtcDevice)
+        rtcReleaseDevice(rtcDevice);
     }
 
     template <int W>
@@ -54,7 +89,7 @@ namespace openvkl {
       vertexPosition = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "vertex.position", nullptr);
       vertexValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "vertex.value", nullptr);
+          "vertex.data", nullptr);
 
       index = (Data *)this->template getParam<ManagedObject::VKL_PTR>("index",
                                                                       nullptr);
@@ -63,12 +98,13 @@ namespace openvkl {
       cellIndex = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "cell.index", nullptr);
       cellValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.value", nullptr);
+          "cell.data", nullptr);
       cellType = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
           "cell.type", nullptr);
 
       if (!vertexPosition) {
-        throw std::runtime_error("unstructured volume must have 'vertex.position'");
+        throw std::runtime_error(
+            "unstructured volume must have 'vertex.position'");
       }
       if (!index) {
         throw std::runtime_error("unstructured volume must have 'index'");
@@ -78,7 +114,7 @@ namespace openvkl {
       }
       if (!vertexValue && !cellValue) {
         throw std::runtime_error(
-            "unstructured volume must have 'vertex.value' or 'cell.value'");
+            "unstructured volume must have 'vertex.data' or 'cell.data'");
       }
       if ((!indexPrefixed && !cellType) || (indexPrefixed && cellType)) {
         throw std::runtime_error(
@@ -86,7 +122,7 @@ namespace openvkl {
             "'indexPrefixed'");
       }
 
-      if (vertexPosition->dataType != VKL_FLOAT3) {
+      if (vertexPosition->dataType != VKL_VEC3F) {
         throw std::runtime_error("unstructured volume unsupported vertex type");
       }
 
@@ -143,6 +179,21 @@ namespace openvkl {
         }
       }
 
+      hexIterative = this->template getParam<bool>("hexIterative", false);
+
+      bool needTolerances = false;
+      for (int i = 0; i < nCells; i++) {
+        auto cell = ((uint8_t *)cellType->data)[i];
+        if (cell == VKL_WEDGE || cell == VKL_PYRAMID ||
+            (cell == VKL_HEXAHEDRON && hexIterative)) {
+          needTolerances = true;
+          break;
+        }
+      }
+
+      if (needTolerances)
+        calculateIterativeTolerance();
+
       auto precompute =
           this->template getParam<bool>("precomputedNormals", false);
       if (precompute) {
@@ -155,8 +206,6 @@ namespace openvkl {
           faceNormals.shrink_to_fit();
         }
       }
-
-      auto hexIterative = this->template getParam<bool>("hexIterative", false);
 
       buildBvhAndCalculateBounds();
 
@@ -176,10 +225,10 @@ namespace openvkl {
           cell32Bit,
           indexPrefixed,
           (const uint8_t *)cellType->data,
-          bvh.rootRef(),
-          bvh.nodePtr(),
-          bvh.itemListPtr(),
-          faceNormals.empty() ? nullptr : (const ispc::vec3f *)faceNormals.data(),
+          (void *)(rtcRoot),
+          faceNormals.empty() ? nullptr
+                              : (const ispc::vec3f *)faceNormals.data(),
+          iterativeTolerance.empty() ? nullptr : iterativeTolerance.data(),
           hexIterative);
     }
 
@@ -212,32 +261,142 @@ namespace openvkl {
       return bBox;
     }
 
+    void errorFunction(void *userPtr, enum RTCError error, const char *str)
+    {
+      LogMessageStream(VKL_LOG_WARNING)
+          << "error " << error << ": " << str << std::endl;
+    }
+
     template <int W>
     void UnstructuredVolume<W>::buildBvhAndCalculateBounds()
     {
-      std::vector<int64> primID(nCells);
-      std::vector<box4f> primBounds(nCells);
+      rtcDevice = rtcNewDevice(NULL);
+      if (!rtcDevice) {
+        throw std::runtime_error("cannot create device");
+      }
+      rtcSetDeviceErrorFunction(rtcDevice, errorFunction, NULL);
 
-      box4f bounds4 = empty;
+      containers::AlignedVector<RTCBuildPrimitive> prims;
+      containers::AlignedVector<range1f> range;
+      prims.resize(nCells);
+      range.resize(nCells);
 
-      for (uint64_t i = 0; i < nCells; i++) {
-        primID[i]       = i;
-        auto cellBounds = getCellBBox(i);
-        if (i == 0) {
-          bounds4 = cellBounds;
-        } else {
-          bounds4.extend(cellBounds);
-        }
-        primBounds[i] = cellBounds;
+      tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
+        box4f bound              = getCellBBox(taskIndex);
+        prims[taskIndex].lower_x = bound.lower.x;
+        prims[taskIndex].lower_y = bound.lower.y;
+        prims[taskIndex].lower_z = bound.lower.z;
+        prims[taskIndex].geomID  = taskIndex >> 32;
+        prims[taskIndex].upper_x = bound.upper.x;
+        prims[taskIndex].upper_y = bound.upper.y;
+        prims[taskIndex].upper_z = bound.upper.z;
+        prims[taskIndex].primID  = taskIndex & 0xffffffff;
+        range[taskIndex]         = range1f(bound.lower.w, bound.upper.w);
+      });
+
+      rtcBVH = rtcNewBVH(rtcDevice);
+      if (!rtcBVH) {
+        throw std::runtime_error("bvh creation failure");
       }
 
-      bounds.lower = vec3f(bounds4.lower.x, bounds4.lower.y, bounds4.lower.z);
-      bounds.upper = vec3f(bounds4.upper.x, bounds4.upper.y, bounds4.upper.z);
+      RTCBuildArguments arguments      = rtcDefaultBuildArguments();
+      arguments.byteSize               = sizeof(arguments);
+      arguments.buildFlags             = RTC_BUILD_FLAG_NONE;
+      arguments.buildQuality           = RTC_BUILD_QUALITY_MEDIUM;
+      arguments.maxBranchingFactor     = 2;
+      arguments.maxDepth               = 1024;
+      arguments.sahBlockSize           = 1;
+      arguments.minLeafSize            = 1;
+      arguments.maxLeafSize            = 1;
+      arguments.traversalCost          = 1.0f;
+      arguments.intersectionCost       = 10.0f;
+      arguments.bvh                    = rtcBVH;
+      arguments.primitives             = prims.data();
+      arguments.primitiveCount         = prims.size();
+      arguments.primitiveArrayCapacity = prims.size();
+      arguments.createNode             = InnerNode::create;
+      arguments.setNodeChildren        = InnerNode::setChildren;
+      arguments.setNodeBounds          = InnerNode::setBounds;
+      arguments.createLeaf             = LeafNode::create;
+      arguments.splitPrimitive         = nullptr;
+      arguments.buildProgress          = nullptr;
+      arguments.userPtr                = range.data();
 
-      valueRange.lower = bounds4.lower.w;
-      valueRange.upper = bounds4.upper.w;
+      rtcRoot = (Node *)rtcBuildBVH(&arguments);
+      if (!rtcRoot) {
+        throw std::runtime_error("bvh build failure");
+      }
 
-      bvh.build(primBounds.data(), primID.data(), nCells);
+      if (rtcRoot->nominalLength < 0) {
+        auto &val = ((LeafNode *)rtcRoot)->bounds;
+        bounds    = box3f(val.lower, val.upper);
+      } else {
+        auto &vals = ((InnerNode *)rtcRoot)->bounds;
+        bounds     = box3f(vals[0].lower, vals[0].upper);
+        bounds.extend(box3f(vals[1].lower, vals[1].upper));
+      }
+      valueRange = rtcRoot->valueRange;
+    }
+
+    template <int W>
+    void UnstructuredVolume<W>::calculateIterativeTolerance()
+    {
+      iterativeTolerance.resize(nCells);
+      const uint32_t wedgeEdges[9][2]   = {{0, 1},
+                                         {1, 2},
+                                         {2, 0},
+                                         {3, 4},
+                                         {4, 5},
+                                         {5, 3},
+                                         {0, 3},
+                                         {1, 4},
+                                         {2, 5}};
+      const uint32_t pyramidEdges[8][2] = {
+          {0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
+      const uint32_t hexDiagonals[4][2] = {{0, 6}, {1, 7}, {2, 4}, {3, 5}};
+
+      // Build all tolerances
+      uint8_t *typeArray = (uint8_t *)cellType->data;
+      tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
+        switch (typeArray[taskIndex]) {
+        case VKL_HEXAHEDRON:
+          if (!hexIterative)
+            calculateTolerance(taskIndex, hexDiagonals, 4);
+          break;
+        case VKL_WEDGE:
+          calculateTolerance(taskIndex, wedgeEdges, 9);
+          break;
+        case VKL_PYRAMID:
+          calculateTolerance(taskIndex, pyramidEdges, 8);
+          break;
+        default:
+          break;
+        }
+      });
+    }
+
+    template <int W>
+    void UnstructuredVolume<W>::calculateTolerance(const uint64_t cellId,
+                                                   const uint32_t edge[][2],
+                                                   const uint32_t count)
+    {
+      uint64_t cOffset = getCellOffset(cellId);
+
+      float longest = 0;
+      for (int i = 0; i < count; i++) {
+        uint64_t vId0    = getVertexId(cOffset + edge[i][0]);
+        uint64_t vId1    = getVertexId(cOffset + edge[i][1]);
+        const vec3f &v0  = ((const vec3f *)(vertexPosition->data))[vId0];
+        const vec3f &v1  = ((const vec3f *)(vertexPosition->data))[vId1];
+        const float dist = length(v0 - v1);
+        longest          = std::max(longest, dist);
+      }
+
+      const float volumeBound = longest * longest * longest;
+      const float determinantTolerance =
+          1e-20 < .00001 * volumeBound ? 1e-20 : .00001 * volumeBound;
+
+      iterativeTolerance[cellId] = determinantTolerance;
     }
 
     template <int W>

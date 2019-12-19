@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v0.7.0 of Intel® Open VKL. For changes and new features
+This is release v0.8.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -31,6 +31,41 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 0.8.0 (alpha)
+
+  - Added support for structured volumes on spherical grids
+    (`"structured_spherical"` volume type)
+  - Structured regular volumes:
+      - Up to 8x performance improvement for scalar (single-wide)
+        sampling
+      - Fixed hit iterator bug which could lead to isosurfacing
+        artifacts
+      - Renamed `voxelData` parameter to `data`
+  - Unstructured volumes:
+      - Up to 4x performance improvement for scalar (single-wide)
+        sampling
+      - Improved interval iterator implementation for more efficient
+        space skipping and tighter value bounds on returned intervals
+      - Now using Embree for BVH builds for faster build times / volume
+        commits
+      - Renamed `vertex.value` and `cell.value` parameters to
+        `vertex.data` and `cell.data`, respectively
+  - AMR volumes:
+      - renamed `block.cellWidth` parameter to `cellWidth`, and
+        clarified API documentation
+  - Added `vklGetValueRange()` API for querying volume value ranges
+  - Added new driver parameters, APIs, and environment variables
+    allowing user control of log levels, log / error output redirection,
+    number of threads, and other options
+  - `vklIterateHit[4,8,16]()` and `vklIterateInterval[4,8,16]()` calls
+    now only populate hit / interval data for active lanes
+  - Changed `VKLDataType` enum values for better forward compatibility
+  - ISPC-side hit and interval iterator objects must now be declared
+    `varying`
+  - More flexible ISA build configuration through `OPENVKL_MAX_ISA` and
+    `OPENVKL_ISA_*` CMake build options
+  - Minimum ospcommon version is now 1.1.0
 
 ### Open VKL 0.7.0 (alpha)
 
@@ -84,12 +119,52 @@ driver:
 vklLoadModule("ispc_driver");
 ```
 
-The driver then needs to be selected:
+The driver then needs to be instantiated:
 
 ``` cpp
 VKLDriver driver = vklNewDriver("ispc");
+```
+
+Once a driver is created, you can call
+
+``` cpp
+void vklDriverSetInt(VKLDriver, const char *name, int val);
+void vklDriverSetString(VKLDriver, const char *name, const char *val);
+```
+
+to set parameters on the driver. The following parameters are understood
+by all drivers:
+
+| Type   | Name           | Description                                                                                                                                          |
+| :----- | :------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| int    | logLevel       | logging level; valid values are `VKL_LOG_DEBUG`, `VKL_LOG_INFO`, `VKL_LOG_WARNING` and `VKL_LOG_ERROR`                                               |
+| string | logOutput      | convenience for setting where log messages go; valid values are `cout`, `cerr` and `none`                                                            |
+| string | errorOutput    | convenience for setting where error messages go; valid values are `cout`, `cerr` and `none`                                                          |
+| int    | numThreads     | number of threads which Open VKL can use                                                                                                             |
+| int    | flushDenormals | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register; see Performance Recommendations section for details |
+
+Parameters shared by all drivers.
+
+Once parameters are set, the driver must be committed with
+
+``` cpp
 vklCommitDriver(driver);
+```
+
+Finally, to use the newly committed driver, you must call
+
+``` cpp
 vklSetCurrentDriver(driver);
+```
+
+Users can change parameters on a driver after initialization. In this
+case the driver would need to be re-committed. If changes are made to
+the driver that is already set as the current driver, it does not need
+to be set as current again. The currently set driver can be retrieved at
+any time by calling
+
+``` cpp
+VKLDriver driver = vklGetCurrentDriver();
 ```
 
 Open VKL provides vector-wide versions for several APIs. To determine
@@ -105,6 +180,88 @@ the shutdown function:
 ``` cpp
 vklShutdown();
 ```
+
+### Environment variables
+
+The generic driver parameters can be overridden via environment
+variables for easy changes to Open VKL’s behavior without needing to
+change the application (variables are prefixed by convention with
+“`OPENVKL_`”):
+
+| Variable                  | Description                                                                                                                                          |
+| :------------------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+| OPENVKL\_LOG\_LEVEL       | logging level; valid values are `debug`, `info`, `warning` and `error`                                                                               |
+| OPENVKL\_LOG\_OUTPUT      | convenience for setting where log messages go; valid values are `cout`, `cerr` and `none`                                                            |
+| OPENVKL\_ERROR\_OUTPUT    | convenience for setting where error messages go; valid values are `cout`, `cerr` and `none`                                                          |
+| OPENVKL\_THREADS          | number of threads which Open VKL can use                                                                                                             |
+| OPENVKL\_FLUSH\_DENORMALS | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register; see Performance Recommendations section for details |
+
+Environment variables understood by all drivers.
+
+Note that these environment variables take precedence over values set
+through the `vklDriverSet*()` functions.
+
+### Error handling and log messages
+
+The following errors are currently used by Open VKL:
+
+| Name                    | Description                                           |
+| :---------------------- | :---------------------------------------------------- |
+| VKL\_NO\_ERROR          | no error occurred                                     |
+| VKL\_UNKNOWN\_ERROR     | an unknown error occurred                             |
+| VKL\_INVALID\_ARGUMENT  | an invalid argument was specified                     |
+| VKL\_INVALID\_OPERATION | the operation is not allowed for the specified object |
+| VKL\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
+| VKL\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
+
+Possible error codes, i.e., valid named constants of type `VKLError`.
+
+These error codes are either directly returned by some API functions, or
+are recorded to be later queried by the application via
+
+``` cpp
+VKLError vklDriverGetLastErrorCode(VKLDriver);
+```
+
+A more descriptive error message can be queried by calling
+
+``` cpp
+const char* vklDriverGetLastErrorMsg(VKLDriver);
+```
+
+Alternatively, the application can also register a callback function of
+type
+
+``` cpp
+typedef void (*VKLErrorFunc)(VKLError, const char* message);
+```
+
+via
+
+``` cpp
+void vklDriverSetErrorFunc(VKLDriver, VKLErrorFunc);
+```
+
+to get notified when errors occur. Applications may be interested in
+messages which Open VKL emits, whether for debugging or logging events.
+Applications can register a callback function of type
+
+``` cpp
+typedef void (*VKLLogFunc)(const char* message);
+```
+
+via
+
+``` cpp
+void vklDriverSetLogFunc(VKLDriver, VKLLogFunc);
+```
+
+which Open VKL will use to emit log messages. Applications can clear
+either callback by passing `nullptr` instead of an actual function
+pointer. By default, Open VKL uses `cout` and `cerr` to emit log and
+error messages, respectively. Note that in addition to setting the above
+callbacks, this behavior can be changed via the driver parameters and
+environment variables described previously.
 
 ## Basic data types
 
@@ -225,11 +382,11 @@ should be released via `vklRelease`.
 
 ## Volume types
 
-Open VKL currently supports structured regular volumes (with user
-specified spacing on axes); unstructured volumes with tetrahedral,
-wedge, pyramid, and hexaderal primitive types; and adaptive mesh
-refinement (AMR) volumes. These volumes are created with `vlkNewVolume`
-with the appropriate type string.
+Open VKL currently supports structured volumes on regular and spherical
+grids; unstructured volumes with tetrahedral, wedge, pyramid, and
+hexaderal primitive types; and adaptive mesh refinement (AMR) volumes.
+These volumes are created with `vlkNewVolume` with the appropriate type
+string.
 
 In addition to the usual `vklSet...()` and `vklCommit()` APIs, the
 volume bounding box can be queried:
@@ -238,21 +395,32 @@ volume bounding box can be queried:
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
 ```
 
-### Structured Volume
+The value range of the volume can also be queried:
+
+``` cpp
+vkl_range1f vklGetValueRange(VKLVolume volume);
+```
+
+### Structured Volumes
 
 Structured volumes only need to store the values of the samples, because
-their addresses in memory can be easily computed from a 3D position. A
-common type of structured volumes are regular grids. Structured grids
-are created by passing a type string of `"structured_regular"` to
-`vklNewVolume`.
+their addresses in memory can be easily computed from a 3D position. The
+dimensions for all structured volume types are in units of vertices, not
+cells. For example, a volume with dimensions \((x, y, z)\) will have
+\((x-1, y-1, z-1)\) cells in each dimension. Voxel data provided is
+assumed vertex-centered, so \(x*y*z\) values must be provided.
 
-The parameters understood by structured volumes are summarized in the
-table below.
+#### Structured Regular Volumes
+
+A common type of structured volumes are regular grids, which are created
+by passing a type string of `"structured_regular"` to `vklNewVolume`.
+The parameters understood by structured regular volumes are summarized
+in the table below.
 
 | Type  | Name        |    Default    | Description                                        |
 | :---- | :---------- | :-----------: | :------------------------------------------------- |
 | vec3i | dimensions  |               | number of voxels in each dimension \((x, y, z)\)   |
-| data  | voxelData   |               | VKLData object of voxel data, supported types are: |
+| data  | data        |               | VKLData object of voxel data, supported types are: |
 |       |             |               | `VKL_UCHAR`                                        |
 |       |             |               | `VKL_SHORT`                                        |
 |       |             |               | `VKL_USHORT`                                       |
@@ -261,46 +429,82 @@ table below.
 | vec3f | gridOrigin  | \((0, 0, 0)\) | origin of the grid in world-space                  |
 | vec3f | gridSpacing | \((1, 1, 1)\) | size of the grid cells in world-space              |
 
-Additional configuration parameters for structured volumes.
+Configuration parameters for structured regular (`"structured_regular"`)
+volumes.
 
-The dimensions for structured volumes are in terms units vertices, not
-cells. For example, a volume with dimensions \((x, y, z)\) will have
-\((x-1, y-1, z-1)\) cells in each dimension. Voxel data provided is
-assumed vertex-centered, so \(x*y*z\) values must be provided.
+#### Structured Spherical Volumes
 
-### Adaptive Mesh Refinement (AMR) Volume
+Structured spherical volumes are also supported, which are created by
+passing a type string of `"structured_spherical"` to `vklNewVolume`. The
+grid dimensions and parameters are defined in terms of radial distance
+(\(r\)), inclination angle (\(\theta\)), and azimuthal angle (\(\phi\)),
+conforming with the ISO convention for spherical coordinate systems. The
+coordinate system and parameters understood by structured spherical
+volumes are summarized below.
 
-AMR volumes are specified as a list of blocks, which exist at levels of
-refinement in potentially overlapping regions. Blocks exist in a tree
-structure, with coarser refinement level blocks containing finer blocks.
-The cell width is equal for all blocks at the same refinement level,
-though blocks at a coarser level have a larger cell width than finer
-levels.
+\[Structured spherical volume coordinate system: radial distance
+(\(r\)), inclination angle (\(\theta\)), and azimuthal angle
+(\(\phi\)).\]\[imgStructuredSphericalCoords\]
+
+| Type  | Name        |    Default    | Description                                                                 |
+| :---- | :---------- | :-----------: | :-------------------------------------------------------------------------- |
+| vec3i | dimensions  |               | number of voxels in each dimension \((r, \theta, \phi)\)                    |
+| data  | data        |               | VKLData object of voxel data, supported types are:                          |
+|       |             |               | `VKL_UCHAR`                                                                 |
+|       |             |               | `VKL_SHORT`                                                                 |
+|       |             |               | `VKL_USHORT`                                                                |
+|       |             |               | `VKL_FLOAT`                                                                 |
+|       |             |               | `VKL_DOUBLE`                                                                |
+| vec3f | gridOrigin  | \((0, 0, 0)\) | origin of the grid in units of \((r, \theta, \phi)\); angles in degrees     |
+| vec3f | gridSpacing | \((1, 1, 1)\) | size of the grid cells in units of \((r, \theta, \phi)\); angles in degrees |
+
+Configuration parameters for structured spherical
+(`"structured_spherical"`) volumes.
+
+These grid parameters support flexible specification of spheres,
+hemispheres, spherical shells, spherical wedges, and so forth. The grid
+extents (computed as
+\([gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing]\)) however
+must be constrained such that:
+
+  - \(r \geq 0\)
+  - \(0 \leq \theta \leq 180\)
+  - \(0 \leq \phi \leq 360\)
+
+### Adaptive Mesh Refinement (AMR) Volumes
+
+Open VKL currently supports block-structured (Berger-Colella) AMR
+volumes. Volumes are specified as a list of blocks, which exist at
+levels of refinement in potentially overlapping regions. Blocks exist in
+a tree structure, with coarser refinement level blocks containing finer
+blocks. The cell width is equal for all blocks at the same refinement
+level, though blocks at a coarser level have a larger cell width than
+finer levels.
 
 There can be any number of refinement levels and any number of blocks at
 any level of refinement. An AMR volume type is created by passing the
 type string `"amr"` to `vklNewVolume`.
 
-Blocks are defined by four parameters: their bounds, the refinement
-level in which they reside, the cell widths for each refinement level,
-and the scalar data contained within each block.
+Blocks are defined by three parameters: their bounds, the refinement
+level in which they reside, and the scalar data contained within each
+block.
 
 Note that cell widths are defined *per refinement level*, not per block.
 
-| Type           | Name            |           Default | Description                                                       |
-| :------------- | :-------------- | ----------------: | :---------------------------------------------------------------- |
-| `VKLAMRMethod` | method          | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are:            |
-|                |                 |                   | `VKL_AMR_CURRENT`                                                 |
-|                |                 |                   | `VKL_AMR_FINEST`                                                  |
-|                |                 |                   | `VKL_AMR_OCTANT`                                                  |
-| box3f\[\]      | block.bounds    |              NULL | \[data\] array of bounds for each AMR block                       |
-| int\[\]        | block.level     |              NULL | array of each block’s refinement level                            |
-| float\[\]      | block.cellWidth |              NULL | array of each block’s cell width                                  |
-| VKLData\[\]    | block.data      |              NULL | \[data\] array of VKLData containing the actual scalar voxel data |
-| vec3f          | gridOrigin      |     \((0, 0, 0)\) | origin of the grid in world-space                                 |
-| vec3f          | gridSpacing     |     \((1, 1, 1)\) | size of the grid cells in world-space                             |
+| Type           | Name         |           Default | Description                                                       |
+| :------------- | :----------- | ----------------: | :---------------------------------------------------------------- |
+| `VKLAMRMethod` | method       | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are:            |
+|                |              |                   | `VKL_AMR_CURRENT`                                                 |
+|                |              |                   | `VKL_AMR_FINEST`                                                  |
+|                |              |                   | `VKL_AMR_OCTANT`                                                  |
+| float\[\]      | cellWidth    |              NULL | array of each level’s cell width                                  |
+| box3f\[\]      | block.bounds |              NULL | \[data\] array of bounds for each AMR block                       |
+| int\[\]        | block.level  |              NULL | array of each block’s refinement level                            |
+| VKLData\[\]    | block.data   |              NULL | \[data\] array of VKLData containing the actual scalar voxel data |
+| vec3f          | gridOrigin   |     \((0, 0, 0)\) | origin of the grid in world-space                                 |
+| vec3f          | gridSpacing  |     \((1, 1, 1)\) | size of the grid cells in world-space                             |
 
-Additional configuration parameters for AMR volumes.
+Configuration parameters for AMR (`"amr"`) volumes.
 
 Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just
 like the structured volume equivalent, but they only modify the root
@@ -344,8 +548,8 @@ indices, cell start indices, cell types, and cell values. An
 unstructured volume type is created by passing the type string
 `"unstructured"` to `vklNewVolume`.
 
-Sampled cell values can be specified either per-vertex (`vertex.value`)
-or per-cell (`cell.value`). If both arrays are set, `cell.value` takes
+Sampled cell values can be specified either per-vertex (`vertex.data`)
+or per-cell (`cell.data`). If both arrays are set, `cell.data` takes
 precedence.
 
 Similar to a mesh, each cell is formed by a group of indices into the
@@ -376,11 +580,11 @@ with cell sizes in the following format:
 | Type                    | Name               | Default | Description                                                                                                                                             |
 | :---------------------- | :----------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | vec3f\[\]               | vertex.position    |         | \[data\] array of vertex positions                                                                                                                      |
-| float\[\]               | vertex.value       |         | \[data\] array of vertex data values to be sampled                                                                                                      |
+| float\[\]               | vertex.data        |         | \[data\] array of vertex data values to be sampled                                                                                                      |
 | uint32\[\] / uint64\[\] | index              |         | \[data\] array of indices (into the vertex array(s)) that form cells                                                                                    |
 | uint32\[\] / uint64\[\] | indexPrefixed      |         | alternative \[data\] array of indices compatible to VTK, where the indices of each cell are prefixed with the number of vertices                        |
 | uint32\[\] / uint64\[\] | cell               |         | \[data\] array of locations (into the index array), specifying the first index of each cell                                                             |
-| float\[\]               | cell.value         |         | \[data\] array of cell data values to be sampled                                                                                                        |
+| float\[\]               | cell.data          |         | \[data\] array of cell data values to be sampled                                                                                                        |
 | uint8\[\]               | cell.type          |         | \[data\] array of cell types (VTK compatible). Supported types are:                                                                                     |
 |                         |                    |         | `VKL_TETRAHEDRON`                                                                                                                                       |
 |                         |                    |         | `VKL_HEXAHEDRON`                                                                                                                                        |
@@ -389,7 +593,7 @@ with cell sizes in the following format:
 | bool                    | hexIterative       | false   | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
 | bool                    | precomputedNormals | false   | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
 
-Additional configuration parameters for unstructured volumes.
+Configuration parameters for unstructured (`"unstructured"`) volumes.
 
 ## Sampling
 
@@ -676,6 +880,33 @@ native SIMD width (determined via `vklGetNativeSIMDWidth` can be called.
 The scalar versions are always valid. This restriction will likely be
 lifted in the future.
 
+# Performance Recommendations
+
+## MXCSR control and status register
+
+It is strongly recommended to have the `Flush to Zero` and `Denormals
+are Zero` mode of the MXCSR control and status register enabled for each
+thread before calling the sampling, gradient, or interval API functions.
+Otherwise, under some circumstances special handling of denormalized
+floating point numbers can significantly reduce application and Open VKL
+performance. The driver parameter `flushDenormals` or environment
+variable `OPENVKL_FLUSH_DENORMALS` can be set to 1 to enable this mode.
+Alternatively, when using Open VKL together with the Intel® Threading
+Building Blocks, it is sufficient to execute the following code at the
+beginning of the application main thread (before the creation of the
+`tbb::task_scheduler_init` object):
+
+``` cpp
+#include <xmmintrin.h>
+#include <pmmintrin.h>
+...
+_MM_SET_FLUSH_ZERO_MODE(_MM_FLUSH_ZERO_ON);
+_MM_SET_DENORMALS_ZERO_MODE(_MM_DENORMALS_ZERO_ON);
+```
+
+If using a different tasking system, make sure each thread calling into
+Open VKL has the proper mode set.
+
 # Examples
 
 Open VKL ships with simple tutorial applications demonstrating the basic
@@ -698,6 +929,16 @@ For quick reference, the contents of `vklTutorial.c` are shown below.
 void demoScalarAPI(VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
+
+  // bounding box
+  vkl_box3f bbox = vklGetBoundingBox(volume);
+  printf("\tbounding box\n");
+  printf("\t\tlower = %f %f %f\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
+  printf("\t\tupper = %f %f %f\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
+
+  // value range
+  vkl_range1f valueRange = vklGetValueRange(volume);
+  printf("\tvalue range = (%f %f)\n\n", valueRange.lower, valueRange.upper);
 
   // sample, gradient
   vkl_vec3f coord = {1.f, 1.f, 1.f};
@@ -771,6 +1012,8 @@ void demoScalarAPI(VKLVolume volume)
       break;
     printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
   }
+
+  vklRelease(selector);
 }
 
 void demoVectorAPI(VKLVolume volume)
@@ -827,14 +1070,16 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData voxelData = vklNewData(numVoxels, VKL_FLOAT, voxels, 0);
-  vklSetData(volume, "voxelData", voxelData);
-  vklRelease(voxelData);
+  VKLData data = vklNewData(numVoxels, VKL_FLOAT, voxels, 0);
+  vklSetData(volume, "data", data);
+  vklRelease(data);
 
   vklCommit(volume);
 
   demoScalarAPI(volume);
   demoVectorAPI(volume);
+
+  vklRelease(volume);
 
   vklShutdown();
 
@@ -884,6 +1129,9 @@ before you can build Open VKL you need the following prerequisites:
   - Open VKL depends on the OSPRay common library, ospcommon. ospcommon
     is available at the [ospcommon GitHub
     repository](https://github.com/ospray/ospcommon).
+
+  - Open VKL depends on Embree, which is available at the [Embree GitHub
+    repository](https://github.com/embree/embree).
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be

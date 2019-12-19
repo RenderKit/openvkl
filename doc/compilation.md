@@ -29,6 +29,9 @@ you can build Open VKL you need the following prerequisites:
     available at the [ospcommon GitHub
     repository](https://github.com/ospray/ospcommon).
 
+-   Open VKL depends on Embree, which is available at the [Embree GitHub
+    repository](https://github.com/embree/embree).
+
 Depending on your Linux distribution you can install these dependencies using
 `yum` or `apt-get`. Some of these packages might already be installed or might
 have slightly different names.

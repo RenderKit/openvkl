@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -96,6 +96,64 @@ extern "C" VKLData vklNewData(size_t numItems,
   return data;
 }
 OPENVKL_CATCH_END(nullptr)
+
+///////////////////////////////////////////////////////////////////////////////
+// Observer ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VKLObserver vklNewObserver(VKLVolume volume,
+                                      const char *type)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(volume);
+  THROW_IF_NULL_OBJECT(type);
+  VKLObserver observer = openvkl::api::currentDriver().newObserver(
+      volume, type);
+  if (!observer)
+    throw std::runtime_error(std::string("unsupported observer type: ") + type);
+  return observer;
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" const void * vklMapObserver(VKLObserver observer)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(observer);
+  const void *mapped = openvkl::api::currentDriver().mapObserver(observer);
+  return mapped;
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" void vklUnmapObserver(VKLObserver observer)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(observer);
+  openvkl::api::currentDriver().unmapObserver(observer);
+}
+OPENVKL_CATCH_END()
+
+extern "C" VKLDataType vklGetObserverElementType(VKLObserver observer)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(observer);
+  VKLDataType type = openvkl::api::currentDriver().getObserverElementType(observer);
+  return type;
+}
+OPENVKL_CATCH_END(VKL_UNKNOWN)
+
+extern "C" size_t vklGetObserverNumElements(VKLObserver observer)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(observer);
+  size_t numElements = openvkl::api::currentDriver().getObserverNumElements(observer);
+  return numElements;
+}
+OPENVKL_CATCH_END(0)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Driver /////////////////////////////////////////////////////////////////////

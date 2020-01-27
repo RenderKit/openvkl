@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019-2020 Intel Corporation                                    //
+// Copyright 2020 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,19 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "Observer.h"
 
-#include "VKLDataType.h"
-#include "VKLError.h"
-#include "VKLLogLevel.h"
+namespace openvkl {
 
-#include "common.h"
-#include "data.h"
-#include "driver.h"
-#include "iterator.h"
-#include "module.h"
-#include "observer.h"
-#include "parameters.h"
-#include "value_selector.h"
-#include "version.h"
-#include "volume.h"
+  Observer::~Observer() = default;
+
+  std::string Observer::toString() const
+  {
+    return "openvkl::Observer";
+  }
+
+}  // namespace openvkl
+

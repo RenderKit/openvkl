@@ -265,6 +265,56 @@ a volume is committed.
 As with other object types, when data objects are no longer needed they should
 be released via `vklRelease`.
 
+Observers
+---------
+
+Volumes in Open VKL may provide observers to communicate data back to the
+application. Observers may be created with
+
+    VKLObserver vklNewObserver(VKLVolume volume, 
+                               const char *type);
+
+The volume passed to `vklNewObserver` must already be committed.  Valid
+observer type strings are defined by volume implementations (see section
+'Volume types' below).
+
+`vklNewObserver` returns `NULL` on failure.
+
+To access the underlying data, an observer must first be mapped using
+
+    const void * vklMapObserver(VKLObserver observer);
+
+If this fails, the function returns `NULL`. `vklMapObserver` may fail on
+observers that are already mapped.
+On success, the application may query the underlying type and the number of
+elements in the buffer using
+
+    VKLDataType vklGetObserverElementType(VKLObserver observer);
+    size_t vklGetObserverNumElements(VKLObserver observer);
+
+On failure, these functions return `VKL_UNKNOWN` and `0`, respectively.
+Possible data types are defined by the volume that provides the observer , as
+are the semantics of the observation. See section 'Volume types' for details.
+
+The pointer returned by `vklMapObserver` may be cast to the type corresponding
+to the value returned by `vklGetObserverElementType` to access the observation. 
+For example, if `vklGetObserverElementType` returns `VKL_FLOAT`, then
+the pointer returned by `vklMapObserver` may be cast to `const float *` to access
+up to `vklGetObserverNumElements` consecutive values of type `float`.
+
+Once the application has finished processing the observation, it should unmap
+the observer using
+
+    void vklUnmapObserver(VKLObserver observer);
+
+so that the observer may be mapped again.
+
+When an observer is no longer needed, it should be released using `vklRelease`.
+
+The observer API is not thread safe, and these functions should not
+be called concurrently on the same object.
+
+
 Volume types
 ------------
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -45,6 +45,16 @@ namespace openvkl {
                       VKLDataType dataType,
                       const void *source,
                       VKLDataCreationFlags dataCreationFlags) override;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Observer /////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      VKLObserver newObserver(VKLVolume volume, const char *type) override;
+      const void * mapObserver(VKLObserver observer) override;
+      void unmapObserver(VKLObserver observer) override;
+      VKLDataType getObserverElementType(VKLObserver observer) const override;
+      size_t getObserverNumElements(VKLObserver observer) const override;
 
       /////////////////////////////////////////////////////////////////////////
       // Interval iterator ////////////////////////////////////////////////////

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,6 +16,7 @@
 
 #include "ISPCDriver.h"
 #include "../common/Data.h"
+#include "../common/Observer.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
 #include "ispc_util_ispc.h"
@@ -67,6 +68,45 @@ namespace openvkl {
     {
       Data *data = new Data(numItems, dataType, source, dataCreationFlags);
       return (VKLData)data;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Observer ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    VKLObserver ISPCDriver<W>::newObserver(VKLVolume volume, const char *type)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      return volumeObject.newObserver(type);
+    }
+
+    template <int W>
+    const void * ISPCDriver<W>::mapObserver(VKLObserver observer)
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      return observerObject.map();
+    }
+
+    template <int W>
+    void ISPCDriver<W>::unmapObserver(VKLObserver observer)
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      observerObject.unmap();
+    }
+
+    template <int W>
+    VKLDataType ISPCDriver<W>::getObserverElementType(VKLObserver observer) const
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      return observerObject.getElementType();
+    }
+
+    template <int W>
+    size_t ISPCDriver<W>::getObserverNumElements(VKLObserver observer) const
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      return observerObject.getNumElements();
     }
 
     ///////////////////////////////////////////////////////////////////////////

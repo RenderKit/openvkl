@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019-2020 Intel Corporation                                    //
+// Copyright 2020 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,17 +16,21 @@
 
 #pragma once
 
-#include "VKLDataType.h"
-#include "VKLError.h"
-#include "VKLLogLevel.h"
+#include "ManagedObject.h"
+#include "openvkl/openvkl.h"
 
-#include "common.h"
-#include "data.h"
-#include "driver.h"
-#include "iterator.h"
-#include "module.h"
-#include "observer.h"
-#include "parameters.h"
-#include "value_selector.h"
-#include "version.h"
-#include "volume.h"
+namespace openvkl {
+
+  struct OPENVKL_CORE_INTERFACE Observer : public ManagedObject
+  {
+    virtual ~Observer() override;
+    virtual std::string toString() const override;
+
+    virtual const void *map() = 0;
+    virtual void unmap() = 0;
+    virtual VKLDataType getElementType() const = 0;
+    virtual size_t getNumElements() const = 0;
+  };
+
+}  // namespace openvkl
+

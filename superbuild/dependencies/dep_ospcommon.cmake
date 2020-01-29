@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2019 Intel Corporation                                    ##
+## Copyright 2009-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -42,8 +42,10 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_ALWAYS ${ALWAYS_REBUILD}
 )
 
-list(APPEND CMAKE_PREFIX_PATH ${COMPONENT_PATH})
 
 if (BUILD_TBB_FROM_SOURCE)
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME} configure tbb)
 endif()
+
+add_to_prefix_path(${COMPONENT_PATH})
+

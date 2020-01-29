@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
+## Copyright 2019-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -85,6 +85,14 @@ set(DEFAULT_BUILD_COMMAND cmake --build . --config release ${PARALLEL_JOBS_OPTS}
 
 ## Build dependencies ##
 
+# We must replace separators so that ExternalProject_Add can work with the
+# paths we generate.
+macro(add_to_prefix_path PATH)
+  list(APPEND CMAKE_PREFIX_PATH ${PATH})
+  string(REPLACE ";" "|" CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH}")
+endmacro()
+
+
 if (DOWNLOAD_ISPC)
   include(dep_ispc)
 endif()
@@ -116,7 +124,9 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
     STAMP_DIR openvkl/stamp
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..
     BINARY_DIR openvkl/build
+    LIST_SEPARATOR | # CMAKE_PREFIX_PATH uses alternate separator.
     CMAKE_ARGS
+      -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
       -DBUILD_TESTING=${BUILD_OPENVKL_TESTING}
       -DBUILD_BENCHMARKS=${BUILD_OPENVKL_BENCHMARKS}
       -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
@@ -127,11 +137,9 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
       -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
-      -Dospcommon_DIR:PATH=${OSPCOMMON_PATH}
       -DISPC_EXECUTABLE=${ISPC_PATH}
       $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
-      $<$<BOOL:${BUILD_GLFW}>:-Dglfw3_DIR:PATH=${GLFW_PATH}>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF
   )

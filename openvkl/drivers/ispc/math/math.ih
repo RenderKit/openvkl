@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,10 +16,12 @@
 
 #pragma once
 
+#ifndef ISPC_UINT_IS_DEFINED
 typedef unsigned int64 uint64;
 typedef unsigned int32 uint32;
 typedef unsigned int16 uint16;
 typedef unsigned int8 uint8;
+#endif
 
 // ------------------------------------------------------------------
 // Constants

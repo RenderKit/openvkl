@@ -19,6 +19,8 @@ include(openvkl_macros)
 
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
+option(VKL_BUILD_VDB_ITERATOR_SIZE_HELPER "Build helper program that computes sizeof(VdbIterator)" OFF)
+
 # width-specific builds
 foreach(TARGET_WIDTH 4 8 16)
 
@@ -68,6 +70,13 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/StructuredSphericalVolume.cpp
     volume/UnstructuredVolume.cpp
     volume/UnstructuredVolume.ispc
+    volume/vdb/VdbVolume.cpp
+    volume/vdb/VdbVolume.ispc
+    volume/vdb/VdbSampler.ispc
+    volume/vdb/VdbIterator.cpp
+    volume/vdb/VdbIterator.ispc
+    volume/vdb/VdbLeafAccessObserver.cpp
+    volume/vdb/Dda.ispc
   )
 
   unset(ISPC_DEFINITIONS)
@@ -114,6 +123,21 @@ foreach(TARGET_WIDTH 4 8 16)
 
   # accumulate targets to be linked into single shared library
   list(APPEND ACTIVE_WIDTH_TARGETS ${TARGET_NAME})
+
+  if (NOT WIN32 AND VKL_BUILD_VDB_ITERATOR_SIZE_HELPER)
+    # A helper that makes it easy to find out how big the vdb iterator is in ISPC
+    # for the various target widths.
+    add_executable(vklVdbIteratorSize${TARGET_WIDTH} volume/vdb/iterator_size.cpp)
+    target_compile_definitions(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE
+       "VKL_TARGET_WIDTH=${TARGET_WIDTH}")
+    target_include_directories(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE
+      PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+        $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
+    )
+    target_link_libraries(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE ${TARGET_NAME})
+  endif()
+
 
 endforeach(TARGET_WIDTH)
 

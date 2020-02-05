@@ -68,6 +68,16 @@ namespace openvkl {
       return v[index];
     }
 
+    operator float *()
+    {
+      return v;
+    }
+
+    operator const float *() const
+    {
+      return v;
+    }
+
     vfloatn<W>(const vfloatn<W> &o)
     {
       for (int i = 0; i < W; i++) {

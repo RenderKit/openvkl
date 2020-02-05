@@ -16,19 +16,38 @@
 
 #pragma once
 
-// see SIMD conformance tests
+#include "../common/Observer.h"
+#include "openvkl/ispc_cpp_interop.h"
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT 64
-#define ITERATOR_INTERNAL_STATE_SIZE 6080
+namespace openvkl {
+  namespace ispc_driver {
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_4 16
-#define ITERATOR_INTERNAL_STATE_SIZE_4 1520
+    /*
+     * The leaf access observer simply wraps the buffer allocated by VdbVolume.
+     */
+    struct VdbLeafAccessObserver : public Observer
+    {
+      VdbLeafAccessObserver(ManagedObject &target,
+                            size_t size,
+                            const vkl_uint32 *accessBuffer);
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_8 32
-#define ITERATOR_INTERNAL_STATE_SIZE_8 3040
+      VdbLeafAccessObserver(VdbLeafAccessObserver &&) = delete;
+      VdbLeafAccessObserver &operator=(VdbLeafAccessObserver &&) = delete;
+      VdbLeafAccessObserver(const VdbLeafAccessObserver &)       = delete;
+      VdbLeafAccessObserver &operator=(const VdbLeafAccessObserver &) = delete;
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_16 64
-#define ITERATOR_INTERNAL_STATE_SIZE_16 6080
+      ~VdbLeafAccessObserver();
 
-#define ITERATOR_VARYING_INTERNAL_STATE_SIZE \
-  ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4
+      const void *map() override;
+      void unmap() override;
+      VKLDataType getElementType() const override;
+      size_t getNumElements() const override;
+
+     private:
+      ManagedObject *target{nullptr};
+      size_t size{0};
+      const vkl_uint32 *accessBuffer{nullptr};
+    };
+
+  }  // namespace ispc_driver
+}  // namespace openvkl

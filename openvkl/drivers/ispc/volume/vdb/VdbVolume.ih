@@ -16,19 +16,14 @@
 
 #pragma once
 
-// see SIMD conformance tests
+#include "../Volume.ih"
+#include "VdbGrid.h"
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT 64
-#define ITERATOR_INTERNAL_STATE_SIZE 6080
+varying float VdbVolume_sample(const VdbGrid *uniform grid,
+                               const varying vec3i &ic);
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_4 16
-#define ITERATOR_INTERNAL_STATE_SIZE_4 1520
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_8 32
-#define ITERATOR_INTERNAL_STATE_SIZE_8 3040
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_16 64
-#define ITERATOR_INTERNAL_STATE_SIZE_16 6080
-
-#define ITERATOR_VARYING_INTERNAL_STATE_SIZE \
-  ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4
+struct VdbVolume
+{
+  Volume super;
+  const VdbGrid *uniform grid;
+};

@@ -14,21 +14,40 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "VdbLeafAccessObserver.h"
 
-// see SIMD conformance tests
+namespace openvkl {
+  namespace ispc_driver {
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT 64
-#define ITERATOR_INTERNAL_STATE_SIZE 6080
+    VdbLeafAccessObserver::VdbLeafAccessObserver(ManagedObject &target,
+                                                 size_t size,
+                                                 const vkl_uint32 *accessBuffer)
+        : target(&target), size(size), accessBuffer(accessBuffer)
+    {
+      this->target->refInc();
+    }
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_4 16
-#define ITERATOR_INTERNAL_STATE_SIZE_4 1520
+    VdbLeafAccessObserver::~VdbLeafAccessObserver()
+    {
+      target->refDec();
+    }
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_8 32
-#define ITERATOR_INTERNAL_STATE_SIZE_8 3040
+    const void *VdbLeafAccessObserver::map()
+    {
+      return accessBuffer;
+    }
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_16 64
-#define ITERATOR_INTERNAL_STATE_SIZE_16 6080
+    void VdbLeafAccessObserver::unmap() {}
 
-#define ITERATOR_VARYING_INTERNAL_STATE_SIZE \
-  ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4
+    size_t VdbLeafAccessObserver::getNumElements() const
+    {
+      return size;
+    }
+
+    VKLDataType VdbLeafAccessObserver::getElementType() const
+    {
+      return VKL_UINT;
+    }
+
+  }  // namespace ispc_driver
+}  // namespace openvkl

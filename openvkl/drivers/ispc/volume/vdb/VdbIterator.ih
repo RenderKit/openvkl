@@ -14,21 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "../../iterator/Iterator.ih"
+#include "value_selector/ValueSelector.ih"
+#include "Dda.ih"
+#include "VdbGrid.h"
 
-// see SIMD conformance tests
+struct ValueSelector;
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT 64
-#define ITERATOR_INTERNAL_STATE_SIZE 6080
+// We support at most 2 levels.
+// This is because we must store state for each level,
+// and this must be statically allocated.
+#define VDB_ITERATOR_MAX_LEVELS 3
 
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_4 16
-#define ITERATOR_INTERNAL_STATE_SIZE_4 1520
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_8 32
-#define ITERATOR_INTERNAL_STATE_SIZE_8 3040
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_16 64
-#define ITERATOR_INTERNAL_STATE_SIZE_16 6080
-
-#define ITERATOR_VARYING_INTERNAL_STATE_SIZE \
-  ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4
+struct VdbIterator
+{
+  vkl_uint64 nodeIndex[VDB_ITERATOR_MAX_LEVELS];
+  DdaLevelState ddaLevelState[VDB_ITERATOR_MAX_LEVELS];
+  DdaSegmentState ddaSegmentState[VDB_ITERATOR_MAX_LEVELS];
+  Interval currentInterval;
+  DdaRayState ddaRayState;
+  vkl_uint32 currentLevel;
+  uniform vkl_uint32 numLevels;
+  uniform const VdbGrid *uniform grid;
+  uniform const ValueSelector *uniform valueSelector;
+};

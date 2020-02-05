@@ -1,0 +1,141 @@
+// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "math/box.ih"
+#include "math/math.ih"
+#include "math/vec.ih"
+
+/*
+ * DDA state that is constant for any
+ * given traversal ray, and independent of the level.
+ * Must be initialized once before iteration using
+ * ddaInitRay().
+ */
+struct DdaRayState
+{
+  box1f tRange;     // The range on which the ray is valid.
+  vec3f rayOrigin;  // The ray origin.
+  vec3f rayDir;     // The ray direction, must not have length 0.
+  vec3f iDir;       // 1/rayDir
+  vec3i dirSign;    // +1, 0, or -1 depending on the sign of rayDir.
+};
+
+/*
+ * HDDA state that is constant for a ray, but varies
+ * for each level of a hierarchy.
+ * Must be initialized for each level in the hierarchy
+ * using ddaInitLevel().
+ */
+struct DdaLevelState
+{
+  int domainRes;  // Nodes on this level cover this many domain voxels.
+  int cellRes;  // Cells in a node on this level cover this many domain voxels.
+  vec3i idxDelta;  // In each step, advance this many domain voxels.
+  vec3f tDelta;    // Distance, along the ray, between two cell hyperplanes.
+};
+
+/*
+ * HDDA state that varies for each iteration segment.
+ * This must be initialized using ddaInitSegment() upon
+ * entering a new level in the hierarchy.
+ */
+struct DdaSegmentState
+{
+  float t;            // The current ray parameter t.
+  float tMax;         // The maximum ray parameter t.
+  vec3f tNext;        // The next ray parameter t, for each dimension.
+  vec3i idx;          // The current index.
+  vec3i domainBegin;  // The first voxel on which this segment is valid.
+  vec3i domainEnd;  // One after the last voxel on which this segment is valid.
+};
+
+/*
+ * Determine if the state has exited the domain.
+ */
+inline bool ddaStateHasExited(const DdaSegmentState &segmentState)
+{
+  return (segmentState.t > segmentState.tMax);
+}
+
+/*
+ * Determine if the state is currently in bounds, pointing to a valid index.
+ */
+inline bool ddaStateInBounds(const DdaSegmentState &segmentState)
+{
+  return (segmentState.idx.x >= segmentState.domainBegin.x) &&
+         (segmentState.idx.y >= segmentState.domainBegin.y) &&
+         (segmentState.idx.z >= segmentState.domainBegin.z) &&
+         (segmentState.idx.x < segmentState.domainEnd.x) &&
+         (segmentState.idx.y < segmentState.domainEnd.y) &&
+         (segmentState.idx.z < segmentState.domainEnd.z);
+}
+
+/*
+ * Initialize the DDA state.
+ * This function assumes that the grid is axis-aligned.
+ * Direction may be non-unit length.
+ * Note: ddaInit, and ddaStep, may produce indices that are out of bounds.
+ *       Use ddaStateInBounds() to check that.
+ */
+void ddaInitRay(const vec3f &rayOrg,  // The ray, in index space -- leaf level
+                                      // cells are size (1,1,1), and
+                const vec3f &rayDir,  // the grid has origin (0,0,0).
+                const box1f &tRange,  // The range on which ray is valid.
+                DdaRayState &rayState);
+
+void ddaInitLevel(
+    const DdaRayState &rayState,
+    uniform unsigned int logCellRes,    // A single cell in the domain spans
+                                        // (1<<logCellRes) voxels.
+    uniform unsigned int logDomainRes,  // The full iteration domain spans
+                                        // (1<<logDomainRes) voxels.
+    DdaLevelState &levelState);
+
+void ddaInitSegment(
+    const DdaRayState &rayState,
+    const DdaLevelState &levelState,
+    const vec3i &cellOffset,  // The iteration cell starts at this offset.
+    DdaSegmentState &segmentState);
+
+/*
+ * A single traversal step in the DDA algorithm. This advances
+ * to the next cell the ray intersects.
+ */
+inline void ddaStep(const DdaRayState &rayState,
+                    const DdaLevelState &levelState,
+                    DdaSegmentState &segmentState)
+{
+  varying const bool yseqx = (segmentState.tNext.y <= segmentState.tNext.x);
+  varying const bool yseqz = (segmentState.tNext.y <= segmentState.tNext.z);
+  varying const bool zseqx = (segmentState.tNext.z <= segmentState.tNext.x);
+  varying const bool zseqy = (segmentState.tNext.z <= segmentState.tNext.y);
+
+  if (zseqx && zseqy) {
+    segmentState.t       = segmentState.tNext.z;
+    segmentState.tNext.z = segmentState.tNext.z + levelState.tDelta.z;
+    segmentState.idx.z   = segmentState.idx.z + levelState.idxDelta.z;
+  } else if (yseqx && yseqz) {
+    segmentState.t       = segmentState.tNext.y;
+    segmentState.tNext.y = segmentState.tNext.y + levelState.tDelta.y;
+    segmentState.idx.y   = segmentState.idx.y + levelState.idxDelta.y;
+  } else {
+    segmentState.t       = segmentState.tNext.x;
+    segmentState.tNext.x = segmentState.tNext.x + levelState.tDelta.x;
+    segmentState.idx.x   = segmentState.idx.x + levelState.idxDelta.x;
+  }
+}

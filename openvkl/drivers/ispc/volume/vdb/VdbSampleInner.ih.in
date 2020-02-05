@@ -1,0 +1,102 @@
+// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+// ---------------------------------------------------------------------------
+// Sample inner nodes.
+//
+// Note: We generate files VdbSampleInner_<level>.ih from this 
+//       template using CMake.
+// ---------------------------------------------------------------------------
+
+#include "openvkl_vdb/VdbSampleConstantLeaf_@VKL_VDB_NEXT_LEVEL@.ih"
+
+#if (@VKL_VDB_NEXT_LEVEL@+1) < VKL_VDB_NUM_LEVELS
+  #include "VdbSamplerDispatchInner_@VKL_VDB_NEXT_LEVEL@.ih"
+#endif
+
+#define univary @VKL_VDB_UNIVARY@
+
+/*
+ * Sample an inner node.
+ * We generate versions for varying and uniform traversal (when it is known
+ * that sample locations are in the same leaf), and for each inner level (so
+ * that the compiler can optimize out the tree structure).
+ * We also have separate code for versions that collect stats vs. versions that do not.
+ */
+inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
+  const VdbGrid *uniform            grid,
+  const varying vec3ui             &domainOffset,
+  univary uint64                    voxelOffset)
+{
+  /* We compute offsets in 64 bit to be safe, but access is in 32 bit! */
+  assert(voxelOffset < ((univary uint64)1) << 32);
+  assert(voxelOffset < grid->levels[@VKL_VDB_LEVEL@].numNodes * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@);
+  const univary uint32 vo32 = ((univary uint32)voxelOffset);
+  const univary uint64 voxelValue = grid->levels[@VKL_VDB_LEVEL@].voxels[vo32];
+  const univary bool isTile = vklVdbVoxelIsTile(voxelValue);
+  const univary bool isLeaf = vklVdbVoxelIsLeafPtr(voxelValue);
+
+  varying float sample = 0.f;
+
+  if (isTile)
+  {
+    sample = vklVdbVoxelTileGet(voxelValue);
+  }
+  else if (@VKL_VDB_LEVEL@+1 > grid->maxSamplingDepth) // Cannot descend!
+  {
+    const univary range1f valueRange = grid->levels[@VKL_VDB_LEVEL@].valueRange[vo32];
+    sample = 0.5f * (valueRange.lower + valueRange.upper);
+  }
+  else if (isLeaf)
+  {
+    const void* univary leafPtr = vklVdbVoxelLeafGetPtr(voxelValue);
+    const univary VKLVdbLeafFormat format = vklVdbVoxelLeafGetFormat(voxelValue);
+    if (leafPtr && format == VKL_VDB_FORMAT_CONSTANT)
+    {
+      /* TODO: with mixed formats, the above will not detect if all 
+         leaves of the same type have the same ptr. */
+      sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
+        ((const uniform float *univary)leafPtr), domainOffset);
+    }
+  }
+
+#if (@VKL_VDB_NEXT_LEVEL@+1) < VKL_VDB_NUM_LEVELS
+  else if (vklVdbVoxelIsChildPtr(voxelValue))
+  {
+    sample = VdbSampler_dispatchInner_@VKL_VDB_UNIVARY@_@VKL_VDB_NEXT_LEVEL@(
+      grid,
+      domainOffset,
+      vklVdbVoxelChildGetIndex(voxelValue));
+  }
+#endif
+
+  /* Do nothing for empty voxels. */
+
+  if (grid->usageBuffer && (isTile || isLeaf))
+  {
+    const univary uint64 originalIndex = grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
+    assert(originalIndex < ((univary uint64)1) << 32);
+    const univary uint32 oi32 = ((univary uint32)originalIndex);
+    grid->usageBuffer[oi32] = 1;  /* NOTE: this is not synchronized between threads! */
+  }
+
+  return sample;
+}
+
+#undef univary
+

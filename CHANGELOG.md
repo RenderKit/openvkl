@@ -1,6 +1,12 @@
 Version History
 ---------------
 
+### Open VKL 0.9.0 (alpha)
+
+-   Added basic support for VDB volumes (`"vdb"` volume type).
+-   Added `VLKObserver`, which may be provided by volume types
+    to pass information back to the application.
+
 ### Open VKL 0.8.0 (alpha)
 
 -   Added support for structured volumes on spherical grids

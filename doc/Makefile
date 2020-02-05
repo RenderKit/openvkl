@@ -2,7 +2,7 @@ SHELL := /bin/bash
 
 webpages := $(addprefix www/, $(addsuffix .html, index documentation examples downloads related_projects legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, readme_head))
-images_png := $(addprefix images/, $(addsuffix .png, structured_spherical_coords))
+images_png := $(addprefix images/, $(addsuffix .png, structured_spherical_coords vdb_structure))
 scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 webimages := $(addprefix www/, $(images_png))

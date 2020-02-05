@@ -1,0 +1,64 @@
+// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+// ---------------------------------------------------------------------------
+// CONSTANT leaf sampling.
+//
+// Note: We generate files VdbSampleConstantLeaf_<level>.ih from this 
+//       template using CMake.
+// ---------------------------------------------------------------------------
+
+/*
+ * Sample a constant leaf at the given offset.
+ */
+inline varying float VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_LEVEL@(
+  const uniform float *varying  leafPtr,
+  const varying vec3ui         &offset)
+{
+    const varying uint64 voxelIdx = 
+      __vkl_vdb_domain_offset_to_linear_varying_@VKL_VDB_LEVEL@(offset.x,  
+                                                                offset.y, 
+                                                                offset.z);
+
+    assert(voxelIdx < ((varying uint64)1) << 32);
+    const varying uint32 v32 = ((varying uint32)voxelIdx);
+    return leafPtr[v32];
+}
+
+/* 
+ * Special case: all lanes are sampling the same leaf. 
+ * This gives us the opportunity to use uniform array indices, at least if
+ * all sample points are in the same voxel.
+ */
+inline varying float VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_LEVEL@(
+  const uniform float *uniform  leafPtr,
+  const varying vec3ui         &offset)
+{
+    const varying uint64 voxelIdx = 
+      __vkl_vdb_domain_offset_to_linear_varying_@VKL_VDB_LEVEL@(offset.x,  
+                                                                offset.y, 
+                                                                offset.z);
+    assert(voxelIdx < ((varying uint64)1) << 32);
+    const varying uint32 v32 = ((varying uint32)voxelIdx);
+    uniform uint32 uv32;
+    if (reduce_equal(v32, &uv32))
+      return leafPtr[uv32];
+    else
+      return leafPtr[v32];
+}
+

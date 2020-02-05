@@ -169,3 +169,55 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
   endif()
 
 endfunction()
+
+# Generate files that deal with the VDB topology.
+# There are "templatized" files for traversal, for example,
+# and we also define constants that describe the topology
+# in terms of node resolution per level.
+function(openvkl_vdb_generate_topology)
+
+  list(LENGTH VKL_VDB_LOG_RESOLUTION VKL_VDB_NUM_LEVELS)
+  math(EXPR VKL_VDB_LEAF_LEVEL "${VKL_VDB_NUM_LEVELS}-1")
+  list(REVERSE VKL_VDB_LOG_RESOLUTION) # Define from leaf level up.
+  set(VKL_VDB_TOTAL_LOG_RES 0)
+
+  foreach(I RANGE ${VKL_VDB_LEAF_LEVEL})
+    math(EXPR VKL_VDB_LEVEL "${VKL_VDB_LEAF_LEVEL}-${I}")
+    math(EXPR VKL_VDB_NEXT_LEVEL "${VKL_VDB_LEVEL}+1")
+
+    list(GET VKL_VDB_LOG_RESOLUTION ${I} VKL_VDB_LEVEL_LOG_RES)
+    math(EXPR VKL_VDB_LEVEL_STORAGE_RES "(1<<${VKL_VDB_LEVEL_LOG_RES})")
+    math(EXPR VKL_VDB_LEVEL_NUM_VOXELS "(1<<(3*${VKL_VDB_LEVEL_LOG_RES}))")
+    math(EXPR VKL_VDB_TOTAL_LOG_RES "(${VKL_VDB_TOTAL_LOG_RES}+${VKL_VDB_LEVEL_LOG_RES})")
+    math(EXPR VKL_VDB_LEVEL_RES "(1<<${VKL_VDB_TOTAL_LOG_RES})")
+
+    set(VKL_VDB_POSTFIX "")
+    if (${VKL_VDB_LEVEL} GREATER 0)
+      set(VKL_VDB_POSTFIX "_${VKL_VDB_LEVEL}")
+    endif()
+
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/include/${PROJECT_NAME}/vdb_topology.h.in
+      include/${PROJECT_NAME}/vdb/topology${VKL_VDB_POSTFIX}.h
+    )
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleConstantLeaf.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleConstantLeaf_${VKL_VDB_LEVEL}.ih
+    )
+
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSamplerDispatchInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.ih
+    )
+
+    foreach(VKL_VDB_UNIVARY in "uniform" "varying")
+      configure_file(
+        ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+        include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY}_${VKL_VDB_LEVEL}.ih
+      )
+    endforeach()
+
+  endforeach(I)
+
+endfunction()
+

@@ -16,6 +16,8 @@
 
 #pragma once
 
+#include "math/vec.ih"
+
 struct Volume
 {
   varying float (*uniform computeSample)(

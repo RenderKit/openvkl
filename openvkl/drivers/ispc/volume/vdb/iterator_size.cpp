@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019-2020 Intel Corporation                                    //
+// Copyright 2020 Intel Corporation                                         //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,21 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include <iostream>
+#include "VdbIterator.h"
+#include "VdbIterator_ispc.h"
+#include "common/export_util.h"
 
-// see SIMD conformance tests
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT 64
-#define ITERATOR_INTERNAL_STATE_SIZE 6080
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_4 16
-#define ITERATOR_INTERNAL_STATE_SIZE_4 1520
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_8 32
-#define ITERATOR_INTERNAL_STATE_SIZE_8 3040
-
-#define ITERATOR_INTERNAL_STATE_ALIGNMENT_16 64
-#define ITERATOR_INTERNAL_STATE_SIZE_16 6080
-
-#define ITERATOR_VARYING_INTERNAL_STATE_SIZE \
-  ITERATOR_INTERNAL_STATE_SIZE_16 / 16 / 4
+int main()
+{
+  std::cout << "sizeof(ispc::VdbIterator<" << VKL_TARGET_WIDTH
+            << ">): " << CALL_ISPC(VdbIterator_sizeOf) << " B / "
+            << VKL_TARGET_WIDTH << " lanes = "
+            << CALL_ISPC(VdbIterator_sizeOf) /
+                   static_cast<float>(VKL_TARGET_WIDTH)
+            << " B / lane" << std::endl;
+  std::cout << "sizeof(VdbIterator<" << VKL_TARGET_WIDTH << ">): "
+            << sizeof(openvkl::ispc_driver::VdbIterator<VKL_TARGET_WIDTH>)
+            << " B" << std::endl;
+  return 0;
+}

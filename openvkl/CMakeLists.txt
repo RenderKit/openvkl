@@ -38,10 +38,17 @@ target_include_directories(${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE ospcommon::ospcommon)
+
+
+set(VKL_VDB_LOG_RESOLUTION "6;5;4;3" CACHE STRING
+  "Base-2 logarithm of the resolution for each level in the tree.")
+openvkl_vdb_generate_topology()
+
 
 ## Configure OpenVKL installation ##
 
@@ -64,6 +71,14 @@ install(DIRECTORY
   PATTERN "*.h"
   PATTERN "*.isph"
 )
+
+install(DIRECTORY
+  ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/include/${PROJECT_NAME}
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  FILES_MATCHING
+  PATTERN "*.h"
+)
+
 
 ## Add OpenVKL drivers ##
 

@@ -578,6 +578,132 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
   -------------------  ------------------  --------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes.
 
+### VDB Volumes
+
+VDB volumes implement a data structure that is very similar to the data structure
+outlined in Museth [1].
+
+The data structure is a hierarchical regular grid at its core: Nodes are regular grids,
+and each grid cell may either store a constant value (this is called a tile), or
+child pointers.
+
+Nodes in VDB trees are wide: Nodes on the first level have a resolution of 32^3 voxels
+by default, on the next level 16^3, and on the leaf level 8^3 voxels. All nodes
+on a given level have the same resolution. This makes it easy to find the node
+containing a coordinate using shift operations (cp. [1]).
+
+VDB leaf nodes are implicit in Open VKL: they are stored as pointers to user-provided data.
+
+![Structure of `"vdb"` volumes in the default configuration][imgVdbStructure]
+
+VDB volumes interpret input data as constant cells (which are then potentially filtered).
+This is in contrast to `structured_regular` volumes, which have a vertex-centered
+interpretation.
+
+The VDB implementation in Open VKL follows the following goals:
+
+  - Efficient data structure traversal on vector architectures.
+
+  - Enable the use of industry-standard .vdb files created through the OpenVDB library.
+
+  - Compatibility with OpenVDB on a leaf data level, so that .vdb files may be loaded
+    with minimal overhead.
+
+VDB volumes have the following parameters:
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  Type          Name              Default                Description
+  ------------  ----------------  ---------------------- ---------------------------------------
+  int           type                                     The field type. Only `VKL_FLOAT` is 
+                                                         supported at the moment. Use the enum
+                                                         `VKLDataType` for named constants.
+
+  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+                                                         field. Use `VKLFilter` for named 
+                                                         constants.
+
+  int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`   Do not descend further than to this
+                                                         depth during sampling.
+
+  int           maxIteratorDepth  3                      Do not descend further than to this
+                                                         depth during interval iteration.
+                                                         The maximum value is 3.
+                            
+  float[]       indexToObject     1, 0, 0,               An array of 12 values of type `float` 
+                                  0, 1, 0,               that define the transformation from
+                                  0, 0, 1,               index space to object space.
+                                  0, 0, 0                In index space, the grid is an 
+                                                         axis-aligned regular grid, and leaf
+                                                         voxels have size (1,1,1).
+                                                         The first 9 values are interpreted
+                                                         as a row-major linear transformation
+                                                         matrix. The last 3 values are the
+                                                         translation of the grid origin.
+
+  uint32[]      level                                    For each input node, the level on
+                                                         which this node exists. Levels are
+                                                         counted from the root level (0) down.
+                                                         Input nodes may be on levels 
+                                                         [1, `VKL_VDB_NUM_LEVELS-1`].
+
+  vec3i[]       origin                                   For each input node, the node origin
+                                                         index.
+
+  uint32[]      format                                   For each input node, the data format.
+                                                         Currently supported are 
+                                                         `VKL_VDB_FORMAT_TILE` for tiles,
+                                                         and `VKL_VDB_FORMAT_CONSTANT` for
+                                                         nodes that are dense regular grids,
+                                                         but temporally constant.
+
+  VKLData[]     data                                     Node data. Nodes with format 
+                                                         `VKL_VDB_FORMAT_TILE` are expected to
+                                                         have single-entry arrays. Nodes with
+                                                         format `VKL_VDB_FORMAT_CONSTANT` are
+                                                         expected to have arrays with
+                                                         `vklVdbLevelNumVoxels(level[i])` 
+                                                         entries.
+  ------------  ----------------  ---------------------- ---------------------------------------
+  : Configuration parameters for VDB (`"vdb"`) volumes.
+
+The level, origin, format, and data parameters must have the same size, and there must
+be at least one valid node or `commit()` will fail.
+
+VDB volumes support the following observers:
+
+  --------------  -----------  -------------------------------------------------------------
+  Name            Buffer Type  Description
+  --------------  -----------  -------------------------------------------------------------
+  LeafNodeAccess  uint32[]     This observer returns an array with as many entries as 
+                               input nodes were passed. If the input node i was accessed
+                               during traversal, then the ith entry in this array has a
+                               nonzero value.
+                               This can be used for on-demand loading of leaf nodes.
+  --------------  --------------------------------------------------------------------------
+  : Observers supported by VDB (`"vdb"`) volumes.
+
+
+#### Major differences to OpenVDB
+
+  - Open VKL implements sampling in ISPC, and can exploit wide SIMD architectures.
+
+  - VDB volumes in Open VKL are read-only once committed, and designed for rendering only. 
+    Authoring or manipulating datasets is not in the scope of this implementation.
+
+  - The only supported field type is `VKL_FLOAT` at this point. Other field types
+    may be supported in the future.
+
+  - The root level in Open VKL has a single node with resolution 64^3 (cp. [1]. OpenVDB 
+    uses a hash map, instead).
+
+  - The tree topology can be configured at compile time, but this happens through
+    the CMake option `VKL_VDB_LOG_RESOLUTION`. By default this is set to "6;5;4;3",
+    which means that there are four levels, the root node has a resolution of 
+    (2^6^3 = 64^3), first level nodes a resolution of (2^5^3 = 32^3), and so on.
+
+1. Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic Topology.
+   ACM Transactions on Graphics 32(3), 2013. DOI: 10.1145/2487228.2487235
+
 Sampling
 --------
 

@@ -306,7 +306,6 @@ extern "C" void vklInitIntervalIterator(VKLIntervalIterator *iterator,
                                         VKLValueSelector valueSelector)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   constexpr int valid = 1;
   return openvkl::api::currentDriver().initIntervalIterator1(
       &valid,
@@ -329,7 +328,6 @@ OPENVKL_CATCH_END()
       const vkl_vrange1f##WIDTH *tRange,                              \
       VKLValueSelector valueSelector) OPENVKL_CATCH_BEGIN             \
   {                                                                   \
-    ASSERT_DRIVER();                                                  \
     return openvkl::api::currentDriver().initIntervalIterator##WIDTH( \
         valid,                                                        \
         reinterpret_cast<vVKLIntervalIteratorN<WIDTH> &>(*iterator),  \
@@ -350,7 +348,6 @@ __define_vklInitIntervalIteratorN(16);
 extern "C" int vklIterateInterval(VKLIntervalIterator *iterator,
                                   VKLInterval *interval) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   constexpr int valid = 1;
   vVKLIntervalN<1> intervalInternal;
   int result;
@@ -371,7 +368,6 @@ OPENVKL_CATCH_END(false)
       VKLInterval##WIDTH *interval,                                  \
       int *result) OPENVKL_CATCH_BEGIN                               \
   {                                                                  \
-    ASSERT_DRIVER();                                                 \
     vVKLIntervalN<WIDTH> intervalInternal;                           \
     openvkl::api::currentDriver().iterateInterval##WIDTH(            \
         valid,                                                       \
@@ -400,7 +396,6 @@ extern "C" void vklInitHitIterator(VKLHitIterator *iterator,
                                    VKLValueSelector valueSelector)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   constexpr int valid = 1;
   return openvkl::api::currentDriver().initHitIterator1(
       &valid,
@@ -423,7 +418,6 @@ OPENVKL_CATCH_END()
       const vkl_vrange1f##WIDTH *tRange,                         \
       VKLValueSelector valueSelector) OPENVKL_CATCH_BEGIN        \
   {                                                              \
-    ASSERT_DRIVER();                                             \
     return openvkl::api::currentDriver().initHitIterator##WIDTH( \
         valid,                                                   \
         reinterpret_cast<vVKLHitIteratorN<WIDTH> &>(*iterator),  \
@@ -444,7 +438,6 @@ __define_vklInitHitIteratorN(16);
 extern "C" int vklIterateHit(VKLHitIterator *iterator,
                              VKLHit *hit) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   constexpr int valid = 1;
   vVKLHitN<1> hitInternal;
   int result;
@@ -464,7 +457,6 @@ OPENVKL_CATCH_END(false)
                                        VKLHit##WIDTH *hit,              \
                                        int *result) OPENVKL_CATCH_BEGIN \
   {                                                                     \
-    ASSERT_DRIVER();                                                    \
     vVKLHitN<WIDTH> hitInternal;                                        \
     openvkl::api::currentDriver().iterateHit##WIDTH(                    \
         valid,                                                          \
@@ -653,7 +645,6 @@ OPENVKL_CATCH_END(nullptr)
 extern "C" float vklComputeSample(
     VKLVolume volume, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   constexpr int valid = 1;
   float sample;
   openvkl::api::currentDriver().computeSample1(
@@ -672,9 +663,6 @@ OPENVKL_CATCH_END(ospcommon::math::nan)
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       float *samples) OPENVKL_CATCH_BEGIN                             \
   {                                                                   \
-    ASSERT_DRIVER();                                                  \
-    ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH);                              \
-                                                                      \
     openvkl::api::currentDriver().computeSample##WIDTH(               \
         valid,                                                        \
         volume,                                                       \
@@ -692,7 +680,6 @@ __define_vklComputeSampleN(16);
 extern "C" vkl_vec3f vklComputeGradient(
     VKLVolume volume, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   constexpr int valid = 1;
   vkl_vec3f gradient;
   openvkl::api::currentDriver().computeGradient1(
@@ -711,9 +698,6 @@ OPENVKL_CATCH_END(vkl_vec3f{ospcommon::math::nan})
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       vkl_vvec3f##WIDTH *gradients) OPENVKL_CATCH_BEGIN               \
   {                                                                   \
-    ASSERT_DRIVER();                                                  \
-    ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH);                              \
-                                                                      \
     openvkl::api::currentDriver().computeGradient##WIDTH(             \
         valid,                                                        \
         volume,                                                       \
@@ -730,7 +714,6 @@ __define_vklComputeGradientN(16);
 
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   const box3f result = openvkl::api::currentDriver().getBoundingBox(volume);
   return reinterpret_cast<const vkl_box3f &>(result);
 }
@@ -738,7 +721,6 @@ OPENVKL_CATCH_END(vkl_box3f{ospcommon::math::nan})
 
 extern "C" vkl_range1f vklGetValueRange(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
   const range1f result = openvkl::api::currentDriver().getValueRange(volume);
   return reinterpret_cast<const vkl_range1f &>(result);
 }

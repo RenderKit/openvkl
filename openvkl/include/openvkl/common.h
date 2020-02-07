@@ -73,21 +73,21 @@ typedef struct
   vkl_vec3f lower, upper;
 } vkl_box3f;
 
-#define __define_wide_types(WIDTH)    \
-  typedef struct                      \
-  {                                   \
-    float x[WIDTH];                   \
-    float y[WIDTH];                   \
-    float z[WIDTH];                   \
-  } vkl_vvec3f##WIDTH;                \
-                                      \
-  typedef struct                      \
-  {                                   \
-    float lower[WIDTH], upper[WIDTH]; \
+#define __define_wide_types(WIDTH, ALIGNMENT) \
+  typedef struct VKL_ALIGN(ALIGNMENT)         \
+  {                                           \
+    float x[WIDTH];                           \
+    float y[WIDTH];                           \
+    float z[WIDTH];                           \
+  } vkl_vvec3f##WIDTH;                        \
+                                              \
+  typedef struct VKL_ALIGN(ALIGNMENT)         \
+  {                                           \
+    float lower[WIDTH], upper[WIDTH];         \
   } vkl_vrange1f##WIDTH;
 
-__define_wide_types(4);
-__define_wide_types(8);
-__define_wide_types(16);
+__define_wide_types(4, 16);
+__define_wide_types(8, 32);
+__define_wide_types(16, 64);
 
 #undef __define_wide_types

@@ -43,6 +43,20 @@ if (BUILD_BENCHMARKS)
   install(TARGETS vklBenchmarkUnstructuredVolume
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
+
+  # VDB volumes
+  add_executable(vklBenchmarkVdbVolume
+    vklBenchmarkVdbVolume.cpp
+  )
+
+  target_link_libraries(vklBenchmarkVdbVolume
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkVdbVolume
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 endif()
 
 # Functional tests
@@ -71,6 +85,7 @@ if (BUILD_TESTING)
     tests/vectorized_sampling.cpp
     tests/amr_volume_sampling.cpp
     tests/amr_volume_value_range.cpp
+    tests/vdb_volume.cpp
   )
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})

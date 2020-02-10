@@ -83,7 +83,7 @@ bool addPathTracerUI(GLFWVKLWindow &window)
   return changed;
 }
 
-bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float>& isoValues)
+bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
 {
   auto &renderer = window.currentRenderer();
 
@@ -107,8 +107,8 @@ bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float>& isoValues)
     isosurfaces[1].isovalue = 0.f;
     isosurfaces[2].isovalue = 1.f;
 
-    initialized = true;
-    isosurfacesChanged = true; // Update isovalues on init!
+    initialized        = true;
+    isosurfacesChanged = true;  // Update isovalues on init!
   }
 
   if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
@@ -162,12 +162,13 @@ void usage(const char *progname)
                " ray_march_iterator\n"
                "\t-disable-vsync\n"
                "\t-gridType structured_regular | structured_spherical | "
-               "unstructured | amr\n"
+               "unstructured | amr | vdb\n"
                "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
-               "\t-file <float.raw>"
+               "\t-file <float.raw>\n"
+               "\t-filter nearest | trilinear (vdb only)"
             << std::endl;
 }
 
@@ -182,6 +183,8 @@ int main(int argc, const char **argv)
   VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
   bool disableVSync(false);
+  VKLFilter filter(VKL_FILTER_TRILINEAR);
+  bool haveFilter(false);
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -252,6 +255,19 @@ int main(int argc, const char **argv)
       }
 
       filename = argv[argIndex++];
+    } else if (switchArg == "-filter") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -filter arguments");
+      }
+
+      haveFilter                  = true;
+      const std::string filterArg = argv[argIndex++];
+      if (filterArg == "trilinear")
+        filter = VKL_FILTER_TRILINEAR;
+      else if (filterArg == "nearest")
+        filter = VKL_FILTER_NEAREST;
+      else
+        throw std::runtime_error("unsupported -filter specified");
     } else if (switchArg == "-renderer") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -renderer arguments");
@@ -266,6 +282,11 @@ int main(int argc, const char **argv)
       usage(argv[0]);
       throw std::runtime_error("unknown switch argument");
     }
+  }
+
+  if (haveFilter && gridType != "vdb") {
+    std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
+              << std::endl;
   }
 
   // generate gridOrigin and gridSpacing if not specified on the command-line
@@ -353,6 +374,11 @@ int main(int argc, const char **argv)
       testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
           new ProceduralShellsAMRVolume<>(dimensions, gridOrigin, gridSpacing));
     }
+
+    else if (gridType == "vdb") {
+      testingVolume = std::make_shared<WaveletVdbVolume>(
+          dimensions, gridOrigin, gridSpacing, filter);
+    }
   }
 
   Scene scene;
@@ -424,8 +450,7 @@ int main(int argc, const char **argv)
     }
 
     if (rendererType == "hit_iterator") {
-      if (addIsosurfacesUI(*glfwVKLWindow, isoValues))
-      {
+      if (addIsosurfacesUI(*glfwVKLWindow, isoValues)) {
         changed = true;
         scene.updateValueSelector(transferFunction, isoValues);
       }
@@ -433,9 +458,11 @@ int main(int argc, const char **argv)
     auto transferFunctionUpdatedCallback =
         [&](const range1f &valueRange,
             const std::vector<vec4f> &colorsAndOpacities) {
-          transferFunction = TransferFunction{ valueRange, colorsAndOpacities };
-          scene.tfColorsAndOpacities = transferFunction.colorsAndOpacities.data();
-          scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
+          transferFunction = TransferFunction{valueRange, colorsAndOpacities};
+          scene.tfColorsAndOpacities =
+              transferFunction.colorsAndOpacities.data();
+          scene.tfNumColorsAndOpacities =
+              transferFunction.colorsAndOpacities.size();
           scene.tfValueRange = valueRange;
           scene.updateValueSelector(transferFunction, isoValues);
           glfwVKLWindow->resetAccumulation();

@@ -67,6 +67,7 @@ add_executable(vklExamples
 )
 
 target_link_libraries(vklExamples PRIVATE
+  openvkl_vdb_util
   openvkl_testing
   glfw
   vkl_example_renderers

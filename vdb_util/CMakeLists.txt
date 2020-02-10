@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2019-2020 Intel Corporation                                    ##
+## Copyright 2020 Intel Corporation                                         ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,22 +14,21 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-add_library(openvkl_testing INTERFACE)
+cmake_minimum_required(VERSION 3.1)
 
-target_link_libraries(openvkl_testing INTERFACE
-  openvkl
-  ospcommon::ospcommon
-  openvkl_vdb_util
-)
+# A header-only utility library that shows how vdb volumes can be set up.
 
-target_include_directories(openvkl_testing
+add_library(openvkl_vdb_util INTERFACE)
+
+target_include_directories(openvkl_vdb_util
   INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
-if (BUILD_BENCHMARKS)
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # don't build tests
-  add_subdirectory(external/benchmark)
-endif()
+target_link_libraries(openvkl_vdb_util
+  INTERFACE
+    ospcommon::ospcommon
+    openvkl
+)
 
-add_subdirectory(apps)

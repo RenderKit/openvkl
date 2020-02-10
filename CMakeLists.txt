@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
+## Copyright 2019-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -67,6 +67,7 @@ openvkl_create_embree_target()
 ## Build library, examples, and tests ##
 
 add_subdirectory(openvkl)
+add_subdirectory(vdb_util)
 
 if (BUILD_EXAMPLES)
   add_subdirectory(examples)

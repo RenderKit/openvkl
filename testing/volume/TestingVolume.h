@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -109,6 +109,7 @@ namespace openvkl {
       TestingVolume() = default;
       virtual ~TestingVolume();
 
+      void release();
       VKLVolume getVKLVolume();
 
       // returns an application-side computed value range, for comparison with
@@ -125,8 +126,14 @@ namespace openvkl {
 
     inline TestingVolume::~TestingVolume()
     {
+      release();
+    }
+
+    inline void TestingVolume::release()
+    {
       if (volume) {
         vklRelease(volume);
+        volume = nullptr;
       }
     }
 

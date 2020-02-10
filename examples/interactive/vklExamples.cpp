@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -83,7 +83,7 @@ bool addPathTracerUI(GLFWVKLWindow &window)
   return changed;
 }
 
-bool addIsosurfacesUI(GLFWVKLWindow &window)
+bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float>& isoValues)
 {
   auto &renderer = window.currentRenderer();
 
@@ -100,6 +100,7 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
   static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
 
   static bool initialized = false;
+  bool isosurfacesChanged = false;
 
   if (!initialized) {
     isosurfaces[0].isovalue = -1.f;
@@ -107,9 +108,8 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
     isosurfaces[2].isovalue = 1.f;
 
     initialized = true;
+    isosurfacesChanged = true; // Update isovalues on init!
   }
-
-  bool isosurfacesChanged = false;
 
   if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
     isosurfacesChanged = true;
@@ -141,18 +141,15 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
   }
 
   if (isosurfacesChanged) {
-    static std::vector<float> enabledIsovalues;
-    enabledIsovalues.clear();
+    isoValues.clear();
 
     if (showIsosurfaces) {
       for (const auto &isosurface : isosurfaces) {
         if (isosurface.enabled) {
-          enabledIsovalues.push_back(isosurface.isovalue);
+          isoValues.push_back(isosurface.isovalue);
         }
       }
     }
-
-    window.setIsovalues(enabledIsovalues);
   }
 
   return isosurfacesChanged;
@@ -354,7 +351,10 @@ int main(int argc, const char **argv)
     }
   }
 
-  VKLVolume volume = testingVolume->getVKLVolume();
+  Scene scene;
+  TransferFunction transferFunction;
+  std::vector<float> isoValues;
+  scene.volume = testingVolume->getVKLVolume();
 
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
@@ -363,7 +363,7 @@ int main(int argc, const char **argv)
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
   std::cout << "voxelType:      " << voxelTypeString << std::endl;
 
-  vkl_box3f bbox = vklGetBoundingBox(volume);
+  vkl_box3f bbox = vklGetBoundingBox(scene.volume);
 
   std::cout << "boundingBox:    "
             << "(" << bbox.lower.x << ", " << bbox.lower.y << ", "
@@ -371,9 +371,7 @@ int main(int argc, const char **argv)
             << ", " << bbox.upper.z << ")" << std::endl;
 
   auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
-      vec2i{1024, 1024}, volume, rendererType);
-
-  auto &renderer = glfwVKLWindow->currentRenderer();
+      vec2i{1024, 1024}, scene, rendererType);
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
@@ -408,6 +406,7 @@ int main(int argc, const char **argv)
 
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 16)) {
+      auto &renderer = glfwVKLWindow->currentRenderer();
       renderer.setParam<int>("spp", spp);
       renderer.commit();
     }
@@ -421,19 +420,25 @@ int main(int argc, const char **argv)
     }
 
     if (rendererType == "hit_iterator") {
-      changed |= addIsosurfacesUI(*glfwVKLWindow);
+      if (addIsosurfacesUI(*glfwVKLWindow, isoValues))
+      {
+        changed = true;
+        scene.updateValueSelector(transferFunction, isoValues);
+      }
     }
-
     auto transferFunctionUpdatedCallback =
         [&](const range1f &valueRange,
             const std::vector<vec4f> &colorsAndOpacities) {
-          TransferFunction tf{valueRange, colorsAndOpacities};
-          glfwVKLWindow->setTransferFunction(tf);
+          transferFunction = TransferFunction{ valueRange, colorsAndOpacities };
+          scene.tfColorsAndOpacities = transferFunction.colorsAndOpacities.data();
+          scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
+          scene.tfValueRange = valueRange;
+          scene.updateValueSelector(transferFunction, isoValues);
           glfwVKLWindow->resetAccumulation();
         };
 
     static TransferFunctionWidget transferFunctionWidget(
-        transferFunctionUpdatedCallback);
+        transferFunctionUpdatedCallback, range1f(0.f, 1.f));
     transferFunctionWidget.updateUI();
 
     if (changed) {

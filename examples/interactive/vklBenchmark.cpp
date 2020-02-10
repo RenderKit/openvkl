@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,10 +40,11 @@ static void render_wavelet(benchmark::State &state,
       ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
           vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
-  VKLVolume volume = proceduralVolume->getVKLVolume();
+  Scene scene;
+  scene.volume = proceduralVolume->getVKLVolume();
 
   auto window =
-      ospcommon::make_unique<VKLWindow>(windowSize, volume, rendererType);
+      ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
 
   window->setUseISPC(useISPC);
 

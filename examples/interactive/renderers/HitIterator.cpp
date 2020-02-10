@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,17 +21,17 @@
 namespace openvkl {
   namespace examples {
 
-    HitIterator::HitIterator(VKLVolume volume) : Renderer(volume)
+    HitIterator::HitIterator()
     {
-      ispcEquivalent = ispc::HitIterator_create(volume);
+      ispcEquivalent = ispc::HitIterator_create();
     }
 
-    vec3f HitIterator::renderPixel(Ray &ray, const vec4i &)
+    vec3f HitIterator::renderPixel(const Scene& scene, Ray &ray, const vec4i &)
     {
       vec3f color(0.f);
       float alpha = 0.f;
 
-      if (valueSelector == nullptr)
+      if (scene.valueSelector == nullptr)
         return color;
 
       // create volume iterator
@@ -41,17 +41,17 @@ namespace openvkl {
 
       VKLHitIterator iterator;
       vklInitHitIterator(&iterator,
-                         volume,
+                         scene.volume,
                          (vkl_vec3f *)&ray.org,
                          (vkl_vec3f *)&ray.dir,
                          &tRange,
-                         valueSelector);
+                         scene.valueSelector);
 
       // the current surface hit
       VKLHit hit;
 
       while (vklIterateHit(&iterator, &hit) && alpha < 0.99f) {
-        vec4f surfaceColorAndOpacity = sampleTransferFunction(hit.sample);
+        vec4f surfaceColorAndOpacity = sampleTransferFunction(scene, hit.sample);
 
         color = color + (1.f - alpha) * vec3f(surfaceColorAndOpacity);
         alpha = alpha + (1.f - alpha) * 0.25f;

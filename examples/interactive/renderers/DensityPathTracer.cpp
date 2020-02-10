@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,9 +40,9 @@ namespace openvkl {
 
     // DensityPathTracer definitions //////////////////////////////////////////
 
-    DensityPathTracer::DensityPathTracer(VKLVolume volume) : Renderer(volume)
+    DensityPathTracer::DensityPathTracer()
     {
-      ispcEquivalent = ispc::DensityPathTracer_create(volume);
+      ispcEquivalent = ispc::DensityPathTracer_create();
     }
 
     void DensityPathTracer::commit()
@@ -62,7 +62,7 @@ namespace openvkl {
     }
 
     bool DensityPathTracer::sampleWoodcock(RNG &rng,
-                                           VKLVolume volume,
+                                           const Scene& scene,
                                            const Ray &ray,
                                            const range1f &hits,
                                            float &t,
@@ -84,9 +84,9 @@ namespace openvkl {
         }
 
         const vec3f c = ray.org + t * ray.dir;
-        sample        = vklComputeSample(volume, (const vkl_vec3f *)&c);
+        sample        = vklComputeSample(scene.volume, (const vkl_vec3f *)&c);
 
-        vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
+        vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);
 
         // sigmaT must be mono-chromatic for Woodcock sampling
         const float sigmaTSample = sigmaMax * sampleColorAndOpacity.w;
@@ -100,8 +100,7 @@ namespace openvkl {
     }
 
     void DensityPathTracer::integrate(RNG &rng,
-                                      VKLVolume volume,
-                                      const box3f &volumeBounds,
+                                      const Scene& scene,
                                       Ray &ray,
                                       vec3f &Le,
                                       int scatterIndex)
@@ -109,13 +108,14 @@ namespace openvkl {
       // initialize emitted light to 0
       Le = vec3f(0.f);
 
-      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+      const auto volumeBounds = vklGetBoundingBox(scene.volume);
+      ray.t = intersectRayBox(ray.org, ray.dir, *reinterpret_cast<const box3f*>(&volumeBounds));
       if (ray.t.empty())
         return;
 
       float t, sample, transmittance;
 
-      if (!sampleWoodcock(rng, volume, ray, ray.t, t, sample, transmittance)) {
+      if (!sampleWoodcock(rng, scene, ray, ray.t, t, sample, transmittance)) {
         if (scatterIndex == 0)
           return;  // light is not directly visible
 
@@ -140,13 +140,12 @@ namespace openvkl {
 
       vec3f inscatteredLe;
       integrate(rng,
-                volume,
-                volumeBounds,
+                scene,
                 scatteringRay,
                 inscatteredLe,
                 scatterIndex + 1);
 
-      const vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
+      const vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);
 
       const vec3f sigmaSSample =
           sigmaSScale * vec3f(sampleColorAndOpacity) * sampleColorAndOpacity.w;
@@ -154,11 +153,11 @@ namespace openvkl {
       Le = Le + sigmaSSample * inscatteredLe;
     }
 
-    vec3f DensityPathTracer::renderPixel(Ray &ray, const vec4i &sampleID)
+    vec3f DensityPathTracer::renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID)
     {
       RNG rng(sampleID.z, (sampleID.w * sampleID.y) + sampleID.x);
       vec3f Le;
-      integrate(rng, volume, volumeBounds, ray, Le, 0);
+      integrate(rng, scene, ray, Le, 0);
       return Le;
     }
 

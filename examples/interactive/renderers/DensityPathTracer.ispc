@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -45,7 +45,7 @@ inline vec3f uniformSampleSphere(const float radius, const vec2f s)
 
 inline bool sampleWoodcock(DensityPathTracer *uniform self,
                            varying RandomTEA *const uniform rng,
-                           VKLVolume volume,
+                           const uniform Scene* uniform scene,
                            const Ray &ray,
                            const float tBox0,
                            const float tBox1,
@@ -68,10 +68,10 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    sample        = vklComputeSampleV(volume, (varying vkl_vec3f *)&c);
+    sample        = vklComputeSampleV(scene->volume, (varying vkl_vec3f *)&c);
 
     const vec4f sampleColorAndOpacity =
-        Renderer_sampleTransferFunction(&self->super, sample);
+        Renderer_sampleTransferFunction(scene, sample);
 
     // sigmaT must be mono-chromatic for Woodcock sampling
     const float sigmaTSample = sigmaMax * sampleColorAndOpacity.w;
@@ -86,8 +86,7 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
 
 inline static void integrate(DensityPathTracer *uniform self,
                              varying RandomTEA *const uniform rng,
-                             uniform VKLVolume volume,
-                             const uniform box3f &volumeBounds,
+                             const uniform Scene* uniform scene,
                              const Ray &ray,
                              vec3f &Le,
                              int scatterIndex)
@@ -95,9 +94,11 @@ inline static void integrate(DensityPathTracer *uniform self,
   // initialize emitted light to 0
   Le = make_vec3f(0.f);
 
-  float tBox0, tBox1;
+  uniform vkl_box3f volumeBounds = vklGetBoundingBox(scene->volume);
   const box3f *uniform bb =
       (const uniform struct box3f *uniform) & volumeBounds;
+
+  float tBox0, tBox1;
   intersectBox(ray, *bb, tBox0, tBox1);
 
   if (tBox0 > tBox1)
@@ -106,7 +107,7 @@ inline static void integrate(DensityPathTracer *uniform self,
   float t, sample, transmittance;
 
   if (!sampleWoodcock(
-          self, rng, volume, ray, tBox0, tBox1, t, sample, transmittance)) {
+          self, rng, scene, ray, tBox0, tBox1, t, sample, transmittance)) {
     if (scatterIndex == 0)
       return;  // light is not directly visible
 
@@ -133,14 +134,13 @@ inline static void integrate(DensityPathTracer *uniform self,
   vec3f inscatteredLe;
   integrate(self,
             rng,
-            volume,
-            volumeBounds,
+            scene,
             scatteringRay,
             inscatteredLe,
             scatterIndex + 1);
 
   const vec4f sampleColorAndOpacity =
-      Renderer_sampleTransferFunction(&self->super, sample);
+      Renderer_sampleTransferFunction(scene, sample);
 
   const vec3f sigmaSSample = self->sigmaSScale *
                              make_vec3f(sampleColorAndOpacity) *
@@ -150,6 +150,7 @@ inline static void integrate(DensityPathTracer *uniform self,
 }
 
 vec3f DensityPathTracer_renderPixel(uniform Renderer *uniform _self,
+                                    const uniform Scene* uniform scene,
                                     Ray &ray,
                                     const vec2i &pixel,
                                     const uniform int &frameID,
@@ -162,20 +163,14 @@ vec3f DensityPathTracer_renderPixel(uniform Renderer *uniform _self,
   RandomTEA__Constructor(rng, frameID, (fbWidth * pixel.y) + pixel.x);
 
   vec3f Le;
-  integrate(
-      self, rng, self->super.volume, self->super.volumeBounds, ray, Le, 0);
+  integrate(self, rng, scene, ray, Le, 0);
   return Le;
 }
 
-export void *uniform DensityPathTracer_create(void *uniform _volume)
+export void *uniform DensityPathTracer_create()
 {
   DensityPathTracer *uniform self = uniform new DensityPathTracer;
-
-  VKLVolume volume = (VKLVolume)_volume;
-  Renderer_constructor(&self->super, volume);
-
   self->super.renderPixel = DensityPathTracer_renderPixel;
-
   return self;
 }
 

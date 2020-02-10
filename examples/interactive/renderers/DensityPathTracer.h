@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -23,16 +23,16 @@ namespace openvkl {
 
     struct DensityPathTracer : public Renderer
     {
-      DensityPathTracer(VKLVolume volume);
+      DensityPathTracer();
       ~DensityPathTracer() override = default;
 
       void commit() override;
 
-      vec3f renderPixel(Ray &ray, const vec4i &sampleID) override;
+      vec3f renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID) override;
 
      private:
       bool sampleWoodcock(RNG &rng,
-                          VKLVolume volume,
+                          const Scene& scene,
                           const Ray &ray,
                           const range1f &hits,
                           float &t,
@@ -40,8 +40,7 @@ namespace openvkl {
                           float &transmittance);
 
       void integrate(RNG &rng,
-                     VKLVolume volume,
-                     const box3f &volumeBounds,
+                     const Scene& scene,
                      Ray &ray,
                      vec3f &Le,
                      int scatterIndex);

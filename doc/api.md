@@ -701,6 +701,21 @@ VDB volumes support the following observers:
     which means that there are four levels, the root node has a resolution of 
     (2^6^3 = 64^3), first level nodes a resolution of (2^5^3 = 32^3), and so on.
 
+#### Loading OpenVDB .vdb files
+
+Files generated with OpenVDB can be loaded easily since Open VKL `vdb` volumes
+implement the same leaf data layout. This means that OpenVDB leaf data pointers
+can be passed to Open VKL using shared data buffers, avoiding copy operations.
+
+An example of this can be found in `vdb_util/include/openvkl/OpenVdbGrid.h`,
+where the class `OpenVdbFloatGrid` encapsulates the necessary operations. This
+class is also accessible through the `vklExamples` application using the
+`-file` and `-field` command line arguments. 
+
+To use this example feature, compile Open VKL with `OpenVDB_ROOT` pointing to
+the OpenVDB prefix.
+
+
 1. Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic Topology.
    ACM Transactions on Graphics 32(3), 2013. DOI: 10.1145/2487228.2487235
 

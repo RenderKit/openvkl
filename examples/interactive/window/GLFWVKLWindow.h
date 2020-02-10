@@ -31,7 +31,7 @@ namespace openvkl {
     {
      public:
       GLFWVKLWindow(const vec2i &windowSize,
-                    const Scene& scene,
+                    const Scene &scene,
                     std::string rendererType,
                     bool disableVSync);
 
@@ -42,6 +42,7 @@ namespace openvkl {
       void setWindowTitle(const std::string &newWindowTitle);
 
       void registerImGuiCallback(std::function<void()> callback);
+      void registerEndOfFrameCallback(std::function<void()> callback);
 
       void mainLoop();
 
@@ -64,6 +65,9 @@ namespace openvkl {
       // optional registered ImGui callback, called during every frame to build
       // UI
       std::function<void()> uiCallback;
+
+      // optional callback after a frame was rendered
+      std::function<void()> endOfFrameCallback;
     };
 
   }  // namespace examples

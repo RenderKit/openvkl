@@ -168,7 +168,8 @@ void usage(const char *progname)
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
                "\t-file <float.raw>\n"
-               "\t-filter nearest | trilinear (vdb only)"
+               "\t-filter nearest | trilinear (vdb only)\n"
+               "\t-field <density> (vdb only)\n"
             << std::endl;
 }
 
@@ -185,6 +186,8 @@ int main(int argc, const char **argv)
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
   bool haveFilter(false);
+  bool haveVdb(false);
+  std::string field("density");
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -255,6 +258,12 @@ int main(int argc, const char **argv)
       }
 
       filename = argv[argIndex++];
+    } else if (switchArg == "-field") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -field arguments");
+      }
+
+      field = argv[argIndex++];
     } else if (switchArg == "-filter") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -filter arguments");
@@ -310,13 +319,23 @@ int main(int argc, const char **argv)
 
   if (!filename.empty()) {
     std::cout << "filename:       " << filename << std::endl;
-    testingVolume = std::shared_ptr<RawFileStructuredVolume>(
-        new RawFileStructuredVolume(filename,
-                                    gridType,
-                                    dimensions,
-                                    gridOrigin,
-                                    gridSpacing,
-                                    voxelType));
+
+    std::string ext = filename.substr(filename.size() - 4);
+    std::for_each(ext.begin(), ext.end(), [](char &c) { c = ::tolower(c); });
+    if (ext == ".vdb") {
+      gridType  = "vdb";
+      auto vol  = std::make_shared<OpenVdbFloatVolume>(filename, field, filter);
+      testingVolume = std::move(vol);
+      haveVdb       = true;
+    } else {
+      testingVolume = std::shared_ptr<RawFileStructuredVolume>(
+          new RawFileStructuredVolume(filename,
+                                      gridType,
+                                      dimensions,
+                                      gridOrigin,
+                                      gridSpacing,
+                                      voxelType));
+    }
   } else {
     if (gridType == "structuredRegular") {
       if (voxelType == VKL_UCHAR) {
@@ -378,11 +397,17 @@ int main(int argc, const char **argv)
     else if (gridType == "vdb") {
       testingVolume = std::make_shared<WaveletVdbVolume>(
           dimensions, gridOrigin, gridSpacing, filter);
+      haveVdb = true;
     }
 
     else {
       throw std::runtime_error("unknown gridType specified");
     }
+  }
+
+  if (haveFilter && !haveVdb) {
+    std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
+              << std::endl;
   }
 
   Scene scene;
@@ -477,6 +502,15 @@ int main(int argc, const char **argv)
     transferFunctionWidget.updateUI();
 
     if (changed) {
+      glfwVKLWindow->resetAccumulation();
+    }
+  });
+
+  glfwVKLWindow->registerEndOfFrameCallback([&]() {
+    auto vdbVolume = std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
+    if (vdbVolume && vdbVolume->updateVolume()) {
+      scene.volume = testingVolume->getVKLVolume();
+      scene.updateValueSelector(transferFunction, isoValues);
       glfwVKLWindow->resetAccumulation();
     }
   });

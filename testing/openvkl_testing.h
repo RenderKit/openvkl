@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "volume/OpenVdbVolume.h"
 #include "volume/ProceduralShellsAMRVolume.h"
 #include "volume/ProceduralStructuredRegularVolume.h"
 #include "volume/ProceduralStructuredSphericalVolume.h"

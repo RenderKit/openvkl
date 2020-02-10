@@ -30,7 +30,7 @@ namespace openvkl {
     GLFWVKLWindow *GLFWVKLWindow::activeWindow = nullptr;
 
     GLFWVKLWindow::GLFWVKLWindow(const vec2i &windowSize,
-                                 const Scene& scene,
+                                 const Scene &scene,
                                  std::string rendererType,
                                  bool disableVSync)
         : VKLWindow(windowSize, scene, rendererType)
@@ -126,6 +126,12 @@ namespace openvkl {
       uiCallback = callback;
     }
 
+    void GLFWVKLWindow::registerEndOfFrameCallback(
+        std::function<void()> callback)
+    {
+      endOfFrameCallback = callback;
+    }
+
     void GLFWVKLWindow::mainLoop()
     {
       while (!glfwWindowShouldClose(glfwWindow)) {
@@ -134,6 +140,9 @@ namespace openvkl {
         display();
 
         glfwPollEvents();
+
+        if (endOfFrameCallback)
+          endOfFrameCallback();
       }
     }
 

@@ -32,3 +32,46 @@ target_link_libraries(openvkl_vdb_util
     openvkl
 )
 
+install(DIRECTORY
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/vdb_util
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+  FILES_MATCHING
+  PATTERN "*.h"
+)
+
+# ------------------------------------------------------------------------------
+
+if (DEFINED OpenVDB_ROOT)
+  # Monitor <PackageName>_ROOT variables, as this mechanism is used a lot
+  # in OpenVDB.
+  if(POLICY CMP0074)
+    cmake_policy(SET CMP0074 NEW)
+  endif()
+
+  # OpenVDB comes with a set of cmake scripts that help find its dependencies.
+  # We must set the module path to find these scripts.
+  list(APPEND CMAKE_MODULE_PATH ${OpenVDB_ROOT}/lib/cmake/OpenVDB)
+  find_package(OpenVDB 7.0.0 COMPONENTS openvdb)
+
+  if (OpenVDB_FOUND)
+
+    # Applications should use this variable to determine if .vdb file loading is
+    # enabled.
+    target_compile_definitions(openvkl_vdb_util 
+      INTERFACE
+        OPENVKL_VDB_UTIL_OPENVDB_ENABLED)
+
+    target_link_libraries(openvkl_vdb_util 
+      INTERFACE 
+        OpenVDB::openvdb)
+
+  else()
+    message(STATUS "Failed to find OpenVDB at OpenVDB_ROOT (${OpenVDB_ROOT}).")
+  endif()
+
+else()
+  message(STATUS "Building without OpenVDB support")
+endif()
+
+
+

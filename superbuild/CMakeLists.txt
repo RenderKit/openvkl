@@ -65,6 +65,15 @@ option(INSTALL_IN_SEPARATE_DIRECTORIES
 
 option(BUILD_GLFW "Build glfw for examples or use one in existing environment?" ON)
 
+option(BUILD_OPENVDB "Build OpenVDB to support loading .vdb files?" OFF)
+set(BUILD_OPENVDB_VERSION "v7.0.0" CACHE STRING "Which version of OpenVDB to build?")
+set(BUILD_ILMBASE_VERSION   "v2.4.0" CACHE STRING "Which version of IlmBase to build?")
+set(BUILD_ZLIB_VERSION   "1.2.11" CACHE STRING "Which version of zlib to build?")
+set(BUILD_ZLIB_HASH      "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1" CACHE STRING "Hash for the zlib archive.")
+
+option(BUILD_BLOSC "Build c-BLOSC to support loading compressed.vdb files? This setting is ignored unless BUILD_OPENVDB is ON." ON)
+set(BUILD_BLOSC_VERSION   "v1.5.0" CACHE STRING "Which version of c-BLOSC to build?")
+
 option(BUILD_OPENVKL_TESTING "Enable testing targets when building OpenVKL" ON)
 option(BUILD_OPENVKL_BENCHMARKS "Enable benchmark targets when building OpenVKL" OFF)
 
@@ -105,6 +114,17 @@ if (BUILD_GLFW)
   include(dep_glfw)
 endif()
 
+if (BUILD_OPENVDB)
+  cmake_minimum_required(VERSION 3.7)
+    if (BUILD_BLOSC)
+      include(dep_blosc)
+    endif()
+  include(dep_boost)
+  include(dep_zlib)
+  include(dep_ilmbase)
+  include(dep_openvdb)
+endif()
+
 include(dep_ospcommon)
 include(dep_embree)
 
@@ -140,6 +160,8 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DISPC_EXECUTABLE=${ISPC_PATH}
       $<$<BOOL:${DOWNLOAD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB_FROM_SOURCE}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
+      $<$<BOOL:${BUILD_OPENVDB}>:-DOpenVDB_ROOT=${OPENVDB_ROOT}>
+      $<$<BOOL:${BUILD_OPENVDB}>:-DCMAKE_NO_SYSTEM_FROM_IMPORTED:BOOL=TRUE>
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF
   )
@@ -150,5 +172,6 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
     embree
     $<$<BOOL:${BUILD_GLFW}>:glfw>
     $<$<BOOL:${DOWNLOAD_ISPC}>:ispc>
+    $<$<BOOL:${BUILD_OPENVDB}>:openvdb>
   )
 endif()

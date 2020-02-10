@@ -60,7 +60,7 @@ void test_vectorized_sampling()
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> objectCoordinatesSOA =
+        AlignedVector<float> objectCoordinatesSOA =
             AOStoSOA_vec3f(objectCoordinates, callingWidth);
 
         float samples[16];

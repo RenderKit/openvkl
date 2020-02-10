@@ -52,7 +52,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
       std::vector<int> valid(callingWidth, 0);
       std::fill(valid.begin(), valid.begin() + width, 1);
 
-      std::vector<float> objectCoordinatesSOA =
+      AlignedVector<float> objectCoordinatesSOA =
           AOStoSOA_vec3f(objectCoordinates, callingWidth);
 
       std::vector<vec3f> gradients;

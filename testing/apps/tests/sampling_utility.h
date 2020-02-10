@@ -42,7 +42,7 @@ inline void test_scalar_and_vector_sampling(VKLVolume volume,
   std::vector<vec3f> objectCoordinatesVector;
   objectCoordinatesVector.push_back(objectCoordinates);
 
-  std::vector<float> objectCoordinatesSOA;
+  AlignedVector<float> objectCoordinatesSOA;
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
   float samples_4[4]   = {0.f};

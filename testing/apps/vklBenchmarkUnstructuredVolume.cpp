@@ -20,6 +20,7 @@
 #include "openvkl_testing.h"
 #include "ospcommon/utility/random.h"
 
+using namespace openvkl;
 using namespace openvkl::testing;
 using namespace ospcommon::utility;
 
@@ -107,14 +108,7 @@ void vectorRandomSample(benchmark::State &state)
     valid[i] = 1;
   }
 
-  struct vvec3f
-  {
-    float x[W];
-    float y[W];
-    float z[W];
-  };
-
-  vvec3f objectCoordinates;
+  vvec3fn<W> objectCoordinates;
   float samples[W];
 
   for (auto _ : state) {
@@ -203,15 +197,8 @@ void vectorFixedSample(benchmark::State &state)
     valid[i] = 1;
   }
 
-  struct vvec3f
-  {
-    float x[W];
-    float y[W];
-    float z[W];
-  };
-
   // use fixed coordinates for all benchmark iterations
-  vvec3f objectCoordinates;
+  vvec3fn<W> objectCoordinates;
 
   for (int i = 0; i < W; i++) {
     objectCoordinates.x[i] = 0.1701f;

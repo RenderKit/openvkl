@@ -31,7 +31,8 @@ namespace openvkl {
 
     GLFWVKLWindow::GLFWVKLWindow(const vec2i &windowSize,
                                  const Scene& scene,
-                                 std::string rendererType)
+                                 std::string rendererType,
+                                 bool disableVSync)
         : VKLWindow(windowSize, scene, rendererType)
     {
       if (activeWindow != nullptr)
@@ -51,6 +52,8 @@ namespace openvkl {
       }
 
       glfwMakeContextCurrent(glfwWindow);
+      if (disableVSync)
+        glfwSwapInterval(0);
 
       ImGui_ImplGlfwGL3_Init(glfwWindow, true);
 

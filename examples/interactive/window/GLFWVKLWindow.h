@@ -32,7 +32,8 @@ namespace openvkl {
      public:
       GLFWVKLWindow(const vec2i &windowSize,
                     const Scene& scene,
-                    std::string rendererType);
+                    std::string rendererType,
+                    bool disableVSync);
 
       ~GLFWVKLWindow() override;
 

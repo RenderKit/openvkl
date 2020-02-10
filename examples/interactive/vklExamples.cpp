@@ -160,6 +160,7 @@ void usage(const char *progname)
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
+               "\t-disable-vsync\n"
                "\t-gridType structured_regular | structured_spherical | "
                "unstructured | amr\n"
                "\t-gridOrigin <x> <y> <z>\n"
@@ -180,6 +181,7 @@ int main(int argc, const char **argv)
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
+  bool disableVSync(false);
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -191,6 +193,8 @@ int main(int argc, const char **argv)
       }
 
       gridType = std::string(argv[argIndex++]);
+    } else if (switchArg == "-disable-vsync") {
+      disableVSync = true;
     } else if (switchArg == "-gridOrigin") {
       if (argc < argIndex + 3) {
         throw std::runtime_error("improper -gridOrigin arguments");
@@ -371,7 +375,7 @@ int main(int argc, const char **argv)
             << ", " << bbox.upper.z << ")" << std::endl;
 
   auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
-      vec2i{1024, 1024}, scene, rendererType);
+      vec2i{1024, 1024}, scene, rendererType, disableVSync);
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;

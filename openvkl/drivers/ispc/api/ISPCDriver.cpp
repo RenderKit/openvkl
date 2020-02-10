@@ -708,7 +708,7 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), void>::type
+    typename std::enable_if<(OW < W), void>::type
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLVolume volume,
                                          const vvec3fn<OW> &objectCoordinates,
@@ -729,6 +729,28 @@ namespace openvkl {
       volumeObject.computeSampleV(validW, ocW, samplesW);
 
       for (int i = 0; i < OW; i++)
+        samples[i] = samplesW[i];
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
+                                         VKLVolume volume,
+                                         const vvec3fn<OW> &objectCoordinates,
+                                         vfloatn<OW> &samples)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = valid[i];
+
+      vfloatn<W> samplesW;
+
+      volumeObject.computeSampleV(validW, objectCoordinates, samplesW);
+
+      for (int i = 0; i < W; i++)
         samples[i] = samplesW[i];
     }
 

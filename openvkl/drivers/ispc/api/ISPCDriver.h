@@ -303,7 +303,14 @@ namespace openvkl {
                          vintn<OW> &result);
 
       template <int OW>
-      typename std::enable_if<(OW <= W), void>::type computeSampleAnyWidth(
+      typename std::enable_if<(OW < W), void>::type computeSampleAnyWidth(
+          const int *valid,
+          VKLVolume volume,
+          const vvec3fn<OW> &objectCoordinates,
+          vfloatn<OW> &samples);
+
+      template <int OW>
+      typename std::enable_if<(OW == W), void>::type computeSampleAnyWidth(
           const int *valid,
           VKLVolume volume,
           const vvec3fn<OW> &objectCoordinates,

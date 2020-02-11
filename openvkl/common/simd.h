@@ -168,7 +168,7 @@ namespace openvkl {
       return newVec;
     }
 
-    void fill_inactive_lanes(vintn<W> &mask)
+    void fill_inactive_lanes(const vintn<W> &mask)
     {
       for (int i = 0; i < W; i++) {
         if (mask[i]) {

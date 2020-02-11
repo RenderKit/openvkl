@@ -454,6 +454,7 @@ int main(int argc, const char **argv)
   glfwVKLWindow->mainLoop();
 
   // cleanly shut VKL down
+  scene = Scene();
   testingVolume.reset();
   glfwVKLWindow.reset();
   vklShutdown();

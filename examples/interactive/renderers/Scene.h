@@ -60,6 +60,13 @@ struct Scene
   {
   }
 
+  ~Scene()
+  {
+    if (valueSelector) {
+      vklRelease(valueSelector);
+    }
+  }
+
   void updateValueSelector(const TransferFunction& transferFunction,
                            const std::vector<float>& isoValues)
   {

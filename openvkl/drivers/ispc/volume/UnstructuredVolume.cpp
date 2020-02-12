@@ -261,7 +261,7 @@ namespace openvkl {
       return bBox;
     }
 
-    void errorFunction(void *userPtr, enum RTCError error, const char *str)
+    static inline void errorFunction(void *userPtr, enum RTCError error, const char *str)
     {
       LogMessageStream(VKL_LOG_WARNING)
           << "error " << error << ": " << str << std::endl;
@@ -461,9 +461,17 @@ namespace openvkl {
       }
     }
 
+#if TARGET_WIDTH_ENABLED_4
     VKL_REGISTER_VOLUME(UnstructuredVolume<4>, unstructured_4)
+#endif
+
+#if TARGET_WIDTH_ENABLED_8
     VKL_REGISTER_VOLUME(UnstructuredVolume<8>, unstructured_8)
+#endif
+
+#if TARGET_WIDTH_ENABLED_16
     VKL_REGISTER_VOLUME(UnstructuredVolume<16>, unstructured_16)
+#endif
 
   }  // namespace ispc_driver
 }  // namespace openvkl

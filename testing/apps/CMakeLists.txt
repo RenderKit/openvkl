@@ -70,8 +70,10 @@ if (BUILD_TESTING)
   )
 
   target_link_libraries(vklTests
-    openvkl_testing
-    openvkl_module_ispc_driver
+    PRIVATE
+      openvkl_testing
+      openvkl_module_ispc_driver
+      openvkl_module_ispc_driver_ispc
   )
 
   install(TARGETS vklTests

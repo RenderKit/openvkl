@@ -195,9 +195,17 @@ namespace openvkl {
       return valueRange;
     }
 
+#if TARGET_WIDTH_ENABLED_4
     VKL_REGISTER_VOLUME(AMRVolume<4>, amr_4);
+#endif
+
+#if TARGET_WIDTH_ENABLED_8
     VKL_REGISTER_VOLUME(AMRVolume<8>, amr_8);
+#endif
+
+#if TARGET_WIDTH_ENABLED_16
     VKL_REGISTER_VOLUME(AMRVolume<16>, amr_16);
+#endif
 
   }  // namespace ispc_driver
 }  // namespace openvkl

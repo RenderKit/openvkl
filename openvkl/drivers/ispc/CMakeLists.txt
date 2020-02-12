@@ -15,6 +15,7 @@
 ## ======================================================================== ##
 
 include(openvkl_ispc)
+include(openvkl_macros)
 
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
@@ -22,26 +23,16 @@ if (WIN32)
   set(DEFS_FILE ispc_driver_defs.def)
 endif()
 
-openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
+# ISPC-side build (all ISAs)
+openvkl_add_library_ispc(openvkl_module_ispc_driver_ispc OBJECT
   simd_conformance.ispc
-  api/ISPCDriver.cpp
-  iterator/DefaultIterator.cpp
   iterator/DefaultIterator.ispc
-  iterator/GridAcceleratorIterator.cpp
   iterator/GridAcceleratorIterator.ispc
-  iterator/UnstructuredIterator.cpp
   iterator/UnstructuredIterator.ispc
-  value_selector/ValueSelector.cpp
   value_selector/ValueSelector.ispc
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
-  volume/StructuredRegularVolume.cpp
-  volume/StructuredSphericalVolume.cpp
-  volume/UnstructuredVolume.cpp
   volume/UnstructuredVolume.ispc
-  volume/amr/AMRAccel.cpp
-  volume/amr/AMRData.cpp
-  volume/amr/AMRVolume.cpp
   volume/amr/AMRVolume.ispc
   volume/amr/CellRef.ispc
   volume/amr/DualCell.ispc
@@ -51,19 +42,92 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
   ${DEFS_FILE}
 )
 
-target_include_directories(openvkl_module_ispc_driver
-PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
-  $<BUILD_INTERFACE:${PROJECT_BINARY_DIR}>
-  $<BUILD_INTERFACE:${EMBREE_INCLUDE_DIRS}>
+set_target_properties(openvkl_module_ispc_driver_ispc PROPERTIES
+  LINKER_LANGUAGE CXX)
+
+# keep track of objects, since TARGET_OBJECTS<> is not available for ISPC-built
+# libraries, and we therefore can't just link with this target
+set(openvkl_module_ispc_driver_ispc_OBJECTS ${ISPC_OBJECTS})
+
+target_include_directories(openvkl_module_ispc_driver_ispc
+  PUBLIC
+    ${CMAKE_SOURCE_DIR}
+  INTERFACE
+    ${PROJECT_BINARY_DIR}
+)
+
+# width-specific builds
+
+# common code between all targets will only be built for the first active target
+# width
+set(TARGET_WIDTH_BUILT_COMMON FALSE)
+
+foreach(TARGET_WIDTH 4 8 16)
+
+  openvkl_get_width_enabled(${TARGET_WIDTH} TARGET_WIDTH_ENABLED)
+
+  if(NOT ${TARGET_WIDTH_ENABLED})
+    continue()
+  endif()
+
+  set(TARGET_NAME "openvkl_module_ispc_driver_${TARGET_WIDTH}")
+
+  add_library(${TARGET_NAME} OBJECT
+    api/ISPCDriver.cpp
+    iterator/DefaultIterator.cpp
+    iterator/GridAcceleratorIterator.cpp
+    iterator/UnstructuredIterator.cpp
+    value_selector/ValueSelector.cpp
+    volume/StructuredRegularVolume.cpp
+    volume/StructuredSphericalVolume.cpp
+    volume/UnstructuredVolume.cpp
+    volume/amr/AMRVolume.cpp
+    ${DEFS_FILE}
+  )
+
+  target_compile_definitions(${TARGET_NAME} PRIVATE
+    "TARGET_WIDTH_ENABLED_${TARGET_WIDTH}")
+
+  if(NOT ${TARGET_WIDTH_BUILT_COMMON})
+    set(TARGET_WIDTH_BUILT_COMMON TRUE)
+    target_compile_definitions(${TARGET_NAME} PRIVATE
+      "TARGET_WIDTH_ENABLED_COMMON")
+  endif()
+
+  set(width_compile_options "")
+  openvkl_get_compile_options_for_width(${TARGET_WIDTH} width_compile_options)
+  separate_arguments(width_compile_options UNIX_COMMAND "${width_compile_options}")
+
+  message("using compile options for width ${TARGET_WIDTH}: ${width_compile_options}")
+
+  target_compile_options(${TARGET_NAME} PRIVATE ${width_compile_options})
+
+  target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
+
+  target_link_libraries(${TARGET_NAME}
+    PUBLIC
+      openvkl
+      openvkl_module_ispc_driver_ispc
+      ospcommon::ospcommon
+      embree
+  )
+
+  # accumulate targets to be linked into single shared library
+  list(APPEND ACTIVE_WIDTH_TARGETS ${TARGET_NAME})
+
+endforeach(TARGET_WIDTH)
+
+
+# shared library linking to all width-specific targets
+add_library(openvkl_module_ispc_driver SHARED
+  volume/amr/AMRAccel.cpp
+  volume/amr/AMRData.cpp
+  ${openvkl_module_ispc_driver_ispc_OBJECTS}
 )
 
 target_link_libraries(openvkl_module_ispc_driver
-PUBLIC
-  openvkl
-PRIVATE
-  ospcommon::ospcommon
-  $<BUILD_INTERFACE:embree>
+  PRIVATE
+    ${ACTIVE_WIDTH_TARGETS}
 )
 
 install(TARGETS openvkl_module_ispc_driver

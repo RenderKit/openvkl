@@ -100,9 +100,17 @@ namespace openvkl {
           (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
     }
 
+#if TARGET_WIDTH_ENABLED_4
     template class GridAcceleratorIterator<4>;
+#endif
+
+#if TARGET_WIDTH_ENABLED_8
     template class GridAcceleratorIterator<8>;
+#endif
+
+#if TARGET_WIDTH_ENABLED_16
     template class GridAcceleratorIterator<16>;
+#endif
 
   }  // namespace ispc_driver
 }  // namespace openvkl

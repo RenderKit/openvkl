@@ -102,9 +102,17 @@ namespace openvkl {
           (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
     }
 
+#if TARGET_WIDTH_ENABLED_4
     template class DefaultIterator<4>;
+#endif
+
+#if TARGET_WIDTH_ENABLED_8
     template class DefaultIterator<8>;
+#endif
+
+#if TARGET_WIDTH_ENABLED_16
     template class DefaultIterator<16>;
+#endif
 
   }  // namespace ispc_driver
 }  // namespace openvkl

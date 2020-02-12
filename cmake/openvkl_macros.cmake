@@ -62,3 +62,21 @@ macro(openvkl_create_embree_target)
     )
   endif()
 endmacro()
+
+function(openvkl_get_width_enabled WIDTH ENABLED)
+  set(${ENABLED} FALSE PARENT_SCOPE)
+
+  if(WIDTH EQUAL 4 AND OPENVKL_ISA_SSE4)
+    set(${ENABLED} TRUE PARENT_SCOPE)
+  elseif(WIDTH EQUAL 8 AND (OPENVKL_ISA_AVX OR OPENVKL_ISA_AVX2))
+    set(${ENABLED} TRUE PARENT_SCOPE)
+  elseif(WIDTH EQUAL 16 AND (OPENVKL_ISA_AVX512KNL OR OPENVKL_ISA_AVX512SKX))
+    set(${ENABLED} TRUE PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(openvkl_get_compile_options_for_width WIDTH FLAGS)
+  set(${FLAGS} "" PARENT_SCOPE)
+  message("WARNING: not yet setting compile options for specific widths")
+  # TODO
+endfunction()

@@ -77,6 +77,66 @@ endfunction()
 
 function(openvkl_get_compile_options_for_width WIDTH FLAGS)
   set(${FLAGS} "" PARENT_SCOPE)
-  message("WARNING: not yet setting compile options for specific widths")
-  # TODO
+
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+
+     message("detected Clang or GNU compiler")
+
+    if(WIDTH EQUAL 4)
+      set(${FLAGS} "-msse4.2" PARENT_SCOPE)
+    elseif(WIDTH EQUAL 8)
+      set(${FLAGS} "-mavx" PARENT_SCOPE)
+    elseif(WIDTH EQUAL 16)
+      set(${FLAGS} "-mavx512f" PARENT_SCOPE)
+    else()
+      message(FATAL_ERROR "unknown build width")
+    endif()
+
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+
+    message("detected Intel compiler")
+
+    if(WIN32)
+      if(WIDTH EQUAL 4)
+        set(${FLAGS} "/QxSSE4.2" PARENT_SCOPE)
+      elseif(WIDTH EQUAL 8)
+        set(${FLAGS} "/arch:AVX" PARENT_SCOPE)
+      elseif(WIDTH EQUAL 16)
+        set(${FLAGS} "/QxCORE-AVX512" PARENT_SCOPE)
+      else()
+        message(FATAL_ERROR "unknown build width")
+      endif()
+    else()
+      if(WIDTH EQUAL 4)
+        set(${FLAGS} "-xsse4.2" PARENT_SCOPE)
+      elseif(WIDTH EQUAL 8)
+        set(${FLAGS} "-xAVX" PARENT_SCOPE)
+      elseif(WIDTH EQUAL 16)
+        set(${FLAGS} "-xCORE-AVX512" PARENT_SCOPE)
+      else()
+        message(FATAL_ERROR "unknown build width")
+      endif()
+    endif()
+
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+
+    message("detected MSVC compiler")
+
+    if(WIDTH EQUAL 4)
+      set(${FLAGS} "/D__SSE__ /D__SSE2__ /D__SSE3__ /D__SSSE3__ /D__SSE4_1__ /D__SSE4_2__" PARENT_SCOPE)
+    elseif(WIDTH EQUAL 8)
+      set(${FLAGS} "/D__SSE__ /D__SSE2__ /D__SSE3__ /D__SSSE3__ /D__SSE4_1__ /D__SSE4_2__ /arch:AVX" PARENT_SCOPE)
+    elseif(WIDTH EQUAL 16)
+      message(WARNING "only setting AVX compile options for width ${WIDTH} under MSVC")
+      set(${FLAGS} "/D__SSE__ /D__SSE2__ /D__SSE3__ /D__SSSE3__ /D__SSE4_1__ /D__SSE4_2__ /arch:AVX" PARENT_SCOPE)
+    else()
+      message(FATAL_ERROR "unknown build width")
+    endif()
+
+  else()
+    message(WARNING "unknown compiler, not setting width-specific build flags")
+  endif()
+
 endfunction()

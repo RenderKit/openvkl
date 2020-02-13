@@ -102,15 +102,23 @@ foreach(TARGET_WIDTH 4 8 16)
 
   target_include_directories(${TARGET_NAME}
     PUBLIC
-      ${CMAKE_SOURCE_DIR}
-      ${ISPC_TARGET_DIR}
+      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
+      $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
   )
 
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
       ospcommon::ospcommon
+    PRIVATE
       embree
+  )
+
+  install(TARGETS ${TARGET_NAME}
+    EXPORT ${PROJECT_NAME}_Exports
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
   )
 
   # accumulate targets to be linked into single shared library

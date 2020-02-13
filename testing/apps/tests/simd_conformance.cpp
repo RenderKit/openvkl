@@ -17,7 +17,7 @@
 #include "../../external/catch.hpp"
 #include "../common/simd.h"
 #include "openvkl/drivers/ispc/iterator/GridAcceleratorIterator.h"
-#include "openvkl/drivers/ispc/simd_conformance_ispc.h"
+#include "simd_conformance_ispc.h"
 #include "openvkl_testing.h"
 
 using namespace ospcommon;

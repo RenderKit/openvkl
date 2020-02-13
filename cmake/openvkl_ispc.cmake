@@ -206,8 +206,9 @@ macro (OPENVKL_ISPC_COMPILE)
     set(ISPC_ARCHITECTURE "x86")
   endif()
 
-  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  include_directories(${ISPC_TARGET_DIR})
+  string(CONCAT ISPC_TARGETS_STR ${ISPC_TARGETS})
+
+  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR}/ispc_${ISPC_TARGETS_STR})
 
   if(ISPC_INCLUDE_DIR)
     string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
@@ -256,8 +257,7 @@ macro (OPENVKL_ISPC_COMPILE)
     elseif ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
       string(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
     else() # relative path to input
-      string(CONCAT ISPC_TARGETS_STR ${ISPC_TARGETS})
-      set(outdir "${ISPC_TARGET_DIR}/local_${ISPC_TARGETS_STR}_${dir}")
+      set(outdir "${ISPC_TARGET_DIR}/local_${dir}")
       set(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
     endif()
 

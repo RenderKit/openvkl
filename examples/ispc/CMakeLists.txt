@@ -23,6 +23,8 @@ add_executable_ispc(vklTutorialISPC
   vklTutorialISPC.cpp
 )
 
+target_include_directories(vklTutorialISPC PRIVATE ${ISPC_TARGET_DIR})
+
 target_link_libraries(vklTutorialISPC PRIVATE openvkl)
 
 install(TARGETS vklTutorialISPC

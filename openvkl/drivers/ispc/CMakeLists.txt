@@ -103,8 +103,7 @@ foreach(TARGET_WIDTH 4 8 16)
   target_include_directories(${TARGET_NAME}
     PUBLIC
       ${CMAKE_SOURCE_DIR}
-    INTERFACE
-      ${PROJECT_BINARY_DIR}
+      ${ISPC_TARGET_DIR}
   )
 
   target_link_libraries(${TARGET_NAME}
@@ -127,6 +126,9 @@ openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
 )
 
 set_target_properties(openvkl_module_ispc_driver PROPERTIES LINKER_LANGUAGE CXX)
+
+target_include_directories(openvkl_module_ispc_driver
+  INTERFACE $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>)
 
 target_link_libraries(openvkl_module_ispc_driver
   PRIVATE

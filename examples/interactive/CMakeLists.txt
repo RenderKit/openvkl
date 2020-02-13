@@ -43,6 +43,8 @@ openvkl_add_library_ispc(vkl_example_renderers STATIC
   renderers/RayMarchIterator.ispc
 )
 
+target_include_directories(vkl_example_renderers PRIVATE ${ISPC_TARGET_DIR})
+
 target_link_libraries(vkl_example_renderers PUBLIC openvkl ospcommon::ospcommon)
 
 ## Interactive example app ##

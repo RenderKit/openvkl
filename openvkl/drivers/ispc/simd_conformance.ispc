@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "iterator/Iterator.ih"
+#include "iterator/GridAcceleratorIterator.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 #include "openvkl/openvkl.isph"
@@ -77,4 +78,14 @@ export uniform int sizeofVaryingHit()
 export varying Hit *uniform newVaryingHit()
 {
   return uniform new varying Hit;
+}
+
+export uniform int sizeofGridAcceleratorIterator()
+{
+  return sizeof(varying GridAcceleratorIterator);
+}
+
+export void *uniform newGridAcceleratorIterator()
+{
+  return uniform new varying GridAcceleratorIterator;
 }

@@ -29,7 +29,7 @@
 #  define OPENVKL_DLLEXPORT __declspec(dllexport)
 #else
 #  define OPENVKL_INTERFACE
-#  define OPENVKL_DLLEXPORT
+#  define OPENVKL_DLLEXPORT __attribute__ ((visibility ("default")))
 #endif
 
 #define OPENVKL_CORE_INTERFACE OPENVKL_INTERFACE

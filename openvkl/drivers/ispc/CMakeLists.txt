@@ -23,39 +23,6 @@ if (WIN32)
   set(DEFS_FILE ispc_driver_defs.def)
 endif()
 
-# ISPC-side build (all ISAs)
-openvkl_add_library_ispc(openvkl_module_ispc_driver_ispc OBJECT
-  simd_conformance.ispc
-  iterator/DefaultIterator.ispc
-  iterator/GridAcceleratorIterator.ispc
-  iterator/UnstructuredIterator.ispc
-  value_selector/ValueSelector.ispc
-  volume/GridAccelerator.ispc
-  volume/SharedStructuredVolume.ispc
-  volume/UnstructuredVolume.ispc
-  volume/amr/AMRVolume.ispc
-  volume/amr/CellRef.ispc
-  volume/amr/DualCell.ispc
-  volume/amr/method_current.ispc
-  volume/amr/method_finest.ispc
-  volume/amr/method_octant.ispc
-  ${DEFS_FILE}
-)
-
-set_target_properties(openvkl_module_ispc_driver_ispc PROPERTIES
-  LINKER_LANGUAGE CXX)
-
-# keep track of objects, since TARGET_OBJECTS<> is not available for ISPC-built
-# libraries, and we therefore can't just link with this target
-set(openvkl_module_ispc_driver_ispc_OBJECTS ${ISPC_OBJECTS})
-
-target_include_directories(openvkl_module_ispc_driver_ispc
-  PUBLIC
-    ${CMAKE_SOURCE_DIR}
-  INTERFACE
-    ${PROJECT_BINARY_DIR}
-)
-
 # width-specific builds
 
 # common code between all targets will only be built for the first active target
@@ -72,17 +39,48 @@ foreach(TARGET_WIDTH 4 8 16)
 
   set(TARGET_NAME "openvkl_module_ispc_driver_${TARGET_WIDTH}")
 
-  add_library(${TARGET_NAME} OBJECT
+  if (TARGET_WIDTH EQUAL 4)
+    set(ISPC_TARGETS_OVERRIDE ${OPENVKL_ISPC_TARGET_LIST_4})
+  elseif (TARGET_WIDTH EQUAL 8)
+    set(ISPC_TARGETS_OVERRIDE ${OPENVKL_ISPC_TARGET_LIST_8})
+  elseif (TARGET_WIDTH EQUAL 16)
+    set(ISPC_TARGETS_OVERRIDE ${OPENVKL_ISPC_TARGET_LIST_16})
+  endif()
+
+  openvkl_add_library_ispc(${TARGET_NAME} SHARED
     api/ISPCDriver.cpp
     iterator/DefaultIterator.cpp
+    iterator/DefaultIterator.ispc
     iterator/GridAcceleratorIterator.cpp
+    iterator/GridAcceleratorIterator.ispc
     iterator/UnstructuredIterator.cpp
+    iterator/UnstructuredIterator.ispc
     value_selector/ValueSelector.cpp
+    value_selector/ValueSelector.ispc
+    volume/amr/AMRAccel.cpp
+    volume/amr/AMRData.cpp
+    volume/amr/AMRVolume.cpp
+    volume/amr/AMRVolume.ispc
+    volume/amr/CellRef.ispc
+    volume/amr/DualCell.ispc
+    volume/amr/method_current.ispc
+    volume/amr/method_finest.ispc
+    volume/amr/method_octant.ispc
+    volume/GridAccelerator.ispc
+    volume/SharedStructuredVolume.ispc
     volume/StructuredRegularVolume.cpp
     volume/StructuredSphericalVolume.cpp
     volume/UnstructuredVolume.cpp
-    volume/amr/AMRVolume.cpp
-    ${DEFS_FILE}
+    volume/UnstructuredVolume.ispc
+  )
+
+  unset(ISPC_TARGETS_OVERRIDE)
+
+  # hidden symbols by default, so each target width library can use its internal
+  # ISPC-built components without conflict
+  set_target_properties(${TARGET_NAME} PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN 1
   )
 
   target_compile_definitions(${TARGET_NAME} PRIVATE
@@ -102,12 +100,16 @@ foreach(TARGET_WIDTH 4 8 16)
 
   target_compile_options(${TARGET_NAME} PRIVATE ${width_compile_options})
 
-  target_include_directories(${TARGET_NAME} PUBLIC ${CMAKE_SOURCE_DIR})
+  target_include_directories(${TARGET_NAME}
+    PUBLIC
+      ${CMAKE_SOURCE_DIR}
+    INTERFACE
+      ${PROJECT_BINARY_DIR}
+  )
 
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
-      openvkl_module_ispc_driver_ispc
       ospcommon::ospcommon
       embree
   )
@@ -119,11 +121,12 @@ endforeach(TARGET_WIDTH)
 
 
 # shared library linking to all width-specific targets
-add_library(openvkl_module_ispc_driver SHARED
-  volume/amr/AMRAccel.cpp
-  volume/amr/AMRData.cpp
-  ${openvkl_module_ispc_driver_ispc_OBJECTS}
+openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
+  simd_conformance.ispc
+  ${DEFS_FILE}
 )
+
+set_target_properties(openvkl_module_ispc_driver PROPERTIES LINKER_LANGUAGE CXX)
 
 target_link_libraries(openvkl_module_ispc_driver
   PRIVATE

@@ -73,8 +73,16 @@ if (BUILD_TESTING)
     PRIVATE
       openvkl_testing
       openvkl_module_ispc_driver
-      openvkl_module_ispc_driver_ispc
   )
+
+  # Needed for SIMD conformance tests
+  foreach(TARGET_NAME "openvkl_module_ispc_driver_4"
+                      "openvkl_module_ispc_driver_8"
+                      "openvkl_module_ispc_driver_16")
+    if (TARGET ${TARGET_NAME})
+      target_link_libraries(vklTests PRIVATE ${TARGET_NAME})
+    endif()
+  endforeach()
 
   install(TARGETS vklTests
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

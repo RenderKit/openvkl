@@ -16,7 +16,6 @@
 
 #include "../../external/catch.hpp"
 #include "../common/simd.h"
-#include "openvkl/drivers/ispc/GridAcceleratorIterator_ispc.h"
 #include "openvkl/drivers/ispc/iterator/GridAcceleratorIterator.h"
 #include "openvkl/drivers/ispc/simd_conformance_ispc.h"
 #include "openvkl_testing.h"
@@ -76,8 +75,7 @@ void vVKLHitIteratorN_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vVKLHitIteratorN<W>));
 
-  REQUIRE(sizeof(vVKLHitIteratorN<W>) ==
-          ispc::sizeofVaryingVKLHitIterator());
+  REQUIRE(sizeof(vVKLHitIteratorN<W>) == ispc::sizeofVaryingVKLHitIterator());
   REQUIRE(is_aligned_for_type<vVKLHitIteratorN<W>>(
       ispc::newVaryingVKLHitIterator()));
 
@@ -118,12 +116,12 @@ void vVKLHitN_conformance_test()
 template <int W>
 void GridAcceleratorIterator_conformance_test()
 {
-  int ispcSize = ispc::GridAcceleratorIterator_sizeOf();
+  int ispcSize = ispc::sizeofGridAcceleratorIterator();
   REQUIRE(ispcSize ==
           openvkl::ispc_driver::GridAcceleratorIterator<W>::ispcStorageSize);
 
   REQUIRE(is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIterator<W>>(
-      ispc::GridAcceleratorIterator_new()));
+      ispc::newGridAcceleratorIterator()));
 
   REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIterator<W>) <=
           iterator_internal_state_size_for_width(W));

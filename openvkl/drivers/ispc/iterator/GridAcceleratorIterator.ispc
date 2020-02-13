@@ -42,12 +42,6 @@ export uniform int GridAcceleratorIterator_sizeOf()
   return sizeof(varying GridAcceleratorIterator);
 }
 
-// for tests only
-export void *uniform GridAcceleratorIterator_new()
-{
-  return uniform new varying GridAcceleratorIterator;
-}
-
 export void GridAcceleratorIterator_Initialize(const int *uniform imask,
                                                void *uniform _self,
                                                void *uniform _volume,

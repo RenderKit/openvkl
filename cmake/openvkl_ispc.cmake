@@ -151,31 +151,40 @@ macro(openvkl_configure_ispc_isa)
     endif()
   endif()
 
-  # generate final ISPC target list
+  # generate final ISPC target lists; both a full list of all targets, and lists
+  # of targets per runtime width
   unset(OPENVKL_ISPC_TARGET_LIST)
+  unset(OPENVKL_ISPC_TARGET_LIST_4)
+  unset(OPENVKL_ISPC_TARGET_LIST_8)
+  unset(OPENVKL_ISPC_TARGET_LIST_16)
 
   if (OPENVKL_ISA_SSE4)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} sse4)
+    set(OPENVKL_ISPC_TARGET_LIST_4 ${OPENVKL_ISPC_TARGET_LIST_4} sse4)
     message(STATUS "OpenVKL SSE4 ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx)
+    set(OPENVKL_ISPC_TARGET_LIST_8 ${OPENVKL_ISPC_TARGET_LIST_8} avx)
     message(STATUS "OpenVKL AVX ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX2)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx2)
+    set(OPENVKL_ISPC_TARGET_LIST_8 ${OPENVKL_ISPC_TARGET_LIST_8} avx2)
     message(STATUS "OpenVKL AVX2 ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX512KNL)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512knl-i32x16)
+    set(OPENVKL_ISPC_TARGET_LIST_16 ${OPENVKL_ISPC_TARGET_LIST_16} avx512knl-i32x16)
     message(STATUS "OpenVKL AVX512KNL ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX512SKX)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512skx-i32x16)
+    set(OPENVKL_ISPC_TARGET_LIST_16 ${OPENVKL_ISPC_TARGET_LIST_16} avx512skx-i32x16)
     message(STATUS "OpenVKL AVX512SKX ISA target enabled.")
   endif()
 endmacro()
@@ -183,6 +192,10 @@ endmacro()
 macro (OPENVKL_ISPC_COMPILE)
   set(ISPC_ADDITIONAL_ARGS "")
   set(ISPC_TARGETS ${OPENVKL_ISPC_TARGET_LIST})
+
+  if (DEFINED ISPC_TARGETS_OVERRIDE)
+    set(ISPC_TARGETS ${ISPC_TARGETS_OVERRIDE})
+  endif()
 
   set(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
   string(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -243,7 +256,8 @@ macro (OPENVKL_ISPC_COMPILE)
     elseif ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
       string(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
     else() # relative path to input
-      set(outdir "${ISPC_TARGET_DIR}/local_${OPENVKL_ISPC_TARGET_NAME}_${dir}")
+      string(CONCAT ISPC_TARGETS_STR ${ISPC_TARGETS})
+      set(outdir "${ISPC_TARGET_DIR}/local_${ISPC_TARGETS_STR}_${dir}")
       set(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
     endif()
 

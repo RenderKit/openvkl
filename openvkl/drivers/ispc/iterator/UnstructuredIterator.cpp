@@ -101,17 +101,7 @@ namespace openvkl {
       return;
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    template class UnstructuredIterator<4>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    template class UnstructuredIterator<8>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    template class UnstructuredIterator<16>;
-#endif
+    template class UnstructuredIterator<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

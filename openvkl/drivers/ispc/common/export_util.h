@@ -16,8 +16,8 @@
 
 #pragma once
 
-#ifndef TARGET_WIDTH
-#error "export_util.h included without TARGET_WIDTH defined"
+#ifndef VKL_TARGET_WIDTH
+#error "export_util.h included without VKL_TARGET_WIDTH defined"
 #endif
 
 #define CONCAT2(A, B) A##B
@@ -26,7 +26,7 @@
 #define CONCAT_ARGS_V(A, ...) A(__VA_ARGS__)
 
 #define EXPORT_UNIQUE(name, ...) \
-  CONCAT_ARGS_V(CONCAT1(name, TARGET_WIDTH), __VA_ARGS__)
+  CONCAT_ARGS_V(CONCAT1(name, VKL_TARGET_WIDTH), __VA_ARGS__)
 
 #define CALL_ISPC(function, ...) \
-  CONCAT_ARGS_V(CONCAT1(ispc::function, TARGET_WIDTH), __VA_ARGS__)
+  CONCAT_ARGS_V(CONCAT1(ispc::function, VKL_TARGET_WIDTH), __VA_ARGS__)

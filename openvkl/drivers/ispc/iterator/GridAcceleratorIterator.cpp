@@ -104,17 +104,7 @@ namespace openvkl {
                 (int *)&result);
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    template class GridAcceleratorIterator<4>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    template class GridAcceleratorIterator<8>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    template class GridAcceleratorIterator<16>;
-#endif
+    template class GridAcceleratorIterator<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

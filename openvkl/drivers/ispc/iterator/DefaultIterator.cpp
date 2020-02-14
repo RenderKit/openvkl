@@ -107,17 +107,7 @@ namespace openvkl {
                 (int *)&result);
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    template class DefaultIterator<4>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    template class DefaultIterator<8>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    template class DefaultIterator<16>;
-#endif
+    template class DefaultIterator<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

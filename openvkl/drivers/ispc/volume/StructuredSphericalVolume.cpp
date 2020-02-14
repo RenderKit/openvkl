@@ -105,17 +105,8 @@ namespace openvkl {
       this->buildAccelerator();
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    VKL_REGISTER_VOLUME(StructuredSphericalVolume<4>, structured_spherical_4)
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    VKL_REGISTER_VOLUME(StructuredSphericalVolume<8>, structured_spherical_8)
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    VKL_REGISTER_VOLUME(StructuredSphericalVolume<16>, structured_spherical_16)
-#endif
+    VKL_REGISTER_VOLUME(StructuredSphericalVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(structured_spherical_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

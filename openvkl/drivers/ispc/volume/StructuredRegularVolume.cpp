@@ -54,17 +54,8 @@ namespace openvkl {
       this->buildAccelerator();
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    VKL_REGISTER_VOLUME(StructuredRegularVolume<4>, structured_regular_4)
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    VKL_REGISTER_VOLUME(StructuredRegularVolume<8>, structured_regular_8)
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    VKL_REGISTER_VOLUME(StructuredRegularVolume<16>, structured_regular_16)
-#endif
+    VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(structured_regular_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

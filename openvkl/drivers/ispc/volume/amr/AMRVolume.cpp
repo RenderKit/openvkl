@@ -200,17 +200,8 @@ namespace openvkl {
       return valueRange;
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    VKL_REGISTER_VOLUME(AMRVolume<4>, amr_4);
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    VKL_REGISTER_VOLUME(AMRVolume<8>, amr_8);
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    VKL_REGISTER_VOLUME(AMRVolume<16>, amr_16);
-#endif
+    VKL_REGISTER_VOLUME(AMRVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(amr_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

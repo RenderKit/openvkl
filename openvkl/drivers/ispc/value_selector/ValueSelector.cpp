@@ -72,17 +72,7 @@ namespace openvkl {
       }
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    template struct ValueSelector<4>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    template struct ValueSelector<8>;
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    template struct ValueSelector<16>;
-#endif
+    template struct ValueSelector<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

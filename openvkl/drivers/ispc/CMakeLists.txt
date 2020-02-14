@@ -43,7 +43,7 @@ foreach(TARGET_WIDTH 4 8 16)
     set(ISPC_TARGETS_OVERRIDE ${OPENVKL_ISPC_TARGET_LIST_16})
   endif()
 
-  set(ISPC_DEFINITIONS "-DTARGET_WIDTH=${TARGET_WIDTH}")
+  set(ISPC_DEFINITIONS "-DVKL_TARGET_WIDTH=${TARGET_WIDTH}")
 
   openvkl_add_library_ispc(${TARGET_NAME} SHARED
     api/ISPCDriver.cpp
@@ -84,13 +84,12 @@ foreach(TARGET_WIDTH 4 8 16)
   )
 
   target_compile_definitions(${TARGET_NAME} PRIVATE
-    "TARGET_WIDTH_ENABLED_${TARGET_WIDTH}"
-    "TARGET_WIDTH=${TARGET_WIDTH}")
+    "VKL_TARGET_WIDTH=${TARGET_WIDTH}")
 
   if(NOT ${TARGET_WIDTH_BUILT_COMMON})
     set(TARGET_WIDTH_BUILT_COMMON TRUE)
     target_compile_definitions(${TARGET_NAME} PRIVATE
-      "TARGET_WIDTH_ENABLED_COMMON")
+      "VKL_TARGET_WIDTH_ENABLED_COMMON")
   endif()
 
   set(width_compile_options "")

@@ -847,21 +847,12 @@ namespace openvkl {
       }
     }
 
-#if TARGET_WIDTH_ENABLED_4
-    VKL_REGISTER_DRIVER(ISPCDriver<4>, ispc_4)
-#endif
-
-#if TARGET_WIDTH_ENABLED_8
-    VKL_REGISTER_DRIVER(ISPCDriver<8>, ispc_8)
-#endif
-
-#if TARGET_WIDTH_ENABLED_16
-    VKL_REGISTER_DRIVER(ISPCDriver<16>, ispc_16)
-#endif
+    VKL_REGISTER_DRIVER(ISPCDriver<VKL_TARGET_WIDTH>,
+                        CONCAT1(ispc_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl
 
-#if TARGET_WIDTH_ENABLED_COMMON
+#if VKL_TARGET_WIDTH_ENABLED_COMMON
 extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_ispc_driver() {}
 #endif

@@ -18,6 +18,7 @@
 
 #include <functional>
 #include <memory>
+#include <string>
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
@@ -43,7 +44,7 @@ namespace openvkl {
       Driver();
       virtual ~Driver() override = default;
 
-      static Driver *createDriver(const char *driverName);
+      static Driver *createDriver(const std::string &driverName);
 
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;

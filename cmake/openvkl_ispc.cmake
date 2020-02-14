@@ -142,6 +142,21 @@ macro(openvkl_configure_ispc_isa)
     set(OPENVKL_ISPC_TARGET_LIST_16 ${OPENVKL_ISPC_TARGET_LIST_16} avx512skx-i32x16)
     message(STATUS "OpenVKL AVX512SKX ISA target enabled.")
   endif()
+
+  # if only one target is specified for a given width, add a second target to
+  # force ISPC name mangling. this avoids global name conflicts between drivers
+  # of different widths.
+  foreach (TARGET_LIST OPENVKL_ISPC_TARGET_LIST_4
+                       OPENVKL_ISPC_TARGET_LIST_8
+                       OPENVKL_ISPC_TARGET_LIST_16)
+    if (DEFINED ${TARGET_LIST})
+      list(LENGTH ${TARGET_LIST} NUM_TARGETS)
+
+      if (NUM_TARGETS EQUAL 1)
+        list(APPEND ${TARGET_LIST} sse2)
+      endif()
+    endif()
+  endforeach()
 endmacro()
 
 macro (OPENVKL_ISPC_COMPILE)

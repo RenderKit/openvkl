@@ -47,11 +47,15 @@ endif()
 
 # Functional tests
 if (BUILD_TESTING)
-  add_executable(vklTests
+  include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include
+    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc)
+
+  openvkl_add_executable_ispc(vklTests
     vklTests.cpp
     tests/hit_iterator.cpp
     tests/interval_iterator.cpp
     tests/simd_conformance.cpp
+    tests/simd_conformance.ispc
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
@@ -69,11 +73,9 @@ if (BUILD_TESTING)
     tests/amr_volume_value_range.cpp
   )
 
-  target_link_libraries(vklTests
-    PRIVATE
-      openvkl_testing
-      openvkl_module_ispc_driver
-  )
+  target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
+
+  target_link_libraries(vklTests PRIVATE openvkl_testing)
 
   # Needed for SIMD conformance tests
   foreach(TARGET_NAME "openvkl_module_ispc_driver_4"

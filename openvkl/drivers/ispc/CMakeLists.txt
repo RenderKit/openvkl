@@ -19,10 +19,6 @@ include(openvkl_macros)
 
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
-if (WIN32)
-  set(DEFS_FILE ispc_driver_defs.def)
-endif()
-
 # width-specific builds
 
 # common code between all targets will only be built for the first active target
@@ -128,10 +124,7 @@ endforeach(TARGET_WIDTH)
 
 
 # shared library linking to all width-specific targets
-openvkl_add_library_ispc(openvkl_module_ispc_driver SHARED
-  simd_conformance.ispc
-  ${DEFS_FILE}
-)
+add_library(openvkl_module_ispc_driver SHARED stub.cpp)
 
 set_target_properties(openvkl_module_ispc_driver PROPERTIES LINKER_LANGUAGE CXX)
 

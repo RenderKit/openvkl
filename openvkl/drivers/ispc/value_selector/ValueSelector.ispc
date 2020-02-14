@@ -14,13 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../common/export_util.h"
 #include "ValueSelector.ih"
 
-export void *uniform ValueSelector_Constructor(void *uniform volume,
-                                               const uniform int &numRanges,
-                                               const box1f *uniform ranges,
-                                               const uniform int &numValues,
-                                               const float *uniform values)
+export void *uniform EXPORT_UNIQUE(ValueSelector_Constructor,
+                                   void *uniform volume,
+                                   const uniform int &numRanges,
+                                   const box1f *uniform ranges,
+                                   const uniform int &numValues,
+                                   const float *uniform values)
 {
   uniform ValueSelector *uniform self = uniform new uniform ValueSelector;
 
@@ -61,7 +63,8 @@ export void *uniform ValueSelector_Constructor(void *uniform volume,
   return self;
 }
 
-export void *uniform ValueSelector_Destructor(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(ValueSelector_Destructor,
+                                   void *uniform _self)
 {
   uniform ValueSelector *uniform self = (uniform ValueSelector * uniform) _self;
   delete[] self->ranges;

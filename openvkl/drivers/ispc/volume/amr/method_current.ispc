@@ -17,6 +17,7 @@
 #include "AMRVolume.ih"
 #include "CellRef.ih"
 #include "DualCell.ih"
+#include "common/export_util.h"
 
 varying float AMR_current(const void *uniform _self, const varying vec3f &P)
 {
@@ -48,7 +49,7 @@ varying float AMR_currentLevel(const void *uniform _self,
   return width;
 }
 
-export void AMR_install_current(void *uniform _self)
+export void EXPORT_UNIQUE(AMR_install_current, void *uniform _self)
 {
   AMRVolume *uniform self   = (AMRVolume * uniform) _self;
   self->super.computeSample = AMR_current;

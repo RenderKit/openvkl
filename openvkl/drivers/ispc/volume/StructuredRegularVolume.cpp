@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "StructuredRegularVolume.h"
+#include "../common/export_util.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -25,7 +26,7 @@ namespace openvkl {
       StructuredVolume<W>::commit();
 
       if (!this->ispcEquivalent) {
-        this->ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
+        this->ispcEquivalent = CALL_ISPC(SharedStructuredVolume_Constructor);
 
         if (!this->ispcEquivalent) {
           throw std::runtime_error(
@@ -33,17 +34,17 @@ namespace openvkl {
         }
       }
 
-      bool success = ispc::SharedStructuredVolume_set(
-          this->ispcEquivalent,
-          this->voxelData->data,
-          this->voxelData->dataType,
-          (const ispc::vec3i &)this->dimensions,
-          ispc::structured_regular,
-          (const ispc::vec3f &)this->gridOrigin,
-          (const ispc::vec3f &)this->gridSpacing);
+      bool success = CALL_ISPC(SharedStructuredVolume_set,
+                               this->ispcEquivalent,
+                               this->voxelData->data,
+                               this->voxelData->dataType,
+                               (const ispc::vec3i &)this->dimensions,
+                               ispc::structured_regular,
+                               (const ispc::vec3f &)this->gridOrigin,
+                               (const ispc::vec3f &)this->gridSpacing);
 
       if (!success) {
-        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
         this->ispcEquivalent = nullptr;
 
         throw std::runtime_error("failed to commit StructuredRegularVolume");

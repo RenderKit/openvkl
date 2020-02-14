@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "UnstructuredIterator.h"
+#include "../common/export_util.h"
 #include "../common/math.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/UnstructuredVolume.h"
@@ -41,7 +42,7 @@ namespace openvkl {
       static bool oneTimeChecks = false;
 
       if (!oneTimeChecks) {
-        int ispcSize = ispc::UnstructuredIterator_sizeOf();
+        int ispcSize = CALL_ISPC(UnstructuredIterator_sizeOf);
 
         if (ispcSize > ispcStorageSize) {
           LogMessageStream(VKL_LOG_ERROR)
@@ -56,30 +57,31 @@ namespace openvkl {
         oneTimeChecks = true;
       }
 
-      ispc::UnstructuredIterator_Initialize(
-          (const int *)&valid,
-          &ispcStorage[0],
-          volume->getISPCEquivalent(),
-          (void *)&origin,
-          (void *)&direction,
-          (void *)&tRange,
-          valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+      CALL_ISPC(UnstructuredIterator_Initialize,
+                (const int *)&valid,
+                &ispcStorage[0],
+                volume->getISPCEquivalent(),
+                (void *)&origin,
+                (void *)&direction,
+                (void *)&tRange,
+                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
     template <int W>
     const Interval<W> *UnstructuredIterator<W>::getCurrentInterval() const
     {
-      return reinterpret_cast<const Interval<W> *>(
-          ispc::UnstructuredIterator_getCurrentInterval(
-              (void *)&ispcStorage[0]));
+      return reinterpret_cast<const Interval<W> *>(CALL_ISPC(
+          UnstructuredIterator_getCurrentInterval, (void *)&ispcStorage[0]));
     }
 
     template <int W>
     void UnstructuredIterator<W>::iterateInterval(const vintn<W> &valid,
                                                   vintn<W> &result)
     {
-      ispc::UnstructuredIterator_iterateInterval(
-          (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
+      CALL_ISPC(UnstructuredIterator_iterateInterval,
+                (const int *)&valid,
+                (void *)&ispcStorage[0],
+                (int *)&result);
     }
 
     template <int W>

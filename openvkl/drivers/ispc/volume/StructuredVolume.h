@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../common/Data.h"
+#include "../common/export_util.h"
 #include "../common/math.h"
 #include "GridAccelerator_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
@@ -66,7 +67,7 @@ namespace openvkl {
     StructuredVolume<W>::~StructuredVolume()
     {
       if (this->ispcEquivalent) {
-        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
       }
     }
 
@@ -94,8 +95,10 @@ namespace openvkl {
     inline void StructuredVolume<W>::computeSample(
         const vvec3fn<1> &objectCoordinates, vfloatn<1> &samples) const
     {
-      ispc::SharedStructuredVolume_sample_uniform_export(
-          this->ispcEquivalent, &objectCoordinates, &samples);
+      CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &samples);
     }
 
     template <int W>
@@ -104,10 +107,11 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples) const
     {
-      ispc::SharedStructuredVolume_sample_export((const int *)&valid,
-                                                 this->ispcEquivalent,
-                                                 &objectCoordinates,
-                                                 &samples);
+      CALL_ISPC(SharedStructuredVolume_sample_export,
+                (const int *)&valid,
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &samples);
     }
 
     template <int W>
@@ -116,17 +120,18 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      ispc::SharedStructuredVolume_gradient_export((const int *)&valid,
-                                                   this->ispcEquivalent,
-                                                   &objectCoordinates,
-                                                   &gradients);
+      CALL_ISPC(SharedStructuredVolume_gradient_export,
+                (const int *)&valid,
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &gradients);
     }
 
     template <int W>
     inline box3f StructuredVolume<W>::getBoundingBox() const
     {
-      ispc::box3f bb =
-          ispc::SharedStructuredVolume_getBoundingBox(this->ispcEquivalent);
+      ispc::box3f bb = CALL_ISPC(SharedStructuredVolume_getBoundingBox,
+                                 this->ispcEquivalent);
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
@@ -141,25 +146,27 @@ namespace openvkl {
     template <int W>
     inline void StructuredVolume<W>::buildAccelerator()
     {
-      void *accelerator =
-          ispc::SharedStructuredVolume_createAccelerator(this->ispcEquivalent);
+      void *accelerator = CALL_ISPC(SharedStructuredVolume_createAccelerator,
+                                    this->ispcEquivalent);
 
       vec3i bricksPerDimension;
       bricksPerDimension.x =
-          ispc::GridAccelerator_getBricksPerDimension_x(accelerator);
+          CALL_ISPC(GridAccelerator_getBricksPerDimension_x, accelerator);
       bricksPerDimension.y =
-          ispc::GridAccelerator_getBricksPerDimension_y(accelerator);
+          CALL_ISPC(GridAccelerator_getBricksPerDimension_y, accelerator);
       bricksPerDimension.z =
-          ispc::GridAccelerator_getBricksPerDimension_z(accelerator);
+          CALL_ISPC(GridAccelerator_getBricksPerDimension_z, accelerator);
 
       const int numTasks =
           bricksPerDimension.x * bricksPerDimension.y * bricksPerDimension.z;
       tasking::parallel_for(numTasks, [&](int taskIndex) {
-        ispc::GridAccelerator_build(accelerator, taskIndex);
+        CALL_ISPC(GridAccelerator_build, accelerator, taskIndex);
       });
 
-      ispc::GridAccelerator_computeValueRange(
-          accelerator, valueRange.lower, valueRange.upper);
+      CALL_ISPC(GridAccelerator_computeValueRange,
+                accelerator,
+                valueRange.lower,
+                valueRange.upper);
     }
 
   }  // namespace ispc_driver

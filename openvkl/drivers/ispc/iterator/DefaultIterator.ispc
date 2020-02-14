@@ -14,25 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../common/export_util.h"
 #include "../math/box_utility.ih"
 #include "../value_selector/ValueSelector.ih"
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
-export uniform int DefaultIterator_sizeOf()
+export uniform int EXPORT_UNIQUE(DefaultIterator_sizeOf)
 {
   return sizeof(varying DefaultIterator);
 }
 
-export void DefaultIterator_Initialize(const int *uniform imask,
-                                       void *uniform _self,
-                                       void *uniform _volume,
-                                       void *uniform _origin,
-                                       void *uniform _direction,
-                                       void *uniform _tRange,
-                                       void *uniform _valueSelector,
-                                       const uniform box3f &boundingBox,
-                                       const uniform box1f &valueRange)
+export void EXPORT_UNIQUE(DefaultIterator_Initialize,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _volume,
+                          void *uniform _origin,
+                          void *uniform _direction,
+                          void *uniform _tRange,
+                          void *uniform _valueSelector,
+                          const uniform box3f &boundingBox,
+                          const uniform box1f &valueRange)
 {
   if (!imask[programIndex]) {
     return;
@@ -62,16 +64,18 @@ export void DefaultIterator_Initialize(const int *uniform imask,
   self->hitState.tRange = self->boundingBoxTRange;
 }
 
-export void *uniform DefaultIterator_getCurrentInterval(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(DefaultIterator_getCurrentInterval,
+                                   void *uniform _self)
 {
   varying DefaultIterator *uniform self =
       (varying DefaultIterator * uniform) _self;
   return &self->intervalState.currentInterval;
 }
 
-export void DefaultIterator_iterateInterval(const int *uniform imask,
-                                            void *uniform _self,
-                                            uniform int *uniform _result)
+export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;
@@ -116,16 +120,18 @@ export void DefaultIterator_iterateInterval(const int *uniform imask,
   *result                             = true;
 }
 
-export void *uniform DefaultIterator_getCurrentHit(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(DefaultIterator_getCurrentHit,
+                                   void *uniform _self)
 {
   varying DefaultIterator *uniform self =
       (varying DefaultIterator * uniform) _self;
   return &self->hitState.currentHit;
 }
 
-export void DefaultIterator_iterateHit(const int *uniform imask,
-                                       void *uniform _self,
-                                       uniform int *uniform _result)
+export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../common/export_util.h"
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
 
@@ -752,7 +753,8 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
 // SharedStructuredVolume exported functions //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-export uniform box3f SharedStructuredVolume_getBoundingBox(void *uniform _self)
+export uniform box3f EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
+                                   void *uniform _self)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -760,11 +762,11 @@ export uniform box3f SharedStructuredVolume_getBoundingBox(void *uniform _self)
   return self->boundingBox;
 }
 
-export void SharedStructuredVolume_sample_export(
-    uniform const int *uniform imask,
-    void *uniform _self,
-    const void *uniform _objectCoordinates,
-    void *uniform _samples)
+export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
+                          uniform const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _samples)
 {
   SharedStructuredVolume *uniform self =
       (SharedStructuredVolume * uniform) _self;
@@ -778,10 +780,10 @@ export void SharedStructuredVolume_sample_export(
   }
 }
 
-export void SharedStructuredVolume_sample_uniform_export(void *uniform _self,
-                                                         const void *uniform
-                                                             _objectCoordinates,
-                                                         void *uniform _sample)
+export void EXPORT_UNIQUE(SharedStructuredVolume_sample_uniform_export,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _sample)
 {
   SharedStructuredVolume *uniform self =
       (SharedStructuredVolume * uniform) _self;
@@ -793,11 +795,11 @@ export void SharedStructuredVolume_sample_uniform_export(void *uniform _self,
   *sample = self->computeSampleUniform(self, *objectCoordinates);
 }
 
-export void SharedStructuredVolume_gradient_export(
-    uniform const int *uniform imask,
-    void *uniform _self,
-    const void *uniform _objectCoordinates,
-    void *uniform _gradients)
+export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_export,
+                          uniform const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _gradients)
 {
   SharedStructuredVolume *uniform self =
       (SharedStructuredVolume * uniform) _self;
@@ -811,7 +813,8 @@ export void SharedStructuredVolume_gradient_export(
   }
 }
 
-export void *uniform SharedStructuredVolume_Destructor(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Destructor,
+                                   void *uniform _self)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -823,7 +826,7 @@ export void *uniform SharedStructuredVolume_Destructor(void *uniform _self)
   delete self;
 }
 
-export void *uniform SharedStructuredVolume_Constructor()
+export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Constructor)
 {
   uniform SharedStructuredVolume *uniform self =
       uniform new uniform SharedStructuredVolume;
@@ -833,14 +836,15 @@ export void *uniform SharedStructuredVolume_Constructor()
   return self;
 }
 
-export uniform bool SharedStructuredVolume_set(
-    void *uniform _self,
-    const void *uniform voxelData,
-    const uniform int voxelType,
-    const uniform vec3i &dimensions,
-    const uniform SharedStructuredVolumeGridType gridType,
-    const uniform vec3f &gridOrigin,
-    const uniform vec3f &gridSpacing)
+export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
+                                  void *uniform _self,
+                                  const void *uniform voxelData,
+                                  const uniform int voxelType,
+                                  const uniform vec3i &dimensions,
+                                  const uniform SharedStructuredVolumeGridType
+                                      gridType,
+                                  const uniform vec3f &gridOrigin,
+                                  const uniform vec3f &gridSpacing)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -1006,8 +1010,8 @@ export uniform bool SharedStructuredVolume_set(
   return true;
 }
 
-export void *uniform
-SharedStructuredVolume_createAccelerator(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_createAccelerator,
+                                   void *uniform _self)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;

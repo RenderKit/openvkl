@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../common/export_util.h"
 #include "UnstructuredVolume.ih"
 
 inline bool pointInAABBTest(const uniform box3fa &box,
@@ -828,11 +829,11 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   return gradient / gradientStep;
 }
 
-export void VKLUnstructuredVolume_sample_export(
-    uniform const int *uniform imask,
-    void *uniform _volume,
-    const void *uniform _objectCoordinates,
-    void *uniform _samples)
+export void EXPORT_UNIQUE(VKLUnstructuredVolume_sample_export,
+                          uniform const int *uniform imask,
+                          void *uniform _volume,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _samples)
 {
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
@@ -843,11 +844,11 @@ export void VKLUnstructuredVolume_sample_export(
   }
 }
 
-export void VKLUnstructuredVolume_gradient_export(
-    uniform const int *uniform imask,
-    void *uniform _volume,
-    const void *uniform _objectCoordinates,
-    void *uniform _gradients)
+export void EXPORT_UNIQUE(VKLUnstructuredVolume_gradient_export,
+                          uniform const int *uniform imask,
+                          void *uniform _volume,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _gradients)
 {
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
@@ -859,8 +860,7 @@ export void VKLUnstructuredVolume_gradient_export(
   }
 }
 
-export void *uniform
-VKLUnstructuredVolume_Constructor()
+export void *uniform EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor)
 {
   uniform VKLUnstructuredVolume *uniform self = uniform new uniform VKLUnstructuredVolume;
 
@@ -869,21 +869,22 @@ VKLUnstructuredVolume_Constructor()
   return self;
 }
 
-export void VKLUnstructuredVolume_set(void *uniform _self,
-                                   const uniform box3f& _bbox,
-                                   const vec3f* uniform _vertex,
-                                   const uint32* uniform _index,
-                                   const uniform bool _index32Bit,
-                                   const float* uniform _vertexValue,
-                                   const float* uniform _cellValue,
-                                   const uint32* uniform _cell,
-                                   const uniform bool _cell32Bit,
-                                   const uniform uint32 _cellSkipIds,
-                                   const uint8* uniform _cellType,
-                                   const void* uniform bvhRoot,
-                                   const vec3f* uniform _faceNormals,
-                                   const float* uniform _iterativeTolerance,
-                                   const uniform bool _hexIterative)
+export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
+                          void *uniform _self,
+                          const uniform box3f &_bbox,
+                          const vec3f *uniform _vertex,
+                          const uint32 *uniform _index,
+                          const uniform bool _index32Bit,
+                          const float *uniform _vertexValue,
+                          const float *uniform _cellValue,
+                          const uint32 *uniform _cell,
+                          const uniform bool _cell32Bit,
+                          const uniform uint32 _cellSkipIds,
+                          const uint8 *uniform _cellType,
+                          const void *uniform bvhRoot,
+                          const vec3f *uniform _faceNormals,
+                          const float *uniform _iterativeTolerance,
+                          const uniform bool _hexIterative)
 {
   uniform VKLUnstructuredVolume *uniform self =
       (uniform VKLUnstructuredVolume * uniform) _self;

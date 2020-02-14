@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../common/export_util.h"
 #include "../iterator/GridAcceleratorIterator.ih"
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
@@ -189,7 +190,8 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
 }
 
 bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
-                              const varying GridAcceleratorIterator *uniform iterator,
+                              const varying GridAcceleratorIterator *uniform
+                                  iterator,
                               varying vec3i &cellIndex,
                               varying box1f &cellTRange)
 {
@@ -266,41 +268,43 @@ bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
   }
 }
 
-export uniform int GridAccelerator_getBricksPerDimension_x(
-    void *uniform _accelerator)
+export uniform int EXPORT_UNIQUE(GridAccelerator_getBricksPerDimension_x,
+                                 void *uniform _accelerator)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   return accelerator->bricksPerDimension.x;
 }
 
-export uniform int GridAccelerator_getBricksPerDimension_y(
-    void *uniform _accelerator)
+export uniform int EXPORT_UNIQUE(GridAccelerator_getBricksPerDimension_y,
+                                 void *uniform _accelerator)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   return accelerator->bricksPerDimension.y;
 }
 
-export uniform int GridAccelerator_getBricksPerDimension_z(
-    void *uniform _accelerator)
+export uniform int EXPORT_UNIQUE(GridAccelerator_getBricksPerDimension_z,
+                                 void *uniform _accelerator)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   return accelerator->bricksPerDimension.z;
 }
 
-export void GridAccelerator_build(void *uniform _accelerator,
-                                  const uniform int taskIndex)
+export void EXPORT_UNIQUE(GridAccelerator_build,
+                          void *uniform _accelerator,
+                          const uniform int taskIndex)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   GridAccelerator_encodeBrick(accelerator, taskIndex);
 }
 
-export void GridAccelerator_computeValueRange(void *uniform _accelerator,
-                                              uniform float &lower,
-                                              uniform float &upper)
+export void EXPORT_UNIQUE(GridAccelerator_computeValueRange,
+                          void *uniform _accelerator,
+                          uniform float &lower,
+                          uniform float &upper)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;

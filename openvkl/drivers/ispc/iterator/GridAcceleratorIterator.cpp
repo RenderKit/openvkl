@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "GridAcceleratorIterator.h"
+#include "../common/export_util.h"
 #include "../common/math.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
@@ -39,7 +40,7 @@ namespace openvkl {
       static bool oneTimeChecks = false;
 
       if (!oneTimeChecks) {
-        int ispcSize = ispc::GridAcceleratorIterator_sizeOf();
+        int ispcSize = CALL_ISPC(GridAcceleratorIterator_sizeOf);
 
         if (ispcSize > ispcStorageSize) {
           LogMessageStream(VKL_LOG_ERROR)
@@ -59,45 +60,48 @@ namespace openvkl {
 
       box3f boundingBox = volume->getBoundingBox();
 
-      ispc::GridAcceleratorIterator_Initialize(
-          (const int *)&valid,
-          &ispcStorage[0],
-          srv->getISPCEquivalent(),
-          (void *)&origin,
-          (void *)&direction,
-          (void *)&tRange,
-          valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+      CALL_ISPC(GridAcceleratorIterator_Initialize,
+                (const int *)&valid,
+                &ispcStorage[0],
+                srv->getISPCEquivalent(),
+                (void *)&origin,
+                (void *)&direction,
+                (void *)&tRange,
+                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
     template <int W>
     const Interval<W> *GridAcceleratorIterator<W>::getCurrentInterval() const
     {
-      return reinterpret_cast<const Interval<W> *>(
-          ispc::GridAcceleratorIterator_getCurrentInterval(
-              (void *)&ispcStorage[0]));
+      return reinterpret_cast<const Interval<W> *>(CALL_ISPC(
+          GridAcceleratorIterator_getCurrentInterval, (void *)&ispcStorage[0]));
     }
 
     template <int W>
     void GridAcceleratorIterator<W>::iterateInterval(const vintn<W> &valid,
                                                      vintn<W> &result)
     {
-      ispc::GridAcceleratorIterator_iterateInterval(
-          (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
+      CALL_ISPC(GridAcceleratorIterator_iterateInterval,
+                (const int *)&valid,
+                (void *)&ispcStorage[0],
+                (int *)&result);
     }
 
     template <int W>
     const Hit<W> *GridAcceleratorIterator<W>::getCurrentHit() const
     {
-      return reinterpret_cast<const Hit<W> *>(
-          ispc::GridAcceleratorIterator_getCurrentHit((void *)&ispcStorage[0]));
+      return reinterpret_cast<const Hit<W> *>(CALL_ISPC(
+          GridAcceleratorIterator_getCurrentHit, (void *)&ispcStorage[0]));
     }
 
     template <int W>
     void GridAcceleratorIterator<W>::iterateHit(const vintn<W> &valid,
                                                 vintn<W> &result)
     {
-      ispc::GridAcceleratorIterator_iterateHit(
-          (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
+      CALL_ISPC(GridAcceleratorIterator_iterateHit,
+                (const int *)&valid,
+                (void *)&ispcStorage[0],
+                (int *)&result);
     }
 
 #if TARGET_WIDTH_ENABLED_4

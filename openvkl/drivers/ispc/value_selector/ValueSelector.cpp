@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ValueSelector.h"
+#include "../common/export_util.h"
 #include "../volume/Volume.h"
 #include "ValueSelector_ispc.h"
 
@@ -30,7 +31,7 @@ namespace openvkl {
     ValueSelector<W>::~ValueSelector()
     {
       if (ispcEquivalent) {
-        ispc::ValueSelector_Destructor(ispcEquivalent);
+        CALL_ISPC(ValueSelector_Destructor, ispcEquivalent);
       }
     }
 
@@ -38,15 +39,15 @@ namespace openvkl {
     void ValueSelector<W>::commit()
     {
       if (ispcEquivalent) {
-        ispc::ValueSelector_Destructor(ispcEquivalent);
+        CALL_ISPC(ValueSelector_Destructor, ispcEquivalent);
       }
 
-      ispcEquivalent =
-          ispc::ValueSelector_Constructor(nullptr,
-                                          ranges.size(),
-                                          (const ispc::box1f *)ranges.data(),
-                                          values.size(),
-                                          (const float *)values.data());
+      ispcEquivalent = CALL_ISPC(ValueSelector_Constructor,
+                                 nullptr,
+                                 ranges.size(),
+                                 (const ispc::box1f *)ranges.data(),
+                                 values.size(),
+                                 (const float *)values.data());
     }
 
     template <int W>

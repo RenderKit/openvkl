@@ -14,24 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "common/export_util.h"
 #include "common/print_debug.ih"
 #include "math/box_utility.ih"
 #include "value_selector/ValueSelector.ih"
 #include "volume/UnstructuredVolume.ih"
 #include "UnstructuredIterator.ih"
 
-export uniform int UnstructuredIterator_sizeOf()
+export uniform int EXPORT_UNIQUE(UnstructuredIterator_sizeOf)
 {
   return sizeof(varying UnstructuredIterator);
 }
 
-export void UnstructuredIterator_Initialize(const int *uniform imask,
-                                       void *uniform _self,
-                                       void *uniform _volume,
-                                       void *uniform _origin,
-                                       void *uniform _direction,
-                                       void *uniform _tRange,
-                                       void *uniform _valueSelector)
+export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _volume,
+                          void *uniform _origin,
+                          void *uniform _direction,
+                          void *uniform _tRange,
+                          void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
     return;
@@ -50,7 +52,8 @@ export void UnstructuredIterator_Initialize(const int *uniform imask,
   resetInterval(self->intervalState.currentInterval);
 }
 
-export void *uniform UnstructuredIterator_getCurrentInterval(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(UnstructuredIterator_getCurrentInterval,
+                                   void *uniform _self)
 {
   varying UnstructuredIterator *uniform self =
       (varying UnstructuredIterator * uniform) _self;
@@ -131,9 +134,10 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
   return box_extend(tRangeFirst, tRangeSecond);
 }
 
-export void UnstructuredIterator_iterateInterval(const int *uniform imask,
-                                                 void *uniform _self,
-                                                 uniform int *uniform _result)
+export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;

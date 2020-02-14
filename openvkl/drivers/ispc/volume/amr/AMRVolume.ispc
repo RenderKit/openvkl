@@ -17,6 +17,7 @@
 // ours
 //#include "CellRef.ih"
 // #include "AMRCommon.h"
+#include "common/export_util.h"
 #include "AMR.ih"
 #include "AMRVolume.ih"
 
@@ -69,14 +70,15 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   return (gradient / gradientStep);
 }
 
-export void *uniform AMRVolume_create(void *uniform cppE)
+export void *uniform EXPORT_UNIQUE(AMRVolume_create, void *uniform cppE)
 {
   AMRVolume *uniform self = uniform new uniform AMRVolume;
   return self;
 }
 
-export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
-                                              uniform int leafID)
+export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
+                          const void *uniform _self,
+                          uniform int leafID)
 {
   const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
 
@@ -117,15 +119,16 @@ inline void AMRVolume_transformWorldToLocal(
       rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }
 
-export void AMRVolume_setAMR(void *uniform _self,
-                             uniform int numNodes,
-                             void *uniform _node,
-                             uniform int numLeaves,
-                             void *uniform _leaf,
-                             uniform int numLevels,
-                             void *uniform _level,
-                             const uniform int voxelType,
-                             const uniform box3f &worldBounds)
+export void EXPORT_UNIQUE(AMRVolume_setAMR,
+                          void *uniform _self,
+                          uniform int numNodes,
+                          void *uniform _node,
+                          uniform int numLeaves,
+                          void *uniform _leaf,
+                          uniform int numLevels,
+                          void *uniform _level,
+                          const uniform int voxelType,
+                          const uniform box3f &worldBounds)
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 
@@ -156,7 +159,8 @@ export void AMRVolume_setAMR(void *uniform _self,
   }
 }
 
-export void AMRVolume_set(void *uniform _self,
+export void EXPORT_UNIQUE(AMRVolume_set,
+                          void *uniform _self,
                           uniform box3f &worldBounds,
                           uniform float samplingStep,
                           const uniform vec3f &gridOrigin,
@@ -177,10 +181,11 @@ export void AMRVolume_set(void *uniform _self,
   self->gridOrigin  = gridOrigin;
 }
 
-export void AMRVolume_sample_export(uniform const int *uniform imask,
-                                    void *uniform _self,
-                                    const void *uniform _objectCoordinates,
-                                    void *uniform _samples)
+export void EXPORT_UNIQUE(AMRVolume_sample_export,
+                          uniform const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _samples)
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 

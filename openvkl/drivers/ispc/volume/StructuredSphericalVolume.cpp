@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "StructuredSphericalVolume.h"
+#include "../common/export_util.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -25,7 +26,7 @@ namespace openvkl {
       StructuredVolume<W>::commit();
 
       if (!this->ispcEquivalent) {
-        this->ispcEquivalent = ispc::SharedStructuredVolume_Constructor();
+        this->ispcEquivalent = CALL_ISPC(SharedStructuredVolume_Constructor);
 
         if (!this->ispcEquivalent) {
           throw std::runtime_error(
@@ -84,17 +85,17 @@ namespace openvkl {
       const vec3f gridOriginRadians  = this->gridOrigin * gridToRadians;
       const vec3f gridSpacingRadians = this->gridSpacing * gridToRadians;
 
-      bool success = ispc::SharedStructuredVolume_set(
-          this->ispcEquivalent,
-          this->voxelData->data,
-          this->voxelData->dataType,
-          (const ispc::vec3i &)this->dimensions,
-          ispc::structured_spherical,
-          (const ispc::vec3f &)gridOriginRadians,
-          (const ispc::vec3f &)gridSpacingRadians);
+      bool success = CALL_ISPC(SharedStructuredVolume_set,
+                               this->ispcEquivalent,
+                               this->voxelData->data,
+                               this->voxelData->dataType,
+                               (const ispc::vec3i &)this->dimensions,
+                               ispc::structured_spherical,
+                               (const ispc::vec3f &)gridOriginRadians,
+                               (const ispc::vec3f &)gridSpacingRadians);
 
       if (!success) {
-        ispc::SharedStructuredVolume_Destructor(this->ispcEquivalent);
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
         this->ispcEquivalent = nullptr;
 
         throw std::runtime_error("failed to commit StructuredSphericalVolume");

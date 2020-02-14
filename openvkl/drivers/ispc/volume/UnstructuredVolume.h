@@ -17,6 +17,7 @@
 #pragma once
 
 #include "../common/Data.h"
+#include "../common/export_util.h"
 #include "../common/math.h"
 #include "../iterator/UnstructuredIterator.h"
 #include "UnstructuredVolume_ispc.h"
@@ -203,10 +204,11 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples) const
     {
-      ispc::VKLUnstructuredVolume_sample_export((const int *)&valid,
-                                                this->ispcEquivalent,
-                                                &objectCoordinates,
-                                                &samples);
+      CALL_ISPC(VKLUnstructuredVolume_sample_export,
+                (const int *)&valid,
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &samples);
     }
 
     template <int W>
@@ -244,10 +246,11 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      ispc::VKLUnstructuredVolume_gradient_export((const int *)&valid,
-                                                  this->ispcEquivalent,
-                                                  &objectCoordinates,
-                                                  &gradients);
+      CALL_ISPC(VKLUnstructuredVolume_gradient_export,
+                (const int *)&valid,
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &gradients);
     }
 
     template <int W>

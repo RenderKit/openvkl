@@ -43,6 +43,8 @@ foreach(TARGET_WIDTH 4 8 16)
     set(ISPC_TARGETS_OVERRIDE ${OPENVKL_ISPC_TARGET_LIST_16})
   endif()
 
+  set(ISPC_DEFINITIONS "-DTARGET_WIDTH=${TARGET_WIDTH}")
+
   openvkl_add_library_ispc(${TARGET_NAME} SHARED
     api/ISPCDriver.cpp
     api/ISPCDriver.ispc
@@ -71,6 +73,7 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/UnstructuredVolume.ispc
   )
 
+  unset(ISPC_DEFINITIONS)
   unset(ISPC_TARGETS_OVERRIDE)
 
   # hidden symbols by default, so each target width library can use its internal
@@ -81,7 +84,8 @@ foreach(TARGET_WIDTH 4 8 16)
   )
 
   target_compile_definitions(${TARGET_NAME} PRIVATE
-    "TARGET_WIDTH_ENABLED_${TARGET_WIDTH}")
+    "TARGET_WIDTH_ENABLED_${TARGET_WIDTH}"
+    "TARGET_WIDTH=${TARGET_WIDTH}")
 
   if(NOT ${TARGET_WIDTH_BUILT_COMMON})
     set(TARGET_WIDTH_BUILT_COMMON TRUE)

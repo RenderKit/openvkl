@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "../common/export_util.h"
 #include "../math/box_utility.ih"
 #include "../value_selector/ValueSelector.ih"
 #include "../volume/GridAccelerator.ih"
@@ -37,18 +38,19 @@ inline void printGridAcceleratorIterator(
         self->boundingBoxTRange.upper);
 }
 
-export uniform int GridAcceleratorIterator_sizeOf()
+export uniform int EXPORT_UNIQUE(GridAcceleratorIterator_sizeOf)
 {
   return sizeof(varying GridAcceleratorIterator);
 }
 
-export void GridAcceleratorIterator_Initialize(const int *uniform imask,
-                                               void *uniform _self,
-                                               void *uniform _volume,
-                                               void *uniform _origin,
-                                               void *uniform _direction,
-                                               void *uniform _tRange,
-                                               void *uniform _valueSelector)
+export void EXPORT_UNIQUE(GridAcceleratorIterator_Initialize,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _volume,
+                          void *uniform _origin,
+                          void *uniform _direction,
+                          void *uniform _tRange,
+                          void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
     return;
@@ -90,16 +92,18 @@ export void GridAcceleratorIterator_Initialize(const int *uniform imask,
   self->hitState.currentCellTRange = make_box1f(inf, -inf);
 }
 
-export void *uniform
-GridAcceleratorIterator_getCurrentInterval(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(GridAcceleratorIterator_getCurrentInterval,
+                                   void *uniform _self)
 {
   varying GridAcceleratorIterator *uniform self =
       (varying GridAcceleratorIterator * uniform) _self;
   return &self->intervalState.currentInterval;
 }
 
-export void GridAcceleratorIterator_iterateInterval(
-    const int *uniform imask, void *uniform _self, uniform int *uniform _result)
+export void EXPORT_UNIQUE(GridAcceleratorIterator_iterateInterval,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;
@@ -151,16 +155,18 @@ export void GridAcceleratorIterator_iterateInterval(
   *result = false;
 }
 
-export void *uniform GridAcceleratorIterator_getCurrentHit(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(GridAcceleratorIterator_getCurrentHit,
+                                   void *uniform _self)
 {
   varying GridAcceleratorIterator *uniform self =
       (varying GridAcceleratorIterator * uniform) _self;
   return &self->hitState.currentHit;
 }
 
-export void GridAcceleratorIterator_iterateHit(const int *uniform imask,
-                                               void *uniform _self,
-                                               uniform int *uniform _result)
+export void EXPORT_UNIQUE(GridAcceleratorIterator_iterateHit,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;

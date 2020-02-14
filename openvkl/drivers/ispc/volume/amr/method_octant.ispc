@@ -17,6 +17,7 @@
 #include "AMRVolume.ih"
 #include "CellRef.ih"
 #include "DualCell.ih"
+#include "common/export_util.h"
 
 #define DBG(a)
 
@@ -479,7 +480,7 @@ varying float AMR_octantLevel(const void *uniform _self, const varying vec3f &P)
   return width;
 }
 
-export void AMR_install_octant(void *uniform _self)
+export void EXPORT_UNIQUE(AMR_install_octant, void *uniform _self)
 {
   AMRVolume *uniform self   = (AMRVolume * uniform) _self;
   self->super.computeSample = AMR_octant;

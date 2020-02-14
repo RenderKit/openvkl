@@ -14,9 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "../common/export_util.h"
+#pragma once
 
-export uniform int32 EXPORT_UNIQUE(ISPCDriver_getProgramCount)
-{
-  return programCount;
-}
+#ifndef TARGET_WIDTH
+#error "export_util.h included without TARGET_WIDTH defined"
+#endif
+
+#define CONCAT2(A, B) A##B
+#define CONCAT1(A, B) CONCAT2(A, B)
+
+#define CONCAT_ARGS_V(A, ...) A(__VA_ARGS__)
+
+#define EXPORT_UNIQUE(name, ...) \
+  CONCAT_ARGS_V(CONCAT1(name, TARGET_WIDTH), __VA_ARGS__)
+
+#define CALL_ISPC(function, ...) \
+  CONCAT_ARGS_V(CONCAT1(ispc::function, TARGET_WIDTH), __VA_ARGS__)

@@ -19,7 +19,7 @@
 #include "../common/Observer.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
-#include "ispc_util_ispc.h"
+#include "ISPCDriver_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -33,7 +33,7 @@ namespace openvkl {
     template <int W>
     int ISPCDriver<W>::getNativeSIMDWidth()
     {
-      return ispc::get_programCount();
+      return ispc::ISPCDriver_getProgramCount();
     }
 
     template <int W>

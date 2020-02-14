@@ -25,6 +25,13 @@ using namespace openvkl::testing;
 using namespace openvkl;
 
 template <int W>
+void driver_native_simd_width_conformance_test()
+{
+  INFO("width = " << W);
+  REQUIRE(vklGetNativeSIMDWidth() == W);
+}
+
+template <int W>
 void vrange1fn_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vrange1fn<W>));
@@ -143,6 +150,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   if (nativeSIMDWidth == 4) {
     SECTION("4-wide")
     {
+      driver_native_simd_width_conformance_test<4>();
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
       vVKLIntervalIteratorN_conformance_test<4>();
@@ -156,6 +164,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   else if (nativeSIMDWidth == 8) {
     SECTION("8-wide")
     {
+      driver_native_simd_width_conformance_test<8>();
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
       vVKLIntervalIteratorN_conformance_test<8>();
@@ -169,6 +178,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   else if (nativeSIMDWidth == 16) {
     SECTION("16-wide")
     {
+      driver_native_simd_width_conformance_test<16>();
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
       vVKLIntervalIteratorN_conformance_test<16>();

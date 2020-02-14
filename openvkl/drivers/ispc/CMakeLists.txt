@@ -45,6 +45,7 @@ foreach(TARGET_WIDTH 4 8 16)
 
   openvkl_add_library_ispc(${TARGET_NAME} SHARED
     api/ISPCDriver.cpp
+    api/ISPCDriver.ispc
     iterator/DefaultIterator.cpp
     iterator/DefaultIterator.ispc
     iterator/GridAcceleratorIterator.cpp

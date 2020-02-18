@@ -201,7 +201,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(AMRVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(amr_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_amr_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

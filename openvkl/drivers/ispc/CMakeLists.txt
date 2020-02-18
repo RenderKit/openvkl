@@ -20,14 +20,11 @@ include(openvkl_macros)
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
 
 # width-specific builds
-
-# common code between all targets will only be built for the first active target
-# width
-set(TARGET_WIDTH_BUILT_COMMON FALSE)
-
 foreach(TARGET_WIDTH 4 8 16)
 
   openvkl_get_width_enabled(${TARGET_WIDTH} TARGET_WIDTH_ENABLED)
+
+  set(TARGET_WIDTH_ENABLED_${TARGET_WIDTH} ${TARGET_WIDTH_ENABLED})
 
   if(NOT ${TARGET_WIDTH_ENABLED})
     continue()
@@ -86,12 +83,6 @@ foreach(TARGET_WIDTH 4 8 16)
   target_compile_definitions(${TARGET_NAME} PRIVATE
     "VKL_TARGET_WIDTH=${TARGET_WIDTH}")
 
-  if(NOT ${TARGET_WIDTH_BUILT_COMMON})
-    set(TARGET_WIDTH_BUILT_COMMON TRUE)
-    target_compile_definitions(${TARGET_NAME} PRIVATE
-      "VKL_TARGET_WIDTH_ENABLED_COMMON")
-  endif()
-
   set(width_compile_options "")
   openvkl_get_compile_options_for_width(${TARGET_WIDTH} width_compile_options)
   separate_arguments(width_compile_options UNIX_COMMAND "${width_compile_options}")
@@ -128,9 +119,14 @@ endforeach(TARGET_WIDTH)
 
 
 # shared library linking to all width-specific targets
-add_library(openvkl_module_ispc_driver SHARED stub.cpp)
+add_library(openvkl_module_ispc_driver SHARED exports.cpp)
 
-set_target_properties(openvkl_module_ispc_driver PROPERTIES LINKER_LANGUAGE CXX)
+foreach(TARGET_WIDTH 4 8 16)
+  if (TARGET_WIDTH_ENABLED_${TARGET_WIDTH})
+    target_compile_definitions(openvkl_module_ispc_driver PRIVATE
+      "VKL_TARGET_WIDTH_ENABLED_${TARGET_WIDTH}")
+  endif()
+endforeach(TARGET_WIDTH)
 
 target_include_directories(openvkl_module_ispc_driver
   INTERFACE $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>)

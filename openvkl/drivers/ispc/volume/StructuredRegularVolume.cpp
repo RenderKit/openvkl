@@ -55,7 +55,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(structured_regular_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_structured_regular_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

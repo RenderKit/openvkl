@@ -848,11 +848,12 @@ namespace openvkl {
     }
 
     VKL_REGISTER_DRIVER(ISPCDriver<VKL_TARGET_WIDTH>,
-                        CONCAT1(ispc_, VKL_TARGET_WIDTH))
+                        CONCAT1(internal_ispc_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl
 
-#if VKL_TARGET_WIDTH_ENABLED_COMMON
-extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_ispc_driver() {}
-#endif
+extern "C" OPENVKL_DLLEXPORT void CONCAT1(openvkl_init_module_ispc_driver_,
+                                          VKL_TARGET_WIDTH)()
+{
+}

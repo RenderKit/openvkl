@@ -123,7 +123,7 @@ add_library(openvkl_module_ispc_driver SHARED exports.cpp)
 
 foreach(TARGET_WIDTH 4 8 16)
   if (TARGET_WIDTH_ENABLED_${TARGET_WIDTH})
-    target_compile_definitions(openvkl_module_ispc_driver PRIVATE
+    target_compile_definitions(openvkl_module_ispc_driver PUBLIC
       "VKL_TARGET_WIDTH_ENABLED_${TARGET_WIDTH}")
   endif()
 endforeach(TARGET_WIDTH)

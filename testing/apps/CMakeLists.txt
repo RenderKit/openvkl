@@ -75,7 +75,7 @@ if (BUILD_TESTING)
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
 
-  target_link_libraries(vklTests PRIVATE openvkl_testing)
+  target_link_libraries(vklTests PRIVATE openvkl_testing openvkl_module_ispc_driver)
 
   # Needed for SIMD conformance tests
   foreach(TARGET_NAME "openvkl_module_ispc_driver_4"

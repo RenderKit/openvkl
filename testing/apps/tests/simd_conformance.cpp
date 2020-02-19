@@ -148,6 +148,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
        << nativeSIMDWidth);
 
   if (nativeSIMDWidth == 4) {
+#if VKL_TARGET_WIDTH_ENABLED_4
     SECTION("4-wide")
     {
       driver_native_simd_width_conformance_test<4>();
@@ -159,9 +160,14 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
       vVKLHitN_conformance_test<4>();
       GridAcceleratorIterator_conformance_test<4>();
     }
+#else
+    throw std::runtime_error(
+        "illegal native SIMD width for driver build configuration");
+#endif
   }
 
   else if (nativeSIMDWidth == 8) {
+#if VKL_TARGET_WIDTH_ENABLED_8
     SECTION("8-wide")
     {
       driver_native_simd_width_conformance_test<8>();
@@ -173,9 +179,14 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
       vVKLHitN_conformance_test<8>();
       GridAcceleratorIterator_conformance_test<8>();
     }
+#else
+    throw std::runtime_error(
+        "illegal native SIMD width for driver build configuration");
+#endif
   }
 
   else if (nativeSIMDWidth == 16) {
+#if VKL_TARGET_WIDTH_ENABLED_16
     SECTION("16-wide")
     {
       driver_native_simd_width_conformance_test<16>();
@@ -187,6 +198,10 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
       vVKLHitN_conformance_test<16>();
       GridAcceleratorIterator_conformance_test<16>();
     }
+#else
+    throw std::runtime_error(
+        "illegal native SIMD width for driver build configuration");
+#endif
   }
 
   else {

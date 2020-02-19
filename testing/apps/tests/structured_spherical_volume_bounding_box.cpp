@@ -162,10 +162,15 @@ TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
           continue;
         }
 
-        test_bounding_box(
-            vec3i(dim),
-            vec3f(radiusOrigin, inclinationOrigin, azimuthOrigin),
-            vec3f(radiusSize, inclinationSize, azimuthSize) / float(dim - 1));
+        // specified grids must be within legal ranges for radius, inclination
+        // and azimuth. some of the test case grids are exactly at these limits,
+        // so we include an epsilon in the computed gridSpacing to avoid
+        // exceeding these limits.
+        test_bounding_box(vec3i(dim),
+                          vec3f(radiusOrigin, inclinationOrigin, azimuthOrigin),
+                          (1.f - std::numeric_limits<float>::epsilon()) *
+                              vec3f(radiusSize, inclinationSize, azimuthSize) /
+                              float(dim - 1));
       }
     }
   }

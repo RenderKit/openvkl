@@ -172,7 +172,8 @@ namespace openvkl {
 
     void Renderer::renderFrame_ispc()
     {
-      auto fbDims = pixelIndices.dimensions();
+      vec2i fbDims = pixelIndices.dimensions();
+      ispc::vec2i fbDimsISPC{fbDims.x, fbDims.y};
 
       const size_t numJobs =
           pixelIndices.total_indices() / ispc::Renderer_pixelsPerJob();
@@ -182,7 +183,7 @@ namespace openvkl {
 
         tasking::parallel_for(numJobs, [&](size_t i) {
           ispc::Renderer_renderPixel(
-              ispcEquivalent, (ispc::vec2i &)fbDims, frameID, accumScale, i);
+              ispcEquivalent, fbDimsISPC, frameID, accumScale, i);
         });
 
         frameID++;

@@ -437,18 +437,14 @@ namespace openvkl {
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
-      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
-      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        validW[i] = valid[i];
 
       volumeObject.initIntervalIteratorV(
           validW,
           iterator,
-          originW,
-          directionW,
-          tRangeW,
+          origin,
+          direction,
+          tRange,
           reinterpret_cast<const ValueSelector<W> *>(valueSelector));
     }
 
@@ -518,23 +514,13 @@ namespace openvkl {
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLIntervalN<W> intervalW;
+        validW[i] = valid[i];
 
       vintn<W> resultW;
 
-      volumeObject.iterateIntervalV(validW, iterator, intervalW, resultW);
+      volumeObject.iterateIntervalV(validW, iterator, interval, resultW);
 
-      for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]     = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]     = intervalW.tRange.upper[i];
-        interval.valueRange.lower[i] = intervalW.valueRange.lower[i];
-        interval.valueRange.upper[i] = intervalW.valueRange.upper[i];
-        interval.nominalDeltaT[i]    = intervalW.nominalDeltaT[i];
-      }
-
-      for (int i = 0; i < OW; i++)
+      for (int i = 0; i < W; i++)
         result[i] = resultW[i];
     }
 
@@ -600,18 +586,14 @@ namespace openvkl {
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
-      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
-      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        validW[i] = valid[i];
 
       volumeObject.initHitIteratorV(
           validW,
           iterator,
-          originW,
-          directionW,
-          tRangeW,
+          origin,
+          direction,
+          tRange,
           reinterpret_cast<const ValueSelector<W> *>(valueSelector));
     }
 
@@ -677,20 +659,13 @@ namespace openvkl {
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLHitN<W> hitW;
+        validW[i] = valid[i];
 
       vintn<W> resultW;
 
-      volumeObject.iterateHitV(validW, iterator, hitW, resultW);
+      volumeObject.iterateHitV(validW, iterator, hit, resultW);
 
-      for (int i = 0; i < OW; i++) {
-        hit.t[i]      = hitW.t[i];
-        hit.sample[i] = hitW.sample[i];
-      }
-
-      for (int i = 0; i < OW; i++)
+      for (int i = 0; i < W; i++)
         result[i] = resultW[i];
     }
 

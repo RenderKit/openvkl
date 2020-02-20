@@ -324,7 +324,14 @@ namespace openvkl {
           vfloatn<OW> &samples);
 
       template <int OW>
-      typename std::enable_if<(OW <= W), void>::type computeGradientAnyWidth(
+      typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(
+          const int *valid,
+          VKLVolume volume,
+          const vvec3fn<OW> &objectCoordinates,
+          vvec3fn<OW> &gradients);
+
+      template <int OW>
+      typename std::enable_if<(OW == W), void>::type computeGradientAnyWidth(
           const int *valid,
           VKLVolume volume,
           const vvec3fn<OW> &objectCoordinates,

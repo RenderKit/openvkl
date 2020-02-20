@@ -762,7 +762,7 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), void>::type
+    typename std::enable_if<(OW < W), void>::type
     ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
                                            VKLVolume volume,
                                            const vvec3fn<OW> &objectCoordinates,
@@ -787,6 +787,23 @@ namespace openvkl {
         gradients.y[i] = gradientsW.y[i];
         gradients.z[i] = gradientsW.z[i];
       }
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &objectCoordinates,
+                                           vvec3fn<OW> &gradients)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = valid[i];
+
+      volumeObject.computeGradientV(validW, objectCoordinates, gradients);
     }
 
     template <int W>

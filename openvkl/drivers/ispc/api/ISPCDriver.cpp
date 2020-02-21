@@ -142,7 +142,7 @@ namespace openvkl {
       const int *valid,                                                \
       vVKLIntervalIteratorN<WIDTH> &iterator,                          \
       vVKLIntervalN<WIDTH> &interval,                                  \
-      vintn<WIDTH> &result)                                            \
+      int *result)                                                     \
   {                                                                    \
     iterateIntervalAnyWidth<WIDTH>(valid, iterator, interval, result); \
   }
@@ -185,7 +185,7 @@ namespace openvkl {
   void ISPCDriver<W>::iterateHit##WIDTH(const int *valid,                  \
                                         vVKLHitIteratorN<WIDTH> &iterator, \
                                         vVKLHitN<WIDTH> &hit,              \
-                                        vintn<WIDTH> &result)              \
+                                        int *result)                       \
   {                                                                        \
     iterateHitAnyWidth<WIDTH>(valid, iterator, hit, result);               \
   }
@@ -327,7 +327,7 @@ namespace openvkl {
       const int *valid,                                                      \
       VKLVolume volume,                                                      \
       const vvec3fn<WIDTH> &objectCoordinates,                               \
-      vfloatn<WIDTH> &samples)                                               \
+      float *samples)                                                        \
   {                                                                          \
     computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
@@ -343,10 +343,12 @@ namespace openvkl {
     void ISPCDriver<W>::computeSample1(const int *valid,
                                        VKLVolume volume,
                                        const vvec3fn<1> &objectCoordinates,
-                                       vfloatn<1> &sample)
+                                       float *sample)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      volumeObject.computeSample(objectCoordinates, sample);
+      vfloatn<1> sampleW;
+      volumeObject.computeSample(objectCoordinates, sampleW);
+      *sample = sampleW[0];
     }
 
 #define __define_computeGradientN(WIDTH)              \
@@ -471,7 +473,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
                                            vVKLIntervalIteratorN<OW> &iterator1,
                                            vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
+                                           int *result)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(iterator1.volume);
 
@@ -508,7 +510,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
                                            vVKLIntervalIteratorN<OW> &iterator,
                                            vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
+                                           int *result)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
 
@@ -530,7 +532,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
                                            vVKLIntervalIteratorN<OW> &iterator,
                                            vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
+                                           int *result)
     {
       throw std::runtime_error(
           "cannot iterate on intervals for widths different than the "
@@ -619,7 +621,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
                                       vVKLHitIteratorN<OW> &iterator1,
                                       vVKLHitN<OW> &hit,
-                                      vintn<OW> &result)
+                                      int *result)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(iterator1.volume);
 
@@ -653,7 +655,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
                                       vVKLHitIteratorN<OW> &iterator,
                                       vVKLHitN<OW> &hit,
-                                      vintn<OW> &result)
+                                      int *result)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
 
@@ -675,7 +677,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
                                       vVKLHitIteratorN<OW> &iterator,
                                       vVKLHitN<OW> &hit,
-                                      vintn<OW> &result)
+                                      int *result)
     {
       throw std::runtime_error(
           "cannot iterate on hits for widths different than the native "
@@ -688,7 +690,7 @@ namespace openvkl {
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLVolume volume,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         vfloatn<OW> &samples)
+                                         float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -714,7 +716,7 @@ namespace openvkl {
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLVolume volume,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         vfloatn<OW> &samples)
+                                         float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -736,7 +738,7 @@ namespace openvkl {
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLVolume volume,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         vfloatn<OW> &samples)
+                                         float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 

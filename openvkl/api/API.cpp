@@ -355,7 +355,7 @@ extern "C" int vklIterateInterval(VKLIntervalIterator *iterator,
       &valid,
       reinterpret_cast<vVKLIntervalIteratorN<1> &>(*iterator),
       intervalInternal,
-      reinterpret_cast<vintn<1> &>(result));
+      &result);
   intervalInternal.populateVKLInterval(*interval);
   return result;
 }
@@ -373,7 +373,7 @@ OPENVKL_CATCH_END(false)
         valid,                                                       \
         reinterpret_cast<vVKLIntervalIteratorN<WIDTH> &>(*iterator), \
         intervalInternal,                                            \
-        reinterpret_cast<vintn<WIDTH> &>(*result));                  \
+        result);                                                     \
     intervalInternal.populateVKLInterval##WIDTH(*interval, valid);   \
   }                                                                  \
   OPENVKL_CATCH_END()
@@ -445,7 +445,7 @@ extern "C" int vklIterateHit(VKLHitIterator *iterator,
       &valid,
       reinterpret_cast<vVKLHitIteratorN<1> &>(*iterator),
       hitInternal,
-      reinterpret_cast<vintn<1> &>(result));
+      &result);
   hitInternal.populateVKLHit(*hit);
   return result;
 }
@@ -462,7 +462,7 @@ OPENVKL_CATCH_END(false)
         valid,                                                          \
         reinterpret_cast<vVKLHitIteratorN<WIDTH> &>(*iterator),         \
         hitInternal,                                                    \
-        reinterpret_cast<vintn<WIDTH> &>(*result));                     \
+        result);                                                        \
     hitInternal.populateVKLHit##WIDTH(*hit, valid);                     \
   }                                                                     \
   OPENVKL_CATCH_END()
@@ -651,7 +651,7 @@ extern "C" float vklComputeSample(
       &valid,
       volume,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      reinterpret_cast<vfloatn<1> &>(sample));
+      &sample);
   return sample;
 }
 OPENVKL_CATCH_END(ospcommon::math::nan)
@@ -667,7 +667,7 @@ OPENVKL_CATCH_END(ospcommon::math::nan)
         valid,                                                        \
         volume,                                                       \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        reinterpret_cast<vfloatn<WIDTH> &>(*samples));                \
+        samples);                                                     \
   }                                                                   \
   OPENVKL_CATCH_END()
 

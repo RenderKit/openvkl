@@ -118,7 +118,7 @@ namespace openvkl {
   virtual void iterateInterval##WIDTH(const int *valid,                       \
                                       vVKLIntervalIteratorN<WIDTH> &iterator, \
                                       vVKLIntervalN<WIDTH> &interval,         \
-                                      vintn<WIDTH> &result)                   \
+                                      int *result)                            \
   {                                                                           \
     throw std::runtime_error(                                                 \
         "iterateInterval##WIDTH() not implemented on this driver");           \
@@ -159,7 +159,7 @@ namespace openvkl {
   virtual void iterateHit##WIDTH(const int *valid,                  \
                                  vVKLHitIteratorN<WIDTH> &iterator, \
                                  vVKLHitN<WIDTH> &hit,              \
-                                 vintn<WIDTH> &result)              \
+                                 int *result)                       \
   {                                                                 \
     throw std::runtime_error(                                       \
         "iterateHit##WIDTH() not implemented on this driver");      \
@@ -225,7 +225,7 @@ namespace openvkl {
   virtual void computeSample##WIDTH(const int *valid,                        \
                                     VKLVolume volume,                        \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
-                                    vfloatn<WIDTH> &samples) = 0;
+                                    float *samples) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);

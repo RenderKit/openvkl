@@ -16,13 +16,64 @@
 
 #include "../../external/catch.hpp"
 #include "../common/simd.h"
+#include "openvkl/common.h"
 #include "openvkl/drivers/ispc/iterator/GridAcceleratorIterator.h"
-#include "simd_conformance_ispc.h"
 #include "openvkl_testing.h"
+#include "simd_conformance_ispc.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
 using namespace openvkl;
+
+template <int W>
+struct vklPublicWideTypes
+{
+  using vkl_vvec3fW   = void;
+  using vkl_vrange1fW = void;
+};
+
+template <>
+struct vklPublicWideTypes<1>
+{
+  using vkl_vvec3fW   = vkl_vec3f;
+  using vkl_vrange1fW = vkl_range1f;
+};
+
+template <>
+struct vklPublicWideTypes<4>
+{
+  using vkl_vvec3fW   = vkl_vvec3f4;
+  using vkl_vrange1fW = vkl_vrange1f4;
+};
+
+template <>
+struct vklPublicWideTypes<8>
+{
+  using vkl_vvec3fW   = vkl_vvec3f8;
+  using vkl_vrange1fW = vkl_vrange1f8;
+};
+
+template <>
+struct vklPublicWideTypes<16>
+{
+  using vkl_vvec3fW   = vkl_vvec3f16;
+  using vkl_vrange1fW = vkl_vrange1f16;
+};
+
+template <int W>
+void public_wide_types_conformance_test()
+{
+  INFO("width = " << W);
+
+  using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
+  using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
+
+  REQUIRE(sizeof(vvec3fn<W>) == sizeof(vkl_vvec3fW));
+  REQUIRE(alignof(vvec3fn<W>) == alignof(vkl_vvec3fW));
+
+  REQUIRE(sizeof(vrange1fn<W>) == sizeof(vkl_vrange1fW));
+  REQUIRE(alignof(vrange1fn<W>) == alignof(vkl_vrange1fW));
+}
 
 template <int W>
 void driver_native_simd_width_conformance_test()
@@ -136,6 +187,13 @@ void GridAcceleratorIterator_conformance_test()
 
 TEST_CASE("SIMD conformance", "[simd_conformance]")
 {
+  // verifies public wide types vs internal wide representations, e.g.
+  // vkl_vvecef16 vs vvec3fn<16>
+  public_wide_types_conformance_test<1>();
+  public_wide_types_conformance_test<4>();
+  public_wide_types_conformance_test<8>();
+  public_wide_types_conformance_test<16>();
+
   vklLoadModule("ispc_driver");
 
   VKLDriver driver = vklNewDriver("ispc");
@@ -144,7 +202,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 
   int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
-  WARN("only performing SIMD conformance tests for native width: "
+  WARN("only performing ISPC-side SIMD conformance tests for native width: "
        << nativeSIMDWidth);
 
   if (nativeSIMDWidth == 4) {

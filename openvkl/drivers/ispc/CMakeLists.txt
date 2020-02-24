@@ -87,7 +87,7 @@ foreach(TARGET_WIDTH 4 8 16)
   openvkl_get_compile_options_for_width(${TARGET_WIDTH} width_compile_options)
   separate_arguments(width_compile_options UNIX_COMMAND "${width_compile_options}")
 
-  message("using compile options for width ${TARGET_WIDTH}: ${width_compile_options}")
+  message(STATUS "using compile options for width ${TARGET_WIDTH}: ${width_compile_options}")
 
   target_compile_options(${TARGET_NAME} PRIVATE ${width_compile_options})
 

@@ -97,7 +97,7 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
      CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
      CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
-     message("detected Clang or GNU compiler")
+     message(STATUS "detected Clang or GNU compiler")
 
     if(WIDTH EQUAL 4)
       set(LOCAL_FLAGS "-msse4.2")
@@ -111,7 +111,7 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
 
-    message("detected Intel compiler")
+    message(STATUS "detected Intel compiler")
 
     if(WIN32)
       if(WIDTH EQUAL 4)
@@ -137,7 +137,7 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 
-    message("detected MSVC compiler")
+    message(STATUS "detected MSVC compiler")
 
     if(WIDTH EQUAL 4)
       set(LOCAL_FLAGS "/D__SSE__ /D__SSE2__ /D__SSE3__ /D__SSSE3__ /D__SSE4_1__ /D__SSE4_2__")

@@ -63,7 +63,7 @@ namespace openvkl {
       range1f valueRange = volume->getValueRange();
 
       CALL_ISPC(DefaultIterator_Initialize,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 &ispcStorage[0],
                 volume->getISPCEquivalent(),
                 (void *)&origin,
@@ -86,9 +86,9 @@ namespace openvkl {
                                              vintn<W> &result)
     {
       CALL_ISPC(DefaultIterator_iterateInterval,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 (void *)&ispcStorage[0],
-                (int *)&result);
+                static_cast<int *>(result));
     }
 
     template <int W>
@@ -102,9 +102,9 @@ namespace openvkl {
     void DefaultIterator<W>::iterateHit(const vintn<W> &valid, vintn<W> &result)
     {
       CALL_ISPC(DefaultIterator_iterateHit,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 (void *)&ispcStorage[0],
-                (int *)&result);
+                static_cast<int *>(result));
     }
 
     template class DefaultIterator<VKL_TARGET_WIDTH>;

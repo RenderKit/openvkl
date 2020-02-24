@@ -61,7 +61,7 @@ namespace openvkl {
       box3f boundingBox = volume->getBoundingBox();
 
       CALL_ISPC(GridAcceleratorIterator_Initialize,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 &ispcStorage[0],
                 srv->getISPCEquivalent(),
                 (void *)&origin,
@@ -82,9 +82,9 @@ namespace openvkl {
                                                      vintn<W> &result)
     {
       CALL_ISPC(GridAcceleratorIterator_iterateInterval,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 (void *)&ispcStorage[0],
-                (int *)&result);
+                static_cast<int *>(result));
     }
 
     template <int W>
@@ -99,9 +99,9 @@ namespace openvkl {
                                                 vintn<W> &result)
     {
       CALL_ISPC(GridAcceleratorIterator_iterateHit,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 (void *)&ispcStorage[0],
-                (int *)&result);
+                static_cast<int *>(result));
     }
 
     template class GridAcceleratorIterator<VKL_TARGET_WIDTH>;

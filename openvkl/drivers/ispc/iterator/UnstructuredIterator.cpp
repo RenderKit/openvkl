@@ -58,7 +58,7 @@ namespace openvkl {
       }
 
       CALL_ISPC(UnstructuredIterator_Initialize,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 &ispcStorage[0],
                 volume->getISPCEquivalent(),
                 (void *)&origin,
@@ -79,9 +79,9 @@ namespace openvkl {
                                                   vintn<W> &result)
     {
       CALL_ISPC(UnstructuredIterator_iterateInterval,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 (void *)&ispcStorage[0],
-                (int *)&result);
+                static_cast<int *>(result));
     }
 
     template <int W>

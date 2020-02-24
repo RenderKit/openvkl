@@ -93,6 +93,16 @@ namespace openvkl {
       return v[index];
     }
 
+    operator int *()
+    {
+      return v;
+    }
+
+    operator const int *() const
+    {
+      return v;
+    }
+
     vintn<W>(const vintn<W> &o)
     {
       for (int i = 0; i < W; i++) {

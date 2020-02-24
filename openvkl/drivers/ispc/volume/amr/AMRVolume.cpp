@@ -174,7 +174,7 @@ namespace openvkl {
                                       vfloatn<W> &samples) const
     {
       CALL_ISPC(AMRVolume_sample_export,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 this->ispcEquivalent,
                 &objectCoordinates,
                 &samples);

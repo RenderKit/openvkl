@@ -205,7 +205,7 @@ namespace openvkl {
         vfloatn<W> &samples) const
     {
       CALL_ISPC(VKLUnstructuredVolume_sample_export,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 this->ispcEquivalent,
                 &objectCoordinates,
                 &samples);
@@ -247,7 +247,7 @@ namespace openvkl {
         vvec3fn<W> &gradients) const
     {
       CALL_ISPC(VKLUnstructuredVolume_gradient_export,
-                (const int *)&valid,
+                static_cast<const int *>(valid),
                 this->ispcEquivalent,
                 &objectCoordinates,
                 &gradients);

@@ -28,5 +28,10 @@
 #define EXPORT_UNIQUE(name, ...) \
   CONCAT_ARGS_V(CONCAT1(name, VKL_TARGET_WIDTH), __VA_ARGS__)
 
+#if defined(ISPC)
+#define CALL_ISPC(function, ...) \
+  CONCAT_ARGS_V(CONCAT1(function, VKL_TARGET_WIDTH), __VA_ARGS__)
+#else
 #define CALL_ISPC(function, ...) \
   CONCAT_ARGS_V(CONCAT1(ispc::function, VKL_TARGET_WIDTH), __VA_ARGS__)
+#endif

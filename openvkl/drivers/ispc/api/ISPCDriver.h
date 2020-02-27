@@ -187,6 +187,11 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
+      void computeSampleN(VKLVolume volume,
+                          unsigned int N,
+                          const vvec3fn<1> *objectCoordinates,
+                          float *samples) override;
+
 #define __define_computeGradientN(WIDTH)                               \
   void computeGradient##WIDTH(const int *valid,                        \
                               VKLVolume volume,                        \

@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -73,6 +73,12 @@ void vklComputeSample16(const int *valid,
                         VKLVolume volume,
                         const vkl_vvec3f16 *objectCoordinates,
                         float *samples);
+
+OPENVKL_INTERFACE
+void vklComputeSampleN(VKLVolume volume,
+                       unsigned int N,
+                       const vkl_vec3f *objectCoordinates,
+                       float *samples);
 
 OPENVKL_INTERFACE
 vkl_vec3f vklComputeGradient(VKLVolume volume,

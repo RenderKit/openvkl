@@ -407,6 +407,16 @@ namespace openvkl {
       *sample = sampleW[0];
     }
 
+    template <int W>
+    void ISPCDriver<W>::computeSampleN(VKLVolume volume,
+                                       unsigned int N,
+                                       const vvec3fn<1> *objectCoordinates,
+                                       float *samples)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      volumeObject.computeSampleN(N, objectCoordinates, samples);
+    }
+
 #define __define_computeGradientN(WIDTH)              \
   template <int W>                                    \
   void ISPCDriver<W>::computeGradient##WIDTH(         \

@@ -57,6 +57,7 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/StructuredSphericalVolume.cpp
     volume/UnstructuredVolume.cpp
     volume/UnstructuredVolume.ispc
+    volume/Volume.ispc
     volume/vdb/VdbVolume.cpp
     volume/vdb/VdbVolume.ispc
     volume/vdb/VdbSampler.ispc

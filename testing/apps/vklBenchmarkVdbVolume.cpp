@@ -115,6 +115,57 @@ BENCHMARK_TEMPLATE(vectorRandomSample, 4, VKL_FILTER_TRILINEAR);
 BENCHMARK_TEMPLATE(vectorRandomSample, 8, VKL_FILTER_TRILINEAR);
 BENCHMARK_TEMPLATE(vectorRandomSample, 16, VKL_FILTER_TRILINEAR);
 
+template <int N, VKLFilter filter>
+void streamRandomSample(benchmark::State &state)
+{
+  auto v = ospcommon::make_unique<WaveletVdbVolume>(
+      vec3i(128), vec3f(0.f), vec3f(1.f), filter);
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  std::random_device rd;
+  pcg32_biased_float_distribution distX(rd(), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
+
+  std::vector<vkl_vec3f> objectCoordinates(N);
+  std::vector<float> samples(N);
+
+  for (auto _ : state) {
+    for (int i = 0; i < N; i++) {
+      objectCoordinates[i].x = distX();
+      objectCoordinates[i].y = distY();
+      objectCoordinates[i].z = distZ();
+    }
+
+    vklComputeSampleN(vklVolume, N, objectCoordinates.data(), samples.data());
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * N);
+}
+
+// use mangled name so these don't yet show up in CI-run benchmarks
+BENCHMARK_TEMPLATE(streamRandomSample, 1, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 4, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 8, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 16, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 32, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 64, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 128, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamRandomSample, 256, VKL_FILTER_NEAREST);
+
+BENCHMARK_TEMPLATE(streamRandomSample, 1, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 4, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 8, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 16, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 32, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 64, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 128, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamRandomSample, 256, VKL_FILTER_TRILINEAR);
+
 template <VKLFilter filter>
 static void scalarFixedSample(benchmark::State &state)
 {
@@ -201,6 +252,47 @@ BENCHMARK_TEMPLATE(vectorFixedSample, 16, VKL_FILTER_NEAREST);
 BENCHMARK_TEMPLATE(vectorFixedSample, 4, VKL_FILTER_TRILINEAR);
 BENCHMARK_TEMPLATE(vectorFixedSample, 8, VKL_FILTER_TRILINEAR);
 BENCHMARK_TEMPLATE(vectorFixedSample, 16, VKL_FILTER_TRILINEAR);
+
+template <int N, VKLFilter filter>
+void streamFixedSample(benchmark::State &state)
+{
+  auto v = ospcommon::make_unique<WaveletVdbVolume>(
+      vec3i(128), vec3f(0.f), vec3f(1.f), filter);
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  // use fixed coordinates for all benchmark iterations
+  std::vector<vkl_vec3f> objectCoordinates(
+      N, vkl_vec3f{0.1701f, 0.1701f, 0.1701f});
+
+  std::vector<float> samples(N);
+
+  for (auto _ : state) {
+    vklComputeSampleN(vklVolume, N, objectCoordinates.data(), samples.data());
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * N);
+}
+
+// use mangled name so these don't yet show up in CI-run benchmarks
+BENCHMARK_TEMPLATE(streamFixedSample, 1, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 4, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 8, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 16, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 32, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 64, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 128, VKL_FILTER_NEAREST);
+BENCHMARK_TEMPLATE(streamFixedSample, 256, VKL_FILTER_NEAREST);
+
+BENCHMARK_TEMPLATE(streamFixedSample, 1, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 4, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 8, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 16, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 32, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 64, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 128, VKL_FILTER_TRILINEAR);
+BENCHMARK_TEMPLATE(streamFixedSample, 256, VKL_FILTER_TRILINEAR);
 
 template <VKLFilter filter>
 static void scalarIntervalIteratorConstruction(benchmark::State &state)

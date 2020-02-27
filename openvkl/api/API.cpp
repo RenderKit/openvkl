@@ -656,6 +656,19 @@ __define_vklComputeSampleN(16);
 
 #undef __define_vklComputeSampleN
 
+extern "C" void vklComputeSampleN(VKLVolume volume,
+                                  unsigned int N,
+                                  const vkl_vec3f *objectCoordinates,
+                                  float *samples) OPENVKL_CATCH_BEGIN
+{
+  openvkl::api::currentDriver().computeSampleN(
+      volume,
+      N,
+      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
+      samples);
+}
+OPENVKL_CATCH_END()
+
 extern "C" vkl_vec3f vklComputeGradient(
     VKLVolume volume, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
 {

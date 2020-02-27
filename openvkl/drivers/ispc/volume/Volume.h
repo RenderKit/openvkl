@@ -4,9 +4,11 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
+#include "../common/export_util.h"
 #include "../common/objectFactory.h"
 #include "../iterator/DefaultIterator.h"
 #include "../value_selector/ValueSelector.h"
+#include "Volume_ispc.h"
 #include "openvkl/openvkl.h"
 #include "ospcommon/math/box.h"
 
@@ -118,6 +120,10 @@ namespace openvkl {
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
                                   vfloatn<W> &samples) const = 0;
+
+      virtual void computeSampleN(unsigned int N,
+                                  const vvec3fn<1> *objectCoordinates,
+                                  float *samples) const;
 
       virtual void computeGradientV(const vintn<W> &valid,
                                     const vvec3fn<W> &objectCoordinates,
@@ -323,6 +329,18 @@ namespace openvkl {
       computeSampleV(validW, ocW, samplesW);
 
       sample[0] = samplesW[0];
+    }
+
+    template <int W>
+    inline void Volume<W>::computeSampleN(unsigned int N,
+                                          const vvec3fn<1> *objectCoordinates,
+                                          float *samples) const
+    {
+      CALL_ISPC(Volume_sample_N_export,
+                this->ispcEquivalent,
+                N,
+                (ispc::vec3f *)objectCoordinates,
+                samples);
     }
 
     template <int W>

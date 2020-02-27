@@ -756,6 +756,18 @@ set 0 for lanes to be ignored, -1 for active lanes.
                             const vkl_vvec3f16 *objectCoordinates,
                             float *samples);
 
+A stream version allows sampling an arbitrary number of positions at once. While
+the vector version requires coordinates to be provided in a structure-of-arrays
+layout, the stream version allows coordinates to be provided in an
+array-of-structures layout. Thus, the stream API can be used to avoid
+reformatting of data by the application. As with the vector versions, the stream
+API can give greater performance than the scalar API.
+
+      void vklComputeSampleN(VKLVolume volume,
+                             unsigned int N,
+                             const vkl_vec3f *objectCoordinates,
+                             float *samples);
+
 All of the above sampling APIs can be used, regardless of the driver's native
 SIMD width.
 

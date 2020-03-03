@@ -56,6 +56,12 @@ build-centos7:
   script:
   - gitlab/build.sh
 
+build-centos8:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos8
+  script:
+  - gitlab/build.sh -G Ninja
+
 build-ubuntu16.04:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
@@ -114,6 +120,12 @@ test-functional-centos7:
   image: ospray/docker-images:centos7
   dependencies:
     - build-centos7
+
+test-functional-centos8:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:centos8
+  dependencies:
+    - build-centos8
 
 test-functional-ubuntu16.04:
   <<: *test_functional_job_docker

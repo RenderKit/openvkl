@@ -25,16 +25,14 @@ namespace openvkl {
     struct Volume;
 
     template <int W>
-    struct GridAcceleratorIterator : public Iterator<W>
+    struct GridAcceleratorIteratorV : public IteratorV<W>
     {
-      GridAcceleratorIterator() {}
-
-      GridAcceleratorIterator(const vintn<W> &valid,
-                              const Volume<W> *volume,
-                              const vvec3fn<W> &origin,
-                              const vvec3fn<W> &direction,
-                              const vrange1fn<W> &tRange,
-                              const ValueSelector<W> *valueSelector);
+      GridAcceleratorIteratorV(const vintn<W> &valid,
+                               const Volume<W> *volume,
+                               const vvec3fn<W> &origin,
+                               const vvec3fn<W> &direction,
+                               const vrange1fn<W> &tRange,
+                               const ValueSelector<W> *valueSelector);
 
       const Interval<W> *getCurrentInterval() const override;
       void iterateInterval(const vintn<W> &valid, vintn<W> &result) override;

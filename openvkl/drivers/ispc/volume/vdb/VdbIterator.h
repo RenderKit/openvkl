@@ -34,7 +34,7 @@ namespace openvkl {
      * This iterator implements a hierarchical Digital Differential Analyzer.
      */
     template <int W>
-    struct VdbIterator : public Iterator<W>
+    struct VdbIterator : public IteratorV<W>
     {
       VdbIterator()  = default;
       ~VdbIterator() = default;

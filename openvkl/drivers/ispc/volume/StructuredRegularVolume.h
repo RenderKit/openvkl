@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -64,7 +64,7 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLIntervalIterator<W>(GridAcceleratorIterator<W>(
+      iterator = toVKLIntervalIterator<W>(GridAcceleratorIteratorV<W>(
           valid, this, origin, direction, tRange, valueSelector));
     }
 
@@ -75,8 +75,8 @@ namespace openvkl {
         vVKLIntervalN<W> &interval,
         vintn<W> &result)
     {
-      GridAcceleratorIterator<W> *ri =
-          fromVKLIntervalIterator<GridAcceleratorIterator<W>>(&iterator);
+      GridAcceleratorIteratorV<W> *ri =
+          fromVKLIntervalIterator<GridAcceleratorIteratorV<W>>(&iterator);
 
       ri->iterateInterval(valid, result);
 
@@ -93,7 +93,7 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLHitIterator<W>(GridAcceleratorIterator<W>(
+      iterator = toVKLHitIterator<W>(GridAcceleratorIteratorV<W>(
           valid, this, origin, direction, tRange, valueSelector));
     }
 
@@ -104,8 +104,8 @@ namespace openvkl {
         vVKLHitN<W> &hit,
         vintn<W> &result)
     {
-      GridAcceleratorIterator<W> *ri =
-          fromVKLHitIterator<GridAcceleratorIterator<W>>(&iterator);
+      GridAcceleratorIteratorV<W> *ri =
+          fromVKLHitIterator<GridAcceleratorIteratorV<W>>(&iterator);
 
       ri->iterateHit(valid, result);
 

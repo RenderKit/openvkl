@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,7 +28,7 @@ namespace openvkl {
     struct Node;
 
     template <int W>
-    struct UnstructuredIterator : public Iterator<W>
+    struct UnstructuredIterator : public IteratorV<W>
     {
       UnstructuredIterator(const vintn<W> &valid,
                            const Volume<W> *volume,

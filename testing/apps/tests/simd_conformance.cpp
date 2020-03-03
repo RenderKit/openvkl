@@ -176,12 +176,13 @@ void GridAcceleratorIterator_conformance_test()
 {
   int ispcSize = ispc::sizeofGridAcceleratorIterator();
   REQUIRE(ispcSize ==
-          openvkl::ispc_driver::GridAcceleratorIterator<W>::ispcStorageSize);
+          openvkl::ispc_driver::GridAcceleratorIteratorV<W>::ispcStorageSize);
 
-  REQUIRE(is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIterator<W>>(
-      ispc::newGridAcceleratorIterator()));
+  REQUIRE(
+      is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorV<W>>(
+          ispc::newGridAcceleratorIterator()));
 
-  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIterator<W>) <=
+  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorV<W>) <=
           iterator_internal_state_size_for_width(W));
 }
 

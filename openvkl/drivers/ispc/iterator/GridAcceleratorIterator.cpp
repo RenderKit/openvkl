@@ -25,24 +25,24 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    constexpr int GridAcceleratorIterator<W>::ispcStorageSize;
+    constexpr int GridAcceleratorIteratorV<W>::ispcStorageSize;
 
     template <int W>
-    GridAcceleratorIterator<W>::GridAcceleratorIterator(
+    GridAcceleratorIteratorV<W>::GridAcceleratorIteratorV(
         const vintn<W> &valid,
         const Volume<W> *volume,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
-        : Iterator<W>(valid, volume, origin, direction, tRange, valueSelector)
+        : IteratorV<W>(valid, volume, origin, direction, tRange, valueSelector)
     {
       static bool oneTimeChecks = false;
 
       if (!oneTimeChecks) {
         int ispcSize = CALL_ISPC(GridAcceleratorIterator_sizeOf);
 
-        if (ispcSize > ispcStorageSize) {
+        if (ispcSize != ispcStorageSize) {
           LogMessageStream(VKL_LOG_ERROR)
               << "GridAcceleratorIterator required ISPC object size = "
               << ispcSize << ", allocated size = " << ispcStorageSize
@@ -71,15 +71,15 @@ namespace openvkl {
     }
 
     template <int W>
-    const Interval<W> *GridAcceleratorIterator<W>::getCurrentInterval() const
+    const Interval<W> *GridAcceleratorIteratorV<W>::getCurrentInterval() const
     {
       return reinterpret_cast<const Interval<W> *>(CALL_ISPC(
           GridAcceleratorIterator_getCurrentInterval, (void *)&ispcStorage[0]));
     }
 
     template <int W>
-    void GridAcceleratorIterator<W>::iterateInterval(const vintn<W> &valid,
-                                                     vintn<W> &result)
+    void GridAcceleratorIteratorV<W>::iterateInterval(const vintn<W> &valid,
+                                                      vintn<W> &result)
     {
       CALL_ISPC(GridAcceleratorIterator_iterateInterval,
                 static_cast<const int *>(valid),
@@ -88,15 +88,15 @@ namespace openvkl {
     }
 
     template <int W>
-    const Hit<W> *GridAcceleratorIterator<W>::getCurrentHit() const
+    const Hit<W> *GridAcceleratorIteratorV<W>::getCurrentHit() const
     {
       return reinterpret_cast<const Hit<W> *>(CALL_ISPC(
           GridAcceleratorIterator_getCurrentHit, (void *)&ispcStorage[0]));
     }
 
     template <int W>
-    void GridAcceleratorIterator<W>::iterateHit(const vintn<W> &valid,
-                                                vintn<W> &result)
+    void GridAcceleratorIteratorV<W>::iterateHit(const vintn<W> &valid,
+                                                 vintn<W> &result)
     {
       CALL_ISPC(GridAcceleratorIterator_iterateHit,
                 static_cast<const int *>(valid),
@@ -104,7 +104,7 @@ namespace openvkl {
                 static_cast<int *>(result));
     }
 
-    template class GridAcceleratorIterator<VKL_TARGET_WIDTH>;
+    template class GridAcceleratorIteratorV<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

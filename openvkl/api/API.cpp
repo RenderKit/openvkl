@@ -306,9 +306,7 @@ extern "C" void vklInitIntervalIterator(VKLIntervalIterator *iterator,
                                         VKLValueSelector valueSelector)
     OPENVKL_CATCH_BEGIN
 {
-  constexpr int valid = 1;
   return openvkl::api::currentDriver().initIntervalIterator1(
-      &valid,
       reinterpret_cast<vVKLIntervalIteratorN<1> &>(*iterator),
       volume,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
@@ -348,11 +346,9 @@ __define_vklInitIntervalIteratorN(16);
 extern "C" int vklIterateInterval(VKLIntervalIterator *iterator,
                                   VKLInterval *interval) OPENVKL_CATCH_BEGIN
 {
-  constexpr int valid = 1;
   vVKLIntervalN<1> intervalInternal;
   int result;
   openvkl::api::currentDriver().iterateInterval1(
-      &valid,
       reinterpret_cast<vVKLIntervalIteratorN<1> &>(*iterator),
       intervalInternal,
       &result);
@@ -396,9 +392,7 @@ extern "C" void vklInitHitIterator(VKLHitIterator *iterator,
                                    VKLValueSelector valueSelector)
     OPENVKL_CATCH_BEGIN
 {
-  constexpr int valid = 1;
   return openvkl::api::currentDriver().initHitIterator1(
-      &valid,
       reinterpret_cast<vVKLHitIteratorN<1> &>(*iterator),
       volume,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
@@ -438,11 +432,9 @@ __define_vklInitHitIteratorN(16);
 extern "C" int vklIterateHit(VKLHitIterator *iterator,
                              VKLHit *hit) OPENVKL_CATCH_BEGIN
 {
-  constexpr int valid = 1;
   vVKLHitN<1> hitInternal;
   int result;
   openvkl::api::currentDriver().iterateHit1(
-      &valid,
       reinterpret_cast<vVKLHitIteratorN<1> &>(*iterator),
       hitInternal,
       &result);

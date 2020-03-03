@@ -60,6 +60,13 @@ namespace openvkl {
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      void initIntervalIterator1(vVKLIntervalIteratorN<1> &iterator,
+                                 VKLVolume volume,
+                                 const vvec3fn<1> &origin,
+                                 const vvec3fn<1> &direction,
+                                 const vrange1fn<1> &tRange,
+                                 VKLValueSelector valueSelector) override;
+
 #define __define_initIntervalIteratorN(WIDTH)                              \
   void initIntervalIterator##WIDTH(const int *valid,                       \
                                    vVKLIntervalIteratorN<WIDTH> &iterator, \
@@ -69,12 +76,15 @@ namespace openvkl {
                                    const vrange1fn<WIDTH> &tRange,         \
                                    VKLValueSelector valueSelector) override;
 
-      __define_initIntervalIteratorN(1);
       __define_initIntervalIteratorN(4);
       __define_initIntervalIteratorN(8);
       __define_initIntervalIteratorN(16);
 
 #undef __define_initIntervalIteratorN
+
+      void iterateInterval1(vVKLIntervalIteratorN<1> &iterator,
+                            vVKLIntervalN<1> &interval,
+                            int *result) override;
 
 #define __define_iterateIntervalN(WIDTH)                              \
   void iterateInterval##WIDTH(const int *valid,                       \
@@ -82,7 +92,6 @@ namespace openvkl {
                               vVKLIntervalN<WIDTH> &interval,         \
                               int *result) override;
 
-      __define_iterateIntervalN(1);
       __define_iterateIntervalN(4);
       __define_iterateIntervalN(8);
       __define_iterateIntervalN(16);
@@ -93,6 +102,13 @@ namespace openvkl {
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      void initHitIterator1(vVKLHitIteratorN<1> &iterator,
+                            VKLVolume volume,
+                            const vvec3fn<1> &origin,
+                            const vvec3fn<1> &direction,
+                            const vrange1fn<1> &tRange,
+                            VKLValueSelector valueSelector) override;
+
 #define __define_initHitIteratorN(WIDTH)                         \
   void initHitIterator##WIDTH(const int *valid,                  \
                               vVKLHitIteratorN<WIDTH> &iterator, \
@@ -102,12 +118,15 @@ namespace openvkl {
                               const vrange1fn<WIDTH> &tRange,    \
                               VKLValueSelector valueSelector) override;
 
-      __define_initHitIteratorN(1);
       __define_initHitIteratorN(4);
       __define_initHitIteratorN(8);
       __define_initHitIteratorN(16);
 
 #undef __define_initHitIteratorN
+
+      void iterateHit1(vVKLHitIteratorN<1> &iterator,
+                       vVKLHitN<1> &hit,
+                       int *result) override;
 
 #define __define_iterateHitN(WIDTH)                         \
   void iterateHit##WIDTH(const int *valid,                  \
@@ -115,7 +134,6 @@ namespace openvkl {
                          vVKLHitN<WIDTH> &hit,              \
                          int *result) override;
 
-      __define_iterateHitN(1);
       __define_iterateHitN(4);
       __define_iterateHitN(8);
       __define_iterateHitN(16);
@@ -201,16 +219,6 @@ namespace openvkl {
 
      private:
       template <int OW>
-      typename std::enable_if<(OW == 1), void>::type
-      initIntervalIteratorAnyWidth(const int *valid,
-                                   vVKLIntervalIteratorN<OW> &iterator,
-                                   VKLVolume volume,
-                                   const vvec3fn<OW> &origin,
-                                   const vvec3fn<OW> &direction,
-                                   const vrange1fn<OW> &tRange,
-                                   VKLValueSelector valueSelector);
-
-      template <int OW>
       typename std::enable_if<(OW == W), void>::type
       initIntervalIteratorAnyWidth(const int *valid,
                                    vVKLIntervalIteratorN<OW> &iterator,
@@ -231,13 +239,6 @@ namespace openvkl {
                                    VKLValueSelector valueSelector);
 
       template <int OW>
-      typename std::enable_if<(OW == 1), void>::type iterateIntervalAnyWidth(
-          const int *valid,
-          vVKLIntervalIteratorN<OW> &iterator1,
-          vVKLIntervalN<OW> &interval,
-          int *result);
-
-      template <int OW>
       typename std::enable_if<(OW == W), void>::type iterateIntervalAnyWidth(
           const int *valid,
           vVKLIntervalIteratorN<OW> &iterator,
@@ -250,16 +251,6 @@ namespace openvkl {
                               vVKLIntervalIteratorN<OW> &iterator,
                               vVKLIntervalN<OW> &interval,
                               int *result);
-
-      template <int OW>
-      typename std::enable_if<(OW == 1), void>::type initHitIteratorAnyWidth(
-          const int *valid,
-          vVKLHitIteratorN<OW> &iterator,
-          VKLVolume volume,
-          const vvec3fn<OW> &origin,
-          const vvec3fn<OW> &direction,
-          const vrange1fn<OW> &tRange,
-          VKLValueSelector valueSelector);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type initHitIteratorAnyWidth(
@@ -280,13 +271,6 @@ namespace openvkl {
                               const vvec3fn<OW> &direction,
                               const vrange1fn<OW> &tRange,
                               VKLValueSelector valueSelector);
-
-      template <int OW>
-      typename std::enable_if<(OW == 1), void>::type iterateHitAnyWidth(
-          const int *valid,
-          vVKLHitIteratorN<OW> &iterator1,
-          vVKLHitN<OW> &hit,
-          int *result);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type iterateHitAnyWidth(

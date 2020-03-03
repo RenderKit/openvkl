@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,6 +25,28 @@ using namespace ospcommon;
 namespace openvkl {
   namespace ispc_driver {
 
+    template <int W>
+    struct Volume;
+
+    template <int W>
+    struct Interval
+    {
+      vrange1fn<W> tRange;
+      vrange1fn<W> valueRange;
+      vfloatn<W> nominalDeltaT;
+    };
+
+    template <int W>
+    struct Hit
+    {
+      vfloatn<W> t;
+      vfloatn<W> sample;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Conversion to / from public types //////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     template <int W, typename U>
     inline vVKLIntervalIteratorN<W> toVKLIntervalIterator(U &&x)
     {
@@ -43,7 +65,7 @@ namespace openvkl {
     inline T *fromVKLIntervalIterator(vVKLIntervalIteratorN<W> *x)
     {
       static_assert(
-          alignof(T) == alignof(vVKLIntervalIteratorN<W>),
+          alignof(T) <= alignof(vVKLIntervalIteratorN<W>),
           "alignment of destination type must be == alignment of source type");
       static_assert(
           sizeof(T) <= iterator_internal_state_size_for_width(W),
@@ -70,7 +92,7 @@ namespace openvkl {
     inline T *fromVKLHitIterator(vVKLHitIteratorN<W> *x)
     {
       static_assert(
-          alignof(T) == alignof(vVKLHitIteratorN<W>),
+          alignof(T) <= alignof(vVKLHitIteratorN<W>),
           "alignment of destination type must be == alignment of source type");
       static_assert(sizeof(T) <= iterator_internal_state_size_for_width(W),
                     "fromVKLHitIterator destination object size must be <= "
@@ -78,38 +100,63 @@ namespace openvkl {
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
 
-    template <int W>
-    struct Volume;
-
-    template <int W>
-    struct Interval
-    {
-      vrange1fn<W> tRange;
-      vrange1fn<W> valueRange;
-      vfloatn<W> nominalDeltaT;
-    };
-
-    template <int W>
-    struct Hit
-    {
-      vfloatn<W> t;
-      vfloatn<W> sample;
-    };
+    ///////////////////////////////////////////////////////////////////////////
+    // Uniform iterator ///////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     // a general iterator that handles both interval and hit iteration
     template <int W>
-    struct Iterator
+    struct IteratorU
     {
-      Iterator() = default;
+      IteratorU() = default;
 
-      Iterator(const vintn<W> &valid,
-               const Volume<W> *volume,
-               const vvec3fn<W> &origin,
-               const vvec3fn<W> &direction,
-               const vrange1fn<W> &tRange,
-               const ValueSelector<W> *valueSelector);
+      IteratorU(const Volume<W> *volume,
+                const vvec3fn<1> &origin,
+                const vvec3fn<1> &direction,
+                const vrange1fn<1> &tRange,
+                const ValueSelector<W> *valueSelector);
 
-      virtual ~Iterator() = default;
+      virtual ~IteratorU() = default;
+
+      virtual const Interval<1> *getCurrentInterval() const = 0;
+      virtual void iterateInterval(vintn<1> &result)        = 0;
+
+      virtual const Hit<1> *getCurrentHit() const = 0;
+      virtual void iterateHit(vintn<1> &result)   = 0;
+
+      const Volume<W> *volume;
+    };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline IteratorU<W>::IteratorU(const Volume<W> *volume,
+                                   const vvec3fn<1> &origin,
+                                   const vvec3fn<1> &direction,
+                                   const vrange1fn<1> &tRange,
+                                   const ValueSelector<W> *valueSelector)
+        : volume(volume)
+    {
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Varying iterator ///////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    // a general iterator that handles both interval and hit iteration
+    template <int W>
+    struct IteratorV
+    {
+      IteratorV() = default;
+
+      IteratorV(const vintn<W> &valid,
+                const Volume<W> *volume,
+                const vvec3fn<W> &origin,
+                const vvec3fn<W> &direction,
+                const vrange1fn<W> &tRange,
+                const ValueSelector<W> *valueSelector);
+
+      virtual ~IteratorV() = default;
 
       virtual const Interval<W> *getCurrentInterval() const                 = 0;
       virtual void iterateInterval(const vintn<W> &valid, vintn<W> &result) = 0;
@@ -123,12 +170,12 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline Iterator<W>::Iterator(const vintn<W> &valid,
-                                 const Volume<W> *volume,
-                                 const vvec3fn<W> &origin,
-                                 const vvec3fn<W> &direction,
-                                 const vrange1fn<W> &tRange,
-                                 const ValueSelector<W> *valueSelector)
+    inline IteratorV<W>::IteratorV(const vintn<W> &valid,
+                                   const Volume<W> *volume,
+                                   const vvec3fn<W> &origin,
+                                   const vvec3fn<W> &direction,
+                                   const vrange1fn<W> &tRange,
+                                   const ValueSelector<W> *valueSelector)
         : volume(volume)
     {
     }

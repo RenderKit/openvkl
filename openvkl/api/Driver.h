@@ -93,6 +93,17 @@ namespace openvkl {
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      virtual void initIntervalIterator1(vVKLIntervalIteratorN<1> &iterator,
+                                         VKLVolume volume,
+                                         const vvec3fn<1> &origin,
+                                         const vvec3fn<1> &direction,
+                                         const vrange1fn<1> &tRange,
+                                         VKLValueSelector valueSelector)
+      {
+        throw std::runtime_error(
+            "initIntervalIterator1() not implemented on this driver");
+      }
+
 #define __define_initIntervalIteratorN(WIDTH)                            \
   virtual void initIntervalIterator##WIDTH(                              \
       const int *valid,                                                  \
@@ -107,12 +118,19 @@ namespace openvkl {
         "initIntervalIterator##WIDTH() not implemented on this driver"); \
   }
 
-      __define_initIntervalIteratorN(1);
       __define_initIntervalIteratorN(4);
       __define_initIntervalIteratorN(8);
       __define_initIntervalIteratorN(16);
 
 #undef __define_initIntervalIteratorN
+
+      virtual void iterateInterval1(vVKLIntervalIteratorN<1> &iterator,
+                                    vVKLIntervalN<1> &interval,
+                                    int *result)
+      {
+        throw std::runtime_error(
+            "iterateInterval1() not implemented on this driver");
+      }
 
 #define __define_iterateIntervalN(WIDTH)                                      \
   virtual void iterateInterval##WIDTH(const int *valid,                       \
@@ -124,7 +142,6 @@ namespace openvkl {
         "iterateInterval##WIDTH() not implemented on this driver");           \
   }
 
-      __define_iterateIntervalN(1);
       __define_iterateIntervalN(4);
       __define_iterateIntervalN(8);
       __define_iterateIntervalN(16);
@@ -134,6 +151,17 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
+
+      virtual void initHitIterator1(vVKLHitIteratorN<1> &iterator,
+                                    VKLVolume volume,
+                                    const vvec3fn<1> &origin,
+                                    const vvec3fn<1> &direction,
+                                    const vrange1fn<1> &tRange,
+                                    VKLValueSelector valueSelector)
+      {
+        throw std::runtime_error(
+            "initHitIterator1() not implemented on this driver");
+      }
 
 #define __define_initHitIteratorN(WIDTH)                                 \
   virtual void initHitIterator##WIDTH(const int *valid,                  \
@@ -148,12 +176,19 @@ namespace openvkl {
         "initHitIterator##WIDTH() not implemented on this driver");      \
   }
 
-      __define_initHitIteratorN(1);
       __define_initHitIteratorN(4);
       __define_initHitIteratorN(8);
       __define_initHitIteratorN(16);
 
 #undef __define_initHitIteratorN
+
+      virtual void iterateHit1(vVKLHitIteratorN<1> &iterator,
+                               vVKLHitN<1> &hit,
+                               int *result)
+      {
+        throw std::runtime_error(
+            "iterateHit1() not implemented on this driver");
+      }
 
 #define __define_iterateHitN(WIDTH)                                 \
   virtual void iterateHit##WIDTH(const int *valid,                  \
@@ -165,7 +200,6 @@ namespace openvkl {
         "iterateHit##WIDTH() not implemented on this driver");      \
   }
 
-      __define_iterateHitN(1);
       __define_iterateHitN(4);
       __define_iterateHitN(8);
       __define_iterateHitN(16);

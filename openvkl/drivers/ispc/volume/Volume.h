@@ -40,19 +40,37 @@ namespace openvkl {
 
       static Volume *createInstance(const std::string &type);
 
-      // volumes must provide their own iterator implementations based on
-      // their internal acceleration structures.
-
-      // initialize a new iterator for the given input rays (specified by
-      // origin, direction and tRange) and optional valueSelector indicating
-      // volume sample values of interest. if no valueSelector is provided, all
-      // intervals intersecting the volume should be (iteratively) returned by
-      // iterateIntervalV(), and no hits should be returned by iterateHitV().
+      // Volumes may implement their own interval and hit iterators based on
+      // their internal acceleration structures. If not provided, a default
+      // iterator implementation will be used instead. The default iterator
+      // implementation may not be performant.
       //
-      // the iterator objects can be casted to volume-specific iterator types,
+      // Both scalar (uniform) and wide (varying) interfaces for iterators are
+      // available. These are suffixed with U and V respectively, e.g.
+      // initIntervalIteratorU() and initIntervalIteratorV(). If uniform
+      // implementations are not overridden, inputs will be upconverted and the
+      // varying implementations will be used. If varying implementations are
+      // not implemented, the default iterator implementation will be used.
+      // Thus, if a volume implements its own iterators, it should implement the
+      // varying interfaces first, as the uniform interfaces will automatically
+      // make use of it.
+      //
+      // The iterator objects can be casted to volume-specific iterator types,
       // and may maintain internal state as desired, e.g. for current state
-      // within an acceleration structure, etc.
+      // within an acceleration structure.
 
+      // Initialize a new interval iterator for the given input ray(s)
+      // (specified by origin, direction and tRange) and optional valueSelector
+      // indicating volume sample values of interest. If no valueSelector is
+      // provided, all intervals intersecting the volume should be (iteratively)
+      // returned by iterateInterval[U,V]()
+      virtual void initIntervalIteratorU(vVKLIntervalIteratorN<1> &iterator,
+                                         const vvec3fn<1> &origin,
+                                         const vvec3fn<1> &direction,
+                                         const vrange1fn<1> &tRange,
+                                         const ValueSelector<W> *valueSelector);
+
+      // The valid mask indicates which lanes are active.
       virtual void initIntervalIteratorV(const vintn<W> &valid,
                                          vVKLIntervalIteratorN<W> &iterator,
                                          const vvec3fn<W> &origin,
@@ -60,17 +78,30 @@ namespace openvkl {
                                          const vrange1fn<W> &tRange,
                                          const ValueSelector<W> *valueSelector);
 
-      // for each active lane / ray (indicated by valid), iterate once for the
-      // given iterator and return the next interval (if any) satisfying the
-      // iterator's valueSelector in interval. result (0 or 1) should
-      // indicate if a new interval was found for each active lane.
-      //
-      // iterator may be modified to track any internal state as desired.
+      // Iterate once for the given iterator and return the next interval (if
+      // any) satisfying the iterator's valueSelector in interval. Result (0 or
+      // 1) indicates if a new interval was found.
+      virtual void iterateIntervalU(vVKLIntervalIteratorN<1> &iterator,
+                                    vVKLIntervalN<1> &interval,
+                                    vintn<1> &result);
+
       virtual void iterateIntervalV(const vintn<W> &valid,
                                     vVKLIntervalIteratorN<W> &iterator,
                                     vVKLIntervalN<W> &interval,
                                     vintn<W> &result);
 
+      // Initialize a new hit iterator for the given input ray(s) (specified by
+      // origin, direction and tRange) and optional valueSelector indicating
+      // volume sample values of interest. If no valueSelector is provided, or
+      // the value selector contains now values, no hits should be returned by
+      // iterateHit[U,V]().
+      virtual void initHitIteratorU(vVKLHitIteratorN<1> &iterator,
+                                    const vvec3fn<1> &origin,
+                                    const vvec3fn<1> &direction,
+                                    const vrange1fn<1> &tRange,
+                                    const ValueSelector<W> *valueSelector);
+
+      // The valid mask indicates which lanes are active.
       virtual void initHitIteratorV(const vintn<W> &valid,
                                     vVKLHitIteratorN<W> &iterator,
                                     const vvec3fn<W> &origin,
@@ -78,12 +109,13 @@ namespace openvkl {
                                     const vrange1fn<W> &tRange,
                                     const ValueSelector<W> *valueSelector);
 
-      // for each active lane / ray (indicated by valid), iterate once for the
-      // given iterator and return the next hit (if any) satisfying
-      // the iterator's valueSelector in hit. result (0 or 1) should
-      // indicate if a new hit was found for each active lane.
-      //
-      // iterator may be modified to track any internal state as desired.
+      // Iterate once for the given iterator and return the next hit (if any)
+      // satisfying the iterator's valueSelector in hit. Result (0 or 1)
+      // indicates if a new hit was found.
+      virtual void iterateHitU(vVKLHitIteratorN<1> &iterator,
+                               vVKLHitN<1> &hit,
+                               vintn<1> &result);
+
       virtual void iterateHitV(const vintn<W> &valid,
                                vVKLHitIteratorN<W> &iterator,
                                vVKLHitN<W> &hit,
@@ -128,6 +160,30 @@ namespace openvkl {
     }
 
     template <int W>
+    inline void Volume<W>::initIntervalIteratorU(
+        vVKLIntervalIteratorN<1> &iterator,
+        const vvec3fn<1> &origin,
+        const vvec3fn<1> &direction,
+        const vrange1fn<1> &tRange,
+        const ValueSelector<W> *valueSelector)
+    {
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i == 0 ? -1 : 0;
+
+      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+
+      vVKLIntervalIteratorN<W> iteratorW;
+
+      initIntervalIteratorV(
+          validW, iteratorW, originW, directionW, tRangeW, valueSelector);
+
+      iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
+    }
+
+    template <int W>
     inline void Volume<W>::initIntervalIteratorV(
         const vintn<W> &valid,
         vVKLIntervalIteratorN<W> &iterator,
@@ -138,6 +194,35 @@ namespace openvkl {
     {
       iterator = toVKLIntervalIterator<W>(DefaultIterator<W>(
           valid, this, origin, direction, tRange, valueSelector));
+    }
+
+    template <int W>
+    inline void Volume<W>::iterateIntervalU(vVKLIntervalIteratorN<1> &iterator,
+                                            vVKLIntervalN<1> &interval,
+                                            vintn<1> &result)
+    {
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i == 0 ? -1 : 0;
+
+      vVKLIntervalN<W> intervalW;
+
+      vintn<W> resultW;
+
+      vVKLIntervalIteratorN<W> iteratorW =
+          static_cast<vVKLIntervalIteratorN<W>>(iterator);
+
+      iterateIntervalV(validW, iteratorW, intervalW, resultW);
+
+      iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
+
+      interval.tRange.lower[0]     = intervalW.tRange.lower[0];
+      interval.tRange.upper[0]     = intervalW.tRange.upper[0];
+      interval.valueRange.lower[0] = intervalW.valueRange.lower[0];
+      interval.valueRange.upper[0] = intervalW.valueRange.upper[0];
+      interval.nominalDeltaT[0]    = intervalW.nominalDeltaT[0];
+
+      result[0] = resultW[0];
     }
 
     template <int W>
@@ -156,6 +241,30 @@ namespace openvkl {
     }
 
     template <int W>
+    inline void Volume<W>::initHitIteratorU(
+        vVKLHitIteratorN<1> &iterator,
+        const vvec3fn<1> &origin,
+        const vvec3fn<1> &direction,
+        const vrange1fn<1> &tRange,
+        const ValueSelector<W> *valueSelector)
+    {
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i == 0 ? -1 : 0;
+
+      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+
+      vVKLHitIteratorN<W> iteratorW;
+
+      initHitIteratorV(
+          validW, iteratorW, originW, directionW, tRangeW, valueSelector);
+
+      iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
+    }
+
+    template <int W>
     inline void Volume<W>::initHitIteratorV(
         const vintn<W> &valid,
         vVKLHitIteratorN<W> &iterator,
@@ -166,6 +275,32 @@ namespace openvkl {
     {
       iterator = toVKLHitIterator<W>(DefaultIterator<W>(
           valid, this, origin, direction, tRange, valueSelector));
+    }
+
+    template <int W>
+    inline void Volume<W>::iterateHitU(vVKLHitIteratorN<1> &iterator,
+                                       vVKLHitN<1> &hit,
+                                       vintn<1> &result)
+    {
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i == 0 ? -1 : 0;
+
+      vVKLHitN<W> hitW;
+
+      vintn<W> resultW;
+
+      vVKLHitIteratorN<W> iteratorW =
+          static_cast<vVKLHitIteratorN<W>>(iterator);
+
+      iterateHitV(validW, iteratorW, hitW, resultW);
+
+      iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
+
+      hit.t[0]      = hitW.t[0];
+      hit.sample[0] = hitW.sample[0];
+
+      result[0] = resultW[0];
     }
 
     template <int W>

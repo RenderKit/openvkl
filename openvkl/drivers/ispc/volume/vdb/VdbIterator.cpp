@@ -33,7 +33,7 @@ namespace openvkl {
                                 const vvec3fn<W> &direction,
                                 const vrange1fn<W> &tRange,
                                 const ValueSelector<W> *valueSelector)
-        : Iterator<W>(valid, volume, origin, direction, tRange, valueSelector)
+        : IteratorV<W>(valid, volume, origin, direction, tRange, valueSelector)
     {
       static bool oneTimeChecks = false;
 

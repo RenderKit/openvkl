@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,19 +31,19 @@ namespace openvkl {
     if (dataCreationFlags & VKL_DATA_SHARED_BUFFER) {
       if (source == nullptr)
         throw std::runtime_error("shared buffer is NULL");
-      data = const_cast<void *>(source);
+      data = source;
     } else {
-      data = ospcommon::memory::alignedMalloc(numBytes + 16);
-      if (data == nullptr)
+      void *buffer = ospcommon::memory::alignedMalloc(numBytes + 16);
+      if (buffer == nullptr)
         throw std::runtime_error("data is NULL");
+      data = buffer;
       if (source)
-        memcpy(data, source, numBytes);
+        memcpy(buffer, source, numBytes);
       else if (dataType == VKL_OBJECT)
-        memset(data, 0, numBytes);
+        memset(buffer, 0, numBytes);
     }
 
     managedObjectType = VKL_DATA;
-
     if (isManagedObject(dataType)) {
       ManagedObject **child = (ManagedObject **)data;
       for (uint32_t i = 0; i < numItems; i++) {
@@ -63,8 +63,11 @@ namespace openvkl {
       }
     }
 
-    if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER))
-      ospcommon::memory::alignedFree(data);
+    if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
+      // We know we allocated this buffer, so the const cast is in fact
+      // reasonable.
+      ospcommon::memory::alignedFree(const_cast<void *>(data));
+    }
   }
 
   std::string Data::toString() const

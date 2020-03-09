@@ -54,7 +54,6 @@ if (DEFINED OpenVDB_ROOT)
   find_package(OpenVDB 7.0.0 COMPONENTS openvdb)
 
   if (OpenVDB_FOUND)
-
     # Applications should use this variable to determine if .vdb file loading is
     # enabled.
     target_compile_definitions(openvkl_vdb_util 
@@ -65,12 +64,13 @@ if (DEFINED OpenVDB_ROOT)
       INTERFACE 
         OpenVDB::openvdb)
 
+    message(STATUS "Building with OpenVDB support: ${OpenVDB_openvdb_LIBRARY}.")
   else()
     message(STATUS "Failed to find OpenVDB at OpenVDB_ROOT (${OpenVDB_ROOT}).")
   endif()
 
 else()
-  message(STATUS "Building without OpenVDB support")
+  message(STATUS "Building without OpenVDB support.")
 endif()
 
 

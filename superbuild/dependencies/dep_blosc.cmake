@@ -27,7 +27,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/Blosc/c-blosc/archive/${BUILD_BLOSC_VERSION}.zip"
+  URL ${BLOSC_URL}
+  URL_HASH SHA256=${BLOSC_HASH}
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
@@ -36,5 +37,10 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_ALWAYS OFF
 )
 
-set(Blosc_ROOT ${COMPONENT_PATH})
+set(BLOSC_PATH ${COMPONENT_PATH})
+
+ExternalProject_Add_StepDependencies(c-blosc
+  configure
+    zlib
+)
 

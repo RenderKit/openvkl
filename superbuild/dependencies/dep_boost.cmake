@@ -21,16 +21,9 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
-
-if(WIN32)
-  set(BOOST_CONF "bootstrap")
-  set(BOOST_URL  "https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.zip")
-  set(BOOST_HASH SHA256=8c20440aaba21dd963c0f7149517445f50c62ce4eb689df2b5544cc89e6e621e)
-else()
-  set(BOOST_CONF "./bootstrap.sh")
-  set(BOOST_URL  "https://dl.bintray.com/boostorg/release/1.72.0/source/boost_1_72_0.tar.gz")
-  set(BOOST_HASH SHA256=c66e88d5786f2ca4dbebb14e06b566fb642a1a6947ad8cc9091f9f445134143f)
-endif()
+set(BOOST_CONF "./bootstrap.sh")
+set(BOOST_BUILD "./b2")
+set(BOOST_LINK "shared")
 
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
@@ -39,12 +32,18 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/src
   URL ${BOOST_URL}
-  URL_HASH ${BOOST_HASH}
-  CONFIGURE_COMMAND ${BOOST_CONF} --with-libraries=system,iostreams,regex --prefix=${COMPONENT_PATH}
-  BUILD_COMMAND ./b2
-  INSTALL_COMMAND ./b2 install
+  URL_HASH SHA256=${BOOST_HASH}
+  CONFIGURE_COMMAND ${BOOST_CONF}
+  BUILD_COMMAND ${BOOST_BUILD} -d0 --with-system --with-iostreams --with-regex --layout=system
+    --prefix=${COMPONENT_PATH} variant=release threading=multi address-model=64
+    link=${BOOST_LINK} architecture=x86 install
+  INSTALL_COMMAND ""
   BUILD_ALWAYS OFF
 )
 
-set(BOOST_ROOT ${COMPONENT_PATH})
+mark_as_advanced(BOOST_CONF)
+mark_as_advanced(BOOST_BUILD)
+mark_as_advanced(BOOST_LINK)
+
+set(BOOST_PATH ${COMPONENT_PATH})
 

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
+## Copyright 2019-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -26,17 +26,32 @@ ExternalProject_Add(${COMPONENT_NAME}
   DOWNLOAD_DIR ${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
-  BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/wjakob/tbb/archive/master.zip"
-  CMAKE_ARGS
-    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
-    -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
-    -DCMAKE_BUILD_TYPE=Release
-    -DTBB_BUILD_TESTS=OFF
-    -DTBB_BUILD_SHARED=ON
-    -DTBB_BUILD_STATIC=OFF
-  BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
+  BINARY_DIR ${COMPONENT_NAME}
+  URL ${TBB_URL}
+  URL_HASH SHA256=${TBB_HASH}
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_directory
+    <SOURCE_DIR>/tbb/include
+    ${COMPONENT_PATH}/include
   BUILD_ALWAYS OFF
 )
 
-set(TBB_PATH "${COMPONENT_PATH}")
+# We copy the libraries into the main lib dir. This makes it easier
+# to set the correct library path.
+ExternalProject_Add_Step(${COMPONENT_NAME} install_lib
+  COMMAND "${CMAKE_COMMAND}" -E copy_directory 
+  <SOURCE_DIR>/tbb/lib/${TBB_LIB_SUBDIR} ${COMPONENT_PATH}/lib
+  DEPENDEES install
+)
+
+if (WIN32)
+  # DLLs on Windows are in the bin subdirectory.
+  ExternalProject_Add_Step(${COMPONENT_NAME} install_dll
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory 
+    <SOURCE_DIR>/tbb/bin/${TBB_LIB_SUBDIR} ${COMPONENT_PATH}/bin
+    DEPENDEES install_lib
+  )
+endif()
+
+set(TBB_PATH ${COMPONENT_PATH})

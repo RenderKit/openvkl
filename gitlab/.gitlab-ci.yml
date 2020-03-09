@@ -187,6 +187,9 @@ test-functional-macOS:
   tags:
     - osx
     - clang
+  script:
+    - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTests
 
 test-functional-windows-msvc15:
   <<: *base_functional_test_job

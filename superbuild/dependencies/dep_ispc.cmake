@@ -21,18 +21,11 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
-if (APPLE)
-  set(ISPC_URL http://sdvis.org/ospray/download/dependencies/osx/ispc-v1.12.0-macOS.tar.gz)
-elseif(WIN32)
-  set(ISPC_URL http://sdvis.org/ospray/download/dependencies/win/ispc-v1.12.0-windows.zip)
-else()
-  set(ISPC_URL http://sdvis.org/ospray/download/dependencies/linux/ispc-v1.12.0-linux.tar.gz)
-endif()
-
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   URL ${ISPC_URL}
+  URL_HASH SHA256=${ISPC_HASH}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND "${CMAKE_COMMAND}" -E copy_if_different

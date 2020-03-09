@@ -1,6 +1,6 @@
 @echo off
 rem ======================================================================== rem
-rem Copyright 2019 Intel Corporation                                         rem
+rem Copyright 2019-2020 Intel Corporation                                    rem
 rem                                                                          rem
 rem Licensed under the Apache License, Version 2.0 (the "License");          rem
 rem you may not use this file except in compliance with the License.         rem
@@ -25,14 +25,12 @@ cmake --version
 cmake -L ^
 -G "%~1" ^
 -T "%~2" ^
--D BUILD_TBB_FROM_SOURCE=OFF ^
 -D CMAKE_INSTALL_LIBDIR=lib ^
--D INSTALL_IN_SEPARATE_DIRECTORIES=OFF ^
 -D BUILD_OPENVKL_BENCHMARKS=OFF ^
 -D BUILD_OPENVKL_TESTING=ON ^
 ../superbuild
 
-cmake --build . --config Release --target ALL_BUILD -- /m /nologo
+cmake --build . --verbose --config Release --target ALL_BUILD -- /m /nologo
 
 :abort
 endlocal

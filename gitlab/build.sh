@@ -1,6 +1,6 @@
 #!/bin/bash
 ## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
+## Copyright 2019-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -25,7 +25,6 @@ cmake --version
 
 cmake \
   -DCMAKE_INSTALL_LIBDIR=lib \
-  -DINSTALL_IN_SEPARATE_DIRECTORIES=OFF \
   -DBUILD_OPENVKL_BENCHMARKS=ON \
   "$@" ../superbuild
 

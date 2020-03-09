@@ -43,7 +43,7 @@ mkdir build
 cd build
 
 # NOTE(jda) - Some Linux OSs need to have TBB on LD_LIBRARY_PATH at build time
-export LD_LIBRARY_PATH=`pwd`/install/tbb/lib:${LD_LIBRARY_PATH}
+export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
 
 cmake --version
 
@@ -58,12 +58,12 @@ cmake --build .
 mkdir openvkl_build
 cd openvkl_build
 
-export OSPCOMMON_TBB_ROOT=`pwd`/../install/tbb
-export ospcommon_DIR=`pwd`/../install/ospcommon
-export embree_DIR=`pwd`/../install/embree
+export OSPCOMMON_TBB_ROOT=`pwd`/../install
+export ospcommon_DIR=`pwd`/../install
+export embree_DIR=`pwd`/../install
 
 cmake \
- -DISPC_EXECUTABLE=`pwd`/../install/ispc/bin/ispc \
+ -DISPC_EXECUTABLE=`pwd`/../install/bin/ispc \
  -DBUILD_EXAMPLES=OFF \
   ../..
 

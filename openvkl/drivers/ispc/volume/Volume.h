@@ -192,8 +192,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLIntervalIterator<W>(DefaultIterator<W>(
-          valid, this, origin, direction, tRange, valueSelector));
+      initVKLIntervalIterator<DefaultIterator<W>>(
+          iterator, valid, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>
@@ -273,8 +273,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLHitIterator<W>(DefaultIterator<W>(
-          valid, this, origin, direction, tRange, valueSelector));
+      initVKLHitIterator<DefaultIterator<W>>(
+          iterator, valid, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>

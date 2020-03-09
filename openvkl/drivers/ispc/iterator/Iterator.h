@@ -47,18 +47,15 @@ namespace openvkl {
     // Conversion to / from public types //////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    template <int W, typename U>
-    inline vVKLIntervalIteratorN<W> toVKLIntervalIterator(U &&x)
+    template <typename T, int W, typename... Args>
+    inline void initVKLIntervalIterator(vVKLIntervalIteratorN<W> &iterator,
+                                        const Args &... args)
     {
       static_assert(
-          iterator_internal_state_size_for_width(W) >= sizeof(U),
+          iterator_internal_state_size_for_width(W) >= sizeof(T),
           "iterator internal state size must be >= source object size");
-      vVKLIntervalIteratorN<W> result;
-      std::memcpy((void *)std::addressof(result.internalState),
-                  (const void *)std::addressof(x),
-                  sizeof(U));
-      result.volume = (VKLVolume)x.volume;
-      return result;
+      T *t            = new (&iterator.internalState) T(args...);
+      iterator.volume = (VKLVolume)t->volume;
     }
 
     template <typename T, int W>
@@ -74,18 +71,15 @@ namespace openvkl {
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
 
-    template <int W, typename U>
-    inline vVKLHitIteratorN<W> toVKLHitIterator(U &&x)
+    template <typename T, int W, typename... Args>
+    inline void initVKLHitIterator(vVKLHitIteratorN<W> &iterator,
+                                   const Args &... args)
     {
       static_assert(
-          iterator_internal_state_size_for_width(W) >= sizeof(U),
+          iterator_internal_state_size_for_width(W) >= sizeof(T),
           "iterator internal state size must be >= source object size");
-      vVKLHitIteratorN<W> result;
-      std::memcpy((void *)std::addressof(result.internalState),
-                  (const void *)std::addressof(x),
-                  sizeof(U));
-      result.volume = (VKLVolume)x.volume;
-      return result;
+      T *t            = new (&iterator.internalState) T(args...);
+      iterator.volume = (VKLVolume)t->volume;
     }
 
     template <typename T, int W>

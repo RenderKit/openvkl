@@ -220,8 +220,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLIntervalIterator<W>(UnstructuredIterator<W>(
-          valid, this, origin, direction, tRange, valueSelector));
+      initVKLIntervalIterator<UnstructuredIterator<W>>(
+          iterator, valid, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>

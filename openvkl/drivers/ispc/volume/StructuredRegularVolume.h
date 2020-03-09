@@ -84,8 +84,8 @@ namespace openvkl {
         const vrange1fn<1> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLIntervalIterator<1>(GridAcceleratorIteratorU<W>(
-          this, origin, direction, tRange, valueSelector));
+      initVKLIntervalIterator<GridAcceleratorIteratorU<W>>(
+          iterator, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>
@@ -97,8 +97,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLIntervalIterator<W>(GridAcceleratorIteratorV<W>(
-          valid, this, origin, direction, tRange, valueSelector));
+      initVKLIntervalIterator<GridAcceleratorIteratorV<W>>(
+          iterator, valid, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>
@@ -140,8 +140,8 @@ namespace openvkl {
         const vrange1fn<1> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLHitIterator<1>(GridAcceleratorIteratorU<W>(
-          this, origin, direction, tRange, valueSelector));
+      initVKLHitIterator<GridAcceleratorIteratorU<W>>(
+          iterator, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>
@@ -153,8 +153,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLHitIterator<W>(GridAcceleratorIteratorV<W>(
-          valid, this, origin, direction, tRange, valueSelector));
+      initVKLHitIterator<GridAcceleratorIteratorV<W>>(
+          iterator, valid, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>

@@ -549,7 +549,7 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
                                                      each cell are prefixed with the number
                                                      of vertices
 
-  uint32[] / uint64[]  cell                          [data] array of locations (into the
+  uint32[] / uint64[]  cell.index                    [data] array of locations (into the
                                                      index array), specifying the first index
                                                      of each cell
 

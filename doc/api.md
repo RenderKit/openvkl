@@ -51,8 +51,8 @@ drivers:
   int    numThreads     number of threads which Open VKL can use
 
   int    flushDenormals sets the `Flush to Zero` and `Denormals are Zero` mode
-                        of the MXCSR control and status register; see
-                        Performance Recommendations section for details
+                        of the MXCSR control and status register (default: 1);
+                        see Performance Recommendations section for details
   ------ -------------- --------------------------------------------------------
   : Parameters shared by all drivers.
 
@@ -102,8 +102,8 @@ easy changes to Open VKL’s behavior without needing to change the application
   OPENVKL_THREADS         number of threads which Open VKL can use
 
   OPENVKL_FLUSH_DENORMALS sets the `Flush to Zero` and `Denormals are Zero` mode
-                          of the MXCSR control and status register; see
-                          Performance Recommendations section for details
+                          of the MXCSR control and status register (default: 1);
+                          see Performance Recommendations section for details
   ----------------------- ------------------------------------------------------
   : Environment variables understood by all drivers.
 
@@ -973,11 +973,11 @@ mode of the MXCSR control and status register enabled for each thread before
 calling the sampling, gradient, or interval API functions. Otherwise, under some
 circumstances special handling of denormalized floating point numbers can
 significantly reduce application and Open VKL performance. The driver parameter
-`flushDenormals` or environment variable `OPENVKL_FLUSH_DENORMALS` can be set to
-1 to enable this mode. Alternatively, when using Open VKL together with the
-Intel® Threading Building Blocks, it is sufficient to execute the following code
-at the beginning of the application main thread (before the creation of the
-`tbb::task_scheduler_init` object):
+`flushDenormals` or environment variable `OPENVKL_FLUSH_DENORMALS` can be used
+to toggle this mode; by default it is enabled. Alternatively, when using Open
+VKL together with the Intel® Threading Building Blocks, it is sufficient to
+execute the following code at the beginning of the application main thread
+(before the creation of the `tbb::task_scheduler_init` object):
 
     #include <xmmintrin.h>
     #include <pmmintrin.h>

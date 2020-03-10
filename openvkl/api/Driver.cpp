@@ -163,7 +163,7 @@ namespace openvkl {
       auto OPENVKL_FLUSH_DENORMALS =
           utility::getEnvVar<int>("OPENVKL_FLUSH_DENORMALS");
       bool flushDenormals =
-          OPENVKL_FLUSH_DENORMALS.value_or(getParam<int>("flushDenormals", 0));
+          OPENVKL_FLUSH_DENORMALS.value_or(getParam<int>("flushDenormals", 1));
 
       tasking::initTaskingSystem(numThreads, flushDenormals);
 

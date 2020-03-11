@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "iterator/Iterator.ih"
 #include "iterator/GridAcceleratorIterator.ih"
+#include "iterator/Iterator.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 #include "openvkl/openvkl.isph"
@@ -80,12 +80,22 @@ export varying Hit *uniform newVaryingHit()
   return uniform new varying Hit;
 }
 
-export uniform int sizeofGridAcceleratorIterator()
+export uniform int sizeofGridAcceleratorIteratorU()
+{
+  return sizeof(uniform GridAcceleratorIterator);
+}
+
+export uniform int sizeofGridAcceleratorIteratorV()
 {
   return sizeof(varying GridAcceleratorIterator);
 }
 
-export void *uniform newGridAcceleratorIterator()
+export void *uniform newGridAcceleratorIteratorU()
+{
+  return uniform new uniform GridAcceleratorIterator;
+}
+
+export void *uniform newGridAcceleratorIteratorV()
 {
   return uniform new varying GridAcceleratorIterator;
 }

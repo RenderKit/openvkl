@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -56,15 +56,15 @@ struct SharedStructuredVolume
   // bytesPerSlice < 2G.
   uniform uint32 voxelOfs_dx, voxelOfs_dy, voxelOfs_dz;
 
-  void (*uniform transformLocalToObject)(const SharedStructuredVolume *uniform
-                                             self,
-                                         const varying vec3f &localCoordinates,
-                                         varying vec3f &objectCoordinates);
+  void (*uniform transformLocalToObject_varying)(
+      const SharedStructuredVolume *uniform self,
+      const varying vec3f &localCoordinates,
+      varying vec3f &objectCoordinates);
 
-  void (*uniform transformObjectToLocal)(const SharedStructuredVolume *uniform
-                                             self,
-                                         const varying vec3f &objectCoordinates,
-                                         varying vec3f &localCoordinates);
+  void (*uniform transformObjectToLocal_varying)(
+      const SharedStructuredVolume *uniform self,
+      const varying vec3f &objectCoordinates,
+      varying vec3f &localCoordinates);
 
   void (*uniform getVoxel)(const SharedStructuredVolume *uniform self,
                            const varying vec3i &index,
@@ -74,11 +74,16 @@ struct SharedStructuredVolume
       const SharedStructuredVolume *uniform self,
       const varying vec3f &objectCoordinates);
 
-  // required for uniform (scalar) sampling
+  // required for uniform (scalar) sampling and iterators
   uniform float (*uniform computeSampleUniform)(
       const void *uniform _self, const uniform vec3f &objectCoordinates);
 
-  void (*uniform transformObjectToLocalUniform)(
+  void (*uniform transformLocalToObject_uniform)(
+      const SharedStructuredVolume *uniform self,
+      const uniform vec3f &localCoordinates,
+      uniform vec3f &objectCoordinates);
+
+  void (*uniform transformObjectToLocal_uniform)(
       const SharedStructuredVolume *uniform self,
       const uniform vec3f &objectCoordinates,
       uniform vec3f &localCoordinates);

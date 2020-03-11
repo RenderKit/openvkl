@@ -51,7 +51,7 @@ varying float AMR_currentLevel(const void *uniform _self,
 
 export void EXPORT_UNIQUE(AMR_install_current, void *uniform _self)
 {
-  AMRVolume *uniform self   = (AMRVolume * uniform) _self;
-  self->super.computeSample = AMR_current;
-  self->computeSampleLevel  = AMR_currentLevel;
+  AMRVolume *uniform self           = (AMRVolume * uniform) _self;
+  self->super.computeSample_varying = AMR_current;
+  self->computeSampleLevel          = AMR_currentLevel;
 }

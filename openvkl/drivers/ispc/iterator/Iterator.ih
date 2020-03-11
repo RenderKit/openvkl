@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,15 +16,15 @@
 
 #pragma once
 
-#include "math/box.ih"
 #include "../volume/Volume.ih"
+#include "math/box.ih"
 
 // this should match the layout of VKLInterval
 struct Interval
 {
-  varying box1f tRange;
-  varying box1f valueRange;
-  varying float nominalDeltaT;
+  box1f tRange;
+  box1f valueRange;
+  float nominalDeltaT;
 };
 
 inline void resetInterval(Interval &interval)
@@ -36,73 +36,89 @@ inline void resetInterval(Interval &interval)
   interval.nominalDeltaT    = 0.f;
 }
 
+inline void resetInterval(uniform Interval &interval)
+{
+  interval.tRange.lower     = 1.f;
+  interval.tRange.upper     = -1.f;
+  interval.valueRange.lower = 0.f;
+  interval.valueRange.upper = 0.f;
+  interval.nominalDeltaT    = 0.f;
+}
+
 struct Hit
 {
-  varying float t;
-  varying float sample;
+  float t;
+  float sample;
 };
 
-inline bool intersectSurfaces(const Volume *uniform volume,
-                              const varying vec3f &origin,
-                              const varying vec3f &direction,
-                              const varying box1f &tRange,
-                              const uniform float step,
-                              const uniform int numValues,
-                              const float *uniform values,
-                              varying Hit &hit,
-                              varying float &surfaceEpsilon)
-{
-  // our bracketing sample t-values will always be in multiples of `step`, to
-  // avoid artifacts / differences in hits between neighboring rays, or when
-  // moving between macrocell boundaries, for example.
-  //
-  // note that the current approach here takes only one Newton iteration, so
-  // consistent bracketing is especially important for "smooth" results.
-  const int minTIndex = floor(tRange.lower / step);
-  const int maxTIndex = ceil(tRange.upper / step);
-
-  float t0      = minTIndex * step;
-  float sample0 = volume->computeSample(volume, origin + t0 * direction);
-
-  float t;
-
-  for (int i = minTIndex; i < maxTIndex; i++) {
-    t = (i + 1) * step;
-
-    const float sample = volume->computeSample(volume, origin + t * direction);
-
-    float tHit    = inf;
-    float epsilon = inf;
-    float value   = inf;
-
-    if (!isnan(sample0 + sample) && (sample != sample0)) {
-      for (uniform int i = 0; i < numValues; i++) {
-        if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {
-          const float rcpSamp = 1.f / (sample - sample0);
-          float tIso          = inf;
-          if (!isnan(rcpSamp)) {
-            tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);
-          }
-
-          if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) {
-            tHit    = tIso;
-            value   = values[i];
-            epsilon = step * 0.125f;
-          }
-        }
-      }
-
-      if (tHit < inf) {
-        hit.t          = tHit;
-        hit.sample     = value;
-        surfaceEpsilon = epsilon;
-        return true;
-      }
-    }
-
-    t0      = t;
-    sample0 = sample;
+#define template_intersectSurfaces(univary)                                    \
+  inline univary bool intersectSurfaces(const Volume *uniform volume,          \
+                                        const univary vec3f &origin,           \
+                                        const univary vec3f &direction,        \
+                                        const univary box1f &tRange,           \
+                                        const uniform float step,              \
+                                        const uniform int numValues,           \
+                                        const float *uniform values,           \
+                                        univary Hit &hit,                      \
+                                        univary float &surfaceEpsilon)         \
+  {                                                                            \
+    /* our bracketing sample t-values will always be in multiples of `step`,   \
+    to avoid artifacts / differences in hits between neighboring rays, or when \
+    moving between macrocell boundaries, for example.                          \
+                                                                               \
+    note that the current approach here takes only one Newton iteration, so    \
+    consistent bracketing is especially important for "smooth" results. */     \
+    const univary int minTIndex = floor(tRange.lower / step);                  \
+    const univary int maxTIndex = ceil(tRange.upper / step);                   \
+                                                                               \
+    univary float t0 = minTIndex * step;                                       \
+    univary float sample0 =                                                    \
+        volume->computeSample_##univary(volume, origin + t0 * direction);      \
+                                                                               \
+    univary float t;                                                           \
+                                                                               \
+    for (univary int i = minTIndex; i < maxTIndex; i++) {                      \
+      t = (i + 1) * step;                                                      \
+                                                                               \
+      const univary float sample =                                             \
+          volume->computeSample_##univary(volume, origin + t * direction);     \
+                                                                               \
+      univary float tHit    = inf;                                             \
+      univary float epsilon = inf;                                             \
+      univary float value   = inf;                                             \
+                                                                               \
+      if (!isnan(sample0 + sample) && (sample != sample0)) {                   \
+        for (uniform int i = 0; i < numValues; i++) {                          \
+          if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {           \
+            const univary float rcpSamp = 1.f / (sample - sample0);            \
+            univary float tIso          = inf;                                 \
+            if (!isnan(rcpSamp)) {                                             \
+              tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);          \
+            }                                                                  \
+                                                                               \
+            if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) { \
+              tHit    = tIso;                                                  \
+              value   = values[i];                                             \
+              epsilon = step * 0.125f;                                         \
+            }                                                                  \
+          }                                                                    \
+        }                                                                      \
+                                                                               \
+        if (tHit < inf) {                                                      \
+          hit.t          = tHit;                                               \
+          hit.sample     = value;                                              \
+          surfaceEpsilon = epsilon;                                            \
+          return true;                                                         \
+        }                                                                      \
+      }                                                                        \
+                                                                               \
+      t0      = t;                                                             \
+      sample0 = sample;                                                        \
+    }                                                                          \
+                                                                               \
+    return false;                                                              \
   }
 
-  return false;
-}
+template_intersectSurfaces(uniform);
+template_intersectSurfaces(varying);
+#undef template_intersectSurfaces

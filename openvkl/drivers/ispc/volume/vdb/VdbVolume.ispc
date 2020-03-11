@@ -63,7 +63,7 @@ export void EXPORT_UNIQUE(VdbVolume_setGrid,
                           void *uniform _self,
                           const VdbGrid *uniform grid)
 {
-  VdbVolume *uniform volume   = (VdbVolume * uniform) _self;
-  volume->grid                = grid;
-  volume->super.computeSample = VdbVolume_sample;
+  VdbVolume *uniform volume           = (VdbVolume * uniform) _self;
+  volume->grid                        = grid;
+  volume->super.computeSample_varying = VdbVolume_sample;
 }

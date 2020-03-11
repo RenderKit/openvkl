@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,6 +20,9 @@
 
 struct Volume
 {
-  varying float (*uniform computeSample)(
+  uniform float (*uniform computeSample_uniform)(
+      const void *uniform _self, const uniform vec3f &objectCoordinates);
+
+  varying float (*uniform computeSample_varying)(
       const void *uniform _self, const varying vec3f &objectCoordinates);
 };

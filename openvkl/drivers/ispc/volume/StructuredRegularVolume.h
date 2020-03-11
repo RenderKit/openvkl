@@ -27,6 +27,13 @@ namespace openvkl {
     {
       void commit() override;
 
+      void initIntervalIteratorU(
+          vVKLIntervalIteratorN<1> &iterator,
+          const vvec3fn<1> &origin,
+          const vvec3fn<1> &direction,
+          const vrange1fn<1> &tRange,
+          const ValueSelector<W> *valueSelector) override;
+
       void initIntervalIteratorV(
           const vintn<W> &valid,
           vVKLIntervalIteratorN<W> &iterator,
@@ -35,10 +42,20 @@ namespace openvkl {
           const vrange1fn<W> &tRange,
           const ValueSelector<W> *valueSelector) override;
 
+      void iterateIntervalU(vVKLIntervalIteratorN<1> &iterator,
+                            vVKLIntervalN<1> &interval,
+                            vintn<1> &result) override;
+
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalIteratorN<W> &iterator,
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override;
+
+      void initHitIteratorU(vVKLHitIteratorN<1> &iterator,
+                            const vvec3fn<1> &origin,
+                            const vvec3fn<1> &direction,
+                            const vrange1fn<1> &tRange,
+                            const ValueSelector<W> *valueSelector) override;
 
       void initHitIteratorV(const vintn<W> &valid,
                             vVKLHitIteratorN<W> &iterator,
@@ -47,6 +64,10 @@ namespace openvkl {
                             const vrange1fn<W> &tRange,
                             const ValueSelector<W> *valueSelector) override;
 
+      void iterateHitU(vVKLHitIteratorN<1> &iterator,
+                       vVKLHitN<1> &hit,
+                       vintn<1> &result) override;
+
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitIteratorN<W> &iterator,
                        vVKLHitN<W> &hit,
@@ -54,6 +75,18 @@ namespace openvkl {
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline void StructuredRegularVolume<W>::initIntervalIteratorU(
+        vVKLIntervalIteratorN<1> &iterator,
+        const vvec3fn<1> &origin,
+        const vvec3fn<1> &direction,
+        const vrange1fn<1> &tRange,
+        const ValueSelector<W> *valueSelector)
+    {
+      iterator = toVKLIntervalIterator<1>(GridAcceleratorIteratorU<W>(
+          this, origin, direction, tRange, valueSelector));
+    }
 
     template <int W>
     inline void StructuredRegularVolume<W>::initIntervalIteratorV(
@@ -66,6 +99,21 @@ namespace openvkl {
     {
       iterator = toVKLIntervalIterator<W>(GridAcceleratorIteratorV<W>(
           valid, this, origin, direction, tRange, valueSelector));
+    }
+
+    template <int W>
+    inline void StructuredRegularVolume<W>::iterateIntervalU(
+        vVKLIntervalIteratorN<1> &iterator,
+        vVKLIntervalN<1> &interval,
+        vintn<1> &result)
+    {
+      GridAcceleratorIteratorU<W> *ri =
+          fromVKLIntervalIterator<GridAcceleratorIteratorU<W>>(&iterator);
+
+      ri->iterateInterval(result);
+
+      interval =
+          *reinterpret_cast<const vVKLIntervalN<1> *>(ri->getCurrentInterval());
     }
 
     template <int W>
@@ -85,6 +133,18 @@ namespace openvkl {
     }
 
     template <int W>
+    inline void StructuredRegularVolume<W>::initHitIteratorU(
+        vVKLHitIteratorN<1> &iterator,
+        const vvec3fn<1> &origin,
+        const vvec3fn<1> &direction,
+        const vrange1fn<1> &tRange,
+        const ValueSelector<W> *valueSelector)
+    {
+      iterator = toVKLHitIterator<1>(GridAcceleratorIteratorU<W>(
+          this, origin, direction, tRange, valueSelector));
+    }
+
+    template <int W>
     inline void StructuredRegularVolume<W>::initHitIteratorV(
         const vintn<W> &valid,
         vVKLHitIteratorN<W> &iterator,
@@ -95,6 +155,18 @@ namespace openvkl {
     {
       iterator = toVKLHitIterator<W>(GridAcceleratorIteratorV<W>(
           valid, this, origin, direction, tRange, valueSelector));
+    }
+
+    template <int W>
+    inline void StructuredRegularVolume<W>::iterateHitU(
+        vVKLHitIteratorN<1> &iterator, vVKLHitN<1> &hit, vintn<1> &result)
+    {
+      GridAcceleratorIteratorU<W> *ri =
+          fromVKLHitIterator<GridAcceleratorIteratorU<W>>(&iterator);
+
+      ri->iterateHit(result);
+
+      hit = *reinterpret_cast<const vVKLHitN<1> *>(ri->getCurrentHit());
     }
 
     template <int W>

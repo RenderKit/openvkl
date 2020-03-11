@@ -174,13 +174,26 @@ void vVKLHitN_conformance_test()
 template <int W>
 void GridAcceleratorIterator_conformance_test()
 {
-  int ispcSize = ispc::sizeofGridAcceleratorIterator();
+  // uniform GridAcceleratorIterator
+  int ispcSize = ispc::sizeofGridAcceleratorIteratorU();
+  REQUIRE(ispcSize ==
+          openvkl::ispc_driver::GridAcceleratorIteratorU<W>::ispcStorageSize);
+
+  REQUIRE(
+      is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorU<W>>(
+          ispc::newGridAcceleratorIteratorU()));
+
+  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorU<W>) <=
+          iterator_internal_state_size_for_width(1));
+
+  // varying GridAcceleratorIterator
+  ispcSize = ispc::sizeofGridAcceleratorIteratorV();
   REQUIRE(ispcSize ==
           openvkl::ispc_driver::GridAcceleratorIteratorV<W>::ispcStorageSize);
 
   REQUIRE(
       is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorV<W>>(
-          ispc::newGridAcceleratorIterator()));
+          ispc::newGridAcceleratorIteratorV()));
 
   REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorV<W>) <=
           iterator_internal_state_size_for_width(W));

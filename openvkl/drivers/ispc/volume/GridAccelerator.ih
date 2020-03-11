@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -36,10 +36,21 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
 void GridAccelerator_Destructor(GridAccelerator *uniform accelerator);
 
 bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
-                              const varying GridAcceleratorIterator *uniform iterator,
+                              const varying GridAcceleratorIterator *uniform
+                                  iterator,
                               varying vec3i &cellIndex,
                               varying box1f &cellTRange);
+
+uniform bool GridAccelerator_nextCell(
+    const GridAccelerator *uniform accelerator,
+    const uniform GridAcceleratorIterator *uniform iterator,
+    uniform vec3i &cellIndex,
+    uniform box1f &cellTRange);
 
 void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
                                        const varying vec3i &cellIndex,
                                        varying box1f &valueRange);
+
+void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
+                                       const uniform vec3i &cellIndex,
+                                       uniform box1f &valueRange);

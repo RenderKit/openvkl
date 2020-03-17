@@ -371,6 +371,16 @@ namespace openvkl {
     template <int W>
     VKLVolume ISPCDriver<W>::newVolume(const char *type)
     {
+      // warn for deprecated snake case volume types
+      std::string typeStr(type);
+
+      if (typeStr.find("_") != std::string::npos) {
+        postLogMessage(VKL_LOG_WARNING)
+            << "volume type name '" << typeStr
+            << "' may be deprecated; volume type names are now camelCase (no "
+               "underscores)";
+      }
+
       std::stringstream ss;
       ss << type << "_" << W;
       return (VKLVolume)Volume<W>::createInstance(ss.str());

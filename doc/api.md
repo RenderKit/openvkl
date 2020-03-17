@@ -344,7 +344,7 @@ values must be provided.
 #### Structured Regular Volumes
 
 A common type of structured volumes are regular grids, which are
-created by passing a type string of `"structured_regular"` to `vklNewVolume`.
+created by passing a type string of `"structuredRegular"` to `vklNewVolume`.
 The parameters understood by structured regular volumes are summarized in the
 table below.
 
@@ -372,12 +372,12 @@ table below.
   vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in
                                     world-space
   ------ ----------- -------------  -----------------------------------
-  : Configuration parameters for structured regular (`"structured_regular"`) volumes.
+  : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
 
 #### Structured Spherical Volumes
 
 Structured spherical volumes are also supported, which are created by passing a
-type string of `"structured_spherical"` to `vklNewVolume`. The grid dimensions
+type string of `"structuredSpherical"` to `vklNewVolume`. The grid dimensions
 and parameters are defined in terms of radial distance ($r$), inclination angle
 ($\theta$), and azimuthal angle ($\phi$), conforming with the ISO convention for
 spherical coordinate systems. The coordinate system and parameters understood by
@@ -410,7 +410,7 @@ structured spherical volumes are summarized below.
   vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of
                                     $(r, \theta, \phi)$; angles in degrees
   ------ ----------- -------------  -----------------------------------
-  : Configuration parameters for structured spherical (`"structured_spherical"`) volumes.
+  : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,
 spherical shells, spherical wedges, and so forth. The grid extents (computed as
@@ -597,7 +597,7 @@ VDB leaf nodes are implicit in Open VKL: they are stored as pointers to user-pro
 ![Structure of `"vdb"` volumes in the default configuration][imgVdbStructure]
 
 VDB volumes interpret input data as constant cells (which are then potentially filtered).
-This is in contrast to `structured_regular` volumes, which have a vertex-centered
+This is in contrast to `structuredRegular` volumes, which have a vertex-centered
 interpretation.
 
 The VDB implementation in Open VKL follows the following goals:

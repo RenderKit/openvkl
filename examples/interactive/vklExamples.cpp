@@ -161,7 +161,7 @@ void usage(const char *progname)
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
                "\t-disable-vsync\n"
-               "\t-gridType structured_regular | structured_spherical | "
+               "\t-gridType structuredRegular | structuredSpherical | "
                "unstructured | amr | vdb\n"
                "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
@@ -175,7 +175,7 @@ void usage(const char *progname)
 int main(int argc, const char **argv)
 {
   std::string rendererType("density_pathtracer");
-  std::string gridType("structured_regular");
+  std::string gridType("structuredRegular");
   vec3i dimensions(128);
   vec3f gridOrigin(ospcommon::nan);
   vec3f gridSpacing(ospcommon::nan);
@@ -293,7 +293,7 @@ int main(int argc, const char **argv)
   if (std::isnan(gridOrigin.x) || std::isnan(gridSpacing.x)) {
     const float boundingBoxSize = 2.f;
 
-    if (gridType == "structured_spherical") {
+    if (gridType == "structuredSpherical") {
       ProceduralStructuredSphericalVolume<>::generateGridParameters(
           dimensions, boundingBoxSize, gridOrigin, gridSpacing);
     } else {
@@ -318,7 +318,7 @@ int main(int argc, const char **argv)
                                     gridSpacing,
                                     voxelType));
   } else {
-    if (gridType == "structured_regular") {
+    if (gridType == "structuredRegular") {
       if (voxelType == VKL_UCHAR) {
         testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
             dimensions, gridOrigin, gridSpacing);
@@ -340,7 +340,7 @@ int main(int argc, const char **argv)
       }
     }
 
-    else if (gridType == "structured_spherical") {
+    else if (gridType == "structuredSpherical") {
       if (voxelType == VKL_UCHAR) {
         testingVolume = std::make_shared<WaveletStructuredSphericalVolumeUChar>(
             dimensions, gridOrigin, gridSpacing);
@@ -378,6 +378,10 @@ int main(int argc, const char **argv)
     else if (gridType == "vdb") {
       testingVolume = std::make_shared<WaveletVdbVolume>(
           dimensions, gridOrigin, gridSpacing, filter);
+    }
+
+    else {
+      throw std::runtime_error("unknown gridType specified");
     }
   }
 

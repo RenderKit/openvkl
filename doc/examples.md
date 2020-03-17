@@ -144,7 +144,7 @@ int main()
 
   const int numVoxels = dimensions[0] * dimensions[1] * dimensions[2];
 
-  VKLVolume volume = vklNewVolume("structured_regular");
+  VKLVolume volume = vklNewVolume("structuredRegular");
   vklSetVec3i(volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);

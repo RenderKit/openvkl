@@ -106,7 +106,7 @@ namespace openvkl {
     }
 
     VKL_REGISTER_VOLUME(StructuredSphericalVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_structured_spherical_,
+                        CONCAT1(internal_structuredSpherical_,
                                 VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -142,7 +142,7 @@ int main()
 
   const int numVoxels = dimensions[0] * dimensions[1] * dimensions[2];
 
-  VKLVolume volume = vklNewVolume("structured_regular");
+  VKLVolume volume = vklNewVolume("structuredRegular");
   vklSetVec3i(volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);

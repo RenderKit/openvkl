@@ -69,6 +69,22 @@ install(DIRECTORY
   PATTERN "*.h"
 )
 
+## Version header ##
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
+  @ONLY
+)
+
+target_include_directories(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}>
+)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+)
 
 ## Add OpenVKL drivers ##
 

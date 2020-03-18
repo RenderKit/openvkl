@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
+// Copyright 2019-2020 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,8 +16,7 @@
 
 #pragma once
 
-#define VKL_VERSION_MAJOR 0
-#define VKL_VERSION_MINOR 0
-#define VKL_VERSION_PATCH 1
-#define VKL_VERSION 00001
-#define VKL_VERSION_STRING "0.0.1"
+#define OPENVKL_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define OPENVKL_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define OPENVKL_VERSION_PATCH @PROJECT_VERSION_PATCH@
+#define OPENVKL_VERSION "@PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@.@PROJECT_VERSION_PATCH@"

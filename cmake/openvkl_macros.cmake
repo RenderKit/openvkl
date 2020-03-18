@@ -167,8 +167,35 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
     message(WARNING "compiler does not support build flags for width ${WIDTH}: ${LOCAL_FLAGS}. Performance may not be optimal.")
     set(${FLAGS} "" PARENT_SCOPE)
   endif()
-
 endfunction()
+
+macro(openvkl_install_library name)
+  set_target_properties(${name}
+    PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION ${PROJECT_VERSION_MAJOR})
+  openvkl_install_target(${name})
+endmacro()
+
+macro(openvkl_install_target name)
+  install(TARGETS ${name}
+    EXPORT ${PROJECT_NAME}_Exports
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      NAMELINK_SKIP
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+
+  install(EXPORT ${PROJECT_NAME}_Exports
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}-${PROJECT_VERSION}
+    NAMESPACE openvkl::
+  )
+
+  install(TARGETS ${name}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      NAMELINK_ONLY
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  )
+endmacro()
 
 # Generate files that deal with the VDB topology.
 # There are "templatized" files for traversal, for example,

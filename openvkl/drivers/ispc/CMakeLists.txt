@@ -114,12 +114,7 @@ foreach(TARGET_WIDTH 4 8 16)
       embree
   )
 
-  install(TARGETS ${TARGET_NAME}
-    EXPORT ${PROJECT_NAME}_Exports
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  )
+  openvkl_install_library(${TARGET_NAME})
 
   # accumulate targets to be linked into single shared library
   list(APPEND ACTIVE_WIDTH_TARGETS ${TARGET_NAME})
@@ -160,9 +155,4 @@ target_link_libraries(openvkl_module_ispc_driver
     ${ACTIVE_WIDTH_TARGETS}
 )
 
-install(TARGETS openvkl_module_ispc_driver
-  EXPORT ${PROJECT_NAME}_Exports
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-)
+openvkl_install_library(openvkl_module_ispc_driver)

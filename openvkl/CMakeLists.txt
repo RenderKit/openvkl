@@ -72,6 +72,14 @@ install(DIRECTORY
   PATTERN "*.h"
 )
 
+install(FILES
+  ${PROJECT_SOURCE_DIR}/LICENSE.txt
+  ${PROJECT_SOURCE_DIR}/third-party-programs.txt
+  ${PROJECT_SOURCE_DIR}/third-party-programs-TBB.txt
+  ${PROJECT_SOURCE_DIR}/README.md
+  ${PROJECT_SOURCE_DIR}/CHANGELOG.md
+  DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
 ## Version header ##
 
 configure_file(

@@ -2,3 +2,4 @@ build*/
 install/
 .vscode/
 .*.swp
+imgui.ini

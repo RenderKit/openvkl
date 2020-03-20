@@ -151,6 +151,8 @@ target_include_directories(openvkl_module_ispc_driver
   INTERFACE $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>)
 
 target_link_libraries(openvkl_module_ispc_driver
+  PUBLIC
+    openvkl
   PRIVATE
     ${ACTIVE_WIDTH_TARGETS}
 )

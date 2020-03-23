@@ -28,7 +28,9 @@ target_include_directories(openvkl_testing
 )
 
 if (BUILD_BENCHMARKS)
-  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # don't build tests
+  set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "" FORCE)
+  set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE)
+
   add_subdirectory(external/benchmark)
 endif()
 

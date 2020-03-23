@@ -45,6 +45,15 @@ stages:
   tags:
     - docker
 
+.job_template: &build_job_docker_centos7_modules
+  <<: *build_job_docker
+  image: ospray/docker-images:centos7-mod
+  script:
+    - gitlab/build.sh
+  tags:
+    - docker
+    - modules
+
 .job_template: &base_build_from_install_job
   type: test
   script:
@@ -78,6 +87,16 @@ build-centos7:
   image: ospray/docker-images:centos7
   script:
   - gitlab/build.sh
+
+build-centos7-icc:
+  <<: *build_job_docker_centos7_modules
+  script:
+    - module load cmake
+    - module load intel/2019.4
+    - export CC=icc
+    - export CXX=icpc
+    - export CXXFLAGS=-static-intel
+    - gitlab/build.sh
 
 build-centos8:
   <<: *build_job_docker
@@ -143,6 +162,13 @@ test-functional-centos7:
   image: ospray/docker-images:centos7
   dependencies:
     - build-centos7
+
+# ensures icc-built binaries can run without Intel runtimes
+test-functional-centos7-icc:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:centos7
+  dependencies:
+    - build-centos7-icc
 
 test-functional-centos8:
   <<: *test_functional_job_docker

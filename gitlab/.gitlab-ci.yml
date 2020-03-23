@@ -24,6 +24,7 @@ stages:
   - benchmark
   - scan1
   - scan2
+  - release
 
 ## Job Templates ##
 
@@ -55,7 +56,7 @@ stages:
     - modules
 
 .job_template: &base_build_from_install_job
-  type: test
+  stage: test
   script:
     - gitlab/build-from-install.sh
 
@@ -65,7 +66,7 @@ stages:
     - docker
 
 .job_template: &base_functional_test_job
-  type: test
+  stage: test
   script:
     - ./build/openvkl/build/vklTests # NOTE(jda) - base this on install later
 
@@ -75,10 +76,20 @@ stages:
     - docker
 
 .job_template: &base_benchmark_job
-  type: benchmark
+  stage: benchmark
   when: manual
   script:
     - gitlab/run-benchmarks.sh
+
+.job_template: &base_release_job
+  stage: release
+  when: manual
+  tags:
+    - release
+  before_script:
+    - git submodule sync
+    - git submodule init
+    - git submodule update
 
 ## Build Jobs ##
 
@@ -95,7 +106,7 @@ build-centos7-icc:
     - module load intel/2019.4
     - export CC=icc
     - export CXX=icpc
-    - export CXXFLAGS=-static-intel
+    - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/build.sh
 
 build-centos8:
@@ -239,7 +250,7 @@ benchmark-x8280-1:
 ## KW Jobs ##
 
 build-kw-scan:
-  type: scan1
+  stage: scan1
   image: openvkl/openvkl:centos7
   script:
     - gitlab/build-kw-scan.sh
@@ -257,7 +268,7 @@ build-kw-scan:
   allow_failure: true
 
 test-kw-critical:
-  type: scan2
+  stage: scan2
   image: openvkl/openvkl:centos7
   script:
     - gitlab/test-kw-critical.sh
@@ -270,7 +281,7 @@ test-kw-critical:
 ## Protex Job ##
 
 source-protex-scan:
-  type: scan1
+  stage: scan1
   image: openvkl/openvkl:centos7
   script:
     - gitlab/source-scan-protex.sh
@@ -278,3 +289,44 @@ source-protex-scan:
     - docker
   dependencies: []
   allow_failure: true
+
+## Release Jobs ##
+
+release-linux-icc:
+  <<: *base_release_job
+  image: ospray/docker-images:centos7-mod
+  script:
+    - module load cmake
+    - module load intel/2019.4
+    - export CC=icc
+    - export CXX=icpc
+    - export CXXFLAGS="-static-intel -fPIC"
+    - gitlab/release/linux.sh
+  tags:
+    - docker
+    - modules
+  artifacts:
+    paths:
+      - ./*.gz
+
+release-macOS:
+  <<: *base_release_job
+  script:
+    - gitlab/release/macos.sh
+  tags:
+    - osx
+    - clang
+  artifacts:
+    paths:
+      - ./*.zip
+
+release-windows:
+  <<: *base_release_job
+  script:
+    - gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win10
+  artifacts:
+    paths:
+      - ./*.zip

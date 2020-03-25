@@ -149,10 +149,10 @@ endif()
 
 option(BUILD_OSPCOMMON "Build ospcommon or search in environment?" ON)
 if (BUILD_OSPCOMMON)
-  set(OSPCOMMON_VERSION "1.1.0")
-  set(OSPCOMMON_URL "https://github.com/ospray/ospcommon/archive/v${OSPCOMMON_VERSION}.zip" 
+  set(OSPCOMMON_VERSION "1.3.0")
+  set(OSPCOMMON_URL "https://github.com/ospray/ospcommon/archive/v${OSPCOMMON_VERSION}.zip"
     CACHE STRING "URL of the ospcommon archive.")
-  set(OSPCOMMON_HASH "8b483dae5eb42709f9c0a735a927432b51c5592f3e54845818b8076804f005bf" 
+  set(OSPCOMMON_HASH "0b5499e9f28c97523f7d8fe2fc2ef9c1278547917b5e548b4000f927c09b0e59"
     CACHE STRING "SHA256 hash of the ospcommon archive.")
   include(dep_ospcommon)
 endif()

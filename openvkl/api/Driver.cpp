@@ -119,10 +119,12 @@ namespace openvkl {
           logLevel = VKL_LOG_WARNING;
         } else if (OPENVKL_LOG_LEVEL == "error") {
           logLevel = VKL_LOG_ERROR;
+        } else if (OPENVKL_LOG_LEVEL == "none") {
+          logLevel = VKL_LOG_NONE;
         } else {
           LogMessageStream(VKL_LOG_ERROR)
               << "unknown OPENVKL_LOG_LEVEL env value; must be debug, info, "
-                 "warning, or error";
+                 "warning, error or none";
         }
       }
 

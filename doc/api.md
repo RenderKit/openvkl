@@ -40,7 +40,8 @@ drivers:
   Type   Name           Description
   ------ -------------- --------------------------------------------------------
   int    logLevel       logging level; valid values are `VKL_LOG_DEBUG`,
-                        `VKL_LOG_INFO`, `VKL_LOG_WARNING` and `VKL_LOG_ERROR`
+                        `VKL_LOG_INFO`, `VKL_LOG_WARNING`, `VKL_LOG_ERROR` and
+                        `VKL_LOG_NONE`
 
   string logOutput      convenience for setting where log messages go; valid
                         values are `cout`, `cerr` and `none`
@@ -91,7 +92,7 @@ easy changes to Open VKL’s behavior without needing to change the application
   Variable                Description
   ----------------------- ------------------------------------------------------
   OPENVKL_LOG_LEVEL       logging level; valid values are `debug`, `info`,
-                          `warning` and `error`
+                          `warning`, `error` and `none`
 
   OPENVKL_LOG_OUTPUT      convenience for setting where log messages go; valid
                           values are `cout`, `cerr` and `none`

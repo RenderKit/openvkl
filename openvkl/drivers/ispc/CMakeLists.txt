@@ -122,7 +122,9 @@ foreach(TARGET_WIDTH 4 8 16)
   if (NOT WIN32 AND VKL_BUILD_VDB_ITERATOR_SIZE_HELPER)
     # A helper that makes it easy to find out how big the vdb iterator is in ISPC
     # for the various target widths.
-    add_executable(vklVdbIteratorSize${TARGET_WIDTH} volume/vdb/iterator_size.cpp)
+    add_executable(vklVdbIteratorSize${TARGET_WIDTH}
+      volume/vdb/iterator_size.cpp
+      ${VKL_RESOURCE})
     target_compile_definitions(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE
        "VKL_TARGET_WIDTH=${TARGET_WIDTH}")
     target_include_directories(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE
@@ -138,7 +140,7 @@ endforeach(TARGET_WIDTH)
 
 
 # shared library linking to all width-specific targets
-add_library(openvkl_module_ispc_driver SHARED exports.cpp)
+add_library(openvkl_module_ispc_driver SHARED exports.cpp ${VKL_RESOURCE})
 
 foreach(TARGET_WIDTH 4 8 16)
   if (TARGET_WIDTH_ENABLED_${TARGET_WIDTH})

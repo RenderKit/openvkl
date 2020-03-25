@@ -20,6 +20,9 @@ if(WIN32)
   set(DEF_FILE common/ispc_defs.def)
 endif()
 
+set(VKL_RESOURCE "${CMAKE_CURRENT_SOURCE_DIR}/include/openvkl/openvkl.rc")
+set(VKL_RESOURCE ${VKL_RESOURCE} PARENT_SCOPE)
+
 openvkl_add_library_ispc(${PROJECT_NAME} SHARED
   api/API.cpp
   api/Driver.cpp

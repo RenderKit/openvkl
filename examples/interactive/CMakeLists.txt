@@ -64,6 +64,8 @@ add_executable(vklExamples
   window/GLFWVKLWindow.cpp
   window/imgui_impl_glfw_gl3.cpp
   window/TransferFunctionWidget.cpp
+
+  ${VKL_RESOURCE}
 )
 
 target_link_libraries(vklExamples PRIVATE
@@ -92,6 +94,8 @@ if (BUILD_BENCHMARKS)
     window/VKLWindow.cpp
     AppInit.cpp
     vklBenchmark.cpp
+
+    ${VKL_RESOURCE}
   )
 
   target_link_libraries(vklBenchmark

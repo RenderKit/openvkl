@@ -28,7 +28,7 @@ macro(add_executable_ispc name)
     endif ()
   endforeach()
   openvkl_ispc_compile(${ISPC_SOURCES})
-  add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+  add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES} ${VKL_RESOURCE})
 endmacro()
 
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)

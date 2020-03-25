@@ -19,6 +19,7 @@ if (BUILD_BENCHMARKS)
   # Structured volumes
   add_executable(vklBenchmarkStructuredVolume
     vklBenchmarkStructuredVolume.cpp
+    ${VKL_RESOURCE}
   )
 
   target_link_libraries(vklBenchmarkStructuredVolume
@@ -33,6 +34,7 @@ if (BUILD_BENCHMARKS)
   # Unstructured volumes
   add_executable(vklBenchmarkUnstructuredVolume
     vklBenchmarkUnstructuredVolume.cpp
+    ${VKL_RESOURCE}
   )
 
   target_link_libraries(vklBenchmarkUnstructuredVolume
@@ -47,6 +49,7 @@ if (BUILD_BENCHMARKS)
   # VDB volumes
   add_executable(vklBenchmarkVdbVolume
     vklBenchmarkVdbVolume.cpp
+    ${VKL_RESOURCE}
   )
 
   target_link_libraries(vklBenchmarkVdbVolume

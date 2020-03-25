@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
+## Copyright 2019-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -16,7 +16,7 @@
 
 ## "Hello world" VKL tutorials ##
 
-add_executable(vklTutorial vklTutorial.c)
+add_executable(vklTutorial vklTutorial.c ${VKL_RESOURCE})
 target_link_libraries(vklTutorial PRIVATE openvkl)
 install(TARGETS vklTutorial RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 

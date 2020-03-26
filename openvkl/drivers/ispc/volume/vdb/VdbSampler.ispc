@@ -102,16 +102,16 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
                                          {1, 1, 0},
                                          {1, 1, 1}};
 
-  uniform float sample[TARGET_WIDTH * 8];
+  uniform float sample[VKL_TARGET_WIDTH * 8];
 
   // The goal of this code is to keep as many lanes busy as possible.
   // The first case is that we have as many queries as there are
   // lanes, so we need not do anything smart (=expensive), no lane will
   // be idle.
-  if (lanemask() == ((1 << TARGET_WIDTH) - 1)) {
+  if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {
     for (uniform unsigned int i = 0; i < 8; ++i) {
       const vec3i coord                       = ic + offset[i];
-      sample[i * TARGET_WIDTH + programIndex] = VdbSampler_sample(grid, coord);
+      sample[i * VKL_TARGET_WIDTH + programIndex] = VdbSampler_sample(grid, coord);
     }
   } else {
     // The opposite extreme is a single query. We perform as many of the
@@ -126,18 +126,18 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
       foreach (o = 0 ... 8) {
         const vec3i coord = make_vec3i(
             iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-        sample[o * TARGET_WIDTH + activeInstance] =
+        sample[o * VKL_TARGET_WIDTH + activeInstance] =
             VdbSampler_sample(grid, coord);
       }
     }
     // Finally, a hybrid version: There are more than one but fewer than
-    // TARGET_WIDTH queries. We may benefit from calling
+    // VKL_TARGET_WIDTH queries. We may benefit from calling
     // VdbSampler_sample for multiple query points at once.
     else {
       // ith element is the index of the ith active lane.
       // packed_store_active2 may store an additional element, but we know
       // that at least one lane is inactive.
-      uniform int progIdx[TARGET_WIDTH];
+      uniform int progIdx[VKL_TARGET_WIDTH];
       const uniform int numActive = packed_store_active2(progIdx, programIndex);
 
       foreach_tiled(i = 0 ... numActive, o = 0 ... 8)
@@ -148,7 +148,7 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
                                      shuffle(ic.z, instance));
         const vec3i coord  = make_vec3i(
             iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-        sample[o * TARGET_WIDTH + instance] = VdbSampler_sample(grid, coord);
+        sample[o * VKL_TARGET_WIDTH + instance] = VdbSampler_sample(grid, coord);
       }
     }
   }

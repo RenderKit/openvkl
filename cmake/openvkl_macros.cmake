@@ -133,6 +133,10 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
       else()
         message(FATAL_ERROR "unknown build width")
       endif()
+
+      set(LOCAL_FLAGS "${LOCAL_FLAGS} -no-inline-max-total-size")   # no size limit when performing inlining
+      set(LOCAL_FLAGS "${LOCAL_FLAGS} -no-inline-max-per-compile")  # no maximal number of inlinings per compilation unit
+      set(LOCAL_FLAGS "${LOCAL_FLAGS} -inline-factor=150")          # increase default inline factors limits by 2x
     endif()
 
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

@@ -243,7 +243,7 @@ test-functional-windows-msvc15:
 benchmark-x8280-1:
   <<: *base_benchmark_job
   dependencies:
-    - build-centos8
+    - build-centos7-icc
   tags:
     - vis-perf-x8280-1
 

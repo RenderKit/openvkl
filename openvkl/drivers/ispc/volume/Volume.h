@@ -175,12 +175,11 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      vVKLIntervalIteratorN<W> iteratorW;
+      vVKLIntervalIteratorN<W> *iteratorW =
+          static_cast<vVKLIntervalIteratorN<W> *>(iterator);
 
       initIntervalIteratorV(
-          validW, iteratorW, originW, directionW, tRangeW, valueSelector);
-
-      iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
+          validW, *iteratorW, originW, directionW, tRangeW, valueSelector);
     }
 
     template <int W>
@@ -209,12 +208,10 @@ namespace openvkl {
 
       vintn<W> resultW;
 
-      vVKLIntervalIteratorN<W> iteratorW =
-          static_cast<vVKLIntervalIteratorN<W>>(iterator);
+      vVKLIntervalIteratorN<W> *iteratorW =
+          static_cast<vVKLIntervalIteratorN<W> *>(iterator);
 
-      iterateIntervalV(validW, iteratorW, intervalW, resultW);
-
-      iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
+      iterateIntervalV(validW, *iteratorW, intervalW, resultW);
 
       interval.tRange.lower[0]     = intervalW.tRange.lower[0];
       interval.tRange.upper[0]     = intervalW.tRange.upper[0];
@@ -256,12 +253,11 @@ namespace openvkl {
       vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
       vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      vVKLHitIteratorN<W> iteratorW;
+      vVKLHitIteratorN<W> *iteratorW =
+          static_cast<vVKLHitIteratorN<W> *>(iterator);
 
       initHitIteratorV(
-          validW, iteratorW, originW, directionW, tRangeW, valueSelector);
-
-      iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
+          validW, *iteratorW, originW, directionW, tRangeW, valueSelector);
     }
 
     template <int W>
@@ -290,12 +286,10 @@ namespace openvkl {
 
       vintn<W> resultW;
 
-      vVKLHitIteratorN<W> iteratorW =
-          static_cast<vVKLHitIteratorN<W>>(iterator);
+      vVKLHitIteratorN<W> *iteratorW =
+          static_cast<vVKLHitIteratorN<W> *>(iterator);
 
-      iterateHitV(validW, iteratorW, hitW, resultW);
-
-      iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
+      iterateHitV(validW, *iteratorW, hitW, resultW);
 
       hit.t[0]      = hitW.t[0];
       hit.sample[0] = hitW.sample[0];

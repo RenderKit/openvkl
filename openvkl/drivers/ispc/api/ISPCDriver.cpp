@@ -125,6 +125,8 @@ namespace openvkl {
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
+      iterator.volume = (VKLVolume)&volumeObject;
+
       volumeObject.initIntervalIteratorU(
           iterator,
           origin,
@@ -195,6 +197,8 @@ namespace openvkl {
                                          VKLValueSelector valueSelector)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      iterator.volume = (VKLVolume)&volumeObject;
 
       volumeObject.initHitIteratorU(
           iterator,
@@ -467,6 +471,8 @@ namespace openvkl {
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
+      iterator.volume = (VKLVolume)&volumeObject;
+
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = valid[i];
@@ -544,6 +550,8 @@ namespace openvkl {
                                            VKLValueSelector valueSelector)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      iterator.volume = (VKLVolume)&volumeObject;
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)

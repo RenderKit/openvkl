@@ -47,6 +47,9 @@ namespace openvkl {
     // Conversion to / from public types //////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
+    // constructs a given iterator type in the internal state of a public
+    // iterator object; does NOT populate the volume member of the public
+    // iterator object
     template <typename T, int W, typename... Args>
     inline void initVKLIntervalIterator(vVKLIntervalIteratorN<W> &iterator,
                                         const Args &... args)
@@ -54,8 +57,7 @@ namespace openvkl {
       static_assert(
           iterator_internal_state_size_for_width(W) >= sizeof(T),
           "iterator internal state size must be >= source object size");
-      T *t            = new (&iterator.internalState) T(args...);
-      iterator.volume = (VKLVolume)t->volume;
+      T *t = new (&iterator.internalState) T(args...);
     }
 
     template <typename T, int W>
@@ -71,6 +73,9 @@ namespace openvkl {
       return reinterpret_cast<T *>(&x->internalState[0]);
     }
 
+    // constructs a given iterator type in the internal state of a public
+    // iterator object; does NOT populate the volume member of the public
+    // iterator object
     template <typename T, int W, typename... Args>
     inline void initVKLHitIterator(vVKLHitIteratorN<W> &iterator,
                                    const Args &... args)
@@ -78,8 +83,7 @@ namespace openvkl {
       static_assert(
           iterator_internal_state_size_for_width(W) >= sizeof(T),
           "iterator internal state size must be >= source object size");
-      T *t            = new (&iterator.internalState) T(args...);
-      iterator.volume = (VKLVolume)t->volume;
+      T *t = new (&iterator.internalState) T(args...);
     }
 
     template <typename T, int W>

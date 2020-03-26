@@ -61,6 +61,20 @@ macro(openvkl_configure_build_type)
   endif()
 endmacro()
 
+macro(openvkl_configure_global_build_flags)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+
+     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
+
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    if(NOT WIN32)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -no-ansi-alias")
+    endif()
+  endif()
+endmacro()
+
 macro(openvkl_create_embree_target)
   if (NOT TARGET embree)
     add_library(embree INTERFACE) # NOTE(jda) - Cannot be IMPORTED due to CMake
@@ -97,7 +111,7 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
      CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
      CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
-     message(STATUS "detected Clang or GNU compiler")
+    message(STATUS "detected Clang or GNU compiler")
 
     if(WIDTH EQUAL 4)
       set(LOCAL_FLAGS "-msse4.2")

@@ -57,6 +57,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 openvkl_configure_build_type()
+openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
 find_package(ospcommon 1.1.0 REQUIRED)

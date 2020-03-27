@@ -3,10 +3,8 @@ SHELL := /bin/bash
 webpages := $(addprefix www/, $(addsuffix .html, index documentation examples downloads related_projects legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, readme_head))
 images_png := $(addprefix images/, $(addsuffix .png, structured_spherical_coords vdb_structure))
-scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
 
 webimages := $(addprefix www/, $(images_png))
-webscripts := $(addprefix www/, $(scripts))
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
@@ -16,7 +14,7 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc
-www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
+www: $(webpages) www/stylesheet.css $(webimages)
 doc: ../README.md
 
 .PHONY: all www doc clean
@@ -41,10 +39,6 @@ changelog.md:
 $(webpages) www/stylesheet.css: | wwwdir
 wwwdir:
 	@mkdir -p www
-
-$(webscripts): | wwwscriptdir
-wwwscriptdir:
-	@mkdir -p www/scripts
 
 $(process_version) tmp/version: | tmpdir
 tmpdir:
@@ -89,8 +83,7 @@ www/images/%: images/%
 ## Scripts
 ## ----------------------------------------------------------------------------
 
-www/scripts/%: scripts/%
-	cp $< $@
+# scripts (JavaScript) are now maintained separately
 
 ## ----------------------------------------------------------------------------
 ## Markdown

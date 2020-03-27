@@ -28,6 +28,12 @@ The driver then needs to be instantiated:
 
     VKLDriver driver = vklNewDriver("ispc");
 
+By default, the ISPC driver selects the maximum supported SIMD width (and
+associated ISA) for the system. Optionally, a specific width may be requested
+using the `ispc_4`, `ispc_8`, or `ispc_16` driver names. Note that the system
+must support the given width (SSE4.1 for 4-wide, AVX for 8-wide, and AVX512 for
+16-wide).
+
 Once a driver is created, you can call
 
     void vklDriverSetInt(VKLDriver, const char *name, int val);
@@ -272,7 +278,7 @@ Observers
 Volumes in Open VKL may provide observers to communicate data back to the
 application. Observers may be created with
 
-    VKLObserver vklNewObserver(VKLVolume volume, 
+    VKLObserver vklNewObserver(VKLVolume volume,
                                const char *type);
 
 The volume passed to `vklNewObserver` must already be committed.  Valid
@@ -298,7 +304,7 @@ Possible data types are defined by the volume that provides the observer , as
 are the semantics of the observation. See section 'Volume types' for details.
 
 The pointer returned by `vklMapObserver` may be cast to the type corresponding
-to the value returned by `vklGetObserverElementType` to access the observation. 
+to the value returned by `vklGetObserverElementType` to access the observation.
 For example, if `vklGetObserverElementType` returns `VKL_FLOAT`, then
 the pointer returned by `vklMapObserver` may be cast to `const float *` to access
 up to `vklGetObserverNumElements` consecutive values of type `float`.
@@ -322,7 +328,7 @@ Volume types
 Open VKL currently supports structured volumes on regular and spherical grids;
 unstructured volumes with tetrahedral, wedge, pyramid, and hexaderal primitive
 types; and adaptive mesh refinement (AMR) volumes.  These volumes are created
-with `vlkNewVolume` with the appropriate type string.
+with `vklNewVolume` with the appropriate type string.
 
 In addition to the usual `vklSet...()` and `vklCommit()` APIs, the volume
 bounding box can be queried:
@@ -615,12 +621,12 @@ VDB volumes have the following parameters:
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           type                                     The field type. Only `VKL_FLOAT` is 
+  int           type                                     The field type. Only `VKL_FLOAT` is
                                                          supported at the moment. Use the enum
                                                          `VKLDataType` for named constants.
 
   int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
-                                                         field. Use `VKLFilter` for named 
+                                                         field. Use `VKLFilter` for named
                                                          constants.
 
   int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`   Do not descend further than to this
@@ -629,11 +635,11 @@ VDB volumes have the following parameters:
   int           maxIteratorDepth  3                      Do not descend further than to this
                                                          depth during interval iteration.
                                                          The maximum value is 3.
-                            
-  float[]       indexToObject     1, 0, 0,               An array of 12 values of type `float` 
+
+  float[]       indexToObject     1, 0, 0,               An array of 12 values of type `float`
                                   0, 1, 0,               that define the transformation from
                                   0, 0, 1,               index space to object space.
-                                  0, 0, 0                In index space, the grid is an 
+                                  0, 0, 0                In index space, the grid is an
                                                          axis-aligned regular grid, and leaf
                                                          voxels have size (1,1,1).
                                                          The first 9 values are interpreted
@@ -644,25 +650,25 @@ VDB volumes have the following parameters:
   uint32[]      level                                    For each input node, the level on
                                                          which this node exists. Levels are
                                                          counted from the root level (0) down.
-                                                         Input nodes may be on levels 
+                                                         Input nodes may be on levels
                                                          [1, `VKL_VDB_NUM_LEVELS-1`].
 
   vec3i[]       origin                                   For each input node, the node origin
                                                          index.
 
   uint32[]      format                                   For each input node, the data format.
-                                                         Currently supported are 
+                                                         Currently supported are
                                                          `VKL_VDB_FORMAT_TILE` for tiles,
                                                          and `VKL_VDB_FORMAT_CONSTANT` for
                                                          nodes that are dense regular grids,
                                                          but temporally constant.
 
-  VKLData[]     data                                     Node data. Nodes with format 
+  VKLData[]     data                                     Node data. Nodes with format
                                                          `VKL_VDB_FORMAT_TILE` are expected to
                                                          have single-entry arrays. Nodes with
                                                          format `VKL_VDB_FORMAT_CONSTANT` are
                                                          expected to have arrays with
-                                                         `vklVdbLevelNumVoxels(level[i])` 
+                                                         `vklVdbLevelNumVoxels(level[i])`
                                                          entries.
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
@@ -675,7 +681,7 @@ VDB volumes support the following observers:
   --------------  -----------  -------------------------------------------------------------
   Name            Buffer Type  Description
   --------------  -----------  -------------------------------------------------------------
-  LeafNodeAccess  uint32[]     This observer returns an array with as many entries as 
+  LeafNodeAccess  uint32[]     This observer returns an array with as many entries as
                                input nodes were passed. If the input node i was accessed
                                during traversal, then the ith entry in this array has a
                                nonzero value.
@@ -688,18 +694,18 @@ VDB volumes support the following observers:
 
   - Open VKL implements sampling in ISPC, and can exploit wide SIMD architectures.
 
-  - VDB volumes in Open VKL are read-only once committed, and designed for rendering only. 
+  - VDB volumes in Open VKL are read-only once committed, and designed for rendering only.
     Authoring or manipulating datasets is not in the scope of this implementation.
 
   - The only supported field type is `VKL_FLOAT` at this point. Other field types
     may be supported in the future.
 
-  - The root level in Open VKL has a single node with resolution 64^3 (cp. [1]. OpenVDB 
+  - The root level in Open VKL has a single node with resolution 64^3 (cp. [1]. OpenVDB
     uses a hash map, instead).
 
   - The tree topology can be configured at compile time, but this happens through
     the CMake option `VKL_VDB_LOG_RESOLUTION`. By default this is set to "6;5;4;3",
-    which means that there are four levels, the root node has a resolution of 
+    which means that there are four levels, the root node has a resolution of
     (2^6^3 = 64^3), first level nodes a resolution of (2^5^3 = 32^3), and so on.
 
 #### Loading OpenVDB .vdb files
@@ -711,7 +717,7 @@ can be passed to Open VKL using shared data buffers, avoiding copy operations.
 An example of this can be found in `vdb_util/include/openvkl/OpenVdbGrid.h`,
 where the class `OpenVdbFloatGrid` encapsulates the necessary operations. This
 class is also accessible through the `vklExamples` application using the
-`-file` and `-field` command line arguments. 
+`-file` and `-field` command line arguments.
 
 To use this example feature, compile Open VKL with `OpenVDB_ROOT` pointing to
 the OpenVDB prefix.
@@ -756,7 +762,7 @@ SIMD width.
 Gradients
 ---------
 
-In a very similar API to `vlkComputeSample`, `vlkComputeGradient` queries the
+In a very similar API to `vklComputeSample`, `vklComputeGradient` queries the
 value gradient at an object space coordinate.  Again, a scalar API, now
 returning a vec3f instead of a float. NaN values are returned for points outside
 the volume.

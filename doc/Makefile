@@ -15,9 +15,10 @@ endif
 
 all: www doc
 www: $(webpages) www/stylesheet.css $(webimages)
+wwwsync: www
 doc: ../README.md
 
-.PHONY: all www doc clean
+.PHONY: all www wwwsync doc clean
 
 tmp/version: ../CMakeLists.txt
 	sed -n -e "s/^project(openvkl VERSION \(.*\) LANGUAGES.*)/\1/p" $< | tr -d '\n' > $@
@@ -80,10 +81,14 @@ www/images/%: images/%
 	cp $< $@
 
 ## ----------------------------------------------------------------------------
-## Scripts
+## Webpages sync
 ## ----------------------------------------------------------------------------
 
-# scripts (JavaScript) are now maintained separately
+wwwsync:
+ifndef WWW_REPO
+	$(error environment variable WWW_REPO is not set)
+endif
+	rsync -arP www/* $(WWW_REPO)/
 
 ## ----------------------------------------------------------------------------
 ## Markdown

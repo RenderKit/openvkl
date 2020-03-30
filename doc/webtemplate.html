@@ -17,6 +17,25 @@
     <script src="scripts/jquery.min.js"></script>
     <script src="scripts/popper.min.js"></script>
     <script src="scripts/bootstrap.min.js"></script>
+
+    <script>
+      /*
+       * Whenever we detect a slide change event, stop playing videos,
+       * and reset them, and play the active video.
+       */
+      jQuery(document).ready(function () {
+
+        jQuery('#demo').on('slid.bs.carousel', function () {
+          jQuery(this).find("video").each(function (i, video) {
+            video.pause();
+            video.currentTime = 0;
+          });
+          jQuery(this).find(".active video").each(function (i, video) {
+            video.play();
+          })
+        });
+      });
+    </script>
   $endif$
 </head>
 
@@ -53,7 +72,7 @@
   $if(select_legal)$
   $else$
   <div id="footer">
-    © 2019 Intel Corporation <a href="legal.html">Disclaimer and Legal Information</a>
+    © 2019-2020 Intel Corporation <a href="legal.html">Disclaimer and Legal Information</a>
     <a href="https://www.intel.com/privacy">Privacy</a>
   </div>
   $endif$

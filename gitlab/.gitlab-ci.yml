@@ -25,6 +25,7 @@ stages:
   - scan1
   - scan2
   - release
+  - release-test
 
 ## Job Templates ##
 
@@ -90,6 +91,12 @@ stages:
     - git submodule sync
     - git submodule init
     - git submodule update
+
+.job_template: &base_release_test_job
+  stage: release-test
+  when: manual
+  tags:
+    - release
 
 ## Build Jobs ##
 
@@ -330,3 +337,35 @@ release-windows:
   artifacts:
     paths:
       - ./*.zip
+
+## Release Test Jobs ##
+
+release-linux-test:
+  <<: *base_release_test_job
+  image: ospray/docker-images:centos7
+  script:
+    - gitlab/release/linux-test.sh
+  tags:
+    - docker
+  dependencies:
+    - release-linux-icc
+
+release-macOS-test:
+  <<: *base_release_test_job
+  script:
+    - gitlab/release/macos-test.sh
+  tags:
+    - osx
+    - clang
+  dependencies:
+    - release-macOS
+
+release-windows-test:
+  <<: *base_release_test_job
+  script:
+    - gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win10
+  dependencies:
+    - release-windows

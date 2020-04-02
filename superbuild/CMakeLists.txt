@@ -50,8 +50,16 @@ set(installDir ${CMAKE_INSTALL_PREFIX})
 get_filename_component(INSTALL_DIR_ABSOLUTE
   ${installDir} ABSOLUTE BASE_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+ProcessorCount(PROCESSOR_COUNT)
+
+if(NOT PROCESSOR_COUNT EQUAL 0)
+  set(BUILD_JOBS ${PROCESSOR_COUNT} CACHE STRING "Number of build jobs '-j <n>'")
+else()
+  set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
+endif()
+
 if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
-  set(PARALLEL_JOBS_OPTS -j ${NUM_BUILD_JOBS})
+  set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
 set(DEFAULT_BUILD_COMMAND cmake --build . --config Release ${PARALLEL_JOBS_OPTS})
@@ -66,12 +74,6 @@ endmacro()
 ## ======================================================================== ##
 ## Superbuild options.
 ## ======================================================================== ##
-
-if(NOT PROCESSOR_COUNT EQUAL 0)
-  set(BUILD_JOBS ${PROCESSOR_COUNT} CACHE STRING "Number of build jobs '-j <n>'")
-else()
-  set(BUILD_JOBS 4 CACHE STRING "Number of build jobs '-j <n>'")
-endif()
 
 option(INSTALL_IN_SEPARATE_DIRECTORIES
   "Install libraries into their own directories under CMAKE_INSTALL_PREFIX"

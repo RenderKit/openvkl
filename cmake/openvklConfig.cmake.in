@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
+## Copyright 2019-2020 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -29,16 +29,6 @@ set(OPENVKL_ISA_AVX @OPENVKL_ISA_AVX@)
 set(OPENVKL_ISA_AVX2 @OPENVKL_ISA_AVX2@)
 set(OPENVKL_ISA_AVX512KNL @OPENVKL_ISA_AVX512KNL@)
 set(OPENVKL_ISA_AVX512SKX @OPENVKL_ISA_AVX512SKX@)
-
-## Find ospcommon ##
-
-include(CMakeFindDependencyMacro)
-if (NOT TARGET ospcommon::ospcommon)
-  find_dependency(ospcommon)
-endif()
-
-set_target_properties(openvkl::openvkl PROPERTIES
-  INTERFACE_LINK_LIBRARIES "ospcommon::ospcommon")
 
 ## Standard signal that the package was found ##
 

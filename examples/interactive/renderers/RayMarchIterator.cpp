@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "RayMarchIterator.h"
 // ispc
@@ -21,9 +8,9 @@
 namespace openvkl {
   namespace examples {
 
-    RayMarchIterator::RayMarchIterator(VKLVolume volume) : Renderer(volume)
+    RayMarchIterator::RayMarchIterator()
     {
-      ispcEquivalent = ispc::RayMarchIterator_create(volume);
+      ispcEquivalent = ispc::RayMarchIterator_create();
     }
 
     void RayMarchIterator::commit()
@@ -35,7 +22,7 @@ namespace openvkl {
       ispc::RayMarchIterator_set(ispcEquivalent, samplingRate);
     }
 
-    vec3f RayMarchIterator::renderPixel(Ray &ray, const vec4i &sampleID)
+    vec3f RayMarchIterator::renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID)
     {
       vec3f color(0.f);
       float alpha = 0.f;
@@ -47,11 +34,11 @@ namespace openvkl {
 
       VKLIntervalIterator iterator;
       vklInitIntervalIterator(&iterator,
-                              volume,
+                              scene.volume,
                               (vkl_vec3f *)&ray.org,
                               (vkl_vec3f *)&ray.dir,
                               &tRange,
-                              valueSelector);
+                              scene.valueSelector);
 
       // the current ray interval
       VKLInterval interval;
@@ -73,10 +60,10 @@ namespace openvkl {
 
           // get volume sample
           vec3f c      = ray.org + t * ray.dir;
-          float sample = vklComputeSample(volume, (vkl_vec3f *)&c);
+          float sample = vklComputeSample(scene.volume, (vkl_vec3f *)&c);
 
           // map through transfer function
-          vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
+          vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);
 
           // accumulate contribution
           const float clampedOpacity = clamp(sampleColorAndOpacity.w * dt);

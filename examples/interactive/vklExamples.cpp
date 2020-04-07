@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "AppInit.h"
 #include "window/GLFWVKLWindow.h"
@@ -83,7 +70,7 @@ bool addPathTracerUI(GLFWVKLWindow &window)
   return changed;
 }
 
-bool addIsosurfacesUI(GLFWVKLWindow &window)
+bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
 {
   auto &renderer = window.currentRenderer();
 
@@ -100,16 +87,16 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
   static std::array<IsosurfaceParameters, maxNumIsosurfaces> isosurfaces;
 
   static bool initialized = false;
+  bool isosurfacesChanged = false;
 
   if (!initialized) {
     isosurfaces[0].isovalue = -1.f;
     isosurfaces[1].isovalue = 0.f;
     isosurfaces[2].isovalue = 1.f;
 
-    initialized = true;
+    initialized        = true;
+    isosurfacesChanged = true;  // Update isovalues on init!
   }
-
-  bool isosurfacesChanged = false;
 
   if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
     isosurfacesChanged = true;
@@ -141,18 +128,15 @@ bool addIsosurfacesUI(GLFWVKLWindow &window)
   }
 
   if (isosurfacesChanged) {
-    static std::vector<float> enabledIsovalues;
-    enabledIsovalues.clear();
+    isoValues.clear();
 
     if (showIsosurfaces) {
       for (const auto &isosurface : isosurfaces) {
         if (isosurface.enabled) {
-          enabledIsovalues.push_back(isosurface.isovalue);
+          isoValues.push_back(isosurface.isovalue);
         }
       }
     }
-
-    window.setIsovalues(enabledIsovalues);
   }
 
   return isosurfacesChanged;
@@ -163,26 +147,34 @@ void usage(const char *progname)
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer density_pathtracer | hit_iterator |"
                " ray_march_iterator\n"
-               "\t-gridType structured_regular | structured_spherical | "
-               "unstructured | amr\n"
+               "\t-disable-vsync\n"
+               "\t-gridType structuredRegular | structuredSpherical | "
+               "unstructured | amr | vdb\n"
                "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
-               "\t-file <float.raw>"
+               "\t-file <float.raw>\n"
+               "\t-filter nearest | trilinear (vdb only)\n"
+               "\t-field <density> (vdb only)\n"
             << std::endl;
 }
 
 int main(int argc, const char **argv)
 {
   std::string rendererType("density_pathtracer");
-  std::string gridType("structured_regular");
+  std::string gridType("structuredRegular");
   vec3i dimensions(128);
   vec3f gridOrigin(ospcommon::nan);
   vec3f gridSpacing(ospcommon::nan);
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
+  bool disableVSync(false);
+  VKLFilter filter(VKL_FILTER_TRILINEAR);
+  bool haveFilter(false);
+  bool haveVdb(false);
+  std::string field("density");
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -194,6 +186,8 @@ int main(int argc, const char **argv)
       }
 
       gridType = std::string(argv[argIndex++]);
+    } else if (switchArg == "-disable-vsync") {
+      disableVSync = true;
     } else if (switchArg == "-gridOrigin") {
       if (argc < argIndex + 3) {
         throw std::runtime_error("improper -gridOrigin arguments");
@@ -251,6 +245,25 @@ int main(int argc, const char **argv)
       }
 
       filename = argv[argIndex++];
+    } else if (switchArg == "-field") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -field arguments");
+      }
+
+      field = argv[argIndex++];
+    } else if (switchArg == "-filter") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -filter arguments");
+      }
+
+      haveFilter                  = true;
+      const std::string filterArg = argv[argIndex++];
+      if (filterArg == "trilinear")
+        filter = VKL_FILTER_TRILINEAR;
+      else if (filterArg == "nearest")
+        filter = VKL_FILTER_NEAREST;
+      else
+        throw std::runtime_error("unsupported -filter specified");
     } else if (switchArg == "-renderer") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -renderer arguments");
@@ -267,11 +280,16 @@ int main(int argc, const char **argv)
     }
   }
 
+  if (haveFilter && gridType != "vdb") {
+    std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
+              << std::endl;
+  }
+
   // generate gridOrigin and gridSpacing if not specified on the command-line
   if (std::isnan(gridOrigin.x) || std::isnan(gridSpacing.x)) {
     const float boundingBoxSize = 2.f;
 
-    if (gridType == "structured_spherical") {
+    if (gridType == "structuredSpherical") {
       ProceduralStructuredSphericalVolume<>::generateGridParameters(
           dimensions, boundingBoxSize, gridOrigin, gridSpacing);
     } else {
@@ -288,15 +306,25 @@ int main(int argc, const char **argv)
 
   if (!filename.empty()) {
     std::cout << "filename:       " << filename << std::endl;
-    testingVolume = std::shared_ptr<RawFileStructuredVolume>(
-        new RawFileStructuredVolume(filename,
-                                    gridType,
-                                    dimensions,
-                                    gridOrigin,
-                                    gridSpacing,
-                                    voxelType));
+
+    std::string ext = filename.substr(filename.size() - 4);
+    std::for_each(ext.begin(), ext.end(), [](char &c) { c = ::tolower(c); });
+    if (ext == ".vdb") {
+      gridType  = "vdb";
+      auto vol  = std::make_shared<OpenVdbFloatVolume>(filename, field, filter);
+      testingVolume = std::move(vol);
+      haveVdb       = true;
+    } else {
+      testingVolume = std::shared_ptr<RawFileStructuredVolume>(
+          new RawFileStructuredVolume(filename,
+                                      gridType,
+                                      dimensions,
+                                      gridOrigin,
+                                      gridSpacing,
+                                      voxelType));
+    }
   } else {
-    if (gridType == "structured_regular") {
+    if (gridType == "structuredRegular") {
       if (voxelType == VKL_UCHAR) {
         testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
             dimensions, gridOrigin, gridSpacing);
@@ -318,7 +346,7 @@ int main(int argc, const char **argv)
       }
     }
 
-    else if (gridType == "structured_spherical") {
+    else if (gridType == "structuredSpherical") {
       if (voxelType == VKL_UCHAR) {
         testingVolume = std::make_shared<WaveletStructuredSphericalVolumeUChar>(
             dimensions, gridOrigin, gridSpacing);
@@ -352,9 +380,27 @@ int main(int argc, const char **argv)
       testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
           new ProceduralShellsAMRVolume<>(dimensions, gridOrigin, gridSpacing));
     }
+
+    else if (gridType == "vdb") {
+      testingVolume = std::make_shared<WaveletVdbVolume>(
+          dimensions, gridOrigin, gridSpacing, filter);
+      haveVdb = true;
+    }
+
+    else {
+      throw std::runtime_error("unknown gridType specified");
+    }
   }
 
-  VKLVolume volume = testingVolume->getVKLVolume();
+  if (haveFilter && !haveVdb) {
+    std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
+              << std::endl;
+  }
+
+  Scene scene;
+  TransferFunction transferFunction;
+  std::vector<float> isoValues;
+  scene.volume = testingVolume->getVKLVolume();
 
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
@@ -363,7 +409,7 @@ int main(int argc, const char **argv)
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
   std::cout << "voxelType:      " << voxelTypeString << std::endl;
 
-  vkl_box3f bbox = vklGetBoundingBox(volume);
+  vkl_box3f bbox = vklGetBoundingBox(scene.volume);
 
   std::cout << "boundingBox:    "
             << "(" << bbox.lower.x << ", " << bbox.lower.y << ", "
@@ -371,9 +417,7 @@ int main(int argc, const char **argv)
             << ", " << bbox.upper.z << ")" << std::endl;
 
   auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
-      vec2i{1024, 1024}, volume, rendererType);
-
-  auto &renderer = glfwVKLWindow->currentRenderer();
+      vec2i{1024, 1024}, scene, rendererType, disableVSync);
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
@@ -408,6 +452,7 @@ int main(int argc, const char **argv)
 
     static int spp = 1;
     if (ImGui::SliderInt("spp", &spp, 1, 16)) {
+      auto &renderer = glfwVKLWindow->currentRenderer();
       renderer.setParam<int>("spp", spp);
       renderer.commit();
     }
@@ -421,22 +466,38 @@ int main(int argc, const char **argv)
     }
 
     if (rendererType == "hit_iterator") {
-      changed |= addIsosurfacesUI(*glfwVKLWindow);
+      if (addIsosurfacesUI(*glfwVKLWindow, isoValues)) {
+        changed = true;
+        scene.updateValueSelector(transferFunction, isoValues);
+      }
     }
-
     auto transferFunctionUpdatedCallback =
         [&](const range1f &valueRange,
             const std::vector<vec4f> &colorsAndOpacities) {
-          TransferFunction tf{valueRange, colorsAndOpacities};
-          glfwVKLWindow->setTransferFunction(tf);
+          transferFunction = TransferFunction{valueRange, colorsAndOpacities};
+          scene.tfColorsAndOpacities =
+              transferFunction.colorsAndOpacities.data();
+          scene.tfNumColorsAndOpacities =
+              transferFunction.colorsAndOpacities.size();
+          scene.tfValueRange = valueRange;
+          scene.updateValueSelector(transferFunction, isoValues);
           glfwVKLWindow->resetAccumulation();
         };
 
     static TransferFunctionWidget transferFunctionWidget(
-        transferFunctionUpdatedCallback);
+        transferFunctionUpdatedCallback, range1f(0.f, 1.f));
     transferFunctionWidget.updateUI();
 
     if (changed) {
+      glfwVKLWindow->resetAccumulation();
+    }
+  });
+
+  glfwVKLWindow->registerEndOfFrameCallback([&]() {
+    auto vdbVolume = std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
+    if (vdbVolume && vdbVolume->updateVolume()) {
+      scene.volume = testingVolume->getVKLVolume();
+      scene.updateValueSelector(transferFunction, isoValues);
       glfwVKLWindow->resetAccumulation();
     }
   });
@@ -445,6 +506,7 @@ int main(int argc, const char **argv)
   glfwVKLWindow->mainLoop();
 
   // cleanly shut VKL down
+  scene = Scene();
   testingVolume.reset();
   glfwVKLWindow.reset();
   vklShutdown();

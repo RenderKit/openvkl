@@ -2,35 +2,103 @@
 <div id="demo" class="carousel slide" data-ride="carousel">
 
 <!-- Indicators -->
-<ul class="carousel-indicators">
+<ol class="carousel-indicators">
 <li data-target="#demo" data-slide-to="0" class="active"></li>
 <li data-target="#demo" data-slide-to="1"></li>
-</ul>
+<li data-target="#demo" data-slide-to="2"></li>
+<li data-target="#demo" data-slide-to="3"></li>
+<li data-target="#demo" data-slide-to="4"></li>
+<li data-target="#demo" data-slide-to="5"></li>
+</ol>
 
 <div class="carousel-inner">
+
 <div class="carousel-item active">
+<img src="images/fire_extinguisher.jpg">
+<div class="carousel-caption">
+<h3>
+VDB Support
+</h3>
+<p>
+Created in SideFX Houdini, rendered in OSPRay 2.0 with Open VKL and Open Image Denoise.
+</p>
+</div>
+</div>
+
+<div class="carousel-item">
 <img src="images/cloud_standalone.jpg">
 <div class="carousel-caption">
-<h3>Open VKL based volumetric path tracing of the Disney cloud</h3>
-<p></p>
+<h3>
+Open VKL based volumetric path tracing of the Disney cloud
+</h3>
+<p>
+</p>
 </div>
 </div>
+
+<div class="carousel-item" data-interval="20000">
+<video muted loop poster="images/deferred_loading_0001.jpg" width="1024" height="576">
+<!-- Fall back to mp4 for browser compatibility, or a preview
+frame if video is not supported. -->
+<source src="images/deferred_loading.webm" type="video/webm">
+<source src="images/deferred_loading.mp4" type="video/mp4">
+<img src="images/deferred_loading_0423.jpg">
+</video>
+<div class="carousel-caption">
+<h3>Interactive Data Exploration</h3>
+<p>
+Loading leaf data from the Disney Moana cloud dataset while the user manipulates the viewport.
+</p>
+</div>
+</div>
+
 <div class="carousel-item">
 <img src="images/moana_cloud_sunset.jpg">
 <div class="carousel-caption">
-<h3>OSPRay 2.0 + Open VKL</h3>
-<p>The Disney Moana island and cloud rendered with OSPRay 2.0 using the new Open VKL integration</p>
-</div>
+<h3>
+OSPRay 2.0 + Open VKL
+</h3>
+<p>
+The Disney Moana island and cloud rendered with OSPRay 2.0 using the new Open VKL integration.
+</p>
 </div>
 </div>
 
+<div class="carousel-item">
+<img src="images/coffee.jpg">
+<div class="carousel-caption">
+<h3>
+VDB Support
+</h3>
+<p>
+Created in SideFX Houdini, rendered in OSPRay 2.0 with Open VKL and Open Image Denoise.
+</p>
+</div>
+</div>
+
+<div class="carousel-item">
+<img src="images/jf_smoke.jpg">
+<div class="carousel-caption">
+<h3>
+VDB Support
+</h3>
+<p>
+Created in SideFX Houdini, rendered using Open VKL.
+</p>
+</div>
+</div>
+
+</div>
+
 <!-- Left and right controls -->
-<a class="carousel-control-prev" href="#demo" data-slide="prev">
+<p>
+<a class="carousel-control-prev" href="#demo" role="button" data-slide="prev">
 <span class="carousel-control-prev-icon"></span>
 </a>
-<a class="carousel-control-next" href="#demo" data-slide="next">
+<a class="carousel-control-next" href="#demo" role="button" data-slide="next">
 <span class="carousel-control-next-icon"></span>
 </a>
+</p>
 
 </div>
 

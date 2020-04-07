@@ -1,19 +1,7 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
+#include "../common/export_util.h"
 #include "../iterator/GridAcceleratorIterator.ih"
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
@@ -37,31 +25,55 @@
 // reciprocal of macrocell width in volume cells
 #define RCP_CELL_WIDTH 1.f / CELL_WIDTH
 
-inline uint32 GridAccelerator_getCellAddress(
-    GridAccelerator *uniform accelerator, const varying vec3i &cellIndex)
-{
-  const vec3i brickIndex = cellIndex >> BRICK_WIDTH_BITCOUNT;
+#define template_GridAccelerator_getters(univary)                              \
+  inline univary uint32 GridAccelerator_getCellAddress(                        \
+      GridAccelerator *uniform accelerator, const univary vec3i &cellIndex)    \
+  {                                                                            \
+    const univary vec3i brickIndex = cellIndex >> BRICK_WIDTH_BITCOUNT;        \
+                                                                               \
+    const univary uint32 brickAddress =                                        \
+        brickIndex.x + accelerator->bricksPerDimension.x *                     \
+                           (brickIndex.y + accelerator->bricksPerDimension.y * \
+                                               (uint32)brickIndex.z);          \
+                                                                               \
+    const univary vec3i cellOffset = bitwise_AND(cellIndex, BRICK_WIDTH - 1);  \
+                                                                               \
+    return brickAddress << (3 * BRICK_WIDTH_BITCOUNT) |                        \
+           cellOffset.z << (2 * BRICK_WIDTH_BITCOUNT) |                        \
+           cellOffset.y << (BRICK_WIDTH_BITCOUNT) | cellOffset.x;              \
+  }                                                                            \
+                                                                               \
+  inline void GridAccelerator_getCellValueRange(                               \
+      GridAccelerator *uniform accelerator,                                    \
+      const univary vec3i &cellIndex,                                          \
+      univary box1f &valueRange)                                               \
+  {                                                                            \
+    const univary uint32 address =                                             \
+        GridAccelerator_getCellAddress(accelerator, cellIndex);                \
+    valueRange = accelerator->cellValueRanges[address];                        \
+  }                                                                            \
+                                                                               \
+  inline univary box3f GridAccelerator_getCellBounds(                          \
+      const GridAccelerator *uniform accelerator, const univary vec3i &index)  \
+  {                                                                            \
+    SharedStructuredVolume *uniform volume = accelerator->volume;              \
+                                                                               \
+    /* coordinates of the lower corner of the cell in object coordinates */    \
+    univary vec3f lower;                                                       \
+    volume->transformLocalToObject_##univary(                                  \
+        volume, to_float(index << CELL_WIDTH_BITCOUNT), lower);                \
+                                                                               \
+    /* coordinates of the upper corner of the cell in object coordinates */    \
+    univary vec3f upper;                                                       \
+    volume->transformLocalToObject_##univary(                                  \
+        volume, to_float(index + 1 << CELL_WIDTH_BITCOUNT), upper);            \
+                                                                               \
+    return (make_box3f(lower, upper));                                         \
+  }
 
-  const uint32 brickAddress =
-      brickIndex.x + accelerator->bricksPerDimension.x *
-                         (brickIndex.y + accelerator->bricksPerDimension.y *
-                                             (uint32)brickIndex.z);
-
-  const vec3i cellOffset = bitwise_AND(cellIndex, BRICK_WIDTH - 1);
-
-  return brickAddress << (3 * BRICK_WIDTH_BITCOUNT) |
-         cellOffset.z << (2 * BRICK_WIDTH_BITCOUNT) |
-         cellOffset.y << (BRICK_WIDTH_BITCOUNT) | cellOffset.x;
-}
-
-inline void GridAccelerator_getCellValueRange(GridAccelerator *uniform
-                                                  accelerator,
-                                              const varying vec3i &cellIndex,
-                                              varying box1f &valueRange)
-{
-  const uint32 address = GridAccelerator_getCellAddress(accelerator, cellIndex);
-  valueRange           = accelerator->cellValueRanges[address];
-}
+template_GridAccelerator_getters(uniform);
+template_GridAccelerator_getters(varying);
+#undef template_GridAccelerator_getters
 
 inline void GridAccelerator_setCellValueRange(GridAccelerator *uniform
                                                   accelerator,
@@ -131,24 +143,6 @@ inline void GridAccelerator_encodeBrick(GridAccelerator *uniform accelerator,
   }
 }
 
-inline box3f GridAccelerator_getCellBounds(
-    const GridAccelerator *uniform accelerator, const varying vec3i &index)
-{
-  SharedStructuredVolume *uniform volume = accelerator->volume;
-
-  // coordinates of the lower corner of the cell in object coordinates
-  vec3f lower;
-  volume->transformLocalToObject(
-      volume, to_float(index << CELL_WIDTH_BITCOUNT), lower);
-
-  // coordinates of the upper corner of the cell in object coordinates
-  vec3f upper;
-  volume->transformLocalToObject(
-      volume, to_float(index + 1 << CELL_WIDTH_BITCOUNT), upper);
-
-  return (make_box3f(lower, upper));
-}
-
 GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
 {
   SharedStructuredVolume *uniform volume =
@@ -188,119 +182,131 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
   delete accelerator;
 }
 
-bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
-                              const varying GridAcceleratorIterator *uniform iterator,
-                              varying vec3i &cellIndex,
-                              varying box1f &cellTRange)
-{
-  SharedStructuredVolume *uniform volume = accelerator->volume;
-
-  cif(cellIndex.x == -1)
-  {
-    // first iteration
-    vec3f localCoordinates;
-    volume->transformObjectToLocal(
-        volume,
-        iterator->origin +
-            (iterator->boundingBoxTRange.lower) * iterator->direction,
-        localCoordinates);
-
-    cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;
+#define template_GridAccelerator_nextCell(univary)                             \
+  univary bool GridAccelerator_nextCell(                                       \
+      const GridAccelerator *uniform accelerator,                              \
+      const univary GridAcceleratorIterator *uniform iterator,                 \
+      univary vec3i &cellIndex,                                                \
+      univary box1f &cellTRange)                                               \
+  {                                                                            \
+    SharedStructuredVolume *uniform volume = accelerator->volume;              \
+                                                                               \
+    cif(cellIndex.x == -1)                                                     \
+    {                                                                          \
+      /* first iteration */                                                    \
+      univary vec3f localCoordinates;                                          \
+      volume->transformObjectToLocal_##univary(                                \
+          volume,                                                              \
+          iterator->origin +                                                   \
+              (iterator->boundingBoxTRange.lower) * iterator->direction,       \
+          localCoordinates);                                                   \
+                                                                               \
+      cellIndex = to_int(localCoordinates) >> CELL_WIDTH_BITCOUNT;             \
+    }                                                                          \
+                                                                               \
+    else                                                                       \
+    {                                                                          \
+      /* subsequent iterations: only moving one cell at a time */              \
+                                                                               \
+      /* TODO: see "A Fast Voxel Traversal Algorithm for Ray Tracing", John    \
+         Amanatides, to see if this can be further simplified */               \
+                                                                               \
+      /* transform object-space direction and origin to cell-space */          \
+      const univary vec3f cellDirection =                                      \
+          iterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH;    \
+                                                                               \
+      const univary vec3f rcpCellDirection = 1.f / cellDirection;              \
+                                                                               \
+      univary vec3f cellOrigin;                                                \
+      volume->transformObjectToLocal_##univary(                                \
+          volume, iterator->origin, cellOrigin);                               \
+      cellOrigin = cellOrigin * RCP_CELL_WIDTH;                                \
+                                                                               \
+      /* sign of direction determines index delta (1 or -1 in each dimension)  \
+         to far corner cell */                                                 \
+      const univary vec3i cornerDeltaCellIndex =                               \
+          make_vec3i(1 - 2 * (intbits(cellDirection.x) >> 31),                 \
+                     1 - 2 * (intbits(cellDirection.y) >> 31),                 \
+                     1 - 2 * (intbits(cellDirection.z) >> 31));                \
+                                                                               \
+      /* find exit distance within current cell */                             \
+      const univary vec3f t0 =                                                 \
+          (to_float(cellIndex) - cellOrigin) * rcpCellDirection;               \
+      const univary vec3f t1 =                                                 \
+          (to_float(cellIndex + 1) - cellOrigin) * rcpCellDirection;           \
+      const univary vec3f tMax = max(t0, t1);                                  \
+                                                                               \
+      const univary float tExit = reduce_min(tMax);                            \
+                                                                               \
+      /* the next cell corresponds to the exit point (which will be a movement \
+         in one direction only) */                                             \
+      univary vec3i deltaCellIndex =                                           \
+          make_vec3i(tMax.x == tExit ? cornerDeltaCellIndex.x : 0,             \
+                     tMax.y == tExit ? cornerDeltaCellIndex.y : 0,             \
+                     tMax.z == tExit ? cornerDeltaCellIndex.z : 0);            \
+                                                                               \
+      cellIndex = cellIndex + deltaCellIndex;                                  \
+    }                                                                          \
+                                                                               \
+    univary box3f cellBounds =                                                 \
+        GridAccelerator_getCellBounds(accelerator, cellIndex);                 \
+                                                                               \
+    /* clamp next cell bounds to ray iterator bounding range */                \
+    univary box1f cellInterval = intersectBox(iterator->origin,                \
+                                              iterator->direction,             \
+                                              cellBounds,                      \
+                                              iterator->boundingBoxTRange);    \
+                                                                               \
+    if (isempty1f(cellInterval)) {                                             \
+      cellTRange = make_box1f(inf, -inf);                                      \
+      return false;                                                            \
+    } else {                                                                   \
+      cellTRange = cellInterval;                                               \
+      return true;                                                             \
+    }                                                                          \
   }
 
-  else
-  {
-    // subsequent iterations: only moving one cell at a time
+template_GridAccelerator_nextCell(uniform);
+template_GridAccelerator_nextCell(varying);
+#undef template_GridAccelerator_nextCell
 
-    // TODO: see "A Fast Voxel Traversal Algorithm for Ray Tracing", John
-    // Amanatides, to see if this can be further simplified
-
-    // transform object-space direction and origin to cell-space
-    const vec3f cellDirection =
-        iterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH;
-
-    const vec3f rcpCellDirection = 1.f / cellDirection;
-
-    vec3f cellOrigin;
-    volume->transformObjectToLocal(volume, iterator->origin, cellOrigin);
-    cellOrigin = cellOrigin * RCP_CELL_WIDTH;
-
-    // sign of direction determines index delta (1 or -1 in each dimension) to
-    // far corner cell
-    const vec3i cornerDeltaCellIndex =
-        make_vec3i(1 - 2 * (intbits(cellDirection.x) >> 31),
-                   1 - 2 * (intbits(cellDirection.y) >> 31),
-                   1 - 2 * (intbits(cellDirection.z) >> 31));
-
-    // find exit distance within current cell
-    const vec3f t0 = (to_float(cellIndex) - cellOrigin) * rcpCellDirection;
-    const vec3f t1 = (to_float(cellIndex + 1) - cellOrigin) * rcpCellDirection;
-    const vec3f tMax = max(t0, t1);
-
-    const float tExit = reduce_min(tMax);
-
-    // the next cell corresponds to the exit point (which will be a movement in
-    // one direction only)
-    vec3i deltaCellIndex =
-        make_vec3i(tMax.x == tExit ? cornerDeltaCellIndex.x : 0,
-                   tMax.y == tExit ? cornerDeltaCellIndex.y : 0,
-                   tMax.z == tExit ? cornerDeltaCellIndex.z : 0);
-
-    cellIndex = cellIndex + deltaCellIndex;
-  }
-
-  box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
-
-  // clamp next cell bounds to ray iterator bounding range
-  box1f cellInterval = intersectBox(iterator->origin,
-                                    iterator->direction,
-                                    cellBounds,
-                                    iterator->boundingBoxTRange);
-
-  if (isempty1f(cellInterval)) {
-    cellTRange = make_box1f(inf, -inf);
-    return false;
-  } else {
-    cellTRange = cellInterval;
-    return true;
-  }
-}
-
-export uniform int GridAccelerator_getBricksPerDimension_x(
-    void *uniform _accelerator)
+export uniform int EXPORT_UNIQUE(GridAccelerator_getBricksPerDimension_x,
+                                 void *uniform _accelerator)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   return accelerator->bricksPerDimension.x;
 }
 
-export uniform int GridAccelerator_getBricksPerDimension_y(
-    void *uniform _accelerator)
+export uniform int EXPORT_UNIQUE(GridAccelerator_getBricksPerDimension_y,
+                                 void *uniform _accelerator)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   return accelerator->bricksPerDimension.y;
 }
 
-export uniform int GridAccelerator_getBricksPerDimension_z(
-    void *uniform _accelerator)
+export uniform int EXPORT_UNIQUE(GridAccelerator_getBricksPerDimension_z,
+                                 void *uniform _accelerator)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   return accelerator->bricksPerDimension.z;
 }
 
-export void GridAccelerator_build(void *uniform _accelerator,
-                                  const uniform int taskIndex)
+export void EXPORT_UNIQUE(GridAccelerator_build,
+                          void *uniform _accelerator,
+                          const uniform int taskIndex)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;
   GridAccelerator_encodeBrick(accelerator, taskIndex);
 }
 
-export void GridAccelerator_computeValueRange(void *uniform _accelerator,
-                                              uniform float &lower,
-                                              uniform float &upper)
+export void EXPORT_UNIQUE(GridAccelerator_computeValueRange,
+                          void *uniform _accelerator,
+                          uniform float &lower,
+                          uniform float &upper)
 {
   GridAccelerator *uniform accelerator =
       (GridAccelerator * uniform) _accelerator;

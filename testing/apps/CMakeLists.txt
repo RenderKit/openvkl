@@ -1,24 +1,12 @@
-## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 # Benchmarks
 if (BUILD_BENCHMARKS)
   # Structured volumes
   add_executable(vklBenchmarkStructuredVolume
     vklBenchmarkStructuredVolume.cpp
+    ${VKL_RESOURCE}
   )
 
   target_link_libraries(vklBenchmarkStructuredVolume
@@ -33,6 +21,7 @@ if (BUILD_BENCHMARKS)
   # Unstructured volumes
   add_executable(vklBenchmarkUnstructuredVolume
     vklBenchmarkUnstructuredVolume.cpp
+    ${VKL_RESOURCE}
   )
 
   target_link_libraries(vklBenchmarkUnstructuredVolume
@@ -43,15 +32,34 @@ if (BUILD_BENCHMARKS)
   install(TARGETS vklBenchmarkUnstructuredVolume
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
+
+  # VDB volumes
+  add_executable(vklBenchmarkVdbVolume
+    vklBenchmarkVdbVolume.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkVdbVolume
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkVdbVolume
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 endif()
 
 # Functional tests
 if (BUILD_TESTING)
-  add_executable(vklTests
+  include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include
+    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc)
+
+  openvkl_add_executable_ispc(vklTests
     vklTests.cpp
     tests/hit_iterator.cpp
     tests/interval_iterator.cpp
     tests/simd_conformance.cpp
+    tests/simd_conformance.ispc
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
@@ -67,12 +75,21 @@ if (BUILD_TESTING)
     tests/vectorized_sampling.cpp
     tests/amr_volume_sampling.cpp
     tests/amr_volume_value_range.cpp
+    tests/vdb_volume.cpp
   )
 
-  target_link_libraries(vklTests
-    openvkl_testing
-    openvkl_module_ispc_driver
-  )
+  target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
+
+  target_link_libraries(vklTests PRIVATE openvkl_testing openvkl_module_ispc_driver)
+
+  # Needed for SIMD conformance tests
+  foreach(TARGET_NAME "openvkl_module_ispc_driver_4"
+                      "openvkl_module_ispc_driver_8"
+                      "openvkl_module_ispc_driver_16")
+    if (TARGET ${TARGET_NAME})
+      target_link_libraries(vklTests PRIVATE ${TARGET_NAME})
+    endif()
+  endforeach()
 
   install(TARGETS vklTests
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

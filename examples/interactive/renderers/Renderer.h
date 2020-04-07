@@ -1,23 +1,11 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 // openvkl
 #include "TransferFunction.h"
+#include "Scene.h"
 #include "openvkl/openvkl.h"
 // ospcommon
 #include "ospcommon/containers/AlignedVector.h"
@@ -49,7 +37,7 @@ namespace openvkl {
 
     struct Renderer : public utility::ParameterizedObject
     {
-      Renderer(VKLVolume volume);
+      Renderer();
 
       virtual ~Renderer();
 
@@ -72,27 +60,16 @@ namespace openvkl {
       void resetAccumulation();
       const FrameBuffer &frameBuffer() const;
 
-      // Transfer function setup //
-
-      void setTransferFunction(const TransferFunction &transferFunction);
-
-      // Isosurfaces setup //
-
-      void setIsovalues(const std::vector<float> &isovalues);
-
       // Render a frame //
 
-      void renderFrame();
-      void renderFrame_ispc();
+      void renderFrame(const Scene& scene);
+      void renderFrame_ispc(const Scene& scene);
 
      protected:
-      void updateValueSelector();
-
-      virtual vec3f renderPixel(Ray &ray, const vec4i &sampleID) = 0;
+      virtual vec3f renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID) = 0;
 
       Ray computeRay(const vec2f &screenCoords) const;
-
-      vec4f sampleTransferFunction(float value) const;
+      vec4f sampleTransferFunction(const Scene& scene, float value) const;
 
       // Camera data //
 
@@ -111,18 +88,7 @@ namespace openvkl {
       int spp{1};
       int frameID{0};
 
-      // Transfer function data //
-
-      TransferFunction transferFunction;
-
-      // Isosurfaces data //
-
-      std::vector<float> isovalues{-1.f, 0.f, 1.f};
-
       // Renderer data //
-      VKLVolume volume;
-      box3f volumeBounds;
-      VKLValueSelector valueSelector{nullptr};
       void *ispcEquivalent{nullptr};
     };
 
@@ -142,39 +108,37 @@ namespace openvkl {
       return ray;
     }
 
-    inline vec4f Renderer::sampleTransferFunction(float value) const
+    inline vec4f Renderer::sampleTransferFunction(const Scene& scene, float value) const
     {
       vec4f colorAndOpacity{0.f};
 
-      if (std::isnan(value) ||
-          transferFunction.colorsAndOpacities.size() == 0) {
+      if (std::isnan(value) || scene.tfNumColorsAndOpacities == 0) {
         return colorAndOpacity;
       }
 
-      if (value <= transferFunction.valueRange.lower) {
-        return transferFunction.colorsAndOpacities.front();
+      if (value <= scene.tfValueRange.lower) {
+        return scene.tfColorsAndOpacities[0];
       }
 
-      if (value >= transferFunction.valueRange.upper) {
-        return transferFunction.colorsAndOpacities.back();
+      if (value >= scene.tfValueRange.upper) {
+        return scene.tfColorsAndOpacities[scene.tfNumColorsAndOpacities-1];
       }
 
       // map the value into the range [0, size - 1]
-      value = (value - transferFunction.valueRange.lower) /
-              (transferFunction.valueRange.upper -
-               transferFunction.valueRange.lower) *
-              (transferFunction.colorsAndOpacities.size() - 1.f);
+      value = (value - scene.tfValueRange.lower) /
+              (scene.tfValueRange.upper -
+               scene.tfValueRange.lower) * (scene.tfNumColorsAndOpacities - 1.f);
 
       // index and fractional offset
       const int index       = floor(value);
       const float remainder = value - index;
 
       // the final interpolated value
-      return ((1.f - remainder) * transferFunction.colorsAndOpacities[index] +
+      return ((1.f - remainder) * scene.tfColorsAndOpacities[index] +
               remainder *
-                  transferFunction.colorsAndOpacities[min(
+                  scene.tfColorsAndOpacities[min(
                       index + 1,
-                      int(transferFunction.colorsAndOpacities.size() - 1))]);
+                      int(scene.tfNumColorsAndOpacities - 1))]);
     }
 
     ///////////////////////////////////////////////////////////////////////////

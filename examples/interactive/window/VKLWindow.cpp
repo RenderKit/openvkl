@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "VKLWindow.h"
 // std
@@ -29,37 +16,38 @@ namespace openvkl {
   namespace examples {
 
     VKLWindow::VKLWindow(const vec2i &windowSize,
-                         VKLVolume volume,
+                         const Scene& scene,
                          std::string rendererType)
-        : windowSize(windowSize), volume(volume)
+        : windowSize(windowSize), scene(scene)
     {
-      const auto volumeBounds = vklGetBoundingBox(volume);
-
+      assert(scene.volume);
+      const auto volumeBounds = vklGetBoundingBox(scene.volume);
       arcballCamera = std::unique_ptr<ArcballCamera>(
           new ArcballCamera((const box3f &)volumeBounds, windowSize));
 
       renderer_density_pathtracer =
-          std::unique_ptr<Renderer>(new DensityPathTracer(volume));
-      renderer_hit_iterator =
-          std::unique_ptr<Renderer>(new HitIterator(volume));
-      renderer_ray_march_iterator =
-          std::unique_ptr<Renderer>(new RayMarchIterator(volume));
-
-      setActiveRenderer(rendererType);
-
+          std::unique_ptr<Renderer>(new DensityPathTracer());
       renderer_density_pathtracer->commit();
+      renderer_hit_iterator =
+          std::unique_ptr<Renderer>(new HitIterator());
       renderer_hit_iterator->commit();
+      renderer_ray_march_iterator =
+          std::unique_ptr<Renderer>(new RayMarchIterator());
       renderer_ray_march_iterator->commit();
 
+      setActiveRenderer(rendererType);
       reshape(this->windowSize);
     }
 
     void VKLWindow::render()
     {
-      if (useISPC)
-        renderer->renderFrame_ispc();
-      else
-        renderer->renderFrame();
+      if (scene.volume)
+      {
+        if (useISPC)
+          renderer->renderFrame_ispc(scene);
+        else
+          renderer->renderFrame(scene);
+      }
     }
 
     Renderer &VKLWindow::currentRenderer()
@@ -74,27 +62,17 @@ namespace openvkl {
 
     void VKLWindow::resetCamera()
     {
-      const auto volumeBounds = vklGetBoundingBox(volume);
-      arcballCamera->resetCamera((const box3f &)volumeBounds);
-      updateCamera();
+      if (scene.volume)
+      {
+        const auto volumeBounds = vklGetBoundingBox(scene.volume);
+        arcballCamera->resetCamera((const box3f &)volumeBounds);
+        updateCamera();
+      }
     }
 
     void VKLWindow::setUseISPC(bool enabled)
     {
       useISPC = enabled;
-    }
-
-    void VKLWindow::setTransferFunction(
-        const TransferFunction &transferFunction)
-    {
-      this->transferFunction = transferFunction;
-      renderer->setTransferFunction(transferFunction);
-    }
-
-    void VKLWindow::setIsovalues(const std::vector<float> &isovalues)
-    {
-      this->isovalues = isovalues;
-      renderer->setIsovalues(isovalues);
     }
 
     void VKLWindow::savePPM(const std::string &filename)
@@ -115,10 +93,6 @@ namespace openvkl {
         throw std::runtime_error("VKLWindow: unknown renderer type");
 
       updateCamera();
-
-      renderer->setTransferFunction(transferFunction);
-
-      renderer->setIsovalues(isovalues);
     }
 
     void VKLWindow::reshape(const vec2i &newWindowSize)

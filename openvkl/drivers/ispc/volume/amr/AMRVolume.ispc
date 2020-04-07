@@ -1,24 +1,12 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 // ours
 //#include "CellRef.ih"
 // #include "AMRCommon.h"
 #include "AMR.ih"
 #include "AMRVolume.ih"
+#include "common/export_util.h"
 
 // ------------------------------------------------------------------
 //! The current level at the given sample location in world coordinates.
@@ -38,9 +26,8 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   const AMRVolume *uniform volume = (const AMRVolume *uniform)_self;
 
   // Gradient step in each dimension (world coordinates).
-  const uniform vec3f gradientStep =
-      make_vec3f(volume->samplingStep *
-                 .1f);  // Carson TODO: determine correct offset
+  const uniform vec3f gradientStep = make_vec3f(
+      volume->samplingStep * .1f);  // Carson TODO: determine correct offset
 
   // The gradient will be computed using central differences.
   varying vec3f gradient;
@@ -48,20 +35,20 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = volume->super.computeSample(volume, pos);
+  float sample = volume->super.computeSample_varying(volume, pos);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->super.computeSample(
+  gradient.x = volume->super.computeSample_varying(
                    volume, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->super.computeSample(
+  gradient.y = volume->super.computeSample_varying(
                    volume, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->super.computeSample(
+  gradient.z = volume->super.computeSample_varying(
                    volume, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
                sample;
 
@@ -69,14 +56,15 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   return (gradient / gradientStep);
 }
 
-export void *uniform AMRVolume_create(void *uniform cppE)
+export void *uniform EXPORT_UNIQUE(AMRVolume_create, void *uniform cppE)
 {
   AMRVolume *uniform self = uniform new uniform AMRVolume;
   return self;
 }
 
-export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
-                                              uniform int leafID)
+export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
+                          const void *uniform _self,
+                          uniform int leafID)
 {
   const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
 
@@ -94,7 +82,7 @@ export void AMRVolume_computeValueRangeOfLeaf(const void *uniform _self,
       for (varying int ix = 0; ix < numSamplePoints.x; ix += programCount) {
         vec3f relPos    = make_vec3f(ix, iy, iz) / make_vec3f(numSamplePoints);
         vec3f samplePos = lerp(leaf->bounds, relPos);
-        float sampleValue = self->super.computeSample(_self, samplePos);
+        float sampleValue = self->super.computeSample_varying(_self, samplePos);
         extend(leaf->valueRange, sampleValue);
       }
 }
@@ -117,15 +105,16 @@ inline void AMRVolume_transformWorldToLocal(
       rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }
 
-export void AMRVolume_setAMR(void *uniform _self,
-                             uniform int numNodes,
-                             void *uniform _node,
-                             uniform int numLeaves,
-                             void *uniform _leaf,
-                             uniform int numLevels,
-                             void *uniform _level,
-                             const uniform int voxelType,
-                             const uniform box3f &worldBounds)
+export void EXPORT_UNIQUE(AMRVolume_setAMR,
+                          void *uniform _self,
+                          uniform int numNodes,
+                          void *uniform _node,
+                          uniform int numLeaves,
+                          void *uniform _leaf,
+                          uniform int numLevels,
+                          void *uniform _level,
+                          const uniform int voxelType,
+                          const uniform box3f &worldBounds)
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 
@@ -156,7 +145,8 @@ export void AMRVolume_setAMR(void *uniform _self,
   }
 }
 
-export void AMRVolume_set(void *uniform _self,
+export void EXPORT_UNIQUE(AMRVolume_set,
+                          void *uniform _self,
                           uniform box3f &worldBounds,
                           uniform float samplingStep,
                           const uniform vec3f &gridOrigin,
@@ -177,10 +167,11 @@ export void AMRVolume_set(void *uniform _self,
   self->gridOrigin  = gridOrigin;
 }
 
-export void AMRVolume_sample_export(uniform const int *uniform imask,
-                                    void *uniform _self,
-                                    const void *uniform _objectCoordinates,
-                                    void *uniform _samples)
+export void EXPORT_UNIQUE(AMRVolume_sample_export,
+                          uniform const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _samples)
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
 
@@ -189,6 +180,6 @@ export void AMRVolume_sample_export(uniform const int *uniform imask,
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = self->super.computeSample(self, *objectCoordinates);
+    *samples = self->super.computeSample_varying(self, *objectCoordinates);
   }
 }

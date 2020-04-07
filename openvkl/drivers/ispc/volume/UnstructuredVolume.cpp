@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "UnstructuredVolume.h"
 #include "../common/Data.h"
@@ -210,10 +197,11 @@ namespace openvkl {
       buildBvhAndCalculateBounds();
 
       if (!this->ispcEquivalent) {
-        this->ispcEquivalent = ispc::VKLUnstructuredVolume_Constructor();
+        this->ispcEquivalent = CALL_ISPC(VKLUnstructuredVolume_Constructor);
       }
 
-      ispc::VKLUnstructuredVolume_set(
+      CALL_ISPC(
+          VKLUnstructuredVolume_set,
           this->ispcEquivalent,
           (const ispc::box3f &)bounds,
           (const ispc::vec3f *)vertexPosition->data,
@@ -261,7 +249,7 @@ namespace openvkl {
       return bBox;
     }
 
-    void errorFunction(void *userPtr, enum RTCError error, const char *str)
+    static inline void errorFunction(void *userPtr, enum RTCError error, const char *str)
     {
       LogMessageStream(VKL_LOG_WARNING)
           << "error " << error << ": " << str << std::endl;
@@ -461,9 +449,8 @@ namespace openvkl {
       }
     }
 
-    VKL_REGISTER_VOLUME(UnstructuredVolume<4>, unstructured_4)
-    VKL_REGISTER_VOLUME(UnstructuredVolume<8>, unstructured_8)
-    VKL_REGISTER_VOLUME(UnstructuredVolume<16>, unstructured_16)
+    VKL_REGISTER_VOLUME(UnstructuredVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(internal_unstructured_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

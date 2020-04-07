@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Driver.h"
 #include <sstream>
@@ -55,19 +42,46 @@ namespace openvkl {
       installErrorFunction(*this, std::cerr);
     }
 
-    Driver *Driver::createDriver(const char *driverName)
+    Driver *Driver::createDriver(const std::string &driverName)
     {
       // special case for ISPC driver selection based on runtime native ISPC
       // vector width
-      const char *ispcDriverName = "ispc";
+      const std::string ispcDriverName("ispc");
 
-      if (strcmp(driverName, ispcDriverName) == 0) {
+      if (driverName == ispcDriverName) {
+        // determine native width and instantiate that driver for that width
         int nativeIspcWidth = ispc::get_programCount();
 
         std::stringstream ss;
         ss << ispcDriverName << "_" << nativeIspcWidth;
 
         return objectFactory<Driver, VKL_DRIVER>(ss.str().c_str());
+      } else if (driverName.find(ispcDriverName + "_") != std::string::npos &&
+                 driverName.size() > ispcDriverName.size() + 1) {
+        // the user chose a specific width for the ISPC driver, e.g.
+        // ispc_[4,8,16]. verify that driver is legal on this system.
+        std::string specifiedWidthStr =
+            driverName.substr(driverName.find("_") + 1, driverName.size());
+
+        try {
+          int specifiedWidth  = std::stoi(specifiedWidthStr);
+          int nativeIspcWidth = ispc::get_programCount();
+
+          if (specifiedWidth > nativeIspcWidth) {
+            std::stringstream ss;
+            ss << "driver " << driverName
+               << " cannot run on the system (native SIMD width: "
+               << nativeIspcWidth
+               << ", requested SIMD width: " << specifiedWidthStr << ")";
+
+            throw std::runtime_error(ss.str().c_str());
+          }
+
+        } catch (const std::invalid_argument &ia) {
+          LogMessageStream(VKL_LOG_DEBUG)
+              << "could not verify legality of ISPC driver width: "
+              << driverName;
+        }
       }
 
       return objectFactory<Driver, VKL_DRIVER>(driverName);
@@ -92,10 +106,12 @@ namespace openvkl {
           logLevel = VKL_LOG_WARNING;
         } else if (OPENVKL_LOG_LEVEL == "error") {
           logLevel = VKL_LOG_ERROR;
+        } else if (OPENVKL_LOG_LEVEL == "none") {
+          logLevel = VKL_LOG_NONE;
         } else {
           LogMessageStream(VKL_LOG_ERROR)
               << "unknown OPENVKL_LOG_LEVEL env value; must be debug, info, "
-                 "warning, or error";
+                 "warning, error or none";
         }
       }
 
@@ -136,7 +152,7 @@ namespace openvkl {
       auto OPENVKL_FLUSH_DENORMALS =
           utility::getEnvVar<int>("OPENVKL_FLUSH_DENORMALS");
       bool flushDenormals =
-          OPENVKL_FLUSH_DENORMALS.value_or(getParam<int>("flushDenormals", 0));
+          OPENVKL_FLUSH_DENORMALS.value_or(getParam<int>("flushDenormals", 1));
 
       tasking::initTaskingSystem(numThreads, flushDenormals);
 

@@ -1,20 +1,8 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "UnstructuredIterator.h"
+#include "../common/export_util.h"
 #include "../common/math.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/UnstructuredVolume.h"
@@ -36,12 +24,12 @@ namespace openvkl {
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
-        : Iterator<W>(valid, volume, origin, direction, tRange, valueSelector)
+        : IteratorV<W>(valid, volume, origin, direction, tRange, valueSelector)
     {
       static bool oneTimeChecks = false;
 
       if (!oneTimeChecks) {
-        int ispcSize = ispc::UnstructuredIterator_sizeOf();
+        int ispcSize = CALL_ISPC(UnstructuredIterator_sizeOf);
 
         if (ispcSize > ispcStorageSize) {
           LogMessageStream(VKL_LOG_ERROR)
@@ -56,30 +44,31 @@ namespace openvkl {
         oneTimeChecks = true;
       }
 
-      ispc::UnstructuredIterator_Initialize(
-          (const int *)&valid,
-          &ispcStorage[0],
-          volume->getISPCEquivalent(),
-          (void *)&origin,
-          (void *)&direction,
-          (void *)&tRange,
-          valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+      CALL_ISPC(UnstructuredIterator_Initialize,
+                static_cast<const int *>(valid),
+                &ispcStorage[0],
+                volume->getISPCEquivalent(),
+                (void *)&origin,
+                (void *)&direction,
+                (void *)&tRange,
+                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
     template <int W>
     const Interval<W> *UnstructuredIterator<W>::getCurrentInterval() const
     {
-      return reinterpret_cast<const Interval<W> *>(
-          ispc::UnstructuredIterator_getCurrentInterval(
-              (void *)&ispcStorage[0]));
+      return reinterpret_cast<const Interval<W> *>(CALL_ISPC(
+          UnstructuredIterator_getCurrentInterval, (void *)&ispcStorage[0]));
     }
 
     template <int W>
     void UnstructuredIterator<W>::iterateInterval(const vintn<W> &valid,
                                                   vintn<W> &result)
     {
-      ispc::UnstructuredIterator_iterateInterval(
-          (const int *)&valid, (void *)&ispcStorage[0], (int *)&result);
+      CALL_ISPC(UnstructuredIterator_iterateInterval,
+                static_cast<const int *>(valid),
+                (void *)&ispcStorage[0],
+                static_cast<int *>(result));
     }
 
     template <int W>
@@ -99,8 +88,7 @@ namespace openvkl {
       return;
     }
 
-    template class UnstructuredIterator<4>;
-    template class UnstructuredIterator<8>;
-    template class UnstructuredIterator<16>;
+    template class UnstructuredIterator<VKL_TARGET_WIDTH>;
+
   }  // namespace ispc_driver
 }  // namespace openvkl

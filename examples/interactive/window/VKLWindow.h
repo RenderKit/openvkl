@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -30,7 +17,7 @@ namespace openvkl {
     {
      public:
       VKLWindow(const vec2i &windowSize,
-                VKLVolume volume,
+                const Scene& scene,
                 std::string rendererType);
 
       virtual ~VKLWindow() = default;
@@ -45,10 +32,6 @@ namespace openvkl {
 
       void setUseISPC(bool enabled);
 
-      void setTransferFunction(const TransferFunction &transferFunction);
-
-      void setIsovalues(const std::vector<float> &isovalues);
-
       void savePPM(const std::string &filename);
 
       void setActiveRenderer(const std::string &rendererType);
@@ -61,7 +44,6 @@ namespace openvkl {
       bool useISPC{true};
 
       vec2i windowSize;
-      VKLVolume volume{nullptr};
 
       Renderer *renderer;
 
@@ -71,9 +53,7 @@ namespace openvkl {
 
       std::unique_ptr<ArcballCamera> arcballCamera;
 
-      TransferFunction transferFunction;
-
-      std::vector<float> isovalues{-1.f, 0.f, 1.f};
+      const Scene& scene;
     };
 
   }  // namespace examples

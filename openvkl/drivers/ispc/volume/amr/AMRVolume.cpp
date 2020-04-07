@@ -1,21 +1,9 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.h"
 #include "../common/Data.h"
+#include "../../common/export_util.h"
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -34,7 +22,7 @@ namespace openvkl {
     template <int W>
     AMRVolume<W>::AMRVolume()
     {
-      this->ispcEquivalent = ispc::AMRVolume_create(this);
+      this->ispcEquivalent = CALL_ISPC(AMRVolume_create, this);
     }
 
     template <int W>
@@ -50,11 +38,11 @@ namespace openvkl {
           (VKLAMRMethod)this->template getParam<int>("method", VKL_AMR_CURRENT);
 
       if (amrMethod == VKL_AMR_CURRENT)
-        ispc::AMR_install_current(this->ispcEquivalent);
+        CALL_ISPC(AMR_install_current, this->ispcEquivalent);
       else if (amrMethod == VKL_AMR_FINEST)
-        ispc::AMR_install_finest(this->ispcEquivalent);
+        CALL_ISPC(AMR_install_finest, this->ispcEquivalent);
       else if (amrMethod == VKL_AMR_OCTANT)
-        ispc::AMR_install_octant(this->ispcEquivalent);
+        CALL_ISPC(AMR_install_octant, this->ispcEquivalent);
 
       if (data != nullptr)  // TODO: support data updates
         return;
@@ -136,26 +124,29 @@ namespace openvkl {
             "VKL_USHORT, VKL_FLOAT, VKL_DOUBLE");
       }
 
-      ispc::AMRVolume_set(this->ispcEquivalent,
-                          (ispc::box3f &)bounds,
-                          samplingStep,
-                          (const ispc::vec3f &)gridOrigin,
-                          (const ispc::vec3f &)gridSpacing);
+      CALL_ISPC(AMRVolume_set,
+                this->ispcEquivalent,
+                (ispc::box3f &)bounds,
+                samplingStep,
+                (const ispc::vec3f &)gridOrigin,
+                (const ispc::vec3f &)gridSpacing);
 
-      ispc::AMRVolume_setAMR(this->ispcEquivalent,
-                             accel->node.size(),
-                             &accel->node[0],
-                             accel->leaf.size(),
-                             &accel->leaf[0],
-                             accel->level.size(),
-                             &accel->level[0],
-                             voxelType,
-                             (ispc::box3f &)bounds);
+      CALL_ISPC(AMRVolume_setAMR,
+                this->ispcEquivalent,
+                accel->node.size(),
+                &accel->node[0],
+                accel->leaf.size(),
+                &accel->leaf[0],
+                accel->level.size(),
+                &accel->level[0],
+                voxelType,
+                (ispc::box3f &)bounds);
 
       // parse the k-d tree to compute the voxel range of each leaf node.
       // This enables empty space skipping within the hierarchical structure
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
-        ispc::AMRVolume_computeValueRangeOfLeaf(this->ispcEquivalent, leafID);
+        CALL_ISPC(
+            AMRVolume_computeValueRangeOfLeaf, this->ispcEquivalent, leafID);
       });
 
       // compute value range over the full volume
@@ -169,10 +160,11 @@ namespace openvkl {
                                       const vvec3fn<W> &objectCoordinates,
                                       vfloatn<W> &samples) const
     {
-      ispc::AMRVolume_sample_export((const int *)&valid,
-                                    this->ispcEquivalent,
-                                    &objectCoordinates,
-                                    &samples);
+      CALL_ISPC(AMRVolume_sample_export,
+                static_cast<const int *>(valid),
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &samples);
     }
 
     template <int W>
@@ -195,9 +187,8 @@ namespace openvkl {
       return valueRange;
     }
 
-    VKL_REGISTER_VOLUME(AMRVolume<4>, amr_4);
-    VKL_REGISTER_VOLUME(AMRVolume<8>, amr_8);
-    VKL_REGISTER_VOLUME(AMRVolume<16>, amr_16);
+    VKL_REGISTER_VOLUME(AMRVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(internal_amr_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl

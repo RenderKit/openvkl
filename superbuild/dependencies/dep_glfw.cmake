@@ -1,18 +1,5 @@
-## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME glfw)
 
@@ -27,9 +14,10 @@ ExternalProject_Add(${COMPONENT_NAME}
   STAMP_DIR ${COMPONENT_NAME}/stamp
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
-  URL "https://github.com/glfw/glfw/archive/3.2.1.zip"
+  URL ${GLFW_URL}
+  URL_HASH SHA256=${GLFW_HASH}
   CMAKE_ARGS
-    -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}
     -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_INSTALL_INCLUDEDIR}
     -DCMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}
@@ -43,4 +31,5 @@ ExternalProject_Add(${COMPONENT_NAME}
   BUILD_ALWAYS OFF
 )
 
-set(GLFW_PATH "${COMPONENT_PATH}/${CMAKE_INSTALL_LIBDIR}/cmake/glfw3")
+add_to_prefix_path(${COMPONENT_PATH})
+

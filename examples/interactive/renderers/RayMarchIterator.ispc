@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
 
@@ -23,6 +10,7 @@ struct RayMarchIterator
 };
 
 vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
+                                   const uniform Scene* uniform scene,
                                    Ray &ray,
                                    const vec2i &pixel,
                                    const uniform int &frameID,
@@ -40,11 +28,11 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
 
   VKLIntervalIterator iterator;
   vklInitIntervalIteratorV(&iterator,
-                           self->super.volume,
+                           scene->volume,
                            (varying vkl_vec3f *)&ray.org,
                            (varying vkl_vec3f *)&ray.dir,
                            &tRange,
-                           self->super.valueSelector);
+                           scene->valueSelector);
 
   // the current ray interval
   VKLInterval interval;
@@ -67,11 +55,11 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
       // get volume sample
       vec3f c = ray.org + t * ray.dir;
       float sample =
-          vklComputeSampleV(self->super.volume, (varying vkl_vec3f *)&c);
+          vklComputeSampleV(scene->volume, (varying vkl_vec3f *)&c);
 
       // map through transfer function
       vec4f sampleColorAndOpacity =
-          Renderer_sampleTransferFunction(&self->super, sample);
+          Renderer_sampleTransferFunction(scene, sample);
 
       // accumulate contribution
       const float clampedOpacity = clamp(sampleColorAndOpacity.w * dt);
@@ -91,13 +79,9 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
   return color;
 }
 
-export void *uniform RayMarchIterator_create(void *uniform _volume)
+export void *uniform RayMarchIterator_create()
 {
   RayMarchIterator *uniform self = uniform new RayMarchIterator;
-
-  VKLVolume volume = (VKLVolume)_volume;
-  Renderer_constructor(&self->super, volume);
-
   self->super.renderPixel = RayMarchIterator_renderPixel;
   self->samplingRate      = 1.f;
 

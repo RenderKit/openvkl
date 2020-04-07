@@ -1,23 +1,11 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "box.ih"
 #include "vec.ih"
+#include "Scene.h"
 // openvkl
 #include "openvkl/openvkl.isph"
 
@@ -42,30 +30,13 @@ struct Renderer
   float *accum_b;
   int frameID;
 
-  vec2f tfValueRange;
-  int tfColorsAndOpacitiesCount;
-  vec4f *tfColorsAndOpacities;
-
-  VKLVolume volume;
-  box3f volumeBounds;
-  VKLValueSelector valueSelector;
-
   vec3f (*uniform renderPixel)(uniform Renderer *uniform self,
+                               const uniform Scene* uniform scene,
                                Ray &ray,
                                const vec2i &pixel,
                                const uniform int &frameID,
                                const uniform int &fbWidth);
 };
-
-inline void Renderer_constructor(Renderer *uniform self, VKLVolume volume)
-{
-  self->volume = volume;
-
-  uniform vkl_box3f volumeBounds = vklGetBoundingBox(volume);
-  const box3f *uniform bb =
-      (const uniform struct box3f *uniform) & volumeBounds;
-  self->volumeBounds = *bb;
-}
 
 inline Ray Renderer_computeRay(uniform Renderer *uniform self,
                                const vec2f &screenCoords)
@@ -83,36 +54,36 @@ inline Ray Renderer_computeRay(uniform Renderer *uniform self,
   return ray;
 }
 
-inline vec4f Renderer_sampleTransferFunction(uniform Renderer *uniform self,
+inline vec4f Renderer_sampleTransferFunction(const uniform Scene* uniform scene,
                                              float value)
 {
   vec4f colorAndOpacity = make_vec4f(0.f);
 
-  if (isnan(value) || self->tfColorsAndOpacitiesCount == 0) {
+  if (isnan(value) || scene->tfNumColorsAndOpacities == 0) {
     return colorAndOpacity;
   }
 
-  if (value <= self->tfValueRange.x) {
-    return self->tfColorsAndOpacities[0];
+  if (value <= scene->tfValueRange.lower) {
+    return scene->tfColorsAndOpacities[0];
   }
 
-  if (value >= self->tfValueRange.y) {
-    return self->tfColorsAndOpacities[self->tfColorsAndOpacitiesCount - 1];
+  if (value >= scene->tfValueRange.upper) {
+    return scene->tfColorsAndOpacities[scene->tfNumColorsAndOpacities - 1];
   }
 
   // map the value into the range [0, size - 1]
-  value = (value - self->tfValueRange.x) /
-          (self->tfValueRange.y - self->tfValueRange.x) *
-          (self->tfColorsAndOpacitiesCount - 1.f);
+  value = (value - scene->tfValueRange.lower) /
+          (scene->tfValueRange.upper - scene->tfValueRange.lower) *
+          (scene->tfNumColorsAndOpacities - 1.f);
 
   // index and fractional offset
   const int index       = floor(value);
   const float remainder = value - index;
 
   // the final interpolated value
-  return ((1.f - remainder) * self->tfColorsAndOpacities[index] +
-          remainder * self->tfColorsAndOpacities[min(
-                          index + 1, self->tfColorsAndOpacitiesCount - 1)]);
+  return ((1.f - remainder) * scene->tfColorsAndOpacities[index] +
+          remainder * scene->tfColorsAndOpacities[min(
+                          index + 1, scene->tfNumColorsAndOpacities - 1)]);
 }
 
 inline void intersectBox(const Ray &ray,

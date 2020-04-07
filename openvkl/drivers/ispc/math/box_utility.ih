@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
@@ -20,6 +7,11 @@
 #include "math/vec_utility.ih"
 
 inline bool isempty1f(const box1f &box)
+{
+  return box.upper <= box.lower;
+}
+
+inline uniform bool isempty1f(const uniform box1f &box)
 {
   return box.upper <= box.lower;
 }
@@ -34,7 +26,8 @@ inline bool overlaps1f(const uniform box1f &box1, const box1f &box2)
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
-inline bool overlaps1f(const uniform box1f &box1, const uniform box1f &box2)
+inline uniform bool overlaps1f(const uniform box1f &box1,
+                               const uniform box1f &box2)
 {
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
@@ -42,6 +35,19 @@ inline bool overlaps1f(const uniform box1f &box1, const uniform box1f &box2)
 inline bool overlapsAny1f(const box1f &r,
                           const uniform int &numRanges,
                           const box1f *uniform ranges)
+{
+  for (uniform int i = 0; i < numRanges; i++) {
+    if (overlaps1f(ranges[i], r)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+inline uniform bool overlapsAny1f(const uniform box1f &r,
+                                  const uniform int &numRanges,
+                                  const box1f *uniform ranges)
 {
   for (uniform int i = 0; i < numRanges; i++) {
     if (overlaps1f(ranges[i], r)) {
@@ -76,6 +82,21 @@ inline box1f intersectBox(const vec3f &origin,
   const vec3f maxs = (box.upper - origin) * divide_safe(direction);
 
   box1f result;
+  result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
+  result.upper = reduce_min(make_vec4f(max(mins, maxs), rangeLimit.upper));
+
+  return result;
+}
+
+inline uniform box1f intersectBox(const uniform vec3f &origin,
+                                  const uniform vec3f &direction,
+                                  const uniform box3f &box,
+                                  const uniform box1f &rangeLimit)
+{
+  const uniform vec3f mins = (box.lower - origin) * divide_safe(direction);
+  const uniform vec3f maxs = (box.upper - origin) * divide_safe(direction);
+
+  uniform box1f result;
   result.lower = reduce_max(make_vec4f(min(mins, maxs), rangeLimit.lower));
   result.upper = reduce_min(make_vec4f(max(mins, maxs), rangeLimit.upper));
 

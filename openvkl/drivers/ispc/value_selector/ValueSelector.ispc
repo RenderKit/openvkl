@@ -1,26 +1,15 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
+#include "../common/export_util.h"
 #include "ValueSelector.ih"
 
-export void *uniform ValueSelector_Constructor(void *uniform volume,
-                                               const uniform int &numRanges,
-                                               const box1f *uniform ranges,
-                                               const uniform int &numValues,
-                                               const float *uniform values)
+export void *uniform EXPORT_UNIQUE(ValueSelector_Constructor,
+                                   void *uniform volume,
+                                   const uniform int &numRanges,
+                                   const box1f *uniform ranges,
+                                   const uniform int &numValues,
+                                   const float *uniform values)
 {
   uniform ValueSelector *uniform self = uniform new uniform ValueSelector;
 
@@ -61,7 +50,8 @@ export void *uniform ValueSelector_Constructor(void *uniform volume,
   return self;
 }
 
-export void *uniform ValueSelector_Destructor(void *uniform _self)
+export void *uniform EXPORT_UNIQUE(ValueSelector_Destructor,
+                                   void *uniform _self)
 {
   uniform ValueSelector *uniform self = (uniform ValueSelector * uniform) _self;
   delete[] self->ranges;

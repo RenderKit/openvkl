@@ -1,29 +1,73 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "../common/simd.h"
-#include "openvkl/drivers/ispc/GridAcceleratorIterator_ispc.h"
+#include "openvkl/common.h"
 #include "openvkl/drivers/ispc/iterator/GridAcceleratorIterator.h"
-#include "openvkl/drivers/ispc/simd_conformance_ispc.h"
 #include "openvkl_testing.h"
+#include "simd_conformance_ispc.h"
 
 using namespace ospcommon;
 using namespace openvkl::testing;
 using namespace openvkl;
+
+template <int W>
+struct vklPublicWideTypes
+{
+  using vkl_vvec3fW   = void;
+  using vkl_vrange1fW = void;
+};
+
+template <>
+struct vklPublicWideTypes<1>
+{
+  using vkl_vvec3fW   = vkl_vec3f;
+  using vkl_vrange1fW = vkl_range1f;
+};
+
+template <>
+struct vklPublicWideTypes<4>
+{
+  using vkl_vvec3fW   = vkl_vvec3f4;
+  using vkl_vrange1fW = vkl_vrange1f4;
+};
+
+template <>
+struct vklPublicWideTypes<8>
+{
+  using vkl_vvec3fW   = vkl_vvec3f8;
+  using vkl_vrange1fW = vkl_vrange1f8;
+};
+
+template <>
+struct vklPublicWideTypes<16>
+{
+  using vkl_vvec3fW   = vkl_vvec3f16;
+  using vkl_vrange1fW = vkl_vrange1f16;
+};
+
+template <int W>
+void public_wide_types_conformance_test()
+{
+  INFO("width = " << W);
+
+  using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
+  using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
+
+  REQUIRE(sizeof(vvec3fn<W>) == sizeof(vkl_vvec3fW));
+  REQUIRE(alignof(vvec3fn<W>) == alignof(vkl_vvec3fW));
+
+  REQUIRE(sizeof(vrange1fn<W>) == sizeof(vkl_vrange1fW));
+  REQUIRE(alignof(vrange1fn<W>) == alignof(vkl_vrange1fW));
+}
+
+template <int W>
+void driver_native_simd_width_conformance_test()
+{
+  INFO("width = " << W);
+  REQUIRE(vklGetNativeSIMDWidth() == W);
+}
 
 template <int W>
 void vrange1fn_conformance_test()
@@ -76,8 +120,7 @@ void vVKLHitIteratorN_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vVKLHitIteratorN<W>));
 
-  REQUIRE(sizeof(vVKLHitIteratorN<W>) ==
-          ispc::sizeofVaryingVKLHitIterator());
+  REQUIRE(sizeof(vVKLHitIteratorN<W>) == ispc::sizeofVaryingVKLHitIterator());
   REQUIRE(is_aligned_for_type<vVKLHitIteratorN<W>>(
       ispc::newVaryingVKLHitIterator()));
 
@@ -118,19 +161,40 @@ void vVKLHitN_conformance_test()
 template <int W>
 void GridAcceleratorIterator_conformance_test()
 {
-  int ispcSize = ispc::GridAcceleratorIterator_sizeOf();
+  // uniform GridAcceleratorIterator
+  int ispcSize = ispc::sizeofGridAcceleratorIteratorU();
   REQUIRE(ispcSize ==
-          openvkl::ispc_driver::GridAcceleratorIterator<W>::ispcStorageSize);
+          openvkl::ispc_driver::GridAcceleratorIteratorU<W>::ispcStorageSize);
 
-  REQUIRE(is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIterator<W>>(
-      ispc::GridAcceleratorIterator_new()));
+  REQUIRE(
+      is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorU<W>>(
+          ispc::newGridAcceleratorIteratorU()));
 
-  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIterator<W>) <=
+  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorU<W>) <=
+          iterator_internal_state_size_for_width(1));
+
+  // varying GridAcceleratorIterator
+  ispcSize = ispc::sizeofGridAcceleratorIteratorV();
+  REQUIRE(ispcSize ==
+          openvkl::ispc_driver::GridAcceleratorIteratorV<W>::ispcStorageSize);
+
+  REQUIRE(
+      is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorV<W>>(
+          ispc::newGridAcceleratorIteratorV()));
+
+  REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorV<W>) <=
           iterator_internal_state_size_for_width(W));
 }
 
 TEST_CASE("SIMD conformance", "[simd_conformance]")
 {
+  // verifies public wide types vs internal wide representations, e.g.
+  // vkl_vvecef16 vs vvec3fn<16>
+  public_wide_types_conformance_test<1>();
+  public_wide_types_conformance_test<4>();
+  public_wide_types_conformance_test<8>();
+  public_wide_types_conformance_test<16>();
+
   vklLoadModule("ispc_driver");
 
   VKLDriver driver = vklNewDriver("ispc");
@@ -139,12 +203,14 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 
   int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
-  WARN("only performing SIMD conformance tests for native width: "
+  WARN("only performing ISPC-side SIMD conformance tests for native width: "
        << nativeSIMDWidth);
 
   if (nativeSIMDWidth == 4) {
+#if VKL_TARGET_WIDTH_ENABLED_4
     SECTION("4-wide")
     {
+      driver_native_simd_width_conformance_test<4>();
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
       vVKLIntervalIteratorN_conformance_test<4>();
@@ -153,11 +219,17 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
       vVKLHitN_conformance_test<4>();
       GridAcceleratorIterator_conformance_test<4>();
     }
+#else
+    throw std::runtime_error(
+        "illegal native SIMD width for driver build configuration");
+#endif
   }
 
   else if (nativeSIMDWidth == 8) {
+#if VKL_TARGET_WIDTH_ENABLED_8
     SECTION("8-wide")
     {
+      driver_native_simd_width_conformance_test<8>();
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
       vVKLIntervalIteratorN_conformance_test<8>();
@@ -166,11 +238,17 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
       vVKLHitN_conformance_test<8>();
       GridAcceleratorIterator_conformance_test<8>();
     }
+#else
+    throw std::runtime_error(
+        "illegal native SIMD width for driver build configuration");
+#endif
   }
 
   else if (nativeSIMDWidth == 16) {
+#if VKL_TARGET_WIDTH_ENABLED_16
     SECTION("16-wide")
     {
+      driver_native_simd_width_conformance_test<16>();
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
       vVKLIntervalIteratorN_conformance_test<16>();
@@ -179,6 +257,10 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
       vVKLHitN_conformance_test<16>();
       GridAcceleratorIterator_conformance_test<16>();
     }
+#else
+    throw std::runtime_error(
+        "illegal native SIMD width for driver build configuration");
+#endif
   }
 
   else {

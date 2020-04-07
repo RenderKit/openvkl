@@ -2,11 +2,9 @@ SHELL := /bin/bash
 
 webpages := $(addprefix www/, $(addsuffix .html, index documentation examples downloads related_projects legal))
 process_version := $(addprefix tmp/, $(addsuffix .md, readme_head))
-images_png := $(addprefix images/, $(addsuffix .png, structured_spherical_coords))
-scripts := $(addprefix scripts/, $(addsuffix .min.js, bootstrap jquery popper))
+images_png := $(addprefix images/, $(addsuffix .png, structured_spherical_coords vdb_structure))
 
 webimages := $(addprefix www/, $(images_png))
-webscripts := $(addprefix www/, $(scripts))
 
 PANDOC := pandoc
 PDMINVERSION := 2000000
@@ -16,10 +14,11 @@ ifneq "$(PDOK)" "1"
 endif
 
 all: www doc
-www: $(webpages) www/stylesheet.css $(webimages) $(webscripts)
+www: $(webpages) www/stylesheet.css $(webimages)
+wwwsync: www
 doc: ../README.md
 
-.PHONY: all www doc clean
+.PHONY: all www wwwsync doc clean
 
 tmp/version: ../CMakeLists.txt
 	sed -n -e "s/^project(openvkl VERSION \(.*\) LANGUAGES.*)/\1/p" $< | tr -d '\n' > $@
@@ -41,10 +40,6 @@ changelog.md:
 $(webpages) www/stylesheet.css: | wwwdir
 wwwdir:
 	@mkdir -p www
-
-$(webscripts): | wwwscriptdir
-wwwscriptdir:
-	@mkdir -p www/scripts
 
 $(process_version) tmp/version: | tmpdir
 tmpdir:
@@ -86,11 +81,14 @@ www/images/%: images/%
 	cp $< $@
 
 ## ----------------------------------------------------------------------------
-## Scripts
+## Webpages sync
 ## ----------------------------------------------------------------------------
 
-www/scripts/%: scripts/%
-	cp $< $@
+wwwsync:
+ifndef WWW_REPO
+	$(error environment variable WWW_REPO is not set)
+endif
+	rsync -arP www/* $(WWW_REPO)/
 
 ## ----------------------------------------------------------------------------
 ## Markdown

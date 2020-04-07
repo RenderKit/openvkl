@@ -1,24 +1,13 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "ISPCDriver.h"
 #include "../common/Data.h"
+#include "../common/Observer.h"
+#include "../common/export_util.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
-#include "ispc_util_ispc.h"
+#include "ISPCDriver_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -32,7 +21,7 @@ namespace openvkl {
     template <int W>
     int ISPCDriver<W>::getNativeSIMDWidth()
     {
-      return ispc::get_programCount();
+      return CALL_ISPC(ISPCDriver_getProgramCount);
     }
 
     template <int W>
@@ -70,8 +59,68 @@ namespace openvkl {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Observer ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    VKLObserver ISPCDriver<W>::newObserver(VKLVolume volume, const char *type)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      return volumeObject.newObserver(type);
+    }
+
+    template <int W>
+    const void * ISPCDriver<W>::mapObserver(VKLObserver observer)
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      return observerObject.map();
+    }
+
+    template <int W>
+    void ISPCDriver<W>::unmapObserver(VKLObserver observer)
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      observerObject.unmap();
+    }
+
+    template <int W>
+    VKLDataType ISPCDriver<W>::getObserverElementType(VKLObserver observer) const
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      return observerObject.getElementType();
+    }
+
+    template <int W>
+    size_t ISPCDriver<W>::getObserverNumElements(VKLObserver observer) const
+    {
+      auto &observerObject = referenceFromHandle<Observer>(observer);
+      return observerObject.getNumElements();
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // Interval iterator //////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    void ISPCDriver<W>::initIntervalIterator1(
+        vVKLIntervalIteratorN<1> &iterator,
+        VKLVolume volume,
+        const vvec3fn<1> &origin,
+        const vvec3fn<1> &direction,
+        const vrange1fn<1> &tRange,
+        VKLValueSelector valueSelector)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      iterator.volume = (VKLVolume)&volumeObject;
+
+      volumeObject.initIntervalIteratorU(
+          iterator,
+          origin,
+          direction,
+          tRange,
+          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
+    }
 
 #define __define_initIntervalIteratorN(WIDTH)                               \
   template <int W>                                                          \
@@ -88,12 +137,22 @@ namespace openvkl {
         valid, iterator, volume, origin, direction, tRange, valueSelector); \
   }
 
-    __define_initIntervalIteratorN(1);
     __define_initIntervalIteratorN(4);
     __define_initIntervalIteratorN(8);
     __define_initIntervalIteratorN(16);
 
 #undef __define_initIntervalIteratorN
+
+    template <int W>
+    void ISPCDriver<W>::iterateInterval1(vVKLIntervalIteratorN<1> &iterator,
+                                         vVKLIntervalN<1> &interval,
+                                         int *result)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
+
+      volumeObject.iterateIntervalU(
+          iterator, interval, reinterpret_cast<vintn<1> &>(*result));
+    }
 
 #define __define_iterateIntervalN(WIDTH)                               \
   template <int W>                                                     \
@@ -101,12 +160,11 @@ namespace openvkl {
       const int *valid,                                                \
       vVKLIntervalIteratorN<WIDTH> &iterator,                          \
       vVKLIntervalN<WIDTH> &interval,                                  \
-      vintn<WIDTH> &result)                                            \
+      int *result)                                                     \
   {                                                                    \
     iterateIntervalAnyWidth<WIDTH>(valid, iterator, interval, result); \
   }
 
-    __define_iterateIntervalN(1);
     __define_iterateIntervalN(4);
     __define_iterateIntervalN(8);
     __define_iterateIntervalN(16);
@@ -116,6 +174,26 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
     // Hit iterator ///////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    void ISPCDriver<W>::initHitIterator1(vVKLHitIteratorN<1> &iterator,
+                                         VKLVolume volume,
+                                         const vvec3fn<1> &origin,
+                                         const vvec3fn<1> &direction,
+                                         const vrange1fn<1> &tRange,
+                                         VKLValueSelector valueSelector)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      iterator.volume = (VKLVolume)&volumeObject;
+
+      volumeObject.initHitIteratorU(
+          iterator,
+          origin,
+          direction,
+          tRange,
+          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
+    }
 
 #define __define_initHitIteratorN(WIDTH)                                    \
   template <int W>                                                          \
@@ -132,24 +210,33 @@ namespace openvkl {
         valid, iterator, volume, origin, direction, tRange, valueSelector); \
   }
 
-    __define_initHitIteratorN(1);
     __define_initHitIteratorN(4);
     __define_initHitIteratorN(8);
     __define_initHitIteratorN(16);
 
 #undef __define_initHitIteratorN
 
+    template <int W>
+    void ISPCDriver<W>::iterateHit1(vVKLHitIteratorN<1> &iterator,
+                                    vVKLHitN<1> &hit,
+                                    int *result)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
+
+      volumeObject.iterateHitU(
+          iterator, hit, reinterpret_cast<vintn<1> &>(*result));
+    }
+
 #define __define_iterateHitN(WIDTH)                                        \
   template <int W>                                                         \
   void ISPCDriver<W>::iterateHit##WIDTH(const int *valid,                  \
                                         vVKLHitIteratorN<WIDTH> &iterator, \
                                         vVKLHitN<WIDTH> &hit,              \
-                                        vintn<WIDTH> &result)              \
+                                        int *result)                       \
   {                                                                        \
     iterateHitAnyWidth<WIDTH>(valid, iterator, hit, result);               \
   }
 
-    __define_iterateHitN(1);
     __define_iterateHitN(4);
     __define_iterateHitN(8);
     __define_iterateHitN(16);
@@ -275,6 +362,16 @@ namespace openvkl {
     template <int W>
     VKLVolume ISPCDriver<W>::newVolume(const char *type)
     {
+      // warn for deprecated snake case volume types
+      std::string typeStr(type);
+
+      if (typeStr.find("_") != std::string::npos) {
+        postLogMessage(VKL_LOG_WARNING)
+            << "volume type name '" << typeStr
+            << "' may be deprecated; volume type names are now camelCase (no "
+               "underscores)";
+      }
+
       std::stringstream ss;
       ss << type << "_" << W;
       return (VKLVolume)Volume<W>::createInstance(ss.str());
@@ -286,7 +383,7 @@ namespace openvkl {
       const int *valid,                                                      \
       VKLVolume volume,                                                      \
       const vvec3fn<WIDTH> &objectCoordinates,                               \
-      vfloatn<WIDTH> &samples)                                               \
+      float *samples)                                                        \
   {                                                                          \
     computeSampleAnyWidth<WIDTH>(valid, volume, objectCoordinates, samples); \
   }
@@ -302,10 +399,12 @@ namespace openvkl {
     void ISPCDriver<W>::computeSample1(const int *valid,
                                        VKLVolume volume,
                                        const vvec3fn<1> &objectCoordinates,
-                                       vfloatn<1> &sample)
+                                       float *sample)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      volumeObject.computeSample(objectCoordinates, sample);
+      vfloatn<1> sampleW;
+      volumeObject.computeSample(objectCoordinates, sampleW);
+      *sample = sampleW[0];
     }
 
 #define __define_computeGradientN(WIDTH)              \
@@ -347,41 +446,6 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::initIntervalIteratorAnyWidth(
-        const int *valid,
-        vVKLIntervalIteratorN<OW> &iterator,
-        VKLVolume volume,
-        const vvec3fn<OW> &origin,
-        const vvec3fn<OW> &direction,
-        const vrange1fn<OW> &tRange,
-        VKLValueSelector valueSelector)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
-      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
-      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
-
-      vVKLIntervalIteratorN<W> iteratorW;
-
-      volumeObject.initIntervalIteratorV(
-          validW,
-          iteratorW,
-          originW,
-          directionW,
-          tRangeW,
-          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
-
-      iterator = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
-    }
-
-    template <int W>
-    template <int OW>
     typename std::enable_if<(OW == W), void>::type
     ISPCDriver<W>::initIntervalIteratorAnyWidth(
         const int *valid,
@@ -394,20 +458,18 @@ namespace openvkl {
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
+      iterator.volume = (VKLVolume)&volumeObject;
+
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
-      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
-      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        validW[i] = valid[i];
 
       volumeObject.initIntervalIteratorV(
           validW,
           iterator,
-          originW,
-          directionW,
-          tRangeW,
+          origin,
+          direction,
+          tRange,
           reinterpret_cast<const ValueSelector<W> *>(valueSelector));
     }
 
@@ -430,70 +492,23 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
-                                           vVKLIntervalIteratorN<OW> &iterator1,
-                                           vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator1.volume);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLIntervalN<W> intervalW;
-
-      vintn<W> resultW;
-
-      vVKLIntervalIteratorN<W> iteratorW =
-          static_cast<vVKLIntervalIteratorN<W>>(iterator1);
-
-      volumeObject.iterateIntervalV(validW, iteratorW, intervalW, resultW);
-
-      iterator1 = static_cast<vVKLIntervalIteratorN<1>>(iteratorW);
-
-      for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]     = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]     = intervalW.tRange.upper[i];
-        interval.valueRange.lower[i] = intervalW.valueRange.lower[i];
-        interval.valueRange.upper[i] = intervalW.valueRange.upper[i];
-        interval.nominalDeltaT[i]    = intervalW.nominalDeltaT[i];
-      }
-
-      for (int i = 0; i < OW; i++)
-        result[i] = resultW[i];
-    }
-
-    template <int W>
-    template <int OW>
     typename std::enable_if<(OW == W), void>::type
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
                                            vVKLIntervalIteratorN<OW> &iterator,
                                            vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
+                                           int *result)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLIntervalN<W> intervalW;
+        validW[i] = valid[i];
 
       vintn<W> resultW;
 
-      volumeObject.iterateIntervalV(validW, iterator, intervalW, resultW);
+      volumeObject.iterateIntervalV(validW, iterator, interval, resultW);
 
-      for (int i = 0; i < OW; i++) {
-        interval.tRange.lower[i]     = intervalW.tRange.lower[i];
-        interval.tRange.upper[i]     = intervalW.tRange.upper[i];
-        interval.valueRange.lower[i] = intervalW.valueRange.lower[i];
-        interval.valueRange.upper[i] = intervalW.valueRange.upper[i];
-        interval.nominalDeltaT[i]    = intervalW.nominalDeltaT[i];
-      }
-
-      for (int i = 0; i < OW; i++)
+      for (int i = 0; i < W; i++)
         result[i] = resultW[i];
     }
 
@@ -503,45 +518,11 @@ namespace openvkl {
     ISPCDriver<W>::iterateIntervalAnyWidth(const int *valid,
                                            vVKLIntervalIteratorN<OW> &iterator,
                                            vVKLIntervalN<OW> &interval,
-                                           vintn<OW> &result)
+                                           int *result)
     {
       throw std::runtime_error(
           "cannot iterate on intervals for widths different than the "
           "native runtime vector width");
-    }
-
-    template <int W>
-    template <int OW>
-    typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::initHitIteratorAnyWidth(const int *valid,
-                                           vVKLHitIteratorN<OW> &iterator,
-                                           VKLVolume volume,
-                                           const vvec3fn<OW> &origin,
-                                           const vvec3fn<OW> &direction,
-                                           const vrange1fn<OW> &tRange,
-                                           VKLValueSelector valueSelector)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
-      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
-      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
-
-      vVKLHitIteratorN<W> iteratorW;
-
-      volumeObject.initHitIteratorV(
-          validW,
-          iteratorW,
-          originW,
-          directionW,
-          tRangeW,
-          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
-
-      iterator = static_cast<vVKLHitIteratorN<1>>(iteratorW);
     }
 
     template <int W>
@@ -557,20 +538,18 @@ namespace openvkl {
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
+      iterator.volume = (VKLVolume)&volumeObject;
+
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
-      vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
-      vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        validW[i] = valid[i];
 
       volumeObject.initHitIteratorV(
           validW,
           iterator,
-          originW,
-          directionW,
-          tRangeW,
+          origin,
+          direction,
+          tRange,
           reinterpret_cast<const ValueSelector<W> *>(valueSelector));
     }
 
@@ -592,64 +571,23 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW == 1), void>::type
-    ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
-                                      vVKLHitIteratorN<OW> &iterator1,
-                                      vVKLHitN<OW> &hit,
-                                      vintn<OW> &result)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(iterator1.volume);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLHitN<W> hitW;
-
-      vintn<W> resultW;
-
-      vVKLHitIteratorN<W> iteratorW =
-          static_cast<vVKLHitIteratorN<W>>(iterator1);
-
-      volumeObject.iterateHitV(validW, iteratorW, hitW, resultW);
-
-      iterator1 = static_cast<vVKLHitIteratorN<1>>(iteratorW);
-
-      for (int i = 0; i < OW; i++) {
-        hit.t[i]      = hitW.t[i];
-        hit.sample[i] = hitW.sample[i];
-      }
-
-      for (int i = 0; i < OW; i++)
-        result[i] = resultW[i];
-    }
-
-    template <int W>
-    template <int OW>
     typename std::enable_if<(OW == W), void>::type
     ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
                                       vVKLHitIteratorN<OW> &iterator,
                                       vVKLHitN<OW> &hit,
-                                      vintn<OW> &result)
+                                      int *result)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(iterator.volume);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      vVKLHitN<W> hitW;
+        validW[i] = valid[i];
 
       vintn<W> resultW;
 
-      volumeObject.iterateHitV(validW, iterator, hitW, resultW);
+      volumeObject.iterateHitV(validW, iterator, hit, resultW);
 
-      for (int i = 0; i < OW; i++) {
-        hit.t[i]      = hitW.t[i];
-        hit.sample[i] = hitW.sample[i];
-      }
-
-      for (int i = 0; i < OW; i++)
+      for (int i = 0; i < W; i++)
         result[i] = resultW[i];
     }
 
@@ -659,7 +597,7 @@ namespace openvkl {
     ISPCDriver<W>::iterateHitAnyWidth(const int *valid,
                                       vVKLHitIteratorN<OW> &iterator,
                                       vVKLHitN<OW> &hit,
-                                      vintn<OW> &result)
+                                      int *result)
     {
       throw std::runtime_error(
           "cannot iterate on hits for widths different than the native "
@@ -668,11 +606,11 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), void>::type
+    typename std::enable_if<(OW < W), void>::type
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLVolume volume,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         vfloatn<OW> &samples)
+                                         float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -694,11 +632,33 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
+                                         VKLVolume volume,
+                                         const vvec3fn<OW> &objectCoordinates,
+                                         float *samples)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = valid[i];
+
+      vfloatn<W> samplesW;
+
+      volumeObject.computeSampleV(validW, objectCoordinates, samplesW);
+
+      for (int i = 0; i < W; i++)
+        samples[i] = samplesW[i];
+    }
+
+    template <int W>
+    template <int OW>
     typename std::enable_if<(OW > W), void>::type
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLVolume volume,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         vfloatn<OW> &samples)
+                                         float *samples)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
 
@@ -724,7 +684,7 @@ namespace openvkl {
 
     template <int W>
     template <int OW>
-    typename std::enable_if<(OW <= W), void>::type
+    typename std::enable_if<(OW < W), void>::type
     ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
                                            VKLVolume volume,
                                            const vvec3fn<OW> &objectCoordinates,
@@ -749,6 +709,23 @@ namespace openvkl {
         gradients.y[i] = gradientsW.y[i];
         gradients.z[i] = gradientsW.z[i];
       }
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
+                                           VKLVolume volume,
+                                           const vvec3fn<OW> &objectCoordinates,
+                                           vvec3fn<OW> &gradients)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = valid[i];
+
+      volumeObject.computeGradientV(validW, objectCoordinates, gradients);
     }
 
     template <int W>
@@ -784,11 +761,13 @@ namespace openvkl {
       }
     }
 
-    VKL_REGISTER_DRIVER(ISPCDriver<4>, ispc_4)
-    VKL_REGISTER_DRIVER(ISPCDriver<8>, ispc_8)
-    VKL_REGISTER_DRIVER(ISPCDriver<16>, ispc_16)
+    VKL_REGISTER_DRIVER(ISPCDriver<VKL_TARGET_WIDTH>,
+                        CONCAT1(internal_ispc_, VKL_TARGET_WIDTH))
 
   }  // namespace ispc_driver
 }  // namespace openvkl
 
-extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_ispc_driver() {}
+extern "C" OPENVKL_DLLEXPORT void CONCAT1(openvkl_init_module_ispc_driver_,
+                                          VKL_TARGET_WIDTH)()
+{
+}

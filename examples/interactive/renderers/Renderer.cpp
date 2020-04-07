@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.h"
 // std
@@ -25,28 +12,16 @@
 namespace openvkl {
   namespace examples {
 
-    Renderer::Renderer(VKLVolume volume) : volume(volume)
-    {
-      const auto vklVolumeBounds = vklGetBoundingBox(volume);
-      volumeBounds               = (const box3f &)vklVolumeBounds;
-    }
+    Renderer::Renderer() = default;
 
     Renderer::~Renderer()
     {
-      if (valueSelector) {
-        vklRelease(valueSelector);
-        valueSelector = nullptr;
-      }
-
       ispc::Renderer_freeRenderer(ispcEquivalent);
     }
 
     void Renderer::commit()
     {
       spp = getParam<int>("spp", 1);
-
-      setTransferFunction(transferFunction);
-      setIsovalues(isovalues);
     }
 
     void Renderer::setCamera(const vec3f &pos,
@@ -112,27 +87,7 @@ namespace openvkl {
       return framebuffer;
     }
 
-    void Renderer::setTransferFunction(const TransferFunction &transferFunction)
-    {
-      this->transferFunction = transferFunction;
-
-      ispc::Renderer_setTransferFunction(
-          ispcEquivalent,
-          (ispc::vec2f &)this->transferFunction.valueRange,
-          this->transferFunction.colorsAndOpacities.size(),
-          (ispc::vec4f *)this->transferFunction.colorsAndOpacities.data());
-
-      updateValueSelector();
-    }
-
-    void Renderer::setIsovalues(const std::vector<float> &isovalues)
-    {
-      this->isovalues = isovalues;
-
-      updateValueSelector();
-    }
-
-    void Renderer::renderFrame()
+    void Renderer::renderFrame(const Scene& scene)
     {
       auto fbDims = pixelIndices.dimensions();
 
@@ -146,9 +101,7 @@ namespace openvkl {
                        pixel.y * rcp(float(fbDims.y)));
 
           Ray ray = computeRay(screen);
-
-          vec3f color =
-              renderPixel(ray, vec4i(pixel.x, pixel.y, frameID, fbDims.x));
+          const vec3f color = renderPixel(scene, ray, vec4i(pixel.x, pixel.y, frameID, fbDims.x));
 
           float &ar = accum_r[i];
           float &ag = accum_g[i];
@@ -170,9 +123,10 @@ namespace openvkl {
       }
     }
 
-    void Renderer::renderFrame_ispc()
+    void Renderer::renderFrame_ispc(const Scene& scene)
     {
-      auto fbDims = pixelIndices.dimensions();
+      vec2i fbDims = pixelIndices.dimensions();
+      ispc::vec2i fbDimsISPC{fbDims.x, fbDims.y};
 
       const size_t numJobs =
           pixelIndices.total_indices() / ispc::Renderer_pixelsPerJob();
@@ -181,41 +135,16 @@ namespace openvkl {
         float accumScale = 1.f / (frameID + 1);
 
         tasking::parallel_for(numJobs, [&](size_t i) {
-          ispc::Renderer_renderPixel(
-              ispcEquivalent, (ispc::vec2i &)fbDims, frameID, accumScale, i);
+          ispc::Renderer_renderPixel(ispcEquivalent,
+                                     reinterpret_cast<const ispc::Scene*>(&scene),
+                                     fbDimsISPC,
+                                     frameID,
+                                     accumScale,
+                                     i);
         });
 
         frameID++;
       }
-    }
-
-    void Renderer::updateValueSelector()
-    {
-      if (valueSelector) {
-        vklRelease(valueSelector);
-        valueSelector = nullptr;
-      }
-
-      valueSelector = vklNewValueSelector(volume);
-
-      // set value selector value ranges based on transfer function positive
-      // opacity intervals
-      std::vector<range1f> valueRanges =
-          transferFunction.getPositiveOpacityValueRanges();
-
-      vklValueSelectorSetRanges(valueSelector,
-                                valueRanges.size(),
-                                (const vkl_range1f *)valueRanges.data());
-
-      // if we have isovalues, set these values on the value selector
-      if (isovalues.size() > 0) {
-        vklValueSelectorSetValues(
-            valueSelector, isovalues.size(), isovalues.data());
-      }
-
-      vklCommit(valueSelector);
-
-      ispc::Renderer_setValueSelector(ispcEquivalent, valueSelector);
     }
 
   }  // namespace examples

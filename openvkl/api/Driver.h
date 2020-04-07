@@ -1,23 +1,11 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <functional>
 #include <memory>
+#include <string>
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
@@ -43,7 +31,7 @@ namespace openvkl {
       Driver();
       virtual ~Driver() override = default;
 
-      static Driver *createDriver(const char *driverName);
+      static Driver *createDriver(const std::string &driverName);
 
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;
@@ -79,8 +67,29 @@ namespace openvkl {
                               VKLDataCreationFlags dataCreationFlags) = 0;
 
       /////////////////////////////////////////////////////////////////////////
+      // Observer /////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VKLObserver newObserver(VKLVolume volume, const char *type) = 0;
+      virtual const void * mapObserver(VKLObserver observer) = 0;
+      virtual void unmapObserver(VKLObserver observer) = 0;
+      virtual VKLDataType getObserverElementType(VKLObserver observer) const = 0;
+      virtual size_t getObserverNumElements(VKLObserver observer) const = 0;
+
+      /////////////////////////////////////////////////////////////////////////
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
+
+      virtual void initIntervalIterator1(vVKLIntervalIteratorN<1> &iterator,
+                                         VKLVolume volume,
+                                         const vvec3fn<1> &origin,
+                                         const vvec3fn<1> &direction,
+                                         const vrange1fn<1> &tRange,
+                                         VKLValueSelector valueSelector)
+      {
+        throw std::runtime_error(
+            "initIntervalIterator1() not implemented on this driver");
+      }
 
 #define __define_initIntervalIteratorN(WIDTH)                            \
   virtual void initIntervalIterator##WIDTH(                              \
@@ -96,24 +105,30 @@ namespace openvkl {
         "initIntervalIterator##WIDTH() not implemented on this driver"); \
   }
 
-      __define_initIntervalIteratorN(1);
       __define_initIntervalIteratorN(4);
       __define_initIntervalIteratorN(8);
       __define_initIntervalIteratorN(16);
 
 #undef __define_initIntervalIteratorN
 
+      virtual void iterateInterval1(vVKLIntervalIteratorN<1> &iterator,
+                                    vVKLIntervalN<1> &interval,
+                                    int *result)
+      {
+        throw std::runtime_error(
+            "iterateInterval1() not implemented on this driver");
+      }
+
 #define __define_iterateIntervalN(WIDTH)                                      \
   virtual void iterateInterval##WIDTH(const int *valid,                       \
                                       vVKLIntervalIteratorN<WIDTH> &iterator, \
                                       vVKLIntervalN<WIDTH> &interval,         \
-                                      vintn<WIDTH> &result)                   \
+                                      int *result)                            \
   {                                                                           \
     throw std::runtime_error(                                                 \
         "iterateInterval##WIDTH() not implemented on this driver");           \
   }
 
-      __define_iterateIntervalN(1);
       __define_iterateIntervalN(4);
       __define_iterateIntervalN(8);
       __define_iterateIntervalN(16);
@@ -123,6 +138,17 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
+
+      virtual void initHitIterator1(vVKLHitIteratorN<1> &iterator,
+                                    VKLVolume volume,
+                                    const vvec3fn<1> &origin,
+                                    const vvec3fn<1> &direction,
+                                    const vrange1fn<1> &tRange,
+                                    VKLValueSelector valueSelector)
+      {
+        throw std::runtime_error(
+            "initHitIterator1() not implemented on this driver");
+      }
 
 #define __define_initHitIteratorN(WIDTH)                                 \
   virtual void initHitIterator##WIDTH(const int *valid,                  \
@@ -137,24 +163,30 @@ namespace openvkl {
         "initHitIterator##WIDTH() not implemented on this driver");      \
   }
 
-      __define_initHitIteratorN(1);
       __define_initHitIteratorN(4);
       __define_initHitIteratorN(8);
       __define_initHitIteratorN(16);
 
 #undef __define_initHitIteratorN
 
+      virtual void iterateHit1(vVKLHitIteratorN<1> &iterator,
+                               vVKLHitN<1> &hit,
+                               int *result)
+      {
+        throw std::runtime_error(
+            "iterateHit1() not implemented on this driver");
+      }
+
 #define __define_iterateHitN(WIDTH)                                 \
   virtual void iterateHit##WIDTH(const int *valid,                  \
                                  vVKLHitIteratorN<WIDTH> &iterator, \
                                  vVKLHitN<WIDTH> &hit,              \
-                                 vintn<WIDTH> &result)              \
+                                 int *result)                       \
   {                                                                 \
     throw std::runtime_error(                                       \
         "iterateHit##WIDTH() not implemented on this driver");      \
   }
 
-      __define_iterateHitN(1);
       __define_iterateHitN(4);
       __define_iterateHitN(8);
       __define_iterateHitN(16);
@@ -214,7 +246,7 @@ namespace openvkl {
   virtual void computeSample##WIDTH(const int *valid,                        \
                                     VKLVolume volume,                        \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
-                                    vfloatn<WIDTH> &samples) = 0;
+                                    float *samples) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);

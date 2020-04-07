@@ -1,22 +1,10 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.ih"
 #include "CellRef.ih"
 #include "DualCell.ih"
+#include "common/export_util.h"
 
 varying float AMR_current(const void *uniform _self, const varying vec3f &P)
 {
@@ -48,9 +36,9 @@ varying float AMR_currentLevel(const void *uniform _self,
   return width;
 }
 
-export void AMR_install_current(void *uniform _self)
+export void EXPORT_UNIQUE(AMR_install_current, void *uniform _self)
 {
-  AMRVolume *uniform self   = (AMRVolume * uniform) _self;
-  self->super.computeSample = AMR_current;
-  self->computeSampleLevel  = AMR_currentLevel;
+  AMRVolume *uniform self           = (AMRVolume * uniform) _self;
+  self->super.computeSample_varying = AMR_current;
+  self->computeSampleLevel          = AMR_currentLevel;
 }

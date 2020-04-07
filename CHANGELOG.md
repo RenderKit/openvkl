@@ -1,6 +1,33 @@
 Version History
 ---------------
 
+### Open VKL 0.9.0 (alpha)
+
+-   Added support for VDB sparse structured volumes (`"vdb"` volume type)
+-   Added `vdb_util` library to simplify instantiation of VDB volumes, and
+    support loading of .vdb files using OpenVDB
+-   Added `VKLObserver` and associated APIs, which may used by volume types to
+    pass information back to the application
+    - A `LeafNodeAccess` observer is provided for VDB volumes to support
+      on-demand loading of leaf nodes
+-   Structured regular volumes:
+    -   Up to 6x performance improvement for scalar iterator initialization
+    -   Up to 2x performance improvement for scalar iterator iteration
+-   General improvements to the CMake Superbuild for building Open VKL and all
+    associated dependencies
+-   Allowing instantiation of ISPC driver for any supported SIMD width (in
+    addition to the default automatically selected width)
+-   Volume type names are now camelCase (legacy snake_case type names are
+    deprecated), impacting `structuredRegular` and `structuredSpherical` volumes
+-   Enabling `flushDenormals` driver mode by default
+-   Aligning public `vkl_vvec3f[4,8,16]` and `vkl_vrange1f[4,8,16]` types
+-   Added `VKL_LOG_NONE` log level
+-   Fixed bug in `vklExamples` which could lead to improper rendering on macOS
+    Catalina
+-   Fixed bug in unstructured volume interval iterator which could lead to
+    errors with some combinations of lane masks
+-   Now providing binary releases for Linux, macOS, and Windows
+
 ### Open VKL 0.8.0 (alpha)
 
 -   Added support for structured volumes on spherical grids

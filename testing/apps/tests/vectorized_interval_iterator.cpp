@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include <array>
 #include "../../external/catch.hpp"
@@ -85,10 +72,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
-        std::vector<float> directionsSOA =
+        AlignedVector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
+        AlignedVector<float> directionsSOA =
             AOStoSOA_vec3f(directions, callingWidth);
-        std::vector<float> tRangesSOA = AOStoSOA_range1f(tRanges, callingWidth);
+        AlignedVector<float> tRangesSOA =
+            AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLIntervalIterator4 iterator;
@@ -310,10 +298,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
-        std::vector<float> directionsSOA =
+        AlignedVector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
+        AlignedVector<float> directionsSOA =
             AOStoSOA_vec3f(directions, callingWidth);
-        std::vector<float> tRangesSOA = AOStoSOA_range1f(tRanges, callingWidth);
+        AlignedVector<float> tRangesSOA =
+            AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLIntervalIterator4 iterator;
@@ -542,10 +531,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
-        std::vector<float> directionsSOA =
+        AlignedVector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
+        AlignedVector<float> directionsSOA =
             AOStoSOA_vec3f(directions, callingWidth);
-        std::vector<float> tRangesSOA = AOStoSOA_range1f(tRanges, callingWidth);
+        AlignedVector<float> tRangesSOA =
+            AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLIntervalIterator4 iterator;
@@ -818,10 +808,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         std::vector<int> valid(callingWidth, 0);
         std::fill(valid.begin(), valid.begin() + width, 1);
 
-        std::vector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
-        std::vector<float> directionsSOA =
+        AlignedVector<float> originsSOA = AOStoSOA_vec3f(origins, callingWidth);
+        AlignedVector<float> directionsSOA =
             AOStoSOA_vec3f(directions, callingWidth);
-        std::vector<float> tRangesSOA = AOStoSOA_range1f(tRanges, callingWidth);
+        AlignedVector<float> tRangesSOA =
+            AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
           VKLIntervalIterator4 iterator;
@@ -970,12 +961,12 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         else if (callingWidth == 16) {
           VKLIntervalIterator16 iterator;
           vklInitIntervalIterator16(valid.data(),
-                                   &iterator,
-                                   vklVolume,
-                                   (const vkl_vvec3f16 *)originsSOA.data(),
-                                   (const vkl_vvec3f16 *)directionsSOA.data(),
-                                   (const vkl_vrange1f16 *)tRangesSOA.data(),
-                                   nullptr);
+                                    &iterator,
+                                    vklVolume,
+                                    (const vkl_vvec3f16 *)originsSOA.data(),
+                                    (const vkl_vvec3f16 *)directionsSOA.data(),
+                                    (const vkl_vrange1f16 *)tRangesSOA.data(),
+                                    nullptr);
 
           VKLInterval16 interval;
 

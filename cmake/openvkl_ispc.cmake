@@ -1,18 +1,5 @@
-## ======================================================================== ##
-## Copyright 2019 Intel Corporation                                         ##
-##                                                                          ##
-## Licensed under the Apache License, Version 2.0 (the "License");          ##
-## you may not use this file except in compliance with the License.         ##
-## You may obtain a copy of the License at                                  ##
-##                                                                          ##
-##     http://www.apache.org/licenses/LICENSE-2.0                           ##
-##                                                                          ##
-## Unless required by applicable law or agreed to in writing, software      ##
-## distributed under the License is distributed on an "AS IS" BASIS,        ##
-## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
-## See the License for the specific language governing permissions and      ##
-## limitations under the License.                                           ##
-## ======================================================================== ##
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
@@ -95,94 +82,77 @@ macro (add_definitions_ispc)
 endmacro ()
 
 macro(openvkl_configure_ispc_isa)
-  set(OPENVKL_MAX_ISA "AVX512SKX" CACHE STRING "Selects highest ISA to support.")
-  set_property(CACHE OPENVKL_MAX_ISA PROPERTY STRINGS NONE SSE4 AVX AVX2 AVX512KNL AVX512SKX)
+  # support only individual specification of ISAs
+  option(OPENVKL_ISA_SSE4 "Enables SSE4 ISA." ON)
+  option(OPENVKL_ISA_AVX "Enables AVX ISA." ON)
+  option(OPENVKL_ISA_AVX2 "Enables AVX2 ISA." ON)
+  option(OPENVKL_ISA_AVX512KNL "Enables AVX512 ISA for Knights Landing." OFF)
+  option(OPENVKL_ISA_AVX512SKX "Enables AVX512 ISA for Skylake." ON)
 
-  if (OPENVKL_MAX_ISA STREQUAL "NONE")
-    # no maximum specified; support individual specification of ISAs
-    option(OPENVKL_ISA_SSE4 "Enables SSE4 ISA." ON)
-    option(OPENVKL_ISA_AVX "Enables AVX ISA." ON)
-    option(OPENVKL_ISA_AVX2 "Enables AVX2 ISA." ON)
-    option(OPENVKL_ISA_AVX512KNL "Enables AVX512 ISA for Knights Landing." ON)
-    option(OPENVKL_ISA_AVX512SKX "Enables AVX512 ISA for Skylake." ON)
-
-  else()
-    # support specification of maximum ISA only
-    unset(OPENVKL_ISA_SSE4 CACHE)
-    unset(OPENVKL_ISA_AVX CACHE)
-    unset(OPENVKL_ISA_AVX2 CACHE)
-    unset(OPENVKL_ISA_AVX512KNL CACHE)
-    unset(OPENVKL_ISA_AVX512SKX CACHE)
-
-    if (OPENVKL_MAX_ISA STREQUAL "SSE4")
-      set(ISA 1)
-    elseif (OPENVKL_MAX_ISA STREQUAL "AVX")
-      set(ISA 2)
-    elseif (OPENVKL_MAX_ISA STREQUAL "AVX2")
-      set(ISA 3)
-    elseif (OPENVKL_MAX_ISA STREQUAL "AVX512KNL")
-      set(ISA 4)
-    elseif (OPENVKL_MAX_ISA STREQUAL "AVX512SKX")
-      set(ISA 5)
-    else()
-      message(FATAL_ERROR "Unsupported max ISA specified: " ${OPENVKL_MAX_ISA})
-    endif()
-
-    set(OPENVKL_ISA_SSE4 OFF)
-    set(OPENVKL_ISA_AVX OFF)
-    set(OPENVKL_ISA_AVX2 OFF)
-    set(OPENVKL_ISA_AVX512KNL OFF)
-    set(OPENVKL_ISA_AVX512SKX OFF)
-
-    if (ISA GREATER 0)
-      set(OPENVKL_ISA_SSE4  ON)
-    endif()
-    if (ISA GREATER 1)
-      set(OPENVKL_ISA_AVX  ON)
-    endif()
-    if (ISA GREATER 2)
-      set(OPENVKL_ISA_AVX2  ON)
-    endif()
-    if (ISA GREATER 3)
-      set(OPENVKL_ISA_AVX512KNL  ON)
-    endif()
-    if (ISA GREATER 4)
-      set(OPENVKL_ISA_AVX512SKX  ON)
-    endif()
+  if (OPENVKL_ISA_AVX512KNL AND OPENVKL_ISA_AVX512SKX)
+    message(FATAL_ERROR "Only one AVX512 ISA may be enabled; choose either AVX512KNL or AVX512SKX")
   endif()
 
-  # generate final ISPC target list
+  # generate final ISPC target lists; both a full list of all targets, and lists
+  # of targets per runtime width
   unset(OPENVKL_ISPC_TARGET_LIST)
+  unset(OPENVKL_ISPC_TARGET_LIST_4)
+  unset(OPENVKL_ISPC_TARGET_LIST_8)
+  unset(OPENVKL_ISPC_TARGET_LIST_16)
 
   if (OPENVKL_ISA_SSE4)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} sse4)
+    set(OPENVKL_ISPC_TARGET_LIST_4 ${OPENVKL_ISPC_TARGET_LIST_4} sse4)
     message(STATUS "OpenVKL SSE4 ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx)
+    set(OPENVKL_ISPC_TARGET_LIST_8 ${OPENVKL_ISPC_TARGET_LIST_8} avx)
     message(STATUS "OpenVKL AVX ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX2)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx2)
+    set(OPENVKL_ISPC_TARGET_LIST_8 ${OPENVKL_ISPC_TARGET_LIST_8} avx2)
     message(STATUS "OpenVKL AVX2 ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX512KNL)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512knl-i32x16)
+    set(OPENVKL_ISPC_TARGET_LIST_16 ${OPENVKL_ISPC_TARGET_LIST_16} avx512knl-i32x16)
     message(STATUS "OpenVKL AVX512KNL ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX512SKX)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512skx-i32x16)
+    set(OPENVKL_ISPC_TARGET_LIST_16 ${OPENVKL_ISPC_TARGET_LIST_16} avx512skx-i32x16)
     message(STATUS "OpenVKL AVX512SKX ISA target enabled.")
   endif()
+
+  # if only one target is specified for a given width, add a second target to
+  # force ISPC name mangling. this avoids global name conflicts between drivers
+  # of different widths.
+  foreach (TARGET_LIST OPENVKL_ISPC_TARGET_LIST_4
+                       OPENVKL_ISPC_TARGET_LIST_8
+                       OPENVKL_ISPC_TARGET_LIST_16)
+    if (DEFINED ${TARGET_LIST})
+      list(LENGTH ${TARGET_LIST} NUM_TARGETS)
+
+      if (NUM_TARGETS EQUAL 1)
+        list(APPEND ${TARGET_LIST} sse2)
+      endif()
+    endif()
+  endforeach()
 endmacro()
 
 macro (OPENVKL_ISPC_COMPILE)
   set(ISPC_ADDITIONAL_ARGS "")
   set(ISPC_TARGETS ${OPENVKL_ISPC_TARGET_LIST})
+
+  if (DEFINED ISPC_TARGETS_OVERRIDE)
+    set(ISPC_TARGETS ${ISPC_TARGETS_OVERRIDE})
+  endif()
 
   set(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
   string(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -193,8 +163,9 @@ macro (OPENVKL_ISPC_COMPILE)
     set(ISPC_ARCHITECTURE "x86")
   endif()
 
-  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
-  include_directories(${ISPC_TARGET_DIR})
+  string(CONCAT ISPC_TARGETS_STR ${ISPC_TARGETS})
+
+  set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR}/ispc_${ISPC_TARGETS_STR})
 
   if(ISPC_INCLUDE_DIR)
     string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
@@ -243,7 +214,7 @@ macro (OPENVKL_ISPC_COMPILE)
     elseif ("${dir}" MATCHES "^[A-Z]:") # absolute DOS-style path to input
       string(REGEX REPLACE "^[A-Z]:" "${ISPC_TARGET_DIR}/rebased/" outdir "${dir}")
     else() # relative path to input
-      set(outdir "${ISPC_TARGET_DIR}/local_${OPENVKL_ISPC_TARGET_NAME}_${dir}")
+      set(outdir "${ISPC_TARGET_DIR}/local_${dir}")
       set(input ${CMAKE_CURRENT_SOURCE_DIR}/${src})
     endif()
 
@@ -277,6 +248,7 @@ macro (OPENVKL_ISPC_COMPILE)
       COMMAND ${ISPC_EXECUTABLE}
       ${ISPC_DEFINITIONS}
       -I ${CMAKE_CURRENT_SOURCE_DIR}
+      -I ${PROJECT_BINARY_DIR}/${PROJECT_NAME}/include
       ${ISPC_INCLUDE_DIR_PARMS}
       --arch=${ISPC_ARCHITECTURE}
       --addressing=${OPENVKL_ISPC_ADDRESSING}

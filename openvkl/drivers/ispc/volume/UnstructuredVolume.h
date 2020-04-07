@@ -1,22 +1,10 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../common/Data.h"
+#include "../common/export_util.h"
 #include "../common/math.h"
 #include "../iterator/UnstructuredIterator.h"
 #include "UnstructuredVolume_ispc.h"
@@ -203,10 +191,11 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples) const
     {
-      ispc::VKLUnstructuredVolume_sample_export((const int *)&valid,
-                                                this->ispcEquivalent,
-                                                &objectCoordinates,
-                                                &samples);
+      CALL_ISPC(VKLUnstructuredVolume_sample_export,
+                static_cast<const int *>(valid),
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &samples);
     }
 
     template <int W>
@@ -218,8 +207,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      iterator = toVKLIntervalIterator<W>(UnstructuredIterator<W>(
-          valid, this, origin, direction, tRange, valueSelector));
+      initVKLIntervalIterator<UnstructuredIterator<W>>(
+          iterator, valid, this, origin, direction, tRange, valueSelector);
     }
 
     template <int W>
@@ -244,10 +233,11 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      ispc::VKLUnstructuredVolume_gradient_export((const int *)&valid,
-                                                  this->ispcEquivalent,
-                                                  &objectCoordinates,
-                                                  &gradients);
+      CALL_ISPC(VKLUnstructuredVolume_gradient_export,
+                static_cast<const int *>(valid),
+                this->ispcEquivalent,
+                &objectCoordinates,
+                &gradients);
     }
 
     template <int W>

@@ -1,3 +1,6 @@
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
 variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
@@ -5,8 +8,11 @@ variables:
 stages:
   - build
   - test
+  - benchmark
   - scan1
   - scan2
+  - release
+  - release-test
 
 ## Job Templates ##
 
@@ -28,8 +34,17 @@ stages:
   tags:
     - docker
 
+.job_template: &build_job_docker_centos7_modules
+  <<: *build_job_docker
+  image: ospray/docker-images:centos7-mod
+  script:
+    - gitlab/build.sh
+  tags:
+    - docker
+    - modules
+
 .job_template: &base_build_from_install_job
-  type: test
+  stage: test
   script:
     - gitlab/build-from-install.sh
 
@@ -39,7 +54,7 @@ stages:
     - docker
 
 .job_template: &base_functional_test_job
-  type: test
+  stage: test
   script:
     - ./build/openvkl/build/vklTests # NOTE(jda) - base this on install later
 
@@ -48,6 +63,28 @@ stages:
   tags:
     - docker
 
+.job_template: &base_benchmark_job
+  stage: benchmark
+  when: manual
+  script:
+    - gitlab/run-benchmarks.sh
+
+.job_template: &base_release_job
+  stage: release
+  when: manual
+  tags:
+    - release
+  before_script:
+    - git submodule sync
+    - git submodule init
+    - git submodule update
+
+.job_template: &base_release_test_job
+  stage: release-test
+  when: manual
+  tags:
+    - release
+
 ## Build Jobs ##
 
 build-centos7:
@@ -55,6 +92,22 @@ build-centos7:
   image: ospray/docker-images:centos7
   script:
   - gitlab/build.sh
+
+build-centos7-icc:
+  <<: *build_job_docker_centos7_modules
+  script:
+    - module load cmake
+    - module load intel/2019.4
+    - export CC=icc
+    - export CXX=icpc
+    - export CXXFLAGS="-static-intel -fPIC"
+    - gitlab/build.sh
+
+build-centos8:
+  <<: *build_job_docker
+  image: ospray/docker-images:centos8
+  script:
+  - gitlab/build.sh -G Ninja
 
 build-ubuntu16.04:
   <<: *build_job_docker
@@ -115,6 +168,19 @@ test-functional-centos7:
   dependencies:
     - build-centos7
 
+# ensures icc-built binaries can run without Intel runtimes
+test-functional-centos7-icc:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:centos7
+  dependencies:
+    - build-centos7-icc
+
+test-functional-centos8:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:centos8
+  dependencies:
+    - build-centos8
+
 test-functional-ubuntu16.04:
   <<: *test_functional_job_docker
   image: ospray/docker-images:ubuntu16.04
@@ -152,6 +218,9 @@ test-functional-macOS:
   tags:
     - osx
     - clang
+  script:
+    - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTests
 
 test-functional-windows-msvc15:
   <<: *base_functional_test_job
@@ -163,10 +232,19 @@ test-functional-windows-msvc15:
     - msvc15
     - win10
 
+## Benchmark Jobs ##
+
+benchmark-x8280-1:
+  <<: *base_benchmark_job
+  dependencies:
+    - build-centos7-icc
+  tags:
+    - vis-perf-x8280-1
+
 ## KW Jobs ##
 
 build-kw-scan:
-  type: scan1
+  stage: scan1
   image: openvkl/openvkl:centos7
   script:
     - gitlab/build-kw-scan.sh
@@ -184,7 +262,7 @@ build-kw-scan:
   allow_failure: true
 
 test-kw-critical:
-  type: scan2
+  stage: scan2
   image: openvkl/openvkl:centos7
   script:
     - gitlab/test-kw-critical.sh
@@ -197,7 +275,7 @@ test-kw-critical:
 ## Protex Job ##
 
 source-protex-scan:
-  type: scan1
+  stage: scan1
   image: openvkl/openvkl:centos7
   script:
     - gitlab/source-scan-protex.sh
@@ -205,3 +283,76 @@ source-protex-scan:
     - docker
   dependencies: []
   allow_failure: true
+
+## Release Jobs ##
+
+release-linux-icc:
+  <<: *base_release_job
+  image: ospray/docker-images:centos7-mod
+  script:
+    - module load cmake
+    - module load intel/2019.4
+    - export CC=icc
+    - export CXX=icpc
+    - export CXXFLAGS="-static-intel -fPIC"
+    - gitlab/release/linux.sh
+  tags:
+    - docker
+    - modules
+  artifacts:
+    paths:
+      - ./*.gz
+
+release-macOS:
+  <<: *base_release_job
+  script:
+    - gitlab/release/macos.sh
+  tags:
+    - osx
+    - clang
+  artifacts:
+    paths:
+      - ./*.zip
+
+release-windows:
+  <<: *base_release_job
+  script:
+    - gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win10
+  artifacts:
+    paths:
+      - ./*.zip
+
+## Release Test Jobs ##
+
+release-linux-test:
+  <<: *base_release_test_job
+  image: ospray/docker-images:centos7
+  script:
+    - gitlab/release/linux-test.sh
+  tags:
+    - docker
+  dependencies:
+    - release-linux-icc
+
+release-macOS-test:
+  <<: *base_release_test_job
+  script:
+    - gitlab/release/macos-test.sh
+  tags:
+    - osx
+    - clang
+  dependencies:
+    - release-macOS
+
+release-windows-test:
+  <<: *base_release_test_job
+  script:
+    - gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win10
+  dependencies:
+    - release-windows

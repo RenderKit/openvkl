@@ -1,3 +1,5 @@
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 include(openvkl_ispc)
 
@@ -13,7 +15,7 @@ macro(add_executable_ispc name)
     endif ()
   endforeach()
   openvkl_ispc_compile(${ISPC_SOURCES})
-  add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+  add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES} ${VKL_RESOURCE})
 endmacro()
 
 include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
@@ -22,6 +24,8 @@ add_executable_ispc(vklTutorialISPC
   vklTutorialISPC.ispc
   vklTutorialISPC.cpp
 )
+
+target_include_directories(vklTutorialISPC PRIVATE ${ISPC_TARGET_DIR})
 
 target_link_libraries(vklTutorialISPC PRIVATE openvkl)
 

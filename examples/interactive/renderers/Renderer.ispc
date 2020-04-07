@@ -1,18 +1,5 @@
-// ======================================================================== //
-// Copyright 2019 Intel Corporation                                         //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
 
@@ -57,28 +44,8 @@ export void Renderer_setFrameID(void *uniform _self, uniform int frameID)
   self->frameID = frameID;
 }
 
-export void Renderer_setTransferFunction(
-    void *uniform _self,
-    const uniform vec2f &valueRange,
-    const uniform int colorsAndOpacitiesCount,
-    vec4f *uniform colorsAndOpacities)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-
-  self->tfValueRange              = valueRange;
-  self->tfColorsAndOpacitiesCount = colorsAndOpacitiesCount;
-  self->tfColorsAndOpacities      = colorsAndOpacities;
-}
-
-export void Renderer_setValueSelector(void *uniform _self,
-                                      VKLValueSelector valueSelector)
-{
-  Renderer *uniform self = (Renderer * uniform) _self;
-
-  self->valueSelector = valueSelector;
-}
-
 export void Renderer_renderPixel(void *uniform _self,
+                                 const uniform Scene* uniform scene,
                                  const uniform vec2i &fbDims,
                                  const uniform int frameID,
                                  const uniform float accumScale,
@@ -93,12 +60,11 @@ export void Renderer_renderPixel(void *uniform _self,
   if (pixel.x >= fbDims.x)
     return;
 
-  vec2f screen = make_vec2f(pixel.x * rcp((float)fbDims.x),
-                            pixel.y * rcp((float)fbDims.y));
+  const vec2f screen = make_vec2f(pixel.x * rcp((float)fbDims.x),
+                                  pixel.y * rcp((float)fbDims.y));
 
   Ray ray = Renderer_computeRay(self, screen);
-
-  vec3f color = self->renderPixel(self, ray, pixel, frameID, fbDims.x);
+  const vec3f color = self->renderPixel(self, scene, ray, pixel, frameID, fbDims.x);
 
   float ar = self->accum_r[pixelID];
   float ag = self->accum_g[pixelID];

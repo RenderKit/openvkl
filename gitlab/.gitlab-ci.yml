@@ -157,7 +157,7 @@ build-windows-msvc15:
 build-from-install-centos7:
   <<: *build_from_install_job_docker
   image: ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7
 
 ## Functional Test Jobs ##
@@ -165,20 +165,20 @@ build-from-install-centos7:
 test-functional-centos7:
   <<: *test_functional_job_docker
   image: ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7
 
 # ensures icc-built binaries can run without Intel runtimes
 test-functional-centos7-icc:
   <<: *test_functional_job_docker
   image: ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7-icc
 
 test-functional-centos8:
   <<: *test_functional_job_docker
   image: ospray/docker-images:centos8
-  dependencies:
+  needs:
     - build-centos8
 
 test-functional-ubuntu16.04:
@@ -187,7 +187,7 @@ test-functional-ubuntu16.04:
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests
-  dependencies:
+  needs:
     - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
@@ -196,24 +196,24 @@ test-functional-ubuntu18.04:
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests
-  dependencies:
+  needs:
     - build-ubuntu18.04
 
 test-functional-arch:
   <<: *test_functional_job_docker
   image: ospray/docker-images:arch
-  dependencies:
+  needs:
     - build-arch
 
 test-functional-arch-clang:
   <<: *test_functional_job_docker
   image: ospray/docker-images:arch
-  dependencies:
+  needs:
     - build-arch-clang
 
 test-functional-macOS:
   <<: *base_functional_test_job
-  dependencies:
+  needs:
     - build-macOS
   tags:
     - osx
@@ -226,7 +226,7 @@ test-functional-windows-msvc15:
   <<: *base_functional_test_job
   script:
     - gitlab\run_tests.bat
-  dependencies:
+  needs:
     - build-windows-msvc15
   tags:
     - msvc15
@@ -236,7 +236,7 @@ test-functional-windows-msvc15:
 
 benchmark-x8280-1:
   <<: *base_benchmark_job
-  dependencies:
+  needs:
     - build-centos7-icc
   tags:
     - vis-perf-x8280-1
@@ -296,6 +296,7 @@ release-linux-icc:
     - export CXX=icpc
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/release/linux.sh
+  dependencies: []
   tags:
     - docker
     - modules
@@ -307,6 +308,7 @@ release-macOS:
   <<: *base_release_job
   script:
     - gitlab/release/macos.sh
+  dependencies: []
   tags:
     - osx
     - clang
@@ -318,6 +320,7 @@ release-windows:
   <<: *base_release_job
   script:
     - gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+  dependencies: []
   tags:
     - msvc15
     - win10

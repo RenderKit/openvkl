@@ -117,6 +117,29 @@ void demoVectorAPI(VKLVolume volume)
   }
 }
 
+void demoStreamAPI(VKLVolume volume)
+{
+  printf("demo of stream API\n");
+
+  // array-of-structure layout; arbitrary stream lengths are supported
+  vkl_vec3f coord[5];
+
+  for (int i = 0; i < 5; i++) {
+    coord[i].x = coord[i].y = coord[i].z = i;
+  }
+
+  float sample[5];
+  vkl_vec3f grad[5];
+  vklComputeSampleN(volume, 5, coord, sample);
+  vklComputeGradientN(volume, 5, coord, grad);
+
+  for (int i = 0; i < 5; i++) {
+    printf("\tcoord[%d] = %f %f %f\n", i, coord[i].x, coord[i].y, coord[i].z);
+    printf("\t\tsample[%d] = %f\n", i, sample[i]);
+    printf("\t\tgrad[%d]   = %f %f %f\n", i, grad[i].x, grad[i].y, grad[i].z);
+  }
+}
+
 int main()
 {
   vklLoadModule("ispc_driver");
@@ -156,6 +179,7 @@ int main()
 
   demoScalarAPI(volume);
   demoVectorAPI(volume);
+  demoStreamAPI(volume);
 
   vklRelease(volume);
 

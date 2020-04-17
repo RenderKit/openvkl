@@ -103,6 +103,12 @@ void vklComputeGradient16(const int *valid,
                           vkl_vvec3f16 *gradients);
 
 OPENVKL_INTERFACE
+void vklComputeGradientN(VKLVolume volume,
+                         unsigned int N,
+                         const vkl_vec3f *objectCoordinates,
+                         vkl_vec3f *gradients);
+
+OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
 OPENVKL_INTERFACE vkl_range1f vklGetValueRange(VKLVolume volume);

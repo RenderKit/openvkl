@@ -338,6 +338,48 @@ BENCHMARK_TEMPLATE(vectorRandomGradient, 4);
 BENCHMARK_TEMPLATE(vectorRandomGradient, 8);
 BENCHMARK_TEMPLATE(vectorRandomGradient, 16);
 
+template <int N>
+void streamRandomGradient(benchmark::State &state)
+{
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+  std::random_device rd;
+  pcg32_biased_float_distribution distX(rd(), 0, bbox.lower.x, bbox.upper.x);
+  pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
+  pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
+
+  std::vector<vkl_vec3f> objectCoordinates(N);
+  std::vector<vkl_vec3f> gradients(N);
+
+  for (auto _ : state) {
+    for (int i = 0; i < N; i++) {
+      objectCoordinates[i].x = distX();
+      objectCoordinates[i].y = distY();
+      objectCoordinates[i].z = distZ();
+    }
+
+    vklComputeGradientN(
+        vklVolume, N, objectCoordinates.data(), gradients.data());
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * N);
+}
+
+BENCHMARK_TEMPLATE(streamRandomGradient, 1);
+BENCHMARK_TEMPLATE(streamRandomGradient, 4);
+BENCHMARK_TEMPLATE(streamRandomGradient, 8);
+BENCHMARK_TEMPLATE(streamRandomGradient, 16);
+BENCHMARK_TEMPLATE(streamRandomGradient, 32);
+BENCHMARK_TEMPLATE(streamRandomGradient, 64);
+BENCHMARK_TEMPLATE(streamRandomGradient, 128);
+BENCHMARK_TEMPLATE(streamRandomGradient, 256);
+
 static void scalarFixedGradient(benchmark::State &state)
 {
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
@@ -419,6 +461,38 @@ void vectorFixedGradient(benchmark::State &state)
 BENCHMARK_TEMPLATE(vectorFixedGradient, 4);
 BENCHMARK_TEMPLATE(vectorFixedGradient, 8);
 BENCHMARK_TEMPLATE(vectorFixedGradient, 16);
+
+template <int N>
+void streamFixedGradient(benchmark::State &state)
+{
+  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      vec3i(128), vec3f(0.f), vec3f(1.f));
+
+  VKLVolume vklVolume = v->getVKLVolume();
+
+  // use fixed coordinates for all benchmark iterations
+  std::vector<vkl_vec3f> objectCoordinates(
+      N, vkl_vec3f{0.1701f, 0.1701f, 0.1701f});
+
+  std::vector<vkl_vec3f> gradients(N);
+
+  for (auto _ : state) {
+    vklComputeGradientN(
+        vklVolume, N, objectCoordinates.data(), gradients.data());
+  }
+
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations() * N);
+}
+
+BENCHMARK_TEMPLATE(streamFixedGradient, 1);
+BENCHMARK_TEMPLATE(streamFixedGradient, 4);
+BENCHMARK_TEMPLATE(streamFixedGradient, 8);
+BENCHMARK_TEMPLATE(streamFixedGradient, 16);
+BENCHMARK_TEMPLATE(streamFixedGradient, 32);
+BENCHMARK_TEMPLATE(streamFixedGradient, 64);
+BENCHMARK_TEMPLATE(streamFixedGradient, 128);
+BENCHMARK_TEMPLATE(streamFixedGradient, 256);
 
 static void scalarIntervalIteratorConstruction(benchmark::State &state)
 {

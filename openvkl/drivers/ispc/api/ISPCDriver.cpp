@@ -437,6 +437,16 @@ namespace openvkl {
 #undef __define_computeGradientN
 
     template <int W>
+    void ISPCDriver<W>::computeGradientN(VKLVolume volume,
+                                         unsigned int N,
+                                         const vvec3fn<1> *objectCoordinates,
+                                         vvec3fn<1> *gradients)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      volumeObject.computeGradientN(N, objectCoordinates, gradients);
+    }
+
+    template <int W>
     box3f ISPCDriver<W>::getBoundingBox(VKLVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);

@@ -799,6 +799,13 @@ Vector versions are also provided:
                               const vkl_vvec3f16 *objectCoordinates,
                               vkl_vvec3f16 *gradients);
 
+Finally, a stream version is provided:
+
+    void vklComputeGradientN(VKLVolume volume,
+                             unsigned int N,
+                             const vkl_vec3f *objectCoordinates,
+                             vkl_vec3f *gradients);
+
 All of the above gradient APIs can be used, regardless of the driver's native
 SIMD width.
 

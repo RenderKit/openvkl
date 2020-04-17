@@ -852,6 +852,7 @@ export void *uniform EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor)
   uniform VKLUnstructuredVolume *uniform self = uniform new uniform VKLUnstructuredVolume;
 
   self->super.computeSample_varying = VKLUnstructuredVolume_sample;
+  self->super.computeGradient_varying = VKLUnstructuredVolume_computeGradient;
 
   return self;
 }

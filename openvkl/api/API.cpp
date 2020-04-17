@@ -704,6 +704,19 @@ __define_vklComputeGradientN(16);
 
 #undef __define_vklComputeGradientN
 
+extern "C" void vklComputeGradientN(VKLVolume volume,
+                                    unsigned int N,
+                                    const vkl_vec3f *objectCoordinates,
+                                    vkl_vec3f *gradients) OPENVKL_CATCH_BEGIN
+{
+  openvkl::api::currentDriver().computeGradientN(
+      volume,
+      N,
+      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
+      reinterpret_cast<vvec3fn<1> *>(gradients));
+}
+OPENVKL_CATCH_END()
+
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
   const box3f result = openvkl::api::currentDriver().getBoundingBox(volume);

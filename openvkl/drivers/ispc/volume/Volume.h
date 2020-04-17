@@ -129,6 +129,10 @@ namespace openvkl {
                                     const vvec3fn<W> &objectCoordinates,
                                     vvec3fn<W> &gradients) const;
 
+      virtual void computeGradientN(unsigned int N,
+                                    const vvec3fn<1> *objectCoordinates,
+                                    vvec3fn<1> *gradients) const;
+
       virtual box3f getBoundingBox() const = 0;
 
       virtual range1f getValueRange() const = 0;
@@ -347,6 +351,14 @@ namespace openvkl {
     inline void Volume<W>::computeGradientV(const vintn<W> &valid,
                                             const vvec3fn<W> &objectCoordinates,
                                             vvec3fn<W> &gradients) const
+    {
+      THROW_NOT_IMPLEMENTED;
+    }
+
+    template <int W>
+    inline void Volume<W>::computeGradientN(unsigned int N,
+                                            const vvec3fn<1> *objectCoordinates,
+                                            vvec3fn<1> *gradients) const
     {
       THROW_NOT_IMPLEMENTED;
     }

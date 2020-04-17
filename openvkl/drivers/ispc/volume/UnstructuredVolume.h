@@ -125,6 +125,10 @@ namespace openvkl {
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients) const override;
 
+      void computeGradientN(unsigned int N,
+                            const vvec3fn<1> *objectCoordinates,
+                            vvec3fn<1> *gradients) const override;
+
       box3f getBoundingBox() const override;
 
       range1f getValueRange() const override;
@@ -238,6 +242,19 @@ namespace openvkl {
                 this->ispcEquivalent,
                 &objectCoordinates,
                 &gradients);
+    }
+
+    template <int W>
+    inline void UnstructuredVolume<W>::computeGradientN(
+        unsigned int N,
+        const vvec3fn<1> *objectCoordinates,
+        vvec3fn<1> *gradients) const
+    {
+      CALL_ISPC(Volume_gradient_N_export,
+                this->ispcEquivalent,
+                N,
+                (ispc::vec3f *)objectCoordinates,
+                (ispc::vec3f *)gradients);
     }
 
     template <int W>

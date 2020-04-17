@@ -273,6 +273,11 @@ namespace openvkl {
 
 #undef __define_computeGradientN
 
+      virtual void computeGradientN(VKLVolume volume,
+                                    unsigned int N,
+                                    const vvec3fn<1> *objectCoordinates,
+                                    vvec3fn<1> *gradients) = 0;
+
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
 
       virtual range1f getValueRange(VKLVolume volume) = 0;

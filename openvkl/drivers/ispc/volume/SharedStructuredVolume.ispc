@@ -638,9 +638,11 @@ template_sample_64(uniform);
 ///////////////////////////////////////////////////////////////////////////////
 
 inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3f &objectCoordinates)
+    const void *uniform _self, const varying vec3f &objectCoordinates)
 {
+  const SharedStructuredVolume *uniform self =
+      (const SharedStructuredVolume *uniform)_self;
+
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gridSpacing;
 
@@ -677,9 +679,11 @@ inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
 }
 
 inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3f &objectCoordinates)
+    const void *uniform _self, const varying vec3f &objectCoordinates)
 {
+  const SharedStructuredVolume *uniform self =
+      (const SharedStructuredVolume *uniform)_self;
+
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gridSpacing;
 
@@ -794,7 +798,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients = self->computeGradient(self, *objectCoordinates);
+    *gradients = self->super.computeGradient_varying(self, *objectCoordinates);
   }
 }
 
@@ -854,7 +858,8 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
     self->transformObjectToLocal_uniform =
         transformObjectToLocalUniform_structured_regular;
 
-    self->computeGradient = SharedStructuredVolume_computeGradient_bbox_checks;
+    self->super.computeGradient_varying =
+        SharedStructuredVolume_computeGradient_bbox_checks;
 
   } else if (self->gridType == structured_spherical) {
     computeStructuredSphericalBoundingBox(self, self->boundingBox);
@@ -868,7 +873,8 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
     self->transformObjectToLocal_uniform =
         transformObjectToLocal_uniform_structured_spherical;
 
-    self->computeGradient = SharedStructuredVolume_computeGradient_NaN_checks;
+    self->super.computeGradient_varying =
+        SharedStructuredVolume_computeGradient_NaN_checks;
   } else {
     print("#vkl:shared_structured_volume: unknown gridType\n");
     return false;

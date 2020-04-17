@@ -205,6 +205,11 @@ namespace openvkl {
 
 #undef __define_computeGradientN
 
+      void computeGradientN(VKLVolume volume,
+                            unsigned int N,
+                            const vvec3fn<1> *objectCoordinates,
+                            vvec3fn<1> *gradients) override;
+
       box3f getBoundingBox(VKLVolume volume) override;
 
       range1f getValueRange(VKLVolume volume) override;

@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -39,7 +39,8 @@ OPENVKL_INTERFACE VKLData vklNewData(size_t numItems,
                                      VKLDataType dataType,
                                      const void *source,
                                      VKLDataCreationFlags dataCreationFlags
-                                         VKL_DEFAULT_VAL(= VKL_DATA_DEFAULT));
+                                         VKL_DEFAULT_VAL(= VKL_DATA_DEFAULT),
+                                     size_t byteStride VKL_DEFAULT_VAL(= 0));
 
 #ifdef __cplusplus
 }  // extern "C"

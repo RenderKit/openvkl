@@ -14,6 +14,9 @@ namespace openvkl {
 
   struct Data;
 
+  template <typename T>
+  struct DataT;
+
   struct OPENVKL_CORE_INTERFACE ManagedObject
       : public rkcommon::memory::RefCount,
         public rkcommon::utility::ParameterizedObject
@@ -35,12 +38,16 @@ namespace openvkl {
     // gets a data array of elements of the given type; uses the provided
     // default value if the parameter is not set
     template <typename T>
-    const Ref<const Data> getParamDataT(const char *name, Data *valIfNotFound);
+    const Ref<const DataT<T>> getParamDataT(const char *name,
+                                            DataT<T> *valIfNotFound);
 
     // gets a data array of elements of the given type; throws an error if the
     // requested parameter is not set
     template <typename T>
-    const Ref<const Data> getParamDataT(const char *name);
+    const Ref<const DataT<T>> getParamDataT(const char *name);
+
+    // throws an error if the named Data parameter is present and not compact
+    void requireParamDataIsCompact(const char *name);
 
     // commit the object's outstanding changes (such as changed parameters)
     virtual void commit() {}

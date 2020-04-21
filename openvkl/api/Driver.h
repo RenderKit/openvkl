@@ -64,7 +64,8 @@ namespace openvkl {
       virtual VKLData newData(size_t numItems,
                               VKLDataType dataType,
                               const void *source,
-                              VKLDataCreationFlags dataCreationFlags) = 0;
+                              VKLDataCreationFlags dataCreationFlags,
+                              size_t byteStride) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Observer /////////////////////////////////////////////////////////////

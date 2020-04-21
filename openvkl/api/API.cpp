@@ -74,12 +74,12 @@ inline std::string getPidString()
 extern "C" VKLData vklNewData(size_t numItems,
                               VKLDataType dataType,
                               const void *source,
-                              VKLDataCreationFlags dataCreationFlags)
-    OPENVKL_CATCH_BEGIN
+                              VKLDataCreationFlags dataCreationFlags,
+                              size_t byteStride) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   VKLData data = openvkl::api::currentDriver().newData(
-      numItems, dataType, source, dataCreationFlags);
+      numItems, dataType, source, dataCreationFlags, byteStride);
   return data;
 }
 OPENVKL_CATCH_END(nullptr)

@@ -53,9 +53,11 @@ namespace openvkl {
     VKLData ISPCDriver<W>::newData(size_t numItems,
                                    VKLDataType dataType,
                                    const void *source,
-                                   VKLDataCreationFlags dataCreationFlags)
+                                   VKLDataCreationFlags dataCreationFlags,
+                                   size_t byteStride)
     {
-      Data *data = new Data(numItems, dataType, source, dataCreationFlags);
+      Data *data =
+          new Data(numItems, dataType, source, dataCreationFlags, byteStride);
       return (VKLData)data;
     }
 

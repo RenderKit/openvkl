@@ -1,0 +1,145 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "math/math.ih"
+#include "math/vec.ih"
+
+struct Data1D
+{
+  const uint8 *addr;
+  uint64 byteStride;
+  uint64 numItems;
+  bool compact;
+};
+
+// in all inlined functions here, ok to pass-by-value, will be inlined and
+// optimized
+inline uniform bool valid(const uniform Data1D data)
+{
+  return data.addr != NULL;
+}
+
+// indicates if the provided index can be safely used in the 32-bit indexing
+// accessors below (as a single 32-bit index, or offsetIndex)
+inline uniform bool safe_32bit_indexing(const uniform Data1D data,
+                                        const uniform uint64 maxIndex)
+{
+  uniform uint64 maxBytes = maxIndex * data.byteStride;
+  return (maxBytes < (1ULL << 31));
+}
+
+#define process_hi28(univary) process_hi28_##univary
+#define process_hi28_varying foreach_unique(hi in hi28)
+#define process_hi28_uniform uniform uint32 hi = hi28;
+
+#define template_get(T, univary)                                           \
+  inline univary T get_##T##_compact(const uniform Data1D data,            \
+                                     const univary uint32 index32)         \
+  {                                                                        \
+    return ((const T *uniform)data.addr)[index32];                         \
+  }                                                                        \
+                                                                           \
+  inline univary T get_##T##_strided(const uniform Data1D data,            \
+                                     const univary uint32 index32)         \
+  {                                                                        \
+    return *((const uniform T *)(data.addr + index32 * data.byteStride));  \
+  }                                                                        \
+                                                                           \
+  inline univary T get_##T##_compact(const uniform Data1D data,            \
+                                     const uniform uint64 baseIndex64,     \
+                                     const univary uint32 offsetIndex32)   \
+  {                                                                        \
+    const T *uniform base =                                                \
+        (const T *uniform)(data.addr + baseIndex64 * data.byteStride);     \
+    return base[offsetIndex32];                                            \
+  }                                                                        \
+                                                                           \
+  inline univary T get_##T##_strided(const uniform Data1D data,            \
+                                     const uniform uint64 baseIndex64,     \
+                                     const univary uint32 offsetIndex32)   \
+  {                                                                        \
+    const uint8 *uniform base =                                            \
+        (const uint8 *uniform)(data.addr + baseIndex64 * data.byteStride); \
+    return *((const uniform T *)(base + offsetIndex32 * data.byteStride)); \
+  }                                                                        \
+                                                                           \
+  inline univary T get_##T(const uniform Data1D data,                      \
+                           const univary uint64 index64)                   \
+  {                                                                        \
+    const univary uint64 address = index64 * data.byteStride;              \
+    const univary uint32 hi28    = address >> 28;                          \
+    const univary uint32 lo28    = address & ((1 << 28) - 1);              \
+    univary T value;                                                       \
+    process_hi28(univary)                                                  \
+    {                                                                      \
+      const uniform uint64 hi64 = hi;                                      \
+      value = *((const uniform T *)((data.addr + (hi64 << 28)) + lo28));   \
+    }                                                                      \
+    return value;                                                          \
+  }
+
+template_get(uint8, varying);
+template_get(int16, varying);
+template_get(uint16, varying);
+template_get(uint32, varying);
+template_get(uint64, varying);
+template_get(float, varying);
+template_get(double, varying);
+template_get(vec3f, varying);
+
+template_get(uint8, uniform);
+template_get(int16, uniform);
+template_get(uint16, uniform);
+template_get(uint32, uniform);
+template_get(uint64, uniform);
+template_get(float, uniform);
+template_get(double, uniform);
+template_get(vec3f, uniform);
+
+#undef template_get
+
+// define wrappers that appropriately call the compact and strided getters. for
+// the uniform case, these will always use the strided path (which avoids the
+// conditional and is more performant). for the varying case, the compact or
+// strided functions will be used as appropriate.
+#define template_get_wrapper(T)                                                \
+  inline uniform T get_##T(const uniform Data1D data,                          \
+                           const uniform uint32 index32)                       \
+  {                                                                            \
+    return get_##T##_strided(data, index32);                                   \
+  }                                                                            \
+                                                                               \
+  inline varying T get_##T(const uniform Data1D data,                          \
+                           const varying uint32 index32)                       \
+  {                                                                            \
+    return data.compact ? get_##T##_compact(data, index32)                     \
+                        : get_##T##_strided(data, index32);                    \
+  }                                                                            \
+                                                                               \
+  inline uniform T get_##T(const uniform Data1D data,                          \
+                           const uniform uint64 baseIndex64,                   \
+                           const uniform uint32 offsetIndex32)                 \
+  {                                                                            \
+    return get_##T##_strided(data, baseIndex64, offsetIndex32);                \
+  }                                                                            \
+                                                                               \
+  inline varying T get_##T(const uniform Data1D data,                          \
+                           const uniform uint64 baseIndex64,                   \
+                           const varying uint32 offsetIndex32)                 \
+  {                                                                            \
+    return data.compact ? get_##T##_compact(data, baseIndex64, offsetIndex32)  \
+                        : get_##T##_strided(data, baseIndex64, offsetIndex32); \
+  }
+
+template_get_wrapper(uint8);
+template_get_wrapper(int16);
+template_get_wrapper(uint16);
+template_get_wrapper(uint32);
+template_get_wrapper(uint64);
+template_get_wrapper(float);
+template_get_wrapper(double);
+template_get_wrapper(vec3f);
+
+#undef template_get_wrapper

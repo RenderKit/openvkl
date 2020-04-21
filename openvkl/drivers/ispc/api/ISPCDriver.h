@@ -31,7 +31,8 @@ namespace openvkl {
       VKLData newData(size_t numItems,
                       VKLDataType dataType,
                       const void *source,
-                      VKLDataCreationFlags dataCreationFlags) override;
+                      VKLDataCreationFlags dataCreationFlags,
+                      size_t byteStride) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Observer /////////////////////////////////////////////////////////////

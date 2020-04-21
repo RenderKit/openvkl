@@ -256,11 +256,12 @@ Large data is passed to Open VKL via a `VKLData` handle created with
     VKLData vklNewData(size_t numItems,
                        VKLDataType dataType,
                        const void *source,
-                       VKLDataCreationFlags dataCreationFlags);
+                       VKLDataCreationFlags dataCreationFlags,
+                       size_t byteStride);
 
 Types accepted are listed in `VKLDataType.h`; basic types (`UCHAR`, `INT`,
-`UINT`, `LONG`, `ULONG`) exist as both scalar and chunked formats.  The types
-accepted vary per volume at the moment; read the volume section below for
+`UINT`, `LONG`, `ULONG`, `FLOAT`) exist as both scalar and chunked formats.  The
+types accepted vary per volume at the moment; read the volume section below for
 specifics.
 
 Data objects can be created as Open VKL owned (`dataCreationFlags =
@@ -268,6 +269,10 @@ VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its
 use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try
 to use the passed pointer for usage.  The library is allowed to copy data when
 a volume is committed.
+
+The distance between consecutive elements in `source` is given in bytes with
+`byteStride`. If the provided `byteStride` is zero, then it will be determined
+automatically as `sizeof(type)`.
 
 As with other object types, when data objects are no longer needed they should
 be released via `vklRelease`.

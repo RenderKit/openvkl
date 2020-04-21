@@ -185,7 +185,7 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData data = vklNewData(numVoxels, VKL_FLOAT, voxels, 0);
+  VKLData data = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
   vklSetData(volume, "data", data);
   vklRelease(data);
 

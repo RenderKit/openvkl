@@ -253,7 +253,7 @@ build-kw-scan:
     - git submodule init
     - git submodule update
   tags:
-    - kw-scan-docker
+    - docker
   artifacts:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
@@ -269,7 +269,7 @@ test-kw-critical:
   dependencies:
     - build-kw-scan
   tags:
-    - kw-scan-docker
+    - docker
   allow_failure: true
 
 ## Protex Job ##

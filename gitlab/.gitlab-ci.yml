@@ -65,7 +65,6 @@ stages:
 
 .job_template: &base_benchmark_job
   stage: benchmark
-  when: manual
   script:
     - gitlab/run-benchmarks.sh
 
@@ -234,8 +233,23 @@ test-functional-windows-msvc15:
 
 ## Benchmark Jobs ##
 
+# All pipelines have this manual benchmark job.
 benchmark-x8280-1:
   <<: *base_benchmark_job
+  when: manual
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-perf-x8280-1
+
+# A second benchmark job meant for scheduled (nightly, weekly, ...) builds.
+# The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
+# BENCHMARK_MIN_TIME_SECONDS to configure the benchmark run time.
+benchmark-x8280-1-schedule:
+  <<: *base_benchmark_job
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
   needs:
     - build-centos7-icc
   tags:

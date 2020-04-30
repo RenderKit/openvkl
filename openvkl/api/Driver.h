@@ -237,14 +237,14 @@ namespace openvkl {
           const utility::ArrayView<const float> &values) = 0;
 
       /////////////////////////////////////////////////////////////////////////
-      // Volume ///////////////////////////////////////////////////////////////
+      // Sampler //////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual VKLVolume newVolume(const char *type) = 0;
+      virtual VKLSampler newSampler(VKLVolume volume) = 0;
 
 #define __define_computeSampleN(WIDTH)                                       \
   virtual void computeSample##WIDTH(const int *valid,                        \
-                                    VKLVolume volume,                        \
+                                    VKLSampler sampler,                      \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
                                     float *samples) = 0;
 
@@ -255,14 +255,14 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
-      virtual void computeSampleN(VKLVolume volume,
+      virtual void computeSampleN(VKLSampler sampler,
                                   unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples) = 0;
 
 #define __define_computeGradientN(WIDTH)                                       \
   virtual void computeGradient##WIDTH(const int *valid,                        \
-                                      VKLVolume volume,                        \
+                                      VKLSampler sampler,                      \
                                       const vvec3fn<WIDTH> &objectCoordinates, \
                                       vvec3fn<WIDTH> &gradients) = 0;
 
@@ -273,10 +273,16 @@ namespace openvkl {
 
 #undef __define_computeGradientN
 
-      virtual void computeGradientN(VKLVolume volume,
+      virtual void computeGradientN(VKLSampler sampler,
                                     unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
                                     vvec3fn<1> *gradients) = 0;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Volume ///////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      virtual VKLVolume newVolume(const char *type) = 0;
 
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
 

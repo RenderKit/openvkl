@@ -7,6 +7,7 @@
 #include "../common/export_util.h"
 #include "../common/objectFactory.h"
 #include "../iterator/DefaultIterator.h"
+#include "../sampler/Sampler.h"
 #include "../value_selector/ValueSelector.h"
 #include "Volume_ispc.h"
 #include "openvkl/openvkl.h"
@@ -111,6 +112,7 @@ namespace openvkl {
                                vintn<W> &result);
 
       virtual ValueSelector<W> *newValueSelector();
+      virtual Sampler<W> *newSampler();
 
       // volumes can optionally define a scalar sampling method; if not
       // defined then the default implementation will use computeSampleV()
@@ -311,6 +313,12 @@ namespace openvkl {
     inline ValueSelector<W> *Volume<W>::newValueSelector()
     {
       return new ValueSelector<W>(this);
+    }
+
+    template <int W>
+    inline Sampler<W> *Volume<W>::newSampler()
+    {
+      return new DefaultSampler<W, Volume>(this);
     }
 
     template <int W>

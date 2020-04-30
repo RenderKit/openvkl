@@ -55,7 +55,7 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
       // get volume sample
       vec3f c = ray.org + t * ray.dir;
       float sample =
-          vklComputeSampleV(scene->volume, (varying vkl_vec3f *)&c);
+          vklComputeSampleV(scene->sampler, (varying vkl_vec3f *)&c);
 
       // map through transfer function
       vec4f sampleColorAndOpacity =

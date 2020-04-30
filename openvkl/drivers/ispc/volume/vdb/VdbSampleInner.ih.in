@@ -27,6 +27,7 @@
  */
 inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   const VdbGrid *uniform            grid,
+  const VdbSampleConfig *uniform    config,
   const varying vec3ui             &domainOffset,
   univary uint64                    voxelOffset)
 {
@@ -44,7 +45,7 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   {
     sample = vklVdbVoxelTileGet(voxelValue);
   }
-  else if (@VKL_VDB_LEVEL@+1 > grid->maxSamplingDepth) // Cannot descend!
+  else if (@VKL_VDB_LEVEL@+1 > config->maxSamplingDepth) // Cannot descend!
   {
     const univary range1f valueRange = grid->levels[@VKL_VDB_LEVEL@].valueRange[vo32];
     sample = 0.5f * (valueRange.lower + valueRange.upper);
@@ -67,6 +68,7 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   {
     sample = VdbSampler_dispatchInner_@VKL_VDB_UNIVARY@_@VKL_VDB_NEXT_LEVEL@(
       grid,
+      config,
       domainOffset,
       vklVdbVoxelChildGetIndex(voxelValue));
   }

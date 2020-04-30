@@ -169,14 +169,14 @@ namespace openvkl {
           const utility::ArrayView<const float> &values) override;
 
       /////////////////////////////////////////////////////////////////////////
-      // Volume ///////////////////////////////////////////////////////////////
+      // Sampler //////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
-
-      VKLVolume newVolume(const char *type) override;
+      
+      VKLSampler newSampler(VKLVolume volume) override;
 
 #define __define_computeSampleN(WIDTH)                               \
   void computeSample##WIDTH(const int *valid,                        \
-                            VKLVolume volume,                        \
+                            VKLSampler sampler,                      \
                             const vvec3fn<WIDTH> &objectCoordinates, \
                             float *samples) override;
 
@@ -187,14 +187,14 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
-      void computeSampleN(VKLVolume volume,
+      void computeSampleN(VKLSampler sampler,
                           unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
                           float *samples) override;
 
 #define __define_computeGradientN(WIDTH)                               \
   void computeGradient##WIDTH(const int *valid,                        \
-                              VKLVolume volume,                        \
+                              VKLSampler sampler,                      \
                               const vvec3fn<WIDTH> &objectCoordinates, \
                               vvec3fn<WIDTH> &gradients) override;
 
@@ -205,10 +205,16 @@ namespace openvkl {
 
 #undef __define_computeGradientN
 
-      void computeGradientN(VKLVolume volume,
+      void computeGradientN(VKLSampler sampler,
                             unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients) override;
+
+      /////////////////////////////////////////////////////////////////////////
+      // Volume ///////////////////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+
+      VKLVolume newVolume(const char *type) override;
 
       box3f getBoundingBox(VKLVolume volume) override;
 
@@ -286,42 +292,42 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeSampleAnyWidth(
           const int *valid,
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeSampleAnyWidth(
           const int *valid,
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeSampleAnyWidth(
           const int *valid,
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples);
 
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(
           const int *valid,
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeGradientAnyWidth(
           const int *valid,
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeGradientAnyWidth(
           const int *valid,
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients);
     };

@@ -8,6 +8,9 @@ void demoScalarAPI(VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
 
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
   printf("\tbounding box\n");
@@ -20,8 +23,8 @@ void demoScalarAPI(VKLVolume volume)
 
   // sample, gradient
   vkl_vec3f coord = {1.f, 1.f, 1.f};
-  float sample    = vklComputeSample(volume, &coord);
-  vkl_vec3f grad  = vklComputeGradient(volume, &coord);
+  float sample    = vklComputeSample(sampler, &coord);
+  vkl_vec3f grad  = vklComputeGradient(sampler, &coord);
   printf("\tcoord = %f %f %f\n", coord.x, coord.y, coord.z);
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -92,11 +95,15 @@ void demoScalarAPI(VKLVolume volume)
   }
 
   vklRelease(selector);
+  vklRelease(sampler);
 }
 
 void demoVectorAPI(VKLVolume volume)
 {
   printf("demo of 4-wide API (8- and 16- follow the same pattern)\n");
+
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   vkl_vvec3f4 coord4;  // structure-of-array layout
   int valid[4];
@@ -107,19 +114,24 @@ void demoVectorAPI(VKLVolume volume)
 
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, volume, &coord4, sample4);
-  vklComputeGradient4(valid, volume, &coord4, &grad4);
+  vklComputeSample4(valid, sampler, &coord4, sample4);
+  vklComputeGradient4(valid, sampler, &coord4, &grad4);
 
   for (int i = 0; i < 4; i++) {
     printf("\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
     printf("\t\tsample[%d] = %f\n", i, sample4[i]);
     printf("\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
   }
+
+  vklRelease(sampler);
 }
 
 void demoStreamAPI(VKLVolume volume)
 {
   printf("demo of stream API\n");
+
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   // array-of-structure layout; arbitrary stream lengths are supported
   vkl_vec3f coord[5];
@@ -130,14 +142,16 @@ void demoStreamAPI(VKLVolume volume)
 
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(volume, 5, coord, sample);
-  vklComputeGradientN(volume, 5, coord, grad);
+  vklComputeSampleN(sampler, 5, coord, sample);
+  vklComputeGradientN(sampler, 5, coord, grad);
 
   for (int i = 0; i < 5; i++) {
     printf("\tcoord[%d] = %f %f %f\n", i, coord[i].x, coord[i].y, coord[i].z);
     printf("\t\tsample[%d] = %f\n", i, sample[i]);
     printf("\t\tgrad[%d]   = %f %f %f\n", i, grad[i].x, grad[i].y, grad[i].z);
   }
+
+  vklRelease(sampler);
 }
 
 int main()

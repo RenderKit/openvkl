@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -57,6 +57,7 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
       &iterator, volume, &origin, &direction, &tRange, nullptr);
 
   VKLInterval interval;
+  VKLSampler sampler = vklNewSampler(volume);
 
   int intervalCount = 0;
 
@@ -67,7 +68,7 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
                               << ", " << interval.valueRange.upper);
 
     vkl_range1f sampledValueRange =
-        computeIntervalValueRange(volume, origin, direction, interval.tRange);
+        computeIntervalValueRange(sampler, origin, direction, interval.tRange);
 
     INFO("sampled value range = " << sampledValueRange.lower << ", "
                                   << sampledValueRange.upper);
@@ -92,6 +93,8 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
     intervalCount++;
   }
 
+  vklRelease(sampler);
+
   // make sure we had at least one interval...
   REQUIRE(intervalCount > 0);
 }
@@ -102,6 +105,7 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
+  VKLSampler sampler = vklNewSampler(volume);
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
 
   // will trigger intervals covering individual ranges separately
@@ -127,7 +131,7 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
                               << ", " << interval.valueRange.upper);
 
     vkl_range1f sampledValueRange =
-        computeIntervalValueRange(volume, origin, direction, interval.tRange);
+        computeIntervalValueRange(sampler, origin, direction, interval.tRange);
 
     INFO("sampled value range = " << sampledValueRange.lower << ", "
                                   << sampledValueRange.upper);
@@ -167,6 +171,7 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   REQUIRE(intervalCount > 0);
 
   vklRelease(valueSelector);
+  vklRelease(sampler);
 }
 
 void scalar_interval_nominalDeltaT(VKLVolume volume,

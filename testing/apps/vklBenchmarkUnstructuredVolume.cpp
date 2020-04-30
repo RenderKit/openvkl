@@ -45,6 +45,8 @@ static void scalarRandomSample(benchmark::State &state)
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -57,11 +59,12 @@ static void scalarRandomSample(benchmark::State &state)
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
 
     benchmark::DoNotOptimize(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(scalarRandomSample);
@@ -81,6 +84,8 @@ void vectorRandomSample(benchmark::State &state)
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -107,13 +112,13 @@ void vectorRandomSample(benchmark::State &state)
 
     if (W == 4) {
       vklComputeSample4(
-          valid, vklVolume, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
     } else if (W == 8) {
       vklComputeSample8(
-          valid, vklVolume, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
     } else if (W == 16) {
       vklComputeSample16(
-          valid, vklVolume, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f16 *)&objectCoordinates, samples);
     } else {
       throw std::runtime_error(
           "vectorRandomSample benchmark called with unimplemented calling "
@@ -123,6 +128,7 @@ void vectorRandomSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(vectorRandomSample, 4)
@@ -144,6 +150,8 @@ static void scalarFixedSample(benchmark::State &state)
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -151,11 +159,12 @@ static void scalarFixedSample(benchmark::State &state)
 
   for (auto _ : state) {
     benchmark::DoNotOptimize(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(scalarFixedSample)
@@ -175,6 +184,8 @@ void vectorFixedSample(benchmark::State &state)
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -198,13 +209,13 @@ void vectorFixedSample(benchmark::State &state)
   for (auto _ : state) {
     if (W == 4) {
       vklComputeSample4(
-          valid, vklVolume, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
     } else if (W == 8) {
       vklComputeSample8(
-          valid, vklVolume, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
     } else if (W == 16) {
       vklComputeSample16(
-          valid, vklVolume, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f16 *)&objectCoordinates, samples);
     } else {
       throw std::runtime_error(
           "vectorFixedSample benchmark called with unimplemented calling "
@@ -214,6 +225,7 @@ void vectorFixedSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(vectorFixedSample, 4)

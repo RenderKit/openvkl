@@ -6,6 +6,7 @@
 #include "../../common/export_util.h"
 #include "../common/logging.h"
 #include "VdbLeafAccessObserver.h"
+#include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
 #include "openvkl/vdb.h"
 #include "ospcommon/math/AffineSpace.h"
@@ -433,10 +434,6 @@ namespace openvkl {
 
       const VKLDataType type =
           (VKLDataType)this->template getParam<int>("type", VKL_UNKNOWN);
-      const VKLFilter filter = (VKLFilter)this->template getParam<int>(
-          "filter", VKL_FILTER_TRILINEAR);
-      const int maxSamplingDepth = this->template getParam<int>(
-          "maxSamplingDepth", VKL_VDB_NUM_LEVELS - 1);
       const int maxIteratorDepth =
           this->template getParam<int>("maxIteratorDepth", 3);
       Ref<Data> dataIndexToObject =
@@ -457,6 +454,14 @@ namespace openvkl {
       Ref<Data> dataData =
           (Data *)this->template getParam<ManagedObject::VKL_PTR>("data",
                                                                   nullptr);
+
+      // Set up the global sample config.
+      globalConfig.filter = (VKLFilter)this->template getParam<int>(
+          "filter", VKL_FILTER_TRILINEAR);
+      globalConfig.maxSamplingDepth = this->template getParam<int>(
+          "maxSamplingDepth", VKL_VDB_NUM_LEVELS - 1);
+      globalConfig.maxSamplingDepth =
+          min(globalConfig.maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
 
       // Sanity checks.
       // We will assume that the following conditions hold downstream, so
@@ -493,11 +498,8 @@ namespace openvkl {
       const uint32_t *leafFormat  = dataFormat->begin<uint32_t>();
       const Data *const *leafData = dataData->begin<const Data *>();
 
-      grid         = allocate<VdbGrid>(1, bytesAllocated);
-      grid->type   = type;
-      grid->filter = filter;
-      grid->maxSamplingDepth =
-          min(max(maxSamplingDepth, 0), VKL_VDB_NUM_LEVELS - 1);
+      grid       = allocate<VdbGrid>(1, bytesAllocated);
+      grid->type = type;
       grid->maxIteratorDepth =
           min(max(maxIteratorDepth, 0), VKL_VDB_NUM_LEVELS - 1);
       grid->totalNumLeaves = numLeaves;
@@ -539,29 +541,8 @@ namespace openvkl {
 
       CALL_ISPC(VdbVolume_setGrid,
                 Volume<W>::getISPCEquivalent(),
-                reinterpret_cast<ispc::VdbGrid *>(grid));
-    }
-
-    template <int W>
-    void VdbVolume<W>::computeSampleV(const vintn<W> &valid,
-                                      const vvec3fn<W> &objectCoordinates,
-                                      vfloatn<W> &samples) const
-    {
-      CALL_ISPC(VdbSampler_computeSample,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                static_cast<float *>(samples));
-    }
-
-    template <int W>
-    void VdbVolume<W>::computeSample(const vvec3fn<1> &objectCoordinates,
-                                     vfloatn<1> &samples) const
-    {
-      CALL_ISPC(VdbSampler_computeSample_uniform,
-                this->ispcEquivalent,
-                &objectCoordinates,
-                static_cast<float *>(samples));
+                reinterpret_cast<const ispc::VdbGrid *>(grid),
+                reinterpret_cast<const ispc::VdbSampleConfig *>(&globalConfig));
     }
 
     template <int W>
@@ -582,6 +563,12 @@ namespace openvkl {
       } else {
         return Volume<W>::newObserver(type);
       }
+    }
+
+    template <int W>
+    Sampler<W> *VdbVolume<W>::newSampler()
+    {
+      return new VdbSampler<W>(grid, globalConfig);
     }
 
     template <int W>

@@ -25,7 +25,9 @@ static void scalarRandomSample(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -38,11 +40,12 @@ static void scalarRandomSample(benchmark::State &state)
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
 
     benchmark::DoNotOptimize(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
+  vklRelease(vklSampler);
 }
 
 BENCHMARK(scalarRandomSample);
@@ -53,7 +56,9 @@ void vectorRandomSample(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -80,13 +85,13 @@ void vectorRandomSample(benchmark::State &state)
 
     if (W == 4) {
       vklComputeSample4(
-          valid, vklVolume, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
     } else if (W == 8) {
       vklComputeSample8(
-          valid, vklVolume, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
     } else if (W == 16) {
       vklComputeSample16(
-          valid, vklVolume, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f16 *)&objectCoordinates, samples);
     } else {
       throw std::runtime_error(
           "vectorRandomSample benchmark called with unimplemented calling "
@@ -96,6 +101,7 @@ void vectorRandomSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(vectorRandomSample, 4);
@@ -108,7 +114,9 @@ void streamRandomSample(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -127,11 +135,12 @@ void streamRandomSample(benchmark::State &state)
       objectCoordinates[i].z = distZ();
     }
 
-    vklComputeSampleN(vklVolume, N, objectCoordinates.data(), samples.data());
+    vklComputeSampleN(vklSampler, N, objectCoordinates.data(), samples.data());
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * N);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(streamRandomSample, 1);
@@ -148,7 +157,9 @@ static void scalarFixedSample(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -156,11 +167,12 @@ static void scalarFixedSample(benchmark::State &state)
 
   for (auto _ : state) {
     benchmark::DoNotOptimize(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
+  vklRelease(vklSampler);
 }
 
 BENCHMARK(scalarFixedSample);
@@ -171,7 +183,9 @@ void vectorFixedSample(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -195,13 +209,13 @@ void vectorFixedSample(benchmark::State &state)
   for (auto _ : state) {
     if (W == 4) {
       vklComputeSample4(
-          valid, vklVolume, (const vkl_vvec3f4 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
     } else if (W == 8) {
       vklComputeSample8(
-          valid, vklVolume, (const vkl_vvec3f8 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f8 *)&objectCoordinates, samples);
     } else if (W == 16) {
       vklComputeSample16(
-          valid, vklVolume, (const vkl_vvec3f16 *)&objectCoordinates, samples);
+          valid, vklSampler, (const vkl_vvec3f16 *)&objectCoordinates, samples);
     } else {
       throw std::runtime_error(
           "vectorFixedSample benchmark called with unimplemented calling "
@@ -211,6 +225,7 @@ void vectorFixedSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(vectorFixedSample, 4);
@@ -224,6 +239,8 @@ void streamFixedSample(benchmark::State &state)
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   // use fixed coordinates for all benchmark iterations
   std::vector<vkl_vec3f> objectCoordinates(
@@ -232,11 +249,12 @@ void streamFixedSample(benchmark::State &state)
   std::vector<float> samples(N);
 
   for (auto _ : state) {
-    vklComputeSampleN(vklVolume, N, objectCoordinates.data(), samples.data());
+    vklComputeSampleN(vklSampler, N, objectCoordinates.data(), samples.data());
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * N);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(streamFixedSample, 1);
@@ -253,7 +271,9 @@ static void scalarRandomGradient(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -266,11 +286,12 @@ static void scalarRandomGradient(benchmark::State &state)
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
 
     benchmark::DoNotOptimize(
-        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
+  vklRelease(vklSampler);
 }
 
 BENCHMARK(scalarRandomGradient);
@@ -281,7 +302,9 @@ void vectorRandomGradient(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -310,17 +333,17 @@ void vectorRandomGradient(benchmark::State &state)
 
     if (W == 4) {
       vklComputeGradient4(valid,
-                          vklVolume,
+                          vklSampler,
                           (const vkl_vvec3f4 *)&objectCoordinates,
                           &gradient4);
     } else if (W == 8) {
       vklComputeGradient8(valid,
-                          vklVolume,
+                          vklSampler,
                           (const vkl_vvec3f8 *)&objectCoordinates,
                           &gradient8);
     } else if (W == 16) {
       vklComputeGradient16(valid,
-                           vklVolume,
+                           vklSampler,
                            (const vkl_vvec3f16 *)&objectCoordinates,
                            &gradient16);
     } else {
@@ -332,6 +355,7 @@ void vectorRandomGradient(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(vectorRandomGradient, 4);
@@ -345,6 +369,8 @@ void streamRandomGradient(benchmark::State &state)
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -364,11 +390,12 @@ void streamRandomGradient(benchmark::State &state)
     }
 
     vklComputeGradientN(
-        vklVolume, N, objectCoordinates.data(), gradients.data());
+        vklSampler, N, objectCoordinates.data(), gradients.data());
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * N);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(streamRandomGradient, 1);
@@ -385,7 +412,9 @@ static void scalarFixedGradient(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -393,11 +422,12 @@ static void scalarFixedGradient(benchmark::State &state)
 
   for (auto _ : state) {
     benchmark::DoNotOptimize(
-        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates));
+        vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates));
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
+  vklRelease(vklSampler);
 }
 
 BENCHMARK(scalarFixedGradient);
@@ -408,7 +438,9 @@ void vectorFixedGradient(benchmark::State &state)
   auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -434,17 +466,17 @@ void vectorFixedGradient(benchmark::State &state)
   for (auto _ : state) {
     if (W == 4) {
       vklComputeGradient4(valid,
-                          vklVolume,
+                          vklSampler,
                           (const vkl_vvec3f4 *)&objectCoordinates,
                           &gradient4);
     } else if (W == 8) {
       vklComputeGradient8(valid,
-                          vklVolume,
+                          vklSampler,
                           (const vkl_vvec3f8 *)&objectCoordinates,
                           &gradient8);
     } else if (W == 16) {
       vklComputeGradient16(valid,
-                           vklVolume,
+                           vklSampler,
                            (const vkl_vvec3f16 *)&objectCoordinates,
                            &gradient16);
     } else {
@@ -456,6 +488,7 @@ void vectorFixedGradient(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(vectorFixedGradient, 4);
@@ -469,6 +502,8 @@ void streamFixedGradient(benchmark::State &state)
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   // use fixed coordinates for all benchmark iterations
   std::vector<vkl_vec3f> objectCoordinates(
@@ -478,11 +513,12 @@ void streamFixedGradient(benchmark::State &state)
 
   for (auto _ : state) {
     vklComputeGradientN(
-        vklVolume, N, objectCoordinates.data(), gradients.data());
+        vklSampler, N, objectCoordinates.data(), gradients.data());
   }
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * N);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_TEMPLATE(streamFixedGradient, 1);

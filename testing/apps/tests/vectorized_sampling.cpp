@@ -17,6 +17,7 @@ void test_vectorized_sampling()
       ospcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
 
   SECTION("randomized vectorized sampling varying calling width and masks")
   {
@@ -54,18 +55,18 @@ void test_vectorized_sampling()
 
         if (callingWidth == 4) {
           vklComputeSample4(valid.data(),
-                            vklVolume,
+                            vklSampler,
                             (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                             samples);
         } else if (callingWidth == 8) {
           vklComputeSample8(valid.data(),
-                            vklVolume,
+                            vklSampler,
                             (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                             samples);
 
         } else if (callingWidth == 16) {
           vklComputeSample16(valid.data(),
-                             vklVolume,
+                             vklSampler,
                              (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                              samples);
         } else {
@@ -74,7 +75,7 @@ void test_vectorized_sampling()
 
         for (int i = 0; i < width; i++) {
           float sampleTruth = vklComputeSample(
-              vklVolume, (const vkl_vec3f *)&objectCoordinates[i]);
+              vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
 
           INFO("sample = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);
@@ -83,6 +84,7 @@ void test_vectorized_sampling()
       }
     }
   }
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Vectorized sampling", "[volume_sampling]")

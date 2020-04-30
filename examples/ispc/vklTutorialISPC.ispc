@@ -1,11 +1,12 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.isph>
 
-export void demo_ispc(void *uniform _volume)
+export void demo_ispc(void *uniform _volume, void *uniform _sampler)
 {
   uniform VKLVolume volume = (uniform VKLVolume)_volume;
+  uniform VKLSampler sampler = (uniform VKLSampler)_sampler;
 
   // bounding box
   uniform vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -19,8 +20,8 @@ export void demo_ispc(void *uniform _volume)
   objectCoordinates.y = programIndex * 3 + 1;
   objectCoordinates.z = programIndex * 3 + 2;
 
-  float sample   = vklComputeSampleV(volume, &objectCoordinates);
-  vkl_vec3f grad = vklComputeGradientV(volume, &objectCoordinates);
+  float sample   = vklComputeSampleV(sampler, &objectCoordinates);
+  vkl_vec3f grad = vklComputeGradientV(sampler, &objectCoordinates);
 
   print("objectCoordinates:\n\tx: %\n\ty: %\n\tz: %\n\n",
         objectCoordinates.x,

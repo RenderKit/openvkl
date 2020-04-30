@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/vdb.h>
+#include "VdbSampleConfig.h"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
 
@@ -32,6 +33,7 @@ export void EXPORT_UNIQUE(VdbSampler_valueRangeConstantFloat,
 // ---------------------------------------------------------------------------
 
 inline varying float VdbSampler_sample(const VdbGrid *uniform grid,
+                                       const VdbSampleConfig *uniform config,
                                        const varying vec3i &ic)
 {
   assert(grid->levels[0].numNodes == 1);
@@ -46,7 +48,7 @@ inline varying float VdbSampler_sample(const VdbGrid *uniform grid,
     return 0.f;
   }
 
-  return VdbSampler_dispatchInner_uniform_0(grid, domainOffset, 0);
+  return VdbSampler_dispatchInner_uniform_0(grid, config, domainOffset, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -58,13 +60,14 @@ inline varying float VdbSampler_sample(const VdbGrid *uniform grid,
  * blocky results. This should be good for indirect light etc.
  */
 float VdbSampler_computeSampleNearest(const uniform VdbGrid *uniform grid,
+                                      const VdbSampleConfig *uniform config,
                                       const varying vec3f &indexCoordinates)
 {
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
                               floor(indexCoordinates.y),
                               floor(indexCoordinates.z));
 
-  return VdbSampler_sample(grid, ic);
+  return VdbSampler_sample(grid, config, ic);
 }
 
 /*
@@ -72,6 +75,7 @@ float VdbSampler_computeSampleNearest(const uniform VdbGrid *uniform grid,
  * The implementation is optimized to exploit SIMD.
  */
 float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
+                                        const VdbSampleConfig *uniform config,
                                         const varying vec3f &indexCoordinates)
 {
   const vec3i ic      = make_vec3i(floor(indexCoordinates.x),
@@ -97,8 +101,9 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
   // be idle.
   if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {
     for (uniform unsigned int i = 0; i < 8; ++i) {
-      const vec3i coord                       = ic + offset[i];
-      sample[i * VKL_TARGET_WIDTH + programIndex] = VdbSampler_sample(grid, coord);
+      const vec3i coord = ic + offset[i];
+      sample[i * VKL_TARGET_WIDTH + programIndex] =
+          VdbSampler_sample(grid, config, coord);
     }
   } else {
     // The opposite extreme is a single query. We perform as many of the
@@ -114,7 +119,7 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
         const vec3i coord = make_vec3i(
             iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
         sample[o * VKL_TARGET_WIDTH + activeInstance] =
-            VdbSampler_sample(grid, coord);
+            VdbSampler_sample(grid, config, coord);
       }
     }
     // Finally, a hybrid version: There are more than one but fewer than
@@ -135,7 +140,8 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
                                      shuffle(ic.z, instance));
         const vec3i coord  = make_vec3i(
             iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-        sample[o * VKL_TARGET_WIDTH + instance] = VdbSampler_sample(grid, coord);
+        sample[o * VKL_TARGET_WIDTH + instance] =
+            VdbSampler_sample(grid, config, coord);
       }
     }
   }
@@ -152,7 +158,9 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
  * above if we know that there is only one query.
  */
 uniform float VdbSampler_computeSampleTrilinear_uniform(
-    const uniform VdbGrid *uniform grid, const uniform vec3f &indexCoordinates)
+    const uniform VdbGrid *uniform grid,
+    const VdbSampleConfig *uniform config,
+    const uniform vec3f &indexCoordinates)
 {
   const uniform vec3i ic      = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
@@ -175,7 +183,7 @@ uniform float VdbSampler_computeSampleTrilinear_uniform(
     foreach (o = 0 ... 8) {
       const vec3i coord = make_vec3i(
           ic.x + offset[o].x, ic.y + offset[o].y, ic.z + offset[o].z);
-      sample[o] = VdbSampler_sample(grid, coord);
+      sample[o] = VdbSampler_sample(grid, config, coord);
     }
 
     return lerp(delta.x,
@@ -192,55 +200,22 @@ uniform float VdbSampler_computeSampleTrilinear_uniform(
 // Public API.
 // ---------------------------------------------------------------------------
 
-export void EXPORT_UNIQUE(VdbSampler_computeSample,
-                          uniform const int *uniform imask,
-                          const void *uniform _volume,
-                          const void *uniform _objectCoordinates,
-                          void *uniform _samples)
-{
-  VdbVolume *uniform volume   = (VdbVolume * uniform) _volume;
-  const VdbGrid *uniform grid = volume->grid;
-  assert(grid);
-
-  const uniform VKLFilter filter = grid->filter;
-
-  const varying vec3f *uniform objectCoordinates =
-      (const varying vec3f *uniform)_objectCoordinates;
-  varying float *uniform samples = (varying float *uniform)_samples;
-
-  const vec3f indexCoordinates =
-      xfmPoint(grid->objectToIndex, *objectCoordinates);
-
-  switch (filter) {
-  case VKL_FILTER_NEAREST:
-    if (imask[programIndex])
-      *samples = VdbSampler_computeSampleNearest(grid, indexCoordinates);
-    break;
-
-  case VKL_FILTER_TRILINEAR:
-    if (imask[programIndex])
-      *samples = VdbSampler_computeSampleTrilinear(grid, indexCoordinates);
-    break;
-
-  default:
-    *samples = 0.f;
-    break;
-  }
-}
-
 /*
  * Special case: we know that coordinates are uniform.
  */
 export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
-                          const void *uniform _volume,
+                          const void *uniform _grid,
+                          const void *uniform _config,
                           const void *uniform _objectCoordinates,
                           void *uniform _samples)
 {
-  VdbVolume *uniform volume   = (VdbVolume * uniform) _volume;
-  const VdbGrid *uniform grid = volume->grid;
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const VdbSampleConfig *uniform config =
+      (const VdbSampleConfig *uniform)_config;
   assert(grid);
+  assert(config);
 
-  const uniform VKLFilter filter = grid->filter;
+  const uniform VKLFilter filter = config->filter;
 
   const uniform vec3f *uniform objectCoordinates =
       (const uniform vec3f *uniform)_objectCoordinates;
@@ -252,18 +227,96 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
   switch (filter) {
   case VKL_FILTER_NEAREST: {
     *samples = extract(VdbSampler_computeSampleNearest(
-                           grid, ((varying vec3f)indexCoordinates)),
+                           grid, config, ((varying vec3f)indexCoordinates)),
                        0);
     break;
   }
 
   case VKL_FILTER_TRILINEAR:
-    *samples =
-        VdbSampler_computeSampleTrilinear_uniform(grid, indexCoordinates);
+    *samples = VdbSampler_computeSampleTrilinear_uniform(
+        grid, config, indexCoordinates);
     break;
 
   default:
     *samples = 0.f;
     break;
+  }
+}
+
+export void EXPORT_UNIQUE(VdbSampler_computeSample,
+                          uniform const int *uniform imask,
+                          const void *uniform _grid,
+                          const void *uniform _config,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _samples)
+{
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const VdbSampleConfig *uniform config =
+      (const VdbSampleConfig *uniform)_config;
+  assert(grid);
+  assert(config);
+
+  const uniform VKLFilter filter = config->filter;
+
+  const varying vec3f *uniform objectCoordinates =
+      (const varying vec3f *uniform)_objectCoordinates;
+  varying float *uniform samples = (varying float *uniform)_samples;
+
+  const vec3f indexCoordinates =
+      xfmPoint(grid->objectToIndex, *objectCoordinates);
+
+  switch (filter) {
+  case VKL_FILTER_NEAREST:
+    if (imask[programIndex])
+      *samples =
+          VdbSampler_computeSampleNearest(grid, config, indexCoordinates);
+    break;
+
+  case VKL_FILTER_TRILINEAR:
+    if (imask[programIndex])
+      *samples =
+          VdbSampler_computeSampleTrilinear(grid, config, indexCoordinates);
+    break;
+
+  default:
+    *samples = 0.f;
+    break;
+  }
+}
+
+export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
+                          const void *uniform _grid,
+                          const void *uniform _config,
+                          uniform unsigned int N,
+                          const vec3f *uniform objectCoordinates,
+                          float *uniform samples)
+{
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const VdbSampleConfig *uniform config =
+      (const VdbSampleConfig *uniform)_config;
+  assert(grid);
+  assert(config);
+
+  const uniform VKLFilter filter = config->filter;
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(grid->objectToIndex, oc);
+
+    switch (filter) {
+    case VKL_FILTER_NEAREST:
+      samples[i] =
+          VdbSampler_computeSampleNearest(grid, config, indexCoordinates);
+      break;
+
+    case VKL_FILTER_TRILINEAR:
+      samples[i] =
+          VdbSampler_computeSampleTrilinear(grid, config, indexCoordinates);
+      break;
+
+    default:
+      samples[i] = 0.f;
+      break;
+    }
   }
 }

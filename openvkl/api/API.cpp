@@ -605,6 +605,120 @@ extern "C" void vklValueSelectorSetValues(VKLValueSelector valueSelector,
 OPENVKL_CATCH_END()
 
 ///////////////////////////////////////////////////////////////////////////////
+// Sampler ////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VKLSampler vklNewSampler(VKLVolume volume)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  VKLSampler sampler =
+      openvkl::api::currentDriver().newSampler(volume);
+  if (sampler == nullptr) {
+    postLogMessage(VKL_LOG_ERROR) << "could not create sampler";
+  }
+
+  return sampler;
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" float vklComputeSample(
+    VKLSampler sampler, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
+{
+  constexpr int valid = 1;
+  float sample;
+  openvkl::api::currentDriver().computeSample1(
+      &valid,
+      sampler,
+      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
+      &sample);
+  return sample;
+}
+OPENVKL_CATCH_END(ospcommon::math::nan)
+
+#define __define_vklComputeSampleN(WIDTH)                             \
+  extern "C" void vklComputeSample##WIDTH(                            \
+      const int *valid,                                               \
+      VKLSampler sampler,                                             \
+      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
+      float *samples) OPENVKL_CATCH_BEGIN                             \
+  {                                                                   \
+    openvkl::api::currentDriver().computeSample##WIDTH(               \
+        valid,                                                        \
+        sampler,                                                      \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
+        samples);                                                     \
+  }                                                                   \
+  OPENVKL_CATCH_END()
+
+__define_vklComputeSampleN(4);
+__define_vklComputeSampleN(8);
+__define_vklComputeSampleN(16);
+
+#undef __define_vklComputeSampleN
+
+extern "C" void vklComputeSampleN(VKLSampler sampler,
+                                  unsigned int N,
+                                  const vkl_vec3f *objectCoordinates,
+                                  float *samples) OPENVKL_CATCH_BEGIN
+{
+  openvkl::api::currentDriver().computeSampleN(
+      sampler,
+      N,
+      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
+      samples);
+}
+OPENVKL_CATCH_END()
+
+extern "C" vkl_vec3f vklComputeGradient(
+    VKLSampler sampler, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
+{
+  constexpr int valid = 1;
+  vkl_vec3f gradient;
+  openvkl::api::currentDriver().computeGradient1(
+      &valid,
+      sampler,
+      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
+      reinterpret_cast<vvec3fn<1> &>(gradient));
+  return gradient;
+}
+OPENVKL_CATCH_END(vkl_vec3f{ospcommon::math::nan})
+
+#define __define_vklComputeGradientN(WIDTH)                           \
+  extern "C" void vklComputeGradient##WIDTH(                          \
+      const int *valid,                                               \
+      VKLSampler sampler,                                             \
+      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
+      vkl_vvec3f##WIDTH *gradients) OPENVKL_CATCH_BEGIN               \
+  {                                                                   \
+    openvkl::api::currentDriver().computeGradient##WIDTH(             \
+        valid,                                                        \
+        sampler,                                                      \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
+        reinterpret_cast<vvec3fn<WIDTH> &>(*gradients));              \
+  }                                                                   \
+  OPENVKL_CATCH_END()
+
+__define_vklComputeGradientN(4);
+__define_vklComputeGradientN(8);
+__define_vklComputeGradientN(16);
+
+#undef __define_vklComputeGradientN
+
+extern "C" void vklComputeGradientN(VKLSampler sampler,
+                                    unsigned int N,
+                                    const vkl_vec3f *objectCoordinates,
+                                    vkl_vec3f *gradients) OPENVKL_CATCH_BEGIN
+{
+  openvkl::api::currentDriver().computeGradientN(
+      sampler,
+      N,
+      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
+      reinterpret_cast<vvec3fn<1> *>(gradients));
+}
+OPENVKL_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
 // Volume /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -620,102 +734,6 @@ extern "C" VKLVolume vklNewVolume(const char *type) OPENVKL_CATCH_BEGIN
   return volume;
 }
 OPENVKL_CATCH_END(nullptr)
-
-extern "C" float vklComputeSample(
-    VKLVolume volume, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
-{
-  constexpr int valid = 1;
-  float sample;
-  openvkl::api::currentDriver().computeSample1(
-      &valid,
-      volume,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      &sample);
-  return sample;
-}
-OPENVKL_CATCH_END(ospcommon::math::nan)
-
-#define __define_vklComputeSampleN(WIDTH)                             \
-  extern "C" void vklComputeSample##WIDTH(                            \
-      const int *valid,                                               \
-      VKLVolume volume,                                               \
-      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      float *samples) OPENVKL_CATCH_BEGIN                             \
-  {                                                                   \
-    openvkl::api::currentDriver().computeSample##WIDTH(               \
-        valid,                                                        \
-        volume,                                                       \
-        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        samples);                                                     \
-  }                                                                   \
-  OPENVKL_CATCH_END()
-
-__define_vklComputeSampleN(4);
-__define_vklComputeSampleN(8);
-__define_vklComputeSampleN(16);
-
-#undef __define_vklComputeSampleN
-
-extern "C" void vklComputeSampleN(VKLVolume volume,
-                                  unsigned int N,
-                                  const vkl_vec3f *objectCoordinates,
-                                  float *samples) OPENVKL_CATCH_BEGIN
-{
-  openvkl::api::currentDriver().computeSampleN(
-      volume,
-      N,
-      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      samples);
-}
-OPENVKL_CATCH_END()
-
-extern "C" vkl_vec3f vklComputeGradient(
-    VKLVolume volume, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
-{
-  constexpr int valid = 1;
-  vkl_vec3f gradient;
-  openvkl::api::currentDriver().computeGradient1(
-      &valid,
-      volume,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      reinterpret_cast<vvec3fn<1> &>(gradient));
-  return gradient;
-}
-OPENVKL_CATCH_END(vkl_vec3f{ospcommon::math::nan})
-
-#define __define_vklComputeGradientN(WIDTH)                           \
-  extern "C" void vklComputeGradient##WIDTH(                          \
-      const int *valid,                                               \
-      VKLVolume volume,                                               \
-      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      vkl_vvec3f##WIDTH *gradients) OPENVKL_CATCH_BEGIN               \
-  {                                                                   \
-    openvkl::api::currentDriver().computeGradient##WIDTH(             \
-        valid,                                                        \
-        volume,                                                       \
-        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        reinterpret_cast<vvec3fn<WIDTH> &>(*gradients));              \
-  }                                                                   \
-  OPENVKL_CATCH_END()
-
-__define_vklComputeGradientN(4);
-__define_vklComputeGradientN(8);
-__define_vklComputeGradientN(16);
-
-#undef __define_vklComputeGradientN
-
-extern "C" void vklComputeGradientN(VKLVolume volume,
-                                    unsigned int N,
-                                    const vkl_vec3f *objectCoordinates,
-                                    vkl_vec3f *gradients) OPENVKL_CATCH_BEGIN
-{
-  openvkl::api::currentDriver().computeGradientN(
-      volume,
-      N,
-      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      reinterpret_cast<vvec3fn<1> *>(gradients));
-}
-OPENVKL_CATCH_END()
 
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {

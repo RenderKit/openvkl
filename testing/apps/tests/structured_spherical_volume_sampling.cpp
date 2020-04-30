@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -27,6 +27,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -53,7 +54,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
                                 << objectCoordinates.z);
 
     test_scalar_and_vector_sampling(
-        vklVolume, objectCoordinates, proceduralValue, 1e-3f);
+        vklSampler, objectCoordinates, proceduralValue, 1e-3f);
   }
 }
 

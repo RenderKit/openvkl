@@ -29,7 +29,7 @@ static void render_wavelet_structured_regular(benchmark::State &state,
           vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   Scene scene;
-  scene.volume = proceduralVolume->getVKLVolume();
+  scene.updateVolume(proceduralVolume->getVKLVolume());
 
   auto window =
       ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
@@ -105,7 +105,7 @@ static void render_wavelet_vdb(benchmark::State &state,
       vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   Scene scene;
-  scene.volume = proceduralVolume->getVKLVolume();
+  scene.updateVolume(proceduralVolume->getVKLVolume());
 
   auto window =
       ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
@@ -185,7 +185,7 @@ static void render_wavelet_unstructured_hex(benchmark::State &state,
           false);
 
   Scene scene;
-  scene.volume = proceduralVolume->getVKLVolume();
+  scene.updateVolume(proceduralVolume->getVKLVolume());
 
   auto window =
       ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);

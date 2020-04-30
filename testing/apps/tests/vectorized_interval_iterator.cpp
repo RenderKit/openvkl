@@ -38,6 +38,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -344,7 +345,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                    << interval.valueRange.upper[i]);
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
-                  vklVolume,
+                  vklSampler,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -407,7 +408,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                    << interval.valueRange.upper[i]);
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
-                  vklVolume,
+                  vklSampler,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -470,7 +471,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                    << interval.valueRange.upper[i]);
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
-                  vklVolume,
+                  vklSampler,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -578,7 +579,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                    << interval.valueRange.upper[i]);
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
-                  vklVolume,
+                  vklSampler,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -658,7 +659,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                    << interval.valueRange.upper[i]);
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
-                  vklVolume,
+                  vklSampler,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -738,7 +739,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                    << interval.valueRange.upper[i]);
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
-                  vklVolume,
+                  vklSampler,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],

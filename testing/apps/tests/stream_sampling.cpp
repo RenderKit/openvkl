@@ -15,6 +15,8 @@ void test_stream_sampling()
       ospcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   SECTION("randomized stream sampling")
   {
@@ -37,10 +39,10 @@ void test_stream_sampling()
         oc = vkl_vec3f{distX(eng), distY(eng), distZ(eng)};
       }
 
-      vklComputeSampleN(vklVolume, N, objectCoordinates.data(), samples.data());
+      vklComputeSampleN(vklSampler, N, objectCoordinates.data(), samples.data());
 
       for (int i = 0; i < N; i++) {
-        float sampleTruth = vklComputeSample(vklVolume, &objectCoordinates[i]);
+        float sampleTruth = vklComputeSample(vklSampler, &objectCoordinates[i]);
 
         INFO("sample = " << i + 1 << " / " << N);
 
@@ -51,6 +53,8 @@ void test_stream_sampling()
       }
     }
   }
+
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Stream sampling", "[volume_sampling]")

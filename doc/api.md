@@ -625,13 +625,6 @@ VDB volumes have the following parameters:
                                                          supported at the moment. Use the enum
                                                          `VKLDataType` for named constants.
 
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
-                                                         field. Use `VKLFilter` for named
-                                                         constants.
-
-  int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`   Do not descend further than to this
-                                                         depth during sampling.
-
   int           maxIteratorDepth  3                      Do not descend further than to this
                                                          depth during interval iteration.
                                                          The maximum value is 3.
@@ -675,6 +668,23 @@ VDB volumes have the following parameters:
 
 The level, origin, format, and data parameters must have the same size, and there must
 be at least one valid node or `commit()` will fail.
+
+The following additional parameters can be set both on `vdb` volumes and their sampler
+objects (sampler object parameters default to volume parameters).
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  Type          Name              Default                Description
+  ------------  ----------------  ---------------------- ---------------------------------------
+
+  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+                                                         field. Use `VKLFilter` for named
+                                                         constants.
+
+  int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`   Do not descend further than to this
+                                                         depth during sampling.
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
 VDB volumes support the following observers:
 
@@ -726,15 +736,29 @@ the OpenVDB prefix.
 1. Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic Topology.
    ACM Transactions on Graphics 32(3), 2013. DOI: 10.1145/2487228.2487235
 
+Sampler Objects
+---------------
+
+Computing the value of a volume at an object space coordinate is done using the
+sampling API, and sampler objects. Sampler objects can be created using
+
+    VKLSampler vklNewSampler(VKLVolume volume);
+
+Sampler objects may then be parametrized with traversal parameters. Available
+parameters are defined by volumes, and are a subset of the volume parameters.
+As an example, `filter` can be set on both `vdb` volumes and their sampler objects.
+The volume parameter is used as the default for sampler objects. The
+sampler object parameter provides an override per ray.
+More detail on parameters can be found in the sections on volumes.
+Use `vklCommit()` to commit parameters to the sampler object.
+
 Sampling
 --------
 
-Computing the value of a volume at an object space coordinate is done using the
-sampling API.  NaN is returned for probe points outside the volume.
-
 The scalar API just takes a volume and coordinate, and returns a float value.
+NaN is returned for probe points outside the volume.
 
-    float vklComputeSample(VKLVolume volume, const vkl_vec3f *objectCoordinates);
+    float vklComputeSample(VKLSampler sampler, const vkl_vec3f *objectCoordinates);
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
 the machine type and Open VKL driver implementation, these can give greater
@@ -742,17 +766,17 @@ performance.  An active lane mask `valid` is passed in as an array of integers;
 set 0 for lanes to be ignored, -1 for active lanes.
 
     void vklComputeSample4(const int *valid,
-                           VKLVolume volume,
+                           VKLSampler sampler,
                            const vkl_vvec3f4 *objectCoordinates,
                            float *samples);
 
     void vklComputeSample8(const int *valid,
-                           VKLVolume volume,
+                           VKLSampler sampler,
                            const vkl_vvec3f8 *objectCoordinates,
                            float *samples);
 
     void vklComputeSample16(const int *valid,
-                            VKLVolume volume,
+                            VKLSampler sampler,
                             const vkl_vvec3f16 *objectCoordinates,
                             float *samples);
 
@@ -763,7 +787,7 @@ array-of-structures layout. Thus, the stream API can be used to avoid
 reformatting of data by the application. As with the vector versions, the stream
 API can give greater performance than the scalar API.
 
-      void vklComputeSampleN(VKLVolume volume,
+      void vklComputeSampleN(VKLSampler sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
                              float *samples);
@@ -779,29 +803,29 @@ value gradient at an object space coordinate.  Again, a scalar API, now
 returning a vec3f instead of a float. NaN values are returned for points outside
 the volume.
 
-    vkl_vec3f vklComputeGradient(VKLVolume volume,
+    vkl_vec3f vklComputeGradient(VKLSampler sampler,
                                  const vkl_vec3f *objectCoordinates);
 
 Vector versions are also provided:
 
     void vklComputeGradient4(const int *valid,
-                             VKLVolume volume,
+                             VKLSampler sampler,
                              const vkl_vvec3f4 *objectCoordinates,
                              vkl_vvec3f4 *gradients);
 
     void vklComputeGradient8(const int *valid,
-                             VKLVolume volume,
+                             VKLSampler sampler,
                              const vkl_vvec3f8 *objectCoordinates,
                              vkl_vvec3f8 *gradients);
 
     void vklComputeGradient16(const int *valid,
-                              VKLVolume volume,
+                              VKLSampler sampler,
                               const vkl_vvec3f16 *objectCoordinates,
                               vkl_vvec3f16 *gradients);
 
 Finally, a stream version is provided:
 
-    void vklComputeGradientN(VKLVolume volume,
+    void vklComputeGradientN(VKLSampler sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
                              vkl_vec3f *gradients);

@@ -9,6 +9,7 @@
 #include "../common/Data.h"
 #include "VdbGrid.h"
 #include "VdbIterator.h"
+#include "VdbSampleConfig.h"
 #include "VdbVolume_ispc.h"
 #include "ospcommon/memory/RefCount.h"
 
@@ -45,13 +46,17 @@ namespace openvkl {
        */
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
+                          vfloatn<W> &samples) const override
+      {
+        THROW_NOT_IMPLEMENTED;
+      }
 
-      /*
-       * Scalar specialization.
-       */
-      void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override;
+      void computeSampleN(unsigned int N,
+                          const vvec3fn<1> *objectCoordinates,
+                          float *samples) const override
+      {
+        THROW_NOT_IMPLEMENTED;
+      }
 
       /*
        * Compute the volume gradient at the given coordinates.
@@ -60,6 +65,13 @@ namespace openvkl {
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients) const override
+      {
+        THROW_NOT_IMPLEMENTED;
+      }
+
+      void computeGradientN(unsigned int N,
+                            const vvec3fn<1> *objectCoordinates,
+                            vvec3fn<1> *gradients) const override
       {
         THROW_NOT_IMPLEMENTED;
       }
@@ -86,6 +98,7 @@ namespace openvkl {
       }
 
       VKLObserver newObserver(const char *type) override;
+      Sampler<W> *newSampler() override;
 
       void initIntervalIteratorV(
           const vintn<W> &valid,
@@ -122,6 +135,7 @@ namespace openvkl {
       Ref<Data> dataData;
       VdbGrid *grid{nullptr};
       size_t bytesAllocated{0};
+      VdbSampleConfig globalConfig;
     };
 
   }  // namespace ispc_driver

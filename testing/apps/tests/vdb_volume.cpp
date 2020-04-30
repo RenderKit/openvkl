@@ -61,6 +61,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
                         128, vec3f(0.f), vec3f(1.f), VKL_FILTER_NEAREST));
 
     VKLVolume vklVolume = volume->getVKLVolume();
+    VKLSampler vklSampler = vklNewSampler(vklVolume);
     const vec3i step(1);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
@@ -79,10 +80,11 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
                                   << objectCoordinates.z);
 
       test_scalar_and_vector_sampling(
-          vklVolume, objectCoordinates, proceduralValue, 1e-4f);
+          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
     }
 
     REQUIRE_NOTHROW(delete volume);
+    vklRelease(vklSampler);
   }
 
   SECTION("WaveletVdbVolume trilinear")
@@ -93,6 +95,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
                         128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
     VKLVolume vklVolume = volume->getVKLVolume();
+    VKLSampler vklSampler = vklNewSampler(vklVolume);
     const vec3i step(1);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
@@ -111,10 +114,11 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
                                   << objectCoordinates.z);
 
       test_scalar_and_vector_sampling(
-          vklVolume, objectCoordinates, proceduralValue, 1e-4f);
+          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
     }
 
     REQUIRE_NOTHROW(delete volume);
+    vklRelease(vklSampler);
   }
 }
 

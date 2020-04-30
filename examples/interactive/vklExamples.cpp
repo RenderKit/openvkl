@@ -172,6 +172,7 @@ int main(int argc, const char **argv)
   std::string filename;
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
+  int maxSamplingDepth(VKL_VDB_NUM_LEVELS-1);
   bool haveFilter(false);
   bool haveVdb(false);
   std::string field("density");
@@ -400,7 +401,10 @@ int main(int argc, const char **argv)
   Scene scene;
   TransferFunction transferFunction;
   std::vector<float> isoValues;
-  scene.volume = testingVolume->getVKLVolume();
+  scene.updateVolume(testingVolume->getVKLVolume());
+  vklSetInt(scene.sampler, "filter", filter);
+  vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+  vklCommit(scene.sampler);
 
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
@@ -442,6 +446,32 @@ int main(int argc, const char **argv)
       }
 
       glfwVKLWindow->setActiveRenderer(rendererType);
+    }
+
+    // filter and maxSamplingDepth parameters currently only apply to VDB
+    // volumes
+    if (gridType == "vdb") {
+      static int whichFilter = (filter == VKL_FILTER_NEAREST ? 0 : 1);
+      if (ImGui::Combo("filter", &whichFilter, "nearest\0trilinear\0\0") ||
+          ImGui::SliderInt("maxSamplingDepth",
+                           &maxSamplingDepth,
+                           0,
+                           VKL_VDB_NUM_LEVELS - 1)) {
+        switch (whichFilter) {
+        case 0:
+          filter = VKL_FILTER_NEAREST;
+          break;
+        case 1:
+          filter = VKL_FILTER_TRILINEAR;
+          break;
+        default:
+          break;
+        }
+        vklSetInt(scene.sampler, "filter", filter);
+        vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+        vklCommit(scene.sampler);
+        changed = true;
+      }
     }
 
     static int useISPC = 1;
@@ -496,7 +526,10 @@ int main(int argc, const char **argv)
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
     auto vdbVolume = std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
     if (vdbVolume && vdbVolume->updateVolume()) {
-      scene.volume = testingVolume->getVKLVolume();
+      scene.updateVolume(testingVolume->getVKLVolume());
+      vklSetInt(scene.sampler, "filter", filter);
+      vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+      vklCommit(scene.sampler);
       scene.updateValueSelector(transferFunction, isoValues);
       glfwVKLWindow->resetAccumulation();
     }

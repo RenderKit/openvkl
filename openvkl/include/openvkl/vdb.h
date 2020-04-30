@@ -9,6 +9,7 @@
 #pragma once
 
 #include "VKLDataType.h"
+#include "VKLFilter.h"
 #include "ispc_cpp_interop.h"
 
 // ========================================================================== //
@@ -214,23 +215,6 @@ inline varying vkl_uint64 vklVdbDomainOffsetToLinear(varying vkl_uint32 level,
 #endif
 
 #undef __vkl_vdb_switch_case
-
-// ========================================================================== //
-// An enum that represents the different filter types available in vdb volumes.
-// ========================================================================== //
-#if __cplusplus >= 201103L
-enum VKLFilter : vkl_uint32
-#else
-enum VKLFilter
-#endif
-{
-  // Only read the voxel the sample position is in, treating it as
-  // constant.
-  VKL_FILTER_NEAREST = 0,
-  // Read the eight voxels surrounding the sample position, and
-  // interpolate trilinearly.
-  VKL_FILTER_TRILINEAR = 100,
-};
 
 // ========================================================================== //
 // An enum for leaf data format constants.

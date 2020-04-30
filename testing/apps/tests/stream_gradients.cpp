@@ -15,6 +15,8 @@ void test_stream_gradients()
       ospcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   SECTION("randomized stream gradients")
   {
@@ -38,11 +40,11 @@ void test_stream_gradients()
       }
 
       vklComputeGradientN(
-          vklVolume, N, objectCoordinates.data(), gradients.data());
+          vklSampler, N, objectCoordinates.data(), gradients.data());
 
       for (int i = 0; i < N; i++) {
         vkl_vec3f gradientTruth =
-            vklComputeGradient(vklVolume, &objectCoordinates[i]);
+            vklComputeGradient(vklSampler, &objectCoordinates[i]);
 
         INFO("gradient = " << i + 1 << " / " << N);
 
@@ -58,6 +60,7 @@ void test_stream_gradients()
       }
     }
   }
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Stream gradients", "[volume_gradients]")

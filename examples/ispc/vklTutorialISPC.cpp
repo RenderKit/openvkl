@@ -22,6 +22,9 @@ int main()
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
   std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
 
   for (int k = 0; k < dimensions.z; k++)
@@ -36,8 +39,9 @@ int main()
 
   vklCommit(volume);
 
-  ispc::demo_ispc(volume);
+  ispc::demo_ispc(volume, sampler);
 
+  vklRelease(sampler);
   vklRelease(volume);
 
   vklShutdown();

@@ -62,6 +62,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
     VKLVolume vklVolume = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklCommit(vklSampler);
     const vec3i step(1);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
@@ -96,6 +97,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
     VKLVolume vklVolume = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklCommit(vklSampler);
     const vec3i step(1);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {

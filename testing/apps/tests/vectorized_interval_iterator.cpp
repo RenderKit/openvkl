@@ -39,6 +39,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -1037,4 +1038,6 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
       }
     }
   }
+
+  vklRelease(vklSampler);
 }

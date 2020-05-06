@@ -23,6 +23,7 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions());
 

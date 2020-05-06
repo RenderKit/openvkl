@@ -28,6 +28,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -56,6 +57,8 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
     test_scalar_and_vector_sampling(
         vklSampler, objectCoordinates, proceduralValue, 1e-3f);
   }
+
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")

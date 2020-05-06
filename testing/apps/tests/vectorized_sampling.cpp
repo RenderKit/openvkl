@@ -18,6 +18,7 @@ void test_vectorized_sampling()
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   SECTION("randomized vectorized sampling varying calling width and masks")
   {

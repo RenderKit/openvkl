@@ -58,6 +58,7 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
 
   VKLInterval interval;
   VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   int intervalCount = 0;
 

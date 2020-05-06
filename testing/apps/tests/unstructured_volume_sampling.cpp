@@ -26,6 +26,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   std::random_device rd;
   std::mt19937 eng(rd());
@@ -107,6 +108,7 @@ void scalar_sampling_on_vertices_vs_procedural_values(
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 

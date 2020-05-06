@@ -27,6 +27,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions());
 

@@ -997,7 +997,8 @@ returned lane mask indicates that the iterator is still within the volume.
                          VKLHit16 *hit,
                          int *result);
 
-Returned hits consist of the t-value and volume value at that location:
+Returned hits consist of a t-value and volume value (equal to one of the
+requested values specified in the value selector):
 
     typedef struct
     {

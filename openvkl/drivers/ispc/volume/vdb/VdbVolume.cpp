@@ -457,6 +457,8 @@ namespace openvkl {
       // Set up the global sample config.
       globalConfig.filter = (VKLFilter)this->template getParam<int>(
           "filter", VKL_FILTER_TRILINEAR);
+      globalConfig.gradientFilter = (VKLFilter)this->template getParam<int>(
+          "gradientFilter", globalConfig.filter);
       globalConfig.maxSamplingDepth = this->template getParam<int>(
           "maxSamplingDepth", VKL_VDB_NUM_LEVELS - 1);
       globalConfig.maxSamplingDepth =

@@ -172,6 +172,7 @@ int main(int argc, const char **argv)
   std::string filename;
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
+  VKLFilter gradientFilter(VKL_FILTER_TRILINEAR);
   int maxSamplingDepth(VKL_VDB_NUM_LEVELS-1);
   bool haveFilter(false);
   bool haveVdb(false);
@@ -265,6 +266,7 @@ int main(int argc, const char **argv)
         filter = VKL_FILTER_NEAREST;
       else
         throw std::runtime_error("unsupported -filter specified");
+      gradientFilter = filter;
     } else if (switchArg == "-renderer") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -renderer arguments");
@@ -403,6 +405,7 @@ int main(int argc, const char **argv)
   std::vector<float> isoValues;
   scene.updateVolume(testingVolume->getVKLVolume());
   vklSetInt(scene.sampler, "filter", filter);
+  vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
   vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
   vklCommit(scene.sampler);
 
@@ -452,7 +455,9 @@ int main(int argc, const char **argv)
     // volumes
     if (gridType == "vdb") {
       static int whichFilter = (filter == VKL_FILTER_NEAREST ? 0 : 1);
+      static int whichGradientFilter = (gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
       if (ImGui::Combo("filter", &whichFilter, "nearest\0trilinear\0\0") ||
+          ImGui::Combo("gradientFilter", &whichGradientFilter, "nearest\0trilinear\0\0") ||
           ImGui::SliderInt("maxSamplingDepth",
                            &maxSamplingDepth,
                            0,
@@ -468,6 +473,17 @@ int main(int argc, const char **argv)
           break;
         }
         vklSetInt(scene.sampler, "filter", filter);
+        switch (whichGradientFilter) {
+        case 0:
+          gradientFilter = VKL_FILTER_NEAREST;
+          break;
+        case 1:
+          gradientFilter = VKL_FILTER_TRILINEAR;
+          break;
+        default:
+          break;
+        }
+        vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
         vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
         vklCommit(scene.sampler);
         changed = true;
@@ -528,6 +544,7 @@ int main(int argc, const char **argv)
     if (vdbVolume && vdbVolume->updateVolume()) {
       scene.updateVolume(testingVolume->getVKLVolume());
       vklSetInt(scene.sampler, "filter", filter);
+      vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
       vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
       vklCommit(scene.sampler);
       scene.updateValueSelector(transferFunction, isoValues);

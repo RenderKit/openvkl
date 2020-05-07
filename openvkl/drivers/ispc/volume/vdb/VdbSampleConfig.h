@@ -16,6 +16,7 @@ namespace openvkl {
     struct VdbSampleConfig
     {
       VKLFilter filter;
+      VKLFilter gradientFilter;
       vkl_uint32 maxSamplingDepth;
     };
 

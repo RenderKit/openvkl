@@ -23,6 +23,15 @@ namespace openvkl {
     {
       config.filter =
           (VKLFilter)this->template getParam<int>("filter", config.filter);
+
+      // Note: We fall back to the sampler object filter parameter if it set.
+      //       This enables users to specify *only* the field filter override.
+      //       This does mean that users must set the gradientFilter explicitly 
+      //       if they set filter and want gradientFilter to be different.
+      config.gradientFilter =
+          (VKLFilter)this->template getParam<int>("gradientFilter", 
+              this->hasParam("filter") ? config.filter : config.gradientFilter);
+
       config.maxSamplingDepth =
           this->template getParam<int>("maxSamplingDepth", config.maxSamplingDepth);
     }
@@ -69,7 +78,12 @@ namespace openvkl {
                                          const vvec3fn<W> &objectCoordinates,
                                          vvec3fn<W> &gradients) const
     {
-      THROW_NOT_IMPLEMENTED;
+      CALL_ISPC(VdbSampler_computeGradient,
+                static_cast<const int *>(valid),
+                this->grid,
+                &this->config,
+                &objectCoordinates,
+                &gradients);
     }
 
     template <int W>
@@ -77,7 +91,12 @@ namespace openvkl {
                                          const vvec3fn<1> *objectCoordinates,
                                          vvec3fn<1> *gradients) const
     {
-      THROW_NOT_IMPLEMENTED;
+      CALL_ISPC(VdbSampler_computeGradient_stream,
+                this->grid,
+                &this->config,
+                N,
+                (const ispc::vec3f *)objectCoordinates,
+                (ispc::vec3f *)gradients);
     }
 
     template struct VdbSampler<VKL_TARGET_WIDTH>;

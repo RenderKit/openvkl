@@ -61,27 +61,40 @@ struct VdbGrid
 /*
  * Transform points and vectors with the given affine matrix (in row major
  * order).
+ *
+ * Note that xfmNormal takes the inverse matrix, as the normal transform matrix
+ * for a given matrix M is (M^{-1})^T.
  */
-#define __vkl_vdb_xfm_functions(univary)                      \
-  inline univary vec3f xfmVector(                             \
-      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M, \
-      const univary vec3f &p)                                 \
-  {                                                           \
-    univary vec3f r;                                          \
-    r.x = M[0] * p.x + M[1] * p.y + M[2] * p.z;               \
-    r.y = M[3] * p.x + M[4] * p.y + M[5] * p.z;               \
-    r.z = M[6] * p.x + M[7] * p.y + M[8] * p.z;               \
-    return r;                                                 \
-  }                                                           \
-  inline univary vec3f xfmPoint(                              \
-      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M, \
-      const univary vec3f &p)                                 \
-  {                                                           \
-    univary vec3f r = xfmVector(M, p);                        \
-    r.x             = r.x + M[9];                             \
-    r.y             = r.y + M[10];                            \
-    r.z             = r.z + M[11];                            \
-    return r;                                                 \
+#define __vkl_vdb_xfm_functions(univary)                         \
+  inline univary vec3f xfmVector(                                \
+      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M,    \
+      const univary vec3f &p)                                    \
+  {                                                              \
+    univary vec3f r;                                             \
+    r.x = M[0] * p.x + M[1] * p.y + M[2] * p.z;                  \
+    r.y = M[3] * p.x + M[4] * p.y + M[5] * p.z;                  \
+    r.z = M[6] * p.x + M[7] * p.y + M[8] * p.z;                  \
+    return r;                                                    \
+  }                                                              \
+  inline univary vec3f xfmNormal(                                \
+      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM MInv, \
+      const univary vec3f &p)                                    \
+  {                                                              \
+    univary vec3f r;                                             \
+    r.x = MInv[0] * p.x + MInv[3] * p.y + MInv[6] * p.z;         \
+    r.y = MInv[1] * p.x + MInv[4] * p.y + MInv[7] * p.z;         \
+    r.z = MInv[2] * p.x + MInv[5] * p.y + MInv[8] * p.z;         \
+    return r;                                                    \
+  }                                                              \
+  inline univary vec3f xfmPoint(                                 \
+      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M,    \
+      const univary vec3f &p)                                    \
+  {                                                              \
+    univary vec3f r = xfmVector(M, p);                           \
+    r.x             = r.x + M[9];                                \
+    r.y             = r.y + M[10];                               \
+    r.z             = r.z + M[11];                               \
+    return r;                                                    \
   }
 
 __vkl_interop_univary(__vkl_vdb_xfm_functions)

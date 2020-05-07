@@ -682,6 +682,10 @@ objects (sampler object parameters default to volume parameters).
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
+  int           gradientFilter    `filter`               The filter used for reconstructing the
+                                                         field during gradient computations.
+                                                         Use `VKLFilter` for named constants.
+
   int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`-1 Do not descend further than to this
                                                          depth during sampling.
 

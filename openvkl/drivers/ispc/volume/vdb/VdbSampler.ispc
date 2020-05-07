@@ -59,9 +59,10 @@ inline varying float VdbSampler_sample(const VdbGrid *uniform grid,
  * Nearest neighbor interpolation is the fastest version, but also gives
  * blocky results. This should be good for indirect light etc.
  */
-float VdbSampler_computeSampleNearest(const uniform VdbGrid *uniform grid,
-                                      const VdbSampleConfig *uniform config,
-                                      const varying vec3f &indexCoordinates)
+inline varying float VdbSampler_interpolateNearest(
+    const uniform VdbGrid *uniform grid,
+    const VdbSampleConfig *uniform config,
+    const varying vec3f &indexCoordinates)
 {
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
                               floor(indexCoordinates.y),
@@ -71,19 +72,16 @@ float VdbSampler_computeSampleNearest(const uniform VdbGrid *uniform grid,
 }
 
 /*
- * Trilinear sampling is a good default for directly visible volumes.
- * The implementation is optimized to exploit SIMD.
+ * Compute voxel values for the eight corners required in trilinear 
+ * interpolation.
+ * This is used for both sampling and gradient computation!
  */
-float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
-                                        const VdbSampleConfig *uniform config,
-                                        const varying vec3f &indexCoordinates)
+inline void VdbSampler_computeVoxelValuesTrilinear(
+    const uniform VdbGrid *uniform grid,
+    const VdbSampleConfig *uniform config,
+    const varying vec3i &ic,
+    uniform float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
-  const vec3i ic      = make_vec3i(floor(indexCoordinates.x),
-                              floor(indexCoordinates.y),
-                              floor(indexCoordinates.z));
-  const vec3f delta   = indexCoordinates - make_vec3f(ic);
-  const vec3f omdelta = make_vec3f(1.f) - delta;
-
   static const uniform vec3i offset[] = {{0, 0, 0},
                                          {0, 0, 1},
                                          {0, 1, 0},
@@ -92,8 +90,6 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
                                          {1, 0, 1},
                                          {1, 1, 0},
                                          {1, 1, 1}};
-
-  uniform float sample[VKL_TARGET_WIDTH * 8];
 
   // The goal of this code is to keep as many lanes busy as possible.
   // The first case is that we have as many queries as there are
@@ -145,6 +141,23 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
       }
     }
   }
+}
+
+/*
+ * Trilinear sampling is a good default for directly visible volumes.
+ * The implementation is optimized to exploit SIMD.
+ */
+inline varying float VdbSampler_interpolateTrilinear(
+    const uniform VdbGrid *uniform grid,
+    const VdbSampleConfig *uniform config,
+    const varying vec3f &indexCoordinates)
+{
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  uniform float sample[VKL_TARGET_WIDTH * 8];
+  VdbSampler_computeVoxelValuesTrilinear(grid, config, ic, sample);
 
   const varying float *uniform s = (const varying float *uniform) & sample;
   return lerp(
@@ -157,17 +170,11 @@ float VdbSampler_computeSampleTrilinear(const uniform VdbGrid *uniform grid,
  * Uniform path. This allows us to skip the selection magic in the function
  * above if we know that there is only one query.
  */
-uniform float VdbSampler_computeSampleTrilinear_uniform(
+inline uniform float VdbSampler_interpolateTrilinear_uniform(
     const uniform VdbGrid *uniform grid,
     const VdbSampleConfig *uniform config,
     const uniform vec3f &indexCoordinates)
 {
-  const uniform vec3i ic      = make_vec3i(floor(indexCoordinates.x),
-                                      floor(indexCoordinates.y),
-                                      floor(indexCoordinates.z));
-  const uniform vec3f delta   = indexCoordinates - make_vec3f(ic);
-  const uniform vec3f omdelta = make_vec3f(1.f) - delta;
-
   static const uniform vec3i offset[] = {{0, 0, 0},
                                          {0, 0, 1},
                                          {0, 1, 0},
@@ -176,6 +183,11 @@ uniform float VdbSampler_computeSampleTrilinear_uniform(
                                          {1, 0, 1},
                                          {1, 1, 0},
                                          {1, 1, 1}};
+
+  const uniform vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+  const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
 
   unmasked
   {
@@ -194,6 +206,36 @@ uniform float VdbSampler_computeSampleTrilinear_uniform(
                      lerp(delta.z, sample[4], sample[5]),
                      lerp(delta.z, sample[6], sample[7])));
   }
+}
+
+/*
+ * Gradients in trilinear fields.
+ */
+inline vec3f VdbSampler_computeGradientTrilinear(
+    const uniform VdbGrid *uniform grid,
+    const VdbSampleConfig *uniform config,
+    const varying vec3f &indexCoordinates)
+{
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  uniform float sample[VKL_TARGET_WIDTH * 8];
+  VdbSampler_computeVoxelValuesTrilinear(grid, config, ic, sample);
+
+  const varying float *uniform s = (const varying float *uniform) & sample;
+
+  vec3f gradient;
+  gradient.x = lerp(delta.y,
+                    lerp(delta.z, s[4] - s[0], s[5] - s[1]),
+                    lerp(delta.z, s[6] - s[2], s[7] - s[3]));
+  gradient.y = lerp(delta.x,
+                    lerp(delta.z, s[2] - s[0], s[3] - s[1]),
+                    lerp(delta.z, s[6] - s[4], s[7] - s[5]));
+  gradient.z = lerp(delta.x,
+                    lerp(delta.y, s[1] - s[0], s[3] - s[2]),
+                    lerp(delta.y, s[5] - s[4], s[7] - s[6]));
+  return gradient;
 }
 
 // ---------------------------------------------------------------------------
@@ -226,15 +268,15 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
 
   switch (filter) {
   case VKL_FILTER_NEAREST: {
-    *samples = extract(VdbSampler_computeSampleNearest(
+    *samples = extract(VdbSampler_interpolateNearest(
                            grid, config, ((varying vec3f)indexCoordinates)),
                        0);
     break;
   }
 
   case VKL_FILTER_TRILINEAR:
-    *samples = VdbSampler_computeSampleTrilinear_uniform(
-        grid, config, indexCoordinates);
+    *samples =
+        VdbSampler_interpolateTrilinear_uniform(grid, config, indexCoordinates);
     break;
 
   default:
@@ -268,14 +310,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
   switch (filter) {
   case VKL_FILTER_NEAREST:
     if (imask[programIndex])
-      *samples =
-          VdbSampler_computeSampleNearest(grid, config, indexCoordinates);
+      *samples = VdbSampler_interpolateNearest(grid, config, indexCoordinates);
     break;
 
   case VKL_FILTER_TRILINEAR:
     if (imask[programIndex])
       *samples =
-          VdbSampler_computeSampleTrilinear(grid, config, indexCoordinates);
+          VdbSampler_interpolateTrilinear(grid, config, indexCoordinates);
     break;
 
   default:
@@ -306,17 +347,90 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
     switch (filter) {
     case VKL_FILTER_NEAREST:
       samples[i] =
-          VdbSampler_computeSampleNearest(grid, config, indexCoordinates);
+          VdbSampler_interpolateNearest(grid, config, indexCoordinates);
       break;
 
     case VKL_FILTER_TRILINEAR:
       samples[i] =
-          VdbSampler_computeSampleTrilinear(grid, config, indexCoordinates);
+          VdbSampler_interpolateTrilinear(grid, config, indexCoordinates);
       break;
 
     default:
       samples[i] = 0.f;
       break;
     }
+  }
+}
+
+export void EXPORT_UNIQUE(VdbSampler_computeGradient,
+                          uniform const int *uniform imask,
+                          const void *uniform _grid,
+                          const void *uniform _config,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _gradients)
+{
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const VdbSampleConfig *uniform config =
+      (const VdbSampleConfig *uniform)_config;
+  assert(grid);
+  assert(config);
+
+  const uniform VKLFilter filter = config->gradientFilter;
+
+  const varying vec3f *uniform objectCoordinates =
+      (const varying vec3f *uniform)_objectCoordinates;
+  varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
+
+  const vec3f indexCoordinates =
+      xfmPoint(grid->objectToIndex, *objectCoordinates);
+
+  switch (filter) {
+  case VKL_FILTER_TRILINEAR:
+    if (imask[programIndex])
+      *gradients =
+          VdbSampler_computeGradientTrilinear(grid, config, indexCoordinates);
+    break;
+
+  default:
+    *gradients = make_vec3f(0.f, 0.f, 0.f);
+    break;
+  }
+
+  // Note: xfmNormal takes inverse!
+  *gradients = xfmNormal(grid->objectToIndex, *gradients);
+}
+
+export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
+                          const void *uniform _grid,
+                          const void *uniform _config,
+                          uniform unsigned int N,
+                          const vec3f *uniform objectCoordinates,
+                          vec3f *uniform gradients)
+{
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const VdbSampleConfig *uniform config =
+      (const VdbSampleConfig *uniform)_config;
+  assert(grid);
+  assert(config);
+
+  const uniform VKLFilter filter = config->gradientFilter;
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(grid->objectToIndex, oc);
+
+    vec3f gradient;
+    switch (filter) {
+    case VKL_FILTER_TRILINEAR:
+      gradient =
+          VdbSampler_computeGradientTrilinear(grid, config, indexCoordinates);
+      break;
+
+    default:
+      gradient = make_vec3f(0.f, 0.f, 0.f);
+      break;
+    }
+    // Note: xfmNormal takes inverse!
+    gradients[i] = xfmNormal(grid->objectToIndex, gradient);
   }
 }

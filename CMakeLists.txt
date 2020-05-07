@@ -47,7 +47,7 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-find_package(ospcommon 1.1.0 REQUIRED)
+find_package(ospcommon 1.3.0 REQUIRED)
 
 find_package(embree 3.6.1 REQUIRED)
 openvkl_create_embree_target()

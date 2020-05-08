@@ -1,14 +1,18 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "ospcommon/memory/RefCount.h"
-#include "ospcommon/utility/ParameterizedObject.h"
 #include "VKLCommon.h"
 #include "objectFactory.h"
+#include "ospcommon/memory/RefCount.h"
+#include "ospcommon/utility/ParameterizedObject.h"
+
+using namespace ospcommon::memory;
 
 namespace openvkl {
+
+  struct Data;
 
   struct OPENVKL_CORE_INTERFACE ManagedObject
       : public ospcommon::memory::RefCount,
@@ -19,6 +23,9 @@ namespace openvkl {
     ManagedObject() = default;
 
     virtual ~ManagedObject() override;
+
+    template <typename T>
+    T getParam(const char *name, T valIfNotFound = T());
 
     // commit the object's outstanding changes (such as changed parameters)
     virtual void commit() {}
@@ -53,6 +60,27 @@ namespace openvkl {
   {
     return *((OPENVKL_CLASS *)handle);
   }
+
+  // Inlined definitions //////////////////////////////////////////////////////
+
+  template <typename T>
+  inline T ManagedObject::getParam(const char *name, T valIfNotFound)
+  {
+    return ParameterizedObject::getParam<T>(name, valIfNotFound);
+  }
+
+  template <>
+  inline Data *ManagedObject::getParam<Data *>(const char *name,
+                                               Data *valIfNotFound)
+  {
+    auto *obj = ParameterizedObject::getParam<ManagedObject *>(
+        name, (ManagedObject *)valIfNotFound);
+    if (obj && obj->managedObjectType == VKL_DATA)
+      return (Data *)obj;
+    else
+      return valIfNotFound;
+  }
+
 }  // namespace openvkl
 
 // Specializations for ISPCDriver /////////////////////////////////////////////

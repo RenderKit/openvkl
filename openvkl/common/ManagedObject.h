@@ -24,8 +24,13 @@ namespace openvkl {
 
     virtual ~ManagedObject() override;
 
+    // uses the provided default value if the parameter is not set
     template <typename T>
-    T getParam(const char *name, T valIfNotFound = T());
+    T getParam(const char *name, T valIfNotFound);
+
+    // throws an error if the requested parameter is not set
+    template <typename T>
+    T getParam(const char *name);
 
     // commit the object's outstanding changes (such as changed parameters)
     virtual void commit() {}
@@ -69,6 +74,29 @@ namespace openvkl {
     return ParameterizedObject::getParam<T>(name, valIfNotFound);
   }
 
+  template <typename T>
+  inline T ManagedObject::getParam(const char *name)
+  {
+    if (!hasParam(name)) {
+      throw std::runtime_error("missing required parameter '" +
+                               std::string(name) + "'");
+    }
+
+    Param *param = findParam(name);
+
+    if (!param->data.is<T>()) {
+      throw std::runtime_error("found parameter '" + std::string(name) +
+                               "', but it is not the expected type");
+    }
+
+    // we're guaranteed that the parameter exists and is the correct type; use
+    // the method on ParameterizedObject since it does other things like set the
+    // `query` flag.
+    return getParam<T>(name, T());
+  }
+
+  // Specialization for Data objects //////////////////////////////////////////
+
   template <>
   inline Data *ManagedObject::getParam<Data *>(const char *name,
                                                Data *valIfNotFound)
@@ -79,6 +107,28 @@ namespace openvkl {
       return (Data *)obj;
     else
       return valIfNotFound;
+  }
+
+  template <>
+  inline Data *ManagedObject::getParam<Data *>(const char *name)
+  {
+    if (!hasParam(name)) {
+      throw std::runtime_error("missing required parameter '" +
+                               std::string(name) + "'");
+    }
+
+    Param *param = findParam(name);
+
+    if (!(param->data.is<ManagedObject *>() &&
+          param->data.get<ManagedObject *>()->managedObjectType == VKL_DATA)) {
+      throw std::runtime_error("found parameter '" + std::string(name) +
+                               "', but it is not the expected type");
+    }
+
+    // we're guaranteed that the parameter exists and is the correct type; use
+    // the method on ParameterizedObject since it does other things like set the
+    // `query` flag.
+    return getParam<Data *>(name, nullptr);
   }
 
 }  // namespace openvkl

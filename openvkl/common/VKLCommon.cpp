@@ -165,8 +165,7 @@ namespace openvkl {
 
   bool isManagedObject(VKLDataType type)
   {
-    return type == VKL_OBJECT || type == VKL_DATA ||
-           type == VKL_VALUE_SELECTOR || type == VKL_VOLUME;
+    return type & VKL_OBJECT;
   }
 
   void handleError(VKLError e, const std::string &message)

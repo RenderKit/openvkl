@@ -102,6 +102,8 @@ namespace openvkl {
     {
       ~UnstructuredVolume();
 
+      std::string toString() const override;
+
       void commit() override;
 
       void initIntervalIteratorV(
@@ -188,6 +190,12 @@ namespace openvkl {
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline std::string UnstructuredVolume<W>::toString() const
+    {
+      return "openvkl::UnstructuredVolume";
+    }
 
     template <int W>
     inline void UnstructuredVolume<W>::computeSampleV(

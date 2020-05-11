@@ -12,6 +12,8 @@ namespace openvkl {
     template <int W>
     struct StructuredRegularVolume : public StructuredVolume<W>
     {
+      std::string toString() const override;
+
       void commit() override;
 
       void initIntervalIteratorU(
@@ -62,6 +64,12 @@ namespace openvkl {
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline std::string StructuredRegularVolume<W>::toString() const
+    {
+      return "openvkl::StructuredRegularVolume";
+    }
 
     template <int W>
     inline void StructuredRegularVolume<W>::initIntervalIteratorU(

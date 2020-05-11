@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VKLCommon.h"
@@ -36,11 +36,15 @@ namespace openvkl {
     return VKL_NO_ERROR;
   }
 
-  std::string stringForHandleType(VKLDataType type)
+  std::string stringFor(VKLDataType type)
   {
     switch (type) {
     case VKL_DRIVER:
       return "driver";
+    case VKL_VOID_PTR:
+      return "void_ptr";
+    case VKL_BOOL:
+      return "bool";
     case VKL_OBJECT:
       return "object";
     case VKL_DATA:
@@ -49,13 +53,97 @@ namespace openvkl {
       return "value_selector";
     case VKL_VOLUME:
       return "volume";
+    case VKL_STRING:
+      return "string";
+    case VKL_CHAR:
+      return "char";
+    case VKL_UCHAR:
+      return "uchar";
+    case VKL_VEC2UC:
+      return "vec2uc";
+    case VKL_VEC3UC:
+      return "vec3uc";
+    case VKL_VEC4UC:
+      return "vec4uc";
+    case VKL_SHORT:
+      return "short";
+    case VKL_USHORT:
+      return "ushort";
+    case VKL_INT:
+      return "int";
+    case VKL_VEC2I:
+      return "vec2i";
+    case VKL_VEC3I:
+      return "vec3i";
+    case VKL_VEC4I:
+      return "vec4i";
+    case VKL_UINT:
+      return "uint";
+    case VKL_VEC2UI:
+      return "vec2ui";
+    case VKL_VEC3UI:
+      return "vec3ui";
+    case VKL_VEC4UI:
+      return "vec4ui";
+    case VKL_LONG:
+      return "long";
+    case VKL_VEC2L:
+      return "vec2l";
+    case VKL_VEC3L:
+      return "vec3l";
+    case VKL_VEC4L:
+      return "vec4l";
+    case VKL_ULONG:
+      return "ulong";
+    case VKL_VEC2UL:
+      return "vec2ul";
+    case VKL_VEC3UL:
+      return "vec3ul";
+    case VKL_VEC4UL:
+      return "vec4ul";
+    case VKL_FLOAT:
+      return "float";
+    case VKL_VEC2F:
+      return "vec2f";
+    case VKL_VEC3F:
+      return "vec3f";
+    case VKL_VEC4F:
+      return "vec4f";
+    case VKL_DOUBLE:
+      return "double";
+    case VKL_BOX1I:
+      return "box1i";
+    case VKL_BOX2I:
+      return "box2i";
+    case VKL_BOX3I:
+      return "box3i";
+    case VKL_BOX4I:
+      return "box4i";
+    case VKL_BOX1F:
+      return "box1f";
+    case VKL_BOX2F:
+      return "box2f";
+    case VKL_BOX3F:
+      return "box3f";
+    case VKL_BOX4F:
+      return "box4f";
+    case VKL_LINEAR2F:
+      return "linear2f";
+    case VKL_LINEAR3F:
+      return "linear3f";
+    case VKL_AFFINE2F:
+      return "affine2f";
+    case VKL_AFFINE3F:
+      return "affine3f";
+    case VKL_UNKNOWN:
+      return "unknown";
     default:
       break;
     };
 
     std::stringstream error;
-    error << __FILE__ << ":" << __LINE__
-          << ": unknown VKLDataType or non-handle type used " << (int)type;
+    error << __FILE__ << ":" << __LINE__ << ": unknown VKLDataType "
+          << (int)type;
     throw std::runtime_error(error.str());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -20,7 +20,7 @@ namespace openvkl {
 
     // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
-    const auto type_string = stringForHandleType(VKL_TYPE);
+    const auto type_string = stringFor(VKL_TYPE);
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {

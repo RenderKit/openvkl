@@ -73,32 +73,14 @@ namespace openvkl {
 
       // hex method planar/nonplanar
 
-      vertexPosition = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "vertex.position", nullptr);
-      vertexValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "vertex.data", nullptr);
-
-      index = (Data *)this->template getParam<ManagedObject::VKL_PTR>("index",
-                                                                      nullptr);
+      vertexPosition = this->template getParamDataT<vec3f>("vertex.position");
+      vertexValue = this->template getParamDataT<float>("vertex.data", nullptr);
+      index       = this->template getParam<Data *>("index");
       indexPrefixed = this->template getParam<bool>("indexPrefixed", false);
+      cellIndex     = this->template getParam<Data *>("cell.index");
+      cellValue     = this->template getParamDataT<float>("cell.data", nullptr);
+      cellType = this->template getParamDataT<uint8_t>("cell.type", nullptr);
 
-      cellIndex = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.index", nullptr);
-      cellValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.data", nullptr);
-      cellType = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.type", nullptr);
-
-      if (!vertexPosition) {
-        throw std::runtime_error(
-            "unstructured volume must have 'vertex.position'");
-      }
-      if (!index) {
-        throw std::runtime_error("unstructured volume must have 'index'");
-      }
-      if (!cellIndex) {
-        throw std::runtime_error("unstructured volume must have 'cellIndex'");
-      }
       if (!vertexValue && !cellValue) {
         throw std::runtime_error(
             "unstructured volume must have 'vertex.data' or 'cell.data'");
@@ -107,10 +89,6 @@ namespace openvkl {
         throw std::runtime_error(
             "unstructured volume must have one of 'cell.type' or "
             "'indexPrefixed'");
-      }
-
-      if (vertexPosition->dataType != VKL_VEC3F) {
-        throw std::runtime_error("unstructured volume unsupported vertex type");
       }
 
       switch (index->dataType) {
@@ -132,7 +110,8 @@ namespace openvkl {
         cell32Bit = false;
         break;
       default:
-        throw std::runtime_error("unstructured volume unsupported cell type");
+        throw std::runtime_error(
+            "unstructured volume unsupported cell.index type");
       }
       nCells = cellIndex->size();
 
@@ -249,7 +228,9 @@ namespace openvkl {
       return bBox;
     }
 
-    static inline void errorFunction(void *userPtr, enum RTCError error, const char *str)
+    static inline void errorFunction(void *userPtr,
+                                     enum RTCError error,
+                                     const char *str)
     {
       LogMessageStream(VKL_LOG_WARNING)
           << "error " << error << ": " << str << std::endl;

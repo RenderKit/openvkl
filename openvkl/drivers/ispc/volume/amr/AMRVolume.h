@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,10 +34,10 @@ namespace openvkl {
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 
-      Ref<Data> blockDataData;
-      Ref<Data> blockBoundsData;
-      Ref<Data> refinementLevelsData;
-      Ref<Data> cellWidthsData;
+      Ref<const Data> blockDataData;
+      Ref<const Data> blockBoundsData;
+      Ref<const Data> refinementLevelsData;
+      Ref<const Data> cellWidthsData;
       VKLDataType voxelType;
       range1f valueRange{empty};
       box3f bounds;

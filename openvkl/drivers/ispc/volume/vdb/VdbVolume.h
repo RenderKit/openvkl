@@ -132,7 +132,7 @@ namespace openvkl {
       box3f bounds;
       std::string name;
       range1f valueRange;
-      Ref<Data> dataData;
+      Ref<const Data> dataData;
       VdbGrid *grid{nullptr};
       size_t bytesAllocated{0};
       VdbSampleConfig globalConfig;

@@ -458,15 +458,15 @@ Note that cell widths are defined _per refinement level_, not per block.
 
                                                     `VKL_AMR_OCTANT`
 
-  float[]        cellWidth                    NULL  array of each level's cell width
+  float[]        cellWidth                          [data] array of each level's cell width
 
-  box3i[]        block.bounds                 NULL  [data] array of grid sizes (in voxels)
+  box3i[]        block.bounds                       [data] array of grid sizes (in voxels)
                                                     for each AMR block
 
-  int[]          block.level                  NULL  array of each block's refinement
+  int[]          block.level                        [data] array of each block's refinement
                                                     level
 
-  VKLData[]      block.data                   NULL  [data] array of VKLData containing
+  VKLData[]      block.data                         [data] array of VKLData containing
                                                     the actual scalar voxel data
 
   vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
@@ -682,7 +682,7 @@ objects (sampler object parameters default to volume parameters).
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
-  int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`   Do not descend further than to this
+  int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`-1 Do not descend further than to this
                                                          depth during sampling.
 
   ------------  ----------------  ---------------------- ---------------------------------------

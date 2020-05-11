@@ -167,14 +167,14 @@ namespace openvkl {
       box3f bounds{empty};
       range1f valueRange{empty};
 
-      Data *vertexPosition{nullptr};
-      Data *vertexValue{nullptr};
+      Ref<const Data> vertexPosition;
+      Ref<const Data> vertexValue;
 
-      Data *index{nullptr};
+      Ref<const Data> index;
 
-      Data *cellIndex{nullptr};
-      Data *cellValue{nullptr};
-      Data *cellType{nullptr};
+      Ref<const Data> cellIndex;
+      Ref<const Data> cellValue;
+      Ref<const Data> cellType;
 
       bool index32Bit{false};
       bool cell32Bit{false};

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.h"
-#include "../common/Data.h"
 #include "../../common/export_util.h"
+#include "../common/Data.h"
 // ospcommon
 #include "ospcommon/tasking/parallel_for.h"
 #include "ospcommon/utility/getEnvVar.h"
@@ -47,26 +47,10 @@ namespace openvkl {
       if (data != nullptr)  // TODO: support data updates
         return;
 
-      blockBoundsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "block.bounds", nullptr);
-      if (blockBoundsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.bounds' array");
-
-      refinementLevelsData =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>("block.level",
-                                                                  nullptr);
-      if (refinementLevelsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.level' array");
-
-      cellWidthsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cellWidth", nullptr);
-      if (cellWidthsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'cellWidth' array");
-
-      blockDataData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "block.data", nullptr);
-      if (blockDataData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.data' array");
+      cellWidthsData  = this->template getParamDataT<float>("cellWidth");
+      blockBoundsData = this->template getParamDataT<box3i>("block.bounds");
+      refinementLevelsData = this->template getParamDataT<int>("block.level");
+      blockDataData        = this->template getParam<Data *>("block.data");
 
       // create the AMR data structure. This creates the logical blocks, which
       // contain the actual data and block-level metadata, such as cell width
@@ -89,10 +73,10 @@ namespace openvkl {
 
       bounds = accel->worldBounds;
 
-      const vec3f gridSpacing =
-          this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       const vec3f gridOrigin =
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+      const vec3f gridSpacing =
+          this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
 
       // determine voxelType from set of block data; they must all be the same
       std::set<VKLDataType> blockDataTypes;

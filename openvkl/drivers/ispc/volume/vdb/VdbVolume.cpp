@@ -397,7 +397,7 @@ namespace openvkl {
       }
     }
 
-    AffineSpace3f loadTransform(const Ref<Data> &dataIndexToObject)
+    AffineSpace3f loadTransform(const Ref<const Data> &dataIndexToObject)
     {
       AffineSpace3f a(one);
       if (dataIndexToObject && dataIndexToObject->size() >= 12) {
@@ -433,27 +433,23 @@ namespace openvkl {
       cleanup();
 
       const VKLDataType type =
-          (VKLDataType)this->template getParam<int>("type", VKL_UNKNOWN);
+          (VKLDataType)this->template getParam<int>("type");
       const int maxIteratorDepth =
           this->template getParam<int>("maxIteratorDepth", 3);
-      Ref<Data> dataIndexToObject =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-              "indexToObject", nullptr);
-      Ref<Data> dataLevel =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>("level",
-                                                                  nullptr);
-      Ref<Data> dataOrigin =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>("origin",
-                                                                  nullptr);
+
+      Ref<const Data> dataIndexToObject =
+          this->template getParamDataT<float>("indexToObject", nullptr);
+      Ref<const Data> dataLevel =
+          this->template getParamDataT<uint32_t>("level");
+      Ref<const Data> dataOrigin =
+          this->template getParamDataT<vec3i>("origin");
+
       // 32 bit unsigned int values. The enum VKLVdbLeafFormat encodes supported
       // values for the format.
-      Ref<Data> dataFormat =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>("format",
-                                                                  nullptr);
+      Ref<const Data> dataFormat =
+          this->template getParamDataT<uint32_t>("format");
       // 64 bit unsigned int values. Interpretation depends on dataFormat.
-      Ref<Data> dataData =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>("data",
-                                                                  nullptr);
+      Ref<const Data> dataData = this->template getParam<Data *>("data");
 
       // Set up the global sample config.
       globalConfig.filter = (VKLFilter)this->template getParam<int>(
@@ -473,18 +469,6 @@ namespace openvkl {
                      " but only ",
                      VKL_FLOAT,
                      " (VKL_FLOAT) is supported.");
-
-      if (!dataLevel)
-        runtimeError("level is not set");
-
-      if (!dataOrigin)
-        runtimeError("origin is not set");
-
-      if (!dataFormat)
-        runtimeError("format is not set");
-
-      if (!dataData)
-        runtimeError("data is not set");
 
       const size_t numLeaves = dataLevel->size();
       if (dataOrigin->size() != numLeaves || dataFormat->size() != numLeaves ||

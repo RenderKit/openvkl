@@ -32,6 +32,16 @@ namespace openvkl {
     template <typename T>
     T getParam(const char *name);
 
+    // gets a data array of elements of the given type; uses the provided
+    // default value if the parameter is not set
+    template <typename T>
+    const Ref<const Data> getParamDataT(const char *name, Data *valIfNotFound);
+
+    // gets a data array of elements of the given type; throws an error if the
+    // requested parameter is not set
+    template <typename T>
+    const Ref<const Data> getParamDataT(const char *name);
+
     // commit the object's outstanding changes (such as changed parameters)
     virtual void commit() {}
 

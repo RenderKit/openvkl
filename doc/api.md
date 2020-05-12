@@ -536,9 +536,11 @@ For pyramid cells, each cell is formed by a group of five indices into the
 vertices and data values. Vertex ordering is the same as `VTK_PYRAMID`: four
 bottom vertices counterclockwise, then the top vertex.
 
-To maintain VTK data compatibility an index array may be specified via the
-`indexPrefixed` array that allows vertex indices to be interleaved with cell
-sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
+To maintain VTK data compatibility, the `index` array may be specified with cell
+sizes interleaved with vertex indices in the following format: $n, id_1, ...,
+id_n, m, id_1, ..., id_m$. This alternative `index` array layout can be enabled
+through the `indexPrefixed` flag (in which case, the `cell.type` parameter
+should be omitted).
 
   -------------------  ------------------  --------  ---------------------------------------
   Type                 Name                Default   Description
@@ -551,10 +553,10 @@ sizes in the following format: $n, id_1, ..., id_n, m, id_1, ..., id_m$.
   uint32[] / uint64[]  index                         [data] array of indices (into the
                                                      vertex array(s)) that form cells
 
-  uint32[] / uint64[]  indexPrefixed                 alternative [data] array of indices
-                                                     compatible to VTK, where the indices of
-                                                     each cell are prefixed with the number
-                                                     of vertices
+  bool                 indexPrefixed          false  indicates that the `index` array is
+                                                     provided in a VTK-compatible format,
+                                                     where the indices of each cell are
+                                                     prefixed with the number of vertices
 
   uint32[] / uint64[]  cell.index                    [data] array of locations (into the
                                                      index array), specifying the first index

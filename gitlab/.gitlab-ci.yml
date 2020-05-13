@@ -112,11 +112,15 @@ build-ubuntu16.04:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
   script:
+    - export LD_LIBRARY_PATH=`pwd`/build/install/lib  # Ubuntu needs TBB in LD_LIBRARY_PATH at build time
     - gitlab/build.sh -G Ninja
 
 build-ubuntu18.04:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu18.04
+  script:
+    - export LD_LIBRARY_PATH=`pwd`/build/install/lib  # Ubuntu needs TBB in LD_LIBRARY_PATH at build time
+    - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
 build-arch:
   <<: *build_job_docker
@@ -129,6 +133,15 @@ build-arch-clang:
     - export CC=clang
     - export CXX=clang++
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+build-arch-address-sanitizer:
+  <<: *build_job_docker
+  image: ospray/docker-images:arch
+  script:
+    - export CFLAGS=-fsanitize=address
+    - export CXXFLAGS=-fsanitize=address
+    - export LDFLAGS=-fsanitize=address
+    - gitlab/build.sh -D BUILD_GLFW=OFF
 
 build-macOS:
   <<: *base_build_job
@@ -209,6 +222,12 @@ test-functional-arch-clang:
   image: ospray/docker-images:arch
   needs:
     - build-arch-clang
+
+test-functional-arch-address-sanitizer:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:arch
+  needs:
+    - build-arch-address-sanitizer
 
 test-functional-macOS:
   <<: *base_functional_test_job

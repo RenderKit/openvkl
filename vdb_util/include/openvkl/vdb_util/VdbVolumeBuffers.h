@@ -199,9 +199,10 @@ namespace openvkl {
         vklSetInt(volume, "filter", filter);
         vklSetInt(volume, "maxSamplingDepth", vklVdbNumLevels() - 1);
         vklSetInt(volume, "maxIteratorDepth", 3);
-        vklSetData(volume,
-                   "indexToObject",
-                   vklNewData(12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT));
+
+        VKLData transformData = vklNewData(12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
+        vklSetData(volume, "indexToObject", transformData);
+        vklRelease(transformData);
 
         // Create the data buffer from our pointers.
         const size_t numNodes = level.size();
@@ -211,22 +212,21 @@ namespace openvkl {
         //       object can change safely, including replacing leaf data.
         //       This also means that the VdbVolumeBuffers object can be
         //       destroyed after creating the volume.
-        vklSetData(
-            volume,
-            "level",
-            vklNewData(numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT));
-        vklSetData(
-            volume,
-            "origin",
-            vklNewData(numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT));
-        vklSetData(
-            volume,
-            "format",
-            vklNewData(numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT));
-        vklSetData(
-            volume,
-            "data",
-            vklNewData(numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT));
+        VKLData levelData = vklNewData(numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "level", levelData);
+        vklRelease(levelData);
+
+        VKLData originData = vklNewData(numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "origin", originData);
+        vklRelease(originData);
+
+        VKLData formatData = vklNewData(numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "format", formatData);
+        vklRelease(formatData);
+
+        VKLData dataData = vklNewData(numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "data", dataData);
+        vklRelease(dataData);
 
         vklCommit(volume);
         return volume;

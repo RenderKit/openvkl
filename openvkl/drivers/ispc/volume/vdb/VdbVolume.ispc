@@ -29,6 +29,16 @@ export void *uniform EXPORT_UNIQUE(VdbVolume_create)
   return self;
 }
 
+/*
+ * Destructor for ISPC versions of the volume.
+ */
+export void EXPORT_UNIQUE(VdbVolume_destroy,
+                          void *uniform _self)
+{
+  VdbVolume *uniform volume = (VdbVolume * uniform) _self;
+  delete volume;
+}
+
 /* This is here for the default iterator. */
 varying float VdbVolume_sample(const void *uniform volume,
                                const varying vec3f &objectCoordinates)

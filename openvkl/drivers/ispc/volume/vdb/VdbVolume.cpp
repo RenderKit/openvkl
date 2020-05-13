@@ -77,6 +77,7 @@ namespace openvkl {
     VdbVolume<W>::~VdbVolume()
     {
       cleanup();
+      CALL_ISPC(VdbVolume_destroy, this->ispcEquivalent);
     }
 
     template <int W>

@@ -83,7 +83,9 @@ namespace openvkl {
     void VdbVolume<W>::cleanup()
     {
       if (grid) {
-        for (uint32_t l = 0; l < vklVdbNumLevels(); ++l) {
+        // Note: There are VKL_VDB_NUM_LEVELS-1 slots for the
+        //       level buffers! Leaves are not stored in the hierarchy!
+        for (uint32_t l = 0; (l+1) < vklVdbNumLevels(); ++l) {
           VdbLevel &level = grid->levels[l];
           deallocate(level.voxels);
           deallocate(level.valueRange);

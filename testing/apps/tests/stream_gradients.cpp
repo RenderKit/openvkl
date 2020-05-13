@@ -85,4 +85,9 @@ TEST_CASE("Stream gradients", "[volume_gradients]")
   {
     test_stream_gradients<WaveletUnstructuredProceduralVolume>();
   }
+
+  SECTION("vdb")
+  {
+    test_stream_gradients<WaveletVdbVolume>();
+  }
 }

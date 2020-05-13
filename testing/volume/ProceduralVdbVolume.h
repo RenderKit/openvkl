@@ -13,7 +13,8 @@ using namespace ospcommon;
 namespace openvkl {
   namespace testing {
 
-    template <float samplingFunction(const vec3f &)>
+    template <float samplingFunction(const vec3f &),
+              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralVdbVolume : public TestingVolume
     {
       using Buffers = vdb_util::VdbVolumeBuffers<VKL_FLOAT>;
@@ -132,6 +133,11 @@ namespace openvkl {
         return samplingFunction(objectCoordinates);
       }
 
+      vec3f computeProceduralGradient(const vec3f &objectCoordinates)
+      {
+        return gradientFunction(objectCoordinates);
+      }
+
      protected:
       void generateVKLVolume() override
       {
@@ -158,7 +164,11 @@ namespace openvkl {
       vec3f gridSpacing;
     };
 
-    using WaveletVdbVolume = ProceduralVdbVolume<getWaveletValue<float>>;
+    using WaveletVdbVolume = ProceduralVdbVolume<getWaveletValue<float>,
+                                                 getWaveletGradient>;
+
+    using XYZVdbVolume = ProceduralVdbVolume<getXYZValue<float>,
+                                             getXYZGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

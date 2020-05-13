@@ -122,4 +122,16 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
 
     randomized_vectorized_gradients(volume);
   }
+
+  SECTION(
+      "randomized vectorized gradients varying calling width and masks: "
+      "vdb volumes")
+  {
+    std::unique_ptr<XYZVdbVolume> v(new XYZVdbVolume(
+            vec3i(128), vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
+
+    VKLVolume volume = v->getVKLVolume();
+
+    randomized_vectorized_gradients(volume);
+  }
 }

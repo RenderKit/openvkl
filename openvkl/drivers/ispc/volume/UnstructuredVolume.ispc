@@ -857,6 +857,13 @@ export void *uniform EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor)
   return self;
 }
 
+export void EXPORT_UNIQUE(VKLUnstructuredVolume_Destructor, void *uniform _self)
+{
+  VKLUnstructuredVolume *uniform volume =
+      (VKLUnstructuredVolume * uniform) _self;
+  delete volume;
+}
+
 export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
                           void *uniform _self,
                           const uniform box3f &_bbox,

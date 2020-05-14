@@ -142,4 +142,5 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   REQUIRE_NOTHROW(vklInitIntervalIterator(
       &iterator, vklVolume, &origin, &direction, &tRange, nullptr));
   REQUIRE_NOTHROW(vklIterateInterval(&iterator, &interval));
+  REQUIRE_NOTHROW(delete volume);
 }

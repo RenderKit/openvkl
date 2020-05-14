@@ -16,7 +16,7 @@ namespace openvkl {
     struct AMRVolume : public Volume<W>
     {
       AMRVolume();
-      ~AMRVolume() override = default;
+      ~AMRVolume() override;
 
       std::string toString() const override;
 

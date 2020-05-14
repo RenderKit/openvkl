@@ -62,6 +62,13 @@ export void *uniform EXPORT_UNIQUE(AMRVolume_create, void *uniform cppE)
   return self;
 }
 
+export void EXPORT_UNIQUE(AMRVolume_Destructor,
+                          void *uniform _self)
+{
+  AMRVolume *uniform volume = (AMRVolume * uniform) _self;
+  delete volume;
+}
+
 export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
                           const void *uniform _self,
                           uniform int leafID)

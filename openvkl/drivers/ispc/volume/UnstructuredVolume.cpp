@@ -60,6 +60,10 @@ namespace openvkl {
     template <int W>
     UnstructuredVolume<W>::~UnstructuredVolume()
     {
+      if (this->ispcEquivalent) {
+        CALL_ISPC(VKLUnstructuredVolume_Destructor, this->ispcEquivalent);
+      }
+
       if (rtcBVH)
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
@@ -121,6 +125,7 @@ namespace openvkl {
               "unstructured volume #cells does not match #cell.type");
       } else {
         cellType = new Data(nCells, VKL_UCHAR, nullptr, VKL_DATA_DEFAULT);
+        cellType->refDec();
         uint8_t *typeArray = (uint8_t *)cellType->data;
         for (int i = 0; i < nCells; i++) {
           auto index = readInteger(cellIndex->data, cell32Bit, i);

@@ -233,6 +233,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
       }
     }
+
+    vklRelease(valueSelector);
   }
 
   SECTION("only write hits for active lanes")
@@ -481,5 +483,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
       }
     }
+
+    vklRelease(valueSelector);
   }
 }

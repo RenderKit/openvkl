@@ -74,7 +74,9 @@ void vrange1fn_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vrange1fn<W>));
   REQUIRE(sizeof(vrange1fn<W>) == ispc::sizeofVaryingRange1f());
-  REQUIRE(is_aligned_for_type<vrange1fn<W>>(ispc::newVaryingRange1f()));
+  void *ptr = ispc::newVaryingRange1f();
+  REQUIRE(is_aligned_for_type<vrange1fn<W>>(ptr));
+  ispc::delete_uniform(ptr);
 };
 
 template <int W>
@@ -82,7 +84,9 @@ void vvec3fn_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vvec3fn<W>));
   REQUIRE(sizeof(vvec3fn<W>) == ispc::sizeofVaryingVec3f());
-  REQUIRE(is_aligned_for_type<vvec3fn<W>>(ispc::newVaryingVec3f()));
+  void *ptr = ispc::newVaryingVec3f();
+  REQUIRE(is_aligned_for_type<vvec3fn<W>>(ptr));
+  ispc::delete_uniform(ptr);
 }
 
 template <int W>
@@ -93,8 +97,9 @@ void vVKLIntervalIteratorN_conformance_test()
 
   REQUIRE(sizeof(vVKLIntervalIteratorN<W>) ==
           ispc::sizeofVaryingVKLIntervalIterator());
-  REQUIRE(is_aligned_for_type<vVKLIntervalIteratorN<W>>(
-      ispc::newVaryingVKLIntervalIterator()));
+  void *ptr = ispc::newVaryingVKLIntervalIterator();
+  REQUIRE(is_aligned_for_type<vVKLIntervalIteratorN<W>>(ptr));
+  ispc::delete_uniform(ptr);
 
   if (W == 4) {
     REQUIRE(sizeof(VKLIntervalIterator4) == sizeof(vVKLIntervalIteratorN<W>));
@@ -121,8 +126,9 @@ void vVKLHitIteratorN_conformance_test()
   INFO("width = " << W << ", alignment = " << alignof(vVKLHitIteratorN<W>));
 
   REQUIRE(sizeof(vVKLHitIteratorN<W>) == ispc::sizeofVaryingVKLHitIterator());
-  REQUIRE(is_aligned_for_type<vVKLHitIteratorN<W>>(
-      ispc::newVaryingVKLHitIterator()));
+  void *ptr = ispc::newVaryingVKLHitIterator();
+  REQUIRE(is_aligned_for_type<vVKLHitIteratorN<W>>(ptr));
+  ispc::delete_uniform(ptr);
 
   if (W == 4) {
     REQUIRE(sizeof(VKLHitIterator4) == sizeof(vVKLHitIteratorN<W>));
@@ -147,7 +153,9 @@ void vVKLIntervalN_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vVKLIntervalN<W>));
   REQUIRE(sizeof(vVKLIntervalN<W>) == ispc::sizeofVaryingInterval());
-  REQUIRE(is_aligned_for_type<vVKLIntervalN<W>>(ispc::newVaryingInterval()));
+  void *ptr = ispc::newVaryingInterval();
+  REQUIRE(is_aligned_for_type<vVKLIntervalN<W>>(ptr));
+  ispc::delete_uniform(ptr);
 }
 
 template <int W>
@@ -155,7 +163,9 @@ void vVKLHitN_conformance_test()
 {
   INFO("width = " << W << ", alignment = " << alignof(vVKLHitN<W>));
   REQUIRE(sizeof(vVKLHitN<W>) == ispc::sizeofVaryingHit());
-  REQUIRE(is_aligned_for_type<vVKLHitN<W>>(ispc::newVaryingHit()));
+  void *ptr = ispc::newVaryingHit();
+  REQUIRE(is_aligned_for_type<vVKLHitN<W>>(ptr));
+  ispc::delete_uniform(ptr);
 }
 
 template <int W>
@@ -166,9 +176,11 @@ void GridAcceleratorIterator_conformance_test()
   REQUIRE(ispcSize ==
           openvkl::ispc_driver::GridAcceleratorIteratorU<W>::ispcStorageSize);
 
+  void *ptr = ispc::newGridAcceleratorIteratorU();
   REQUIRE(
       is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorU<W>>(
-          ispc::newGridAcceleratorIteratorU()));
+          ptr));
+  ispc::delete_uniform(ptr);
 
   REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorU<W>) <=
           iterator_internal_state_size_for_width(1));
@@ -178,9 +190,11 @@ void GridAcceleratorIterator_conformance_test()
   REQUIRE(ispcSize ==
           openvkl::ispc_driver::GridAcceleratorIteratorV<W>::ispcStorageSize);
 
+  ptr = ispc::newGridAcceleratorIteratorV();
   REQUIRE(
       is_aligned_for_type<openvkl::ispc_driver::GridAcceleratorIteratorV<W>>(
-          ispc::newGridAcceleratorIteratorV()));
+          ptr));
+  ispc::delete_uniform(ptr);
 
   REQUIRE(sizeof(openvkl::ispc_driver::GridAcceleratorIteratorV<W>) <=
           iterator_internal_state_size_for_width(W));

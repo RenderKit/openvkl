@@ -7,6 +7,11 @@
 #include "math/vec.ih"
 #include "openvkl/openvkl.isph"
 
+export void delete_uniform(void *uniform ptr)
+{
+  delete ptr;
+}
+
 export uniform int sizeofVaryingRange1f()
 {
   return sizeof(varying box1f);

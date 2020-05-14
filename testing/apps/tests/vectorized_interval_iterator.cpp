@@ -784,6 +784,8 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
       }
     }
+
+    vklRelease(valueSelector);
   }
 
   SECTION("only write intervals for active lanes")

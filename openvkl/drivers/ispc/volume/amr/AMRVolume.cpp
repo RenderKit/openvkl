@@ -26,6 +26,14 @@ namespace openvkl {
     }
 
     template <int W>
+    AMRVolume<W>::~AMRVolume()
+    {
+      if (this->ispcEquivalent) {
+        CALL_ISPC(AMRVolume_Destructor, this->ispcEquivalent);
+      }
+    }
+
+    template <int W>
     std::string AMRVolume<W>::toString() const
     {
       return "openvkl::AMRVolume";

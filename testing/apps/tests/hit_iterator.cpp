@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -37,6 +37,8 @@ void scalar_hit_iteration(VKLVolume volume, const std::vector<float> &isoValues)
   }
 
   REQUIRE(hitCount == isoValues.size());
+
+  vklRelease(valueSelector);
 }
 
 TEST_CASE("Hit iterator", "[hit_iterators]")

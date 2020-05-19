@@ -17,10 +17,10 @@ namespace openvkl {
           data - ie, what we get from the scene graph or applicatoin */
       struct AMRData
       {
-        AMRData(const Data &blockBoundsData,
-                const Data &refinementLevelsData,
-                const Data &cellWidthsData,
-                const Data &blockDataData);
+        AMRData(const DataT<box3i> &blockBoundsData,
+                const DataT<int> &refinementLevelsData,
+                const DataT<float> &cellWidthsData,
+                const DataT<Data *> &blockDataData);
 
         /*! this is how an app _specifies_ a brick (or better, the array
           of bricks); the brick data is specified through a separate

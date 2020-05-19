@@ -34,10 +34,10 @@ namespace openvkl {
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 
-      Ref<const Data> blockDataData;
-      Ref<const Data> blockBoundsData;
-      Ref<const Data> refinementLevelsData;
-      Ref<const Data> cellWidthsData;
+      Ref<const DataT<Data *>> blockDataData;
+      Ref<const DataT<box3i>> blockBoundsData;
+      Ref<const DataT<int>> refinementLevelsData;
+      Ref<const DataT<float>> cellWidthsData;
       VKLDataType voxelType;
       range1f valueRange{empty};
       box3f bounds;

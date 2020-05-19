@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // amr base
@@ -30,31 +30,24 @@ namespace openvkl {
 
       /*! this structure defines only the format of the INPUT of amr
         data - ie, what we get from the scene graph or applicatoin */
-      AMRData::AMRData(const Data &blockBoundsData,
-                       const Data &refinementLevelsData,
-                       const Data &cellWidthsData,
-                       const Data &blockDataData)
+      AMRData::AMRData(const DataT<box3i> &blockBounds,
+                       const DataT<int> &refinementLevels,
+                       const DataT<float> &cellWidths,
+                       const DataT<Data *> &blockDataData)
       {
-        size_t numBricks = blockBoundsData.numItems;
+        size_t numBricks = blockBounds.size();
 
         // ALOK: putting the arrays back into a struct for now
-        // TODO: turn this all into arrays
-
-        const box3i *blockBounds    = (const box3i *)blockBoundsData.data;
-        const int *refinementLevels = (const int *)refinementLevelsData.data;
-        const float *cellWidths     = (const float *)cellWidthsData.data;
-        const Data **allBlocksData  = (const Data **)blockDataData.data;
 
         for (size_t i = 0; i < numBricks; i++) {
           AMRData::BrickInfo blockInfo;
           blockInfo.box       = blockBounds[i];
           blockInfo.level     = refinementLevels[i];
           blockInfo.cellWidth = cellWidths[refinementLevels[i]];
-          brick.emplace_back(blockInfo, (const float *)allBlocksData[i]->data);
+          brick.emplace_back(blockInfo, blockDataData[i]->as<float>().data());
         }
       }
 
     }  // namespace amr
   }    // namespace ispc_driver
 }  // namespace openvkl
-

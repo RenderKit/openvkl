@@ -58,7 +58,20 @@ namespace openvkl {
       cellWidthsData  = this->template getParamDataT<float>("cellWidth");
       blockBoundsData = this->template getParamDataT<box3i>("block.bounds");
       refinementLevelsData = this->template getParamDataT<int>("block.level");
-      blockDataData        = this->template getParam<Data *>("block.data");
+      blockDataData        = this->template getParamDataT<Data *>("block.data");
+
+      // strided data not yet supported
+      this->requireParamDataIsCompact("cellWidth");
+      this->requireParamDataIsCompact("block.bounds");
+      this->requireParamDataIsCompact("block.level");
+      this->requireParamDataIsCompact("block.data");
+
+      for (const auto &d : *blockDataData) {
+        if (!d->compact()) {
+          throw std::runtime_error(
+              "all block.data arrays must be compact (naturally strided)");
+        }
+      }
 
       // create the AMR data structure. This creates the logical blocks, which
       // contain the actual data and block-level metadata, such as cell width
@@ -74,8 +87,8 @@ namespace openvkl {
       // nodes, and parents have progressively lower resolution
       accel = make_unique<amr::AMRAccel>(*data);
 
-      float coarsestCellWidth = *std::max_element(
-          cellWidthsData->begin<float>(), cellWidthsData->end<float>());
+      float coarsestCellWidth =
+          *std::max_element(cellWidthsData->begin(), cellWidthsData->end());
 
       float samplingStep = 0.1f * coarsestCellWidth;
 
@@ -89,8 +102,8 @@ namespace openvkl {
       // determine voxelType from set of block data; they must all be the same
       std::set<VKLDataType> blockDataTypes;
 
-      for (int i = 0; i < blockDataData->numItems; i++)
-        blockDataTypes.insert(((Data **)blockDataData->data)[i]->dataType);
+      for (const auto &d : *blockDataData)
+        blockDataTypes.insert(d->dataType);
 
       if (blockDataTypes.size() != 1)
         throw std::runtime_error(

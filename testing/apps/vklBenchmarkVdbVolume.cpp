@@ -1,7 +1,6 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include <sstream>
 #include "benchmark/benchmark.h"
 #include "openvkl_testing.h"
 #include "benchmark_suite/volume.h"

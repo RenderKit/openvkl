@@ -26,8 +26,9 @@ namespace api {
     static const std::string name()
     {
       std::ostringstream os;
-      os << "scalar" << CoordinateGenerator::name() << "Gradient"
-         << "<" << VolumeWrapper::name() << ">";
+      os << "scalar" << CoordinateGenerator::name() << "Gradient";
+      if (!VolumeWrapper::name().empty())
+         os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -110,7 +111,10 @@ namespace api {
     {
       std::ostringstream os;
       os << "vector" << CoordinateGenerator::name() << "Gradient"
-         << "<" << W << ", " << VolumeWrapper::name() << ">";
+         << "<" << W;
+      if (!VolumeWrapper::name().empty())
+         os << ", " << VolumeWrapper::name();
+      os << ">";
       return os.str();
     }
 
@@ -148,7 +152,10 @@ namespace api {
     {
       std::ostringstream os;
       os << "stream" << CoordinateGenerator::name() << "Gradient"
-         << "<" << N << ", " << VolumeWrapper::name() << ">";
+         << "<" << N;
+      if (!VolumeWrapper::name().empty())
+         os << ", " << VolumeWrapper::name();
+      os << ">";
       return os.str();
     }
 

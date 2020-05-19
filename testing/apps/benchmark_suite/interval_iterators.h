@@ -16,8 +16,9 @@ namespace api {
     static const std::string name()
     {
       std::ostringstream os;
-      os << "scalarIntervalIteratorConstruction"
-         << "<" << VolumeWrapper::name() << ">";
+      os << "scalarIntervalIteratorConstruction";
+      if (!VolumeWrapper::name().empty())
+         os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -69,8 +70,9 @@ namespace api {
     static const std::string name()
     {
       std::ostringstream os;
-      os << "scalarIntervalIteratorIterateFirst"
-         << "<" << VolumeWrapper::name() << ">";
+      os << "scalarIntervalIteratorIterateFirst";
+      if (!VolumeWrapper::name().empty())
+         os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -124,6 +126,72 @@ namespace api {
     }
   };
 
+  template <class VolumeWrapper>
+  struct IntervalIteratorIterateSecond
+  {
+    static const std::string name()
+    {
+      std::ostringstream os;
+      os << "scalarIntervalIteratorIterateSecond";
+      if (!VolumeWrapper::name().empty())
+         os << "<" << VolumeWrapper::name() << ">";
+      return os.str();
+    }
+
+    static inline void run(benchmark::State &state)
+    {
+      static std::unique_ptr<VolumeWrapper> wrapper;
+      static VKLVolume vklVolume;
+      static VKLIntervalIterator iterator;
+
+      if (state.thread_index == 0) {
+        wrapper = rkcommon::make_unique<VolumeWrapper>();
+
+        vklVolume            = wrapper->getVolume();
+        const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+
+        std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
+        std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
+
+        std::random_device rd;
+        std::mt19937 eng(rd());
+
+        vkl_vec3f origin{distX(eng), distY(eng), -1.f};
+        vkl_vec3f direction{0.f, 0.f, 1.f};
+        vkl_range1f tRange{0.f, 1000.f};
+
+        vklInitIntervalIterator(
+            &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
+
+        // move past first iteration
+        VKLInterval interval;
+        vklIterateInterval(&iterator, &interval);
+      }
+
+      VKLInterval interval;
+
+      for (auto _ : state) {
+        VKLIntervalIterator iteratorTemp = iterator;
+
+        bool success = vklIterateInterval(&iteratorTemp, &interval);
+
+        if (!success) {
+          throw std::runtime_error("vklIterateInterval() returned false");
+        }
+
+        benchmark::DoNotOptimize(interval);
+      }
+
+      // global teardown only in first thread
+      if (state.thread_index == 0) {
+        wrapper.reset();
+      }
+
+      // enables rates in report output
+      state.SetItemsProcessed(state.iterations());
+    }
+  };
+
 } // namespace api
 
 /*
@@ -149,5 +217,14 @@ inline void registerIntervalIterators()
   registerBenchmark<IterateFirst>()->Threads(12)->UseRealTime();
   registerBenchmark<IterateFirst>()->Threads(36)->UseRealTime();
   registerBenchmark<IterateFirst>()->Threads(72)->UseRealTime();
+
+  using IterateSecond = api::IntervalIteratorIterateSecond<VolumeWrapper>;
+  registerBenchmark<IterateSecond>()->UseRealTime();
+  registerBenchmark<IterateSecond>()->Threads(2)->UseRealTime();
+  registerBenchmark<IterateSecond>()->Threads(4)->UseRealTime();
+  registerBenchmark<IterateSecond>()->Threads(6)->UseRealTime();
+  registerBenchmark<IterateSecond>()->Threads(12)->UseRealTime();
+  registerBenchmark<IterateSecond>()->Threads(36)->UseRealTime();
+  registerBenchmark<IterateSecond>()->Threads(72)->UseRealTime();
 }
 

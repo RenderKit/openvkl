@@ -1,15 +1,15 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include <cmath>
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
 
 namespace openvkl {
 
-  using namespace ospcommon::math;
+  using namespace rkcommon::math;
 
   inline std::pair<float, float> intersectBox(const vec3f &origin,
                                               const vec3f &direction,

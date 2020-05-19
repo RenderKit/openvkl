@@ -1,15 +1,15 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "TestingStructuredVolume.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+// rkcommon
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {
@@ -94,7 +94,7 @@ namespace openvkl {
 
         VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
 
-        ospcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
+        rkcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
           for (size_t y = 0; y < this->dimensions.y; y++) {
             for (size_t x = 0; x < this->dimensions.x; x++) {
               size_t index = z * this->dimensions.y * this->dimensions.x +

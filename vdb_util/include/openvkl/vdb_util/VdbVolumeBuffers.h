@@ -6,16 +6,16 @@
 #include <vector>
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
-#include "ospcommon/math/AffineSpace.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/vec.h"
 
 namespace openvkl {
   namespace vdb_util {
 
-    using vec3i         = ospcommon::math::vec3i;
-    using vec3f         = ospcommon::math::vec3f;
-    using AffineSpace3f = ospcommon::math::AffineSpace3f;
-    using LinearSpace3f = ospcommon::math::LinearSpace3f;
+    using vec3i         = rkcommon::math::vec3i;
+    using vec3f         = rkcommon::math::vec3f;
+    using AffineSpace3f = rkcommon::math::AffineSpace3f;
+    using LinearSpace3f = rkcommon::math::LinearSpace3f;
 
     /*
      * These are all the buffers we need. We will create VKLData objects

@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,8 +6,8 @@
 #include <vector>
 // openvkl
 #include "TestingVolume.h"
-// ospcommon
-#include "ospcommon/math/range.h"
+// rkcommon
+#include "rkcommon/math/range.h"
 
 namespace openvkl {
   namespace testing {
@@ -33,7 +33,7 @@ namespace openvkl {
      protected:
       void generateVKLVolume() override;
 
-      range1f computedValueRange = range1f(ospcommon::math::empty);
+      range1f computedValueRange = range1f(rkcommon::math::empty);
 
       std::string gridType;
       vec3i dimensions;

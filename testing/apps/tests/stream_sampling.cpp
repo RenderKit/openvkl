@@ -5,14 +5,14 @@
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 template <typename VOLUME_TYPE>
 void test_stream_sampling()
 {
   auto v =
-      ospcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
+      rkcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);

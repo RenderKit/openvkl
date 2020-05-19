@@ -37,8 +37,8 @@ mkdir $OPENVKL_BUILD_DIR
 cd $OPENVKL_BUILD_DIR
 
 # Setup environment variables for dependencies
-$env:OSPCOMMON_TBB_ROOT = $DEP_INSTALL_DIR
-$env:ospcommon_DIR = $DEP_INSTALL_DIR
+$env:RKCOMMON_TBB_ROOT = $DEP_INSTALL_DIR
+$env:rkcommon_DIR = $DEP_INSTALL_DIR
 $env:embree_DIR = $DEP_INSTALL_DIR
 $env:glfw3_DIR = $DEP_INSTALL_DIR
 

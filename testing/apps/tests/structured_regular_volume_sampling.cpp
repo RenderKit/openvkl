@@ -3,10 +3,10 @@
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 #include "sampling_utility.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 template <typename PROCEDURAL_VOLUME_TYPE>
@@ -16,7 +16,7 @@ void sampling_on_vertices_vs_procedural_values(vec3i dimensions,
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f);
 
-  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+  auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();

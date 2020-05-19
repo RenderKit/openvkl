@@ -5,11 +5,11 @@
 #include "../common/simd.h"
 #include "benchmark/benchmark.h"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/random.h"
+#include "rkcommon/utility/random.h"
 
 using namespace openvkl;
 using namespace openvkl::testing;
-using namespace ospcommon::utility;
+using namespace rkcommon::utility;
 
 #define BENCHMARK_ALL_PRIMS(...)                   \
   BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_HEXAHEDRON)  \

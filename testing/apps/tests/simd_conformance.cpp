@@ -8,7 +8,7 @@
 #include "openvkl_testing.h"
 #include "simd_conformance_ispc.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 using namespace openvkl;
 

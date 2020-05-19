@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -35,7 +35,7 @@ namespace openvkl {
       vec3f computeProceduralGradient(const vec3f &objectCoordinates);
 
      private:
-      range1f computedValueRange = range1f(ospcommon::math::empty);
+      range1f computedValueRange = range1f(rkcommon::math::empty);
 
       vec3i dimensions;
       vec3f gridOrigin;

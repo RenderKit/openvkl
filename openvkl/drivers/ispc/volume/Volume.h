@@ -11,13 +11,13 @@
 #include "../value_selector/ValueSelector.h"
 #include "Volume_ispc.h"
 #include "openvkl/openvkl.h"
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
 #define THROW_NOT_IMPLEMENTED                          \
   throw std::runtime_error(std::string(__FUNCTION__) + \
                            " not implemented in this volume!")
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {

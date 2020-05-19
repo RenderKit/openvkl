@@ -1,11 +1,11 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AppInit.h"
 // openvkl
 #include "openvkl/openvkl.h"
-// ospcommon
-#include "ospcommon/common.h"
+// rkcommon
+#include "rkcommon/common.h"
 
 void initializeOpenVKL()
 {
@@ -14,7 +14,7 @@ void initializeOpenVKL()
   if (!initialized) {
     // NOTE(jda) - Workaround issue with not exposing 'anchor' feature through
     //             vklLoadModule().
-    ospcommon::loadLibrary("openvkl_module_ispc_driver", false);
+    rkcommon::loadLibrary("openvkl_module_ispc_driver", false);
     vklLoadModule("ispc_driver");
 
     VKLDriver driver = vklNewDriver("ispc");

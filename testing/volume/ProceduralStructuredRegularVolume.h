@@ -6,7 +6,7 @@
 #include "ProceduralStructuredVolume.h"
 #include "procedural_functions.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {

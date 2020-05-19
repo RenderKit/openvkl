@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "ospcommon/os/library.h"
+#include "rkcommon/os/library.h"
 #include <map>
 #include "VKLCommon.h"
 #include "logging.h"
@@ -34,7 +34,7 @@ namespace openvkl {
 
       // Look for the named function.
       symbolRegistry[type] =
-          (creationFunctionPointer)ospcommon::getSymbol(creationFunctionName);
+          (creationFunctionPointer)rkcommon::getSymbol(creationFunctionName);
 
       // The named function may not be found if the requested subtype is not
       // known.

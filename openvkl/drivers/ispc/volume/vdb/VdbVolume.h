@@ -11,9 +11,9 @@
 #include "VdbIterator.h"
 #include "VdbSampleConfig.h"
 #include "VdbVolume_ispc.h"
-#include "ospcommon/memory/RefCount.h"
+#include "rkcommon/memory/RefCount.h"
 
-using namespace ospcommon::memory;
+using namespace rkcommon::memory;
 
 namespace openvkl {
   namespace ispc_driver {

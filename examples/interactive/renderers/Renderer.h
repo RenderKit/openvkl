@@ -7,11 +7,11 @@
 #include "TransferFunction.h"
 #include "Scene.h"
 #include "openvkl/openvkl.h"
-// ospcommon
-#include "ospcommon/containers/AlignedVector.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/ParameterizedObject.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+// rkcommon
+#include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/utility/ParameterizedObject.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 // std
 #include <cmath>
 #include <random>
@@ -22,8 +22,8 @@
 namespace openvkl {
   namespace examples {
 
-    using namespace ospcommon;
-    using namespace ospcommon::math;
+    using namespace rkcommon;
+    using namespace rkcommon::math;
 
     using FrameBuffer  = containers::AlignedVector<vec3f>;
     using ColorChannel = containers::AlignedVector<float>;
@@ -103,7 +103,7 @@ namespace openvkl {
 
       ray.org = org;
       ray.dir = normalize(dir);
-      ray.t   = range1f(0.f, ospcommon::inf);
+      ray.t   = range1f(0.f, rkcommon::inf);
 
       return ray;
     }

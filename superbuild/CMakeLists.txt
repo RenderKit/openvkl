@@ -136,14 +136,14 @@ if (BUILD_TBB)
 endif()
 
 
-option(BUILD_OSPCOMMON "Build ospcommon or search in environment?" ON)
-if (BUILD_OSPCOMMON)
-  set(OSPCOMMON_VERSION "1.3.0")
-  set(OSPCOMMON_URL "https://github.com/ospray/ospcommon/archive/v${OSPCOMMON_VERSION}.zip"
-    CACHE STRING "URL of the ospcommon archive.")
-  set(OSPCOMMON_HASH "0b5499e9f28c97523f7d8fe2fc2ef9c1278547917b5e548b4000f927c09b0e59"
-    CACHE STRING "SHA256 hash of the ospcommon archive.")
-  include(dep_ospcommon)
+option(BUILD_RKCOMMON "Build rkcommon or search in environment?" ON)
+if (BUILD_RKCOMMON)
+  set(RKCOMMON_VERSION "1.4.0")
+  set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/v${RKCOMMON_VERSION}.zip"
+    CACHE STRING "URL of the rkcommon archive.")
+  set(RKCOMMON_HASH "8cd0d6fca58cb74ec3588b0c292f555cdb8c90c287f8c81154adb292875396f9"
+    CACHE STRING "SHA256 hash of the rkcommon archive.")
+  include(dep_rkcommon)
 endif()
 
 
@@ -280,7 +280,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       $<$<BOOL:${BUILD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
-      $<$<BOOL:${BUILD_TBB}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
+      $<$<BOOL:${BUILD_TBB}>:-DRKCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_OPENVDB}>:-DOpenVDB_ROOT=${OPENVDB_PATH}>
       ${OPENVKL_EXTRA_OPENVDB_OPTIONS}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
@@ -291,7 +291,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   configure
     $<$<BOOL:${BUILD_ISPC}>:ispc>
     $<$<BOOL:${BUILD_TBB}>:tbb>
-    $<$<BOOL:${BUILD_OSPCOMMON}>:ospcommon>
+    $<$<BOOL:${BUILD_RKCOMMON}>:rkcommon>
     $<$<BOOL:${BUILD_GLFW}>:glfw>
     $<$<BOOL:${BUILD_EMBREE}>:embree>
     $<$<BOOL:${BUILD_OPENVDB}>:openvdb>

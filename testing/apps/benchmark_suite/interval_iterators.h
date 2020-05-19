@@ -29,7 +29,7 @@ namespace api {
       static vkl_vec3f origin;
 
       if (state.thread_index == 0) {
-        wrapper = ospcommon::make_unique<VolumeWrapper>();
+        wrapper = rkcommon::make_unique<VolumeWrapper>();
 
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
@@ -81,7 +81,7 @@ namespace api {
       static VKLIntervalIterator iterator;
 
       if (state.thread_index == 0) {
-        wrapper = ospcommon::make_unique<VolumeWrapper>();
+        wrapper = rkcommon::make_unique<VolumeWrapper>();
 
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);

@@ -9,9 +9,9 @@
 #include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
 #include "openvkl/vdb.h"
-#include "ospcommon/math/AffineSpace.h"
-#include "ospcommon/memory/malloc.h"
-#include "ospcommon/tasking/AsyncTask.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/memory/malloc.h"
+#include "rkcommon/tasking/AsyncTask.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -25,7 +25,7 @@ namespace openvkl {
       const size_t numBytes = size * sizeof(T);
       bytesAllocated += numBytes;
       T *buf =
-          reinterpret_cast<T *>(ospcommon::memory::alignedMalloc(numBytes));
+          reinterpret_cast<T *>(rkcommon::memory::alignedMalloc(numBytes));
       if (!buf)
         throw std::bad_alloc();
       std::memset(buf, 0, numBytes);
@@ -35,7 +35,7 @@ namespace openvkl {
     template <class T>
     void deallocate(T *&ptr)
     {
-      ospcommon::memory::alignedFree(ptr);
+      rkcommon::memory::alignedFree(ptr);
       ptr = nullptr;
     }
 

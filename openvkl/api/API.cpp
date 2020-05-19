@@ -5,10 +5,10 @@
 #include "../common/simd.h"
 #include "Driver.h"
 #include "openvkl/openvkl.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/OnScopeExit.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+#include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/OnScopeExit.h"
 
 #ifdef _WIN32
 #include <process.h>  // for getpid
@@ -634,7 +634,7 @@ extern "C" float vklComputeSample(
       &sample);
   return sample;
 }
-OPENVKL_CATCH_END(ospcommon::math::nan)
+OPENVKL_CATCH_END(rkcommon::math::nan)
 
 #define __define_vklComputeSampleN(WIDTH)                             \
   extern "C" void vklComputeSample##WIDTH(                            \
@@ -682,7 +682,7 @@ extern "C" vkl_vec3f vklComputeGradient(
       reinterpret_cast<vvec3fn<1> &>(gradient));
   return gradient;
 }
-OPENVKL_CATCH_END(vkl_vec3f{ospcommon::math::nan})
+OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
 
 #define __define_vklComputeGradientN(WIDTH)                           \
   extern "C" void vklComputeGradient##WIDTH(                          \
@@ -740,11 +740,11 @@ extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
   const box3f result = openvkl::api::currentDriver().getBoundingBox(volume);
   return reinterpret_cast<const vkl_box3f &>(result);
 }
-OPENVKL_CATCH_END(vkl_box3f{ospcommon::math::nan})
+OPENVKL_CATCH_END(vkl_box3f{rkcommon::math::nan})
 
 extern "C" vkl_range1f vklGetValueRange(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
   const range1f result = openvkl::api::currentDriver().getValueRange(volume);
   return reinterpret_cast<const vkl_range1f &>(result);
 }
-OPENVKL_CATCH_END(vkl_range1f{ospcommon::math::nan})
+OPENVKL_CATCH_END(vkl_range1f{rkcommon::math::nan})

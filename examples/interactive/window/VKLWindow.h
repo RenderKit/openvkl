@@ -5,8 +5,8 @@
 
 #include "ArcballCamera.h"
 #include "renderers/Renderer.h"
-// ospcommon
-#include "ospcommon/math/box.h"
+// rkcommon
+#include "rkcommon/math/box.h"
 // std
 #include <string>
 

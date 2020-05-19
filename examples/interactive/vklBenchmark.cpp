@@ -9,13 +9,13 @@
 #include "benchmark/benchmark.h"
 // std
 #include <sstream>
-// ospcommon
-#include "ospcommon/common.h"
-#include "ospcommon/math/box.h"
+// rkcommon
+#include "rkcommon/common.h"
+#include "rkcommon/math/box.h"
 
 using namespace openvkl::examples;
 using namespace openvkl::testing;
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 using openvkl::testing::WaveletVdbVolume;
 
 static void render_wavelet_structured_regular(benchmark::State &state,
@@ -25,14 +25,14 @@ static void render_wavelet_structured_regular(benchmark::State &state,
                                               bool useISPC)
 {
   auto proceduralVolume =
-      ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+      rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
           vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   Scene scene;
   scene.updateVolume(proceduralVolume->getVKLVolume());
 
   auto window =
-      ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
+      rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
 
   window->setUseISPC(useISPC);
 
@@ -101,14 +101,14 @@ static void render_wavelet_vdb(benchmark::State &state,
                                int volumeDimension,
                                bool useISPC)
 {
-  auto proceduralVolume = ospcommon::make_unique<WaveletVdbVolume>(
+  auto proceduralVolume = rkcommon::make_unique<WaveletVdbVolume>(
       vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   Scene scene;
   scene.updateVolume(proceduralVolume->getVKLVolume());
 
   auto window =
-      ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
+      rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
 
   window->setUseISPC(useISPC);
 
@@ -177,7 +177,7 @@ static void render_wavelet_unstructured_hex(benchmark::State &state,
                                             bool useISPC)
 {
   auto proceduralVolume =
-      ospcommon::make_unique<WaveletUnstructuredProceduralVolume>(
+      rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
           vec3i(volumeDimension),
           vec3f(-1.f),
           vec3f(2.f / volumeDimension),
@@ -188,7 +188,7 @@ static void render_wavelet_unstructured_hex(benchmark::State &state,
   scene.updateVolume(proceduralVolume->getVKLVolume());
 
   auto window =
-      ospcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
+      rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
 
   window->setUseISPC(useISPC);
 

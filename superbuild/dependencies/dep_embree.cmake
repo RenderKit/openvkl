@@ -38,7 +38,7 @@ if (BUILD_EMBREE_FROM_SOURCE)
 
   ExternalProject_Add_StepDependencies(${COMPONENT_NAME}
   configure
-    $<$<BOOL:${BUILD_OSPCOMMON}>:ospcommon>
+    $<$<BOOL:${BUILD_RKCOMMON}>:rkcommon>
     $<$<BOOL:${BUILD_ISPC}>:ispc>
     $<$<BOOL:${BUILD_TBB}>:tbb>
   )

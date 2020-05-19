@@ -6,9 +6,9 @@
 #include "aos_soa_conversion.h"
 #include "iterator_utility.h"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
@@ -34,7 +34,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();

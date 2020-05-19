@@ -15,7 +15,7 @@ target_include_directories(openvkl_vdb_util
 
 target_link_libraries(openvkl_vdb_util
   INTERFACE
-    ospcommon::ospcommon
+    rkcommon::rkcommon
     openvkl
 )
 

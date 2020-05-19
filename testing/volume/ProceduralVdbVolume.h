@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <ospcommon/math/AffineSpace.h>
+#include <rkcommon/math/AffineSpace.h>
 #include "TestingVolume.h"
 #include "openvkl/vdb.h"
 #include "openvkl/vdb_util/VdbVolumeBuffers.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {

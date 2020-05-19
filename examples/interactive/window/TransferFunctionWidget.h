@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -15,10 +15,10 @@
 #include <GLFW/glfw3native.h>
 #endif
 
-#include "ospcommon/math/range.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/range.h"
+#include "rkcommon/math/vec.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 using ColorPoint   = vec4f;
 using OpacityPoint = vec2f;

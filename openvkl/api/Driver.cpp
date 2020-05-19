@@ -5,9 +5,9 @@
 #include <sstream>
 #include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/StringManip.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/StringManip.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #define LOG_LEVEL_DEFAULT VKL_LOG_INFO
 

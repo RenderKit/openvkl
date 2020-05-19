@@ -8,8 +8,8 @@
 // imgui
 #include <imgui.h>
 #include "imgui_impl_glfw_gl3.h"
-// ospcommon
-#include "ospcommon/utility/CodeTimer.h"
+// rkcommon
+#include "rkcommon/utility/CodeTimer.h"
 
 namespace openvkl {
   namespace examples {
@@ -187,8 +187,8 @@ namespace openvkl {
 
     void GLFWVKLWindow::display()
     {
-      static ospcommon::utility::CodeTimer displayTimer;
-      static ospcommon::utility::CodeTimer renderTimer;
+      static rkcommon::utility::CodeTimer displayTimer;
+      static rkcommon::utility::CodeTimer renderTimer;
 
       displayTimer.start();
 

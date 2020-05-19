@@ -25,9 +25,9 @@ you can build Open VKL you need the following prerequisites:
     release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 
--   Open VKL depends on the OSPRay common library, ospcommon. ospcommon is
-    available at the [ospcommon GitHub
-    repository](https://github.com/ospray/ospcommon).
+-   Open VKL depends on the Intel RenderKit common library, rkcommon. rkcommon is
+    available at the [rkcommon GitHub
+    repository](https://github.com/ospray/rkcommon).
 
 -   Open VKL depends on Embree, which is available at the [Embree GitHub
     repository](https://github.com/embree/embree).

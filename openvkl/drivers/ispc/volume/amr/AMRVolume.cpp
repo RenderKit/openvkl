@@ -4,9 +4,9 @@
 #include "AMRVolume.h"
 #include "../../common/export_util.h"
 #include "../common/Data.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/utility/getEnvVar.h"
+// rkcommon
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/getEnvVar.h"
 // ispc exports
 #include "AMRVolume_ispc.h"
 #include "method_current_ispc.h"

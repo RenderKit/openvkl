@@ -9,7 +9,7 @@
 #include "GridAccelerator_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "Volume.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace ispc_driver {

@@ -6,9 +6,9 @@
 #include "../common/ManagedObject.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/vec.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {

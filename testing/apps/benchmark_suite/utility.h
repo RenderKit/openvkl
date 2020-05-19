@@ -6,7 +6,7 @@
 #include <random>
 #include "../common/simd.h"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/random.h"
+#include "rkcommon/utility/random.h"
 
 /*
  * Utilities for our benchmarking suite.
@@ -89,7 +89,7 @@ namespace coordinate_generator {
    */
   struct Random
   {
-    using Dist = ospcommon::utility::pcg32_biased_float_distribution;
+    using Dist = rkcommon::utility::pcg32_biased_float_distribution;
 
     inline static constexpr const char *name()
     {

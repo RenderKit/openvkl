@@ -4,7 +4,7 @@
 #pragma once
 
 #include "openvkl/openvkl.h"
-#include "ospcommon/platform.h"
+#include "rkcommon/platform.h"
 
 namespace openvkl {
 

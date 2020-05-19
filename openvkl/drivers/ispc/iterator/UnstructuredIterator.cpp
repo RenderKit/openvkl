@@ -8,7 +8,7 @@
 #include "../volume/UnstructuredVolume.h"
 #include "../volume/Volume.h"
 #include "UnstructuredIterator_ispc.h"
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
 namespace openvkl {
   namespace ispc_driver {

@@ -3,7 +3,7 @@
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 #include "sampling_utility.h"
 
 using namespace openvkl;

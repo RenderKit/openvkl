@@ -32,7 +32,7 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ospcommon::ospcommon)
+target_link_libraries(${PROJECT_NAME} PRIVATE rkcommon::rkcommon)
 
 
 set(VKL_VDB_LOG_RESOLUTION "6;5;4;3" CACHE STRING

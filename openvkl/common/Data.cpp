@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Data.h"
-#include "ospcommon/memory/malloc.h"
+#include "rkcommon/memory/malloc.h"
 
 namespace openvkl {
 
@@ -20,7 +20,7 @@ namespace openvkl {
         throw std::runtime_error("shared buffer is NULL");
       data = source;
     } else {
-      void *buffer = ospcommon::memory::alignedMalloc(numBytes + 16);
+      void *buffer = rkcommon::memory::alignedMalloc(numBytes + 16);
       if (buffer == nullptr)
         throw std::runtime_error("data is NULL");
       data = buffer;
@@ -53,7 +53,7 @@ namespace openvkl {
     if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
       // We know we allocated this buffer, so the const cast is in fact
       // reasonable.
-      ospcommon::memory::alignedFree(const_cast<void *>(data));
+      rkcommon::memory::alignedFree(const_cast<void *>(data));
     }
   }
 

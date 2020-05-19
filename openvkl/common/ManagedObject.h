@@ -5,18 +5,18 @@
 
 #include "VKLCommon.h"
 #include "objectFactory.h"
-#include "ospcommon/memory/RefCount.h"
-#include "ospcommon/utility/ParameterizedObject.h"
+#include "rkcommon/memory/RefCount.h"
+#include "rkcommon/utility/ParameterizedObject.h"
 
-using namespace ospcommon::memory;
+using namespace rkcommon::memory;
 
 namespace openvkl {
 
   struct Data;
 
   struct OPENVKL_CORE_INTERFACE ManagedObject
-      : public ospcommon::memory::RefCount,
-        public ospcommon::utility::ParameterizedObject
+      : public rkcommon::memory::RefCount,
+        public rkcommon::utility::ParameterizedObject
   {
     using VKL_PTR = ManagedObject *;
 
@@ -145,7 +145,7 @@ namespace openvkl {
 
 // Specializations for ISPCDriver /////////////////////////////////////////////
 
-namespace ospcommon {
+namespace rkcommon {
   namespace utility {
 
     template <>
@@ -167,4 +167,4 @@ namespace ospcommon {
     }
 
   }  // namespace utility
-}  // namespace ospcommon
+}  // namespace rkcommon

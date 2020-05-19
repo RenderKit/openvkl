@@ -3,8 +3,8 @@
 
 #include "UnstructuredVolume.h"
 #include "../common/Data.h"
-#include "ospcommon/containers/AlignedVector.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 // Map cell type to its vertices count
 inline uint32_t getVerticesCount(uint8_t cellType)

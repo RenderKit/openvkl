@@ -7,7 +7,7 @@
 #include "../value_selector/ValueSelector.h"
 #include "openvkl/openvkl.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {

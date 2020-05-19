@@ -5,11 +5,11 @@
 #include "../common/simd.h"
 #include "benchmark/benchmark.h"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/random.h"
+#include "rkcommon/utility/random.h"
 
 using namespace openvkl;
 using namespace openvkl::testing;
-using namespace ospcommon::utility;
+using namespace rkcommon::utility;
 
 void initializeOpenVKL()
 {
@@ -22,7 +22,7 @@ void initializeOpenVKL()
 
 static void scalarRandomSample(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -53,7 +53,7 @@ BENCHMARK(scalarRandomSample);
 template <int W>
 void vectorRandomSample(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -111,7 +111,7 @@ BENCHMARK_TEMPLATE(vectorRandomSample, 16);
 template <int N>
 void streamRandomSample(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -154,7 +154,7 @@ BENCHMARK_TEMPLATE(streamRandomSample, 256);
 
 static void scalarFixedSample(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -180,7 +180,7 @@ BENCHMARK(scalarFixedSample);
 template <int W>
 void vectorFixedSample(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -235,7 +235,7 @@ BENCHMARK_TEMPLATE(vectorFixedSample, 16);
 template <int N>
 void streamFixedSample(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
@@ -268,7 +268,7 @@ BENCHMARK_TEMPLATE(streamFixedSample, 256);
 
 static void scalarRandomGradient(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -299,7 +299,7 @@ BENCHMARK(scalarRandomGradient);
 template <int W>
 void vectorRandomGradient(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -365,7 +365,7 @@ BENCHMARK_TEMPLATE(vectorRandomGradient, 16);
 template <int N>
 void streamRandomGradient(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
@@ -409,7 +409,7 @@ BENCHMARK_TEMPLATE(streamRandomGradient, 256);
 
 static void scalarFixedGradient(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -435,7 +435,7 @@ BENCHMARK(scalarFixedGradient);
 template <int W>
 void vectorFixedGradient(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume   = v->getVKLVolume();
@@ -498,7 +498,7 @@ BENCHMARK_TEMPLATE(vectorFixedGradient, 16);
 template <int N>
 void streamFixedGradient(benchmark::State &state)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();

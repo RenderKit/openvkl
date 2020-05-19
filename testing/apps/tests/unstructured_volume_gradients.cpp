@@ -3,10 +3,10 @@
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void xyz_scalar_gradients(VKLUnstructuredCellType primType)

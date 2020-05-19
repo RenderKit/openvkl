@@ -98,7 +98,7 @@ foreach(TARGET_WIDTH 4 8 16)
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
-      ospcommon::ospcommon
+      rkcommon::rkcommon
     PRIVATE
       embree
   )

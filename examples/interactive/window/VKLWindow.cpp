@@ -5,8 +5,8 @@
 // std
 #include <iostream>
 #include <stdexcept>
-// ospcommon
-#include "ospcommon/utility/SaveImage.h"
+// rkcommon
+#include "rkcommon/utility/SaveImage.h"
 
 #include "renderers/DensityPathTracer.h"
 #include "renderers/HitIterator.h"

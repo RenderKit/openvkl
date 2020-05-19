@@ -7,7 +7,7 @@
 #include "benchmark_suite/volume.h"
 
 using namespace openvkl::testing;
-using namespace ospcommon::utility;
+using namespace rkcommon::utility;
 using openvkl::testing::WaveletVdbVolume;
 
 
@@ -41,7 +41,7 @@ struct Vdb
   Vdb()
   {
     volume =
-        ospcommon::make_unique<WaveletVdbVolume>(128, vec3f(0.f), vec3f(1.f));
+        rkcommon::make_unique<WaveletVdbVolume>(128, vec3f(0.f), vec3f(1.f));
 
     vklVolume  = volume->getVKLVolume();
     vklSampler = vklNewSampler(vklVolume);

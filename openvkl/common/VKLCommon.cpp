@@ -6,17 +6,17 @@
 #include <sstream>
 #include "../api/Driver.h"
 #include "logging.h"
-#include "ospcommon/math/AffineSpace.h"
+#include "rkcommon/math/AffineSpace.h"
 
 namespace openvkl {
 
   VKLError loadLocalModule(const std::string &moduleName)
   {
     std::string libName = "openvkl_module_" + moduleName;
-    ospcommon::loadLibrary(libName);
+    rkcommon::loadLibrary(libName);
 
     std::string initSymName = "openvkl_init_module_" + moduleName;
-    void *initSym           = ospcommon::getSymbol(initSymName);
+    void *initSym           = rkcommon::getSymbol(initSymName);
     if (!initSym) {
       throw std::runtime_error("#vkl:api: could not find module initializer " +
                                initSymName);

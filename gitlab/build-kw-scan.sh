@@ -1,4 +1,6 @@
 #!/bin/bash -x
+## Copyright 2019-2020 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
 
 set -e
 KW_PATH=/NAS/tools/kw
@@ -26,8 +28,8 @@ cmake --build .
 mkdir openvkl_build
 cd openvkl_build
 
-export OSPCOMMON_TBB_ROOT=`pwd`/../install
-export ospcommon_DIR=`pwd`/../install
+export RKCOMMON_TBB_ROOT=`pwd`/../install
+export rkcommon_DIR=`pwd`/../install
 export embree_DIR=`pwd`/../install
 
 cmake \

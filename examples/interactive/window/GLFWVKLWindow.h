@@ -12,7 +12,7 @@
 namespace openvkl {
   namespace examples {
 
-    using namespace ospcommon::math;
+    using namespace rkcommon::math;
 
     class GLFWVKLWindow : public VKLWindow
     {

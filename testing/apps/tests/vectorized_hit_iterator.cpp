@@ -5,9 +5,9 @@
 #include "../../external/catch.hpp"
 #include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 TEST_CASE("Vectorized hit iterator", "[hit_iterators]")

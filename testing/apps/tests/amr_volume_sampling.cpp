@@ -3,9 +3,9 @@
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))

@@ -6,7 +6,7 @@
 #include "../../iterator/Iterator.h"
 #include "VdbGrid.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {

@@ -9,13 +9,13 @@
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/vec.h"
-#include "ospcommon/utility/ArrayView.h"
-#include "ospcommon/utility/ParameterizedObject.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+#include "rkcommon/utility/ArrayView.h"
+#include "rkcommon/utility/ParameterizedObject.h"
 
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 using VKLIntervalIterator1 = VKLIntervalIterator;
 using VKLHitIterator1      = VKLHitIterator;
@@ -24,7 +24,7 @@ namespace openvkl {
   namespace api {
 
     struct OPENVKL_CORE_INTERFACE Driver
-        : public ospcommon::utility::ParameterizedObject
+        : public rkcommon::utility::ParameterizedObject
     {
       static std::shared_ptr<Driver> current;
 

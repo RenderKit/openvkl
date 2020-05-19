@@ -90,8 +90,8 @@ mkdir -p $OPENVKL_BUILD_DIR
 cd $OPENVKL_BUILD_DIR
 
 # Setup environment variables for dependencies
-export OSPCOMMON_TBB_ROOT=$DEP_INSTALL_DIR
-export ospcommon_DIR=$DEP_INSTALL_DIR
+export RKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR
+export rkcommon_DIR=$DEP_INSTALL_DIR
 export embree_DIR=$DEP_INSTALL_DIR
 export glfw3_DIR=$DEP_INSTALL_DIR
 

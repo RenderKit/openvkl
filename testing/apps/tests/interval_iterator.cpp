@@ -4,9 +4,9 @@
 #include "../../external/catch.hpp"
 #include "iterator_utility.h"
 #include "openvkl_testing.h"
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
@@ -225,7 +225,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-    auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+    auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         dimensions, gridOrigin, gridSpacing);
 
     VKLVolume vklVolume = v->getVKLVolume();
@@ -253,7 +253,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(-64.f);
     const vec3f gridSpacing(1.f, 2.f, 3.f);
 
-    auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+    auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         dimensions, gridOrigin, gridSpacing);
 
     VKLVolume vklVolume = v->getVKLVolume();
@@ -327,7 +327,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-    auto v = ospcommon::make_unique<WaveletUnstructuredProceduralVolume>(
+    auto v = rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
         dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
 
     VKLVolume vklVolume = v->getVKLVolume();

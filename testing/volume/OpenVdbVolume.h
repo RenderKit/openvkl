@@ -7,10 +7,10 @@
 
 #include "TestingVolume.h"
 #include "openvkl/vdb_util/OpenVdbGrid.h"
-#include "ospcommon/tasking/AsyncTask.h"
-#include "ospcommon/utility/CodeTimer.h"
+#include "rkcommon/tasking/AsyncTask.h"
+#include "rkcommon/utility/CodeTimer.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {
@@ -54,12 +54,12 @@ namespace openvkl {
         bool changed = false;
         if (!asyncLoader && grid.numDeferred() > 0) {
           asyncLoader.reset(
-              new ospcommon::tasking::AsyncTask<AsyncResult>([=]() {
+              new rkcommon::tasking::AsyncTask<AsyncResult>([=]() {
                 // Load remaining leaves, but use the usage buffer as guidance.
                 AsyncResult result;
                 result.volume = nullptr;
 
-                ospcommon::utility::CodeTimer loadTimer;
+                rkcommon::utility::CodeTimer loadTimer;
                 loadTimer.start();
 
                 grid.loadDeferred(leafAccessObserver);
@@ -71,7 +71,7 @@ namespace openvkl {
                 loadTimer.stop();
                 result.loadMS = loadTimer.milliseconds();
 
-                ospcommon::utility::CodeTimer commitTimer;
+                rkcommon::utility::CodeTimer commitTimer;
                 commitTimer.start();
                 result.volume = grid.createVolume(filter);
                 commitTimer.stop();
@@ -128,7 +128,7 @@ namespace openvkl {
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLObserver leafAccessObserver{nullptr};
       uint64_t lastLoadMS{30};
-      std::unique_ptr<ospcommon::tasking::AsyncTask<AsyncResult>> asyncLoader;
+      std::unique_ptr<rkcommon::tasking::AsyncTask<AsyncResult>> asyncLoader;
     };
 
   }  // namespace testing

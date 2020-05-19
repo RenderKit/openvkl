@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,14 +7,14 @@
 #include "procedural_functions.h"
 // openvkl
 #include "openvkl/openvkl.h"
-// ospcommon
-#include "ospcommon/math/vec.h"
-#include "ospcommon/tasking/parallel_for.h"
+// rkcommon
+#include "rkcommon/math/vec.h"
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 #include <vector>
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {

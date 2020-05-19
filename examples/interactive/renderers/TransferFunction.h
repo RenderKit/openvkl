@@ -4,13 +4,13 @@
 #pragma once
 
 #include <vector>
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
 namespace openvkl {
   namespace examples {
 
-    using namespace ospcommon;
-    using namespace ospcommon::math;
+    using namespace rkcommon;
+    using namespace rkcommon::math;
 
     struct TransferFunction
     {

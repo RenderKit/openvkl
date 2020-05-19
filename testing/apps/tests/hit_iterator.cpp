@@ -4,7 +4,7 @@
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void scalar_hit_iteration(VKLVolume volume, const std::vector<float> &isoValues)

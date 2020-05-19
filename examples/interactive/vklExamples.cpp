@@ -14,7 +14,7 @@
 #include <memory>
 #include <random>
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 using namespace openvkl::examples;
 
@@ -165,8 +165,8 @@ int main(int argc, const char **argv)
   std::string rendererType("density_pathtracer");
   std::string gridType("structuredRegular");
   vec3i dimensions(128);
-  vec3f gridOrigin(ospcommon::nan);
-  vec3f gridSpacing(ospcommon::nan);
+  vec3f gridOrigin(rkcommon::nan);
+  vec3f gridSpacing(rkcommon::nan);
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
@@ -423,7 +423,7 @@ int main(int argc, const char **argv)
             << bbox.lower.z << ") -> (" << bbox.upper.x << ", " << bbox.upper.y
             << ", " << bbox.upper.z << ")" << std::endl;
 
-  auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
+  auto glfwVKLWindow = rkcommon::make_unique<GLFWVKLWindow>(
       vec2i{1024, 1024}, scene, rendererType, disableVSync);
 
   glfwVKLWindow->registerImGuiCallback([&]() {

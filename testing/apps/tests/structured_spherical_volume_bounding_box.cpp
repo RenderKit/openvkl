@@ -3,16 +3,16 @@
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void test_bounding_box(const vec3i &dimensions,
                        const vec3f &gridOrigin,
                        const vec3f &gridSpacing)
 {
-  auto v = ospcommon::make_unique<WaveletStructuredSphericalVolume<float>>(
+  auto v = rkcommon::make_unique<WaveletStructuredSphericalVolume<float>>(
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume      = v->getVKLVolume();

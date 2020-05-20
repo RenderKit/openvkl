@@ -63,6 +63,7 @@ if (BUILD_TESTING)
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
+    tests/structured_regular_volume_strides.cpp
     tests/structured_spherical_volume_sampling.cpp
     tests/structured_spherical_volume_bounding_box.cpp
     tests/structured_volume_value_range.cpp

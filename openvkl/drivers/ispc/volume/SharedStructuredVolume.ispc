@@ -202,10 +202,6 @@ inline void computeStructuredSphericalBoundingBox(
 #define process_index_z_varying foreach_unique(z in index.z)
 #define process_index_z_uniform uniform int z = index.z;
 
-#define process_hi28(univary) process_hi28_##univary
-#define process_hi28_varying foreach_unique(hi in hi28)
-#define process_hi28_uniform uniform uint32 hi = hi28;
-
 #define template_getVoxel(type, univary)                                     \
   /* for pure 32-bit addressing. volume *MUST* be smaller than 2G */         \
   inline void SSV_getVoxel_##type##_##univary##_32(                          \
@@ -213,12 +209,11 @@ inline void computeStructuredSphericalBoundingBox(
       const univary vec3i &index,                                            \
       univary float &value)                                                  \
   {                                                                          \
-    const type *uniform voxelData = (const type *uniform)self->voxelData;    \
-    const univary uint32 addr =                                              \
+    const univary uint32 index32 =                                           \
         index.x +                                                            \
         self->dimensions.x * (index.y + self->dimensions.y * index.z);       \
                                                                              \
-    value = voxelData[addr];                                                 \
+    value = get_##type(self->voxelData, index32);                            \
   }                                                                          \
   /* for 64/32-bit addressing. volume itself can be larger than 2G, but each \
    * slice must be within the 2G limit. */                                   \
@@ -227,17 +222,14 @@ inline void computeStructuredSphericalBoundingBox(
       const univary vec3i &index,                                            \
       univary float &value)                                                  \
   {                                                                          \
-    const uniform uint8 *uniform basePtr =                                   \
-        (const uniform uint8 *uniform)self->voxelData;                       \
-                                                                             \
     /* iterate over slices, then do 32-bit gather in slice */                \
-    const univary uint32 ofs = index.x + self->dimensions.x * index.y;       \
+    const univary uint32 offsetIndex32 =                                     \
+        index.x + self->dimensions.x * index.y;                              \
     process_index_z(univary)                                                 \
     {                                                                        \
-      const uniform uint64 byteOffset = z * self->bytesPerSlice;             \
-      const uniform type *uniform sliceData =                                \
-          (const uniform type *uniform)(basePtr + byteOffset);               \
-      value = sliceData[ofs];                                                \
+      const uniform uint64 baseIndex64 =                                     \
+          (uint64)z * self->dimensions.x * self->dimensions.y;               \
+      value = get_##type(self->voxelData, baseIndex64, offsetIndex32);       \
     }                                                                        \
   }                                                                          \
   /* for full 64-bit addressing, for all dimensions or slice size */         \
@@ -249,17 +241,8 @@ inline void computeStructuredSphericalBoundingBox(
     const univary uint64 index64 =                                           \
         (uint64)index.x +                                                    \
         self->dimensions.x *                                                 \
-            ((int64)index.y + self->dimensions.y * ((uint64)index.z));       \
-    const univary uint32 hi28 = index64 >> 28;                               \
-    const univary uint32 lo28 = index64 & ((1 << 28) - 1);                   \
-                                                                             \
-    process_hi28(univary)                                                    \
-    {                                                                        \
-      const uniform uint64 hi64 = hi;                                        \
-      const type *uniform base =                                             \
-          ((const type *)self->voxelData) + (hi64 << 28);                    \
-      value = base[lo28];                                                    \
-    }                                                                        \
+            ((uint64)index.y + self->dimensions.y * ((uint64)index.z));      \
+    value = get_##type(self->voxelData, index64);                            \
   }
 
 template_getVoxel(uint8, varying);
@@ -278,39 +261,6 @@ template_getVoxel(double, uniform);
 ///////////////////////////////////////////////////////////////////////////////
 // Sampling methods for all addressing / voxel type combinations //////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-// read a _typed_ value from an address that's given by an *BYTE*-offset
-// relative to a base array. note that even though we assume that the offset is
-// already in bytes (ie, WITHOUT scaling by the width of the array data type),
-// the base pointer must *STILL* be of the proper type for this macro to figure
-// out the type of data it's reading from this address
-#define template_accessArray(type, univary)                                \
-  inline univary float accessArrayWithOffset(const type *uniform basePtr,  \
-                                             const univary uint32 offset)  \
-  {                                                                        \
-    uniform uint8 *uniform base = (uniform uint8 * uniform) basePtr;       \
-    return *((uniform type *)(base + offset));                             \
-  }                                                                        \
-  inline univary float accessArrayWithOffset(const type *uniform basePtr,  \
-                                             const uniform uint64 baseOfs, \
-                                             const univary uint32 offset)  \
-  {                                                                        \
-    uniform uint8 *uniform base = (uniform uint8 * uniform)(basePtr);      \
-    return *((uniform type *)((base + baseOfs) + offset));                 \
-  }
-
-template_accessArray(uint8, varying);
-template_accessArray(int16, varying);
-template_accessArray(uint16, varying);
-template_accessArray(float, varying);
-template_accessArray(double, varying);
-
-template_accessArray(uint8, uniform);
-template_accessArray(int16, uniform);
-template_accessArray(uint16, uniform);
-template_accessArray(float, uniform);
-template_accessArray(double, uniform);
-#undef template_accessArray
 
 // overloads for both varying and uniform voxel getters, used in templated
 // sampling functions
@@ -339,6 +289,8 @@ inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
   {                                                                            \
     const SharedStructuredVolume *uniform self =                               \
         (const SharedStructuredVolume *uniform)_self;                          \
+                                                                               \
+    const uniform Data1D voxelData = self->voxelData;                          \
                                                                                \
     univary vec3f localCoordinates;                                            \
     self->transformObjectToLocal_##univary(                                    \
@@ -371,38 +323,30 @@ inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
     const univary uint32 voxelOfs = voxelIndex_0.x * self->voxelOfs_dx +       \
                                     voxelIndex_0.y * self->voxelOfs_dy +       \
                                     voxelIndex_0.z * self->voxelOfs_dz;        \
-    const type *uniform voxelData = (const type *uniform)self->voxelData;      \
-    const uniform uint64 ofs000   = 0;                                         \
-    const uniform uint64 ofs001   = self->bytesPerVoxel;                       \
-    const univary float val000 =                                               \
-        accessArrayWithOffset(voxelData, ofs000, voxelOfs);                    \
-    const univary float val001 =                                               \
-        accessArrayWithOffset(voxelData, ofs001, voxelOfs);                    \
-    const univary float val00 = val000 + frac.x * (val001 - val000);           \
                                                                                \
-    const uniform uint64 ofs010 = self->bytesPerLine;                          \
-    const uniform uint64 ofs011 = self->bytesPerLine + self->bytesPerVoxel;    \
-    const univary float val010 =                                               \
-        accessArrayWithOffset(voxelData, ofs010, voxelOfs);                    \
-    const univary float val011 =                                               \
-        accessArrayWithOffset(voxelData, ofs011, voxelOfs);                    \
-    const univary float val01 = val010 + frac.x * (val011 - val010);           \
+    const uniform uint64 ofs000 = 0;                                           \
+    const uniform uint64 ofs001 = self->voxelOfs_dx;                           \
+    const univary float val000  = get_##type(voxelData, ofs000, voxelOfs);     \
+    const univary float val001  = get_##type(voxelData, ofs001, voxelOfs);     \
+    const univary float val00   = val000 + frac.x * (val001 - val000);         \
                                                                                \
-    const uniform uint64 ofs100 = self->bytesPerSlice;                         \
+    const uniform uint64 ofs010 = self->voxelOfs_dy;                           \
+    const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;       \
+    const univary float val010  = get_##type(voxelData, ofs010, voxelOfs);     \
+    const univary float val011  = get_##type(voxelData, ofs011, voxelOfs);     \
+    const univary float val01   = val010 + frac.x * (val011 - val010);         \
+                                                                               \
+    const uniform uint64 ofs100 = self->voxelOfs_dz;                           \
     const uniform uint64 ofs101 = ofs100 + ofs001;                             \
-    const univary float val100 =                                               \
-        accessArrayWithOffset(voxelData, ofs100, voxelOfs);                    \
-    const univary float val101 =                                               \
-        accessArrayWithOffset(voxelData, ofs101, voxelOfs);                    \
-    const univary float val10 = val100 + frac.x * (val101 - val100);           \
+    const univary float val100  = get_##type(voxelData, ofs100, voxelOfs);     \
+    const univary float val101  = get_##type(voxelData, ofs101, voxelOfs);     \
+    const univary float val10   = val100 + frac.x * (val101 - val100);         \
                                                                                \
     const uniform uint64 ofs110 = ofs100 + ofs010;                             \
     const uniform uint64 ofs111 = ofs100 + ofs011;                             \
-    const univary float val110 =                                               \
-        accessArrayWithOffset(voxelData, ofs110, voxelOfs);                    \
-    const univary float val111 =                                               \
-        accessArrayWithOffset(voxelData, ofs111, voxelOfs);                    \
-    const univary float val11 = val110 + frac.x * (val111 - val110);           \
+    const univary float val110  = get_##type(voxelData, ofs110, voxelOfs);     \
+    const univary float val111  = get_##type(voxelData, ofs111, voxelOfs);     \
+    const univary float val11   = val110 + frac.x * (val111 - val110);         \
                                                                                \
     const univary float val0 = val00 + frac.y * (val01 - val00);               \
     const univary float val1 = val10 + frac.y * (val11 - val10);               \
@@ -427,7 +371,7 @@ template_sample_32(double, uniform);
 // used below in template_sample_64_32
 #define process_sliceID(univary) process_sliceID_##univary
 #define process_sliceID_varying foreach_unique(sliceID in voxelIndex_0.z)
-#define process_sliceID_uniform uniform sliceID = voxelIndex_0.z;
+#define process_sliceID_uniform uniform int sliceID = voxelIndex_0.z;
 
 #define template_sample_64_32(type, univary)                                   \
   inline univary float SSV_sample_##type##_##univary##_64_32(                  \
@@ -435,6 +379,8 @@ template_sample_32(double, uniform);
   {                                                                            \
     const SharedStructuredVolume *uniform self =                               \
         (const SharedStructuredVolume *uniform)_self;                          \
+                                                                               \
+    const uniform Data1D voxelData = self->voxelData;                          \
                                                                                \
     univary vec3f localCoordinates;                                            \
     self->transformObjectToLocal_##univary(                                    \
@@ -467,41 +413,41 @@ template_sample_32(double, uniform);
     univary float ret = 0.f;                                                   \
     process_sliceID(univary)                                                   \
     {                                                                          \
+      const uniform uint64 sliceOfs =                                          \
+          (uint64)sliceID * self->dimensions.x * self->dimensions.y;           \
       const univary uint32 voxelOfs = voxelIndex_0.x * self->voxelOfs_dx +     \
                                       voxelIndex_0.y * self->voxelOfs_dy;      \
-      const type *uniform voxelData =                                          \
-          (const type *uniform)((uniform uint8 * uniform) self->voxelData +    \
-                                sliceID * self->bytesPerSlice);                \
+                                                                               \
       const uniform uint64 ofs000 = 0;                                         \
-      const uniform uint64 ofs001 = self->bytesPerVoxel;                       \
+      const uniform uint64 ofs001 = self->voxelOfs_dx;                         \
       const univary float val000 =                                             \
-          accessArrayWithOffset(voxelData, ofs000, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs000, voxelOfs);                  \
       const univary float val001 =                                             \
-          accessArrayWithOffset(voxelData, ofs001, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs001, voxelOfs);                  \
       const univary float val00 = val000 + frac.x * (val001 - val000);         \
                                                                                \
-      const uniform uint64 ofs010 = self->bytesPerLine;                        \
-      const uniform uint64 ofs011 = self->bytesPerLine + self->bytesPerVoxel;  \
+      const uniform uint64 ofs010 = self->voxelOfs_dy;                         \
+      const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;     \
       const univary float val010 =                                             \
-          accessArrayWithOffset(voxelData, ofs010, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs010, voxelOfs);                  \
       const univary float val011 =                                             \
-          accessArrayWithOffset(voxelData, ofs011, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs011, voxelOfs);                  \
       const univary float val01 = val010 + frac.x * (val011 - val010);         \
                                                                                \
-      const uniform uint64 ofs100 = self->bytesPerSlice;                       \
+      const uniform uint64 ofs100 = self->voxelOfs_dz;                         \
       const uniform uint64 ofs101 = ofs100 + ofs001;                           \
       const univary float val100 =                                             \
-          accessArrayWithOffset(voxelData, ofs100, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs100, voxelOfs);                  \
       const univary float val101 =                                             \
-          accessArrayWithOffset(voxelData, ofs101, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs101, voxelOfs);                  \
       const univary float val10 = val100 + frac.x * (val101 - val100);         \
                                                                                \
       const uniform uint64 ofs110 = ofs100 + ofs010;                           \
       const uniform uint64 ofs111 = ofs100 + ofs011;                           \
       const univary float val110 =                                             \
-          accessArrayWithOffset(voxelData, ofs110, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs110, voxelOfs);                  \
       const univary float val111 =                                             \
-          accessArrayWithOffset(voxelData, ofs111, voxelOfs);                  \
+          get_##type(voxelData, sliceOfs + ofs111, voxelOfs);                  \
       const univary float val11 = val110 + frac.x * (val111 - val110);         \
                                                                                \
       const univary float val0 = val00 + frac.y * (val01 - val00);             \
@@ -827,7 +773,7 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Constructor)
 
 export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
                                   void *uniform _self,
-                                  const void *uniform voxelData,
+                                  const Data1D *uniform voxelData,
                                   const uniform int voxelType,
                                   const uniform vec3i &dimensions,
                                   const uniform SharedStructuredVolumeGridType
@@ -838,7 +784,7 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
 
-  self->voxelData   = voxelData;
+  self->voxelData   = *voxelData;
   self->voxelType   = (VKLDataType)voxelType;
   self->dimensions  = dimensions;
   self->gridType    = gridType;
@@ -883,44 +829,16 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
   self->localCoordinatesUpperBound =
       nextafter(self->dimensions - 1, make_vec3i(0));
 
-  uniform uint64 bytesPerVoxel;
-
-  if (voxelType == VKL_UCHAR) {
-    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_UCHAR voxelType\n");
-    bytesPerVoxel = sizeof(uniform uint8);
-  } else if (voxelType == VKL_SHORT) {
-    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_SHORT voxelType\n");
-    bytesPerVoxel = sizeof(uniform int16);
-  } else if (voxelType == VKL_USHORT) {
-    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_USHORT voxelType\n");
-    bytesPerVoxel = sizeof(uniform uint16);
-  } else if (voxelType == VKL_FLOAT) {
-    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_FLOAT voxelType\n");
-    bytesPerVoxel = sizeof(uniform float);
-  } else if (voxelType == VKL_DOUBLE) {
-    PRINT_DEBUG("#vkl:shared_structured_volume: using VKL_DOUBLE voxelType\n");
-    bytesPerVoxel = sizeof(uniform double);
-  } else {
-    print("#vkl:shared_structured_volume: unknown voxelType\n");
-    return false;
-  }
-
-  const uniform uint64 bytesPerLine   = bytesPerVoxel * dimensions.x;
-  const uniform uint64 bytesPerSlice  = bytesPerLine * dimensions.y;
-  const uniform uint64 bytesPerVolume = bytesPerSlice * dimensions.z;
-
-  self->bytesPerVoxel = bytesPerVoxel;
-  self->bytesPerLine  = bytesPerLine;
-  self->bytesPerSlice = bytesPerSlice;
-  self->voxelOfs_dx   = bytesPerVoxel;
-  self->voxelOfs_dy   = bytesPerLine;
-  self->voxelOfs_dz   = bytesPerSlice;
+  self->voxelOfs_dx = 1;
+  self->voxelOfs_dy = dimensions.x;
+  self->voxelOfs_dz = dimensions.x * dimensions.y;
 
   // default sampling function (64-bit addressing)
   self->super.computeSample_varying = SSV_sample_varying_64;
   self->super.computeSample_uniform = SSV_sample_uniform_64;
 
-  if (bytesPerVolume <= (1ULL << 30)) {
+  if (safe_32bit_indexing(self->voxelData,
+                          dimensions.x * dimensions.y * (uint64)dimensions.z)) {
     // in this case, we know ALL addressing can be 32-bit.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
 
@@ -949,9 +867,13 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
       self->super.computeSample_varying = SSV_sample_double_varying_32;
       self->getVoxelUniform             = SSV_getVoxel_double_uniform_32;
       self->super.computeSample_uniform = SSV_sample_double_uniform_32;
+    } else {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
     }
 
-  } else if (bytesPerSlice <= (1ULL << 30)) {
+  } else if (safe_32bit_indexing(self->voxelData,
+                                 dimensions.x * (uint64)dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice begins
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
@@ -981,6 +903,9 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
       self->super.computeSample_varying = SSV_sample_double_varying_64_32;
       self->getVoxelUniform             = SSV_getVoxel_double_uniform_64_32;
       self->super.computeSample_uniform = SSV_sample_double_uniform_64_32;
+    } else {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
     }
   } else {
     // in this case, even a single slice is too big to do 32-bit
@@ -1002,6 +927,9 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
     } else if (voxelType == VKL_DOUBLE) {
       self->getVoxel        = SSV_getVoxel_double_varying_64;
       self->getVoxelUniform = SSV_getVoxel_double_uniform_64;
+    } else {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
     }
   }
 

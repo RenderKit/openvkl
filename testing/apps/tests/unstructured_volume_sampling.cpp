@@ -1,12 +1,7 @@
 // Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../../external/catch.hpp"
-#include "openvkl_testing.h"
-#include "rkcommon/utility/multidim_index_sequence.h"
-
-using namespace rkcommon;
-using namespace openvkl::testing;
+#include "unstructured_volume.h"
 
 template <typename volumeType>
 void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
@@ -24,7 +19,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
                                                precomputedNormals,
                                                hexIterative));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -94,40 +89,6 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
       WARN("ignoring test failure due to convergence tolerance (delta = "
            << delta << ")");
     }
-  }
-
-  vklRelease(vklSampler);
-}
-
-void scalar_sampling_on_vertices_vs_procedural_values(
-    vec3i dimensions, VKLUnstructuredCellType primType, vec3i step = vec3i(1))
-{
-  std::unique_ptr<WaveletUnstructuredProceduralVolume> v(
-      new WaveletUnstructuredProceduralVolume(
-          dimensions, vec3f(0.f), vec3f(1.f), primType, true));
-
-  VKLVolume vklVolume = v->getVKLVolume();
-  VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
-
-  multidim_index_sequence<3> mis(v->getDimensions() / step);
-
-  for (const auto &offset : mis) {
-    const auto offsetWithStep = offset * step;
-
-    vec3f objectCoordinates =
-        v->getGridOrigin() + offsetWithStep * v->getGridSpacing();
-
-    INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                     << offsetWithStep.z);
-    INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                << objectCoordinates.y << " "
-                                << objectCoordinates.z);
-
-    vec3f offsetCoordinates = objectCoordinates + vec3f(0.1f);
-    CHECK(
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&(offsetCoordinates)) ==
-        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 
   vklRelease(vklSampler);

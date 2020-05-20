@@ -18,11 +18,13 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
-          VKLUnstructuredCellType _primType = VKL_HEXAHEDRON,
-          bool _cellValued                  = true,
-          bool _indexPrefix                 = true,
-          bool _precomputedNormals          = false,
-          bool _hexIterative                = false);
+          VKLUnstructuredCellType primType       = VKL_HEXAHEDRON,
+          bool cellValued                        = true,
+          bool indexPrefix                       = true,
+          bool precomputedNormals                = false,
+          bool hexIterative                      = false,
+          VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
+          size_t byteStride                      = 0);
 
       range1f getComputedValueRange() const override;
 
@@ -48,6 +50,15 @@ namespace openvkl {
       bool precomputedNormals;
       bool hexIterative;
 
+      // these flags are used for `cell.data` or `vertex.data` data objects as
+      // appropriate
+      VKLDataCreationFlags dataCreationFlags;
+      size_t byteStride;
+
+      // data may need to be retained for shared data buffers (`cell.data` or
+      // `vertex.data`)
+      std::vector<unsigned char> values;
+
       int vtxPerPrimitive(VKLUnstructuredCellType type) const;
 
       std::vector<unsigned char> generateVoxels(vec3i dimensions);
@@ -70,19 +81,23 @@ namespace openvkl {
         ProceduralUnstructuredVolume(const vec3i &dimensions,
                                      const vec3f &gridOrigin,
                                      const vec3f &gridSpacing,
-                                     VKLUnstructuredCellType _primType,
-                                     bool _cellValued,
-                                     bool _indexPrefix,
-                                     bool _precomputedNormals,
-                                     bool _hexIterative)
+                                     VKLUnstructuredCellType primType,
+                                     bool cellValued,
+                                     bool indexPrefix,
+                                     bool precomputedNormals,
+                                     bool hexIterative,
+                                     VKLDataCreationFlags dataCreationFlags,
+                                     size_t byteStride)
         : dimensions(dimensions),
           gridOrigin(gridOrigin),
           gridSpacing(gridSpacing),
-          primType(_primType),
-          cellValued(_cellValued),
-          indexPrefix(_indexPrefix),
-          precomputedNormals(_precomputedNormals),
-          hexIterative(_hexIterative)
+          primType(primType),
+          cellValued(cellValued),
+          indexPrefix(indexPrefix),
+          precomputedNormals(precomputedNormals),
+          hexIterative(hexIterative),
+          dataCreationFlags(dataCreationFlags),
+          byteStride(byteStride)
     {
     }
 
@@ -180,9 +195,15 @@ namespace openvkl {
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
         generateVoxels(vec3i dimensions)
     {
-      std::vector<unsigned char> voxels(dimensions.long_product() *
-                                        sizeof(float));
-      float *voxelsTyped = (float *)voxels.data();
+      if (byteStride == 0) {
+        byteStride = sizeof(float);
+      }
+
+      if (byteStride < sizeof(float)) {
+        throw std::runtime_error("byteStride < sizeof(float)");
+      }
+
+      std::vector<unsigned char> voxels(dimensions.long_product() * byteStride);
 
       auto transformLocalToObject = [&](const vec3f &localCoordinates) {
         return gridOrigin + localCoordinates * gridSpacing;
@@ -193,8 +214,9 @@ namespace openvkl {
           for (size_t x = 0; x < dimensions.x; x++) {
             size_t index =
                 z * dimensions.y * dimensions.x + y * dimensions.x + x;
+            float *voxelTyped = (float *)(voxels.data() + index * byteStride);
             vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
-            voxelsTyped[index]      = samplingFunction(objectCoordinates);
+            *voxelTyped             = samplingFunction(objectCoordinates);
           }
         }
       }
@@ -212,7 +234,7 @@ namespace openvkl {
       vec3i valueDimensions = dimensions;
       if (!cellValued)
         valueDimensions += vec3i(1, 1, 1);
-      std::vector<unsigned char> values = generateVoxels(valueDimensions);
+      values = generateVoxels(valueDimensions);
 
       std::vector<vec3f> vtxPositions = generateGrid();
       std::vector<idxType> topology   = generateTopology();
@@ -244,10 +266,12 @@ namespace openvkl {
         vklRelease(celltypeData);
       }
 
-      VKLData valuesData =
-          vklNewData(valueDimensions.long_product(), VKL_FLOAT, values.data());
-      vklSetData(
-          volume, cellValued ? "cell.data" : "vertex.data", valuesData);
+      VKLData valuesData = vklNewData(valueDimensions.long_product(),
+                                      VKL_FLOAT,
+                                      values.data(),
+                                      dataCreationFlags,
+                                      byteStride);
+      vklSetData(volume, cellValued ? "cell.data" : "vertex.data", valuesData);
       vklRelease(valuesData);
 
       VKLData vtxPositionsData =
@@ -270,6 +294,10 @@ namespace openvkl {
 
       computedValueRange = computeValueRange(
           VKL_FLOAT, values.data(), valueDimensions.long_product());
+
+      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+        std::vector<unsigned char>().swap(values);
+      }
     }
 
     template <typename idxType,

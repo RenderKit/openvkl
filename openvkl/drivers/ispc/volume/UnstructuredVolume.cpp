@@ -124,23 +124,22 @@ namespace openvkl {
           throw std::runtime_error(
               "unstructured volume #cells does not match #cell.type");
       } else {
-        cellType = new Data(nCells, VKL_UCHAR, nullptr, VKL_DATA_DEFAULT);
-        cellType->refDec();
-        uint8_t *typeArray = (uint8_t *)cellType->data;
+        generatedCellType.resize(nCells);
+
         for (int i = 0; i < nCells; i++) {
-          auto index = readInteger(cellIndex->data, cell32Bit, i);
+          auto index = readInteger(cellIndex, cell32Bit, i);
           switch (getVertexId(index)) {
           case 4:
-            typeArray[i] = VKL_TETRAHEDRON;
+            generatedCellType[i] = VKL_TETRAHEDRON;
             break;
           case 8:
-            typeArray[i] = VKL_HEXAHEDRON;
+            generatedCellType[i] = VKL_HEXAHEDRON;
             break;
           case 6:
-            typeArray[i] = VKL_WEDGE;
+            generatedCellType[i] = VKL_WEDGE;
             break;
           case 5:
-            typeArray[i] = VKL_PYRAMID;
+            generatedCellType[i] = VKL_PYRAMID;
             break;
           default:
             throw std::runtime_error(
@@ -148,13 +147,21 @@ namespace openvkl {
             break;
           }
         }
+
+        Data *d  = new Data(nCells,
+                           VKL_UCHAR,
+                           generatedCellType.data(),
+                           VKL_DATA_SHARED_BUFFER,
+                           0);
+        cellType = &(d->as<uint8_t>());
+        d->refDec();
       }
 
       hexIterative = this->template getParam<bool>("hexIterative", false);
 
       bool needTolerances = false;
       for (int i = 0; i < nCells; i++) {
-        auto cell = ((uint8_t *)cellType->data)[i];
+        auto cell = (*cellType)[i];
         if (cell == VKL_WEDGE || cell == VKL_PYRAMID ||
             (cell == VKL_HEXAHEDRON && hexIterative)) {
           needTolerances = true;
@@ -188,15 +195,15 @@ namespace openvkl {
           VKLUnstructuredVolume_set,
           this->ispcEquivalent,
           (const ispc::box3f &)bounds,
-          (const ispc::vec3f *)vertexPosition->data,
-          (const uint32_t *)index->data,
+          ispc(vertexPosition),
+          ispc(index),
           index32Bit,
-          vertexValue ? (const float *)vertexValue->data : nullptr,
-          cellValue ? (const float *)cellValue->data : nullptr,
-          (const uint32_t *)cellIndex->data,
+          ispc(vertexValue),
+          ispc(cellValue),
+          ispc(cellIndex),
           cell32Bit,
           indexPrefixed,
-          (const uint8_t *)cellType->data,
+          ispc(cellType),
           (void *)(rtcRoot),
           faceNormals.empty() ? nullptr
                               : (const ispc::vec3f *)faceNormals.data(),
@@ -212,16 +219,15 @@ namespace openvkl {
 
       // iterate through cell vertices
       box4f bBox;
-      uint32_t maxIdx = getVerticesCount(((uint8_t *)(cellType->data))[id]);
+      uint32_t maxIdx = getVerticesCount((*cellType)[id]);
       for (uint32_t i = 0; i < maxIdx; i++) {
         // get vertex index
         uint64_t vId = getVertexId(cOffset + i);
 
         // build 4 dimensional vertex with its position and value
-        vec3f &v  = ((vec3f *)(vertexPosition->data))[vId];
-        float val = cellValue ? ((float *)(cellValue->data))[id]
-                              : ((float *)(vertexValue->data))[vId];
-        vec4f p = vec4f(v.x, v.y, v.z, val);
+        const vec3f &v = (*vertexPosition)[vId];
+        float val      = cellValue ? (*cellValue)[id] : (*vertexValue)[vId];
+        vec4f p        = vec4f(v.x, v.y, v.z, val);
 
         // extend bounding box
         if (i == 0)
@@ -330,9 +336,8 @@ namespace openvkl {
       const uint32_t hexDiagonals[4][2] = {{0, 6}, {1, 7}, {2, 4}, {3, 5}};
 
       // Build all tolerances
-      uint8_t *typeArray = (uint8_t *)cellType->data;
       tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
-        switch (typeArray[taskIndex]) {
+        switch ((*cellType)[taskIndex]) {
         case VKL_HEXAHEDRON:
           if (!hexIterative)
             calculateTolerance(taskIndex, hexDiagonals, 4);
@@ -360,8 +365,8 @@ namespace openvkl {
       for (int i = 0; i < count; i++) {
         uint64_t vId0    = getVertexId(cOffset + edge[i][0]);
         uint64_t vId1    = getVertexId(cOffset + edge[i][1]);
-        const vec3f &v0  = ((const vec3f *)(vertexPosition->data))[vId0];
-        const vec3f &v1  = ((const vec3f *)(vertexPosition->data))[vId1];
+        const vec3f &v0  = (*vertexPosition)[vId0];
+        const vec3f &v1  = (*vertexPosition)[vId1];
         const float dist = length(v0 - v1);
         longest          = std::max(longest, dist);
       }
@@ -391,9 +396,8 @@ namespace openvkl {
           {3, 0, 1}, {4, 1, 0}, {4, 2, 1}, {4, 3, 2}, {3, 4, 0}};
 
       // Build all normals
-      uint8_t *typeArray = (uint8_t *)cellType->data;
       tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
-        switch (typeArray[taskIndex]) {
+        switch ((*cellType)[taskIndex]) {
         case VKL_TETRAHEDRON:
           calculateCellNormals(taskIndex, tetrahedronFaces, 4);
           break;
@@ -426,9 +430,9 @@ namespace openvkl {
         uint64_t vId0   = getVertexId(cOffset + faces[i][0]);
         uint64_t vId1   = getVertexId(cOffset + faces[i][1]);
         uint64_t vId2   = getVertexId(cOffset + faces[i][2]);
-        const vec3f &v0 = ((const vec3f *)(vertexPosition->data))[vId0];
-        const vec3f &v1 = ((const vec3f *)(vertexPosition->data))[vId1];
-        const vec3f &v2 = ((const vec3f *)(vertexPosition->data))[vId2];
+        const vec3f &v0 = (*vertexPosition)[vId0];
+        const vec3f &v1 = (*vertexPosition)[vId1];
+        const vec3f &v2 = (*vertexPosition)[vId2];
 
         // Calculate normal
         faceNormals[cellId * 6 + i] = normalize(cross(v0 - v1, v2 - v1));

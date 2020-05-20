@@ -69,6 +69,7 @@ if (BUILD_TESTING)
     tests/structured_volume_value_range.cpp
     tests/unstructured_volume_gradients.cpp
     tests/unstructured_volume_sampling.cpp
+    tests/unstructured_volume_strides.cpp
     tests/unstructured_volume_value_range.cpp
     tests/vectorized_gradients.cpp
     tests/stream_gradients.cpp

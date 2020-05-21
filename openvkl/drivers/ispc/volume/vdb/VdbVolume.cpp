@@ -24,8 +24,7 @@ namespace openvkl {
     {
       const size_t numBytes = size * sizeof(T);
       bytesAllocated += numBytes;
-      T *buf =
-          reinterpret_cast<T *>(rkcommon::memory::alignedMalloc(numBytes));
+      T *buf = reinterpret_cast<T *>(rkcommon::memory::alignedMalloc(numBytes));
       if (!buf)
         throw std::bad_alloc();
       std::memset(buf, 0, numBytes);
@@ -54,7 +53,7 @@ namespace openvkl {
       swap(bounds, other.bounds);
       swap(name, other.name);
       swap(valueRange, other.valueRange);
-      swap(dataData, other.dataData);
+      swap(leafData, other.leafData);
       swap(grid, other.grid);
       swap(bytesAllocated, other.bytesAllocated);
     }
@@ -67,7 +66,7 @@ namespace openvkl {
         swap(bounds, other.bounds);
         swap(name, other.name);
         swap(valueRange, other.valueRange);
-        swap(dataData, other.dataData);
+        swap(leafData, other.leafData);
         swap(grid, other.grid);
         swap(bytesAllocated, other.bytesAllocated);
       }
@@ -87,7 +86,7 @@ namespace openvkl {
       if (grid) {
         // Note: There are VKL_VDB_NUM_LEVELS-1 slots for the
         //       level buffers! Leaves are not stored in the hierarchy!
-        for (uint32_t l = 0; (l+1) < vklVdbNumLevels(); ++l) {
+        for (uint32_t l = 0; (l + 1) < vklVdbNumLevels(); ++l) {
           VdbLevel &level = grid->levels[l];
           deallocate(level.voxels);
           deallocate(level.valueRange);
@@ -105,12 +104,6 @@ namespace openvkl {
       return "openvkl::VdbVolume";
     }
 
-    template <class T>
-    inline T *getDataPtr(Data *data)
-    {
-      return data ? data->begin<T>() : nullptr;
-    }
-
     template <class... Args>
     void runtimeError(Args &&... args)
     {
@@ -123,8 +116,8 @@ namespace openvkl {
      * Compute the grid bounding box and count the number of leaves per level.
      */
     box3i computeBbox(uint64_t numLeaves,
-                      const uint32_t *leafLevel,
-                      const vec3i *leafOrigin)
+                      const DataT<uint32_t> &leafLevel,
+                      const DataT<vec3i> &leafOrigin)
     {
       box3i bbox = box3i();
       for (size_t i = 0; i < numLeaves; ++i) {
@@ -138,7 +131,7 @@ namespace openvkl {
      * Bin leaves per level (returns indices into the input leaf array).
      */
     std::vector<std::vector<uint64_t>> binLeavesPerLevel(
-        uint64_t numLeaves, const uint32_t *leafLevel)
+        uint64_t numLeaves, const DataT<uint32_t> &leafLevel)
     {
       std::vector<size_t> numLeavesPerLevel(vklVdbNumLevels(), 0);
       for (uint64_t i = 0; i < numLeaves; ++i) {
@@ -183,9 +176,10 @@ namespace openvkl {
      * origin.
      * This function computes these offsets.
      */
-    inline std::vector<vec3ui> computeLeafOffsets(uint64_t numLeaves,
-                                                  const vec3i *leafOrigin,
-                                                  const vec3ui &rootOrigin)
+    inline std::vector<vec3ui> computeLeafOffsets(
+        uint64_t numLeaves,
+        const DataT<vec3i> &leafOrigin,
+        const vec3ui &rootOrigin)
     {
       std::vector<vec3ui> leafOffsets(numLeaves);
       for (size_t i = 0; i < numLeaves; ++i)
@@ -296,21 +290,20 @@ namespace openvkl {
      */
     range1f computeValueRangeFloat(VKLVdbLeafFormat format,
                                    uint32_t level,
-                                   const Data *data)
+                                   const DataT<float> &data)
     {
       range1f range;
-      const float *buffer = data->begin<float>();
 
       switch (format) {
       case VKL_VDB_FORMAT_TILE: {
-        range.extend(buffer[0]);
+        range.extend(data[0]);
         break;
       }
 
       case VKL_VDB_FORMAT_CONSTANT: {
         range1f leafRange;
         CALL_ISPC(VdbSampler_valueRangeConstantFloat,
-                  buffer,
+                  data.data(),
                   static_cast<uint32_t>(vklVdbLevelNumVoxels(level)),
                   reinterpret_cast<ispc::box1f *>(&leafRange));
 
@@ -334,8 +327,8 @@ namespace openvkl {
      */
     void insertLeavesFloat(
         const std::vector<vec3ui> &leafOffsets,
-        const uint32_t *leafFormat,
-        const Data *const *leafData,
+        const DataT<uint32_t> &leafFormat,
+        const DataT<Data *> &leafData,
         const std::vector<std::vector<uint64_t>> &binnedLeaves,
         const std::vector<uint64_t> &capacity,
         VdbGrid *grid)
@@ -347,8 +340,8 @@ namespace openvkl {
         const auto &leaves = binnedLeaves[leafLevel];
         for (uint64_t idx : leaves) {
           const auto format = static_cast<VKLVdbLeafFormat>(leafFormat[idx]);
-          const range1f leafValueRange =
-              computeValueRangeFloat(format, leafLevel, leafData[idx]);
+          const range1f leafValueRange = computeValueRangeFloat(
+              format, leafLevel, leafData[idx]->as<float>());
 
           const vec3ui &offset = leafOffsets[idx];
           uint64_t nodeIndex   = 0;
@@ -383,9 +376,10 @@ namespace openvkl {
                 voxel = vklVdbVoxelMakeChildPtr(nodeIndex);
               } else {
                 if (format == VKL_VDB_FORMAT_TILE) {
-                  voxel = vklVdbVoxelMakeTile(leafData[idx]->begin<float>()[0]);
+                  voxel = vklVdbVoxelMakeTile(leafData[idx]->as<float>()[0]);
                 } else if (format == VKL_VDB_FORMAT_CONSTANT)
-                  voxel = vklVdbVoxelMakeLeafPtr(leafData[idx]->data, format);
+                  voxel = vklVdbVoxelMakeLeafPtr(
+                      leafData[idx]->as<float>().data(), format);
                 else
                   assert(false);
 
@@ -400,15 +394,16 @@ namespace openvkl {
       }
     }
 
-    AffineSpace3f loadTransform(const Ref<const Data> &dataIndexToObject)
+    AffineSpace3f loadTransform(
+        const Ref<const DataT<float>> &dataIndexToObject)
     {
       AffineSpace3f a(one);
       if (dataIndexToObject && dataIndexToObject->size() >= 12) {
-        const float *i2w = dataIndexToObject->begin<float>();
-        a.l              = LinearSpace3f(vec3f(i2w[0], i2w[1], i2w[2]),
+        const DataT<float> &i2w = *dataIndexToObject;
+        a.l                     = LinearSpace3f(vec3f(i2w[0], i2w[1], i2w[2]),
                             vec3f(i2w[3], i2w[4], i2w[5]),
                             vec3f(i2w[6], i2w[7], i2w[8]));
-        a.p              = vec3f(i2w[9], i2w[10], i2w[11]);
+        a.p                     = vec3f(i2w[9], i2w[10], i2w[11]);
       }
       return a;
     }
@@ -440,19 +435,34 @@ namespace openvkl {
       const int maxIteratorDepth =
           this->template getParam<int>("maxIteratorDepth", 3);
 
-      Ref<const Data> dataIndexToObject =
+      Ref<const DataT<float>> dataIndexToObject =
           this->template getParamDataT<float>("indexToObject", nullptr);
-      Ref<const Data> dataLevel =
+      Ref<const DataT<uint32_t>> leafLevel =
           this->template getParamDataT<uint32_t>("level");
-      Ref<const Data> dataOrigin =
+      Ref<const DataT<vec3i>> leafOrigin =
           this->template getParamDataT<vec3i>("origin");
 
       // 32 bit unsigned int values. The enum VKLVdbLeafFormat encodes supported
       // values for the format.
-      Ref<const Data> dataFormat =
+      Ref<const DataT<uint32_t>> leafFormat =
           this->template getParamDataT<uint32_t>("format");
-      // 64 bit unsigned int values. Interpretation depends on dataFormat.
-      Ref<const Data> dataData = this->template getParam<Data *>("data");
+      // 64 bit unsigned int values. Interpretation depends on leafFormat.
+      Ref<const DataT<Data *>> leafData =
+          this->template getParamDataT<Data *>("data");
+
+      // Strided data not yet supported.
+      this->requireParamDataIsCompact("indexToObject");
+      this->requireParamDataIsCompact("level");
+      this->requireParamDataIsCompact("origin");
+      this->requireParamDataIsCompact("format");
+      this->requireParamDataIsCompact("data");
+
+      for (const auto &l : *leafData) {
+        if (!l->compact()) {
+          throw std::runtime_error(
+              "all node data arrays must be naturally strided");
+        }
+      }
 
       // Set up the global sample config.
       globalConfig.filter = (VKLFilter)this->template getParam<int>(
@@ -475,17 +485,12 @@ namespace openvkl {
                      VKL_FLOAT,
                      " (VKL_FLOAT) is supported.");
 
-      const size_t numLeaves = dataLevel->size();
-      if (dataOrigin->size() != numLeaves || dataFormat->size() != numLeaves ||
-          dataData->size() != numLeaves) {
+      const size_t numLeaves = leafLevel->size();
+      if (leafOrigin->size() != numLeaves || leafFormat->size() != numLeaves ||
+          leafData->size() != numLeaves) {
         runtimeError(
             "level, origin, format, and data must all have the same size");
       }
-
-      const uint32_t *leafLevel   = dataLevel->begin<uint32_t>();
-      const vec3i *leafOrigin     = dataOrigin->begin<vec3i>();
-      const uint32_t *leafFormat  = dataFormat->begin<uint32_t>();
-      const Data *const *leafData = dataData->begin<const Data *>();
 
       grid       = allocate<VdbGrid>(1, bytesAllocated);
       grid->type = type;
@@ -501,18 +506,18 @@ namespace openvkl {
       objectToIndex.p = -(objectToIndex.l * indexToObject.p);
       writeTransform(objectToIndex, grid->objectToIndex);
 
-      const box3i bbox = computeBbox(numLeaves, leafLevel, leafOrigin);
+      const box3i bbox = computeBbox(numLeaves, *leafLevel, *leafOrigin);
       grid->rootOrigin = computeRootOrigin(bbox);
 
       // VKL requires a float bbox. This is stored on the base class Volume.
       bounds.lower = xfmPoint(grid->indexToObject, vec3f(bbox.lower));
       bounds.upper = xfmPoint(grid->indexToObject, vec3f(bbox.upper));
 
-      const auto binnedLeaves = binLeavesPerLevel(numLeaves, leafLevel);
+      const auto binnedLeaves = binLeavesPerLevel(numLeaves, *leafLevel);
       for (size_t i = 0; i < vklVdbNumLevels(); ++i)
         grid->numLeaves[i] = binnedLeaves[i].size();
       const auto leafOffsets =
-          computeLeafOffsets(numLeaves, leafOrigin, grid->rootOrigin);
+          computeLeafOffsets(numLeaves, *leafOrigin, grid->rootOrigin);
 
       // Allocate buffers for all levels now, all in one go. This makes
       // inserting the nodes (below) much faster.
@@ -522,7 +527,7 @@ namespace openvkl {
 
       // TODO: Support other types?
       insertLeavesFloat(
-          leafOffsets, leafFormat, leafData, binnedLeaves, capacity, grid);
+          leafOffsets, *leafFormat, *leafData, binnedLeaves, capacity, grid);
 
       valueRange = range1f();
       for (size_t i = 0; i < vklVdbLevelNumVoxels(0); ++i)

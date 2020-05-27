@@ -5,7 +5,7 @@
 
 export void demo_ispc(void *uniform _volume, void *uniform _sampler)
 {
-  uniform VKLVolume volume = (uniform VKLVolume)_volume;
+  uniform VKLVolume volume   = (uniform VKLVolume)_volume;
   uniform VKLSampler sampler = (uniform VKLSampler)_sampler;
 
   // bounding box
@@ -69,13 +69,9 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
         rayTRange.upper);
 
   // interval iteration
-  VKLIntervalIterator intervalIterator;
-  vklInitIntervalIteratorV(&intervalIterator,
-                           volume,
-                           &rayOrigin,
-                           &rayDirection,
-                           &rayTRange,
-                           selector);
+  uniform unsigned int8 bufferInterval[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+      volume, &rayOrigin, &rayDirection, &rayTRange, selector, bufferInterval);
 
   print("interval iterator for value ranges {% %} {% %}\n",
         ranges[0].lower,
@@ -84,7 +80,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
         ranges[1].upper);
 
   VKLInterval interval;
-  while (vklIterateIntervalV(&intervalIterator, &interval)) {
+  while (vklIterateIntervalV(intervalIterator, &interval)) {
     print("\ttRange:\n\t\tlower: %\n\t\tupper: %\n",
           interval.tRange.lower,
           interval.tRange.upper);
@@ -95,14 +91,14 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   }
 
   // hit iteration
-  VKLHitIterator hitIterator;
-  vklInitHitIteratorV(
-      &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
+  uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
+  VKLHitIterator hitIterator = vklInitHitIteratorV(
+      volume, &rayOrigin, &rayDirection, &rayTRange, selector, bufferHit);
 
   print("hit iterator for values % %\n", values[0], values[1]);
 
   VKLHit hit;
-  while (vklIterateHitV(&hitIterator, &hit)) {
+  while (vklIterateHitV(hitIterator, &hit)) {
     print("\tt: %\n\tsample %\n\n", hit.t, hit.sample);
   }
 

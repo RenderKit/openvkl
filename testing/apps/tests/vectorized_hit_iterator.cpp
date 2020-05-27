@@ -88,14 +88,14 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          VKLHitIterator4 iterator;
-          vklInitHitIterator4(valid.data(),
-                              &iterator,
+          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklVolume));
+          VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
                               vklVolume,
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
-                              valueSelector);
+                              valueSelector,
+                              buffer.data());
 
           VKLHit4 hit;
           int result[4];
@@ -103,7 +103,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
           int hitCount = 0;
 
           while (true) {
-            vklIterateHit4(valid.data(), &iterator, &hit, result);
+            vklIterateHit4(valid.data(), iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -135,14 +135,14 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 8) {
-          VKLHitIterator8 iterator;
-          vklInitHitIterator8(valid.data(),
-                              &iterator,
+          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklVolume));
+          VKLHitIterator8 iterator = vklInitHitIterator8(valid.data(),
                               vklVolume,
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
-                              valueSelector);
+                              valueSelector,
+                              buffer.data());
 
           VKLHit8 hit;
           int result[8];
@@ -150,7 +150,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
           int hitCount = 0;
 
           while (true) {
-            vklIterateHit8(valid.data(), &iterator, &hit, result);
+            vklIterateHit8(valid.data(), iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -182,14 +182,14 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 16) {
-          VKLHitIterator16 iterator;
-          vklInitHitIterator16(valid.data(),
-                               &iterator,
+          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklVolume));
+          VKLHitIterator16 iterator = vklInitHitIterator16(valid.data(),
                                vklVolume,
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
-                               valueSelector);
+                               valueSelector,
+                               buffer.data());
 
           VKLHit16 hit;
           int result[16];
@@ -197,7 +197,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
           int hitCount = 0;
 
           while (true) {
-            vklIterateHit16(valid.data(), &iterator, &hit, result);
+            vklIterateHit16(valid.data(), iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -293,14 +293,14 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          VKLHitIterator4 iterator;
-          vklInitHitIterator4(valid.data(),
-                              &iterator,
+          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklVolume));
+          VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
                               vklVolume,
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
-                              valueSelector);
+                              valueSelector,
+                              buffer.data());
 
           VKLHit4 hit;
 
@@ -316,7 +316,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
           int hitCount = 0;
 
           while (true) {
-            vklIterateHit4(valid.data(), &iterator, &hit, result);
+            vklIterateHit4(valid.data(), iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -355,14 +355,14 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 8) {
-          VKLHitIterator8 iterator;
-          vklInitHitIterator8(valid.data(),
-                              &iterator,
+          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklVolume));
+          VKLHitIterator8 iterator = vklInitHitIterator8(valid.data(),
                               vklVolume,
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
-                              valueSelector);
+                              valueSelector,
+                              buffer.data());
 
           VKLHit8 hit;
 
@@ -378,7 +378,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
           int hitCount = 0;
 
           while (true) {
-            vklIterateHit8(valid.data(), &iterator, &hit, result);
+            vklIterateHit8(valid.data(), iterator, &hit, result);
 
             int resultSum = 0;
 
@@ -417,14 +417,14 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 16) {
-          VKLHitIterator16 iterator;
-          vklInitHitIterator16(valid.data(),
-                               &iterator,
+          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklVolume));
+          VKLHitIterator16 iterator = vklInitHitIterator16(valid.data(),
                                vklVolume,
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
-                               valueSelector);
+                               valueSelector,
+                               buffer.data());
 
           VKLHit16 hit;
 
@@ -440,7 +440,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
           int hitCount = 0;
 
           while (true) {
-            vklIterateHit16(valid.data(), &iterator, &hit, result);
+            vklIterateHit16(valid.data(), iterator, &hit, result);
 
             int resultSum = 0;
 

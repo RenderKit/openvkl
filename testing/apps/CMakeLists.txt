@@ -71,6 +71,7 @@ if (BUILD_TESTING)
 
   openvkl_add_executable_ispc(vklTests
     vklTests.cpp
+    tests/alignment.cpp
     tests/hit_iterator.cpp
     tests/interval_iterator.cpp
     tests/simd_conformance.cpp

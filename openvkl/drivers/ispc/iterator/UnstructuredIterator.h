@@ -5,37 +5,36 @@
 
 #include "../common/math.h"
 #include "Iterator.h"
+#include "UnstructuredIterator_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct UnstructuredVolume;
-
-    struct Node;
-
-    template <int W>
-    struct UnstructuredIterator : public IteratorV<W>
+    struct UnstructuredIntervalIterator : public IntervalIterator<W>
     {
-      UnstructuredIterator(const vintn<W> &valid,
-                           const Volume<W> *volume,
-                           const vvec3fn<W> &origin,
-                           const vvec3fn<W> &direction,
-                           const vrange1fn<W> &tRange,
-                           const ValueSelector<W> *valueSelector);
+      using IntervalIterator<W>::IntervalIterator;
 
-      const Interval<W> *getCurrentInterval() const override;
-      void iterateInterval(const vintn<W> &valid, vintn<W> &result) override;
+      void initializeIntervalV(
+          const vintn<W> &valid,
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const ValueSelector<W> *valueSelector) override final;
 
-      const Hit<W> *getCurrentHit() const override;
-      void iterateHit(const vintn<W> &valid, vintn<W> &result) override;
-
-      // required size of ISPC-side object for width
-      static constexpr int ispcStorageSize = 76 * W;
+      void iterateIntervalV(const vintn<W> &valid,
+                            Interval<W> &interval,
+                            vintn<W> &result) override final;
 
      protected:
-      alignas(simd_alignment_for_width(W)) char ispcStorage[ispcStorageSize];
+      using Iterator<W>::volume;
+      using IspcIterator = __varying_ispc_type(UnstructuredIterator);
+      alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
+
+    template <int W>
+    using UnstructuredIntervalIteratorFactory =
+        ConcreteIteratorFactory<W, IntervalIterator, UnstructuredIntervalIterator>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

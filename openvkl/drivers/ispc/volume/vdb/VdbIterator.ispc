@@ -7,6 +7,14 @@
 #include "math/box_utility.ih"
 #include "math/math.ih"
 
+export void EXPORT_UNIQUE(VdbIterator_export,
+                          uniform box1f &dummy_box1f,
+                          const DdaSegmentState *uniform ddaSegmentState,
+                          const DdaLevelState *uniform ddaLevelState,
+                          const varying VdbIterator *uniform it)
+{
+}
+
 export uniform int EXPORT_UNIQUE(VdbIterator_sizeOf)
 {
   return sizeof(varying VdbIterator);

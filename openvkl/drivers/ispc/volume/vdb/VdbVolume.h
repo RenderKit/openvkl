@@ -65,30 +65,11 @@ namespace openvkl {
       VKLObserver newObserver(const char *type) override;
       Sampler<W> *newSampler() override;
 
-      void initIntervalIteratorV(
-          const vintn<W> &valid,
-          vVKLIntervalIteratorN<W> &iterator,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override;
-
-      void iterateIntervalV(const vintn<W> &valid,
-                            vVKLIntervalIteratorN<W> &iterator,
-                            vVKLIntervalN<W> &interval,
-                            vintn<W> &result) override;
-
-      void initHitIteratorV(const vintn<W> &valid,
-                            vVKLHitIteratorN<W> &iterator,
-                            const vvec3fn<W> &origin,
-                            const vvec3fn<W> &direction,
-                            const vrange1fn<W> &tRange,
-                            const ValueSelector<W> *valueSelector) override;
-
-      void iterateHitV(const vintn<W> &valid,
-                       vVKLHitIteratorN<W> &iterator,
-                       vVKLHitN<W> &hit,
-                       vintn<W> &result) override;
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final
+      {
+        return intervalIteratorFactory;
+      }
 
      private:
       void cleanup();
@@ -101,6 +82,7 @@ namespace openvkl {
       VdbGrid *grid{nullptr};
       size_t bytesAllocated{0};
       VdbSampleConfig globalConfig;
+      VdbIntervalIteratorFactory<W> intervalIteratorFactory;
     };
 
   }  // namespace ispc_driver

@@ -21,15 +21,15 @@ void scalar_hit_iteration(VKLVolume volume,
 
   vklCommit(valueSelector);
 
-  VKLHitIterator iterator;
-  vklInitHitIterator(
-      &iterator, volume, &origin, &direction, &tRange, valueSelector);
+  std::vector<char> buffer(vklGetHitIteratorSize(volume));
+  VKLHitIterator iterator = vklInitHitIterator(
+      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLHit hit;
 
   int hitCount = 0;
 
-  while (vklIterateHit(&iterator, &hit)) {
+  while (vklIterateHit(iterator, &hit)) {
     INFO("hit t = " << hit.t << ", sample = " << hit.sample);
 
     REQUIRE(hit.t == Approx(expectedTValues[hitCount]));

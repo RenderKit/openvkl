@@ -37,14 +37,6 @@ namespace openvkl {
     return W < 4 ? 8 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
-  constexpr int iterator_internal_state_size_for_width(int W)
-  {
-    return W < 4 ? ITERATOR_INTERNAL_STATE_SIZE
-                 : (W < 8 ? ITERATOR_INTERNAL_STATE_SIZE_4
-                          : (W < 16 ? ITERATOR_INTERNAL_STATE_SIZE_8
-                                    : ITERATOR_INTERNAL_STATE_SIZE_16));
-  }
-
   template <int W>
   struct alignas(simd_alignment_for_width(W)) vfloatn
   {
@@ -219,47 +211,6 @@ namespace openvkl {
   };
 
   template <int W>
-  struct alignas(simd_alignment_for_width_promote_scalar(W))
-      vVKLIntervalIteratorN
-  {
-    alignas(simd_alignment_for_width_promote_scalar(
-        W)) char internalState[iterator_internal_state_size_for_width(W)];
-    VKLVolume volume;
-
-    vVKLIntervalIteratorN<W>() = default;
-
-    vVKLIntervalIteratorN<W>(const vVKLIntervalIteratorN<W> &v)
-        : volume(v.volume)
-    {
-      memcpy(internalState,
-             v.internalState,
-             iterator_internal_state_size_for_width(W));
-    }
-
-    // vVKLIntervalIteratorN<1> is maximally sized and aligned, so can hold
-    // internal state for any other iterator width; this is to support execution
-    // of the scalar APIs through the native vector-wide implementation.
-    // therefore we allow conversion between width=1 and any other width.
-    //
-    // scalar (width 1) => any width conversion; only the internalState member
-    // should be used in the result
-    template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
-    explicit operator vVKLIntervalIteratorN<W2> *()
-    {
-      static_assert(alignof(vVKLIntervalIteratorN<W2>) <=
-                        alignof(vVKLIntervalIteratorN<W>),
-                    "vVKLIntervalIteratorN<W> is not sufficiently aligned to "
-                    "represent vVKLIntervalIteratorN<W2>");
-
-      static_assert(iterator_internal_state_size_for_width(W2) <=
-                        iterator_internal_state_size_for_width(W),
-                    "vVKLIntervalIteratorN<W2> is larger than source type");
-
-      return reinterpret_cast<vVKLIntervalIteratorN<W2> *>(this);
-    }
-  };
-
-  template <int W>
   struct alignas(simd_alignment_for_width(W)) vVKLIntervalN
   {
     vrange1fn<W> tRange;
@@ -325,45 +276,6 @@ namespace openvkl {
           interval.nominalDeltaT[i]    = nominalDeltaT[i];
         }
       }
-    }
-  };
-
-  template <int W>
-  struct alignas(simd_alignment_for_width_promote_scalar(W)) vVKLHitIteratorN
-  {
-    alignas(simd_alignment_for_width_promote_scalar(
-        W)) char internalState[iterator_internal_state_size_for_width(W)];
-    VKLVolume volume;
-
-    vVKLHitIteratorN<W>() = default;
-
-    vVKLHitIteratorN<W>(const vVKLHitIteratorN<W> &v) : volume(v.volume)
-    {
-      memcpy(internalState,
-             v.internalState,
-             iterator_internal_state_size_for_width(W));
-    }
-
-    // vVKLHitIteratorN<1> is maximally sized and aligned, so can hold internal
-    // state for any other iterator width; this is to support execution of the
-    // scalar APIs through the native vector-wide implementation. therefore we
-    // allow conversion between width=1 and any other width.
-    //
-    // scalar (width 1) => any width conversion; only the internalState member
-    // should be used in the result
-    template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
-    explicit operator vVKLHitIteratorN<W2> *()
-    {
-      static_assert(
-          alignof(vVKLHitIteratorN<W2>) <= alignof(vVKLHitIteratorN<W>),
-          "vVKLHitIteratorN<W> is not sufficiently aligned to "
-          "represent vVKLHitIteratorN<W2>");
-
-      static_assert(iterator_internal_state_size_for_width(W2) <=
-                        iterator_internal_state_size_for_width(W),
-                    "vVKLHitIteratorN<W2> is larger than source type");
-
-      return reinterpret_cast<vVKLHitIteratorN<W2> *>(this);
     }
   };
 

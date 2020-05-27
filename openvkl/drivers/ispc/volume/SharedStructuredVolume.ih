@@ -22,7 +22,7 @@ struct SharedStructuredVolume
   Volume super;
 
   uniform Data1D voxelData;
-  uniform VKLDataType voxelType;
+  uniform int voxelType;
 
   uniform vec3i dimensions;
 

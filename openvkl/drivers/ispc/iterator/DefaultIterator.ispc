@@ -7,6 +7,12 @@
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
+export void EXPORT_UNIQUE(DefaultIterator_export,
+    uniform vec3f &dummy_vec3f,
+    const varying DefaultIterator *uniform it)
+{
+}
+
 export uniform int EXPORT_UNIQUE(DefaultIterator_sizeOf)
 {
   return sizeof(varying DefaultIterator);

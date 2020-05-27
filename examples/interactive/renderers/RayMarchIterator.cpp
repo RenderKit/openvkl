@@ -22,7 +22,9 @@ namespace openvkl {
       ispc::RayMarchIterator_set(ispcEquivalent, samplingRate);
     }
 
-    vec3f RayMarchIterator::renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID)
+    vec3f RayMarchIterator::renderPixel(const Scene &scene,
+                                        Ray &ray,
+                                        const vec4i &sampleID)
     {
       vec3f color(0.f);
       float alpha = 0.f;
@@ -32,18 +34,20 @@ namespace openvkl {
       tRange.lower = ray.t.lower;
       tRange.upper = ray.t.upper;
 
-      VKLIntervalIterator iterator;
-      vklInitIntervalIterator(&iterator,
-                              scene.volume,
-                              (vkl_vec3f *)&ray.org,
-                              (vkl_vec3f *)&ray.dir,
-                              &tRange,
-                              scene.valueSelector);
+      void *intervalIteratorBuffer =
+          alloca(vklGetIntervalIteratorSize(scene.volume));
+      VKLIntervalIterator iterator =
+          vklInitIntervalIterator(scene.volume,
+                                  (vkl_vec3f *)&ray.org,
+                                  (vkl_vec3f *)&ray.dir,
+                                  &tRange,
+                                  scene.valueSelector,
+                                  intervalIteratorBuffer);
 
       // the current ray interval
       VKLInterval interval;
 
-      while (vklIterateInterval(&iterator, &interval) && alpha < 0.99f) {
+      while (vklIterateInterval(iterator, &interval) && alpha < 0.99f) {
         const float nominalSamplingDt = interval.nominalDeltaT / samplingRate;
 
         // initial sub interval, based on our renderer-defined sampling rate

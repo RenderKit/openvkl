@@ -21,13 +21,13 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
   range1f expectedTRange = intersectRayBox(
       (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(
-      &iterator, volume, &origin, &direction, &tRange, nullptr);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      volume, &origin, &direction, &tRange, nullptr, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
-  for (int i = 0; vklIterateInterval(&iterator, &intervalCurrent); i++) {
+  for (int i = 0; vklIterateInterval(iterator, &intervalCurrent); i++) {
     INFO("interval tRange = " << intervalCurrent.tRange.lower << ", "
                               << intervalCurrent.tRange.upper);
 
@@ -52,9 +52,9 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(
-      &iterator, volume, &origin, &direction, &tRange, nullptr);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      volume, &origin, &direction, &tRange, nullptr, buffer.data());
 
   VKLInterval interval;
   VKLSampler sampler = vklNewSampler(volume);
@@ -62,7 +62,7 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
 
   int intervalCount = 0;
 
-  while (vklIterateInterval(&iterator, &interval)) {
+  while (vklIterateInterval(iterator, &interval)) {
     INFO("interval tRange = " << interval.tRange.lower << ", "
                               << interval.tRange.upper
                               << " valueRange = " << interval.valueRange.lower
@@ -106,7 +106,7 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
-  VKLSampler sampler = vklNewSampler(volume);
+  VKLSampler sampler             = vklNewSampler(volume);
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
 
   // will trigger intervals covering individual ranges separately
@@ -117,15 +117,15 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
 
   vklCommit(valueSelector);
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(
-      &iterator, volume, &origin, &direction, &tRange, valueSelector);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLInterval interval;
 
   int intervalCount = 0;
 
-  while (vklIterateInterval(&iterator, &interval)) {
+  while (vklIterateInterval(iterator, &interval)) {
     INFO("interval tRange = " << interval.tRange.lower << ", "
                               << interval.tRange.upper
                               << " valueRange = " << interval.valueRange.lower
@@ -188,16 +188,17 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
   INFO("direction = " << direction.x << " " << direction.y << " "
                       << direction.z);
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(&iterator,
-                          volume,
-                          &origin,
-                          &(const vkl_vec3f &)direction,
-                          &tRange,
-                          nullptr);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator =
+      vklInitIntervalIterator(volume,
+                              &origin,
+                              &(const vkl_vec3f &)direction,
+                              &tRange,
+                              nullptr,
+                              buffer.data());
 
   VKLInterval interval;
-  bool gotInterval = vklIterateInterval(&iterator, &interval);
+  bool gotInterval = vklIterateInterval(iterator, &interval);
 
   REQUIRE(gotInterval == true);
 

@@ -8,6 +8,12 @@
 #include "../volume/SharedStructuredVolume.ih"
 #include "GridAcceleratorIterator.ih"
 
+export void EXPORT_UNIQUE(GridAcceleratorIterator_export,
+    uniform vec3f &dummy_vec3f,
+    const varying GridAcceleratorIterator *uniform it)
+{
+}
+
 inline void printGridAcceleratorIterator(
     varying GridAcceleratorIterator *uniform self)
 {

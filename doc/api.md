@@ -922,58 +922,81 @@ which needs to be created, filled in with values, and then committed.
                                    const float *values);
 
 To query an interval, a `VKLIntervalIterator` of scalar or vector width must be
-initialized with `vklInitIntervalIterator`.  The iterator structure is allocated
-and belongs to the caller, and initialized by the following functions.
+initialized with `vklInitIntervalIterator`.
 
-    void vklInitIntervalIterator(VKLIntervalIterator *iterator,
-                                 VKLVolume volume,
-                                 const vkl_vec3f *origin,
-                                 const vkl_vec3f *direction,
-                                 const vkl_range1f *tRange,
-                                 VKLValueSelector valueSelector);
+    VKLIntervalIterator vklInitIntervalIterator(VKLVolume volume,
+                                                const vkl_vec3f *origin,
+                                                const vkl_vec3f *direction,
+                                                const vkl_range1f *tRange,
+                                                VKLValueSelector valueSelector,
+                                                void *buffer);
 
-    void vklInitIntervalIterator4(const int *valid,
-                                  VKLIntervalIterator4 *iterator,
-                                  VKLVolume volume,
-                                  const vkl_vvec3f4 *origin,
-                                  const vkl_vvec3f4 *direction,
-                                  const vkl_vrange1f4 *tRange,
-                                  VKLValueSelector valueSelector);
+    VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
+                                                  VKLVolume volume,
+                                                  const vkl_vvec3f4 *origin,
+                                                  const vkl_vvec3f4 *direction,
+                                                  const vkl_vrange1f4 *tRange,
+                                                  VKLValueSelector valueSelector,
+                                                  void *buffer);
 
-    void vklInitIntervalIterator8(const int *valid,
-                                  VKLIntervalIterator8 *iterator,
-                                  VKLVolume volume,
-                                  const vkl_vvec3f8 *origin,
-                                  const vkl_vvec3f8 *direction,
-                                  const vkl_vrange1f8 *tRange,
-                                  VKLValueSelector valueSelector);
+    VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
+                                                  VKLVolume volume,
+                                                  const vkl_vvec3f8 *origin,
+                                                  const vkl_vvec3f8 *direction,
+                                                  const vkl_vrange1f8 *tRange,
+                                                  VKLValueSelector valueSelector,
+                                                  void *buffer);
 
-    void vklInitIntervalIterator16(const int *valid,
-                                   VKLIntervalIterator16 *iterator,
-                                   VKLVolume volume,
-                                   const vkl_vvec3f16 *origin,
-                                   const vkl_vvec3f16 *direction,
-                                   const vkl_vrange1f16 *tRange,
-                                   VKLValueSelector valueSelector);
+    VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
+                                                    VKLVolume volume,
+                                                    const vkl_vvec3f16 *origin,
+                                                    const vkl_vvec3f16 *direction,
+                                                    const vkl_vrange1f16 *tRange,
+                                                    VKLValueSelector valueSelector,
+                                                    void *buffer);
+
+Open VKL places the iterator struct into a user-provided buffer, and the
+returned handle is essentially a pointer into this buffer. This means that
+the iterator handle must not be used after the buffer ceases to exist.
+Copying iterator buffers is currently not supported.
+
+The required size, in bytes, of the buffer can be queried with
+
+    size_t vklGetIntervalIteratorSize(VKLVolume volume);
+
+    size_t vklGetIntervalIteratorSize4(VKLVolume volume);
+
+    size_t vklGetIntervalIteratorSize8(VKLVolume volume);
+
+    size_t vklGetIntervalIteratorSize16(VKLVolume volume);
+
+The values these functions return depend on the volume type rather than the
+particular `VKLVolume` instance.
+
+Open VKL also provides a conservative maximum size over all volume types as a
+preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). This is particularly
+useful for stack-based allocation in ISPC. Open VKL will attempt to
+detect the native vector width using `TARGET_WIDTH`, which is defined in recent
+versions of ISPC.
 
 Intervals can then be processed by calling `vklIterateInterval` as long as the
 returned lane masks indicates that the iterator is still within the volume:
 
-    int vklIterateInterval(VKLIntervalIterator *iterator,
+    int vklIterateInterval(VKLIntervalIterator iterator,
                            VKLInterval *interval);
 
     void vklIterateInterval4(const int *valid,
-                             VKLIntervalIterator4 *iterator,
+                             VKLIntervalIterator4 iterator,
                              VKLInterval4 *interval,
                              int *result);
 
     void vklIterateInterval8(const int *valid,
-                             VKLIntervalIterator8 *iterator,
+                             VKLIntervalIterator8 iterator,
                              VKLInterval8 *interval,
                              int *result);
 
     void vklIterateInterval16(const int *valid,
-                              VKLIntervalIterator16 *iterator,
+                              VKLIntervalIterator16 iterator,
                               VKLInterval16 *interval,
                               int *result);
 
@@ -1013,57 +1036,70 @@ requesting a particular splitting.
 
 Querying for particular values is done using a `VKLHitIterator` in much the
 same fashion.  This API could be used, for example, to find isosurfaces.
-Again, a user allocated `VKLHitIterator` of the desired width must be
-initialized:
+Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
+desired width must be initialized:
 
-    void vklInitHitIterator(VKLHitIterator *iterator,
-                            VKLVolume volume,
-                            const vkl_vec3f *origin,
-                            const vkl_vec3f *direction,
-                            const vkl_range1f *tRange,
-                            VKLValueSelector valueSelector);
+    VKLHitIterator vklInitHitIterator(VKLVolume volume,
+                                      const vkl_vec3f *origin,
+                                      const vkl_vec3f *direction,
+                                      const vkl_range1f *tRange,
+                                      VKLValueSelector valueSelector,
+                                      void *buffer);
 
-    void vklInitHitIterator4(const int *valid,
-                             VKLHitIterator4 *iterator,
+    VKLHitIterator4 vklInitHitIterator4(const int *valid,
                              VKLVolume volume,
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
-                             VKLValueSelector valueSelector);
+                             VKLValueSelector valueSelector,
+                             void *buffer);
 
-    void vklInitHitIterator8(const int *valid,
-                             VKLHitIterator8 *iterator,
+    VKLHitIterator8 vklInitHitIterator8(const int *valid,
                              VKLVolume volume,
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
                              const vkl_vrange1f8 *tRange,
-                             VKLValueSelector valueSelector);
+                             VKLValueSelector valueSelector,
+                             void *buffer);
 
-    void vklInitHitIterator16(const int *valid,
-                              VKLHitIterator16 *iterator,
+    VKLHitIterator16 vklInitHitIterator16(const int *valid,
                               VKLVolume volume,
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
-                              VKLValueSelector valueSelector);
+                              VKLValueSelector valueSelector,
+                              void *buffer);
+
+Buffer size can be queried with
+
+    size_t vklGetHitIteratorSize(VKLVolume volume);
+
+    size_t vklGetHitIteratorSize4(VKLVolume volume);
+
+    size_t vklGetHitIteratorSize8(VKLVolume volume);
+
+    size_t vklGetHitIteratorSize16(VKLVolume volume);
+
+Open VKL also provides the macro `VKL_MAX_HIT_ITERATOR_SIZE` as a conservative
+estimate.
 
 Hits are then queried by looping a call to `vklIterateHit` as long as the
 returned lane mask indicates that the iterator is still within the volume.
 
-    int vklIterateHit(VKLHitIterator *iterator, VKLHit *hit);
+    int vklIterateHit(VKLHitIterator iterator, VKLHit *hit);
 
     void vklIterateHit4(const int *valid,
-                        VKLHitIterator4 *iterator,
+                        VKLHitIterator4 iterator,
                         VKLHit4 *hit,
                         int *result);
 
     void vklIterateHit8(const int *valid,
-                        VKLHitIterator8 *iterator,
+                        VKLHitIterator8 iterator,
                         VKLHit8 *hit,
                         int *result);
 
     void vklIterateHit16(const int *valid,
-                         VKLHitIterator16 *iterator,
+                         VKLHitIterator16 iterator,
                          VKLHit16 *hit,
                          int *result);
 
@@ -1123,3 +1159,46 @@ execute the following code at the beginning of the application main thread
 
 If using a different tasking system, make sure each thread calling into
 Open VKL has the proper mode set.
+
+Iterator Allocation
+-------------------
+
+`vklInitIntervalIterator` and `vklInitHitIterator` expect a user allocated
+buffer. While this buffer can be allocated by any means, we expect iterators
+to be used in inner loops and advise against heap allocation in that case.
+Applications may provide high performance memory pools, but as a preferred
+alternative we recommend stack allocated buffers.
+
+In C99, variable length arrays provide an easy way to achieve this:
+
+    const size_t bufferSize = vklGetIntervalIteratorSize(volume);
+    char buffer[bufferSize];
+
+Note that the call to `vklGetIntervalIteratorSize` or `vklGetHitIteratorSize`
+should not appear in an inner loop as it is relatively costly. The return value
+depends only on the volume type and target architecture, and `volume` does not
+actually have to be committed.
+
+In C++, variable length arrays are not part of the standard. Here, users may
+rely on `alloca` and similar functions:
+
+    #include <alloca.h>
+    const size_t bufferSize = vklGetIntervalIteratorSize(volume);
+    char *buffer = alloca(bufferSize);
+
+Users should understand the implications of `alloca`. In particular,
+`alloca` does check available stack space and may result in stack overflow.
+`buffer` also becomes invalid at the end of the scope. As one consequence, it
+cannot be returned from a function.
+On Windows, `_malloca` is a safer option that performs additional error
+checking.
+
+In ISPC, variable length or `alloca` do not exist. Applications may instead rely
+on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and `VKL_MAX_HIT_ITERATOR_SIZE` macros:
+
+    uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+
+These values are majorants over all drivers and volume types. Note that Open VKL
+attempts to detect the target SIMD width using `TARGET_WIDTH`, returning smaller
+buffer sizes for narrow architectures. However, Open VKL may fall back to the
+largest buffer size over all targets.

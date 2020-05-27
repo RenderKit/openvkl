@@ -4,35 +4,63 @@
 #pragma once
 
 #include "Iterator.h"
+#include "DefaultIterator_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct Volume;
-
-    template <int W>
-    struct DefaultIterator : public IteratorV<W>
+    struct DefaultIntervalIterator : public IntervalIterator<W>
     {
-      DefaultIterator(const vintn<W> &valid,
-                      const Volume<W> *volume,
-                      const vvec3fn<W> &origin,
-                      const vvec3fn<W> &direction,
-                      const vrange1fn<W> &tRange,
-                      const ValueSelector<W> *valueSelector);
+      using IntervalIterator<W>::IntervalIterator;
 
-      const Interval<W> *getCurrentInterval() const override;
-      void iterateInterval(const vintn<W> &valid, vintn<W> &result) override;
+      void initializeIntervalV(
+          const vintn<W> &valid,
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const ValueSelector<W> *valueSelector) override final;
 
-      const Hit<W> *getCurrentHit() const override;
-      void iterateHit(const vintn<W> &valid, vintn<W> &result) override;
-
-      // required size of ISPC-side object for width
-      static constexpr int ispcStorageSize = 124 * W;
+      void iterateIntervalV(const vintn<W> &valid,
+                            Interval<W> &interval,
+                            vintn<W> &result) override final;
 
      protected:
-      alignas(simd_alignment_for_width(W)) char ispcStorage[ispcStorageSize];
+      using Iterator<W>::volume;
+      using IspcIterator = __varying_ispc_type(DefaultIterator);
+      alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
+
+    template <int W>
+    using DefaultIntervalIteratorFactory =
+        ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
+
+    ////////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    struct DefaultHitIterator : public HitIterator<W>
+    {
+      using HitIterator<W>::HitIterator;
+
+      void initializeHitV(const vintn<W> &valid,
+                          const vvec3fn<W> &origin,
+                          const vvec3fn<W> &direction,
+                          const vrange1fn<W> &tRange,
+                          const ValueSelector<W> *valueSelector) override final;
+
+      void iterateHitV(const vintn<W> &valid,
+                       Hit<W> &hit,
+                       vintn<W> &result) override final;
+
+     protected:
+      using Iterator<W>::volume;
+      using IspcIterator = __varying_ispc_type(DefaultIterator);
+      alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
+    };
+
+    template <int W>
+    using DefaultHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, DefaultHitIterator>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

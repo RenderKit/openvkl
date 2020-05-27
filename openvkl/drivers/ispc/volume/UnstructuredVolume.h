@@ -106,18 +106,11 @@ namespace openvkl {
 
       void commit() override;
 
-      void initIntervalIteratorV(
-          const vintn<W> &valid,
-          vVKLIntervalIteratorN<W> &iterator,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override;
-
-      void iterateIntervalV(const vintn<W> &valid,
-                            vVKLIntervalIteratorN<W> &iterator,
-                            vVKLIntervalN<W> &interval,
-                            vintn<W> &result) override;
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final
+      {
+        return intervalIteratorFactory;
+      }
 
       Sampler<W> *newSampler() override;
 
@@ -180,6 +173,7 @@ namespace openvkl {
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -188,35 +182,6 @@ namespace openvkl {
     inline std::string UnstructuredVolume<W>::toString() const
     {
       return "openvkl::UnstructuredVolume";
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::initIntervalIteratorV(
-        const vintn<W> &valid,
-        vVKLIntervalIteratorN<W> &iterator,
-        const vvec3fn<W> &origin,
-        const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
-    {
-      initVKLIntervalIterator<UnstructuredIterator<W>>(
-          iterator, valid, this, origin, direction, tRange, valueSelector);
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::iterateIntervalV(
-        const vintn<W> &valid,
-        vVKLIntervalIteratorN<W> &iterator,
-        vVKLIntervalN<W> &interval,
-        vintn<W> &result)
-    {
-      UnstructuredIterator<W> *ri =
-          fromVKLIntervalIterator<UnstructuredIterator<W>>(&iterator);
-
-      ri->iterateInterval(valid, result);
-
-      interval =
-          *reinterpret_cast<const vVKLIntervalN<W> *>(ri->getCurrentInterval());
     }
 
     template <int W>

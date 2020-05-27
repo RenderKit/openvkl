@@ -28,13 +28,15 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  VKLHitIterator iterator;
-  vklInitHitIteratorV(&iterator,
-                      scene->volume,
-                      (varying vkl_vec3f *)&ray.org,
-                      (varying vkl_vec3f *)&ray.dir,
-                      &tRange,
-                      scene->valueSelector);
+  uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
+  uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
+
+  VKLHitIterator iterator = vklInitHitIteratorV(scene->volume,
+                                                (varying vkl_vec3f *)&ray.org,
+                                                (varying vkl_vec3f *)&ray.dir,
+                                                &tRange,
+                                                scene->valueSelector,
+                                                hitIteratorBuffer);
 
   // the current surface hit
   VKLHit hit;
@@ -43,7 +45,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   const uniform vec3f lightDir[] = {normalize(make_vec3f(1.f, 1.f, 1.f)),
                                     normalize(make_vec3f(1.f, 1.f, -1.f))};
 
-  while (vklIterateHitV(&iterator, &hit) && alpha < 0.99f) {
+  while (vklIterateHitV(iterator, &hit) && alpha < 0.99f) {
     const vec3f c = ray.org + hit.t * ray.dir;
     const vkl_vec3f grad =
         vklComputeGradientV(scene->sampler, (varying vkl_vec3f *)&c);
@@ -66,17 +68,17 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
         // Only test for shadow if we don't have to go through this surface.
         if ((co > 0) == (ci > 0)) {
           VKLHit shadowHit;
-          VKLHitIterator shadowIterator;
           vkl_range1f tShadowRange;
           tShadowRange.lower = 0.001f;
           tShadowRange.upper = inf;
-          vklInitHitIteratorV(&shadowIterator,
-                              scene->volume,
-                              (varying vkl_vec3f *)&c,
-                              (varying vkl_vec3f *)&wo,
-                              &tShadowRange,
-                              scene->valueSelector);
-          if (!vklIterateHitV(&shadowIterator, &shadowHit)) {
+          VKLHitIterator shadowIterator =
+              vklInitHitIteratorV(scene->volume,
+                                  (varying vkl_vec3f *)&c,
+                                  (varying vkl_vec3f *)&wo,
+                                  &tShadowRange,
+                                  scene->valueSelector,
+                                  shadowHitIteratorBuffer);
+          if (!vklIterateHitV(shadowIterator, &shadowHit)) {
             illum += abs(co) * emission[i];  // Lambertian surface shading.
           }
         }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
+#include <vector>
 #include "utility.h"
 
 /*
@@ -18,7 +19,7 @@ namespace api {
       std::ostringstream os;
       os << "scalarIntervalIteratorConstruction";
       if (!VolumeWrapper::name().empty())
-         os << "<" << VolumeWrapper::name() << ">";
+        os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -26,12 +27,17 @@ namespace api {
     {
       static std::unique_ptr<VolumeWrapper> wrapper;
       static VKLVolume vklVolume;
-      static VKLIntervalIterator iterator;
       static vkl_vec3f origin;
+      static const vkl_vec3f direction{0.f, 0.f, 1.f};
+      static const vkl_range1f tRange{0.f, 1000.f};
+      static size_t intervalIteratorSize { 0 };
+      static std::vector<char> buffers;
 
-      if (state.thread_index == 0) {
+      // This is safe: Google benchmark guarantees that threads do not
+      // start running until the start of the loop below.
+      if (state.thread_index == 0)
+      {
         wrapper = rkcommon::make_unique<VolumeWrapper>();
-
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -41,23 +47,21 @@ namespace api {
         std::random_device rd;
         std::mt19937 eng(rd());
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
+
+        intervalIteratorSize = vklGetIntervalIteratorSize(vklVolume);
+        buffers.resize(intervalIteratorSize * state.threads);
       }
 
-      vkl_vec3f direction{0.f, 0.f, 1.f};
-      vkl_range1f tRange{0.f, 1000.f};
-
       for (auto _ : state) {
-        VKLIntervalIterator iterator;
-        vklInitIntervalIterator(
-            &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
+        void *buffer = buffers.data() + intervalIteratorSize * state.thread_index;
+        VKLIntervalIterator iterator = vklInitIntervalIterator(
+            vklVolume, &origin, &direction, &tRange, nullptr, buffer);
 
         benchmark::DoNotOptimize(iterator);
       }
 
-      // global teardown only in first thread
-      if (state.thread_index == 0) {
+      if (state.thread_index == 0)
         wrapper.reset();
-      }
 
       // enables rates in report output
       state.SetItemsProcessed(state.iterations());
@@ -72,7 +76,7 @@ namespace api {
       std::ostringstream os;
       os << "scalarIntervalIteratorIterateFirst";
       if (!VolumeWrapper::name().empty())
-         os << "<" << VolumeWrapper::name() << ">";
+        os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -80,11 +84,15 @@ namespace api {
     {
       static std::unique_ptr<VolumeWrapper> wrapper;
       static VKLVolume vklVolume;
-      static VKLIntervalIterator iterator;
+      static vkl_vec3f origin;
+      static const vkl_vec3f direction{0.f, 0.f, 1.f};
+      static const vkl_range1f tRange{0.f, 1000.f};
+      static size_t intervalIteratorSize { 0 };
+      static std::vector<char> buffers;
 
-      if (state.thread_index == 0) {
-        wrapper = rkcommon::make_unique<VolumeWrapper>();
-
+      if (state.thread_index == 0)
+      {
+        wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -94,20 +102,23 @@ namespace api {
         std::random_device rd;
         std::mt19937 eng(rd());
 
-        vkl_vec3f origin{distX(eng), distY(eng), -1.f};
+        origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
         vkl_vec3f direction{0.f, 0.f, 1.f};
         vkl_range1f tRange{0.f, 1000.f};
 
-        vklInitIntervalIterator(
-            &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
+        intervalIteratorSize = vklGetIntervalIteratorSize(vklVolume);
+        buffers.resize(intervalIteratorSize * state.threads);
       }
 
       VKLInterval interval;
+      std::vector<char> buffer;
 
       for (auto _ : state) {
-        VKLIntervalIterator iteratorTemp = iterator;
+        void *buffer = buffers.data() + intervalIteratorSize * state.thread_index;
+        VKLIntervalIterator iterator = vklInitIntervalIterator(
+            vklVolume, &origin, &direction, &tRange, nullptr, buffer);
 
-        bool success = vklIterateInterval(&iteratorTemp, &interval);
+        bool success = vklIterateInterval(iterator, &interval);
 
         if (!success) {
           throw std::runtime_error("vklIterateInterval() returned false");
@@ -117,9 +128,8 @@ namespace api {
       }
 
       // global teardown only in first thread
-      if (state.thread_index == 0) {
+      if (state.thread_index == 0)
         wrapper.reset();
-      }
 
       // enables rates in report output
       state.SetItemsProcessed(state.iterations());
@@ -134,7 +144,7 @@ namespace api {
       std::ostringstream os;
       os << "scalarIntervalIteratorIterateSecond";
       if (!VolumeWrapper::name().empty())
-         os << "<" << VolumeWrapper::name() << ">";
+        os << "<" << VolumeWrapper::name() << ">";
       return os.str();
     }
 
@@ -142,11 +152,15 @@ namespace api {
     {
       static std::unique_ptr<VolumeWrapper> wrapper;
       static VKLVolume vklVolume;
-      static VKLIntervalIterator iterator;
+      static vkl_vec3f origin;
+      static const vkl_vec3f direction{0.f, 0.f, 1.f};
+      static const vkl_range1f tRange{0.f, 1000.f};
+      static size_t intervalIteratorSize { 0 };
+      static std::vector<char> buffers;
 
-      if (state.thread_index == 0) {
+      if (state.thread_index == 0)
+      {
         wrapper = rkcommon::make_unique<VolumeWrapper>();
-
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -155,25 +169,21 @@ namespace api {
 
         std::random_device rd;
         std::mt19937 eng(rd());
+        origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
-        vkl_vec3f origin{distX(eng), distY(eng), -1.f};
-        vkl_vec3f direction{0.f, 0.f, 1.f};
-        vkl_range1f tRange{0.f, 1000.f};
-
-        vklInitIntervalIterator(
-            &iterator, vklVolume, &origin, &direction, &tRange, nullptr);
-
-        // move past first iteration
-        VKLInterval interval;
-        vklIterateInterval(&iterator, &interval);
+        intervalIteratorSize = vklGetIntervalIteratorSize(vklVolume);
+        buffers.resize(intervalIteratorSize * state.threads);
       }
 
       VKLInterval interval;
-
       for (auto _ : state) {
-        VKLIntervalIterator iteratorTemp = iterator;
+        void *buffer = buffers.data() + intervalIteratorSize * state.thread_index;
+        VKLIntervalIterator iterator = vklInitIntervalIterator(
+            vklVolume, &origin, &direction, &tRange, nullptr, buffer);
 
-        bool success = vklIterateInterval(&iteratorTemp, &interval);
+        vklIterateInterval(iterator, &interval);
+
+        bool success = vklIterateInterval(iterator, &interval);
 
         if (!success) {
           throw std::runtime_error("vklIterateInterval() returned false");
@@ -182,17 +192,15 @@ namespace api {
         benchmark::DoNotOptimize(interval);
       }
 
-      // global teardown only in first thread
-      if (state.thread_index == 0) {
+      if (state.thread_index == 0)
         wrapper.reset();
-      }
 
       // enables rates in report output
       state.SetItemsProcessed(state.iterations());
     }
   };
 
-} // namespace api
+}  // namespace api
 
 /*
  * Register interval iterator tests.

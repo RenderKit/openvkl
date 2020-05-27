@@ -565,58 +565,6 @@ namespace openvkl {
       return new VdbSampler<W>(grid, globalConfig);
     }
 
-    template <int W>
-    void VdbVolume<W>::initIntervalIteratorV(
-        const vintn<W> &valid,
-        vVKLIntervalIteratorN<W> &iterator,
-        const vvec3fn<W> &origin,
-        const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
-    {
-      initVKLIntervalIterator<VdbIterator<W>>(
-          iterator, valid, this, origin, direction, tRange, valueSelector);
-    }
-
-    template <int W>
-    void VdbVolume<W>::iterateIntervalV(const vintn<W> &valid,
-                                        vVKLIntervalIteratorN<W> &iterator,
-                                        vVKLIntervalN<W> &interval,
-                                        vintn<W> &result)
-    {
-      VdbIterator<W> *i = fromVKLIntervalIterator<VdbIterator<W>>(&iterator);
-
-      i->iterateInterval(valid, result);
-
-      interval =
-          *reinterpret_cast<const vVKLIntervalN<W> *>(i->getCurrentInterval());
-    }
-
-    template <int W>
-    void VdbVolume<W>::initHitIteratorV(const vintn<W> &valid,
-                                        vVKLHitIteratorN<W> &iterator,
-                                        const vvec3fn<W> &origin,
-                                        const vvec3fn<W> &direction,
-                                        const vrange1fn<W> &tRange,
-                                        const ValueSelector<W> *valueSelector)
-    {
-      initVKLHitIterator<DefaultIterator<W>>(
-          iterator, valid, this, origin, direction, tRange, valueSelector);
-    }
-
-    template <int W>
-    void VdbVolume<W>::iterateHitV(const vintn<W> &valid,
-                                   vVKLHitIteratorN<W> &iterator,
-                                   vVKLHitN<W> &hit,
-                                   vintn<W> &result)
-    {
-      DefaultIterator<W> *i = fromVKLHitIterator<DefaultIterator<W>>(&iterator);
-
-      i->iterateHit(valid, result);
-
-      hit = *reinterpret_cast<const vVKLHitN<W> *>(i->getCurrentHit());
-    }
-
     VKL_REGISTER_VOLUME(VdbVolume<VKL_TARGET_WIDTH>,
                         CONCAT1(internal_vdb_, VKL_TARGET_WIDTH))
 

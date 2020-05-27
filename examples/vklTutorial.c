@@ -4,6 +4,10 @@
 #include <openvkl/openvkl.h>
 #include <stdio.h>
 
+#if defined(_MSC_VER)
+#include <malloc.h> // _malloca
+#endif
+
 void demoScalarAPI(VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
@@ -50,48 +54,62 @@ void demoScalarAPI(VKLVolume volume)
          rayDirection.z);
   printf("\trayTRange = %f %f\n", rayTRange.lower, rayTRange.upper);
 
-  // interval iteration
-  VKLIntervalIterator intervalIterator;
-  vklInitIntervalIterator(&intervalIterator,
-                          volume,
-                          &rayOrigin,
-                          &rayDirection,
-                          &rayTRange,
-                          selector);
+  // interval iteration. This is scoped
+  {
+    // Note: buffer will cease to exist at the end of this scope.
+#if defined(_MSC_VER)
+    // MSVC does not support variable length arrays, but provides a
+    // safer version of alloca.
+    char *buffer = _malloca(vklGetIntervalIteratorSize(volume));
+#else
+    char buffer[vklGetIntervalIteratorSize(volume)];
+#endif
+    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
+        volume, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
 
-  printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
-         ranges[0].lower,
-         ranges[0].upper,
-         ranges[1].lower,
-         ranges[1].upper);
+    printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
+           ranges[0].lower,
+           ranges[0].upper,
+           ranges[1].lower,
+           ranges[1].upper);
 
-  for (;;) {
-    VKLInterval interval;
-    int result = vklIterateInterval(&intervalIterator, &interval);
-    if (!result)
-      break;
-    printf(
-        "\t\ttRange (%f %f)\n\t\tvalueRange (%f %f)\n\t\tnominalDeltaT %f\n\n",
-        interval.tRange.lower,
-        interval.tRange.upper,
-        interval.valueRange.lower,
-        interval.valueRange.upper,
-        interval.nominalDeltaT);
+    for (;;) {
+      VKLInterval interval;
+      int result = vklIterateInterval(intervalIterator, &interval);
+      if (!result)
+        break;
+      printf(
+          "\t\ttRange (%f %f)\n\t\tvalueRange (%f %f)\n\t\tnominalDeltaT "
+          "%f\n\n",
+          interval.tRange.lower,
+          interval.tRange.upper,
+          interval.valueRange.lower,
+          interval.valueRange.upper,
+          interval.nominalDeltaT);
+    }
   }
 
   // hit iteration
-  VKLHitIterator hitIterator;
-  vklInitHitIterator(
-      &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
+  {
+#if defined(_MSC_VER)
+    // MSVC does not support variable length arrays, but provides a
+    // safer version of alloca.
+    char *buffer = _malloca(vklGetHitIteratorSize(volume));
+#else
+    char buffer[vklGetHitIteratorSize(volume)];
+#endif
+    VKLHitIterator hitIterator = vklInitHitIterator(
+        volume, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
 
-  printf("\thit iterator for values %f %f\n", values[0], values[1]);
+    printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
-  for (;;) {
-    VKLHit hit;
-    int result = vklIterateHit(&hitIterator, &hit);
-    if (!result)
-      break;
-    printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
+    for (;;) {
+      VKLHit hit;
+      int result = vklIterateHit(hitIterator, &hit);
+      if (!result)
+        break;
+      printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
+    }
   }
 
   vklRelease(selector);
@@ -118,9 +136,11 @@ void demoVectorAPI(VKLVolume volume)
   vklComputeGradient4(valid, sampler, &coord4, &grad4);
 
   for (int i = 0; i < 4; i++) {
-    printf("\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
+    printf(
+        "\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
     printf("\t\tsample[%d] = %f\n", i, sample4[i]);
-    printf("\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
+    printf(
+        "\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
   }
 
   vklRelease(sampler);
@@ -167,7 +187,8 @@ int main()
   const int numVoxels = dimensions[0] * dimensions[1] * dimensions[2];
 
   VKLVolume volume = vklNewVolume("structuredRegular");
-  vklSetVec3i(volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
+  vklSetVec3i(
+      volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 

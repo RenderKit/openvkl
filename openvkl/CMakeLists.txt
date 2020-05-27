@@ -89,3 +89,11 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
 ## Add OpenVKL drivers ##
 
 add_subdirectory(drivers)
+
+## Utilities
+
+add_executable(vklGenerateIteratorSizeHeader
+  util/vklGenerateIteratorSizeHeader.cpp 
+  ${VKL_RESOURCE})
+
+target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl)

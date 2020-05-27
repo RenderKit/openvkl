@@ -1,12 +1,20 @@
 // Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "UnstructuredIterator.ih"
 #include "common/export_util.h"
 #include "common/print_debug.ih"
 #include "math/box_utility.ih"
 #include "value_selector/ValueSelector.ih"
 #include "volume/UnstructuredVolume.ih"
-#include "UnstructuredIterator.ih"
+
+export void EXPORT_UNIQUE(UnstructuredIterator_export,
+                          uniform vec3i &dummy_vec3i,
+                          uniform vec3f &dummy_vec3f,
+                          uniform box1f &dummy_box1f,
+                          const varying UnstructuredIterator *uniform it)
+{
+}
 
 export uniform int EXPORT_UNIQUE(UnstructuredIterator_sizeOf)
 {
@@ -34,7 +42,7 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
   self->direction     = *((varying vec3f * uniform) _direction);
   self->tRange        = *((varying box1f * uniform) _tRange);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-  self->getCount = 0;
+  self->getCount      = 0;
 
   resetInterval(self->intervalState.currentInterval);
 }
@@ -62,8 +70,8 @@ static inline box1f make_box1f_empty()
   return make_box1f(inf, neg_inf);
 }
 
-static box1f evalNode(varying UnstructuredIterator *uniform iterator, 
-                      uniform Node * uniform node,
+static box1f evalNode(varying UnstructuredIterator *uniform iterator,
+                      uniform Node *uniform node,
                       box1f &valueRange,
                       float &deltaT,
                       uniform int level)
@@ -72,7 +80,9 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
 
   // rejection based on values being in the range we're looking for
   if (disjoint(iterator->valueSelector->rangesMinMax, node->valueRange)) {
-    PRINT_DEBUG("rejected range:\n\t%\n\t%\n", node->valueRange.lower, node->valueRange.upper);
+    PRINT_DEBUG("rejected range:\n\t%\n\t%\n",
+                node->valueRange.lower,
+                node->valueRange.upper);
     valueRange = make_box1f_empty();
     deltaT     = inf;
     return make_box1f_empty();
@@ -81,20 +91,29 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
   uniform bool isLeaf = (node->nominalLength < 0);
   uniform box3fa box;
   if (isLeaf) {
-    uniform LeafNode * uniform leaf = (uniform LeafNode * uniform)node;
-    box = leaf->bounds;
+    uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;
+    box                            = leaf->bounds;
   } else {
-    uniform InnerNode * uniform inner = (uniform InnerNode * uniform)node;
+    uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
     box = box_extend(inner->bounds[0], inner->bounds[1]);
   }
 
   uniform box3f reduced = make_box3f(box.lower, box.upper);
-  range1f nodeTRange = intersectBox(iterator->origin, iterator->direction, reduced, iterator->tRange);
+  range1f nodeTRange    = intersectBox(
+      iterator->origin, iterator->direction, reduced, iterator->tRange);
 
   PRINT_DEBUG("box dimensions:\n");
-  PRINT_DEBUG("\tlower:\n\t\t%\n\t\t%\n\t\t%\n", reduced.lower.x, reduced.lower.y, reduced.lower.z);
-  PRINT_DEBUG("\tupper:\n\t\t%\n\t\t%\n\t\t%\n", reduced.upper.x, reduced.upper.y, reduced.upper.z);
-  PRINT_DEBUG("box valueRange:\n\t%\n\t%\n", node->valueRange.lower, node->valueRange.upper);
+  PRINT_DEBUG("\tlower:\n\t\t%\n\t\t%\n\t\t%\n",
+              reduced.lower.x,
+              reduced.lower.y,
+              reduced.lower.z);
+  PRINT_DEBUG("\tupper:\n\t\t%\n\t\t%\n\t\t%\n",
+              reduced.upper.x,
+              reduced.upper.y,
+              reduced.upper.z);
+  PRINT_DEBUG("box valueRange:\n\t%\n\t%\n",
+              node->valueRange.lower,
+              node->valueRange.upper);
   PRINT_DEBUG("box tRange:\n\t%\n\t%\n", nodeTRange.lower, nodeTRange.upper);
 
   // rejection based on ray/box intersection
@@ -109,7 +128,7 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
   }
 
   // going to be an inner node if we reach here
-  uniform InnerNode * uniform inner = (uniform InnerNode * uniform)node;
+  uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
   box1f valueRangeFirst, valueRangeSecond;
   float deltaT1, deltaT2;
   range1f tRangeFirst = evalNode(
@@ -134,34 +153,39 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
       (varying UnstructuredIterator * uniform) _self;
 
   varying int *uniform result = (varying int *uniform)_result;
-  
+
   if (self->getCount) {
     *result = false;
     return;
   }
-  
+
   box1f retRange;
   box1f valueRange;
   float deltaT;
 
   if (!self->valueSelector) {
-    retRange   = intersectBox(self->origin, self->direction, self->volume->super.boundingBox, self->tRange);
+    retRange   = intersectBox(self->origin,
+                            self->direction,
+                            self->volume->super.boundingBox,
+                            self->tRange);
     valueRange = self->volume->super.bvhRoot->valueRange;
     deltaT     = abs(self->volume->super.bvhRoot->nominalLength);
   } else {
-    retRange = evalNode(self, self->volume->super.bvhRoot, valueRange, deltaT, 0);
+    retRange =
+        evalNode(self, self->volume->super.bvhRoot, valueRange, deltaT, 0);
   }
 
   if (isEmpty(retRange)) {
     *result = false;
   } else {
-     // shrink range slightly for cell-valued where testing the boundary will fail (modify test instead?)
-    self->intervalState.currentInterval.tRange.lower     = retRange.lower + 0.00001;
-    self->intervalState.currentInterval.tRange.upper     = retRange.upper - 0.00001;
+    // shrink range slightly for cell-valued where testing the boundary will
+    // fail (modify test instead?)
+    self->intervalState.currentInterval.tRange.lower = retRange.lower + 0.00001;
+    self->intervalState.currentInterval.tRange.upper = retRange.upper - 0.00001;
     self->intervalState.currentInterval.valueRange.lower = valueRange.lower;
     self->intervalState.currentInterval.valueRange.upper = valueRange.upper;
     self->intervalState.currentInterval.nominalDeltaT    = deltaT;
-    *result = true;
+    *result                                              = true;
   }
 
   self->getCount++;

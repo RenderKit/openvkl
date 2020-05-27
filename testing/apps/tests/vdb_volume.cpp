@@ -61,7 +61,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
                         128, vec3f(0.f), vec3f(1.f), VKL_FILTER_NEAREST));
 
-    VKLVolume vklVolume = volume->getVKLVolume();
+    VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(1);
@@ -96,7 +96,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
                         128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
-    VKLVolume vklVolume = volume->getVKLVolume();
+    VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(1);
@@ -135,14 +135,16 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
                       128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
   VKLVolume vklVolume = volume->getVKLVolume();
+  std::vector<char> buffer(vklGetIntervalIteratorSize(vklVolume));
   VKLIntervalIterator iterator;
   VKLInterval interval;
   vkl_vec3f origin{0, 0, -5.f};
   vkl_vec3f direction{0, 0, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
-  REQUIRE_NOTHROW(vklInitIntervalIterator(
-      &iterator, vklVolume, &origin, &direction, &tRange, nullptr));
-  REQUIRE_NOTHROW(vklIterateInterval(&iterator, &interval));
+  REQUIRE_NOTHROW(
+      iterator = vklInitIntervalIterator(
+          vklVolume, &origin, &direction, &tRange, nullptr, buffer.data()));
+  REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
   REQUIRE_NOTHROW(delete volume);
 }
 
@@ -157,7 +159,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
                         128, vec3f(0.f), vec3f(1.f), VKL_FILTER_NEAREST));
 
-    VKLVolume vklVolume = volume->getVKLVolume();
+    VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(1);
@@ -193,16 +195,15 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     REQUIRE_NOTHROW(volume = new XYZVdbVolume(
                         dim, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
-    VKLVolume vklVolume = volume->getVKLVolume();
+    VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(1);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
-      if (offset.x+1 >= volume->getDimensions().x
-       || offset.y+1 >= volume->getDimensions().y
-       || offset.z+1 >= volume->getDimensions().z)
-      {
+      if (offset.x + 1 >= volume->getDimensions().x ||
+          offset.y + 1 >= volume->getDimensions().y ||
+          offset.z + 1 >= volume->getDimensions().z) {
         continue;
       }
 

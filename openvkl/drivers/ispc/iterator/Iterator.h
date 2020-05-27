@@ -3,11 +3,19 @@
 
 #pragma once
 
+#include <type_traits>
+#include "../common/align.h"
 #include "../common/simd.h"
 #include "../value_selector/ValueSelector.h"
 #include "openvkl/openvkl.h"
 
 using namespace rkcommon;
+
+#define paste(A, B) __paste(A, B)
+#define __paste(A, B) A##B
+
+#define __varying_ispc_type(TypeName) \
+  ispc::paste(paste(v, VKL_TARGET_WIDTH), _varying_##TypeName)
 
 namespace openvkl {
   namespace ispc_driver {
@@ -30,140 +38,241 @@ namespace openvkl {
       vfloatn<W> sample;
     };
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Conversion to / from public types //////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    // constructs a given iterator type in the internal state of a public
-    // iterator object; does NOT populate the volume member of the public
-    // iterator object
-    template <typename T, int W, typename... Args>
-    inline void initVKLIntervalIterator(vVKLIntervalIteratorN<W> &iterator,
-                                        const Args &... args)
-    {
-      static_assert(
-          iterator_internal_state_size_for_width(W) >= sizeof(T),
-          "iterator internal state size must be >= source object size");
-      T *t = new (&iterator.internalState) T(args...);
-    }
-
-    template <typename T, int W>
-    inline T *fromVKLIntervalIterator(vVKLIntervalIteratorN<W> *x)
-    {
-      static_assert(
-          alignof(T) <= alignof(vVKLIntervalIteratorN<W>),
-          "alignment of destination type must be == alignment of source type");
-      static_assert(
-          sizeof(T) <= iterator_internal_state_size_for_width(W),
-          "fromVKLIntervalIterator destination object size must be <= "
-          "iterator internal state size");
-      return reinterpret_cast<T *>(&x->internalState[0]);
-    }
-
-    // constructs a given iterator type in the internal state of a public
-    // iterator object; does NOT populate the volume member of the public
-    // iterator object
-    template <typename T, int W, typename... Args>
-    inline void initVKLHitIterator(vVKLHitIteratorN<W> &iterator,
-                                   const Args &... args)
-    {
-      static_assert(
-          iterator_internal_state_size_for_width(W) >= sizeof(T),
-          "iterator internal state size must be >= source object size");
-      T *t = new (&iterator.internalState) T(args...);
-    }
-
-    template <typename T, int W>
-    inline T *fromVKLHitIterator(vVKLHitIteratorN<W> *x)
-    {
-      static_assert(
-          alignof(T) <= alignof(vVKLHitIteratorN<W>),
-          "alignment of destination type must be == alignment of source type");
-      static_assert(sizeof(T) <= iterator_internal_state_size_for_width(W),
-                    "fromVKLHitIterator destination object size must be <= "
-                    "iterator internal state size");
-      return reinterpret_cast<T *>(&x->internalState[0]);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Uniform iterator ///////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    // a general iterator that handles both interval and hit iteration
+    /*
+     * Base class for all iterators.
+     */
     template <int W>
-    struct IteratorU
+    struct Iterator
     {
-      IteratorU() = default;
+      /*
+       * Disallow all kinds of copying to be on the safe side.
+       */
+      Iterator(const Iterator &) = delete;
+      Iterator &operator=(const Iterator &) = delete;
+      Iterator(Iterator &&)                 = delete;
+      Iterator &operator=(Iterator &&) = delete;
 
-      IteratorU(const Volume<W> *volume,
-                const vvec3fn<1> &origin,
-                const vvec3fn<1> &direction,
-                const vrange1fn<1> &tRange,
-                const ValueSelector<W> *valueSelector);
+      explicit Iterator(const Volume<W> *volume) : volume{volume} {}
 
-      virtual ~IteratorU() = default;
+     protected:
+      virtual ~Iterator() = default;
 
-      virtual const Interval<1> *getCurrentInterval() const = 0;
-      virtual void iterateInterval(vintn<1> &result)        = 0;
-
-      virtual const Hit<1> *getCurrentHit() const = 0;
-      virtual void iterateHit(vintn<1> &result)   = 0;
-
+     protected:
       const Volume<W> *volume;
     };
 
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    template <int W>
-    inline IteratorU<W>::IteratorU(const Volume<W> *volume,
-                                   const vvec3fn<1> &origin,
-                                   const vvec3fn<1> &direction,
-                                   const vrange1fn<1> &tRange,
-                                   const ValueSelector<W> *valueSelector)
-        : volume(volume)
-    {
-    }
-
     ///////////////////////////////////////////////////////////////////////////
-    // Varying iterator ///////////////////////////////////////////////////////
+    // Interval iterator //////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    // a general iterator that handles both interval and hit iteration
     template <int W>
-    struct IteratorV
+    struct IntervalIterator : public Iterator<W>
     {
-      IteratorV() = default;
+      using Iterator<W>::Iterator;
 
-      IteratorV(const vintn<W> &valid,
-                const Volume<W> *volume,
-                const vvec3fn<W> &origin,
-                const vvec3fn<W> &direction,
-                const vrange1fn<W> &tRange,
-                const ValueSelector<W> *valueSelector);
+      /*
+       * Uniform path.
+       * Implementing this can have substantial performance benefits, however,
+       * note that we fall back to the varying code path by default.
+       */
+      virtual void initializeIntervalU(const vvec3fn<1> &origin,
+                                       const vvec3fn<1> &direction,
+                                       const vrange1fn<1> &tRange,
+                                       const ValueSelector<W> *valueSelector)
+      {
+        vintn<W> validW;
+        for (int i = 0; i < W; i++)
+          validW[i] = i == 0 ? -1 : 0;
 
-      virtual ~IteratorV() = default;
+        vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+        vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+        vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-      virtual const Interval<W> *getCurrentInterval() const                 = 0;
-      virtual void iterateInterval(const vintn<W> &valid, vintn<W> &result) = 0;
+        initializeIntervalV(
+            validW, originW, directionW, tRangeW, valueSelector);
+      }
 
-      virtual const Hit<W> *getCurrentHit() const                      = 0;
-      virtual void iterateHit(const vintn<W> &valid, vintn<W> &result) = 0;
+      virtual void iterateIntervalU(Interval<1> &interval, vintn<1> &result)
+      {
+        vintn<W> validW;
+        for (int i = 0; i < W; i++)
+          validW[i] = i == 0 ? -1 : 0;
 
-      const Volume<W> *volume;
+        Interval<W> intervalW;
+
+        vintn<W> resultW;
+
+        iterateIntervalV(validW, intervalW, resultW);
+
+        interval.tRange.lower[0]     = intervalW.tRange.lower[0];
+        interval.tRange.upper[0]     = intervalW.tRange.upper[0];
+        interval.valueRange.lower[0] = intervalW.valueRange.lower[0];
+        interval.valueRange.upper[0] = intervalW.valueRange.upper[0];
+        interval.nominalDeltaT[0]    = intervalW.nominalDeltaT[0];
+
+        result[0] = resultW[0];
+      }
+
+      /*
+       * Varying code path.
+       */
+      virtual void initializeIntervalV(
+          const vintn<W> &valid,
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const ValueSelector<W> *valueSelector) = 0;
+
+      virtual void iterateIntervalV(const vintn<W> &valid,
+                                    Interval<W> &interval,
+                                    vintn<W> &result) = 0;
     };
 
-    // Inlined definitions ////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+    // Hit iterator ///////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    inline IteratorV<W>::IteratorV(const vintn<W> &valid,
-                                   const Volume<W> *volume,
-                                   const vvec3fn<W> &origin,
-                                   const vvec3fn<W> &direction,
-                                   const vrange1fn<W> &tRange,
-                                   const ValueSelector<W> *valueSelector)
-        : volume(volume)
+    struct HitIterator : public Iterator<W>
     {
-    }
+      using Iterator<W>::Iterator;
+
+      /*
+       * Uniform path.
+       * Implementing this can have substantial performance benefits, however,
+       * note that we fall back to the varying code path by default.
+       */
+
+      virtual void initializeHitU(const vvec3fn<1> &origin,
+                                  const vvec3fn<1> &direction,
+                                  const vrange1fn<1> &tRange,
+                                  const ValueSelector<W> *valueSelector)
+      {
+        vintn<W> validW;
+        for (int i = 0; i < W; i++)
+          validW[i] = i == 0 ? -1 : 0;
+
+        vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
+        vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
+        vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+
+        initializeHitV(validW, originW, directionW, tRangeW, valueSelector);
+      }
+
+      virtual void iterateHitU(Hit<1> &hit, vintn<1> &result)
+      {
+        vintn<W> validW;
+        for (int i = 0; i < W; i++)
+          validW[i] = i == 0 ? -1 : 0;
+
+        Hit<W> hitW;
+        vintn<W> resultW;
+
+        iterateHitV(validW, hitW, resultW);
+
+        hit.t[0]      = hitW.t[0];
+        hit.sample[0] = hitW.sample[0];
+        result[0]     = resultW[0];
+      }
+
+      /*
+       * Varying code path.
+       */
+
+      virtual void initializeHitV(const vintn<W> &valid,
+                                  const vvec3fn<W> &origin,
+                                  const vvec3fn<W> &direction,
+                                  const vrange1fn<W> &tRange,
+                                  const ValueSelector<W> *valueSelector) = 0;
+
+      virtual void iterateHitV(const vintn<W> &valid,
+                               Hit<W> &hit,
+                               vintn<W> &result) = 0;
+    };
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Iterator factory ///////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    /*
+     * Interface for iterator factories.
+     * Note that the uniform interfaces attempt to fall back to the varying
+     * implementation to reduce implementation burden. However, volumes should
+     * consider implementing both varying and uniform code paths for maximum
+     * performance.
+     */
+    template <int W, template <int> class IteratorT>
+    struct IteratorFactory
+    {
+      virtual ~IteratorFactory() = default;
+
+      /*
+       * Construct a new varying iterator into the provided buffer.
+       */
+      virtual IteratorT<W> *constructV(const Volume<W> *volume,
+                                       void *buffer) const = 0;
+
+      /*
+       * Retrieve the size, in bytes, required for a buffer to be able to
+       * store a varying iterator.
+       *
+       * This includes all padding that may be needed for alignment, and both
+       * the storeage required for the iterator itself and its internal state.
+       */
+      virtual size_t sizeV() const = 0;
+
+      /*
+       * Construct a new uniform iterator into the provided buffer.
+       */
+      virtual IteratorT<W> *constructU(const Volume<W> *volume,
+                                       void *buffer) const = 0;
+
+      /*
+       * Retrieve the size, in bytes, required for a buffer to be able to
+       * store a uniform iterator.
+       *
+       * This includes all padding that may be needed for alignment, and both
+       * the storeage required for the iterator itself and its internal state.
+       */
+      virtual size_t sizeU() const = 0;
+    };
+
+    /*
+     * Concrete iterator factory. Derive from this to implement a volume
+     * iterator factory.
+     */
+    template <int W,
+              template <int>
+              class IteratorBaseT,
+              template <int>
+              class IteratorT>
+    struct ConcreteIteratorFactory : public IteratorFactory<W, IteratorBaseT>
+    {
+      static_assert(std::is_base_of<IteratorBaseT<W>, IteratorT<W>>::value,
+                    "ConcreteIteratorFactory used with incompatible types.");
+
+      IteratorBaseT<W> *constructV(const Volume<W> *volume,
+                                   void *buffer) const override final
+      {
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(volume);
+      }
+
+      size_t sizeV() const override final
+      {
+        return alignedSize<IteratorT<W>>();
+      }
+
+      IteratorBaseT<W> *constructU(const Volume<W> *volume,
+                                   void *buffer) const override final
+      {
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(volume);
+      }
+
+      size_t sizeU() const override final
+      {
+        return alignedSize<IteratorT<W>>();
+      }
+    };
 
   }  // namespace ispc_driver
 }  // namespace openvkl

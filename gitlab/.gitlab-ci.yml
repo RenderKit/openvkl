@@ -143,6 +143,12 @@ build-arch-address-sanitizer:
     - export LDFLAGS=-fsanitize=address
     - gitlab/build.sh -D BUILD_GLFW=OFF
 
+build-arch-devel-rkdeps:
+  <<: *build_job_docker
+  image: ospray/docker-images:arch
+  script:
+    - gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
+
 build-macOS:
   <<: *base_build_job
   stage: build
@@ -228,6 +234,12 @@ test-functional-arch-address-sanitizer:
   image: ospray/docker-images:arch
   needs:
     - build-arch-address-sanitizer
+
+test-functional-arch-devel-rkdeps:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:arch
+  needs:
+    - build-arch-devel-rkdeps
 
 test-functional-macOS:
   <<: *base_functional_test_job

@@ -56,13 +56,18 @@ namespace coordinate_generator {
       return "Fixed";
     }
 
+    inline static constexpr float value()
+    {
+      return 0.1701f;
+    }
+
     explicit inline Fixed(vkl_box3f const & /*bbox*/) {}
 
     template <unsigned int N>
     inline void getNextN(vkl_vec3f *pos)
     {
       if (firstCall) {
-        std::fill(pos, pos + N, vkl_vec3f{value, value, value});
+        std::fill(pos, pos + N, vkl_vec3f{value(), value(), value()});
         firstCall = false;
       }
     }
@@ -71,15 +76,14 @@ namespace coordinate_generator {
     inline void getNextV(vvec3fn<W> *pos)
     {
       if (firstCall) {
-        std::fill(pos->x.v, pos->x.v + W, value);
-        std::fill(pos->y.v, pos->y.v + W, value);
-        std::fill(pos->z.v, pos->z.v + W, value);
+        std::fill(pos->x.v, pos->x.v + W, value());
+        std::fill(pos->y.v, pos->y.v + W, value());
+        std::fill(pos->z.v, pos->z.v + W, value());
         firstCall = false;
       }
     }
 
     bool firstCall{true};
-    static constexpr float value{0.1701f};
   };
 
   /*

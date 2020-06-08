@@ -4,6 +4,7 @@
 #pragma once
 
 #include "openvkl/openvkl.h"
+#include "rkcommon/math/vec.h"
 #include "rkcommon/platform.h"
 
 namespace openvkl {
@@ -50,6 +51,12 @@ namespace openvkl {
     float v[W];
 
     vfloatn<W>() = default;
+
+    vfloatn<W>(float _v)
+    {
+      static_assert(W == 1, "scalar constructor only valid for W=1");
+      v[0] = _v;
+    }
 
     float &operator[](std::size_t index)
     {
@@ -150,6 +157,19 @@ namespace openvkl {
     vvec3fn<W>() = default;
 
     vvec3fn<W>(const vvec3fn<W> &v) : x(v.x), y(v.y), z(v.z) {}
+
+    vvec3fn<W>(const vfloatn<W> &x, const vfloatn<W> &y, const vfloatn<W> &z)
+        : x(x), y(y), z(z)
+    {
+    }
+
+    vvec3fn<W>(const rkcommon::math::vec3f &v)
+    {
+      static_assert(W == 1, "vec3f constructor only valid for W=1");
+      x[0] = v.x;
+      y[0] = v.y;
+      z[0] = v.z;
+    }
 
     template <int OW>
     explicit operator vvec3fn<OW>() const

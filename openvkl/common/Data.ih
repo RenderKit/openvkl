@@ -88,6 +88,7 @@ template_get(uint64, varying);
 template_get(float, varying);
 template_get(double, varying);
 template_get(vec3f, varying);
+template_get(vec4f, varying);
 
 template_get(uint8, uniform);
 template_get(int16, uniform);
@@ -97,6 +98,7 @@ template_get(uint64, uniform);
 template_get(float, uniform);
 template_get(double, uniform);
 template_get(vec3f, uniform);
+template_get(vec4f, uniform);
 
 #undef template_get
 
@@ -141,5 +143,6 @@ template_get_wrapper(uint64);
 template_get_wrapper(float);
 template_get_wrapper(double);
 template_get_wrapper(vec3f);
+template_get_wrapper(vec4f);
 
 #undef template_get_wrapper

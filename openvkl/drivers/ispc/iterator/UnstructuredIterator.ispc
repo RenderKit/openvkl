@@ -145,11 +145,11 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
   float deltaT;
 
   if (!self->valueSelector) {
-    retRange   = intersectBox(self->origin, self->direction, self->volume->boundingBox, self->tRange);
-    valueRange = self->volume->bvhRoot->valueRange;
-    deltaT     = abs(self->volume->bvhRoot->nominalLength);
+    retRange   = intersectBox(self->origin, self->direction, self->volume->super.boundingBox, self->tRange);
+    valueRange = self->volume->super.bvhRoot->valueRange;
+    deltaT     = abs(self->volume->super.bvhRoot->nominalLength);
   } else {
-    retRange = evalNode(self, self->volume->bvhRoot, valueRange, deltaT, 0);
+    retRange = evalNode(self, self->volume->super.bvhRoot, valueRange, deltaT, 0);
   }
 
   if (isEmpty(retRange)) {

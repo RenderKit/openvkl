@@ -332,8 +332,9 @@ Volume types
 
 Open VKL currently supports structured volumes on regular and spherical grids;
 unstructured volumes with tetrahedral, wedge, pyramid, and hexaderal primitive
-types; and adaptive mesh refinement (AMR) volumes.  These volumes are created
-with `vklNewVolume` with the appropriate type string.
+types; adaptive mesh refinement (AMR) volumes; sparse VDB volumes; and particle
+volumes.  These volumes are created with `vklNewVolume` with the appropriate
+type string.
 
 In addition to the usual `vklSet...()` and `vklCommit()` APIs, the volume
 bounding box can be queried:
@@ -746,6 +747,64 @@ the OpenVDB prefix.
 
 1. Museth, K. VDB: High-Resolution Sparse Volumes with Dynamic Topology.
    ACM Transactions on Graphics 32(3), 2013. DOI: 10.1145/2487228.2487235
+
+
+### Particle Volumes
+
+Particle volumes consist of a set of points in space. Each point has a position,
+a radius, and a weight typically associated with an attribute. A radial basis
+function defines the contribution of that particle. Currently, we use the
+Gaussian radial basis function,
+
+phi(P) = w * exp( -0.5 * ((P - p) / r)^2 )
+
+where P is the particle position, p is the sample position, r is the radius and
+w is the weight.
+
+At each sample, the scalar field value is then computed as the sum of each
+radial basis function phi, for each particle that overlaps it.
+
+The Open VKL implementation is similar to direct evaluation of samples in Reda
+et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
+method in [1].
+
+  --------  --------------------------  --------  ---------------------------------------
+  Type      Name                        Default   Description
+  --------  --------------------------  --------  ---------------------------------------
+  vec3f[]   particle.position                     [data] array of particle positions
+
+  float[]   particle.radius                       [data] array of particle radii
+
+  float[]   particle.weight             null      [data] (optional) array of particle
+                                                  weights, specifying the height of the
+                                                  kernel.
+
+  float     radiusSupportFactor         3.0       The multipler of the particle radius
+                                                  required for support. Larger radii
+                                                  ensure smooth results at the cost of
+                                                  performance. In the Gaussian kernel, the
+                                                  the radius is one standard deviation
+                                                  (sigma), so a `radiusSupportFactor` of
+                                                  3 corresponds to 3*sigma.
+
+  float     clampMaxCumulativeValue     0         The maximum cumulative value possible,
+                                                  set by user. All cumulative values will
+                                                  be clamped to this, and further
+                                                  traversal (RBF summation) of particle
+                                                  contributions will halt when this value
+                                                  is reached. A value of zero or less
+                                                  turns this off.
+  --------  --------------------------  --------  ---------------------------------------
+  : Configuration parameters for particle (`"particle"`) volumes.
+
+1. Knoll, A., Wald, I., Navratil, P., Bowen, A., Reda, K., Papka, M.E. and
+   Gaither, K. (2014), RBF Volume Ray Casting on Multicore and Manycore CPUs.
+   Computer Graphics Forum, 33: 71-80. doi:10.1111/cgf.12363
+
+2. K. Reda, A. Knoll, K. Nomura, M. E. Papka, A. E. Johnson and J. Leigh,
+   "Visualizing large-scale atomistic simulations in ultra-resolution immersive
+   environments," 2013 IEEE Symposium on Large-Scale Data Analysis and
+   Visualization (LDAV), Atlanta, GA, 2013, pp. 59-65.
 
 Sampler Objects
 ---------------

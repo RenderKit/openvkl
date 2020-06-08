@@ -6,6 +6,7 @@
 #include "../common/Data.ih"
 #include "math/vec.ih"
 #include "math/box.ih"
+
 #include "Volume.ih"
 
 typedef enum
@@ -33,9 +34,42 @@ struct InnerNode {
   uniform Node* uniform children[2];
 };
 
-struct VKLUnstructuredVolume
+bool pointInAABBTest(const uniform box3fa &box,
+                            const vec3f &point);
+
+typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
+                                       uniform uint64 id,
+                                       float &result,
+                                       vec3f pos);
+
+typedef bool (*intersectAndGradientPrim)(const void *uniform userData,
+                                         uniform uint64 id,
+                                         vec3f &result,
+                                         vec3f pos);
+
+void traverseEmbree(uniform Node* uniform root,
+                    const void *uniform userPtr,
+                    uniform intersectAndSamplePrim sampleFunc,
+                    float &result,
+                    const vec3f &pos);
+
+void traverseEmbree(uniform Node* uniform root,
+                    const void *uniform userPtr,
+                    uniform intersectAndGradientPrim sampleFunc,
+                    vec3f &result,
+                    const vec3f &pos);
+
+struct VKLUnstructuredBase
 {
   Volume super;
+
+  uniform box3f boundingBox;
+  uniform Node* uniform bvhRoot;
+};
+
+struct VKLUnstructuredVolume
+{
+  VKLUnstructuredBase super;
 
   // vertex data
   uniform Data1D vertex;
@@ -55,11 +89,7 @@ struct VKLUnstructuredVolume
   const vec3f* uniform faceNormals;
   const float* uniform iterativeTolerance;
 
-  uniform box3f boundingBox;
-
   uniform vec3f gradientStep;
-
-  uniform Node* uniform bvhRoot;
 
   uniform bool hexIterative;
 };

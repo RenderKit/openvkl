@@ -149,14 +149,15 @@ void usage(const char *progname)
                " ray_march_iterator\n"
                "\t-disable-vsync\n"
                "\t-gridType structuredRegular | structuredSpherical | "
-               "unstructured | amr | vdb\n"
+               "unstructured | amr | vdb | particle\n"
                "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
-               "\t-file <float.raw>\n"
+               "\t-file <filename>\n"
                "\t-filter nearest | trilinear (vdb only)\n"
                "\t-field <density> (vdb only)\n"
+               "\t-numParticles <N> (particle only)\n"
             << std::endl;
 }
 
@@ -177,6 +178,7 @@ int main(int argc, const char **argv)
   bool haveFilter(false);
   bool haveVdb(false);
   std::string field("density");
+  size_t numParticles(1000);
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -267,6 +269,8 @@ int main(int argc, const char **argv)
       else
         throw std::runtime_error("unsupported -filter specified");
       gradientFilter = filter;
+    } else if (switchArg == "-numParticles") {
+      numParticles = std::stoul(argv[argIndex++]);
     } else if (switchArg == "-renderer") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -renderer arguments");
@@ -388,6 +392,10 @@ int main(int argc, const char **argv)
       testingVolume = std::make_shared<WaveletVdbVolume>(
           dimensions, gridOrigin, gridSpacing, filter);
       haveVdb = true;
+    }
+
+    else if (gridType == "particle") {
+      testingVolume = std::make_shared<ProceduralParticleVolume>(numParticles);
     }
 
     else {

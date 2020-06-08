@@ -16,55 +16,55 @@ inline bool pointInAABBTest(const uniform box3fa &box,
   return t1 & t2 & t3 & t4 & t5 & t6;
 }
 
-typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
-                                       uniform uint64 id,
-                                       float &result,
-                                       vec3f samplePos);
+#define template_traverseEmbree(userFuncType, resultType)                      \
+  inline void traverseEmbree(uniform Node *uniform root,                       \
+                             const void *uniform userPtr,                      \
+                             uniform userFuncType userFunc,                    \
+                             resultType &result,                               \
+                             const vec3f &samplePos)                           \
+  {                                                                            \
+    uniform Node *uniform node = root;                                         \
+    uniform Node *uniform nodeStack[32]; /* xxx */                             \
+    uniform int stackPtr = 0;                                                  \
+                                                                               \
+    while (1) {                                                                \
+      uniform bool isLeaf = (node->nominalLength < 0);                         \
+      if (isLeaf) {                                                            \
+        uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;    \
+        if (userFunc(userPtr, leaf->cellID, result, samplePos))                \
+          return;                                                              \
+      } else {                                                                 \
+        uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node; \
+        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);         \
+        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);         \
+                                                                               \
+        if (any(in0)) {                                                        \
+          if (any(in1)) {                                                      \
+            nodeStack[stackPtr++] = inner->children[1];                        \
+            node                  = inner->children[0];                        \
+            continue;                                                          \
+          } else {                                                             \
+            node = inner->children[0];                                         \
+            continue;                                                          \
+          }                                                                    \
+        } else {                                                               \
+          if (any(in1)) {                                                      \
+            node = inner->children[1];                                         \
+            continue;                                                          \
+          } else {                                                             \
+            /* Do nothing, just pop. */                                        \
+          }                                                                    \
+        }                                                                      \
+      }                                                                        \
+      if (stackPtr == 0)                                                       \
+        return;                                                                \
+      node = nodeStack[--stackPtr];                                            \
+    }                                                                          \
+  }
 
-void traverseEmbree(uniform Node* uniform root,
-                    const void *uniform userPtr,
-                    uniform intersectAndSamplePrim sampleFunc,
-                    float &result,
-                    const vec3f &samplePos)
-{
-    uniform Node* uniform node = root;
-    uniform Node* uniform nodeStack[32]; // xxx
-    uniform int stackPtr = 0;
-
-    while (1) {
-      uniform bool isLeaf = (node->nominalLength < 0);
-      if (isLeaf) {
-        uniform LeafNode* uniform leaf = (uniform LeafNode* uniform)node;
-        if (sampleFunc(userPtr, leaf->cellID, result, samplePos))
-          return;
-      } else {
-        uniform InnerNode* uniform inner = (uniform InnerNode* uniform)node;
-        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);
-        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);
-
-        if (any(in0)) {
-          if (any(in1)) {
-            nodeStack[stackPtr++] = inner->children[1];
-            node                  = inner->children[0];
-            continue;
-          } else {
-            node = inner->children[0];
-            continue;
-          }
-        } else {
-          if (any(in1)) {
-            node = inner->children[1];
-            continue;
-          } else {
-            // Do nothing, just pop.
-          }
-        }
-      }
-      if (stackPtr == 0)
-        return;
-      node = nodeStack[--stackPtr];
-    }
-}
+template_traverseEmbree(intersectAndSamplePrim, float);
+template_traverseEmbree(intersectAndGradientPrim, vec3f);
+#undef template_traverseEmbree
 
 struct LinearSpace3f
 {
@@ -763,7 +763,7 @@ inline varying float VKLUnstructuredVolume_sample(
 
   float results = floatbits(0xffffffff);  /* NaN */
 
-  traverseEmbree(self->bvhRoot, _self, intersectAndSampleCell, results, worldCoordinates);
+  traverseEmbree(self->super.bvhRoot, _self, intersectAndSampleCell, results, worldCoordinates);
 
   return results;
 }
@@ -781,13 +781,13 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   // compute via forward or backward differences depending on volume boundary
   const vec3f gradientExtent = objectCoordinates + gradientStep;
 
-  if (gradientExtent.x >= self->boundingBox.upper.x)
+  if (gradientExtent.x >= self->super.boundingBox.upper.x)
     gradientStep.x *= -1.f;
 
-  if (gradientExtent.y >= self->boundingBox.upper.y)
+  if (gradientExtent.y >= self->super.boundingBox.upper.y)
     gradientStep.y *= -1.f;
 
-  if (gradientExtent.z >= self->boundingBox.upper.z)
+  if (gradientExtent.z >= self->super.boundingBox.upper.z)
     gradientStep.z *= -1.f;
 
   vec3f gradient;
@@ -845,8 +845,8 @@ export void *uniform EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor)
 {
   uniform VKLUnstructuredVolume *uniform self = uniform new uniform VKLUnstructuredVolume;
 
-  self->super.computeSample_varying = VKLUnstructuredVolume_sample;
-  self->super.computeGradient_varying = VKLUnstructuredVolume_computeGradient;
+  self->super.super.computeSample_varying = VKLUnstructuredVolume_sample;
+  self->super.super.computeGradient_varying = VKLUnstructuredVolume_computeGradient;
 
   return self;
 }
@@ -892,9 +892,9 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
   self->iterativeTolerance = _iterativeTolerance;
   self->hexIterative = _hexIterative;
 
-  self->boundingBox = _bbox;
+  self->super.boundingBox = _bbox;
 
-  self->gradientStep = make_vec3f(0.01f * reduce_min(self->boundingBox.upper - self->boundingBox.lower));
+  self->gradientStep = make_vec3f(0.01f * reduce_min(self->super.boundingBox.upper - self->super.boundingBox.lower));
 
-  self->bvhRoot = (uniform Node* uniform)bvhRoot;
+  self->super.bvhRoot = (uniform Node* uniform)bvhRoot;
 }

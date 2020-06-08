@@ -51,6 +51,8 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/amr/method_current.ispc
     volume/amr/method_finest.ispc
     volume/amr/method_octant.ispc
+    volume/particle/ParticleVolume.cpp
+    volume/particle/ParticleVolume.ispc
     volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.ispc
     volume/StructuredRegularVolume.cpp

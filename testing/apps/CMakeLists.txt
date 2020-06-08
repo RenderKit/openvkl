@@ -47,6 +47,21 @@ if (BUILD_BENCHMARKS)
   install(TARGETS vklBenchmarkVdbVolume
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
+
+  # Particle volumes
+  add_executable(vklBenchmarkParticleVolume
+    vklBenchmarkParticleVolume.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkParticleVolume
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkParticleVolume
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 endif()
 
 # Functional tests
@@ -80,6 +95,10 @@ if (BUILD_TESTING)
     tests/amr_volume_sampling.cpp
     tests/amr_volume_value_range.cpp
     tests/vdb_volume.cpp
+    tests/particle_volume_sampling.cpp
+    tests/particle_volume_gradients.cpp
+    tests/particle_volume_value_range.cpp
+    tests/particle_volume_interval_iterator.cpp
   )
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})

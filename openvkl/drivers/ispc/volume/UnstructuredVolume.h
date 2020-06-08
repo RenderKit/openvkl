@@ -145,11 +145,6 @@ namespace openvkl {
      private:
       void buildBvhAndCalculateBounds();
 
-      // Read 32/64-bit integer value from given array
-      uint64_t readInteger(Ref<const Data> array,
-                           bool is32Bit,
-                           uint64_t id) const;
-
       // Read from index arrays that could have 32/64-bit element size
       uint64_t getCellOffset(uint64_t id) const;
       uint64_t getVertexId(uint64_t id) const;
@@ -172,9 +167,12 @@ namespace openvkl {
       Ref<const DataT<vec3f>> vertexPosition;
       Ref<const DataT<float>> vertexValue;
 
-      Ref<const Data> index;
+      Ref<const DataT<uint32_t>> index32;
+      Ref<const DataT<uint64_t>> index64;
 
-      Ref<const Data> cellIndex;
+      Ref<const DataT<uint32_t>> cellIndex32;
+      Ref<const DataT<uint64_t>> cellIndex64;
+
       Ref<const DataT<float>> cellValue;
       Ref<const DataT<uint8_t>> cellType;
 
@@ -283,26 +281,16 @@ namespace openvkl {
     }
 
     template <int W>
-    inline uint64_t UnstructuredVolume<W>::readInteger(Ref<const Data> array,
-                                                       bool is32Bit,
-                                                       uint64_t id) const
-    {
-      if (!is32Bit)
-        return array->as<uint64_t>()[id];
-      else
-        return array->as<uint32_t>()[id];
-    }
-
-    template <int W>
     inline uint64_t UnstructuredVolume<W>::getCellOffset(uint64_t id) const
     {
-      return readInteger(cellIndex, cell32Bit, id) + indexPrefixed;
+      return (cell32Bit ? (*cellIndex32)[id] : (*cellIndex64)[id]) +
+             indexPrefixed;
     }
 
     template <int W>
     inline uint64_t UnstructuredVolume<W>::getVertexId(uint64_t id) const
     {
-      return readInteger(index, index32Bit, id);
+      return index32Bit ? (*index32)[id] : (*index64)[id];
     }
 
   }  // namespace ispc_driver

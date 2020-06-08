@@ -79,9 +79,7 @@ namespace openvkl {
 
       vertexPosition = this->template getParamDataT<vec3f>("vertex.position");
       vertexValue = this->template getParamDataT<float>("vertex.data", nullptr);
-      index       = this->template getParam<Data *>("index");
       indexPrefixed = this->template getParam<bool>("indexPrefixed", false);
-      cellIndex     = this->template getParam<Data *>("cell.index");
       cellValue     = this->template getParamDataT<float>("cell.data", nullptr);
       cellType = this->template getParamDataT<uint8_t>("cell.type", nullptr);
 
@@ -95,23 +93,33 @@ namespace openvkl {
             "'indexPrefixed'");
       }
 
+      // index data can be 32 or 64 bit
+      Ref<const Data> index = this->template getParam<Data *>("index");
+
       switch (index->dataType) {
       case VKL_UINT:
         index32Bit = true;
+        index32    = this->template getParamDataT<uint32_t>("index");
         break;
       case VKL_ULONG:
         index32Bit = false;
+        index64    = this->template getParamDataT<uint64_t>("index");
         break;
       default:
         throw std::runtime_error("unstructured volume unsupported index type");
       }
 
+      // cell.index data can be 32 or 64 bit
+      Ref<const Data> cellIndex = this->template getParam<Data *>("cell.index");
+
       switch (cellIndex->dataType) {
       case VKL_UINT:
-        cell32Bit = true;
+        cell32Bit   = true;
+        cellIndex32 = this->template getParamDataT<uint32_t>("cell.index");
         break;
       case VKL_ULONG:
-        cell32Bit = false;
+        cell32Bit   = false;
+        cellIndex64 = this->template getParamDataT<uint64_t>("cell.index");
         break;
       default:
         throw std::runtime_error(
@@ -127,7 +135,7 @@ namespace openvkl {
         generatedCellType.resize(nCells);
 
         for (int i = 0; i < nCells; i++) {
-          auto index = readInteger(cellIndex, cell32Bit, i);
+          auto index = cell32Bit ? (*cellIndex32)[i] : (*cellIndex64)[i];
           switch (getVertexId(index)) {
           case 4:
             generatedCellType[i] = VKL_TETRAHEDRON;
@@ -196,11 +204,11 @@ namespace openvkl {
           this->ispcEquivalent,
           (const ispc::box3f &)bounds,
           ispc(vertexPosition),
-          ispc(index),
+          index32Bit ? ispc(index32) : ispc(index64),
           index32Bit,
           ispc(vertexValue),
           ispc(cellValue),
-          ispc(cellIndex),
+          cell32Bit ? ispc(cellIndex32) : ispc(cellIndex64),
           cell32Bit,
           indexPrefixed,
           ispc(cellType),

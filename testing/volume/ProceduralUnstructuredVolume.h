@@ -5,6 +5,7 @@
 
 #include "TestingVolume.h"
 #include "procedural_functions.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace testing {
@@ -209,17 +210,17 @@ namespace openvkl {
         return gridOrigin + localCoordinates * gridSpacing;
       };
 
-      for (size_t z = 0; z < dimensions.z; z++) {
+      rkcommon::tasking::parallel_for(dimensions.z, [&](int z) {
         for (size_t y = 0; y < dimensions.y; y++) {
           for (size_t x = 0; x < dimensions.x; x++) {
             size_t index =
-                z * dimensions.y * dimensions.x + y * dimensions.x + x;
+                size_t(z) * dimensions.y * dimensions.x + y * dimensions.x + x;
             float *voxelTyped = (float *)(voxels.data() + index * byteStride);
             vec3f objectCoordinates = transformLocalToObject(vec3f(x, y, z));
             *voxelTyped             = samplingFunction(objectCoordinates);
           }
         }
-      }
+      });
 
       return voxels;
     }

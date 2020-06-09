@@ -76,13 +76,7 @@ namespace openvkl {
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override;
 
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
+      Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
 
@@ -141,32 +135,6 @@ namespace openvkl {
 
       interval =
           *reinterpret_cast<const vVKLIntervalN<W> *>(ri->getCurrentInterval());
-    }
-
-    template <int W>
-    inline void ParticleVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
-    {
-      CALL_ISPC(VKLParticleVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    inline void ParticleVolume<W>::computeGradientV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
-    {
-      CALL_ISPC(VKLParticleVolume_gradient_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &gradients);
     }
 
     template <int W>

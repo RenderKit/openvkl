@@ -21,20 +21,7 @@ namespace openvkl {
 
       virtual void commit() override;
 
-      void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override;
-
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
-
-      void computeGradientN(unsigned int N,
-                            const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override;
+      Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
 
@@ -86,55 +73,6 @@ namespace openvkl {
             this->toString() +
             ": unsupported element type for 'data' parameter");
       }
-    }
-
-    template <int W>
-    inline void StructuredVolume<W>::computeSample(
-        const vvec3fn<1> &objectCoordinates, vfloatn<1> &samples) const
-    {
-      CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    inline void StructuredVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
-    {
-      CALL_ISPC(SharedStructuredVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    inline void StructuredVolume<W>::computeGradientV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
-    {
-      CALL_ISPC(SharedStructuredVolume_gradient_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &gradients);
-    }
-
-    template <int W>
-    inline void StructuredVolume<W>::computeGradientN(
-        unsigned int N,
-        const vvec3fn<1> *objectCoordinates,
-        vvec3fn<1> *gradients) const
-    {
-      CALL_ISPC(Volume_gradient_N_export,
-                this->ispcEquivalent,
-                N,
-                (ispc::vec3f *)objectCoordinates,
-                (ispc::vec3f *)gradients);
     }
 
     template <int W>

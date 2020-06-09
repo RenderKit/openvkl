@@ -42,41 +42,6 @@ namespace openvkl {
       void commit() override;
 
       /*
-       * Sample the volume at the given coordinates.
-       */
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override
-      {
-        THROW_NOT_IMPLEMENTED;
-      }
-
-      void computeSampleN(unsigned int N,
-                          const vvec3fn<1> *objectCoordinates,
-                          float *samples) const override
-      {
-        THROW_NOT_IMPLEMENTED;
-      }
-
-      /*
-       * Compute the volume gradient at the given coordinates.
-       * NOT IMPLEMENTED.
-       */
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override
-      {
-        THROW_NOT_IMPLEMENTED;
-      }
-
-      void computeGradientN(unsigned int N,
-                            const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override
-      {
-        THROW_NOT_IMPLEMENTED;
-      }
-
-      /*
        * Obtain the volume bounding box.
        */
       box3f getBoundingBox() const override

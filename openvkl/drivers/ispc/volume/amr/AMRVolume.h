@@ -22,12 +22,8 @@ namespace openvkl {
 
       void commit() override;
 
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
+      Sampler<W> *newSampler() override;
+
       box3f getBoundingBox() const override;
       range1f getValueRange() const override;
 

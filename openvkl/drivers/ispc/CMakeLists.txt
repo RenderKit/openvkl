@@ -55,6 +55,7 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/particle/ParticleVolume.ispc
     volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.ispc
+    volume/StructuredVolume.cpp
     volume/StructuredRegularVolume.cpp
     volume/StructuredSphericalVolume.cpp
     volume/UnstructuredVolume.cpp

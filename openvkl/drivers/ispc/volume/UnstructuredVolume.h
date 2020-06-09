@@ -119,17 +119,7 @@ namespace openvkl {
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override;
 
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
-
-      void computeGradientN(unsigned int N,
-                            const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override;
+      Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
 
@@ -201,19 +191,6 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void UnstructuredVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
-    {
-      CALL_ISPC(VKLUnstructuredVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
     inline void UnstructuredVolume<W>::initIntervalIteratorV(
         const vintn<W> &valid,
         vVKLIntervalIteratorN<W> &iterator,
@@ -240,32 +217,6 @@ namespace openvkl {
 
       interval =
           *reinterpret_cast<const vVKLIntervalN<W> *>(ri->getCurrentInterval());
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::computeGradientV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
-    {
-      CALL_ISPC(VKLUnstructuredVolume_gradient_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &gradients);
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::computeGradientN(
-        unsigned int N,
-        const vvec3fn<1> *objectCoordinates,
-        vvec3fn<1> *gradients) const
-    {
-      CALL_ISPC(Volume_gradient_N_export,
-                this->ispcEquivalent,
-                N,
-                (ispc::vec3f *)objectCoordinates,
-                (ispc::vec3f *)gradients);
     }
 
     template <int W>

@@ -3,6 +3,7 @@
 
 #include "ParticleVolume.h"
 #include "../common/Data.h"
+#include "ParticleSampler.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
@@ -92,6 +93,12 @@ namespace openvkl {
                 (void *)(rtcRoot));
 
       computeValueRanges();
+    }
+
+    template <int W>
+    Sampler<W> *ParticleVolume<W>::newSampler()
+    {
+      return new ParticleSampler<W>(this);
     }
 
     template <int W>
@@ -193,6 +200,8 @@ namespace openvkl {
       }
 
       // compute value ranges of leaf nodes in parallel
+      std::unique_ptr<Sampler<W>> sampler(newSampler());
+
       tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
         LeafNode *leafNode         = leafNodes[leafNodeIndex];
         const size_t particleIndex = leafNode->cellID;
@@ -205,7 +214,7 @@ namespace openvkl {
 
         // initial estimate based sampling particle center
         vfloatn<1> sample;
-        this->computeSample((*positions)[particleIndex], sample);
+        sampler->computeSample((*positions)[particleIndex], sample);
         computedValueRange.extend(sample[0]);
 
         // sample over regular grid within leaf bounds to improve estimate
@@ -226,7 +235,7 @@ namespace openvkl {
         }
 
         std::vector<float> samples(objectCoordinates.size());
-        this->computeSampleN(
+        sampler->computeSampleN(
             objectCoordinates.size(), objectCoordinates.data(), samples.data());
 
         auto minmax = std::minmax_element(samples.begin(), samples.end());

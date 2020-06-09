@@ -4,6 +4,7 @@
 #include "AMRVolume.h"
 #include "../../common/export_util.h"
 #include "../common/Data.h"
+#include "AMRSampler.h"
 // rkcommon
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/utility/getEnvVar.h"
@@ -161,23 +162,9 @@ namespace openvkl {
     }
 
     template <int W>
-    void AMRVolume<W>::computeSampleV(const vintn<W> &valid,
-                                      const vvec3fn<W> &objectCoordinates,
-                                      vfloatn<W> &samples) const
+    Sampler<W> *AMRVolume<W>::newSampler()
     {
-      CALL_ISPC(AMRVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    void AMRVolume<W>::computeGradientV(const vintn<W> &valid,
-                                        const vvec3fn<W> &objectCoordinates,
-                                        vvec3fn<W> &gradients) const
-    {
-      THROW_NOT_IMPLEMENTED;
+      return new AMRSampler<W>(this);
     }
 
     template <int W>

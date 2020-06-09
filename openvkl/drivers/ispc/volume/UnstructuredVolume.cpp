@@ -3,6 +3,7 @@
 
 #include "UnstructuredVolume.h"
 #include "../common/Data.h"
+#include "UnstructuredSampler.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
 
@@ -217,6 +218,12 @@ namespace openvkl {
                               : (const ispc::vec3f *)faceNormals.data(),
           iterativeTolerance.empty() ? nullptr : iterativeTolerance.data(),
           hexIterative);
+    }
+
+    template <int W>
+    Sampler<W> *UnstructuredVolume<W>::newSampler()
+    {
+      return new UnstructuredSampler<W>(this);
     }
 
     template <int W>

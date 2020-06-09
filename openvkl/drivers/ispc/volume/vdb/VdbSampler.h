@@ -22,8 +22,6 @@ namespace openvkl {
 
       void commit() override;
 
-      // samplers can optionally define a scalar sampling method; if not
-      // defined then the default implementation will use computeSampleV()
       void computeSample(const vvec3fn<1> &objectCoordinates,
                          vfloatn<1> &samples) const override final;
 

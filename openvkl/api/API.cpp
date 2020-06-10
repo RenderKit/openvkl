@@ -668,8 +668,10 @@ extern "C" VKLSampler vklNewSampler(VKLVolume volume) OPENVKL_CATCH_BEGIN
 }
 OPENVKL_CATCH_END(nullptr)
 
-extern "C" float vklComputeSample(
-    VKLSampler sampler, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
+extern "C" float vklComputeSample(VKLSampler sampler,
+                                  const vkl_vec3f *objectCoordinates,
+                                  unsigned int attributeIndex)
+    OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
   float sample;
@@ -677,7 +679,8 @@ extern "C" float vklComputeSample(
       &valid,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      &sample);
+      &sample,
+      attributeIndex);
   return sample;
 }
 OPENVKL_CATCH_END(rkcommon::math::nan)
@@ -687,13 +690,15 @@ OPENVKL_CATCH_END(rkcommon::math::nan)
       const int *valid,                                               \
       VKLSampler sampler,                                             \
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      float *samples) OPENVKL_CATCH_BEGIN                             \
+      float *samples,                                                 \
+      unsigned int attributeIndex) OPENVKL_CATCH_BEGIN                \
   {                                                                   \
     openvkl::api::currentDriver().computeSample##WIDTH(               \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        samples);                                                     \
+        samples,                                                      \
+        attributeIndex);                                              \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -706,18 +711,23 @@ __define_vklComputeSampleN(16);
 extern "C" void vklComputeSampleN(VKLSampler sampler,
                                   unsigned int N,
                                   const vkl_vec3f *objectCoordinates,
-                                  float *samples) OPENVKL_CATCH_BEGIN
+                                  float *samples,
+                                  unsigned int attributeIndex)
+    OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeSampleN(
       sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      samples);
+      samples,
+      attributeIndex);
 }
 OPENVKL_CATCH_END()
 
-extern "C" vkl_vec3f vklComputeGradient(
-    VKLSampler sampler, const vkl_vec3f *objectCoordinates) OPENVKL_CATCH_BEGIN
+extern "C" vkl_vec3f vklComputeGradient(VKLSampler sampler,
+                                        const vkl_vec3f *objectCoordinates,
+                                        unsigned int attributeIndex)
+    OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
   vkl_vec3f gradient;
@@ -725,7 +735,8 @@ extern "C" vkl_vec3f vklComputeGradient(
       &valid,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      reinterpret_cast<vvec3fn<1> &>(gradient));
+      reinterpret_cast<vvec3fn<1> &>(gradient),
+      attributeIndex);
   return gradient;
 }
 OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
@@ -735,13 +746,15 @@ OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
       const int *valid,                                               \
       VKLSampler sampler,                                             \
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      vkl_vvec3f##WIDTH *gradients) OPENVKL_CATCH_BEGIN               \
+      vkl_vvec3f##WIDTH *gradients,                                   \
+      unsigned int attributeIndex) OPENVKL_CATCH_BEGIN                \
   {                                                                   \
     openvkl::api::currentDriver().computeGradient##WIDTH(             \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        reinterpret_cast<vvec3fn<WIDTH> &>(*gradients));              \
+        reinterpret_cast<vvec3fn<WIDTH> &>(*gradients),               \
+        attributeIndex);                                              \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -754,13 +767,16 @@ __define_vklComputeGradientN(16);
 extern "C" void vklComputeGradientN(VKLSampler sampler,
                                     unsigned int N,
                                     const vkl_vec3f *objectCoordinates,
-                                    vkl_vec3f *gradients) OPENVKL_CATCH_BEGIN
+                                    vkl_vec3f *gradients,
+                                    unsigned int attributeIndex)
+    OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeGradientN(
       sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      reinterpret_cast<vvec3fn<1> *>(gradients));
+      reinterpret_cast<vvec3fn<1> *>(gradients),
+      attributeIndex);
 }
 OPENVKL_CATCH_END()
 
@@ -787,6 +803,13 @@ extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
   return reinterpret_cast<const vkl_box3f &>(result);
 }
 OPENVKL_CATCH_END(vkl_box3f{rkcommon::math::nan})
+
+extern "C" unsigned int vklGetNumAttributes(VKLVolume volume)
+    OPENVKL_CATCH_BEGIN
+{
+  return openvkl::api::currentDriver().getNumAttributes(volume);
+}
+OPENVKL_CATCH_END(0)
 
 extern "C" vkl_range1f vklGetValueRange(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {

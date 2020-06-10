@@ -60,6 +60,14 @@ namespace openvkl {
       }
 
       /*
+       * Get the number of attributes in this volume.
+       */
+      unsigned int getNumAttributes() const override
+      {
+        return 1;
+      }
+
+      /*
        * Get the minimum and maximum value in this volume.
        */
       range1f getValueRange() const override

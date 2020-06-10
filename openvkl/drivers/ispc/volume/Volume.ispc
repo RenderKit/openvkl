@@ -4,6 +4,8 @@
 #include "../common/export_util.h"
 #include "Volume.ih"
 
+// these functions do not yet support multi-attribute volumes.
+
 export void EXPORT_UNIQUE(Volume_sample_N_export,
                           void *uniform _self,
                           const uniform unsigned int N,

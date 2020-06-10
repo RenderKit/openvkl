@@ -41,6 +41,7 @@ namespace openvkl {
       Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
+      unsigned int getNumAttributes() const override;
       range1f getValueRange() const override;
 
       std::unique_ptr<amr::AMRData> data;

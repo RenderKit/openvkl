@@ -15,11 +15,18 @@ void demoScalarAPI(VKLVolume volume)
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  // volume attribute of interest
+  const unsigned int attributeIndex = 0;
+
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
   printf("\tbounding box\n");
   printf("\t\tlower = %f %f %f\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
   printf("\t\tupper = %f %f %f\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
+
+  // number of attributes
+  unsigned int numAttributes = vklGetNumAttributes(volume);
+  printf("\tnum attributes = %d\n\n", numAttributes);
 
   // value range
   vkl_range1f valueRange = vklGetValueRange(volume);
@@ -27,8 +34,8 @@ void demoScalarAPI(VKLVolume volume)
 
   // sample, gradient
   vkl_vec3f coord = {1.f, 1.f, 1.f};
-  float sample    = vklComputeSample(sampler, &coord);
-  vkl_vec3f grad  = vklComputeGradient(sampler, &coord);
+  float sample    = vklComputeSample(sampler, &coord, attributeIndex);
+  vkl_vec3f grad  = vklComputeGradient(sampler, &coord, attributeIndex);
   printf("\tcoord = %f %f %f\n", coord.x, coord.y, coord.z);
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -126,6 +133,9 @@ void demoVectorAPI(VKLVolume volume)
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  // volume attribute of interest
+  const unsigned int attributeIndex = 0;
+
   vkl_vvec3f4 coord4;  // structure-of-array layout
   int valid[4];
   for (int i = 0; i < 4; i++) {
@@ -135,8 +145,8 @@ void demoVectorAPI(VKLVolume volume)
 
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, sampler, &coord4, sample4);
-  vklComputeGradient4(valid, sampler, &coord4, &grad4);
+  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex);
+  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex);
 
   for (int i = 0; i < 4; i++) {
     printf(
@@ -156,6 +166,9 @@ void demoStreamAPI(VKLVolume volume)
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  // volume attribute of interest
+  const unsigned int attributeIndex = 0;
+
   // array-of-structure layout; arbitrary stream lengths are supported
   vkl_vec3f coord[5];
 
@@ -165,8 +178,8 @@ void demoStreamAPI(VKLVolume volume)
 
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(sampler, 5, coord, sample);
-  vklComputeGradientN(sampler, 5, coord, grad);
+  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex);
+  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex);
 
   for (int i = 0; i < 5; i++) {
     printf("\tcoord[%d] = %f %f %f\n", i, coord[i].x, coord[i].y, coord[i].z);

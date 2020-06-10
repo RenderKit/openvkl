@@ -38,8 +38,10 @@ namespace openvkl {
 
     template <int W>
     void VdbSampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
-                                      vfloatn<1> &samples) const
+                                      vfloatn<1> &samples,
+                                      unsigned int attributeIndex) const
     {
+      assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 this->grid,
                 &this->config,
@@ -50,8 +52,10 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::computeSampleV(const vintn<W> &valid,
                                        const vvec3fn<W> &objectCoordinates,
-                                       vfloatn<W> &samples) const
+                                       vfloatn<W> &samples,
+                                       unsigned int attributeIndex) const
     {
+      assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
                 this->grid,
@@ -63,8 +67,10 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::computeSampleN(unsigned int N,
                                        const vvec3fn<1> *objectCoordinates,
-                                       float *samples) const
+                                       float *samples,
+                                       unsigned int attributeIndex) const
     {
+      assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeSample_stream,
                 this->grid,
                 &this->config,
@@ -76,8 +82,10 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::computeGradientV(const vintn<W> &valid,
                                          const vvec3fn<W> &objectCoordinates,
-                                         vvec3fn<W> &gradients) const
+                                         vvec3fn<W> &gradients,
+                                         unsigned int attributeIndex) const
     {
+      assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeGradient,
                 static_cast<const int *>(valid),
                 this->grid,
@@ -89,8 +97,10 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::computeGradientN(unsigned int N,
                                          const vvec3fn<1> *objectCoordinates,
-                                         vvec3fn<1> *gradients) const
+                                         vvec3fn<1> *gradients,
+                                         unsigned int attributeIndex) const
     {
+      assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeGradient_stream,
                 this->grid,
                 &this->config,

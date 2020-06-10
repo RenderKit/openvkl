@@ -19,30 +19,36 @@ namespace openvkl {
       // samplers can optionally define a scalar sampling method; if not
       // defined then the default implementation will use computeSampleV()
       virtual void computeSample(const vvec3fn<1> &objectCoordinates,
-                                 vfloatn<1> &samples) const;
+                                 vfloatn<1> &samples,
+                                 unsigned int attributeIndex) const;
 
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
-                                  vfloatn<W> &samples) const = 0;
+                                  vfloatn<W> &samples,
+                                  unsigned int attributeIndex) const = 0;
 
       virtual void computeSampleN(unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
-                                  float *samples) const = 0;
+                                  float *samples,
+                                  unsigned int attributeIndex) const = 0;
 
       virtual void computeGradientV(const vintn<W> &valid,
                                     const vvec3fn<W> &objectCoordinates,
-                                    vvec3fn<W> &gradients) const = 0;
+                                    vvec3fn<W> &gradients,
+                                    unsigned int attributeIndex) const = 0;
 
       virtual void computeGradientN(unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
-                                    vvec3fn<1> *gradients) const = 0;
+                                    vvec3fn<1> *gradients,
+                                    unsigned int attributeIndex) const = 0;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
     inline void Sampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
-                                          vfloatn<1> &samples) const
+                                          vfloatn<1> &samples,
+                                          unsigned int attributeIndex) const
     {
       // gracefully degrade to use computeSampleV(); see
       // ISPCDriver<W>::computeSampleAnyWidth()
@@ -57,7 +63,7 @@ namespace openvkl {
 
       vfloatn<W> samplesW;
 
-      computeSampleV(validW, ocW, samplesW);
+      computeSampleV(validW, ocW, samplesW, attributeIndex);
 
       samples[0] = samplesW[0];
     }

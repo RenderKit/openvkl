@@ -31,6 +31,7 @@ namespace openvkl {
       VKLVolume volume;
       VKLSampler sampler;
       VKLValueSelector valueSelector;
+      unsigned int attributeIndex;
 
       /*
        * Shading is done through a transfer function.
@@ -44,6 +45,7 @@ namespace openvkl {
           : volume(nullptr),
             sampler(nullptr),
             valueSelector(nullptr),
+            attributeIndex(0),
             tfNumColorsAndOpacities(0),
             tfColorsAndOpacities(nullptr)
       {

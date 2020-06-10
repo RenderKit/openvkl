@@ -149,6 +149,12 @@ namespace openvkl {
     }
 
     template <int W>
+    unsigned int AMRVolume<W>::getNumAttributes() const
+    {
+      return 1;
+    }
+
+    template <int W>
     range1f AMRVolume<W>::getValueRange() const
     {
       return valueRange;

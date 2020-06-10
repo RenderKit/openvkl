@@ -32,11 +32,22 @@ bool addSamplingRateUI(GLFWVKLWindow &window)
   return false;
 }
 
-bool addPathTracerUI(GLFWVKLWindow &window)
+bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
 {
   auto &renderer = window.currentRenderer();
 
   bool changed = false;
+
+  static int attributeIndex  = 0;
+  unsigned int numAttributes = vklGetNumAttributes(scene.volume);
+
+  if (numAttributes > 1) {
+    if (ImGui::SliderInt(
+            "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
+      scene.attributeIndex = attributeIndex;
+      changed              = true;
+    }
+  }
 
   static float sigmaTScale = 1.f;
   if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
@@ -191,6 +202,7 @@ void usage(const char *progname)
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
+               "\t-multiAttribute (structuredRegular only)\n"
                "\t-file <filename>\n"
                "\t-filter nearest | trilinear (vdb only)\n"
                "\t-field <density> (vdb only)\n"
@@ -207,6 +219,7 @@ int main(int argc, const char **argv)
   vec3f gridSpacing(rkcommon::nan);
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
+  bool multiAttribute(false);
   std::string filename;
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
@@ -280,6 +293,8 @@ int main(int argc, const char **argv)
       }
 
       voxelType = stringToVKLDataType[voxelTypeString];
+    } else if (switchArg == "-multiAttribute") {
+      multiAttribute = true;
     } else if (switchArg == "-file") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -file arguments");
@@ -369,24 +384,36 @@ int main(int argc, const char **argv)
     }
   } else {
     if (gridType == "structuredRegular") {
-      if (voxelType == VKL_UCHAR) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
-            dimensions, gridOrigin, gridSpacing);
-      } else if (voxelType == VKL_SHORT) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolumeShort>(
-            dimensions, gridOrigin, gridSpacing);
-      } else if (voxelType == VKL_USHORT) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolumeUShort>(
-            dimensions, gridOrigin, gridSpacing);
-      } else if (voxelType == VKL_FLOAT) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolumeFloat>(
-            dimensions, gridOrigin, gridSpacing);
-      } else if (voxelType == VKL_DOUBLE) {
-        testingVolume = std::make_shared<WaveletStructuredRegularVolumeDouble>(
-            dimensions, gridOrigin, gridSpacing);
+      if (multiAttribute) {
+        testingVolume = std::shared_ptr<TestingStructuredVolumeMulti>(
+            generateMultiAttributeStructuredRegularVolume(
+                dimensions,
+                gridOrigin,
+                gridSpacing,
+                VKL_DATA_SHARED_BUFFER,
+                true));
       } else {
-        throw std::runtime_error(
-            "cannot create procedural volume for unknown voxel type");
+        if (voxelType == VKL_UCHAR) {
+          testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (voxelType == VKL_SHORT) {
+          testingVolume = std::make_shared<WaveletStructuredRegularVolumeShort>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (voxelType == VKL_USHORT) {
+          testingVolume =
+              std::make_shared<WaveletStructuredRegularVolumeUShort>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else if (voxelType == VKL_FLOAT) {
+          testingVolume = std::make_shared<WaveletStructuredRegularVolumeFloat>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (voxelType == VKL_DOUBLE) {
+          testingVolume =
+              std::make_shared<WaveletStructuredRegularVolumeDouble>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          throw std::runtime_error(
+              "cannot create procedural volume for unknown voxel type");
+        }
       }
     }
 
@@ -562,7 +589,7 @@ int main(int argc, const char **argv)
     }
 
     if (rendererType == "density_pathtracer") {
-      changed |= addPathTracerUI(*glfwVKLWindow);
+      changed |= addPathTracerUI(*glfwVKLWindow, scene);
     }
 
     if (rendererType == "hit_iterator") {

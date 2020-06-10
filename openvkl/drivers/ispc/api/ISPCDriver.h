@@ -333,7 +333,8 @@ namespace openvkl {
   void computeSample##WIDTH(const int *valid,                        \
                             VKLSampler sampler,                      \
                             const vvec3fn<WIDTH> &objectCoordinates, \
-                            float *samples) override;
+                            float *samples,                          \
+                            unsigned int attributeIndex) override;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -345,13 +346,15 @@ namespace openvkl {
       void computeSampleN(VKLSampler sampler,
                           unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
-                          float *samples) override;
+                          float *samples,
+                          unsigned int attributeIndex) override;
 
 #define __define_computeGradientN(WIDTH)                               \
   void computeGradient##WIDTH(const int *valid,                        \
                               VKLSampler sampler,                      \
                               const vvec3fn<WIDTH> &objectCoordinates, \
-                              vvec3fn<WIDTH> &gradients) override;
+                              vvec3fn<WIDTH> &gradients,               \
+                              unsigned int attributeIndex) override;
 
       __define_computeGradientN(1);
       __define_computeGradientN(4);
@@ -363,7 +366,8 @@ namespace openvkl {
       void computeGradientN(VKLSampler sampler,
                             unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) override;
+                            vvec3fn<1> *gradients,
+                            unsigned int attributeIndex) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -373,6 +377,8 @@ namespace openvkl {
 
       box3f getBoundingBox(VKLVolume volume) override;
 
+      unsigned int getNumAttributes(VKLVolume volume) override;
+
       range1f getValueRange(VKLVolume volume) override;
 
      private:
@@ -381,42 +387,48 @@ namespace openvkl {
           const int *valid,
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
-          float *samples);
+          float *samples,
+          unsigned int attributeIndex);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeSampleAnyWidth(
           const int *valid,
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
-          float *samples);
+          float *samples,
+          unsigned int attributeIndex);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeSampleAnyWidth(
           const int *valid,
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
-          float *samples);
+          float *samples,
+          unsigned int attributeIndex);
 
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(
           const int *valid,
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
-          vvec3fn<OW> &gradients);
+          vvec3fn<OW> &gradients,
+          unsigned int attributeIndex);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeGradientAnyWidth(
           const int *valid,
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
-          vvec3fn<OW> &gradients);
+          vvec3fn<OW> &gradients,
+          unsigned int attributeIndex);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeGradientAnyWidth(
           const int *valid,
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
-          vvec3fn<OW> &gradients);
+          vvec3fn<OW> &gradients,
+          unsigned int attributeIndex);
     };
 
     ////////////////////////////////////////////////////////////////////////////

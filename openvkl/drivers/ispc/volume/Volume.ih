@@ -7,6 +7,11 @@
 
 struct Volume
 {
+  // these functions do not yet support multi-attribute volumes. they are used
+  // in generic stream-wide sampling and gradient implementations, as well as in
+  // hit iterator surface intersection functions (which today only support the
+  // first attribute).
+
   uniform float (*uniform computeSample_uniform)(
       const void *uniform _self, const uniform vec3f &objectCoordinates);
 

@@ -5,6 +5,7 @@
 
 #include <vector>
 // openvkl
+#include "ProceduralVolume.h"
 #include "TestingVolume.h"
 // rkcommon
 #include <random>
@@ -14,7 +15,8 @@
 namespace openvkl {
   namespace testing {
 
-    struct ProceduralParticleVolume : public TestingVolume
+    struct ProceduralParticleVolume : public TestingVolume,
+                                      public ProceduralVolume
     {
       ProceduralParticleVolume(size_t numParticles,
                                bool provideWeights           = true,
@@ -24,8 +26,8 @@ namespace openvkl {
 
       range1f getComputedValueRange() const override;
 
-      float computeReferenceSample(const vec3f &p);
-      vec3f computeReferenceGradient(const vec3f &p);
+      float computeProceduralValue(const vec3f &p) const override;
+      vec3f computeProceduralGradient(const vec3f &p) const override;
 
       const std::vector<vec4f> &getParticles();
 
@@ -72,8 +74,8 @@ namespace openvkl {
       return computedValueRange;
     }
 
-    inline float ProceduralParticleVolume::computeReferenceSample(
-        const vec3f &p)
+    inline float ProceduralParticleVolume::computeProceduralValue(
+        const vec3f &p) const
     {
       float referenceSample = 0.f;
 
@@ -102,22 +104,22 @@ namespace openvkl {
       }
     }
 
-    inline vec3f ProceduralParticleVolume::computeReferenceGradient(
-        const vec3f &objectCoordinates)
+    inline vec3f ProceduralParticleVolume::computeProceduralGradient(
+        const vec3f &objectCoordinates) const
     {
       const vec3f gradientStep(1e-5f);
 
       vec3f gradient;
 
-      const float sample = computeReferenceSample(objectCoordinates);
+      const float sample = computeProceduralValue(objectCoordinates);
 
-      gradient.x = computeReferenceSample(objectCoordinates +
+      gradient.x = computeProceduralValue(objectCoordinates +
                                           vec3f(gradientStep.x, 0.f, 0.f)) -
                    sample;
-      gradient.y = computeReferenceSample(objectCoordinates +
+      gradient.y = computeProceduralValue(objectCoordinates +
                                           vec3f(0.f, gradientStep.y, 0.f)) -
                    sample;
-      gradient.z = computeReferenceSample(objectCoordinates +
+      gradient.z = computeProceduralValue(objectCoordinates +
                                           vec3f(0.f, 0.f, gradientStep.z)) -
                    sample;
 
@@ -213,7 +215,7 @@ namespace openvkl {
       }
 
       // Sample over regular grid to improve estimate. Note that we use
-      // vklComputeSample() for this instead of computeReferenceSample(),
+      // vklComputeSample() for this instead of computeProceduralValue(),
       // for performance. The correctness of sampling / equivalence of these
       // two methods is validated in the sampling functional tests.
       const int samplesPerDimension = 100;

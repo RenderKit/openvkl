@@ -73,6 +73,7 @@ namespace openvkl {
     ispc.addr       = reinterpret_cast<decltype(ispc.addr)>(addr);
     ispc.byteStride = byteStride;
     ispc.numItems   = numItems;
+    ispc.dataType   = dataType;
     ispc.compact    = compact();
   }
 

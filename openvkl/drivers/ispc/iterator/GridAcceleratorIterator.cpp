@@ -6,6 +6,7 @@
 #include "../common/math.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
+#include "GridAcceleratorIterator_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {

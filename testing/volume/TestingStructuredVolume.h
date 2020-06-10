@@ -25,9 +25,11 @@ namespace openvkl {
 
       range1f getComputedValueRange() const override;
 
+      std::string getGridType() const;
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
+      VKLDataType getVoxelType() const;
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
@@ -87,6 +89,11 @@ namespace openvkl {
       return computedValueRange;
     }
 
+    inline std::string TestingStructuredVolume::getGridType() const
+    {
+      return gridType;
+    }
+
     inline vec3i TestingStructuredVolume::getDimensions() const
     {
       return dimensions;
@@ -100,6 +107,11 @@ namespace openvkl {
     inline vec3f TestingStructuredVolume::getGridSpacing() const
     {
       return gridSpacing;
+    }
+
+    inline VKLDataType TestingStructuredVolume::getVoxelType() const
+    {
+      return voxelType;
     }
 
     inline void TestingStructuredVolume::generateVKLVolume()

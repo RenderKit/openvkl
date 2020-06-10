@@ -225,15 +225,17 @@ namespace openvkl {
       return (VKLSampler)volumeObject.newSampler();
     }
 
-#define __define_computeSampleN(WIDTH)                                        \
-  template <int W>                                                            \
-  void ISPCDriver<W>::computeSample##WIDTH(                                   \
-      const int *valid,                                                       \
-      VKLSampler sampler,                                                     \
-      const vvec3fn<WIDTH> &objectCoordinates,                                \
-      float *samples)                                                         \
-  {                                                                           \
-    computeSampleAnyWidth<WIDTH>(valid, sampler, objectCoordinates, samples); \
+#define __define_computeSampleN(WIDTH)                               \
+  template <int W>                                                   \
+  void ISPCDriver<W>::computeSample##WIDTH(                          \
+      const int *valid,                                              \
+      VKLSampler sampler,                                            \
+      const vvec3fn<WIDTH> &objectCoordinates,                       \
+      float *samples,                                                \
+      unsigned int attributeIndex)                                   \
+  {                                                                  \
+    computeSampleAnyWidth<WIDTH>(                                    \
+        valid, sampler, objectCoordinates, samples, attributeIndex); \
   }
 
     __define_computeSampleN(4);
@@ -247,11 +249,12 @@ namespace openvkl {
     void ISPCDriver<W>::computeSample1(const int *valid,
                                        VKLSampler sampler,
                                        const vvec3fn<1> &objectCoordinates,
-                                       float *sample)
+                                       float *sample,
+                                       unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
       vfloatn<1> sampleW;
-      samplerObject.computeSample(objectCoordinates, sampleW);
+      samplerObject.computeSample(objectCoordinates, sampleW, attributeIndex);
       *sample = sampleW[0];
     }
 
@@ -259,22 +262,25 @@ namespace openvkl {
     void ISPCDriver<W>::computeSampleN(VKLSampler sampler,
                                        unsigned int N,
                                        const vvec3fn<1> *objectCoordinates,
-                                       float *samples)
+                                       float *samples,
+                                       unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
-      samplerObject.computeSampleN(N, objectCoordinates, samples);
+      samplerObject.computeSampleN(
+          N, objectCoordinates, samples, attributeIndex);
     }
 
-#define __define_computeGradientN(WIDTH)               \
-  template <int W>                                     \
-  void ISPCDriver<W>::computeGradient##WIDTH(          \
-      const int *valid,                                \
-      VKLSampler sampler,                              \
-      const vvec3fn<WIDTH> &objectCoordinates,         \
-      vvec3fn<WIDTH> &gradients)                       \
-  {                                                    \
-    computeGradientAnyWidth<WIDTH>(                    \
-        valid, sampler, objectCoordinates, gradients); \
+#define __define_computeGradientN(WIDTH)                               \
+  template <int W>                                                     \
+  void ISPCDriver<W>::computeGradient##WIDTH(                          \
+      const int *valid,                                                \
+      VKLSampler sampler,                                              \
+      const vvec3fn<WIDTH> &objectCoordinates,                         \
+      vvec3fn<WIDTH> &gradients,                                       \
+      unsigned int attributeIndex)                                     \
+  {                                                                    \
+    computeGradientAnyWidth<WIDTH>(                                    \
+        valid, sampler, objectCoordinates, gradients, attributeIndex); \
   }
 
     __define_computeGradientN(1);
@@ -288,10 +294,12 @@ namespace openvkl {
     void ISPCDriver<W>::computeGradientN(VKLSampler sampler,
                                          unsigned int N,
                                          const vvec3fn<1> *objectCoordinates,
-                                         vvec3fn<1> *gradients)
+                                         vvec3fn<1> *gradients,
+                                         unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
-      samplerObject.computeGradientN(N, objectCoordinates, gradients);
+      samplerObject.computeGradientN(
+          N, objectCoordinates, gradients, attributeIndex);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -324,6 +332,13 @@ namespace openvkl {
     }
 
     template <int W>
+    unsigned int ISPCDriver<W>::getNumAttributes(VKLVolume volume)
+    {
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      return volumeObject.getNumAttributes();
+    }
+
+    template <int W>
     range1f ISPCDriver<W>::getValueRange(VKLVolume volume)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
@@ -334,14 +349,14 @@ namespace openvkl {
     // Private methods ////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-
     template <int W>
     template <int OW>
     typename std::enable_if<(OW < W), void>::type
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLSampler sampler,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         float *samples)
+                                         float *samples,
+                                         unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
@@ -355,7 +370,7 @@ namespace openvkl {
 
       vfloatn<W> samplesW;
 
-      samplerObject.computeSampleV(validW, ocW, samplesW);
+      samplerObject.computeSampleV(validW, ocW, samplesW, attributeIndex);
 
       for (int i = 0; i < OW; i++)
         samples[i] = samplesW[i];
@@ -367,7 +382,8 @@ namespace openvkl {
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLSampler sampler,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         float *samples)
+                                         float *samples,
+                                         unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
@@ -377,7 +393,8 @@ namespace openvkl {
 
       vfloatn<W> samplesW;
 
-      samplerObject.computeSampleV(validW, objectCoordinates, samplesW);
+      samplerObject.computeSampleV(
+          validW, objectCoordinates, samplesW, attributeIndex);
 
       for (int i = 0; i < W; i++)
         samples[i] = samplesW[i];
@@ -389,7 +406,8 @@ namespace openvkl {
     ISPCDriver<W>::computeSampleAnyWidth(const int *valid,
                                          VKLSampler sampler,
                                          const vvec3fn<OW> &objectCoordinates,
-                                         float *samples)
+                                         float *samples,
+                                         unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
@@ -406,7 +424,7 @@ namespace openvkl {
 
         vfloatn<W> samplesW;
 
-        samplerObject.computeSampleV(validW, ocW, samplesW);
+        samplerObject.computeSampleV(validW, ocW, samplesW, attributeIndex);
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           samples[i] = samplesW[i - packIndex * W];
@@ -419,7 +437,8 @@ namespace openvkl {
     ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
                                            VKLSampler sampler,
                                            const vvec3fn<OW> &objectCoordinates,
-                                           vvec3fn<OW> &gradients)
+                                           vvec3fn<OW> &gradients,
+                                           unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
@@ -433,7 +452,7 @@ namespace openvkl {
 
       vvec3fn<W> gradientsW;
 
-      samplerObject.computeGradientV(validW, ocW, gradientsW);
+      samplerObject.computeGradientV(validW, ocW, gradientsW, attributeIndex);
 
       for (int i = 0; i < OW; i++) {
         gradients.x[i] = gradientsW.x[i];
@@ -448,7 +467,8 @@ namespace openvkl {
     ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
                                            VKLSampler sampler,
                                            const vvec3fn<OW> &objectCoordinates,
-                                           vvec3fn<OW> &gradients)
+                                           vvec3fn<OW> &gradients,
+                                           unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
@@ -456,7 +476,8 @@ namespace openvkl {
       for (int i = 0; i < W; i++)
         validW[i] = valid[i];
 
-      samplerObject.computeGradientV(validW, objectCoordinates, gradients);
+      samplerObject.computeGradientV(
+          validW, objectCoordinates, gradients, attributeIndex);
     }
 
     template <int W>
@@ -465,7 +486,8 @@ namespace openvkl {
     ISPCDriver<W>::computeGradientAnyWidth(const int *valid,
                                            VKLSampler sampler,
                                            const vvec3fn<OW> &objectCoordinates,
-                                           vvec3fn<OW> &gradients)
+                                           vvec3fn<OW> &gradients,
+                                           unsigned int attributeIndex)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
@@ -482,7 +504,7 @@ namespace openvkl {
 
         vvec3fn<W> gradientsW;
 
-        samplerObject.computeGradientV(validW, ocW, gradientsW);
+        samplerObject.computeGradientV(validW, ocW, gradientsW, attributeIndex);
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++) {
           gradients.x[i] = gradientsW.x[i - packIndex * W];

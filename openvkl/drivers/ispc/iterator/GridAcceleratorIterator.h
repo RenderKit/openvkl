@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "GridAcceleratorIterator_ispc.h"
+#include "GridAcceleratorIteratorSize_ispc.h"
 #include "Iterator.h"
 
 namespace openvkl {

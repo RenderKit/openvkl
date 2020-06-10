@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ProceduralVolume.h"
 #include "TestingVolume.h"
 #include "procedural_functions.h"
 #include "rkcommon/tasking/parallel_for.h"
@@ -13,7 +14,8 @@ namespace openvkl {
     template <typename idxType,
               float samplingFunction(const vec3f &),
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
-    struct ProceduralUnstructuredVolume : public TestingVolume
+    struct ProceduralUnstructuredVolume : public TestingVolume,
+                                          public ProceduralVolume
     {
       ProceduralUnstructuredVolume(
           const vec3i &dimensions,
@@ -33,9 +35,11 @@ namespace openvkl {
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
 
-      float computeProceduralValue(const vec3f &objectCoordinates);
+      float computeProceduralValue(
+          const vec3f &objectCoordinates) const override;
 
-      vec3f computeProceduralGradient(const vec3f &objectCoordinates);
+      vec3f computeProceduralGradient(
+          const vec3f &objectCoordinates) const override;
 
      private:
       range1f computedValueRange = range1f(rkcommon::math::empty);
@@ -154,7 +158,7 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &)>
     inline float
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
-        computeProceduralValue(const vec3f &objectCoordinates)
+        computeProceduralValue(const vec3f &objectCoordinates) const
     {
       return samplingFunction(objectCoordinates);
     }
@@ -164,7 +168,7 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &)>
     inline vec3f
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
-        computeProceduralGradient(const vec3f &objectCoordinates)
+        computeProceduralGradient(const vec3f &objectCoordinates) const
     {
       return gradientFunction(objectCoordinates);
     }

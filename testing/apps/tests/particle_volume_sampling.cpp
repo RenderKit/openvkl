@@ -33,7 +33,7 @@ void sampling_at_particle_centers(size_t numParticles,
     INFO("particle i = " << i << ", p = " << p.x << " " << p.y << " " << p.z
                          << ", radius = " << p.w)
 
-    float referenceValue = v->computeReferenceSample(p3);
+    float referenceValue = v->computeProceduralValue(p3);
 
     INFO("reference = " << referenceValue)
 
@@ -72,7 +72,7 @@ void sampling_at_random_points(size_t numParticles,
   for (size_t i = 0; i < N; i++) {
     const vec3f objectCoordinates(distX(eng), distY(eng), distZ(eng));
 
-    float referenceValue = v->computeReferenceSample(objectCoordinates);
+    float referenceValue = v->computeProceduralValue(objectCoordinates);
 
     test_scalar_and_vector_sampling(
         vklSampler, objectCoordinates, referenceValue, 1e-6f);

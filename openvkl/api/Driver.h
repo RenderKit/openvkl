@@ -286,7 +286,8 @@ namespace openvkl {
   virtual void computeSample##WIDTH(const int *valid,                        \
                                     VKLSampler sampler,                      \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
-                                    float *samples) = 0;
+                                    float *samples,                          \
+                                    unsigned int attributeIndex) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -298,13 +299,15 @@ namespace openvkl {
       virtual void computeSampleN(VKLSampler sampler,
                                   unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
-                                  float *samples) = 0;
+                                  float *samples,
+                                  unsigned int attributeIndex) = 0;
 
 #define __define_computeGradientN(WIDTH)                                       \
   virtual void computeGradient##WIDTH(const int *valid,                        \
                                       VKLSampler sampler,                      \
                                       const vvec3fn<WIDTH> &objectCoordinates, \
-                                      vvec3fn<WIDTH> &gradients) = 0;
+                                      vvec3fn<WIDTH> &gradients,               \
+                                      unsigned int attributeIndex) = 0;
 
       __define_computeGradientN(1);
       __define_computeGradientN(4);
@@ -316,7 +319,8 @@ namespace openvkl {
       virtual void computeGradientN(VKLSampler sampler,
                                     unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
-                                    vvec3fn<1> *gradients) = 0;
+                                    vvec3fn<1> *gradients,
+                                    unsigned int attributeIndex) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -325,6 +329,8 @@ namespace openvkl {
       virtual VKLVolume newVolume(const char *type) = 0;
 
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
+
+      virtual unsigned int getNumAttributes(VKLVolume volume) = 0;
 
       virtual range1f getValueRange(VKLVolume volume) = 0;
 

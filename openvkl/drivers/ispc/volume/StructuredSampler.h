@@ -22,23 +22,28 @@ namespace openvkl {
       void commit() override {}
 
       void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override final;
+                         vfloatn<1> &samples,
+                         unsigned int attributeIndex) const override final;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override final;
+                          vfloatn<W> &samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
-                          float *samples) const override final;
+                          float *samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override final;
+                            vvec3fn<W> &gradients,
+                            unsigned int attributeIndex) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override final;
+                            vvec3fn<1> *gradients,
+                            unsigned int attributeIndex) const override final;
 
      protected:
       const StructuredVolume<W> *volume{nullptr};
@@ -56,11 +61,15 @@ namespace openvkl {
 
     template <int W>
     inline void StructuredSampler<W>::computeSample(
-        const vvec3fn<1> &objectCoordinates, vfloatn<1> &samples) const
+        const vvec3fn<1> &objectCoordinates,
+        vfloatn<1> &samples,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
                 volume->getISPCEquivalent(),
                 &objectCoordinates,
+                attributeIndex,
                 &samples);
     }
 
@@ -68,12 +77,15 @@ namespace openvkl {
     inline void StructuredSampler<W>::computeSampleV(
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
+        vfloatn<W> &samples,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_sample_export,
                 static_cast<const int *>(valid),
                 volume->getISPCEquivalent(),
                 &objectCoordinates,
+                attributeIndex,
                 &samples);
     }
 
@@ -81,12 +93,15 @@ namespace openvkl {
     inline void StructuredSampler<W>::computeSampleN(
         unsigned int N,
         const vvec3fn<1> *objectCoordinates,
-        float *samples) const
+        float *samples,
+        unsigned int attributeIndex) const
     {
-      CALL_ISPC(Volume_sample_N_export,
+      assert(attributeIndex < volume->getNumAttributes());
+      CALL_ISPC(SharedStructuredVolume_sample_N_export,
                 volume->getISPCEquivalent(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
+                attributeIndex,
                 samples);
     }
 
@@ -94,12 +109,15 @@ namespace openvkl {
     inline void StructuredSampler<W>::computeGradientV(
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
+        vvec3fn<W> &gradients,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
                 volume->getISPCEquivalent(),
                 &objectCoordinates,
+                attributeIndex,
                 &gradients);
     }
 
@@ -107,12 +125,15 @@ namespace openvkl {
     inline void StructuredSampler<W>::computeGradientN(
         unsigned int N,
         const vvec3fn<1> *objectCoordinates,
-        vvec3fn<1> *gradients) const
+        vvec3fn<1> *gradients,
+        unsigned int attributeIndex) const
     {
-      CALL_ISPC(Volume_gradient_N_export,
+      assert(attributeIndex < volume->getNumAttributes());
+      CALL_ISPC(SharedStructuredVolume_gradient_N_export,
                 volume->getISPCEquivalent(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
+                attributeIndex,
                 (ispc::vec3f *)gradients);
     }
 

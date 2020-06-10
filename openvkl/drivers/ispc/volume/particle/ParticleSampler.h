@@ -23,19 +23,23 @@ namespace openvkl {
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override final;
+                          vfloatn<W> &samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
-                          float *samples) const override final;
+                          float *samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override final;
+                            vvec3fn<W> &gradients,
+                            unsigned int attributeIndex) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override final;
+                            vvec3fn<1> *gradients,
+                            unsigned int attributeIndex) const override final;
 
      protected:
       const ParticleVolume<W> *volume{nullptr};
@@ -54,8 +58,10 @@ namespace openvkl {
     inline void ParticleSampler<W>::computeSampleV(
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
+        vfloatn<W> &samples,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(VKLParticleVolume_sample_export,
                 static_cast<const int *>(valid),
                 volume->getISPCEquivalent(),
@@ -67,8 +73,10 @@ namespace openvkl {
     inline void ParticleSampler<W>::computeSampleN(
         unsigned int N,
         const vvec3fn<1> *objectCoordinates,
-        float *samples) const
+        float *samples,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(Volume_sample_N_export,
                 volume->getISPCEquivalent(),
                 N,
@@ -80,8 +88,10 @@ namespace openvkl {
     inline void ParticleSampler<W>::computeGradientV(
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
+        vvec3fn<W> &gradients,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(VKLParticleVolume_gradient_export,
                 static_cast<const int *>(valid),
                 volume->getISPCEquivalent(),
@@ -93,8 +103,10 @@ namespace openvkl {
     inline void ParticleSampler<W>::computeGradientN(
         unsigned int N,
         const vvec3fn<1> *objectCoordinates,
-        vvec3fn<1> *gradients) const
+        vvec3fn<1> *gradients,
+        unsigned int attributeIndex) const
     {
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(Volume_gradient_N_export,
                 volume->getISPCEquivalent(),
                 N,

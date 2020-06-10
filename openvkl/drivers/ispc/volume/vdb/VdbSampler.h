@@ -23,23 +23,28 @@ namespace openvkl {
       void commit() override;
 
       void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override final;
+                         vfloatn<1> &samples,
+                         unsigned int attributeIndex) const override final;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override final;
+                          vfloatn<W> &samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
-                          float *samples) const override final;
+                          float *samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override final;
+                            vvec3fn<W> &gradients,
+                            unsigned int attributeIndex) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override final;
+                            vvec3fn<1> *gradients,
+                            unsigned int attributeIndex) const override final;
 
       const VdbGrid *grid{nullptr};
       VdbSampleConfig config;
@@ -47,4 +52,3 @@ namespace openvkl {
 
   }  // namespace ispc_driver
 }  // namespace openvkl
-

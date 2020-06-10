@@ -105,6 +105,26 @@ namespace openvkl {
         return -.5f;
     }
 
+    inline float getXValue(const vec3f &objectCoordinates)
+    {
+      return objectCoordinates.x;
+    }
+
+    inline vec3f getXGradient(const vec3f &objectCoordinates)
+    {
+      return vec3f(1.f, 0.f, 0.f);
+    }
+
+    inline float getYValue(const vec3f &objectCoordinates)
+    {
+      return objectCoordinates.y;
+    }
+
+    inline vec3f getYGradient(const vec3f &objectCoordinates)
+    {
+      return vec3f(0.f, 1.f, 0.f);
+    }
+
     inline float getZValue(const vec3f &objectCoordinates)
     {
       return objectCoordinates.z;

@@ -45,6 +45,8 @@ namespace openvkl {
 
       virtual box3f getBoundingBox() const = 0;
 
+      virtual unsigned int getNumAttributes() const = 0;
+
       virtual range1f getValueRange() const = 0;
 
       void *getISPCEquivalent() const;

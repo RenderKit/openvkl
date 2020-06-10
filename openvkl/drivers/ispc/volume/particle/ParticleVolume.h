@@ -68,6 +68,8 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
 
+      unsigned int getNumAttributes() const override;
+
       range1f getValueRange() const override;
 
       const Node *getNodeRoot() const
@@ -105,6 +107,12 @@ namespace openvkl {
     inline box3f ParticleVolume<W>::getBoundingBox() const
     {
       return bounds;
+    }
+
+    template <int W>
+    unsigned int ParticleVolume<W>::getNumAttributes() const
+    {
+      return 1;
     }
 
     template <int W>

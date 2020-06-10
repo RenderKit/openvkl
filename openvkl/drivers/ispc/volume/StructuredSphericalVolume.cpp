@@ -72,10 +72,13 @@ namespace openvkl {
       const vec3f gridOriginRadians  = this->gridOrigin * gridToRadians;
       const vec3f gridSpacingRadians = this->gridSpacing * gridToRadians;
 
+      std::vector<const ispc::Data1D *> ispcAttributesData =
+          ispcs(this->attributesData);
+
       bool success = CALL_ISPC(SharedStructuredVolume_set,
                                this->ispcEquivalent,
-                               ispc(this->voxelData),
-                               this->voxelData->dataType,
+                               ispcAttributesData.size(),
+                               ispcAttributesData.data(),
                                (const ispc::vec3i &)this->dimensions,
                                ispc::structured_spherical,
                                (const ispc::vec3f &)gridOriginRadians,

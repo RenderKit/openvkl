@@ -122,6 +122,8 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
 
+      unsigned int getNumAttributes() const override;
+
       range1f getValueRange() const override;
 
       box4f getCellBBox(size_t id);
@@ -195,6 +197,12 @@ namespace openvkl {
     inline box3f UnstructuredVolume<W>::getBoundingBox() const
     {
       return bounds;
+    }
+
+    template <int W>
+    inline unsigned int UnstructuredVolume<W>::getNumAttributes() const
+    {
+      return 1;
     }
 
     template <int W>

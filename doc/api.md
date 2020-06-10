@@ -344,7 +344,11 @@ bounding box can be queried:
 
     vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
-The value range of the volume can also be queried:
+The number of attributes in a volume can also be queried:
+
+    unsigned int vklGetNumAttributes(VKLVolume volume);
+
+Finally, the value range of the volume (first attribute only) can be queried:
 
     vkl_range1f vklGetValueRange(VKLVolume volume);
 
@@ -364,30 +368,34 @@ created by passing a type string of `"structuredRegular"` to `vklNewVolume`.
 The parameters understood by structured regular volumes are summarized in the
 table below.
 
-  ------ ----------- -------------  -----------------------------------
-  Type   Name            Default    Description
-  ------ ----------- -------------  -----------------------------------
-  vec3i  dimensions                 number of voxels in each
-                                    dimension $(x, y, z)$
+  --------- ----------- -------------  -----------------------------------
+  Type      Name            Default    Description
+  --------- ----------- -------------  -----------------------------------
+  vec3i     dimensions                 number of voxels in each
+                                       dimension $(x, y, z)$
 
-  data   data                       VKLData object of voxel data,
-                                    supported types are:
+  VKLData   data                       VKLData object(s) of voxel data,
+  VKLData[]                            supported types are:
 
-                                    `VKL_UCHAR`
+                                       `VKL_UCHAR`
 
-                                    `VKL_SHORT`
+                                       `VKL_SHORT`
 
-                                    `VKL_USHORT`
+                                       `VKL_USHORT`
 
-                                    `VKL_FLOAT`
+                                       `VKL_FLOAT`
 
-                                    `VKL_DOUBLE`
+                                       `VKL_DOUBLE`
 
-  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in world-space
+                                       Multiple attributes are supported
+                                       through passing an array of VKLData
+                                       objects.
 
-  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in
-                                    world-space
-  ------ ----------- -------------  -----------------------------------
+  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in world-space
+
+  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in
+                                       world-space
+  --------- ----------- -------------  -----------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
 
 #### Structured Spherical Volumes
@@ -401,31 +409,35 @@ structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
 
-  ------ ----------- -------------  -----------------------------------
-  Type   Name            Default    Description
-  ------ ----------- -------------  -----------------------------------
-  vec3i  dimensions                 number of voxels in each
-                                    dimension $(r, \theta, \phi)$
+  --------- ----------- -------------  -----------------------------------
+  Type      Name            Default    Description
+  --------- ----------- -------------  -----------------------------------
+  vec3i     dimensions                 number of voxels in each
+                                       dimension $(r, \theta, \phi)$
 
-  data   data                       VKLData object of voxel data,
-                                    supported types are:
+  VKLData   data                       VKLData object(s) of voxel data,
+  VKLData[]                            supported types are:
 
-                                    `VKL_UCHAR`
+                                       `VKL_UCHAR`
 
-                                    `VKL_SHORT`
+                                       `VKL_SHORT`
 
-                                    `VKL_USHORT`
+                                       `VKL_USHORT`
 
-                                    `VKL_FLOAT`
+                                       `VKL_FLOAT`
 
-                                    `VKL_DOUBLE`
+                                       `VKL_DOUBLE`
 
-  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in units of
-                                    $(r, \theta, \phi)$; angles in degrees
+                                       Multiple attributes are supported
+                                       through passing an array of VKLData
+                                       objects.
 
-  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of
-                                    $(r, \theta, \phi)$; angles in degrees
-  ------ ----------- -------------  -----------------------------------
+  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in units of
+                                       $(r, \theta, \phi)$; angles in degrees
+
+  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in units of
+                                       $(r, \theta, \phi)$; angles in degrees
+  --------- ----------- -------------  -----------------------------------
   : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,
@@ -841,10 +853,13 @@ Use `vklCommit()` to commit parameters to the sampler object.
 Sampling
 --------
 
-The scalar API just takes a volume and coordinate, and returns a float value.
-NaN is returned for probe points outside the volume.
+The scalar API takes a volume and coordinate, and returns a float value. NaN is
+returned for probe points outside the volume. The attribute index selects the
+scalar attribute of interest; not all volumes support multiple attributes.
 
-    float vklComputeSample(VKLSampler sampler, const vkl_vec3f *objectCoordinates);
+    float vklComputeSample(VKLSampler sampler,
+                           const vkl_vec3f *objectCoordinates,
+                           unsigned int attributeIndex);
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
 the machine type and Open VKL driver implementation, these can give greater
@@ -854,17 +869,20 @@ set 0 for lanes to be ignored, -1 for active lanes.
     void vklComputeSample4(const int *valid,
                            VKLSampler sampler,
                            const vkl_vvec3f4 *objectCoordinates,
-                           float *samples);
+                           float *samples,
+                           unsigned int attributeIndex);
 
     void vklComputeSample8(const int *valid,
                            VKLSampler sampler,
                            const vkl_vvec3f8 *objectCoordinates,
-                           float *samples);
+                           float *samples,
+                           unsigned int attributeIndex);
 
     void vklComputeSample16(const int *valid,
                             VKLSampler sampler,
                             const vkl_vvec3f16 *objectCoordinates,
-                            float *samples);
+                            float *samples,
+                            unsigned int attributeIndex);
 
 A stream version allows sampling an arbitrary number of positions at once. While
 the vector version requires coordinates to be provided in a structure-of-arrays
@@ -876,7 +894,8 @@ API can give greater performance than the scalar API.
       void vklComputeSampleN(VKLSampler sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
-                             float *samples);
+                             float *samples,
+                             unsigned int attributeIndex);
 
 All of the above sampling APIs can be used, regardless of the driver's native
 SIMD width.
@@ -890,31 +909,36 @@ returning a vec3f instead of a float. NaN values are returned for points outside
 the volume.
 
     vkl_vec3f vklComputeGradient(VKLSampler sampler,
-                                 const vkl_vec3f *objectCoordinates);
+                                 const vkl_vec3f *objectCoordinates,
+                                 unsigned int attributeIndex);
 
 Vector versions are also provided:
 
     void vklComputeGradient4(const int *valid,
                              VKLSampler sampler,
                              const vkl_vvec3f4 *objectCoordinates,
-                             vkl_vvec3f4 *gradients);
+                             vkl_vvec3f4 *gradients,
+                             unsigned int attributeIndex);
 
     void vklComputeGradient8(const int *valid,
                              VKLSampler sampler,
                              const vkl_vvec3f8 *objectCoordinates,
-                             vkl_vvec3f8 *gradients);
+                             vkl_vvec3f8 *gradients,
+                             unsigned int attributeIndex);
 
     void vklComputeGradient16(const int *valid,
                               VKLSampler sampler,
                               const vkl_vvec3f16 *objectCoordinates,
-                              vkl_vvec3f16 *gradients);
+                              vkl_vvec3f16 *gradients,
+                              unsigned int attributeIndex);
 
 Finally, a stream version is provided:
 
     void vklComputeGradientN(VKLSampler sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
-                             vkl_vec3f *gradients);
+                             vkl_vec3f *gradients,
+                             unsigned int attributeIndex);
 
 All of the above gradient APIs can be used, regardless of the driver's native
 SIMD width.
@@ -924,8 +948,11 @@ Iterators
 
 Open VKL has APIs to search for particular volume values along a ray.  Queries
 can be for ranges of volume values (`vklIterateInterval`) or for particular
-values (`vklIterateHit`).  The desired values are set in a `VKLValueSelector`,
-which needs to be created, filled in with values, and then committed.
+values (`vklIterateHit`).  Only the first volume attribute is currently
+considered in the iterator APIs.
+
+The desired values are set in a `VKLValueSelector`, which needs to be created,
+filled in with values, and then committed.
 
     VKLValueSelector vklNewValueSelector(VKLVolume volume);
 

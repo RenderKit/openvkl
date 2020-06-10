@@ -38,6 +38,7 @@ foreach(TARGET_WIDTH 4 8 16)
     iterator/DefaultIterator.ispc
     iterator/GridAcceleratorIterator.cpp
     iterator/GridAcceleratorIterator.ispc
+    iterator/GridAcceleratorIteratorSize.ispc
     iterator/UnstructuredIterator.cpp
     iterator/UnstructuredIterator.ispc
     value_selector/ValueSelector.cpp

@@ -37,14 +37,13 @@ namespace openvkl {
 
     template <int W>
     void UnstructuredIntervalIterator<W>::iterateIntervalV(
-        const vintn<W> &valid, Interval<W> &interval, vintn<W> &result)
+        const vintn<W> &valid, vVKLIntervalN<W> &interval, vintn<W> &result)
     {
       CALL_ISPC(UnstructuredIterator_iterateInterval,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                &interval,
                 static_cast<int *>(result));
-      interval = *reinterpret_cast<const Interval<W> *>(
-          CALL_ISPC(UnstructuredIterator_getCurrentInterval, ispcStorage));
     }
 
     template class UnstructuredIntervalIterator<VKL_TARGET_WIDTH>;

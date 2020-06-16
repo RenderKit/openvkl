@@ -360,27 +360,26 @@ __define_vklInitIntervalIteratorN(16);
 extern "C" int vklIterateInterval(VKLIntervalIterator iterator,
                                   VKLInterval *interval) OPENVKL_CATCH_BEGIN
 {
-  vVKLIntervalN<1> intervalInternal;
   int result;
   openvkl::api::currentDriver().iterateInterval1(
-      iterator, intervalInternal, &result);
-  intervalInternal.populateVKLInterval(*interval);
+      iterator, reinterpret_cast<vVKLIntervalN<1> &>(*interval), &result);
   return result;
 }
 OPENVKL_CATCH_END(false)
 
-#define __define_vklIterateIntervalN(WIDTH)                        \
-  extern "C" void vklIterateInterval##WIDTH(                       \
-      const int *valid,                                            \
-      VKLIntervalIterator##WIDTH iterator,                         \
-      VKLInterval##WIDTH *interval,                                \
-      int *result) OPENVKL_CATCH_BEGIN                             \
-  {                                                                \
-    vVKLIntervalN<WIDTH> intervalInternal;                         \
-    openvkl::api::currentDriver().iterateInterval##WIDTH(          \
-        valid, iterator, intervalInternal, result);                \
-    intervalInternal.populateVKLInterval##WIDTH(*interval, valid); \
-  }                                                                \
+#define __define_vklIterateIntervalN(WIDTH)                  \
+  extern "C" void vklIterateInterval##WIDTH(                 \
+      const int *valid,                                      \
+      VKLIntervalIterator##WIDTH iterator,                   \
+      VKLInterval##WIDTH *interval,                          \
+      int *result) OPENVKL_CATCH_BEGIN                       \
+  {                                                          \
+    openvkl::api::currentDriver().iterateInterval##WIDTH(    \
+        valid,                                               \
+        iterator,                                            \
+        reinterpret_cast<vVKLIntervalN<WIDTH> &>(*interval), \
+        result);                                             \
+  }                                                          \
   OPENVKL_CATCH_END()
 
 __define_vklIterateIntervalN(4);
@@ -464,25 +463,22 @@ __define_vklInitHitIteratorN(16);
 extern "C" int vklIterateHit(VKLHitIterator iterator,
                              VKLHit *hit) OPENVKL_CATCH_BEGIN
 {
-  vVKLHitN<1> hitInternal;
   int result;
-  openvkl::api::currentDriver().iterateHit1(iterator, hitInternal, &result);
-  hitInternal.populateVKLHit(*hit);
+  openvkl::api::currentDriver().iterateHit1(
+      iterator, reinterpret_cast<vVKLHitN<1> &>(*hit), &result);
   return result;
 }
 OPENVKL_CATCH_END(false)
 
-#define __define_vklIterateHitN(WIDTH)                                  \
-  extern "C" void vklIterateHit##WIDTH(const int *valid,                \
-                                       VKLHitIterator##WIDTH iterator,  \
-                                       VKLHit##WIDTH *hit,              \
-                                       int *result) OPENVKL_CATCH_BEGIN \
-  {                                                                     \
-    vVKLHitN<WIDTH> hitInternal;                                        \
-    openvkl::api::currentDriver().iterateHit##WIDTH(                    \
-        valid, iterator, hitInternal, result);                          \
-    hitInternal.populateVKLHit##WIDTH(*hit, valid);                     \
-  }                                                                     \
+#define __define_vklIterateHitN(WIDTH)                                       \
+  extern "C" void vklIterateHit##WIDTH(const int *valid,                     \
+                                       VKLHitIterator##WIDTH iterator,       \
+                                       VKLHit##WIDTH *hit,                   \
+                                       int *result) OPENVKL_CATCH_BEGIN      \
+  {                                                                          \
+    openvkl::api::currentDriver().iterateHit##WIDTH(                         \
+        valid, iterator, reinterpret_cast<vVKLHitN<WIDTH> &>(*hit), result); \
+  }                                                                          \
   OPENVKL_CATCH_END()
 
 __define_vklIterateHitN(4);

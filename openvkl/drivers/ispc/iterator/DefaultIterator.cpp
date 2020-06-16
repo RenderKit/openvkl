@@ -21,7 +21,7 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      box3f boundingBox = volume->getBoundingBox();
+      box3f boundingBox  = volume->getBoundingBox();
       range1f valueRange = volume->getValueRange();
 
       CALL_ISPC(DefaultIterator_Initialize,
@@ -38,17 +38,13 @@ namespace openvkl {
 
     template <int W>
     void DefaultIntervalIterator<W>::iterateIntervalV(
-        const vintn<W> &valid,
-        Interval<W> &interval,
-        vintn<W> &result)
+        const vintn<W> &valid, vVKLIntervalN<W> &interval, vintn<W> &result)
     {
       CALL_ISPC(DefaultIterator_iterateInterval,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                &interval,
                 static_cast<int *>(result));
-
-      interval = *reinterpret_cast<const Interval<W> *>(CALL_ISPC(
-          DefaultIterator_getCurrentInterval, ispcStorage));
     }
 
     template class DefaultIntervalIterator<VKL_TARGET_WIDTH>;
@@ -63,7 +59,7 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      box3f boundingBox = volume->getBoundingBox();
+      box3f boundingBox  = volume->getBoundingBox();
       range1f valueRange = volume->getValueRange();
 
       CALL_ISPC(DefaultIterator_Initialize,
@@ -80,16 +76,14 @@ namespace openvkl {
 
     template <int W>
     void DefaultHitIterator<W>::iterateHitV(const vintn<W> &valid,
-                                            Hit<W> &hit,
+                                            vVKLHitN<W> &hit,
                                             vintn<W> &result)
     {
       CALL_ISPC(DefaultIterator_iterateHit,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                &hit,
                 static_cast<int *>(result));
-
-      hit = *reinterpret_cast<const Hit<W> *>(
-          CALL_ISPC(DefaultIterator_getCurrentHit, ispcStorage));
     }
 
     template class DefaultHitIterator<VKL_TARGET_WIDTH>;

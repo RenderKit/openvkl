@@ -9,8 +9,8 @@
 #include "GridAcceleratorIterator.ih"
 
 export void EXPORT_UNIQUE(GridAcceleratorIterator_export,
-    uniform vec3f &dummy_vec3f,
-    const varying GridAcceleratorIterator *uniform it)
+                          uniform vec3f &dummy_vec3f,
+                          const varying GridAcceleratorIterator *uniform it)
 {
 }
 
@@ -41,7 +41,7 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   return sizeof(varying GridAcceleratorIterator);
 }
 
-#define template_GridAcceleratorIteratorU_Initialize_internal(univary)         \
+#define template_GridAcceleratorIterator_Initialize_internal(univary)          \
   univary GridAcceleratorIterator *uniform self =                              \
       (univary GridAcceleratorIterator * uniform) _self;                       \
                                                                                \
@@ -60,17 +60,16 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
    the artifacts may look like speckles, or cross-hairs in orthographic camera \
    views. */                                                                   \
   /*const uniform float epsilon = reduce_min(self->volume->gridSpacing) *      \
-  0.125f;                                                                      \
+   * 0.125f;                                                                   \
+  self->boundingBoxTRange.lower += epsilon;                                    \
+  */                                                                           \
                                                                                \
-  self->boundingBoxTRange.lower += epsilon;*/                                  \
-                                                                               \
-  resetInterval(self->intervalState.currentInterval);                          \
   self->intervalState.currentCellIndex = make_vec3i(-1);                       \
                                                                                \
   /* compute interval nominal deltaT based on gridSpacing and direction; the   \
    below is equivalent to: dot(abs(normalize(direction)), gridSpacing) /       \
    length(direction)*/                                                         \
-  self->intervalState.currentInterval.nominalDeltaT =                          \
+  self->intervalState.nominalDeltaT =                                          \
       dot(absf(self->direction), self->volume->gridSpacing) /                  \
       dot(self->direction, self->direction);                                   \
                                                                                \
@@ -85,7 +84,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorU_Initialize,
                           void *uniform _tRange,
                           void *uniform _valueSelector)
 {
-  template_GridAcceleratorIteratorU_Initialize_internal(uniform);
+  template_GridAcceleratorIterator_Initialize_internal(uniform);
 }
 
 export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
@@ -101,112 +100,84 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
     return;
   }
 
-  template_GridAcceleratorIteratorU_Initialize_internal(varying);
+  template_GridAcceleratorIterator_Initialize_internal(varying);
 }
 #undef template_GridAcceleratorIteratorU_Initialize_internal
 
-export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorU_getCurrentInterval,
-                                   void *uniform _self)
-{
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
-  return &self->intervalState.currentInterval;
-}
-
-export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorV_getCurrentInterval,
-                                   void *uniform _self)
-{
-  varying GridAcceleratorIterator *uniform self =
-      (varying GridAcceleratorIterator * uniform) _self;
-  return &self->intervalState.currentInterval;
-}
-
-#define template_GridAcceleratorIteratorU_iterateInterval_internal(univary)   \
-  univary GridAcceleratorIterator *uniform self =                             \
-      (univary GridAcceleratorIterator * uniform) _self;                      \
-                                                                              \
-  univary int *uniform result = (univary int *uniform)_result;                \
-                                                                              \
-  if (isempty1f(self->boundingBoxTRange)) {                                   \
-    *result = false;                                                          \
-    return;                                                                   \
-  }                                                                           \
-                                                                              \
-  while (                                                                     \
-      GridAccelerator_nextCell(self->volume->accelerator,                     \
-                               self,                                          \
-                               self->intervalState.currentCellIndex,          \
-                               self->intervalState.currentInterval.tRange)) { \
-    univary box1f cellValueRange;                                             \
-    GridAccelerator_getCellValueRange(self->volume->accelerator,              \
-                                      self->intervalState.currentCellIndex,   \
-                                      cellValueRange);                        \
-                                                                              \
-    univary bool returnInterval = false;                                      \
-                                                                              \
-    if (!self->valueSelector) {                                               \
-      returnInterval = true;                                                  \
-    } else {                                                                  \
-      if (overlaps1f(self->valueSelector->rangesMinMax, cellValueRange)) {    \
-        if (overlapsAny1f(cellValueRange,                                     \
-                          self->valueSelector->numRanges,                     \
-                          self->valueSelector->ranges)) {                     \
-          returnInterval = true;                                              \
-        }                                                                     \
-      }                                                                       \
-    }                                                                         \
-                                                                              \
-    if (returnInterval) {                                                     \
-      self->intervalState.currentInterval.valueRange = cellValueRange;        \
-                                                                              \
-      /* nominalDeltaT is set during iterator initialization */               \
-                                                                              \
-      *result = true;                                                         \
-      return;                                                                 \
-    }                                                                         \
-  }                                                                           \
-                                                                              \
+#define template_GridAcceleratorIterator_iterateInterval_internal(univary)     \
+  univary GridAcceleratorIterator *uniform self =                              \
+      (univary GridAcceleratorIterator * uniform) _self;                       \
+                                                                               \
+  univary Interval *uniform interval = (univary Interval * uniform) _interval; \
+                                                                               \
+  univary int *uniform result = (univary int *uniform)_result;                 \
+                                                                               \
+  if (isempty1f(self->boundingBoxTRange)) {                                    \
+    *result = false;                                                           \
+    return;                                                                    \
+  }                                                                            \
+                                                                               \
+  while (GridAccelerator_nextCell(self->volume->accelerator,                   \
+                                  self,                                        \
+                                  self->intervalState.currentCellIndex,        \
+                                  interval->tRange)) {                         \
+    univary box1f cellValueRange;                                              \
+    GridAccelerator_getCellValueRange(self->volume->accelerator,               \
+                                      self->intervalState.currentCellIndex,    \
+                                      cellValueRange);                         \
+                                                                               \
+    univary bool returnInterval = false;                                       \
+                                                                               \
+    if (!self->valueSelector) {                                                \
+      returnInterval = true;                                                   \
+    } else {                                                                   \
+      if (overlaps1f(self->valueSelector->rangesMinMax, cellValueRange)) {     \
+        if (overlapsAny1f(cellValueRange,                                      \
+                          self->valueSelector->numRanges,                      \
+                          self->valueSelector->ranges)) {                      \
+          returnInterval = true;                                               \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+                                                                               \
+    if (returnInterval) {                                                      \
+      interval->valueRange    = cellValueRange;                                \
+      interval->nominalDeltaT = self->intervalState.nominalDeltaT;             \
+                                                                               \
+      *result = true;                                                          \
+      return;                                                                  \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
   *result = false;
 
 export void EXPORT_UNIQUE(GridAcceleratorIteratorU_iterateInterval,
                           void *uniform _self,
+                          void *uniform _interval,
                           uniform int *uniform _result)
 {
-  template_GridAcceleratorIteratorU_iterateInterval_internal(uniform);
+  template_GridAcceleratorIterator_iterateInterval_internal(uniform);
 }
 
 export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _interval,
                           uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;
   }
 
-  template_GridAcceleratorIteratorU_iterateInterval_internal(varying);
+  template_GridAcceleratorIterator_iterateInterval_internal(varying);
 }
-#undef template_GridAcceleratorIteratorU_iterateInterval_internal
-
-export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorU_getCurrentHit,
-                                   void *uniform _self)
-{
-  uniform GridAcceleratorIterator *uniform self =
-      (uniform GridAcceleratorIterator * uniform) _self;
-  return &self->hitState.currentHit;
-}
-
-export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorV_getCurrentHit,
-                                   void *uniform _self)
-{
-  varying GridAcceleratorIterator *uniform self =
-      (varying GridAcceleratorIterator * uniform) _self;
-  return &self->hitState.currentHit;
-}
+#undef template_GridAcceleratorIterator_iterateInterval_internal
 
 #define template_GridAcceleratorIterator_iterateHit_internal(univary)       \
   univary GridAcceleratorIterator *uniform self =                           \
       (univary GridAcceleratorIterator * uniform) _self;                    \
+                                                                            \
+  univary Hit *uniform hit = (univary Hit * uniform) _hit;                  \
                                                                             \
   univary int *uniform result = (univary int *uniform)_result;              \
                                                                             \
@@ -253,13 +224,12 @@ export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorV_getCurrentHit,
                             0.5f * step,                                    \
                             self->valueSelector->numValues,                 \
                             self->valueSelector->values,                    \
-                            self->hitState.currentHit,                      \
+                            *hit,                                           \
                             surfaceEpsilon);                                \
                                                                             \
       if (foundHit) {                                                       \
-        *result = true;                                                     \
-        self->hitState.currentCellTRange.lower =                            \
-            self->hitState.currentHit.t + surfaceEpsilon;                   \
+        *result                                = true;                      \
+        self->hitState.currentCellTRange.lower = hit->t + surfaceEpsilon;   \
                                                                             \
         /* move to next cell if next t passes the cell boundary */          \
         if (isempty1f(self->hitState.currentCellTRange)) {                  \
@@ -270,8 +240,7 @@ export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorV_getCurrentHit,
                                        self->hitState.currentCellTRange);   \
                                                                             \
           /* continue where we left off */                                  \
-          self->hitState.currentCellTRange.lower =                          \
-              self->hitState.currentHit.t + surfaceEpsilon;                 \
+          self->hitState.currentCellTRange.lower = hit->t + surfaceEpsilon; \
         }                                                                   \
                                                                             \
         return;                                                             \
@@ -291,6 +260,7 @@ export void *uniform EXPORT_UNIQUE(GridAcceleratorIteratorV_getCurrentHit,
 
 export void EXPORT_UNIQUE(GridAcceleratorIteratorU_iterateHit,
                           void *uniform _self,
+                          void *uniform _hit,
                           uniform int *uniform _result)
 {
   template_GridAcceleratorIterator_iterateHit_internal(uniform);
@@ -299,6 +269,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorU_iterateHit,
 export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateHit,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _hit,
                           uniform int *uniform _result)
 {
   if (!imask[programIndex]) {

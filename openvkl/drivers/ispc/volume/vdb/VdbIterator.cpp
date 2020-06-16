@@ -31,15 +31,14 @@ namespace openvkl {
 
     template <int W>
     void VdbIntervalIterator<W>::iterateIntervalV(const vintn<W> &valid,
-                                                  Interval<W> &interval,
+                                                  vVKLIntervalN<W> &interval,
                                                   vintn<W> &result)
     {
       CALL_ISPC(VdbIterator_iterateInterval,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                &interval,
                 static_cast<int *>(result));
-      interval = *reinterpret_cast<const Interval<W> *>(
-          CALL_ISPC(VdbIterator_getCurrentInterval, ispcStorage));
     }
 
     template class VdbIntervalIterator<VKL_TARGET_WIDTH>;

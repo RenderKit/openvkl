@@ -43,16 +43,6 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
   self->tRange        = *((varying box1f * uniform) _tRange);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->getCount      = 0;
-
-  resetInterval(self->intervalState.currentInterval);
-}
-
-export void *uniform EXPORT_UNIQUE(UnstructuredIterator_getCurrentInterval,
-                                   void *uniform _self)
-{
-  varying UnstructuredIterator *uniform self =
-      (varying UnstructuredIterator * uniform) _self;
-  return &self->intervalState.currentInterval;
 }
 
 // How deep in the BVH we're going to look for intervals.
@@ -143,6 +133,7 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
 export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _interval,
                           uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
@@ -151,6 +142,8 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
 
   varying UnstructuredIterator *uniform self =
       (varying UnstructuredIterator * uniform) _self;
+
+  varying Interval *uniform interval = (varying Interval * uniform) _interval;
 
   varying int *uniform result = (varying int *uniform)_result;
 
@@ -180,12 +173,12 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
   } else {
     // shrink range slightly for cell-valued where testing the boundary will
     // fail (modify test instead?)
-    self->intervalState.currentInterval.tRange.lower = retRange.lower + 0.00001;
-    self->intervalState.currentInterval.tRange.upper = retRange.upper - 0.00001;
-    self->intervalState.currentInterval.valueRange.lower = valueRange.lower;
-    self->intervalState.currentInterval.valueRange.upper = valueRange.upper;
-    self->intervalState.currentInterval.nominalDeltaT    = deltaT;
-    *result                                              = true;
+    interval->tRange.lower     = retRange.lower + 0.00001;
+    interval->tRange.upper     = retRange.upper - 0.00001;
+    interval->valueRange.lower = valueRange.lower;
+    interval->valueRange.upper = valueRange.upper;
+    interval->nominalDeltaT    = deltaT;
+    *result                    = true;
   }
 
   self->getCount++;

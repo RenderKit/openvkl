@@ -10,6 +10,54 @@
 
 namespace openvkl {
 
+  struct Data;
+
+  // Public wide types for given widths
+  template <int W>
+  struct vklPublicWideTypes
+  {
+    using vkl_vvec3fW   = void;
+    using vkl_vrange1fW = void;
+    using VKLIntervalW  = void;
+    using VKLHitW       = void;
+  };
+
+  template <>
+  struct vklPublicWideTypes<1>
+  {
+    using vkl_vvec3fW   = vkl_vec3f;
+    using vkl_vrange1fW = vkl_range1f;
+    using VKLIntervalW  = VKLInterval;
+    using VKLHitW       = VKLHit;
+  };
+
+  template <>
+  struct vklPublicWideTypes<4>
+  {
+    using vkl_vvec3fW   = vkl_vvec3f4;
+    using vkl_vrange1fW = vkl_vrange1f4;
+    using VKLIntervalW  = VKLInterval4;
+    using VKLHitW       = VKLHit4;
+  };
+
+  template <>
+  struct vklPublicWideTypes<8>
+  {
+    using vkl_vvec3fW   = vkl_vvec3f8;
+    using vkl_vrange1fW = vkl_vrange1f8;
+    using VKLIntervalW  = VKLInterval8;
+    using VKLHitW       = VKLHit8;
+  };
+
+  template <>
+  struct vklPublicWideTypes<16>
+  {
+    using vkl_vvec3fW   = vkl_vvec3f16;
+    using vkl_vrange1fW = vkl_vrange1f16;
+    using VKLIntervalW  = VKLInterval16;
+    using VKLHitW       = VKLHit16;
+  };
+
   // Infer (compile time) VKL_DATA_TYPE from input type
   template <typename T>
   struct VKLTypeFor
@@ -29,7 +77,7 @@ namespace openvkl {
   VKLTYPEFOR_SPECIALIZATION(bool, VKL_BOOL);
   VKLTYPEFOR_SPECIALIZATION(VKLObject, VKL_OBJECT);
   VKLTYPEFOR_SPECIALIZATION(VKLData, VKL_DATA);
-  VKLTYPEFOR_SPECIALIZATION(Data *, VKL_DATA);
+  VKLTYPEFOR_SPECIALIZATION(openvkl::Data *, VKL_DATA);
   VKLTYPEFOR_SPECIALIZATION(VKLValueSelector, VKL_VALUE_SELECTOR);
   VKLTYPEFOR_SPECIALIZATION(VKLVolume, VKL_VOLUME);
   VKLTYPEFOR_SPECIALIZATION(char *, VKL_STRING);

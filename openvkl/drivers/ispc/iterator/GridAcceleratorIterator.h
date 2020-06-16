@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "Iterator.h"
 #include "GridAcceleratorIterator_ispc.h"
+#include "Iterator.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -24,7 +24,7 @@ namespace openvkl {
           const ValueSelector<W> *valueSelector) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
-                            Interval<W> &interval,
+                            vVKLIntervalN<W> &interval,
                             vintn<W> &result) override final;
 
       // Uniform.
@@ -35,7 +35,7 @@ namespace openvkl {
           const vrange1fn<1> &tRange,
           const ValueSelector<W> *valueSelector) override final;
 
-      void iterateIntervalU(Interval<1> &interval,
+      void iterateIntervalU(vVKLIntervalN<1> &interval,
                             vintn<1> &result) override final;
 
      protected:
@@ -46,7 +46,9 @@ namespace openvkl {
 
     template <int W>
     using GridAcceleratorIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, GridAcceleratorIntervalIterator>;
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                GridAcceleratorIntervalIterator>;
 
     template <int W>
     struct GridAcceleratorHitIterator : public HitIterator<W>
@@ -61,7 +63,7 @@ namespace openvkl {
                           const vrange1fn<W> &tRange,
                           const ValueSelector<W> *valueSelector) override final;
       void iterateHitV(const vintn<W> &valid,
-                       Hit<W> &hit,
+                       vVKLHitN<W> &hit,
                        vintn<W> &result) override final;
 
       // Uniform.
@@ -71,7 +73,7 @@ namespace openvkl {
                           const vrange1fn<1> &tRange,
                           const ValueSelector<W> *valueSelector) override final;
 
-      void iterateHitU(Hit<1> &hit, vintn<1> &result) override final;
+      void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result) override final;
 
      protected:
       using Iterator<W>::volume;

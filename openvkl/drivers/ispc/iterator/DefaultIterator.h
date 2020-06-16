@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "Iterator.h"
 #include "DefaultIterator_ispc.h"
+#include "Iterator.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -22,7 +22,7 @@ namespace openvkl {
           const ValueSelector<W> *valueSelector) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
-                            Interval<W> &interval,
+                            vVKLIntervalN<W> &interval,
                             vintn<W> &result) override final;
 
      protected:
@@ -49,7 +49,7 @@ namespace openvkl {
                           const ValueSelector<W> *valueSelector) override final;
 
       void iterateHitV(const vintn<W> &valid,
-                       Hit<W> &hit,
+                       vVKLHitN<W> &hit,
                        vintn<W> &result) override final;
 
      protected:

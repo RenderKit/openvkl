@@ -501,7 +501,7 @@ namespace openvkl {
         int *result) const
     {
       auto &it = referenceFromHandle<IntervalIterator<W>>(iterator);
-      it.iterateIntervalU(*reinterpret_cast<Interval<1> *>(&interval),
+      it.iterateIntervalU(*reinterpret_cast<vVKLIntervalN<1> *>(&interval),
                           reinterpret_cast<vintn<1> &>(*result));
     }
 
@@ -520,7 +520,7 @@ namespace openvkl {
       vintn<W> resultW;
 
       iterator.iterateIntervalV(
-          validW, *reinterpret_cast<Interval<W> *>(&interval), resultW);
+          validW, *reinterpret_cast<vVKLIntervalN<W> *>(&interval), resultW);
 
       for (int i = 0; i < W; i++)
         result[i] = resultW[i];
@@ -619,7 +619,7 @@ namespace openvkl {
                                            int *result) const
     {
       auto &it = referenceFromHandle<HitIterator<W>>(iterator);
-      it.iterateHitU(*reinterpret_cast<Hit<1> *>(&hit),
+      it.iterateHitU(*reinterpret_cast<vVKLHitN<1> *>(&hit),
                      reinterpret_cast<vintn<1> &>(*result));
     }
 
@@ -637,7 +637,8 @@ namespace openvkl {
 
       vintn<W> resultW;
 
-      iterator.iterateHitV(validW, *reinterpret_cast<Hit<W> *>(&hit), resultW);
+      iterator.iterateHitV(
+          validW, *reinterpret_cast<vVKLHitN<W> *>(&hit), resultW);
 
       for (int i = 0; i < W; i++)
         result[i] = resultW[i];

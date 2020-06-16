@@ -111,21 +111,21 @@ typedef struct
   float nominalDeltaT;
 } VKLInterval;
 
-typedef struct
+typedef struct VKL_ALIGN(16)
 {
   vkl_vrange1f4 tRange;
   vkl_vrange1f4 valueRange;
   float nominalDeltaT[4];
 } VKLInterval4;
 
-typedef struct
+typedef struct VKL_ALIGN(32)
 {
   vkl_vrange1f8 tRange;
   vkl_vrange1f8 valueRange;
   float nominalDeltaT[8];
 } VKLInterval8;
 
-typedef struct
+typedef struct VKL_ALIGN(64)
 {
   vkl_vrange1f16 tRange;
   vkl_vrange1f16 valueRange;
@@ -248,19 +248,19 @@ typedef struct
   float sample;
 } VKLHit;
 
-typedef struct
+typedef struct VKL_ALIGN(16)
 {
   float t[4];
   float sample[4];
 } VKLHit4;
 
-typedef struct
+typedef struct VKL_ALIGN(32)
 {
   float t[8];
   float sample[8];
 } VKLHit8;
 
-typedef struct
+typedef struct VKL_ALIGN(64)
 {
   float t[16];
   float sample[16];

@@ -25,7 +25,7 @@ namespace openvkl {
           const ValueSelector<W> *valueSelector) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
-                            Interval<W> &interval,
+                            vVKLIntervalN<W> &interval,
                             vintn<W> &result) override final;
 
      protected:

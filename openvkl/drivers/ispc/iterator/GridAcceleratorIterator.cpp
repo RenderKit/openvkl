@@ -34,14 +34,13 @@ namespace openvkl {
 
     template <int W>
     void GridAcceleratorIntervalIterator<W>::iterateIntervalV(
-        const vintn<W> &valid, Interval<W> &interval, vintn<W> &result)
+        const vintn<W> &valid, vVKLIntervalN<W> &interval, vintn<W> &result)
     {
       CALL_ISPC(GridAcceleratorIteratorV_iterateInterval,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                &interval,
                 static_cast<int *>(result));
-      interval = *reinterpret_cast<const Interval<W> *>(
-          CALL_ISPC(GridAcceleratorIteratorV_getCurrentInterval, ispcStorage));
     }
 
     template <int W>
@@ -61,14 +60,13 @@ namespace openvkl {
     }
 
     template <int W>
-    void GridAcceleratorIntervalIterator<W>::iterateIntervalU(Interval<1> &interval,
-                                                      vintn<1> &result)
+    void GridAcceleratorIntervalIterator<W>::iterateIntervalU(
+        vVKLIntervalN<1> &interval, vintn<1> &result)
     {
       CALL_ISPC(GridAcceleratorIteratorU_iterateInterval,
                 ispcStorage,
+                &interval,
                 static_cast<int *>(result));
-      interval = *reinterpret_cast<const Interval<1> *>(
-          CALL_ISPC(GridAcceleratorIteratorU_getCurrentInterval, ispcStorage));
     }
 
     template class GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>;
@@ -95,15 +93,17 @@ namespace openvkl {
 
     template <int W>
     void GridAcceleratorHitIterator<W>::iterateHitV(const vintn<W> &valid,
-                                                    Hit<W> &hit,
+                                                    vVKLHitN<W> &hit,
                                                     vintn<W> &result)
     {
+      // pass hit to be modified directly, which ensures that non-active lane
+      // data is NOT changed (previous OSPRay issue). copies would make this
+      // difficult.
       CALL_ISPC(GridAcceleratorIteratorV_iterateHit,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                &hit,
                 static_cast<int *>(result));
-      hit = *reinterpret_cast<const Hit<W> *>(
-          CALL_ISPC(GridAcceleratorIteratorV_getCurrentHit, ispcStorage));
     }
 
     template <int W>
@@ -123,13 +123,13 @@ namespace openvkl {
     }
 
     template <int W>
-    void GridAcceleratorHitIterator<W>::iterateHitU(Hit<1> &hit, vintn<1> &result)
+    void GridAcceleratorHitIterator<W>::iterateHitU(vVKLHitN<1> &hit,
+                                                    vintn<1> &result)
     {
       CALL_ISPC(GridAcceleratorIteratorU_iterateHit,
                 ispcStorage,
+                &hit,
                 static_cast<int *>(result));
-      hit = *reinterpret_cast<const Hit<1> *>(
-          CALL_ISPC(GridAcceleratorIteratorU_getCurrentHit, ispcStorage));
     }
 
     template class GridAcceleratorHitIterator<VKL_TARGET_WIDTH>;

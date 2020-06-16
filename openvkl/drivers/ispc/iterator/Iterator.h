@@ -23,21 +23,6 @@ namespace openvkl {
     template <int W>
     struct Volume;
 
-    template <int W>
-    struct Interval
-    {
-      vrange1fn<W> tRange;
-      vrange1fn<W> valueRange;
-      vfloatn<W> nominalDeltaT;
-    };
-
-    template <int W>
-    struct Hit
-    {
-      vfloatn<W> t;
-      vfloatn<W> sample;
-    };
-
     /*
      * Base class for all iterators.
      */
@@ -92,13 +77,14 @@ namespace openvkl {
             validW, originW, directionW, tRangeW, valueSelector);
       }
 
-      virtual void iterateIntervalU(Interval<1> &interval, vintn<1> &result)
+      virtual void iterateIntervalU(vVKLIntervalN<1> &interval,
+                                    vintn<1> &result)
       {
         vintn<W> validW;
         for (int i = 0; i < W; i++)
           validW[i] = i == 0 ? -1 : 0;
 
-        Interval<W> intervalW;
+        vVKLIntervalN<W> intervalW;
 
         vintn<W> resultW;
 
@@ -124,7 +110,7 @@ namespace openvkl {
           const ValueSelector<W> *valueSelector) = 0;
 
       virtual void iterateIntervalV(const vintn<W> &valid,
-                                    Interval<W> &interval,
+                                    vVKLIntervalN<W> &interval,
                                     vintn<W> &result) = 0;
     };
 
@@ -159,13 +145,13 @@ namespace openvkl {
         initializeHitV(validW, originW, directionW, tRangeW, valueSelector);
       }
 
-      virtual void iterateHitU(Hit<1> &hit, vintn<1> &result)
+      virtual void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result)
       {
         vintn<W> validW;
         for (int i = 0; i < W; i++)
           validW[i] = i == 0 ? -1 : 0;
 
-        Hit<W> hitW;
+        vVKLHitN<W> hitW;
         vintn<W> resultW;
 
         iterateHitV(validW, hitW, resultW);
@@ -186,7 +172,7 @@ namespace openvkl {
                                   const ValueSelector<W> *valueSelector) = 0;
 
       virtual void iterateHitV(const vintn<W> &valid,
-                               Hit<W> &hit,
+                               vVKLHitN<W> &hit,
                                vintn<W> &result) = 0;
     };
 

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "Traits.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
 #include "rkcommon/platform.h"
@@ -217,65 +218,20 @@ namespace openvkl {
     vrange1fn<W> valueRange;
     vfloatn<W> nominalDeltaT;
 
-    vVKLIntervalN<W>() = default;
+    vVKLIntervalN<W>()
+    {
+      using VKLIntervalW = typename vklPublicWideTypes<W>::VKLIntervalW;
+      static_assert(sizeof(vVKLIntervalN<W>) == sizeof(VKLIntervalW),
+                    "incompatible with corresponding public wide type");
+      static_assert(alignof(vVKLIntervalN<W>) == alignof(VKLIntervalW),
+                    "incompatible with corresponding public wide type");
+    }
 
     vVKLIntervalN<W>(const vVKLIntervalN<W> &v)
         : tRange(v.tRange),
           valueRange(v.valueRange),
           nominalDeltaT(v.nominalDeltaT)
     {
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    void populateVKLInterval(VKLInterval &interval) const
-    {
-      interval.tRange.lower     = tRange.lower[0];
-      interval.tRange.upper     = tRange.upper[0];
-      interval.valueRange.lower = valueRange.lower[0];
-      interval.valueRange.upper = valueRange.upper[0];
-      interval.nominalDeltaT    = nominalDeltaT[0];
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    void populateVKLInterval4(VKLInterval4 &interval, const int *valid) const
-    {
-      for (int i = 0; i < 4; i++) {
-        if (valid[i]) {
-          interval.tRange.lower[i]     = tRange.lower[i];
-          interval.tRange.upper[i]     = tRange.upper[i];
-          interval.valueRange.lower[i] = valueRange.lower[i];
-          interval.valueRange.upper[i] = valueRange.upper[i];
-          interval.nominalDeltaT[i]    = nominalDeltaT[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    void populateVKLInterval8(VKLInterval8 &interval, const int *valid) const
-    {
-      for (int i = 0; i < 8; i++) {
-        if (valid[i]) {
-          interval.tRange.lower[i]     = tRange.lower[i];
-          interval.tRange.upper[i]     = tRange.upper[i];
-          interval.valueRange.lower[i] = valueRange.lower[i];
-          interval.valueRange.upper[i] = valueRange.upper[i];
-          interval.nominalDeltaT[i]    = nominalDeltaT[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    void populateVKLInterval16(VKLInterval16 &interval, const int *valid) const
-    {
-      for (int i = 0; i < 16; i++) {
-        if (valid[i]) {
-          interval.tRange.lower[i]     = tRange.lower[i];
-          interval.tRange.upper[i]     = tRange.upper[i];
-          interval.valueRange.lower[i] = valueRange.lower[i];
-          interval.valueRange.upper[i] = valueRange.upper[i];
-          interval.nominalDeltaT[i]    = nominalDeltaT[i];
-        }
-      }
     }
   };
 
@@ -285,49 +241,16 @@ namespace openvkl {
     vfloatn<W> t;
     vfloatn<W> sample;
 
-    vVKLHitN<W>() = default;
+    vVKLHitN<W>()
+    {
+      using VKLHitW = typename vklPublicWideTypes<W>::VKLHitW;
+      static_assert(sizeof(vVKLHitN<W>) == sizeof(VKLHitW),
+                    "incompatible with corresponding public wide type");
+      static_assert(alignof(vVKLHitN<W>) == alignof(VKLHitW),
+                    "incompatible with corresponding public wide type");
+    }
 
     vVKLHitN<W>(const vVKLHitN<W> &v) : t(v.t), sample(v.sample) {}
-
-    template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    void populateVKLHit(VKLHit &hit) const
-    {
-      hit.t      = t[0];
-      hit.sample = sample[0];
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    void populateVKLHit4(VKLHit4 &hit, const int *valid) const
-    {
-      for (int i = 0; i < 4; i++) {
-        if (valid[i]) {
-          hit.t[i]      = t[i];
-          hit.sample[i] = sample[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    void populateVKLHit8(VKLHit8 &hit, const int *valid) const
-    {
-      for (int i = 0; i < 8; i++) {
-        if (valid[i]) {
-          hit.t[i]      = t[i];
-          hit.sample[i] = sample[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    void populateVKLHit16(VKLHit16 &hit, const int *valid) const
-    {
-      for (int i = 0; i < 16; i++) {
-        if (valid[i]) {
-          hit.t[i]      = t[i];
-          hit.sample[i] = sample[i];
-        }
-      }
-    }
   };
 
 }  // namespace openvkl

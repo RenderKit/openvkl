@@ -23,7 +23,7 @@ namespace openvkl {
           const ValueSelector<W> *valueSelector) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
-                            Interval<W> &interval,
+                            vVKLIntervalN<W> &interval,
                             vintn<W> &result) override final;
 
      protected:
@@ -34,7 +34,9 @@ namespace openvkl {
 
     template <int W>
     using UnstructuredIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, UnstructuredIntervalIterator>;
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                UnstructuredIntervalIterator>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

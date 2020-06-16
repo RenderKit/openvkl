@@ -8,8 +8,8 @@
 #include "DefaultIterator.ih"
 
 export void EXPORT_UNIQUE(DefaultIterator_export,
-    uniform vec3f &dummy_vec3f,
-    const varying DefaultIterator *uniform it)
+                          uniform vec3f &dummy_vec3f,
+                          const varying DefaultIterator *uniform it)
 {
 }
 
@@ -57,17 +57,10 @@ export void EXPORT_UNIQUE(DefaultIterator_Initialize,
   self->hitState.tRange = self->boundingBoxTRange;
 }
 
-export void *uniform EXPORT_UNIQUE(DefaultIterator_getCurrentInterval,
-                                   void *uniform _self)
-{
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
-  return &self->intervalState.currentInterval;
-}
-
 export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _interval,
                           uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
@@ -76,6 +69,8 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
 
   varying DefaultIterator *uniform self =
       (varying DefaultIterator * uniform) _self;
+
+  varying Interval *uniform interval = (varying Interval * uniform) _interval;
 
   varying int *uniform result = (varying int *uniform)_result;
 
@@ -110,20 +105,14 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
   nextInterval.nominalDeltaT = 0.25f * self->nominalIntervalLength;
 
   self->intervalState.currentInterval = nextInterval;
+  *interval                           = nextInterval;
   *result                             = true;
-}
-
-export void *uniform EXPORT_UNIQUE(DefaultIterator_getCurrentHit,
-                                   void *uniform _self)
-{
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
-  return &self->hitState.currentHit;
 }
 
 export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _hit,
                           uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
@@ -132,6 +121,8 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
 
   varying DefaultIterator *uniform self =
       (varying DefaultIterator * uniform) _self;
+
+  varying Hit *uniform hit = (varying Hit * uniform) _hit;
 
   varying int *uniform result = (varying int *uniform)_result;
 
@@ -158,12 +149,12 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
                                     step,
                                     self->valueSelector->numValues,
                                     self->valueSelector->values,
-                                    self->hitState.currentHit,
+                                    *hit,
                                     surfaceEpsilon);
 
   if (foundHit) {
     *result                     = true;
-    self->hitState.tRange.lower = self->hitState.currentHit.t + surfaceEpsilon;
+    self->hitState.tRange.lower = hit->t + surfaceEpsilon;
   } else {
     *result                     = false;
     self->hitState.tRange.lower = inf;

@@ -112,6 +112,12 @@ namespace openvkl {
         return intervalIteratorFactory;
       }
 
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
+
       Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
@@ -174,6 +180,7 @@ namespace openvkl {
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
+      UnstructuredHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

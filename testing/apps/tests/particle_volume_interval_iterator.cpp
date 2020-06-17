@@ -39,6 +39,7 @@ void interval_iteration(size_t numParticles,
   const vkl_range1f tRange{0.f, inf};
 
   const size_t N = 1000;
+  size_t totalIntervals = 0;
 
   for (size_t i = 0; i < N; i++) {
     vkl_vec3f origin{distX(eng), distY(eng), z};
@@ -66,15 +67,20 @@ void interval_iteration(size_t numParticles,
 
       // the sampled value range should be completely within the returned
       // interval value range
-      REQUIRE(sampledValueRange.lower >= interval.valueRange.lower);
-      REQUIRE(sampledValueRange.upper <= interval.valueRange.upper);
+      // Uncertainty is there because it is hard to compute correct value ranges
+      // for particle volumes. Compare ParticleVolume.cpp.
+      constexpr float uncertainty = 0.05f;
+      REQUIRE(sampledValueRange.lower >= interval.valueRange.lower * (1-uncertainty));
+      REQUIRE(sampledValueRange.upper <= interval.valueRange.upper * (1+uncertainty));
 
       intervalCount++;
     }
 
-    // make sure we had at least one interval...
-    REQUIRE(intervalCount > 0);
+    totalIntervals += intervalCount;
   }
+
+  // Not all rays hit something, but most of them should.
+  REQUIRE(totalIntervals / static_cast<double>(N) > 0.9);
 
   vklRelease(sampler);
 }

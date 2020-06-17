@@ -6,7 +6,7 @@
 #include "../common/ManagedObject.h"
 #include "../common/export_util.h"
 #include "../common/objectFactory.h"
-#include "../iterator/DefaultIterator.h"
+#include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
 #include "../value_selector/ValueSelector.h"
 #include "Volume_ispc.h"
@@ -34,16 +34,10 @@ namespace openvkl {
        * Return the iterator factory for this volume.
        */
       virtual const IteratorFactory<W, IntervalIterator>
-          &getIntervalIteratorFactory() const
-      {
-        return defaultIntervalIteratorFactory;
-      }
+          &getIntervalIteratorFactory() const = 0;
 
       virtual const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const
-      {
-        return defaultHitIteratorFactory;
-      }
+          const = 0;
 
       virtual ValueSelector<W> *newValueSelector();
 
@@ -62,10 +56,6 @@ namespace openvkl {
 
      protected:
       void *ispcEquivalent{nullptr};
-
-     private:
-      DefaultIntervalIteratorFactory<W> defaultIntervalIteratorFactory;
-      DefaultHitIteratorFactory<W> defaultHitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

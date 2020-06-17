@@ -38,6 +38,12 @@ namespace openvkl {
       void iterateIntervalU(vVKLIntervalN<1> &interval,
                             vintn<1> &result) override final;
 
+
+      void *getIspcStorage() override final
+      {
+        return reinterpret_cast<void*>(ispcStorage);
+      }
+
      protected:
       using Iterator<W>::volume;
       using IspcIterator = __varying_ispc_type(GridAcceleratorIterator);

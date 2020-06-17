@@ -112,6 +112,11 @@ namespace openvkl {
       virtual void iterateIntervalV(const vintn<W> &valid,
                                     vVKLIntervalN<W> &interval,
                                     vintn<W> &result) = 0;
+
+      /* 
+       * This interface is used by the default hit iterator.
+       */
+      virtual void *getIspcStorage() = 0;
     };
 
     ///////////////////////////////////////////////////////////////////////////

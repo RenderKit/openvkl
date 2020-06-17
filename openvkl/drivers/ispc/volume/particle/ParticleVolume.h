@@ -58,6 +58,12 @@ namespace openvkl {
         return intervalIteratorFactory;
       }
 
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
+
       Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
@@ -90,6 +96,7 @@ namespace openvkl {
 
      private:
         UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
+        UnstructuredHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

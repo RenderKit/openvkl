@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "../../iterator/DefaultIterator.h"
 #include "../../iterator/Iterator.h"
 #include "VdbGrid.h"
 #include "VdbIterator_ispc.h"
@@ -28,6 +29,11 @@ namespace openvkl {
                             vVKLIntervalN<W> &interval,
                             vintn<W> &result) override final;
 
+      void *getIspcStorage() override final
+      {
+        return reinterpret_cast<void*>(ispcStorage);
+      }
+
      protected:
       using Iterator<W>::volume;
       using IspcIterator = __varying_ispc_type(VdbIterator);
@@ -37,6 +43,13 @@ namespace openvkl {
     template <int W>
     using VdbIntervalIteratorFactory =
         ConcreteIteratorFactory<W, IntervalIterator, VdbIntervalIterator>;
+
+    template <int W>
+    using VdbHitIterator = DefaultHitIterator<W, VdbIntervalIterator<W>>;
+
+    template <int W>
+    using VdbHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, VdbHitIterator>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

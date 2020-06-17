@@ -15,70 +15,11 @@ export void EXPORT_UNIQUE(VdbIterator_export,
 {
 }
 
-export uniform int EXPORT_UNIQUE(VdbIterator_sizeOf)
-{
-  return sizeof(varying VdbIterator);
-}
-
-export void EXPORT_UNIQUE(VdbIterator_Initialize,
-                          const int *uniform imask,
-                          void *uniform _self,
-                          const void *uniform _grid,
-                          void *uniform _originObject,
-                          void *uniform _directionObject,
-                          void *uniform _tRangeWorld,
-                          void *uniform _valueSelector)
-{
-  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
-
-  if (!imask[programIndex]) {
-    return;
-  }
-
-  const uniform VdbGrid *uniform grid = (const uniform VdbGrid *uniform)_grid;
-  const vec3f origin    = *((const varying vec3f *uniform)_originObject);
-  const vec3f direction = *((const varying vec3f *uniform)_directionObject);
-  const box1f tRange    = *((const varying box1f *uniform)_tRangeWorld);
-
-  // Always initialize the root level iterator!
-  self->grid          = grid;
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-  self->numLevels = clamp(grid->maxIteratorDepth, 0, VDB_ITERATOR_MAX_LEVELS);
-
-  // Transform the ray to index space where leaf level voxels have
-  // size (1,1,1) and the root is at (0,0,0).
-  const vec3f rootOffset =
-      make_vec3f(grid->rootOrigin.x, grid->rootOrigin.y, grid->rootOrigin.z);
-  ddaInitRay(xfmPoint(grid->objectToIndex, origin) - rootOffset,
-             xfmVector(grid->objectToIndex, direction),
-             tRange,
-             self->ddaRayState);
-
-  // This is an estimate of how far apart voxels are along the ray in object
-  // space. We are basically measuring here how much the volume is scaled along
-  // the ray, and voxels in index space have size 1.
-  self->nominalDeltaT = length(direction) / length(self->ddaRayState.rayDir);
-
-  for (uniform size_t i = 0; i < self->numLevels; ++i) {
-    ddaInitLevel(self->ddaRayState,
-                 vklVdbLevelTotalLogRes(i + 1),
-                 vklVdbLevelTotalLogRes(i),
-                 self->ddaLevelState[i]);
-  }
-
-  // Initialize the root node segment so that we are ready to go.
-  const varying vec3i rootNodeOffset = make_vec3i(0, 0, 0);
-  self->currentLevel                 = 0;
-  self->nodeIndex[0]                 = 0;
-  ddaInitSegment(self->ddaRayState,
-                 self->ddaLevelState[0],
-                 rootNodeOffset,
-                 self->ddaSegmentState[0]);
-}
-export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
+inline void VdbIterator_iterateIntervalInternal(
                           const int *uniform imask,
                           void *uniform _self,
                           void *uniform _interval,
+                          const uniform box1f &inputValueRange,
                           uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
@@ -126,8 +67,7 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
           const varying range1f valueRange =
               grid->levels[currentLevel].valueRange[vo32];
 
-          if ((self->valueSelector &&
-               !overlaps1f(self->valueSelector->rangesMinMax, valueRange)) ||
+          if ((!overlaps1f(inputValueRange, valueRange)) ||
               vklVdbVoxelIsEmpty(voxelValue)) {
             ddaStep(self->ddaRayState,
                     self->ddaLevelState[currentLevel],
@@ -196,3 +136,79 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   assert(done);
 }
+
+export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _interval,
+                          uniform int *uniform _result)
+{
+  varying VdbIterator *uniform self  = (varying VdbIterator * uniform) _self;
+  uniform box1f valueRange;
+  if (self->valueSelector)
+    valueRange = self->valueSelector->rangesMinMax;
+  else {
+    valueRange.lower = -inf;
+    valueRange.upper = inf;
+  }
+  VdbIterator_iterateIntervalInternal(
+      imask, _self, _interval, valueRange, _result);
+}
+
+export void EXPORT_UNIQUE(VdbIterator_Initialize,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _grid,
+                          void *uniform _originObject,
+                          void *uniform _directionObject,
+                          void *uniform _tRangeWorld,
+                          void *uniform _valueSelector)
+{
+  if (!imask[programIndex]) {
+    return;
+  }
+
+  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
+  self->iterateInterval = VdbIterator_iterateIntervalInternal;
+
+  const uniform VdbGrid *uniform grid = (const uniform VdbGrid *uniform)_grid;
+  const vec3f origin    = *((const varying vec3f *uniform)_originObject);
+  const vec3f direction = *((const varying vec3f *uniform)_directionObject);
+  const box1f tRange    = *((const varying box1f *uniform)_tRangeWorld);
+
+  // Always initialize the root level iterator!
+  self->grid          = grid;
+  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
+  self->numLevels = clamp(grid->maxIteratorDepth, 0, VDB_ITERATOR_MAX_LEVELS);
+
+  // Transform the ray to index space where leaf level voxels have
+  // size (1,1,1) and the root is at (0,0,0).
+  const vec3f rootOffset =
+      make_vec3f(grid->rootOrigin.x, grid->rootOrigin.y, grid->rootOrigin.z);
+  ddaInitRay(xfmPoint(grid->objectToIndex, origin) - rootOffset,
+             xfmVector(grid->objectToIndex, direction),
+             tRange,
+             self->ddaRayState);
+
+  // This is an estimate of how far apart voxels are along the ray in object
+  // space. We are basically measuring here how much the volume is scaled along
+  // the ray, and voxels in index space have size 1.
+  self->nominalDeltaT = length(direction) / length(self->ddaRayState.rayDir);
+
+  for (uniform size_t i = 0; i < self->numLevels; ++i) {
+    ddaInitLevel(self->ddaRayState,
+                 vklVdbLevelTotalLogRes(i + 1),
+                 vklVdbLevelTotalLogRes(i),
+                 self->ddaLevelState[i]);
+  }
+
+  // Initialize the root node segment so that we are ready to go.
+  const varying vec3i rootNodeOffset = make_vec3i(0, 0, 0);
+  self->currentLevel                 = 0;
+  self->nodeIndex[0]                 = 0;
+  ddaInitSegment(self->ddaRayState,
+                 self->ddaLevelState[0],
+                 rootNodeOffset,
+                 self->ddaSegmentState[0]);
+}
+

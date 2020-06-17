@@ -36,71 +36,74 @@ inline void resetInterval(uniform Interval &interval)
 // use public VKLHit struct internally
 typedef VKLHit Hit;
 
-#define template_intersectSurfaces(univary)                                    \
-  inline univary bool intersectSurfaces(const Volume *uniform volume,          \
-                                        const univary vec3f &origin,           \
-                                        const univary vec3f &direction,        \
-                                        const univary box1f &tRange,           \
-                                        const uniform float step,              \
-                                        const uniform int numValues,           \
-                                        const float *uniform values,           \
-                                        univary Hit &hit)                      \
-  {                                                                            \
-    /* our bracketing sample t-values will always be in multiples of `step`,   \
-    to avoid artifacts / differences in hits between neighboring rays, or when \
-    moving between macrocell boundaries, for example.                          \
-                                                                               \
-    note that the current approach here takes only one Newton iteration, so    \
-    consistent bracketing is especially important for "smooth" results. */     \
-    const univary int minTIndex = floor(tRange.lower / step);                  \
-    const univary int maxTIndex = ceil(tRange.upper / step);                   \
-                                                                               \
-    univary float t0 = minTIndex * step;                                       \
-    univary float sample0 =                                                    \
-        volume->computeSample_##univary(volume, origin + t0 * direction);      \
-                                                                               \
-    univary float t;                                                           \
-                                                                               \
-    for (univary int i = minTIndex; i < maxTIndex; i++) {                      \
-      t = (i + 1) * step;                                                      \
-                                                                               \
-      const univary float sample =                                             \
-          volume->computeSample_##univary(volume, origin + t * direction);     \
-                                                                               \
-      univary float tHit    = inf;                                             \
-      univary float epsilon = inf;                                             \
-      univary float value   = inf;                                             \
-                                                                               \
-      if (!isnan(sample0 + sample) && (sample != sample0)) {                   \
-        for (uniform int i = 0; i < numValues; i++) {                          \
-          if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {           \
-            const univary float rcpSamp = 1.f / (sample - sample0);            \
-            univary float tIso          = inf;                                 \
-            if (!isnan(rcpSamp)) {                                             \
-              tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);          \
-            }                                                                  \
-                                                                               \
-            if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) { \
-              tHit    = tIso;                                                  \
-              value   = values[i];                                             \
-              epsilon = step * 0.125f;                                         \
-            }                                                                  \
-          }                                                                    \
-        }                                                                      \
-                                                                               \
-        if (tHit < inf) {                                                      \
-          hit.t          = tHit;                                               \
-          hit.sample     = value;                                              \
-          hit.epsilon = epsilon;                                               \
-          return true;                                                         \
-        }                                                                      \
-      }                                                                        \
-                                                                               \
-      t0      = t;                                                             \
-      sample0 = sample;                                                        \
-    }                                                                          \
-                                                                               \
-    return false;                                                              \
+/*
+ * Intersect isosurfaces along the given ray.
+ */
+#define template_intersectSurfaces(univary)                                      \
+  inline univary bool intersectSurfaces(const Volume *uniform volume,            \
+                                        const univary vec3f &origin,             \
+                                        const univary vec3f &direction,          \
+                                        const univary box1f &tRange,             \
+                                        const univary float step,                \
+                                        const uniform int numValues,             \
+                                        const float *uniform values,             \
+                                        univary Hit &hit)                        \
+  {                                                                              \
+    /* our bracketing sample t-values will always be in multiples of `step`,     \
+    to avoid artifacts / differences in hits between neighboring rays, or when   \
+    moving between macrocell boundaries, for example.                            \
+                                                                                 \
+    note that the current approach here takes only one Newton iteration, so      \
+    consistent bracketing is especially important for "smooth" results. */       \
+    const univary int minTIndex = floor(tRange.lower / step);                    \
+    const univary int maxTIndex = ceil(tRange.upper / step);                     \
+                                                                                 \
+    univary float t0 = minTIndex * step;                                         \
+    univary float sample0 =                                                      \
+        volume->computeSample_##univary(volume, origin + t0 * direction);        \
+                                                                                 \
+    univary float t;                                                             \
+                                                                                 \
+    for (univary int i = minTIndex; i < maxTIndex; i++) {                        \
+      t = (i + 1) * step;                                                        \
+                                                                                 \
+      const univary float sample =                                               \
+          volume->computeSample_##univary(volume, origin + t * direction);       \
+                                                                                 \
+      univary float tHit    = inf;                                               \
+      univary float epsilon = inf;                                               \
+      univary float value   = inf;                                               \
+                                                                                 \
+      if (!isnan(sample0 + sample) && (sample != sample0)) {                     \
+        for (uniform int i = 0; i < numValues; i++) {                            \
+          if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {             \
+            const univary float rcpSamp = 1.f / (sample - sample0);              \
+            univary float tIso          = inf;                                   \
+            if (!isnan(rcpSamp)) {                                               \
+              tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);            \
+            }                                                                    \
+                                                                                 \
+            if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) {   \
+              tHit    = tIso;                                                    \
+              value   = values[i];                                               \
+              epsilon = step * 0.00125f;                                         \
+            }                                                                    \
+          }                                                                      \
+        }                                                                        \
+                                                                                 \
+        if (tHit < inf) {                                                        \
+          hit.t       = tHit;                                                    \
+          hit.sample  = value;                                                   \
+          hit.epsilon = epsilon;                                                 \
+          return true;                                                           \
+        }                                                                        \
+      }                                                                          \
+                                                                                 \
+      t0      = t;                                                               \
+      sample0 = sample;                                                          \
+    }                                                                            \
+                                                                                 \
+    return false;                                                                \
   }
 
 template_intersectSurfaces(uniform);

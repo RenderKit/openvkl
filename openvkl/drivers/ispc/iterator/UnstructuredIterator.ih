@@ -4,6 +4,7 @@
 #pragma once
 
 #include "Iterator.ih"
+#include "DefaultIterator.ih"
 #include "../volume/UnstructuredVolume.ih"
 #include "../value_selector/ValueSelector.ih"
 #include "math/box.ih"
@@ -13,6 +14,9 @@ struct ValueSelector;
 
 struct UnstructuredIterator
 {
+  /* Enable the default hit iterator. */
+  IterateIntervalFunc iterateInterval;
+
   VKLUnstructuredVolume *uniform volume;
   vec3f origin;
   vec3f direction;

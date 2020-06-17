@@ -24,7 +24,7 @@ namespace openvkl {
       box3f boundingBox  = volume->getBoundingBox();
       range1f valueRange = volume->getValueRange();
 
-      CALL_ISPC(DefaultIterator_Initialize,
+      CALL_ISPC(DefaultIntervalIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
                 volume->getISPCEquivalent(),
@@ -40,7 +40,7 @@ namespace openvkl {
     void DefaultIntervalIterator<W>::iterateIntervalV(
         const vintn<W> &valid, vVKLIntervalN<W> &interval, vintn<W> &result)
     {
-      CALL_ISPC(DefaultIterator_iterateInterval,
+      CALL_ISPC(DefaultIntervalIterator_iterateInterval,
                 static_cast<const int *>(valid),
                 ispcStorage,
                 &interval,
@@ -48,45 +48,6 @@ namespace openvkl {
     }
 
     template class DefaultIntervalIterator<VKL_TARGET_WIDTH>;
-
-    ////////////////////////////////////////////////////////////////////////////
-
-    template <int W>
-    void DefaultHitIterator<W>::initializeHitV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &origin,
-        const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
-    {
-      box3f boundingBox  = volume->getBoundingBox();
-      range1f valueRange = volume->getValueRange();
-
-      CALL_ISPC(DefaultIterator_Initialize,
-                static_cast<const int *>(valid),
-                ispcStorage,
-                volume->getISPCEquivalent(),
-                (void *)&origin,
-                (void *)&direction,
-                (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr,
-                (const ispc::box3f &)boundingBox,
-                (const ispc::box1f &)valueRange);
-    }
-
-    template <int W>
-    void DefaultHitIterator<W>::iterateHitV(const vintn<W> &valid,
-                                            vVKLHitN<W> &hit,
-                                            vintn<W> &result)
-    {
-      CALL_ISPC(DefaultIterator_iterateHit,
-                static_cast<const int *>(valid),
-                ispcStorage,
-                &hit,
-                static_cast<int *>(result));
-    }
-
-    template class DefaultHitIterator<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

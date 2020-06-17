@@ -21,6 +21,13 @@ export uniform int EXPORT_UNIQUE(UnstructuredIterator_sizeOf)
   return sizeof(varying UnstructuredIterator);
 }
 
+void UnstructuredIterator_iterateIntervalInternal(
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _interval,
+                          const uniform box1f &valueRange,
+                          uniform int *uniform _result);
+
 export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
@@ -36,6 +43,7 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
 
   varying UnstructuredIterator *uniform self =
       (varying UnstructuredIterator * uniform) _self;
+  self->iterateInterval = UnstructuredIterator_iterateIntervalInternal;
 
   self->volume        = (VKLUnstructuredVolume * uniform) _volume;
   self->origin        = *((varying vec3f * uniform) _origin);
@@ -62,18 +70,19 @@ static inline box1f make_box1f_empty()
 
 static box1f evalNode(varying UnstructuredIterator *uniform iterator,
                       uniform Node *uniform node,
-                      box1f &valueRange,
+                      const uniform box1f &valueRange,
+                      box1f &outputValueRange,
                       float &deltaT,
                       uniform int level)
 {
   PRINT_DEBUG("ispc: % %\n", level, node);
 
   // rejection based on values being in the range we're looking for
-  if (disjoint(iterator->valueSelector->rangesMinMax, node->valueRange)) {
+  if (disjoint(valueRange, node->valueRange)) {
     PRINT_DEBUG("rejected range:\n\t%\n\t%\n",
                 node->valueRange.lower,
                 node->valueRange.upper);
-    valueRange = make_box1f_empty();
+    outputValueRange = make_box1f_empty();
     deltaT     = inf;
     return make_box1f_empty();
   }
@@ -108,11 +117,11 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
 
   // rejection based on ray/box intersection
   if (isEmpty(nodeTRange)) {
-    valueRange = make_box1f_empty();
+    outputValueRange = make_box1f_empty();
     deltaT     = inf;
     return make_box1f_empty();
   } else if (isLeaf || level > MAX_LEVEL) {
-    valueRange = node->valueRange;
+    outputValueRange = node->valueRange;
     deltaT     = abs(node->nominalLength);
     return nodeTRange;
   }
@@ -122,20 +131,23 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
   box1f valueRangeFirst, valueRangeSecond;
   float deltaT1, deltaT2;
   range1f tRangeFirst = evalNode(
-      iterator, inner->children[0], valueRangeFirst, deltaT1, level + 1);
+      iterator, inner->children[0], valueRange, valueRangeFirst, deltaT1, level + 1);
   range1f tRangeSecond = evalNode(
-      iterator, inner->children[1], valueRangeSecond, deltaT2, level + 1);
-  valueRange = box_extend(valueRangeFirst, valueRangeSecond);
+      iterator, inner->children[1], valueRange, valueRangeSecond, deltaT2, level + 1);
+  outputValueRange = box_extend(valueRangeFirst, valueRangeSecond);
   deltaT     = min(deltaT1, deltaT2);
-  return box_extend(tRangeFirst, tRangeSecond);
+  box1f foo = box_extend(tRangeFirst, tRangeSecond);
+
+  return foo;
 }
 
-export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
+inline void UnstructuredIterator_iterateIntervalInternal(
                           const int *uniform imask,
                           void *uniform _self,
                           void *uniform _interval,
+                          const uniform box1f &valueRange,
                           uniform int *uniform _result)
-{
+{  
   if (!imask[programIndex]) {
     return;
   }
@@ -147,41 +159,49 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  if (self->getCount) {
+  if (self->getCount != 0) {
     *result = false;
     return;
   }
 
-  box1f retRange;
-  box1f valueRange;
+  box1f intervalValueRange = make_box1f_empty();
   float deltaT;
-
-  if (!self->valueSelector) {
-    retRange   = intersectBox(self->origin,
-                            self->direction,
-                            self->volume->super.boundingBox,
-                            self->tRange);
-    valueRange = self->volume->super.bvhRoot->valueRange;
-    deltaT     = abs(self->volume->super.bvhRoot->nominalLength);
-  } else {
-    retRange =
-        evalNode(self, self->volume->super.bvhRoot, valueRange, deltaT, 0);
-  }
+  const box1f retRange =
+      evalNode(self, self->volume->super.bvhRoot, valueRange, intervalValueRange, deltaT, 0);
 
   if (isEmpty(retRange)) {
     *result = false;
+    PRINT_DEBUG("Empty range\n");
   } else {
     // shrink range slightly for cell-valued where testing the boundary will
     // fail (modify test instead?)
     interval->tRange.lower     = retRange.lower + 0.00001;
     interval->tRange.upper     = retRange.upper - 0.00001;
-    interval->valueRange.lower = valueRange.lower;
-    interval->valueRange.upper = valueRange.upper;
+    interval->valueRange.lower = intervalValueRange.lower;
+    interval->valueRange.upper = intervalValueRange.upper;
     interval->nominalDeltaT    = deltaT;
     *result                    = true;
   }
 
   self->getCount++;
+}
 
-  return;
+export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _interval,
+                          uniform int *uniform _result)
+{
+  varying UnstructuredIterator *uniform self =
+      (varying UnstructuredIterator * uniform) _self;
+
+  uniform box1f valueRange;
+  if (self->valueSelector)
+    valueRange = self->valueSelector->rangesMinMax;
+  else {
+    valueRange.lower = -inf;
+    valueRange.upper = inf;
+  }
+  UnstructuredIterator_iterateIntervalInternal(
+      imask, _self, _interval, valueRange, _result);
 }

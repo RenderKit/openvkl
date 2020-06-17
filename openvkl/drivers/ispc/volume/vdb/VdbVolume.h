@@ -81,6 +81,12 @@ namespace openvkl {
         return intervalIteratorFactory;
       }
 
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
+
      private:
       void cleanup();
 
@@ -94,6 +100,7 @@ namespace openvkl {
       size_t bytesAllocated{0};
       VdbSampleConfig globalConfig;
       VdbIntervalIteratorFactory<W> intervalIteratorFactory;
+      VdbHitIteratorFactory<W> hitIteratorFactory;
     };
 
   }  // namespace ispc_driver

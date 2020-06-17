@@ -202,6 +202,7 @@ namespace openvkl {
     {
       // this method computes an _estimate_ of value range; this fractional
       // uncertainty will be used to conservatively expand the computed ranges
+      // This value also shows up in tests/particle_volume_interval_iterator.cpp
       const float uncertainty = 0.05f;
 
       // build vector of leaf nodes

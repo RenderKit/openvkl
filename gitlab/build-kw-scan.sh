@@ -28,13 +28,15 @@ cmake --build .
 mkdir openvkl_build
 cd openvkl_build
 
-export RKCOMMON_TBB_ROOT=`pwd`/../install
-export rkcommon_DIR=`pwd`/../install
-export embree_DIR=`pwd`/../install
+DEP_INSTALL_DIR=`pwd`/../install
+
+export rkcommon_DIR=$DEP_INSTALL_DIR
+export embree_DIR=$DEP_INSTALL_DIR
 
 cmake \
- -DISPC_EXECUTABLE=`pwd`/../install/bin/ispc \
+ -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc \
  -DBUILD_EXAMPLES=OFF \
+ -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR \
   ../..
 
 # build

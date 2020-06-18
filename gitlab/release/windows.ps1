@@ -37,7 +37,6 @@ mkdir $OPENVKL_BUILD_DIR
 cd $OPENVKL_BUILD_DIR
 
 # Setup environment variables for dependencies
-$env:RKCOMMON_TBB_ROOT = $DEP_INSTALL_DIR
 $env:rkcommon_DIR = $DEP_INSTALL_DIR
 $env:embree_DIR = $DEP_INSTALL_DIR
 $env:glfw3_DIR = $DEP_INSTALL_DIR
@@ -52,6 +51,7 @@ cmake -L `
   -D CMAKE_INSTALL_LIBDIR=lib `
   -D CMAKE_INSTALL_DOCDIR=doc `
   -D CMAKE_INSTALL_BINDIR=bin `
+  -D RKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR `
   -D ISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc.exe `
   -D BUILD_BENCHMARKS=OFF `
   ..

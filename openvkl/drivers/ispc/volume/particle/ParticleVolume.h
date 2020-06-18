@@ -15,29 +15,18 @@
 namespace openvkl {
   namespace ispc_driver {
 
-    struct ParticleLeafNode : public Node
+    struct ParticleLeafNode : public LeafNode
     {
-      box3fa bounds;
-      uint64_t cellID;
-
       ParticleLeafNode(unsigned id, const box3fa &bounds, const float &radius)
-          : cellID(id), bounds(bounds)
+          : LeafNode(id, bounds, empty)
       {
-        // avoid inheriting LeafNode, and instead ensure size / layout is
-        // compatible. this avoids size increase due to vtable, and also
-        // maintains compatibility with ISPC-side code.
+        // ISPC-side code assumes the same layout as LeafNode
         static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNode),
                       "ParticleLeafNode incompatible with LeafNode");
-        static_assert(
-            offsetof(ParticleLeafNode, bounds) == offsetof(LeafNode, bounds),
-            "ParticleLeafNode incompatible with LeafNode");
-        static_assert(
-            offsetof(ParticleLeafNode, cellID) == offsetof(LeafNode, cellID),
-            "ParticleLeafNode incompatible with LeafNode");
 
         nominalLength = -radius;
 
-        // note that valueRange will be set separately
+        // note that valueRange will be set separately in computeValueRanges()
       }
 
       static void *create(RTCThreadLocalAllocator alloc,

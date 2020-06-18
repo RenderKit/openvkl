@@ -156,9 +156,10 @@ namespace openvkl {
 
         iterateHitV(validW, hitW, resultW);
 
-        hit.t[0]      = hitW.t[0];
-        hit.sample[0] = hitW.sample[0];
-        result[0]     = resultW[0];
+        hit.t[0]       = hitW.t[0];
+        hit.sample[0]  = hitW.sample[0];
+        hit.epsilon[0] = hitW.epsilon[0];
+        result[0]      = resultW[0];
       }
 
       /*

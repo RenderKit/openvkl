@@ -1103,31 +1103,36 @@ returned lane mask indicates that the iterator is still within the volume.
                          VKLHit16 *hit,
                          int *result);
 
-Returned hits consist of a t-value and volume value (equal to one of the
-requested values specified in the value selector):
+Returned hits consist of a t-value, a volume value (equal to one of the
+requested values specified in the value selector), and an epsilon value
+estimating the error in t:
 
     typedef struct
     {
       float t;
       float sample;
+      float epsilon;
     } VKLHit;
 
     typedef struct
     {
       float t[4];
       float sample[4];
+      float epsilon[4];
     } VKLHit4;
 
     typedef struct
     {
       float t[8];
       float sample[8];
+      float epsilon[8];
     } VKLHit8;
 
     typedef struct
     {
       float t[16];
       float sample[16];
+      float epsilon[16];
     } VKLHit16;
 
 For both interval and hit iterators, only the vector-wide API for the native

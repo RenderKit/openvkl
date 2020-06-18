@@ -189,6 +189,7 @@ struct VKLHit
 {
   float t;
   float sample;
+  float epsilon;
 };
 
 VKL_API VKLHitIterator

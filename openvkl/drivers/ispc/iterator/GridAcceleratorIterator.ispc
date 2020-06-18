@@ -214,8 +214,6 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
         overlaps1f(self->valueSelector->valuesMinMax, cellValueRange);      \
                                                                             \
     if (cellValueRangeOverlap) {                                            \
-      univary float surfaceEpsilon;                                         \
-                                                                            \
       univary bool foundHit =                                               \
           intersectSurfaces(&self->volume->super,                           \
                             self->origin,                                   \
@@ -224,12 +222,11 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                             0.5f * step,                                    \
                             self->valueSelector->numValues,                 \
                             self->valueSelector->values,                    \
-                            *hit,                                           \
-                            surfaceEpsilon);                                \
+                            *hit);                                          \
                                                                             \
       if (foundHit) {                                                       \
         *result                                = true;                      \
-        self->hitState.currentCellTRange.lower = hit->t + surfaceEpsilon;   \
+        self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;     \
                                                                             \
         /* move to next cell if next t passes the cell boundary */          \
         if (isempty1f(self->hitState.currentCellTRange)) {                  \
@@ -240,7 +237,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                        self->hitState.currentCellTRange);   \
                                                                             \
           /* continue where we left off */                                  \
-          self->hitState.currentCellTRange.lower = hit->t + surfaceEpsilon; \
+          self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;   \
         }                                                                   \
                                                                             \
         return;                                                             \

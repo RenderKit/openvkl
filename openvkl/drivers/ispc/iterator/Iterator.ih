@@ -5,6 +5,7 @@
 
 #include "../volume/Volume.ih"
 #include "math/box.ih"
+#include "openvkl/iterator.isph"
 
 // this should match the layout of VKLInterval
 struct Interval
@@ -32,11 +33,8 @@ inline void resetInterval(uniform Interval &interval)
   interval.nominalDeltaT    = 0.f;
 }
 
-struct Hit
-{
-  float t;
-  float sample;
-};
+// use public VKLHit struct internally
+typedef VKLHit Hit;
 
 #define template_intersectSurfaces(univary)                                    \
   inline univary bool intersectSurfaces(const Volume *uniform volume,          \
@@ -46,8 +44,7 @@ struct Hit
                                         const uniform float step,              \
                                         const uniform int numValues,           \
                                         const float *uniform values,           \
-                                        univary Hit &hit,                      \
-                                        univary float &surfaceEpsilon)         \
+                                        univary Hit &hit)                      \
   {                                                                            \
     /* our bracketing sample t-values will always be in multiples of `step`,   \
     to avoid artifacts / differences in hits between neighboring rays, or when \
@@ -94,7 +91,7 @@ struct Hit
         if (tHit < inf) {                                                      \
           hit.t          = tHit;                                               \
           hit.sample     = value;                                              \
-          surfaceEpsilon = epsilon;                                            \
+          hit.epsilon = epsilon;                                               \
           return true;                                                         \
         }                                                                      \
       }                                                                        \

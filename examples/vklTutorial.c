@@ -44,7 +44,7 @@ void demoScalarAPI(VKLVolume volume)
   vklCommit(selector);
 
   // ray definition for iterators
-  vkl_vec3f rayOrigin    = {0, 0, 0};
+  vkl_vec3f rayOrigin    = {0, 1, 1};
   vkl_vec3f rayDirection = {1, 0, 0};
   vkl_range1f rayTRange  = {0, 200};
   printf("\trayOrigin = %f %f %f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z);
@@ -108,7 +108,10 @@ void demoScalarAPI(VKLVolume volume)
       int result = vklIterateHit(hitIterator, &hit);
       if (!result)
         break;
-      printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
+      printf("\t\tt %f\n\t\tsample %f\n\t\tepsilon %f\n\n",
+             hit.t,
+             hit.sample,
+             hit.epsilon);
     }
   }
 

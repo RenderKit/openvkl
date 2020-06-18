@@ -73,6 +73,7 @@ if (BUILD_TESTING)
     vklTests.cpp
     tests/alignment.cpp
     tests/hit_iterator.cpp
+    tests/hit_iterator_epsilon.cpp
     tests/interval_iterator.cpp
     tests/simd_conformance.cpp
     tests/simd_conformance.ispc

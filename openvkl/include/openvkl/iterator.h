@@ -246,24 +246,28 @@ typedef struct
 {
   float t;
   float sample;
+  float epsilon;
 } VKLHit;
 
 typedef struct VKL_ALIGN(16)
 {
   float t[4];
   float sample[4];
+  float epsilon[4];
 } VKLHit4;
 
 typedef struct VKL_ALIGN(32)
 {
   float t[8];
   float sample[8];
+  float epsilon[8];
 } VKLHit8;
 
 typedef struct VKL_ALIGN(64)
 {
   float t[16];
   float sample[16];
+  float epsilon[16];
 } VKLHit16;
 
 // returns true while the iterator is still within the volume

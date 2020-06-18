@@ -240,6 +240,7 @@ namespace openvkl {
   {
     vfloatn<W> t;
     vfloatn<W> sample;
+    vfloatn<W> epsilon;
 
     vVKLHitN<W>()
     {

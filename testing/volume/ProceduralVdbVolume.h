@@ -164,11 +164,13 @@ namespace openvkl {
       vec3f gridSpacing;
     };
 
-    using WaveletVdbVolume = ProceduralVdbVolume<getWaveletValue<float>,
-                                                 getWaveletGradient>;
+    using WaveletVdbVolume =
+        ProceduralVdbVolume<getWaveletValue<float>, getWaveletGradient>;
 
-    using XYZVdbVolume = ProceduralVdbVolume<getXYZValue<float>,
-                                             getXYZGradient>;
+    using XYZVdbVolume =
+        ProceduralVdbVolume<getXYZValue<float>, getXYZGradient>;
+
+    using ZVdbVolume = ProceduralVdbVolume<getZValue, getZGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

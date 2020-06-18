@@ -41,7 +41,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   vklCommit((VKLObject)selector);
 
   // ray definition for iterators
-  vkl_vec3f rayOrigin = {0, 0, 0};
+  vkl_vec3f rayOrigin = {0, 1, 1};
   vkl_vec3f rayDirection;
   rayDirection.x = 1;
   rayDirection.y = programIndex / 16.f;
@@ -99,7 +99,8 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
 
   VKLHit hit;
   while (vklIterateHitV(hitIterator, &hit)) {
-    print("\tt: %\n\tsample %\n\n", hit.t, hit.sample);
+    print(
+        "\tt: %\n\tsample %\n\tepsilon %\n\n", hit.t, hit.sample, hit.epsilon);
   }
 
   vklRelease((VKLObject)selector);

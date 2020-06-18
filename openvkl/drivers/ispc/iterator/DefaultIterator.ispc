@@ -140,8 +140,6 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
   // this is an estimated step that may yield artifacts
   const uniform float step = 0.1f * self->nominalIntervalLength;
 
-  float surfaceEpsilon;
-
   bool foundHit = intersectSurfaces(self->volume,
                                     self->origin,
                                     self->direction,
@@ -149,12 +147,11 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
                                     step,
                                     self->valueSelector->numValues,
                                     self->valueSelector->values,
-                                    *hit,
-                                    surfaceEpsilon);
+                                    *hit);
 
   if (foundHit) {
     *result                     = true;
-    self->hitState.tRange.lower = hit->t + surfaceEpsilon;
+    self->hitState.tRange.lower = hit->t + hit->epsilon;
   } else {
     *result                     = false;
     self->hitState.tRange.lower = inf;

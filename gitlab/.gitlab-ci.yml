@@ -102,6 +102,16 @@ build-centos7-icc:
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/build.sh
 
+build-centos7-icc15:
+  <<: *build_job_docker_centos7_modules
+  script:
+    - module load cmake
+    - module load intel/2015
+    - export CC=icc
+    - export CXX=icpc
+    - export CXXFLAGS="-static-intel -fPIC"
+    - gitlab/build.sh
+
 build-centos8:
   <<: *build_job_docker
   image: ospray/docker-images:centos8

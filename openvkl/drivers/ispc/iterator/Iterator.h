@@ -39,7 +39,7 @@ namespace openvkl {
 
       explicit Iterator(const Volume<W> *volume) : volume{volume} {}
 
-     protected:
+      // WORKAROUND ICC 15: This destructor must be public!
       virtual ~Iterator() = default;
 
      protected:

@@ -790,6 +790,20 @@ method in [1].
                                                   contributions will halt when this value
                                                   is reached. A value of zero or less
                                                   turns this off.
+
+  bool      estimateValueRanges         true      Enable heuristic estimation of value
+                                                  ranges which are used in internal
+                                                  acceleration structures for interval and
+                                                  hit iterators, as well as for
+                                                  determining the volume's overall value
+                                                  range. When set to `false`, the user
+                                                  *must* specify
+                                                  `clampMaxCumulativeValue`, and all value
+                                                  ranges will be assumed [0,
+                                                  `clampMaxCumulativeValue`]. Disabling
+                                                  this may improve volume commit time, but
+                                                  will make interval and hit iteration
+                                                  less efficient.
   --------  --------------------------  --------  ---------------------------------------
   : Configuration parameters for particle (`"particle"`) volumes.
 

@@ -10,13 +10,20 @@ using namespace openvkl::testing;
 void computed_vs_api_value_range(size_t numParticles,
                                  bool provideWeights,
                                  float radiusSupportFactor,
-                                 float clampMaxCumulativeValue)
+                                 float clampMaxCumulativeValue,
+                                 bool estimateValueRanges)
 {
+  if (!estimateValueRanges && clampMaxCumulativeValue == 0.f) {
+    // illegal case
+    return;
+  }
+
   auto v =
       rkcommon::make_unique<ProceduralParticleVolume>(numParticles,
                                                       provideWeights,
                                                       radiusSupportFactor,
-                                                      clampMaxCumulativeValue);
+                                                      clampMaxCumulativeValue,
+                                                      estimateValueRanges);
 
   VKLVolume vklVolume = v->getVKLVolume();
 
@@ -29,10 +36,21 @@ void computed_vs_api_value_range(size_t numParticles,
   INFO("computed valueRange = " << computedValueRange.lower << " "
                                 << computedValueRange.upper);
 
-  // our computed value range is an estimate, and similarly the API-returned
-  // value range may be conservative
-  REQUIRE((computedValueRange.lower >= apiValueRange.lower &&
-           computedValueRange.upper <= apiValueRange.upper));
+  if (estimateValueRanges) {
+    // our computed value range is an estimate, and similarly the API-returned
+    // value range may be conservative
+    REQUIRE((computedValueRange.lower >= apiValueRange.lower &&
+             computedValueRange.upper <= apiValueRange.upper));
+  } else {
+    // the API-returned value range should be exactly this (since VKL is not
+    // estimating it)
+    REQUIRE((apiValueRange.lower == 0.f &&
+             apiValueRange.upper == clampMaxCumulativeValue));
+
+    // our computed value range should still be within this, given the clamping
+    REQUIRE((computedValueRange.lower >= apiValueRange.lower &&
+             computedValueRange.upper <= apiValueRange.upper));
+  }
 }
 
 TEST_CASE("Particle volume value range", "[volume_value_range]")
@@ -48,14 +66,17 @@ TEST_CASE("Particle volume value range", "[volume_value_range]")
   const std::vector<float> radiusSupportFactors     = {0.1f, 1.f, 3.f};
   const std::vector<float> clampMaxCumulativeValues = {
       0.f, 0.1f, 1.5f, 3.f, 1e6f};
+  const std::vector<bool> estimateValueRanges = {false, true};
 
   for (const auto &pw : provideWeights) {
     for (const auto &rsf : radiusSupportFactors) {
       for (const auto &cmcv : clampMaxCumulativeValues) {
-        INFO("provideWeights = " << pw << ", radiusSupportFactor = " << rsf
-                                 << ", clampMaxCumulativeValue = " << cmcv);
+        for (const auto &evr : estimateValueRanges) {
+          INFO("provideWeights = " << pw << ", radiusSupportFactor = " << rsf
+                                   << ", clampMaxCumulativeValue = " << cmcv);
 
-        computed_vs_api_value_range(numParticles, pw, rsf, cmcv);
+          computed_vs_api_value_range(numParticles, pw, rsf, cmcv, evr);
+        }
       }
     }
   }

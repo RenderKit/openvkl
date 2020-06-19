@@ -82,6 +82,7 @@ namespace openvkl {
       Ref<const DataT<float>> weights;
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
+      bool estimateValueRanges;
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};

@@ -76,6 +76,22 @@ namespace openvkl {
       clampMaxCumulativeValue =
           this->template getParam<float>("clampMaxCumulativeValue", 0.f);
 
+      // Enable heuristic estimation of value ranges which are used in internal
+      // acceleration structures for interval and hit iterators, as well as for
+      // determining the volume's overall value range. When set to `false`, the
+      // user *must* specify `clampMaxCumulativeValue`, and all value ranges
+      // will be assumed [0, `clampMaxCumulativeValue`]. Disabling this may
+      // improve volume commit time, but will make interval and hit iteration
+      // less efficient.
+      estimateValueRanges =
+          this->template getParam<bool>("estimateValueRanges", true);
+
+      if (estimateValueRanges == false && clampMaxCumulativeValue == 0) {
+        throw std::runtime_error(
+            "If estimateValueRanges is set to 'false', the user must specify a "
+            "clampMaxCumulativeValue greater than zero.");
+      }
+
       buildBvhAndCalculateBounds();
 
       if (!this->ispcEquivalent) {
@@ -202,51 +218,59 @@ namespace openvkl {
       // compute value ranges of leaf nodes in parallel
       std::unique_ptr<Sampler<W>> sampler(newSampler());
 
-      tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
-        LeafNode *leafNode         = leafNodes[leafNodeIndex];
-        const size_t particleIndex = leafNode->cellID;
+      if (estimateValueRanges) {
+        tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
+          LeafNode *leafNode         = leafNodes[leafNodeIndex];
+          const size_t particleIndex = leafNode->cellID;
 
-        range1f computedValueRange(empty);
+          range1f computedValueRange(empty);
 
-        // estimates use sampling interfaces directly, to ensure all constraints
-        // are consistently considered (e.g. clampMaxCumulativeValue,
-        // radiusSupportFactor)
+          // estimates use sampling interfaces directly, to ensure all
+          // constraints are consistently considered (e.g.
+          // clampMaxCumulativeValue, radiusSupportFactor)
 
-        // initial estimate based sampling particle center
-        vfloatn<1> sample;
-        sampler->computeSample((*positions)[particleIndex], sample);
-        computedValueRange.extend(sample[0]);
+          // initial estimate based sampling particle center
+          vfloatn<1> sample;
+          sampler->computeSample((*positions)[particleIndex], sample);
+          computedValueRange.extend(sample[0]);
 
-        // sample over regular grid within leaf bounds to improve estimate
-        const box3fa leafBounds = leafNode->bounds;
+          // sample over regular grid within leaf bounds to improve estimate
+          const box3fa leafBounds = leafNode->bounds;
 
-        const int samplesPerDimension = 10;
+          const int samplesPerDimension = 10;
 
-        std::vector<vvec3fn<1>> objectCoordinates;
-        objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
-                                  samplesPerDimension);
+          std::vector<vvec3fn<1>> objectCoordinates;
+          objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
+                                    samplesPerDimension);
 
-        multidim_index_sequence<3> mis{vec3i(samplesPerDimension)};
+          multidim_index_sequence<3> mis{vec3i(samplesPerDimension)};
 
-        for (const auto &ijk : mis) {
-          objectCoordinates.push_back(
-              leafBounds.lower +
-              vec3f(ijk) / float(samplesPerDimension - 1) * leafBounds.size());
-        }
+          for (const auto &ijk : mis) {
+            objectCoordinates.push_back(
+                leafBounds.lower + vec3f(ijk) / float(samplesPerDimension - 1) *
+                                       leafBounds.size());
+          }
 
-        std::vector<float> samples(objectCoordinates.size());
-        sampler->computeSampleN(
-            objectCoordinates.size(), objectCoordinates.data(), samples.data());
+          std::vector<float> samples(objectCoordinates.size());
+          sampler->computeSampleN(objectCoordinates.size(),
+                                  objectCoordinates.data(),
+                                  samples.data());
 
-        auto minmax = std::minmax_element(samples.begin(), samples.end());
-        computedValueRange.extend(range1f(*minmax.first, *minmax.second));
+          auto minmax = std::minmax_element(samples.begin(), samples.end());
+          computedValueRange.extend(range1f(*minmax.first, *minmax.second));
 
-        // apply uncertainty to computed value range
-        computedValueRange.lower *= (1.f - uncertainty);
-        computedValueRange.upper *= (1.f + uncertainty);
+          // apply uncertainty to computed value range
+          computedValueRange.lower *= (1.f - uncertainty);
+          computedValueRange.upper *= (1.f + uncertainty);
 
-        leafNode->valueRange = computedValueRange;
-      });
+          leafNode->valueRange = computedValueRange;
+        });
+      } else {
+        tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
+          LeafNode *leafNode   = leafNodes[leafNodeIndex];
+          leafNode->valueRange = range1f(0.f, clampMaxCumulativeValue);
+        });
+      }
 
       // accumulate ranges in root and inner nodes
       accumulateNodeValueRanges(rtcRoot);

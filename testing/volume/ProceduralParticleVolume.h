@@ -19,7 +19,8 @@ namespace openvkl {
       ProceduralParticleVolume(size_t numParticles,
                                bool provideWeights           = true,
                                float radiusSupportFactor     = 3.f,
-                               float clampMaxCumulativeValue = 0.f);
+                               float clampMaxCumulativeValue = 0.f,
+                               bool estimateValueRanges      = true);
 
       range1f getComputedValueRange() const override;
 
@@ -35,6 +36,7 @@ namespace openvkl {
       bool provideWeights;
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
+      bool estimateValueRanges;
 
       // particles will be seeded within these bounds
       box3f bounds = box3f(-1.f, 1.f);
@@ -50,11 +52,13 @@ namespace openvkl {
         size_t numParticles,
         bool provideWeights,
         float radiusSupportFactor,
-        float clampMaxCumulativeValue)
+        float clampMaxCumulativeValue,
+        bool estimateValueRanges)
         : numParticles(numParticles),
           provideWeights(provideWeights),
           radiusSupportFactor(radiusSupportFactor),
-          clampMaxCumulativeValue(clampMaxCumulativeValue)
+          clampMaxCumulativeValue(clampMaxCumulativeValue),
+          estimateValueRanges(estimateValueRanges)
     {
     }
 
@@ -189,6 +193,7 @@ namespace openvkl {
 
       vklSetFloat(volume, "radiusSupportFactor", radiusSupportFactor);
       vklSetFloat(volume, "clampMaxCumulativeValue", clampMaxCumulativeValue);
+      vklSetBool(volume, "estimateValueRanges", estimateValueRanges);
 
       vklCommit(volume);
 

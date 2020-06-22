@@ -1,4 +1,4 @@
-## Copyright 2019 Intel Corporation
+## Copyright 2019-2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # NOTE: This CMakeLists.txt is intended to be used to exercise an OpenVKL
@@ -25,3 +25,6 @@ find_package(openvkl REQUIRED)
 
 add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
 target_link_libraries(vklTutorial openvkl::openvkl)
+
+add_executable(vklTutorialLinkISPCDriver ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
+target_link_libraries(vklTutorialLinkISPCDriver openvkl::openvkl_module_ispc_driver)

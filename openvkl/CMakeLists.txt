@@ -32,8 +32,9 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE rkcommon::rkcommon)
-
+target_link_libraries(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:rkcommon::rkcommon>)
 
 set(VKL_VDB_LOG_RESOLUTION "6;5;4;3" CACHE STRING
   "Base-2 logarithm of the resolution for each level in the tree.")

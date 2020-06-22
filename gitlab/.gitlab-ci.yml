@@ -122,14 +122,12 @@ build-ubuntu16.04:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu16.04
   script:
-    - export LD_LIBRARY_PATH=`pwd`/build/install/lib  # Ubuntu needs TBB in LD_LIBRARY_PATH at build time
     - gitlab/build.sh -G Ninja
 
 build-ubuntu18.04:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu18.04
   script:
-    - export LD_LIBRARY_PATH=`pwd`/build/install/lib  # Ubuntu needs TBB in LD_LIBRARY_PATH at build time
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
 build-arch:

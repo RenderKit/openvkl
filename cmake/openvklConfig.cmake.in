@@ -17,6 +17,19 @@ set(OPENVKL_ISA_AVX2 @OPENVKL_ISA_AVX2@)
 set(OPENVKL_ISA_AVX512KNL @OPENVKL_ISA_AVX512KNL@)
 set(OPENVKL_ISA_AVX512SKX @OPENVKL_ISA_AVX512SKX@)
 
+## Add missing rkcommon dependency
+
+include(CMakeFindDependencyMacro)
+
+set(RKCOMMON_VERSION_REQUIRED @RKCOMMON_VERSION_REQUIRED@)
+
+if (NOT TARGET rkcommon::rkcommon)
+  find_dependency(rkcommon ${RKCOMMON_VERSION_REQUIRED})
+endif()
+
+set_target_properties(openvkl::openvkl PROPERTIES
+  INTERFACE_LINK_LIBRARIES rkcommon::rkcommon)
+
 ## Standard signal that the package was found ##
 
 set(@PROJECT_NAME@_FOUND TRUE)

@@ -47,7 +47,8 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-find_package(rkcommon 1.4.0 REQUIRED)
+set(RKCOMMON_VERSION_REQUIRED 1.4.0)
+find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 
 find_package(embree 3.6.1 REQUIRED)
 openvkl_create_embree_target()

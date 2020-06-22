@@ -182,7 +182,7 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
   }                                                                            \
                                                                                \
   inline univary vkl_uint64 vklVdbVoxelMakeLeafPtr(                            \
-      const void *univary leafPtr, univary VKLVdbLeafFormat format)            \
+      const void *univary leafPtr, univary VKLFormat format)                   \
   {                                                                            \
     const univary vkl_uint64 intptr = ((univary vkl_uint64)leafPtr);           \
     assert((intptr & 0xFu) == 0); /* Require 16 Byte alignment! */             \
@@ -199,10 +199,10 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     return ((voxel & 0x3u) == 0x3u);                                           \
   }                                                                            \
                                                                                \
-  inline univary VKLVdbLeafFormat vklVdbVoxelLeafGetFormat(                    \
+  inline univary VKLFormat vklVdbVoxelLeafGetFormat(                           \
       univary vkl_uint32 voxel)                                                \
   {                                                                            \
-    return ((VKLVdbLeafFormat)((voxel >> 2) & 0x3u));                          \
+    return ((VKLFormat)((voxel >> 2) & 0x3u));                                 \
   }                                                                            \
   /* Leaf pointers are always 64 bit */                                        \
   inline const void *univary vklVdbVoxelLeafGetPtr(univary vkl_uint64 voxel)   \

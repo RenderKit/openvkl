@@ -6,6 +6,7 @@
 #include "VKLDataType.h"
 #include "VKLError.h"
 #include "VKLFilter.h"
+#include "VKLFormat.h"
 #include "VKLLogLevel.h"
 
 #include "common.h"

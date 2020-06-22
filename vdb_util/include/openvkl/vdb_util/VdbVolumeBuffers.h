@@ -49,10 +49,10 @@ namespace openvkl {
       std::vector<vec3i> origin;
 
       /*
-       * The node format. This can be VKL_VDB_FORMAT_TILE or
-       * VKL_VDB_FORMAT_CONSTANT at this point.
+       * The node format. This can be VKL_FORMAT_TILE or
+       * VKL_FORMAT_CONSTANT_ZYX at this point.
        */
-      std::vector<VKLVdbLeafFormat> format;
+      std::vector<VKLFormat> format;
 
       /*
        * The actual node data. Tiles have exactly one value,
@@ -151,7 +151,7 @@ namespace openvkl {
         const size_t index = numNodes();
         this->level.push_back(level);
         this->origin.push_back(origin);
-        format.push_back(VKL_VDB_FORMAT_TILE);
+        format.push_back(VKL_FORMAT_TILE);
         data.push_back(vklNewData(1, FieldType, ptr, VKL_DATA_DEFAULT));
         return index;
       }
@@ -168,7 +168,7 @@ namespace openvkl {
         const size_t index = numNodes();
         this->level.push_back(level);
         this->origin.push_back(origin);
-        format.push_back(VKL_VDB_FORMAT_INVALID);
+        format.push_back(VKL_FORMAT_INVALID);
         data.push_back(nullptr);
         makeConstant(index, ptr, flags);
         return index;
@@ -186,7 +186,7 @@ namespace openvkl {
           vklRelease(data.at(index));
         data.at(index) = vklNewData(
             vklVdbLevelNumVoxels(level.at(index)), FieldType, ptr, flags);
-        format.at(index) = VKL_VDB_FORMAT_CONSTANT;
+        format.at(index) = VKL_FORMAT_CONSTANT_ZYX;
       }
 
       /*

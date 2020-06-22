@@ -659,15 +659,15 @@ VDB volumes have the following parameters:
 
   uint32[]      format                                   For each input node, the data format.
                                                          Currently supported are
-                                                         `VKL_VDB_FORMAT_TILE` for tiles,
-                                                         and `VKL_VDB_FORMAT_CONSTANT` for
+                                                         `VKL_FORMAT_TILE` for tiles,
+                                                         and `VKL_FORMAT_CONSTANT_ZYX` for
                                                          nodes that are dense regular grids,
                                                          but temporally constant.
 
   VKLData[]     data                                     Node data. Nodes with format
-                                                         `VKL_VDB_FORMAT_TILE` are expected to
+                                                         `VKL_FORMAT_TILE` are expected to
                                                          have single-entry arrays. Nodes with
-                                                         format `VKL_VDB_FORMAT_CONSTANT` are
+                                                         format `VKL_FORMAT_CONSTANT_ZYX` are
                                                          expected to have arrays with
                                                          `vklVdbLevelNumVoxels(level[i])`
                                                          entries.

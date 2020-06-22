@@ -288,19 +288,19 @@ namespace openvkl {
     /*
      * Compute the value range for float leaves.
      */
-    range1f computeValueRangeFloat(VKLVdbLeafFormat format,
+    range1f computeValueRangeFloat(VKLFormat format,
                                    uint32_t level,
                                    const DataT<float> &data)
     {
       range1f range;
 
       switch (format) {
-      case VKL_VDB_FORMAT_TILE: {
+      case VKL_FORMAT_TILE: {
         range.extend(data[0]);
         break;
       }
 
-      case VKL_VDB_FORMAT_CONSTANT: {
+      case VKL_FORMAT_CONSTANT_ZYX: {
         range1f leafRange;
         CALL_ISPC(VdbSampler_valueRangeConstantFloat,
                   data.data(),
@@ -314,7 +314,7 @@ namespace openvkl {
 
       default:
         runtimeError(
-            "Only VKL_VDB_FORMAT_TILE and VLK_VDB_FORMAT_CONST are supported.");
+            "Only VKL_FORMAT_TILE and VKL_FORMAT_CONST are supported.");
       }
 
       return range;
@@ -339,7 +339,7 @@ namespace openvkl {
       for (size_t leafLevel = 0; leafLevel < binnedLeaves.size(); ++leafLevel) {
         const auto &leaves = binnedLeaves[leafLevel];
         for (uint64_t idx : leaves) {
-          const auto format = static_cast<VKLVdbLeafFormat>(leafFormat[idx]);
+          const auto format = static_cast<VKLFormat>(leafFormat[idx]);
           const range1f leafValueRange = computeValueRangeFloat(
               format, leafLevel, leafData[idx]->as<float>());
 
@@ -375,9 +375,9 @@ namespace openvkl {
                 assert(grid->levels[nl].numNodes <= capacity[nl]);
                 voxel = vklVdbVoxelMakeChildPtr(nodeIndex);
               } else {
-                if (format == VKL_VDB_FORMAT_TILE) {
+                if (format == VKL_FORMAT_TILE) {
                   voxel = vklVdbVoxelMakeTile(leafData[idx]->as<float>()[0]);
-                } else if (format == VKL_VDB_FORMAT_CONSTANT)
+                } else if (format == VKL_FORMAT_CONSTANT_ZYX)
                   voxel = vklVdbVoxelMakeLeafPtr(
                       leafData[idx]->as<float>().data(), format);
                 else
@@ -442,7 +442,7 @@ namespace openvkl {
       Ref<const DataT<vec3i>> leafOrigin =
           this->template getParamDataT<vec3i>("origin");
 
-      // 32 bit unsigned int values. The enum VKLVdbLeafFormat encodes supported
+      // 32 bit unsigned int values. The enum VKLFormat encodes supported
       // values for the format.
       Ref<const DataT<uint32_t>> leafFormat =
           this->template getParamDataT<uint32_t>("format");

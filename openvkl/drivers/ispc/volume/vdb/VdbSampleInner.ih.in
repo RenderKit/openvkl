@@ -53,8 +53,8 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   else if (isLeaf)
   {
     const void* univary leafPtr = vklVdbVoxelLeafGetPtr(voxelValue);
-    const univary VKLVdbLeafFormat format = vklVdbVoxelLeafGetFormat(voxelValue);
-    if (leafPtr && format == VKL_VDB_FORMAT_CONSTANT)
+    const univary VKLFormat format = vklVdbVoxelLeafGetFormat(voxelValue);
+    if (leafPtr && format == VKL_FORMAT_CONSTANT_ZYX)
     {
       /* TODO: with mixed formats, the above will not detect if all 
          leaves of the same type have the same ptr. */

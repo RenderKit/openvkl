@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "VKLFormat.h"
 #include "common.isph"
 #include "driver.isph"
 #include "iterator.isph"

@@ -3,6 +3,7 @@
 
 #include "VdbVolume.h"
 #include <cstring>
+#include <set>
 #include "../../common/export_util.h"
 #include "../common/logging.h"
 #include "VdbLeafAccessObserver.h"
@@ -430,37 +431,35 @@ namespace openvkl {
     {
       cleanup();
 
-      const VKLDataType type =
-          (VKLDataType)this->template getParam<int>("type");
       const int maxIteratorDepth =
           this->template getParam<int>("maxIteratorDepth", 3);
 
       Ref<const DataT<float>> dataIndexToObject =
           this->template getParamDataT<float>("indexToObject", nullptr);
       Ref<const DataT<uint32_t>> leafLevel =
-          this->template getParamDataT<uint32_t>("level");
+          this->template getParamDataT<uint32_t>("node.level");
       Ref<const DataT<vec3i>> leafOrigin =
-          this->template getParamDataT<vec3i>("origin");
+          this->template getParamDataT<vec3i>("node.origin");
 
       // 32 bit unsigned int values. The enum VKLFormat encodes supported
       // values for the format.
       Ref<const DataT<uint32_t>> leafFormat =
-          this->template getParamDataT<uint32_t>("format");
+          this->template getParamDataT<uint32_t>("node.format");
       // 64 bit unsigned int values. Interpretation depends on leafFormat.
       Ref<const DataT<Data *>> leafData =
-          this->template getParamDataT<Data *>("data");
+          this->template getParamDataT<Data *>("node.data");
 
       // Strided data not yet supported.
       this->requireParamDataIsCompact("indexToObject");
-      this->requireParamDataIsCompact("level");
-      this->requireParamDataIsCompact("origin");
-      this->requireParamDataIsCompact("format");
-      this->requireParamDataIsCompact("data");
+      this->requireParamDataIsCompact("node.level");
+      this->requireParamDataIsCompact("node.origin");
+      this->requireParamDataIsCompact("node.format");
+      this->requireParamDataIsCompact("node.data");
 
       for (const auto &l : *leafData) {
         if (!l->compact()) {
           throw std::runtime_error(
-              "all node data arrays must be naturally strided");
+              "all node.data arrays must be naturally strided");
         }
       }
 
@@ -478,8 +477,20 @@ namespace openvkl {
       // We will assume that the following conditions hold downstream, so
       // better test them now.
 
+      // Currently only VKL_FLOAT data is supported.
+      std::set<VKLDataType> leafDataTypes;
+
+      for (const auto &d : *leafData)
+        leafDataTypes.insert(d->dataType);
+
+      if (leafDataTypes.size() != 1)
+        throw std::runtime_error(
+            "all node.data arrays must have the same VKLDataType");
+
+      const VKLDataType type = *leafDataTypes.begin();
+
       if (type != VKL_FLOAT)
-        runtimeError("data type is ",
+        runtimeError("node.data arrays have data type ",
                      type,
                      " but only ",
                      VKL_FLOAT,
@@ -489,7 +500,8 @@ namespace openvkl {
       if (leafOrigin->size() != numLeaves || leafFormat->size() != numLeaves ||
           leafData->size() != numLeaves) {
         runtimeError(
-            "level, origin, format, and data must all have the same size");
+            "node.level, node.origin, node.format, and node.data must all have "
+            "the same size");
       }
 
       grid       = allocate<VdbGrid>(1, bytesAllocated);

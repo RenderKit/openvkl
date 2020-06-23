@@ -628,10 +628,6 @@ VDB volumes have the following parameters:
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           type                                     The field type. Only `VKL_FLOAT` is
-                                                         supported at the moment. Use the enum
-                                                         `VKLDataType` for named constants.
-
   int           maxIteratorDepth  3                      Do not descend further than to this
                                                          depth during interval iteration.
                                                          The maximum value is 3.
@@ -647,29 +643,30 @@ VDB volumes have the following parameters:
                                                          matrix. The last 3 values are the
                                                          translation of the grid origin.
 
-  uint32[]      level                                    For each input node, the level on
+  uint32[]      node.level                               For each input node, the level on
                                                          which this node exists. Levels are
                                                          counted from the root level (0) down.
                                                          Input nodes may be on levels
                                                          [1, `VKL_VDB_NUM_LEVELS-1`].
 
-  vec3i[]       origin                                   For each input node, the node origin
+  vec3i[]       node.origin                              For each input node, the node origin
                                                          index.
 
-  uint32[]      format                                   For each input node, the data format.
+  uint32[]      node.format                              For each input node, the data format.
                                                          Currently supported are
                                                          `VKL_FORMAT_TILE` for tiles,
                                                          and `VKL_FORMAT_CONSTANT_ZYX` for
                                                          nodes that are dense regular grids,
                                                          but temporally constant.
 
-  VKLData[]     data                                     Node data. Nodes with format
+  VKLData[]     node.data                                Node data. Nodes with format
                                                          `VKL_FORMAT_TILE` are expected to
                                                          have single-entry arrays. Nodes with
                                                          format `VKL_FORMAT_CONSTANT_ZYX` are
                                                          expected to have arrays with
                                                          `vklVdbLevelNumVoxels(level[i])`
-                                                         entries.
+                                                         entries. Only `VKL_FLOAT` data is
+                                                         currently supported.
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 

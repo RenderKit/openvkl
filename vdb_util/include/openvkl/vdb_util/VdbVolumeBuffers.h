@@ -195,7 +195,6 @@ namespace openvkl {
       VKLVolume createVolume(VKLFilter filter) const
       {
         VKLVolume volume = vklNewVolume("vdb");
-        vklSetInt(volume, "type", FieldType);
         vklSetInt(volume, "filter", filter);
         vklSetInt(volume, "maxSamplingDepth", vklVdbNumLevels() - 1);
         vklSetInt(volume, "maxIteratorDepth", 3);
@@ -213,19 +212,19 @@ namespace openvkl {
         //       This also means that the VdbVolumeBuffers object can be
         //       destroyed after creating the volume.
         VKLData levelData = vklNewData(numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
-        vklSetData(volume, "level", levelData);
+        vklSetData(volume, "node.level", levelData);
         vklRelease(levelData);
 
         VKLData originData = vklNewData(numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
-        vklSetData(volume, "origin", originData);
+        vklSetData(volume, "node.origin", originData);
         vklRelease(originData);
 
         VKLData formatData = vklNewData(numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
-        vklSetData(volume, "format", formatData);
+        vklSetData(volume, "node.format", formatData);
         vklRelease(formatData);
 
         VKLData dataData = vklNewData(numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
-        vklSetData(volume, "data", dataData);
+        vklSetData(volume, "node.data", dataData);
         vklRelease(dataData);
 
         vklCommit(volume);

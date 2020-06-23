@@ -231,4 +231,10 @@ namespace openvkl {
     return dataRef ? &dataRef->ispc : &Data::emptyData1D;
   }
 
+  template <typename T>
+  const ispc::Data1D *ispc(const DataT<T> &data)
+  {
+    return &data.ispc;
+  }
+
 }  // namespace openvkl

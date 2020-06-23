@@ -163,14 +163,15 @@ namespace openvkl {
       size_t addConstant(uint32_t level,
                          const vec3i &origin,
                          const void *ptr,
-                         VKLDataCreationFlags flags)
+                         VKLDataCreationFlags flags,
+                         size_t byteStride = 0)
       {
         const size_t index = numNodes();
         this->level.push_back(level);
         this->origin.push_back(origin);
         format.push_back(VKL_FORMAT_INVALID);
         data.push_back(nullptr);
-        makeConstant(index, ptr, flags);
+        makeConstant(index, ptr, flags, byteStride);
         return index;
       }
 
@@ -180,12 +181,16 @@ namespace openvkl {
        */
       void makeConstant(size_t index,
                         const void *ptr,
-                        VKLDataCreationFlags flags)
+                        VKLDataCreationFlags flags,
+                        size_t byteStride = 0)
       {
         if (data.at(index))
           vklRelease(data.at(index));
-        data.at(index) = vklNewData(
-            vklVdbLevelNumVoxels(level.at(index)), FieldType, ptr, flags);
+        data.at(index)   = vklNewData(vklVdbLevelNumVoxels(level.at(index)),
+                                    FieldType,
+                                    ptr,
+                                    flags,
+                                    byteStride);
         format.at(index) = VKL_FORMAT_CONSTANT_ZYX;
       }
 

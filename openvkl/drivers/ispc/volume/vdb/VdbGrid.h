@@ -48,6 +48,7 @@ struct VdbGrid
   float indexToObject[12];    // Row-major transformation matrix, 3x4,
                               // rotation-shear-scale | translation
   vkl_uint64 totalNumLeaves;  // The total number of leaf nodes in this tree.
+  bool allLeavesCompact;      // If all leaves have compact (non-strided) data
   vkl_uint64
       numLeaves[VKL_VDB_NUM_LEVELS];  // The number of leaf nodes per level.
   vkl_uint64 maxVoxelOffset;  // Used to select 64bit or 32bit traversal. TODO:

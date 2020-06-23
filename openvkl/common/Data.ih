@@ -146,3 +146,11 @@ template_get_wrapper(vec3f);
 template_get_wrapper(vec4f);
 
 #undef template_get_wrapper
+
+// limited support for getters on _varying_ Data1D objects
+
+inline varying float get_float_strided(const uniform Data1D *varying data,
+                                       const varying uint32 index32)
+{
+  return *((const uniform float *)(data->addr + index32 * data->byteStride));
+}

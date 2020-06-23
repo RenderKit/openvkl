@@ -26,17 +26,30 @@ namespace openvkl {
       ProceduralVdbVolume &operator=(ProceduralVdbVolume &&) = default;
       ~ProceduralVdbVolume()                                 = default;
 
-      ProceduralVdbVolume(const vec3i &dimensions,
-                          const vec3f &gridOrigin,
-                          const vec3f &gridSpacing,
-                          VKLFilter filter = VKL_FILTER_TRILINEAR)
+      ProceduralVdbVolume(
+          const vec3i &dimensions,
+          const vec3f &gridOrigin,
+          const vec3f &gridSpacing,
+          VKLFilter filter                       = VKL_FILTER_TRILINEAR,
+          VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
+          size_t byteStride                      = 0)
           : buffers(new Buffers),
-            filter(filter),
             dimensions(dimensions),
             gridOrigin(gridOrigin),
-            gridSpacing(gridSpacing)
+            gridSpacing(gridSpacing),
+            filter(filter),
+            dataCreationFlags(dataCreationFlags),
+            byteStride(byteStride)
 
       {
+        if (byteStride == 0) {
+          byteStride = sizeOfVKLDataType(VKL_FLOAT);
+        }
+
+        if (byteStride < sizeOfVKLDataType(VKL_FLOAT)) {
+          throw std::runtime_error("byteStride must be >= size of voxel type");
+        }
+
         buffers->setIndexToObject(gridSpacing.x,
                                   0,
                                   0,
@@ -63,15 +76,17 @@ namespace openvkl {
         const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
         const size_t numLeafVoxels = vklVdbLevelNumVoxels(leafLevel);
 
-        // Temp buffer for leaf data.
-        std::vector<float> leaf(numLeafVoxels);
-
         buffers->reserve(numLeafNodes);
 
         valueRange = range1f();
         for (int x = 0; x < numLeafNodesIn.x; ++x)
           for (int y = 0; y < numLeafNodesIn.y; ++y)
             for (int z = 0; z < numLeafNodesIn.z; ++z) {
+              // Buffer for leaf data.
+              leaves.emplace_back(
+                  std::vector<unsigned char>(numLeafVoxels * byteStride));
+              std::vector<unsigned char> &leaf = leaves.back();
+
               range1f leafValueRange;
               const vec3i nodeOrigin(leafRes * x, leafRes * y, leafRes * z);
               for (uint32_t vx = 0; vx < leafRes; ++vx)
@@ -90,7 +105,11 @@ namespace openvkl {
                         transformLocalToObjectCoordinates(samplePosIndex);
 
                     const float fieldValue = samplingFunction(samplePosObject);
-                    leaf.at(idx)           = fieldValue;
+
+                    float *leafValueTyped =
+                        (float *)(leaf.data() + idx * byteStride);
+                    *leafValueTyped = fieldValue;
+
                     leafValueRange.extend(fieldValue);
                   }
 
@@ -105,10 +124,17 @@ namespace openvkl {
                   buffers->addTile(
                       leafLevel, nodeOrigin, &leafValueRange.upper);
                 } else
-                  buffers->addConstant(
-                      leafLevel, nodeOrigin, leaf.data(), VKL_DATA_DEFAULT);
+                  buffers->addConstant(leafLevel,
+                                       nodeOrigin,
+                                       leaf.data(),
+                                       dataCreationFlags,
+                                       byteStride);
               }
               valueRange.extend(leafValueRange);
+
+              if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+                leaves.clear();
+              }
             }
       }
 
@@ -158,10 +184,15 @@ namespace openvkl {
      private:
       std::unique_ptr<Buffers> buffers;
       range1f valueRange;
-      VKLFilter filter;
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
+      VKLFilter filter;
+      VKLDataCreationFlags dataCreationFlags;
+      size_t byteStride;
+
+      // leaf data may need to be retained for shared data buffers
+      std::vector<std::vector<unsigned char>> leaves;
     };
 
     using WaveletVdbVolume =

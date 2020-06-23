@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/vdb.h>
+#include "../common/Data.ih"
 #include "VdbSampleConfig.h"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
@@ -11,7 +12,7 @@
  * Compute the value range on the given constant float leaf.
  */
 export void EXPORT_UNIQUE(VdbSampler_valueRangeConstantFloat,
-                          const uniform float *uniform data,
+                          const Data1D *uniform data,
                           uniform uint32 numVoxels,
                           uniform box1f *uniform range)
 {
@@ -20,8 +21,8 @@ export void EXPORT_UNIQUE(VdbSampler_valueRangeConstantFloat,
   float vmin = pos_inf;
   float vmax = neg_inf;
   foreach (i = 0 ... numVoxels) {
-    vmin = min(vmin, data[i]);
-    vmax = max(vmax, data[i]);
+    vmin = min(vmin, get_float(*data, (uint32)i));
+    vmax = max(vmax, get_float(*data, (uint32)i));
   }
   range->lower = reduce_min(vmin);
   range->upper = reduce_max(vmax);

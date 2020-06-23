@@ -234,3 +234,63 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     vklRelease(vklSampler);
   }
 }
+
+TEST_CASE("VDB volume strides", "[volume_strides]")
+{
+  init_driver();
+
+  std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT,
+                                                      VKL_DATA_SHARED_BUFFER};
+
+  std::vector<float> strideFactors{0.f, 1.f, 1.5f, 2.f};
+
+  for (const auto &dcf : dataCreationFlags) {
+    for (const auto &strideFactor : strideFactors) {
+      std::stringstream sectionName;
+      sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
+                                              : "VKL_DATA_SHARED_BUFFER");
+      sectionName << ", stride factor: " << strideFactor;
+
+      // can't have duplicate section names at the same level
+      DYNAMIC_SECTION(sectionName.str())
+      {
+        WaveletVdbVolume *volume = nullptr;
+        range1f valueRange;
+        REQUIRE_NOTHROW(volume =
+                            new WaveletVdbVolume(128,
+                                                 vec3f(0.f),
+                                                 vec3f(1.f),
+                                                 VKL_FILTER_TRILINEAR,
+                                                 dcf,
+                                                 strideFactor * sizeof(float)));
+
+        VKLVolume vklVolume   = volume->getVKLVolume();
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
+
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
+    }
+  }
+}

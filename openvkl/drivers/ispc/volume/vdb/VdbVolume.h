@@ -18,6 +18,16 @@ using namespace rkcommon::memory;
 namespace openvkl {
   namespace ispc_driver {
 
+    struct AlignedISPCData1D
+    {
+      // to be represented as VDB leaf pointers, addresses must be 16-byte
+      // aligned
+      alignas(16) ispc::Data1D data;
+    };
+
+    static_assert(sizeof(AlignedISPCData1D) == sizeof(ispc::Data1D),
+                  "AlignedISPCData1D has incorrect size");
+
     template <int W>
     struct VdbVolume : public Volume<W>
     {
@@ -79,6 +89,7 @@ namespace openvkl {
       std::string name;
       range1f valueRange;
       Ref<const DataT<Data *>> leafData;
+      std::vector<AlignedISPCData1D> leafDataISPC;
       VdbGrid *grid{nullptr};
       size_t bytesAllocated{0};
       VdbSampleConfig globalConfig;

@@ -53,13 +53,19 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   else if (isLeaf)
   {
     const void* univary leafPtr = vklVdbVoxelLeafGetPtr(voxelValue);
-    const univary VKLFormat format = vklVdbVoxelLeafGetFormat(voxelValue);
-    if (leafPtr && format == VKL_FORMAT_CONSTANT_ZYX)
-    {
-      /* TODO: with mixed formats, the above will not detect if all 
-         leaves of the same type have the same ptr. */
+    assert(leafPtr);
+
+    assert(vklVdbVoxelLeafGetFormat(voxelValue) == VKL_FORMAT_CONSTANT_ZYX);
+    /* TODO: with mixed formats, we will need to detect if all
+        leaves of the same type have the same ptr. */
+
+    if (grid->allLeavesCompact) {
       sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
         ((const uniform float *univary)leafPtr), domainOffset);
+    }
+    else {
+      sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
+        ((const uniform Data1D *univary)leafPtr), domainOffset);
     }
   }
 

@@ -466,14 +466,13 @@ Note that cell widths are defined _per refinement level_, not per block.
 
   float[]        cellWidth                          [data] array of each level's cell width
 
-  box3i[]        block.bounds                       [data] array of grid sizes (in voxels)
-                                                    for each AMR block
+  box3i[]        block.bounds                       [data] array of each block's bounds (in voxels)
 
-  int[]          block.level                        [data] array of each block's refinement
-                                                    level
+  int[]          block.level                        [data] array of each block's refinement level
 
-  VKLData[]      block.data                         [data] array of VKLData containing
-                                                    the actual scalar voxel data
+  VKLData[]      block.data                         [data] array of each block's VKLData object
+                                                    containing the actual scalar voxel data.
+                                                    Currently only `VKL_FLOAT` data is supported.
 
   vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
 
@@ -482,13 +481,13 @@ Note that cell widths are defined _per refinement level_, not per block.
   -------------- --------------- -----------------  -----------------------------------
   : Configuration parameters for AMR (`"amr"`) volumes.
 
-Lastly, note that the `gridOrigin` and `gridSpacing` parameters act just like
-the structured volume equivalent, but they only modify the root (coarsest level)
-of refinement.
+Note that the `gridOrigin` and `gridSpacing` parameters act just like the
+structured volume equivalent, but they only modify the root (coarsest level) of
+refinement.
 
-In particular, Open VKL's AMR implementation was designed to cover
-Berger-Colella [1] and Chombo [2] AMR data.  The `method` parameter above
-determines the interpolation method used when sampling the volume.
+Open VKL's AMR implementation was designed to cover Berger-Colella [1] and
+Chombo [2] AMR data.  The `method` parameter above determines the interpolation
+method used when sampling the volume.
 
 * `VKL_AMR_CURRENT` finds the finest refinement level at that cell and
   interpolates through this "current" level

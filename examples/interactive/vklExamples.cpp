@@ -384,8 +384,14 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "amr") {
-      testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
-          new ProceduralShellsAMRVolume<>(dimensions, gridOrigin, gridSpacing));
+      if (voxelType == VKL_FLOAT) {
+        testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
+            new ProceduralShellsAMRVolume<>(
+                dimensions, gridOrigin, gridSpacing));
+      } else {
+        throw std::runtime_error(
+            "cannot create procedural AMR volume for non-float voxel type");
+      }
     }
 
     else if (gridType == "vdb") {

@@ -74,6 +74,24 @@ namespace openvkl {
         }
       }
 
+      // determine voxelType from set of block data; they must all be the same
+      std::set<VKLDataType> blockDataTypes;
+
+      for (const auto &d : *blockDataData)
+        blockDataTypes.insert(d->dataType);
+
+      if (blockDataTypes.size() != 1)
+        throw std::runtime_error(
+            "all block.data entries must have same VKLDataType");
+
+      voxelType = *blockDataTypes.begin();
+
+      if (voxelType != VKL_FLOAT) {
+        throw std::runtime_error(
+            "AMR volume 'block.data' entries have invalid VKLDataType. Must be "
+            "VKL_FLOAT");
+      }
+
       // create the AMR data structure. This creates the logical blocks, which
       // contain the actual data and block-level metadata, such as cell width
       // and refinement level
@@ -99,36 +117,6 @@ namespace openvkl {
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
       const vec3f gridSpacing =
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
-
-      // determine voxelType from set of block data; they must all be the same
-      std::set<VKLDataType> blockDataTypes;
-
-      for (const auto &d : *blockDataData)
-        blockDataTypes.insert(d->dataType);
-
-      if (blockDataTypes.size() != 1)
-        throw std::runtime_error(
-            "all block.data entries must have same VKLDataType");
-
-      voxelType = *blockDataTypes.begin();
-
-      switch (voxelType) {
-      case VKL_UCHAR:
-        break;
-      case VKL_SHORT:
-        break;
-      case VKL_USHORT:
-        break;
-      case VKL_FLOAT:
-        break;
-      case VKL_DOUBLE:
-        break;
-      default:
-        throw std::runtime_error(
-            "AMR volume 'block.data' entries have invalid VKLDataType. "
-            "must be one of: VKL_UCHAR, VKL_SHORT, "
-            "VKL_USHORT, VKL_FLOAT, VKL_DOUBLE");
-      }
 
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,

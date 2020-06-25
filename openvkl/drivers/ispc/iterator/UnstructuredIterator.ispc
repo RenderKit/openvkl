@@ -136,9 +136,7 @@ static box1f evalNode(varying UnstructuredIterator *uniform iterator,
       iterator, inner->children[1], valueRange, valueRangeSecond, deltaT2, level + 1);
   outputValueRange = box_extend(valueRangeFirst, valueRangeSecond);
   deltaT     = min(deltaT1, deltaT2);
-  box1f foo = box_extend(tRangeFirst, tRangeSecond);
-
-  return foo;
+  return box_extend(tRangeFirst, tRangeSecond);
 }
 
 inline void UnstructuredIterator_iterateIntervalInternal(

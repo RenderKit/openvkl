@@ -215,14 +215,14 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                                                             \
     if (cellValueRangeOverlap) {                                            \
       univary bool foundHit =                                               \
-          intersectSurfaces(&self->volume->super,                           \
-                            self->origin,                                   \
-                            self->direction,                                \
-                            self->hitState.currentCellTRange,               \
-                            0.5f * step,                                    \
-                            self->valueSelector->numValues,                 \
-                            self->valueSelector->values,                    \
-                            *hit);                                          \
+          intersectSurfacesNewton(&self->volume->super,                     \
+                                  self->origin,                             \
+                                  self->direction,                          \
+                                  self->hitState.currentCellTRange,         \
+                                  0.5f * step,                              \
+                                  self->valueSelector->numValues,           \
+                                  self->valueSelector->values,              \
+                                  *hit);                                    \
                                                                             \
       if (foundHit) {                                                       \
         *result                                = true;                      \

@@ -192,13 +192,19 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
 
   // Generate intervals using the interval iterator until we either run out
   // or find an isosurface hit.
+
+  // Use a conservative value range as a temporary workaround; interval
+  // iterators will need to handle value ranges for filtered sampling modes to
+  // avoid artifacts (holes)
+  const uniform range1f conservativeValueRange = make_box1f(-inf, inf);
+
   for (uniform int i = 0;; ++i) {
     const int needInterval = isempty1f(self->currentInterval.tRange);
     int haveInterval       = !needInterval;
     intervalIterator->iterate((const int *uniform) & needInterval,
                               self->intervalIteratorState,
                               &self->currentInterval,
-                              self->valueSelector->valuesMinMax,
+                              conservativeValueRange,
                               (int *uniform) & haveInterval);
 
     if (!haveInterval) {
@@ -211,14 +217,14 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
-        intersectSurfaces(self->volume,
-                          self->origin,
-                          self->direction,
-                          self->currentInterval.tRange,
-                          0.5f * self->currentInterval.nominalDeltaT,
-                          self->valueSelector->numValues,
-                          self->valueSelector->values,
-                          *hit);
+        intersectSurfacesBisection(self->volume,
+                                   self->origin,
+                                   self->direction,
+                                   self->currentInterval.tRange,
+                                   0.5f * self->currentInterval.nominalDeltaT,
+                                   self->valueSelector->numValues,
+                                   self->valueSelector->values,
+                                   *hit);
 
     *result |= foundHit;
 

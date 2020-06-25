@@ -32,7 +32,7 @@ void scalar_hit_iteration(VKLVolume volume,
   while (vklIterateHit(iterator, &hit)) {
     INFO("hit t = " << hit.t << ", sample = " << hit.sample);
 
-    REQUIRE(hit.t == Approx(expectedTValues[hitCount]));
+    REQUIRE(hit.t == Approx(expectedTValues[hitCount]).margin(1e-3f));
     REQUIRE(hit.sample == isoValues[hitCount]);
 
     hitCount++;

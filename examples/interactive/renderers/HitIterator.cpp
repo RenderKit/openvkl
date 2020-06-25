@@ -68,7 +68,7 @@ namespace openvkl {
             if ((co > 0) == (ci > 0)) {
               VKLHit shadowHit;
               vkl_range1f tShadowRange;
-              tShadowRange.lower = 0.001f;
+              tShadowRange.lower = hit.epsilon;
               tShadowRange.upper = inf;
               VKLHitIterator shadowIterator =
                   vklInitHitIterator(scene.volume,

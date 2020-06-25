@@ -69,7 +69,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
         if ((co > 0) == (ci > 0)) {
           VKLHit shadowHit;
           vkl_range1f tShadowRange;
-          tShadowRange.lower = 0.001f;
+          tShadowRange.lower = hit.epsilon;
           tShadowRange.upper = inf;
           VKLHitIterator shadowIterator =
               vklInitHitIteratorV(scene->volume,

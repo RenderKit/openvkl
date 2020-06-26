@@ -4,13 +4,13 @@
 #pragma once
 
 #include <functional>
-#include <memory>
 #include <string>
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
+#include "rkcommon/memory/IntrusivePtr.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 
@@ -21,9 +21,10 @@ namespace openvkl {
   namespace api {
 
     struct OPENVKL_CORE_INTERFACE Driver
-        : public rkcommon::utility::ParameterizedObject
+        : public rkcommon::memory::RefCountedObject,
+          public rkcommon::utility::ParameterizedObject
     {
-      static std::shared_ptr<Driver> current;
+      static memory::IntrusivePtr<Driver> current;
 
       Driver();
       virtual ~Driver() override = default;

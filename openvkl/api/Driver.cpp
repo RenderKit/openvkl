@@ -30,7 +30,7 @@ namespace openvkl {
     }
 
     // Driver definitions
-    std::shared_ptr<Driver> Driver::current;
+    memory::IntrusivePtr<Driver> Driver::current;
 
     VKLLogLevel Driver::logLevel = LOG_LEVEL_DEFAULT;
 
@@ -166,7 +166,7 @@ namespace openvkl {
 
     bool driverIsSet()
     {
-      return Driver::current.get() != nullptr;
+      return Driver::current.ptr != nullptr;
     }
 
     Driver &currentDriver()

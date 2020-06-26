@@ -221,13 +221,14 @@ extern "C" void vklSetCurrentDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
     throw std::runtime_error("You must commit the driver before using it!");
   }
 
-  openvkl::api::Driver::current.reset(object);
+  openvkl::api::Driver::current = object;
+  object->refDec();
 }
 OPENVKL_CATCH_END()
 
 extern "C" VKLDriver vklGetCurrentDriver() OPENVKL_CATCH_BEGIN
 {
-  return (VKLDriver)openvkl::api::Driver::current.get();
+  return (VKLDriver)openvkl::api::Driver::current.ptr;
 }
 OPENVKL_CATCH_END(nullptr)
 
@@ -276,7 +277,7 @@ OPENVKL_CATCH_END()
 
 extern "C" void vklShutdown() OPENVKL_CATCH_BEGIN
 {
-  openvkl::api::Driver::current.reset();
+  openvkl::api::Driver::current = nullptr;
 }
 OPENVKL_CATCH_END()
 

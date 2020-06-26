@@ -49,7 +49,7 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
   set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
-set(DEFAULT_BUILD_COMMAND cmake --build . --config Release ${PARALLEL_JOBS_OPTS})
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release ${PARALLEL_JOBS_OPTS})
 
 # We must replace separators so that ExternalProject_Add can work with the
 # paths we generate.

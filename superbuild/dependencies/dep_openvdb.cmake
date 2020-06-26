@@ -48,7 +48,7 @@ ExternalProject_Add(${COMPONENT_NAME}
     $<$<BOOL:${BUILD_TBB}>:-DTBB_ROOT=${TBB_PATH}>
     ${OPENVKL_EXTRA_OPENVDB_OPTIONS}
   BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
-  INSTALL_COMMAND cmake --build . --target install
+  INSTALL_COMMAND ${CMAKE_COMMAND} --build . --target install
   BUILD_ALWAYS OFF
 )
 

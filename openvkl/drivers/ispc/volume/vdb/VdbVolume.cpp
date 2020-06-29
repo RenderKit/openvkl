@@ -291,27 +291,33 @@ namespace openvkl {
     /*
      * Compute the value range for float leaves.
      */
-    range1f computeValueRangeFloat(VKLFormat format,
+    range1f computeValueRangeFloat(const VdbGrid *grid,
+                                   VKLFormat format,
                                    uint32_t level,
+                                   const vec3ui &offset,
                                    const DataT<float> &data)
     {
       range1f range;
 
       switch (format) {
       case VKL_FORMAT_TILE: {
-        range.extend(data[0]);
+        CALL_ISPC(VdbSampler_valueRangeTileFloat,
+                  grid,
+                  ispc(data),
+                  reinterpret_cast<const ispc::vec3ui *>(&offset),
+                  level,
+                  reinterpret_cast<ispc::box1f *>(&range));
         break;
       }
 
       case VKL_FORMAT_CONSTANT_ZYX: {
         range1f leafRange;
         CALL_ISPC(VdbSampler_valueRangeConstantFloat,
+                  grid,
                   ispc(data),
-                  static_cast<uint32_t>(vklVdbLevelNumVoxels(level)),
-                  reinterpret_cast<ispc::box1f *>(&leafRange));
-
-        range.extend(leafRange.lower);
-        range.extend(leafRange.upper);
+                  reinterpret_cast<const ispc::vec3ui *>(&offset),
+                  level,
+                  reinterpret_cast<ispc::box1f *>(&range));
         break;
       }
 
@@ -344,8 +350,6 @@ namespace openvkl {
         const auto &leaves = binnedLeaves[leafLevel];
         for (uint64_t idx : leaves) {
           const auto format = static_cast<VKLFormat>(leafFormat[idx]);
-          const range1f leafValueRange = computeValueRangeFloat(
-              format, leafLevel, leafData[idx]->as<float>());
 
           const vec3ui &offset = leafOffsets[idx];
           uint64_t nodeIndex   = 0;
@@ -359,8 +363,6 @@ namespace openvkl {
             // use 64 bit addressing.
             const uint64_t v = nodeIndex * vklVdbLevelNumVoxels(l) + voxelIndex;
             assert(v < ((uint64_t)1) << 32);
-
-            level.valueRange[v].extend(leafValueRange);
 
             uint64_t &voxel = level.voxels[v];
             if (vklVdbVoxelIsLeafPtr(voxel) || vklVdbVoxelIsTile(voxel)) {
@@ -399,6 +401,60 @@ namespace openvkl {
               assert(nodeIndex < grid->levels[l + 1].numNodes);
             }
           }
+        }
+      }
+    }
+
+    /*
+     * Compute the value range for the given nodes.
+     * The tree must be fully initialized before calling this!
+     * This function takes into account filter radius.
+     */
+    void computeValueRangesFloat(
+        const std::vector<vec3ui> &leafOffsets,
+        const DataT<uint32_t> &leafLevel,
+        const DataT<uint32_t> &leafFormat,
+        const DataT<Data *> &leafData,
+        VdbGrid *grid)
+    {
+      // The value range computation is a big part of commit() cost. We
+      // do it in parallel to make up for that as much as possible.
+      std::vector<range1f> valueRanges(leafFormat.size());
+
+      const size_t numLeaves = leafOffsets.size();
+      tasking::parallel_for(numLeaves, [&](size_t idx) {
+        const auto format    = static_cast<VKLFormat>(leafFormat[idx]);
+        const vec3ui &offset = leafOffsets[idx];
+        valueRanges.at(idx)  = computeValueRangeFloat(
+            grid, format, leafLevel[idx], offset, leafData[idx]->as<float>());
+      });
+
+      for (size_t idx = 0; idx < numLeaves; ++idx) {
+        const vec3ui &offset      = leafOffsets[idx];
+        const range1f &valueRange = valueRanges[idx];
+
+        uint64_t nodeIndex = 0;
+        for (size_t l = 0; l < leafLevel[idx]; ++l) {
+          VdbLevel &level = grid->levels[l];
+          // PRECOND: nodeIndex is valid.
+          assert(nodeIndex < level.numNodes);
+
+          const uint64_t voxelIndex = offsetToLinearVoxelIndex(offset, l);
+          // NOTE: If this is every greater than 2^32-1 then we will have to
+          // use 64 bit addressing.
+          const uint64_t v = nodeIndex * vklVdbLevelNumVoxels(l) + voxelIndex;
+          assert(v < ((uint64_t)1) << 32);
+
+          level.valueRange[v].extend(valueRange);
+
+          uint64_t &voxel = level.voxels[v];
+          assert(!vklVdbVoxelIsEmpty(voxel));
+
+          if (vklVdbVoxelIsLeafPtr(voxel) || vklVdbVoxelIsTile(voxel))
+            break;
+
+          nodeIndex = vklVdbVoxelChildGetIndex(voxel);
+          assert(nodeIndex < grid->levels[l + 1].numNodes);
         }
       }
     }
@@ -559,14 +615,17 @@ namespace openvkl {
                         capacity,
                         grid);
 
-      valueRange = range1f();
-      for (size_t i = 0; i < vklVdbLevelNumVoxels(0); ++i)
-        valueRange.extend(grid->levels[0].valueRange[i]);
-
       CALL_ISPC(VdbVolume_setGrid,
                 Volume<W>::getISPCEquivalent(),
                 reinterpret_cast<const ispc::VdbGrid *>(grid),
                 reinterpret_cast<const ispc::VdbSampleConfig *>(&globalConfig));
+
+      computeValueRangesFloat(
+          leafOffsets, *leafLevel, *leafFormat, *leafData, grid);
+
+      valueRange = range1f();
+      for (size_t i = 0; i < vklVdbLevelNumVoxels(0); ++i)
+        valueRange.extend(grid->levels[0].valueRange[i]);
     }
 
     template <int W>

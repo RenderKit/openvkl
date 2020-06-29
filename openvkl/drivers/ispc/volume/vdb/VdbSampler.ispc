@@ -8,25 +8,6 @@
 #include "common/export_util.h"
 
 #include "openvkl_vdb/VdbSamplerDispatchInner.ih"
-/*
- * Compute the value range on the given constant float leaf.
- */
-export void EXPORT_UNIQUE(VdbSampler_valueRangeConstantFloat,
-                          const Data1D *uniform data,
-                          uniform uint32 numVoxels,
-                          uniform box1f *uniform range)
-{
-  // As suggested in the ISPC performance guide, we perform min/max computation
-  // per lane and only reduce across lanes in the end.
-  float vmin = pos_inf;
-  float vmax = neg_inf;
-  foreach (i = 0 ... numVoxels) {
-    vmin = min(vmin, get_float(*data, (uint32)i));
-    vmax = max(vmax, get_float(*data, (uint32)i));
-  }
-  range->lower = reduce_min(vmin);
-  range->upper = reduce_max(vmax);
-}
 
 // ---------------------------------------------------------------------------
 // The main entrypoint for sampling a volume.
@@ -53,6 +34,96 @@ inline varying float VdbSampler_sample(const VdbGrid *uniform grid,
 }
 
 // ---------------------------------------------------------------------------
+// Value range computation.
+// ---------------------------------------------------------------------------
+
+inline void extendValueRangeFilterFloat(const void *uniform _grid,
+                                        const vec3ui *uniform offset,
+                                        uint32 uniform level,
+                                        uniform box1f *uniform range)
+{
+  uniform VdbSampleConfig config;
+  config.maxSamplingDepth = VKL_VDB_NUM_LEVELS;
+
+  float vminFilter            = pos_inf;
+  float vmaxFilter            = neg_inf;
+  const uniform uint32 res    = vklVdbLevelRes(level);
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const uniform vec3ui os     = *offset;
+  const uniform int radius    = 1; // TRILINEAR INTERPOLATION!
+  // We compute min/max over the voxels (one filter radius) after upper bound.
+  // These are voxels that can be interpolated into our node, so we must include
+  // them for conservative value ranges.
+  foreach (z = -radius... res + radius, y = -radius... res + radius) {
+    const x            = res;
+    const float sample = VdbSampler_sample(
+        grid, &config, make_vec3i(x + os.x, y + os.y, z + os.z));
+    vminFilter = min(vminFilter, sample);
+    vmaxFilter = max(vmaxFilter, sample);
+  }
+  // We only have to go to x = res+radius as we added those voxels above.
+  foreach (z = -radius... res + radius, x = -radius... res) {
+    const y            = res;
+    const float sample = VdbSampler_sample(
+        grid, &config, make_vec3i(x + os.x, y + os.y, z + os.z));
+    vminFilter = min(vminFilter, sample);
+    vmaxFilter = max(vmaxFilter, sample);
+  }
+  // We only have to go to x = res+radius and y = res+radius as we added those
+  // voxels above.
+  foreach (y = -radius... res, x = -radius... res) {
+    const z            = res;
+    const float sample = VdbSampler_sample(
+        grid, &config, make_vec3i(x + os.x, y + os.y, z + os.z));
+    vminFilter = min(vminFilter, sample);
+    vmaxFilter = max(vmaxFilter, sample);
+  }
+
+  range->lower = min(reduce_min(vminFilter), range->lower);
+  range->upper = max(reduce_max(vmaxFilter), range->upper);
+}
+
+/*
+ * Compute the value range on the given tile
+ */
+export void EXPORT_UNIQUE(VdbSampler_valueRangeTileFloat,
+                          const void *uniform _grid,
+                          const Data1D *uniform data,
+                          const vec3ui *uniform offset,
+                          uint32 uniform level,
+                          uniform box1f *uniform range)
+{
+  range->lower = get_float(*data, (uint32)0);
+  range->upper = range->lower;
+  extendValueRangeFilterFloat(_grid, offset, level, range);
+}
+
+/*
+ * Compute the value range on the given constant float leaf.
+ */
+export void EXPORT_UNIQUE(VdbSampler_valueRangeConstantFloat,
+                          const void *uniform _grid,
+                          const Data1D *uniform data,
+                          const vec3ui *uniform offset,
+                          uint32 uniform level,
+                          uniform box1f *uniform range)
+{
+  const uniform uint32 numVoxels = vklVdbLevelNumVoxels(level);
+  // As suggested in the ISPC performance guide, we perform min/max computation
+  // per lane and only reduce across lanes in the end.
+  float vmin = pos_inf;
+  float vmax = neg_inf;
+  foreach (i = 0 ... numVoxels) {
+    vmin = min(vmin, get_float(*data, (uint32)i));
+    vmax = max(vmax, get_float(*data, (uint32)i));
+  }
+  range->lower = reduce_min(vmin);
+  range->upper = reduce_max(vmax);
+
+  extendValueRangeFilterFloat(_grid, offset, level, range);
+}
+
+// ---------------------------------------------------------------------------
 // Interpolation.
 // ---------------------------------------------------------------------------
 
@@ -73,7 +144,7 @@ inline varying float VdbSampler_interpolateNearest(
 }
 
 /*
- * Compute voxel values for the eight corners required in trilinear 
+ * Compute voxel values for the eight corners required in trilinear
  * interpolation.
  * This is used for both sampling and gradient computation!
  */

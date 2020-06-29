@@ -82,7 +82,11 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients) const
     {
-      THROW_NOT_IMPLEMENTED;
+      CALL_ISPC(AMRVolume_gradient_export,
+                static_cast<const int *>(valid),
+                volume->getISPCEquivalent(),
+                &objectCoordinates,
+                &gradients);
     }
 
     template <int W>
@@ -91,7 +95,11 @@ namespace openvkl {
         const vvec3fn<1> *objectCoordinates,
         vvec3fn<1> *gradients) const
     {
-      THROW_NOT_IMPLEMENTED;
+      CALL_ISPC(Volume_gradient_N_export,
+                volume->getISPCEquivalent(),
+                N,
+                (ispc::vec3f *)objectCoordinates,
+                (ispc::vec3f *)gradients);
     }
 
   }  // namespace ispc_driver

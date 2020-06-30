@@ -61,19 +61,6 @@ namespace openvkl {
       refinementLevelsData = this->template getParamDataT<int>("block.level");
       blockDataData        = this->template getParamDataT<Data *>("block.data");
 
-      // strided data not yet supported
-      this->requireParamDataIsCompact("cellWidth");
-      this->requireParamDataIsCompact("block.bounds");
-      this->requireParamDataIsCompact("block.level");
-      this->requireParamDataIsCompact("block.data");
-
-      for (const auto &d : *blockDataData) {
-        if (!d->compact()) {
-          throw std::runtime_error(
-              "all block.data arrays must be compact (naturally strided)");
-        }
-      }
-
       // determine voxelType from set of block data; they must all be the same
       std::set<VKLDataType> blockDataTypes;
 

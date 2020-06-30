@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CellRef.ih"
@@ -40,7 +40,7 @@ extern CellRef findCell(const AMR *uniform self,
             CellRef ret;
             const uint32 idx = (int)(f_bc.x + brick->f_dims.x*(f_bc.y+brick->f_dims.y*(f_bc.z)));
             ret.pos = brick->bounds.lower + f_bc*brick->cellWidth;
-            ret.value = brick->value[idx];
+            ret.value = get_float(*(brick->value), idx);
             ret.width = brick->cellWidth;
             return ret;
           }
@@ -87,7 +87,7 @@ extern CellRef findLeafCell(const AMR *uniform self,
         CellRef ret;
         const uint32 idx = (int)(f_bc.x + brick->f_dims.x*(f_bc.y+brick->f_dims.y*(f_bc.z)));
         ret.pos = brick->bounds.lower + f_bc*brick->cellWidth;
-        ret.value = self->getVoxel((void*)brick->value, idx);
+        ret.value = self->getVoxel(brick->value, idx);
         ret.width = brick->cellWidth;
         return ret;
       } else {

@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DualCell.ih"
@@ -134,7 +134,7 @@ void findDualCell(const AMR *uniform self,
         isLeaf = false;
       }
 
-      const float *uniform v = brick->value;
+      const Data1D *uniform v = brick->value;
       const vec3f rp0 = (_P0 - brick->bounds.lower) * brick->bounds_scale;
       const vec3f rp1 = (_P1 - brick->bounds.lower) * brick->bounds_scale;
 
@@ -153,7 +153,7 @@ void findDualCell(const AMR *uniform self,
 #define DOCORNER(X,Y,Z)                                                 \
       if (valid_z##Z & valid_y##Y & valid_x##X) {                       \
         const int idx = (int)(f_idx_dx##X+f_idx_dy##Y+f_idx_dz##Z);     \
-        dual.value[Z*4+Y*2+X]       = v[idx];                           \
+        dual.value[Z*4+Y*2+X]       = get_float(*v, (uint32)idx);       \
         dual.actualWidth[Z*4+Y*2+X] = brick->cellWidth;                 \
         dual.isLeaf[Z*4+Y*2+X]      = isLeaf;                           \
       }
@@ -295,7 +295,7 @@ void findMirroredDualCell(const AMR *uniform self,
         isLeaf = false;
       }
 
-      const float *uniform v = brick->value;
+      const Data1D *uniform v = brick->value;
       const vec3f rp0 = (make_vec3f(lo[0],lo[1],lo[2]) - brick->bounds.lower) * brick->bounds_scale;
       const vec3f rp1 = (make_vec3f(hi[0],hi[1],hi[2]) - brick->bounds.lower) * brick->bounds_scale;
 
@@ -314,7 +314,7 @@ void findMirroredDualCell(const AMR *uniform self,
 #define DOCORNER(X,Y,Z)                                                 \
       if (valid_z##Z & valid_y##Y & valid_x##X) {                       \
         const int idx = (int)(f_idx_dx##X+f_idx_dy##Y+f_idx_dz##Z);     \
-        dual.value[Z*4+Y*2+X]       = v[idx];                           \
+        dual.value[Z*4+Y*2+X]       = get_float(*v, (uint32)idx);       \
         dual.actualWidth[Z*4+Y*2+X] = brick->cellWidth;                 \
         dual.isLeaf[Z*4+Y*2+X]      = isLeaf;                           \
       }

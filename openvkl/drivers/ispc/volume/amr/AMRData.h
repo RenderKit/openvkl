@@ -52,7 +52,7 @@ namespace openvkl {
         {
           /*! actual constructor from a brick info and data pointer */
           /*! initialize from given data */
-          Brick(const BrickInfo &info, const float *data);
+          Brick(const BrickInfo &info, const DataT<float> &data);
 
           /* world bounds, including entire cells, and including
              level-specific cell width. ie, at root level cell width of
@@ -62,7 +62,7 @@ namespace openvkl {
           box3f worldBounds;
 
           //! pointer to the actual data values stored in this brick
-          const float *value{nullptr};
+          const ispc::Data1D *value{nullptr};
           //! dimensions of this box's data
           vec3i dims;
           //! scale factor from grid space to world space (ie,1.f/cellWidth)

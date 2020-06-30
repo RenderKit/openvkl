@@ -12,12 +12,12 @@ namespace openvkl {
 
       /*! initialize an internal brick representation from input
           brickinfo and corresponding input data pointer */
-      AMRData::Brick::Brick(const BrickInfo &info, const float *data)
+      AMRData::Brick::Brick(const BrickInfo &info, const DataT<float> &data)
       {
         this->box       = info.box;
         this->level     = info.level;
         this->cellWidth = info.cellWidth;
-        this->value     = data;
+        this->value     = ispc(data);
         this->dims      = this->box.size() + vec3i(1);
         this->f_dims    = vec3f(this->dims);
 
@@ -44,7 +44,7 @@ namespace openvkl {
           blockInfo.box       = blockBounds[i];
           blockInfo.level     = refinementLevels[i];
           blockInfo.cellWidth = cellWidths[refinementLevels[i]];
-          brick.emplace_back(blockInfo, blockDataData[i]->as<float>().data());
+          brick.emplace_back(blockInfo, blockDataData[i]->as<float>());
         }
       }
 

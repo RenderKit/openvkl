@@ -410,12 +410,11 @@ namespace openvkl {
      * The tree must be fully initialized before calling this!
      * This function takes into account filter radius.
      */
-    void computeValueRangesFloat(
-        const std::vector<vec3ui> &leafOffsets,
-        const DataT<uint32_t> &leafLevel,
-        const DataT<uint32_t> &leafFormat,
-        const DataT<Data *> &leafData,
-        VdbGrid *grid)
+    void computeValueRangesFloat(const std::vector<vec3ui> &leafOffsets,
+                                 const DataT<uint32_t> &leafLevel,
+                                 const DataT<uint32_t> &leafFormat,
+                                 const DataT<Data *> &leafData,
+                                 VdbGrid *grid)
     {
       // The value range computation is a big part of commit() cost. We
       // do it in parallel to make up for that as much as possible.
@@ -552,6 +551,38 @@ namespace openvkl {
             "node.level, node.origin, node.format, and node.data must all have "
             "the same size");
       }
+
+      tasking::parallel_for(numLeaves, [&](size_t i) {
+        const uint32_t level = (*leafLevel)[i];
+        if (level >= vklVdbNumLevels()) {
+          runtimeError(
+              "invalid node level ", level, " for this vdb configuration");
+        }
+
+        const VKLFormat format = static_cast<VKLFormat>((*leafFormat)[i]);
+        const uint32_t size = (*leafData)[i]->size();
+
+        if (format == VKL_FORMAT_INVALID)
+          runtimeError("invalid format specified");
+
+        if (format == VKL_FORMAT_TILE && size < 1)
+          runtimeError("no voxel data for tile node");
+
+        if (format == VKL_FORMAT_TILE && size > 1)
+        {
+          LogMessageStream(VKL_LOG_WARNING)
+              << "data array too big for tile node" << std::endl;
+        }
+
+        if (format == VKL_FORMAT_CONSTANT_ZYX && size < vklVdbLevelNumVoxels(level))
+          runtimeError("data array too small for constant node");
+
+        if (format == VKL_FORMAT_CONSTANT_ZYX && size > vklVdbLevelNumVoxels(level))
+        {
+          LogMessageStream(VKL_LOG_WARNING)
+              << "data array too big for constant node" << std::endl;
+        }
+      });
 
       grid       = allocate<VdbGrid>(1, bytesAllocated);
       grid->type = type;

@@ -19,6 +19,67 @@ static void init_driver()
 using openvkl::testing::WaveletVdbVolume;
 using openvkl::testing::XYZVdbVolume;
 
+TEST_CASE("VDB volume leaf validation", "[validation]")
+{
+  init_driver();
+  VKLVolume volume = vklNewVolume("vdb");
+
+  const uint32_t level = vklVdbNumLevels()-1;
+  const VKLFormat format = VKL_FORMAT_CONSTANT_ZYX;
+  const vec3i origin = vec3i(0,0,0);
+
+  std::vector<float> voxels(vklVdbLevelNumVoxels(level));
+
+  SECTION("Invalid level")
+  {
+    VKLData data = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+    uint32_t invLevel = vklVdbNumLevels();
+    VKLData levelData = vklNewData(1, VKL_UINT, &invLevel);
+    vklSetData(volume, "node.level", levelData);
+    vklRelease(levelData);
+    VKLData originData = vklNewData(1, VKL_VEC3I, &origin);
+    vklSetData(volume, "node.origin", originData);
+    vklRelease(originData);
+    VKLData formatData = vklNewData(1, VKL_UINT, &format);
+    vklSetData(volume, "node.format", formatData);
+    vklRelease(formatData);
+    VKLData dataData = vklNewData(1, VKL_DATA, &data);
+    vklSetData(volume, "node.data", dataData);
+    vklRelease(dataData);
+    vklRelease(data);
+
+    vklCommit(volume);
+    REQUIRE(vklDriverGetLastErrorCode(vklGetCurrentDriver()) == 1);
+    REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver()))
+        == "invalid node level 4 for this vdb configuration");
+  }
+
+  SECTION("Constant data too small")
+  {
+    VKLData data = vklNewData(1, VKL_FLOAT, voxels.data());
+    VKLData levelData = vklNewData(1, VKL_UINT, &level);
+    vklSetData(volume, "node.level", levelData);
+    vklRelease(levelData);
+    VKLData originData = vklNewData(1, VKL_VEC3I, &origin);
+    vklSetData(volume, "node.origin", originData);
+    vklRelease(originData);
+    VKLData formatData = vklNewData(1, VKL_UINT, &format);
+    vklSetData(volume, "node.format", formatData);
+    vklRelease(formatData);
+    VKLData dataData = vklNewData(1, VKL_DATA, &data);
+    vklSetData(volume, "node.data", dataData);
+    vklRelease(dataData);
+    vklRelease(data);
+
+    vklCommit(volume);
+    REQUIRE(vklDriverGetLastErrorCode(vklGetCurrentDriver()) == 1);
+    REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver()))
+        == "data array too small for constant node");
+  }
+
+  vklRelease(volume);
+}
+
 TEST_CASE("VDB volume value range", "[value_range]")
 {
   init_driver();

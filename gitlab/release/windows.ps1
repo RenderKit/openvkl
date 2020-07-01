@@ -8,7 +8,7 @@ $ROOT_DIR = pwd
 $DEP_BUILD_DIR = "$ROOT_DIR\build_deps"
 $DEP_INSTALL_DIR = "$ROOT_DIR\install_deps"
 
-$OPENVKL_PKG_BASE = "openvkl-0.9.0.x86_64.windows"
+$OPENVKL_PKG_BASE = "openvkl-0.10.0.x86_64.windows"
 $OPENVKL_BUILD_DIR = "$ROOT_DIR/build_release"
 $OPENVKL_INSTALL_DIR = "$ROOT_DIR/install_release/$OPENVKL_PKG_BASE"
 

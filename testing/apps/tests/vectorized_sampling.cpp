@@ -5,18 +5,20 @@
 #include "../../external/catch.hpp"
 #include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 template <typename VOLUME_TYPE>
 void test_vectorized_sampling()
 {
   auto v =
-      ospcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
+      rkcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   SECTION("randomized vectorized sampling varying calling width and masks")
   {
@@ -54,18 +56,18 @@ void test_vectorized_sampling()
 
         if (callingWidth == 4) {
           vklComputeSample4(valid.data(),
-                            vklVolume,
+                            vklSampler,
                             (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                             samples);
         } else if (callingWidth == 8) {
           vklComputeSample8(valid.data(),
-                            vklVolume,
+                            vklSampler,
                             (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                             samples);
 
         } else if (callingWidth == 16) {
           vklComputeSample16(valid.data(),
-                             vklVolume,
+                             vklSampler,
                              (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                              samples);
         } else {
@@ -74,7 +76,7 @@ void test_vectorized_sampling()
 
         for (int i = 0; i < width; i++) {
           float sampleTruth = vklComputeSample(
-              vklVolume, (const vkl_vec3f *)&objectCoordinates[i]);
+              vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
 
           INFO("sample = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);
@@ -83,6 +85,7 @@ void test_vectorized_sampling()
       }
     }
   }
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Vectorized sampling", "[volume_sampling]")

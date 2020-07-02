@@ -5,7 +5,7 @@ add_library(openvkl_testing INTERFACE)
 
 target_link_libraries(openvkl_testing INTERFACE
   openvkl
-  ospcommon::ospcommon
+  rkcommon::rkcommon
   openvkl_vdb_util
 )
 

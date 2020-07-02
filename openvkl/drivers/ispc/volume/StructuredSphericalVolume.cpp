@@ -74,7 +74,7 @@ namespace openvkl {
 
       bool success = CALL_ISPC(SharedStructuredVolume_set,
                                this->ispcEquivalent,
-                               this->voxelData->data,
+                               ispc(this->voxelData),
                                this->voxelData->dataType,
                                (const ispc::vec3i &)this->dimensions,
                                ispc::structured_spherical,

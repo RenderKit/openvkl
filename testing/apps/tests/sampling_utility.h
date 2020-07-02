@@ -7,13 +7,13 @@
 #include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
 
-inline void test_scalar_and_vector_sampling(VKLVolume volume,
+inline void test_scalar_and_vector_sampling(VKLSampler sampler,
                                             const vec3f &objectCoordinates,
                                             const float sampleTruth,
                                             const float sampleTolerance)
 {
   float scalarSampledValue =
-      vklComputeSample(volume, (const vkl_vec3f *)&objectCoordinates);
+      vklComputeSample(sampler, (const vkl_vec3f *)&objectCoordinates);
 
   REQUIRE(scalarSampledValue == Approx(sampleTruth).margin(sampleTolerance));
 
@@ -34,21 +34,21 @@ inline void test_scalar_and_vector_sampling(VKLVolume volume,
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
   float samples_4[4]   = {0.f};
   vklComputeSample4(valid.data(),
-                    volume,
+                    sampler,
                     (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                     samples_4);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
   float samples_8[8]   = {0.f};
   vklComputeSample8(valid.data(),
-                    volume,
+                    sampler,
                     (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                     samples_8);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   float samples_16[16] = {0.f};
   vklComputeSample16(valid.data(),
-                     volume,
+                     sampler,
                      (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                      samples_16);
 

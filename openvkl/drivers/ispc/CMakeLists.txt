@@ -51,14 +51,19 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/amr/method_current.ispc
     volume/amr/method_finest.ispc
     volume/amr/method_octant.ispc
+    volume/particle/ParticleVolume.cpp
+    volume/particle/ParticleVolume.ispc
     volume/GridAccelerator.ispc
     volume/SharedStructuredVolume.ispc
+    volume/StructuredVolume.cpp
     volume/StructuredRegularVolume.cpp
     volume/StructuredSphericalVolume.cpp
     volume/UnstructuredVolume.cpp
     volume/UnstructuredVolume.ispc
+    volume/Volume.ispc
     volume/vdb/VdbVolume.cpp
     volume/vdb/VdbVolume.ispc
+    volume/vdb/VdbSampler.cpp
     volume/vdb/VdbSampler.ispc
     volume/vdb/VdbIterator.cpp
     volume/vdb/VdbIterator.ispc
@@ -96,7 +101,7 @@ foreach(TARGET_WIDTH 4 8 16)
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
-      ospcommon::ospcommon
+      rkcommon::rkcommon
     PRIVATE
       embree
   )
@@ -105,23 +110,6 @@ foreach(TARGET_WIDTH 4 8 16)
 
   # accumulate targets to be linked into single shared library
   list(APPEND ACTIVE_WIDTH_TARGETS ${TARGET_NAME})
-
-  if (NOT WIN32 AND VKL_BUILD_VDB_ITERATOR_SIZE_HELPER)
-    # A helper that makes it easy to find out how big the vdb iterator is in ISPC
-    # for the various target widths.
-    add_executable(vklVdbIteratorSize${TARGET_WIDTH}
-      volume/vdb/iterator_size.cpp
-      ${VKL_RESOURCE})
-    target_compile_definitions(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE
-       "VKL_TARGET_WIDTH=${TARGET_WIDTH}")
-    target_include_directories(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE
-      PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-        $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
-    )
-    target_link_libraries(vklVdbIteratorSize${TARGET_WIDTH} PRIVATE ${TARGET_NAME})
-  endif()
-
 
 endforeach(TARGET_WIDTH)
 

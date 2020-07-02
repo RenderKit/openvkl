@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,9 +16,6 @@ struct AMRVolume
   uniform float samplingStep;
 
   AMR amr;
-
-  varying vec3f (*uniform computeGradient)(
-      const void *uniform _self, const varying vec3f &worldCoordinates);
 
   //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSampleLevel)(

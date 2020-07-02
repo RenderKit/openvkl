@@ -3,8 +3,9 @@
 ## SPDX-License-Identifier: Apache-2.0
 
 export ROOT_DIR=`pwd`
+export DEP_INSTALL_DIR="${ROOT_DIR}/build/install"
 
-export openvkl_DIR="${ROOT_DIR}/build/install/lib/cmake"
+export openvkl_DIR=${DEP_INSTALL_DIR}
 
 mkdir build_from_install
 cd build_from_install
@@ -17,3 +18,4 @@ cmake \
 cmake --build .
 
 ./vklTutorial
+./vklTutorialLinkISPCDriver

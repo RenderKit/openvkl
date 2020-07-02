@@ -6,16 +6,16 @@
 #include <vector>
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
-#include "ospcommon/math/AffineSpace.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/vec.h"
 
 namespace openvkl {
   namespace vdb_util {
 
-    using vec3i         = ospcommon::math::vec3i;
-    using vec3f         = ospcommon::math::vec3f;
-    using AffineSpace3f = ospcommon::math::AffineSpace3f;
-    using LinearSpace3f = ospcommon::math::LinearSpace3f;
+    using vec3i         = rkcommon::math::vec3i;
+    using vec3f         = rkcommon::math::vec3f;
+    using AffineSpace3f = rkcommon::math::AffineSpace3f;
+    using LinearSpace3f = rkcommon::math::LinearSpace3f;
 
     /*
      * These are all the buffers we need. We will create VKLData objects
@@ -49,10 +49,10 @@ namespace openvkl {
       std::vector<vec3i> origin;
 
       /*
-       * The node format. This can be VKL_VDB_FORMAT_TILE or
-       * VKL_VDB_FORMAT_CONSTANT at this point.
+       * The node format. This can be VKL_FORMAT_TILE or
+       * VKL_FORMAT_CONSTANT_ZYX at this point.
        */
-      std::vector<VKLVdbLeafFormat> format;
+      std::vector<VKLFormat> format;
 
       /*
        * The actual node data. Tiles have exactly one value,
@@ -151,7 +151,7 @@ namespace openvkl {
         const size_t index = numNodes();
         this->level.push_back(level);
         this->origin.push_back(origin);
-        format.push_back(VKL_VDB_FORMAT_TILE);
+        format.push_back(VKL_FORMAT_TILE);
         data.push_back(vklNewData(1, FieldType, ptr, VKL_DATA_DEFAULT));
         return index;
       }
@@ -163,14 +163,15 @@ namespace openvkl {
       size_t addConstant(uint32_t level,
                          const vec3i &origin,
                          const void *ptr,
-                         VKLDataCreationFlags flags)
+                         VKLDataCreationFlags flags,
+                         size_t byteStride = 0)
       {
         const size_t index = numNodes();
         this->level.push_back(level);
         this->origin.push_back(origin);
-        format.push_back(VKL_VDB_FORMAT_INVALID);
+        format.push_back(VKL_FORMAT_INVALID);
         data.push_back(nullptr);
-        makeConstant(index, ptr, flags);
+        makeConstant(index, ptr, flags, byteStride);
         return index;
       }
 
@@ -180,13 +181,17 @@ namespace openvkl {
        */
       void makeConstant(size_t index,
                         const void *ptr,
-                        VKLDataCreationFlags flags)
+                        VKLDataCreationFlags flags,
+                        size_t byteStride = 0)
       {
         if (data.at(index))
           vklRelease(data.at(index));
-        data.at(index) = vklNewData(
-            vklVdbLevelNumVoxels(level.at(index)), FieldType, ptr, flags);
-        format.at(index) = VKL_VDB_FORMAT_CONSTANT;
+        data.at(index)   = vklNewData(vklVdbLevelNumVoxels(level.at(index)),
+                                    FieldType,
+                                    ptr,
+                                    flags,
+                                    byteStride);
+        format.at(index) = VKL_FORMAT_CONSTANT_ZYX;
       }
 
       /*
@@ -195,13 +200,13 @@ namespace openvkl {
       VKLVolume createVolume(VKLFilter filter) const
       {
         VKLVolume volume = vklNewVolume("vdb");
-        vklSetInt(volume, "type", FieldType);
         vklSetInt(volume, "filter", filter);
         vklSetInt(volume, "maxSamplingDepth", vklVdbNumLevels() - 1);
         vklSetInt(volume, "maxIteratorDepth", 3);
-        vklSetData(volume,
-                   "indexToObject",
-                   vklNewData(12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT));
+
+        VKLData transformData = vklNewData(12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
+        vklSetData(volume, "indexToObject", transformData);
+        vklRelease(transformData);
 
         // Create the data buffer from our pointers.
         const size_t numNodes = level.size();
@@ -211,22 +216,21 @@ namespace openvkl {
         //       object can change safely, including replacing leaf data.
         //       This also means that the VdbVolumeBuffers object can be
         //       destroyed after creating the volume.
-        vklSetData(
-            volume,
-            "level",
-            vklNewData(numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT));
-        vklSetData(
-            volume,
-            "origin",
-            vklNewData(numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT));
-        vklSetData(
-            volume,
-            "format",
-            vklNewData(numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT));
-        vklSetData(
-            volume,
-            "data",
-            vklNewData(numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT));
+        VKLData levelData = vklNewData(numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "node.level", levelData);
+        vklRelease(levelData);
+
+        VKLData originData = vklNewData(numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "node.origin", originData);
+        vklRelease(originData);
+
+        VKLData formatData = vklNewData(numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "node.format", formatData);
+        vklRelease(formatData);
+
+        VKLData dataData = vklNewData(numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
+        vklSetData(volume, "node.data", dataData);
+        vklRelease(dataData);
 
         vklCommit(volume);
         return volume;

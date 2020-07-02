@@ -14,7 +14,7 @@
 #include <memory>
 #include <random>
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 using namespace openvkl::examples;
 
@@ -149,14 +149,15 @@ void usage(const char *progname)
                " ray_march_iterator\n"
                "\t-disable-vsync\n"
                "\t-gridType structuredRegular | structuredSpherical | "
-               "unstructured | amr | vdb\n"
+               "unstructured | amr | vdb | particle\n"
                "\t-gridOrigin <x> <y> <z>\n"
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
-               "\t-file <float.raw>\n"
+               "\t-file <filename>\n"
                "\t-filter nearest | trilinear (vdb only)\n"
                "\t-field <density> (vdb only)\n"
+               "\t-numParticles <N> (particle only)\n"
             << std::endl;
 }
 
@@ -165,16 +166,19 @@ int main(int argc, const char **argv)
   std::string rendererType("density_pathtracer");
   std::string gridType("structuredRegular");
   vec3i dimensions(128);
-  vec3f gridOrigin(ospcommon::nan);
-  vec3f gridSpacing(ospcommon::nan);
+  vec3f gridOrigin(rkcommon::nan);
+  vec3f gridSpacing(rkcommon::nan);
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
   std::string filename;
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
+  VKLFilter gradientFilter(VKL_FILTER_TRILINEAR);
+  int maxSamplingDepth(VKL_VDB_NUM_LEVELS-1);
   bool haveFilter(false);
   bool haveVdb(false);
   std::string field("density");
+  size_t numParticles(1000);
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -264,6 +268,9 @@ int main(int argc, const char **argv)
         filter = VKL_FILTER_NEAREST;
       else
         throw std::runtime_error("unsupported -filter specified");
+      gradientFilter = filter;
+    } else if (switchArg == "-numParticles") {
+      numParticles = std::stoul(argv[argIndex++]);
     } else if (switchArg == "-renderer") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -renderer arguments");
@@ -377,14 +384,24 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "amr") {
-      testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
-          new ProceduralShellsAMRVolume<>(dimensions, gridOrigin, gridSpacing));
+      if (voxelType == VKL_FLOAT) {
+        testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
+            new ProceduralShellsAMRVolume<>(
+                dimensions, gridOrigin, gridSpacing));
+      } else {
+        throw std::runtime_error(
+            "cannot create procedural AMR volume for non-float voxel type");
+      }
     }
 
     else if (gridType == "vdb") {
       testingVolume = std::make_shared<WaveletVdbVolume>(
           dimensions, gridOrigin, gridSpacing, filter);
       haveVdb = true;
+    }
+
+    else if (gridType == "particle") {
+      testingVolume = std::make_shared<ProceduralParticleVolume>(numParticles);
     }
 
     else {
@@ -400,7 +417,11 @@ int main(int argc, const char **argv)
   Scene scene;
   TransferFunction transferFunction;
   std::vector<float> isoValues;
-  scene.volume = testingVolume->getVKLVolume();
+  scene.updateVolume(testingVolume->getVKLVolume());
+  vklSetInt(scene.sampler, "filter", filter);
+  vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
+  vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+  vklCommit(scene.sampler);
 
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
@@ -416,7 +437,7 @@ int main(int argc, const char **argv)
             << bbox.lower.z << ") -> (" << bbox.upper.x << ", " << bbox.upper.y
             << ", " << bbox.upper.z << ")" << std::endl;
 
-  auto glfwVKLWindow = ospcommon::make_unique<GLFWVKLWindow>(
+  auto glfwVKLWindow = rkcommon::make_unique<GLFWVKLWindow>(
       vec2i{1024, 1024}, scene, rendererType, disableVSync);
 
   glfwVKLWindow->registerImGuiCallback([&]() {
@@ -442,6 +463,45 @@ int main(int argc, const char **argv)
       }
 
       glfwVKLWindow->setActiveRenderer(rendererType);
+    }
+
+    // filter and maxSamplingDepth parameters currently only apply to VDB
+    // volumes
+    if (gridType == "vdb") {
+      static int whichFilter = (filter == VKL_FILTER_NEAREST ? 0 : 1);
+      static int whichGradientFilter = (gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
+      if (ImGui::Combo("filter", &whichFilter, "nearest\0trilinear\0\0") ||
+          ImGui::Combo("gradientFilter", &whichGradientFilter, "nearest\0trilinear\0\0") ||
+          ImGui::SliderInt("maxSamplingDepth",
+                           &maxSamplingDepth,
+                           0,
+                           VKL_VDB_NUM_LEVELS - 1)) {
+        switch (whichFilter) {
+        case 0:
+          filter = VKL_FILTER_NEAREST;
+          break;
+        case 1:
+          filter = VKL_FILTER_TRILINEAR;
+          break;
+        default:
+          break;
+        }
+        vklSetInt(scene.sampler, "filter", filter);
+        switch (whichGradientFilter) {
+        case 0:
+          gradientFilter = VKL_FILTER_NEAREST;
+          break;
+        case 1:
+          gradientFilter = VKL_FILTER_TRILINEAR;
+          break;
+        default:
+          break;
+        }
+        vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
+        vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+        vklCommit(scene.sampler);
+        changed = true;
+      }
     }
 
     static int useISPC = 1;
@@ -496,7 +556,11 @@ int main(int argc, const char **argv)
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
     auto vdbVolume = std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
     if (vdbVolume && vdbVolume->updateVolume()) {
-      scene.volume = testingVolume->getVKLVolume();
+      scene.updateVolume(testingVolume->getVKLVolume());
+      vklSetInt(scene.sampler, "filter", filter);
+      vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
+      vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+      vklCommit(scene.sampler);
       scene.updateValueSelector(transferFunction, isoValues);
       glfwVKLWindow->resetAccumulation();
     }

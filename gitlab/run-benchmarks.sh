@@ -12,8 +12,7 @@ source ~/system_token.sh
 # benchmark configuration
 SOURCE_ROOT=`pwd`
 PROJECT_NAME="Open VKL"
-BENCHMARK_MIN_TIME_SECONDS=10
-BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS}"
+BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10}"
 
 export LD_LIBRARY_PATH=`pwd`/build/install/lib:${LD_LIBRARY_PATH}
 
@@ -70,6 +69,11 @@ SUITE_NAME="VDBVolume"
 
 SUBSUITE_NAME="Sampling"
 SUBSUITE_REGEX="Sample"
+./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
+SUBSUITE_NAME="Gradients"
+SUBSUITE_REGEX="Gradient"
 ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 

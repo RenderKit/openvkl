@@ -1,7 +1,7 @@
 // Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../../iterator/Iterator.ih"
+#include "../../iterator/DefaultIterator.ih"
 #include "value_selector/ValueSelector.ih"
 #include "Dda.ih"
 #include "VdbGrid.h"
@@ -15,10 +15,13 @@ struct ValueSelector;
 
 struct VdbIterator
 {
+  /* Enable the default hit iterator. */
+  IterateIntervalFunc iterateInterval;
+
   vkl_uint64 nodeIndex[VDB_ITERATOR_MAX_LEVELS];
   DdaLevelState ddaLevelState[VDB_ITERATOR_MAX_LEVELS];
   DdaSegmentState ddaSegmentState[VDB_ITERATOR_MAX_LEVELS];
-  Interval currentInterval;
+  float nominalDeltaT;  // constant for all intervals
   DdaRayState ddaRayState;
   vkl_uint32 currentLevel;
   uniform vkl_uint32 numLevels;

@@ -1,48 +1,76 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../Volume.h"
+#include "../../iterator/Iterator.h"
+#include "../../iterator/DefaultIterator.h"
 #include "AMRAccel.h"
-#include "ospcommon/memory/RefCount.h"
+#include "rkcommon/memory/RefCount.h"
 
-using namespace ospcommon::memory;
+using namespace rkcommon::memory;
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
+    using AmrIntervalIteratorFactory =
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                DefaultIntervalIterator>;
+
+    template <int W>
+    using AmrHitIterator = DefaultHitIterator<W, DefaultIntervalIterator<W>>;
+
+    template <int W>
+    using AmrHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, AmrHitIterator>;
+
+
+    template <int W>
     struct AMRVolume : public Volume<W>
     {
       AMRVolume();
-      ~AMRVolume() override = default;
+      ~AMRVolume() override;
 
       std::string toString() const override;
 
       void commit() override;
 
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
+      Sampler<W> *newSampler() override;
+
       box3f getBoundingBox() const override;
       range1f getValueRange() const override;
 
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 
-      Ref<Data> blockDataData;
-      Ref<Data> blockBoundsData;
-      Ref<Data> refinementLevelsData;
-      Ref<Data> cellWidthsData;
+      Ref<const DataT<Data *>> blockDataData;
+      Ref<const DataT<box3i>> blockBoundsData;
+      Ref<const DataT<int>> refinementLevelsData;
+      Ref<const DataT<float>> cellWidthsData;
       VKLDataType voxelType;
       range1f valueRange{empty};
       box3f bounds;
 
       VKLAMRMethod amrMethod;
+
+      const IteratorFactory<W, IntervalIterator>
+          &getIntervalIteratorFactory() const override final
+      {
+        return intervalIteratorFactory;
+      }
+
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
+
+     private:
+      AmrIntervalIteratorFactory<W> intervalIteratorFactory;
+      AmrHitIteratorFactory<W> hitIteratorFactory;
     };
 
   }  // namespace ispc_driver

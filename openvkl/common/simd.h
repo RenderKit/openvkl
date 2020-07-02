@@ -3,8 +3,10 @@
 
 #pragma once
 
+#include "Traits.h"
 #include "openvkl/openvkl.h"
-#include "ospcommon/platform.h"
+#include "rkcommon/math/vec.h"
+#include "rkcommon/platform.h"
 
 namespace openvkl {
 
@@ -36,20 +38,18 @@ namespace openvkl {
     return W < 4 ? 8 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
-  constexpr int iterator_internal_state_size_for_width(int W)
-  {
-    return W < 4 ? ITERATOR_INTERNAL_STATE_SIZE
-                 : (W < 8 ? ITERATOR_INTERNAL_STATE_SIZE_4
-                          : (W < 16 ? ITERATOR_INTERNAL_STATE_SIZE_8
-                                    : ITERATOR_INTERNAL_STATE_SIZE_16));
-  }
-
   template <int W>
   struct alignas(simd_alignment_for_width(W)) vfloatn
   {
     float v[W];
 
     vfloatn<W>() = default;
+
+    vfloatn<W>(float _v)
+    {
+      static_assert(W == 1, "scalar constructor only valid for W=1");
+      v[0] = _v;
+    }
 
     float &operator[](std::size_t index)
     {
@@ -151,6 +151,19 @@ namespace openvkl {
 
     vvec3fn<W>(const vvec3fn<W> &v) : x(v.x), y(v.y), z(v.z) {}
 
+    vvec3fn<W>(const vfloatn<W> &x, const vfloatn<W> &y, const vfloatn<W> &z)
+        : x(x), y(y), z(z)
+    {
+    }
+
+    vvec3fn<W>(const rkcommon::math::vec3f &v)
+    {
+      static_assert(W == 1, "vec3f constructor only valid for W=1");
+      x[0] = v.x;
+      y[0] = v.y;
+      z[0] = v.z;
+    }
+
     template <int OW>
     explicit operator vvec3fn<OW>() const
     {
@@ -199,151 +212,26 @@ namespace openvkl {
   };
 
   template <int W>
-  struct alignas(simd_alignment_for_width_promote_scalar(W))
-      vVKLIntervalIteratorN
-  {
-    alignas(simd_alignment_for_width_promote_scalar(
-        W)) char internalState[iterator_internal_state_size_for_width(W)];
-    VKLVolume volume;
-
-    vVKLIntervalIteratorN<W>() = default;
-
-    vVKLIntervalIteratorN<W>(const vVKLIntervalIteratorN<W> &v)
-        : volume(v.volume)
-    {
-      memcpy(internalState,
-             v.internalState,
-             iterator_internal_state_size_for_width(W));
-    }
-
-    // vVKLIntervalIteratorN<1> is maximally sized and aligned, so can hold
-    // internal state for any other iterator width; this is to support execution
-    // of the scalar APIs through the native vector-wide implementation.
-    // therefore we allow conversion between width=1 and any other width.
-    //
-    // scalar (width 1) => any width conversion; only the internalState member
-    // should be used in the result
-    template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
-    explicit operator vVKLIntervalIteratorN<W2> *()
-    {
-      static_assert(alignof(vVKLIntervalIteratorN<W2>) <=
-                        alignof(vVKLIntervalIteratorN<W>),
-                    "vVKLIntervalIteratorN<W> is not sufficiently aligned to "
-                    "represent vVKLIntervalIteratorN<W2>");
-
-      static_assert(iterator_internal_state_size_for_width(W2) <=
-                        iterator_internal_state_size_for_width(W),
-                    "vVKLIntervalIteratorN<W2> is larger than source type");
-
-      return reinterpret_cast<vVKLIntervalIteratorN<W2> *>(this);
-    }
-  };
-
-  template <int W>
   struct alignas(simd_alignment_for_width(W)) vVKLIntervalN
   {
     vrange1fn<W> tRange;
     vrange1fn<W> valueRange;
     vfloatn<W> nominalDeltaT;
 
-    vVKLIntervalN<W>() = default;
+    vVKLIntervalN<W>()
+    {
+      using VKLIntervalW = typename vklPublicWideTypes<W>::VKLIntervalW;
+      static_assert(sizeof(vVKLIntervalN<W>) == sizeof(VKLIntervalW),
+                    "incompatible with corresponding public wide type");
+      static_assert(alignof(vVKLIntervalN<W>) == alignof(VKLIntervalW),
+                    "incompatible with corresponding public wide type");
+    }
 
     vVKLIntervalN<W>(const vVKLIntervalN<W> &v)
         : tRange(v.tRange),
           valueRange(v.valueRange),
           nominalDeltaT(v.nominalDeltaT)
     {
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    void populateVKLInterval(VKLInterval &interval) const
-    {
-      interval.tRange.lower     = tRange.lower[0];
-      interval.tRange.upper     = tRange.upper[0];
-      interval.valueRange.lower = valueRange.lower[0];
-      interval.valueRange.upper = valueRange.upper[0];
-      interval.nominalDeltaT    = nominalDeltaT[0];
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    void populateVKLInterval4(VKLInterval4 &interval, const int *valid) const
-    {
-      for (int i = 0; i < 4; i++) {
-        if (valid[i]) {
-          interval.tRange.lower[i]     = tRange.lower[i];
-          interval.tRange.upper[i]     = tRange.upper[i];
-          interval.valueRange.lower[i] = valueRange.lower[i];
-          interval.valueRange.upper[i] = valueRange.upper[i];
-          interval.nominalDeltaT[i]    = nominalDeltaT[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    void populateVKLInterval8(VKLInterval8 &interval, const int *valid) const
-    {
-      for (int i = 0; i < 8; i++) {
-        if (valid[i]) {
-          interval.tRange.lower[i]     = tRange.lower[i];
-          interval.tRange.upper[i]     = tRange.upper[i];
-          interval.valueRange.lower[i] = valueRange.lower[i];
-          interval.valueRange.upper[i] = valueRange.upper[i];
-          interval.nominalDeltaT[i]    = nominalDeltaT[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    void populateVKLInterval16(VKLInterval16 &interval, const int *valid) const
-    {
-      for (int i = 0; i < 16; i++) {
-        if (valid[i]) {
-          interval.tRange.lower[i]     = tRange.lower[i];
-          interval.tRange.upper[i]     = tRange.upper[i];
-          interval.valueRange.lower[i] = valueRange.lower[i];
-          interval.valueRange.upper[i] = valueRange.upper[i];
-          interval.nominalDeltaT[i]    = nominalDeltaT[i];
-        }
-      }
-    }
-  };
-
-  template <int W>
-  struct alignas(simd_alignment_for_width_promote_scalar(W)) vVKLHitIteratorN
-  {
-    alignas(simd_alignment_for_width_promote_scalar(
-        W)) char internalState[iterator_internal_state_size_for_width(W)];
-    VKLVolume volume;
-
-    vVKLHitIteratorN<W>() = default;
-
-    vVKLHitIteratorN<W>(const vVKLHitIteratorN<W> &v) : volume(v.volume)
-    {
-      memcpy(internalState,
-             v.internalState,
-             iterator_internal_state_size_for_width(W));
-    }
-
-    // vVKLHitIteratorN<1> is maximally sized and aligned, so can hold internal
-    // state for any other iterator width; this is to support execution of the
-    // scalar APIs through the native vector-wide implementation. therefore we
-    // allow conversion between width=1 and any other width.
-    //
-    // scalar (width 1) => any width conversion; only the internalState member
-    // should be used in the result
-    template <int W2, typename = std::enable_if<(W == 1 && W2 != W)>>
-    explicit operator vVKLHitIteratorN<W2> *()
-    {
-      static_assert(
-          alignof(vVKLHitIteratorN<W2>) <= alignof(vVKLHitIteratorN<W>),
-          "vVKLHitIteratorN<W> is not sufficiently aligned to "
-          "represent vVKLHitIteratorN<W2>");
-
-      static_assert(iterator_internal_state_size_for_width(W2) <=
-                        iterator_internal_state_size_for_width(W),
-                    "vVKLHitIteratorN<W2> is larger than source type");
-
-      return reinterpret_cast<vVKLHitIteratorN<W2> *>(this);
     }
   };
 
@@ -352,50 +240,18 @@ namespace openvkl {
   {
     vfloatn<W> t;
     vfloatn<W> sample;
+    vfloatn<W> epsilon;
 
-    vVKLHitN<W>() = default;
+    vVKLHitN<W>()
+    {
+      using VKLHitW = typename vklPublicWideTypes<W>::VKLHitW;
+      static_assert(sizeof(vVKLHitN<W>) == sizeof(VKLHitW),
+                    "incompatible with corresponding public wide type");
+      static_assert(alignof(vVKLHitN<W>) == alignof(VKLHitW),
+                    "incompatible with corresponding public wide type");
+    }
 
     vVKLHitN<W>(const vVKLHitN<W> &v) : t(v.t), sample(v.sample) {}
-
-    template <int W2 = W, typename = std::enable_if<(W == 1)>>
-    void populateVKLHit(VKLHit &hit) const
-    {
-      hit.t      = t[0];
-      hit.sample = sample[0];
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 4)>>
-    void populateVKLHit4(VKLHit4 &hit, const int *valid) const
-    {
-      for (int i = 0; i < 4; i++) {
-        if (valid[i]) {
-          hit.t[i]      = t[i];
-          hit.sample[i] = sample[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 8)>>
-    void populateVKLHit8(VKLHit8 &hit, const int *valid) const
-    {
-      for (int i = 0; i < 8; i++) {
-        if (valid[i]) {
-          hit.t[i]      = t[i];
-          hit.sample[i] = sample[i];
-        }
-      }
-    }
-
-    template <int W2 = W, typename = std::enable_if<(W == 16)>>
-    void populateVKLHit16(VKLHit16 &hit, const int *valid) const
-    {
-      for (int i = 0; i < 16; i++) {
-        if (valid[i]) {
-          hit.t[i]      = t[i];
-          hit.sample[i] = sample[i];
-        }
-      }
-    }
   };
 
 }  // namespace openvkl

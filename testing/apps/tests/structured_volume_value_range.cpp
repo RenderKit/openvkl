@@ -1,11 +1,11 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 template <typename PROCEDURAL_VOLUME_TYPE>
@@ -20,7 +20,7 @@ void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
   PROCEDURAL_VOLUME_TYPE::generateGridParameters(
       dimensions, boundingBoxSize, gridOrigin, gridSpacing);
 
-  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+  auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();

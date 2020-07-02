@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
@@ -6,7 +6,7 @@
 #include "../common/simd.h"
 #include "openvkl_testing.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 using namespace openvkl;
 

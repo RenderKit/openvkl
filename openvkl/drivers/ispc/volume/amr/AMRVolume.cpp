@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.h"
-#include "../common/Data.h"
 #include "../../common/export_util.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "../common/Data.h"
+#include "AMRSampler.h"
+// rkcommon
+#include "rkcommon/tasking/parallel_for.h"
+#include "rkcommon/utility/getEnvVar.h"
 // ispc exports
 #include "AMRVolume_ispc.h"
 #include "method_current_ispc.h"
@@ -23,6 +24,14 @@ namespace openvkl {
     AMRVolume<W>::AMRVolume()
     {
       this->ispcEquivalent = CALL_ISPC(AMRVolume_create, this);
+    }
+
+    template <int W>
+    AMRVolume<W>::~AMRVolume()
+    {
+      if (this->ispcEquivalent) {
+        CALL_ISPC(AMRVolume_Destructor, this->ispcEquivalent);
+      }
     }
 
     template <int W>
@@ -47,26 +56,28 @@ namespace openvkl {
       if (data != nullptr)  // TODO: support data updates
         return;
 
-      blockBoundsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "block.bounds", nullptr);
-      if (blockBoundsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.bounds' array");
+      cellWidthsData  = this->template getParamDataT<float>("cellWidth");
+      blockBoundsData = this->template getParamDataT<box3i>("block.bounds");
+      refinementLevelsData = this->template getParamDataT<int>("block.level");
+      blockDataData        = this->template getParamDataT<Data *>("block.data");
 
-      refinementLevelsData =
-          (Data *)this->template getParam<ManagedObject::VKL_PTR>("block.level",
-                                                                  nullptr);
-      if (refinementLevelsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.level' array");
+      // determine voxelType from set of block data; they must all be the same
+      std::set<VKLDataType> blockDataTypes;
 
-      cellWidthsData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cellWidth", nullptr);
-      if (cellWidthsData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'cellWidth' array");
+      for (const auto &d : *blockDataData)
+        blockDataTypes.insert(d->dataType);
 
-      blockDataData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "block.data", nullptr);
-      if (blockDataData.ptr == nullptr)
-        throw std::runtime_error("amr volume must have 'block.data' array");
+      if (blockDataTypes.size() != 1)
+        throw std::runtime_error(
+            "all block.data entries must have same VKLDataType");
+
+      voxelType = *blockDataTypes.begin();
+
+      if (voxelType != VKL_FLOAT) {
+        throw std::runtime_error(
+            "AMR volume 'block.data' entries have invalid VKLDataType. Must be "
+            "VKL_FLOAT");
+      }
 
       // create the AMR data structure. This creates the logical blocks, which
       // contain the actual data and block-level metadata, such as cell width
@@ -82,47 +93,17 @@ namespace openvkl {
       // nodes, and parents have progressively lower resolution
       accel = make_unique<amr::AMRAccel>(*data);
 
-      float coarsestCellWidth = *std::max_element(
-          cellWidthsData->begin<float>(), cellWidthsData->end<float>());
+      float coarsestCellWidth =
+          *std::max_element(cellWidthsData->begin(), cellWidthsData->end());
 
       float samplingStep = 0.1f * coarsestCellWidth;
 
       bounds = accel->worldBounds;
 
-      const vec3f gridSpacing =
-          this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       const vec3f gridOrigin =
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
-
-      // determine voxelType from set of block data; they must all be the same
-      std::set<VKLDataType> blockDataTypes;
-
-      for (int i = 0; i < blockDataData->numItems; i++)
-        blockDataTypes.insert(((Data **)blockDataData->data)[i]->dataType);
-
-      if (blockDataTypes.size() != 1)
-        throw std::runtime_error(
-            "all block.data entries must have same VKLDataType");
-
-      voxelType = *blockDataTypes.begin();
-
-      switch (voxelType) {
-      case VKL_UCHAR:
-        break;
-      case VKL_SHORT:
-        break;
-      case VKL_USHORT:
-        break;
-      case VKL_FLOAT:
-        break;
-      case VKL_DOUBLE:
-        break;
-      default:
-        throw std::runtime_error(
-            "AMR volume 'block.data' entries have invalid VKLDataType. "
-            "must be one of: VKL_UCHAR, VKL_SHORT, "
-            "VKL_USHORT, VKL_FLOAT, VKL_DOUBLE");
-      }
+      const vec3f gridSpacing =
+          this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
 
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,
@@ -156,23 +137,9 @@ namespace openvkl {
     }
 
     template <int W>
-    void AMRVolume<W>::computeSampleV(const vintn<W> &valid,
-                                      const vvec3fn<W> &objectCoordinates,
-                                      vfloatn<W> &samples) const
+    Sampler<W> *AMRVolume<W>::newSampler()
     {
-      CALL_ISPC(AMRVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    void AMRVolume<W>::computeGradientV(const vintn<W> &valid,
-                                        const vvec3fn<W> &objectCoordinates,
-                                        vvec3fn<W> &gradients) const
-    {
-      THROW_NOT_IMPLEMENTED;
+      return new AMRSampler<W>(this);
     }
 
     template <int W>

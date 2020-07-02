@@ -23,8 +23,8 @@ static_assert((VKL_VDB_NUM_LEVELS == 4) && (VKL_VDB_LOG_RES_0 == 6) &&
 namespace openvkl {
   namespace vdb_util {
 
-    using vec3i = ospcommon::math::vec3i;
-    using vec3f = ospcommon::math::vec3f;
+    using vec3i = rkcommon::math::vec3i;
+    using vec3f = rkcommon::math::vec3f;
 
     /*
      * This class demonstrates how a float grid can be loaded from OpenVDB .vdb

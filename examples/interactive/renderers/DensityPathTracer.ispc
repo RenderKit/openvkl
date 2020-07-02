@@ -55,7 +55,7 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    sample        = vklComputeSampleV(scene->volume, (varying vkl_vec3f *)&c);
+    sample        = vklComputeSampleV(scene->sampler, (varying vkl_vec3f *)&c);
 
     const vec4f sampleColorAndOpacity =
         Renderer_sampleTransferFunction(scene, sample);

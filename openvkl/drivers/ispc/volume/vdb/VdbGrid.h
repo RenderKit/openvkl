@@ -42,14 +42,13 @@ struct VdbLevel
 struct VdbGrid
 {
   vkl_uint32 type;  // All voxels have this type.
-  VKLFilter filter;
-  vkl_uint32 maxSamplingDepth;
   vkl_uint32 maxIteratorDepth;
   float objectToIndex[12];    // Row-major transformation matrix, 3x4,
                               // rotation-shear-scale | translation
   float indexToObject[12];    // Row-major transformation matrix, 3x4,
                               // rotation-shear-scale | translation
   vkl_uint64 totalNumLeaves;  // The total number of leaf nodes in this tree.
+  bool allLeavesCompact;      // If all leaves have compact (non-strided) data
   vkl_uint64
       numLeaves[VKL_VDB_NUM_LEVELS];  // The number of leaf nodes per level.
   vkl_uint64 maxVoxelOffset;  // Used to select 64bit or 32bit traversal. TODO:
@@ -63,27 +62,40 @@ struct VdbGrid
 /*
  * Transform points and vectors with the given affine matrix (in row major
  * order).
+ *
+ * Note that xfmNormal takes the inverse matrix, as the normal transform matrix
+ * for a given matrix M is (M^{-1})^T.
  */
-#define __vkl_vdb_xfm_functions(univary)                      \
-  inline univary vec3f xfmVector(                             \
-      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M, \
-      const univary vec3f &p)                                 \
-  {                                                           \
-    univary vec3f r;                                          \
-    r.x = M[0] * p.x + M[1] * p.y + M[2] * p.z;               \
-    r.y = M[3] * p.x + M[4] * p.y + M[5] * p.z;               \
-    r.z = M[6] * p.x + M[7] * p.y + M[8] * p.z;               \
-    return r;                                                 \
-  }                                                           \
-  inline univary vec3f xfmPoint(                              \
-      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M, \
-      const univary vec3f &p)                                 \
-  {                                                           \
-    univary vec3f r = xfmVector(M, p);                        \
-    r.x             = r.x + M[9];                             \
-    r.y             = r.y + M[10];                            \
-    r.z             = r.z + M[11];                            \
-    return r;                                                 \
+#define __vkl_vdb_xfm_functions(univary)                         \
+  inline univary vec3f xfmVector(                                \
+      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M,    \
+      const univary vec3f &p)                                    \
+  {                                                              \
+    univary vec3f r;                                             \
+    r.x = M[0] * p.x + M[1] * p.y + M[2] * p.z;                  \
+    r.y = M[3] * p.x + M[4] * p.y + M[5] * p.z;                  \
+    r.z = M[6] * p.x + M[7] * p.y + M[8] * p.z;                  \
+    return r;                                                    \
+  }                                                              \
+  inline univary vec3f xfmNormal(                                \
+      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM MInv, \
+      const univary vec3f &p)                                    \
+  {                                                              \
+    univary vec3f r;                                             \
+    r.x = MInv[0] * p.x + MInv[3] * p.y + MInv[6] * p.z;         \
+    r.y = MInv[1] * p.x + MInv[4] * p.y + MInv[7] * p.z;         \
+    r.z = MInv[2] * p.x + MInv[5] * p.y + MInv[8] * p.z;         \
+    return r;                                                    \
+  }                                                              \
+  inline univary vec3f xfmPoint(                                 \
+      const VKL_INTEROP_UNIFORM float *VKL_INTEROP_UNIFORM M,    \
+      const univary vec3f &p)                                    \
+  {                                                              \
+    univary vec3f r = xfmVector(M, p);                           \
+    r.x             = r.x + M[9];                                \
+    r.y             = r.y + M[10];                               \
+    r.z             = r.z + M[11];                               \
+    return r;                                                    \
   }
 
 __vkl_interop_univary(__vkl_vdb_xfm_functions)
@@ -171,7 +183,7 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
   }                                                                            \
                                                                                \
   inline univary vkl_uint64 vklVdbVoxelMakeLeafPtr(                            \
-      const void *univary leafPtr, univary VKLVdbLeafFormat format)            \
+      const void *univary leafPtr, univary VKLFormat format)                   \
   {                                                                            \
     const univary vkl_uint64 intptr = ((univary vkl_uint64)leafPtr);           \
     assert((intptr & 0xFu) == 0); /* Require 16 Byte alignment! */             \
@@ -188,10 +200,10 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     return ((voxel & 0x3u) == 0x3u);                                           \
   }                                                                            \
                                                                                \
-  inline univary VKLVdbLeafFormat vklVdbVoxelLeafGetFormat(                    \
+  inline univary VKLFormat vklVdbVoxelLeafGetFormat(                           \
       univary vkl_uint32 voxel)                                                \
   {                                                                            \
-    return ((VKLVdbLeafFormat)((voxel >> 2) & 0x3u));                          \
+    return ((VKLFormat)((voxel >> 2) & 0x3u));                                 \
   }                                                                            \
   /* Leaf pointers are always 64 bit */                                        \
   inline const void *univary vklVdbVoxelLeafGetPtr(univary vkl_uint64 voxel)   \

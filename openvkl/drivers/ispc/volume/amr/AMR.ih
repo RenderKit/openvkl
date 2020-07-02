@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,6 +6,7 @@
 // ospray
 #include "math/box.ih"
 #include "openvkl/VKLDataType.h"
+#include "../common/Data.ih"
 // ours
 #include "KDTree.ih"
 
@@ -41,13 +42,11 @@ inline float min(float a, float b, float c, float d,
 /* --------------------------------------------------------------------------\
 // versions for pure 32-bit addressing. volume *MUST* be smaller than 2G     \
 // ------------------------------------------------------------------------*/\
-inline float AMR_getVoxel_##type##_32(void *varying data,                    \
+inline float AMR_getVoxel_##type##_32(Data1D *uniform data,                  \
                                      const varying uint32 index)             \
 {                                                                            \
-  /* Cast to the actual voxel type. */                                       \
-  const type *varying voxelData = (const type *varying)data;                 \
   /* The voxel value at the given index. */                                  \
-  return voxelData[index];                                                   \
+  return get_##type(*data, index);                                           \
 }                                                                            \
 
 template_AMR_getVoxel(uint8);
@@ -81,7 +80,7 @@ struct AMRBrick
      to the 'box' value, see above!) */
   box3f bounds;
   // pointer to the actual data values stored in this brick
-  float *value;
+  Data1D *value;
   // dimensions of this box's data
   vec3i dims;
   // scale factor from grid space to world space (ie,1.f/cellWidth)
@@ -133,8 +132,7 @@ struct AMR
   uniform VKLDataType voxelType;
 
   //! Voxel data accessor.
-//  void (*uniform getVoxel)(void *uniform volume, const varying vec3i &index, varying float &value);
-  float (*uniform getVoxel)(void *varying data, const varying uint32 index);
+  float (*uniform getVoxel)(Data1D *uniform data, const varying uint32 index);
 };
 
 inline float nextafter(const float f, const float s)

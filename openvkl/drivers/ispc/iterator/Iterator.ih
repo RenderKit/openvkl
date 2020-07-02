@@ -5,6 +5,7 @@
 
 #include "../volume/Volume.ih"
 #include "math/box.ih"
+#include "openvkl/iterator.isph"
 
 // this should match the layout of VKLInterval
 struct Interval
@@ -32,22 +33,21 @@ inline void resetInterval(uniform Interval &interval)
   interval.nominalDeltaT    = 0.f;
 }
 
-struct Hit
-{
-  float t;
-  float sample;
-};
+// use public VKLHit struct internally
+typedef VKLHit Hit;
 
-#define template_intersectSurfaces(univary)                                    \
-  inline univary bool intersectSurfaces(const Volume *uniform volume,          \
+/*
+ * Intersect isosurfaces along the given ray using Newton-Raphson iteration.
+ */
+#define template_intersectSurfacesNewton(univary)                              \
+  inline univary bool intersectSurfacesNewton(const Volume *uniform volume,    \
                                         const univary vec3f &origin,           \
                                         const univary vec3f &direction,        \
                                         const univary box1f &tRange,           \
                                         const uniform float step,              \
                                         const uniform int numValues,           \
                                         const float *uniform values,           \
-                                        univary Hit &hit,                      \
-                                        univary float &surfaceEpsilon)         \
+                                        univary Hit &hit)                      \
   {                                                                            \
     /* our bracketing sample t-values will always be in multiples of `step`,   \
     to avoid artifacts / differences in hits between neighboring rays, or when \
@@ -92,9 +92,9 @@ struct Hit
         }                                                                      \
                                                                                \
         if (tHit < inf) {                                                      \
-          hit.t          = tHit;                                               \
-          hit.sample     = value;                                              \
-          surfaceEpsilon = epsilon;                                            \
+          hit.t       = tHit;                                                  \
+          hit.sample  = value;                                                 \
+          hit.epsilon = epsilon;                                               \
           return true;                                                         \
         }                                                                      \
       }                                                                        \
@@ -106,6 +106,123 @@ struct Hit
     return false;                                                              \
   }
 
-template_intersectSurfaces(uniform);
-template_intersectSurfaces(varying);
-#undef template_intersectSurfaces
+template_intersectSurfacesNewton(uniform);
+template_intersectSurfacesNewton(varying);
+#undef template_intersectSurfacesNewton
+
+/*
+ * Intersect isosurfaces along the given ray using bisection method.
+ */
+
+#define template_intersectSurfacesBisection(univary)                          \
+  inline univary float bisect(const Volume *uniform volume,                   \
+                              const univary vec3f &origin,                    \
+                              const univary vec3f &direction,                 \
+                              univary float t0,                               \
+                              univary float sample0,                          \
+                              univary float t,                                \
+                              univary float sample,                           \
+                              uniform float isovalue,                         \
+                              univary float tol,                              \
+                              univary float &error)                           \
+  {                                                                           \
+    const uniform int maxIter = 10;                                           \
+                                                                              \
+    uniform int iter = 0;                                                     \
+    univary float tMid;                                                       \
+                                                                              \
+    while (iter < maxIter) {                                                  \
+      tMid = 0.5f * (t0 + t);                                                 \
+      univary float sampleMid =                                               \
+          volume->computeSample_##univary(volume, origin + tMid * direction); \
+                                                                              \
+      error = 0.5f * (t - t0);                                                \
+                                                                              \
+      if (sampleMid == isovalue || error < tol) {                             \
+        break;                                                                \
+      }                                                                       \
+                                                                              \
+      if ((isovalue - sample0) * (isovalue - sampleMid) < 0.f) {              \
+        /* crossing in (t0, tMid) */                                          \
+        t      = tMid;                                                        \
+        sample = sampleMid;                                                   \
+      } else if ((isovalue - sample) * (isovalue - sampleMid) < 0.f) {        \
+        t0      = tMid;                                                       \
+        sample0 = sampleMid;                                                  \
+      } else {                                                                \
+        print("bisect error\n");                                              \
+        break;                                                                \
+      }                                                                       \
+                                                                              \
+      iter++;                                                                 \
+    }                                                                         \
+                                                                              \
+    return tMid;                                                              \
+  }                                                                           \
+                                                                              \
+  inline univary bool intersectSurfacesBisection(                             \
+      const Volume *uniform volume,                                           \
+      const univary vec3f &origin,                                            \
+      const univary vec3f &direction,                                         \
+      const univary box1f &tRange,                                            \
+      const univary float step,                                               \
+      const uniform int numValues,                                            \
+      const float *uniform values,                                            \
+      univary Hit &hit)                                                       \
+  {                                                                           \
+    univary float t0 = tRange.lower;                                          \
+    univary float sample0 =                                                   \
+        volume->computeSample_##univary(volume, origin + t0 * direction);     \
+                                                                              \
+    univary float t;                                                          \
+                                                                              \
+    while (t0 < tRange.upper) {                                               \
+      t = min(t0 + step, tRange.upper);                                       \
+      const univary float sample =                                            \
+          volume->computeSample_##univary(volume, origin + t * direction);    \
+                                                                              \
+      univary float tHit    = inf;                                            \
+      univary float epsilon = inf;                                            \
+      univary float value   = inf;                                            \
+                                                                              \
+      for (uniform int i = 0; i < numValues; i++) {                           \
+        if (!isnan(sample0 + sample) &&                                       \
+            (values[i] - sample0) * (values[i] - sample) < 0.f) {             \
+          /* we have bracketed a crossing; bisect */                          \
+          univary float error;                                                \
+          univary float tIso = bisect(volume,                                 \
+                                      origin,                                 \
+                                      direction,                              \
+                                      t0,                                     \
+                                      sample0,                                \
+                                      t,                                      \
+                                      sample,                                 \
+                                      values[i],                              \
+                                      0.01f * step,                           \
+                                      error);                                 \
+                                                                              \
+          if (tIso < tHit) {                                                  \
+            tHit    = tIso;                                                   \
+            value   = values[i];                                              \
+            epsilon = 0.125f * step;                                          \
+          }                                                                   \
+        }                                                                     \
+      }                                                                       \
+                                                                              \
+      if (tHit < inf) {                                                       \
+        hit.t       = tHit;                                                   \
+        hit.sample  = value;                                                  \
+        hit.epsilon = epsilon;                                                \
+        return true;                                                          \
+      }                                                                       \
+                                                                              \
+      t0      = t;                                                            \
+      sample0 = sample;                                                       \
+    }                                                                         \
+                                                                              \
+    return false;                                                             \
+  }
+
+template_intersectSurfacesBisection(uniform);
+template_intersectSurfacesBisection(varying);
+#undef template_intersectSurfacesBisection

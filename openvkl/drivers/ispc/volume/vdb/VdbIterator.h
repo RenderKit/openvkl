@@ -3,49 +3,53 @@
 
 #pragma once
 
+#include "../../iterator/DefaultIterator.h"
 #include "../../iterator/Iterator.h"
 #include "VdbGrid.h"
+#include "VdbIterator_ispc.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct VdbVolume;
-
-    template <int W>
-    struct VdbIteratorSize;
-
-    /*
-     * This iterator implements a hierarchical Digital Differential Analyzer.
-     */
-    template <int W>
-    struct VdbIterator : public IteratorV<W>
+    struct VdbIntervalIterator : public IntervalIterator<W>
     {
-      VdbIterator()  = default;
-      ~VdbIterator() = default;
+      using IntervalIterator<W>::IntervalIterator;
 
-      VdbIterator(const vintn<W> &valid,
-                  const VdbVolume<W> *volume,
-                  const vvec3fn<W> &origin,
-                  const vvec3fn<W> &direction,
-                  const vrange1fn<W> &tRange,
-                  const ValueSelector<W> *valueSelector);
+      void initializeIntervalV(
+          const vintn<W> &valid,
+          const vvec3fn<W> &origin,
+          const vvec3fn<W> &direction,
+          const vrange1fn<W> &tRange,
+          const ValueSelector<W> *valueSelector) override final;
 
-      const Interval<W> *getCurrentInterval() const override;
-      void iterateInterval(const vintn<W> &valid, vintn<W> &result) override;
+      void iterateIntervalV(const vintn<W> &valid,
+                            vVKLIntervalN<W> &interval,
+                            vintn<W> &result) override final;
 
-      const Hit<W> *getCurrentHit() const override;
-      void iterateHit(const vintn<W> &valid, vintn<W> &result) override;
-
-      // Required size of ISPC-side object for width W.
-      // Use the vklVdbIteratorSize<W> tools to find out the correct size.
-      static constexpr int ispcStorageSize = 376 * W;
+      void *getIspcStorage() override final
+      {
+        return reinterpret_cast<void*>(ispcStorage);
+      }
 
      protected:
-      alignas(simd_alignment_for_width(W)) char ispcStorage[ispcStorageSize];
+      using Iterator<W>::volume;
+      using IspcIterator = __varying_ispc_type(VdbIterator);
+      alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
+
+    template <int W>
+    using VdbIntervalIteratorFactory =
+        ConcreteIteratorFactory<W, IntervalIterator, VdbIntervalIterator>;
+
+    template <int W>
+    using VdbHitIterator = DefaultHitIterator<W, VdbIntervalIterator<W>>;
+
+    template <int W>
+    using VdbHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, VdbHitIterator>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

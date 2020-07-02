@@ -32,8 +32,9 @@ target_include_directories(${PROJECT_NAME}
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ospcommon::ospcommon)
-
+target_link_libraries(${PROJECT_NAME}
+  PUBLIC
+    $<BUILD_INTERFACE:rkcommon::rkcommon>)
 
 set(VKL_VDB_LOG_RESOLUTION "6;5;4;3" CACHE STRING
   "Base-2 logarithm of the resolution for each level in the tree.")
@@ -89,3 +90,11 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
 ## Add OpenVKL drivers ##
 
 add_subdirectory(drivers)
+
+## Utilities
+
+add_executable(vklGenerateIteratorSizeHeader
+  util/vklGenerateIteratorSizeHeader.cpp 
+  ${VKL_RESOURCE})
+
+target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl)

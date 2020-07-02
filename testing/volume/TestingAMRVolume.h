@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,10 +8,10 @@
 // openvkl
 #include "TestingVolume.h"
 #include "openvkl/common.h"
-// ospcommon
-#include "ospcommon/math/box.h"
-#include "ospcommon/math/range.h"
-#include "ospcommon/tasking/parallel_for.h"
+// rkcommon
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/range.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace testing {
@@ -35,7 +35,7 @@ namespace openvkl {
      protected:
       void generateVKLVolume() override;
 
-      range1f computedValueRange = range1f(ospcommon::math::empty);
+      range1f computedValueRange = range1f(rkcommon::math::empty);
 
       // convert structured volume data to AMR representation
       void makeAMR(const std::vector<float> &voxels,
@@ -223,7 +223,7 @@ namespace openvkl {
             std::vector<float>(nextLevelSize.product(), 0);
 
         const vec3i numBricks = levelSize / blockSize;
-        ospcommon::tasking::parallel_for(
+        rkcommon::tasking::parallel_for(
             numBricks.product(), [&](int brickIdx) {
               // dt == cellWidth in osp_amr_brick_info
               float dt = powf(refinementLevel, numLevels - level - 1);

@@ -5,11 +5,11 @@
 
 #include <vector>
 #include "openvkl/openvkl.h"
-#include "ospcommon/containers/AlignedVector.h"
-#include "ospcommon/math/vec.h"
+#include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/math/vec.h"
 
-using namespace ospcommon::containers;
-using namespace ospcommon::math;
+using namespace rkcommon::containers;
+using namespace rkcommon::math;
 
 ///////////////////////////////////////////////////////////////////////////////
 // AOS to SOA conversion functions ////////////////////////////////////////////

@@ -9,7 +9,7 @@
 #include "GridAccelerator_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "Volume.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -21,16 +21,7 @@ namespace openvkl {
 
       virtual void commit() override;
 
-      void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override;
-
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
+      Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
 
@@ -45,7 +36,7 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
-      Data *voxelData{nullptr};
+      Ref<const Data> voxelData;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -61,57 +52,27 @@ namespace openvkl {
     template <int W>
     inline void StructuredVolume<W>::commit()
     {
-      dimensions  = this->template getParam<vec3i>("dimensions", vec3i(128));
+      dimensions  = this->template getParam<vec3i>("dimensions");
       gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
 
-      voxelData = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "data", nullptr);
-
-      if (!voxelData) {
-        throw std::runtime_error("no data set on volume");
-      }
+      voxelData = this->template getParam<Data *>("data");
 
       if (voxelData->size() != this->dimensions.long_product()) {
         throw std::runtime_error(
             "incorrect data size for provided volume dimensions");
       }
-    }
 
-    template <int W>
-    inline void StructuredVolume<W>::computeSample(
-        const vvec3fn<1> &objectCoordinates, vfloatn<1> &samples) const
-    {
-      CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
+      const std::vector<VKLDataType> supportedDataTypes{
+          VKL_UCHAR, VKL_SHORT, VKL_USHORT, VKL_FLOAT, VKL_DOUBLE};
 
-    template <int W>
-    inline void StructuredVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
-    {
-      CALL_ISPC(SharedStructuredVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    inline void StructuredVolume<W>::computeGradientV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
-    {
-      CALL_ISPC(SharedStructuredVolume_gradient_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &gradients);
+      if (std::find(supportedDataTypes.begin(),
+                    supportedDataTypes.end(),
+                    voxelData->dataType) == supportedDataTypes.end()) {
+        throw std::runtime_error(
+            this->toString() +
+            ": unsupported element type for 'data' parameter");
+      }
     }
 
     template <int W>

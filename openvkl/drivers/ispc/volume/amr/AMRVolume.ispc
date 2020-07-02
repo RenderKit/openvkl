@@ -19,15 +19,15 @@ static varying float AMR_level(const void *uniform _self,
 
 // ------------------------------------------------------------------
 //! The gradient at the given sample location in world coordinates.
-static varying vec3f AMR_gradient(const void *uniform _self,
+static varying vec3f AMRVolume_computeGradient(const void *uniform _self,
                                   const varying vec3f &pos)
 {
   // Cast to the actual Volume subtype.
-  const AMRVolume *uniform volume = (const AMRVolume *uniform)_self;
+  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = make_vec3f(
-      volume->samplingStep * .1f);  // Carson TODO: determine correct offset
+      self->samplingStep * .1f);  // Carson TODO: determine correct offset
 
   // The gradient will be computed using central differences.
   varying vec3f gradient;
@@ -35,21 +35,21 @@ static varying vec3f AMR_gradient(const void *uniform _self,
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = volume->super.computeSample_varying(volume, pos);
+  float sample = self->super.computeSample_varying(self, pos);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->super.computeSample_varying(
-                   volume, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
+  gradient.x = self->super.computeSample_varying(
+                   self, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->super.computeSample_varying(
-                   volume, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
+  gradient.y = self->super.computeSample_varying(
+                   self, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->super.computeSample_varying(
-                   volume, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
+  gradient.z = self->super.computeSample_varying(
+                   self, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
                sample;
 
   // This approximation may yield image artifacts.
@@ -60,6 +60,13 @@ export void *uniform EXPORT_UNIQUE(AMRVolume_create, void *uniform cppE)
 {
   AMRVolume *uniform self = uniform new uniform AMRVolume;
   return self;
+}
+
+export void EXPORT_UNIQUE(AMRVolume_Destructor,
+                          void *uniform _self)
+{
+  AMRVolume *uniform volume = (AMRVolume * uniform) _self;
+  delete volume;
 }
 
 export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
@@ -159,12 +166,13 @@ export void EXPORT_UNIQUE(AMRVolume_set,
                  worldBounds.lower + gridOrigin +
                      (worldBounds.upper - worldBounds.lower) * gridSpacing);
   self->samplingStep          = samplingStep;
-  self->computeGradient       = &AMR_gradient;
   self->transformLocalToWorld = AMRVolume_transformLocalToWorld;
   self->transformWorldToLocal = AMRVolume_transformWorldToLocal;
 
   self->gridSpacing = gridSpacing;
   self->gridOrigin  = gridOrigin;
+
+  self->super.computeGradient_varying = AMRVolume_computeGradient;
 }
 
 export void EXPORT_UNIQUE(AMRVolume_sample_export,
@@ -181,5 +189,22 @@ export void EXPORT_UNIQUE(AMRVolume_sample_export,
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples = self->super.computeSample_varying(self, *objectCoordinates);
+  }
+}
+
+export void EXPORT_UNIQUE(AMRVolume_gradient_export,
+                          uniform const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          void *uniform _gradients)
+{
+  AMRVolume *uniform self = (AMRVolume * uniform) _self;
+
+  if (imask[programIndex]) {
+    const varying vec3f *uniform objectCoordinates =
+        (const varying vec3f *uniform)_objectCoordinates;
+    varying vec3f *uniform gradients = (varying vec3f *uniform)_gradients;
+
+    *gradients = self->super.computeGradient_varying(self, *objectCoordinates);
   }
 }

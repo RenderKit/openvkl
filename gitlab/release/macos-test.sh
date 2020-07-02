@@ -6,7 +6,7 @@ ROOT_DIR=$PWD
 
 #### Extract release package ####
 
-OPENVKL_PKG_BASE=openvkl-0.9.0.x86_64.macos
+OPENVKL_PKG_BASE=openvkl-0.10.0.x86_64.macos
 unzip ${OPENVKL_PKG_BASE}.zip
 
 #### Build tutorial against release package ####

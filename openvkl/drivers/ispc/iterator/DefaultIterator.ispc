@@ -7,12 +7,22 @@
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
-export uniform int EXPORT_UNIQUE(DefaultIterator_sizeOf)
+export void EXPORT_UNIQUE(DefaultIterator_export,
+                          uniform vec3f &dummy_vec3f,
+                          const varying DefaultIntervalIterator *uniform
+                              itInterval,
+                          const varying DefaultHitIterator *uniform itHit)
 {
-  return sizeof(varying DefaultIterator);
 }
 
-export void EXPORT_UNIQUE(DefaultIterator_Initialize,
+void DefaultIntervalIterator_iterateIntervalInternal(const int *uniform imask,
+                                                     void *uniform _self,
+                                                     void *uniform _interval,
+                                                     const uniform box1f &valueRange,
+                                                     uniform int *uniform
+                                                         _result);
+
+export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
                           void *uniform _volume,
@@ -27,18 +37,19 @@ export void EXPORT_UNIQUE(DefaultIterator_Initialize,
     return;
   }
 
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
+  varying DefaultIntervalIterator *uniform self =
+      (varying DefaultIntervalIterator * uniform) _self;
 
+  self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
   self->volume        = (Volume * uniform) _volume;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
-  self->tRange        = *((varying box1f * uniform) _tRange);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->valueRange    = valueRange;
 
+  box1f tRange = *((varying box1f * uniform) _tRange);
   self->boundingBoxTRange =
-      intersectBox(self->origin, self->direction, boundingBox, self->tRange);
+      intersectBox(self->origin, self->direction, boundingBox, tRange);
 
   // compute a nominal interval length as a fraction of the largest bounding box
   // dimension
@@ -46,30 +57,24 @@ export void EXPORT_UNIQUE(DefaultIterator_Initialize,
       reduce_max(boundingBox.upper - boundingBox.lower);
   self->nominalIntervalLength = 0.1f * bbMaxDimension;
 
-  resetInterval(self->intervalState.currentInterval);
-
-  self->hitState.tRange = self->boundingBoxTRange;
+  resetInterval(self->currentInterval);
 }
 
-export void *uniform EXPORT_UNIQUE(DefaultIterator_getCurrentInterval,
-                                   void *uniform _self)
-{
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
-  return &self->intervalState.currentInterval;
-}
-
-export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
-                          const int *uniform imask,
-                          void *uniform _self,
-                          uniform int *uniform _result)
+inline void DefaultIntervalIterator_iterateIntervalInternal(
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &valueRange,
+    uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
     return;
   }
 
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
+  varying DefaultIntervalIterator *uniform self =
+      (varying DefaultIntervalIterator * uniform) _self;
+
+  varying Interval *uniform interval = (varying Interval * uniform) _interval;
 
   varying int *uniform result = (varying int *uniform)_result;
 
@@ -78,8 +83,7 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
     return;
   }
 
-  if (self->valueSelector &&
-      !overlaps1f(self->valueSelector->rangesMinMax, self->valueRange)) {
+  if (!overlaps1f(valueRange, self->valueRange)) {
     *result = false;
     return;
   }
@@ -87,8 +91,7 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
   Interval nextInterval;
 
   nextInterval.tRange.lower =
-      max(self->intervalState.currentInterval.tRange.upper,
-          self->boundingBoxTRange.lower);
+      max(self->currentInterval.tRange.upper, self->boundingBoxTRange.lower);
   nextInterval.tRange.upper =
       min(nextInterval.tRange.lower + self->nominalIntervalLength,
           self->boundingBoxTRange.upper);
@@ -99,67 +102,133 @@ export void EXPORT_UNIQUE(DefaultIterator_iterateInterval,
   }
 
   // conservatively use the volume value range
-  nextInterval.valueRange = self->valueRange;
-
+  nextInterval.valueRange    = self->valueRange;
   nextInterval.nominalDeltaT = 0.25f * self->nominalIntervalLength;
 
-  self->intervalState.currentInterval = nextInterval;
-  *result                             = true;
+  self->currentInterval = nextInterval;
+  *interval             = nextInterval;
+  *result               = true;
 }
 
-export void *uniform EXPORT_UNIQUE(DefaultIterator_getCurrentHit,
-                                   void *uniform _self)
-{
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
-  return &self->hitState.currentHit;
-}
-
-export void EXPORT_UNIQUE(DefaultIterator_iterateHit,
+export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _interval,
                           uniform int *uniform _result)
+{
+  varying DefaultIntervalIterator *uniform self =
+      (varying DefaultIntervalIterator * uniform) _self;
+
+  uniform box1f valueRange;
+  if (self->valueSelector)
+    valueRange = self->valueSelector->rangesMinMax;
+  else {
+    valueRange.lower = -inf;
+    valueRange.upper = inf;
+  }
+  DefaultIntervalIterator_iterateIntervalInternal(
+      imask, _self, _interval, valueRange, _result);
+}
+
+// -----------------------------------------------------------------------------
+
+export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _intervalIterator,
+                          void *uniform _volume,
+                          void *uniform _origin,
+                          void *uniform _direction,
+                          void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
     return;
   }
 
-  varying DefaultIterator *uniform self =
-      (varying DefaultIterator * uniform) _self;
+  varying DefaultHitIterator *uniform self =
+      (varying DefaultHitIterator * uniform) _self;
+
+  self->volume        = (Volume * uniform) _volume;
+  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
+  self->origin        = *((varying vec3f * uniform) _origin);
+  self->direction     = *((varying vec3f * uniform) _direction);
+  self->intervalIteratorState = _intervalIterator;
+
+  // Reset to invalid.
+  resetInterval(self->currentInterval);
+}
+
+struct IntervalIteratorT
+{
+  IterateIntervalFunc iterate;
+};
+
+export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _hit,
+                          uniform int *uniform _result)
+{
+  if (!imask[programIndex])
+    return;
 
   varying int *uniform result = (varying int *uniform)_result;
+  *result                     = false;
 
-  if (isempty1f(self->hitState.tRange)) {
-    *result = false;
+  varying DefaultHitIterator *uniform self =
+      (varying DefaultHitIterator * uniform) _self;
+
+  // The selector prunes everything - don't iterate at all.
+  cif(!self->valueSelector || self->valueSelector->numValues == 0) return;
+
+  if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
     return;
-  }
 
-  cif(!self->valueSelector || self->valueSelector->numValues == 0)
-  {
-    *result = false;
-    return;
-  }
+  // Note: We simply assume the presence of a functor as the first element
+  //       in the interval iterator state. This will wreak havoc if that
+  //       functor is not present.
+  const IntervalIteratorT *uniform intervalIterator =
+      (IntervalIteratorT * uniform) self->intervalIteratorState;
 
-  // this is an estimated step that may yield artifacts
-  const uniform float step = 0.1f * self->nominalIntervalLength;
+  // Generate intervals using the interval iterator until we either run out
+  // or find an isosurface hit.
 
-  float surfaceEpsilon;
+  for (uniform int i = 0;; ++i) {
+    const int needInterval = isempty1f(self->currentInterval.tRange);
+    int haveInterval       = !needInterval;
+    intervalIterator->iterate((const int *uniform) & needInterval,
+                              self->intervalIteratorState,
+                              &self->currentInterval,
+                              self->valueSelector->valuesMinMax,
+                              (int *uniform) & haveInterval);
 
-  bool foundHit = intersectSurfaces(self->volume,
-                                    self->origin,
-                                    self->direction,
-                                    self->hitState.tRange,
-                                    step,
-                                    self->valueSelector->numValues,
-                                    self->valueSelector->values,
-                                    self->hitState.currentHit,
-                                    surfaceEpsilon);
+    if (!haveInterval) {
+      // We use this to indicate that this lane has run out of intervals,
+      // so that we can use an early exit on the next iterateHit call.
+      self->currentInterval.tRange.lower = inf;
+      return;
+    }
 
-  if (foundHit) {
-    *result                     = true;
-    self->hitState.tRange.lower = self->hitState.currentHit.t + surfaceEpsilon;
-  } else {
-    *result                     = false;
-    self->hitState.tRange.lower = inf;
+    varying Hit *uniform hit = (varying Hit * uniform) _hit;
+    hit->t                   = inf;
+    bool foundHit =
+        intersectSurfacesBisection(self->volume,
+                                   self->origin,
+                                   self->direction,
+                                   self->currentInterval.tRange,
+                                   0.5f * self->currentInterval.nominalDeltaT,
+                                   self->valueSelector->numValues,
+                                   self->valueSelector->values,
+                                   *hit);
+
+    *result |= foundHit;
+
+    if (foundHit) {
+      self->currentInterval.tRange.lower = hit->t + hit->epsilon;
+      return;
+    }
+
+    self->currentInterval.tRange.lower = inf;
   }
 }
+

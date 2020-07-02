@@ -40,6 +40,7 @@ VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_4,
                              structuredSpherical_4)
 VKL_WRAP_VOLUME_REGISTRATION(internal_unstructured_4, unstructured_4)
 VKL_WRAP_VOLUME_REGISTRATION(internal_vdb_4, vdb_4)
+VKL_WRAP_VOLUME_REGISTRATION(internal_particle_4, particle_4)
 
 // support deprecated snake case names (a warning will be triggered if these are
 // used)
@@ -57,6 +58,7 @@ VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_8,
                              structuredSpherical_8)
 VKL_WRAP_VOLUME_REGISTRATION(internal_unstructured_8, unstructured_8)
 VKL_WRAP_VOLUME_REGISTRATION(internal_vdb_8, vdb_8)
+VKL_WRAP_VOLUME_REGISTRATION(internal_particle_8, particle_8)
 
 // support deprecated snake case names (a warning will be triggered if these are
 // used)
@@ -75,6 +77,7 @@ VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_16,
                              structuredSpherical_16)
 VKL_WRAP_VOLUME_REGISTRATION(internal_unstructured_16, unstructured_16)
 VKL_WRAP_VOLUME_REGISTRATION(internal_vdb_16, vdb_16)
+VKL_WRAP_VOLUME_REGISTRATION(internal_particle_16, particle_16)
 
 // support deprecated snake case names (a warning will be triggered if these are
 // used)

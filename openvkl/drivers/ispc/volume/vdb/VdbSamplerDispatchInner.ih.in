@@ -20,9 +20,10 @@
  * into varying traversal.
  */
 inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
-  const VdbGrid *uniform  grid,
-  const varying vec3ui   &domainOffset,
-  uniform uint64          nodeIndex)
+  const VdbGrid *uniform         grid,
+  const VdbSampleConfig *uniform config,
+  const varying vec3ui          &domainOffset,
+  uniform uint64                 nodeIndex)
 {
   assert(nodeIndex < grid->levels[@VKL_VDB_LEVEL@].numNodes);
   const varying uint64 voxelIdx = 
@@ -38,6 +39,7 @@ inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
   {
     return VdbSampler_sampleInner_uniform_@VKL_VDB_LEVEL@(
       grid, 
+      config,
       domainOffset, 
       nodeVoxelOffset + uvidx);
   }
@@ -45,6 +47,7 @@ inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
   {
     return VdbSampler_sampleInner_varying_@VKL_VDB_LEVEL@(
       grid,  
+      config,
       domainOffset, 
       nodeVoxelOffset + voxelIdx);
   }
@@ -56,9 +59,10 @@ inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
  * as well skip the test above.
  */
 inline varying float VdbSampler_dispatchInner_varying_@VKL_VDB_LEVEL@(
-  const VdbGrid *uniform  grid,
-  const varying vec3ui   &domainOffset,
-  varying uint64          nodeIndex)
+  const VdbGrid *uniform         grid,
+  const VdbSampleConfig *uniform config,
+  const varying vec3ui          &domainOffset,
+  varying uint64                 nodeIndex)
 {
   assert(nodeIndex < grid->levels[@VKL_VDB_LEVEL@].numNodes);
   const varying uint64 voxelIdx = 
@@ -70,6 +74,7 @@ inline varying float VdbSampler_dispatchInner_varying_@VKL_VDB_LEVEL@(
 
   return VdbSampler_sampleInner_varying_@VKL_VDB_LEVEL@(
     grid, 
+    config,
     domainOffset, 
     nodeVoxelOffset + voxelIdx);
 }

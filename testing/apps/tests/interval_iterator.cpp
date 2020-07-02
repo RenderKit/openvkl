@@ -1,12 +1,12 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "iterator_utility.h"
 #include "openvkl_testing.h"
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
@@ -21,13 +21,13 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
   range1f expectedTRange = intersectRayBox(
       (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(
-      &iterator, volume, &origin, &direction, &tRange, nullptr);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      volume, &origin, &direction, &tRange, nullptr, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
-  for (int i = 0; vklIterateInterval(&iterator, &intervalCurrent); i++) {
+  for (int i = 0; vklIterateInterval(iterator, &intervalCurrent); i++) {
     INFO("interval tRange = " << intervalCurrent.tRange.lower << ", "
                               << intervalCurrent.tRange.upper);
 
@@ -52,22 +52,24 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(
-      &iterator, volume, &origin, &direction, &tRange, nullptr);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      volume, &origin, &direction, &tRange, nullptr, buffer.data());
 
   VKLInterval interval;
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   int intervalCount = 0;
 
-  while (vklIterateInterval(&iterator, &interval)) {
+  while (vklIterateInterval(iterator, &interval)) {
     INFO("interval tRange = " << interval.tRange.lower << ", "
                               << interval.tRange.upper
                               << " valueRange = " << interval.valueRange.lower
                               << ", " << interval.valueRange.upper);
 
     vkl_range1f sampledValueRange =
-        computeIntervalValueRange(volume, origin, direction, interval.tRange);
+        computeIntervalValueRange(sampler, origin, direction, interval.tRange);
 
     INFO("sampled value range = " << sampledValueRange.lower << ", "
                                   << sampledValueRange.upper);
@@ -92,6 +94,8 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
     intervalCount++;
   }
 
+  vklRelease(sampler);
+
   // make sure we had at least one interval...
   REQUIRE(intervalCount > 0);
 }
@@ -102,6 +106,7 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
+  VKLSampler sampler             = vklNewSampler(volume);
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
 
   // will trigger intervals covering individual ranges separately
@@ -112,22 +117,22 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
 
   vklCommit(valueSelector);
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(
-      &iterator, volume, &origin, &direction, &tRange, valueSelector);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLInterval interval;
 
   int intervalCount = 0;
 
-  while (vklIterateInterval(&iterator, &interval)) {
+  while (vklIterateInterval(iterator, &interval)) {
     INFO("interval tRange = " << interval.tRange.lower << ", "
                               << interval.tRange.upper
                               << " valueRange = " << interval.valueRange.lower
                               << ", " << interval.valueRange.upper);
 
     vkl_range1f sampledValueRange =
-        computeIntervalValueRange(volume, origin, direction, interval.tRange);
+        computeIntervalValueRange(sampler, origin, direction, interval.tRange);
 
     INFO("sampled value range = " << sampledValueRange.lower << ", "
                                   << sampledValueRange.upper);
@@ -167,6 +172,7 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   REQUIRE(intervalCount > 0);
 
   vklRelease(valueSelector);
+  vklRelease(sampler);
 }
 
 void scalar_interval_nominalDeltaT(VKLVolume volume,
@@ -182,16 +188,17 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
   INFO("direction = " << direction.x << " " << direction.y << " "
                       << direction.z);
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIterator(&iterator,
-                          volume,
-                          &origin,
-                          &(const vkl_vec3f &)direction,
-                          &tRange,
-                          nullptr);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLIntervalIterator iterator =
+      vklInitIntervalIterator(volume,
+                              &origin,
+                              &(const vkl_vec3f &)direction,
+                              &tRange,
+                              nullptr,
+                              buffer.data());
 
   VKLInterval interval;
-  bool gotInterval = vklIterateInterval(&iterator, &interval);
+  bool gotInterval = vklIterateInterval(iterator, &interval);
 
   REQUIRE(gotInterval == true);
 
@@ -219,7 +226,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-    auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+    auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         dimensions, gridOrigin, gridSpacing);
 
     VKLVolume vklVolume = v->getVKLVolume();
@@ -247,7 +254,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(-64.f);
     const vec3f gridSpacing(1.f, 2.f, 3.f);
 
-    auto v = ospcommon::make_unique<WaveletStructuredRegularVolume<float>>(
+    auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         dimensions, gridOrigin, gridSpacing);
 
     VKLVolume vklVolume = v->getVKLVolume();
@@ -321,7 +328,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-    auto v = ospcommon::make_unique<WaveletUnstructuredProceduralVolume>(
+    auto v = rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
         dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
 
     VKLVolume vklVolume = v->getVKLVolume();

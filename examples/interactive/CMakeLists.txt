@@ -32,7 +32,7 @@ openvkl_add_library_ispc(vkl_example_renderers STATIC
 
 target_include_directories(vkl_example_renderers PRIVATE ${ISPC_TARGET_DIR})
 
-target_link_libraries(vkl_example_renderers PUBLIC openvkl ospcommon::ospcommon)
+target_link_libraries(vkl_example_renderers PUBLIC openvkl rkcommon::rkcommon)
 
 ## Interactive example app ##
 

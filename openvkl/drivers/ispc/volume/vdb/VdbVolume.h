@@ -9,13 +9,24 @@
 #include "../common/Data.h"
 #include "VdbGrid.h"
 #include "VdbIterator.h"
+#include "VdbSampleConfig.h"
 #include "VdbVolume_ispc.h"
-#include "ospcommon/memory/RefCount.h"
+#include "rkcommon/memory/RefCount.h"
 
-using namespace ospcommon::memory;
+using namespace rkcommon::memory;
 
 namespace openvkl {
   namespace ispc_driver {
+
+    struct AlignedISPCData1D
+    {
+      // to be represented as VDB leaf pointers, addresses must be 16-byte
+      // aligned
+      alignas(16) ispc::Data1D data;
+    };
+
+    static_assert(sizeof(AlignedISPCData1D) == sizeof(ispc::Data1D),
+                  "AlignedISPCData1D has incorrect size");
 
     template <int W>
     struct VdbVolume : public Volume<W>
@@ -41,30 +52,6 @@ namespace openvkl {
       void commit() override;
 
       /*
-       * Sample the volume at the given coordinates.
-       */
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      /*
-       * Scalar specialization.
-       */
-      void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override;
-
-      /*
-       * Compute the volume gradient at the given coordinates.
-       * NOT IMPLEMENTED.
-       */
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override
-      {
-        THROW_NOT_IMPLEMENTED;
-      }
-
-      /*
        * Obtain the volume bounding box.
        */
       box3f getBoundingBox() const override
@@ -86,31 +73,19 @@ namespace openvkl {
       }
 
       VKLObserver newObserver(const char *type) override;
+      Sampler<W> *newSampler() override;
 
-      void initIntervalIteratorV(
-          const vintn<W> &valid,
-          vVKLIntervalIteratorN<W> &iterator,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override;
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final
+      {
+        return intervalIteratorFactory;
+      }
 
-      void iterateIntervalV(const vintn<W> &valid,
-                            vVKLIntervalIteratorN<W> &iterator,
-                            vVKLIntervalN<W> &interval,
-                            vintn<W> &result) override;
-
-      void initHitIteratorV(const vintn<W> &valid,
-                            vVKLHitIteratorN<W> &iterator,
-                            const vvec3fn<W> &origin,
-                            const vvec3fn<W> &direction,
-                            const vrange1fn<W> &tRange,
-                            const ValueSelector<W> *valueSelector) override;
-
-      void iterateHitV(const vintn<W> &valid,
-                       vVKLHitIteratorN<W> &iterator,
-                       vVKLHitN<W> &hit,
-                       vintn<W> &result) override;
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
 
      private:
       void cleanup();
@@ -119,9 +94,13 @@ namespace openvkl {
       box3f bounds;
       std::string name;
       range1f valueRange;
-      Ref<Data> dataData;
+      Ref<const DataT<Data *>> leafData;
+      std::vector<AlignedISPCData1D> leafDataISPC;
       VdbGrid *grid{nullptr};
       size_t bytesAllocated{0};
+      VdbSampleConfig globalConfig;
+      VdbIntervalIteratorFactory<W> intervalIteratorFactory;
+      VdbHitIteratorFactory<W> hitIteratorFactory;
     };
 
   }  // namespace ispc_driver

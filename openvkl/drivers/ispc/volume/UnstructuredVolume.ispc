@@ -16,55 +16,55 @@ inline bool pointInAABBTest(const uniform box3fa &box,
   return t1 & t2 & t3 & t4 & t5 & t6;
 }
 
-typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
-                                       uniform uint64 id,
-                                       float &result,
-                                       vec3f samplePos);
+#define template_traverseEmbree(userFuncType, resultType)                      \
+  inline void traverseEmbree(uniform Node *uniform root,                       \
+                             const void *uniform userPtr,                      \
+                             uniform userFuncType userFunc,                    \
+                             resultType &result,                               \
+                             const vec3f &samplePos)                           \
+  {                                                                            \
+    uniform Node *uniform node = root;                                         \
+    uniform Node *uniform nodeStack[32]; /* xxx */                             \
+    uniform int stackPtr = 0;                                                  \
+                                                                               \
+    while (1) {                                                                \
+      uniform bool isLeaf = (node->nominalLength < 0);                         \
+      if (isLeaf) {                                                            \
+        uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;    \
+        if (userFunc(userPtr, leaf->cellID, result, samplePos))                \
+          return;                                                              \
+      } else {                                                                 \
+        uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node; \
+        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);         \
+        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);         \
+                                                                               \
+        if (any(in0)) {                                                        \
+          if (any(in1)) {                                                      \
+            nodeStack[stackPtr++] = inner->children[1];                        \
+            node                  = inner->children[0];                        \
+            continue;                                                          \
+          } else {                                                             \
+            node = inner->children[0];                                         \
+            continue;                                                          \
+          }                                                                    \
+        } else {                                                               \
+          if (any(in1)) {                                                      \
+            node = inner->children[1];                                         \
+            continue;                                                          \
+          } else {                                                             \
+            /* Do nothing, just pop. */                                        \
+          }                                                                    \
+        }                                                                      \
+      }                                                                        \
+      if (stackPtr == 0)                                                       \
+        return;                                                                \
+      node = nodeStack[--stackPtr];                                            \
+    }                                                                          \
+  }
 
-void traverseEmbree(uniform Node* uniform root,
-                    const void *uniform userPtr,
-                    uniform intersectAndSamplePrim sampleFunc,
-                    float &result,
-                    const vec3f &samplePos)
-{
-    uniform Node* uniform node = root;
-    uniform Node* uniform nodeStack[32]; // xxx
-    uniform int stackPtr = 0;
-
-    while (1) {
-      uniform bool isLeaf = (node->nominalLength < 0);
-      if (isLeaf) {
-        uniform LeafNode* uniform leaf = (uniform LeafNode* uniform)node;
-        if (sampleFunc(userPtr, leaf->cellID, result, samplePos))
-          return;
-      } else {
-        uniform InnerNode* uniform inner = (uniform InnerNode* uniform)node;
-        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);
-        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);
-
-        if (any(in0)) {
-          if (any(in1)) {
-            nodeStack[stackPtr++] = inner->children[1];
-            node                  = inner->children[0];
-            continue;
-          } else {
-            node = inner->children[0];
-            continue;
-          }
-        } else {
-          if (any(in1)) {
-            node = inner->children[1];
-            continue;
-          } else {
-            // Do nothing, just pop.
-          }
-        }
-      }
-      if (stackPtr == 0)
-        return;
-      node = nodeStack[--stackPtr];
-    }
-}
+template_traverseEmbree(intersectAndSamplePrim, float);
+template_traverseEmbree(intersectAndGradientPrim, vec3f);
+#undef template_traverseEmbree
 
 struct LinearSpace3f
 {
@@ -81,13 +81,11 @@ make_LinearSpace3f(const varying vec3f x, const varying vec3f y, const varying v
 inline varying float det(const varying LinearSpace3f l) { return dot(l.vx,cross(l.vy,l.vz)); }
 
 // Read 32/64-bit integer value from given array
-static inline uniform uint64 readInteger(const uint32* uniform array,
+static inline uniform uint64 readInteger(const uniform Data1D array,
                                          const uniform bool is32Bit,
                                          const uniform uint64 id)
 {
-  const uniform uint64 value =
-    *((const uint64* uniform)(array + (is32Bit ? id : id << 1)));
-  return value & (is32Bit ? 0x00000000ffffffffull : 0xffffffffffffffffull);
+  return is32Bit ? get_uint32(array, id) : get_uint64(array, id);
 }
 
 // Get cell offset (location) in index array
@@ -110,12 +108,11 @@ static inline uniform vec3f calcPlaneNormal(const VKLUnstructuredVolume* uniform
 {
   // Retrieve cell offset first
   const uniform uint64 cOffset = getCellOffset(self, id);
-  const vec3f* const uniform vtx = self->vertex;
 
   // Get 3 vertices for normal calculation
-  const uniform vec3f& v0 = vtx[getVertexId(self, cOffset + plane[0])];
-  const uniform vec3f& v1 = vtx[getVertexId(self, cOffset + plane[1])];
-  const uniform vec3f& v2 = vtx[getVertexId(self, cOffset + plane[2])];
+  const uniform vec3f v0 = get_vec3f(self->vertex, getVertexId(self, cOffset + plane[0]));
+  const uniform vec3f v1 = get_vec3f(self->vertex, getVertexId(self, cOffset + plane[1]));
+  const uniform vec3f v2 = get_vec3f(self->vertex, getVertexId(self, cOffset + plane[2]));
 
   // Calculate normal
   return normalize(cross(v0 - v1, v2 - v1));
@@ -188,11 +185,10 @@ static bool intersectAndSampleTet(const void *uniform userData,
   // Get cell offset in index buffer
   const uniform uint64 cOffset = getCellOffset(self, id);
 
-  const vec3f* uniform vtx = self->vertex;
-  const uniform vec3f p0 = vtx[getVertexId(self, cOffset + 0)];
-  const uniform vec3f p1 = vtx[getVertexId(self, cOffset + 1)];
-  const uniform vec3f p2 = vtx[getVertexId(self, cOffset + 2)];
-  const uniform vec3f p3 = vtx[getVertexId(self, cOffset + 3)];
+  const uniform vec3f p0 = get_vec3f(self->vertex, getVertexId(self, cOffset + 0));
+  const uniform vec3f p1 = get_vec3f(self->vertex, getVertexId(self, cOffset + 1));
+  const uniform vec3f p2 = get_vec3f(self->vertex, getVertexId(self, cOffset + 2));
+  const uniform vec3f p3 = get_vec3f(self->vertex, getVertexId(self, cOffset + 3));
 
   const uniform vec3f norm0 = tetrahedronNormal(self, id, 0);
   const uniform vec3f norm1 = tetrahedronNormal(self, id, 1);
@@ -210,8 +206,8 @@ static bool intersectAndSampleTet(const void *uniform userData,
     return false;
 
   // Skip interpolation if values are defined per cell
-  if (self->cellValue) {
-    result = self->cellValue[id];
+  if (valid(self->cellValue)) {
+    result = get_float(self->cellValue, id);
     return true;
   }
 
@@ -228,11 +224,10 @@ static bool intersectAndSampleTet(const void *uniform userData,
   const float z3 = d3 / h3;
 
   // Field/attribute values at the tetrahedron corners.
-  const float* const uniform vv = self->vertexValue;
-  const uniform float v0 = vv[getVertexId(self, cOffset + 0)];
-  const uniform float v1 = vv[getVertexId(self, cOffset + 1)];
-  const uniform float v2 = vv[getVertexId(self, cOffset + 2)];
-  const uniform float v3 = vv[getVertexId(self, cOffset + 3)];
+  const uniform float v0 = get_float(self->vertexValue, getVertexId(self, cOffset + 0));
+  const uniform float v1 = get_float(self->vertexValue, getVertexId(self, cOffset + 1));
+  const uniform float v2 = get_float(self->vertexValue, getVertexId(self, cOffset + 2));
+  const uniform float v3 = get_float(self->vertexValue, getVertexId(self, cOffset + 3));
 
   // Interpolated field/attribute value at the world position.
   result = z0 * v3 + z1 * v2 + z2 * v0 + z3 * v1;
@@ -315,7 +310,7 @@ static bool intersectAndSampleWedge(const void *uniform userData,
     vec3f scol = make_vec3f(0.f, 0.f, 0.f);
     vec3f tcol = make_vec3f(0.f, 0.f, 0.f);
     for (uniform int i = 0; i < 6; i++) {
-      const uniform vec3f pt = self->vertex[getVertexId(self, cOffset + i)];
+      const uniform vec3f pt = get_vec3f(self->vertex, getVertexId(self, cOffset + i));
       fcol = fcol + pt * weights[i];
       rcol = rcol + pt * derivs[i];
       scol = scol + pt * derivs[i + 6];
@@ -363,13 +358,13 @@ static bool intersectAndSampleWedge(const void *uniform userData,
                        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit &&
                        pcoords[0] + pcoords[1] <= upperlimit)) {
     // Evaluation
-    if (self->cellValue) {
-      result = self->cellValue[id];
+    if (valid(self->cellValue)) {
+      result = get_float(self->cellValue, id);
     } else {
       float val = 0.f;
       for (uniform int i = 0; i < 6; i++) {
         val += weights[i] *
-          self->vertexValue[getVertexId(self, cOffset + i)];
+          get_float(self->vertexValue, getVertexId(self, cOffset + i));
       }
       result = val;
     }
@@ -393,15 +388,15 @@ static bool intersectAndSampleHexFast(const void *uniform userData,
   // Calculate distances from each hexahedron face
   float dist[6];
   for (uniform int plane = 0; plane < 6; plane++) {
-    const uniform vec3f v = self->vertex[getVertexId(self, cOffset + plane)];
+    const uniform vec3f v = get_vec3f(self->vertex, getVertexId(self, cOffset + plane));
     dist[plane] = dot(samplePos - v, hexahedronNormal(self, id, plane));
     if (dist[plane] > 0.f) // samplePos is outside of the cell
       return false;
   }
 
   // Skip interpolation if values are defined per cell
-  if (self->cellValue) {
-    result = self->cellValue[id];
+  if (valid(self->cellValue)) {
+    result = get_float(self->cellValue, id);
     return true;
   }
 
@@ -414,16 +409,15 @@ static bool intersectAndSampleHexFast(const void *uniform userData,
   const float w1 = 1.f - w0;
 
   // Do the trilinear interpolation
-  const float* const uniform vv = self->vertexValue;
   result =
-    u0 * v0 * w0 * vv[getVertexId(self, cOffset + 0)] +
-    u1 * v0 * w0 * vv[getVertexId(self, cOffset + 1)] +
-    u1 * v0 * w1 * vv[getVertexId(self, cOffset + 2)] +
-    u0 * v0 * w1 * vv[getVertexId(self, cOffset + 3)] +
-    u0 * v1 * w0 * vv[getVertexId(self, cOffset + 4)] +
-    u1 * v1 * w0 * vv[getVertexId(self, cOffset + 5)] +
-    u1 * v1 * w1 * vv[getVertexId(self, cOffset + 6)] +
-    u0 * v1 * w1 * vv[getVertexId(self, cOffset + 7)];
+    u0 * v0 * w0 * get_float(self->vertexValue, getVertexId(self, cOffset + 0)) +
+    u1 * v0 * w0 * get_float(self->vertexValue, getVertexId(self, cOffset + 1)) +
+    u1 * v0 * w1 * get_float(self->vertexValue, getVertexId(self, cOffset + 2)) +
+    u0 * v0 * w1 * get_float(self->vertexValue, getVertexId(self, cOffset + 3)) +
+    u0 * v1 * w0 * get_float(self->vertexValue, getVertexId(self, cOffset + 4)) +
+    u1 * v1 * w0 * get_float(self->vertexValue, getVertexId(self, cOffset + 5)) +
+    u1 * v1 * w1 * get_float(self->vertexValue, getVertexId(self, cOffset + 6)) +
+    u0 * v1 * w1 * get_float(self->vertexValue, getVertexId(self, cOffset + 7));
   return true;
 }
 
@@ -523,7 +517,7 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
     vec3f scol = make_vec3f(0.f, 0.f, 0.f);
     vec3f tcol = make_vec3f(0.f, 0.f, 0.f);
     for (uniform int i = 0; i < 8; i++) {
-      const uniform vec3f pt = self->vertex[getVertexId(self, cOffset + i)];
+      const uniform vec3f pt = get_vec3f(self->vertex, getVertexId(self, cOffset + i));
       fcol = fcol + pt * weights[i];
       rcol = rcol + pt * derivs[i];
       scol = scol + pt * derivs[i + 8];
@@ -571,13 +565,13 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
        pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit)) {
     // Evaluation
-    if (self->cellValue) {
-      result = self->cellValue[id];
+    if (valid(self->cellValue)) {
+      result = get_float(self->cellValue, id);
     } else {
       float val = 0.f;
       for (uniform int i = 0; i < 8; i++) {
         val  += weights[i] *
-          self->vertexValue[getVertexId(self, cOffset + i)];
+          get_float(self->vertexValue, getVertexId(self, cOffset + i));
       }
       result = val;
     }
@@ -666,7 +660,7 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
     vec3f scol = make_vec3f(0.f, 0.f, 0.f);
     vec3f tcol = make_vec3f(0.f, 0.f, 0.f);
     for (uniform int i = 0; i < 5; i++) {
-      const uniform vec3f pt = self->vertex[getVertexId(self, cOffset + i)];
+      const uniform vec3f pt = get_vec3f(self->vertex, getVertexId(self, cOffset + i));
       fcol = fcol + pt * weights[i];
       rcol = rcol + pt * derivs[i];
       scol = scol + pt * derivs[i + 5];
@@ -714,13 +708,13 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
        pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit)) {
     // Evaluation
-    if (self->cellValue) {
-      result = self->cellValue[id];
+    if (valid(self->cellValue)) {
+      result = get_float(self->cellValue, id);
     } else {
       float val = 0.f;
       for (uniform int i = 0; i < 5; i++) {
         val += weights[i] *
-          self->vertexValue[getVertexId(self, cOffset + i)];
+          get_float(self->vertexValue, getVertexId(self, cOffset + i));
       }
       result = val;
     }
@@ -739,7 +733,7 @@ static bool intersectAndSampleCell(const void *uniform userData,
   bool hit = false;
   const VKLUnstructuredVolume* uniform self = (const VKLUnstructuredVolume* uniform)userData;
 
-  switch (self->cellType[id]) {
+  switch (get_uint8(self->cellType, id)) {
   case VKL_TETRAHEDRON:
     hit = intersectAndSampleTet(userData, id, false, result, samplePos);
     break;
@@ -769,7 +763,7 @@ inline varying float VKLUnstructuredVolume_sample(
 
   float results = floatbits(0xffffffff);  /* NaN */
 
-  traverseEmbree(self->bvhRoot, _self, intersectAndSampleCell, results, worldCoordinates);
+  traverseEmbree(self->super.bvhRoot, _self, intersectAndSampleCell, results, worldCoordinates);
 
   return results;
 }
@@ -787,13 +781,13 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   // compute via forward or backward differences depending on volume boundary
   const vec3f gradientExtent = objectCoordinates + gradientStep;
 
-  if (gradientExtent.x >= self->boundingBox.upper.x)
+  if (gradientExtent.x >= self->super.boundingBox.upper.x)
     gradientStep.x *= -1.f;
 
-  if (gradientExtent.y >= self->boundingBox.upper.y)
+  if (gradientExtent.y >= self->super.boundingBox.upper.y)
     gradientStep.y *= -1.f;
 
-  if (gradientExtent.z >= self->boundingBox.upper.z)
+  if (gradientExtent.z >= self->super.boundingBox.upper.z)
     gradientStep.z *= -1.f;
 
   vec3f gradient;
@@ -851,23 +845,31 @@ export void *uniform EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor)
 {
   uniform VKLUnstructuredVolume *uniform self = uniform new uniform VKLUnstructuredVolume;
 
-  self->super.computeSample_varying = VKLUnstructuredVolume_sample;
+  self->super.super.computeSample_varying = VKLUnstructuredVolume_sample;
+  self->super.super.computeGradient_varying = VKLUnstructuredVolume_computeGradient;
 
   return self;
+}
+
+export void EXPORT_UNIQUE(VKLUnstructuredVolume_Destructor, void *uniform _self)
+{
+  VKLUnstructuredVolume *uniform volume =
+      (VKLUnstructuredVolume * uniform) _self;
+  delete volume;
 }
 
 export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
                           void *uniform _self,
                           const uniform box3f &_bbox,
-                          const vec3f *uniform _vertex,
-                          const uint32 *uniform _index,
+                          const Data1D *uniform _vertex,
+                          const Data1D *uniform _index,
                           const uniform bool _index32Bit,
-                          const float *uniform _vertexValue,
-                          const float *uniform _cellValue,
-                          const uint32 *uniform _cell,
+                          const Data1D *uniform _vertexValue,
+                          const Data1D *uniform _cellValue,
+                          const Data1D *uniform _cell,
                           const uniform bool _cell32Bit,
                           const uniform uint32 _cellSkipIds,
-                          const uint8 *uniform _cellType,
+                          const Data1D *uniform _cellType,
                           const void *uniform bvhRoot,
                           const vec3f *uniform _faceNormals,
                           const float *uniform _iterativeTolerance,
@@ -876,23 +878,23 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
   uniform VKLUnstructuredVolume *uniform self =
       (uniform VKLUnstructuredVolume * uniform) _self;
 
-  self->vertex       = _vertex;
-  self->index        = _index;
+  self->vertex       = *_vertex;
+  self->index        = *_index;
   self->index32Bit   = _index32Bit;
-  self->vertexValue  = _vertexValue;
-  self->cellValue    = _cellValue;
-  self->cell         = _cell;
+  self->vertexValue  = *_vertexValue;
+  self->cellValue    = *_cellValue;
+  self->cell         = *_cell;
   self->cell32Bit    = _cell32Bit;
   self->cellSkipIds  = _cellSkipIds;
-  self->cellType     = _cellType;
+  self->cellType     = *_cellType;
 
   self->faceNormals  = _faceNormals;
   self->iterativeTolerance = _iterativeTolerance;
   self->hexIterative = _hexIterative;
 
-  self->boundingBox = _bbox;
+  self->super.boundingBox = _bbox;
 
-  self->gradientStep = make_vec3f(0.01f * reduce_min(self->boundingBox.upper - self->boundingBox.lower));
+  self->gradientStep = make_vec3f(0.01f * reduce_min(self->super.boundingBox.upper - self->super.boundingBox.lower));
 
-  self->bvhRoot = (uniform Node* uniform)bvhRoot;
+  self->super.bvhRoot = (uniform Node* uniform)bvhRoot;
 }

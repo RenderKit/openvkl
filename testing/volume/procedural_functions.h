@@ -1,9 +1,9 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "ospcommon/math/vec.h"
+#include "rkcommon/math/vec.h"
 
 namespace openvkl {
   namespace testing {

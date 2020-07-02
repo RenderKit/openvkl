@@ -1,15 +1,15 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "TestingStructuredVolume.h"
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+// rkcommon
+#include "rkcommon/tasking/parallel_for.h"
 // std
 #include <algorithm>
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {
@@ -19,10 +19,13 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralStructuredVolume : public TestingStructuredVolume
     {
-      ProceduralStructuredVolume(const std::string &gridType,
-                                 const vec3i &dimensions,
-                                 const vec3f &gridOrigin,
-                                 const vec3f &gridSpacing);
+      ProceduralStructuredVolume(
+          const std::string &gridType,
+          const vec3i &dimensions,
+          const vec3f &gridOrigin,
+          const vec3f &gridSpacing,
+          VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
+          size_t byteStride                      = 0);
 
       VOXEL_TYPE computeProceduralValue(const vec3f &objectCoordinates);
 
@@ -49,12 +52,16 @@ namespace openvkl {
         ProceduralStructuredVolume(const std::string &gridType,
                                    const vec3i &dimensions,
                                    const vec3f &gridOrigin,
-                                   const vec3f &gridSpacing)
+                                   const vec3f &gridSpacing,
+                                   VKLDataCreationFlags dataCreationFlags,
+                                   size_t byteStride)
         : TestingStructuredVolume(gridType,
                                   dimensions,
                                   gridOrigin,
                                   gridSpacing,
-                                  getVKLDataType<VOXEL_TYPE>())
+                                  getVKLDataType<VOXEL_TYPE>(),
+                                  dataCreationFlags,
+                                  byteStride)
     {
       // should be void, but isn't due to Windows Visual Studio compiler bug
       static_assert(!std::is_same<VOXEL_TYPE, VoidType>::value,
@@ -90,18 +97,19 @@ namespace openvkl {
     {
       {
         auto numValues = this->dimensions.long_product();
-        std::vector<unsigned char> voxels(numValues * sizeof(VOXEL_TYPE));
+        std::vector<unsigned char> voxels(numValues * byteStride);
 
-        VOXEL_TYPE *voxelsTyped = (VOXEL_TYPE *)voxels.data();
-
-        ospcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
+        rkcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
           for (size_t y = 0; y < this->dimensions.y; y++) {
             for (size_t x = 0; x < this->dimensions.x; x++) {
-              size_t index = z * this->dimensions.y * this->dimensions.x +
-                             y * this->dimensions.x + x;
+              size_t index =
+                  size_t(z) * this->dimensions.y * this->dimensions.x +
+                  y * this->dimensions.x + x;
+              VOXEL_TYPE *voxelTyped =
+                  (VOXEL_TYPE *)(voxels.data() + index * byteStride);
               vec3f objectCoordinates =
                   transformLocalToObjectCoordinates(vec3f(x, y, z));
-              voxelsTyped[index] = samplingFunction(objectCoordinates);
+              *voxelTyped = samplingFunction(objectCoordinates);
             }
           }
         });

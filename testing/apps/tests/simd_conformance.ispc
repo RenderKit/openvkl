@@ -7,6 +7,11 @@
 #include "math/vec.ih"
 #include "openvkl/openvkl.isph"
 
+export void delete_uniform(void *uniform ptr)
+{
+  delete ptr;
+}
+
 export uniform int sizeofVaryingRange1f()
 {
   return sizeof(varying box1f);
@@ -32,29 +37,14 @@ export uniform int sizeofVaryingVKLIntervalIterator()
   return sizeof(varying VKLIntervalIterator);
 }
 
-export varying VKLIntervalIterator *uniform newVaryingVKLIntervalIterator()
+export varying Interval *uniform newVaryingInterval()
 {
-  return uniform new varying VKLIntervalIterator;
-}
-
-export uniform int sizeofVaryingVKLHitIterator()
-{
-  return sizeof(varying VKLHitIterator);
-}
-
-export varying VKLHitIterator *uniform newVaryingVKLHitIterator()
-{
-  return uniform new varying VKLHitIterator;
+  return uniform new varying Interval;
 }
 
 export uniform int sizeofVaryingInterval()
 {
   return sizeof(varying Interval);
-}
-
-export varying Interval *uniform newVaryingInterval()
-{
-  return uniform new varying Interval;
 }
 
 export uniform int sizeofVaryingHit()

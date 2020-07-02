@@ -10,4 +10,5 @@
 #include "volume/ProceduralStructuredVolume.h"
 #include "volume/ProceduralUnstructuredVolume.h"
 #include "volume/ProceduralVdbVolume.h"
+#include "volume/ProceduralParticleVolume.h"
 #include "volume/RawFileStructuredVolume.h"

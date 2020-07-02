@@ -6,7 +6,7 @@
 #include "ProceduralStructuredVolume.h"
 #include "procedural_functions.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace testing {
@@ -24,9 +24,12 @@ namespace openvkl {
                                             samplingFunction,
                                             gradientFunction>
     {
-      ProceduralStructuredRegularVolume(const vec3i &dimensions,
-                                        const vec3f &gridOrigin,
-                                        const vec3f &gridSpacing);
+      ProceduralStructuredRegularVolume(
+          const vec3i &dimensions,
+          const vec3f &gridOrigin,
+          const vec3f &gridSpacing,
+          VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
+          size_t byteStride                      = 0);
 
       vec3f transformLocalToObjectCoordinates(
           const vec3f &localCoordinates) override;
@@ -45,13 +48,20 @@ namespace openvkl {
     inline ProceduralStructuredRegularVolume<VOXEL_TYPE,
                                              samplingFunction,
                                              gradientFunction>::
-        ProceduralStructuredRegularVolume(const vec3i &dimensions,
-                                          const vec3f &gridOrigin,
-                                          const vec3f &gridSpacing)
+        ProceduralStructuredRegularVolume(
+            const vec3i &dimensions,
+            const vec3f &gridOrigin,
+            const vec3f &gridSpacing,
+            VKLDataCreationFlags dataCreationFlags,
+            size_t byteStride)
         : ProceduralStructuredVolume<VOXEL_TYPE,
                                      samplingFunction,
-                                     gradientFunction>(
-              "structuredRegular", dimensions, gridOrigin, gridSpacing)
+                                     gradientFunction>("structuredRegular",
+                                                       dimensions,
+                                                       gridOrigin,
+                                                       gridSpacing,
+                                                       dataCreationFlags,
+                                                       byteStride)
     {
     }
 
@@ -128,6 +138,55 @@ namespace openvkl {
         ProceduralStructuredRegularVolume<double,
                                           getWaveletValue<double>,
                                           getWaveletGradient>;
+
+    // using type traits to work around Visual Studio compiler templating bugs
+    template <typename VOXEL_TYPE>
+    struct ProceduralStructuredRegularVolumes
+    {
+      using Wavelet = void;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<unsigned char>
+    {
+      using Wavelet =
+          ProceduralStructuredRegularVolume<unsigned char,
+                                            getWaveletValue<unsigned char>,
+                                            getWaveletGradient>;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<short>
+    {
+      using Wavelet = ProceduralStructuredRegularVolume<short,
+                                                        getWaveletValue<short>,
+                                                        getWaveletGradient>;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<unsigned short>
+    {
+      using Wavelet =
+          ProceduralStructuredRegularVolume<unsigned short,
+                                            getWaveletValue<unsigned short>,
+                                            getWaveletGradient>;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<float>
+    {
+      using Wavelet = ProceduralStructuredRegularVolume<float,
+                                                        getWaveletValue<float>,
+                                                        getWaveletGradient>;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<double>
+    {
+      using Wavelet = ProceduralStructuredRegularVolume<double,
+                                                        getWaveletValue<double>,
+                                                        getWaveletGradient>;
+    };
 
   }  // namespace testing
 }  // namespace openvkl

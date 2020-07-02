@@ -1,12 +1,12 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void xyz_scalar_gradients(VKLUnstructuredCellType primType)
@@ -22,6 +22,8 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
                                           false));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions());
 
@@ -35,7 +37,7 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
                                 << objectCoordinates.z);
 
     const vkl_vec3f vklGradient =
-        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates);
+        vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
     const vec3f gradient = (const vec3f &)vklGradient;
 
     // compare to analytical gradient
@@ -48,6 +50,8 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
     REQUIRE(gradient.y == Approx(proceduralGradient.y).epsilon(1e-4f));
     REQUIRE(gradient.z == Approx(proceduralGradient.z).epsilon(1e-4f));
   }
+
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Unstructured volume gradients", "[volume_gradients]")

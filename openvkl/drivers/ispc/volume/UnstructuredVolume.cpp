@@ -3,8 +3,9 @@
 
 #include "UnstructuredVolume.h"
 #include "../common/Data.h"
-#include "ospcommon/containers/AlignedVector.h"
-#include "ospcommon/tasking/parallel_for.h"
+#include "UnstructuredSampler.h"
+#include "rkcommon/containers/AlignedVector.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 // Map cell type to its vertices count
 inline uint32_t getVerticesCount(uint8_t cellType)
@@ -60,6 +61,10 @@ namespace openvkl {
     template <int W>
     UnstructuredVolume<W>::~UnstructuredVolume()
     {
+      if (this->ispcEquivalent) {
+        CALL_ISPC(VKLUnstructuredVolume_Destructor, this->ispcEquivalent);
+      }
+
       if (rtcBVH)
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
@@ -73,32 +78,12 @@ namespace openvkl {
 
       // hex method planar/nonplanar
 
-      vertexPosition = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "vertex.position", nullptr);
-      vertexValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "vertex.data", nullptr);
-
-      index = (Data *)this->template getParam<ManagedObject::VKL_PTR>("index",
-                                                                      nullptr);
+      vertexPosition = this->template getParamDataT<vec3f>("vertex.position");
+      vertexValue = this->template getParamDataT<float>("vertex.data", nullptr);
       indexPrefixed = this->template getParam<bool>("indexPrefixed", false);
+      cellValue     = this->template getParamDataT<float>("cell.data", nullptr);
+      cellType = this->template getParamDataT<uint8_t>("cell.type", nullptr);
 
-      cellIndex = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.index", nullptr);
-      cellValue = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.data", nullptr);
-      cellType = (Data *)this->template getParam<ManagedObject::VKL_PTR>(
-          "cell.type", nullptr);
-
-      if (!vertexPosition) {
-        throw std::runtime_error(
-            "unstructured volume must have 'vertex.position'");
-      }
-      if (!index) {
-        throw std::runtime_error("unstructured volume must have 'index'");
-      }
-      if (!cellIndex) {
-        throw std::runtime_error("unstructured volume must have 'cellIndex'");
-      }
       if (!vertexValue && !cellValue) {
         throw std::runtime_error(
             "unstructured volume must have 'vertex.data' or 'cell.data'");
@@ -109,30 +94,37 @@ namespace openvkl {
             "'indexPrefixed'");
       }
 
-      if (vertexPosition->dataType != VKL_VEC3F) {
-        throw std::runtime_error("unstructured volume unsupported vertex type");
-      }
+      // index data can be 32 or 64 bit
+      Ref<const Data> index = this->template getParam<Data *>("index");
 
       switch (index->dataType) {
       case VKL_UINT:
         index32Bit = true;
+        index32    = this->template getParamDataT<uint32_t>("index");
         break;
       case VKL_ULONG:
         index32Bit = false;
+        index64    = this->template getParamDataT<uint64_t>("index");
         break;
       default:
         throw std::runtime_error("unstructured volume unsupported index type");
       }
 
+      // cell.index data can be 32 or 64 bit
+      Ref<const Data> cellIndex = this->template getParam<Data *>("cell.index");
+
       switch (cellIndex->dataType) {
       case VKL_UINT:
-        cell32Bit = true;
+        cell32Bit   = true;
+        cellIndex32 = this->template getParamDataT<uint32_t>("cell.index");
         break;
       case VKL_ULONG:
-        cell32Bit = false;
+        cell32Bit   = false;
+        cellIndex64 = this->template getParamDataT<uint64_t>("cell.index");
         break;
       default:
-        throw std::runtime_error("unstructured volume unsupported cell type");
+        throw std::runtime_error(
+            "unstructured volume unsupported cell.index type");
       }
       nCells = cellIndex->size();
 
@@ -141,22 +133,22 @@ namespace openvkl {
           throw std::runtime_error(
               "unstructured volume #cells does not match #cell.type");
       } else {
-        cellType = new Data(nCells, VKL_UCHAR, nullptr, VKL_DATA_DEFAULT);
-        uint8_t *typeArray = (uint8_t *)cellType->data;
+        generatedCellType.resize(nCells);
+
         for (int i = 0; i < nCells; i++) {
-          auto index = readInteger(cellIndex->data, cell32Bit, i);
+          auto index = cell32Bit ? (*cellIndex32)[i] : (*cellIndex64)[i];
           switch (getVertexId(index)) {
           case 4:
-            typeArray[i] = VKL_TETRAHEDRON;
+            generatedCellType[i] = VKL_TETRAHEDRON;
             break;
           case 8:
-            typeArray[i] = VKL_HEXAHEDRON;
+            generatedCellType[i] = VKL_HEXAHEDRON;
             break;
           case 6:
-            typeArray[i] = VKL_WEDGE;
+            generatedCellType[i] = VKL_WEDGE;
             break;
           case 5:
-            typeArray[i] = VKL_PYRAMID;
+            generatedCellType[i] = VKL_PYRAMID;
             break;
           default:
             throw std::runtime_error(
@@ -164,13 +156,21 @@ namespace openvkl {
             break;
           }
         }
+
+        Data *d  = new Data(nCells,
+                           VKL_UCHAR,
+                           generatedCellType.data(),
+                           VKL_DATA_SHARED_BUFFER,
+                           0);
+        cellType = &(d->as<uint8_t>());
+        d->refDec();
       }
 
       hexIterative = this->template getParam<bool>("hexIterative", false);
 
       bool needTolerances = false;
       for (int i = 0; i < nCells; i++) {
-        auto cell = ((uint8_t *)cellType->data)[i];
+        auto cell = (*cellType)[i];
         if (cell == VKL_WEDGE || cell == VKL_PYRAMID ||
             (cell == VKL_HEXAHEDRON && hexIterative)) {
           needTolerances = true;
@@ -204,20 +204,26 @@ namespace openvkl {
           VKLUnstructuredVolume_set,
           this->ispcEquivalent,
           (const ispc::box3f &)bounds,
-          (const ispc::vec3f *)vertexPosition->data,
-          (const uint32_t *)index->data,
+          ispc(vertexPosition),
+          index32Bit ? ispc(index32) : ispc(index64),
           index32Bit,
-          vertexValue ? (const float *)vertexValue->data : nullptr,
-          cellValue ? (const float *)cellValue->data : nullptr,
-          (const uint32_t *)cellIndex->data,
+          ispc(vertexValue),
+          ispc(cellValue),
+          cell32Bit ? ispc(cellIndex32) : ispc(cellIndex64),
           cell32Bit,
           indexPrefixed,
-          (const uint8_t *)cellType->data,
+          ispc(cellType),
           (void *)(rtcRoot),
           faceNormals.empty() ? nullptr
                               : (const ispc::vec3f *)faceNormals.data(),
           iterativeTolerance.empty() ? nullptr : iterativeTolerance.data(),
           hexIterative);
+    }
+
+    template <int W>
+    Sampler<W> *UnstructuredVolume<W>::newSampler()
+    {
+      return new UnstructuredSampler<W>(this);
     }
 
     template <int W>
@@ -228,16 +234,15 @@ namespace openvkl {
 
       // iterate through cell vertices
       box4f bBox;
-      uint32_t maxIdx = getVerticesCount(((uint8_t *)(cellType->data))[id]);
+      uint32_t maxIdx = getVerticesCount((*cellType)[id]);
       for (uint32_t i = 0; i < maxIdx; i++) {
         // get vertex index
         uint64_t vId = getVertexId(cOffset + i);
 
         // build 4 dimensional vertex with its position and value
-        vec3f &v  = ((vec3f *)(vertexPosition->data))[vId];
-        float val = cellValue ? ((float *)(cellValue->data))[id]
-                              : ((float *)(vertexValue->data))[vId];
-        vec4f p = vec4f(v.x, v.y, v.z, val);
+        const vec3f &v = (*vertexPosition)[vId];
+        float val      = cellValue ? (*cellValue)[id] : (*vertexValue)[vId];
+        vec4f p        = vec4f(v.x, v.y, v.z, val);
 
         // extend bounding box
         if (i == 0)
@@ -249,7 +254,9 @@ namespace openvkl {
       return bBox;
     }
 
-    static inline void errorFunction(void *userPtr, enum RTCError error, const char *str)
+    static inline void errorFunction(void *userPtr,
+                                     enum RTCError error,
+                                     const char *str)
     {
       LogMessageStream(VKL_LOG_WARNING)
           << "error " << error << ": " << str << std::endl;
@@ -344,9 +351,8 @@ namespace openvkl {
       const uint32_t hexDiagonals[4][2] = {{0, 6}, {1, 7}, {2, 4}, {3, 5}};
 
       // Build all tolerances
-      uint8_t *typeArray = (uint8_t *)cellType->data;
       tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
-        switch (typeArray[taskIndex]) {
+        switch ((*cellType)[taskIndex]) {
         case VKL_HEXAHEDRON:
           if (!hexIterative)
             calculateTolerance(taskIndex, hexDiagonals, 4);
@@ -374,8 +380,8 @@ namespace openvkl {
       for (int i = 0; i < count; i++) {
         uint64_t vId0    = getVertexId(cOffset + edge[i][0]);
         uint64_t vId1    = getVertexId(cOffset + edge[i][1]);
-        const vec3f &v0  = ((const vec3f *)(vertexPosition->data))[vId0];
-        const vec3f &v1  = ((const vec3f *)(vertexPosition->data))[vId1];
+        const vec3f &v0  = (*vertexPosition)[vId0];
+        const vec3f &v1  = (*vertexPosition)[vId1];
         const float dist = length(v0 - v1);
         longest          = std::max(longest, dist);
       }
@@ -405,9 +411,8 @@ namespace openvkl {
           {3, 0, 1}, {4, 1, 0}, {4, 2, 1}, {4, 3, 2}, {3, 4, 0}};
 
       // Build all normals
-      uint8_t *typeArray = (uint8_t *)cellType->data;
       tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
-        switch (typeArray[taskIndex]) {
+        switch ((*cellType)[taskIndex]) {
         case VKL_TETRAHEDRON:
           calculateCellNormals(taskIndex, tetrahedronFaces, 4);
           break;
@@ -440,9 +445,9 @@ namespace openvkl {
         uint64_t vId0   = getVertexId(cOffset + faces[i][0]);
         uint64_t vId1   = getVertexId(cOffset + faces[i][1]);
         uint64_t vId2   = getVertexId(cOffset + faces[i][2]);
-        const vec3f &v0 = ((const vec3f *)(vertexPosition->data))[vId0];
-        const vec3f &v1 = ((const vec3f *)(vertexPosition->data))[vId1];
-        const vec3f &v2 = ((const vec3f *)(vertexPosition->data))[vId2];
+        const vec3f &v0 = (*vertexPosition)[vId0];
+        const vec3f &v1 = (*vertexPosition)[vId1];
+        const vec3f &v2 = (*vertexPosition)[vId2];
 
         // Calculate normal
         faceNormals[cellId * 6 + i] = normalize(cross(v0 - v1, v2 - v1));

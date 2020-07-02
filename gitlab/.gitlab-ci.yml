@@ -65,7 +65,6 @@ stages:
 
 .job_template: &base_benchmark_job
   stage: benchmark
-  when: manual
   script:
     - gitlab/run-benchmarks.sh
 
@@ -103,6 +102,16 @@ build-centos7-icc:
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/build.sh
 
+build-centos7-icc15:
+  <<: *build_job_docker_centos7_modules
+  script:
+    - module load cmake
+    - module load intel/2015
+    - export CC=icc
+    - export CXX=icpc
+    - export CXXFLAGS="-static-intel -fPIC"
+    - gitlab/build.sh
+
 build-centos8:
   <<: *build_job_docker
   image: ospray/docker-images:centos8
@@ -118,6 +127,8 @@ build-ubuntu16.04:
 build-ubuntu18.04:
   <<: *build_job_docker
   image: ospray/docker-images:ubuntu18.04
+  script:
+    - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
 build-arch:
   <<: *build_job_docker
@@ -130,6 +141,21 @@ build-arch-clang:
     - export CC=clang
     - export CXX=clang++
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+build-arch-address-sanitizer:
+  <<: *build_job_docker
+  image: ospray/docker-images:arch
+  script:
+    - export CFLAGS=-fsanitize=address
+    - export CXXFLAGS=-fsanitize=address
+    - export LDFLAGS=-fsanitize=address
+    - gitlab/build.sh -D BUILD_GLFW=OFF
+
+build-arch-devel-rkdeps:
+  <<: *build_job_docker
+  image: ospray/docker-images:arch
+  script:
+    - gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
 
 build-macOS:
   <<: *base_build_job
@@ -157,7 +183,7 @@ build-windows-msvc15:
 build-from-install-centos7:
   <<: *build_from_install_job_docker
   image: ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7
 
 ## Functional Test Jobs ##
@@ -165,20 +191,20 @@ build-from-install-centos7:
 test-functional-centos7:
   <<: *test_functional_job_docker
   image: ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7
 
 # ensures icc-built binaries can run without Intel runtimes
 test-functional-centos7-icc:
   <<: *test_functional_job_docker
   image: ospray/docker-images:centos7
-  dependencies:
+  needs:
     - build-centos7-icc
 
 test-functional-centos8:
   <<: *test_functional_job_docker
   image: ospray/docker-images:centos8
-  dependencies:
+  needs:
     - build-centos8
 
 test-functional-ubuntu16.04:
@@ -187,7 +213,7 @@ test-functional-ubuntu16.04:
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests
-  dependencies:
+  needs:
     - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
@@ -196,24 +222,36 @@ test-functional-ubuntu18.04:
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests
-  dependencies:
+  needs:
     - build-ubuntu18.04
 
 test-functional-arch:
   <<: *test_functional_job_docker
   image: ospray/docker-images:arch
-  dependencies:
+  needs:
     - build-arch
 
 test-functional-arch-clang:
   <<: *test_functional_job_docker
   image: ospray/docker-images:arch
-  dependencies:
+  needs:
     - build-arch-clang
+
+test-functional-arch-address-sanitizer:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:arch
+  needs:
+    - build-arch-address-sanitizer
+
+test-functional-arch-devel-rkdeps:
+  <<: *test_functional_job_docker
+  image: ospray/docker-images:arch
+  needs:
+    - build-arch-devel-rkdeps
 
 test-functional-macOS:
   <<: *base_functional_test_job
-  dependencies:
+  needs:
     - build-macOS
   tags:
     - osx
@@ -226,7 +264,7 @@ test-functional-windows-msvc15:
   <<: *base_functional_test_job
   script:
     - gitlab\run_tests.bat
-  dependencies:
+  needs:
     - build-windows-msvc15
   tags:
     - msvc15
@@ -234,9 +272,24 @@ test-functional-windows-msvc15:
 
 ## Benchmark Jobs ##
 
+# All pipelines have this manual benchmark job.
 benchmark-x8280-1:
   <<: *base_benchmark_job
-  dependencies:
+  when: manual
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-perf-x8280-1
+
+# A second benchmark job meant for scheduled (nightly, weekly, ...) builds.
+# The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
+# BENCHMARK_MIN_TIME_SECONDS to configure the benchmark run time.
+benchmark-x8280-1-schedule:
+  <<: *base_benchmark_job
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
+  needs:
     - build-centos7-icc
   tags:
     - vis-perf-x8280-1
@@ -253,7 +306,7 @@ build-kw-scan:
     - git submodule init
     - git submodule update
   tags:
-    - kw-scan-docker
+    - docker
   artifacts:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
@@ -269,7 +322,7 @@ test-kw-critical:
   dependencies:
     - build-kw-scan
   tags:
-    - kw-scan-docker
+    - docker
   allow_failure: true
 
 ## Protex Job ##
@@ -296,6 +349,7 @@ release-linux-icc:
     - export CXX=icpc
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/release/linux.sh
+  dependencies: []
   tags:
     - docker
     - modules
@@ -307,6 +361,7 @@ release-macOS:
   <<: *base_release_job
   script:
     - gitlab/release/macos.sh
+  dependencies: []
   tags:
     - osx
     - clang
@@ -318,6 +373,7 @@ release-windows:
   <<: *base_release_job
   script:
     - gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
+  dependencies: []
   tags:
     - msvc15
     - win10

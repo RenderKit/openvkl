@@ -71,7 +71,7 @@ namespace openvkl {
         }
 
         const vec3f c = ray.org + t * ray.dir;
-        sample        = vklComputeSample(scene.volume, (const vkl_vec3f *)&c);
+        sample        = vklComputeSample(scene.sampler, (const vkl_vec3f *)&c);
 
         vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);
 

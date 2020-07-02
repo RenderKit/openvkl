@@ -1,11 +1,12 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.isph>
 
-export void demo_ispc(void *uniform _volume)
+export void demo_ispc(void *uniform _volume, void *uniform _sampler)
 {
-  uniform VKLVolume volume = (uniform VKLVolume)_volume;
+  uniform VKLVolume volume   = (uniform VKLVolume)_volume;
+  uniform VKLSampler sampler = (uniform VKLSampler)_sampler;
 
   // bounding box
   uniform vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -19,8 +20,8 @@ export void demo_ispc(void *uniform _volume)
   objectCoordinates.y = programIndex * 3 + 1;
   objectCoordinates.z = programIndex * 3 + 2;
 
-  float sample   = vklComputeSampleV(volume, &objectCoordinates);
-  vkl_vec3f grad = vklComputeGradientV(volume, &objectCoordinates);
+  float sample   = vklComputeSampleV(sampler, &objectCoordinates);
+  vkl_vec3f grad = vklComputeGradientV(sampler, &objectCoordinates);
 
   print("objectCoordinates:\n\tx: %\n\ty: %\n\tz: %\n\n",
         objectCoordinates.x,
@@ -40,7 +41,7 @@ export void demo_ispc(void *uniform _volume)
   vklCommit((VKLObject)selector);
 
   // ray definition for iterators
-  vkl_vec3f rayOrigin = {0, 0, 0};
+  vkl_vec3f rayOrigin = {0, 1, 1};
   vkl_vec3f rayDirection;
   rayDirection.x = 1;
   rayDirection.y = programIndex / 16.f;
@@ -68,13 +69,9 @@ export void demo_ispc(void *uniform _volume)
         rayTRange.upper);
 
   // interval iteration
-  VKLIntervalIterator intervalIterator;
-  vklInitIntervalIteratorV(&intervalIterator,
-                           volume,
-                           &rayOrigin,
-                           &rayDirection,
-                           &rayTRange,
-                           selector);
+  uniform unsigned int8 bufferInterval[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+      volume, &rayOrigin, &rayDirection, &rayTRange, selector, bufferInterval);
 
   print("interval iterator for value ranges {% %} {% %}\n",
         ranges[0].lower,
@@ -83,7 +80,7 @@ export void demo_ispc(void *uniform _volume)
         ranges[1].upper);
 
   VKLInterval interval;
-  while (vklIterateIntervalV(&intervalIterator, &interval)) {
+  while (vklIterateIntervalV(intervalIterator, &interval)) {
     print("\ttRange:\n\t\tlower: %\n\t\tupper: %\n",
           interval.tRange.lower,
           interval.tRange.upper);
@@ -94,15 +91,16 @@ export void demo_ispc(void *uniform _volume)
   }
 
   // hit iteration
-  VKLHitIterator hitIterator;
-  vklInitHitIteratorV(
-      &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
+  uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
+  VKLHitIterator hitIterator = vklInitHitIteratorV(
+      volume, &rayOrigin, &rayDirection, &rayTRange, selector, bufferHit);
 
   print("hit iterator for values % %\n", values[0], values[1]);
 
   VKLHit hit;
-  while (vklIterateHitV(&hitIterator, &hit)) {
-    print("\tt: %\n\tsample %\n\n", hit.t, hit.sample);
+  while (vklIterateHitV(hitIterator, &hit)) {
+    print(
+        "\tt: %\n\tsample %\n\tepsilon %\n\n", hit.t, hit.sample, hit.epsilon);
   }
 
   vklRelease((VKLObject)selector);

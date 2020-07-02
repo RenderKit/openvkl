@@ -1,16 +1,18 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
-void scalar_hit_iteration(VKLVolume volume, const std::vector<float> &isoValues)
+void scalar_hit_iteration(VKLVolume volume,
+                          const std::vector<float> &isoValues,
+                          const std::vector<float> &expectedTValues,
+                          const vkl_vec3f &origin = vkl_vec3f{0.5f, 0.5f, -1.f},
+                          const vkl_vec3f &direction = vkl_vec3f{0.f, 0.f, 1.f})
 {
-  vkl_vec3f origin{0.5f, 0.5f, -1.f};
-  vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
@@ -19,24 +21,26 @@ void scalar_hit_iteration(VKLVolume volume, const std::vector<float> &isoValues)
 
   vklCommit(valueSelector);
 
-  VKLHitIterator iterator;
-  vklInitHitIterator(
-      &iterator, volume, &origin, &direction, &tRange, valueSelector);
+  std::vector<char> buffer(vklGetHitIteratorSize(volume));
+  VKLHitIterator iterator = vklInitHitIterator(
+      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLHit hit;
 
   int hitCount = 0;
 
-  while (vklIterateHit(&iterator, &hit)) {
+  while (vklIterateHit(iterator, &hit)) {
     INFO("hit t = " << hit.t << ", sample = " << hit.sample);
 
-    REQUIRE(hit.t == Approx(1.f + isoValues[hitCount]));
+    REQUIRE(hit.t == Approx(expectedTValues[hitCount]).margin(1e-3f));
     REQUIRE(hit.sample == isoValues[hitCount]);
 
     hitCount++;
   }
 
   REQUIRE(hitCount == isoValues.size());
+
+  vklRelease(valueSelector);
 }
 
 TEST_CASE("Hit iterator", "[hit_iterators]")
@@ -54,9 +58,11 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
   // default isovalues
   std::vector<float> defaultIsoValues;
+  std::vector<float> defaultExpectedTValues;
 
   for (float f = 0.1f; f < 1.f; f += 0.1f) {
     defaultIsoValues.push_back(f);
+    defaultExpectedTValues.push_back(f + 1.f);
   }
 
   SECTION("scalar hit iteration")
@@ -68,7 +74,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume();
 
-      scalar_hit_iteration(vklVolume, defaultIsoValues);
+      scalar_hit_iteration(vklVolume, defaultIsoValues, defaultExpectedTValues);
     }
 
     SECTION(
@@ -82,12 +88,32 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       VKLVolume vklVolume = v->getVKLVolume();
 
       std::vector<float> macroCellBoundaries;
+      std::vector<float> macroCellTValues;
 
       for (int i = 0; i < 128; i += 16) {
         macroCellBoundaries.push_back(float(i));
+        macroCellTValues.push_back(float(i) + 1.f);
       }
 
-      scalar_hit_iteration(vklVolume, macroCellBoundaries);
+      scalar_hit_iteration(vklVolume, macroCellBoundaries, macroCellTValues);
+    }
+
+    SECTION("structured volumes: single voxel layer edge case")
+    {
+      std::unique_ptr<ZProceduralVolume> v(
+          new ZProceduralVolume(vec3i(17, 17, 17), vec3f(0.f), vec3f(1.f) / vec3f(16.f)));
+
+      VKLVolume vklVolume = v->getVKLVolume();
+      // We're tracing from the back, so we'll hit the isovalues in reverse order
+      std::vector<float> reversedIsovalues = defaultIsoValues;
+      std::reverse(reversedIsovalues.begin(), reversedIsovalues.end());
+
+      scalar_hit_iteration(vklVolume,
+                           reversedIsovalues,
+                           defaultExpectedTValues,
+                           vkl_vec3f{0.5f, 0.5f, 2.f},
+                           //vkl_vec3f{8.f, 8.f, 18.f},
+                           vkl_vec3f{0.f, 0.f, -1.f});
     }
 
     SECTION("unstructured volumes")
@@ -98,7 +124,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume();
 
-      scalar_hit_iteration(vklVolume, defaultIsoValues);
+      scalar_hit_iteration(vklVolume, defaultIsoValues, defaultExpectedTValues);
     }
   }
 }

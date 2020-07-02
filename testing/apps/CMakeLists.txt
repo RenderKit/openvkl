@@ -47,6 +47,21 @@ if (BUILD_BENCHMARKS)
   install(TARGETS vklBenchmarkVdbVolume
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
+
+  # Particle volumes
+  add_executable(vklBenchmarkParticleVolume
+    vklBenchmarkParticleVolume.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkParticleVolume
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkParticleVolume
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
 endif()
 
 # Functional tests
@@ -56,26 +71,36 @@ if (BUILD_TESTING)
 
   openvkl_add_executable_ispc(vklTests
     vklTests.cpp
+    tests/alignment.cpp
     tests/hit_iterator.cpp
+    tests/hit_iterator_epsilon.cpp
     tests/interval_iterator.cpp
     tests/simd_conformance.cpp
     tests/simd_conformance.ispc
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
+    tests/structured_regular_volume_strides.cpp
     tests/structured_spherical_volume_sampling.cpp
     tests/structured_spherical_volume_bounding_box.cpp
     tests/structured_volume_value_range.cpp
     tests/unstructured_volume_gradients.cpp
     tests/unstructured_volume_sampling.cpp
+    tests/unstructured_volume_strides.cpp
     tests/unstructured_volume_value_range.cpp
     tests/vectorized_gradients.cpp
+    tests/stream_gradients.cpp
     tests/vectorized_hit_iterator.cpp
     tests/vectorized_interval_iterator.cpp
     tests/vectorized_sampling.cpp
+    tests/stream_sampling.cpp
     tests/amr_volume_sampling.cpp
     tests/amr_volume_value_range.cpp
     tests/vdb_volume.cpp
+    tests/particle_volume_sampling.cpp
+    tests/particle_volume_gradients.cpp
+    tests/particle_volume_value_range.cpp
+    tests/particle_volume_interval_iterator.cpp
   )
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})

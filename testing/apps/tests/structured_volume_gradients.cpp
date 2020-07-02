@@ -1,12 +1,12 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/math/box.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 template <typename PROCEDURAL_VOLUME_TYPE>
@@ -22,10 +22,12 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
   PROCEDURAL_VOLUME_TYPE::generateGridParameters(
       dimensions, boundingBoxSize, gridOrigin, gridSpacing);
 
-  auto v = ospcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
+  auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions());
 
@@ -46,7 +48,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
                                 << objectCoordinates.z);
 
     const vkl_vec3f vklGradient =
-        vklComputeGradient(vklVolume, (const vkl_vec3f *)&objectCoordinates);
+        vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
     const vec3f gradient = (const vec3f &)vklGradient;
 
     // compare to analytical gradient
@@ -57,6 +59,8 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
     REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
     REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
   }
+
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Structured volume gradients", "[volume_gradients]")

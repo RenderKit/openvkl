@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,8 +12,8 @@ struct SharedStructuredVolume;
 
 struct GridAcceleratorIteratorIntervalState
 {
-  Interval currentInterval;
   vec3i currentCellIndex;
+  float nominalDeltaT;  // constant for all intervals
 };
 
 struct GridAcceleratorIteratorHitState
@@ -21,7 +21,6 @@ struct GridAcceleratorIteratorHitState
   bool activeCell;
   vec3i currentCellIndex;
   box1f currentCellTRange;
-  Hit currentHit;
 };
 
 struct GridAcceleratorIterator

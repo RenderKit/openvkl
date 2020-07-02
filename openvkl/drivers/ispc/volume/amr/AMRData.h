@@ -1,13 +1,13 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../common/Data.h"
 #include "../common/math.h"
-#include "ospcommon/math/box.h"
+#include "rkcommon/math/box.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {
@@ -17,10 +17,10 @@ namespace openvkl {
           data - ie, what we get from the scene graph or applicatoin */
       struct AMRData
       {
-        AMRData(const Data &blockBoundsData,
-                const Data &refinementLevelsData,
-                const Data &cellWidthsData,
-                const Data &blockDataData);
+        AMRData(const DataT<box3i> &blockBoundsData,
+                const DataT<int> &refinementLevelsData,
+                const DataT<float> &cellWidthsData,
+                const DataT<Data *> &blockDataData);
 
         /*! this is how an app _specifies_ a brick (or better, the array
           of bricks); the brick data is specified through a separate
@@ -52,7 +52,7 @@ namespace openvkl {
         {
           /*! actual constructor from a brick info and data pointer */
           /*! initialize from given data */
-          Brick(const BrickInfo &info, const float *data);
+          Brick(const BrickInfo &info, const DataT<float> &data);
 
           /* world bounds, including entire cells, and including
              level-specific cell width. ie, at root level cell width of
@@ -62,7 +62,7 @@ namespace openvkl {
           box3f worldBounds;
 
           //! pointer to the actual data values stored in this brick
-          const float *value{nullptr};
+          const ispc::Data1D *value{nullptr};
           //! dimensions of this box's data
           vec3i dims;
           //! scale factor from grid space to world space (ie,1.f/cellWidth)

@@ -5,6 +5,7 @@
 
 #include "../Volume.ih"
 #include "VdbGrid.h"
+#include "VdbSampleConfig.h"
 
 varying float VdbVolume_sample(const VdbGrid *uniform grid,
                                const varying vec3i &ic);
@@ -13,4 +14,5 @@ struct VdbVolume
 {
   Volume super;
   const VdbGrid *uniform grid;
+  const VdbSampleConfig *uniform globalConfig;
 };

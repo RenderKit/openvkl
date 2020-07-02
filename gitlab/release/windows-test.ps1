@@ -5,7 +5,7 @@ $ROOT_DIR = pwd
 
 #### Extract release package ####
 
-$OPENVKL_PKG_BASE = "openvkl-0.9.0.x86_64.windows"
+$OPENVKL_PKG_BASE = "openvkl-0.10.0.x86_64.windows"
 Expand-Archive .\$OPENVKL_PKG_BASE.zip -DestinationPath $ROOT_DIR
 
 #### Build tutorial against release package ####

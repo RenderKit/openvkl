@@ -9,6 +9,8 @@
 #pragma once
 
 #include "VKLDataType.h"
+#include "VKLFormat.h"
+#include "VKLFilter.h"
 #include "ispc_cpp_interop.h"
 
 // ========================================================================== //
@@ -214,46 +216,3 @@ inline varying vkl_uint64 vklVdbDomainOffsetToLinear(varying vkl_uint32 level,
 #endif
 
 #undef __vkl_vdb_switch_case
-
-// ========================================================================== //
-// An enum that represents the different filter types available in vdb volumes.
-// ========================================================================== //
-#if __cplusplus >= 201103L
-enum VKLFilter : vkl_uint32
-#else
-enum VKLFilter
-#endif
-{
-  // Only read the voxel the sample position is in, treating it as
-  // constant.
-  VKL_FILTER_NEAREST = 0,
-  // Read the eight voxels surrounding the sample position, and
-  // interpolate trilinearly.
-  VKL_FILTER_TRILINEAR = 100,
-};
-
-// ========================================================================== //
-// An enum for leaf data format constants.
-// This value determines how the leaf data buffer is interpreted by VKL
-// ========================================================================== //
-#if defined(__cplusplus)
-enum VKLVdbLeafFormat : vkl_uint32
-#else
-enum VKLVdbLeafFormat
-#endif
-{
-  // The leaf is constant over the whole domain, and the buffer contains a
-  // single value.
-  VKL_VDB_FORMAT_TILE,
-  // The data is temporally constant, and the buffer contains an array of
-  // vklVdbNumVoxels(level) values.
-  VKL_VDB_FORMAT_CONSTANT,
-  // (unsupported) The data is temporally dense.
-  // TODO: Support this format.
-  VKL_VDB_FORMAT_DENSE,
-  // (unsupported) The data is temporally dense.
-  // The data is a temporally unstructured volume (TUV).
-  // TODO: Support this format.
-  VKL_VDB_FORMAT_TUV,
-  VKL_VDB_FORMAT_INVALID
-};

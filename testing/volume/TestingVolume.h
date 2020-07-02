@@ -5,11 +5,11 @@
 
 // openvkl
 #include "openvkl/openvkl.h"
-// ospcommon
-#include "ospcommon/math/range.h"
-#include "ospcommon/math/vec.h"
+// rkcommon
+#include "rkcommon/math/range.h"
+#include "rkcommon/math/vec.h"
 
-using namespace ospcommon::math;
+using namespace rkcommon::math;
 
 namespace openvkl {
   namespace testing {

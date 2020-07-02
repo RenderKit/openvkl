@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,30 +10,50 @@
 struct ValueSelector;
 struct Volume;
 
-struct DefaultIteratorIntervalState
+/*
+ * Add a pointer of this type as the first member in your interval iterator
+ * state struct to make it usable with the default hit iterator.
+ */
+typedef void (*uniform IterateIntervalFunc)(const int *uniform imask,
+                                            void *uniform _self,
+                                            void *uniform _interval,
+                                            const uniform box1f &valueRange,
+                                            uniform int *uniform _result);
+
+/*
+ * Default iterators share this state as they represent iteration along
+ * a ray.
+ */
+struct DefaultIntervalIterator
 {
+  /* Enable the default hit iterator. */
+  IterateIntervalFunc iterateInterval;
+
+  Volume *uniform volume;
+  ValueSelector *uniform valueSelector;
+
+  uniform box1f valueRange;  // value range of the full volume
+  float nominalIntervalLength;
+
+  vec3f origin;
+  vec3f direction;
+
+  box1f boundingBoxTRange;
   Interval currentInterval;
 };
 
-struct DefaultIteratorHitState
-{
-  box1f tRange;
-  Hit currentHit;
-};
-
-struct DefaultIterator
+struct DefaultHitIterator
 {
   Volume *uniform volume;
+  ValueSelector *uniform valueSelector;
+
   vec3f origin;
   vec3f direction;
-  box1f tRange;
-  ValueSelector *uniform valueSelector;
-  uniform box1f valueRange;  // value range of the full volume
 
-  box1f boundingBoxTRange;
-  uniform float nominalIntervalLength;
+  // The interval iterator that we use.
+  void *uniform intervalIteratorState;
 
-  DefaultIteratorIntervalState intervalState;
-
-  DefaultIteratorHitState hitState;
+  // Current iteration state.
+  Interval currentInterval;
 };
+

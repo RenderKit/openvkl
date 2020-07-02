@@ -6,6 +6,7 @@
 #include "Volume.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
+#include "../common/Data.ih"
 #include "openvkl/VKLDataType.h"
 
 struct GridAccelerator;
@@ -20,8 +21,8 @@ struct SharedStructuredVolume
 {
   Volume super;
 
-  const void *uniform voxelData;
-  uniform VKLDataType voxelType;
+  uniform Data1D voxelData;
+  uniform int voxelType;
 
   uniform vec3i dimensions;
 
@@ -34,10 +35,6 @@ struct SharedStructuredVolume
   uniform vec3f localCoordinatesUpperBound;
 
   GridAccelerator *uniform accelerator;
-
-  // number of bytes for one x/y slice of the data, used to compute offsets for
-  // slices with different z values.
-  uniform uint64 bytesPerVoxel, bytesPerLine, bytesPerSlice;
 
   // offsets, in bytes, for one step in x,y,z direction; ONLY valid if
   // bytesPerSlice < 2G.

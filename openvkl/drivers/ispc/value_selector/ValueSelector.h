@@ -1,15 +1,15 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "../common/ManagedObject.h"
 #include "../common/objectFactory.h"
-#include "ospcommon/math/range.h"
-#include "ospcommon/utility/ArrayView.h"
+#include "rkcommon/math/range.h"
+#include "rkcommon/utility/ArrayView.h"
 
-using namespace ospcommon;
-using namespace ospcommon::math;
+using namespace rkcommon;
+using namespace rkcommon::math;
 
 namespace openvkl {
   namespace ispc_driver {

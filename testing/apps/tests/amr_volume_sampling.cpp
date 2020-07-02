@@ -1,11 +1,11 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
-#include "ospcommon/utility/multidim_index_sequence.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
-using namespace ospcommon;
+using namespace rkcommon;
 using namespace openvkl::testing;
 
 void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
@@ -15,6 +15,8 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
           dimensions, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   std::vector<vec3f> offsets;
   offsets.emplace_back(0.0f);
@@ -46,9 +48,11 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
                                 << objectCoordinates.z);
 
     REQUIRE(
-        vklComputeSample(vklVolume, (const vkl_vec3f *)&objectCoordinates) ==
+        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates) ==
         Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
+
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("AMR volume sampling", "[volume_sampling]")

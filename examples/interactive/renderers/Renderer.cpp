@@ -4,8 +4,8 @@
 #include "Renderer.h"
 // std
 #include <algorithm>
-// ospcommon
-#include "ospcommon/tasking/parallel_for.h"
+// rkcommon
+#include "rkcommon/tasking/parallel_for.h"
 // ispc
 #include "Renderer_ispc.h"
 

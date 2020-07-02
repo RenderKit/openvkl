@@ -26,18 +26,20 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  VKLIntervalIterator iterator;
-  vklInitIntervalIteratorV(&iterator,
+  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+
+  VKLIntervalIterator iterator = vklInitIntervalIteratorV(
                            scene->volume,
                            (varying vkl_vec3f *)&ray.org,
                            (varying vkl_vec3f *)&ray.dir,
                            &tRange,
-                           scene->valueSelector);
+                           scene->valueSelector,
+                           intervalIteratorBuffer);
 
   // the current ray interval
   VKLInterval interval;
 
-  while (vklIterateIntervalV(&iterator, &interval) && alpha < 0.99f) {
+  while (vklIterateIntervalV(iterator, &interval) && alpha < 0.99f) {
     const float nominalSamplingDt = interval.nominalDeltaT / self->samplingRate;
 
     // initial sub interval, based on our renderer-defined sampling rate
@@ -55,7 +57,7 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
       // get volume sample
       vec3f c = ray.org + t * ray.dir;
       float sample =
-          vklComputeSampleV(scene->volume, (varying vkl_vec3f *)&c);
+          vklComputeSampleV(scene->sampler, (varying vkl_vec3f *)&c);
 
       // map through transfer function
       vec4f sampleColorAndOpacity =

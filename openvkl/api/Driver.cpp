@@ -5,9 +5,9 @@
 #include <sstream>
 #include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
-#include "ospcommon/tasking/tasking_system_init.h"
-#include "ospcommon/utility/StringManip.h"
-#include "ospcommon/utility/getEnvVar.h"
+#include "rkcommon/tasking/tasking_system_init.h"
+#include "rkcommon/utility/StringManip.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #define LOG_LEVEL_DEFAULT VKL_LOG_INFO
 
@@ -30,7 +30,7 @@ namespace openvkl {
     }
 
     // Driver definitions
-    std::shared_ptr<Driver> Driver::current;
+    memory::IntrusivePtr<Driver> Driver::current;
 
     VKLLogLevel Driver::logLevel = LOG_LEVEL_DEFAULT;
 
@@ -166,7 +166,7 @@ namespace openvkl {
 
     bool driverIsSet()
     {
-      return Driver::current.get() != nullptr;
+      return Driver::current.ptr != nullptr;
     }
 
     Driver &currentDriver()

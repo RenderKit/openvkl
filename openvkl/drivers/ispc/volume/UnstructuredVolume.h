@@ -102,28 +102,23 @@ namespace openvkl {
     {
       ~UnstructuredVolume();
 
+      std::string toString() const override;
+
       void commit() override;
 
-      void initIntervalIteratorV(
-          const vintn<W> &valid,
-          vVKLIntervalIteratorN<W> &iterator,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override;
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final
+      {
+        return intervalIteratorFactory;
+      }
 
-      void iterateIntervalV(const vintn<W> &valid,
-                            vVKLIntervalIteratorN<W> &iterator,
-                            vVKLIntervalN<W> &interval,
-                            vintn<W> &result) override;
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
 
-      void computeSampleV(const vintn<W> &valid,
-                          const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override;
-
-      void computeGradientV(const vintn<W> &valid,
-                            const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override;
+      Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
 
@@ -138,9 +133,6 @@ namespace openvkl {
 
      private:
       void buildBvhAndCalculateBounds();
-
-      // Read 32/64-bit integer value from given array
-      uint64_t readInteger(const void *array, bool is32Bit, uint64_t id) const;
 
       // Read from index arrays that could have 32/64-bit element size
       uint64_t getCellOffset(uint64_t id) const;
@@ -161,19 +153,25 @@ namespace openvkl {
       box3f bounds{empty};
       range1f valueRange{empty};
 
-      Data *vertexPosition{nullptr};
-      Data *vertexValue{nullptr};
+      Ref<const DataT<vec3f>> vertexPosition;
+      Ref<const DataT<float>> vertexValue;
 
-      Data *index{nullptr};
+      Ref<const DataT<uint32_t>> index32;
+      Ref<const DataT<uint64_t>> index64;
 
-      Data *cellIndex{nullptr};
-      Data *cellValue{nullptr};
-      Data *cellType{nullptr};
+      Ref<const DataT<uint32_t>> cellIndex32;
+      Ref<const DataT<uint64_t>> cellIndex64;
+
+      Ref<const DataT<float>> cellValue;
+      Ref<const DataT<uint8_t>> cellType;
 
       bool index32Bit{false};
       bool cell32Bit{false};
       bool indexPrefixed{false};
       bool hexIterative{false};
+
+      // used only if an explicit cell type array is not provided
+      std::vector<uint8_t> generatedCellType;
 
       std::vector<vec3f> faceNormals;
       std::vector<float> iterativeTolerance;
@@ -181,63 +179,16 @@ namespace openvkl {
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
+      UnstructuredHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline void UnstructuredVolume<W>::computeSampleV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vfloatn<W> &samples) const
+    inline std::string UnstructuredVolume<W>::toString() const
     {
-      CALL_ISPC(VKLUnstructuredVolume_sample_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &samples);
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::initIntervalIteratorV(
-        const vintn<W> &valid,
-        vVKLIntervalIteratorN<W> &iterator,
-        const vvec3fn<W> &origin,
-        const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
-    {
-      initVKLIntervalIterator<UnstructuredIterator<W>>(
-          iterator, valid, this, origin, direction, tRange, valueSelector);
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::iterateIntervalV(
-        const vintn<W> &valid,
-        vVKLIntervalIteratorN<W> &iterator,
-        vVKLIntervalN<W> &interval,
-        vintn<W> &result)
-    {
-      UnstructuredIterator<W> *ri =
-          fromVKLIntervalIterator<UnstructuredIterator<W>>(&iterator);
-
-      ri->iterateInterval(valid, result);
-
-      interval =
-          *reinterpret_cast<const vVKLIntervalN<W> *>(ri->getCurrentInterval());
-    }
-
-    template <int W>
-    inline void UnstructuredVolume<W>::computeGradientV(
-        const vintn<W> &valid,
-        const vvec3fn<W> &objectCoordinates,
-        vvec3fn<W> &gradients) const
-    {
-      CALL_ISPC(VKLUnstructuredVolume_gradient_export,
-                static_cast<const int *>(valid),
-                this->ispcEquivalent,
-                &objectCoordinates,
-                &gradients);
+      return "openvkl::UnstructuredVolume";
     }
 
     template <int W>
@@ -253,26 +204,16 @@ namespace openvkl {
     }
 
     template <int W>
-    inline uint64_t UnstructuredVolume<W>::readInteger(const void *array,
-                                                       bool is32Bit,
-                                                       uint64_t id) const
-    {
-      if (!is32Bit)
-        return ((const uint64_t *)(array))[id];
-      else
-        return ((const uint32_t *)(array))[id];
-    }
-
-    template <int W>
     inline uint64_t UnstructuredVolume<W>::getCellOffset(uint64_t id) const
     {
-      return readInteger(cellIndex->data, cell32Bit, id) + indexPrefixed;
+      return (cell32Bit ? (*cellIndex32)[id] : (*cellIndex64)[id]) +
+             indexPrefixed;
     }
 
     template <int W>
     inline uint64_t UnstructuredVolume<W>::getVertexId(uint64_t id) const
     {
-      return readInteger(index->data, index32Bit, id);
+      return index32Bit ? (*index32)[id] : (*index64)[id];
     }
 
   }  // namespace ispc_driver

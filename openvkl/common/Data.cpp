@@ -2,48 +2,84 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Data.h"
-#include "ospcommon/memory/malloc.h"
+#include "rkcommon/memory/malloc.h"
 
 namespace openvkl {
+
+  ispc::Data1D Data::emptyData1D;
 
   Data::Data(size_t numItems,
              VKLDataType dataType,
              const void *source,
-             VKLDataCreationFlags dataCreationFlags)
+             VKLDataCreationFlags dataCreationFlags,
+             size_t _byteStride)
       : numItems(numItems),
-        numBytes(numItems * sizeOf(dataType)),
         dataType(dataType),
-        dataCreationFlags(dataCreationFlags)
+        dataCreationFlags(dataCreationFlags),
+        byteStride(_byteStride)
   {
-    if (dataCreationFlags & VKL_DATA_SHARED_BUFFER) {
-      if (source == nullptr)
-        throw std::runtime_error("shared buffer is NULL");
-      data = source;
-    } else {
-      void *buffer = ospcommon::memory::alignedMalloc(numBytes + 16);
-      if (buffer == nullptr)
-        throw std::runtime_error("data is NULL");
-      data = buffer;
-      if (source)
+    if (numItems == 0) {
+      throw std::out_of_range("VKLData: numItems must be positive");
+    }
+
+    if (!source) {
+      throw std::runtime_error("VKLData: source cannot be NULL");
+    }
+
+    // compute stride if requested
+    if (byteStride == 0) {
+      byteStride = sizeOf(dataType);
+    }
+
+    if (dataCreationFlags == VKL_DATA_DEFAULT) {
+      // copy source data into naturally-strided (compact) array
+      const size_t naturalByteStride = sizeOf(dataType);
+      const size_t numBytes          = numItems * naturalByteStride;
+
+      void *buffer = rkcommon::memory::alignedMalloc(numBytes + 16);
+
+      if (buffer == nullptr) {
+        throw std::bad_alloc();
+      }
+
+      if (byteStride == naturalByteStride) {
         memcpy(buffer, source, numBytes);
-      else if (dataType == VKL_OBJECT)
-        memset(buffer, 0, numBytes);
+      } else {
+        for (size_t i = 0; i < numItems; i++) {
+          const char *src = (const char *)source + i * byteStride;
+          char *dst       = (char *)buffer + i * naturalByteStride;
+          memcpy(dst, src, sizeOf(dataType));
+        }
+      }
+
+      addr       = (char *)buffer;
+      byteStride = naturalByteStride;
+    } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
+      addr = (char *)source;
+    } else {
+      throw std::runtime_error("VKLData: unknown data creation flags provided");
     }
 
     managedObjectType = VKL_DATA;
     if (isManagedObject(dataType)) {
-      ManagedObject **child = (ManagedObject **)data;
+      ManagedObject **child = (ManagedObject **)addr;
       for (uint32_t i = 0; i < numItems; i++) {
         if (child[i])
           child[i]->refInc();
       }
     }
+
+    // set ISPC-side proxy
+    ispc.addr       = reinterpret_cast<decltype(ispc.addr)>(addr);
+    ispc.byteStride = byteStride;
+    ispc.numItems   = numItems;
+    ispc.compact    = compact();
   }
 
   Data::~Data()
   {
     if (isManagedObject(dataType)) {
-      Data **child = (Data **)data;
+      Data **child = (Data **)addr;
       for (uint32_t i = 0; i < numItems; i++) {
         if (child[i])
           child[i]->refDec();
@@ -51,9 +87,7 @@ namespace openvkl {
     }
 
     if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
-      // We know we allocated this buffer, so the const cast is in fact
-      // reasonable.
-      ospcommon::memory::alignedFree(const_cast<void *>(data));
+      rkcommon::memory::alignedFree(addr);
     }
   }
 
@@ -62,9 +96,14 @@ namespace openvkl {
     return "openvkl::Data";
   }
 
-  size_t openvkl::Data::size() const
+  size_t Data::size() const
   {
     return numItems;
+  }
+
+  bool Data::compact() const
+  {
+    return byteStride == sizeOf(dataType);
   }
 
 }  // namespace openvkl

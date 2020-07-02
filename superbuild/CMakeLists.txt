@@ -49,7 +49,7 @@ if (${CMAKE_VERSION} VERSION_GREATER 3.11.4)
   set(PARALLEL_JOBS_OPTS -j ${BUILD_JOBS})
 endif()
 
-set(DEFAULT_BUILD_COMMAND cmake --build . --config Release ${PARALLEL_JOBS_OPTS})
+set(DEFAULT_BUILD_COMMAND ${CMAKE_COMMAND} --build . --config Release ${PARALLEL_JOBS_OPTS})
 
 # We must replace separators so that ExternalProject_Add can work with the
 # paths we generate.
@@ -95,17 +95,17 @@ option(BUILD_OPENVKL_BENCHMARKS
 
 option(BUILD_ISPC "Build the Intel SPMD Program Compiler or search in environment?" ON)
 if (BUILD_ISPC)
-  set(ISPC_VERSION "1.12.0")
-  set(ISPC_BASE_URL "http://sdvis.org/ospray/download/dependencies")
+  set(ISPC_VERSION "1.13.0")
+  set(ISPC_BASE_URL "https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}")
   if (APPLE)
-    set(_ISPC_URL "${ISPC_BASE_URL}/osx/ispc-v${ISPC_VERSION}-macOS.tar.gz")
-    set(_ISPC_HASH "e6c917b964e43218c422b46c9a6c71b876d88d0791da2ee3732b20a2e209c018")
+    set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-macOS.tar.gz")
+    set(_ISPC_HASH "0dc7eaf3335b299e262f052fb96f0ad5a4e04a41492f399b690ca788e0fd304b")
   elseif(WIN32)
-    set(_ISPC_URL "${ISPC_BASE_URL}/win/ispc-v${ISPC_VERSION}-windows.zip")
-    set(_ISPC_HASH "a35eb79c52456dfbd560edbfec99dae67f1beffd39b106922f5d02cd908c6454")
+    set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-windows.zip")
+    set(_ISPC_HASH "b0a3a96baf426845fd1a38ca5c1dcca094354bea99a3bc3f8e3a741bf07e6608")
   else()
-    set(_ISPC_URL "${ISPC_BASE_URL}/linux/ispc-v${ISPC_VERSION}-linux.tar.gz")
-    set(_ISPC_HASH "79decaef42bc5433ab30f5879eb91af14473a42e8b51ec727a97f61ee918497e")
+    set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-linux.tar.gz")
+    set(_ISPC_HASH "8ab1189bd5db596b3eee9d9465d3528b6626a7250675d67102761bb0d284cd21")
   endif()
   set(ISPC_URL "${_ISPC_URL}" CACHE STRING "URL of the ISPC archive.")
   set(ISPC_HASH "${_ISPC_HASH}" CACHE STRING "SHA256 hash of the ISPC archive.")
@@ -115,19 +115,19 @@ endif()
 
 option(BUILD_TBB "Build Intel Threading Building Blocks or search in environment?" ON)
 if (BUILD_TBB)
-  set(TBB_VERSION "2020.1")
+  set(TBB_VERSION "2020.2")
   set(TBB_BASE_URL "https://github.com/oneapi-src/oneTBB/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}")
   if (APPLE)
     set(_TBB_URL "${TBB_BASE_URL}-mac.tgz")
-    set(_TBB_HASH "db7fca4b5d737183b999f6de2f96583f14864e4e2427e624cb0bc65cefc24a42")
+    set(_TBB_HASH "4ca94512289e857a1d23d122947f2902c2edf6e521a5f29d161bf8458ea317b5")
     set(TBB_LIB_SUBDIR "")
   elseif(WIN32)
     set(_TBB_URL "${TBB_BASE_URL}-win.zip")
-    set(_TBB_HASH "7fd8e2434ee9be18a81c4274576bf4ac4c01bf28240935f06ee827f8f3b1914a")
+    set(_TBB_HASH "087b63903e3b3ea26cbf0c128c768ce8aefc23d18a3089ce929c0c8a6dfd0f64")
     set(TBB_LIB_SUBDIR "intel64/vc14")
   else()
     set(_TBB_URL "${TBB_BASE_URL}-lin.tgz")
-    set(_TBB_HASH "048b221d8d3b4a4a9d4d535acf536401122a2a316a74cf383570612ed8236ad3")
+    set(_TBB_HASH "b2545fbf162a1c16613add3463687154b967757bd0a00b70c885f7aef2a921d5")
     set(TBB_LIB_SUBDIR "intel64/gcc4.8")
   endif()
   set(TBB_URL "${_TBB_URL}" CACHE STRING "URL of the TBB archive.")
@@ -136,14 +136,14 @@ if (BUILD_TBB)
 endif()
 
 
-option(BUILD_OSPCOMMON "Build ospcommon or search in environment?" ON)
-if (BUILD_OSPCOMMON)
-  set(OSPCOMMON_VERSION "1.3.0")
-  set(OSPCOMMON_URL "https://github.com/ospray/ospcommon/archive/v${OSPCOMMON_VERSION}.zip"
-    CACHE STRING "URL of the ospcommon archive.")
-  set(OSPCOMMON_HASH "0b5499e9f28c97523f7d8fe2fc2ef9c1278547917b5e548b4000f927c09b0e59"
-    CACHE STRING "SHA256 hash of the ospcommon archive.")
-  include(dep_ospcommon)
+option(BUILD_RKCOMMON "Build rkcommon or search in environment?" ON)
+if (BUILD_RKCOMMON)
+  set(RKCOMMON_VERSION "v1.4.1" CACHE STRING "rkcommon version to download")
+  set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_VERSION}.zip"
+    CACHE STRING "URL of the rkcommon archive.")
+  set(RKCOMMON_HASH "68a122e6da9f10441d6f1b85f5787b57be01008495a8ac025bd29fbd15359c57"
+    CACHE STRING "SHA256 hash of the rkcommon archive.")
+  include(dep_rkcommon)
 endif()
 
 
@@ -151,21 +151,23 @@ endif()
 option(BUILD_EMBREE "Build Intel Embree or search in environment?" ON)
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree from source or use pre-built version? (Only used when BUILD_EMBREE=ON)" ON)
 if (BUILD_EMBREE)
-  set(EMBREE_VERSION "3.8.0")
+  set(EMBREE_VERSION "v3.11.0" CACHE STRING "Embree version to download")
   if (BUILD_EMBREE_FROM_SOURCE)
-    set(_EMBREE_URL "https://github.com/embree/embree/archive/v${EMBREE_VERSION}.zip")
-    set(_EMBREE_HASH "9902d375346559a64bb68c09d8960b7f5cc23608647f088ad0da769d445cbf2b")
+    set(_EMBREE_URL "https://github.com/embree/embree/archive/${EMBREE_VERSION}.zip")
+    set(_EMBREE_HASH "2247a7b0560497d7b7e5e67e237a5cb8ed853b5e6484cd8995a87e746bc308bc")
   else()
-    set(EMBREE_BASE_URL "https://github.com/embree/embree/releases/download/v${EMBREE_VERSION}")
+    # Embree binary package URLs do not use the "v" prefix
+    string(REPLACE "v" "" EMBREE_VERSION_NUMBER ${EMBREE_VERSION})
+    set(EMBREE_BASE_URL "https://github.com/embree/embree/releases/download/${EMBREE_VERSION}")
     if (APPLE)
-      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION}.x86_64.macosx.zip")
-      set(_EMBREE_HASH "d2d99344eda7274875ca08a2e02ae77da94b7cf879dfbe354ef5d47834311918")
+      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x86_64.macosx.zip")
+      set(_EMBREE_HASH "81548ebc7689c6451be5409a9395bdf48a6259c0debdc43fe134bc0e5f306448")
     elseif (WIN32)
-      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION}.x64.vc14.windows.zip")
-      set(_EMBREE_HASH "241154d03587bbbd430c45da174f6d990ee13acc3b54725af938cd05cf0aaf77")
+      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x64.vc14.windows.zip")
+      set(_EMBREE_HASH "97c4cc85dd60127a81751a68aaaa5dba9e410faf558a6e08f2226484ffc67b7d")
     else()
-      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION}.x86_64.linux.tar.gz")
-      set(_EMBREE_HASH "3153e32aca07b38b804353ae2f31ddc8d25201fcffb7b506aa7f2e8f36448fb7")
+      set(_EMBREE_URL "${EMBREE_BASE_URL}/embree-${EMBREE_VERSION_NUMBER}.x86_64.linux.tar.gz")
+      set(_EMBREE_HASH "f61ecc7401b8c9444008d53201ec681516f048ee31d43d125dad917fc76c5b71")
     endif()
   endif()
   set(EMBREE_URL "${_EMBREE_URL}"  CACHE STRING "URL of the Embree source archive.")
@@ -202,8 +204,11 @@ if (BUILD_OPENVDB)
   elseif (CMAKE_VERSION VERSION_LESS 3.7)
     message(WARNING "Disabling OpenVDB support because the cmake version is too low (3.7 is required)")
     set(BUILD_OPENVDB OFF)
-  elseif (CMAKE_COMPILER_IS_GNUCC AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.3)
+  elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.3)
     message(WARNING "Disabling OpenVDB support because the gcc compiler version is too low (6.3 is required)")
+    set(BUILD_OPENVDB OFF)
+  elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.1)
+    message(WARNING "Disabling OpenVDB support because the icc compiler version is too low (19.1 is required)")
     set(BUILD_OPENVDB OFF)
   else()
     set(ILMBASE_VERSION "2.4.1")
@@ -280,7 +285,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       -DCMAKE_INSTALL_DOCDIR=${CMAKE_INSTALL_DOCDIR}
       -DCMAKE_INSTALL_BINDIR=${CMAKE_INSTALL_BINDIR}
       $<$<BOOL:${BUILD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
-      $<$<BOOL:${BUILD_TBB}>:-DOSPCOMMON_TBB_ROOT=${TBB_PATH}>
+      $<$<BOOL:${BUILD_TBB}>:-DRKCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_OPENVDB}>:-DOpenVDB_ROOT=${OPENVDB_PATH}>
       ${OPENVKL_EXTRA_OPENVDB_OPTIONS}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
@@ -291,7 +296,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
   configure
     $<$<BOOL:${BUILD_ISPC}>:ispc>
     $<$<BOOL:${BUILD_TBB}>:tbb>
-    $<$<BOOL:${BUILD_OSPCOMMON}>:ospcommon>
+    $<$<BOOL:${BUILD_RKCOMMON}>:rkcommon>
     $<$<BOOL:${BUILD_GLFW}>:glfw>
     $<$<BOOL:${BUILD_EMBREE}>:embree>
     $<$<BOOL:${BUILD_OPENVDB}>:openvdb>

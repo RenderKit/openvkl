@@ -1,6 +1,36 @@
 Version History
 ---------------
 
+### Open VKL 0.10.0 (alpha)
+
+-   Added new `particle` volume type supporting Gaussian radial basis functions
+-   Introduced `VKLSampler` objects allowing configuration of sampling and
+    gradient behavior
+-   Added stream-wide sampling and gradient APIs
+-   Introduced a new way to allocate iterators, giving the user more freedom in
+    choosing allocation schemes and reducing iterator size
+-   Added support for strided data arrays
+-   Added gradient implementations for `amr` and `vdb` volumes
+-   Hit iterator accuracy improvements for `amr`, `structuredSpherical`,
+    `unstructured`, and `vdb` volumes
+-   Up to 4x performance improvement for `structuredRegular` and
+    `structuredSpherical` sampling for volumes in the 1-2GB range
+-   Up to 2x performance improvement for `structuredRegular` interval iteration
+-   Improved commit speed for `unstructured` volumes
+-   Improved value range computation in `vdb` volumes
+-   Improved isosurface shading in `vklExamples`
+-   Improved parameter validation across all volume types
+-   Aligned `VKLHit[4,8,16]` and `VKLInterval[4,8,16]` structs
+-   Added hit epsilon to `VKLHit[4,8,16]`
+-   Updated parameter names for `vdb` volumes
+-   Renamed `VKLVdbLeafFormat` to `VKLFormat`
+-   Fixed incorrect use of system-installed CMake in superbuild while building
+    dependencies
+-   Fixed various memory leaks
+-   Fixed crashes which could occur in `VdbVolume::cleanup()` and
+    `vklShutdown()`
+-   Moved from ospcommon to rkcommon v1.4.1
+
 ### Open VKL 0.9.0 (alpha)
 
 -   Added support for VDB sparse structured volumes (`"vdb"` volume type)

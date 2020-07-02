@@ -783,31 +783,20 @@ The following additional parameters can be set both on `vdb` volumes and
 their sampler objects (sampler object parameters default to volume
 parameters).
 
-|      |      |         |             |
-| :--- | :--- | :------ | :---------- |
-| Type | Name | Default | Description |
+| Type | Name             | Default                | Description                                                                                                     |
+| :--- | :--------------- | :--------------------- | :-------------------------------------------------------------------------------------------------------------- |
+| int  | filter           | `VKL_FILTER_TRILINEAR` | The filter used for reconstructing the field. Use `VKLFilter` for named constants.                              |
+| int  | gradientFilter   | `filter`               | The filter used for reconstructing the field during gradient computations. Use `VKLFilter` for named constants. |
+| int  | maxSamplingDepth | `VKL_VDB_NUM_LEVELS`-1 | Do not descend further than to this depth during sampling.                                                      |
 
-int filter `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
-field. Use `VKLFilter` for named constants.
+Configuration parameters for VDB (`"vdb"`) volumes and their sampler
+objects.
 
-int gradientFilter `filter` The filter used for reconstructing the field
-during gradient computations. Use `VKLFilter` for named constants.
+VDB volumes support the following observers:
 
-int maxSamplingDepth `VKL_VDB_NUM_LEVELS`-1 Do not descend further than
-to this depth during sampling.
-
-|                |                    |                         |                          |
-| -------------- | :----------------- | :---------------------- | :----------------------- |
-| : Configuratio | n parameters for V | DB (`"vdb"`) volumes an | d their sampler objects. |
-| B volumes supp | ort the following  | observers:              |                          |
-
-| Name           | Buffer Type | Description                                               |
-| :------------- | :---------- | :-------------------------------------------------------- |
-| LeafNodeAccess | uint32\[\]  | This observer returns an array with as many entries as    |
-|                |             | input nodes were passed. If the input node i was accessed |
-|                |             | during traversal, then the ith entry in this array has a  |
-|                |             | nonzero value.                                            |
-|                |             | This can be used for on-demand loading of leaf nodes.     |
+| Name           | Buffer Type | Description                                                                                                                                                                                                                                    |
+| :------------- | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| LeafNodeAccess | uint32\[\]  | This observer returns an array with as many entries as input nodes were passed. If the input node i was accessed during traversal, then the ith entry in this array has a nonzero value. This can be used for on-demand loading of leaf nodes. |
 
 Observers supported by VDB (`"vdb"`) volumes.
 
@@ -1359,9 +1348,16 @@ For quick reference, the contents of `vklTutorial.c` are shown below.
 #include <openvkl/openvkl.h>
 #include <stdio.h>
 
+#if defined(_MSC_VER)
+#include <malloc.h> // _malloca
+#endif
+
 void demoScalarAPI(VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
+
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -1375,8 +1371,8 @@ void demoScalarAPI(VKLVolume volume)
 
   // sample, gradient
   vkl_vec3f coord = {1.f, 1.f, 1.f};
-  float sample    = vklComputeSample(volume, &coord);
-  vkl_vec3f grad  = vklComputeGradient(volume, &coord);
+  float sample    = vklComputeSample(sampler, &coord);
+  vkl_vec3f grad  = vklComputeGradient(sampler, &coord);
   printf("\tcoord = %f %f %f\n", coord.x, coord.y, coord.z);
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -1392,7 +1388,7 @@ void demoScalarAPI(VKLVolume volume)
   vklCommit(selector);
 
   // ray definition for iterators
-  vkl_vec3f rayOrigin    = {0, 0, 0};
+  vkl_vec3f rayOrigin    = {0, 1, 1};
   vkl_vec3f rayDirection = {1, 0, 0};
   vkl_range1f rayTRange  = {0, 200};
   printf("\trayOrigin = %f %f %f\n", rayOrigin.x, rayOrigin.y, rayOrigin.z);
@@ -1402,56 +1398,77 @@ void demoScalarAPI(VKLVolume volume)
          rayDirection.z);
   printf("\trayTRange = %f %f\n", rayTRange.lower, rayTRange.upper);
 
-  // interval iteration
-  VKLIntervalIterator intervalIterator;
-  vklInitIntervalIterator(&intervalIterator,
-                          volume,
-                          &rayOrigin,
-                          &rayDirection,
-                          &rayTRange,
-                          selector);
+  // interval iteration. This is scoped
+  {
+    // Note: buffer will cease to exist at the end of this scope.
+#if defined(_MSC_VER)
+    // MSVC does not support variable length arrays, but provides a
+    // safer version of alloca.
+    char *buffer = _malloca(vklGetIntervalIteratorSize(volume));
+#else
+    char buffer[vklGetIntervalIteratorSize(volume)];
+#endif
+    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
+        volume, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
 
-  printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
-         ranges[0].lower,
-         ranges[0].upper,
-         ranges[1].lower,
-         ranges[1].upper);
+    printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
+           ranges[0].lower,
+           ranges[0].upper,
+           ranges[1].lower,
+           ranges[1].upper);
 
-  for (;;) {
-    VKLInterval interval;
-    int result = vklIterateInterval(&intervalIterator, &interval);
-    if (!result)
-      break;
-    printf(
-        "\t\ttRange (%f %f)\n\t\tvalueRange (%f %f)\n\t\tnominalDeltaT %f\n\n",
-        interval.tRange.lower,
-        interval.tRange.upper,
-        interval.valueRange.lower,
-        interval.valueRange.upper,
-        interval.nominalDeltaT);
+    for (;;) {
+      VKLInterval interval;
+      int result = vklIterateInterval(intervalIterator, &interval);
+      if (!result)
+        break;
+      printf(
+          "\t\ttRange (%f %f)\n\t\tvalueRange (%f %f)\n\t\tnominalDeltaT "
+          "%f\n\n",
+          interval.tRange.lower,
+          interval.tRange.upper,
+          interval.valueRange.lower,
+          interval.valueRange.upper,
+          interval.nominalDeltaT);
+    }
   }
 
   // hit iteration
-  VKLHitIterator hitIterator;
-  vklInitHitIterator(
-      &hitIterator, volume, &rayOrigin, &rayDirection, &rayTRange, selector);
+  {
+#if defined(_MSC_VER)
+    // MSVC does not support variable length arrays, but provides a
+    // safer version of alloca.
+    char *buffer = _malloca(vklGetHitIteratorSize(volume));
+#else
+    char buffer[vklGetHitIteratorSize(volume)];
+#endif
+    VKLHitIterator hitIterator = vklInitHitIterator(
+        volume, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
 
-  printf("\thit iterator for values %f %f\n", values[0], values[1]);
+    printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
-  for (;;) {
-    VKLHit hit;
-    int result = vklIterateHit(&hitIterator, &hit);
-    if (!result)
-      break;
-    printf("\t\tt %f\n\t\tsample %f\n\n", hit.t, hit.sample);
+    for (;;) {
+      VKLHit hit;
+      int result = vklIterateHit(hitIterator, &hit);
+      if (!result)
+        break;
+      printf("\t\tt %f\n\t\tsample %f\n\t\tepsilon %f\n\n",
+             hit.t,
+             hit.sample,
+             hit.epsilon);
+    }
   }
 
   vklRelease(selector);
+  vklRelease(sampler);
 }
 
 void demoVectorAPI(VKLVolume volume)
 {
   printf("demo of 4-wide API (8- and 16- follow the same pattern)\n");
+
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   vkl_vvec3f4 coord4;  // structure-of-array layout
   int valid[4];
@@ -1462,14 +1479,46 @@ void demoVectorAPI(VKLVolume volume)
 
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, volume, &coord4, sample4);
-  vklComputeGradient4(valid, volume, &coord4, &grad4);
+  vklComputeSample4(valid, sampler, &coord4, sample4);
+  vklComputeGradient4(valid, sampler, &coord4, &grad4);
 
   for (int i = 0; i < 4; i++) {
-    printf("\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
+    printf(
+        "\tcoord[%d] = %f %f %f\n", i, coord4.x[i], coord4.y[i], coord4.z[i]);
     printf("\t\tsample[%d] = %f\n", i, sample4[i]);
-    printf("\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
+    printf(
+        "\t\tgrad[%d]   = %f %f %f\n", i, grad4.x[i], grad4.y[i], grad4.z[i]);
   }
+
+  vklRelease(sampler);
+}
+
+void demoStreamAPI(VKLVolume volume)
+{
+  printf("demo of stream API\n");
+
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
+  // array-of-structure layout; arbitrary stream lengths are supported
+  vkl_vec3f coord[5];
+
+  for (int i = 0; i < 5; i++) {
+    coord[i].x = coord[i].y = coord[i].z = i;
+  }
+
+  float sample[5];
+  vkl_vec3f grad[5];
+  vklComputeSampleN(sampler, 5, coord, sample);
+  vklComputeGradientN(sampler, 5, coord, grad);
+
+  for (int i = 0; i < 5; i++) {
+    printf("\tcoord[%d] = %f %f %f\n", i, coord[i].x, coord[i].y, coord[i].z);
+    printf("\t\tsample[%d] = %f\n", i, sample[i]);
+    printf("\t\tgrad[%d]   = %f %f %f\n", i, grad[i].x, grad[i].y, grad[i].z);
+  }
+
+  vklRelease(sampler);
 }
 
 int main()
@@ -1485,7 +1534,8 @@ int main()
   const int numVoxels = dimensions[0] * dimensions[1] * dimensions[2];
 
   VKLVolume volume = vklNewVolume("structuredRegular");
-  vklSetVec3i(volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
+  vklSetVec3i(
+      volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
@@ -1503,7 +1553,7 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData data = vklNewData(numVoxels, VKL_FLOAT, voxels, 0);
+  VKLData data = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
   vklSetData(volume, "data", data);
   vklRelease(data);
 
@@ -1511,6 +1561,7 @@ int main()
 
   demoScalarAPI(volume);
   demoVectorAPI(volume);
+  demoStreamAPI(volume);
 
   vklRelease(volume);
 

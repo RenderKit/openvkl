@@ -679,7 +679,6 @@ objects (sampler object parameters default to volume parameters).
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-
   int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.

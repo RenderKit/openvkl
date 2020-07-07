@@ -623,7 +623,8 @@ The VDB implementation in Open VKL follows the following goals:
   - Compatibility with OpenVDB on a leaf data level, so that .vdb files may be loaded
     with minimal overhead.
 
-VDB volumes have the following parameters:
+VDB volumes are created by passing the type string `"vdb"` to `vklNewVolume`, and have the
+following parameters:
 
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
@@ -762,6 +763,9 @@ radial basis function phi, for each particle that overlaps it.
 The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
 method in [1].
+
+Particle volumes are created by passing the type string `"particle"` to `vklNewVolume`,
+and have the following parameters:
 
   --------  --------------------------  --------  ---------------------------------------
   Type      Name                        Default   Description

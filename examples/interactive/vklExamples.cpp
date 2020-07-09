@@ -142,11 +142,48 @@ bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
   return isosurfacesChanged;
 }
 
+bool addIntervalIteratorDebugUI(GLFWVKLWindow &window)
+{
+  auto &renderer = window.currentRenderer();
+
+  bool changed = false;
+
+  static int intervalColorScale = 4;
+  if (ImGui::SliderInt("intervalColorScale", &intervalColorScale, 1, 32)) {
+    renderer.setParam<float>("intervalColorScale", float(intervalColorScale));
+    changed = true;
+  }
+
+  static float intervalOpacity = 0.25f;
+  if (ImGui::SliderFloat("intervalOpacity", &intervalOpacity, 0.01f, 1.f)) {
+    renderer.setParam<float>("intervalOpacity", intervalOpacity);
+    changed = true;
+  }
+
+  static bool firstIntervalOnly = false;
+  if (ImGui::Checkbox("firstIntervalOnly", &firstIntervalOnly)) {
+    renderer.setParam<bool>("firstIntervalOnly", firstIntervalOnly);
+    changed = true;
+  }
+
+  static bool showIntervalBorders = false;
+  if (ImGui::Checkbox("showIntervalBorders", &showIntervalBorders)) {
+    renderer.setParam<bool>("showIntervalBorders", showIntervalBorders);
+    changed = true;
+  }
+
+  if (changed) {
+    renderer.commit();
+  }
+
+  return changed;
+}
+
 void usage(const char *progname)
 {
   std::cerr << "usage: " << progname << "\n"
             << "\t-renderer density_pathtracer | hit_iterator |"
-               " ray_march_iterator\n"
+               " ray_march_iterator | interval_iterator_debug\n"
                "\t-disable-vsync\n"
                "\t-gridType structuredRegular | structuredSpherical | "
                "unstructured | amr | vdb | particle\n"
@@ -444,10 +481,10 @@ int main(int argc, const char **argv)
     bool changed = false;
 
     static int whichRenderer = 0;
-    if (ImGui::Combo(
-            "renderer",
-            &whichRenderer,
-            "density_pathtracer\0hit_iterator\0ray_march_iterator\0\0")) {
+    if (ImGui::Combo("renderer",
+                     &whichRenderer,
+                     "density_pathtracer\0hit_iterator\0ray_march_"
+                     "iterator\0interval_iterator_debug\0\0")) {
       switch (whichRenderer) {
       case 0:
         rendererType = "density_pathtracer";
@@ -457,6 +494,9 @@ int main(int argc, const char **argv)
         break;
       case 2:
         rendererType = "ray_march_iterator";
+        break;
+      case 3:
+        rendererType = "interval_iterator_debug";
         break;
       default:
         break;
@@ -531,6 +571,11 @@ int main(int argc, const char **argv)
         scene.updateValueSelector(transferFunction, isoValues);
       }
     }
+
+    if (rendererType == "interval_iterator_debug") {
+      changed |= addIntervalIteratorDebugUI(*glfwVKLWindow);
+    }
+
     auto transferFunctionUpdatedCallback =
         [&](const range1f &valueRange,
             const std::vector<vec4f> &colorsAndOpacities) {

@@ -10,6 +10,7 @@
 
 #include "renderers/DensityPathTracer.h"
 #include "renderers/HitIterator.h"
+#include "renderers/IntervalIteratorDebug.h"
 #include "renderers/RayMarchIterator.h"
 
 namespace openvkl {
@@ -34,6 +35,9 @@ namespace openvkl {
       renderer_ray_march_iterator =
           std::unique_ptr<Renderer>(new RayMarchIterator());
       renderer_ray_march_iterator->commit();
+      renderer_interval_iterator_debug =
+          std::unique_ptr<Renderer>(new IntervalIteratorDebug());
+      renderer_interval_iterator_debug->commit();
 
       setActiveRenderer(rendererType);
       reshape(this->windowSize);
@@ -89,6 +93,8 @@ namespace openvkl {
         renderer = renderer_hit_iterator.get();
       else if (rendererType == "ray_march_iterator")
         renderer = renderer_ray_march_iterator.get();
+      else if (rendererType == "interval_iterator_debug")
+        renderer = renderer_interval_iterator_debug.get();
       else
         throw std::runtime_error("VKLWindow: unknown renderer type");
 
@@ -102,6 +108,7 @@ namespace openvkl {
       renderer_density_pathtracer->setFrameSize(windowSize);
       renderer_hit_iterator->setFrameSize(windowSize);
       renderer_ray_march_iterator->setFrameSize(windowSize);
+      renderer_interval_iterator_debug->setFrameSize(windowSize);
 
       // update camera
       arcballCamera->updateWindowSize(windowSize);

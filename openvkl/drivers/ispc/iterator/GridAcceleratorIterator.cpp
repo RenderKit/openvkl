@@ -71,6 +71,8 @@ namespace openvkl {
 
     template class GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>;
 
+    __vkl_verify_max_interval_iterator_size(GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>)
+
     ////////////////////////////////////////////////////////////////////////////
 
     template <int W>
@@ -133,6 +135,8 @@ namespace openvkl {
     }
 
     template class GridAcceleratorHitIterator<VKL_TARGET_WIDTH>;
+
+    __vkl_verify_max_hit_iterator_size(GridAcceleratorHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

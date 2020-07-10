@@ -108,5 +108,6 @@ namespace openvkl {
                 &hit,
                 static_cast<int *>(result));
     }
+
   }  // namespace ispc_driver
 }  // namespace openvkl

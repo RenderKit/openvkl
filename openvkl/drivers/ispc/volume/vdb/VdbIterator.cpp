@@ -43,5 +43,8 @@ namespace openvkl {
 
     template class VdbIntervalIterator<VKL_TARGET_WIDTH>;
 
+    __vkl_verify_max_interval_iterator_size(VdbIntervalIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_hit_iterator_size(VdbHitIterator<VKL_TARGET_WIDTH>)
+
   }  // namespace ispc_driver
 }  // namespace openvkl

@@ -113,11 +113,36 @@ namespace openvkl {
                                     vVKLIntervalN<W> &interval,
                                     vintn<W> &result) = 0;
 
-      /* 
+      /*
        * This interface is used by the default hit iterator.
        */
       virtual void *getIspcStorage() = 0;
     };
+
+/*
+ * Verify max interval iterator size macros. Use this in your implementation to
+ * catch inconsistencies early.
+ */
+#if defined(VKL_TARGET_WIDTH)
+
+#define __vkl_verify_max_interval_iterator_size_impl(T, W)                  \
+  static_assert(sizeof(T) <= alignedSize<T>() &&                            \
+                    alignedSize<T>() <= VKL_MAX_INTERVAL_ITERATOR_SIZE_##W, \
+                "sizeof(" #T                                                \
+                ") is greater than VKL_MAX_INTERVAL_ITERATOR_SIZE_" #W);
+
+#if (VKL_TARGET_WIDTH == 4)
+#define __vkl_verify_max_interval_iterator_size(T) \
+  __vkl_verify_max_interval_iterator_size_impl(T, 4)
+#elif (VKL_TARGET_WIDTH == 8)
+#define __vkl_verify_max_interval_iterator_size(T) \
+  __vkl_verify_max_interval_iterator_size_impl(T, 8)
+#elif (VKL_TARGET_WIDTH == 16)
+#define __vkl_verify_max_interval_iterator_size(T) \
+  __vkl_verify_max_interval_iterator_size_impl(T, 16)
+#endif
+
+#endif  // defined(VKL_TARGET_WIDTH)
 
     ///////////////////////////////////////////////////////////////////////////
     // Hit iterator ///////////////////////////////////////////////////////////
@@ -181,6 +206,31 @@ namespace openvkl {
                                vVKLHitN<W> &hit,
                                vintn<W> &result) = 0;
     };
+
+/*
+ * Verify max hit iterator size macros. Use this in your implementation to
+ * catch inconsistencies early.
+ */
+#if defined(VKL_TARGET_WIDTH)
+
+#define __vkl_verify_max_hit_iterator_size_impl(T, W)                  \
+  static_assert(sizeof(T) <= alignedSize<T>() &&                       \
+                    alignedSize<T>() <= VKL_MAX_HIT_ITERATOR_SIZE_##W, \
+                "sizeof(" #T                                           \
+                ") is greater than VKL_MAX_HIT_ITERATOR_SIZE_" #W);
+
+#if (VKL_TARGET_WIDTH == 4)
+#define __vkl_verify_max_hit_iterator_size(T) \
+  __vkl_verify_max_hit_iterator_size_impl(T, 4)
+#elif (VKL_TARGET_WIDTH == 8)
+#define __vkl_verify_max_hit_iterator_size(T) \
+  __vkl_verify_max_hit_iterator_size_impl(T, 8)
+#elif (VKL_TARGET_WIDTH == 16)
+#define __vkl_verify_max_hit_iterator_size(T) \
+  __vkl_verify_max_hit_iterator_size_impl(T, 16)
+#endif
+
+#endif  // defined(VKL_TARGET_WIDTH)
 
     ///////////////////////////////////////////////////////////////////////////
     // Iterator factory ///////////////////////////////////////////////////////

@@ -49,5 +49,7 @@ namespace openvkl {
 
     template class DefaultIntervalIterator<VKL_TARGET_WIDTH>;
 
+    __vkl_verify_max_interval_iterator_size(DefaultIntervalIterator<VKL_TARGET_WIDTH>)
+
   }  // namespace ispc_driver
 }  // namespace openvkl

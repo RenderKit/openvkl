@@ -49,7 +49,16 @@ inline vec3f intersect_planes(const vec3f &rayOrg,
                               const vec3f &rayInvDir,
                               const vec3f &planes)
 {
-  return (planes - rayOrg) * rayInvDir;
+  const float tx = (planes.x - rayOrg.x) * rayInvDir.x;
+  const float ty = (planes.y - rayOrg.y) * rayInvDir.y;
+  const float tz = (planes.z - rayOrg.z) * rayInvDir.z;
+
+  // NaN will occur if the ray starts on a plane (planes-rayOrg == 0) but 
+  // is also fully contained in this plane (rayDir == 0 -> rayInvDir == inf).
+  // We want to ignore such intersections.
+  return make_vec3f(select(isnan(tx), inf, tx),
+                    select(isnan(ty), inf, ty),
+                    select(isnan(tz), inf, tz));
 }
 
 /*

@@ -611,9 +611,16 @@ namespace openvkl {
       const box3i bbox = computeBbox(numLeaves, *leafLevel, *leafOrigin);
       grid->rootOrigin = computeRootOrigin(bbox);
 
-      // VKL requires a float bbox. This is stored on the base class Volume.
-      bounds.lower = xfmPoint(grid->indexToObject, vec3f(bbox.lower));
-      bounds.upper = xfmPoint(grid->indexToObject, vec3f(bbox.upper));
+      // VKL requires a float bbox.
+      bounds = empty;
+
+      for (int i = 0; i < 8; ++i) {
+        vec3f v = vec3f((i & 1) ? bbox.upper.x : bbox.lower.x,
+                        (i & 2) ? bbox.upper.y : bbox.lower.y,
+                        (i & 4) ? bbox.upper.z : bbox.lower.z);
+
+        bounds.extend(xfmPoint(grid->indexToObject, v));
+      }
 
       const auto binnedLeaves = binLeavesPerLevel(numLeaves, *leafLevel);
       for (size_t i = 0; i < vklVdbNumLevels(); ++i)

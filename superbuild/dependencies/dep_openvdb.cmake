@@ -8,6 +8,11 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
   set(COMPONENT_PATH ${INSTALL_DIR_ABSOLUTE}/${COMPONENT_NAME})
 endif()
 
+set(OPENVDB_HASH_ARGS "")
+if (NOT "${OPENVDB_HASH}" STREQUAL "")
+  set(OPENVDB_HASH_ARGS URL_HASH SHA256=${OPENVDB_HASH})
+endif()
+
 # Options that are shared between the OpenVDB and Open VKL builds.
 # We need to define these both for the OpenVDB dependency build and
 # the main Open VKL build.
@@ -23,7 +28,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   SOURCE_DIR ${COMPONENT_NAME}/src
   BINARY_DIR ${COMPONENT_NAME}/build
   URL ${OPENVDB_URL}
-  URL_HASH SHA256=${OPENVDB_HASH}
+  ${OPENVDB_HASH_ARGS}
   CMAKE_ARGS
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX=${COMPONENT_PATH}

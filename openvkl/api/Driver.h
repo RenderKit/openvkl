@@ -51,9 +51,13 @@ namespace openvkl {
 
       static VKLLogLevel logLevel;
 
-      std::function<void(const char *)> logFunction{[](const char *) {}};
-      std::function<void(VKLError, const char *)> errorFunction{
-          [](VKLError, const char *) {}};
+      std::function<void(void *, const char *)> logCallback{
+          [](void *, const char *) {}};
+      void *logUserData{nullptr};
+
+      std::function<void(void *, VKLError, const char *)> errorCallback{
+          [](void *, VKLError, const char *) {}};
+      void *errorUserData{nullptr};
 
       /////////////////////////////////////////////////////////////////////////
       // Data /////////////////////////////////////////////////////////////////

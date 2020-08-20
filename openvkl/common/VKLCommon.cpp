@@ -264,7 +264,7 @@ namespace openvkl {
       driver.lastErrorCode    = e;
       driver.lastErrorMessage = message;
 
-      driver.errorFunction(e, message.c_str());
+      driver.errorCallback(driver.errorUserData, e, message.c_str());
     } else {
       LogMessageStream(VKL_LOG_ERROR)
           << "INITIALIZATION ERROR: " << message << std::endl;

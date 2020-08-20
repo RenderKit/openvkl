@@ -143,25 +143,28 @@ A more descriptive error message can be queried by calling
 
 Alternatively, the application can also register a callback function of type
 
-    typedef void (*VKLErrorFunc)(VKLError, const char* message);
+    typedef void (*VKLErrorCallback)(void *, VKLError, const char* message);
 
 via
 
-    void vklDriverSetErrorFunc(VKLDriver, VKLErrorFunc);
+    void vklDriverSetErrorCallback(VKLDriver, VKLErrorFunc, void *);
 
 to get notified when errors occur. Applications may be interested in messages
 which Open VKL emits, whether for debugging or logging events. Applications can
 register a callback function of type
 
-    typedef void (*VKLLogFunc)(const char* message);
+    typedef void (*VKLLogCallback)(void *, const char* message);
 
 via
 
-    void vklDriverSetLogFunc(VKLDriver, VKLLogFunc);
+    void vklDriverSetLogCallback(VKLDriver, VKLLogCallback, void *);
 
 which Open VKL will use to emit log messages. Applications can clear either
 callback by passing `nullptr` instead of an actual function pointer. By default,
 Open VKL uses `cout` and `cerr` to emit log and error messages, respectively.
+The last parameter to `vklDriverSetErrorCallback` and `vklDriverSetLogCallback`
+is a user data pointer. Open VKL passes this pointer to the callback functions as
+the first parameter.
 Note that in addition to setting the above callbacks, this behavior can be
 changed via the driver parameters and environment variables described
 previously.

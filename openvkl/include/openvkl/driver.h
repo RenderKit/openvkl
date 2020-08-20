@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,11 +14,17 @@ extern "C" {
 
 OPENVKL_INTERFACE VKLDriver vklNewDriver(const char *driverName);
 
-typedef void (*VKLLogFunc)(const char *message);
-OPENVKL_INTERFACE void vklDriverSetLogFunc(VKLDriver driver, VKLLogFunc func);
+typedef void (*VKLLogCallback)(void *userData, const char *message);
+OPENVKL_INTERFACE void vklDriverSetLogCallback(VKLDriver driver,
+                                               VKLLogCallback callback,
+                                               void *userData);
 
-typedef void (*VKLErrorFunc)(VKLError error, const char *message);
-OPENVKL_INTERFACE void vklDriverSetErrorFunc(VKLDriver, VKLErrorFunc func);
+typedef void (*VKLErrorCallback)(void *userData,
+                                 VKLError error,
+                                 const char *message);
+OPENVKL_INTERFACE void vklDriverSetErrorCallback(VKLDriver,
+                                                 VKLErrorCallback callback,
+                                                 void *userData);
 
 OPENVKL_INTERFACE void vklDriverSetInt(VKLDriver driver,
                                        const char *name,

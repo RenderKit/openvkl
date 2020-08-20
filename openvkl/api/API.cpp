@@ -152,29 +152,41 @@ extern "C" VKLDriver vklNewDriver(const char *driverName) OPENVKL_CATCH_BEGIN
 }
 OPENVKL_CATCH_END(nullptr)
 
-extern "C" void vklDriverSetLogFunc(VKLDriver driver,
-                                    VKLLogFunc func) OPENVKL_CATCH_BEGIN
+extern "C" void vklDriverSetLogCallback(
+    VKLDriver driver, VKLLogCallback callback, void *userData) OPENVKL_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(driver);
   auto *object = (openvkl::api::Driver *)driver;
 
-  if (func == nullptr)
-    object->logFunction = [](const char *) {};
+  if (callback == nullptr)
+  {
+    object->logCallback = [](void *, const char *) {};
+    object->logUserData = nullptr;
+  }
   else
-    object->logFunction = func;
+  {
+    object->logCallback = callback;
+    object->logUserData = userData;
+  }
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklDriverSetErrorFunc(VKLDriver driver,
-                                      VKLErrorFunc func) OPENVKL_CATCH_BEGIN
+extern "C" void vklDriverSetErrorCallback(
+    VKLDriver driver, VKLErrorCallback callback, void *userData) OPENVKL_CATCH_BEGIN
 {
   THROW_IF_NULL_OBJECT(driver);
   auto *object = (openvkl::api::Driver *)driver;
 
-  if (func == nullptr)
-    object->errorFunction = [](VKLError, const char *) {};
+  if (callback == nullptr)
+  {
+    object->errorCallback = [](void *, VKLError, const char *) {};
+    object->errorUserData = nullptr;
+  }
   else
-    object->errorFunction = func;
+  {
+    object->errorCallback = callback;
+    object->errorUserData = userData;
+  }
 }
 OPENVKL_CATCH_END()
 

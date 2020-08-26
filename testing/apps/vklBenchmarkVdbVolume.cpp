@@ -9,22 +9,6 @@ using namespace openvkl::testing;
 using namespace rkcommon::utility;
 using openvkl::testing::WaveletVdbVolume;
 
-
-template <VKLFilter filter>
-constexpr const char *toString();
-
-template <>
-inline constexpr const char *toString<VKL_FILTER_NEAREST>()
-{
-  return "VKL_FILTER_NEAREST";
-}
-
-template <>
-inline constexpr const char *toString<VKL_FILTER_TRILINEAR>()
-{
-  return "VKL_FILTER_TRILINEAR";
-}
-
 /*
  * VDB volume wrapper.
  * Parametrize with the lookup filter type.

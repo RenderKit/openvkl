@@ -12,6 +12,21 @@
 #include "compute_gradient.h"
 #include "interval_iterators.h"
 
+template <VKLFilter filter>
+constexpr const char *toString();
+
+template <>
+inline constexpr const char *toString<VKL_FILTER_NEAREST>()
+{
+  return "VKL_FILTER_NEAREST";
+}
+
+template <>
+inline constexpr const char *toString<VKL_FILTER_TRILINEAR>()
+{
+  return "VKL_FILTER_TRILINEAR";
+}
+
 /*
  * Register all benchmarks for the given volume type.
  * A VolumeWrapper object corresponds to a single VKLVolume..

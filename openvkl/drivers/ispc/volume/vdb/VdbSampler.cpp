@@ -24,7 +24,7 @@ namespace openvkl {
       config.filter =
           (VKLFilter)this->template getParam<int>("filter", config.filter);
 
-      // Note: We fall back to the sampler object filter parameter if it set.
+      // Note: We fall back to the sampler object filter parameter if it is set.
       //       This enables users to specify *only* the field filter override.
       //       This does mean that users must set the gradientFilter explicitly 
       //       if they set filter and want gradientFilter to be different.

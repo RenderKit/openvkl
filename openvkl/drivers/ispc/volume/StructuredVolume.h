@@ -9,6 +9,7 @@
 #include "GridAccelerator_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "Volume.h"
+#include "openvkl/VKLFilter.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
@@ -29,6 +30,14 @@ namespace openvkl {
 
       range1f getValueRange() const override;
 
+      VKLFilter getFilter() const {
+        return filter;
+      }
+
+      VKLFilter getGradientFilter() const {
+        return gradientFilter;
+      }
+
      protected:
       void buildAccelerator();
 
@@ -39,6 +48,9 @@ namespace openvkl {
       vec3f gridOrigin;
       vec3f gridSpacing;
       std::vector<Ref<const Data>> attributesData;
+
+      VKLFilter filter{VKL_FILTER_TRILINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -94,6 +106,10 @@ namespace openvkl {
               std::to_string(i) + ") for 'data' parameter");
         }
       }
+
+      filter = (VKLFilter)this->template getParam<int>("filter", filter);
+      gradientFilter = (VKLFilter)this->template getParam<int>("gradientFilter",
+                                                               filter);
     }
 
     template <int W>

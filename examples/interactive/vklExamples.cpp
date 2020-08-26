@@ -204,7 +204,7 @@ void usage(const char *progname)
                "\t-voxelType uchar | short | ushort | float | double\n"
                "\t-multiAttribute (structuredRegular only)\n"
                "\t-file <filename>\n"
-               "\t-filter nearest | trilinear (vdb only)\n"
+               "\t-filter nearest | trilinear (vdb and structured)\n"
                "\t-field <density> (vdb only)\n"
                "\t-numParticles <N> (particle only)\n"
             << std::endl;
@@ -224,7 +224,7 @@ int main(int argc, const char **argv)
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
   VKLFilter gradientFilter(VKL_FILTER_TRILINEAR);
-  int maxSamplingDepth(VKL_VDB_NUM_LEVELS-1);
+  int maxSamplingDepth(VKL_VDB_NUM_LEVELS - 1);
   bool haveFilter(false);
   bool haveVdb(false);
   std::string field("density");
@@ -339,7 +339,8 @@ int main(int argc, const char **argv)
     }
   }
 
-  if (haveFilter && gridType != "vdb") {
+  if (haveFilter && gridType != "vdb" && gridType != "structuredRegular" &&
+      gridType != "structuredSpherical") {
     std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
               << std::endl;
   }
@@ -369,8 +370,8 @@ int main(int argc, const char **argv)
     std::string ext = filename.substr(filename.size() - 4);
     std::for_each(ext.begin(), ext.end(), [](char &c) { c = ::tolower(c); });
     if (ext == ".vdb") {
-      gridType  = "vdb";
-      auto vol  = std::make_shared<OpenVdbFloatVolume>(filename, field, filter);
+      gridType = "vdb";
+      auto vol = std::make_shared<OpenVdbFloatVolume>(filename, field, filter);
       testingVolume = std::move(vol);
       haveVdb       = true;
     } else {
@@ -536,9 +537,12 @@ int main(int argc, const char **argv)
     // volumes
     if (gridType == "vdb") {
       static int whichFilter = (filter == VKL_FILTER_NEAREST ? 0 : 1);
-      static int whichGradientFilter = (gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
+      static int whichGradientFilter =
+          (gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
       if (ImGui::Combo("filter", &whichFilter, "nearest\0trilinear\0\0") ||
-          ImGui::Combo("gradientFilter", &whichGradientFilter, "nearest\0trilinear\0\0") ||
+          ImGui::Combo("gradientFilter",
+                       &whichGradientFilter,
+                       "nearest\0trilinear\0\0") ||
           ImGui::SliderInt("maxSamplingDepth",
                            &maxSamplingDepth,
                            0,
@@ -626,7 +630,8 @@ int main(int argc, const char **argv)
   });
 
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
-    auto vdbVolume = std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
+    auto vdbVolume =
+        std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
     if (vdbVolume && vdbVolume->updateVolume()) {
       scene.updateVolume(testingVolume->getVKLVolume());
       vklSetInt(scene.sampler, "filter", filter);

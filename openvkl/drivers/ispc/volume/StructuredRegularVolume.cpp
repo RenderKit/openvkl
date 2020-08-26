@@ -31,7 +31,8 @@ namespace openvkl {
                                (const ispc::vec3i &)this->dimensions,
                                ispc::structured_regular,
                                (const ispc::vec3f &)this->gridOrigin,
-                               (const ispc::vec3f &)this->gridSpacing);
+                               (const ispc::vec3f &)this->gridSpacing,
+                               (ispc::VKLFilter)this->filter);
 
       if (!success) {
         CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);

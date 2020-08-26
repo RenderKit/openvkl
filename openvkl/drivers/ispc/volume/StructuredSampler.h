@@ -8,6 +8,7 @@
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 #include "Volume_ispc.h"
+#include "openvkl/VKLFilter.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -19,7 +20,7 @@ namespace openvkl {
 
       ~StructuredSampler() override = default;
 
-      void commit() override {}
+      void commit() override;
 
       void computeSample(const vvec3fn<1> &objectCoordinates,
                          vfloatn<1> &samples,
@@ -47,6 +48,8 @@ namespace openvkl {
 
      protected:
       const StructuredVolume<W> *volume{nullptr};
+      VKLFilter filter;
+      VKLFilter gradientFilter;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -54,9 +57,24 @@ namespace openvkl {
     template <int W>
     inline StructuredSampler<W>::StructuredSampler(
         const StructuredVolume<W> *volume)
-        : volume(volume)
+        : volume(volume),
+          filter(volume->getFilter()),
+          gradientFilter(volume->getGradientFilter())
     {
       assert(volume);
+    }
+
+    template <int W>
+    inline void StructuredSampler<W>::commit()
+    {
+      filter = (VKLFilter)this->template getParam<int>("filter", filter);
+
+      // Note: We fall back to the sampler object filter parameter if it is set.
+      //       This enables users to specify *only* the field filter override.
+      //       This does mean that users must set the gradientFilter explicitly
+      //       if they set filter and want gradientFilter to be different.
+      gradientFilter = (VKLFilter)this->template getParam<int>(
+          "gradientFilter", this->hasParam("filter") ? filter : gradientFilter);
     }
 
     template <int W>
@@ -69,6 +87,7 @@ namespace openvkl {
       CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
                 volume->getISPCEquivalent(),
                 &objectCoordinates,
+                (ispc::VKLFilter)filter,
                 attributeIndex,
                 &samples);
     }
@@ -85,6 +104,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 volume->getISPCEquivalent(),
                 &objectCoordinates,
+                (ispc::VKLFilter)filter,
                 attributeIndex,
                 &samples);
     }
@@ -101,6 +121,7 @@ namespace openvkl {
                 volume->getISPCEquivalent(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
+                (ispc::VKLFilter)filter,
                 attributeIndex,
                 samples);
     }
@@ -117,6 +138,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 volume->getISPCEquivalent(),
                 &objectCoordinates,
+                (ispc::VKLFilter)gradientFilter,
                 attributeIndex,
                 &gradients);
     }
@@ -133,6 +155,7 @@ namespace openvkl {
                 volume->getISPCEquivalent(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
+                (ispc::VKLFilter)gradientFilter,
                 attributeIndex,
                 (ispc::vec3f *)gradients);
     }

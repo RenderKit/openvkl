@@ -398,6 +398,23 @@ table below.
   --------- ----------- -------------  -----------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
 
+The following additional parameters can be set both on `"structuredRegular"`
+volumes and their sampler objects. Sampler object parameters default to volume
+parameters.
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  Type          Name              Default                Description
+  ------------  ----------------  ---------------------- ---------------------------------------
+  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+                                                         field. Use `VKLFilter` for named
+                                                         constants.
+
+  int           gradientFilter    `filter`               The filter used for reconstructing the
+                                                         field during gradient computations.
+                                                         Use `VKLFilter` for named constants.
+  ------------  ----------------  ---------------------- ---------------------------------------
+  : Configuration parameters for structured regular (`"structuredRegular"`) volumes and their sampler objects.
+
 #### Structured Spherical Volumes
 
 Structured spherical volumes are also supported, which are created by passing a
@@ -448,6 +465,24 @@ constrained such that:
   * $r \geq 0$
   * $0 \leq \theta \leq 180$
   * $0 \leq \phi \leq 360$
+
+The following additional parameters can be set both on `"structuredSpherical"`
+volumes and their sampler objects. Sampler object parameters default to volume
+parameters.
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  Type          Name              Default                Description
+  ------------  ----------------  ---------------------- ---------------------------------------
+  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+                                                         field. Use `VKLFilter` for named
+                                                         constants.
+
+  int           gradientFilter    `filter`               The filter used for reconstructing the
+                                                         field during gradient computations.
+                                                         Use `VKLFilter` for named constants.
+  ------------  ----------------  ---------------------- ---------------------------------------
+  : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes and their sampler objects.
+
 
 ### Adaptive Mesh Refinement (AMR) Volumes
 

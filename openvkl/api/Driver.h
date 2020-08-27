@@ -86,7 +86,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
 #define __define_getIntervalIteratorSizeN(WIDTH)                            \
-  virtual size_t getIntervalIteratorSize##WIDTH(VKLVolume volume) const     \
+  virtual size_t getIntervalIteratorSize##WIDTH(VKLSampler sampler) const   \
   {                                                                         \
     throw std::runtime_error(                                               \
         "getIntervalIteratorSize##WIDTH() not implemented on this driver"); \
@@ -101,7 +101,7 @@ namespace openvkl {
 #undef __define_getIntervalIteratorSizeN
 
       virtual VKLIntervalIterator initIntervalIterator1(
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
@@ -116,7 +116,7 @@ namespace openvkl {
 #define __define_initIntervalIteratorN(WIDTH)                            \
   virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(        \
       const int *valid,                                                  \
-      VKLVolume volume,                                                  \
+      VKLSampler sampler,                                                \
       const vvec3fn<WIDTH> &origin,                                      \
       const vvec3fn<WIDTH> &direction,                                   \
       const vrange1fn<WIDTH> &tRange,                                    \
@@ -163,7 +163,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
 #define __define_getHitIteratorSizeN(WIDTH)                            \
-  virtual size_t getHitIteratorSize##WIDTH(VKLVolume volume) const     \
+  virtual size_t getHitIteratorSize##WIDTH(VKLSampler sampler) const   \
   {                                                                    \
     throw std::runtime_error(                                          \
         "getHitIteratorSize##WIDTH() not implemented on this driver"); \
@@ -177,7 +177,7 @@ namespace openvkl {
 
 #undef __define_getHitIteratorSizeN
 
-      virtual VKLHitIterator initHitIterator1(VKLVolume volume,
+      virtual VKLHitIterator initHitIterator1(VKLSampler sampler,
                                               const vvec3fn<1> &origin,
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
@@ -192,7 +192,7 @@ namespace openvkl {
 #define __define_initHitIteratorN(WIDTH)                            \
   virtual VKLHitIterator##WIDTH initHitIterator##WIDTH(             \
       const int *valid,                                             \
-      VKLVolume volume,                                             \
+      VKLSampler sampler,                                           \
       const vvec3fn<WIDTH> &origin,                                 \
       const vvec3fn<WIDTH> &direction,                              \
       const vrange1fn<WIDTH> &tRange,                               \

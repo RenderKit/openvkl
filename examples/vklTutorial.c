@@ -79,12 +79,12 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetIntervalIteratorSize(volume));
+    char *buffer = _malloca(vklGetIntervalIteratorSize(sampler));
 #else
-    char buffer[vklGetIntervalIteratorSize(volume)];
+    char buffer[vklGetIntervalIteratorSize(sampler)];
 #endif
     VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
-        volume, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -113,12 +113,12 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetHitIteratorSize(volume));
+    char *buffer = _malloca(vklGetHitIteratorSize(sampler));
 #else
-    char buffer[vklGetHitIteratorSize(volume)];
+    char buffer[vklGetHitIteratorSize(sampler)];
 #endif
     VKLHitIterator hitIterator = vklInitHitIterator(
-        volume, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 

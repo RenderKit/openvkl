@@ -86,7 +86,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   // interval iteration
   uniform unsigned int8 bufferInterval[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
-      volume, &rayOrigin, &rayDirection, &rayTRange, selector, bufferInterval);
+      sampler, &rayOrigin, &rayDirection, &rayTRange, selector, bufferInterval);
 
   print("interval iterator for value ranges {% %} {% %}\n",
         ranges[0].lower,
@@ -108,7 +108,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   // hit iteration
   uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
   VKLHitIterator hitIterator = vklInitHitIteratorV(
-      volume, &rayOrigin, &rayDirection, &rayTRange, selector, bufferHit);
+      sampler, &rayOrigin, &rayDirection, &rayTRange, selector, bufferHit);
 
   print("hit iterator for values % %\n", values[0], values[1]);
 

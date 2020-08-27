@@ -5,7 +5,7 @@
 
 #include "common.isph"
 #include "value_selector.isph"
-#include "volume.isph"
+#include "sampler.isph"
 #include "max_iterator_size.h"
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -15,13 +15,13 @@
 struct IntervalIterator;
 typedef IntervalIterator *uniform VKLIntervalIterator;
 
-VKL_API uniform size_t vklGetIntervalIteratorSize4(VKLVolume volume);
+VKL_API uniform size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
 
-VKL_API uniform size_t vklGetIntervalIteratorSize8(VKLVolume volume);
+VKL_API uniform size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
 
-VKL_API uniform size_t vklGetIntervalIteratorSize16(VKLVolume volume);
+VKL_API uniform size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
 
-VKL_FORCEINLINE uniform size_t vklGetIntervalIteratorSizeV(VKLVolume volume)
+VKL_FORCEINLINE uniform size_t vklGetIntervalIteratorSizeV(VKLSampler sampler)
 {
   varying bool mask = __mask;
   unmasked
@@ -30,11 +30,11 @@ VKL_FORCEINLINE uniform size_t vklGetIntervalIteratorSizeV(VKLVolume volume)
   }
 
   if (sizeof(varying float) == 16)
-    return vklGetIntervalIteratorSize4(volume);
+    return vklGetIntervalIteratorSize4(sampler);
   else if (sizeof(varying float) == 32)
-    return vklGetIntervalIteratorSize8(volume);
+    return vklGetIntervalIteratorSize8(sampler);
   else if (sizeof(varying float) == 64)
-    return vklGetIntervalIteratorSize16(volume);
+    return vklGetIntervalIteratorSize16(sampler);
 }
 
 struct VKLInterval
@@ -46,7 +46,7 @@ struct VKLInterval
 
 VKL_API VKLIntervalIterator
 vklInitIntervalIterator4(const int *uniform valid,
-                         VKLVolume volume,
+                         VKLSampler sampler,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
@@ -55,7 +55,7 @@ vklInitIntervalIterator4(const int *uniform valid,
 
 VKL_API VKLIntervalIterator
 vklInitIntervalIterator8(const int *uniform valid,
-                         VKLVolume volume,
+                         VKLSampler sampler,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
@@ -64,7 +64,7 @@ vklInitIntervalIterator8(const int *uniform valid,
 
 VKL_API VKLIntervalIterator
 vklInitIntervalIterator16(const int *uniform valid,
-                          VKLVolume volume,
+                          VKLSampler sampler,
                           const varying vkl_vec3f *uniform origin,
                           const varying vkl_vec3f *uniform direction,
                           const varying vkl_range1f *uniform tRange,
@@ -72,7 +72,7 @@ vklInitIntervalIterator16(const int *uniform valid,
                           void *uniform buffer);
 
 VKL_FORCEINLINE VKLIntervalIterator
-vklInitIntervalIteratorV(VKLVolume volume,
+vklInitIntervalIteratorV(VKLSampler sampler,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
@@ -87,7 +87,7 @@ vklInitIntervalIteratorV(VKLVolume volume,
 
   if (sizeof(varying float) == 16) {
     return vklInitIntervalIterator4((uniform int *uniform) & imask,
-                                    volume,
+                                    sampler,
                                     origin,
                                     direction,
                                     tRange,
@@ -95,7 +95,7 @@ vklInitIntervalIteratorV(VKLVolume volume,
                                     buffer);
   } else if (sizeof(varying float) == 32) {
     return vklInitIntervalIterator8((uniform int *uniform) & imask,
-                                    volume,
+                                    sampler,
                                     origin,
                                     direction,
                                     tRange,
@@ -103,7 +103,7 @@ vklInitIntervalIteratorV(VKLVolume volume,
                                     buffer);
   } else if (sizeof(varying float) == 64) {
     return vklInitIntervalIterator16((uniform int *uniform) & imask,
-                                     volume,
+                                     sampler,
                                      origin,
                                      direction,
                                      tRange,
@@ -163,13 +163,13 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
 struct HitIterator;
 typedef HitIterator *uniform VKLHitIterator;
 
-VKL_API uniform size_t vklGetHitIteratorSize4(VKLVolume volume);
+VKL_API uniform size_t vklGetHitIteratorSize4(VKLSampler sampler);
 
-VKL_API uniform size_t vklGetHitIteratorSize8(VKLVolume volume);
+VKL_API uniform size_t vklGetHitIteratorSize8(VKLSampler sampler);
 
-VKL_API uniform size_t vklGetHitIteratorSize16(VKLVolume volume);
+VKL_API uniform size_t vklGetHitIteratorSize16(VKLSampler sampler);
 
-VKL_FORCEINLINE uniform size_t vklGetHitIteratorSizeV(VKLVolume volume)
+VKL_FORCEINLINE uniform size_t vklGetHitIteratorSizeV(VKLSampler sampler)
 {
   varying bool mask = __mask;
   unmasked
@@ -178,11 +178,11 @@ VKL_FORCEINLINE uniform size_t vklGetHitIteratorSizeV(VKLVolume volume)
   }
 
   if (sizeof(varying float) == 16)
-    return vklGetHitIteratorSize4(volume);
+    return vklGetHitIteratorSize4(sampler);
   else if (sizeof(varying float) == 32)
-    return vklGetHitIteratorSize8(volume);
+    return vklGetHitIteratorSize8(sampler);
   else if (sizeof(varying float) == 64)
-    return vklGetHitIteratorSize16(volume);
+    return vklGetHitIteratorSize16(sampler);
 }
 
 struct VKLHit
@@ -194,7 +194,7 @@ struct VKLHit
 
 VKL_API VKLHitIterator
 vklInitHitIterator4(const int *uniform valid,
-                    VKLVolume volume,
+                    VKLSampler sampler,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
@@ -203,7 +203,7 @@ vklInitHitIterator4(const int *uniform valid,
 
 VKL_API VKLHitIterator
 vklInitHitIterator8(const int *uniform valid,
-                    VKLVolume volume,
+                    VKLSampler sampler,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
@@ -212,7 +212,7 @@ vklInitHitIterator8(const int *uniform valid,
 
 VKL_API VKLHitIterator
 vklInitHitIterator16(const int *uniform valid,
-                     VKLVolume volume,
+                     VKLSampler sampler,
                      const varying vkl_vec3f *uniform origin,
                      const varying vkl_vec3f *uniform direction,
                      const varying vkl_range1f *uniform tRange,
@@ -220,7 +220,7 @@ vklInitHitIterator16(const int *uniform valid,
                      void *uniform buffer);
 
 VKL_FORCEINLINE VKLHitIterator
-vklInitHitIteratorV(VKLVolume volume,
+vklInitHitIteratorV(VKLSampler sampler,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
@@ -235,7 +235,7 @@ vklInitHitIteratorV(VKLVolume volume,
 
   if (sizeof(varying float) == 16) {
     return vklInitHitIterator4((uniform int *uniform) & imask,
-                               volume,
+                               sampler,
                                origin,
                                direction,
                                tRange,
@@ -243,7 +243,7 @@ vklInitHitIteratorV(VKLVolume volume,
                                buffer);
   } else if (sizeof(varying float) == 32) {
     return vklInitHitIterator8((uniform int *uniform) & imask,
-                               volume,
+                               sampler,
                                origin,
                                direction,
                                tRange,
@@ -251,7 +251,7 @@ vklInitHitIteratorV(VKLVolume volume,
                                buffer);
   } else if (sizeof(varying float) == 64) {
     return vklInitHitIterator16((uniform int *uniform) & imask,
-                                volume,
+                                sampler,
                                 origin,
                                 direction,
                                 tRange,

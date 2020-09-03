@@ -10,7 +10,8 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    VdbSampler<W>::VdbSampler(VdbVolume<W> &volume) : volume(&volume)
+    VdbSampler<W>::VdbSampler(VdbVolume<W> &volume) 
+      : SamplerBase<W, VdbVolume>(volume)
     {
       config.leafAccessObservers = leafAccessObservers.getIE();
     }

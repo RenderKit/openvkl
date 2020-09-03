@@ -16,7 +16,7 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct VdbSampler : public Sampler<W>
+    struct VdbSampler : public SamplerBase<W, VdbVolume>
     {
       explicit VdbSampler(VdbVolume<W> &volume);
 
@@ -55,7 +55,7 @@ namespace openvkl {
       }
 
       private:
-        Ref<VdbVolume<W>> volume;
+        using SamplerBase<W, VdbVolume>::volume;
         ObserverRegistry<W> leafAccessObservers;
         VdbSampleConfig config;
     };

@@ -14,9 +14,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct StructuredSampler : public Sampler<W>
+    struct StructuredSampler : public SamplerBase<W, StructuredVolume>
     {
-      StructuredSampler(const StructuredVolume<W> *volume);
+      StructuredSampler(StructuredVolume<W> *volume);
 
       ~StructuredSampler() override = default;
 
@@ -71,7 +71,7 @@ namespace openvkl {
           const unsigned int *attributeIndices) const override final;
 
      protected:
-      const StructuredVolume<W> *volume{nullptr};
+      using SamplerBase<W, StructuredVolume>::volume;
       VKLFilter filter;
       VKLFilter gradientFilter;
     };
@@ -80,8 +80,8 @@ namespace openvkl {
 
     template <int W>
     inline StructuredSampler<W>::StructuredSampler(
-        const StructuredVolume<W> *volume)
-        : volume(volume),
+        StructuredVolume<W> *volume)
+        : SamplerBase<W, StructuredVolume>(*volume),
           filter(volume->getFilter()),
           gradientFilter(volume->getGradientFilter())
     {

@@ -13,9 +13,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct ParticleSampler : public Sampler<W>
+    struct ParticleSampler : public SamplerBase<W, ParticleVolume>
     {
-      ParticleSampler(const ParticleVolume<W> *volume);
+      ParticleSampler(ParticleVolume<W> *volume);
 
       ~ParticleSampler() override = default;
 
@@ -42,14 +42,14 @@ namespace openvkl {
                             unsigned int attributeIndex) const override final;
 
      protected:
-      const ParticleVolume<W> *volume{nullptr};
+      using SamplerBase<W, ParticleVolume>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline ParticleSampler<W>::ParticleSampler(const ParticleVolume<W> *volume)
-        : volume(volume)
+    inline ParticleSampler<W>::ParticleSampler(ParticleVolume<W> *volume)
+        : SamplerBase<W, ParticleVolume>(*volume)
     {
       assert(volume);
     }

@@ -13,9 +13,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct AMRSampler : public Sampler<W>
+    struct AMRSampler : public SamplerBase<W, AMRVolume>
     {
-      AMRSampler(const AMRVolume<W> *volume);
+      AMRSampler(AMRVolume<W> *volume);
 
       ~AMRSampler() override = default;
 
@@ -42,14 +42,14 @@ namespace openvkl {
                             unsigned int attributeIndex) const override final;
 
      protected:
-      const AMRVolume<W> *volume{nullptr};
+      using SamplerBase<W, AMRVolume>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline AMRSampler<W>::AMRSampler(const AMRVolume<W> *volume)
-        : volume(volume)
+    inline AMRSampler<W>::AMRSampler(AMRVolume<W> *volume)
+        : SamplerBase<W, AMRVolume>(*volume)
     {
       assert(volume);
     }

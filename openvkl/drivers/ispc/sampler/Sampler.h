@@ -15,8 +15,13 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
+    class Volume;
+
+    template <int W>
     struct Sampler : public ManagedObject
     {
+      virtual ~Sampler();
+
       // single attribute /////////////////////////////////////////////////////
 
       // samplers can optionally define a scalar sampling method; if not
@@ -64,7 +69,19 @@ namespace openvkl {
                                    unsigned int M,
                                    const unsigned int *attributeIndices) const;
 
-      virtual Observer<W> *newObserver(const char *type);
+      virtual Observer<W> *newObserver(const char *type) = 0;
+
+      /*
+       * Samplers keep references to their underlying volumes!
+       */
+      virtual Volume<W> &getVolume()             = 0;
+      virtual const Volume<W> &getVolume() const = 0;
+
+     protected:
+      void *getISPCEquivalent();
+
+     protected:
+      void *ispcEquivalent{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -140,9 +157,53 @@ namespace openvkl {
       }
     }
 
-    template <int W>
-    inline Observer<W> *Sampler<W>::newObserver(const char *type)
+    ///////////////////////////////////////////////////////////////////////////
+
+    // SamplerBase is the base class for all concrete sampler types.
+    // It takes care of keeping a reference to the volume, and provides
+    // sensible default implementation where possible.
+
+    template <int W, template <int> class VolumeT>
+    struct SamplerBase : public Sampler<W>
     {
+      explicit SamplerBase(VolumeT<W> &volume);
+
+      VolumeT<W> &getVolume() override;
+      const VolumeT<W> &getVolume() const override;
+
+      Observer<W> *newObserver(const char *type) override;
+
+     protected:
+      Ref<VolumeT<W>> volume;
+    };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W, template <int> class VolumeT>
+    inline SamplerBase<W, VolumeT>::SamplerBase(VolumeT<W> &volume)
+        : volume(&volume)
+    {
+    }
+
+    template <int W, template <int> class VolumeT>
+    inline VolumeT<W> &SamplerBase<W, VolumeT>::getVolume()
+    {
+      return *volume;
+    }
+
+    template <int W, template <int> class VolumeT>
+    inline const VolumeT<W> &SamplerBase<W, VolumeT>::getVolume() const
+    {
+      return *volume;
+    }
+
+    template <int W, template <int> class VolumeT>
+    inline Observer<W> *SamplerBase<W, VolumeT>::newObserver(const char *type)
+    {
+      /*
+       * This is a place to provide potential default observers that
+       * work for *all* samplers, if we ever find such a thing.
+       */
       return nullptr;
     }
 

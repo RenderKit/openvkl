@@ -13,9 +13,9 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct UnstructuredSampler : public Sampler<W>
+    struct UnstructuredSampler : public SamplerBase<W, UnstructuredVolume>
     {
-      UnstructuredSampler(const UnstructuredVolume<W> *volume);
+      UnstructuredSampler(UnstructuredVolume<W> *volume);
 
       ~UnstructuredSampler() override = default;
 
@@ -42,15 +42,15 @@ namespace openvkl {
                             unsigned int attributeIndex) const override final;
 
      protected:
-      const UnstructuredVolume<W> *volume{nullptr};
+      using SamplerBase<W, UnstructuredVolume>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
     inline UnstructuredSampler<W>::UnstructuredSampler(
-        const UnstructuredVolume<W> *volume)
-        : volume(volume)
+        UnstructuredVolume<W> *volume)
+        : SamplerBase<W, UnstructuredVolume>(*volume)
     {
       assert(volume);
     }

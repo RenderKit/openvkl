@@ -18,7 +18,6 @@ openvkl_add_library_ispc(${PROJECT_NAME} SHARED
   common/ispc_util.ispc
   common/logging.cpp
   common/ManagedObject.cpp
-  common/Observer.cpp
   common/VKLCommon.cpp
 
   ${DEF_FILE}

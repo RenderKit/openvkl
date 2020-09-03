@@ -1,0 +1,33 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../../observer/ObserverRegistry.ih"
+#include "VdbSampleConfig.h"
+
+uniform bool VdbLeafAccessObserver_isObservable(
+    const VdbSampleConfig *uniform sampleConfig)
+{
+  return sampleConfig && sampleConfig->leafAccessObservers &&
+         (((ObserverRegistry * uniform) sampleConfig->leafAccessObservers)
+              ->size > 0);
+}
+
+#define __define_leaf_access_observer(univary)                               \
+  void VdbLeafAccessObserver_observe_##univary(                              \
+      const VdbSampleConfig *uniform sampleConfig,                           \
+      const univary uint32 leafIndex)                                        \
+  {                                                                          \
+    ObserverRegistry *uniform registry =                                     \
+        ((ObserverRegistry * uniform) sampleConfig->leafAccessObservers);    \
+    for (uniform size_t i = 0; i < registry->size; ++i) {                    \
+      uint32 *uniform accessBuffer = ((uint32 * uniform) registry->data[i]); \
+      /* NOTE: this is not synchronized between threads! */                  \
+      accessBuffer[leafIndex] = 1;                                           \
+    }                                                                        \
+  }
+
+__define_leaf_access_observer(uniform) __define_leaf_access_observer(varying)
+
+#undef __define_leaf_access_observer

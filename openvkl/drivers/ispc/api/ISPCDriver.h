@@ -47,6 +47,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       VKLObserver newObserver(VKLVolume volume, const char *type) override;
+      VKLObserver newObserver(VKLSampler sampler, const char *type) override;
       const void *mapObserver(VKLObserver observer) override;
       void unmapObserver(VKLObserver observer) override;
       VKLDataType getObserverElementType(VKLObserver observer) const override;

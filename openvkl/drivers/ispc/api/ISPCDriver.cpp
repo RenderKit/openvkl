@@ -3,9 +3,9 @@
 
 #include "ISPCDriver.h"
 #include "../common/Data.h"
-#include "../common/Observer.h"
 #include "../common/export_util.h"
 #include "../iterator/Iterator.h"
+#include "../observer/Observer.h"
 #include "../sampler/Sampler.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
@@ -69,21 +69,30 @@ namespace openvkl {
     template <int W>
     VKLObserver ISPCDriver<W>::newObserver(VKLVolume volume, const char *type)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return volumeObject.newObserver(type);
+      auto &object = referenceFromHandle<Volume<W>>(volume);
+      Observer<W> *observer = object.newObserver(type);
+      return (VKLObserver)observer;
+    }
+
+    template <int W>
+    VKLObserver ISPCDriver<W>::newObserver(VKLSampler sampler, const char *type)
+    {
+      auto &object = referenceFromHandle<Sampler<W>>(sampler);
+      Observer<W> *observer = object.newObserver(type);
+      return (VKLObserver)observer;
     }
 
     template <int W>
     const void *ISPCDriver<W>::mapObserver(VKLObserver observer)
     {
-      auto &observerObject = referenceFromHandle<Observer>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
       return observerObject.map();
     }
 
     template <int W>
     void ISPCDriver<W>::unmapObserver(VKLObserver observer)
     {
-      auto &observerObject = referenceFromHandle<Observer>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
       observerObject.unmap();
     }
 
@@ -91,14 +100,14 @@ namespace openvkl {
     VKLDataType ISPCDriver<W>::getObserverElementType(
         VKLObserver observer) const
     {
-      auto &observerObject = referenceFromHandle<Observer>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
       return observerObject.getElementType();
     }
 
     template <int W>
     size_t ISPCDriver<W>::getObserverNumElements(VKLObserver observer) const
     {
-      auto &observerObject = referenceFromHandle<Observer>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
       return observerObject.getNumElements();
     }
 

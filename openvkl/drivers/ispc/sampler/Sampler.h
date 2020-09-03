@@ -5,6 +5,7 @@
 
 #include "../common/ManagedObject.h"
 #include "../common/simd.h"
+#include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
 
@@ -41,6 +42,8 @@ namespace openvkl {
                                     const vvec3fn<1> *objectCoordinates,
                                     vvec3fn<1> *gradients,
                                     unsigned int attributeIndex) const = 0;
+
+      virtual Observer<W> *newObserver(const char *type);
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -66,6 +69,12 @@ namespace openvkl {
       computeSampleV(validW, ocW, samplesW, attributeIndex);
 
       samples[0] = samplesW[0];
+    }
+
+    template <int W>
+    inline Observer<W> *Sampler<W>::newObserver(const char *type)
+    {
+      return nullptr;
     }
 
   }  // namespace ispc_driver

@@ -2,39 +2,60 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbLeafAccessObserver.h"
+#include "VdbGrid.h"
+#include "VdbSampler.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
-    VdbLeafAccessObserver::VdbLeafAccessObserver(ManagedObject &target,
-                                                 size_t size,
-                                                 const vkl_uint32 *accessBuffer)
-        : target(&target), size(size), accessBuffer(accessBuffer)
+    template <int W>
+    VdbLeafAccessObserver<W>::VdbLeafAccessObserver(VdbSampler<W> &target,
+                                                    const VdbGrid &grid)
+        : Observer<W>(target)
     {
-      this->target->refInc();
+      accessBuffer = allocator.allocate<uint32>(grid.totalNumLeaves);
+      size         = grid.totalNumLeaves;
+      getRegistry().add(accessBuffer);
     }
 
-    VdbLeafAccessObserver::~VdbLeafAccessObserver()
+    template <int W>
+    VdbLeafAccessObserver<W>::~VdbLeafAccessObserver()
     {
-      target->refDec();
+      getRegistry().remove(accessBuffer);
+      allocator.deallocate(accessBuffer);
     }
 
-    const void *VdbLeafAccessObserver::map()
+    template <int W>
+    const void *VdbLeafAccessObserver<W>::map()
     {
       return accessBuffer;
     }
 
-    void VdbLeafAccessObserver::unmap() {}
+    template <int W>
+    void VdbLeafAccessObserver<W>::unmap()
+    {
+    }
 
-    size_t VdbLeafAccessObserver::getNumElements() const
+    template <int W>
+    size_t VdbLeafAccessObserver<W>::getNumElements() const
     {
       return size;
     }
 
-    VKLDataType VdbLeafAccessObserver::getElementType() const
+    template <int W>
+    VKLDataType VdbLeafAccessObserver<W>::getElementType() const
     {
       return VKL_UINT;
     }
+
+    template <int W>
+    ObserverRegistry<W> &VdbLeafAccessObserver<W>::getRegistry()
+    {
+      return dynamic_cast<VdbSampler<W> &>(*this->target)
+          .getLeafAccessObserverRegistry();
+    }
+
+    template struct VdbLeafAccessObserver<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver
 }  // namespace openvkl

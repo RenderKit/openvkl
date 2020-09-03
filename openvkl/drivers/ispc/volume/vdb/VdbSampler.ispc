@@ -3,6 +3,7 @@
 
 #include <openvkl/vdb.h>
 #include "../common/Data.ih"
+#include "VdbLeafAccessObserver.ih"
 #include "VdbSampleConfig.h"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
@@ -43,6 +44,10 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
                                         uniform box1f *uniform range)
 {
   uniform VdbSampleConfig config;
+  // It's important to zero all members because config has pointers!
+  memset(&config, 0, sizeof(uniform VdbSampleConfig));
+  config.filter = VKL_FILTER_TRILINEAR;
+  config.gradientFilter = VKL_FILTER_TRILINEAR;
   config.maxSamplingDepth = VKL_VDB_NUM_LEVELS;
 
   float vminFilter            = pos_inf;
@@ -50,7 +55,7 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
   const uniform uint32 res    = vklVdbLevelRes(level);
   const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
   const uniform vec3ui os     = *offset;
-  const uniform int radius    = 1; // TRILINEAR INTERPOLATION!
+  const uniform int radius    = 1;  // TRILINEAR INTERPOLATION!
   // We compute min/max over the voxels (one filter radius) after upper bound.
   // These are voxels that can be interpolated into our node, so we must include
   // them for conservative value ranges.

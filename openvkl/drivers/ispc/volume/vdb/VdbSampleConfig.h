@@ -15,9 +15,11 @@ namespace openvkl {
 
     struct VdbSampleConfig
     {
-      VKLFilter filter;
-      VKLFilter gradientFilter;
-      vkl_uint32 maxSamplingDepth;
+      VKLFilter filter VKL_INITIALIZER_LIST(VKL_FILTER_TRILINEAR);
+      VKLFilter gradientFilter VKL_INITIALIZER_LIST(VKL_FILTER_TRILINEAR);
+      vkl_uint32 maxSamplingDepth VKL_INITIALIZER_LIST(VKL_VDB_NUM_LEVELS - 1);
+
+      void *leafAccessObservers VKL_INITIALIZER_LIST(nullptr);
     };
 
 #if defined(__cplusplus)

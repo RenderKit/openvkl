@@ -17,63 +17,12 @@
 namespace openvkl {
   namespace ispc_driver {
 
-    /*
-     * Centralized allocation helpers.
-     */
-    template <class T>
-    T *allocate(size_t size, size_t &bytesAllocated)
-    {
-      const size_t numBytes = size * sizeof(T);
-      bytesAllocated += numBytes;
-      T *buf = reinterpret_cast<T *>(rkcommon::memory::alignedMalloc(numBytes));
-      if (!buf)
-        throw std::bad_alloc();
-      std::memset(buf, 0, numBytes);
-      return buf;
-    }
-
-    template <class T>
-    void deallocate(T *&ptr)
-    {
-      rkcommon::memory::alignedFree(ptr);
-      ptr = nullptr;
-    }
-
     // -------------------------------------------------------------------------
 
     template <int W>
     VdbVolume<W>::VdbVolume()
     {
       this->ispcEquivalent = CALL_ISPC(VdbVolume_create);
-    }
-
-    template <int W>
-    VdbVolume<W>::VdbVolume(VdbVolume<W> &&other)
-    {
-      using std::swap;
-      swap(bounds, other.bounds);
-      swap(name, other.name);
-      swap(valueRange, other.valueRange);
-      swap(leafData, other.leafData);
-      swap(leafDataISPC, other.leafDataISPC);
-      swap(grid, other.grid);
-      swap(bytesAllocated, other.bytesAllocated);
-    }
-
-    template <int W>
-    VdbVolume<W> &VdbVolume<W>::operator=(VdbVolume<W> &&other)
-    {
-      if (this != &other) {
-        using std::swap;
-        swap(bounds, other.bounds);
-        swap(name, other.name);
-        swap(valueRange, other.valueRange);
-        swap(leafData, other.leafData);
-        swap(leafDataISPC, other.leafDataISPC);
-        swap(grid, other.grid);
-        swap(bytesAllocated, other.bytesAllocated);
-      }
-      return *this;
     }
 
     template <int W>
@@ -91,14 +40,12 @@ namespace openvkl {
         //       level buffers! Leaves are not stored in the hierarchy!
         for (uint32_t l = 0; (l + 1) < vklVdbNumLevels(); ++l) {
           VdbLevel &level = grid->levels[l];
-          deallocate(level.voxels);
-          deallocate(level.valueRange);
-          deallocate(level.leafIndex);
+          allocator.deallocate(level.voxels);
+          allocator.deallocate(level.valueRange);
+          allocator.deallocate(level.leafIndex);
         }
-        deallocate(grid->usageBuffer);
-        deallocate(grid);
+        allocator.deallocate(grid);
       }
-      bytesAllocated = 0;
     }
 
     template <int W>
@@ -231,7 +178,7 @@ namespace openvkl {
         const std::vector<std::vector<uint64_t>> &binnedLeaves,
         std::vector<uint64_t> &capacity,
         VdbGrid *grid,
-        size_t &bytesAllocated)
+        Allocator &allocator)
     {
       // Comparator for voxel coordinates. We use this for sorting.
       const auto isLess = [](const vec3i &a, const vec3i &b) {
@@ -279,9 +226,9 @@ namespace openvkl {
           capacity[l - 1] = levelNumInner;
           const size_t totalNumVoxels =
               levelNumInner * vklVdbLevelNumVoxels(l - 1);
-          level.voxels     = allocate<uint64_t>(totalNumVoxels, bytesAllocated);
-          level.valueRange = allocate<range1f>(totalNumVoxels, bytesAllocated);
-          level.leafIndex  = allocate<uint64>(totalNumVoxels, bytesAllocated);
+          level.voxels     = allocator.allocate<uint64_t>(totalNumVoxels);
+          level.valueRange = allocator.allocate<range1f>(totalNumVoxels);
+          level.leafIndex  = allocator.allocate<uint64>(totalNumVoxels);
           range1f empty;
           std::fill(level.valueRange, level.valueRange + totalNumVoxels, empty);
         }
@@ -513,11 +460,11 @@ namespace openvkl {
 
       // Set up the global sample config.
       globalConfig.filter = (VKLFilter)this->template getParam<int>(
-          "filter", VKL_FILTER_TRILINEAR);
+          "filter", globalConfig.filter);
       globalConfig.gradientFilter = (VKLFilter)this->template getParam<int>(
           "gradientFilter", globalConfig.filter);
       globalConfig.maxSamplingDepth = this->template getParam<int>(
-          "maxSamplingDepth", VKL_VDB_NUM_LEVELS - 1);
+          "maxSamplingDepth", globalConfig.maxSamplingDepth);
       globalConfig.maxSamplingDepth =
           min(globalConfig.maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
 
@@ -584,7 +531,7 @@ namespace openvkl {
         }
       });
 
-      grid       = allocate<VdbGrid>(1, bytesAllocated);
+      grid       = allocator.allocate<VdbGrid>(1);
       grid->type = type;
       grid->maxIteratorDepth =
           min(max(maxIteratorDepth, 0), VKL_VDB_NUM_LEVELS - 1);
@@ -632,7 +579,7 @@ namespace openvkl {
       // inserting the nodes (below) much faster.
       std::vector<uint64_t> capacity(vklVdbNumLevels() - 1, 0);
       allocateInnerLevels(
-          leafOffsets, binnedLeaves, capacity, grid, bytesAllocated);
+          leafOffsets, binnedLeaves, capacity, grid, allocator);
 
       // Populate contiguous ispc::Data1D objects to be used in leaf pointers,
       // only needed if we have strided data
@@ -654,7 +601,7 @@ namespace openvkl {
                         grid);
 
       CALL_ISPC(VdbVolume_setGrid,
-                Volume<W>::getISPCEquivalent(),
+                this->ispcEquivalent,
                 reinterpret_cast<const ispc::VdbGrid *>(grid),
                 reinterpret_cast<const ispc::VdbSampleConfig *>(&globalConfig));
 
@@ -667,7 +614,7 @@ namespace openvkl {
     }
 
     template <int W>
-    VKLObserver VdbVolume<W>::newObserver(const char *type)
+    Observer<W> *VdbVolume<W>::newObserver(const char *type)
     {
       if (!grid)
         throw std::runtime_error(
@@ -675,21 +622,13 @@ namespace openvkl {
             "committed.");
 
       const std::string t(type);
-      if (t == "LeafNodeAccess") {
-        if (!grid->usageBuffer)
-          grid->usageBuffer =
-              allocate<uint32>(grid->totalNumLeaves, bytesAllocated);
-        return (VKLObserver) new VdbLeafAccessObserver(
-            *this, grid->totalNumLeaves, grid->usageBuffer);
-      } else {
-        return Volume<W>::newObserver(type);
-      }
+      return Volume<W>::newObserver(type);
     }
 
     template <int W>
     Sampler<W> *VdbVolume<W>::newSampler()
     {
-      return new VdbSampler<W>(grid, globalConfig);
+      return new VdbSampler<W>(*this);
     }
 
     VKL_REGISTER_VOLUME(VdbVolume<VKL_TARGET_WIDTH>,

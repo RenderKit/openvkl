@@ -88,14 +88,28 @@ OPENVKL_CATCH_END(nullptr)
 // Observer ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VKLObserver vklNewObserver(VKLVolume volume,
-                                      const char *type) OPENVKL_CATCH_BEGIN
+extern "C" VKLObserver vklNewVolumeObserver(VKLVolume volume,
+                                            const char *type) OPENVKL_CATCH_BEGIN
 {
   ASSERT_DRIVER();
   THROW_IF_NULL_OBJECT(volume);
   THROW_IF_NULL_OBJECT(type);
   VKLObserver observer =
       openvkl::api::currentDriver().newObserver(volume, type);
+  if (!observer)
+    throw std::runtime_error(std::string("unsupported observer type: ") + type);
+  return observer;
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" VKLObserver vklNewSamplerObserver(VKLSampler sampler,
+                                             const char *type) OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(sampler);
+  THROW_IF_NULL_OBJECT(type);
+  VKLObserver observer =
+      openvkl::api::currentDriver().newObserver(sampler, type);
   if (!observer)
     throw std::runtime_error(std::string("unsupported observer type: ") + type);
   return observer;

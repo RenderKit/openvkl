@@ -51,7 +51,7 @@ namespace openvkl {
 
       void *getISPCEquivalent() const;
 
-      virtual VKLObserver newObserver(const char *type)
+      virtual Observer<W> *newObserver(const char *type)
       {
         return nullptr;
       }

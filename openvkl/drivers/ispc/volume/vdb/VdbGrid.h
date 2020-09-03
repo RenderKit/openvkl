@@ -54,8 +54,6 @@ struct VdbGrid
   vkl_uint64 maxVoxelOffset;  // Used to select 64bit or 32bit traversal. TODO:
                               // Use this in VDBSampler.ispc
   vec3i rootOrigin;           // In index space.
-  vkl_uint32
-      *usageBuffer;  // Nonzero if the given input leaf has been accessed.
   VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];
 };
 

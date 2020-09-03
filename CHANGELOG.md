@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Open VKL 0.11.0
+
+-   Observers can now be created for both `VKLVolume` and `VKLSampler` objects.
+-   `LeafNodeAccess` observers must now be created on sampler objects.
+
 ### Open VKL 0.10.0 (alpha)
 
 -   Added new `particle` volume type supporting Gaussian radial basis functions

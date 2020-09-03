@@ -30,8 +30,6 @@ namespace openvkl {
           : grid(filename, field, true), filter(filter)
       {
         volume = grid.createVolume(filter);
-        if (grid.numDeferred() > 0)
-          leafAccessObserver = vklNewObserver(volume, "LeafNodeAccess");
       }
 
       ~OpenVdbFloatVolume()
@@ -44,12 +42,9 @@ namespace openvkl {
           if (result.volume)
             vklRelease(result.volume);
         }
-
-        if (leafAccessObserver)
-          vklRelease(leafAccessObserver);
       }
 
-      bool updateVolume()
+      bool updateVolume(VKLObserver leafAccessObserver)
       {
         bool changed = false;
         if (!asyncLoader && grid.numDeferred() > 0) {
@@ -84,15 +79,9 @@ namespace openvkl {
           asyncLoader.reset();
           if (result.volume) {
             changed = true;
-            if (leafAccessObserver) {
-              vklRelease(leafAccessObserver);
-              leafAccessObserver = nullptr;
-            }
             vklRelease(volume);
 
             volume = result.volume;
-            if (grid.numDeferred() > 0)
-              leafAccessObserver = vklNewObserver(volume, "LeafNodeAccess");
 
             std::cout << "Done loading leaf data."
                       << " Load: " << result.loadMS << "ms"
@@ -113,6 +102,14 @@ namespace openvkl {
         return range1f(0.f, 1.f);
       }
 
+      VKLObserver newLeafAccessObserver(VKLSampler sampler) const
+      {
+        VKLObserver observer = nullptr;
+        if (grid.numDeferred() > 0)
+          observer = vklNewSamplerObserver(sampler, "LeafNodeAccess");
+        return observer;
+      }
+
      protected:
       struct AsyncResult
       {
@@ -126,7 +123,6 @@ namespace openvkl {
      private:
       Grid grid;
       VKLFilter filter{VKL_FILTER_TRILINEAR};
-      VKLObserver leafAccessObserver{nullptr};
       uint64_t lastLoadMS{30};
       std::unique_ptr<rkcommon::tasking::AsyncTask<AsyncResult>> asyncLoader;
     };
@@ -153,13 +149,19 @@ namespace openvkl {
             "You must compile with OpenVDB to use TestingVdbVolume");
       }
 
-      bool updateVolume()
+      bool updateVolume(VKLObserver leafAccessObserver)
       {
         return false;
       }
+
       range1f getComputedValueRange() const override
       {
         return range1f(0.f, 0.f);
+      }
+
+      VKLObserver newLeafAccessObserver(VKLSampler sampler) const
+      {
+        return nullptr;
       }
 
      protected:

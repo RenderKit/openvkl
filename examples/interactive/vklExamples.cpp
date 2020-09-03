@@ -488,6 +488,13 @@ int main(int argc, const char **argv)
   vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
   vklCommit(scene.sampler);
 
+  VKLObserver leafAccessObserver = nullptr;
+  {
+    auto vdbVolume = dynamic_cast<OpenVdbFloatVolume *>(testingVolume.get());
+    if (vdbVolume)
+      leafAccessObserver = vdbVolume->newLeafAccessObserver(scene.sampler);
+  }
+
   std::cout << "renderer:       " << rendererType << std::endl;
   std::cout << "gridType:       " << gridType << std::endl;
   std::cout << "gridDimensions: " << dimensions << std::endl;
@@ -630,15 +637,20 @@ int main(int argc, const char **argv)
   });
 
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
-    auto vdbVolume =
-        std::dynamic_pointer_cast<OpenVdbFloatVolume>(testingVolume);
-    if (vdbVolume && vdbVolume->updateVolume()) {
-      scene.updateVolume(testingVolume->getVKLVolume());
+    auto vdbVolume = dynamic_cast<OpenVdbFloatVolume *>(testingVolume.get());
+    if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
+      scene.updateVolume(vdbVolume->getVKLVolume());
+
       vklSetInt(scene.sampler, "filter", filter);
       vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
       vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
       vklCommit(scene.sampler);
       scene.updateValueSelector(transferFunction, isoValues);
+
+      if (leafAccessObserver)
+        vklRelease(leafAccessObserver);
+      leafAccessObserver = vdbVolume->newLeafAccessObserver(scene.sampler);
+
       glfwVKLWindow->resetAccumulation();
     }
   });
@@ -648,8 +660,12 @@ int main(int argc, const char **argv)
 
   // cleanly shut VKL down
   scene = Scene();
+  if (leafAccessObserver)
+    vklRelease(leafAccessObserver);
+
   testingVolume.reset();
   glfwVKLWindow.reset();
+
   vklShutdown();
 
   return 0;

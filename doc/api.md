@@ -283,17 +283,20 @@ be released via `vklRelease`.
 Observers
 ---------
 
-Volumes in Open VKL may provide observers to communicate data back to the
-application. Observers may be created with
+Volumes and samplers in Open VKL may provide observers to communicate data back
+to the application. Observers may be created with
 
-    VKLObserver vklNewObserver(VKLVolume volume,
-                               const char *type);
+    VKLObserver vklNewSamplerObserver(VKLSampler sampler,
+                                      const char *type);
 
-The volume passed to `vklNewObserver` must already be committed.  Valid
+    VKLObserver vklNewVolumeObserver(VKLVolume volume,
+                                     const char *type);
+
+The object passed to `vklNew*Observer` must already be committed.  Valid
 observer type strings are defined by volume implementations (see section
 'Volume types' below).
 
-`vklNewObserver` returns `NULL` on failure.
+`vklNew*Observer` returns `NULL` on failure.
 
 To access the underlying data, an observer must first be mapped using
 
@@ -744,7 +747,7 @@ objects (sampler object parameters default to volume parameters).
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
-VDB volumes support the following observers:
+VDB sampler objects support the following observers:
 
   --------------  -----------  -------------------------------------------------------------
   Name            Buffer Type  Description
@@ -755,7 +758,7 @@ VDB volumes support the following observers:
                                nonzero value.
                                This can be used for on-demand loading of leaf nodes.
   --------------  --------------------------------------------------------------------------
-  : Observers supported by VDB (`"vdb"`) volumes.
+  : Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
 
 
 #### Major differences to OpenVDB

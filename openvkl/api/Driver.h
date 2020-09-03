@@ -74,6 +74,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       virtual VKLObserver newObserver(VKLVolume volume, const char *type) = 0;
+      virtual VKLObserver newObserver(VKLSampler sampler, const char *type) = 0;
       virtual const void *mapObserver(VKLObserver observer)               = 0;
       virtual void unmapObserver(VKLObserver observer)                    = 0;
       virtual VKLDataType getObserverElementType(

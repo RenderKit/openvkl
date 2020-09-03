@@ -4,9 +4,11 @@
 #pragma once
 
 #include "../../sampler/Sampler.h"
+#include "../../observer/ObserverRegistry.h"
 #include "../common/simd.h"
 #include "VdbGrid.h"
 #include "VdbSampleConfig.h"
+#include "VdbVolume.h"
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
 
@@ -16,7 +18,7 @@ namespace openvkl {
     template <int W>
     struct VdbSampler : public Sampler<W>
     {
-      VdbSampler(const VdbGrid *grid, const VdbSampleConfig &defaultConfig);
+      explicit VdbSampler(VdbVolume<W> &volume);
 
       ~VdbSampler() override;
 
@@ -46,8 +48,16 @@ namespace openvkl {
                             vvec3fn<1> *gradients,
                             unsigned int attributeIndex) const override final;
 
-      const VdbGrid *grid{nullptr};
-      VdbSampleConfig config;
+      Observer<W> *newObserver(const char *type) override;
+
+      ObserverRegistry<W> &getLeafAccessObserverRegistry() {
+        return leafAccessObservers;
+      }
+
+      private:
+        Ref<VdbVolume<W>> volume;
+        ObserverRegistry<W> leafAccessObservers;
+        VdbSampleConfig config;
     };
 
   }  // namespace ispc_driver

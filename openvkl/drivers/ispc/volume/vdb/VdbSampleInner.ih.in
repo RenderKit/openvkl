@@ -82,12 +82,14 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
 
   /* Do nothing for empty voxels. */
 
-  if (grid->usageBuffer && (isTile || isLeaf))
+  if ((isTile || isLeaf)
+   && VdbLeafAccessObserver_isObservable(config))
   {
-    const univary uint64 originalIndex = grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
+    const univary uint64 originalIndex = 
+      grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
     assert(originalIndex < ((univary uint64)1) << 32);
     const univary uint32 oi32 = ((univary uint32)originalIndex);
-    grid->usageBuffer[oi32] = 1;  /* NOTE: this is not synchronized between threads! */
+    VdbLeafAccessObserver_observe_@VKL_VDB_UNIVARY@(config, oi32);
   }
 
   return sample;

@@ -28,6 +28,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
 export void *uniform EXPORT_UNIQUE(VdbVolume_create)
 {
   VdbVolume *uniform self = uniform new uniform VdbVolume;
+  memset(self, 0, sizeof(uniform VdbVolume));
   return self;
 }
 
@@ -65,6 +66,7 @@ export void EXPORT_UNIQUE(VdbVolume_setGrid,
                           const VdbGrid *uniform grid,
                           const VdbSampleConfig *uniform globalConfig)
 {
+  assert(_self);
   VdbVolume *uniform volume           = (VdbVolume * uniform) _self;
   volume->grid                        = grid;
   volume->globalConfig                = globalConfig;

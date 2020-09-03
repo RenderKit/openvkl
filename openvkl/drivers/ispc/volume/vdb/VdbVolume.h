@@ -7,6 +7,7 @@
 #include <memory>
 #include "../StructuredVolume.h"
 #include "../common/Data.h"
+#include "../../common/Allocator.h"
 #include "VdbGrid.h"
 #include "VdbIterator.h"
 #include "VdbSampleConfig.h"
@@ -33,10 +34,10 @@ namespace openvkl {
     {
       VdbVolume(const VdbVolume &) = delete;
       VdbVolume &operator=(const VdbVolume &) = delete;
+      VdbVolume(VdbVolume &&other) = delete;
+      VdbVolume &operator=(VdbVolume &&other) = delete;
 
       VdbVolume();
-      VdbVolume(VdbVolume &&other);
-      VdbVolume &operator=(VdbVolume &&other);
       ~VdbVolume() override;
 
       /*
@@ -80,8 +81,10 @@ namespace openvkl {
         return grid;
       }
 
-      VKLObserver newObserver(const char *type) override;
-      Sampler<W> *newSampler() override;
+      const VdbSampleConfig &getSampleConfig() const
+      {
+        return globalConfig;
+      }
 
       const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
           const override final
@@ -95,6 +98,9 @@ namespace openvkl {
         return hitIteratorFactory;
       }
 
+      Observer<W> *newObserver(const char *type) override;
+      Sampler<W> *newSampler() override;
+
      private:
       void cleanup();
 
@@ -105,10 +111,10 @@ namespace openvkl {
       Ref<const DataT<Data *>> leafData;
       std::vector<AlignedISPCData1D> leafDataISPC;
       VdbGrid *grid{nullptr};
-      size_t bytesAllocated{0};
       VdbSampleConfig globalConfig;
       VdbIntervalIteratorFactory<W> intervalIteratorFactory;
       VdbHitIteratorFactory<W> hitIteratorFactory;
+      Allocator allocator;
     };
 
   }  // namespace ispc_driver

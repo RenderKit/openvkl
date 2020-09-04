@@ -196,7 +196,9 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
                       128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
   VKLVolume vklVolume = volume->getVKLVolume();
-  std::vector<char> buffer(vklGetIntervalIteratorSize(vklVolume));
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(vklSampler));
   VKLIntervalIterator iterator;
   VKLInterval interval;
   vkl_vec3f origin{0, 0, -5.f};
@@ -204,8 +206,9 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   vkl_range1f tRange{0.f, 1000.f};
   REQUIRE_NOTHROW(
       iterator = vklInitIntervalIterator(
-          vklVolume, &origin, &direction, &tRange, nullptr, buffer.data()));
+          vklSampler, &origin, &direction, &tRange, nullptr, buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
+  REQUIRE_NOTHROW(vklRelease(vklSampler));
   REQUIRE_NOTHROW(delete volume);
 }
 

@@ -21,9 +21,12 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
   range1f expectedTRange = intersectRayBox(
       (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
+  std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      volume, &origin, &direction, &tRange, nullptr, buffer.data());
+      sampler, &origin, &direction, &tRange, nullptr, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
@@ -44,6 +47,7 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
 
   // last interval at expected ending
   REQUIRE(intervalPrevious.tRange.upper == Approx(expectedTRange.upper));
+  vklRelease(sampler);
 }
 
 void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
@@ -52,13 +56,13 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
-  VKLIntervalIterator iterator = vklInitIntervalIterator(
-      volume, &origin, &direction, &tRange, nullptr, buffer.data());
-
-  VKLInterval interval;
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
+
+  std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
+  VKLIntervalIterator iterator = vklInitIntervalIterator(
+      sampler, &origin, &direction, &tRange, nullptr, buffer.data());
+  VKLInterval interval;
 
   int intervalCount = 0;
 
@@ -106,7 +110,9 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   vkl_vec3f direction{0.f, 0.f, 1.f};
   vkl_range1f tRange{0.f, inf};
 
-  VKLSampler sampler             = vklNewSampler(volume);
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
 
   // will trigger intervals covering individual ranges separately
@@ -117,9 +123,9 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
 
   vklCommit(valueSelector);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
+      sampler, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLInterval interval;
 
@@ -188,9 +194,12 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
   INFO("direction = " << direction.x << " " << direction.y << " "
                       << direction.z);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
+  std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
   VKLIntervalIterator iterator =
-      vklInitIntervalIterator(volume,
+      vklInitIntervalIterator(sampler,
                               &origin,
                               &(const vkl_vec3f &)direction,
                               &tRange,
@@ -209,6 +218,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
                             << ", nominalDeltaT = " << interval.nominalDeltaT);
 
   REQUIRE(interval.nominalDeltaT == Approx(expectedNominalDeltaT));
+  vklRelease(sampler);
 }
 
 TEST_CASE("Interval iterator", "[interval_iterators]")

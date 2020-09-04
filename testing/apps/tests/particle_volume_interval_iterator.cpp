@@ -44,9 +44,9 @@ void interval_iteration(size_t numParticles,
   for (size_t i = 0; i < N; i++) {
     vkl_vec3f origin{distX(eng), distY(eng), z};
 
-    std::vector<char> buffer(vklGetIntervalIteratorSize(volume));
+    std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
     VKLIntervalIterator iterator = vklInitIntervalIterator(
-        volume, &origin, &direction, &tRange, nullptr, buffer.data());
+        sampler, &origin, &direction, &tRange, nullptr, buffer.data());
 
     VKLInterval interval;
 

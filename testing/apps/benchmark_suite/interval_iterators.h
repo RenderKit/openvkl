@@ -27,18 +27,19 @@ namespace api {
     {
       static std::unique_ptr<VolumeWrapper> wrapper;
       static VKLVolume vklVolume;
+      static VKLSampler vklSampler;
       static vkl_vec3f origin;
       static const vkl_vec3f direction{0.f, 0.f, 1.f};
       static const vkl_range1f tRange{0.f, 1000.f};
-      static size_t intervalIteratorSize { 0 };
+      static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
       // This is safe: Google benchmark guarantees that threads do not
       // start running until the start of the loop below.
-      if (state.thread_index == 0)
-      {
-        wrapper = rkcommon::make_unique<VolumeWrapper>();
+      if (state.thread_index == 0) {
+        wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
+        vklSampler           = vklNewSampler(vklVolume);
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
@@ -48,14 +49,15 @@ namespace api {
         std::mt19937 eng(rd());
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
-        intervalIteratorSize = vklGetIntervalIteratorSize(vklVolume);
+        intervalIteratorSize = vklGetIntervalIteratorSize(vklSampler);
         buffers.resize(intervalIteratorSize * state.threads);
       }
 
       for (auto _ : state) {
-        void *buffer = buffers.data() + intervalIteratorSize * state.thread_index;
+        void *buffer =
+            buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            vklVolume, &origin, &direction, &tRange, nullptr, buffer);
+            vklSampler, &origin, &direction, &tRange, nullptr, buffer);
 
         benchmark::DoNotOptimize(iterator);
       }
@@ -84,16 +86,17 @@ namespace api {
     {
       static std::unique_ptr<VolumeWrapper> wrapper;
       static VKLVolume vklVolume;
+      static VKLSampler vklSampler;
       static vkl_vec3f origin;
       static const vkl_vec3f direction{0.f, 0.f, 1.f};
       static const vkl_range1f tRange{0.f, 1000.f};
-      static size_t intervalIteratorSize { 0 };
+      static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
-      if (state.thread_index == 0)
-      {
+      if (state.thread_index == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
+        vklSampler           = vklNewSampler(vklVolume);
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
@@ -106,7 +109,7 @@ namespace api {
         vkl_vec3f direction{0.f, 0.f, 1.f};
         vkl_range1f tRange{0.f, 1000.f};
 
-        intervalIteratorSize = vklGetIntervalIteratorSize(vklVolume);
+        intervalIteratorSize = vklGetIntervalIteratorSize(vklSampler);
         buffers.resize(intervalIteratorSize * state.threads);
       }
 
@@ -114,9 +117,10 @@ namespace api {
       std::vector<char> buffer;
 
       for (auto _ : state) {
-        void *buffer = buffers.data() + intervalIteratorSize * state.thread_index;
+        void *buffer =
+            buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            vklVolume, &origin, &direction, &tRange, nullptr, buffer);
+            vklSampler, &origin, &direction, &tRange, nullptr, buffer);
 
         bool success = vklIterateInterval(iterator, &interval);
 
@@ -152,16 +156,17 @@ namespace api {
     {
       static std::unique_ptr<VolumeWrapper> wrapper;
       static VKLVolume vklVolume;
+      static VKLSampler vklSampler;
       static vkl_vec3f origin;
       static const vkl_vec3f direction{0.f, 0.f, 1.f};
       static const vkl_range1f tRange{0.f, 1000.f};
-      static size_t intervalIteratorSize { 0 };
+      static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
-      if (state.thread_index == 0)
-      {
-        wrapper = rkcommon::make_unique<VolumeWrapper>();
+      if (state.thread_index == 0) {
+        wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
+        vklSampler           = vklNewSampler(vklVolume);
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
@@ -171,15 +176,16 @@ namespace api {
         std::mt19937 eng(rd());
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
-        intervalIteratorSize = vklGetIntervalIteratorSize(vklVolume);
+        intervalIteratorSize = vklGetIntervalIteratorSize(vklSampler);
         buffers.resize(intervalIteratorSize * state.threads);
       }
 
       VKLInterval interval;
       for (auto _ : state) {
-        void *buffer = buffers.data() + intervalIteratorSize * state.thread_index;
+        void *buffer =
+            buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            vklVolume, &origin, &direction, &tRange, nullptr, buffer);
+            vklSampler, &origin, &direction, &tRange, nullptr, buffer);
 
         vklIterateInterval(iterator, &interval);
 

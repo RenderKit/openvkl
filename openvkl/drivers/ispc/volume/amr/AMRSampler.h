@@ -4,6 +4,8 @@
 #pragma once
 
 #include "../../common/export_util.h"
+#include "../../iterator/DefaultIterator.h"
+#include "../../iterator/Iterator.h"
 #include "../../sampler/Sampler.h"
 #include "AMRVolume.h"
 #include "AMRVolume_ispc.h"
@@ -11,6 +13,17 @@
 
 namespace openvkl {
   namespace ispc_driver {
+
+    template <int W>
+    using AmrIntervalIteratorFactory =
+        ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
+
+    template <int W>
+    using AmrHitIterator = DefaultHitIterator<W, DefaultIntervalIterator<W>>;
+
+    template <int W>
+    using AmrHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, AmrHitIterator>;
 
     template <int W>
     struct AMRSampler : public SamplerBase<W, AMRVolume>
@@ -41,8 +54,16 @@ namespace openvkl {
                             vvec3fn<1> *gradients,
                             unsigned int attributeIndex) const override final;
 
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final;
+
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final;
+
      protected:
       using SamplerBase<W, AMRVolume>::volume;
+      AmrIntervalIteratorFactory<W> intervalIteratorFactory;
+      AmrHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -112,6 +133,20 @@ namespace openvkl {
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);
+    }
+
+    template <int W>
+    inline const IteratorFactory<W, IntervalIterator>
+        &AMRSampler<W>::getIntervalIteratorFactory() const
+    {
+      return intervalIteratorFactory;
+    }
+
+    template <int W>
+    inline const IteratorFactory<W, HitIterator>
+        &AMRSampler<W>::getHitIteratorFactory() const
+    {
+      return hitIteratorFactory;
     }
 
   }  // namespace ispc_driver

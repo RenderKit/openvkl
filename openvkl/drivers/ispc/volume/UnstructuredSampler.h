@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../common/export_util.h"
+#include "../iterator/UnstructuredIterator.h"
 #include "../sampler/Sampler.h"
 #include "UnstructuredVolume.h"
 #include "UnstructuredVolume_ispc.h"
@@ -41,8 +42,16 @@ namespace openvkl {
                             vvec3fn<1> *gradients,
                             unsigned int attributeIndex) const override final;
 
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final;
+
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final;
+
      protected:
       using SamplerBase<W, UnstructuredVolume>::volume;
+      UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
+      UnstructuredHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -113,6 +122,20 @@ namespace openvkl {
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);
+    }
+
+    template <int W>
+    inline const IteratorFactory<W, IntervalIterator>
+        &UnstructuredSampler<W>::getIntervalIteratorFactory() const
+    {
+      return intervalIteratorFactory;
+    }
+
+    template <int W>
+    inline const IteratorFactory<W, HitIterator>
+        &UnstructuredSampler<W>::getHitIteratorFactory() const
+    {
+      return hitIteratorFactory;
     }
 
   }  // namespace ispc_driver

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "../../sampler/Sampler.h"
 #include "../../observer/ObserverRegistry.h"
+#include "../../sampler/Sampler.h"
 #include "../common/simd.h"
 #include "VdbGrid.h"
 #include "VdbSampleConfig.h"
@@ -50,15 +50,38 @@ namespace openvkl {
 
       Observer<W> *newObserver(const char *type) override;
 
-      ObserverRegistry<W> &getLeafAccessObserverRegistry() {
+      ObserverRegistry<W> &getLeafAccessObserverRegistry()
+      {
         return leafAccessObservers;
       }
 
-      private:
-        using SamplerBase<W, VdbVolume>::volume;
-        ObserverRegistry<W> leafAccessObservers;
-        VdbSampleConfig config;
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final;
+
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final;
+
+     private:
+      using SamplerBase<W, VdbVolume>::volume;
+      ObserverRegistry<W> leafAccessObservers;
+      VdbIntervalIteratorFactory<W> intervalIteratorFactory;
+      VdbHitIteratorFactory<W> hitIteratorFactory;
+      VdbSampleConfig config;
     };
+
+    template <int W>
+    const IteratorFactory<W, IntervalIterator>
+        &VdbSampler<W>::getIntervalIteratorFactory() const
+    {
+      return intervalIteratorFactory;
+    }
+
+    template <int W>
+    const IteratorFactory<W, HitIterator>
+        &VdbSampler<W>::getHitIteratorFactory() const
+    {
+      return hitIteratorFactory;
+    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

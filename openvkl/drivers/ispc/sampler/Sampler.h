@@ -5,6 +5,7 @@
 
 #include "../common/ManagedObject.h"
 #include "../common/simd.h"
+#include "../iterator/Iterator.h"
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
@@ -76,6 +77,15 @@ namespace openvkl {
        */
       virtual Volume<W> &getVolume()             = 0;
       virtual const Volume<W> &getVolume() const = 0;
+
+      /*
+       * Return the iterator factories for this volume.
+       */
+      virtual const IteratorFactory<W, IntervalIterator>
+          &getIntervalIteratorFactory() const = 0;
+
+      virtual const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const = 0;
 
      protected:
       void *getISPCEquivalent();

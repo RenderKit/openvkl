@@ -33,7 +33,7 @@ namespace openvkl {
       }
 
      protected:
-      using Iterator<W>::volume;
+      using Iterator<W>::sampler;
       using IspcIterator = __varying_ispc_type(UnstructuredIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };

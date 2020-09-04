@@ -497,10 +497,10 @@ namespace openvkl {
         VKLValueSelector valueSelector,
         void *buffer) const
     {
-      auto &spl           = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
       const auto &factory = spl.getIntervalIteratorFactory();
 
-      IntervalIterator<W> *it = factory.constructU(&spl, buffer);
+      IntervalIterator<W> *it = factory.constructU(spl, buffer);
       it->initializeIntervalU(
           origin,
           direction,
@@ -521,10 +521,10 @@ namespace openvkl {
                                                 VKLValueSelector valueSelector,
                                                 void *buffer) const
     {
-      auto &spl           = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
       const auto &factory = spl.getIntervalIteratorFactory();
 
-      IntervalIterator<W> *it = factory.constructV(&spl, buffer);
+      IntervalIterator<W> *it = factory.constructV(spl, buffer);
 
       vintn<W> validW;
       for (int i = 0; i < W; ++i)
@@ -615,10 +615,10 @@ namespace openvkl {
         VKLValueSelector valueSelector,
         void *buffer) const
     {
-      auto &spl           = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
       const auto &factory = spl.getHitIteratorFactory();
 
-      HitIterator<W> *it = factory.constructU(&spl, buffer);
+      HitIterator<W> *it = factory.constructU(spl, buffer);
       it->initializeHitU(
           origin,
           direction,
@@ -639,10 +639,10 @@ namespace openvkl {
                                            VKLValueSelector valueSelector,
                                            void *buffer) const
     {
-      auto &spl           = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
       const auto &factory = spl.getHitIteratorFactory();
 
-      HitIterator<W> *it = factory.constructV(&spl, buffer);
+      HitIterator<W> *it = factory.constructV(spl, buffer);
 
       vintn<W> validW;
       for (int i = 0; i < W; ++i)

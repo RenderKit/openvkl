@@ -30,15 +30,6 @@ namespace openvkl {
 
       static Volume *createInstance(const std::string &type);
 
-      /*
-       * Return the iterator factory for this volume.
-       */
-      virtual const IteratorFactory<W, IntervalIterator>
-          &getIntervalIteratorFactory() const = 0;
-
-      virtual const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const = 0;
-
       virtual ValueSelector<W> *newValueSelector();
 
       virtual Sampler<W> *newSampler() = 0;

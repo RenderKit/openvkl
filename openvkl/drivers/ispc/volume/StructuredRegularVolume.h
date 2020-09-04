@@ -3,7 +3,6 @@
 
 #pragma once
 
-#include "../iterator/GridAcceleratorIterator.h"
 #include "StructuredVolume.h"
 
 namespace openvkl {
@@ -15,23 +14,6 @@ namespace openvkl {
       std::string toString() const override;
 
       void commit() override;
-
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final
-      {
-        return intervalIteratorFactory;
-      }
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final
-      {
-        return hitIteratorFactory;
-      }
-
-      private:
-        GridAcceleratorIntervalIteratorFactory<W> intervalIteratorFactory;
-        GridAcceleratorHitIteratorFactory<W> hitIteratorFactory;
-
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

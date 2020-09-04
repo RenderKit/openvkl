@@ -6,7 +6,6 @@
 #include "../common/Data.h"
 #include "../common/export_util.h"
 #include "../common/math.h"
-#include "../iterator/UnstructuredIterator.h"
 #include "UnstructuredVolume_ispc.h"
 #include "Volume.h"
 #include "embree3/rtcore.h"
@@ -106,18 +105,6 @@ namespace openvkl {
 
       void commit() override;
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final
-      {
-        return intervalIteratorFactory;
-      }
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final
-      {
-        return hitIteratorFactory;
-      }
-
       Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
@@ -181,8 +168,6 @@ namespace openvkl {
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
-      UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
-      UnstructuredHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

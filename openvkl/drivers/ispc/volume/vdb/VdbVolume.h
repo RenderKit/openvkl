@@ -86,17 +86,6 @@ namespace openvkl {
         return globalConfig;
       }
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final
-      {
-        return intervalIteratorFactory;
-      }
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final
-      {
-        return hitIteratorFactory;
-      }
 
       Observer<W> *newObserver(const char *type) override;
       Sampler<W> *newSampler() override;
@@ -112,8 +101,6 @@ namespace openvkl {
       std::vector<AlignedISPCData1D> leafDataISPC;
       VdbGrid *grid{nullptr};
       VdbSampleConfig globalConfig;
-      VdbIntervalIteratorFactory<W> intervalIteratorFactory;
-      VdbHitIteratorFactory<W> hitIteratorFactory;
       Allocator allocator;
     };
 

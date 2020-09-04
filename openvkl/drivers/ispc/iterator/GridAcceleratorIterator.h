@@ -45,7 +45,7 @@ namespace openvkl {
       }
 
      protected:
-      using Iterator<W>::volume;
+      using Iterator<W>::sampler;
       using IspcIterator = __varying_ispc_type(GridAcceleratorIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
@@ -82,7 +82,7 @@ namespace openvkl {
       void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result) override final;
 
      protected:
-      using Iterator<W>::volume;
+      using Iterator<W>::sampler;
       using IspcIterator = __varying_ispc_type(GridAcceleratorIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };

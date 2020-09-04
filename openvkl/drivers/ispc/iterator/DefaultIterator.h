@@ -32,7 +32,7 @@ namespace openvkl {
       }
 
      protected:
-      using Iterator<W>::volume;
+      using Iterator<W>::sampler;
       using IspcIterator = __varying_ispc_type(DefaultIntervalIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
@@ -42,7 +42,7 @@ namespace openvkl {
     template <int W, class IntervalIterator>
     struct DefaultHitIterator : public HitIterator<W>
     {
-      explicit DefaultHitIterator(const Volume<W> *volume);
+      explicit DefaultHitIterator(const Sampler<W> &sampler);
 
       void initializeHitV(const vintn<W> &valid,
                           const vvec3fn<W> &origin,
@@ -57,7 +57,7 @@ namespace openvkl {
      protected:
       IntervalIterator intervalIterator;
 
-      using Iterator<W>::volume;
+      using Iterator<W>::sampler;
       using IspcIterator = __varying_ispc_type(DefaultHitIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
@@ -69,8 +69,8 @@ namespace openvkl {
 
     template <int W, class IntervalIterator>
     DefaultHitIterator<W, IntervalIterator>::DefaultHitIterator(
-        const Volume<W> *volume)
-        : HitIterator<W>(volume), intervalIterator(volume)
+        const Sampler<W> &sampler)
+        : HitIterator<W>(sampler), intervalIterator(sampler)
     {
     }
 
@@ -92,7 +92,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 ispcStorage,
                 intervalIterator.getIspcStorage(),
-                volume->getISPCEquivalent(),
+                sampler->getVolume().getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);

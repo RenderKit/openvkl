@@ -18,11 +18,11 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      const auto *vdbVolume = dynamic_cast<const VdbVolume<W> *>(volume);
+      const auto &vdbVolume = dynamic_cast<const VdbVolume<W> &>(sampler->getVolume());
       CALL_ISPC(VdbIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                vdbVolume->getGrid(),
+                vdbVolume.getGrid(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,

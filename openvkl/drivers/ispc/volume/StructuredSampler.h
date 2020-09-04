@@ -4,6 +4,7 @@
 #pragma once
 
 #include "../common/export_util.h"
+#include "../iterator/GridAcceleratorIterator.h"
 #include "../sampler/Sampler.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
@@ -70,17 +71,28 @@ namespace openvkl {
           unsigned int M,
           const unsigned int *attributeIndices) const override final;
 
+      /////////////////////////////////////////////////////////////////////////
+
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final;
+
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final;
+
      protected:
       using SamplerBase<W, StructuredVolume>::volume;
       VKLFilter filter;
       VKLFilter gradientFilter;
+
+     private:
+      GridAcceleratorIntervalIteratorFactory<W> intervalIteratorFactory;
+      GridAcceleratorHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline StructuredSampler<W>::StructuredSampler(
-        StructuredVolume<W> *volume)
+    inline StructuredSampler<W>::StructuredSampler(StructuredVolume<W> *volume)
         : SamplerBase<W, StructuredVolume>(*volume),
           filter(volume->getFilter()),
           gradientFilter(volume->getGradientFilter())
@@ -243,6 +255,20 @@ namespace openvkl {
                 M,
                 attributeIndices,
                 samples);
+    }
+
+    template <int W>
+    inline const IteratorFactory<W, IntervalIterator>
+        &StructuredSampler<W>::getIntervalIteratorFactory() const
+    {
+      return intervalIteratorFactory;
+    }
+
+    template <int W>
+    inline const IteratorFactory<W, HitIterator>
+        &StructuredSampler<W>::getHitIteratorFactory() const
+    {
+      return hitIteratorFactory;
     }
 
   }  // namespace ispc_driver

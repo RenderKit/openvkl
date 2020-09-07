@@ -45,6 +45,7 @@ foreach(TARGET_WIDTH 4 8 16)
     observer/ObserverRegistry.cpp
     observer/ObserverRegistry.ispc
     sampler/Sampler.cpp
+    sampler/Sampler.ispc
     value_selector/ValueSelector.cpp
     value_selector/ValueSelector.ispc
     volume/amr/AMRAccel.cpp

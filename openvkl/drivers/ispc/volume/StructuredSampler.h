@@ -6,6 +6,7 @@
 #include "../common/export_util.h"
 #include "../iterator/GridAcceleratorIterator.h"
 #include "../sampler/Sampler.h"
+#include "Sampler_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 #include "Volume_ispc.h"
@@ -18,8 +19,7 @@ namespace openvkl {
     struct StructuredSampler : public SamplerBase<W, StructuredVolume>
     {
       StructuredSampler(StructuredVolume<W> *volume);
-
-      ~StructuredSampler() override = default;
+      ~StructuredSampler() override;
 
       void commit() override;
 
@@ -81,6 +81,8 @@ namespace openvkl {
 
      protected:
       using SamplerBase<W, StructuredVolume>::volume;
+      using Sampler<W>::ispcEquivalent;
+
       VKLFilter filter;
       VKLFilter gradientFilter;
 
@@ -98,6 +100,14 @@ namespace openvkl {
           gradientFilter(volume->getGradientFilter())
     {
       assert(volume);
+      ispcEquivalent = CALL_ISPC(Sampler_create);
+    }
+
+    template <int W>
+    inline StructuredSampler<W>::~StructuredSampler()
+    {
+      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      ispcEquivalent = nullptr;
     }
 
     template <int W>
@@ -111,6 +121,12 @@ namespace openvkl {
       //       if they set filter and want gradientFilter to be different.
       gradientFilter = (VKLFilter)this->template getParam<int>(
           "gradientFilter", this->hasParam("filter") ? filter : gradientFilter);
+
+      CALL_ISPC(Sampler_set,
+                ispcEquivalent,
+                &*volume,
+                (ispc::VKLFilter)filter,
+                (ispc::VKLFilter)gradientFilter);
     }
 
     template <int W>

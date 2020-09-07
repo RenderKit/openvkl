@@ -3,9 +3,26 @@
 
 #pragma once
 
+#include "openvkl/VKLFilter.h"
+#include "openvkl/ispc_cpp_interop.h"
+#include "../volume/Volume.ih"
+#include "../common/export_util.h"
+
 struct Sampler
 {
   Volume *uniform volume;
+  VKLFilter filter;
+  VKLFilter gradientFilter;
 };
+
+/*
+ * Initialize the given sampler object. Use this from your derived samplers
+ * to initialize the super member.
+ */
+export void EXPORT_UNIQUE(Sampler_set,
+                          void *uniform _sampler,
+                          void *uniform _volume,
+                          uniform VKLFilter filter,
+                          uniform VKLFilter gradientFilter);
 
 

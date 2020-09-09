@@ -21,7 +21,7 @@ you can build Open VKL you need the following prerequisites:
     have some version of OpenGL.
 
 -   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.12.0 or later. Please obtain a
+    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please obtain a
     release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 

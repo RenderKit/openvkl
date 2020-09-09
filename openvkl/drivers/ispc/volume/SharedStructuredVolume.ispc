@@ -1071,13 +1071,7 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Constructor)
 {
   uniform SharedStructuredVolume *uniform self =
       uniform new uniform SharedStructuredVolume;
-
-  self->attributesData              = NULL;
-  self->accelerator                 = NULL;
-  self->computeSamplesInner_varying = NULL;
-  self->getVoxels_varying           = NULL;
-  self->computeSamplesInner_uniform = NULL;
-  self->getVoxels_uniform           = NULL;
+  memset(self, 0, sizeof(uniform SharedStructuredVolume));
 
   return self;
 }

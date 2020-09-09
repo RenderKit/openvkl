@@ -138,6 +138,7 @@ export void *uniform EXPORT_UNIQUE(VKLParticleVolume_Constructor)
 {
   uniform VKLParticleVolume *uniform self =
       uniform new uniform VKLParticleVolume;
+  memset(self, 0, sizeof(uniform VKLParticleVolume));
 
   self->super.super.computeSample_varying = VKLParticleVolume_sample;
 

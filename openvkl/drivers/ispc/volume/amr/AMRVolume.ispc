@@ -59,6 +59,7 @@ static varying vec3f AMRVolume_computeGradient(const Volume *uniform _self,
 export void *uniform EXPORT_UNIQUE(AMRVolume_create, void *uniform cppE)
 {
   AMRVolume *uniform self = uniform new uniform AMRVolume;
+  memset(self, 0, sizeof(uniform AMRVolume));
   return self;
 }
 

@@ -10,14 +10,21 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    VdbSampler<W>::VdbSampler(VdbVolume<W> &volume) 
-      : SamplerBase<W, VdbVolume>(volume)
+    VdbSampler<W>::VdbSampler(VdbVolume<W> &volume)
+        : SamplerBase<W, VdbVolume>(volume)
     {
       config.leafAccessObservers = leafAccessObservers.getIE();
+
+      ispcEquivalent = CALL_ISPC(VdbSampler_create,
+        volume.getISPCEquivalent(), leafAccessObservers.getIE());
     }
 
     template <int W>
-    VdbSampler<W>::~VdbSampler() = default;
+    VdbSampler<W>::~VdbSampler()
+    {
+      CALL_ISPC(VdbSampler_destroy, ispcEquivalent);
+      ispcEquivalent = nullptr;
+    }
 
     template <int W>
     void VdbSampler<W>::commit()
@@ -37,6 +44,12 @@ namespace openvkl {
 
       config.maxSamplingDepth = this->template getParam<int>(
           "maxSamplingDepth", globalConfig.maxSamplingDepth);
+
+      CALL_ISPC(VdbSampler_set,
+                ispcEquivalent,
+                (ispc::VKLFilter)config.filter,
+                (ispc::VKLFilter)config.gradientFilter,
+                config.maxSamplingDepth);
     }
 
     template <int W>

@@ -9,6 +9,7 @@
 #include "ParticleVolume.h"
 #include "ParticleVolume_ispc.h"
 #include "Volume_ispc.h"
+#include "Sampler_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -17,8 +18,7 @@ namespace openvkl {
     struct ParticleSampler : public SamplerBase<W, ParticleVolume>
     {
       ParticleSampler(ParticleVolume<W> *volume);
-
-      ~ParticleSampler() override = default;
+      ~ParticleSampler();
 
       void commit() override {}
 
@@ -49,6 +49,7 @@ namespace openvkl {
           const override final;
 
      protected:
+      using Sampler<W>::ispcEquivalent;
       using SamplerBase<W, ParticleVolume>::volume;
 
      private:
@@ -63,6 +64,14 @@ namespace openvkl {
         : SamplerBase<W, ParticleVolume>(*volume)
     {
       assert(volume);
+      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
+    }
+
+    template <int W>
+    inline ParticleSampler<W>::~ParticleSampler()
+    {
+      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      ispcEquivalent = nullptr;
     }
 
     template <int W>

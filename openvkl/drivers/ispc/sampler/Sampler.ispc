@@ -3,20 +3,21 @@
 
 #include "Sampler.ih"
 
-export Sampler *uniform EXPORT_UNIQUE(Sampler_create)
+export Sampler *uniform EXPORT_UNIQUE(Sampler_create,
+                                      const void* uniform _volume)
 {
   Sampler *uniform sampler = uniform new Sampler;
+  memset(sampler, 0, sizeof(uniform Sampler));
+  sampler->volume = (const Volume *uniform) _volume;
   return sampler;
 }
 
-export void EXPORT_UNIQUE(Sampler_set,
+export void EXPORT_UNIQUE(Sampler_setFilters,
                           void *uniform _sampler,
-                          void *uniform _volume,
                           uniform VKLFilter filter,
                           uniform VKLFilter gradientFilter)
 {
   Sampler *uniform sampler = (Sampler *uniform)_sampler;
-  sampler->volume = (Volume *uniform)_volume;
   sampler->filter = filter;
   sampler->gradientFilter = gradientFilter;
 }

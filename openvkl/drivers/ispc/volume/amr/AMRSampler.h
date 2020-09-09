@@ -10,6 +10,7 @@
 #include "AMRVolume.h"
 #include "AMRVolume_ispc.h"
 #include "Volume_ispc.h"
+#include "Sampler_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -29,8 +30,7 @@ namespace openvkl {
     struct AMRSampler : public SamplerBase<W, AMRVolume>
     {
       AMRSampler(AMRVolume<W> *volume);
-
-      ~AMRSampler() override = default;
+      ~AMRSampler() override;
 
       void commit() override {}
 
@@ -61,7 +61,9 @@ namespace openvkl {
           const override final;
 
      protected:
+      using Sampler<W>::ispcEquivalent;
       using SamplerBase<W, AMRVolume>::volume;
+
       AmrIntervalIteratorFactory<W> intervalIteratorFactory;
       AmrHitIteratorFactory<W> hitIteratorFactory;
     };
@@ -73,6 +75,14 @@ namespace openvkl {
         : SamplerBase<W, AMRVolume>(*volume)
     {
       assert(volume);
+      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
+    }
+
+    template <int W>
+    inline AMRSampler<W>::~AMRSampler()
+    {
+      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      ispcEquivalent = nullptr;
     }
 
     template <int W>

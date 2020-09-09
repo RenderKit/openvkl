@@ -10,6 +10,7 @@
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
 #include "Volume_ispc.h"
+#include "Sampler_ispc.h"
 #include "openvkl/VKLFilter.h"
 
 namespace openvkl {
@@ -80,8 +81,8 @@ namespace openvkl {
           const override final;
 
      protected:
-      using SamplerBase<W, StructuredVolume>::volume;
       using Sampler<W>::ispcEquivalent;
+      using SamplerBase<W, StructuredVolume>::volume;
 
       VKLFilter filter;
       VKLFilter gradientFilter;
@@ -100,7 +101,7 @@ namespace openvkl {
           gradientFilter(volume->getGradientFilter())
     {
       assert(volume);
-      ispcEquivalent = CALL_ISPC(Sampler_create);
+      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
     }
 
     template <int W>
@@ -122,9 +123,8 @@ namespace openvkl {
       gradientFilter = (VKLFilter)this->template getParam<int>(
           "gradientFilter", this->hasParam("filter") ? filter : gradientFilter);
 
-      CALL_ISPC(Sampler_set,
+      CALL_ISPC(Sampler_setFilters,
                 ispcEquivalent,
-                &*volume,
                 (ispc::VKLFilter)filter,
                 (ispc::VKLFilter)gradientFilter);
     }

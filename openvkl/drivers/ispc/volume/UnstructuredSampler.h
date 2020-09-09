@@ -9,6 +9,7 @@
 #include "UnstructuredVolume.h"
 #include "UnstructuredVolume_ispc.h"
 #include "Volume_ispc.h"
+#include "Sampler_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -17,8 +18,7 @@ namespace openvkl {
     struct UnstructuredSampler : public SamplerBase<W, UnstructuredVolume>
     {
       UnstructuredSampler(UnstructuredVolume<W> *volume);
-
-      ~UnstructuredSampler() override = default;
+      ~UnstructuredSampler() override;
 
       void commit() override {}
 
@@ -49,6 +49,7 @@ namespace openvkl {
           const override final;
 
      protected:
+      using Sampler<W>::ispcEquivalent;
       using SamplerBase<W, UnstructuredVolume>::volume;
       UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
       UnstructuredHitIteratorFactory<W> hitIteratorFactory;
@@ -62,6 +63,14 @@ namespace openvkl {
         : SamplerBase<W, UnstructuredVolume>(*volume)
     {
       assert(volume);
+      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
+    }
+
+    template <int W>
+    inline UnstructuredSampler<W>::~UnstructuredSampler()
+    {
+      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      ispcEquivalent = nullptr;
     }
 
     template <int W>

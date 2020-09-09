@@ -21,6 +21,12 @@ namespace openvkl {
     template <int W>
     struct Sampler : public ManagedObject
     {
+      Sampler() = default;
+      Sampler(Sampler &&) = delete;
+      Sampler& operator=(Sampler &&) = delete;
+      Sampler(const Sampler &) = delete;
+      Sampler& operator=(const Sampler &) = delete;
+
       virtual ~Sampler();
 
       // single attribute /////////////////////////////////////////////////////
@@ -87,8 +93,7 @@ namespace openvkl {
       virtual const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
           const = 0;
 
-     protected:
-      void *getISPCEquivalent();
+      void *getISPCEquivalent() const;
 
      protected:
       void *ispcEquivalent{nullptr};

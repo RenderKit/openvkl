@@ -7,8 +7,46 @@
 #include "VdbSampleConfig.h"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
+#include "sampler/Sampler.ih"
 
 #include "openvkl_vdb/VdbSamplerDispatchInner.ih"
+
+struct VdbSampler
+{
+  Sampler super;
+  const void *uniform leafAccessObservers;
+  vkl_uint32 maxSamplingDepth;
+};
+
+export VdbSampler *uniform EXPORT_UNIQUE(VdbSampler_create,
+                                         const void* uniform volume,
+                                         const void* uniform leafAccessObservers)
+{
+  VdbSampler *uniform sampler = uniform new VdbSampler;
+  memset(sampler, 0, sizeof(uniform VdbSampler));
+
+  sampler->super.volume = (const Volume * uniform) volume;
+  sampler->leafAccessObservers = leafAccessObservers;
+  return sampler;
+}
+
+export void EXPORT_UNIQUE(VdbSampler_set,
+                          void *uniform _sampler,
+                          uniform VKLFilter filter,
+                          uniform VKLFilter gradientFilter,
+                          uniform vkl_uint32 maxSamplingDepth)
+{
+  VdbSampler *uniform sampler = (VdbSampler *uniform)_sampler;
+  CALL_ISPC(Sampler_setFilters, &sampler->super, filter, gradientFilter);
+  sampler->maxSamplingDepth = maxSamplingDepth;
+}
+
+export void EXPORT_UNIQUE(VdbSampler_destroy,
+                          void *uniform _sampler)
+{
+  VdbSampler *uniform sampler = (VdbSampler *uniform)_sampler;
+  delete sampler;
+}
 
 // ---------------------------------------------------------------------------
 // The main entrypoint for sampling a volume.

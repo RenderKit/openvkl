@@ -11,6 +11,7 @@
 struct Sampler
 {
   Volume *uniform volume;
+
   VKLFilter filter;
   VKLFilter gradientFilter;
 };
@@ -19,9 +20,8 @@ struct Sampler
  * Initialize the given sampler object. Use this from your derived samplers
  * to initialize the super member.
  */
-export void EXPORT_UNIQUE(Sampler_set,
+export void EXPORT_UNIQUE(Sampler_setFilters,
                           void *uniform _sampler,
-                          void *uniform _volume,
                           uniform VKLFilter filter,
                           uniform VKLFilter gradientFilter);
 

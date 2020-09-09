@@ -20,7 +20,7 @@ namespace openvkl {
     }
 
     template <int W>
-    void *Sampler<W>::getISPCEquivalent() 
+    void *Sampler<W>::getISPCEquivalent() const
     {
       return ispcEquivalent;
     }

@@ -19,7 +19,6 @@ namespace openvkl {
     struct VdbSampler : public SamplerBase<W, VdbVolume>
     {
       explicit VdbSampler(VdbVolume<W> &volume);
-
       ~VdbSampler() override;
 
       void commit() override;
@@ -62,7 +61,9 @@ namespace openvkl {
           const override final;
 
      private:
+      using Sampler<W>::ispcEquivalent;
       using SamplerBase<W, VdbVolume>::volume;
+
       ObserverRegistry<W> leafAccessObservers;
       VdbIntervalIteratorFactory<W> intervalIteratorFactory;
       VdbHitIteratorFactory<W> hitIteratorFactory;

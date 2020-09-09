@@ -1,0 +1,9 @@
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "openvkl/iterator.isph"
+
+// use public VKLHit struct internally
+typedef VKLHit Hit;

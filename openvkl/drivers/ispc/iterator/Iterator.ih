@@ -3,38 +3,11 @@
 
 #pragma once
 
+#include "../common/Hit.ih"
+#include "../common/Interval.ih"
 #include "../volume/Volume.ih"
 #include "math/box.ih"
 #include "openvkl/iterator.isph"
-
-// this should match the layout of VKLInterval
-struct Interval
-{
-  box1f tRange;
-  box1f valueRange;
-  float nominalDeltaT;
-};
-
-inline void resetInterval(Interval &interval)
-{
-  interval.tRange.lower     = 1.f;
-  interval.tRange.upper     = -1.f;
-  interval.valueRange.lower = 0.f;
-  interval.valueRange.upper = 0.f;
-  interval.nominalDeltaT    = 0.f;
-}
-
-inline void resetInterval(uniform Interval &interval)
-{
-  interval.tRange.lower     = 1.f;
-  interval.tRange.upper     = -1.f;
-  interval.valueRange.lower = 0.f;
-  interval.valueRange.upper = 0.f;
-  interval.nominalDeltaT    = 0.f;
-}
-
-// use public VKLHit struct internally
-typedef VKLHit Hit;
 
 /*
  * Intersect isosurfaces along the given ray using Newton-Raphson iteration.

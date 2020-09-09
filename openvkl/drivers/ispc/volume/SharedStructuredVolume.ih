@@ -32,7 +32,7 @@ typedef uniform float (*uniform ComputeSampleInnerUniformFunc)(
     const uniform uint32 attributeIndex);
 
 typedef varying vec3f (*uniform ComputeGradientVaryingFunc)(
-    const void *uniform _self,
+    const SharedStructuredVolume *uniform _self,
     const varying vec3f &objectCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex);

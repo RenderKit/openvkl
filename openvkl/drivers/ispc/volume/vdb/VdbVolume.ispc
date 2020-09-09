@@ -43,7 +43,7 @@ export void EXPORT_UNIQUE(VdbVolume_destroy,
 }
 
 /* This is here for the default iterator. */
-varying float VdbVolume_sample(const void *uniform _volume,
+varying float VdbVolume_sample(const Volume *uniform _volume,
                                const varying vec3f &objectCoordinates)
 {
   float samples                   = 0.f;

@@ -385,44 +385,44 @@ inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
                                                                                \
     univary float val = 0.f;                                                   \
     switch (filter) {                                                          \
-      case VKL_FILTER_NEAREST: {                                               \
-        val = get_##type(voxelData, 0, voxelOfs);                              \
-        break;                                                                 \
-      }                                                                        \
-      case VKL_FILTER_TRILINEAR: {                                             \
-        /* fractional coordinates within the lower corner voxel used during    \
-         * interpolation. */                                                   \
-        const univary vec3f frac =                                             \
-            clampedLocalCoordinates - to_float(voxelIndex_0);                  \
-        const uniform uint64 ofs000 = 0;                                       \
-        const uniform uint64 ofs001 = self->voxelOfs_dx;                       \
-        const univary float val000  = get_##type(voxelData, ofs000, voxelOfs); \
-        const univary float val001  = get_##type(voxelData, ofs001, voxelOfs); \
-        const univary float val00   = val000 + frac.x * (val001 - val000);     \
+    case VKL_FILTER_NEAREST: {                                                 \
+      val = get_##type(voxelData, 0, voxelOfs);                                \
+      break;                                                                   \
+    }                                                                          \
+    case VKL_FILTER_TRILINEAR: {                                               \
+      /* fractional coordinates within the lower corner voxel used during      \
+       * interpolation. */                                                     \
+      const univary vec3f frac =                                               \
+          clampedLocalCoordinates - to_float(voxelIndex_0);                    \
+      const uniform uint64 ofs000 = 0;                                         \
+      const uniform uint64 ofs001 = self->voxelOfs_dx;                         \
+      const univary float val000  = get_##type(voxelData, ofs000, voxelOfs);   \
+      const univary float val001  = get_##type(voxelData, ofs001, voxelOfs);   \
+      const univary float val00   = val000 + frac.x * (val001 - val000);       \
                                                                                \
-        const uniform uint64 ofs010 = self->voxelOfs_dy;                       \
-        const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;   \
-        const univary float val010  = get_##type(voxelData, ofs010, voxelOfs); \
-        const univary float val011  = get_##type(voxelData, ofs011, voxelOfs); \
-        const univary float val01   = val010 + frac.x * (val011 - val010);     \
+      const uniform uint64 ofs010 = self->voxelOfs_dy;                         \
+      const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;     \
+      const univary float val010  = get_##type(voxelData, ofs010, voxelOfs);   \
+      const univary float val011  = get_##type(voxelData, ofs011, voxelOfs);   \
+      const univary float val01   = val010 + frac.x * (val011 - val010);       \
                                                                                \
-        const uniform uint64 ofs100 = self->voxelOfs_dz;                       \
-        const uniform uint64 ofs101 = ofs100 + ofs001;                         \
-        const univary float val100  = get_##type(voxelData, ofs100, voxelOfs); \
-        const univary float val101  = get_##type(voxelData, ofs101, voxelOfs); \
-        const univary float val10   = val100 + frac.x * (val101 - val100);     \
+      const uniform uint64 ofs100 = self->voxelOfs_dz;                         \
+      const uniform uint64 ofs101 = ofs100 + ofs001;                           \
+      const univary float val100  = get_##type(voxelData, ofs100, voxelOfs);   \
+      const univary float val101  = get_##type(voxelData, ofs101, voxelOfs);   \
+      const univary float val10   = val100 + frac.x * (val101 - val100);       \
                                                                                \
-        const uniform uint64 ofs110 = ofs100 + ofs010;                         \
-        const uniform uint64 ofs111 = ofs100 + ofs011;                         \
-        const univary float val110  = get_##type(voxelData, ofs110, voxelOfs); \
-        const univary float val111  = get_##type(voxelData, ofs111, voxelOfs); \
-        const univary float val11   = val110 + frac.x * (val111 - val110);     \
+      const uniform uint64 ofs110 = ofs100 + ofs010;                           \
+      const uniform uint64 ofs111 = ofs100 + ofs011;                           \
+      const univary float val110  = get_##type(voxelData, ofs110, voxelOfs);   \
+      const univary float val111  = get_##type(voxelData, ofs111, voxelOfs);   \
+      const univary float val11   = val110 + frac.x * (val111 - val110);       \
                                                                                \
-        const univary float val0 = val00 + frac.y * (val01 - val00);           \
-        const univary float val1 = val10 + frac.y * (val11 - val10);           \
-        val = val0 + frac.z * (val1 - val0);                                   \
-        break;                                                                 \
-      }                                                                        \
+      const univary float val0 = val00 + frac.y * (val01 - val00);             \
+      const univary float val1 = val10 + frac.y * (val11 - val10);             \
+      val                      = val0 + frac.z * (val1 - val0);                \
+      break;                                                                   \
+    }                                                                          \
     }                                                                          \
                                                                                \
     return val;                                                                \
@@ -472,49 +472,49 @@ template_sample_inner_32(double, uniform);
                                       voxelIndex_0.y * self->voxelOfs_dy;      \
                                                                                \
       switch (filter) {                                                        \
-        case VKL_FILTER_NEAREST: {                                             \
-          ret = get_##type(voxelData, sliceOfs, voxelOfs);                     \
-          break;                                                               \
-        }                                                                      \
-        case VKL_FILTER_TRILINEAR: {                                           \
-          const uniform uint64 ofs000 = 0;                                     \
-          const uniform uint64 ofs001 = self->voxelOfs_dx;                     \
-          const univary float val000 =                                         \
-              get_##type(voxelData, sliceOfs + ofs000, voxelOfs);              \
-          const univary float val001 =                                         \
-              get_##type(voxelData, sliceOfs + ofs001, voxelOfs);              \
-          const univary float val00 = val000 + frac.x * (val001 - val000);     \
+      case VKL_FILTER_NEAREST: {                                               \
+        ret = get_##type(voxelData, sliceOfs, voxelOfs);                       \
+        break;                                                                 \
+      }                                                                        \
+      case VKL_FILTER_TRILINEAR: {                                             \
+        const uniform uint64 ofs000 = 0;                                       \
+        const uniform uint64 ofs001 = self->voxelOfs_dx;                       \
+        const univary float val000 =                                           \
+            get_##type(voxelData, sliceOfs + ofs000, voxelOfs);                \
+        const univary float val001 =                                           \
+            get_##type(voxelData, sliceOfs + ofs001, voxelOfs);                \
+        const univary float val00 = val000 + frac.x * (val001 - val000);       \
                                                                                \
-          const uniform uint64 ofs010 = self->voxelOfs_dy;                     \
-          const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx; \
-          const univary float val010 =                                         \
-              get_##type(voxelData, sliceOfs + ofs010, voxelOfs);              \
-          const univary float val011 =                                         \
-              get_##type(voxelData, sliceOfs + ofs011, voxelOfs);              \
-          const univary float val01 = val010 + frac.x * (val011 - val010);     \
+        const uniform uint64 ofs010 = self->voxelOfs_dy;                       \
+        const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;   \
+        const univary float val010 =                                           \
+            get_##type(voxelData, sliceOfs + ofs010, voxelOfs);                \
+        const univary float val011 =                                           \
+            get_##type(voxelData, sliceOfs + ofs011, voxelOfs);                \
+        const univary float val01 = val010 + frac.x * (val011 - val010);       \
                                                                                \
-          const uniform uint64 ofs100 = self->voxelOfs_dz;                     \
-          const uniform uint64 ofs101 = ofs100 + ofs001;                       \
-          const univary float val100 =                                         \
-              get_##type(voxelData, sliceOfs + ofs100, voxelOfs);              \
-          const univary float val101 =                                         \
-              get_##type(voxelData, sliceOfs + ofs101, voxelOfs);              \
-          const univary float val10 = val100 + frac.x * (val101 - val100);     \
+        const uniform uint64 ofs100 = self->voxelOfs_dz;                       \
+        const uniform uint64 ofs101 = ofs100 + ofs001;                         \
+        const univary float val100 =                                           \
+            get_##type(voxelData, sliceOfs + ofs100, voxelOfs);                \
+        const univary float val101 =                                           \
+            get_##type(voxelData, sliceOfs + ofs101, voxelOfs);                \
+        const univary float val10 = val100 + frac.x * (val101 - val100);       \
                                                                                \
-          const uniform uint64 ofs110 = ofs100 + ofs010;                       \
-          const uniform uint64 ofs111 = ofs100 + ofs011;                       \
-          const univary float val110 =                                         \
-              get_##type(voxelData, sliceOfs + ofs110, voxelOfs);              \
-          const univary float val111 =                                         \
-              get_##type(voxelData, sliceOfs + ofs111, voxelOfs);              \
-          const univary float val11 = val110 + frac.x * (val111 - val110);     \
+        const uniform uint64 ofs110 = ofs100 + ofs010;                         \
+        const uniform uint64 ofs111 = ofs100 + ofs011;                         \
+        const univary float val110 =                                           \
+            get_##type(voxelData, sliceOfs + ofs110, voxelOfs);                \
+        const univary float val111 =                                           \
+            get_##type(voxelData, sliceOfs + ofs111, voxelOfs);                \
+        const univary float val11 = val110 + frac.x * (val111 - val110);       \
                                                                                \
-          const univary float val0 = val00 + frac.y * (val01 - val00);         \
-          const univary float val1 = val10 + frac.y * (val11 - val10);         \
-          const univary float val  = val0 + frac.z * (val1 - val0);            \
-          ret                      = val;                                      \
-          break;                                                               \
-        }                                                                      \
+        const univary float val0 = val00 + frac.y * (val01 - val00);           \
+        const univary float val1 = val10 + frac.y * (val11 - val10);           \
+        const univary float val  = val0 + frac.z * (val1 - val0);              \
+        ret                      = val;                                        \
+        break;                                                                 \
+      }                                                                        \
       }                                                                        \
     }                                                                          \
     return ret;                                                                \
@@ -548,94 +548,94 @@ template_sample_inner_64_32(double, uniform);
                                                                                \
     univary float val = 0.f;                                                   \
     switch (filter) {                                                          \
-      case VKL_FILTER_NEAREST: {                                               \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),        \
-            attributeIndex,                                                    \
-            val);                                                              \
-        break;                                                                 \
-      }                                                                        \
-      case VKL_FILTER_TRILINEAR: {                                             \
-        /* fractional coordinates within the lower corner voxel used during    \
-         interpolation. */                                                     \
-        const univary vec3f fractionalLocalCoordinates =                       \
-            clampedLocalCoordinates - to_float(voxelIndex_0);                  \
+    case VKL_FILTER_NEAREST: {                                                 \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),          \
+          attributeIndex,                                                      \
+          val);                                                                \
+      break;                                                                   \
+    }                                                                          \
+    case VKL_FILTER_TRILINEAR: {                                               \
+      /* fractional coordinates within the lower corner voxel used during      \
+       interpolation. */                                                       \
+      const univary vec3f fractionalLocalCoordinates =                         \
+          clampedLocalCoordinates - to_float(voxelIndex_0);                    \
                                                                                \
-        /* look up the voxel values to be interpolated. */                     \
-        univary float voxelValue_000;                                          \
-        univary float voxelValue_001;                                          \
-        univary float voxelValue_010;                                          \
-        univary float voxelValue_011;                                          \
-        univary float voxelValue_100;                                          \
-        univary float voxelValue_101;                                          \
-        univary float voxelValue_110;                                          \
-        univary float voxelValue_111;                                          \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),        \
-            attributeIndex,                                                    \
-            voxelValue_000);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z),        \
-            attributeIndex,                                                    \
-            voxelValue_001);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z),        \
-            attributeIndex,                                                    \
-            voxelValue_010);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z),        \
-            attributeIndex,                                                    \
-            voxelValue_011);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z),        \
-            attributeIndex,                                                    \
-            voxelValue_100);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z),        \
-            attributeIndex,                                                    \
-            voxelValue_101);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z),        \
-            attributeIndex,                                                    \
-            voxelValue_110);                                                   \
-        getVoxelUnivary(                                                       \
-            self,                                                              \
-            make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z),        \
-            attributeIndex,                                                    \
-            voxelValue_111);                                                   \
+      /* look up the voxel values to be interpolated. */                       \
+      univary float voxelValue_000;                                            \
+      univary float voxelValue_001;                                            \
+      univary float voxelValue_010;                                            \
+      univary float voxelValue_011;                                            \
+      univary float voxelValue_100;                                            \
+      univary float voxelValue_101;                                            \
+      univary float voxelValue_110;                                            \
+      univary float voxelValue_111;                                            \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),          \
+          attributeIndex,                                                      \
+          voxelValue_000);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z),          \
+          attributeIndex,                                                      \
+          voxelValue_001);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z),          \
+          attributeIndex,                                                      \
+          voxelValue_010);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z),          \
+          attributeIndex,                                                      \
+          voxelValue_011);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z),          \
+          attributeIndex,                                                      \
+          voxelValue_100);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z),          \
+          attributeIndex,                                                      \
+          voxelValue_101);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z),          \
+          attributeIndex,                                                      \
+          voxelValue_110);                                                     \
+      getVoxelUnivary(                                                         \
+          self,                                                                \
+          make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z),          \
+          attributeIndex,                                                      \
+          voxelValue_111);                                                     \
                                                                                \
-        /* interpolate the voxel values. */                                    \
-        const univary float voxelValue_00 =                                    \
-            voxelValue_000 +                                                   \
-            fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);  \
-        const univary float voxelValue_01 =                                    \
-            voxelValue_010 +                                                   \
-            fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);  \
-        const univary float voxelValue_10 =                                    \
-            voxelValue_100 +                                                   \
-            fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);  \
-        const univary float voxelValue_11 =                                    \
-            voxelValue_110 +                                                   \
-            fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);  \
-        const univary float voxelValue_0 =                                     \
-            voxelValue_00 +                                                    \
-            fractionalLocalCoordinates.y * (voxelValue_01 - voxelValue_00);    \
-        const univary float voxelValue_1 =                                     \
-            voxelValue_10 +                                                    \
-            fractionalLocalCoordinates.y * (voxelValue_11 - voxelValue_10);    \
+      /* interpolate the voxel values. */                                      \
+      const univary float voxelValue_00 =                                      \
+          voxelValue_000 +                                                     \
+          fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);    \
+      const univary float voxelValue_01 =                                      \
+          voxelValue_010 +                                                     \
+          fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);    \
+      const univary float voxelValue_10 =                                      \
+          voxelValue_100 +                                                     \
+          fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);    \
+      const univary float voxelValue_11 =                                      \
+          voxelValue_110 +                                                     \
+          fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);    \
+      const univary float voxelValue_0 =                                       \
+          voxelValue_00 +                                                      \
+          fractionalLocalCoordinates.y * (voxelValue_01 - voxelValue_00);      \
+      const univary float voxelValue_1 =                                       \
+          voxelValue_10 +                                                      \
+          fractionalLocalCoordinates.y * (voxelValue_11 - voxelValue_10);      \
                                                                                \
-        val = voxelValue_0 +                                                   \
-               fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);   \
-        break;                                                                 \
-      }                                                                        \
+      val = voxelValue_0 +                                                     \
+            fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);      \
+      break;                                                                   \
+    }                                                                          \
     }                                                                          \
     return val;                                                                \
   }
@@ -649,14 +649,11 @@ template_sample_inner_64(uniform);
 ///////////////////////////////////////////////////////////////////////////////
 
 inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
-    const void *uniform _self,
+    const SharedStructuredVolume *uniform self,
     const varying vec3f &objectCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex)
 {
-  const SharedStructuredVolume *uniform self =
-      (const SharedStructuredVolume *uniform)_self;
-
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gridSpacing;
 
@@ -700,14 +697,11 @@ inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
 }
 
 inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
-    const void *uniform _self,
+    const SharedStructuredVolume *uniform self,
     const varying vec3f &objectCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex)
 {
-  const SharedStructuredVolume *uniform self =
-      (const SharedStructuredVolume *uniform)_self;
-
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gridSpacing;
 
@@ -829,7 +823,7 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
 // wrappers to enable setting old-style function pointers in the Volume
 // superclass; restricts to first attribute
 varying float computeSample_varying_0_legacy_wrapper(
-    const void *uniform _self, const varying vec3f &objectCoordinates)
+    const Volume *uniform _self, const varying vec3f &objectCoordinates)
 {
   const SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -838,7 +832,7 @@ varying float computeSample_varying_0_legacy_wrapper(
 }
 
 uniform float computeSample_uniform_0_legacy_wrapper(
-    const void *uniform _self, const uniform vec3f &objectCoordinates)
+    const Volume *uniform _self, const uniform vec3f &objectCoordinates)
 {
   const SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;

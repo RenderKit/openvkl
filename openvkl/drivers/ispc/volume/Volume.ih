@@ -13,11 +13,11 @@ struct Volume
   // first attribute).
 
   uniform float (*uniform computeSample_uniform)(
-      const void *uniform _self, const uniform vec3f &objectCoordinates);
+      const Volume *uniform _self, const uniform vec3f &objectCoordinates);
 
   varying float (*uniform computeSample_varying)(
-      const void *uniform _self, const varying vec3f &objectCoordinates);
+      const Volume *uniform _self, const varying vec3f &objectCoordinates);
 
   varying vec3f (*uniform computeGradient_varying)(
-      const void *uniform _self, const varying vec3f &objectCoordinates);
+      const Volume *uniform _self, const varying vec3f &objectCoordinates);
 };

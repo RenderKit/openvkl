@@ -756,7 +756,7 @@ static bool intersectAndSampleCell(const void *uniform userData,
 }
 
 inline varying float VKLUnstructuredVolume_sample(
-    const void *uniform _self, const varying vec3f &worldCoordinates)
+    const Volume *uniform _self, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
   const VKLUnstructuredVolume *uniform self = (const VKLUnstructuredVolume * uniform) _self;
@@ -769,7 +769,7 @@ inline varying float VKLUnstructuredVolume_sample(
 }
 
 inline varying vec3f VKLUnstructuredVolume_computeGradient(
-    const void *uniform _self,
+    const Volume *uniform _self,
     const varying vec3f &objectCoordinates)
 {
   // Cast to the actual Volume subtype.
@@ -792,19 +792,19 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
 
   vec3f gradient;
 
-  float sample = VKLUnstructuredVolume_sample(self, objectCoordinates);
+  float sample = VKLUnstructuredVolume_sample(_self, objectCoordinates);
 
   gradient.x =
       VKLUnstructuredVolume_sample(
-          self, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
+          _self, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
       sample;
   gradient.y =
       VKLUnstructuredVolume_sample(
-          self, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
+          _self, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
       sample;
   gradient.z =
       VKLUnstructuredVolume_sample(
-          self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
+          _self, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
       sample;
 
   return gradient / gradientStep;
@@ -821,7 +821,8 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_sample_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLUnstructuredVolume_sample(_volume, *objectCoordinates);
+    *samples = VKLUnstructuredVolume_sample(
+        (const Volume *uniform)_volume, *objectCoordinates);
   }
 }
 
@@ -836,8 +837,8 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_gradient_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients =
-        VKLUnstructuredVolume_computeGradient(_volume, *objectCoordinates);
+    *gradients = VKLUnstructuredVolume_computeGradient(
+        (const Volume *uniform)_volume, *objectCoordinates);
   }
 }
 

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "AMR.ih"
 #include "../Volume.ih"
+#include "AMR.ih"
 
 struct AMRVolume
 {
@@ -19,7 +19,7 @@ struct AMRVolume
 
   //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSampleLevel)(
-      const void *uniform _self, const varying vec3f &worldCoordinates);
+      const AMRVolume *uniform self, const varying vec3f &worldCoordinates);
 
   //! Transform from local coordinates to world coordinates using the volume's
   //! grid definition.

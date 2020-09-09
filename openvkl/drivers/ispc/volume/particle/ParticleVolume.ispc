@@ -71,7 +71,7 @@ static bool intersectAndGradientParticle(const void *uniform userData,
 }
 
 inline varying float VKLParticleVolume_sample(
-    const void *uniform _self, const varying vec3f &objectCoordinates)
+    const Volume *uniform _self, const varying vec3f &objectCoordinates)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)_self;
@@ -88,7 +88,7 @@ inline varying float VKLParticleVolume_sample(
 }
 
 inline varying vec3f VKLParticleVolume_computeGradient(
-    const void *uniform _self, const varying vec3f &objectCoordinates)
+    const Volume *uniform _self, const varying vec3f &objectCoordinates)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)_self;
@@ -115,7 +115,7 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLParticleVolume_sample(_volume, *objectCoordinates);
+    *samples = VKLParticleVolume_sample((Volume *uniform)_volume, *objectCoordinates);
   }
 }
 
@@ -130,7 +130,7 @@ export void EXPORT_UNIQUE(VKLParticleVolume_gradient_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients = VKLParticleVolume_computeGradient(_volume, *objectCoordinates);
+    *gradients = VKLParticleVolume_computeGradient((Volume *uniform)_volume, *objectCoordinates);
   }
 }
 

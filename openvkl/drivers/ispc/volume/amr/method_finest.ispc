@@ -6,7 +6,7 @@
 #include "DualCell.ih"
 #include "common/export_util.h"
 
-varying float AMR_finest(const void *uniform _self, const varying vec3f &P)
+varying float AMR_finest(const Volume *uniform _self, const varying vec3f &P)
 {
   const AMRVolume *uniform self = (const AMRVolume *)_self;
   const AMR *uniform amr        = &self->amr;
@@ -20,10 +20,10 @@ varying float AMR_finest(const void *uniform _self, const varying vec3f &P)
   return lerp(D);
 }
 
-varying float AMR_finestLevel(const void *uniform _self, const varying vec3f &P)
+varying float AMR_finestLevel(const AMRVolume *uniform self,
+                              const varying vec3f &P)
 {
-  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
-  const AMR *uniform amr        = &self->amr;
+  const AMR *uniform amr = &self->amr;
 
   vec3f lP;  // local amr space
   self->transformWorldToLocal(self, P, lP);

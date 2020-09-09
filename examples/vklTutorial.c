@@ -5,7 +5,8 @@
 #include <stdio.h>
 
 #if defined(_MSC_VER)
-#include <malloc.h> // _malloca
+#include <malloc.h>   // _malloca
+#include <windows.h>  // Sleep
 #endif
 
 void demoScalarAPI(VKLVolume volume)
@@ -330,6 +331,14 @@ int main()
   vklShutdown();
 
   free(voxels);
+
+  printf("complete.\n");
+
+#if defined(_MSC_VER)
+  // On Windows, sleep for a few seconds so the terminal window doesn't close
+  // immediately.
+  Sleep(3000);
+#endif
 
   return 0;
 }

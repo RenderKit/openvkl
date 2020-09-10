@@ -70,7 +70,7 @@ namespace openvkl {
       gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
 
-      if (this->template getParamDataT<Data *>("data", nullptr)) {
+      if (this->template hasParamDataT<Data *>("data")) {
         // multiple attributes provided through VKLData array
         Ref<const DataT<Data *>> data =
             this->template getParamDataT<Data *>("data");

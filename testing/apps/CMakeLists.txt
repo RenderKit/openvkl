@@ -18,6 +18,21 @@ if (BUILD_BENCHMARKS)
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
+  # Structured volumes (multi-attribute)
+  add_executable(vklBenchmarkStructuredVolumeMulti
+    vklBenchmarkStructuredVolumeMulti.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkStructuredVolumeMulti
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkStructuredVolumeMulti
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+
   # Unstructured volumes
   add_executable(vklBenchmarkUnstructuredVolume
     vklBenchmarkUnstructuredVolume.cpp

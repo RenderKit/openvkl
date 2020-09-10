@@ -738,6 +738,67 @@ extern "C" void vklComputeSampleN(VKLSampler sampler,
 }
 OPENVKL_CATCH_END()
 
+extern "C" void vklComputeSampleM(VKLSampler sampler,
+                                  const vkl_vec3f *objectCoordinates,
+                                  float *samples,
+                                  unsigned int M,
+                                  const unsigned int *attributeIndices)
+    OPENVKL_CATCH_BEGIN
+{
+  constexpr int valid = 1;
+  openvkl::api::currentDriver().computeSampleM1(
+      &valid,
+      sampler,
+      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
+      samples,
+      M,
+      attributeIndices);
+}
+OPENVKL_CATCH_END()
+
+#define __define_vklComputeSampleMN(WIDTH)                            \
+  extern "C" void vklComputeSampleM##WIDTH(                           \
+      const int *valid,                                               \
+      VKLSampler sampler,                                             \
+      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
+      float *samples,                                                 \
+      unsigned int M,                                                 \
+      const unsigned int *attributeIndices) OPENVKL_CATCH_BEGIN       \
+  {                                                                   \
+    openvkl::api::currentDriver().computeSampleM##WIDTH(              \
+        valid,                                                        \
+        sampler,                                                      \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
+        samples,                                                      \
+        M,                                                            \
+        attributeIndices);                                            \
+  }                                                                   \
+  OPENVKL_CATCH_END()
+
+__define_vklComputeSampleMN(4);
+__define_vklComputeSampleMN(8);
+__define_vklComputeSampleMN(16);
+
+#undef __define_vklComputeSampleMN
+
+extern "C" void vklComputeSampleMN(VKLSampler sampler,
+                                   unsigned int N,
+                                   const vkl_vec3f *objectCoordinates,
+                                   float *samples,
+                                   unsigned int M,
+                                   const unsigned int *attributeIndices)
+    OPENVKL_CATCH_BEGIN
+{
+  openvkl::api::currentDriver().computeSampleMN(
+      sampler,
+      N,
+      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
+      samples,
+      M,
+      attributeIndices);
+}
+OPENVKL_CATCH_END()
+
 extern "C" vkl_vec3f vklComputeGradient(VKLSampler sampler,
                                         const vkl_vec3f *objectCoordinates,
                                         unsigned int attributeIndex)

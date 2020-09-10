@@ -20,35 +20,49 @@ inline void num_attributes(std::shared_ptr<TestingStructuredVolumeMulti> v)
 inline void sampling_on_vertices_vs_procedural_values_multi(
     std::shared_ptr<TestingStructuredVolumeMulti> v, vec3i step = vec3i(1))
 {
+  const float sampleTolerance = 1e-4f;
+
   VKLVolume vklVolume   = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
-  for (unsigned int attributeIndex = 0; attributeIndex < v->getNumAttributes();
-       attributeIndex++) {
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
+  for (const auto &offset : mis) {
+    const auto offsetWithStep = offset * step;
 
-      vec3f objectCoordinates =
-          v->transformLocalToObjectCoordinates(offsetWithStep);
+    const vec3f objectCoordinates =
+        v->transformLocalToObjectCoordinates(offsetWithStep);
 
-      const float proceduralValue =
-          v->computeProceduralValue(objectCoordinates, attributeIndex);
+    INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                     << offsetWithStep.z);
+    INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                << objectCoordinates.y << " "
+                                << objectCoordinates.z);
 
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+    std::vector<float> proceduralValues;
 
+    for (unsigned int a = 0; a < v->getNumAttributes(); a++) {
+      proceduralValues.push_back(
+          v->computeProceduralValue(objectCoordinates, a));
+    }
+
+    for (unsigned int a = 0; a < v->getNumAttributes(); a++) {
       test_scalar_and_vector_sampling(vklSampler,
                                       objectCoordinates,
-                                      proceduralValue,
-                                      1e-4f,
-                                      attributeIndex);
+                                      proceduralValues[a],
+                                      sampleTolerance,
+                                      a);
     }
+
+    std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+    std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+
+    test_scalar_and_vector_sampling_multi(vklSampler,
+                                          objectCoordinates,
+                                          proceduralValues,
+                                          sampleTolerance,
+                                          attributeIndices);
   }
 
   vklRelease(vklSampler);
@@ -135,6 +149,11 @@ TEST_CASE("Structured regular volume multiple attributes",
           test_stream_sampling(v, i);
           test_stream_gradients(v, i);
         }
+
+        std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+        std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+
+        test_stream_sampling_multi(v, attributeIndices);
       }
     }
   }

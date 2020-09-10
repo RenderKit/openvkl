@@ -263,7 +263,85 @@ template_getVoxel(double, uniform);
 #undef template_getVoxel
 
 ///////////////////////////////////////////////////////////////////////////////
-// Sampling methods for all addressing / voxel type combinations //////////////
+// Sampling functions /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+inline uniform float nanValue()
+{
+  const uniform int NaN_bits = 0x7fc00000;
+  return floatbits(NaN_bits);
+}
+
+#define template_clampedLocalCoordinates(univary)                      \
+  inline void clampedLocalCoordinates_##univary(                       \
+      const SharedStructuredVolume *uniform self,                      \
+      const univary vec3f &objectCoordinates,                          \
+      univary vec3f &clampedLocalCoordinates,                          \
+      univary bool &inBounds)                                          \
+  {                                                                    \
+    inBounds = true;                                                   \
+                                                                       \
+    self->transformObjectToLocal_##univary(                            \
+        self, objectCoordinates, clampedLocalCoordinates);             \
+                                                                       \
+    if (clampedLocalCoordinates.x < 0.f ||                             \
+        clampedLocalCoordinates.x > self->dimensions.x - 1.f ||        \
+        clampedLocalCoordinates.y < 0.f ||                             \
+        clampedLocalCoordinates.y > self->dimensions.y - 1.f ||        \
+        clampedLocalCoordinates.z < 0.f ||                             \
+        clampedLocalCoordinates.z > self->dimensions.z - 1.f) {        \
+      inBounds = false;                                                \
+      return;                                                          \
+    }                                                                  \
+                                                                       \
+    clampedLocalCoordinates = clamp(clampedLocalCoordinates,           \
+                                    make_vec3f(0.0f),                  \
+                                    self->localCoordinatesUpperBound); \
+  }
+
+template_clampedLocalCoordinates(varying);
+template_clampedLocalCoordinates(uniform);
+#undef template_clampedLocalCoordinates
+
+#define template_sample(univary)                                       \
+  inline univary float SharedStructuredVolume_computeSample_##univary( \
+      const SharedStructuredVolume *uniform self,                      \
+      const univary vec3f &objectCoordinates,                          \
+      const uniform VKLFilter filter,                                  \
+      const uniform uint32 attributeIndex)                             \
+  {                                                                    \
+    univary vec3f clampedLocalCoordinates;                             \
+                                                                       \
+    /* computing clampedLocalCoordinates directly here rather than     \
+     * using the above clampedLocalCoordinates_univary() function      \
+     * produces more efficient code; clampedLocalCoordinates_univary() \
+     * is still used for multi-attribute sampling functions... */      \
+    self->transformObjectToLocal_##univary(                            \
+        self, objectCoordinates, clampedLocalCoordinates);             \
+                                                                       \
+    if (clampedLocalCoordinates.x < 0.f ||                             \
+        clampedLocalCoordinates.x > self->dimensions.x - 1.f ||        \
+        clampedLocalCoordinates.y < 0.f ||                             \
+        clampedLocalCoordinates.y > self->dimensions.y - 1.f ||        \
+        clampedLocalCoordinates.z < 0.f ||                             \
+        clampedLocalCoordinates.z > self->dimensions.z - 1.f) {        \
+      return nanValue();                                               \
+    }                                                                  \
+                                                                       \
+    clampedLocalCoordinates = clamp(clampedLocalCoordinates,           \
+                                    make_vec3f(0.0f),                  \
+                                    self->localCoordinatesUpperBound); \
+                                                                       \
+    return self->computeSamplesInner_##univary[attributeIndex](        \
+        self, clampedLocalCoordinates, filter, attributeIndex);        \
+  }
+
+template_sample(varying);
+template_sample(uniform);
+#undef template_sample
+
+///////////////////////////////////////////////////////////////////////////////
+// Sampling inner functions for all addressing / voxel type combinations //////
 ///////////////////////////////////////////////////////////////////////////////
 
 // overloads for both varying and uniform voxel getters, used in templated
@@ -289,37 +367,14 @@ inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
 // virtual 'getSample()' of the volume layout) this function will directly do
 // all the addressing for the getSample (inlined), and thus be about 50% faster
 // (wall-time, meaning even much faster in pure sample speed)
-#define template_sample_32(type, univary)                                      \
-  inline univary float SSV_sample_##type##_##univary##_32(                     \
-      const void *uniform _self,                                               \
-      const univary vec3f &objectCoordinates,                                  \
+#define template_sample_inner_32(type, univary)                                \
+  inline univary float SSV_sample_inner_##type##_##univary##_32(               \
+      const SharedStructuredVolume *uniform self,                              \
+      const univary vec3f &clampedLocalCoordinates,                            \
       const uniform VKLFilter filter,                                          \
       const uniform uint32 attributeIndex)                                     \
   {                                                                            \
-    const SharedStructuredVolume *uniform self =                               \
-        (const SharedStructuredVolume *uniform)_self;                          \
-                                                                               \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];     \
-                                                                               \
-    univary vec3f localCoordinates;                                            \
-    self->transformObjectToLocal_##univary(                                    \
-        self, objectCoordinates, localCoordinates);                            \
-                                                                               \
-    /* return NaN for local coordinates outside the bounds of the volume. */   \
-    const uniform int NaN_bits   = 0x7fc00000;                                 \
-    const uniform float nanValue = floatbits(NaN_bits);                        \
-                                                                               \
-    if (localCoordinates.x < 0.f ||                                            \
-        localCoordinates.x > self->dimensions.x - 1.f ||                       \
-        localCoordinates.y < 0.f ||                                            \
-        localCoordinates.y > self->dimensions.y - 1.f ||                       \
-        localCoordinates.z < 0.f ||                                            \
-        localCoordinates.z > self->dimensions.z - 1.f) {                       \
-      return nanValue;                                                         \
-    }                                                                          \
-                                                                               \
-    const univary vec3f clampedLocalCoordinates = clamp(                       \
-        localCoordinates, make_vec3f(0.0f), self->localCoordinatesUpperBound); \
                                                                                \
     /* lower corner of the box straddling the voxels to be interpolated. */    \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);        \
@@ -373,55 +428,32 @@ inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
     return val;                                                                \
   }
 
-template_sample_32(uint8, varying);
-template_sample_32(int16, varying);
-template_sample_32(uint16, varying);
-template_sample_32(float, varying);
-template_sample_32(double, varying);
+template_sample_inner_32(uint8, varying);
+template_sample_inner_32(int16, varying);
+template_sample_inner_32(uint16, varying);
+template_sample_inner_32(float, varying);
+template_sample_inner_32(double, varying);
 
-template_sample_32(uint8, uniform);
-template_sample_32(int16, uniform);
-template_sample_32(uint16, uniform);
-template_sample_32(float, uniform);
-template_sample_32(double, uniform);
-#undef template_sample_32
+template_sample_inner_32(uint8, uniform);
+template_sample_inner_32(int16, uniform);
+template_sample_inner_32(uint16, uniform);
+template_sample_inner_32(float, uniform);
+template_sample_inner_32(double, uniform);
+#undef template_sample_inner_32
 
-// used below in template_sample_64_32
+// used below in template_sample_inner_64_32
 #define process_sliceID(univary) process_sliceID_##univary
 #define process_sliceID_varying foreach_unique(sliceID in voxelIndex_0.z)
 #define process_sliceID_uniform uniform int sliceID = voxelIndex_0.z;
 
-#define template_sample_64_32(type, univary)                                   \
-  inline univary float SSV_sample_##type##_##univary##_64_32(                  \
-      const void *uniform _self,                                               \
-      const univary vec3f &objectCoordinates,                                  \
+#define template_sample_inner_64_32(type, univary)                             \
+  inline univary float SSV_sample_inner_##type##_##univary##_64_32(            \
+      const SharedStructuredVolume *uniform self,                              \
+      const univary vec3f &clampedLocalCoordinates,                            \
       const uniform VKLFilter filter,                                          \
       const uniform uint32 attributeIndex)                                     \
   {                                                                            \
-    const SharedStructuredVolume *uniform self =                               \
-        (const SharedStructuredVolume *uniform)_self;                          \
-                                                                               \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];     \
-                                                                               \
-    univary vec3f localCoordinates;                                            \
-    self->transformObjectToLocal_##univary(                                    \
-        self, objectCoordinates, localCoordinates);                            \
-                                                                               \
-    /* return NaN for local coordinates outside the bounds of the volume. */   \
-    const uniform int NaN_bits   = 0x7fc00000;                                 \
-    const uniform float nanValue = floatbits(NaN_bits);                        \
-                                                                               \
-    if (localCoordinates.x < 0.f ||                                            \
-        localCoordinates.x > self->dimensions.x - 1.f ||                       \
-        localCoordinates.y < 0.f ||                                            \
-        localCoordinates.y > self->dimensions.y - 1.f ||                       \
-        localCoordinates.z < 0.f ||                                            \
-        localCoordinates.z > self->dimensions.z - 1.f) {                       \
-      return nanValue;                                                         \
-    }                                                                          \
-                                                                               \
-    const univary vec3f clampedLocalCoordinates = clamp(                       \
-        localCoordinates, make_vec3f(0.0f), self->localCoordinatesUpperBound); \
                                                                                \
     /* lower corner of the box straddling the voxels to be interpolated. */    \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);        \
@@ -488,50 +520,27 @@ template_sample_32(double, uniform);
     return ret;                                                                \
   }
 
-template_sample_64_32(uint8, varying);
-template_sample_64_32(int16, varying);
-template_sample_64_32(uint16, varying);
-template_sample_64_32(float, varying);
-template_sample_64_32(double, varying);
+template_sample_inner_64_32(uint8, varying);
+template_sample_inner_64_32(int16, varying);
+template_sample_inner_64_32(uint16, varying);
+template_sample_inner_64_32(float, varying);
+template_sample_inner_64_32(double, varying);
 
-template_sample_64_32(uint8, uniform);
-template_sample_64_32(int16, uniform);
-template_sample_64_32(uint16, uniform);
-template_sample_64_32(float, uniform);
-template_sample_64_32(double, uniform);
-#undef template_sample_64_32
+template_sample_inner_64_32(uint8, uniform);
+template_sample_inner_64_32(int16, uniform);
+template_sample_inner_64_32(uint16, uniform);
+template_sample_inner_64_32(float, uniform);
+template_sample_inner_64_32(double, uniform);
+#undef template_sample_inner_64_32
 
 // default sampling function (64-bit addressing)
-#define template_sample_64(univary)                                            \
-  inline univary float SSV_sample_##univary##_64(                              \
-      const void *uniform _self,                                               \
-      const univary vec3f &objectCoordinates,                                  \
+#define template_sample_inner_64(univary)                                      \
+  inline univary float SSV_sample_inner_##univary##_64(                        \
+      const SharedStructuredVolume *uniform self,                              \
+      const univary vec3f &clampedLocalCoordinates,                            \
       const uniform VKLFilter filter,                                          \
       const uniform uint32 attributeIndex)                                     \
   {                                                                            \
-    const SharedStructuredVolume *uniform self =                               \
-        (const SharedStructuredVolume *uniform)_self;                          \
-                                                                               \
-    univary vec3f localCoordinates;                                            \
-    self->transformObjectToLocal_##univary(                                    \
-        self, objectCoordinates, localCoordinates);                            \
-                                                                               \
-    /* return NaN for local coordinates outside the bounds of the volume. */   \
-    const uniform int NaN_bits   = 0x7fc00000;                                 \
-    const uniform float nanValue = floatbits(NaN_bits);                        \
-                                                                               \
-    if (localCoordinates.x < 0.f ||                                            \
-        localCoordinates.x > self->dimensions.x - 1.f ||                       \
-        localCoordinates.y < 0.f ||                                            \
-        localCoordinates.y > self->dimensions.y - 1.f ||                       \
-        localCoordinates.z < 0.f ||                                            \
-        localCoordinates.z > self->dimensions.z - 1.f) {                       \
-      return nanValue;                                                         \
-    }                                                                          \
-                                                                               \
-    const univary vec3f clampedLocalCoordinates = clamp(                       \
-        localCoordinates, make_vec3f(0.0f), self->localCoordinatesUpperBound); \
-                                                                               \
     /* lower and upper corners of the box straddling the voxels to be          \
      interpolated. */                                                          \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);        \
@@ -631,9 +640,9 @@ template_sample_64_32(double, uniform);
     return val;                                                                \
   }
 
-template_sample_64(varying);
-template_sample_64(uniform);
-#undef template_sample_64
+template_sample_inner_64(varying);
+template_sample_inner_64(uniform);
+#undef template_sample_inner_64
 
 ///////////////////////////////////////////////////////////////////////////////
 // Gradient computation ///////////////////////////////////////////////////////
@@ -665,22 +674,22 @@ inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
 
   vec3f gradient;
 
-  float sample = self->computeSamples_varying[attributeIndex](
+  float sample = SharedStructuredVolume_computeSample_varying(
       self, objectCoordinates, filter, attributeIndex);
 
-  gradient.x = self->computeSamples_varying[attributeIndex](
+  gradient.x = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
                    filter,
                    attributeIndex) -
                sample;
-  gradient.y = self->computeSamples_varying[attributeIndex](
+  gradient.y = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
                    filter,
                    attributeIndex) -
                sample;
-  gradient.z = self->computeSamples_varying[attributeIndex](
+  gradient.z = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
                    filter,
@@ -708,22 +717,22 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
 
   vec3f gradient;
 
-  float sample = self->computeSamples_varying[attributeIndex](
+  float sample = SharedStructuredVolume_computeSample_varying(
       self, objectCoordinates, filter, attributeIndex);
 
-  gradient.x = self->computeSamples_varying[attributeIndex](
+  gradient.x = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
                    filter,
                    attributeIndex) -
                sample;
-  gradient.y = self->computeSamples_varying[attributeIndex](
+  gradient.y = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
                    filter,
                    attributeIndex) -
                sample;
-  gradient.z = self->computeSamples_varying[attributeIndex](
+  gradient.z = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
                    VKL_FILTER_TRILINEAR,
@@ -733,7 +742,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
   if (isnan(gradient.x)) {
     gradientStep.x *= -1.f;
 
-    gradient.x = self->computeSamples_varying[attributeIndex](
+    gradient.x = SharedStructuredVolume_computeSample_varying(
                      self,
                      objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
                      filter,
@@ -744,7 +753,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
   if (isnan(gradient.y)) {
     gradientStep.y *= -1.f;
 
-    gradient.y = self->computeSamples_varying[attributeIndex](
+    gradient.y = SharedStructuredVolume_computeSample_varying(
                      self,
                      objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
                      filter,
@@ -755,7 +764,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
   if (isnan(gradient.z)) {
     gradientStep.z *= -1.f;
 
-    gradient.z = self->computeSamples_varying[attributeIndex](
+    gradient.z = SharedStructuredVolume_computeSample_varying(
                      self,
                      objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
                      filter,
@@ -779,9 +788,9 @@ inline void destructAttributesStorage(SharedStructuredVolume *uniform self)
     self->attributesData = NULL;
   }
 
-  if (self->computeSamples_varying) {
-    delete[] self->computeSamples_varying;
-    self->computeSamples_varying = NULL;
+  if (self->computeSamplesInner_varying) {
+    delete[] self->computeSamplesInner_varying;
+    self->computeSamplesInner_varying = NULL;
   }
 
   if (self->getVoxels_varying) {
@@ -789,9 +798,9 @@ inline void destructAttributesStorage(SharedStructuredVolume *uniform self)
     self->getVoxels_varying = NULL;
   }
 
-  if (self->computeSamples_uniform) {
-    delete[] self->computeSamples_uniform;
-    self->computeSamples_uniform = NULL;
+  if (self->computeSamplesInner_uniform) {
+    delete[] self->computeSamplesInner_uniform;
+    self->computeSamplesInner_uniform = NULL;
   }
 
   if (self->getVoxels_uniform) {
@@ -806,13 +815,13 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
   self->numAttributes  = numAttributes;
   self->attributesData = uniform new uniform Data1D[numAttributes];
 
-  self->computeSamples_varying =
-      uniform new uniform ComputeSampleVaryingFunc[numAttributes];
+  self->computeSamplesInner_varying =
+      uniform new uniform ComputeSampleInnerVaryingFunc[numAttributes];
   self->getVoxels_varying =
       uniform new uniform GetVoxelVaryingFunc[numAttributes];
 
-  self->computeSamples_uniform =
-      uniform new uniform ComputeSampleUniformFunc[numAttributes];
+  self->computeSamplesInner_uniform =
+      uniform new uniform ComputeSampleInnerUniformFunc[numAttributes];
   self->getVoxels_uniform =
       uniform new uniform GetVoxelUniformFunc[numAttributes];
 }
@@ -822,19 +831,19 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
 varying float computeSample_varying_0_legacy_wrapper(
     const void *uniform _self, const varying vec3f &objectCoordinates)
 {
-  uniform SharedStructuredVolume *uniform self =
+  const SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
-  return self->computeSamples_varying[0](
-      _self, objectCoordinates, self->filter, 0);
+  return SharedStructuredVolume_computeSample_varying(
+      self, objectCoordinates, self->filter, 0);
 }
 
 uniform float computeSample_uniform_0_legacy_wrapper(
     const void *uniform _self, const uniform vec3f &objectCoordinates)
 {
-  uniform SharedStructuredVolume *uniform self =
+  const SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
-  return self->computeSamples_uniform[0](
-      _self, objectCoordinates, self->filter, 0);
+  return SharedStructuredVolume_computeSample_uniform(
+      self, objectCoordinates, self->filter, 0);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -866,7 +875,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = self->computeSamples_varying[attributeIndex](
+    *samples = SharedStructuredVolume_computeSample_varying(
         self, *objectCoordinates, filter, attributeIndex);
   }
 }
@@ -885,7 +894,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_uniform_export,
       (const vec3f *uniform)_objectCoordinates;
   float *uniform sample = (float *uniform)_sample;
 
-  *sample = self->computeSamples_uniform[attributeIndex](
+  *sample = SharedStructuredVolume_computeSample_uniform(
       self, *objectCoordinates, filter, attributeIndex);
 }
 
@@ -902,7 +911,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
-    samples[i]       = self->computeSamples_varying[attributeIndex](
+    samples[i]       = SharedStructuredVolume_computeSample_varying(
         self, oc, filter, attributeIndex);
   }
 }
@@ -945,6 +954,110 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_N_export,
   }
 }
 
+export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
+                          uniform const int *uniform imask,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          const uniform VKLFilter filter,
+                          const uniform uint32 M,
+                          const uint32 *uniform attributeIndices,
+                          float *uniform samples)
+{
+  const SharedStructuredVolume *uniform self =
+      (const SharedStructuredVolume * uniform) _self;
+
+  if (imask[programIndex]) {
+    const varying vec3f *uniform objectCoordinates =
+        (const varying vec3f *uniform)_objectCoordinates;
+
+    vec3f clampedLocalCoordinates;
+    bool inBounds;
+    clampedLocalCoordinates_varying(
+        self, *objectCoordinates, clampedLocalCoordinates, inBounds);
+
+    if (inBounds) {
+      for (uniform uint32 i = 0; i < M; i++) {
+        float attributeSamples =
+            self->computeSamplesInner_varying[attributeIndices[i]](
+                self, clampedLocalCoordinates, filter, attributeIndices[i]);
+
+        samples[i * VKL_TARGET_WIDTH + programIndex] = attributeSamples;
+      }
+    } else {
+      for (uniform uint32 i = 0; i < M; i++) {
+        samples[i * VKL_TARGET_WIDTH + programIndex] = nanValue();
+      }
+    }
+  }
+}
+
+export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
+                          void *uniform _self,
+                          const void *uniform _objectCoordinates,
+                          const uniform VKLFilter filter,
+                          const uniform uint32 M,
+                          const uint32 *uniform attributeIndices,
+                          float *uniform samples)
+{
+  const SharedStructuredVolume *uniform self =
+      (const SharedStructuredVolume * uniform) _self;
+
+  const vec3f *uniform objectCoordinates =
+      (const vec3f *uniform)_objectCoordinates;
+
+  uniform vec3f clampedLocalCoordinates;
+  uniform bool inBounds;
+  clampedLocalCoordinates_uniform(
+      self, *objectCoordinates, clampedLocalCoordinates, inBounds);
+
+  if (inBounds) {
+    for (uniform uint32 i = 0; i < M; i++) {
+      samples[i] = self->computeSamplesInner_uniform[attributeIndices[i]](
+          self, clampedLocalCoordinates, filter, attributeIndices[i]);
+    }
+  } else {
+    for (uniform uint32 i = 0; i < M; i++) {
+      samples[i] = nanValue();
+    }
+  }
+}
+
+export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
+                          void *uniform _self,
+                          const uniform uint32 N,
+                          const vec3f *uniform objectCoordinates,
+                          const uniform VKLFilter filter,
+                          const uniform uint32 M,
+                          const uint32 *uniform attributeIndices,
+                          float *uniform samples)
+{
+  const SharedStructuredVolume *uniform self =
+      (const SharedStructuredVolume * uniform) _self;
+
+  foreach (i = 0 ... N) {
+    varying vec3f objectCoordinatesV = objectCoordinates[i];
+
+    vec3f clampedLocalCoordinates;
+    bool inBounds;
+    clampedLocalCoordinates_varying(
+        self, objectCoordinatesV, clampedLocalCoordinates, inBounds);
+
+    if (inBounds) {
+      for (uniform uint32 a = 0; a < M; a++) {
+        varying float attributeSamples =
+            self->computeSamplesInner_varying[attributeIndices[a]](
+                self, clampedLocalCoordinates, filter, attributeIndices[a]);
+
+        samples[i * M + a] = attributeSamples;
+      }
+    } else {
+      for (uniform uint32 a = 0; a < M; a++) {
+        samples[i * M + a] = nanValue();
+      }
+    }
+  }
+}
+
 export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Destructor,
                                    void *uniform _self)
 {
@@ -965,12 +1078,12 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Constructor)
   uniform SharedStructuredVolume *uniform self =
       uniform new uniform SharedStructuredVolume;
 
-  self->attributesData         = NULL;
-  self->accelerator            = NULL;
-  self->computeSamples_varying = NULL;
-  self->getVoxels_varying      = NULL;
-  self->computeSamples_uniform = NULL;
-  self->getVoxels_uniform      = NULL;
+  self->attributesData              = NULL;
+  self->accelerator                 = NULL;
+  self->computeSamplesInner_varying = NULL;
+  self->getVoxels_varying           = NULL;
+  self->computeSamplesInner_uniform = NULL;
+  self->getVoxels_uniform           = NULL;
 
   return self;
 }
@@ -1047,8 +1160,8 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
 
   // default sampling function (64-bit addressing)
   for (uniform uint32 i = 0; i < numAttributes; i++) {
-    self->computeSamples_varying[i] = SSV_sample_varying_64;
-    self->computeSamples_uniform[i] = SSV_sample_uniform_64;
+    self->computeSamplesInner_varying[i] = SSV_sample_inner_varying_64;
+    self->computeSamplesInner_uniform[i] = SSV_sample_inner_uniform_64;
 
     if (safe_32bit_indexing(
             self->attributesData[i],
@@ -1057,30 +1170,40 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
       PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
 
       if (self->attributesData[i].dataType == VKL_UCHAR) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_uint8_varying_32;
-        self->computeSamples_varying[i] = SSV_sample_uint8_varying_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_uint8_uniform_32;
-        self->computeSamples_uniform[i] = SSV_sample_uint8_uniform_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_uint8_varying_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_uint8_varying_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_uint8_uniform_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_uint8_uniform_32;
       } else if (self->attributesData[i].dataType == VKL_SHORT) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_int16_varying_32;
-        self->computeSamples_varying[i] = SSV_sample_int16_varying_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_int16_uniform_32;
-        self->computeSamples_uniform[i] = SSV_sample_int16_uniform_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_int16_varying_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_int16_varying_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_int16_uniform_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_int16_uniform_32;
       } else if (self->attributesData[i].dataType == VKL_USHORT) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_uint16_varying_32;
-        self->computeSamples_varying[i] = SSV_sample_uint16_varying_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_uint16_uniform_32;
-        self->computeSamples_uniform[i] = SSV_sample_uint16_uniform_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_uint16_varying_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_uint16_varying_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_uint16_uniform_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_uint16_uniform_32;
       } else if (self->attributesData[i].dataType == VKL_FLOAT) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_float_varying_32;
-        self->computeSamples_varying[i] = SSV_sample_float_varying_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_float_uniform_32;
-        self->computeSamples_uniform[i] = SSV_sample_float_uniform_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_float_varying_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_float_varying_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_float_uniform_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_float_uniform_32;
       } else if (self->attributesData[i].dataType == VKL_DOUBLE) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_double_varying_32;
-        self->computeSamples_varying[i] = SSV_sample_double_varying_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_double_uniform_32;
-        self->computeSamples_uniform[i] = SSV_sample_double_uniform_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_double_varying_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_double_varying_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_double_uniform_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_double_uniform_32;
       } else {
         print("#vkl:shared_structured_volume: unknown voxelType\n");
         return false;
@@ -1093,30 +1216,40 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
       PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
 
       if (self->attributesData[i].dataType == VKL_UCHAR) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_uint8_varying_64_32;
-        self->computeSamples_varying[i] = SSV_sample_uint8_varying_64_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_uint8_uniform_64_32;
-        self->computeSamples_uniform[i] = SSV_sample_uint8_uniform_64_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_uint8_varying_64_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_uint8_varying_64_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_uint8_uniform_64_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_uint8_uniform_64_32;
       } else if (self->attributesData[i].dataType == VKL_SHORT) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_int16_varying_64_32;
-        self->computeSamples_varying[i] = SSV_sample_int16_varying_64_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_int16_uniform_64_32;
-        self->computeSamples_uniform[i] = SSV_sample_int16_uniform_64_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_int16_varying_64_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_int16_varying_64_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_int16_uniform_64_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_int16_uniform_64_32;
       } else if (self->attributesData[i].dataType == VKL_USHORT) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_uint16_varying_64_32;
-        self->computeSamples_varying[i] = SSV_sample_uint16_varying_64_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_uint16_uniform_64_32;
-        self->computeSamples_uniform[i] = SSV_sample_uint16_uniform_64_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_uint16_varying_64_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_uint16_varying_64_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_uint16_uniform_64_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_uint16_uniform_64_32;
       } else if (self->attributesData[i].dataType == VKL_FLOAT) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_float_varying_64_32;
-        self->computeSamples_varying[i] = SSV_sample_float_varying_64_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_float_uniform_64_32;
-        self->computeSamples_uniform[i] = SSV_sample_float_uniform_64_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_float_varying_64_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_float_varying_64_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_float_uniform_64_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_float_uniform_64_32;
       } else if (self->attributesData[i].dataType == VKL_DOUBLE) {
-        self->getVoxels_varying[i]      = SSV_getVoxel_double_varying_64_32;
-        self->computeSamples_varying[i] = SSV_sample_double_varying_64_32;
-        self->getVoxels_uniform[i]      = SSV_getVoxel_double_uniform_64_32;
-        self->computeSamples_uniform[i] = SSV_sample_double_uniform_64_32;
+        self->getVoxels_varying[i] = SSV_getVoxel_double_varying_64_32;
+        self->computeSamplesInner_varying[i] =
+            SSV_sample_inner_double_varying_64_32;
+        self->getVoxels_uniform[i] = SSV_getVoxel_double_uniform_64_32;
+        self->computeSamplesInner_uniform[i] =
+            SSV_sample_inner_double_uniform_64_32;
       } else {
         print("#vkl:shared_structured_volume: unknown voxelType\n");
         return false;

@@ -170,6 +170,18 @@ namespace openvkl {
   // ManagedObject specializations ////////////////////////////////////////////
 
   template <typename T>
+  inline bool ManagedObject::hasParamDataT(const char *name)
+  {
+    Data *data = getParam<Data *>(name, nullptr);
+
+    if (data && data->is<T>()) {
+      return true;
+    }
+
+    return false;
+  }
+
+  template <typename T>
   inline const Ref<const DataT<T>> ManagedObject::getParamDataT(
       const char *name, DataT<T> *valIfNotFound)
   {

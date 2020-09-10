@@ -11,6 +11,15 @@
 namespace openvkl {
   namespace testing {
 
+    inline std::vector<unsigned int> getAttributeIndices(
+        unsigned int numAttributes)
+    {
+      std::vector<unsigned int> attributeIndices(numAttributes);
+      std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+
+      return attributeIndices;
+    }
+
     struct TestingStructuredVolumeMulti : public TestingVolume
     {
       TestingStructuredVolumeMulti(

@@ -11,6 +11,7 @@
 #include "openvkl/VKLFilter.h"
 
 struct GridAccelerator;
+struct SharedStructuredVolume;
 
 enum SharedStructuredVolumeGridType
 {
@@ -18,15 +19,15 @@ enum SharedStructuredVolumeGridType
   structured_spherical
 };
 
-typedef varying float (*uniform ComputeSampleVaryingFunc)(
-    const void *uniform _self,
-    const varying vec3f &objectCoordinates,
+typedef varying float (*uniform ComputeSampleInnerVaryingFunc)(
+    const SharedStructuredVolume *uniform self,
+    const varying vec3f &clampedLocalCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex);
 
-typedef uniform float (*uniform ComputeSampleUniformFunc)(
-    const void *uniform _self,
-    const uniform vec3f &objectCoordinates,
+typedef uniform float (*uniform ComputeSampleInnerUniformFunc)(
+    const SharedStructuredVolume *uniform self,
+    const uniform vec3f &clampedLocalCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex);
 
@@ -86,7 +87,7 @@ struct SharedStructuredVolume
       const varying vec3f &objectCoordinates,
       varying vec3f &localCoordinates);
 
-  ComputeSampleVaryingFunc *uniform computeSamples_varying;
+  ComputeSampleInnerVaryingFunc *uniform computeSamplesInner_varying;
   ComputeGradientVaryingFunc computeGradient_varying;
   GetVoxelVaryingFunc *uniform getVoxels_varying;
 
@@ -101,6 +102,6 @@ struct SharedStructuredVolume
       const uniform vec3f &objectCoordinates,
       uniform vec3f &localCoordinates);
 
-  ComputeSampleUniformFunc *uniform computeSamples_uniform;
+  ComputeSampleInnerUniformFunc *uniform computeSamplesInner_uniform;
   GetVoxelUniformFunc *uniform getVoxels_uniform;
 };

@@ -21,6 +21,11 @@ struct Vdb
     return toString<filter>();
   }
 
+  static constexpr unsigned int getNumAttributes()
+  {
+    return 1;
+  }
+
   Vdb()
   {
     volume =

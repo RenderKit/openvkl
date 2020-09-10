@@ -350,6 +350,28 @@ namespace openvkl {
                           float *samples,
                           unsigned int attributeIndex) override;
 
+#define __define_computeSampleMN(WIDTH)                               \
+  void computeSampleM##WIDTH(const int *valid,                        \
+                             VKLSampler sampler,                      \
+                             const vvec3fn<WIDTH> &objectCoordinates, \
+                             float *samples,                          \
+                             unsigned int M,                          \
+                             const unsigned int *attributeIndices) override;
+
+      __define_computeSampleMN(1);
+      __define_computeSampleMN(4);
+      __define_computeSampleMN(8);
+      __define_computeSampleMN(16);
+
+#undef __define_computeSampleMN
+
+      void computeSampleMN(VKLSampler sampler,
+                           unsigned int N,
+                           const vvec3fn<1> *objectCoordinates,
+                           float *samples,
+                           unsigned int M,
+                           const unsigned int *attributeIndices) override;
+
 #define __define_computeGradientN(WIDTH)                               \
   void computeGradient##WIDTH(const int *valid,                        \
                               VKLSampler sampler,                      \
@@ -406,6 +428,33 @@ namespace openvkl {
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int attributeIndex);
+
+      template <int OW>
+      typename std::enable_if<(OW < W), void>::type computeSampleMAnyWidth(
+          const int *valid,
+          VKLSampler sampler,
+          const vvec3fn<OW> &objectCoordinates,
+          float *samples,
+          unsigned int M,
+          const unsigned int *attributeIndices);
+
+      template <int OW>
+      typename std::enable_if<(OW == W), void>::type computeSampleMAnyWidth(
+          const int *valid,
+          VKLSampler sampler,
+          const vvec3fn<OW> &objectCoordinates,
+          float *samples,
+          unsigned int M,
+          const unsigned int *attributeIndices);
+
+      template <int OW>
+      typename std::enable_if<(OW > W), void>::type computeSampleMAnyWidth(
+          const int *valid,
+          VKLSampler sampler,
+          const vvec3fn<OW> &objectCoordinates,
+          float *samples,
+          unsigned int M,
+          const unsigned int *attributeIndices);
 
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(

@@ -29,6 +29,8 @@ extern "C" {
 
 OPENVKL_INTERFACE VKLSampler vklNewSampler(VKLVolume volume);
 
+// single attribute sampling
+
 OPENVKL_INTERFACE
 float vklComputeSample(VKLSampler sampler,
                        const vkl_vec3f *objectCoordinates,
@@ -61,6 +63,47 @@ void vklComputeSampleN(VKLSampler sampler,
                        const vkl_vec3f *objectCoordinates,
                        float *samples,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+
+// multi-attribute sampling
+
+OPENVKL_INTERFACE
+void vklComputeSampleM(VKLSampler sampler,
+                       const vkl_vec3f *objectCoordinates,
+                       float *samples,
+                       unsigned int M,
+                       const unsigned int *attributeIndices);
+
+OPENVKL_INTERFACE
+void vklComputeSampleM4(const int *valid,
+                        VKLSampler sampler,
+                        const vkl_vvec3f4 *objectCoordinates,
+                        float *samples,
+                        unsigned int M,
+                        const unsigned int *attributeIndices);
+
+OPENVKL_INTERFACE
+void vklComputeSampleM8(const int *valid,
+                        VKLSampler sampler,
+                        const vkl_vvec3f8 *objectCoordinates,
+                        float *samples,
+                        unsigned int M,
+                        const unsigned int *attributeIndices);
+
+OPENVKL_INTERFACE
+void vklComputeSampleM16(const int *valid,
+                         VKLSampler sampler,
+                         const vkl_vvec3f16 *objectCoordinates,
+                         float *samples,
+                         unsigned int M,
+                         const unsigned int *attributeIndices);
+
+OPENVKL_INTERFACE
+void vklComputeSampleMN(VKLSampler sampler,
+                        unsigned int N,
+                        const vkl_vec3f *objectCoordinates,
+                        float *samples,
+                        unsigned int M,
+                        const unsigned int *attributeIndices);
 
 OPENVKL_INTERFACE
 vkl_vec3f vklComputeGradient(VKLSampler sampler,

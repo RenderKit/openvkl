@@ -32,6 +32,21 @@ namespace programming_model {
   {
   };
 
+  template <unsigned int M>
+  struct ScalarM
+  {
+  };
+
+  template <unsigned int M, int W>
+  struct VectorM
+  {
+  };
+
+  template <unsigned int M, unsigned int N>
+  struct StreamM
+  {
+  };
+
 }  // namespace programming_model
 
 /*

@@ -61,6 +61,27 @@ SUBSUITE_REGEX="IntervalIterator"
 ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
+##################################################
+# Structured volume (multi-attribute) benchmarks #
+##################################################
+
+SUITE_NAME="StructuredVolumeMulti"
+
+SUBSUITE_NAME="ScalarSampling"
+SUBSUITE_REGEX="scalar.*Sample"
+./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
+SUBSUITE_NAME="VectorSampling"
+SUBSUITE_REGEX="vector.*Sample"
+./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
+SUBSUITE_NAME="StreamSampling"
+SUBSUITE_REGEX="stream.*Sample"
+./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
 #########################
 # VDB volume benchmarks #
 #########################

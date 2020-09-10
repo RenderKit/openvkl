@@ -17,6 +17,8 @@ namespace openvkl {
     template <int W>
     struct Sampler : public ManagedObject
     {
+      // single attribute /////////////////////////////////////////////////////
+
       // samplers can optionally define a scalar sampling method; if not
       // defined then the default implementation will use computeSampleV()
       virtual void computeSample(const vvec3fn<1> &objectCoordinates,
@@ -42,6 +44,25 @@ namespace openvkl {
                                     const vvec3fn<1> *objectCoordinates,
                                     vvec3fn<1> *gradients,
                                     unsigned int attributeIndex) const = 0;
+
+      // multi-attribute //////////////////////////////////////////////////////
+
+      virtual void computeSampleM(const vvec3fn<1> &objectCoordinates,
+                                  float *samples,
+                                  unsigned int M,
+                                  const unsigned int *attributeIndices) const;
+
+      virtual void computeSampleMV(const vintn<W> &valid,
+                                   const vvec3fn<W> &objectCoordinates,
+                                   float *samples,
+                                   unsigned int M,
+                                   const unsigned int *attributeIndices) const;
+
+      virtual void computeSampleMN(unsigned int N,
+                                   const vvec3fn<1> *objectCoordinates,
+                                   float *samples,
+                                   unsigned int M,
+                                   const unsigned int *attributeIndices) const;
 
       virtual Observer<W> *newObserver(const char *type);
     };
@@ -69,6 +90,54 @@ namespace openvkl {
       computeSampleV(validW, ocW, samplesW, attributeIndex);
 
       samples[0] = samplesW[0];
+    }
+
+    template <int W>
+    inline void Sampler<W>::computeSampleM(
+        const vvec3fn<1> &objectCoordinates,
+        float *samples,
+        unsigned int M,
+        const unsigned int *attributeIndices) const
+    {
+      for (unsigned int a = 0; a < M; a++) {
+        computeSample(
+            objectCoordinates, reinterpret_cast<vfloatn<1> &>(samples[a]), a);
+      }
+    }
+
+    template <int W>
+    inline void Sampler<W>::computeSampleMV(
+        const vintn<W> &valid,
+        const vvec3fn<W> &objectCoordinates,
+        float *samples,
+        unsigned int M,
+        const unsigned int *attributeIndices) const
+    {
+      for (unsigned int a = 0; a < M; a++) {
+        vfloatn<W> samplesW;
+
+        computeSampleV(valid, objectCoordinates, samplesW, attributeIndices[a]);
+
+        for (int i = 0; i < W; i++)
+          samples[a * W + i] = samplesW[i];
+      }
+    }
+
+    template <int W>
+    inline void Sampler<W>::computeSampleMN(
+        unsigned int N,
+        const vvec3fn<1> *objectCoordinates,
+        float *samples,
+        unsigned int M,
+        const unsigned int *attributeIndices) const
+    {
+      for (unsigned int i = 0; i < N; i++) {
+        for (unsigned int a = 0; a < M; a++) {
+          computeSample(objectCoordinates[i],
+                        reinterpret_cast<vfloatn<1> &>(samples[i * M + a]),
+                        attributeIndices[a]);
+        }
+      }
     }
 
     template <int W>

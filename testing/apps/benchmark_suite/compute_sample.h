@@ -5,7 +5,7 @@
 #include "utility.h"
 
 /*
- * Benchmark wrappers for vklComputeSample* functions.
+ * Benchmark wrappers for vklComputeSample* (single attribute) functions.
  */
 
 namespace api {

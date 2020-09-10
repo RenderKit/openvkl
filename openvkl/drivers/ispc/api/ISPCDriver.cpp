@@ -279,6 +279,53 @@ namespace openvkl {
           N, objectCoordinates, samples, attributeIndex);
     }
 
+#define __define_computeSampleMN(WIDTH)                                   \
+  template <int W>                                                        \
+  void ISPCDriver<W>::computeSampleM##WIDTH(                              \
+      const int *valid,                                                   \
+      VKLSampler sampler,                                                 \
+      const vvec3fn<WIDTH> &objectCoordinates,                            \
+      float *samples,                                                     \
+      unsigned int M,                                                     \
+      const unsigned int *attributeIndices)                               \
+  {                                                                       \
+    computeSampleMAnyWidth<WIDTH>(                                        \
+        valid, sampler, objectCoordinates, samples, M, attributeIndices); \
+  }
+
+    __define_computeSampleMN(4);
+    __define_computeSampleMN(8);
+    __define_computeSampleMN(16);
+
+#undef __define_computeSampleMN
+
+    // support a fast path for scalar sampling
+    template <int W>
+    void ISPCDriver<W>::computeSampleM1(const int *valid,
+                                        VKLSampler sampler,
+                                        const vvec3fn<1> &objectCoordinates,
+                                        float *samples,
+                                        unsigned int M,
+                                        const unsigned int *attributeIndices)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      samplerObject.computeSampleM(
+          objectCoordinates, samples, M, attributeIndices);
+    }
+
+    template <int W>
+    void ISPCDriver<W>::computeSampleMN(VKLSampler sampler,
+                                        unsigned int N,
+                                        const vvec3fn<1> *objectCoordinates,
+                                        float *samples,
+                                        unsigned int M,
+                                        const unsigned int *attributeIndices)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      samplerObject.computeSampleMN(
+          N, objectCoordinates, samples, M, attributeIndices);
+    }
+
 #define __define_computeGradientN(WIDTH)                               \
   template <int W>                                                     \
   void ISPCDriver<W>::computeGradient##WIDTH(                          \
@@ -437,6 +484,92 @@ namespace openvkl {
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           samples[i] = samplesW[i - packIndex * W];
+      }
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW < W), void>::type
+    ISPCDriver<W>::computeSampleMAnyWidth(const int *valid,
+                                          VKLSampler sampler,
+                                          const vvec3fn<OW> &objectCoordinates,
+                                          float *samples,
+                                          unsigned int M,
+                                          const unsigned int *attributeIndices)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = i < OW ? valid[i] : 0;
+
+      ocW.fill_inactive_lanes(validW);
+
+      float *samplesW = (float *)alloca(M * W * sizeof(float));
+
+      samplerObject.computeSampleMV(validW, ocW, samplesW, M, attributeIndices);
+
+      for (unsigned int a = 0; a < M; a++) {
+        for (int i = 0; i < OW; i++) {
+          samples[a * OW + i] = samplesW[a * W + i];
+        }
+      }
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW == W), void>::type
+    ISPCDriver<W>::computeSampleMAnyWidth(const int *valid,
+                                          VKLSampler sampler,
+                                          const vvec3fn<OW> &objectCoordinates,
+                                          float *samples,
+                                          unsigned int M,
+                                          const unsigned int *attributeIndices)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vintn<W> validW;
+      for (int i = 0; i < W; i++)
+        validW[i] = valid[i];
+
+      samplerObject.computeSampleMV(
+          validW, objectCoordinates, samples, M, attributeIndices);
+    }
+
+    template <int W>
+    template <int OW>
+    typename std::enable_if<(OW > W), void>::type
+    ISPCDriver<W>::computeSampleMAnyWidth(const int *valid,
+                                          VKLSampler sampler,
+                                          const vvec3fn<OW> &objectCoordinates,
+                                          float *samples,
+                                          unsigned int M,
+                                          const unsigned int *attributeIndices)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      const int numPacks = OW / W + (OW % W != 0);
+
+      for (int packIndex = 0; packIndex < numPacks; packIndex++) {
+        vvec3fn<W> ocW = objectCoordinates.template extract_pack<W>(packIndex);
+
+        vintn<W> validW;
+        for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
+          validW[i - packIndex * W] = i < OW ? valid[i] : 0;
+
+        ocW.fill_inactive_lanes(validW);
+
+        float *samplesW = (float *)alloca(M * W * sizeof(float));
+
+        samplerObject.computeSampleMV(
+            validW, ocW, samplesW, M, attributeIndices);
+
+        for (unsigned int a = 0; a < M; a++) {
+          for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
+            samples[a * OW + i] = samplesW[a * W + (i - packIndex * W)];
+        }
       }
     }
 

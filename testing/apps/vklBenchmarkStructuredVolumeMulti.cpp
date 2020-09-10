@@ -7,33 +7,42 @@
 
 using namespace openvkl::testing;
 using namespace rkcommon::utility;
-using openvkl::testing::ProceduralParticleVolume;
+using openvkl::testing::WaveletStructuredRegularVolume;
 
 /*
- * Particle volume wrapper.
+ * StructuredMulti volume wrapper.
  */
-struct Particle
+template <VKLFilter filter>
+struct StructuredMulti
 {
   static std::string name()
   {
-    return std::string();
+    return toString<filter>();
   }
 
   static constexpr unsigned int getNumAttributes()
   {
-    return 1;
+    return 4;
   }
 
-  Particle()
+  StructuredMulti()
   {
-    volume = rkcommon::make_unique<ProceduralParticleVolume>(1000);
+    volume = std::unique_ptr<TestingStructuredVolumeMulti>(
+        generateMultiAttributeStructuredRegularVolume(
+            vec3i(128), vec3f(0.f), vec3f(1.f), VKL_DATA_SHARED_BUFFER, true));
+
+    if (StructuredMulti::getNumAttributes() != volume->getNumAttributes()) {
+      throw std::runtime_error("inconsistent StructuredMulti numAttributes");
+    }
 
     vklVolume  = volume->getVKLVolume();
     vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", filter);
+    vklSetInt(vklSampler, "gradientFilter", filter);
     vklCommit(vklSampler);
   }
 
-  ~Particle()
+  ~StructuredMulti()
   {
     vklRelease(vklSampler);
     volume.reset();  // also releases the vklVolume handle
@@ -49,7 +58,7 @@ struct Particle
     return vklSampler;
   }
 
-  std::unique_ptr<ProceduralParticleVolume> volume;
+  std::unique_ptr<TestingStructuredVolumeMulti> volume;
   VKLVolume vklVolume{nullptr};
   VKLSampler vklSampler{nullptr};
 };
@@ -63,7 +72,8 @@ int main(int argc, char **argv)
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  registerVolumeBenchmarks<Particle>();
+  registerVolumeBenchmarks<StructuredMulti<VKL_FILTER_NEAREST>>();
+  registerVolumeBenchmarks<StructuredMulti<VKL_FILTER_TRILINEAR>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

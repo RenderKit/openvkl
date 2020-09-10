@@ -14,21 +14,36 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   print("\tlower: % % %\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
   print("\tupper: % % %\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
 
-  // sampling and gradients
+  // coordinates for sampling and gradients
   vkl_vec3f objectCoordinates;
   objectCoordinates.x = programIndex * 3 + 0;
   objectCoordinates.y = programIndex * 3 + 1;
   objectCoordinates.z = programIndex * 3 + 2;
 
-  float sample   = vklComputeSampleV(sampler, &objectCoordinates);
-  vkl_vec3f grad = vklComputeGradientV(sampler, &objectCoordinates);
-
   print("objectCoordinates:\n\tx: %\n\ty: %\n\tz: %\n\n",
         objectCoordinates.x,
         objectCoordinates.y,
         objectCoordinates.z);
-  print("samples:\n\t%\n\n", sample);
-  print("gradient:\n\tx: %\n\ty: %\n\tz: %\n\n", grad.x, grad.y, grad.z);
+
+  // sampling and gradients (first attribute)
+  float sample   = vklComputeSampleV(sampler, &objectCoordinates);
+  vkl_vec3f grad = vklComputeGradientV(sampler, &objectCoordinates);
+
+  print("sampling and gradient computation (first attribute)\n");
+  print("\tsamples: %\n\n", sample);
+  print(
+      "\tgradient:\n\t\tx: %\n\t\ty: %\n\t\tz: %\n\n", grad.x, grad.y, grad.z);
+
+  // sampling (multiple attributes)
+  uniform unsigned int M                  = 3;
+  uniform unsigned int attributeIndices[] = {0, 1, 2};
+  float samples[3];
+  vklComputeSampleMV(sampler, &objectCoordinates, samples, M, attributeIndices);
+
+  print("sampling (multiple attributes)\n");
+  for (uniform unsigned int i = 0; i < M; i++)
+    print("\tsamples[%]: %\n", i, samples[i]);
+  print("\n");
 
   // value selector setup (note the commit at the end)
   uniform vkl_range1f ranges[2] = {{10, 20}, {50, 75}};

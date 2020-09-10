@@ -20,6 +20,11 @@ struct Structured
     return toString<filter>();
   }
 
+  static constexpr unsigned int getNumAttributes()
+  {
+    return 1;
+  }
+
   Structured()
   {
     volume = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(

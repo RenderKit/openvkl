@@ -275,7 +275,8 @@ a volume is committed.
 
 The distance between consecutive elements in `source` is given in bytes with
 `byteStride`. If the provided `byteStride` is zero, then it will be determined
-automatically as `sizeof(type)`.
+automatically as `sizeof(type)`. Open VKL owned data will be compacted into a
+naturally-strided array on copy, regardless of the original `byteStride`.
 
 As with other object types, when data objects are no longer needed they should
 be released via `vklRelease`.
@@ -938,6 +939,77 @@ API can give greater performance than the scalar API.
 All of the above sampling APIs can be used, regardless of the driver's native
 SIMD width.
 
+### Sampling Multiple Attributes
+
+Open VKL provides additional APIs for sampling multiple scalar attributes in a
+single call through the `vklComputeSampleM*()` interfaces. Beyond convenience,
+these can give improved performance relative to the single attribute sampling
+APIs. A scalar API supports sampling `M` attributes specified by
+`attributeIndices` on a single object space coordinate:
+
+    void vklComputeSampleM(VKLSampler sampler,
+                           const vkl_vec3f *objectCoordinates,
+                           float *samples,
+                           unsigned int M,
+                           const unsigned int *attributeIndices);
+
+Vector versions allow sampling at 4, 8, or 16 positions at once across the `M`
+attributes:
+
+    void vklComputeSampleM4(const int *valid,
+                            VKLSampler sampler,
+                            const vkl_vvec3f4 *objectCoordinates,
+                            float *samples,
+                            unsigned int M,
+                            const unsigned int *attributeIndices);
+
+    void vklComputeSampleM8(const int *valid,
+                            VKLSampler sampler,
+                            const vkl_vvec3f8 *objectCoordinates,
+                            float *samples,
+                            unsigned int M,
+                            const unsigned int *attributeIndices);
+
+    void vklComputeSampleM16(const int *valid,
+                             VKLSampler sampler,
+                             const vkl_vvec3f16 *objectCoordinates,
+                             float *samples,
+                             unsigned int M,
+                             const unsigned int *attributeIndices);
+
+The `[4, 8, 16] * M` sampled values are populated in the `samples` array in a
+structure-of-arrays layout, with all values for each attribute provided in
+sequence. That is, sample values `s_m,n` for the `m`th attribute and `n`th
+object coordinate will be populated as
+
+    samples = [s_0,0,   s_0,1,   ..., s_0,N-1,
+               s_1,0,   s_1,1,   ..., s_1,N-1,
+               ...,
+               s_M-1,0, s_M-1,1, ..., s_M-1,N-1]
+
+A stream version allows sampling an arbitrary number of positions at once across
+the `M` attributes. As with single attribute stream sampling, the `N`
+coordinates are provided in an array-of-structures layout.
+
+    void vklComputeSampleMN(VKLSampler sampler,
+                            unsigned int N,
+                            const vkl_vec3f *objectCoordinates,
+                            float *samples,
+                            unsigned int M,
+                            const unsigned int *attributeIndices);
+
+The `M * N` sampled values are populated in the `samples` array in an
+array-of-structures layout, with all attribute values for each coordinate
+provided in sequence as
+
+    samples = [s_0,0,   s_1,0,   ..., s_M-1,0,
+               s_0,1,   s_1,1,   ..., s_M-1,1,
+               ...,
+               s_0,N-1, s_1,N-1, ..., s_M-1,N-1]
+
+All of the above sampling APIs can be used, regardless of the driver's native
+SIMD width.
+
 Gradients
 ---------
 
@@ -1288,3 +1360,76 @@ These values are majorants over all drivers and volume types. Note that Open VKL
 attempts to detect the target SIMD width using `TARGET_WIDTH`, returning smaller
 buffer sizes for narrow architectures. However, Open VKL may fall back to the
 largest buffer size over all targets.
+
+Multi-attribute Volume Data Layout
+----------------------------------
+
+Open VKL provides flexible managed data APIs that allow applications to specify
+input data in various formats and layouts. When shared buffers are used
+(`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), Open VKL will use the
+application-owned memory directly, respecting the input data layout. Shared
+buffers therefore allow applications to strategically select the best layout for
+multi-attribute volume data and expected sampling behavior.
+
+For volume attributes that are sampled individually (e.g. using
+`vklComputeSample[4,8,16,N]()`), it is recommended to use a structure-of-arrays
+layout. That is, each attribute's data should be compact in contiguous memory.
+This can be accomplished by simply using Open VKL owned data objects
+(`dataCreationFlags = VKL_DATA_DEFAULT`), or by using a natural `byteStride` for
+shared buffers.
+
+For volume attributes that are sampled simultaneously (e.g. using
+`vklComputeSampleM[4,8,16,N]()`), it is recommended to use an
+array-of-structures layout. That is, data for these attributes should be
+provided per voxel in a contiguous layout. This is accomplished using shared
+buffers for each attribute with appropriate byte strides. For example, for a
+three attribute structured volume representing a velocity field, the data can be
+provided as:
+
+    // used in Open VKL shared buffers, so must not be freed by application
+    std::vector<vkl_vec3f> velocities(numVoxels);
+
+    for (auto &v : velocities) {
+      v.x = ...;
+      v.y = ...;
+      v.z = ...;
+    }
+
+    std::vector<VKLData> attributes;
+
+    attributes.push_back(vklNewData(velocities.size(),
+                                    VKL_FLOAT,
+                                    &velocities[0].x,
+                                    VKL_DATA_SHARED_BUFFER,
+                                    sizeof(vkl_vec3f)));
+
+    attributes.push_back(vklNewData(velocities.size(),
+                                    VKL_FLOAT,
+                                    &velocities[0].y,
+                                    VKL_DATA_SHARED_BUFFER,
+                                    sizeof(vkl_vec3f)));
+
+    attributes.push_back(vklNewData(velocities.size(),
+                                    VKL_FLOAT,
+                                    &velocities[0].z,
+                                    VKL_DATA_SHARED_BUFFER,
+                                    sizeof(vkl_vec3f)));
+
+    VKLData attributesData =
+        vklNewData(attributes.size(), VKL_DATA, attributes.data());
+
+    for (auto &attribute : attributes)
+      vklRelease(attribute);
+
+    VKLVolume volume = vklNewVolume("structuredRegular");
+
+    vklSetData(volume, "data", attributesData);
+    vklRelease(attributesData);
+
+    // set other volume parameters...
+
+    vklCommit(volume);
+
+These are general recommendations for common scenarios; it is still recommended
+to evaluate performance of different volume data layouts for your application's
+particular use case.

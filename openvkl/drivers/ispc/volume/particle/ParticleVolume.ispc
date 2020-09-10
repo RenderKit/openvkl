@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../common/export_util.h"
+#include "../../sampler/Sampler.ih"
 #include "ParticleVolume.ih"
 
 inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
@@ -71,15 +72,15 @@ static bool intersectAndGradientParticle(const void *uniform userData,
 }
 
 inline varying float VKLParticleVolume_sample(
-    const Volume *uniform _self, const varying vec3f &objectCoordinates)
+    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
 {
   const VKLParticleVolume *uniform self =
-      (const VKLParticleVolume *uniform)_self;
+      (const VKLParticleVolume *uniform)sampler->volume;
 
   float sampleResult = 0.f;
 
   traverseEmbree(self->super.bvhRoot,
-                 _self,
+                 sampler->volume,
                  intersectAndSampleParticle,
                  sampleResult,
                  objectCoordinates);
@@ -88,15 +89,15 @@ inline varying float VKLParticleVolume_sample(
 }
 
 inline varying vec3f VKLParticleVolume_computeGradient(
-    const Volume *uniform _self, const varying vec3f &objectCoordinates)
+    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
 {
   const VKLParticleVolume *uniform self =
-      (const VKLParticleVolume *uniform)_self;
+      (const VKLParticleVolume *uniform) sampler->volume;
 
   vec3f gradientResult = make_vec3f(0.f);
 
   traverseEmbree(self->super.bvhRoot,
-                 _self,
+                 sampler->volume,
                  intersectAndGradientParticle,
                  gradientResult,
                  objectCoordinates);
@@ -106,7 +107,7 @@ inline varying vec3f VKLParticleVolume_computeGradient(
 
 export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
                           uniform const int *uniform imask,
-                          void *uniform _volume,
+                          const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
                           void *uniform _samples)
 {
@@ -115,13 +116,14 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLParticleVolume_sample((Volume *uniform)_volume, *objectCoordinates);
+    *samples = VKLParticleVolume_sample((const Sampler *uniform)_sampler,
+                                        *objectCoordinates);
   }
 }
 
 export void EXPORT_UNIQUE(VKLParticleVolume_gradient_export,
                           uniform const int *uniform imask,
-                          void *uniform _volume,
+                          void *uniform _sampler,
                           const void *uniform _objectCoordinates,
                           void *uniform _gradients)
 {
@@ -130,7 +132,8 @@ export void EXPORT_UNIQUE(VKLParticleVolume_gradient_export,
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients = VKLParticleVolume_computeGradient((Volume *uniform)_volume, *objectCoordinates);
+    *gradients = VKLParticleVolume_computeGradient(
+        (const Sampler *uniform)_sampler, *objectCoordinates);
   }
 }
 
@@ -140,8 +143,6 @@ export void *uniform EXPORT_UNIQUE(VKLParticleVolume_Constructor)
       uniform new uniform VKLParticleVolume;
   memset(self, 0, sizeof(uniform VKLParticleVolume));
 
-  self->super.super.computeSample_varying = VKLParticleVolume_sample;
-
   return self;
 }
 
@@ -149,6 +150,20 @@ export void EXPORT_UNIQUE(VKLParticleVolume_Destructor, void *uniform _self)
 {
   VKLParticleVolume *uniform volume = (VKLParticleVolume * uniform) _self;
   delete volume;
+}
+
+export Sampler *uniform EXPORT_UNIQUE(VKLParticleSampler_Constructor,
+                          void *uniform _volume)
+{
+  Sampler *uniform sampler = CALL_ISPC(Sampler_create, _volume);
+  sampler->computeSample_varying = VKLParticleVolume_sample;
+  return sampler;
+}
+
+export void EXPORT_UNIQUE(VKLParticleSampler_Destructor,
+                          void *uniform _sampler)
+{
+  CALL_ISPC(Sampler_destroy, _sampler);
 }
 
 export void EXPORT_UNIQUE(VKLParticleVolume_set,

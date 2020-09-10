@@ -101,13 +101,14 @@ namespace openvkl {
           gradientFilter(volume->getGradientFilter())
     {
       assert(volume);
-      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
+      ispcEquivalent = CALL_ISPC(StructuredSampler_create, 
+                                 volume->getISPCEquivalent());
     }
 
     template <int W>
     inline StructuredSampler<W>::~StructuredSampler()
     {
-      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      CALL_ISPC(StructuredSampler_destroy, ispcEquivalent);
       ispcEquivalent = nullptr;
     }
 
@@ -137,9 +138,8 @@ namespace openvkl {
     {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
-                (ispc::VKLFilter)filter,
                 attributeIndex,
                 &samples);
     }
@@ -154,9 +154,8 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_sample_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
-                (ispc::VKLFilter)filter,
                 attributeIndex,
                 &samples);
     }
@@ -170,10 +169,9 @@ namespace openvkl {
     {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_sample_N_export,
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
-                (ispc::VKLFilter)filter,
                 attributeIndex,
                 samples);
     }
@@ -188,9 +186,8 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
-                (ispc::VKLFilter)gradientFilter,
                 attributeIndex,
                 &gradients);
     }
@@ -204,10 +201,9 @@ namespace openvkl {
     {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(SharedStructuredVolume_gradient_N_export,
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
-                (ispc::VKLFilter)gradientFilter,
                 attributeIndex,
                 (ispc::vec3f *)gradients);
     }
@@ -223,9 +219,8 @@ namespace openvkl {
         assert(attributeIndices[i] < volume->getNumAttributes());
 
       CALL_ISPC(SharedStructuredVolume_sampleM_uniform_export,
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
-                (ispc::VKLFilter)filter,
                 M,
                 attributeIndices,
                 samples);
@@ -244,9 +239,8 @@ namespace openvkl {
 
       CALL_ISPC(SharedStructuredVolume_sampleM_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
-                (ispc::VKLFilter)filter,
                 M,
                 attributeIndices,
                 samples);
@@ -264,10 +258,9 @@ namespace openvkl {
         assert(attributeIndices[i] < volume->getNumAttributes());
 
       CALL_ISPC(SharedStructuredVolume_sampleM_N_export,
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
-                (ispc::VKLFilter)filter,
                 M,
                 attributeIndices,
                 samples);

@@ -1,0 +1,29 @@
+// Copyright 2019-2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+#include "sampler/Sampler.ih"
+
+struct VdbSampler
+{
+  Sampler super;
+
+  const VdbGrid *uniform grid;
+  const void *uniform leafAccessObservers;
+  vkl_uint32 maxSamplingDepth;
+
+  /*
+   * We use function pointers to differentiate between
+   * filter kernels.
+   */
+  uniform float (*interpolate_uniform)(const VdbSampler *uniform sampler,
+                                       const uniform vec3f &indexCoordinates);
+
+  float (*interpolate_varying)(const VdbSampler *uniform sampler,
+                               const vec3f &indexCoordinates);
+
+  vec3f (*computeGradient_varying)(const VdbSampler *uniform sampler,
+                                   const vec3f &indexCoordinates);
+};

@@ -75,13 +75,13 @@ namespace openvkl {
         : SamplerBase<W, AMRVolume>(*volume)
     {
       assert(volume);
-      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
+      ispcEquivalent = CALL_ISPC(AMRSampler_create, volume->getISPCEquivalent());
     }
 
     template <int W>
     inline AMRSampler<W>::~AMRSampler()
     {
-      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      CALL_ISPC(AMRSampler_destroy, ispcEquivalent);
       ispcEquivalent = nullptr;
     }
 
@@ -95,7 +95,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(AMRVolume_sample_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
                 &samples);
     }
@@ -108,8 +108,8 @@ namespace openvkl {
         unsigned int attributeIndex) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      CALL_ISPC(Volume_sample_N_export,
-                volume->getISPCEquivalent(),
+      CALL_ISPC(Sampler_sample_N_export,
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 samples);
@@ -125,7 +125,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(AMRVolume_gradient_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
                 &gradients);
     }
@@ -138,8 +138,8 @@ namespace openvkl {
         unsigned int attributeIndex) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      CALL_ISPC(Volume_gradient_N_export,
-                volume->getISPCEquivalent(),
+      CALL_ISPC(Sampler_gradient_N_export,
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);

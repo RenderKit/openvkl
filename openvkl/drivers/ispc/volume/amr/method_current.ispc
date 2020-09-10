@@ -6,10 +6,9 @@
 #include "DualCell.ih"
 #include "common/export_util.h"
 
-varying float AMR_current(const Volume *uniform _self, const varying vec3f &P)
+varying float AMR_current(const AMRVolume *uniform self, const varying vec3f &P)
 {
-  const AMRVolume *uniform self = (const AMRVolume *)_self;
-  const AMR *uniform amr        = &self->amr;
+  const AMR *uniform amr = &self->amr;
 
   vec3f lP;  // local amr space
   self->transformWorldToLocal(self, P, lP);
@@ -37,7 +36,7 @@ varying float AMR_currentLevel(const AMRVolume *uniform self,
 
 export void EXPORT_UNIQUE(AMR_install_current, void *uniform _self)
 {
-  AMRVolume *uniform self           = (AMRVolume * uniform) _self;
-  self->super.computeSample_varying = AMR_current;
-  self->computeSampleLevel          = AMR_currentLevel;
+  AMRVolume *uniform self     = (AMRVolume * uniform) _self;
+  self->computeSample_varying = AMR_current;
+  self->computeSampleLevel    = AMR_currentLevel;
 }

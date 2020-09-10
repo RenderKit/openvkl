@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "iterator/GridAcceleratorIterator.ih"
-#include "iterator/Iterator.ih"
+#include "common/Interval.ih"
+#include "common/Hit.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 #include "openvkl/openvkl.isph"

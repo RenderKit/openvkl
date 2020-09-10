@@ -13,10 +13,9 @@ namespace openvkl {
     VdbSampler<W>::VdbSampler(VdbVolume<W> &volume)
         : SamplerBase<W, VdbVolume>(volume)
     {
-      config.leafAccessObservers = leafAccessObservers.getIE();
-
       ispcEquivalent = CALL_ISPC(VdbSampler_create,
-        volume.getISPCEquivalent(), leafAccessObservers.getIE());
+                                 volume.getISPCEquivalent(),
+                                 leafAccessObservers.getIE());
     }
 
     template <int W>
@@ -29,27 +28,25 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::commit()
     {
-      const VdbSampleConfig &globalConfig = volume->getSampleConfig();
-      config.filter = (VKLFilter)this->template getParam<int>(
-          "filter", globalConfig.filter);
+      const VKLFilter filter = (VKLFilter)this->template getParam<int>(
+          "filter", volume->getFilter());
 
       // Note: We fall back to the sampler object filter parameter if it is set.
       //       This enables users to specify *only* the field filter override.
       //       This does mean that users must set the gradientFilter explicitly
       //       if they set filter and want gradientFilter to be different.
-      config.gradientFilter = (VKLFilter)this->template getParam<int>(
+      const VKLFilter gradientFilter = (VKLFilter)this->template getParam<int>(
           "gradientFilter",
-          this->hasParam("filter") ? config.filter
-                                   : globalConfig.gradientFilter);
+          this->hasParam("filter") ? filter : volume->getGradientFilter());
 
-      config.maxSamplingDepth = this->template getParam<int>(
-          "maxSamplingDepth", globalConfig.maxSamplingDepth);
+      const uint32_t maxSamplingDepth = this->template getParam<int>(
+          "maxSamplingDepth", volume->getMaxSamplingDepth());
 
       CALL_ISPC(VdbSampler_set,
                 ispcEquivalent,
-                (ispc::VKLFilter)config.filter,
-                (ispc::VKLFilter)config.gradientFilter,
-                config.maxSamplingDepth);
+                (ispc::VKLFilter)filter,
+                (ispc::VKLFilter)gradientFilter,
+                maxSamplingDepth);
     }
 
     template <int W>
@@ -59,8 +56,7 @@ namespace openvkl {
     {
       assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeSample_uniform,
-                volume->getGrid(),
-                &config,
+                ispcEquivalent,
                 &objectCoordinates,
                 static_cast<float *>(samples));
     }
@@ -74,8 +70,7 @@ namespace openvkl {
       assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
-                volume->getGrid(),
-                &config,
+                ispcEquivalent,
                 &objectCoordinates,
                 static_cast<float *>(samples));
     }
@@ -88,8 +83,7 @@ namespace openvkl {
     {
       assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeSample_stream,
-                volume->getGrid(),
-                &config,
+                ispcEquivalent,
                 N,
                 (const ispc::vec3f *)objectCoordinates,
                 samples);
@@ -104,8 +98,7 @@ namespace openvkl {
       assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeGradient,
                 static_cast<const int *>(valid),
-                volume->getGrid(),
-                &config,
+                ispcEquivalent,
                 &objectCoordinates,
                 &gradients);
     }
@@ -118,8 +111,7 @@ namespace openvkl {
     {
       assert(attributeIndex == 0);
       CALL_ISPC(VdbSampler_computeGradient_stream,
-                volume->getGrid(),
-                &config,
+                ispcEquivalent,
                 N,
                 (const ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);

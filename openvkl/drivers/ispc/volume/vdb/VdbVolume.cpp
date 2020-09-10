@@ -13,6 +13,7 @@
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/AsyncTask.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -459,14 +460,13 @@ namespace openvkl {
       leafData = this->template getParamDataT<Data *>("node.data");
 
       // Set up the global sample config.
-      globalConfig.filter = (VKLFilter)this->template getParam<int>(
-          "filter", globalConfig.filter);
-      globalConfig.gradientFilter = (VKLFilter)this->template getParam<int>(
-          "gradientFilter", globalConfig.filter);
-      globalConfig.maxSamplingDepth = this->template getParam<int>(
-          "maxSamplingDepth", globalConfig.maxSamplingDepth);
-      globalConfig.maxSamplingDepth =
-          min(globalConfig.maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
+      filter = (VKLFilter)this->template getParam<int>(
+          "filter", filter);
+      gradientFilter = (VKLFilter)this->template getParam<int>(
+          "gradientFilter", filter);
+      maxSamplingDepth = this->template getParam<int>(
+          "maxSamplingDepth", maxSamplingDepth);
+      maxSamplingDepth = min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
 
       // Sanity checks.
       // We will assume that the following conditions hold downstream, so
@@ -602,8 +602,7 @@ namespace openvkl {
 
       CALL_ISPC(VdbVolume_setGrid,
                 this->ispcEquivalent,
-                reinterpret_cast<const ispc::VdbGrid *>(grid),
-                reinterpret_cast<const ispc::VdbSampleConfig *>(&globalConfig));
+                reinterpret_cast<const ispc::VdbGrid *>(grid));
 
       computeValueRangesFloat(
           leafOffsets, *leafLevel, *leafFormat, *leafData, grid);

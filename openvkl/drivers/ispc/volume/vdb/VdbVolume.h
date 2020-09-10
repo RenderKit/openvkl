@@ -5,12 +5,11 @@
 
 #include <openvkl/vdb.h>
 #include <memory>
-#include "../StructuredVolume.h"
-#include "../common/Data.h"
 #include "../../common/Allocator.h"
+#include "../Volume.h"
+#include "../common/Data.h"
 #include "VdbGrid.h"
 #include "VdbIterator.h"
-#include "VdbSampleConfig.h"
 #include "VdbVolume_ispc.h"
 #include "rkcommon/memory/RefCount.h"
 
@@ -34,7 +33,7 @@ namespace openvkl {
     {
       VdbVolume(const VdbVolume &) = delete;
       VdbVolume &operator=(const VdbVolume &) = delete;
-      VdbVolume(VdbVolume &&other) = delete;
+      VdbVolume(VdbVolume &&other)            = delete;
       VdbVolume &operator=(VdbVolume &&other) = delete;
 
       VdbVolume();
@@ -81,14 +80,20 @@ namespace openvkl {
         return grid;
       }
 
-      const VdbSampleConfig &getSampleConfig() const
-      {
-        return globalConfig;
-      }
-
-
       Observer<W> *newObserver(const char *type) override;
       Sampler<W> *newSampler() override;
+
+      VKLFilter getFilter() const {
+        return filter;
+      }
+
+      VKLFilter getGradientFilter() const {
+        return gradientFilter;
+      }
+
+      uint32_t getMaxSamplingDepth() const {
+        return maxSamplingDepth;
+      }
 
      private:
       void cleanup();
@@ -100,8 +105,11 @@ namespace openvkl {
       Ref<const DataT<Data *>> leafData;
       std::vector<AlignedISPCData1D> leafDataISPC;
       VdbGrid *grid{nullptr};
-      VdbSampleConfig globalConfig;
       Allocator allocator;
+
+      VKLFilter filter{VKL_FILTER_TRILINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
     };
 
   }  // namespace ispc_driver

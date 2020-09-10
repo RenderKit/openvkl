@@ -7,7 +7,6 @@
 #include "../../sampler/Sampler.h"
 #include "../common/simd.h"
 #include "VdbGrid.h"
-#include "VdbSampleConfig.h"
 #include "VdbVolume.h"
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
@@ -67,7 +66,6 @@ namespace openvkl {
       ObserverRegistry<W> leafAccessObservers;
       VdbIntervalIteratorFactory<W> intervalIteratorFactory;
       VdbHitIteratorFactory<W> hitIteratorFactory;
-      VdbSampleConfig config;
     };
 
     template <int W>

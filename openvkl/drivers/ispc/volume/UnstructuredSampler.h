@@ -6,10 +6,10 @@
 #include "../common/export_util.h"
 #include "../iterator/UnstructuredIterator.h"
 #include "../sampler/Sampler.h"
+#include "Sampler_ispc.h"
 #include "UnstructuredVolume.h"
 #include "UnstructuredVolume_ispc.h"
 #include "Volume_ispc.h"
-#include "Sampler_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -63,13 +63,14 @@ namespace openvkl {
         : SamplerBase<W, UnstructuredVolume>(*volume)
     {
       assert(volume);
-      ispcEquivalent = CALL_ISPC(Sampler_create, volume->getISPCEquivalent());
+      ispcEquivalent = CALL_ISPC(VKLUnstructuredSampler_Constructor,
+                                 volume->getISPCEquivalent());
     }
 
     template <int W>
     inline UnstructuredSampler<W>::~UnstructuredSampler()
     {
-      CALL_ISPC(Sampler_destroy, ispcEquivalent);
+      CALL_ISPC(VKLUnstructuredSampler_Destructor, ispcEquivalent);
       ispcEquivalent = nullptr;
     }
 
@@ -83,7 +84,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(VKLUnstructuredVolume_sample_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
                 &samples);
     }
@@ -96,8 +97,8 @@ namespace openvkl {
         unsigned int attributeIndex) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      CALL_ISPC(Volume_sample_N_export,
-                volume->getISPCEquivalent(),
+      CALL_ISPC(Sampler_sample_N_export,
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 samples);
@@ -113,7 +114,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(VKLUnstructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
-                volume->getISPCEquivalent(),
+                ispcEquivalent,
                 &objectCoordinates,
                 &gradients);
     }
@@ -126,8 +127,8 @@ namespace openvkl {
         unsigned int attributeIndex) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      CALL_ISPC(Volume_gradient_N_export,
-                volume->getISPCEquivalent(),
+      CALL_ISPC(Sampler_gradient_N_export,
+                ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);

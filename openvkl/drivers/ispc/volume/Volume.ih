@@ -7,6 +7,7 @@
 
 struct Volume
 {
+#if 0
   // these functions do not yet support multi-attribute volumes. they are used
   // in generic stream-wide sampling and gradient implementations, as well as in
   // hit iterator surface intersection functions (which today only support the
@@ -20,4 +21,5 @@ struct Volume
 
   varying vec3f (*uniform computeGradient_varying)(
       const Volume *uniform _self, const varying vec3f &objectCoordinates);
+#endif
 };

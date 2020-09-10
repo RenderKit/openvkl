@@ -25,7 +25,6 @@ void DefaultIntervalIterator_iterateIntervalInternal(const int *uniform imask,
 export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          void *uniform _volume,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
@@ -41,7 +40,6 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
       (varying DefaultIntervalIterator * uniform) _self;
 
   self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
-  self->volume        = (Volume * uniform) _volume;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
@@ -136,7 +134,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
                           void *uniform _intervalIterator,
-                          void *uniform _volume,
+                          void *uniform _sampler,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _valueSelector)
@@ -148,7 +146,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   varying DefaultHitIterator *uniform self =
       (varying DefaultHitIterator * uniform) _self;
 
-  self->volume        = (Volume * uniform) _volume;
+  self->sampler       = (Sampler * uniform) _sampler;
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
@@ -212,7 +210,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
-        intersectSurfacesBisection(self->volume,
+        intersectSurfacesBisection(self->sampler,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,

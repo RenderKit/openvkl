@@ -28,7 +28,6 @@ namespace openvkl {
       CALL_ISPC(DefaultIntervalIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                volume.getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,

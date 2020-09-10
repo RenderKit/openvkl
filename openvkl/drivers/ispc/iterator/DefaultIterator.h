@@ -92,7 +92,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 ispcStorage,
                 intervalIterator.getIspcStorage(),
-                sampler->getVolume().getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);

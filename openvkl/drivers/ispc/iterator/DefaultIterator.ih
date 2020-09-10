@@ -29,7 +29,6 @@ struct DefaultIntervalIterator
   /* Enable the default hit iterator. */
   IterateIntervalFunc iterateInterval;
 
-  Volume *uniform volume;
   ValueSelector *uniform valueSelector;
 
   uniform box1f valueRange;  // value range of the full volume
@@ -44,7 +43,7 @@ struct DefaultIntervalIterator
 
 struct DefaultHitIterator
 {
-  Volume *uniform volume;
+  Sampler *uniform sampler;
   ValueSelector *uniform valueSelector;
 
   vec3f origin;

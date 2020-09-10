@@ -4,6 +4,7 @@
 #include "../common/export_util.h"
 #include "Volume.ih"
 
+#if 0
 // these functions do not yet support multi-attribute volumes.
 
 export void EXPORT_UNIQUE(Volume_sample_N_export,
@@ -33,3 +34,4 @@ export void EXPORT_UNIQUE(Volume_gradient_N_export,
     gradients[i]     = self->computeGradient_varying(self, oc);
   }
 }
+#endif

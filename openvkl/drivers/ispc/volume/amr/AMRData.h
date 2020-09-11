@@ -14,7 +14,7 @@ namespace openvkl {
     namespace amr {
 
       /*! this structure defines only the format of the INPUT of amr
-          data - ie, what we get from the scene graph or applicatoin */
+          data - ie, what we get from the scene graph or application */
       struct AMRData
       {
         AMRData(const DataT<box3i> &blockBoundsData,

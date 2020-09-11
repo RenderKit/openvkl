@@ -160,9 +160,8 @@ export void EXPORT_UNIQUE(AMRVolume_set,
                           const uniform vec3f &gridSpacing)
 {
   AMRVolume *uniform self = (AMRVolume * uniform) _self;
-
   self->boundingBox =
-      make_box3f(gridOrigin + worldBounds.lower,
+      make_box3f(worldBounds.lower + gridOrigin,
                  worldBounds.lower + gridOrigin +
                      (worldBounds.upper - worldBounds.lower) * gridSpacing);
   self->samplingStep          = samplingStep;

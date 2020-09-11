@@ -4,17 +4,32 @@
 #pragma once
 
 #include "../common/export_util.h"
+#include "../iterator/DefaultIterator.h"
 #include "../iterator/GridAcceleratorIterator.h"
 #include "../sampler/Sampler.h"
 #include "Sampler_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredVolume.h"
+#include "StructuredRegularVolume.h"
+#include "StructuredSphericalVolume.h"
 #include "Volume_ispc.h"
 #include "Sampler_ispc.h"
 #include "openvkl/VKLFilter.h"
 
 namespace openvkl {
   namespace ispc_driver {
+
+    template <int W>
+    using StructuredSphericalIntervalIteratorFactory =
+        ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
+
+    template <int W>
+    using StructuredSphericalHitIterator =
+        DefaultHitIterator<W, DefaultIntervalIterator<W>>;
+
+    template <int W>
+    using StructuredSphericalHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, StructuredSphericalHitIterator>;
 
     template <int W>
     struct StructuredSampler : public SamplerBase<W, StructuredVolume>
@@ -88,8 +103,12 @@ namespace openvkl {
       VKLFilter gradientFilter;
 
      private:
-      GridAcceleratorIntervalIteratorFactory<W> intervalIteratorFactory;
-      GridAcceleratorHitIteratorFactory<W> hitIteratorFactory;
+      GridAcceleratorIntervalIteratorFactory<W> intervalIteratorFactoryRegular;
+      GridAcceleratorHitIteratorFactory<W> hitIteratorFactoryRegular;
+
+      StructuredSphericalIntervalIteratorFactory<W>
+          intervalIteratorFactorSpherical;
+      StructuredSphericalHitIteratorFactory<W> hitIteratorFactorySpherical;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -270,14 +289,30 @@ namespace openvkl {
     inline const IteratorFactory<W, IntervalIterator>
         &StructuredSampler<W>::getIntervalIteratorFactory() const
     {
-      return intervalIteratorFactory;
+      if (dynamic_cast<const StructuredRegularVolume<W> *>(
+              &this->getVolume())) {
+        return intervalIteratorFactoryRegular;
+      } else if (dynamic_cast<const StructuredSphericalVolume<W> *>(
+                     &this->getVolume())) {
+        return intervalIteratorFactorSpherical;
+      } else {
+        throw std::runtime_error("unsupported volume type on sampler");
+      }
     }
 
     template <int W>
     inline const IteratorFactory<W, HitIterator>
         &StructuredSampler<W>::getHitIteratorFactory() const
     {
-      return hitIteratorFactory;
+      if (dynamic_cast<const StructuredRegularVolume<W> *>(
+              &this->getVolume())) {
+        return hitIteratorFactoryRegular;
+      } else if (dynamic_cast<const StructuredSphericalVolume<W> *>(
+                     &this->getVolume())) {
+        return hitIteratorFactorySpherical;
+      } else {
+        throw std::runtime_error("unsupported volume type on sampler");
+      }
     }
 
   }  // namespace ispc_driver

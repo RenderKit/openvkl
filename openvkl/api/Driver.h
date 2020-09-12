@@ -288,7 +288,8 @@ namespace openvkl {
                                     VKLSampler sampler,                      \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
                                     float *samples,                          \
-                                    unsigned int attributeIndex) = 0;
+                                    unsigned int attributeIndex,             \
+                                    float sampleTime) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -301,7 +302,8 @@ namespace openvkl {
                                   unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples,
-                                  unsigned int attributeIndex) = 0;
+                                  unsigned int attributeIndex,
+                                  float sampleTime) = 0;
 
 #define __define_computeSampleMN(WIDTH)        \
   virtual void computeSampleM##WIDTH(          \
@@ -310,7 +312,8 @@ namespace openvkl {
       const vvec3fn<WIDTH> &objectCoordinates, \
       float *samples,                          \
       unsigned int M,                          \
-      const unsigned int *attributeIndices) = 0;
+      const unsigned int *attributeIndices,    \
+      const float sampleTime) = 0;
 
       __define_computeSampleMN(1);
       __define_computeSampleMN(4);
@@ -324,7 +327,8 @@ namespace openvkl {
                                    const vvec3fn<1> *objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices) = 0;
+                                   const unsigned int *attributeIndices,
+                                   const float sampleTime) = 0;
 
 #define __define_computeGradientN(WIDTH)                                       \
   virtual void computeGradient##WIDTH(const int *valid,                        \

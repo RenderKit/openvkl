@@ -688,7 +688,8 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" float vklComputeSample(VKLSampler sampler,
                                   const vkl_vec3f *objectCoordinates,
-                                  unsigned int attributeIndex)
+                                  unsigned int attributeIndex,
+                                  float sampleTime)
     OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
@@ -698,7 +699,8 @@ extern "C" float vklComputeSample(VKLSampler sampler,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
       &sample,
-      attributeIndex);
+      attributeIndex,
+      sampleTime);
   return sample;
 }
 OPENVKL_CATCH_END(rkcommon::math::nan)
@@ -709,14 +711,16 @@ OPENVKL_CATCH_END(rkcommon::math::nan)
       VKLSampler sampler,                                             \
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       float *samples,                                                 \
-      unsigned int attributeIndex) OPENVKL_CATCH_BEGIN                \
+      unsigned int attributeIndex,                                    \
+      float sampleTime) OPENVKL_CATCH_BEGIN                           \
   {                                                                   \
     openvkl::api::currentDriver().computeSample##WIDTH(               \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
         samples,                                                      \
-        attributeIndex);                                              \
+        attributeIndex,                                               \
+        sampleTime);                                                  \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -730,7 +734,8 @@ extern "C" void vklComputeSampleN(VKLSampler sampler,
                                   unsigned int N,
                                   const vkl_vec3f *objectCoordinates,
                                   float *samples,
-                                  unsigned int attributeIndex)
+                                  unsigned int attributeIndex,
+                                  float sampleTime)
     OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeSampleN(
@@ -738,7 +743,8 @@ extern "C" void vklComputeSampleN(VKLSampler sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
       samples,
-      attributeIndex);
+      attributeIndex,
+      sampleTime);
 }
 OPENVKL_CATCH_END()
 
@@ -746,7 +752,8 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
                                   const vkl_vec3f *objectCoordinates,
                                   float *samples,
                                   unsigned int M,
-                                  const unsigned int *attributeIndices)
+                                  const unsigned int *attributeIndices,
+                                  const float sampleTime)
     OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
@@ -756,7 +763,8 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
       samples,
       M,
-      attributeIndices);
+      attributeIndices,
+      sampleTime);
 }
 OPENVKL_CATCH_END()
 
@@ -767,7 +775,8 @@ OPENVKL_CATCH_END()
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       float *samples,                                                 \
       unsigned int M,                                                 \
-      const unsigned int *attributeIndices) OPENVKL_CATCH_BEGIN       \
+      const unsigned int *attributeIndices,                           \
+      const float sampleTime) OPENVKL_CATCH_BEGIN                   \
   {                                                                   \
     openvkl::api::currentDriver().computeSampleM##WIDTH(              \
         valid,                                                        \
@@ -775,7 +784,8 @@ OPENVKL_CATCH_END()
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
         samples,                                                      \
         M,                                                            \
-        attributeIndices);                                            \
+        attributeIndices,                                             \
+        sampleTime);                                                  \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -790,7 +800,8 @@ extern "C" void vklComputeSampleMN(VKLSampler sampler,
                                    const vkl_vec3f *objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices)
+                                   const unsigned int *attributeIndices,
+                                   const float sampleTime)
     OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeSampleMN(
@@ -799,7 +810,8 @@ extern "C" void vklComputeSampleMN(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
       samples,
       M,
-      attributeIndices);
+      attributeIndices,
+      sampleTime);
 }
 OPENVKL_CATCH_END()
 

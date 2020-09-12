@@ -35,17 +35,20 @@ namespace openvkl {
       // defined then the default implementation will use computeSampleV()
       virtual void computeSample(const vvec3fn<1> &objectCoordinates,
                                  vfloatn<1> &samples,
-                                 unsigned int attributeIndex) const;
+                                 unsigned int attributeIndex,
+                                 float sampleTime) const;
 
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
                                   vfloatn<W> &samples,
-                                  unsigned int attributeIndex) const = 0;
+                                  unsigned int attributeIndex,
+                                  float sampleTime) const = 0;
 
       virtual void computeSampleN(unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples,
-                                  unsigned int attributeIndex) const = 0;
+                                  unsigned int attributeIndex,
+                                  float sampleTime) const = 0;
 
       virtual void computeGradientV(const vintn<W> &valid,
                                     const vvec3fn<W> &objectCoordinates,
@@ -62,19 +65,22 @@ namespace openvkl {
       virtual void computeSampleM(const vvec3fn<1> &objectCoordinates,
                                   float *samples,
                                   unsigned int M,
-                                  const unsigned int *attributeIndices) const;
+                                  const unsigned int *attributeIndices,
+                                  const float sampleTime) const;
 
       virtual void computeSampleMV(const vintn<W> &valid,
                                    const vvec3fn<W> &objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices) const;
+                                   const unsigned int *attributeIndices,
+                                   const float sampleTime) const;
 
       virtual void computeSampleMN(unsigned int N,
                                    const vvec3fn<1> *objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices) const;
+                                   const unsigned int *attributeIndices,
+                                   const float sampleTime) const;
 
       virtual Observer<W> *newObserver(const char *type) = 0;
 
@@ -104,7 +110,8 @@ namespace openvkl {
     template <int W>
     inline void Sampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
                                           vfloatn<1> &samples,
-                                          unsigned int attributeIndex) const
+                                          unsigned int attributeIndex,
+                                          float sampleTime) const
     {
       // gracefully degrade to use computeSampleV(); see
       // ISPCDriver<W>::computeSampleAnyWidth()
@@ -119,7 +126,7 @@ namespace openvkl {
 
       vfloatn<W> samplesW;
 
-      computeSampleV(validW, ocW, samplesW, attributeIndex);
+      computeSampleV(validW, ocW, samplesW, attributeIndex, sampleTime);
 
       samples[0] = samplesW[0];
     }
@@ -129,11 +136,12 @@ namespace openvkl {
         const vvec3fn<1> &objectCoordinates,
         float *samples,
         unsigned int M,
-        const unsigned int *attributeIndices) const
+        const unsigned int *attributeIndices,
+        const float sampleTime) const
     {
       for (unsigned int a = 0; a < M; a++) {
         computeSample(
-            objectCoordinates, reinterpret_cast<vfloatn<1> &>(samples[a]), a);
+            objectCoordinates, reinterpret_cast<vfloatn<1> &>(samples[a]), a, sampleTime);
       }
     }
 
@@ -143,12 +151,13 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         float *samples,
         unsigned int M,
-        const unsigned int *attributeIndices) const
+        const unsigned int *attributeIndices,
+        const float sampleTime) const
     {
       for (unsigned int a = 0; a < M; a++) {
         vfloatn<W> samplesW;
 
-        computeSampleV(valid, objectCoordinates, samplesW, attributeIndices[a]);
+        computeSampleV(valid, objectCoordinates, samplesW, attributeIndices[a], sampleTime);
 
         for (int i = 0; i < W; i++)
           samples[a * W + i] = samplesW[i];
@@ -161,13 +170,15 @@ namespace openvkl {
         const vvec3fn<1> *objectCoordinates,
         float *samples,
         unsigned int M,
-        const unsigned int *attributeIndices) const
+        const unsigned int *attributeIndices,
+        const float sampleTime) const
     {
       for (unsigned int i = 0; i < N; i++) {
         for (unsigned int a = 0; a < M; a++) {
           computeSample(objectCoordinates[i],
                         reinterpret_cast<vfloatn<1> &>(samples[i * M + a]),
-                        attributeIndices[a]);
+                        attributeIndices[a],
+                        sampleTime);
         }
       }
     }

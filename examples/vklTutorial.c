@@ -38,7 +38,8 @@ void demoScalarAPI(VKLVolume volume)
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
-  float sample   = vklComputeSample(sampler, &coord, attributeIndex);
+  float time = 0.f;
+  float sample   = vklComputeSample(sampler, &coord, attributeIndex, time);
   vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex);
   printf("\tsampling and gradient computation (first attribute)\n");
   printf("\t\tsample = %f\n", sample);
@@ -47,8 +48,9 @@ void demoScalarAPI(VKLVolume volume)
   // sample (multiple attributes)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
+  float sampleTime = 0.f;
   float samples[3];
-  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices);
+  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, sampleTime);
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
@@ -168,9 +170,10 @@ void demoVectorAPI(VKLVolume volume)
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
+  float time = 0.f;
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex);
+  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex, time);
   vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex);
 
   printf("\n\tsampling and gradient computation (first attribute)\n");
@@ -184,8 +187,9 @@ void demoVectorAPI(VKLVolume volume)
   // sample (multiple attributes)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
+  float sampleTime = 0.f;
   float samples[3 * 4];
-  vklComputeSampleM4(valid, sampler, &coord4, samples, M, attributeIndices);
+  vklComputeSampleM4(valid, sampler, &coord4, samples, M, attributeIndices, sampleTime);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -228,9 +232,10 @@ void demoStreamAPI(VKLVolume volume)
   // sample, gradient (first attribute)
   printf("\n\tsampling and gradient computation (first attribute)\n");
   unsigned int attributeIndex = 0;
+  float time = 0.f;
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex);
+  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
   vklComputeGradientN(sampler, 5, coord, grad, attributeIndex);
 
   for (int i = 0; i < 5; i++) {
@@ -241,8 +246,9 @@ void demoStreamAPI(VKLVolume volume)
   // sample (multiple attributes)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
+  float sampleTime = 0.f;
   float samples[3 * 5];
-  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices);
+  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices, sampleTime);
 
   printf("\n\tsampling (multiple attributes)\n");
 

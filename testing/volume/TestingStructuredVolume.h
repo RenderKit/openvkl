@@ -33,7 +33,15 @@ namespace openvkl {
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
-      virtual std::vector<unsigned char> generateVoxels() = 0;
+      virtual std::vector<unsigned char> generateVoxels(
+          size_t numTimeSamples = 1,
+          const std::vector<float>& timeSamples = std::vector<float>()) = 0;
+      virtual std::vector<float> generateTimeData(
+          size_t numTimeSamples = 1,
+          const std::vector<float>& timeSamples = std::vector<float>()) = 0;
+      virtual std::vector<unsigned int> generateTimeConfig(
+          size_t numTimeSamples = 1,
+          const std::vector<float>& timeSamples = std::vector<float>()) = 0;
 
      protected:
       void generateVKLVolume() override;

@@ -14,7 +14,7 @@ using namespace rkcommon;
 namespace openvkl {
   namespace testing {
 
-    template <float samplingFunction(const vec3f &),
+    template <float samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralVdbVolume : public TestingVolume, public ProceduralVolume
     {
@@ -105,7 +105,7 @@ namespace openvkl {
                     const vec3f samplePosObject =
                         transformLocalToObjectCoordinates(samplePosIndex);
 
-                    const float fieldValue = samplingFunction(samplePosObject);
+                    const float fieldValue = samplingFunction(samplePosObject, 0.f);
 
                     float *leafValueTyped =
                         (float *)(leaf.data() + idx * byteStride);
@@ -158,7 +158,7 @@ namespace openvkl {
       float computeProceduralValue(
           const vec3f &objectCoordinates) const override
       {
-        return samplingFunction(objectCoordinates);
+        return samplingFunction(objectCoordinates, 0.f);
       }
 
       vec3f computeProceduralGradient(

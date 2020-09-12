@@ -30,17 +30,20 @@ namespace openvkl {
 
       void computeSample(const vvec3fn<1> &objectCoordinates,
                          vfloatn<1> &samples,
-                         unsigned int attributeIndex) const override final;
+                         unsigned int attributeIndex,
+                         float sampleTime) const override final;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples,
-                          unsigned int attributeIndex) const override final;
+                          unsigned int attributeIndex,
+                          float sampleTime) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
-                          unsigned int attributeIndex) const override final;
+                          unsigned int attributeIndex,
+                          float sampleTime) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,

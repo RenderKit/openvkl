@@ -56,9 +56,11 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
                                       vfloatn<1> &samples,
-                                      unsigned int attributeIndex) const
+                                      unsigned int attributeIndex,
+                                      float sampleTime) const
     {
       assert(attributeIndex == 0);
+      assert(sampleTime == 0.f);
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -69,9 +71,11 @@ namespace openvkl {
     void VdbSampler<W>::computeSampleV(const vintn<W> &valid,
                                        const vvec3fn<W> &objectCoordinates,
                                        vfloatn<W> &samples,
-                                       unsigned int attributeIndex) const
+                                       unsigned int attributeIndex,
+                                       float sampleTime) const
     {
       assert(attributeIndex == 0);
+      assert(sampleTime == 0.f);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -83,9 +87,11 @@ namespace openvkl {
     void VdbSampler<W>::computeSampleN(unsigned int N,
                                        const vvec3fn<1> *objectCoordinates,
                                        float *samples,
-                                       unsigned int attributeIndex) const
+                                       unsigned int attributeIndex,
+                                       float sampleTime) const
     {
       assert(attributeIndex == 0);
+      assert(sampleTime == 0.f);
       CALL_ISPC(VdbSampler_computeSample_stream,
                 ispcEquivalent,
                 N,

@@ -55,14 +55,14 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
                                       a);
     }
 
-    std::vector<unsigned int> attributeIndices(v->getNumAttributes());
-    std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+    // std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+    // std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
 
-    test_scalar_and_vector_sampling_multi(vklSampler,
-                                          objectCoordinates,
-                                          proceduralValues,
-                                          sampleTolerance,
-                                          attributeIndices);
+    // test_scalar_and_vector_sampling_multi(vklSampler,
+    //                                       objectCoordinates,
+    //                                       proceduralValues,
+    //                                       sampleTolerance,
+    //                                       attributeIndices);
   }
 
   vklRelease(vklSampler);

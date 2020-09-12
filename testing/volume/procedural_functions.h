@@ -15,14 +15,15 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE>
-    inline VOXEL_TYPE samplingNotImplemented(const vec3f &)
+    inline VOXEL_TYPE samplingNotImplemented(const vec3f &, float)
     {
       throw std::runtime_error(
           "sampling function not implemented for this procedural volume");
     }
 
     template <typename VOXEL_TYPE>
-    inline VOXEL_TYPE getWaveletValue(const vec3f &objectCoordinates)
+    inline VOXEL_TYPE getWaveletValue(const vec3f &objectCoordinates,
+                                      float time = 0.f)
     {
       // wavelet parameters
       constexpr double M  = 1.f;
@@ -33,11 +34,14 @@ namespace openvkl {
       constexpr double XF = 3.f;
       constexpr double YF = 3.f;
       constexpr double ZF = 3.f;
+      constexpr double XT = 1.f;
+      constexpr double YT = 1.f;
+      constexpr double ZT = 1.f;
 
       double value = M * G *
-                     (XM * ::sin(XF * objectCoordinates.x) +
-                      YM * ::sin(YF * objectCoordinates.y) +
-                      ZM * ::cos(ZF * objectCoordinates.z));
+                     (XM * ::sin(XF * objectCoordinates.x + XT * time) +
+                      YM * ::sin(YF * objectCoordinates.y + YT * time) +
+                      ZM * ::cos(ZF * objectCoordinates.z + ZT * time));
 
       if (std::is_unsigned<VOXEL_TYPE>::value) {
         value = fabs(value);
@@ -69,10 +73,10 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE>
-    inline VOXEL_TYPE getXYZValue(const vec3f &objectCoordinates)
+    inline VOXEL_TYPE getXYZValue(const vec3f &objectCoordinates, float time = 0.f)
     {
       double value =
-          objectCoordinates.x * objectCoordinates.y * objectCoordinates.z;
+          (1.f-time)*objectCoordinates.x * objectCoordinates.y * objectCoordinates.z;
 
       if (std::is_unsigned<VOXEL_TYPE>::value) {
         value = fabs(value);
@@ -87,7 +91,7 @@ namespace openvkl {
 
     inline vec3f getXYZGradient(const vec3f &objectCoordinates)
     {
-      return vec3f(objectCoordinates.y * objectCoordinates.z,
+      return /*(1.f-time)**/vec3f(objectCoordinates.y * objectCoordinates.z,
                    objectCoordinates.x * objectCoordinates.z,
                    objectCoordinates.x * objectCoordinates.y);
     }
@@ -105,37 +109,37 @@ namespace openvkl {
         return -.5f;
     }
 
-    inline float getXValue(const vec3f &objectCoordinates)
+    inline float getXValue(const vec3f &objectCoordinates, float time = 0.f)
     {
-      return objectCoordinates.x;
+      return (1.f-time) * objectCoordinates.x;
     }
 
     inline vec3f getXGradient(const vec3f &objectCoordinates)
     {
-      return vec3f(1.f, 0.f, 0.f);
+      return /*(1.f-time) * */vec3f(1.f, 0.f, 0.f);
     }
 
-    inline float getYValue(const vec3f &objectCoordinates)
+    inline float getYValue(const vec3f &objectCoordinates, float time = 0.f)
     {
-      return objectCoordinates.y;
+      return (1.f-time) * objectCoordinates.y;
     }
 
     inline vec3f getYGradient(const vec3f &objectCoordinates)
     {
-      return vec3f(0.f, 1.f, 0.f);
+      return /*(1.f-time) * */vec3f(0.f, 1.f, 0.f);
     }
 
-    inline float getZValue(const vec3f &objectCoordinates)
+    inline float getZValue(const vec3f &objectCoordinates, float time = 0.f)
     {
-      return objectCoordinates.z;
+      return (1.f-time) * objectCoordinates.z;
     }
 
     inline vec3f getZGradient(const vec3f &objectCoordinates)
     {
-      return vec3f(0.f, 0.f, 1.f);
+      return /*(1.f-time) * */vec3f(0.f, 0.f, 1.f);
     }
 
-    inline float getConstValue(const vec3f &objectCoordinates)
+    inline float getConstValue(const vec3f &objectCoordinates, float time = 0.f)
     {
       return 0.5f;
     }
@@ -145,11 +149,12 @@ namespace openvkl {
       return vec3f(0.f);
     }
 
-    inline float getRadiusValue(const vec3f &objectCoordinates)
+    inline float getRadiusValue(const vec3f &objectCoordinates, float time = 0.f)
     {
       return sqrtf(objectCoordinates.x * objectCoordinates.x +
                    objectCoordinates.y * objectCoordinates.y +
-                   objectCoordinates.z * objectCoordinates.z);
+                   objectCoordinates.z * objectCoordinates.z +
+                   time * time);
     }
 
   }  // namespace testing

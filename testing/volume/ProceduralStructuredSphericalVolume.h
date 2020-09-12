@@ -16,7 +16,7 @@ namespace openvkl {
                                 to prevent such instantiation), but isn't due
                                 to Windows Visual Studio compiler bug */
         ,
-        VOXEL_TYPE samplingFunction(const vec3f &) = samplingNotImplemented,
+        VOXEL_TYPE samplingFunction(const vec3f &, float) = samplingNotImplemented,
         vec3f gradientFunction(const vec3f &)      = gradientNotImplemented>
     struct ProceduralStructuredSphericalVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
@@ -39,7 +39,7 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &)>
     inline ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                samplingFunction,
@@ -55,7 +55,7 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &)>
     inline vec3f ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                      samplingFunction,
@@ -81,7 +81,7 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &)>
     inline void ProceduralStructuredSphericalVolume<
         VOXEL_TYPE,

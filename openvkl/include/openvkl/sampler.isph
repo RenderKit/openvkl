@@ -13,26 +13,30 @@ VKL_API void vklComputeSample4(const int *uniform valid,
                                const varying struct vkl_vec3f *uniform
                                    objectCoordinates,
                                varying float *uniform samples,
-                               uniform unsigned int attributeIndex);
+                               uniform unsigned int attributeIndex,
+                               uniform float time);
 
 VKL_API void vklComputeSample8(const int *uniform valid,
                                VKLSampler sampler,
                                const varying struct vkl_vec3f *uniform
                                    objectCoordinates,
                                varying float *uniform samples,
-                               uniform unsigned int attributeIndex);
+                               uniform unsigned int attributeIndex,
+                               uniform float time);
 
 VKL_API void vklComputeSample16(const int *uniform valid,
                                 VKLSampler sampler,
                                 const varying struct vkl_vec3f *uniform
                                     objectCoordinates,
                                 varying float *uniform samples,
-                                uniform unsigned int attributeIndex);
+                                uniform unsigned int attributeIndex,
+                                uniform float time);
 
 VKL_FORCEINLINE varying float vklComputeSampleV(
     VKLSampler sampler,
     const varying vkl_vec3f *uniform objectCoordinates,
-    uniform unsigned int attributeIndex = 0)
+    uniform unsigned int attributeIndex = 0,
+    uniform float time = 0.f)
 {
   varying bool mask = __mask;
   unmasked
@@ -47,19 +51,22 @@ VKL_FORCEINLINE varying float vklComputeSampleV(
                       sampler,
                       objectCoordinates,
                       &samples,
-                      attributeIndex);
+                      attributeIndex,
+                      time);
   } else if (sizeof(varying float) == 32) {
     vklComputeSample8((uniform int *uniform) & imask,
                       sampler,
                       objectCoordinates,
                       &samples,
-                      attributeIndex);
+                      attributeIndex,
+                      time);
   } else if (sizeof(varying float) == 64) {
     vklComputeSample16((uniform int *uniform) & imask,
                        sampler,
                        objectCoordinates,
                        &samples,
-                       attributeIndex);
+                       attributeIndex,
+                       time);
   }
 
   return samples;

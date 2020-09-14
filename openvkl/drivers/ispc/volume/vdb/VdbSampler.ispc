@@ -340,6 +340,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
+  assert(sampler->interpolate_uniform);
 
   const vec3f *uniform objectCoordinates =
       (const vec3f *uniform)_objectCoordinates;
@@ -361,6 +362,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
     const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
+    assert(sampler->interpolate_varying);
 
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
@@ -382,6 +384,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
+  assert(sampler->interpolate_varying);
 
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
@@ -401,6 +404,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
     const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
+    assert(sampler->computeGradient_varying);
 
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
@@ -425,6 +429,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
+  assert(sampler->computeGradient_varying);
 
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
@@ -452,6 +457,7 @@ inline float VdbSampler_iterator_computeSample_varying(
   const vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, objectCoordinates);
 
+  assert(sampler->interpolate_varying);
   return sampler->interpolate_varying(sampler, indexCoordinates);
 }
 

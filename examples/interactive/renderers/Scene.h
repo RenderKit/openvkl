@@ -104,6 +104,7 @@ namespace openvkl {
           return;
 
         sampler = vklNewSampler(volume);
+        vklCommit(sampler);
       }
 #endif  // defined(__cplusplus)
     };

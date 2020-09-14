@@ -1077,7 +1077,7 @@ filled in with values, and then committed.
 To query an interval, a `VKLIntervalIterator` of scalar or vector width must be
 initialized with `vklInitIntervalIterator`.
 
-    VKLIntervalIterator vklInitIntervalIterator(VKLVolume volume,
+    VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
                                                 const vkl_vec3f *origin,
                                                 const vkl_vec3f *direction,
                                                 const vkl_range1f *tRange,
@@ -1085,7 +1085,7 @@ initialized with `vklInitIntervalIterator`.
                                                 void *buffer);
 
     VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                                  VKLVolume volume,
+                                                  VKLSampler sampler,
                                                   const vkl_vvec3f4 *origin,
                                                   const vkl_vvec3f4 *direction,
                                                   const vkl_vrange1f4 *tRange,
@@ -1093,7 +1093,7 @@ initialized with `vklInitIntervalIterator`.
                                                   void *buffer);
 
     VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                                  VKLVolume volume,
+                                                  VKLSampler sampler,
                                                   const vkl_vvec3f8 *origin,
                                                   const vkl_vvec3f8 *direction,
                                                   const vkl_vrange1f8 *tRange,
@@ -1101,7 +1101,7 @@ initialized with `vklInitIntervalIterator`.
                                                   void *buffer);
 
     VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                    VKLVolume volume,
+                                                    VKLSampler sampler,
                                                     const vkl_vvec3f16 *origin,
                                                     const vkl_vvec3f16 *direction,
                                                     const vkl_vrange1f16 *tRange,
@@ -1115,16 +1115,16 @@ Copying iterator buffers is currently not supported.
 
 The required size, in bytes, of the buffer can be queried with
 
-    size_t vklGetIntervalIteratorSize(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize(VKLSampler sampler);
 
-    size_t vklGetIntervalIteratorSize4(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
 
-    size_t vklGetIntervalIteratorSize8(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
 
-    size_t vklGetIntervalIteratorSize16(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
 
-The values these functions return depend on the volume type rather than the
-particular `VKLVolume` instance.
+The values these functions return may change depending on the parameters set
+on `sampler`.
 
 Open VKL also provides a conservative maximum size over all volume types as a
 preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). This is particularly
@@ -1192,7 +1192,7 @@ same fashion.  This API could be used, for example, to find isosurfaces.
 Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
 desired width must be initialized:
 
-    VKLHitIterator vklInitHitIterator(VKLVolume volume,
+    VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                       const vkl_vec3f *origin,
                                       const vkl_vec3f *direction,
                                       const vkl_range1f *tRange,
@@ -1200,7 +1200,7 @@ desired width must be initialized:
                                       void *buffer);
 
     VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                             VKLVolume volume,
+                             VKLSampler sampler,
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
@@ -1208,7 +1208,7 @@ desired width must be initialized:
                              void *buffer);
 
     VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                             VKLVolume volume,
+                             VKLSampler sampler,
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
                              const vkl_vrange1f8 *tRange,
@@ -1216,7 +1216,7 @@ desired width must be initialized:
                              void *buffer);
 
     VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                              VKLVolume volume,
+                              VKLSampler sampler,
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
@@ -1225,13 +1225,13 @@ desired width must be initialized:
 
 Buffer size can be queried with
 
-    size_t vklGetHitIteratorSize(VKLVolume volume);
+    size_t vklGetHitIteratorSize(VKLSampler sampler);
 
-    size_t vklGetHitIteratorSize4(VKLVolume volume);
+    size_t vklGetHitIteratorSize4(VKLSampler sampler);
 
-    size_t vklGetHitIteratorSize8(VKLVolume volume);
+    size_t vklGetHitIteratorSize8(VKLSampler sampler);
 
-    size_t vklGetHitIteratorSize16(VKLVolume volume);
+    size_t vklGetHitIteratorSize16(VKLSampler sampler);
 
 Open VKL also provides the macro `VKL_MAX_HIT_ITERATOR_SIZE` as a conservative
 estimate.
@@ -1329,19 +1329,18 @@ alternative we recommend stack allocated buffers.
 
 In C99, variable length arrays provide an easy way to achieve this:
 
-    const size_t bufferSize = vklGetIntervalIteratorSize(volume);
+    const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
     char buffer[bufferSize];
 
 Note that the call to `vklGetIntervalIteratorSize` or `vklGetHitIteratorSize`
 should not appear in an inner loop as it is relatively costly. The return value
-depends only on the volume type and target architecture, and `volume` does not
-actually have to be committed.
+depends on the volume type, target architecture, and parameters to `sampler`.
 
 In C++, variable length arrays are not part of the standard. Here, users may
 rely on `alloca` and similar functions:
 
     #include <alloca.h>
-    const size_t bufferSize = vklGetIntervalIteratorSize(volume);
+    const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
     char *buffer = alloca(bufferSize);
 
 Users should understand the implications of `alloca`. In particular,

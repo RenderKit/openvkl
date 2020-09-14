@@ -5,6 +5,7 @@ Version History
 
 -   Observers can now be created for both `VKLVolume` and `VKLSampler` objects.
 -   `LeafNodeAccess` observers must now be created on sampler objects.
+-   Iterator APIs now work on sampler objects rather than volumes.
 
 ### Open VKL 0.10.0 (alpha)
 

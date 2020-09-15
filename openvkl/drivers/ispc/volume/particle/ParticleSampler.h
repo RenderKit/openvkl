@@ -8,14 +8,20 @@
 #include "../../sampler/Sampler.h"
 #include "ParticleVolume.h"
 #include "ParticleVolume_ispc.h"
-#include "Volume_ispc.h"
 #include "Sampler_ispc.h"
+#include "Volume_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct ParticleSampler : public SamplerBase<W, ParticleVolume>
+    using ParticleSamplerBase = SamplerBase<W,
+                                            ParticleVolume,
+                                            UnstructuredIntervalIteratorFactory,
+                                            UnstructuredHitIteratorFactory>;
+
+    template <int W>
+    struct ParticleSampler : public ParticleSamplerBase<W>
     {
       ParticleSampler(ParticleVolume<W> *volume);
       ~ParticleSampler();
@@ -42,29 +48,19 @@ namespace openvkl {
                             vvec3fn<1> *gradients,
                             unsigned int attributeIndex) const override final;
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final;
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final;
-
      protected:
       using Sampler<W>::ispcEquivalent;
-      using SamplerBase<W, ParticleVolume>::volume;
-
-     private:
-        UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
-        UnstructuredHitIteratorFactory<W> hitIteratorFactory;
+      using ParticleSamplerBase<W>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
     inline ParticleSampler<W>::ParticleSampler(ParticleVolume<W> *volume)
-        : SamplerBase<W, ParticleVolume>(*volume)
+        : ParticleSamplerBase<W>(*volume)
     {
       assert(volume);
-      ispcEquivalent = CALL_ISPC(VKLParticleSampler_Constructor, 
+      ispcEquivalent = CALL_ISPC(VKLParticleSampler_Constructor,
                                  volume->getISPCEquivalent());
     }
 
@@ -133,20 +129,6 @@ namespace openvkl {
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);
-    }
-
-    template <int W>
-    inline const IteratorFactory<W, IntervalIterator>
-        &ParticleSampler<W>::getIntervalIteratorFactory() const
-    {
-      return intervalIteratorFactory;
-    }
-
-    template <int W>
-    inline const IteratorFactory<W, HitIterator>
-        &ParticleSampler<W>::getHitIteratorFactory() const
-    {
-      return hitIteratorFactory;
     }
 
   }  // namespace ispc_driver

@@ -15,6 +15,8 @@ namespace openvkl {
       std::string toString() const override;
 
       void commit() override;
+
+      Sampler<W> *newSampler() override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

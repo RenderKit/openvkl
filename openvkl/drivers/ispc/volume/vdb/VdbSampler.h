@@ -15,7 +15,13 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct VdbSampler : public SamplerBase<W, VdbVolume>
+    using VdbSamplerBase = SamplerBase<W,
+                                       VdbVolume,
+                                       VdbIntervalIteratorFactory,
+                                       VdbHitIteratorFactory>;
+
+    template <int W>
+    struct VdbSampler : public VdbSamplerBase<W>
     {
       explicit VdbSampler(VdbVolume<W> &volume);
       ~VdbSampler() override;
@@ -53,34 +59,12 @@ namespace openvkl {
         return leafAccessObservers;
       }
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final;
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final;
-
      private:
       using Sampler<W>::ispcEquivalent;
-      using SamplerBase<W, VdbVolume>::volume;
+      using VdbSamplerBase<W>::volume;
 
       ObserverRegistry<W> leafAccessObservers;
-      VdbIntervalIteratorFactory<W> intervalIteratorFactory;
-      VdbHitIteratorFactory<W> hitIteratorFactory;
     };
-
-    template <int W>
-    const IteratorFactory<W, IntervalIterator>
-        &VdbSampler<W>::getIntervalIteratorFactory() const
-    {
-      return intervalIteratorFactory;
-    }
-
-    template <int W>
-    const IteratorFactory<W, HitIterator>
-        &VdbSampler<W>::getHitIteratorFactory() const
-    {
-      return hitIteratorFactory;
-    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

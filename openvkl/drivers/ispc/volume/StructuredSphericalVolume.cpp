@@ -3,9 +3,16 @@
 
 #include "StructuredSphericalVolume.h"
 #include "../common/export_util.h"
+#include "StructuredSampler.h"
 
 namespace openvkl {
   namespace ispc_driver {
+
+    template <int W>
+    Sampler<W> *StructuredSphericalVolume<W>::newSampler()
+    {
+      return new StructuredSphericalSampler<W>(this);
+    }
 
     template <int W>
     void StructuredSphericalVolume<W>::commit()

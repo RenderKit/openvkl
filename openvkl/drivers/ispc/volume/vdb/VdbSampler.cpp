@@ -11,7 +11,7 @@ namespace openvkl {
 
     template <int W>
     VdbSampler<W>::VdbSampler(VdbVolume<W> &volume)
-        : SamplerBase<W, VdbVolume>(volume)
+        : VdbSamplerBase<W>(volume)
     {
       ispcEquivalent = CALL_ISPC(VdbSampler_create,
                                  volume.getISPCEquivalent(),

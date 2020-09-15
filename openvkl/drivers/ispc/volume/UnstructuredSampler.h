@@ -15,7 +15,14 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct UnstructuredSampler : public SamplerBase<W, UnstructuredVolume>
+    using UnstructuredSamplerBase = SamplerBase<W,
+                             UnstructuredVolume,
+                             UnstructuredIntervalIteratorFactory,
+                             UnstructuredHitIteratorFactory>;
+
+    template <int W>
+    struct UnstructuredSampler
+        : public UnstructuredSamplerBase<W>
     {
       UnstructuredSampler(UnstructuredVolume<W> *volume);
       ~UnstructuredSampler() override;
@@ -42,17 +49,9 @@ namespace openvkl {
                             vvec3fn<1> *gradients,
                             unsigned int attributeIndex) const override final;
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final;
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final;
-
      protected:
       using Sampler<W>::ispcEquivalent;
-      using SamplerBase<W, UnstructuredVolume>::volume;
-      UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
-      UnstructuredHitIteratorFactory<W> hitIteratorFactory;
+      using UnstructuredSamplerBase<W>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -60,7 +59,7 @@ namespace openvkl {
     template <int W>
     inline UnstructuredSampler<W>::UnstructuredSampler(
         UnstructuredVolume<W> *volume)
-        : SamplerBase<W, UnstructuredVolume>(*volume)
+        : UnstructuredSamplerBase<W>(*volume)
     {
       assert(volume);
       ispcEquivalent = CALL_ISPC(VKLUnstructuredSampler_Constructor,
@@ -132,20 +131,6 @@ namespace openvkl {
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);
-    }
-
-    template <int W>
-    inline const IteratorFactory<W, IntervalIterator>
-        &UnstructuredSampler<W>::getIntervalIteratorFactory() const
-    {
-      return intervalIteratorFactory;
-    }
-
-    template <int W>
-    inline const IteratorFactory<W, HitIterator>
-        &UnstructuredSampler<W>::getHitIteratorFactory() const
-    {
-      return hitIteratorFactory;
     }
 
   }  // namespace ispc_driver

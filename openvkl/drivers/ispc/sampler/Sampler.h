@@ -21,11 +21,11 @@ namespace openvkl {
     template <int W>
     struct Sampler : public ManagedObject
     {
-      Sampler() = default;
+      Sampler()           = default;
       Sampler(Sampler &&) = delete;
-      Sampler& operator=(Sampler &&) = delete;
-      Sampler(const Sampler &) = delete;
-      Sampler& operator=(const Sampler &) = delete;
+      Sampler &operator=(Sampler &&) = delete;
+      Sampler(const Sampler &)       = delete;
+      Sampler &operator=(const Sampler &) = delete;
 
       virtual ~Sampler();
 
@@ -178,49 +178,53 @@ namespace openvkl {
     // It takes care of keeping a reference to the volume, and provides
     // sensible default implementation where possible.
 
-    template <int W, template <int> class VolumeT>
+    template <int W,
+              template <int>
+              class VolumeT,
+              template <int>
+              class IntervalIteratorFactory,
+              template <int>
+              class HitIteratorFactory>
     struct SamplerBase : public Sampler<W>
     {
-      explicit SamplerBase(VolumeT<W> &volume);
+      explicit SamplerBase(VolumeT<W> &volume) : volume(&volume) {}
 
-      VolumeT<W> &getVolume() override;
-      const VolumeT<W> &getVolume() const override;
+      VolumeT<W> &getVolume() override
+      {
+        return *volume;
+      }
 
-      Observer<W> *newObserver(const char *type) override;
+      const VolumeT<W> &getVolume() const override
+      {
+        return *volume;
+      }
+
+      Observer<W> *newObserver(const char *type) override
+      {
+        /*
+         * This is a place to provide potential default observers that
+         * work for *all* samplers, if we ever find such a thing.
+         */
+        return nullptr;
+      }
+
+      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
+          const override final
+      {
+        return intervalIteratorFactory;
+      }
+
+      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
+          const override final
+      {
+        return hitIteratorFactory;
+      }
 
      protected:
       Ref<VolumeT<W>> volume;
+      IntervalIteratorFactory<W> intervalIteratorFactory;
+      HitIteratorFactory<W> hitIteratorFactory;
     };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    template <int W, template <int> class VolumeT>
-    inline SamplerBase<W, VolumeT>::SamplerBase(VolumeT<W> &volume)
-        : volume(&volume)
-    {
-    }
-
-    template <int W, template <int> class VolumeT>
-    inline VolumeT<W> &SamplerBase<W, VolumeT>::getVolume()
-    {
-      return *volume;
-    }
-
-    template <int W, template <int> class VolumeT>
-    inline const VolumeT<W> &SamplerBase<W, VolumeT>::getVolume() const
-    {
-      return *volume;
-    }
-
-    template <int W, template <int> class VolumeT>
-    inline Observer<W> *SamplerBase<W, VolumeT>::newObserver(const char *type)
-    {
-      /*
-       * This is a place to provide potential default observers that
-       * work for *all* samplers, if we ever find such a thing.
-       */
-      return nullptr;
-    }
 
   }  // namespace ispc_driver
 }  // namespace openvkl

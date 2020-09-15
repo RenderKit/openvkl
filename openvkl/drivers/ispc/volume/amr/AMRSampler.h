@@ -9,25 +9,31 @@
 #include "../../sampler/Sampler.h"
 #include "AMRVolume.h"
 #include "AMRVolume_ispc.h"
-#include "Volume_ispc.h"
 #include "Sampler_ispc.h"
+#include "Volume_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    using AmrIntervalIteratorFactory =
+    using AMRIntervalIteratorFactory =
         ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
 
     template <int W>
-    using AmrHitIterator = DefaultHitIterator<W, DefaultIntervalIterator<W>>;
+    using AMRHitIterator = DefaultHitIterator<W, DefaultIntervalIterator<W>>;
 
     template <int W>
-    using AmrHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, AmrHitIterator>;
+    using AMRHitIteratorFactory =
+        ConcreteIteratorFactory<W, HitIterator, AMRHitIterator>;
 
     template <int W>
-    struct AMRSampler : public SamplerBase<W, AMRVolume>
+    using AMRSamplerBase = SamplerBase<W,
+                                       AMRVolume,
+                                       AMRIntervalIteratorFactory,
+                                       AMRHitIteratorFactory>;
+
+    template <int W>
+    struct AMRSampler : public AMRSamplerBase<W>
     {
       AMRSampler(AMRVolume<W> *volume);
       ~AMRSampler() override;
@@ -54,28 +60,20 @@ namespace openvkl {
                             vvec3fn<1> *gradients,
                             unsigned int attributeIndex) const override final;
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final;
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final;
-
      protected:
       using Sampler<W>::ispcEquivalent;
-      using SamplerBase<W, AMRVolume>::volume;
-
-      AmrIntervalIteratorFactory<W> intervalIteratorFactory;
-      AmrHitIteratorFactory<W> hitIteratorFactory;
+      using AMRSamplerBase<W>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
     inline AMRSampler<W>::AMRSampler(AMRVolume<W> *volume)
-        : SamplerBase<W, AMRVolume>(*volume)
+        : AMRSamplerBase<W>(*volume)
     {
       assert(volume);
-      ispcEquivalent = CALL_ISPC(AMRSampler_create, volume->getISPCEquivalent());
+      ispcEquivalent =
+          CALL_ISPC(AMRSampler_create, volume->getISPCEquivalent());
     }
 
     template <int W>
@@ -143,20 +141,6 @@ namespace openvkl {
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);
-    }
-
-    template <int W>
-    inline const IteratorFactory<W, IntervalIterator>
-        &AMRSampler<W>::getIntervalIteratorFactory() const
-    {
-      return intervalIteratorFactory;
-    }
-
-    template <int W>
-    inline const IteratorFactory<W, HitIterator>
-        &AMRSampler<W>::getHitIteratorFactory() const
-    {
-      return hitIteratorFactory;
     }
 
   }  // namespace ispc_driver

@@ -340,16 +340,23 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
-  assert(sampler->interpolate_uniform);
 
   const vec3f *uniform objectCoordinates =
       (const vec3f *uniform)_objectCoordinates;
-  float *uniform samples = (float *uniform)_samples;
+  float *uniform sample = (float *uniform)_samples;
 
   const uniform vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-  *samples = sampler->interpolate_uniform(sampler, indexCoordinates);
+  switch (sampler->super.filter)
+  {
+    case VKL_FILTER_TRILINEAR:
+      *sample = VdbSampler_interpolateTrilinear_uniform(sampler, indexCoordinates);
+      break;
+    default:
+      *sample = VdbSampler_interpolateNearest_uniform(sampler, indexCoordinates);
+      break;
+  }
 }
 
 export void EXPORT_UNIQUE(VdbSampler_computeSample,
@@ -362,7 +369,6 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
     const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
-    assert(sampler->interpolate_varying);
 
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
@@ -371,7 +377,15 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-    *samples = sampler->interpolate_varying(sampler, indexCoordinates);
+    switch (sampler->super.filter)
+    {
+      case VKL_FILTER_TRILINEAR:
+        *samples = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
+        break;
+      default:
+        *samples = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
+        break;
+    }
   }
 }
 
@@ -384,13 +398,20 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
-  assert(sampler->interpolate_varying);
 
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
-    samples[i] = sampler->interpolate_varying(sampler, indexCoordinates);
+    switch (sampler->super.filter)
+    {
+      case VKL_FILTER_TRILINEAR:
+        samples[i] = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
+        break;
+      default:
+        samples[i] = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
+        break;
+    }
   }
 }
 
@@ -404,7 +425,6 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
     const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
-    assert(sampler->computeGradient_varying);
 
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
@@ -412,8 +432,17 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
         (const varying vec3f *uniform)_objectCoordinates;
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
-    const vec3f gradient =
-        sampler->computeGradient_varying(sampler, indexCoordinates);
+
+    vec3f gradient;
+    switch (sampler->super.gradientFilter)
+    {
+      case VKL_FILTER_TRILINEAR:
+        gradient = VdbSampler_computeGradientTrilinear(sampler, indexCoordinates);
+        break;
+      default:
+        gradient = VdbSampler_computeGradientNearest(sampler, indexCoordinates);
+        break;
+    }
 
     // Note: xfmNormal takes inverse!
     *gradients = xfmNormal(sampler->grid->objectToIndex, gradient);
@@ -429,14 +458,21 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
-  assert(sampler->computeGradient_varying);
 
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
-    const vec3f gradient =
-        sampler->computeGradient_varying(sampler, indexCoordinates);
+    vec3f gradient;
+    switch (sampler->super.gradientFilter)
+    {
+      case VKL_FILTER_TRILINEAR:
+        gradient = VdbSampler_computeGradientTrilinear(sampler, indexCoordinates);
+        break;
+      default:
+        gradient = VdbSampler_computeGradientNearest(sampler, indexCoordinates);
+        break;
+    }
 
     // Note: xfmNormal takes inverse!
     gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
@@ -457,8 +493,18 @@ inline float VdbSampler_iterator_computeSample_varying(
   const vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, objectCoordinates);
 
-  assert(sampler->interpolate_varying);
-  return sampler->interpolate_varying(sampler, indexCoordinates);
+  float sample = 0.f;
+  switch (sampler->super.filter)
+  {
+    case VKL_FILTER_TRILINEAR:
+      sample = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
+      break;
+    default:
+      sample = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
+      break;
+  }
+
+  return sample;
 }
 
 // -----------------------------------------------------------------------------
@@ -497,26 +543,6 @@ export void EXPORT_UNIQUE(VdbSampler_set,
       VdbSampler_iterator_computeSample_varying;
 
   sampler->maxSamplingDepth = maxSamplingDepth;
-
-  switch (filter) {
-  case VKL_FILTER_NEAREST:
-    sampler->interpolate_uniform = VdbSampler_interpolateNearest_uniform;
-    sampler->interpolate_varying = VdbSampler_interpolateNearest_varying;
-    break;
-  case VKL_FILTER_TRILINEAR:
-    sampler->interpolate_uniform = VdbSampler_interpolateTrilinear_uniform;
-    sampler->interpolate_varying = VdbSampler_interpolateTrilinear_varying;
-    break;
-  }
-
-  switch (gradientFilter) {
-  case VKL_FILTER_NEAREST:
-    sampler->computeGradient_varying = VdbSampler_computeGradientNearest;
-    break;
-  case VKL_FILTER_TRILINEAR:
-    sampler->computeGradient_varying = VdbSampler_computeGradientTrilinear;
-    break;
-  }
 }
 
 export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler)

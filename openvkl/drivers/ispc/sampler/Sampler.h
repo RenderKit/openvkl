@@ -172,6 +172,12 @@ namespace openvkl {
       }
     }
 
+    template <int W>
+    void *Sampler<W>::getISPCEquivalent() const
+    {
+      return ispcEquivalent;
+    }
+
     ///////////////////////////////////////////////////////////////////////////
 
     // SamplerBase is the base class for all concrete sampler types.

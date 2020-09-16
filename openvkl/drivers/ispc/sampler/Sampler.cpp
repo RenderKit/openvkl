@@ -19,12 +19,6 @@ namespace openvkl {
       return nullptr;
     }
 
-    template <int W>
-    void *Sampler<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
-    }
-
     template struct Sampler<VKL_TARGET_WIDTH>;
 
   }  // namespace ispc_driver

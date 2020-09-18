@@ -3,162 +3,28 @@
 
 #include "VdbGrid.h"
 #include "VdbIterator.ih"
+#include "VdbSampler.ih"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
 #include "math/math.ih"
+#include "openvkl_vdb/VdbQueryVoxel_0.ih"
 
 export void EXPORT_UNIQUE(VdbIterator_export,
                           uniform box1f &dummy_box1f,
-                          const DdaSegmentState *uniform ddaSegmentState,
-                          const DdaLevelState *uniform ddaLevelState,
                           const varying VdbIterator *uniform it)
 {
 }
 
-inline void VdbIterator_iterateIntervalInternal(
-                          const int *uniform imask,
-                          void *uniform _self,
-                          void *uniform _interval,
-                          const uniform box1f &inputValueRange,
-                          uniform int *uniform _result)
-{
-  if (!imask[programIndex]) {
-    return;
-  }
-
-  varying VdbIterator *uniform self  = (varying VdbIterator * uniform) _self;
-  varying Interval *uniform interval = (varying Interval * uniform) _interval;
-  varying int *uniform result        = (varying int *uniform)_result;
-  const VdbGrid *uniform grid        = self->grid;
-
-  interval->valueRange.lower             = inf;
-  interval->valueRange.upper             = neg_inf;
-  const varying DdaRayState &ddaRayState = self->ddaRayState;
-
-  *result   = false;
-  bool done = false;
-  int iter  = 0;
-  while (!done) {
-    foreach_unique(currentLevel in self->currentLevel)
-    {
-      ++iter;
-      assert(currentLevel < VDB_ITERATOR_MAX_LEVELS);
-      varying DdaLevelState &ddaLevelState = self->ddaLevelState[currentLevel];
-      varying DdaSegmentState &ddaSegmentState =
-          self->ddaSegmentState[currentLevel];
-
-      if (!ddaStateHasExited(ddaSegmentState)) {
-        if (ddaStateInBounds(ddaSegmentState)) {
-          const uint64 vidx = vklVdbDomainOffsetToLinear(currentLevel,
-                                                         ddaSegmentState.idx.x,
-                                                         ddaSegmentState.idx.y,
-                                                         ddaSegmentState.idx.z);
-          assert(vidx < vklVdbLevelNumVoxels(currentLevel));
-
-          const varying uint64 nodeVoxelOffset =
-              self->nodeIndex[currentLevel] *
-              vklVdbLevelNumVoxels(currentLevel);
-          const varying uint64 voxelOffset = nodeVoxelOffset + vidx;
-          assert(voxelOffset < ((varying uint64)1) << 32);
-
-          const varying uint32 vo32 = ((varying uint32)voxelOffset);
-          const varying uint64 voxelValue =
-              grid->levels[currentLevel].voxels[vo32];
-          const varying range1f valueRange =
-              grid->levels[currentLevel].valueRange[vo32];
-
-          if ((!overlaps1f(inputValueRange, valueRange)) ||
-              vklVdbVoxelIsEmpty(voxelValue)) {
-            ddaStep(self->ddaRayState,
-                    self->ddaLevelState[currentLevel],
-                    self->ddaSegmentState[currentLevel]);
-          } else {
-            // We count inner nodes that we cannot expand as leaves.
-            const bool isTile = vklVdbVoxelIsTile(voxelValue);
-            const bool isLeaf = vklVdbVoxelIsLeafPtr(voxelValue) ||
-                                (vklVdbVoxelIsChildPtr(voxelValue) &&
-                                 (currentLevel + 1) >= self->numLevels);
-            const bool isInner = !isLeaf && vklVdbVoxelIsChildPtr(voxelValue);
-
-            if (isTile || isLeaf) {
-              interval->valueRange    = valueRange;
-              interval->tRange.lower  = ddaSegmentState.t;
-              interval->tRange.upper  = reduce_min(ddaSegmentState.tNext);
-              interval->nominalDeltaT = self->nominalDeltaT;
-
-              *result = true;
-              done    = true;
-
-              ddaStep(self->ddaRayState,
-                      self->ddaLevelState[currentLevel],
-                      self->ddaSegmentState[currentLevel]);
-            }
-
-            else {
-              assert(isInner);
-              ++self->currentLevel;
-              self->nodeIndex[currentLevel + 1] =
-                  vklVdbVoxelChildGetIndex(voxelValue);
-              ddaInitSegment(self->ddaRayState,
-                             self->ddaLevelState[currentLevel + 1],
-                             ddaSegmentState.idx,
-                             self->ddaSegmentState[currentLevel + 1]);
-              // Do not step in this case - ddaInit initializes to the first
-              // valid interval already.
-            }
-          }
-        } else  // ddaStateInBounds
-        {
-          // This happens mostly at the end of iteration: incremental
-          // computation of t may result in values slightly less than tMax, so
-          // we end up inside the t range, but outside our domain.
-          ddaStep(self->ddaRayState,
-                  self->ddaLevelState[currentLevel],
-                  self->ddaSegmentState[currentLevel]);
-        }
-      } else  // !ddaStateHasExited -- we are out of bounds on the current
-              // level.
-      {
-        if (currentLevel ==
-            0)  // There is no parent level. We have left the volume.
-        {
-          done = true;
-        } else  // There is a parent level. Go up.
-        {
-          --self->currentLevel;
-          ddaStep(self->ddaRayState,
-                  self->ddaLevelState[currentLevel - 1],
-                  self->ddaSegmentState[currentLevel - 1]);
-        }
-      }
-    }  // foreach_unique(currentLevel in self->currentLevel)
-  }
-
-  assert(done);
-}
-
-export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
-                          const int *uniform imask,
-                          void *uniform _self,
-                          void *uniform _interval,
-                          uniform int *uniform _result)
-{
-  varying VdbIterator *uniform self  = (varying VdbIterator * uniform) _self;
-  uniform box1f valueRange;
-  if (self->valueSelector)
-    valueRange = self->valueSelector->rangesMinMax;
-  else {
-    valueRange.lower = -inf;
-    valueRange.upper = inf;
-  }
-  VdbIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRange, _result);
-}
+void VdbIterator_iterateIntervalInternal(const int *uniform imask,
+                                         void *uniform _self,
+                                         void *uniform _interval,
+                                         const uniform box1f &inputValueRange,
+                                         uniform int *uniform _result);
 
 export void EXPORT_UNIQUE(VdbIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          const void *uniform _grid,
+                          const void *uniform _sampler,
                           void *uniform _originObject,
                           void *uniform _directionObject,
                           void *uniform _tRangeWorld,
@@ -168,47 +34,155 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
     return;
   }
 
+  const uniform VdbSampler *uniform sampler =
+      (const uniform VdbSampler *uniform)_sampler;
+  const uniform VdbGrid *uniform grid = sampler->grid;
+
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
+  self->grid                        = grid;
+  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
+
+  // Initialize for hit iteration.
   self->iterateInterval = VdbIterator_iterateIntervalInternal;
 
-  const uniform VdbGrid *uniform grid = (const uniform VdbGrid *uniform)_grid;
   const vec3f origin    = *((const varying vec3f *uniform)_originObject);
   const vec3f direction = *((const varying vec3f *uniform)_directionObject);
-  const box1f tRange    = *((const varying box1f *uniform)_tRangeWorld);
-
-  // Always initialize the root level iterator!
-  self->grid          = grid;
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-  self->numLevels = clamp(grid->maxIteratorDepth, 0, VDB_ITERATOR_MAX_LEVELS);
+  box1f tRange          = *((const varying box1f *uniform)_tRangeWorld);
 
   // Transform the ray to index space where leaf level voxels have
   // size (1,1,1) and the root is at (0,0,0).
   const vec3f rootOffset =
       make_vec3f(grid->rootOrigin.x, grid->rootOrigin.y, grid->rootOrigin.z);
-  ddaInitRay(xfmPoint(grid->objectToIndex, origin) - rootOffset,
-             xfmVector(grid->objectToIndex, direction),
-             tRange,
-             self->ddaRayState);
+  const vec3f rayOrg = xfmPoint(grid->objectToIndex, origin) - rootOffset;
+  const vec3f rayDir = xfmVector(grid->objectToIndex, direction);
 
   // This is an estimate of how far apart voxels are along the ray in object
   // space. We are basically measuring here how much the volume is scaled along
   // the ray, and voxels in index space have size 1.
-  self->nominalDeltaT = length(direction) / length(self->ddaRayState.rayDir);
+  self->nominalDeltaT = length(direction) / length(rayDir);
 
-  for (uniform size_t i = 0; i < self->numLevels; ++i) {
-    ddaInitLevel(self->ddaRayState,
-                 vklVdbLevelTotalLogRes(i + 1),
-                 vklVdbLevelTotalLogRes(i),
-                 self->ddaLevelState[i]);
+  // Clip on active region.
+  float tEnter = pos_inf;
+  float tExit  = neg_inf;
+
+  assert(sampler->super.filter == VKL_FILTER_NEAREST ||
+         sampler->super.filter == VKL_FILTER_TRILINEAR);
+  const float filterSize =
+      (sampler->super.filter == VKL_FILTER_NEAREST) ? 0.f : 1.f;
+
+  intersect_box(
+      rayOrg,
+      safe_rcp(rayDir),
+      ((varying vec3f)make_vec3f(-filterSize, -filterSize, -filterSize)),
+      ((varying vec3f)make_vec3f(grid->activeSize.x + filterSize,
+                                 grid->activeSize.y + filterSize,
+                                 grid->activeSize.z + filterSize)),
+      tEnter,
+      tExit);
+
+  float tMin = tRange.lower;
+  if (tEnter > tExit) {
+    tMin       = 0;
+    self->tMax = neg_inf;
+  } else {
+    tMin       = max(tRange.lower, tEnter * 0.999f);
+    self->tMax = min(tRange.upper, tExit * 1.001f);
   }
 
-  // Initialize the root node segment so that we are ready to go.
-  const varying vec3i rootNodeOffset = make_vec3i(0, 0, 0);
-  self->currentLevel                 = 0;
-  self->nodeIndex[0]                 = 0;
-  ddaInitSegment(self->ddaRayState,
-                 self->ddaLevelState[0],
-                 rootNodeOffset,
-                 self->ddaSegmentState[0]);
+  ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
 }
 
+inline void skipVoxel(const VdbVoxelDescriptor &voxel, DdaState &dda)
+{
+  const int32 logCellRes = vklVdbLevelTotalLogRes(voxel.level + 1);
+  const int32 cellRes    = (1 << logCellRes);
+  int32 px = dda.idx[0];
+  int32 py = dda.idx[1];
+  int32 pz = dda.idx[2];
+  clampOffsetToCellVarying(px, py, pz, cellRes);
+  bool inCell = true;
+  do
+  {
+    ddaStep(dda);
+    inCell = (dda.idx[0] >= px)
+          && (dda.idx[0] < (px+cellRes))
+          && (dda.idx[1] >= py)
+          && (dda.idx[1] < (py+cellRes))
+          && (dda.idx[2] >= pz)
+          && (dda.idx[2] < (pz+cellRes));
+  } while (inCell);
+}
+
+inline void VdbIterator_iterateIntervalInternal(
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &inputValueRange,
+    uniform int *uniform _result)
+{
+  if (!imask[programIndex]) {
+    return;
+  }
+
+  varying int *uniform result = (varying int *uniform)_result;
+  *result                     = false;
+
+  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
+  if (!(self->dda.t <= self->tMax)) {
+    return;
+  }
+
+  VdbVoxelDescriptor voxel;
+  while (self->dda.t <= self->tMax) {
+    uint32 exitDepth = 0;
+    VdbIterator_queryVoxel(self->grid,
+                           self->dda.idx[0],
+                           self->dda.idx[1],
+                           self->dda.idx[2],
+                           self->dda.level,
+                           ((const uniform range1f &)inputValueRange),
+                           voxel);
+    if (!voxel.isEmpty)
+      break;
+
+    skipVoxel(voxel, self->dda);
+  }
+
+  if (self->dda.t <= self->tMax) {
+    varying Interval *uniform interval = (varying Interval * uniform) _interval;
+    interval->valueRange               = voxel.valueRange;
+    interval->tRange.lower             = self->dda.t;
+
+    // Move on to the next voxel to fulfill invariant.
+    skipVoxel(voxel, self->dda);
+
+    interval->tRange.upper  = min(self->dda.t, self->tMax);
+    interval->nominalDeltaT = self->nominalDeltaT;
+
+    *result = true;
+  }
+}
+
+export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
+                          const int *uniform imask,
+                          void *uniform _self,
+                          void *uniform _interval,
+                          uniform int *uniform _result)
+{
+  if (!imask[programIndex]) {
+    return;
+  }
+
+  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
+
+  uniform box1f valueRange;
+  if (self->valueSelector)
+    valueRange = self->valueSelector->rangesMinMax;
+  else {
+    valueRange.lower = -inf;
+    valueRange.upper = inf;
+  }
+
+  VdbIterator_iterateIntervalInternal(
+      imask, _self, _interval, valueRange, _result);
+}

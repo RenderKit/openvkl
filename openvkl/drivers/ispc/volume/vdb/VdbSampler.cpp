@@ -42,11 +42,15 @@ namespace openvkl {
       const uint32_t maxSamplingDepth = this->template getParam<int>(
           "maxSamplingDepth", volume->getMaxSamplingDepth());
 
+      const uint32_t maxIteratorDepth = this->template getParam<int>(
+          "maxIteratorDepth", volume->getMaxIteratorDepth());
+
       CALL_ISPC(VdbSampler_set,
                 ispcEquivalent,
                 (ispc::VKLFilter)filter,
                 (ispc::VKLFilter)gradientFilter,
-                maxSamplingDepth);
+                maxSamplingDepth,
+                maxIteratorDepth);
     }
 
     template <int W>

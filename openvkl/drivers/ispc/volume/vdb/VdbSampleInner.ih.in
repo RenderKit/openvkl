@@ -6,7 +6,7 @@
 // ---------------------------------------------------------------------------
 // Sample inner nodes.
 //
-// Note: We generate files VdbSampleInner_<level>.ih from this 
+// Note: We generate files VdbSampleInner_<univary>_<level>.ih from this 
 //       template using CMake.
 // ---------------------------------------------------------------------------
 

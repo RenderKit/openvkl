@@ -95,6 +95,10 @@ namespace openvkl {
         return maxSamplingDepth;
       }
 
+      uint32_t getMaxIteratorDepth() const {
+        return maxIteratorDepth;
+      }
+
      private:
       void cleanup();
 
@@ -110,6 +114,7 @@ namespace openvkl {
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
       uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
+      uint32_t maxIteratorDepth{VKL_VDB_NUM_LEVELS - 2};
     };
 
   }  // namespace ispc_driver

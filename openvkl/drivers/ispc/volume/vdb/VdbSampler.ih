@@ -13,4 +13,5 @@ struct VdbSampler
   const VdbGrid *uniform grid;
   const void *uniform leafAccessObservers;
   vkl_uint32 maxSamplingDepth;
+  vkl_uint32 maxIteratorDepth;
 };

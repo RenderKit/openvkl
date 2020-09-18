@@ -6,123 +6,201 @@
 #include "math/box.ih"
 #include "math/math.ih"
 #include "math/vec.ih"
+#include "openvkl/vdb.h"
 
-/*
- * DDA state that is constant for any
- * given traversal ray, and independent of the level.
- * Must be initialized once before iteration using
- * ddaInitRay().
- */
-struct DdaRayState
+struct DdaState
 {
-  box1f tRange;     // The range on which the ray is valid.
-  vec3f rayOrigin;  // The ray origin.
-  vec3f rayDir;     // The ray direction, must not have length 0.
-  vec3f iDir;       // 1/rayDir
-  vec3i dirSign;    // +1, 0, or -1 depending on the sign of rayDir.
+  // The level at which we iterate.
+  uniform uint32 level;
+
+  // The current ray parameter.
+  float t;
+
+  // The current index. This is always a value modulo the cell size
+  // on the current level.
+  int32 idx[3];
+
+  float tNext[3];
+  float tDelta[3];
+  int32 idxDelta[3];
 };
 
-/*
- * HDDA state that is constant for a ray, but varies
- * for each level of a hierarchy.
- * Must be initialized for each level in the hierarchy
- * using ddaInitLevel().
- */
-struct DdaLevelState
-{
-  int domainRes;  // Nodes on this level cover this many domain voxels.
-  int cellRes;  // Cells in a node on this level cover this many domain voxels.
-  vec3i idxDelta;  // In each step, advance this many domain voxels.
-  vec3f tDelta;    // Distance, along the ray, between two cell hyperplanes.
-};
+// -----------------------------------------------------------------------------
+// Utilities.
+// -----------------------------------------------------------------------------
 
 /*
- * HDDA state that varies for each iteration segment.
- * This must be initialized using ddaInitSegment() upon
- * entering a new level in the hierarchy.
+ * Returns -1 for negative v, 0 for 0, and 1 for positive v.
  */
-struct DdaSegmentState
+inline int safe_sign(float v)
 {
-  float t;            // The current ray parameter t.
-  float tMax;         // The maximum ray parameter t.
-  vec3f tNext;        // The next ray parameter t, for each dimension.
-  vec3i idx;          // The current index.
-  vec3i domainBegin;  // The first voxel on which this segment is valid.
-  vec3i domainEnd;  // One after the last voxel on which this segment is valid.
-};
+  return ((int)(0 < v)) - ((int)(v < 0));
+}
 
-/*
- * Determine if the state has exited the domain.
- */
-inline bool ddaStateHasExited(const DdaSegmentState &segmentState)
+inline vec3i safe_sign(const vec3f &v)
 {
-  return (segmentState.t > segmentState.tMax);
+  return make_vec3i(safe_sign(v.x), safe_sign(v.y), safe_sign(v.z));
 }
 
 /*
- * Determine if the state is currently in bounds, pointing to a valid index.
+ * Compute 1/v, returning infinity for 0.
  */
-inline bool ddaStateInBounds(const DdaSegmentState &segmentState)
+inline float safe_rcp(float v)
 {
-  return (segmentState.idx.x >= segmentState.domainBegin.x) &&
-         (segmentState.idx.y >= segmentState.domainBegin.y) &&
-         (segmentState.idx.z >= segmentState.domainBegin.z) &&
-         (segmentState.idx.x < segmentState.domainEnd.x) &&
-         (segmentState.idx.y < segmentState.domainEnd.y) &&
-         (segmentState.idx.z < segmentState.domainEnd.z);
+  return (v == -0) ? -inf : (v == 0) ? inf : rcp(v);
+}
+
+inline vec3f safe_rcp(const vec3f &v)
+{
+  return make_vec3f(safe_rcp(v.x), safe_rcp(v.y), safe_rcp(v.z));
 }
 
 /*
- * Initialize the DDA state.
- * This function assumes that the grid is axis-aligned.
- * Direction may be non-unit length.
- * Note: ddaInit, and ddaStep, may produce indices that are out of bounds.
- *       Use ddaStateInBounds() to check that.
+ * Intersect a set of three axis-aligned hyperplanes.
  */
-void ddaInitRay(const vec3f &rayOrg,  // The ray, in index space -- leaf level
-                                      // cells are size (1,1,1), and
-                const vec3f &rayDir,  // the grid has origin (0,0,0).
-                const box1f &tRange,  // The range on which ray is valid.
-                DdaRayState &rayState);
+inline vec3f intersect_planes(const vec3f &rayOrg,
+                              const vec3f &rayInvDir,
+                              const vec3f &planes)
+{
+  const float tx = (planes.x - rayOrg.x) * rayInvDir.x;
+  const float ty = (planes.y - rayOrg.y) * rayInvDir.y;
+  const float tz = (planes.z - rayOrg.z) * rayInvDir.z;
 
-void ddaInitLevel(
-    const DdaRayState &rayState,
-    uniform unsigned int logCellRes,    // A single cell in the domain spans
-                                        // (1<<logCellRes) voxels.
-    uniform unsigned int logDomainRes,  // The full iteration domain spans
-                                        // (1<<logDomainRes) voxels.
-    DdaLevelState &levelState);
-
-void ddaInitSegment(
-    const DdaRayState &rayState,
-    const DdaLevelState &levelState,
-    const vec3i &cellOffset,  // The iteration cell starts at this offset.
-    DdaSegmentState &segmentState);
+  // NaN will occur if the ray starts on a plane (planes-rayOrg == 0) but
+  // is also fully contained in this plane (rayDir == 0 -> rayInvDir == inf).
+  // We want to ignore such intersections.
+  return make_vec3f(select(isnan(tx), inf, tx),
+                    select(isnan(ty), inf, ty),
+                    select(isnan(tz), inf, tz));
+}
 
 /*
- * A single traversal step in the DDA algorithm. This advances
- * to the next cell the ray intersects.
+ * Intersect a box.
  */
-inline void ddaStep(const DdaRayState &rayState,
-                    const DdaLevelState &levelState,
-                    DdaSegmentState &segmentState)
+inline void intersect_box(const vec3f &rayOrg,
+                          const vec3f &rayInvDir,
+                          const vec3f &boxMin,
+                          const vec3f &boxMax,
+                          float &tEnter,
+                          float &tExit)
 {
-  varying const bool yseqx = (segmentState.tNext.y <= segmentState.tNext.x);
-  varying const bool yseqz = (segmentState.tNext.y <= segmentState.tNext.z);
-  varying const bool zseqx = (segmentState.tNext.z <= segmentState.tNext.x);
-  varying const bool zseqy = (segmentState.tNext.z <= segmentState.tNext.y);
+  const vec3f pmins = intersect_planes(rayOrg, rayInvDir, boxMin);
+  const vec3f pmaxs = intersect_planes(rayOrg, rayInvDir, boxMax);
+  const vec3f mins  = min(pmins, pmaxs);
+  const vec3f maxs  = max(pmins, pmaxs);
+  tEnter            = max(mins.x, max(mins.y, mins.z));
+  tExit             = min(maxs.x, min(maxs.y, maxs.z));
+}
 
-  if (zseqx && zseqy) {
-    segmentState.t       = segmentState.tNext.z;
-    segmentState.tNext.z = segmentState.tNext.z + levelState.tDelta.z;
-    segmentState.idx.z   = segmentState.idx.z + levelState.idxDelta.z;
-  } else if (yseqx && yseqz) {
-    segmentState.t       = segmentState.tNext.y;
-    segmentState.tNext.y = segmentState.tNext.y + levelState.tDelta.y;
-    segmentState.idx.y   = segmentState.idx.y + levelState.idxDelta.y;
+/*
+ * Compare __vkl_vdb_map_domain_offset_to_voxel_uniform_*
+ * in openvkl/vdb_topology.h.in.
+ */
+inline void clampOffsetToCell(
+    int32 &x,
+    int32 &y,
+    int32 &z,
+    uniform int32 resolution)  // ... of a single cell on the current level.
+{
+  // We may map a voxel coordinate to the origin of a voxel with resolution
+  // logVoxelRes using this simple mask because resolutions are powers of two.
+  assert(popcnt(resolution) == 1);
+  const uniform int mask = ~((resolution)-1);
+  x                      = x & mask;
+  y                      = y & mask;
+  z                      = z & mask;
+}
+
+inline void clampOffsetToCellVarying(
+    int32 &x,
+    int32 &y,
+    int32 &z,
+    int32 resolution)  // ... of a single cell on the current level.
+{
+  // We may map a voxel coordinate to the origin of a voxel with resolution
+  // logVoxelRes using this simple mask because resolutions are powers of two.
+  assert(popcnt(resolution) == 1);
+  const int mask = ~((resolution)-1);
+  x              = x & mask;
+  y              = y & mask;
+  z              = z & mask;
+}
+
+inline vec3i clampToCell(
+    const vec3f &foffset,
+    uniform int32 resolution)  // ... of a single cell on the current level.
+{
+  // Offsets are non-negative, but numerical errors might cause problems.
+  vec3i offset = make_vec3i(((int)floor(max(foffset.x, 0))),
+                            ((int)floor(max(foffset.y, 0))),
+                            ((int)floor(max(foffset.z, 0))));
+  clampOffsetToCell(offset.x, offset.y, offset.z, resolution);
+  return offset;
+}
+
+/*
+ * Initialize the dda state.
+ */
+inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
+                    const vec3f &rayDir,
+                    const float &tMin,
+                    uniform uint32 level,
+                    varying DdaState &dda)
+{
+  const vec3f oo                 = rayOrg + tMin * rayDir;
+  const vec3i sgn                = safe_sign(rayDir);
+  const vec3f iDir               = safe_rcp(rayDir);
+  const uniform int32 logCellRes = vklVdbLevelTotalLogRes(level + 1);
+  const uniform int32 cellRes    = (1 << logCellRes);
+
+  // Clamp the origin to a cell on this level, i.e., a multiple of the
+  // cell resolution. This results in the index of the cell we are in.
+  const vec3i idx = clampToCell(oo, cellRes);
+
+  const vec3i sgnNonNegative =
+      make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
+
+  // Intersect the exiting plane to get the initial tNext for this level.
+  const vec3f planes =
+      make_vec3f(((float)(idx.x + cellRes * sgnNonNegative.x)),
+                 ((float)(idx.y + cellRes * sgnNonNegative.y)),
+                 ((float)(idx.z + cellRes * sgnNonNegative.z)));
+
+  const vec3f tn = intersect_planes(rayOrg, iDir, planes);
+
+  dda.t           = tMin;
+  dda.level       = clamp(level, 0, VKL_VDB_NUM_LEVELS - 1);
+  dda.idx[0]      = idx.x;
+  dda.idx[1]      = idx.y;
+  dda.idx[2]      = idx.z;
+  dda.idxDelta[0] = sgn.x * cellRes;
+  dda.idxDelta[1] = sgn.y * cellRes;
+  dda.idxDelta[2] = sgn.z * cellRes;
+  dda.tDelta[0]   = ((float)cellRes) * abs(iDir.x);
+  dda.tDelta[1]   = ((float)cellRes) * abs(iDir.y);
+  dda.tDelta[2]   = ((float)cellRes) * abs(iDir.z);
+  dda.tNext[0]    = tn.x;
+  dda.tNext[1]    = tn.y;
+  dda.tNext[2]    = tn.z;
+}
+
+/*
+ * Step once.
+ */
+inline void ddaStep(DdaState &dda)
+{
+  const float minT = min(min(dda.tNext[0], dda.tNext[1]), dda.tNext[2]);
+  if (minT == dda.tNext[0]) {
+    dda.t        = dda.tNext[0];
+    dda.tNext[0] = dda.tNext[0] + dda.tDelta[0];
+    dda.idx[0]   = dda.idx[0] + dda.idxDelta[0];
+  } else if (minT == dda.tNext[1]) {
+    dda.t        = dda.tNext[1];
+    dda.tNext[1] = dda.tNext[1] + dda.tDelta[1];
+    dda.idx[1]   = dda.idx[1] + dda.idxDelta[1];
   } else {
-    segmentState.t       = segmentState.tNext.x;
-    segmentState.tNext.x = segmentState.tNext.x + levelState.tDelta.x;
-    segmentState.idx.x   = segmentState.idx.x + levelState.idxDelta.x;
+    dda.t        = dda.tNext[2];
+    dda.tNext[2] = dda.tNext[2] + dda.tDelta[2];
+    dda.idx[2]   = dda.idx[2] + dda.idxDelta[2];
   }
 }

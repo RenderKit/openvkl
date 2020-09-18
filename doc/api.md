@@ -715,10 +715,6 @@ following parameters:
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           maxIteratorDepth  3                      Do not descend further than to this
-                                                         depth during interval iteration.
-                                                         The maximum value is 3.
-
   float[]       indexToObject     1, 0, 0,               An array of 12 values of type `float`
                                   0, 1, 0,               that define the transformation from
                                   0, 0, 1,               index space to object space.
@@ -776,6 +772,9 @@ objects (sampler object parameters default to volume parameters).
 
   int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`-1 Do not descend further than to this
                                                          depth during sampling.
+
+  int           maxIteratorDepth  `VKL_VDB_NUM_LEVELS`-2 Do not descend further than to this
+                                                         depth during iteration.
 
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.

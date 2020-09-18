@@ -74,7 +74,6 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/vdb/VdbIterator.cpp
     volume/vdb/VdbIterator.ispc
     volume/vdb/VdbLeafAccessObserver.cpp
-    volume/vdb/Dda.ispc
   )
 
   unset(ISPC_DEFINITIONS)

@@ -442,9 +442,6 @@ namespace openvkl {
     {
       cleanup();
 
-      const int maxIteratorDepth =
-          this->template getParam<int>("maxIteratorDepth", 3);
-
       Ref<const DataT<float>> dataIndexToObject =
           this->template getParamDataT<float>("indexToObject", nullptr);
       Ref<const DataT<uint32_t>> leafLevel =
@@ -460,13 +457,13 @@ namespace openvkl {
       leafData = this->template getParamDataT<Data *>("node.data");
 
       // Set up the global sample config.
-      filter = (VKLFilter)this->template getParam<int>(
-          "filter", filter);
-      gradientFilter = (VKLFilter)this->template getParam<int>(
-          "gradientFilter", filter);
-      maxSamplingDepth = this->template getParam<int>(
-          "maxSamplingDepth", maxSamplingDepth);
+      filter = (VKLFilter)this->template getParam<int>("filter", filter);
+      gradientFilter =
+          (VKLFilter)this->template getParam<int>("gradientFilter", filter);
+      maxSamplingDepth =
+          this->template getParam<int>("maxSamplingDepth", maxSamplingDepth);
       maxSamplingDepth = min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
+      maxIteratorDepth = this->template getParam<int>("maxIteratorDepth", 3);
 
       // Sanity checks.
       // We will assume that the following conditions hold downstream, so
@@ -507,7 +504,7 @@ namespace openvkl {
         }
 
         const VKLFormat format = static_cast<VKLFormat>((*leafFormat)[i]);
-        const uint32_t size = (*leafData)[i]->size();
+        const uint32_t size    = (*leafData)[i]->size();
 
         if (format == VKL_FORMAT_INVALID)
           runtimeError("invalid format specified");
@@ -515,26 +512,26 @@ namespace openvkl {
         if (format == VKL_FORMAT_TILE && size < 1)
           runtimeError("no voxel data for tile node");
 
-        if (format == VKL_FORMAT_TILE && size > 1)
-        {
+        if (format == VKL_FORMAT_TILE && size > 1) {
           LogMessageStream(VKL_LOG_WARNING)
               << "data array too big for tile node" << std::endl;
         }
 
-        if (format == VKL_FORMAT_CONSTANT_ZYX && size < vklVdbLevelNumVoxels(level))
+        if (format == VKL_FORMAT_CONSTANT_ZYX &&
+            size < vklVdbLevelNumVoxels(level))
           runtimeError("data array too small for constant node");
 
-        if (format == VKL_FORMAT_CONSTANT_ZYX && size > vklVdbLevelNumVoxels(level))
-        {
+        if (format == VKL_FORMAT_CONSTANT_ZYX &&
+            size > vklVdbLevelNumVoxels(level)) {
           LogMessageStream(VKL_LOG_WARNING)
               << "data array too big for constant node" << std::endl;
         }
       });
 
-      grid       = allocator.allocate<VdbGrid>(1);
-      grid->type = type;
-      grid->maxIteratorDepth =
-          min(max(maxIteratorDepth, 0), VKL_VDB_NUM_LEVELS - 1);
+      grid                 = allocator.allocate<VdbGrid>(1);
+      grid->type           = type;
+      maxIteratorDepth     = min<uint32_t>(max<uint32_t>(maxIteratorDepth, 0),
+                                       VKL_VDB_NUM_LEVELS - 1);
       grid->totalNumLeaves = numLeaves;
 
       // Determine if all leaf data is compact (non-strided)
@@ -557,14 +554,15 @@ namespace openvkl {
 
       const box3i bbox = computeBbox(numLeaves, *leafLevel, *leafOrigin);
       grid->rootOrigin = computeRootOrigin(bbox);
+      grid->activeSize = bbox.upper - grid->rootOrigin;
 
       // VKL requires a float bbox.
       bounds = empty;
 
       for (int i = 0; i < 8; ++i) {
-        vec3f v = vec3f((i & 1) ? bbox.upper.x : bbox.lower.x,
-                        (i & 2) ? bbox.upper.y : bbox.lower.y,
-                        (i & 4) ? bbox.upper.z : bbox.lower.z);
+        const vec3f v = vec3f((i & 1) ? bbox.upper.x : bbox.lower.x,
+                              (i & 2) ? bbox.upper.y : bbox.lower.y,
+                              (i & 4) ? bbox.upper.z : bbox.lower.z);
 
         bounds.extend(xfmPoint(grid->indexToObject, v));
       }
@@ -578,8 +576,7 @@ namespace openvkl {
       // Allocate buffers for all levels now, all in one go. This makes
       // inserting the nodes (below) much faster.
       std::vector<uint64_t> capacity(vklVdbNumLevels() - 1, 0);
-      allocateInnerLevels(
-          leafOffsets, binnedLeaves, capacity, grid, allocator);
+      allocateInnerLevels(leafOffsets, binnedLeaves, capacity, grid, allocator);
 
       // Populate contiguous ispc::Data1D objects to be used in leaf pointers,
       // only needed if we have strided data

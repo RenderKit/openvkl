@@ -224,7 +224,6 @@ int main(int argc, const char **argv)
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
   VKLFilter gradientFilter(VKL_FILTER_TRILINEAR);
-  int maxSamplingDepth(VKL_VDB_NUM_LEVELS - 1);
   bool haveFilter(false);
   bool haveVdb(false);
   std::string field("density");
@@ -479,6 +478,9 @@ int main(int argc, const char **argv)
               << std::endl;
   }
 
+  int maxIteratorDepth = (gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
+  int maxSamplingDepth = VKL_VDB_NUM_LEVELS-1;
+
   Scene scene;
   TransferFunction transferFunction;
   std::vector<float> isoValues;
@@ -486,6 +488,7 @@ int main(int argc, const char **argv)
   vklSetInt(scene.sampler, "filter", filter);
   vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
   vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+  vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
   vklCommit(scene.sampler);
 
   VKLObserver leafAccessObserver = nullptr;
@@ -541,10 +544,8 @@ int main(int argc, const char **argv)
     }
 
     // maxIteratorDepth parameter currently only applies to unstructured and
-    // particle volume samplers
+    // particle volume samplers (special case below for vdb).
     if (gridType == "unstructured" || gridType == "particle") {
-      static int maxIteratorDepth = 6;
-
       if (ImGui::SliderInt("maxIteratorDepth", &maxIteratorDepth, 0, 31)) {
         vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
         vklCommit(scene.sampler);
@@ -552,8 +553,7 @@ int main(int argc, const char **argv)
       }
     }
 
-    // filter and maxSamplingDepth parameters currently only apply to VDB
-    // volumes
+    // VDB specific parameters.
     if (gridType == "vdb") {
       static int whichFilter = (filter == VKL_FILTER_NEAREST ? 0 : 1);
       static int whichGradientFilter =
@@ -564,6 +564,10 @@ int main(int argc, const char **argv)
                        "nearest\0trilinear\0\0") ||
           ImGui::SliderInt("maxSamplingDepth",
                            &maxSamplingDepth,
+                           0,
+                           VKL_VDB_NUM_LEVELS - 1) ||
+          ImGui::SliderInt("maxIteratorDepth",
+                           &maxIteratorDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1)) {
         switch (whichFilter) {
@@ -589,6 +593,7 @@ int main(int argc, const char **argv)
         }
         vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
         vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+        vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
         vklCommit(scene.sampler);
         changed = true;
       }
@@ -656,6 +661,7 @@ int main(int argc, const char **argv)
       vklSetInt(scene.sampler, "filter", filter);
       vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
       vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
+      vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
       vklCommit(scene.sampler);
       scene.updateValueSelector(transferFunction, isoValues);
 

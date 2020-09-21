@@ -102,8 +102,11 @@ namespace openvkl {
 
       const vec3f gridOrigin =
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+      origin = gridOrigin;
+
       const vec3f gridSpacing =
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+      spacing = gridSpacing;
 
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,
@@ -145,7 +148,8 @@ namespace openvkl {
     template <int W>
     box3f AMRVolume<W>::getBoundingBox() const
     {
-      return bounds;
+      return box3f(vec3f(origin+bounds.lower),
+                   vec3f(origin+(bounds.upper-bounds.lower)*spacing));
     }
 
     template <int W>

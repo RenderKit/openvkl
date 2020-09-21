@@ -38,6 +38,8 @@ namespace openvkl {
       VKLDataType voxelType;
       range1f valueRange{empty};
       box3f bounds;
+      vec3f origin;
+      vec3f spacing;
 
       VKLAMRMethod amrMethod;
     };

@@ -26,7 +26,7 @@ namespace openvkl {
       ParticleSampler(ParticleVolume<W> *volume);
       ~ParticleSampler();
 
-      void commit() override {}
+      void commit() override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -69,6 +69,17 @@ namespace openvkl {
     {
       CALL_ISPC(VKLParticleSampler_Destructor, ispcEquivalent);
       ispcEquivalent = nullptr;
+    }
+
+    template <int W>
+    inline void ParticleSampler<W>::commit()
+    {
+      const int maxIteratorDepth =
+          max(this->template getParam<int>("maxIteratorDepth",
+                                           volume->getMaxIteratorDepth()),
+              0);
+
+      CALL_ISPC(VKLParticleSampler_set, ispcEquivalent, maxIteratorDepth);
     }
 
     template <int W>

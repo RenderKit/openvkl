@@ -194,7 +194,12 @@ namespace openvkl {
         }
       }
 
+      maxIteratorDepth =
+          max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+
       buildBvhAndCalculateBounds();
+
+      computeOverlappingNodeMetadata(rtcRoot);
 
       if (!this->ispcEquivalent) {
         this->ispcEquivalent = CALL_ISPC(VKLUnstructuredVolume_Constructor);
@@ -331,6 +336,8 @@ namespace openvkl {
         bounds.extend(box3f(vals[1].lower, vals[1].upper));
       }
       valueRange = rtcRoot->valueRange;
+
+      addLevelToNodes(rtcRoot, 0);
     }
 
     template <int W>

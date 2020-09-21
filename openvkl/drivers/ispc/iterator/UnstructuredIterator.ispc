@@ -22,16 +22,16 @@ export uniform int EXPORT_UNIQUE(UnstructuredIterator_sizeOf)
 }
 
 void UnstructuredIterator_iterateIntervalInternal(
-                          const int *uniform imask,
-                          void *uniform _self,
-                          void *uniform _interval,
-                          const uniform box1f &valueRange,
-                          uniform int *uniform _result);
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &valueRange,
+    uniform int *uniform _result);
 
 export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          void *uniform _volume,
+                          void *uniform _sampler,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
@@ -45,107 +45,196 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
       (varying UnstructuredIterator * uniform) _self;
   self->iterateInterval = UnstructuredIterator_iterateIntervalInternal;
 
-  self->volume        = (VKLUnstructuredVolume * uniform) _volume;
+  self->sampler       = (UnstructuredSamplerBase * uniform) _sampler;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
   self->tRange        = *((varying box1f * uniform) _tRange);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-  self->getCount      = 0;
-}
 
-// How deep in the BVH we're going to look for intervals.
-// This indirectly determines how tight the bounds might be,
-// as currently we just return a single interval.
-#define MAX_LEVEL 6
+  const VKLUnstructuredBase *uniform volume =
+      (const VKLUnstructuredBase *uniform)self->sampler->super.volume;
+
+  self->traversalState.node     = (uint64)(volume->bvhRoot);
+  self->traversalState.bitstack = 0;
+}
 
 static inline bool disjoint(uniform box1f a, varying box1f b)
 {
   return (a.upper < b.lower) || (b.upper < a.lower);
 }
 
-static inline box1f make_box1f_empty()
+#define template_intersectNode(univary)                                     \
+  inline void intersectNode_##univary(const univary vec3f &origin,          \
+                                      const univary vec3f &direction,       \
+                                      const univary box1f &tRange,          \
+                                      const uniform box1f &valueRange,      \
+                                      const uniform box3fa &nodeBounds,     \
+                                      const uniform box1f &nodeValueRange,  \
+                                      univary box1f &intersectedTRange,     \
+                                      univary bool &isIntersected)          \
+  {                                                                         \
+    if (disjoint(valueRange, nodeValueRange)) {                             \
+      intersectedTRange = make_box1f(inf, neg_inf);                         \
+    } else {                                                                \
+      const uniform box3f reduced =                                         \
+          make_box3f(nodeBounds.lower, nodeBounds.upper);                   \
+      intersectedTRange = intersectBox(origin, direction, reduced, tRange); \
+    }                                                                       \
+                                                                            \
+    isIntersected = !(intersectedTRange.upper <= intersectedTRange.lower);  \
+  }
+
+// template_intersectNode(uniform);
+template_intersectNode(varying);
+#undef template_intersectNode
+
+static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
+                                    iterator,
+                                const uniform box1f &valueRange,
+                                uniform Node *uniform node,
+                                uniform uint32 bitstack,
+                                box1f hitTRange,
+                                UnstructuredTraversalState &hitState)
 {
-  return make_box1f(inf, neg_inf);
-}
+  while (1) {
+    uniform bool isInner = (node->nominalLength >= 0);
 
-static box1f evalNode(varying UnstructuredIterator *uniform iterator,
-                      uniform Node *uniform node,
-                      const uniform box1f &valueRange,
-                      box1f &outputValueRange,
-                      float &deltaT,
-                      uniform int level)
-{
-  PRINT_DEBUG("ispc: % %\n", level, node);
+    if (isInner && node->level < iterator->sampler->maxIteratorDepth) {
+      uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
 
-  // rejection based on values being in the range we're looking for
-  if (disjoint(valueRange, node->valueRange)) {
-    PRINT_DEBUG("rejected range:\n\t%\n\t%\n",
-                node->valueRange.lower,
-                node->valueRange.upper);
-    outputValueRange = make_box1f_empty();
-    deltaT     = inf;
-    return make_box1f_empty();
+      box1f intersectedTRange0;
+      bool in0;
+      intersectNode_varying(iterator->origin,
+                            iterator->direction,
+                            make_box1f(iterator->tRange.lower, hitTRange.lower),
+                            valueRange,
+                            inner->bounds[0],
+                            node->valueRange,
+                            intersectedTRange0,
+                            in0);
+
+      box1f intersectedTRange1;
+      bool in1;
+      intersectNode_varying(iterator->origin,
+                            iterator->direction,
+                            make_box1f(iterator->tRange.lower, hitTRange.lower),
+                            valueRange,
+                            inner->bounds[1],
+                            node->valueRange,
+                            intersectedTRange1,
+                            in1);
+
+      if (in0 || in1) {
+        // bitstack = bitstack << 1;
+
+        if (in0 && in1) {
+          if (intersectedTRange0.lower <= intersectedTRange1.lower) {
+            // node = inner->children[0];
+            return evalNodeStacklessV(iterator,
+                                      valueRange,
+                                      inner->children[0],
+                                      (bitstack << 1) | 1,
+                                      hitTRange,
+                                      hitState);
+          } else {
+            // node = inner->children[1];
+            return evalNodeStacklessV(iterator,
+                                      valueRange,
+                                      inner->children[1],
+                                      (bitstack << 1) | 1,
+                                      hitTRange,
+                                      hitState);
+          }
+
+          // bitstack = bitstack | 1;
+        } else {
+          if (in0) {
+            // node = inner->children[0];
+            return evalNodeStacklessV(iterator,
+                                      valueRange,
+                                      inner->children[0],
+                                      bitstack << 1,
+                                      hitTRange,
+                                      hitState);
+          } else {
+            // node = inner->children[1];
+            return evalNodeStacklessV(iterator,
+                                      valueRange,
+                                      inner->children[1],
+                                      bitstack << 1,
+                                      hitTRange,
+                                      hitState);
+          }
+        }
+
+        // should never reach this point
+        return make_box1f(inf, neg_inf);
+      }
+    } else {
+      // leaf, or at maximum traversal level
+      uniform box3fa bounds;
+
+      if (isInner) {
+        uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
+        bounds = box_extend(inner->bounds[0], inner->bounds[1]);
+      } else {
+        uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;
+        bounds                         = leaf->bounds;
+      }
+
+      box1f intersectedTRange;
+      bool in0;
+      intersectNode_varying(
+          iterator->origin,
+          iterator->direction,
+          iterator
+              ->tRange,  // use full tRange to capture full ray / node overlap
+                         // (not clipped by previous leaf intersection)
+          valueRange,
+          bounds,
+          node->valueRange,
+          intersectedTRange,
+          in0);
+
+      if (in0) {
+        if (intersectedTRange.lower < hitTRange.lower) {
+          if (hitTRange.lower == inf) {
+            // first hit; we will restart from here, since we may skip farther
+            // nodes before later returning a closer node (which would lead to
+            // holes with a later restart point)
+            hitState.node     = node;
+            hitState.bitstack = bitstack;
+          }
+
+          hitTRange = intersectedTRange;
+        }
+      }
+    }
+
+    // backtrack
+    while ((bitstack & 1) == 0) {
+      if (!bitstack) {
+        return hitTRange;
+      }
+
+      node     = node->parent;
+      bitstack = bitstack >> 1;
+    }
+
+    // sibling pointer could be used here if we had it
+    node = sibling(node);
+
+    bitstack = bitstack ^ 1;
   }
-
-  uniform bool isLeaf = (node->nominalLength < 0);
-  uniform box3fa box;
-  if (isLeaf) {
-    uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;
-    box                            = leaf->bounds;
-  } else {
-    uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
-    box = box_extend(inner->bounds[0], inner->bounds[1]);
-  }
-
-  uniform box3f reduced = make_box3f(box.lower, box.upper);
-  range1f nodeTRange    = intersectBox(
-      iterator->origin, iterator->direction, reduced, iterator->tRange);
-
-  PRINT_DEBUG("box dimensions:\n");
-  PRINT_DEBUG("\tlower:\n\t\t%\n\t\t%\n\t\t%\n",
-              reduced.lower.x,
-              reduced.lower.y,
-              reduced.lower.z);
-  PRINT_DEBUG("\tupper:\n\t\t%\n\t\t%\n\t\t%\n",
-              reduced.upper.x,
-              reduced.upper.y,
-              reduced.upper.z);
-  PRINT_DEBUG("box valueRange:\n\t%\n\t%\n",
-              node->valueRange.lower,
-              node->valueRange.upper);
-  PRINT_DEBUG("box tRange:\n\t%\n\t%\n", nodeTRange.lower, nodeTRange.upper);
-
-  // rejection based on ray/box intersection
-  if (isEmpty(nodeTRange)) {
-    outputValueRange = make_box1f_empty();
-    deltaT     = inf;
-    return make_box1f_empty();
-  } else if (isLeaf || level > MAX_LEVEL) {
-    outputValueRange = node->valueRange;
-    deltaT     = abs(node->nominalLength);
-    return nodeTRange;
-  }
-
-  // going to be an inner node if we reach here
-  uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
-  box1f valueRangeFirst, valueRangeSecond;
-  float deltaT1, deltaT2;
-  range1f tRangeFirst = evalNode(
-      iterator, inner->children[0], valueRange, valueRangeFirst, deltaT1, level + 1);
-  range1f tRangeSecond = evalNode(
-      iterator, inner->children[1], valueRange, valueRangeSecond, deltaT2, level + 1);
-  outputValueRange = box_extend(valueRangeFirst, valueRangeSecond);
-  deltaT     = min(deltaT1, deltaT2);
-  return box_extend(tRangeFirst, tRangeSecond);
 }
 
 inline void UnstructuredIterator_iterateIntervalInternal(
-                          const int *uniform imask,
-                          void *uniform _self,
-                          void *uniform _interval,
-                          const uniform box1f &valueRange,
-                          uniform int *uniform _result)
-{  
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &valueRange,
+    uniform int *uniform _result)
+{
   if (!imask[programIndex]) {
     return;
   }
@@ -157,31 +246,51 @@ inline void UnstructuredIterator_iterateIntervalInternal(
 
   varying int *uniform result = (varying int *uniform)_result;
 
-  if (self->getCount != 0) {
-    *result = false;
-    return;
+  UnstructuredTraversalState hitState;
+  hitState.node     = NULL;
+  hitState.bitstack = 0;
+
+#if 1
+  // with restart
+
+  varying UnstructuredTraversalState *uniform startState =
+      (varying UnstructuredTraversalState * uniform) & self->traversalState;
+
+  box1f retRange;
+
+  foreach_unique(node in startState->node)
+  {
+    foreach_unique(bitstack in startState->bitstack)
+    {
+      retRange = evalNodeStacklessV(
+          self, valueRange, node, bitstack, make_box1f(inf, inf), hitState);
+    }
   }
+#else
+  // without restart
+  const VKLUnstructuredBase *uniform volume =
+      (const VKLUnstructuredBase *uniform)self->sampler->super.volume;
 
-  box1f intervalValueRange = make_box1f_empty();
-  float deltaT;
-  const box1f retRange =
-      evalNode(self, self->volume->super.bvhRoot, valueRange, intervalValueRange, deltaT, 0);
+  box1f retRange = evalNodeStacklessV(
+      self, valueRange, volume->bvhRoot, 0, make_box1f(inf, inf), hitState);
+#endif
 
-  if (isEmpty(retRange)) {
+  if (retRange.lower == inf || isEmpty(retRange)) {
     *result = false;
     PRINT_DEBUG("Empty range\n");
   } else {
-    // shrink range slightly for cell-valued where testing the boundary will
-    // fail (modify test instead?)
-    interval->tRange.lower     = retRange.lower + 0.00001;
-    interval->tRange.upper     = retRange.upper - 0.00001;
-    interval->valueRange.lower = intervalValueRange.lower;
-    interval->valueRange.upper = intervalValueRange.upper;
-    interval->nominalDeltaT    = deltaT;
+    self->tRange.lower = retRange.upper;
+
+    self->traversalState =
+        *((varying UnstructuredTraversalStatePublic * uniform) & hitState);
+
+    interval->tRange.lower     = retRange.lower;
+    interval->tRange.upper     = retRange.upper;
+    interval->valueRange.lower = hitState.node->valueRange.lower;
+    interval->valueRange.upper = hitState.node->valueRange.upper;
+    interval->nominalDeltaT    = abs(hitState.node->nominalLength);
     *result                    = true;
   }
-
-  self->getCount++;
 }
 
 export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,

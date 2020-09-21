@@ -540,6 +540,18 @@ int main(int argc, const char **argv)
       glfwVKLWindow->setActiveRenderer(rendererType);
     }
 
+    // maxIteratorDepth parameter currently only applies to unstructured and
+    // particle volume samplers
+    if (gridType == "unstructured" || gridType == "particle") {
+      static int maxIteratorDepth = 6;
+
+      if (ImGui::SliderInt("maxIteratorDepth", &maxIteratorDepth, 0, 31)) {
+        vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
+        vklCommit(scene.sampler);
+        changed = true;
+      }
+    }
+
     // filter and maxSamplingDepth parameters currently only apply to VDB
     // volumes
     if (gridType == "vdb") {

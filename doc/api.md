@@ -572,8 +572,7 @@ Unstructured volumes can have their topology and geometry freely defined.
 Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid cell
 types. The data format used is compatible with VTK and consists of multiple
 arrays: vertex positions and values, vertex indices, cell start indices, cell
-types, and cell values. An unstructured volume type is created by passing the
-type string `"unstructured"` to `vklNewVolume`.
+types, and cell values.
 
 Sampled cell values can be specified either per-vertex (`vertex.data`) or
 per-cell (`cell.data`). If both arrays are set, `cell.data` takes precedence.
@@ -600,6 +599,16 @@ sizes interleaved with vertex indices in the following format: $n, id_1, ...,
 id_n, m, id_1, ..., id_m$. This alternative `index` array layout can be enabled
 through the `indexPrefixed` flag (in which case, the `cell.type` parameter
 should be omitted).
+
+A binary bounding volume hierarchy (BVH) is used internally to accelerate
+interval iteration. Intervals are found by intersecting BVH nodes up to a
+maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
+Larger values of `maxIteratorDepth` lead to smaller individual intervals (up to
+leaf node intersections), yielding potentially more efficient space-skipping
+behavior and tighter bounds on returned interval metadata.
+
+Unstructured volumes are created by passing the type string `"unstructured"` to
+`vklNewVolume`, and have the following parameters:
 
   -------------------  ------------------  --------  ---------------------------------------
   Type                 Name                Default   Description
@@ -645,6 +654,18 @@ should be omitted).
                                                      at a cost of 12 bytes/face
   -------------------  ------------------  --------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes.
+
+The following additional parameters can be set both on `unstructured` volumes
+and their sampler objects (sampler object parameters default to volume
+parameters).
+
+  -------------------  ------------------  --------  ---------------------------------------
+  Type                 Name                Default   Description
+  -------------------  ------------------  --------  ---------------------------------------
+  int                  maxIteratorDepth           6  Do not descend further than to this BVH
+                                                     depth during interval iteration.
+  -------------------  ------------------  --------  ---------------------------------------
+  : Configuration parameters for unstructured (`"unstructured"`) volumes and their sampler objects.
 
 ### VDB Volumes
 
@@ -818,8 +839,12 @@ The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
 method in [1].
 
-Particle volumes are created by passing the type string `"particle"` to `vklNewVolume`,
-and have the following parameters:
+Similar to unstructured volumes, a binary BVH is used internally to accelerate
+interval iteration. Intervals are found by intersecting BVH nodes up to a
+maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
+
+Particle volumes are created by passing the type string `"particle"` to
+`vklNewVolume`, and have the following parameters:
 
   --------  --------------------------  --------  ---------------------------------------
   Type      Name                        Default   Description
@@ -863,6 +888,17 @@ and have the following parameters:
                                                   less efficient.
   --------  --------------------------  --------  ---------------------------------------
   : Configuration parameters for particle (`"particle"`) volumes.
+
+The following additional parameters can be set both on `particle` volumes and
+their sampler objects (sampler object parameters default to volume parameters).
+
+  --------  --------------------------  --------  ---------------------------------------
+  Type      Name                        Default   Description
+  --------  --------------------------  --------  ---------------------------------------
+  int       maxIteratorDepth            6         Do not descend further than to this BVH
+                                                  depth during interval iteration.
+  --------  --------------------------  --------  ---------------------------------------
+  : Configuration parameters for particle (`"particle"`) volumes and their sampler objects.
 
 1. Knoll, A., Wald, I., Navratil, P., Bowen, A., Reda, K., Papka, M.E. and
    Gaither, K. (2014), RBF Volume Ray Casting on Multicore and Manycore CPUs.

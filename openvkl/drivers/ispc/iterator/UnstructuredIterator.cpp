@@ -28,7 +28,7 @@ namespace openvkl {
       CALL_ISPC(UnstructuredIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getVolume().getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,

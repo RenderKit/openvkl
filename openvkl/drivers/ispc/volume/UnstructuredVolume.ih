@@ -20,6 +20,8 @@ typedef enum
 struct Node {
   uniform float nominalLength;
   uniform box1f valueRange;
+  uniform int level;
+  uniform Node *uniform parent;
 };
 
 struct LeafNode {
@@ -33,6 +35,18 @@ struct InnerNode {
   uniform box3fa bounds[2];
   uniform Node* uniform children[2];
 };
+
+inline uniform Node *uniform sibling(uniform Node *uniform node)
+{
+  uniform InnerNode *uniform parent = (uniform InnerNode *uniform )node->parent;
+
+  if (parent->children[0] == node) {
+    return parent->children[1];
+  }
+  else {
+    return parent->children[0];
+  }
+}
 
 bool pointInAABBTest(const uniform box3fa &box,
                             const vec3f &point);

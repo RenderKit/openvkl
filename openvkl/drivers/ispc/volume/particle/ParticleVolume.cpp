@@ -92,6 +92,9 @@ namespace openvkl {
             "clampMaxCumulativeValue greater than zero.");
       }
 
+      maxIteratorDepth =
+          max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+
       buildBvhAndCalculateBounds();
 
       if (!this->ispcEquivalent) {
@@ -109,6 +112,8 @@ namespace openvkl {
                 (void *)(rtcRoot));
 
       computeValueRanges();
+
+      computeOverlappingNodeMetadata(rtcRoot);
     }
 
     template <int W>
@@ -210,7 +215,7 @@ namespace openvkl {
       std::vector<LeafNode *> leafNodes;
       leafNodes.reserve(numParticles);
 
-      populateLeafNodes(rtcRoot, leafNodes);
+      getLeafNodes(rtcRoot, leafNodes);
 
       if (leafNodes.size() != numParticles) {
         throw std::runtime_error("incorrect number of leaf nodes found");
@@ -278,8 +283,8 @@ namespace openvkl {
         });
       }
 
-      // accumulate ranges in root and inner nodes
       accumulateNodeValueRanges(rtcRoot);
+      addLevelToNodes(rtcRoot, 0);
 
       valueRange = rtcRoot->valueRange;
     }

@@ -4,12 +4,12 @@
 #pragma once
 
 #include "../../common/export_util.h"
+#include "../UnstructuredBVH.h"
 #include "../UnstructuredVolume.h"
 #include "../Volume.h"
 #include "../common/Data.h"
 #include "../common/math.h"
 #include "ParticleVolume_ispc.h"
-#include "embree3/rtcore.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -59,10 +59,9 @@ namespace openvkl {
 
       range1f getValueRange() const override;
 
-      const Node *getNodeRoot() const
-      {
-        return rtcRoot;
-      }
+      const Node *getNodeRoot() const;
+
+      int getMaxIteratorDepth() const;
 
      private:
       void buildBvhAndCalculateBounds();
@@ -78,6 +77,7 @@ namespace openvkl {
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
+      int maxIteratorDepth;
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
@@ -104,23 +104,25 @@ namespace openvkl {
       return valueRange;
     }
 
-    // Helper functions ///////////////////////////////////////////////////////
-
-    inline void populateLeafNodes(Node *root,
-                                  std::vector<LeafNode *> &leafNodes)
+    template <int W>
+    inline const Node *ParticleVolume<W>::getNodeRoot() const
     {
-      if (root->nominalLength < 0) {
-        leafNodes.push_back((LeafNode *)root);
-      } else {
-        auto inner = (InnerNode *)root;
-        populateLeafNodes(inner->children[0], leafNodes);
-        populateLeafNodes(inner->children[1], leafNodes);
-      }
+      return rtcRoot;
     }
 
+    template <int W>
+    inline int ParticleVolume<W>::getMaxIteratorDepth() const
+    {
+      return maxIteratorDepth;
+    }
+
+    // Helper functions ///////////////////////////////////////////////////////
+
+    // Only applicable to particle volumes; other unstructured types have value
+    // ranges accumulated during build / construction
     inline void accumulateNodeValueRanges(Node *root)
     {
-      if (root->nominalLength < 0) {
+      if (isLeafNode(root)) {
         // leaf node with pre-computed value range
         return;
       }

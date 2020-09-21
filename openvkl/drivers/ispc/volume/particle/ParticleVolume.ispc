@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../common/export_util.h"
-#include "../../sampler/Sampler.ih"
+#include "../UnstructuredSamplerBase.ih"
 #include "ParticleVolume.ih"
 
 inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
@@ -152,20 +152,6 @@ export void EXPORT_UNIQUE(VKLParticleVolume_Destructor, void *uniform _self)
   delete volume;
 }
 
-export Sampler *uniform EXPORT_UNIQUE(VKLParticleSampler_Constructor,
-                          void *uniform _volume)
-{
-  Sampler *uniform sampler = CALL_ISPC(Sampler_create, _volume);
-  sampler->computeSample_varying = VKLParticleVolume_sample;
-  return sampler;
-}
-
-export void EXPORT_UNIQUE(VKLParticleSampler_Destructor,
-                          void *uniform _sampler)
-{
-  CALL_ISPC(Sampler_destroy, _sampler);
-}
-
 export void EXPORT_UNIQUE(VKLParticleVolume_set,
                           void *uniform _self,
                           const uniform box3f &_bbox,
@@ -186,4 +172,34 @@ export void EXPORT_UNIQUE(VKLParticleVolume_set,
   self->clampMaxCumulativeValue = _clampMaxCumulativeValue;
   self->super.boundingBox       = _bbox;
   self->super.bvhRoot           = (uniform Node * uniform) bvhRoot;
+}
+
+export UnstructuredSamplerBase *uniform
+EXPORT_UNIQUE(VKLParticleSampler_Constructor, void *uniform _volume)
+{
+  UnstructuredSamplerBase *uniform sampler =
+      uniform new UnstructuredSamplerBase;
+  memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
+
+  sampler->super.volume                = (const Volume *uniform)_volume;
+  sampler->super.computeSample_varying = VKLParticleVolume_sample;
+
+  return sampler;
+}
+
+export void EXPORT_UNIQUE(VKLParticleSampler_Destructor, void *uniform _sampler)
+{
+  UnstructuredSamplerBase *uniform sampler =
+      (UnstructuredSamplerBase * uniform) _sampler;
+  delete sampler;
+}
+
+export void EXPORT_UNIQUE(VKLParticleSampler_set,
+                          void *uniform _self,
+                          const uniform int maxIteratorDepth)
+{
+  UnstructuredSamplerBase *uniform self =
+      (UnstructuredSamplerBase * uniform) _self;
+
+  self->maxIteratorDepth = maxIteratorDepth;
 }

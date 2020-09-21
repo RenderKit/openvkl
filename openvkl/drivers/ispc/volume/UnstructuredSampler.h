@@ -27,7 +27,7 @@ namespace openvkl {
       UnstructuredSampler(UnstructuredVolume<W> *volume);
       ~UnstructuredSampler() override;
 
-      void commit() override {}
+      void commit() override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -71,6 +71,17 @@ namespace openvkl {
     {
       CALL_ISPC(VKLUnstructuredSampler_Destructor, ispcEquivalent);
       ispcEquivalent = nullptr;
+    }
+
+    template <int W>
+    inline void UnstructuredSampler<W>::commit()
+    {
+      const int maxIteratorDepth =
+          max(this->template getParam<int>("maxIteratorDepth",
+                                           volume->getMaxIteratorDepth()),
+              0);
+
+      CALL_ISPC(VKLUnstructuredSampler_set, ispcEquivalent, maxIteratorDepth);
     }
 
     template <int W>

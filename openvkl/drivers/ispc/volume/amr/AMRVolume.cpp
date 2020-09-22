@@ -10,9 +10,6 @@
 #include "rkcommon/utility/getEnvVar.h"
 // ispc exports
 #include "AMRVolume_ispc.h"
-#include "method_current_ispc.h"
-#include "method_finest_ispc.h"
-#include "method_octant_ispc.h"
 // stl
 #include <map>
 #include <set>
@@ -45,13 +42,6 @@ namespace openvkl {
     {
       amrMethod =
           (VKLAMRMethod)this->template getParam<int>("method", VKL_AMR_CURRENT);
-
-      if (amrMethod == VKL_AMR_CURRENT)
-        CALL_ISPC(AMR_install_current, this->ispcEquivalent);
-      else if (amrMethod == VKL_AMR_FINEST)
-        CALL_ISPC(AMR_install_finest, this->ispcEquivalent);
-      else if (amrMethod == VKL_AMR_OCTANT)
-        CALL_ISPC(AMR_install_octant, this->ispcEquivalent);
 
       if (data != nullptr)  // TODO: support data updates
         return;
@@ -162,6 +152,12 @@ namespace openvkl {
     range1f AMRVolume<W>::getValueRange() const
     {
       return valueRange;
+    }
+
+    template <int W>
+    VKLAMRMethod AMRVolume<W>::getAMRMethod() const
+    {
+      return amrMethod;
     }
 
     VKL_REGISTER_VOLUME(AMRVolume<VKL_TARGET_WIDTH>,

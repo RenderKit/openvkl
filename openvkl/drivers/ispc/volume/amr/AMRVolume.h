@@ -28,6 +28,9 @@ namespace openvkl {
       unsigned int getNumAttributes() const override;
       range1f getValueRange() const override;
 
+      VKLAMRMethod getAMRMethod() const;
+
+     private:
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 

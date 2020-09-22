@@ -9,22 +9,15 @@
 #include "common/export_util.h"
 #include "sampler/Sampler.ih"
 
-static float AMRVolume_computeSample(const Sampler *uniform sampler,
-                                     const varying vec3f &worldCoordinates)
-{
-  const AMRVolume *uniform self = (const AMRVolume *uniform)sampler->volume;
-  return self->computeSample_varying(self, worldCoordinates);
-}
-
 static vec3f AMRVolume_computeGradient(const Sampler *uniform sampler,
                                        const varying vec3f &pos)
 {
   // Cast to the actual Volume subtype.
-  const AMRVolume *uniform self = (const AMRVolume *uniform)sampler->volume;
+  const AMRVolume *uniform volume = (const AMRVolume *uniform)sampler->volume;
 
   // Gradient step in each dimension (world coordinates).
   const uniform vec3f gradientStep = make_vec3f(
-      self->samplingStep * .1f);  // Carson TODO: determine correct offset
+      volume->samplingStep * .1f);  // Carson TODO: determine correct offset
 
   // The gradient will be computed using central differences.
   varying vec3f gradient;
@@ -32,21 +25,21 @@ static vec3f AMRVolume_computeGradient(const Sampler *uniform sampler,
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = self->computeSample_varying(self, pos);
+  float sample = sampler->computeSample_varying(sampler, pos);
 
   // Gradient magnitude in the X direction.
-  gradient.x = self->computeSample_varying(
-                   self, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
+  gradient.x = sampler->computeSample_varying(
+                   sampler, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = self->computeSample_varying(
-                   self, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
+  gradient.y = sampler->computeSample_varying(
+                   sampler, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
                sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = self->computeSample_varying(
-                   self, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
+  gradient.z = sampler->computeSample_varying(
+                   sampler, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
                sample;
 
   // This approximation may yield image artifacts.
@@ -72,24 +65,15 @@ export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
 {
   const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
 
-  const AMR *uniform amr      = &self->amr;
-  AMRLeaf *uniform leaf       = amr->leaf + leafID;
-  AMRBrick *uniform brick     = leaf->brickList[0];
-  uniform float leafCellWidth = brick->cellWidth;
-  uniform vec3f leafSize      = brick->bounds.upper - brick->bounds.lower;
-  uniform vec3i leafCells =
-      make_vec3i((leafSize + 0.5f * leafCellWidth) * rcp(leafCellWidth));
+  const AMR *uniform amr  = &self->amr;
+  AMRLeaf *uniform leaf   = amr->leaf + leafID;
+  AMRBrick *uniform brick = leaf->brickList[0];
 
-  uniform vec3i numSamplePoints = 2 * leafCells + 1;
-  for (uniform int iz = 0; iz < numSamplePoints.z; iz++)
-    for (uniform int iy = 0; iy < numSamplePoints.y; iy++)
-      for (varying int ix = 0; ix < numSamplePoints.x; ix += programCount) {
-        vec3f relPos    = make_vec3f(ix, iy, iz) / make_vec3f(numSamplePoints);
-        vec3f samplePos = lerp(leaf->bounds, relPos);
-        float sampleValue =
-            self->computeSample_varying(self, samplePos);
-        extend(leaf->valueRange, sampleValue);
-      }
+  assert(brick->value->dataType == VKL_FLOAT);
+
+  for (uniform uint64 i = 0; i < brick->value->numItems; i++) {
+    extend(leaf->valueRange, get_float(*(brick->value), i));
+  }
 }
 
 export void EXPORT_UNIQUE(AMRVolume_setAMR,
@@ -156,14 +140,13 @@ export void EXPORT_UNIQUE(AMRVolume_sample_export,
                           void *uniform _samples)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
-  const AMRVolume *uniform self = (const AMRVolume *uniform)sampler->volume;
 
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = self->computeSample_varying(self, *objectCoordinates);
+    *samples = sampler->computeSample_varying(sampler, *objectCoordinates);
   }
 }
 
@@ -185,9 +168,12 @@ export void EXPORT_UNIQUE(AMRVolume_gradient_export,
 
 export Sampler *uniform EXPORT_UNIQUE(AMRSampler_create, void *uniform _volume)
 {
-  Sampler *uniform sampler         = CALL_ISPC(Sampler_create, _volume);
-  sampler->computeSample_varying   = AMRVolume_computeSample;
+  Sampler *uniform sampler = CALL_ISPC(Sampler_create, _volume);
+
+  // computeSample functions set in AMR_install* functions
+
   sampler->computeGradient_varying = AMRVolume_computeGradient;
+
   return sampler;
 }
 

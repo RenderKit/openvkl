@@ -498,26 +498,19 @@ equal for all blocks at the same refinement level, though blocks at a coarser
 level have a larger cell width than finer levels.
 
 There can be any number of refinement levels and any number of blocks at any
-level of refinement. An AMR volume type is created by passing the type string
-`"amr"` to `vklNewVolume`.
+level of refinement.
 
 Blocks are defined by three parameters: their bounds, the refinement level in
 which they reside, and the scalar data contained within each block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
+AMR volumes are created by passing the type string `"amr"` to `vklNewVolume`,
+and have the following parameters:
+
   -------------- --------------- -----------------  -----------------------------------
   Type           Name                      Default  Description
   -------------- --------------- -----------------  -----------------------------------
-  `VKLAMRMethod` method          `VKL_AMR_CURRENT`  `VKLAMRMethod` sampling method.
-                                                    Supported methods are:
-
-                                                    `VKL_AMR_CURRENT`
-
-                                                    `VKL_AMR_FINEST`
-
-                                                    `VKL_AMR_OCTANT`
-
   float[]        cellWidth                          [data] array of each level's cell width
 
   box3i[]        block.bounds                       [data] array of each block's bounds (in voxels)
@@ -538,6 +531,24 @@ Note that cell widths are defined _per refinement level_, not per block.
 Note that the `gridOrigin` and `gridSpacing` parameters act just like the
 structured volume equivalent, but they only modify the root (coarsest level) of
 refinement.
+
+The following additional parameters can be set both on `"amr"`
+volumes and their sampler objects. Sampler object parameters default to volume
+parameters.
+
+  -------------- --------------- -----------------  -----------------------------------
+  Type           Name                      Default  Description
+  -------------- --------------- -----------------  -----------------------------------
+  `VKLAMRMethod` method          `VKL_AMR_CURRENT`  `VKLAMRMethod` sampling method.
+                                                    Supported methods are:
+
+                                                    `VKL_AMR_CURRENT`
+
+                                                    `VKL_AMR_FINEST`
+
+                                                    `VKL_AMR_OCTANT`
+  -------------- --------------- -----------------  -----------------------------------
+  : Configuration parameters for AMR (`"AMR"`) volumes and their sampler objects.
 
 Open VKL's AMR implementation was designed to cover Berger-Colella [1] and
 Chombo [2] AMR data.  The `method` parameter above determines the interpolation

@@ -5,13 +5,15 @@
 #include "CellRef.ih"
 #include "DualCell.ih"
 #include "common/export_util.h"
+#include "sampler/Sampler.ih"
 
-varying float AMR_finest(const AMRVolume *uniform self, const varying vec3f &P)
+varying float AMR_finest(const Sampler *uniform self, const varying vec3f &P)
 {
-  const AMR *uniform amr = &self->amr;
+  const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;
+  const AMR *uniform amr          = &volume->amr;
 
   vec3f lP;  // local amr space
-  AMRVolume_transformObjectToLocal(self, P, lP);
+  AMRVolume_transformObjectToLocal(volume, P, lP);
 
   DualCell D;
   initDualCell(D, lP, *amr->finestLevel);
@@ -19,8 +21,8 @@ varying float AMR_finest(const AMRVolume *uniform self, const varying vec3f &P)
   return lerp(D);
 }
 
-export void EXPORT_UNIQUE(AMR_install_finest, void *uniform _self)
+export void EXPORT_UNIQUE(AMR_install_finest, void *uniform _sampler)
 {
-  AMRVolume *uniform self     = (AMRVolume * uniform) _self;
-  self->computeSample_varying = AMR_finest;
+  Sampler *uniform sampler       = (Sampler * uniform) _sampler;
+  sampler->computeSample_varying = AMR_finest;
 }

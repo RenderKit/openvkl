@@ -11,6 +11,9 @@
 #include "AMRVolume_ispc.h"
 #include "Sampler_ispc.h"
 #include "Volume_ispc.h"
+#include "method_current_ispc.h"
+#include "method_finest_ispc.h"
+#include "method_octant_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -38,7 +41,7 @@ namespace openvkl {
       AMRSampler(AMRVolume<W> *volume);
       ~AMRSampler() override;
 
-      void commit() override {}
+      void commit() override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -81,6 +84,22 @@ namespace openvkl {
     {
       CALL_ISPC(AMRSampler_destroy, ispcEquivalent);
       ispcEquivalent = nullptr;
+    }
+
+    template <int W>
+    inline void AMRSampler<W>::commit()
+    {
+      const VKLAMRMethod amrMethod = (VKLAMRMethod)(
+          this->template getParam<int>("method", volume->getAMRMethod()));
+
+      if (amrMethod == VKL_AMR_CURRENT)
+        CALL_ISPC(AMR_install_current, ispcEquivalent);
+      else if (amrMethod == VKL_AMR_FINEST)
+        CALL_ISPC(AMR_install_finest, ispcEquivalent);
+      else if (amrMethod == VKL_AMR_OCTANT)
+        CALL_ISPC(AMR_install_octant, ispcEquivalent);
+      else
+        throw std::runtime_error("AMRSampler: illegal method specified");
     }
 
     template <int W>

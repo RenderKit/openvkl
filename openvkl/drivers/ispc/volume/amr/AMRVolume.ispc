@@ -92,24 +92,6 @@ export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
       }
 }
 
-inline void AMRVolume_transformLocalToWorld(
-    const AMRVolume *uniform volume,
-    const varying vec3f &localCoordinates,
-    varying vec3f &worldCoordinates)
-{
-  worldCoordinates =
-      volume->gridOrigin + localCoordinates * volume->gridSpacing;
-}
-
-inline void AMRVolume_transformWorldToLocal(
-    const AMRVolume *uniform volume,
-    const varying vec3f &worldCoordinates,
-    varying vec3f &localCoordinates)
-{
-  localCoordinates =
-      rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
-}
-
 export void EXPORT_UNIQUE(AMRVolume_setAMR,
                           void *uniform _self,
                           uniform int numNodes,
@@ -162,12 +144,9 @@ export void EXPORT_UNIQUE(AMRVolume_set,
       make_box3f(worldBounds.lower + gridOrigin,
                  worldBounds.lower + gridOrigin +
                      (worldBounds.upper - worldBounds.lower) * gridSpacing);
-  self->samplingStep          = samplingStep;
-  self->transformLocalToWorld = AMRVolume_transformLocalToWorld;
-  self->transformWorldToLocal = AMRVolume_transformWorldToLocal;
-
-  self->gridSpacing = gridSpacing;
-  self->gridOrigin  = gridOrigin;
+  self->samplingStep = samplingStep;
+  self->gridSpacing  = gridSpacing;
+  self->gridOrigin   = gridOrigin;
 }
 
 export void EXPORT_UNIQUE(AMRVolume_sample_export,

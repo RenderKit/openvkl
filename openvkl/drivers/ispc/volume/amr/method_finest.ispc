@@ -11,7 +11,7 @@ varying float AMR_finest(const AMRVolume *uniform self, const varying vec3f &P)
   const AMR *uniform amr = &self->amr;
 
   vec3f lP;  // local amr space
-  self->transformWorldToLocal(self, P, lP);
+  AMRVolume_transformObjectToLocal(self, P, lP);
 
   DualCell D;
   initDualCell(D, lP, *amr->finestLevel);

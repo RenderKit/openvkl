@@ -9,17 +9,6 @@
 #include "common/export_util.h"
 #include "sampler/Sampler.ih"
 
-// ------------------------------------------------------------------
-//! The current level at the given sample location in world coordinates.
-static varying float AMR_level(const void *uniform _self,
-                               const varying vec3f &pos)
-{
-  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
-  return self->computeSampleLevel(self, pos);
-}
-
-// ------------------------------------------------------------------
-
 static float AMRVolume_computeSample(const Sampler *uniform sampler,
                                      const varying vec3f &worldCoordinates)
 {

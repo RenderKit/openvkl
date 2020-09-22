@@ -22,21 +22,8 @@ varying float AMR_current(const AMRVolume *uniform self, const varying vec3f &P)
   return lerp(D);
 }
 
-varying float AMR_currentLevel(const AMRVolume *uniform self,
-                               const varying vec3f &P)
-{
-  const AMR *uniform amr = &self->amr;
-
-  const CellRef C = findLeafCell(amr, P);
-  float width     = C.width;
-  if (isnan(width))
-    width = 1.0f;
-  return width;
-}
-
 export void EXPORT_UNIQUE(AMR_install_current, void *uniform _self)
 {
   AMRVolume *uniform self     = (AMRVolume * uniform) _self;
   self->computeSample_varying = AMR_current;
-  self->computeSampleLevel    = AMR_currentLevel;
 }

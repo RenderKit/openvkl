@@ -896,18 +896,8 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gradientStep;
 
-  // compute via forward or backward differences depending on volume boundary
-  const vec3f gradientExtent = objectCoordinates + gradientStep;
-
-  if (gradientExtent.x >= self->super.boundingBox.upper.x)
-    gradientStep.x *= -1.f;
-
-  if (gradientExtent.y >= self->super.boundingBox.upper.y)
-    gradientStep.y *= -1.f;
-
-  if (gradientExtent.z >= self->super.boundingBox.upper.z)
-    gradientStep.z *= -1.f;
-
+  // compute via forward or backward differences depending on volume / cell
+  // boundaries (as determined by NaN sample values outside any volume cell)
   vec3f gradient;
 
   float sample = VKLUnstructuredVolume_sample(sampler, objectCoordinates);
@@ -924,6 +914,33 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
       VKLUnstructuredVolume_sample(
           sampler, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
       sample;
+
+  if (isnan(gradient.x)) {
+    gradientStep.x *= -1.f;
+
+    gradient.x =
+        VKLUnstructuredVolume_sample(
+            sampler, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
+        sample;
+  }
+
+  if (isnan(gradient.y)) {
+    gradientStep.y *= -1.f;
+
+    gradient.y =
+        VKLUnstructuredVolume_sample(
+            sampler, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
+        sample;
+  }
+
+  if (isnan(gradient.z)) {
+    gradientStep.z *= -1.f;
+
+    gradient.z =
+        VKLUnstructuredVolume_sample(
+            sampler, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
+        sample;
+  }
 
   return gradient / gradientStep;
 }

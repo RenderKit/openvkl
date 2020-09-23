@@ -106,26 +106,42 @@ template_intersectSurfacesNewton(varying);
                                                                                 \
     while (iter < maxIter) {                                                    \
       tMid = 0.5f * (t0 + t);                                                   \
-      univary float sampleMid =                                                 \
-          sampler->computeSample_##univary(sampler, origin + tMid * direction); \
                                                                                 \
       error = 0.5f * (t - t0);                                                  \
                                                                                 \
-      if (sampleMid == isovalue || error < tol) {                               \
+      if (error < tol) {                                                        \
         break;                                                                  \
       }                                                                         \
                                                                                 \
-      if ((isovalue - sample0) * (isovalue - sampleMid) < 0.f) {                \
+      univary float sampleMid =                                                 \
+          sampler->computeSample_##univary(sampler, origin + tMid * direction); \
+                                                                                \
+      /* sampling at boundaries between unstructured cells can rarely lead to   \
+      NaN values (indicating outside of cell) due to numerical issues; in this  \
+      case we know we have already bracketed an isovalue, so return the nearest \
+      result */                                                                 \
+      if (isnan(sampleMid)) {                                                   \
+        if (abs(isovalue - sample0) < abs(isovalue - sample)) {                 \
+          return t0;                                                            \
+        } else {                                                                \
+          return t;                                                             \
+        }                                                                       \
+      }                                                                         \
+                                                                                \
+      if (sampleMid == isovalue ||                                              \
+          (isovalue - sample0) * (isovalue - sampleMid) < 0.f) {                \
         /* crossing in (t0, tMid) */                                            \
         t      = tMid;                                                          \
         sample = sampleMid;                                                     \
-      } else if ((isovalue - sample) * (isovalue - sampleMid) < 0.f) {          \
+      } else if (sample == isovalue ||                                          \
+                 (isovalue - sample) * (isovalue - sampleMid) < 0.f) {          \
+        /* crossing in (tMid, t) */                                             \
         t0      = tMid;                                                         \
         sample0 = sampleMid;                                                    \
       } else {                                                                  \
-        /* TODO: We should not handle errors with print... */                   \
+        /* should never get here */                                             \
         print("bisect error\n");                                                \
-        break;                                                                  \
+        return inf;                                                             \
       }                                                                         \
                                                                                 \
       iter++;                                                                   \
@@ -151,7 +167,7 @@ template_intersectSurfacesNewton(varying);
     univary float t;                                                            \
                                                                                 \
     while (t0 < tRange.upper) {                                                 \
-      t = min(t0 + step, tRange.upper);                                         \
+      t = t0 + step;                                                            \
       const univary float sample =                                              \
           sampler->computeSample_##univary(sampler, origin + t * direction);    \
                                                                                 \
@@ -175,7 +191,7 @@ template_intersectSurfacesNewton(varying);
                                       0.01f * step,                             \
                                       error);                                   \
                                                                                 \
-          if (tIso < tHit) {                                                    \
+          if (tIso < tHit && tIso <= tRange.upper) {                            \
             tHit    = tIso;                                                     \
             value   = values[i];                                                \
             epsilon = 0.125f * step;                                            \

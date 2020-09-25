@@ -202,6 +202,7 @@ void usage(const char *progname)
                "\t-gridSpacing <x> <y> <z>\n"
                "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
                "\t-voxelType uchar | short | ushort | float | double\n"
+               "\t-valueRange <lower> <upper>\n"
                "\t-multiAttribute (structuredRegular only)\n"
                "\t-file <filename>\n"
                "\t-filter nearest | trilinear (vdb and structured)\n"
@@ -228,6 +229,7 @@ int main(int argc, const char **argv)
   bool haveVdb(false);
   std::string field("density");
   size_t numParticles(1000);
+  range1f initialValueRange(0.f, 1.f);
 
   int argIndex = 1;
   while (argIndex < argc) {
@@ -273,6 +275,15 @@ int main(int argc, const char **argv)
       const std::string dimZ(argv[argIndex++]);
 
       dimensions = vec3i(stoi(dimX), stoi(dimY), stoi(dimZ));
+    } else if (switchArg == "-valueRange") {
+      if (argc < argIndex + 2) {
+        throw std::runtime_error("improper -valueRange arguments");
+      }
+
+      const std::string rangeLower(argv[argIndex++]);
+      const std::string rangeUpper(argv[argIndex++]);
+
+      initialValueRange = range1f(stof(rangeLower), stof(rangeUpper));
     } else if (switchArg == "-voxelType") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -voxelType argument");
@@ -479,7 +490,7 @@ int main(int argc, const char **argv)
   }
 
   int maxIteratorDepth = (gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
-  int maxSamplingDepth = VKL_VDB_NUM_LEVELS-1;
+  int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
 
   Scene scene;
   TransferFunction transferFunction;
@@ -645,7 +656,7 @@ int main(int argc, const char **argv)
         };
 
     static TransferFunctionWidget transferFunctionWidget(
-        transferFunctionUpdatedCallback, range1f(0.f, 1.f));
+        transferFunctionUpdatedCallback, initialValueRange);
     transferFunctionWidget.updateUI();
 
     if (changed) {

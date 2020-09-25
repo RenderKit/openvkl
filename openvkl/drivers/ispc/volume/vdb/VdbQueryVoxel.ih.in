@@ -53,7 +53,7 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
     const uniform range1f &queryValueRange, 
     VdbVoxelDescriptor &desc)
 {
-  assert(queryDepth <= @VKL_VDB_NUM_LEVELS@);
+  assert(queryDepth < @VKL_VDB_NUM_LEVELS@);
 #if @VKL_VDB_LEVEL@ == 0
   desc.nodeIndex = 0;
 #endif
@@ -92,8 +92,17 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
   // level value range - there is no fast way to obtain it for general filter
   // kernels. Instead, we return the full leaf node value range, and the leaf
   // pointer in query.voxel.
-  desc.isLeaf = isLeafPtr && !atQueryDepth;
-
+  //
+  // This is a leaf pointer and we are still supposed to descend into that leaf.
+  // Because of filtering, there there is no good way to obtain a value range 
+  // for a given leaf voxel. 
+  // Instead, we return the parent voxel value range (which we just wrote to
+  // desc above), and return the leaf pointer in query.voxel.
+  if (isLeafPtr && !atQueryDepth)
+  {
+    desc.isLeaf = true;
+    desc.level = @VKL_VDB_NEXT_LEVEL@;
+  }
 
 #if @VKL_VDB_NEXT_LEVEL@ < @VKL_VDB_NUM_LEVELS@
   const bool lastLevel = (@VKL_VDB_NEXT_LEVEL@ > queryDepth) 

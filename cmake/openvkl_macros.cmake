@@ -254,6 +254,11 @@ function(openvkl_vdb_generate_topology)
       include/${PROJECT_NAME}_vdb/VdbQueryVoxel_${VKL_VDB_LEVEL}.ih
     )
 
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/HDDA.ih.in
+      include/${PROJECT_NAME}_vdb/HDDA_${VKL_VDB_LEVEL}.ih
+    )
+
   endforeach(I)
 
 endfunction()

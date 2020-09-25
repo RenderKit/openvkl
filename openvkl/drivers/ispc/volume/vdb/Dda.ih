@@ -8,21 +8,35 @@
 #include "math/vec.ih"
 #include "openvkl/vdb.h"
 
+// Note: Changing this value will probably break our API contract.
+// Tread carefully.
+#define DDA_STATE_MAX_NUM_LEVELS VKL_VDB_NUM_LEVELS
+
+// Helpers for the offsets in three-dimensional arrays below.
+#define DDA_STATE_X_OFFSET(LEVEL) (LEVEL)
+#define DDA_STATE_Y_OFFSET(LEVEL) (DDA_STATE_MAX_NUM_LEVELS + (LEVEL))
+#define DDA_STATE_Z_OFFSET(LEVEL) (2 * DDA_STATE_MAX_NUM_LEVELS + (LEVEL))
+
 struct DdaState
 {
-  // The level at which we iterate.
+  // The level at which we iterate. This is the same for all lanes
+  // as it only depends on the sampler configuration passed into Open VKL.
   uniform uint32 level;
 
   // The current ray parameter.
   float t;
 
-  // The current index. This is always a value modulo the cell size
-  // on the current level.
-  int32 idx[3];
+  // The ray. We need this to reinitialize lower levels when we skip them.
+  vec3f rayOrg;
+  vec3f rayDir;
+  vec3f rayInvDir;
 
-  float tNext[3];
-  float tDelta[3];
-  int32 idxDelta[3];
+  // The current index. This is in units of leaf level voxels for all levels.
+  // NOTE: See DDA_STATE_*_OFFSET macros above for the storage layout.
+  int32 idx[DDA_STATE_MAX_NUM_LEVELS * 3];
+  float tNext[DDA_STATE_MAX_NUM_LEVELS * 3];
+  float tDelta[DDA_STATE_MAX_NUM_LEVELS * 3];
+  int32 idxDelta[DDA_STATE_MAX_NUM_LEVELS * 3];
 };
 
 // -----------------------------------------------------------------------------
@@ -145,62 +159,153 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
                     const vec3f &rayDir,
                     const float &tMin,
                     uniform uint32 level,
-                    varying DdaState &dda)
+                    DdaState &dda)
 {
-  const vec3f oo                 = rayOrg + tMin * rayDir;
-  const vec3i sgn                = safe_sign(rayDir);
-  const vec3f iDir               = safe_rcp(rayDir);
-  const uniform int32 logCellRes = vklVdbLevelTotalLogRes(level + 1);
-  const uniform int32 cellRes    = (1 << logCellRes);
-
-  // Clamp the origin to a cell on this level, i.e., a multiple of the
-  // cell resolution. This results in the index of the cell we are in.
-  const vec3i idx = clampToCell(oo, cellRes);
-
+  const vec3f oo   = rayOrg + tMin * rayDir;
+  const vec3i sgn  = safe_sign(rayDir);
+  const vec3f iDir = safe_rcp(rayDir);
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 
-  // Intersect the exiting plane to get the initial tNext for this level.
-  const vec3f planes =
-      make_vec3f(((float)(idx.x + cellRes * sgnNonNegative.x)),
-                 ((float)(idx.y + cellRes * sgnNonNegative.y)),
-                 ((float)(idx.z + cellRes * sgnNonNegative.z)));
+  dda.level = clamp(level, 0, DDA_STATE_MAX_NUM_LEVELS - 1);
+  dda.t = tMin;
+  dda.rayOrg = rayOrg;
+  dda.rayDir = rayDir;
+  dda.rayInvDir = iDir;
 
-  const vec3f tn = intersect_planes(rayOrg, iDir, planes);
+  for (uniform uint32 l = 0; l <= dda.level; ++l) {
+    const uniform int32 cellRes = vklVdbLevelRes(l + 1);
+    // Clamp the origin to a cell on this level, i.e., a multiple of the
+    // cell resolution. This results in the index of the cell we are in.
+    const vec3i idx = clampToCell(oo, cellRes);
 
-  dda.t           = tMin;
-  dda.level       = clamp(level, 0, VKL_VDB_NUM_LEVELS - 1);
-  dda.idx[0]      = idx.x;
-  dda.idx[1]      = idx.y;
-  dda.idx[2]      = idx.z;
-  dda.idxDelta[0] = sgn.x * cellRes;
-  dda.idxDelta[1] = sgn.y * cellRes;
-  dda.idxDelta[2] = sgn.z * cellRes;
-  dda.tDelta[0]   = ((float)cellRes) * abs(iDir.x);
-  dda.tDelta[1]   = ((float)cellRes) * abs(iDir.y);
-  dda.tDelta[2]   = ((float)cellRes) * abs(iDir.z);
-  dda.tNext[0]    = tn.x;
-  dda.tNext[1]    = tn.y;
-  dda.tNext[2]    = tn.z;
+    // Intersect the exiting plane to get the initial tNext for this level.
+    const vec3f planes =
+        make_vec3f(((float)(idx.x + cellRes * sgnNonNegative.x)),
+                   ((float)(idx.y + cellRes * sgnNonNegative.y)),
+                   ((float)(idx.z + cellRes * sgnNonNegative.z)));
+
+    const vec3f tn = intersect_planes(rayOrg, iDir, planes);
+
+    const uniform int32 ix = DDA_STATE_X_OFFSET(l);
+    const uniform int32 iy = DDA_STATE_Y_OFFSET(l);
+    const uniform int32 iz = DDA_STATE_Z_OFFSET(l);
+    dda.idx[ix]            = idx.x;
+    dda.idx[iy]            = idx.y;
+    dda.idx[iz]            = idx.z;
+    dda.idxDelta[ix]       = sgn.x * cellRes;
+    dda.idxDelta[iy]       = sgn.y * cellRes;
+    dda.idxDelta[iz]       = sgn.z * cellRes;
+    dda.tDelta[ix]         = ((float)cellRes) * abs(iDir.x);
+    dda.tDelta[iy]         = ((float)cellRes) * abs(iDir.y);
+    dda.tDelta[iz]         = ((float)cellRes) * abs(iDir.z);
+    dda.tNext[ix]          = tn.x;
+    dda.tNext[iy]          = tn.y;
+    dda.tNext[iz]          = tn.z;
+  }
 }
 
 /*
- * Step once.
+ * Reinitialize dda.idx and dda.tNext for the given level and index space
+ * position.
+ *
+ * All other members must be set (including t, idx, ray members).
  */
-inline void ddaStep(DdaState &dda)
+inline void ddaReinitBelow(DdaState &dda,
+                           uniform uint32 level,
+                           int32 dx, // The parent level moved by this many voxels.
+                           int32 dy, // Only one of dx, dy, dz is nonzero!
+                           int32 dz)
 {
-  const float minT = min(min(dda.tNext[0], dda.tNext[1]), dda.tNext[2]);
-  if (minT == dda.tNext[0]) {
-    dda.t        = dda.tNext[0];
-    dda.tNext[0] = dda.tNext[0] + dda.tDelta[0];
-    dda.idx[0]   = dda.idx[0] + dda.idxDelta[0];
-  } else if (minT == dda.tNext[1]) {
-    dda.t        = dda.tNext[1];
-    dda.tNext[1] = dda.tNext[1] + dda.tDelta[1];
-    dda.idx[1]   = dda.idx[1] + dda.idxDelta[1];
-  } else {
-    dda.t        = dda.tNext[2];
-    dda.tNext[2] = dda.tNext[2] + dda.tDelta[2];
-    dda.idx[2]   = dda.idx[2] + dda.idxDelta[2];
+  // Should be cheap to recompute, so we save the storage in DdaState.
+  // TODO: Try *not* storing rayInvDir but instead computing it here.
+  const vec3i sgn = safe_sign(dda.rayDir);
+  const vec3i sgnNonNegative =
+      make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
+
+  // We know that we are on a hyperplane dividing two cells on level.
+  // Move the index point off of that plane, or clamping below will not be
+  // numerically robust!
+  // Note that we know the cell has size 1 in each dimension, so the move
+  // by 1e-2f seems perfectly safe.
+  // There is no point in moving oo in other dimensions.
+  vec3f oo = dda.rayOrg + dda.t * dda.rayDir;
+  if (dx != 0)
+  {
+    assert(dy == 0);
+    assert(dz == 0);
+    oo.x = oo.x + ((float)sgn.x) * 1e-2f;
+  }
+  else if (dy != 0)
+  {
+    assert(dx == 0);
+    assert(dz == 0);
+    oo.y = oo.y + ((float)sgn.y) * 1e-2f;
+  }
+  else
+  {
+    assert(dx == 0);
+    assert(dy == 0);
+    assert(dz != 0);
+    oo.z = oo.z + ((float)sgn.z) * 1e-2f;
+  }
+
+  for (uniform uint32 l = level+1; l <= dda.level; ++l)
+  {
+    const uniform int32 cellRes = vklVdbLevelRes(l + 1);
+    const uniform ix = DDA_STATE_X_OFFSET(l);
+    const uniform iy = DDA_STATE_Y_OFFSET(l);
+    const uniform iz = DDA_STATE_Z_OFFSET(l);
+    const vec3i idx = clampToCell(oo, cellRes);
+
+    dda.idx[ix] = idx.x;
+    dda.idx[iy] = idx.y;
+    dda.idx[iz] = idx.z;
+
+    const vec3f planes =
+        make_vec3f(((float)(dda.idx[ix] + cellRes * sgnNonNegative.x)),
+                   ((float)(dda.idx[iy] + cellRes * sgnNonNegative.y)),
+                   ((float)(dda.idx[iz] + cellRes * sgnNonNegative.z)));
+    const vec3f tn = intersect_planes(dda.rayOrg, dda.rayInvDir, planes);
+
+    dda.tNext[ix] = tn.x;
+    dda.tNext[iy] = tn.y;
+    dda.tNext[iz] = tn.z;
+  }
+}
+
+/*
+ * Step once on the given level, ignoring all other levels.
+ */
+inline void ddaStep(DdaState &dda, uniform uint32 level)
+{
+  const uniform uint32 ox = DDA_STATE_X_OFFSET(level);
+  const uniform uint32 oy = DDA_STATE_Y_OFFSET(level);
+  const uniform uint32 oz = DDA_STATE_Z_OFFSET(level);
+
+  // Enforce gathers on tNext now as we use these values a number of
+  // times below.
+  const float tNextX = dda.tNext[ox];
+  const float tNextY = dda.tNext[oy];
+  const float tNextZ = dda.tNext[oz];
+  const float minT = min(min(tNextX, tNextY), tNextZ);
+
+  if (minT == tNextX)
+  {
+    dda.t = tNextX;
+    dda.tNext[ox] = tNextX + dda.tDelta[ox];
+    dda.idx[ox]   = dda.idx[ox] + dda.idxDelta[ox];
+  }
+  else if (minT == tNextY)
+  {
+    dda.t = tNextY;
+    dda.tNext[oy] = tNextY + dda.tDelta[oy];
+    dda.idx[oy]   = dda.idx[oy] + dda.idxDelta[oy];
+  }
+  else
+  {
+    dda.t = tNextZ;
+    dda.tNext[oz] = tNextZ + dda.tDelta[oz];
+    dda.idx[oz]   = dda.idx[oz] + dda.idxDelta[oz];
   }
 }

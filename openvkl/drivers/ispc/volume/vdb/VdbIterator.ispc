@@ -7,7 +7,10 @@
 #include "common/export_util.h"
 #include "math/box_utility.ih"
 #include "math/math.ih"
+
+// Generated headers.
 #include "openvkl_vdb/VdbQueryVoxel_0.ih"
+#include "openvkl_vdb/HDDA_0.ih"
 
 export void EXPORT_UNIQUE(VdbIterator_export,
                           uniform box1f &dummy_box1f,
@@ -92,27 +95,6 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
   ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
 }
 
-inline void skipVoxel(const VdbVoxelDescriptor &voxel, DdaState &dda)
-{
-  const int32 logCellRes = vklVdbLevelTotalLogRes(voxel.level + 1);
-  const int32 cellRes    = (1 << logCellRes);
-  int32 px = dda.idx[0];
-  int32 py = dda.idx[1];
-  int32 pz = dda.idx[2];
-  clampOffsetToCellVarying(px, py, pz, cellRes);
-  bool inCell = true;
-  do
-  {
-    ddaStep(dda);
-    inCell = (dda.idx[0] >= px)
-          && (dda.idx[0] < (px+cellRes))
-          && (dda.idx[1] >= py)
-          && (dda.idx[1] < (py+cellRes))
-          && (dda.idx[2] >= pz)
-          && (dda.idx[2] < (pz+cellRes));
-  } while (inCell);
-}
-
 inline void VdbIterator_iterateIntervalInternal(
     const int *uniform imask,
     void *uniform _self,
@@ -132,20 +114,21 @@ inline void VdbIterator_iterateIntervalInternal(
     return;
   }
 
+
   VdbVoxelDescriptor voxel;
   while (self->dda.t <= self->tMax) {
     uint32 exitDepth = 0;
     VdbIterator_queryVoxel(self->grid,
-                           self->dda.idx[0],
-                           self->dda.idx[1],
-                           self->dda.idx[2],
+                           self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
+                           self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
+                           self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
                            self->dda.level,
                            ((const uniform range1f &)inputValueRange),
                            voxel);
     if (!voxel.isEmpty)
       break;
 
-    skipVoxel(voxel, self->dda);
+    hddaStep(self->grid, voxel, self->dda);
   }
 
   if (self->dda.t <= self->tMax) {
@@ -154,7 +137,7 @@ inline void VdbIterator_iterateIntervalInternal(
     interval->tRange.lower             = self->dda.t;
 
     // Move on to the next voxel to fulfill invariant.
-    skipVoxel(voxel, self->dda);
+    hddaStep(self->grid, voxel, self->dda);
 
     interval->tRange.upper  = min(self->dda.t, self->tMax);
     interval->nominalDeltaT = self->nominalDeltaT;

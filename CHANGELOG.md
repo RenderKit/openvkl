@@ -3,11 +3,32 @@ Version History
 
 ### Open VKL 0.11.0
 
--   Observers can now be created for both `VKLVolume` and `VKLSampler` objects.
--   `LeafNodeAccess` observers must now be created on sampler objects.
--   Iterator APIs now work on sampler objects rather than volumes.
--   Iterators for `vdb` volumes now support elementary cell iteration when
-    `maxIteratorDepth` is set to `VKL_VDB_NUM_LEVELS`-1.
+-   Introduced API support for multi-attribute volumes, including APIs for
+    sampling multiple attributes simultaneously
+    -   Initially only `structuredRegular` and `structuredSpherical` volume
+        types support multi-attribute data
+-   Iterator APIs now work on sampler objects rather than volumes, supporting
+    finer-grained configurability
+-   Observers can now be created for both volume and sampler objects
+    -   `LeafNodeAccess` observers must now be created on sampler objects
+-   Log and error callbacks now support a user pointer
+-   `vdb` volume interval iterators:
+    -   Added support for elementary cell iteration when `maxIteratorDepth` is
+        set to `VKL_VDB_NUM_LEVELS`-1
+    -   Up to 2x faster iteration
+-   `unstructured` and `particle` volume interval iterators:
+    -   Improved interior empty space skipping behavior
+    -   Added support for configurable iterator depth via the `maxIteratorDepth`
+        parameter
+-   Added support for filter modes in `structuredRegular` and
+    `structuredSpherical` volumes
+-   `amr` volumes now support `method` parameter on sampler objects
+-   Added new `interval_iterator_debug` renderer in `vklExamples` to visualize
+    interval iteration behavior
+-   Hit iterator accuracy improvements for `unstructured` volumes
+-   Fixed bugs in `amr` and `vdb` volume bounding box computations
+-   Fixed bug in `unstructured` volume gradient computations near empty regions
+-   Minimum ISPC version is now v1.14.1
 
 ### Open VKL 0.10.0 (alpha)
 

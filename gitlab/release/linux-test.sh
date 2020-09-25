@@ -6,7 +6,7 @@ ROOT_DIR=$PWD
 
 #### Extract release package ####
 
-OPENVKL_PKG_BASE=openvkl-0.10.0.x86_64.linux
+OPENVKL_PKG_BASE=openvkl-0.11.0.x86_64.linux
 tar -zxvf ${OPENVKL_PKG_BASE}.tar.gz
 
 #### Build tutorial against release package ####

@@ -143,25 +143,28 @@ A more descriptive error message can be queried by calling
 
 Alternatively, the application can also register a callback function of type
 
-    typedef void (*VKLErrorFunc)(VKLError, const char* message);
+    typedef void (*VKLErrorCallback)(void *, VKLError, const char* message);
 
 via
 
-    void vklDriverSetErrorFunc(VKLDriver, VKLErrorFunc);
+    void vklDriverSetErrorCallback(VKLDriver, VKLErrorFunc, void *);
 
 to get notified when errors occur. Applications may be interested in messages
 which Open VKL emits, whether for debugging or logging events. Applications can
 register a callback function of type
 
-    typedef void (*VKLLogFunc)(const char* message);
+    typedef void (*VKLLogCallback)(void *, const char* message);
 
 via
 
-    void vklDriverSetLogFunc(VKLDriver, VKLLogFunc);
+    void vklDriverSetLogCallback(VKLDriver, VKLLogCallback, void *);
 
 which Open VKL will use to emit log messages. Applications can clear either
 callback by passing `nullptr` instead of an actual function pointer. By default,
 Open VKL uses `cout` and `cerr` to emit log and error messages, respectively.
+The last parameter to `vklDriverSetErrorCallback` and `vklDriverSetLogCallback`
+is a user data pointer. Open VKL passes this pointer to the callback functions as
+the first parameter.
 Note that in addition to setting the above callbacks, this behavior can be
 changed via the driver parameters and environment variables described
 previously.
@@ -272,7 +275,8 @@ a volume is committed.
 
 The distance between consecutive elements in `source` is given in bytes with
 `byteStride`. If the provided `byteStride` is zero, then it will be determined
-automatically as `sizeof(type)`.
+automatically as `sizeof(type)`. Open VKL owned data will be compacted into a
+naturally-strided array on copy, regardless of the original `byteStride`.
 
 As with other object types, when data objects are no longer needed they should
 be released via `vklRelease`.
@@ -280,17 +284,20 @@ be released via `vklRelease`.
 Observers
 ---------
 
-Volumes in Open VKL may provide observers to communicate data back to the
-application. Observers may be created with
+Volumes and samplers in Open VKL may provide observers to communicate data back
+to the application. Observers may be created with
 
-    VKLObserver vklNewObserver(VKLVolume volume,
-                               const char *type);
+    VKLObserver vklNewSamplerObserver(VKLSampler sampler,
+                                      const char *type);
 
-The volume passed to `vklNewObserver` must already be committed.  Valid
+    VKLObserver vklNewVolumeObserver(VKLVolume volume,
+                                     const char *type);
+
+The object passed to `vklNew*Observer` must already be committed.  Valid
 observer type strings are defined by volume implementations (see section
 'Volume types' below).
 
-`vklNewObserver` returns `NULL` on failure.
+`vklNew*Observer` returns `NULL` on failure.
 
 To access the underlying data, an observer must first be mapped using
 
@@ -341,7 +348,11 @@ bounding box can be queried:
 
     vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
-The value range of the volume can also be queried:
+The number of attributes in a volume can also be queried:
+
+    unsigned int vklGetNumAttributes(VKLVolume volume);
+
+Finally, the value range of the volume (first attribute only) can be queried:
 
     vkl_range1f vklGetValueRange(VKLVolume volume);
 
@@ -361,31 +372,52 @@ created by passing a type string of `"structuredRegular"` to `vklNewVolume`.
 The parameters understood by structured regular volumes are summarized in the
 table below.
 
-  ------ ----------- -------------  -----------------------------------
-  Type   Name            Default    Description
-  ------ ----------- -------------  -----------------------------------
-  vec3i  dimensions                 number of voxels in each
-                                    dimension $(x, y, z)$
+  --------- ----------- -------------  -----------------------------------
+  Type      Name            Default    Description
+  --------- ----------- -------------  -----------------------------------
+  vec3i     dimensions                 number of voxels in each
+                                       dimension $(x, y, z)$
 
-  data   data                       VKLData object of voxel data,
-                                    supported types are:
+  VKLData   data                       VKLData object(s) of voxel data,
+  VKLData[]                            supported types are:
 
-                                    `VKL_UCHAR`
+                                       `VKL_UCHAR`
 
-                                    `VKL_SHORT`
+                                       `VKL_SHORT`
 
-                                    `VKL_USHORT`
+                                       `VKL_USHORT`
 
-                                    `VKL_FLOAT`
+                                       `VKL_FLOAT`
 
-                                    `VKL_DOUBLE`
+                                       `VKL_DOUBLE`
 
-  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in world-space
+                                       Multiple attributes are supported
+                                       through passing an array of VKLData
+                                       objects.
 
-  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in
-                                    world-space
-  ------ ----------- -------------  -----------------------------------
+  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in world-space
+
+  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in
+                                       world-space
+  --------- ----------- -------------  -----------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
+
+The following additional parameters can be set both on `"structuredRegular"`
+volumes and their sampler objects. Sampler object parameters default to volume
+parameters.
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  Type          Name              Default                Description
+  ------------  ----------------  ---------------------- ---------------------------------------
+  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+                                                         field. Use `VKLFilter` for named
+                                                         constants.
+
+  int           gradientFilter    `filter`               The filter used for reconstructing the
+                                                         field during gradient computations.
+                                                         Use `VKLFilter` for named constants.
+  ------------  ----------------  ---------------------- ---------------------------------------
+  : Configuration parameters for structured regular (`"structuredRegular"`) volumes and their sampler objects.
 
 #### Structured Spherical Volumes
 
@@ -398,31 +430,35 @@ structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
 
-  ------ ----------- -------------  -----------------------------------
-  Type   Name            Default    Description
-  ------ ----------- -------------  -----------------------------------
-  vec3i  dimensions                 number of voxels in each
-                                    dimension $(r, \theta, \phi)$
+  --------- ----------- -------------  -----------------------------------
+  Type      Name            Default    Description
+  --------- ----------- -------------  -----------------------------------
+  vec3i     dimensions                 number of voxels in each
+                                       dimension $(r, \theta, \phi)$
 
-  data   data                       VKLData object of voxel data,
-                                    supported types are:
+  VKLData   data                       VKLData object(s) of voxel data,
+  VKLData[]                            supported types are:
 
-                                    `VKL_UCHAR`
+                                       `VKL_UCHAR`
 
-                                    `VKL_SHORT`
+                                       `VKL_SHORT`
 
-                                    `VKL_USHORT`
+                                       `VKL_USHORT`
 
-                                    `VKL_FLOAT`
+                                       `VKL_FLOAT`
 
-                                    `VKL_DOUBLE`
+                                       `VKL_DOUBLE`
 
-  vec3f  gridOrigin  $(0, 0, 0)$    origin of the grid in units of
-                                    $(r, \theta, \phi)$; angles in degrees
+                                       Multiple attributes are supported
+                                       through passing an array of VKLData
+                                       objects.
 
-  vec3f  gridSpacing $(1, 1, 1)$    size of the grid cells in units of
-                                    $(r, \theta, \phi)$; angles in degrees
-  ------ ----------- -------------  -----------------------------------
+  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in units of
+                                       $(r, \theta, \phi)$; angles in degrees
+
+  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in units of
+                                       $(r, \theta, \phi)$; angles in degrees
+  --------- ----------- -------------  -----------------------------------
   : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,
@@ -434,6 +470,24 @@ constrained such that:
   * $0 \leq \theta \leq 180$
   * $0 \leq \phi \leq 360$
 
+The following additional parameters can be set both on `"structuredSpherical"`
+volumes and their sampler objects. Sampler object parameters default to volume
+parameters.
+
+  ------------  ----------------  ---------------------- ---------------------------------------
+  Type          Name              Default                Description
+  ------------  ----------------  ---------------------- ---------------------------------------
+  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+                                                         field. Use `VKLFilter` for named
+                                                         constants.
+
+  int           gradientFilter    `filter`               The filter used for reconstructing the
+                                                         field during gradient computations.
+                                                         Use `VKLFilter` for named constants.
+  ------------  ----------------  ---------------------- ---------------------------------------
+  : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes and their sampler objects.
+
+
 ### Adaptive Mesh Refinement (AMR) Volumes
 
 Open VKL currently supports block-structured (Berger-Colella) AMR volumes.
@@ -444,26 +498,19 @@ equal for all blocks at the same refinement level, though blocks at a coarser
 level have a larger cell width than finer levels.
 
 There can be any number of refinement levels and any number of blocks at any
-level of refinement. An AMR volume type is created by passing the type string
-`"amr"` to `vklNewVolume`.
+level of refinement.
 
 Blocks are defined by three parameters: their bounds, the refinement level in
 which they reside, and the scalar data contained within each block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
+AMR volumes are created by passing the type string `"amr"` to `vklNewVolume`,
+and have the following parameters:
+
   -------------- --------------- -----------------  -----------------------------------
   Type           Name                      Default  Description
   -------------- --------------- -----------------  -----------------------------------
-  `VKLAMRMethod` method          `VKL_AMR_CURRENT`  `VKLAMRMethod` sampling method.
-                                                    Supported methods are:
-
-                                                    `VKL_AMR_CURRENT`
-
-                                                    `VKL_AMR_FINEST`
-
-                                                    `VKL_AMR_OCTANT`
-
   float[]        cellWidth                          [data] array of each level's cell width
 
   box3i[]        block.bounds                       [data] array of each block's bounds (in voxels)
@@ -484,6 +531,24 @@ Note that cell widths are defined _per refinement level_, not per block.
 Note that the `gridOrigin` and `gridSpacing` parameters act just like the
 structured volume equivalent, but they only modify the root (coarsest level) of
 refinement.
+
+The following additional parameters can be set both on `"amr"`
+volumes and their sampler objects. Sampler object parameters default to volume
+parameters.
+
+  -------------- --------------- -----------------  -----------------------------------
+  Type           Name                      Default  Description
+  -------------- --------------- -----------------  -----------------------------------
+  `VKLAMRMethod` method          `VKL_AMR_CURRENT`  `VKLAMRMethod` sampling method.
+                                                    Supported methods are:
+
+                                                    `VKL_AMR_CURRENT`
+
+                                                    `VKL_AMR_FINEST`
+
+                                                    `VKL_AMR_OCTANT`
+  -------------- --------------- -----------------  -----------------------------------
+  : Configuration parameters for AMR (`"AMR"`) volumes and their sampler objects.
 
 Open VKL's AMR implementation was designed to cover Berger-Colella [1] and
 Chombo [2] AMR data.  The `method` parameter above determines the interpolation
@@ -518,8 +583,7 @@ Unstructured volumes can have their topology and geometry freely defined.
 Geometry can be composed of tetrahedral, hexahedral, wedge or pyramid cell
 types. The data format used is compatible with VTK and consists of multiple
 arrays: vertex positions and values, vertex indices, cell start indices, cell
-types, and cell values. An unstructured volume type is created by passing the
-type string `"unstructured"` to `vklNewVolume`.
+types, and cell values.
 
 Sampled cell values can be specified either per-vertex (`vertex.data`) or
 per-cell (`cell.data`). If both arrays are set, `cell.data` takes precedence.
@@ -546,6 +610,16 @@ sizes interleaved with vertex indices in the following format: $n, id_1, ...,
 id_n, m, id_1, ..., id_m$. This alternative `index` array layout can be enabled
 through the `indexPrefixed` flag (in which case, the `cell.type` parameter
 should be omitted).
+
+A binary bounding volume hierarchy (BVH) is used internally to accelerate
+interval iteration. Intervals are found by intersecting BVH nodes up to a
+maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
+Larger values of `maxIteratorDepth` lead to smaller individual intervals (up to
+leaf node intersections), yielding potentially more efficient space-skipping
+behavior and tighter bounds on returned interval metadata.
+
+Unstructured volumes are created by passing the type string `"unstructured"` to
+`vklNewVolume`, and have the following parameters:
 
   -------------------  ------------------  --------  ---------------------------------------
   Type                 Name                Default   Description
@@ -592,6 +666,18 @@ should be omitted).
   -------------------  ------------------  --------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes.
 
+The following additional parameters can be set both on `unstructured` volumes
+and their sampler objects (sampler object parameters default to volume
+parameters).
+
+  -------------------  ------------------  --------  ---------------------------------------
+  Type                 Name                Default   Description
+  -------------------  ------------------  --------  ---------------------------------------
+  int                  maxIteratorDepth           6  Do not descend further than to this BVH
+                                                     depth during interval iteration.
+  -------------------  ------------------  --------  ---------------------------------------
+  : Configuration parameters for unstructured (`"unstructured"`) volumes and their sampler objects.
+
 ### VDB Volumes
 
 VDB volumes implement a data structure that is very similar to the data structure
@@ -623,15 +709,12 @@ The VDB implementation in Open VKL follows the following goals:
   - Compatibility with OpenVDB on a leaf data level, so that .vdb files may be loaded
     with minimal overhead.
 
-VDB volumes have the following parameters:
+VDB volumes are created by passing the type string `"vdb"` to `vklNewVolume`, and have the
+following parameters:
 
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           maxIteratorDepth  3                      Do not descend further than to this
-                                                         depth during interval iteration.
-                                                         The maximum value is 3.
-
   float[]       indexToObject     1, 0, 0,               An array of 12 values of type `float`
                                   0, 1, 0,               that define the transformation from
                                   0, 0, 1,               index space to object space.
@@ -690,10 +773,13 @@ objects (sampler object parameters default to volume parameters).
   int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`-1 Do not descend further than to this
                                                          depth during sampling.
 
+  int           maxIteratorDepth  `VKL_VDB_NUM_LEVELS`-2 Do not descend further than to this
+                                                         depth during iteration.
+
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
-VDB volumes support the following observers:
+VDB sampler objects support the following observers:
 
   --------------  -----------  -------------------------------------------------------------
   Name            Buffer Type  Description
@@ -704,7 +790,7 @@ VDB volumes support the following observers:
                                nonzero value.
                                This can be used for on-demand loading of leaf nodes.
   --------------  --------------------------------------------------------------------------
-  : Observers supported by VDB (`"vdb"`) volumes.
+  : Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
 
 
 #### Major differences to OpenVDB
@@ -763,6 +849,13 @@ The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
 method in [1].
 
+Similar to unstructured volumes, a binary BVH is used internally to accelerate
+interval iteration. Intervals are found by intersecting BVH nodes up to a
+maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
+
+Particle volumes are created by passing the type string `"particle"` to
+`vklNewVolume`, and have the following parameters:
+
   --------  --------------------------  --------  ---------------------------------------
   Type      Name                        Default   Description
   --------  --------------------------  --------  ---------------------------------------
@@ -806,6 +899,17 @@ method in [1].
   --------  --------------------------  --------  ---------------------------------------
   : Configuration parameters for particle (`"particle"`) volumes.
 
+The following additional parameters can be set both on `particle` volumes and
+their sampler objects (sampler object parameters default to volume parameters).
+
+  --------  --------------------------  --------  ---------------------------------------
+  Type      Name                        Default   Description
+  --------  --------------------------  --------  ---------------------------------------
+  int       maxIteratorDepth            6         Do not descend further than to this BVH
+                                                  depth during interval iteration.
+  --------  --------------------------  --------  ---------------------------------------
+  : Configuration parameters for particle (`"particle"`) volumes and their sampler objects.
+
 1. Knoll, A., Wald, I., Navratil, P., Bowen, A., Reda, K., Papka, M.E. and
    Gaither, K. (2014), RBF Volume Ray Casting on Multicore and Manycore CPUs.
    Computer Graphics Forum, 33: 71-80. doi:10.1111/cgf.12363
@@ -834,10 +938,13 @@ Use `vklCommit()` to commit parameters to the sampler object.
 Sampling
 --------
 
-The scalar API just takes a volume and coordinate, and returns a float value.
-NaN is returned for probe points outside the volume.
+The scalar API takes a volume and coordinate, and returns a float value. NaN is
+returned for probe points outside the volume. The attribute index selects the
+scalar attribute of interest; not all volumes support multiple attributes.
 
-    float vklComputeSample(VKLSampler sampler, const vkl_vec3f *objectCoordinates);
+    float vklComputeSample(VKLSampler sampler,
+                           const vkl_vec3f *objectCoordinates,
+                           unsigned int attributeIndex);
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
 the machine type and Open VKL driver implementation, these can give greater
@@ -847,17 +954,20 @@ set 0 for lanes to be ignored, -1 for active lanes.
     void vklComputeSample4(const int *valid,
                            VKLSampler sampler,
                            const vkl_vvec3f4 *objectCoordinates,
-                           float *samples);
+                           float *samples,
+                           unsigned int attributeIndex);
 
     void vklComputeSample8(const int *valid,
                            VKLSampler sampler,
                            const vkl_vvec3f8 *objectCoordinates,
-                           float *samples);
+                           float *samples,
+                           unsigned int attributeIndex);
 
     void vklComputeSample16(const int *valid,
                             VKLSampler sampler,
                             const vkl_vvec3f16 *objectCoordinates,
-                            float *samples);
+                            float *samples,
+                            unsigned int attributeIndex);
 
 A stream version allows sampling an arbitrary number of positions at once. While
 the vector version requires coordinates to be provided in a structure-of-arrays
@@ -869,7 +979,79 @@ API can give greater performance than the scalar API.
       void vklComputeSampleN(VKLSampler sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
-                             float *samples);
+                             float *samples,
+                             unsigned int attributeIndex);
+
+All of the above sampling APIs can be used, regardless of the driver's native
+SIMD width.
+
+### Sampling Multiple Attributes
+
+Open VKL provides additional APIs for sampling multiple scalar attributes in a
+single call through the `vklComputeSampleM*()` interfaces. Beyond convenience,
+these can give improved performance relative to the single attribute sampling
+APIs. A scalar API supports sampling `M` attributes specified by
+`attributeIndices` on a single object space coordinate:
+
+    void vklComputeSampleM(VKLSampler sampler,
+                           const vkl_vec3f *objectCoordinates,
+                           float *samples,
+                           unsigned int M,
+                           const unsigned int *attributeIndices);
+
+Vector versions allow sampling at 4, 8, or 16 positions at once across the `M`
+attributes:
+
+    void vklComputeSampleM4(const int *valid,
+                            VKLSampler sampler,
+                            const vkl_vvec3f4 *objectCoordinates,
+                            float *samples,
+                            unsigned int M,
+                            const unsigned int *attributeIndices);
+
+    void vklComputeSampleM8(const int *valid,
+                            VKLSampler sampler,
+                            const vkl_vvec3f8 *objectCoordinates,
+                            float *samples,
+                            unsigned int M,
+                            const unsigned int *attributeIndices);
+
+    void vklComputeSampleM16(const int *valid,
+                             VKLSampler sampler,
+                             const vkl_vvec3f16 *objectCoordinates,
+                             float *samples,
+                             unsigned int M,
+                             const unsigned int *attributeIndices);
+
+The `[4, 8, 16] * M` sampled values are populated in the `samples` array in a
+structure-of-arrays layout, with all values for each attribute provided in
+sequence. That is, sample values `s_m,n` for the `m`th attribute and `n`th
+object coordinate will be populated as
+
+    samples = [s_0,0,   s_0,1,   ..., s_0,N-1,
+               s_1,0,   s_1,1,   ..., s_1,N-1,
+               ...,
+               s_M-1,0, s_M-1,1, ..., s_M-1,N-1]
+
+A stream version allows sampling an arbitrary number of positions at once across
+the `M` attributes. As with single attribute stream sampling, the `N`
+coordinates are provided in an array-of-structures layout.
+
+    void vklComputeSampleMN(VKLSampler sampler,
+                            unsigned int N,
+                            const vkl_vec3f *objectCoordinates,
+                            float *samples,
+                            unsigned int M,
+                            const unsigned int *attributeIndices);
+
+The `M * N` sampled values are populated in the `samples` array in an
+array-of-structures layout, with all attribute values for each coordinate
+provided in sequence as
+
+    samples = [s_0,0,   s_1,0,   ..., s_M-1,0,
+               s_0,1,   s_1,1,   ..., s_M-1,1,
+               ...,
+               s_0,N-1, s_1,N-1, ..., s_M-1,N-1]
 
 All of the above sampling APIs can be used, regardless of the driver's native
 SIMD width.
@@ -883,31 +1065,36 @@ returning a vec3f instead of a float. NaN values are returned for points outside
 the volume.
 
     vkl_vec3f vklComputeGradient(VKLSampler sampler,
-                                 const vkl_vec3f *objectCoordinates);
+                                 const vkl_vec3f *objectCoordinates,
+                                 unsigned int attributeIndex);
 
 Vector versions are also provided:
 
     void vklComputeGradient4(const int *valid,
                              VKLSampler sampler,
                              const vkl_vvec3f4 *objectCoordinates,
-                             vkl_vvec3f4 *gradients);
+                             vkl_vvec3f4 *gradients,
+                             unsigned int attributeIndex);
 
     void vklComputeGradient8(const int *valid,
                              VKLSampler sampler,
                              const vkl_vvec3f8 *objectCoordinates,
-                             vkl_vvec3f8 *gradients);
+                             vkl_vvec3f8 *gradients,
+                             unsigned int attributeIndex);
 
     void vklComputeGradient16(const int *valid,
                               VKLSampler sampler,
                               const vkl_vvec3f16 *objectCoordinates,
-                              vkl_vvec3f16 *gradients);
+                              vkl_vvec3f16 *gradients,
+                              unsigned int attributeIndex);
 
 Finally, a stream version is provided:
 
     void vklComputeGradientN(VKLSampler sampler,
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
-                             vkl_vec3f *gradients);
+                             vkl_vec3f *gradients,
+                             unsigned int attributeIndex);
 
 All of the above gradient APIs can be used, regardless of the driver's native
 SIMD width.
@@ -917,8 +1104,11 @@ Iterators
 
 Open VKL has APIs to search for particular volume values along a ray.  Queries
 can be for ranges of volume values (`vklIterateInterval`) or for particular
-values (`vklIterateHit`).  The desired values are set in a `VKLValueSelector`,
-which needs to be created, filled in with values, and then committed.
+values (`vklIterateHit`).  Only the first volume attribute is currently
+considered in the iterator APIs.
+
+The desired values are set in a `VKLValueSelector`, which needs to be created,
+filled in with values, and then committed.
 
     VKLValueSelector vklNewValueSelector(VKLVolume volume);
 
@@ -933,7 +1123,7 @@ which needs to be created, filled in with values, and then committed.
 To query an interval, a `VKLIntervalIterator` of scalar or vector width must be
 initialized with `vklInitIntervalIterator`.
 
-    VKLIntervalIterator vklInitIntervalIterator(VKLVolume volume,
+    VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
                                                 const vkl_vec3f *origin,
                                                 const vkl_vec3f *direction,
                                                 const vkl_range1f *tRange,
@@ -941,7 +1131,7 @@ initialized with `vklInitIntervalIterator`.
                                                 void *buffer);
 
     VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                                  VKLVolume volume,
+                                                  VKLSampler sampler,
                                                   const vkl_vvec3f4 *origin,
                                                   const vkl_vvec3f4 *direction,
                                                   const vkl_vrange1f4 *tRange,
@@ -949,7 +1139,7 @@ initialized with `vklInitIntervalIterator`.
                                                   void *buffer);
 
     VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                                  VKLVolume volume,
+                                                  VKLSampler sampler,
                                                   const vkl_vvec3f8 *origin,
                                                   const vkl_vvec3f8 *direction,
                                                   const vkl_vrange1f8 *tRange,
@@ -957,7 +1147,7 @@ initialized with `vklInitIntervalIterator`.
                                                   void *buffer);
 
     VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                    VKLVolume volume,
+                                                    VKLSampler sampler,
                                                     const vkl_vvec3f16 *origin,
                                                     const vkl_vvec3f16 *direction,
                                                     const vkl_vrange1f16 *tRange,
@@ -971,16 +1161,16 @@ Copying iterator buffers is currently not supported.
 
 The required size, in bytes, of the buffer can be queried with
 
-    size_t vklGetIntervalIteratorSize(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize(VKLSampler sampler);
 
-    size_t vklGetIntervalIteratorSize4(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
 
-    size_t vklGetIntervalIteratorSize8(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
 
-    size_t vklGetIntervalIteratorSize16(VKLVolume volume);
+    size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
 
-The values these functions return depend on the volume type rather than the
-particular `VKLVolume` instance.
+The values these functions return may change depending on the parameters set
+on `sampler`.
 
 Open VKL also provides a conservative maximum size over all volume types as a
 preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). This is particularly
@@ -1048,7 +1238,7 @@ same fashion.  This API could be used, for example, to find isosurfaces.
 Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
 desired width must be initialized:
 
-    VKLHitIterator vklInitHitIterator(VKLVolume volume,
+    VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                       const vkl_vec3f *origin,
                                       const vkl_vec3f *direction,
                                       const vkl_range1f *tRange,
@@ -1056,7 +1246,7 @@ desired width must be initialized:
                                       void *buffer);
 
     VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                             VKLVolume volume,
+                             VKLSampler sampler,
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
@@ -1064,7 +1254,7 @@ desired width must be initialized:
                              void *buffer);
 
     VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                             VKLVolume volume,
+                             VKLSampler sampler,
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
                              const vkl_vrange1f8 *tRange,
@@ -1072,7 +1262,7 @@ desired width must be initialized:
                              void *buffer);
 
     VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                              VKLVolume volume,
+                              VKLSampler sampler,
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
@@ -1081,13 +1271,13 @@ desired width must be initialized:
 
 Buffer size can be queried with
 
-    size_t vklGetHitIteratorSize(VKLVolume volume);
+    size_t vklGetHitIteratorSize(VKLSampler sampler);
 
-    size_t vklGetHitIteratorSize4(VKLVolume volume);
+    size_t vklGetHitIteratorSize4(VKLSampler sampler);
 
-    size_t vklGetHitIteratorSize8(VKLVolume volume);
+    size_t vklGetHitIteratorSize8(VKLSampler sampler);
 
-    size_t vklGetHitIteratorSize16(VKLVolume volume);
+    size_t vklGetHitIteratorSize16(VKLSampler sampler);
 
 Open VKL also provides the macro `VKL_MAX_HIT_ITERATOR_SIZE` as a conservative
 estimate.
@@ -1185,19 +1375,18 @@ alternative we recommend stack allocated buffers.
 
 In C99, variable length arrays provide an easy way to achieve this:
 
-    const size_t bufferSize = vklGetIntervalIteratorSize(volume);
+    const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
     char buffer[bufferSize];
 
 Note that the call to `vklGetIntervalIteratorSize` or `vklGetHitIteratorSize`
 should not appear in an inner loop as it is relatively costly. The return value
-depends only on the volume type and target architecture, and `volume` does not
-actually have to be committed.
+depends on the volume type, target architecture, and parameters to `sampler`.
 
 In C++, variable length arrays are not part of the standard. Here, users may
 rely on `alloca` and similar functions:
 
     #include <alloca.h>
-    const size_t bufferSize = vklGetIntervalIteratorSize(volume);
+    const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
     char *buffer = alloca(bufferSize);
 
 Users should understand the implications of `alloca`. In particular,
@@ -1216,3 +1405,76 @@ These values are majorants over all drivers and volume types. Note that Open VKL
 attempts to detect the target SIMD width using `TARGET_WIDTH`, returning smaller
 buffer sizes for narrow architectures. However, Open VKL may fall back to the
 largest buffer size over all targets.
+
+Multi-attribute Volume Data Layout
+----------------------------------
+
+Open VKL provides flexible managed data APIs that allow applications to specify
+input data in various formats and layouts. When shared buffers are used
+(`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), Open VKL will use the
+application-owned memory directly, respecting the input data layout. Shared
+buffers therefore allow applications to strategically select the best layout for
+multi-attribute volume data and expected sampling behavior.
+
+For volume attributes that are sampled individually (e.g. using
+`vklComputeSample[4,8,16,N]()`), it is recommended to use a structure-of-arrays
+layout. That is, each attribute's data should be compact in contiguous memory.
+This can be accomplished by simply using Open VKL owned data objects
+(`dataCreationFlags = VKL_DATA_DEFAULT`), or by using a natural `byteStride` for
+shared buffers.
+
+For volume attributes that are sampled simultaneously (e.g. using
+`vklComputeSampleM[4,8,16,N]()`), it is recommended to use an
+array-of-structures layout. That is, data for these attributes should be
+provided per voxel in a contiguous layout. This is accomplished using shared
+buffers for each attribute with appropriate byte strides. For example, for a
+three attribute structured volume representing a velocity field, the data can be
+provided as:
+
+    // used in Open VKL shared buffers, so must not be freed by application
+    std::vector<vkl_vec3f> velocities(numVoxels);
+
+    for (auto &v : velocities) {
+      v.x = ...;
+      v.y = ...;
+      v.z = ...;
+    }
+
+    std::vector<VKLData> attributes;
+
+    attributes.push_back(vklNewData(velocities.size(),
+                                    VKL_FLOAT,
+                                    &velocities[0].x,
+                                    VKL_DATA_SHARED_BUFFER,
+                                    sizeof(vkl_vec3f)));
+
+    attributes.push_back(vklNewData(velocities.size(),
+                                    VKL_FLOAT,
+                                    &velocities[0].y,
+                                    VKL_DATA_SHARED_BUFFER,
+                                    sizeof(vkl_vec3f)));
+
+    attributes.push_back(vklNewData(velocities.size(),
+                                    VKL_FLOAT,
+                                    &velocities[0].z,
+                                    VKL_DATA_SHARED_BUFFER,
+                                    sizeof(vkl_vec3f)));
+
+    VKLData attributesData =
+        vklNewData(attributes.size(), VKL_DATA, attributes.data());
+
+    for (auto &attribute : attributes)
+      vklRelease(attribute);
+
+    VKLVolume volume = vklNewVolume("structuredRegular");
+
+    vklSetData(volume, "data", attributesData);
+    vklRelease(attributesData);
+
+    // set other volume parameters...
+
+    vklCommit(volume);
+
+These are general recommendations for common scenarios; it is still recommended
+to evaluate performance of different volume data layouts for your application's
+particular use case.

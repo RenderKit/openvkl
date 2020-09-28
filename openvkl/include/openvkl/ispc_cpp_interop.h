@@ -27,6 +27,9 @@ typedef unsigned int64 vkl_uint64;
 // Call macros for both varying and uniform types.
 #define __vkl_interop_univary(Macro) Macro(uniform) Macro(varying)
 
+// Initializer lists in struct definitions.
+#define VKL_INITIALIZER_LIST(...)
+
 // ========================================================================== //
 #elif defined(__cplusplus)
 // ========================================================================== //
@@ -74,6 +77,9 @@ inline vkl_uint32 intbits(float value)
 
 // Call macros for both varying and uniform types.
 #define __vkl_interop_univary(Macro) Macro(VKL_INTEROP_UNIFORM)
+
+// Initializer lists in struct definitions.
+#define VKL_INITIALIZER_LIST(...) { __VA_ARGS__ }
 
 // ========================================================================== //
 #endif  // defined(ISPC)

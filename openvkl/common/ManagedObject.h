@@ -35,6 +35,12 @@ namespace openvkl {
     template <typename T>
     T getParam(const char *name);
 
+    // returns if a data array of the given element type is present; can be used
+    // to avoid warning messages in getParamDataT() if parameter fallbacks are
+    // allowed
+    template <typename T>
+    bool hasParamDataT(const char *name);
+
     // gets a data array of elements of the given type; uses the provided
     // default value if the parameter is not set
     template <typename T>

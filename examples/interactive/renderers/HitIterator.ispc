@@ -31,7 +31,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
   uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
 
-  VKLHitIterator iterator = vklInitHitIteratorV(scene->volume,
+  VKLHitIterator iterator = vklInitHitIteratorV(scene->sampler,
                                                 (varying vkl_vec3f *)&ray.org,
                                                 (varying vkl_vec3f *)&ray.dir,
                                                 &tRange,
@@ -72,7 +72,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
           tShadowRange.lower = hit.epsilon;
           tShadowRange.upper = inf;
           VKLHitIterator shadowIterator =
-              vklInitHitIteratorV(scene->volume,
+              vklInitHitIteratorV(scene->sampler,
                                   (varying vkl_vec3f *)&c,
                                   (varying vkl_vec3f *)&wo,
                                   &tShadowRange,

@@ -35,7 +35,7 @@ void gradients_at_particle_centers(size_t numParticles,
     const vkl_vec3f vklGradient =
         vklComputeGradient(vklSampler, (const vkl_vec3f *)&p3);
 
-    const vec3f referenceGradient = v->computeReferenceGradient(p3);
+    const vec3f referenceGradient = v->computeProceduralGradient(p3);
 
     const float margin = 0.2f;
     CHECK(vklGradient.x == Approx(referenceGradient.x).margin(margin));

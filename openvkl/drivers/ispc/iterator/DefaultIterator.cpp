@@ -21,13 +21,13 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      box3f boundingBox  = volume->getBoundingBox();
-      range1f valueRange = volume->getValueRange();
+      const Volume<W> &volume = sampler->getVolume();
+      box3f boundingBox  = volume.getBoundingBox();
+      range1f valueRange = volume.getValueRange();
 
       CALL_ISPC(DefaultIntervalIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                volume->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -48,6 +48,8 @@ namespace openvkl {
     }
 
     template class DefaultIntervalIterator<VKL_TARGET_WIDTH>;
+
+    __vkl_verify_max_interval_iterator_size(DefaultIntervalIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

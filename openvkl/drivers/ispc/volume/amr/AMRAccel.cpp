@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AMRAccel.h"
@@ -109,7 +109,7 @@ namespace openvkl {
         if (bestDim == -1) {
           // no split dim - make a leaf
 
-          // note that by construction the last brick must be the onoe
+          // note that by construction the last brick must be the one
           // we're looking for (all on a lower level must be earlier in
           // the list)
 

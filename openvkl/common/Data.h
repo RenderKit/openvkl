@@ -15,6 +15,7 @@ namespace ispc {
     const uint8_t *addr;
     uint64_t byteStride;
     uint64_t numItems;
+    VKLDataType dataType;
     bool compact;
   };
 }  // namespace ispc
@@ -169,6 +170,18 @@ namespace openvkl {
   // ManagedObject specializations ////////////////////////////////////////////
 
   template <typename T>
+  inline bool ManagedObject::hasParamDataT(const char *name)
+  {
+    Data *data = getParam<Data *>(name, nullptr);
+
+    if (data && data->is<T>()) {
+      return true;
+    }
+
+    return false;
+  }
+
+  template <typename T>
   inline const Ref<const DataT<T>> ManagedObject::getParamDataT(
       const char *name, DataT<T> *valIfNotFound)
   {
@@ -220,13 +233,13 @@ namespace openvkl {
 
   // Helper functions /////////////////////////////////////////////////////////
 
-  inline const ispc::Data1D *ispc(Ref<const Data> &dataRef)
+  inline const ispc::Data1D *ispc(const Ref<const Data> &dataRef)
   {
     return dataRef ? &dataRef->ispc : &Data::emptyData1D;
   }
 
   template <typename T>
-  const ispc::Data1D *ispc(Ref<const DataT<T>> &dataRef)
+  const ispc::Data1D *ispc(const Ref<const DataT<T>> &dataRef)
   {
     return dataRef ? &dataRef->ispc : &Data::emptyData1D;
   }
@@ -235,6 +248,18 @@ namespace openvkl {
   const ispc::Data1D *ispc(const DataT<T> &data)
   {
     return &data.ispc;
+  }
+
+  inline std::vector<const ispc::Data1D *> ispcs(
+      const std::vector<Ref<const Data>> &dataRefs)
+  {
+    std::vector<const ispc::Data1D *> r;
+
+    for (const auto &d : dataRefs) {
+      r.push_back(ispc(d));
+    }
+
+    return r;
   }
 
 }  // namespace openvkl

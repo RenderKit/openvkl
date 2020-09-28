@@ -4,13 +4,12 @@
 #pragma once
 
 #include "../../common/export_util.h"
-#include "../../iterator/UnstructuredIterator.h"
+#include "../UnstructuredBVH.h"
 #include "../UnstructuredVolume.h"
 #include "../Volume.h"
 #include "../common/Data.h"
 #include "../common/math.h"
 #include "ParticleVolume_ispc.h"
-#include "embree3/rtcore.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -52,28 +51,17 @@ namespace openvkl {
 
       void commit() override;
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final
-      {
-        return intervalIteratorFactory;
-      }
-
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final
-      {
-        return hitIteratorFactory;
-      }
-
       Sampler<W> *newSampler() override;
 
       box3f getBoundingBox() const override;
 
+      unsigned int getNumAttributes() const override;
+
       range1f getValueRange() const override;
 
-      const Node *getNodeRoot() const
-      {
-        return rtcRoot;
-      }
+      const Node *getNodeRoot() const;
+
+      int getMaxIteratorDepth() const;
 
      private:
       void buildBvhAndCalculateBounds();
@@ -89,14 +77,11 @@ namespace openvkl {
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
+      int maxIteratorDepth;
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
-
-     private:
-        UnstructuredIntervalIteratorFactory<W> intervalIteratorFactory;
-        UnstructuredHitIteratorFactory<W> hitIteratorFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -108,28 +93,36 @@ namespace openvkl {
     }
 
     template <int W>
+    unsigned int ParticleVolume<W>::getNumAttributes() const
+    {
+      return 1;
+    }
+
+    template <int W>
     inline range1f ParticleVolume<W>::getValueRange() const
     {
       return valueRange;
     }
 
-    // Helper functions ///////////////////////////////////////////////////////
-
-    inline void populateLeafNodes(Node *root,
-                                  std::vector<LeafNode *> &leafNodes)
+    template <int W>
+    inline const Node *ParticleVolume<W>::getNodeRoot() const
     {
-      if (root->nominalLength < 0) {
-        leafNodes.push_back((LeafNode *)root);
-      } else {
-        auto inner = (InnerNode *)root;
-        populateLeafNodes(inner->children[0], leafNodes);
-        populateLeafNodes(inner->children[1], leafNodes);
-      }
+      return rtcRoot;
     }
 
+    template <int W>
+    inline int ParticleVolume<W>::getMaxIteratorDepth() const
+    {
+      return maxIteratorDepth;
+    }
+
+    // Helper functions ///////////////////////////////////////////////////////
+
+    // Only applicable to particle volumes; other unstructured types have value
+    // ranges accumulated during build / construction
     inline void accumulateNodeValueRanges(Node *root)
     {
-      if (root->nominalLength < 0) {
+      if (isLeafNode(root)) {
         // leaf node with pre-computed value range
         return;
       }

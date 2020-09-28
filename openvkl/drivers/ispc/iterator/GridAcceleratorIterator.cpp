@@ -6,6 +6,7 @@
 #include "../common/math.h"
 #include "../value_selector/ValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
+#include "GridAcceleratorIterator_ispc.h"
 
 namespace openvkl {
   namespace ispc_driver {
@@ -25,7 +26,7 @@ namespace openvkl {
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                volume->getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -52,7 +53,7 @@ namespace openvkl {
     {
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
-                volume->getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -71,6 +72,8 @@ namespace openvkl {
 
     template class GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>;
 
+    __vkl_verify_max_interval_iterator_size(GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>)
+
     ////////////////////////////////////////////////////////////////////////////
 
     template <int W>
@@ -84,7 +87,7 @@ namespace openvkl {
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                volume->getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -115,7 +118,7 @@ namespace openvkl {
     {
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
-                volume->getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -133,6 +136,8 @@ namespace openvkl {
     }
 
     template class GridAcceleratorHitIterator<VKL_TARGET_WIDTH>;
+
+    __vkl_verify_max_hit_iterator_size(GridAcceleratorHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

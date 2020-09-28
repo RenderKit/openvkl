@@ -5,12 +5,14 @@
 
 #include "math/math.ih"
 #include "math/vec.ih"
+#include "openvkl/VKLDataType.h"
 
 struct Data1D
 {
   const uint8 *addr;
   uint64 byteStride;
   uint64 numItems;
+  uint32 dataType;
   bool compact;
 };
 

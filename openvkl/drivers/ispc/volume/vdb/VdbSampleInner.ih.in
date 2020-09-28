@@ -6,7 +6,7 @@
 // ---------------------------------------------------------------------------
 // Sample inner nodes.
 //
-// Note: We generate files VdbSampleInner_<level>.ih from this 
+// Note: We generate files VdbSampleInner_<univary>_<level>.ih from this 
 //       template using CMake.
 // ---------------------------------------------------------------------------
 
@@ -26,16 +26,16 @@
  * We also have separate code for versions that collect stats vs. versions that do not.
  */
 inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
-  const VdbGrid *uniform            grid,
-  const VdbSampleConfig *uniform    config,
+  const VdbSampler *uniform         sampler,
   const varying vec3ui             &domainOffset,
   univary uint64                    voxelOffset)
 {
   /* We compute offsets in 64 bit to be safe, but access is in 32 bit! */
   assert(voxelOffset < ((univary uint64)1) << 32);
-  assert(voxelOffset < grid->levels[@VKL_VDB_LEVEL@].numNodes * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@);
+  assert(voxelOffset < sampler->grid->levels[@VKL_VDB_LEVEL@].numNodes 
+                     * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@);
   const univary uint32 vo32 = ((univary uint32)voxelOffset);
-  const univary uint64 voxelValue = grid->levels[@VKL_VDB_LEVEL@].voxels[vo32];
+  const univary uint64 voxelValue = sampler->grid->levels[@VKL_VDB_LEVEL@].voxels[vo32];
   const univary bool isTile = vklVdbVoxelIsTile(voxelValue);
   const univary bool isLeaf = vklVdbVoxelIsLeafPtr(voxelValue);
 
@@ -45,9 +45,10 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   {
     sample = vklVdbVoxelTileGet(voxelValue);
   }
-  else if (@VKL_VDB_LEVEL@+1 > config->maxSamplingDepth) // Cannot descend!
+  else if (@VKL_VDB_LEVEL@+1 > sampler->maxSamplingDepth) // Cannot descend!
   {
-    const univary range1f valueRange = grid->levels[@VKL_VDB_LEVEL@].valueRange[vo32];
+    const univary range1f valueRange = 
+      sampler->grid->levels[@VKL_VDB_LEVEL@].valueRange[vo32];
     sample = 0.5f * (valueRange.lower + valueRange.upper);
   }
   else if (isLeaf)
@@ -59,7 +60,7 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
     /* TODO: with mixed formats, we will need to detect if all
         leaves of the same type have the same ptr. */
 
-    if (grid->allLeavesCompact) {
+    if (sampler->grid->allLeavesCompact) {
       sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
         ((const uniform float *univary)leafPtr), domainOffset);
     }
@@ -73,8 +74,7 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
   else if (vklVdbVoxelIsChildPtr(voxelValue))
   {
     sample = VdbSampler_dispatchInner_@VKL_VDB_UNIVARY@_@VKL_VDB_NEXT_LEVEL@(
-      grid,
-      config,
+      sampler,
       domainOffset,
       vklVdbVoxelChildGetIndex(voxelValue));
   }
@@ -82,12 +82,14 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
 
   /* Do nothing for empty voxels. */
 
-  if (grid->usageBuffer && (isTile || isLeaf))
+  if ((isTile || isLeaf)
+   && VdbLeafAccessObserver_isObservable(sampler))
   {
-    const univary uint64 originalIndex = grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
+    const univary uint64 originalIndex = 
+      sampler->grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
     assert(originalIndex < ((univary uint64)1) << 32);
     const univary uint32 oi32 = ((univary uint32)originalIndex);
-    grid->usageBuffer[oi32] = 1;  /* NOTE: this is not synchronized between threads! */
+    VdbLeafAccessObserver_observe_@VKL_VDB_UNIVARY@(sampler, oi32);
   }
 
   return sample;

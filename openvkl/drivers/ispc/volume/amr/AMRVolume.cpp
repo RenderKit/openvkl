@@ -10,9 +10,6 @@
 #include "rkcommon/utility/getEnvVar.h"
 // ispc exports
 #include "AMRVolume_ispc.h"
-#include "method_current_ispc.h"
-#include "method_finest_ispc.h"
-#include "method_octant_ispc.h"
 // stl
 #include <map>
 #include <set>
@@ -45,13 +42,6 @@ namespace openvkl {
     {
       amrMethod =
           (VKLAMRMethod)this->template getParam<int>("method", VKL_AMR_CURRENT);
-
-      if (amrMethod == VKL_AMR_CURRENT)
-        CALL_ISPC(AMR_install_current, this->ispcEquivalent);
-      else if (amrMethod == VKL_AMR_FINEST)
-        CALL_ISPC(AMR_install_finest, this->ispcEquivalent);
-      else if (amrMethod == VKL_AMR_OCTANT)
-        CALL_ISPC(AMR_install_octant, this->ispcEquivalent);
 
       if (data != nullptr)  // TODO: support data updates
         return;
@@ -102,8 +92,11 @@ namespace openvkl {
 
       const vec3f gridOrigin =
           this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+      origin = gridOrigin;
+
       const vec3f gridSpacing =
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+      spacing = gridSpacing;
 
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,
@@ -145,13 +138,26 @@ namespace openvkl {
     template <int W>
     box3f AMRVolume<W>::getBoundingBox() const
     {
-      return bounds;
+      return box3f(vec3f(origin+bounds.lower),
+                   vec3f(origin+(bounds.upper-bounds.lower)*spacing));
+    }
+
+    template <int W>
+    unsigned int AMRVolume<W>::getNumAttributes() const
+    {
+      return 1;
     }
 
     template <int W>
     range1f AMRVolume<W>::getValueRange() const
     {
       return valueRange;
+    }
+
+    template <int W>
+    VKLAMRMethod AMRVolume<W>::getAMRMethod() const
+    {
+      return amrMethod;
     }
 
     VKL_REGISTER_VOLUME(AMRVolume<VKL_TARGET_WIDTH>,

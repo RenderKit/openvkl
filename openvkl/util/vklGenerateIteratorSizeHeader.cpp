@@ -35,8 +35,10 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
                                    "vdb" } )
     {
       VKLVolume volume = vklNewVolume(volumeType);
-      maxIntervalSize = std::max<size_t>(maxIntervalSize, vklGetIntervalIteratorSize(volume));
-      maxHitSize = std::max<size_t>(maxHitSize, vklGetHitIteratorSize(volume));
+      VKLSampler sampler = vklNewSampler(volume);
+      maxIntervalSize = std::max<size_t>(maxIntervalSize, vklGetIntervalIteratorSize(sampler));
+      maxHitSize = std::max<size_t>(maxHitSize, vklGetHitIteratorSize(sampler));
+      vklRelease(sampler);
       vklRelease(volume);
     }
   }

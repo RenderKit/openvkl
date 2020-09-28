@@ -12,6 +12,8 @@
 #endif
 
 #include "common.h"
+#include "sampler.h"
+#include "volume.h"
 
 // Observers provide an interface for receiving data back from OpenVKL.
 
@@ -30,10 +32,13 @@ typedef Observer *VKLObserver;
 extern "C" {
 #endif
 
-// Create a new observer of the given type for volume.
+// Create a new observer of the given type.
 // Triggers the error handler and returns NULL on error.
 OPENVKL_INTERFACE
-VKLObserver vklNewObserver(VKLVolume volume, const char *type);
+VKLObserver vklNewVolumeObserver(VKLVolume volume, const char *type);
+
+OPENVKL_INTERFACE
+VKLObserver vklNewSamplerObserver(VKLSampler volume, const char *type);
 
 // Map an observer.
 // Returns a pointer to the observer data buffer.

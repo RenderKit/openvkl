@@ -7,6 +7,10 @@
 
 #include "vklTutorialISPC_ispc.h"
 
+#if defined(_MSC_VER)
+#include <windows.h>  // Sleep
+#endif
+
 int main()
 {
   vklLoadModule("ispc_driver");
@@ -22,22 +26,50 @@ int main()
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
-  VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
-
   std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
 
+  std::vector<VKLData> attributes;
+
+  // volume attribute 0: x-grad
   for (int k = 0; k < dimensions.z; k++)
     for (int j = 0; j < dimensions.y; j++)
       for (int i = 0; i < dimensions.x; i++)
         voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
-            float(i);
+            (float)i;
 
-  VKLData data = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
-  vklSetData(volume, "data", data);
-  vklRelease(data);
+  attributes.push_back(vklNewData(voxels.size(), VKL_FLOAT, voxels.data()));
+
+  // volume attribute 1: y-grad
+  for (int k = 0; k < dimensions.z; k++)
+    for (int j = 0; j < dimensions.y; j++)
+      for (int i = 0; i < dimensions.x; i++)
+        voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
+            (float)j;
+
+  attributes.push_back(vklNewData(voxels.size(), VKL_FLOAT, voxels.data()));
+
+  // volume attribute 2: z-grad
+  for (int k = 0; k < dimensions.z; k++)
+    for (int j = 0; j < dimensions.y; j++)
+      for (int i = 0; i < dimensions.x; i++)
+        voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
+            (float)k;
+
+  attributes.push_back(vklNewData(voxels.size(), VKL_FLOAT, voxels.data()));
+
+  VKLData attributesData =
+      vklNewData(attributes.size(), VKL_DATA, attributes.data());
+
+  for (auto &attribute : attributes)
+    vklRelease(attribute);
+
+  vklSetData(volume, "data", attributesData);
+  vklRelease(attributesData);
 
   vklCommit(volume);
+
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   ispc::demo_ispc(volume, sampler);
 
@@ -45,6 +77,14 @@ int main()
   vklRelease(volume);
 
   vklShutdown();
+
+  printf("complete.\n");
+
+#if defined(_MSC_VER)
+  // On Windows, sleep for a few seconds so the terminal window doesn't close
+  // immediately.
+  Sleep(3000);
+#endif
 
   return 0;
 }

@@ -4,6 +4,7 @@
 #pragma once
 
 #include <rkcommon/math/AffineSpace.h>
+#include "ProceduralVolume.h"
 #include "TestingVolume.h"
 #include "openvkl/vdb.h"
 #include "openvkl/vdb_util/VdbVolumeBuffers.h"
@@ -15,7 +16,7 @@ namespace openvkl {
 
     template <float samplingFunction(const vec3f &),
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
-    struct ProceduralVdbVolume : public TestingVolume
+    struct ProceduralVdbVolume : public TestingVolume, public ProceduralVolume
     {
       using Buffers = vdb_util::VdbVolumeBuffers<VKL_FLOAT>;
 
@@ -154,12 +155,14 @@ namespace openvkl {
         return gridSpacing * localCoordinates + gridOrigin;
       }
 
-      float computeProceduralValue(const vec3f &objectCoordinates)
+      float computeProceduralValue(
+          const vec3f &objectCoordinates) const override
       {
         return samplingFunction(objectCoordinates);
       }
 
-      vec3f computeProceduralGradient(const vec3f &objectCoordinates)
+      vec3f computeProceduralGradient(
+          const vec3f &objectCoordinates) const override
       {
         return gradientFunction(objectCoordinates);
       }

@@ -34,6 +34,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
   VKLVolume vklVolume = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
 
   SECTION("vector hit iteration")
   {
@@ -88,9 +90,9 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklVolume));
+          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
           VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
-                              vklVolume,
+                              vklSampler,
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -135,9 +137,9 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklVolume));
+          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
           VKLHitIterator8 iterator = vklInitHitIterator8(valid.data(),
-                              vklVolume,
+                              vklSampler,
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -182,9 +184,9 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklVolume));
+          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
           VKLHitIterator16 iterator = vklInitHitIterator16(valid.data(),
-                               vklVolume,
+                               vklSampler,
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
@@ -293,9 +295,9 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklVolume));
+          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
           VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
-                              vklVolume,
+                              vklSampler,
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -355,9 +357,9 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklVolume));
+          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
           VKLHitIterator8 iterator = vklInitHitIterator8(valid.data(),
-                              vklVolume,
+                              vklSampler,
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -417,9 +419,9 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklVolume));
+          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
           VKLHitIterator16 iterator = vklInitHitIterator16(valid.data(),
-                               vklVolume,
+                               vklSampler,
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
@@ -486,4 +488,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     vklRelease(valueSelector);
   }
+
+  vklRelease(vklSampler);
 }

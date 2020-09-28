@@ -11,6 +11,22 @@
 #include "compute_sample.h"
 #include "compute_gradient.h"
 #include "interval_iterators.h"
+#include "compute_sample_multi.h"
+
+template <VKLFilter filter>
+constexpr const char *toString();
+
+template <>
+inline constexpr const char *toString<VKL_FILTER_NEAREST>()
+{
+  return "VKL_FILTER_NEAREST";
+}
+
+template <>
+inline constexpr const char *toString<VKL_FILTER_TRILINEAR>()
+{
+  return "VKL_FILTER_TRILINEAR";
+}
 
 /*
  * Register all benchmarks for the given volume type.
@@ -20,6 +36,9 @@
  *
  * // A human-readable string used in test name generation.
  * static <string-like> name()
+ *
+ * // Number of attributes the volume will have.
+ * static constexpr unsigned int getNumAttributes()
  *
  * // Return a handle to the underlying volume.
  * VKLVolume getVolume() const
@@ -41,5 +60,11 @@ inline void registerVolumeBenchmarks()
   registerComputeGradient<VolumeWrapper, Random>();
 
   registerIntervalIterators<VolumeWrapper>();
+
+  if (VolumeWrapper::getNumAttributes() > 1)
+  {
+    registerComputeSampleMulti<VolumeWrapper, Fixed>();
+    registerComputeSampleMulti<VolumeWrapper, Random>();
+  }
 }
 

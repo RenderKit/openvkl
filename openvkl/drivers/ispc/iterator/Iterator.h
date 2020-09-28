@@ -21,7 +21,7 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct Volume;
+    struct Sampler;
 
     /*
      * Base class for all iterators.
@@ -37,13 +37,14 @@ namespace openvkl {
       Iterator(Iterator &&)                 = delete;
       Iterator &operator=(Iterator &&) = delete;
 
-      explicit Iterator(const Volume<W> *volume) : volume{volume} {}
+      explicit Iterator(const Sampler<W> &sampler) : sampler{&sampler} {}
 
       // WORKAROUND ICC 15: This destructor must be public!
       virtual ~Iterator() = default;
 
      protected:
-      const Volume<W> *volume;
+      // Not a Ref<>! Destructors will not run.
+      Sampler<W> const *sampler{nullptr};
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -113,11 +114,36 @@ namespace openvkl {
                                     vVKLIntervalN<W> &interval,
                                     vintn<W> &result) = 0;
 
-      /* 
+      /*
        * This interface is used by the default hit iterator.
        */
       virtual void *getIspcStorage() = 0;
     };
+
+/*
+ * Verify max interval iterator size macros. Use this in your implementation to
+ * catch inconsistencies early.
+ */
+#if defined(VKL_TARGET_WIDTH)
+
+#define __vkl_verify_max_interval_iterator_size_impl(T, W)                  \
+  static_assert(sizeof(T) <= alignedSize<T>() &&                            \
+                    alignedSize<T>() <= VKL_MAX_INTERVAL_ITERATOR_SIZE_##W, \
+                "sizeof(" #T                                                \
+                ") is greater than VKL_MAX_INTERVAL_ITERATOR_SIZE_" #W);
+
+#if (VKL_TARGET_WIDTH == 4)
+#define __vkl_verify_max_interval_iterator_size(T) \
+  __vkl_verify_max_interval_iterator_size_impl(T, 4)
+#elif (VKL_TARGET_WIDTH == 8)
+#define __vkl_verify_max_interval_iterator_size(T) \
+  __vkl_verify_max_interval_iterator_size_impl(T, 8)
+#elif (VKL_TARGET_WIDTH == 16)
+#define __vkl_verify_max_interval_iterator_size(T) \
+  __vkl_verify_max_interval_iterator_size_impl(T, 16)
+#endif
+
+#endif  // defined(VKL_TARGET_WIDTH)
 
     ///////////////////////////////////////////////////////////////////////////
     // Hit iterator ///////////////////////////////////////////////////////////
@@ -182,6 +208,31 @@ namespace openvkl {
                                vintn<W> &result) = 0;
     };
 
+/*
+ * Verify max hit iterator size macros. Use this in your implementation to
+ * catch inconsistencies early.
+ */
+#if defined(VKL_TARGET_WIDTH)
+
+#define __vkl_verify_max_hit_iterator_size_impl(T, W)                  \
+  static_assert(sizeof(T) <= alignedSize<T>() &&                       \
+                    alignedSize<T>() <= VKL_MAX_HIT_ITERATOR_SIZE_##W, \
+                "sizeof(" #T                                           \
+                ") is greater than VKL_MAX_HIT_ITERATOR_SIZE_" #W);
+
+#if (VKL_TARGET_WIDTH == 4)
+#define __vkl_verify_max_hit_iterator_size(T) \
+  __vkl_verify_max_hit_iterator_size_impl(T, 4)
+#elif (VKL_TARGET_WIDTH == 8)
+#define __vkl_verify_max_hit_iterator_size(T) \
+  __vkl_verify_max_hit_iterator_size_impl(T, 8)
+#elif (VKL_TARGET_WIDTH == 16)
+#define __vkl_verify_max_hit_iterator_size(T) \
+  __vkl_verify_max_hit_iterator_size_impl(T, 16)
+#endif
+
+#endif  // defined(VKL_TARGET_WIDTH)
+
     ///////////////////////////////////////////////////////////////////////////
     // Iterator factory ///////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -189,7 +240,7 @@ namespace openvkl {
     /*
      * Interface for iterator factories.
      * Note that the uniform interfaces attempt to fall back to the varying
-     * implementation to reduce implementation burden. However, volumes should
+     * implementation to reduce implementation burden. However, samplers should
      * consider implementing both varying and uniform code paths for maximum
      * performance.
      */
@@ -201,7 +252,7 @@ namespace openvkl {
       /*
        * Construct a new varying iterator into the provided buffer.
        */
-      virtual IteratorT<W> *constructV(const Volume<W> *volume,
+      virtual IteratorT<W> *constructV(const Sampler<W> &sampler,
                                        void *buffer) const = 0;
 
       /*
@@ -216,7 +267,7 @@ namespace openvkl {
       /*
        * Construct a new uniform iterator into the provided buffer.
        */
-      virtual IteratorT<W> *constructU(const Volume<W> *volume,
+      virtual IteratorT<W> *constructU(const Sampler<W> &sampler,
                                        void *buffer) const = 0;
 
       /*
@@ -230,7 +281,7 @@ namespace openvkl {
     };
 
     /*
-     * Concrete iterator factory. Derive from this to implement a volume
+     * Concrete iterator factory. Derive from this to implement a sampler's
      * iterator factory.
      */
     template <int W,
@@ -243,10 +294,10 @@ namespace openvkl {
       static_assert(std::is_base_of<IteratorBaseT<W>, IteratorT<W>>::value,
                     "ConcreteIteratorFactory used with incompatible types.");
 
-      IteratorBaseT<W> *constructV(const Volume<W> *volume,
+      IteratorBaseT<W> *constructV(const Sampler<W> &sampler,
                                    void *buffer) const override final
       {
-        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(volume);
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(sampler);
       }
 
       size_t sizeV() const override final
@@ -254,10 +305,10 @@ namespace openvkl {
         return alignedSize<IteratorT<W>>();
       }
 
-      IteratorBaseT<W> *constructU(const Volume<W> *volume,
+      IteratorBaseT<W> *constructU(const Sampler<W> &sampler,
                                    void *buffer) const override final
       {
-        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(volume);
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(sampler);
       }
 
       size_t sizeU() const override final

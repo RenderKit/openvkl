@@ -8,23 +8,16 @@
 
 struct ValueSelector;
 
-// We support at most 2 levels.
-// This is because we must store state for each level,
-// and this must be statically allocated.
-#define VDB_ITERATOR_MAX_LEVELS 3
-
 struct VdbIterator
 {
   /* Enable the default hit iterator. */
   IterateIntervalFunc iterateInterval;
 
-  vkl_uint64 nodeIndex[VDB_ITERATOR_MAX_LEVELS];
-  DdaLevelState ddaLevelState[VDB_ITERATOR_MAX_LEVELS];
-  DdaSegmentState ddaSegmentState[VDB_ITERATOR_MAX_LEVELS];
-  float nominalDeltaT;  // constant for all intervals
-  DdaRayState ddaRayState;
-  vkl_uint32 currentLevel;
-  uniform vkl_uint32 numLevels;
   uniform const VdbGrid *uniform grid;
   uniform const ValueSelector *uniform valueSelector;
+
+  float tMax;
+  float nominalDeltaT;
+
+  DdaState dda;
 };

@@ -169,9 +169,12 @@ void max_iterator_size_conformance_test()
                                  "unstructured",
                                  "vdb"}) {
     VKLVolume volume = vklNewVolume(volumeType);
+    VKLSampler sampler = vklNewSampler(volume);
+    vklCommit(sampler);
     maxIntervalSize =
-        std::max<size_t>(maxIntervalSize, vklGetIntervalIteratorSize(volume));
-    maxHitSize = std::max<size_t>(maxHitSize, vklGetHitIteratorSize(volume));
+        std::max<size_t>(maxIntervalSize, vklGetIntervalIteratorSize(sampler));
+    maxHitSize = std::max<size_t>(maxHitSize, vklGetHitIteratorSize(sampler));
+    vklRelease(sampler);
     vklRelease(volume);
   }
 

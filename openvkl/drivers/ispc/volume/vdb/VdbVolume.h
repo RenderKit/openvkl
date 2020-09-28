@@ -5,11 +5,11 @@
 
 #include <openvkl/vdb.h>
 #include <memory>
-#include "../StructuredVolume.h"
+#include "../../common/Allocator.h"
+#include "../Volume.h"
 #include "../common/Data.h"
 #include "VdbGrid.h"
 #include "VdbIterator.h"
-#include "VdbSampleConfig.h"
 #include "VdbVolume_ispc.h"
 #include "rkcommon/memory/RefCount.h"
 
@@ -33,10 +33,10 @@ namespace openvkl {
     {
       VdbVolume(const VdbVolume &) = delete;
       VdbVolume &operator=(const VdbVolume &) = delete;
+      VdbVolume(VdbVolume &&other)            = delete;
+      VdbVolume &operator=(VdbVolume &&other) = delete;
 
       VdbVolume();
-      VdbVolume(VdbVolume &&other);
-      VdbVolume &operator=(VdbVolume &&other);
       ~VdbVolume() override;
 
       /*
@@ -60,6 +60,14 @@ namespace openvkl {
       }
 
       /*
+       * Get the number of attributes in this volume.
+       */
+      unsigned int getNumAttributes() const override
+      {
+        return 1;
+      }
+
+      /*
        * Get the minimum and maximum value in this volume.
        */
       range1f getValueRange() const override
@@ -72,19 +80,23 @@ namespace openvkl {
         return grid;
       }
 
-      VKLObserver newObserver(const char *type) override;
+      Observer<W> *newObserver(const char *type) override;
       Sampler<W> *newSampler() override;
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final
-      {
-        return intervalIteratorFactory;
+      VKLFilter getFilter() const {
+        return filter;
       }
 
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final
-      {
-        return hitIteratorFactory;
+      VKLFilter getGradientFilter() const {
+        return gradientFilter;
+      }
+
+      uint32_t getMaxSamplingDepth() const {
+        return maxSamplingDepth;
+      }
+
+      uint32_t getMaxIteratorDepth() const {
+        return maxIteratorDepth;
       }
 
      private:
@@ -97,10 +109,12 @@ namespace openvkl {
       Ref<const DataT<Data *>> leafData;
       std::vector<AlignedISPCData1D> leafDataISPC;
       VdbGrid *grid{nullptr};
-      size_t bytesAllocated{0};
-      VdbSampleConfig globalConfig;
-      VdbIntervalIteratorFactory<W> intervalIteratorFactory;
-      VdbHitIteratorFactory<W> hitIteratorFactory;
+      Allocator allocator;
+
+      VKLFilter filter{VKL_FILTER_TRILINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
+      uint32_t maxIteratorDepth{VKL_VDB_NUM_LEVELS - 2};
     };
 
   }  // namespace ispc_driver

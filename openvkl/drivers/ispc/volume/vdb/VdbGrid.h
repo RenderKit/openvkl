@@ -53,9 +53,8 @@ struct VdbGrid
       numLeaves[VKL_VDB_NUM_LEVELS];  // The number of leaf nodes per level.
   vkl_uint64 maxVoxelOffset;  // Used to select 64bit or 32bit traversal. TODO:
                               // Use this in VDBSampler.ispc
-  vec3i rootOrigin;           // In index space.
-  vkl_uint32
-      *usageBuffer;  // Nonzero if the given input leaf has been accessed.
+  vec3i rootOrigin;           // In index scale space.
+  vec3ui activeSize;          // Size of the root node, in voxels (relative to origin).
   VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];
 };
 

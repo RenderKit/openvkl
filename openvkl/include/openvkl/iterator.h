@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "value_selector.h"
-#include "volume.h"
+#include "sampler.h"
 #include "max_iterator_size.h"
 
 #ifdef __cplusplus
@@ -36,19 +36,19 @@ typedef struct IntervalIterator16 *VKLIntervalIterator16;
 
 /*
  * Return the size, in bytes, required to store an interval iterator for the
- * given volumes.
+ * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize(VKLVolume volume);
+size_t vklGetIntervalIteratorSize(VKLSampler sampler);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize4(VKLVolume volume);
+size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize8(VKLVolume volume);
+size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize16(VKLVolume volume);
+size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
 
 /*
  * Initialize an interval iterator for the given volume.
@@ -70,7 +70,7 @@ size_t vklGetIntervalIteratorSize16(VKLVolume volume);
  * buffer. It however may be distinct from buffer.
  */
 OPENVKL_INTERFACE
-VKLIntervalIterator vklInitIntervalIterator(VKLVolume volume,
+VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
                                             const vkl_vec3f *origin,
                                             const vkl_vec3f *direction,
                                             const vkl_range1f *tRange,
@@ -79,7 +79,7 @@ VKLIntervalIterator vklInitIntervalIterator(VKLVolume volume,
 
 OPENVKL_INTERFACE
 VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                              VKLVolume volume,
+                                              VKLSampler sampler,
                                               const vkl_vvec3f4 *origin,
                                               const vkl_vvec3f4 *direction,
                                               const vkl_vrange1f4 *tRange,
@@ -88,7 +88,7 @@ VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
 
 OPENVKL_INTERFACE
 VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                              VKLVolume volume,
+                                              VKLSampler sampler,
                                               const vkl_vvec3f8 *origin,
                                               const vkl_vvec3f8 *direction,
                                               const vkl_vrange1f8 *tRange,
@@ -97,7 +97,7 @@ VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
 
 OPENVKL_INTERFACE
 VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                VKLVolume volume,
+                                                VKLSampler sampler,
                                                 const vkl_vvec3f16 *origin,
                                                 const vkl_vvec3f16 *direction,
                                                 const vkl_vrange1f16 *tRange,
@@ -172,19 +172,19 @@ typedef struct HitIterator16 *VKLHitIterator16;
 
 /*
  * Return the size, in bytes, required to store a hit iterator for the
- * given volumes.
+ * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize(VKLVolume volume);
+size_t vklGetHitIteratorSize(VKLSampler sampler);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize4(VKLVolume volume);
+size_t vklGetHitIteratorSize4(VKLSampler sampler);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize8(VKLVolume volume);
+size_t vklGetHitIteratorSize8(VKLSampler sampler);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize16(VKLVolume volume);
+size_t vklGetHitIteratorSize16(VKLSampler sampler);
 
 /*
  * Initialize a hit iterator for the given volume.
@@ -207,7 +207,7 @@ size_t vklGetHitIteratorSize16(VKLVolume volume);
  */
 
 OPENVKL_INTERFACE
-VKLHitIterator vklInitHitIterator(VKLVolume volume,
+VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                   const vkl_vec3f *origin,
                                   const vkl_vec3f *direction,
                                   const vkl_range1f *tRange,
@@ -216,7 +216,7 @@ VKLHitIterator vklInitHitIterator(VKLVolume volume,
 
 OPENVKL_INTERFACE
 VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                                    VKLVolume volume,
+                                    VKLSampler sampler,
                                     const vkl_vvec3f4 *origin,
                                     const vkl_vvec3f4 *direction,
                                     const vkl_vrange1f4 *tRange,
@@ -225,7 +225,7 @@ VKLHitIterator4 vklInitHitIterator4(const int *valid,
 
 OPENVKL_INTERFACE
 VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                                    VKLVolume volume,
+                                    VKLSampler sampler,
                                     const vkl_vvec3f8 *origin,
                                     const vkl_vvec3f8 *direction,
                                     const vkl_vrange1f8 *tRange,
@@ -234,7 +234,7 @@ VKLHitIterator8 vklInitHitIterator8(const int *valid,
 
 OPENVKL_INTERFACE
 VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                                      VKLVolume volume,
+                                      VKLSampler sampler,
                                       const vkl_vvec3f16 *origin,
                                       const vkl_vvec3f16 *direction,
                                       const vkl_vrange1f16 *tRange,

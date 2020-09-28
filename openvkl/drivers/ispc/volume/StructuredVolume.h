@@ -9,6 +9,7 @@
 #include "GridAccelerator_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "Volume.h"
+#include "openvkl/VKLFilter.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
@@ -25,7 +26,17 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
 
+      unsigned int getNumAttributes() const override;
+
       range1f getValueRange() const override;
+
+      VKLFilter getFilter() const {
+        return filter;
+      }
+
+      VKLFilter getGradientFilter() const {
+        return gradientFilter;
+      }
 
      protected:
       void buildAccelerator();
@@ -36,7 +47,10 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
-      Ref<const Data> voxelData;
+      std::vector<Ref<const Data>> attributesData;
+
+      VKLFilter filter{VKL_FILTER_TRILINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -56,23 +70,46 @@ namespace openvkl {
       gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
 
-      voxelData = this->template getParam<Data *>("data");
+      if (this->template hasParamDataT<Data *>("data")) {
+        // multiple attributes provided through VKLData array
+        Ref<const DataT<Data *>> data =
+            this->template getParamDataT<Data *>("data");
 
-      if (voxelData->size() != this->dimensions.long_product()) {
-        throw std::runtime_error(
-            "incorrect data size for provided volume dimensions");
+        for (const auto &d : *data) {
+          attributesData.push_back(d);
+        }
+      } else if (this->template getParam<Data *>("data", nullptr)) {
+        // single attribute provided through single VKLData object
+        attributesData.push_back(this->template getParam<Data *>("data"));
+      } else {
+        throw std::runtime_error(this->toString() +
+                                 ": missing required 'data' parameter");
       }
 
+      // validate size and type of each provided attribute
       const std::vector<VKLDataType> supportedDataTypes{
           VKL_UCHAR, VKL_SHORT, VKL_USHORT, VKL_FLOAT, VKL_DOUBLE};
 
-      if (std::find(supportedDataTypes.begin(),
-                    supportedDataTypes.end(),
-                    voxelData->dataType) == supportedDataTypes.end()) {
-        throw std::runtime_error(
-            this->toString() +
-            ": unsupported element type for 'data' parameter");
+      for (int i = 0; i < attributesData.size(); i++) {
+        if (attributesData[i]->size() != this->dimensions.long_product()) {
+          throw std::runtime_error("incorrect data size (attribute " +
+                                   std::to_string(i) +
+                                   ") for provided volume dimensions");
+        }
+
+        if (std::find(supportedDataTypes.begin(),
+                      supportedDataTypes.end(),
+                      attributesData[i]->dataType) ==
+            supportedDataTypes.end()) {
+          throw std::runtime_error(
+              this->toString() + ": unsupported data element type (attribute " +
+              std::to_string(i) + ") for 'data' parameter");
+        }
       }
+
+      filter = (VKLFilter)this->template getParam<int>("filter", filter);
+      gradientFilter = (VKLFilter)this->template getParam<int>("gradientFilter",
+                                                               filter);
     }
 
     template <int W>
@@ -83,6 +120,12 @@ namespace openvkl {
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
+    }
+
+    template <int W>
+    inline unsigned int StructuredVolume<W>::getNumAttributes() const
+    {
+      return attributesData.size();
     }
 
     template <int W>

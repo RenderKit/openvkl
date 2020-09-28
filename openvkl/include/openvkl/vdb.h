@@ -9,8 +9,8 @@
 #pragma once
 
 #include "VKLDataType.h"
-#include "VKLFormat.h"
 #include "VKLFilter.h"
+#include "VKLFormat.h"
 #include "ispc_cpp_interop.h"
 
 // ========================================================================== //
@@ -51,45 +51,50 @@ inline VKL_INTEROP_CONSTEXPR VKL_INTEROP_UNIFORM vkl_uint32 vklVdbNumLevels()
   case Level:                                \
     return Prefix##Level;
 
-#define __vkl_vdb_define_topology_functions(univary)                          \
-  inline univary vkl_uint32 vklVdbLevelLogRes(univary vkl_uint32 level)       \
-  {                                                                           \
-    switch (level) {                                                          \
-      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                       \
-                                 VKL_VDB_LOG_RES_) default : return 0;        \
-    }                                                                         \
-  }                                                                           \
-  inline univary vkl_uint32 vklVdbLevelResShift(univary vkl_uint32 level)     \
-  {                                                                           \
-    return vklVdbLevelLogRes(level);                                          \
-  }                                                                           \
-  inline univary vkl_uint32 vklVdbLevelTotalLogRes(univary vkl_uint32 level)  \
-  {                                                                           \
-    switch (level) {                                                          \
-      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                       \
-                                 VKL_VDB_TOTAL_LOG_RES_) default : return 0;  \
-    }                                                                         \
-  }                                                                           \
-  inline univary vkl_uint32 vklVdbLevelStorageRes(univary vkl_uint32 level)   \
-  {                                                                           \
-    switch (level) {                                                          \
-      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                       \
-                                 VKL_VDB_STORAGE_RES_) default : return 0;    \
-    }                                                                         \
-  }                                                                           \
-  inline univary vkl_uint32 vklVdbLevelRes(univary vkl_uint32 level)          \
-  {                                                                           \
-    switch (level) {                                                          \
-      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case, VKL_VDB_RES_) default \
-          : return 0;                                                         \
-    }                                                                         \
-  }                                                                           \
-  inline univary vkl_uint32 vklVdbLevelNumVoxels(univary vkl_uint32 level)    \
-  {                                                                           \
-    switch (level) {                                                          \
-      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                       \
-                                 VKL_VDB_NUM_VOXELS_) default : return 0;     \
-    }                                                                         \
+#define __vkl_vdb_define_topology_functions(univary)                         \
+  inline univary vkl_uint32 vklVdbLevelLogRes(univary vkl_uint32 level)      \
+  {                                                                          \
+    switch (level) {                                                         \
+      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                      \
+                                 VKL_VDB_LOG_RES_) default : return 0;       \
+    }                                                                        \
+  }                                                                          \
+  inline univary vkl_uint32 vklVdbLevelResShift(univary vkl_uint32 level)    \
+  {                                                                          \
+    return vklVdbLevelLogRes(level);                                         \
+  }                                                                          \
+  inline univary vkl_uint32 vklVdbLevelTotalLogRes(univary vkl_uint32 level) \
+  {                                                                          \
+    switch (level) {                                                         \
+      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                      \
+                                 VKL_VDB_TOTAL_LOG_RES_) default : return 0; \
+    }                                                                        \
+  }                                                                          \
+  inline univary vkl_uint32 vklVdbLevelStorageRes(univary vkl_uint32 level)  \
+  {                                                                          \
+    switch (level) {                                                         \
+      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                      \
+                                 VKL_VDB_STORAGE_RES_) default : return 0;   \
+    }                                                                        \
+  }                                                                          \
+  inline univary vkl_uint32 vklVdbLevelRes(univary vkl_uint32 level)         \
+  {                                                                          \
+    switch (level) {                                                         \
+      __vkl_vdb_iterate_levels_0(                                            \
+          __vkl_vdb_switch_case,                                             \
+          VKL_VDB_RES_) /* Special case: we use this to determine cell       \
+                           resolution. */                                    \
+          case VKL_VDB_NUM_LEVELS : return 1;                                \
+    default:                                                                 \
+      return 0;                                                              \
+    }                                                                        \
+  }                                                                          \
+  inline univary vkl_uint32 vklVdbLevelNumVoxels(univary vkl_uint32 level)   \
+  {                                                                          \
+    switch (level) {                                                         \
+      __vkl_vdb_iterate_levels_0(__vkl_vdb_switch_case,                      \
+                                 VKL_VDB_NUM_VOXELS_) default : return 0;    \
+    }                                                                        \
   }
 
 __vkl_interop_univary(__vkl_vdb_define_topology_functions)

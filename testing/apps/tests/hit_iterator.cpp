@@ -16,14 +16,15 @@ void scalar_hit_iteration(VKLVolume volume,
   vkl_range1f tRange{0.f, inf};
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
-
   vklValueSelectorSetValues(valueSelector, isoValues.size(), isoValues.data());
-
   vklCommit(valueSelector);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(volume));
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
+
+  std::vector<char> buffer(vklGetHitIteratorSize(sampler));
   VKLHitIterator iterator = vklInitHitIterator(
-      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
+      sampler, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLHit hit;
 
@@ -41,6 +42,7 @@ void scalar_hit_iteration(VKLVolume volume,
   REQUIRE(hitCount == isoValues.size());
 
   vklRelease(valueSelector);
+  vklRelease(sampler);
 }
 
 TEST_CASE("Hit iterator", "[hit_iterators]")

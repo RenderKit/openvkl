@@ -113,6 +113,12 @@ namespace openvkl {
                                           getXYZValue<VOXEL_TYPE>,
                                           getXYZGradient>;
 
+    using XProceduralVolume =
+        ProceduralStructuredRegularVolume<float, getXValue, getXGradient>;
+
+    using YProceduralVolume =
+        ProceduralStructuredRegularVolume<float, getYValue, getYGradient>;
+
     using ZProceduralVolume =
         ProceduralStructuredRegularVolume<float, getZValue, getZGradient>;
 

@@ -3,10 +3,11 @@
 
 #pragma once
 
+#include "../../observer/ObserverRegistry.h"
 #include "../../sampler/Sampler.h"
 #include "../common/simd.h"
 #include "VdbGrid.h"
-#include "VdbSampleConfig.h"
+#include "VdbVolume.h"
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
 
@@ -14,37 +15,56 @@ namespace openvkl {
   namespace ispc_driver {
 
     template <int W>
-    struct VdbSampler : public Sampler<W>
-    {
-      VdbSampler(const VdbGrid *grid, const VdbSampleConfig &defaultConfig);
+    using VdbSamplerBase = SamplerBase<W,
+                                       VdbVolume,
+                                       VdbIntervalIteratorFactory,
+                                       VdbHitIteratorFactory>;
 
+    template <int W>
+    struct VdbSampler : public VdbSamplerBase<W>
+    {
+      explicit VdbSampler(VdbVolume<W> &volume);
       ~VdbSampler() override;
 
       void commit() override;
 
       void computeSample(const vvec3fn<1> &objectCoordinates,
-                         vfloatn<1> &samples) const override final;
+                         vfloatn<1> &samples,
+                         unsigned int attributeIndex) const override final;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
-                          vfloatn<W> &samples) const override final;
+                          vfloatn<W> &samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
-                          float *samples) const override final;
+                          float *samples,
+                          unsigned int attributeIndex) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
-                            vvec3fn<W> &gradients) const override final;
+                            vvec3fn<W> &gradients,
+                            unsigned int attributeIndex) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
-                            vvec3fn<1> *gradients) const override final;
+                            vvec3fn<1> *gradients,
+                            unsigned int attributeIndex) const override final;
 
-      const VdbGrid *grid{nullptr};
-      VdbSampleConfig config;
+      Observer<W> *newObserver(const char *type) override;
+
+      ObserverRegistry<W> &getLeafAccessObserverRegistry()
+      {
+        return leafAccessObservers;
+      }
+
+     private:
+      using Sampler<W>::ispcEquivalent;
+      using VdbSamplerBase<W>::volume;
+
+      ObserverRegistry<W> leafAccessObservers;
     };
 
   }  // namespace ispc_driver
 }  // namespace openvkl
-

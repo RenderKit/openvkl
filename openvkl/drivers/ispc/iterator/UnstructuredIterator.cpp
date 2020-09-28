@@ -28,7 +28,7 @@ namespace openvkl {
       CALL_ISPC(UnstructuredIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                volume->getISPCEquivalent(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -47,6 +47,9 @@ namespace openvkl {
     }
 
     template class UnstructuredIntervalIterator<VKL_TARGET_WIDTH>;
+
+    __vkl_verify_max_interval_iterator_size(UnstructuredIntervalIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_hit_iterator_size(UnstructuredHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

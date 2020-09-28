@@ -5,6 +5,7 @@
 #include "CellRef.ih"
 #include "DualCell.ih"
 #include "common/export_util.h"
+#include "sampler/Sampler.ih"
 
 #define DBG(a)
 
@@ -440,36 +441,20 @@ varying float doOctant(const AMR *uniform self,
   return lerp(O);
 }
 
-varying float AMR_octant(const void *uniform _self, const varying vec3f &P)
+varying float AMR_octant(const Sampler *uniform self, const varying vec3f &P)
 {
-  const AMRVolume *uniform self = (const AMRVolume *)_self;
-  const AMR *uniform amr        = &self->amr;
+  const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;
+  const AMR *uniform amr          = &volume->amr;
 
   vec3f lP;  // local amr space
-  self->transformWorldToLocal(self, P, lP);
+  AMRVolume_transformObjectToLocal(volume, P, lP);
 
   const CellRef C = findLeafCell(amr, lP);
   return doOctant(amr, C, lP);
 }
 
-varying float AMR_octantLevel(const void *uniform _self, const varying vec3f &P)
+export void EXPORT_UNIQUE(AMR_install_octant, void *uniform _sampler)
 {
-  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
-  const AMR *uniform amr        = &self->amr;
-
-  vec3f lP;  // local amr space
-  self->transformWorldToLocal(self, P, lP);
-
-  const CellRef C = findLeafCell(amr, lP);
-  float width     = C.width;
-  if (isnan(width))
-    width = 1.0f;
-  return width;
-}
-
-export void EXPORT_UNIQUE(AMR_install_octant, void *uniform _self)
-{
-  AMRVolume *uniform self           = (AMRVolume * uniform) _self;
-  self->super.computeSample_varying = AMR_octant;
-  self->computeSampleLevel          = AMR_octantLevel;
+  Sampler *uniform sampler       = (Sampler * uniform) _sampler;
+  sampler->computeSample_varying = AMR_octant;
 }

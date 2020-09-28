@@ -50,6 +50,7 @@ namespace openvkl {
       std::unique_ptr<Renderer> renderer_density_pathtracer;
       std::unique_ptr<Renderer> renderer_hit_iterator;
       std::unique_ptr<Renderer> renderer_ray_march_iterator;
+      std::unique_ptr<Renderer> renderer_interval_iterator_debug;
 
       std::unique_ptr<ArcballCamera> arcballCamera;
 

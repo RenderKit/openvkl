@@ -36,7 +36,7 @@ stages:
 
 .job_template: &build_job_docker_centos7_modules
   <<: *build_job_docker
-  image: ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   script:
     - gitlab/build.sh
   tags:
@@ -88,7 +88,7 @@ stages:
 
 build-centos7:
   <<: *build_job_docker
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
   - gitlab/build.sh
 
@@ -114,29 +114,35 @@ build-centos7-icc15:
 
 build-centos8:
   <<: *build_job_docker
-  image: ospray/docker-images:centos8
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   script:
   - gitlab/build.sh -G Ninja
 
 build-ubuntu16.04:
   <<: *build_job_docker
-  image: ospray/docker-images:ubuntu16.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - gitlab/build.sh -G Ninja
 
 build-ubuntu18.04:
   <<: *build_job_docker
-  image: ospray/docker-images:ubuntu18.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
+  script:
+    - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+build-ubuntu20.04:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
 build-arch:
   <<: *build_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
 
 build-arch-clang:
   <<: *build_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
     - export CC=clang
     - export CXX=clang++
@@ -144,7 +150,7 @@ build-arch-clang:
 
 build-arch-address-sanitizer:
   <<: *build_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
     - export CFLAGS=-fsanitize=address
     - export CXXFLAGS=-fsanitize=address
@@ -153,7 +159,7 @@ build-arch-address-sanitizer:
 
 build-arch-devel-rkdeps:
   <<: *build_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
     - gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
 
@@ -182,7 +188,7 @@ build-windows-msvc15:
 
 build-from-install-centos7:
   <<: *build_from_install_job_docker
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - build-centos7
 
@@ -190,26 +196,26 @@ build-from-install-centos7:
 
 test-functional-centos7:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - build-centos7
 
 # ensures icc-built binaries can run without Intel runtimes
 test-functional-centos7-icc:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - build-centos7-icc
 
 test-functional-centos8:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:centos8
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   needs:
     - build-centos8
 
 test-functional-ubuntu16.04:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:ubuntu16.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests
@@ -218,34 +224,43 @@ test-functional-ubuntu16.04:
 
 test-functional-ubuntu18.04:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:ubuntu18.04
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests
   needs:
     - build-ubuntu18.04
 
+test-functional-ubuntu20.04:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  script:
+    - export LD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTests
+  needs:
+    - build-ubuntu20.04
+
 test-functional-arch:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch
 
 test-functional-arch-clang:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch-clang
 
 test-functional-arch-address-sanitizer:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch-address-sanitizer
 
 test-functional-arch-devel-rkdeps:
   <<: *test_functional_job_docker
-  image: ospray/docker-images:arch
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch-devel-rkdeps
 
@@ -298,7 +313,7 @@ benchmark-x8280-1-schedule:
 
 build-kw-scan:
   stage: scan1
-  image: openvkl/openvkl:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - gitlab/build-kw-scan.sh
   before_script:
@@ -316,7 +331,7 @@ build-kw-scan:
 
 test-kw-critical:
   stage: scan2
-  image: openvkl/openvkl:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - gitlab/test-kw-critical.sh
   dependencies:
@@ -329,7 +344,7 @@ test-kw-critical:
 
 source-protex-scan:
   stage: scan1
-  image: openvkl/openvkl:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - gitlab/source-scan-protex.sh
   tags:
@@ -341,7 +356,7 @@ source-protex-scan:
 
 release-linux-icc:
   <<: *base_release_job
-  image: ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
   script:
     - module load cmake
     - module load intel/2019.4
@@ -385,7 +400,7 @@ release-windows:
 
 release-linux-test:
   <<: *base_release_test_job
-  image: ospray/docker-images:centos7
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - gitlab/release/linux-test.sh
   tags:

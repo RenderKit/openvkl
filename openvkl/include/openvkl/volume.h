@@ -56,6 +56,8 @@ VKLVolume vklNewVolume(const char *type);
 OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
+OPENVKL_INTERFACE unsigned int vklGetNumAttributes(VKLVolume volume);
+
 OPENVKL_INTERFACE vkl_range1f vklGetValueRange(VKLVolume volume);
 
 #ifdef __cplusplus

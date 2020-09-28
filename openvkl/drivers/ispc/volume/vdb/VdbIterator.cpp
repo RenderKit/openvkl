@@ -18,11 +18,10 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
-      const auto *vdbVolume = dynamic_cast<const VdbVolume<W> *>(volume);
       CALL_ISPC(VdbIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                vdbVolume->getGrid(),
+                sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -42,6 +41,9 @@ namespace openvkl {
     }
 
     template class VdbIntervalIterator<VKL_TARGET_WIDTH>;
+
+    __vkl_verify_max_interval_iterator_size(VdbIntervalIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_hit_iterator_size(VdbHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace ispc_driver
 }  // namespace openvkl

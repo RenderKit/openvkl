@@ -12,11 +12,17 @@ using openvkl::testing::WaveletStructuredRegularVolume;
 /*
  * Structured volume wrapper.
  */
+template <VKLFilter filter>
 struct Structured
 {
   static std::string name()
   {
-    return std::string();
+    return toString<filter>();
+  }
+
+  static constexpr unsigned int getNumAttributes()
+  {
+    return 1;
   }
 
   Structured()
@@ -26,6 +32,8 @@ struct Structured
 
     vklVolume  = volume->getVKLVolume();
     vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", filter);
+    vklSetInt(vklSampler, "gradientFilter", filter);
     vklCommit(vklSampler);
   }
 
@@ -60,7 +68,8 @@ int main(int argc, char **argv)
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
-  registerVolumeBenchmarks<Structured>();
+  registerVolumeBenchmarks<Structured<VKL_FILTER_NEAREST>>();
+  registerVolumeBenchmarks<Structured<VKL_FILTER_TRILINEAR>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

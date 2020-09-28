@@ -13,31 +13,10 @@
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/AsyncTask.h"
+#include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {
   namespace ispc_driver {
-
-    /*
-     * Centralized allocation helpers.
-     */
-    template <class T>
-    T *allocate(size_t size, size_t &bytesAllocated)
-    {
-      const size_t numBytes = size * sizeof(T);
-      bytesAllocated += numBytes;
-      T *buf = reinterpret_cast<T *>(rkcommon::memory::alignedMalloc(numBytes));
-      if (!buf)
-        throw std::bad_alloc();
-      std::memset(buf, 0, numBytes);
-      return buf;
-    }
-
-    template <class T>
-    void deallocate(T *&ptr)
-    {
-      rkcommon::memory::alignedFree(ptr);
-      ptr = nullptr;
-    }
 
     // -------------------------------------------------------------------------
 
@@ -45,35 +24,6 @@ namespace openvkl {
     VdbVolume<W>::VdbVolume()
     {
       this->ispcEquivalent = CALL_ISPC(VdbVolume_create);
-    }
-
-    template <int W>
-    VdbVolume<W>::VdbVolume(VdbVolume<W> &&other)
-    {
-      using std::swap;
-      swap(bounds, other.bounds);
-      swap(name, other.name);
-      swap(valueRange, other.valueRange);
-      swap(leafData, other.leafData);
-      swap(leafDataISPC, other.leafDataISPC);
-      swap(grid, other.grid);
-      swap(bytesAllocated, other.bytesAllocated);
-    }
-
-    template <int W>
-    VdbVolume<W> &VdbVolume<W>::operator=(VdbVolume<W> &&other)
-    {
-      if (this != &other) {
-        using std::swap;
-        swap(bounds, other.bounds);
-        swap(name, other.name);
-        swap(valueRange, other.valueRange);
-        swap(leafData, other.leafData);
-        swap(leafDataISPC, other.leafDataISPC);
-        swap(grid, other.grid);
-        swap(bytesAllocated, other.bytesAllocated);
-      }
-      return *this;
     }
 
     template <int W>
@@ -91,14 +41,12 @@ namespace openvkl {
         //       level buffers! Leaves are not stored in the hierarchy!
         for (uint32_t l = 0; (l + 1) < vklVdbNumLevels(); ++l) {
           VdbLevel &level = grid->levels[l];
-          deallocate(level.voxels);
-          deallocate(level.valueRange);
-          deallocate(level.leafIndex);
+          allocator.deallocate(level.voxels);
+          allocator.deallocate(level.valueRange);
+          allocator.deallocate(level.leafIndex);
         }
-        deallocate(grid->usageBuffer);
-        deallocate(grid);
+        allocator.deallocate(grid);
       }
-      bytesAllocated = 0;
     }
 
     template <int W>
@@ -231,7 +179,7 @@ namespace openvkl {
         const std::vector<std::vector<uint64_t>> &binnedLeaves,
         std::vector<uint64_t> &capacity,
         VdbGrid *grid,
-        size_t &bytesAllocated)
+        Allocator &allocator)
     {
       // Comparator for voxel coordinates. We use this for sorting.
       const auto isLess = [](const vec3i &a, const vec3i &b) {
@@ -279,9 +227,9 @@ namespace openvkl {
           capacity[l - 1] = levelNumInner;
           const size_t totalNumVoxels =
               levelNumInner * vklVdbLevelNumVoxels(l - 1);
-          level.voxels     = allocate<uint64_t>(totalNumVoxels, bytesAllocated);
-          level.valueRange = allocate<range1f>(totalNumVoxels, bytesAllocated);
-          level.leafIndex  = allocate<uint64>(totalNumVoxels, bytesAllocated);
+          level.voxels     = allocator.allocate<uint64_t>(totalNumVoxels);
+          level.valueRange = allocator.allocate<range1f>(totalNumVoxels);
+          level.leafIndex  = allocator.allocate<uint64>(totalNumVoxels);
           range1f empty;
           std::fill(level.valueRange, level.valueRange + totalNumVoxels, empty);
         }
@@ -494,9 +442,6 @@ namespace openvkl {
     {
       cleanup();
 
-      const int maxIteratorDepth =
-          this->template getParam<int>("maxIteratorDepth", 3);
-
       Ref<const DataT<float>> dataIndexToObject =
           this->template getParamDataT<float>("indexToObject", nullptr);
       Ref<const DataT<uint32_t>> leafLevel =
@@ -512,14 +457,14 @@ namespace openvkl {
       leafData = this->template getParamDataT<Data *>("node.data");
 
       // Set up the global sample config.
-      globalConfig.filter = (VKLFilter)this->template getParam<int>(
-          "filter", VKL_FILTER_TRILINEAR);
-      globalConfig.gradientFilter = (VKLFilter)this->template getParam<int>(
-          "gradientFilter", globalConfig.filter);
-      globalConfig.maxSamplingDepth = this->template getParam<int>(
-          "maxSamplingDepth", VKL_VDB_NUM_LEVELS - 1);
-      globalConfig.maxSamplingDepth =
-          min(globalConfig.maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
+      filter = (VKLFilter)this->template getParam<int>("filter", filter);
+      gradientFilter =
+          (VKLFilter)this->template getParam<int>("gradientFilter", filter);
+      maxSamplingDepth =
+          this->template getParam<int>("maxSamplingDepth", maxSamplingDepth);
+      maxSamplingDepth = min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
+      maxIteratorDepth = this->template getParam<int>("maxIteratorDepth",
+                                                      VKL_VDB_NUM_LEVELS - 2u);
 
       // Sanity checks.
       // We will assume that the following conditions hold downstream, so
@@ -560,7 +505,7 @@ namespace openvkl {
         }
 
         const VKLFormat format = static_cast<VKLFormat>((*leafFormat)[i]);
-        const uint32_t size = (*leafData)[i]->size();
+        const uint32_t size    = (*leafData)[i]->size();
 
         if (format == VKL_FORMAT_INVALID)
           runtimeError("invalid format specified");
@@ -568,26 +513,26 @@ namespace openvkl {
         if (format == VKL_FORMAT_TILE && size < 1)
           runtimeError("no voxel data for tile node");
 
-        if (format == VKL_FORMAT_TILE && size > 1)
-        {
+        if (format == VKL_FORMAT_TILE && size > 1) {
           LogMessageStream(VKL_LOG_WARNING)
               << "data array too big for tile node" << std::endl;
         }
 
-        if (format == VKL_FORMAT_CONSTANT_ZYX && size < vklVdbLevelNumVoxels(level))
+        if (format == VKL_FORMAT_CONSTANT_ZYX &&
+            size < vklVdbLevelNumVoxels(level))
           runtimeError("data array too small for constant node");
 
-        if (format == VKL_FORMAT_CONSTANT_ZYX && size > vklVdbLevelNumVoxels(level))
-        {
+        if (format == VKL_FORMAT_CONSTANT_ZYX &&
+            size > vklVdbLevelNumVoxels(level)) {
           LogMessageStream(VKL_LOG_WARNING)
               << "data array too big for constant node" << std::endl;
         }
       });
 
-      grid       = allocate<VdbGrid>(1, bytesAllocated);
-      grid->type = type;
-      grid->maxIteratorDepth =
-          min(max(maxIteratorDepth, 0), VKL_VDB_NUM_LEVELS - 1);
+      grid                 = allocator.allocate<VdbGrid>(1);
+      grid->type           = type;
+      maxIteratorDepth     = min<uint32_t>(max<uint32_t>(maxIteratorDepth, 0),
+                                       VKL_VDB_NUM_LEVELS - 1);
       grid->totalNumLeaves = numLeaves;
 
       // Determine if all leaf data is compact (non-strided)
@@ -610,10 +555,18 @@ namespace openvkl {
 
       const box3i bbox = computeBbox(numLeaves, *leafLevel, *leafOrigin);
       grid->rootOrigin = computeRootOrigin(bbox);
+      grid->activeSize = bbox.upper - grid->rootOrigin;
 
-      // VKL requires a float bbox. This is stored on the base class Volume.
-      bounds.lower = xfmPoint(grid->indexToObject, vec3f(bbox.lower));
-      bounds.upper = xfmPoint(grid->indexToObject, vec3f(bbox.upper));
+      // VKL requires a float bbox.
+      bounds = empty;
+
+      for (int i = 0; i < 8; ++i) {
+        const vec3f v = vec3f((i & 1) ? bbox.upper.x : bbox.lower.x,
+                              (i & 2) ? bbox.upper.y : bbox.lower.y,
+                              (i & 4) ? bbox.upper.z : bbox.lower.z);
+
+        bounds.extend(xfmPoint(grid->indexToObject, v));
+      }
 
       const auto binnedLeaves = binLeavesPerLevel(numLeaves, *leafLevel);
       for (size_t i = 0; i < vklVdbNumLevels(); ++i)
@@ -624,8 +577,7 @@ namespace openvkl {
       // Allocate buffers for all levels now, all in one go. This makes
       // inserting the nodes (below) much faster.
       std::vector<uint64_t> capacity(vklVdbNumLevels() - 1, 0);
-      allocateInnerLevels(
-          leafOffsets, binnedLeaves, capacity, grid, bytesAllocated);
+      allocateInnerLevels(leafOffsets, binnedLeaves, capacity, grid, allocator);
 
       // Populate contiguous ispc::Data1D objects to be used in leaf pointers,
       // only needed if we have strided data
@@ -647,9 +599,8 @@ namespace openvkl {
                         grid);
 
       CALL_ISPC(VdbVolume_setGrid,
-                Volume<W>::getISPCEquivalent(),
-                reinterpret_cast<const ispc::VdbGrid *>(grid),
-                reinterpret_cast<const ispc::VdbSampleConfig *>(&globalConfig));
+                this->ispcEquivalent,
+                reinterpret_cast<const ispc::VdbGrid *>(grid));
 
       computeValueRangesFloat(
           leafOffsets, *leafLevel, *leafFormat, *leafData, grid);
@@ -660,7 +611,7 @@ namespace openvkl {
     }
 
     template <int W>
-    VKLObserver VdbVolume<W>::newObserver(const char *type)
+    Observer<W> *VdbVolume<W>::newObserver(const char *type)
     {
       if (!grid)
         throw std::runtime_error(
@@ -668,21 +619,13 @@ namespace openvkl {
             "committed.");
 
       const std::string t(type);
-      if (t == "LeafNodeAccess") {
-        if (!grid->usageBuffer)
-          grid->usageBuffer =
-              allocate<uint32>(grid->totalNumLeaves, bytesAllocated);
-        return (VKLObserver) new VdbLeafAccessObserver(
-            *this, grid->totalNumLeaves, grid->usageBuffer);
-      } else {
-        return Volume<W>::newObserver(type);
-      }
+      return Volume<W>::newObserver(type);
     }
 
     template <int W>
     Sampler<W> *VdbVolume<W>::newSampler()
     {
-      return new VdbSampler<W>(grid, globalConfig);
+      return new VdbSampler<W>(*this);
     }
 
     VKL_REGISTER_VOLUME(VdbVolume<VKL_TARGET_WIDTH>,

@@ -3,12 +3,11 @@
 
 #pragma once
 
-#include "Iterator.ih"
 #include "math/box.ih"
 #include "math/vec.ih"
 
 struct ValueSelector;
-struct SharedStructuredVolume;
+struct Sampler;
 
 struct GridAcceleratorIteratorIntervalState
 {
@@ -25,7 +24,7 @@ struct GridAcceleratorIteratorHitState
 
 struct GridAcceleratorIterator
 {
-  SharedStructuredVolume *uniform volume;
+  const Sampler *uniform sampler;
   vec3f origin;
   vec3f direction;
   box1f tRange;

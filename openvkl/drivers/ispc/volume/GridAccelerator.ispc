@@ -88,6 +88,9 @@ inline void GridAccelerator_computeCellValueRange(
     const uniform vec3i &cellIndex,
     uniform box1f &valueRange)
 {
+  // temporarily restrict grid accelerator to first attribute
+  const uniform uint32 attributeIndex = 0;
+
   uniform bool cellEmpty = true;
 
   foreach (k = 0 ... CELL_WIDTH + 1,
@@ -96,7 +99,8 @@ inline void GridAccelerator_computeCellValueRange(
     const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
 
     float value;
-    volume->getVoxel(volume, min(volume->dimensions - 1, voxelIndex), value);
+    volume->getVoxels_varying[attributeIndex](
+        volume, min(volume->dimensions - 1, voxelIndex), attributeIndex, value);
 
     if (!isnan(value)) {
       valueRange.lower = min(valueRange.lower, reduce_min(value));

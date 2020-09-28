@@ -18,6 +18,21 @@ if (BUILD_BENCHMARKS)
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
+  # Structured volumes (multi-attribute)
+  add_executable(vklBenchmarkStructuredVolumeMulti
+    vklBenchmarkStructuredVolumeMulti.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkStructuredVolumeMulti
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkStructuredVolumeMulti
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+
   # Unstructured volumes
   add_executable(vklBenchmarkUnstructuredVolume
     vklBenchmarkUnstructuredVolume.cpp
@@ -81,6 +96,7 @@ if (BUILD_TESTING)
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
     tests/structured_regular_volume_strides.cpp
+    tests/structured_regular_volume_multi.cpp
     tests/structured_spherical_volume_sampling.cpp
     tests/structured_spherical_volume_bounding_box.cpp
     tests/structured_volume_value_range.cpp

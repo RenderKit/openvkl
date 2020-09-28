@@ -37,10 +37,10 @@
 #else
 
 #define VKL_VDB_LOG_RES_@VKL_VDB_NEXT_LEVEL@       0
-#define VKL_VDB_STORAGE_RES_@VKL_VDB_NEXT_LEVEL@   0
-#define VKL_VDB_NUM_VOXELS_@VKL_VDB_NEXT_LEVEL@    0
+#define VKL_VDB_STORAGE_RES_@VKL_VDB_NEXT_LEVEL@   1
+#define VKL_VDB_NUM_VOXELS_@VKL_VDB_NEXT_LEVEL@    1
 #define VKL_VDB_TOTAL_LOG_RES_@VKL_VDB_NEXT_LEVEL@ 0
-#define VKL_VDB_RES_@VKL_VDB_NEXT_LEVEL@           0
+#define VKL_VDB_RES_@VKL_VDB_NEXT_LEVEL@           1
 
 #define __vkl_vdb_iterate_levels_@VKL_VDB_NEXT_LEVEL@(Macro, ...)
 

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "ProceduralVolume.h"
 #include "TestingAMRVolume.h"
 #include "procedural_functions.h"
 // openvkl
@@ -21,15 +22,18 @@ namespace openvkl {
 
     template <vec3f volumeGradientFunction(const vec3f &) =
                   gradientNotImplemented>
-    struct ProceduralShellsAMRVolume : public TestingAMRVolume
+    struct ProceduralShellsAMRVolume : public TestingAMRVolume,
+                                       public ProceduralVolume
     {
       ProceduralShellsAMRVolume(const vec3i &_dimensions,
                                 const vec3f &_gridOrigin,
                                 const vec3f &_gridSpacing);
 
-      float computeProceduralValue(const vec3f &objectCoordinates);
+      float computeProceduralValue(
+          const vec3f &objectCoordinates) const override;
 
-      vec3f computeProceduralGradient(const vec3f &objectCoordinates);
+      vec3f computeProceduralGradient(
+          const vec3f &objectCoordinates) const override;
 
       std::vector<unsigned char> generateVoxels() override;  // unused
 
@@ -61,7 +65,7 @@ namespace openvkl {
     template <vec3f gradientFunction(const vec3f &)>
     inline float
     ProceduralShellsAMRVolume<gradientFunction>::computeProceduralValue(
-        const vec3f &objectCoordinates)
+        const vec3f &objectCoordinates) const
     {
       return getShellValue(objectCoordinates, dimensions);
     }
@@ -69,7 +73,7 @@ namespace openvkl {
     template <vec3f gradientFunction(const vec3f &)>
     inline vec3f
     ProceduralShellsAMRVolume<gradientFunction>::computeProceduralGradient(
-        const vec3f &objectCoordinates)
+        const vec3f &objectCoordinates) const
     {
       return gradientFunction(objectCoordinates);
     }

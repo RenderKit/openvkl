@@ -26,18 +26,6 @@ namespace openvkl {
     return W < 4 ? 4 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
-  // assumes W==1 can be promoted to wide type
-  constexpr int simd_alignment_for_width_promote_scalar(int W)
-  {
-    return W < 4 ? 64 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
-  }
-
-  // minimum alignment is 8 if object contains any pointers
-  constexpr int simd_alignment_for_width_with_ptr(int W)
-  {
-    return W < 4 ? 8 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
-  }
-
   template <int W>
   struct alignas(simd_alignment_for_width(W)) vfloatn
   {

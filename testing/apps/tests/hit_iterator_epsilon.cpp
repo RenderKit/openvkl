@@ -18,14 +18,16 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   const vkl_range1f tRange{0.f, inf};
 
   VKLVolume volume = testingVolume->getVKLVolume();
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
   vklValueSelectorSetValues(valueSelector, isovalues.size(), isovalues.data());
   vklCommit(valueSelector);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(volume));
+  std::vector<char> buffer(vklGetHitIteratorSize(sampler));
   VKLHitIterator iterator = vklInitHitIterator(
-      volume, &origin, &direction, &tRange, valueSelector, buffer.data());
+      sampler, &origin, &direction, &tRange, valueSelector, buffer.data());
 
   VKLHit hit;
   hit.epsilon = 0.f;
@@ -45,6 +47,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   REQUIRE(hitCount > 0);
 
+  vklRelease(sampler);
   vklRelease(valueSelector);
 }
 
@@ -81,6 +84,8 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   }
 
   VKLVolume volume = testingVolume->getVKLVolume();
+  VKLSampler sampler = vklNewSampler(volume);
+  vklCommit(sampler);
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
   vklValueSelectorSetValues(valueSelector, isovalues.size(), isovalues.data());
@@ -92,9 +97,9 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   // lanes
   valid[1] = 0;
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(volume));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(sampler));
   VKLHitIteratorW iterator = vklInitHitIteratorW(valid.data(),
-                                                 volume,
+                                                 sampler,
                                                  (vkl_vvec3fW *)&origins,
                                                  (vkl_vvec3fW *)&directions,
                                                  (vkl_vrange1fW *)&tRanges,
@@ -132,6 +137,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   REQUIRE(hitCount > 0);
 
+  vklRelease(sampler);
   vklRelease(valueSelector);
 }
 

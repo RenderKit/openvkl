@@ -35,9 +35,9 @@ namespace openvkl {
       tRange.upper = ray.t.upper;
 
       void *intervalIteratorBuffer =
-          alloca(vklGetIntervalIteratorSize(scene.volume));
+          alloca(vklGetIntervalIteratorSize(scene.sampler));
       VKLIntervalIterator iterator =
-          vklInitIntervalIterator(scene.volume,
+          vklInitIntervalIterator(scene.sampler,
                                   (vkl_vec3f *)&ray.org,
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,

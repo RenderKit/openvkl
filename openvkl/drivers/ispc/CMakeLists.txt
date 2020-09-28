@@ -38,8 +38,14 @@ foreach(TARGET_WIDTH 4 8 16)
     iterator/DefaultIterator.ispc
     iterator/GridAcceleratorIterator.cpp
     iterator/GridAcceleratorIterator.ispc
+    iterator/GridAcceleratorIteratorSize.ispc
     iterator/UnstructuredIterator.cpp
     iterator/UnstructuredIterator.ispc
+    observer/Observer.cpp
+    observer/ObserverRegistry.cpp
+    observer/ObserverRegistry.ispc
+    sampler/Sampler.cpp
+    sampler/Sampler.ispc
     value_selector/ValueSelector.cpp
     value_selector/ValueSelector.ispc
     volume/amr/AMRAccel.cpp
@@ -68,7 +74,6 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/vdb/VdbIterator.cpp
     volume/vdb/VdbIterator.ispc
     volume/vdb/VdbLeafAccessObserver.cpp
-    volume/vdb/Dda.ispc
   )
 
   unset(ISPC_DEFINITIONS)

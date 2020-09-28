@@ -51,9 +51,13 @@ namespace openvkl {
 
       static VKLLogLevel logLevel;
 
-      std::function<void(const char *)> logFunction{[](const char *) {}};
-      std::function<void(VKLError, const char *)> errorFunction{
-          [](VKLError, const char *) {}};
+      std::function<void(void *, const char *)> logCallback{
+          [](void *, const char *) {}};
+      void *logUserData{nullptr};
+
+      std::function<void(void *, VKLError, const char *)> errorCallback{
+          [](void *, VKLError, const char *) {}};
+      void *errorUserData{nullptr};
 
       /////////////////////////////////////////////////////////////////////////
       // Data /////////////////////////////////////////////////////////////////
@@ -70,6 +74,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       virtual VKLObserver newObserver(VKLVolume volume, const char *type) = 0;
+      virtual VKLObserver newObserver(VKLSampler sampler, const char *type) = 0;
       virtual const void *mapObserver(VKLObserver observer)               = 0;
       virtual void unmapObserver(VKLObserver observer)                    = 0;
       virtual VKLDataType getObserverElementType(
@@ -81,7 +86,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
 #define __define_getIntervalIteratorSizeN(WIDTH)                            \
-  virtual size_t getIntervalIteratorSize##WIDTH(VKLVolume volume) const     \
+  virtual size_t getIntervalIteratorSize##WIDTH(VKLSampler sampler) const   \
   {                                                                         \
     throw std::runtime_error(                                               \
         "getIntervalIteratorSize##WIDTH() not implemented on this driver"); \
@@ -96,7 +101,7 @@ namespace openvkl {
 #undef __define_getIntervalIteratorSizeN
 
       virtual VKLIntervalIterator initIntervalIterator1(
-          VKLVolume volume,
+          VKLSampler sampler,
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
@@ -111,7 +116,7 @@ namespace openvkl {
 #define __define_initIntervalIteratorN(WIDTH)                            \
   virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(        \
       const int *valid,                                                  \
-      VKLVolume volume,                                                  \
+      VKLSampler sampler,                                                \
       const vvec3fn<WIDTH> &origin,                                      \
       const vvec3fn<WIDTH> &direction,                                   \
       const vrange1fn<WIDTH> &tRange,                                    \
@@ -158,7 +163,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
 #define __define_getHitIteratorSizeN(WIDTH)                            \
-  virtual size_t getHitIteratorSize##WIDTH(VKLVolume volume) const     \
+  virtual size_t getHitIteratorSize##WIDTH(VKLSampler sampler) const   \
   {                                                                    \
     throw std::runtime_error(                                          \
         "getHitIteratorSize##WIDTH() not implemented on this driver"); \
@@ -172,7 +177,7 @@ namespace openvkl {
 
 #undef __define_getHitIteratorSizeN
 
-      virtual VKLHitIterator initHitIterator1(VKLVolume volume,
+      virtual VKLHitIterator initHitIterator1(VKLSampler sampler,
                                               const vvec3fn<1> &origin,
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
@@ -187,7 +192,7 @@ namespace openvkl {
 #define __define_initHitIteratorN(WIDTH)                            \
   virtual VKLHitIterator##WIDTH initHitIterator##WIDTH(             \
       const int *valid,                                             \
-      VKLVolume volume,                                             \
+      VKLSampler sampler,                                           \
       const vvec3fn<WIDTH> &origin,                                 \
       const vvec3fn<WIDTH> &direction,                              \
       const vrange1fn<WIDTH> &tRange,                               \
@@ -282,7 +287,8 @@ namespace openvkl {
   virtual void computeSample##WIDTH(const int *valid,                        \
                                     VKLSampler sampler,                      \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
-                                    float *samples) = 0;
+                                    float *samples,                          \
+                                    unsigned int attributeIndex) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -294,13 +300,38 @@ namespace openvkl {
       virtual void computeSampleN(VKLSampler sampler,
                                   unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
-                                  float *samples) = 0;
+                                  float *samples,
+                                  unsigned int attributeIndex) = 0;
+
+#define __define_computeSampleMN(WIDTH)        \
+  virtual void computeSampleM##WIDTH(          \
+      const int *valid,                        \
+      VKLSampler sampler,                      \
+      const vvec3fn<WIDTH> &objectCoordinates, \
+      float *samples,                          \
+      unsigned int M,                          \
+      const unsigned int *attributeIndices) = 0;
+
+      __define_computeSampleMN(1);
+      __define_computeSampleMN(4);
+      __define_computeSampleMN(8);
+      __define_computeSampleMN(16);
+
+#undef __define_computeSampleMN
+
+      virtual void computeSampleMN(VKLSampler sampler,
+                                   unsigned int N,
+                                   const vvec3fn<1> *objectCoordinates,
+                                   float *samples,
+                                   unsigned int M,
+                                   const unsigned int *attributeIndices) = 0;
 
 #define __define_computeGradientN(WIDTH)                                       \
   virtual void computeGradient##WIDTH(const int *valid,                        \
                                       VKLSampler sampler,                      \
                                       const vvec3fn<WIDTH> &objectCoordinates, \
-                                      vvec3fn<WIDTH> &gradients) = 0;
+                                      vvec3fn<WIDTH> &gradients,               \
+                                      unsigned int attributeIndex) = 0;
 
       __define_computeGradientN(1);
       __define_computeGradientN(4);
@@ -312,7 +343,8 @@ namespace openvkl {
       virtual void computeGradientN(VKLSampler sampler,
                                     unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
-                                    vvec3fn<1> *gradients) = 0;
+                                    vvec3fn<1> *gradients,
+                                    unsigned int attributeIndex) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -321,6 +353,8 @@ namespace openvkl {
       virtual VKLVolume newVolume(const char *type) = 0;
 
       virtual box3f getBoundingBox(VKLVolume volume) = 0;
+
+      virtual unsigned int getNumAttributes(VKLVolume volume) = 0;
 
       virtual range1f getValueRange(VKLVolume volume) = 0;
 

@@ -19,6 +19,11 @@ struct Particle
     return std::string();
   }
 
+  static constexpr unsigned int getNumAttributes()
+  {
+    return 1;
+  }
+
   Particle()
   {
     volume = rkcommon::make_unique<ProceduralParticleVolume>(1000);

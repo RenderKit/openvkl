@@ -1,0 +1,50 @@
+// Copyright 2020 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "openvkl/VKLFilter.h"
+#include "openvkl/ispc_cpp_interop.h"
+#include "../volume/Volume.ih"
+#include "../common/export_util.h"
+
+struct Sampler
+{
+  Volume *uniform volume;
+
+  // these functions do not yet support multi-attribute volumes. they are used
+  // in generic stream-wide sampling and gradient implementations, as well as in
+  // hit iterator surface intersection functions (which today only support the
+  // first attribute).
+
+  uniform float (*uniform computeSample_uniform)(
+      const Sampler *uniform _self, const uniform vec3f &objectCoordinates);
+
+  varying float (*uniform computeSample_varying)(
+      const Sampler *uniform _self, const varying vec3f &objectCoordinates);
+
+  varying vec3f (*uniform computeGradient_varying)(
+      const Sampler *uniform _self, const varying vec3f &objectCoordinates);
+
+  // Samplers may choose to implement these filter modes.
+  VKLFilter filter;
+  VKLFilter gradientFilter;
+};
+
+/*
+ * Initialize the given sampler object. Use this from your derived samplers
+ * to initialize the super member.
+ */
+
+export Sampler *uniform EXPORT_UNIQUE(Sampler_create,
+                                      const void* uniform _volume);
+
+export void EXPORT_UNIQUE(Sampler_destroy,
+                          void *uniform _sampler);
+
+export void EXPORT_UNIQUE(Sampler_setFilters,
+                          void *uniform _sampler,
+                          uniform VKLFilter filter,
+                          uniform VKLFilter gradientFilter);
+
+

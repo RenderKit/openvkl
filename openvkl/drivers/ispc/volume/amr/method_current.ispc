@@ -5,14 +5,15 @@
 #include "CellRef.ih"
 #include "DualCell.ih"
 #include "common/export_util.h"
+#include "sampler/Sampler.ih"
 
-varying float AMR_current(const void *uniform _self, const varying vec3f &P)
+varying float AMR_current(const Sampler *uniform self, const varying vec3f &P)
 {
-  const AMRVolume *uniform self = (const AMRVolume *)_self;
-  const AMR *uniform amr        = &self->amr;
+  const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;
+  const AMR *uniform amr          = &volume->amr;
 
   vec3f lP;  // local amr space
-  self->transformWorldToLocal(self, P, lP);
+  AMRVolume_transformObjectToLocal(volume, P, lP);
 
   const CellRef C = findLeafCell(amr, lP);
 
@@ -23,22 +24,8 @@ varying float AMR_current(const void *uniform _self, const varying vec3f &P)
   return lerp(D);
 }
 
-varying float AMR_currentLevel(const void *uniform _self,
-                               const varying vec3f &P)
+export void EXPORT_UNIQUE(AMR_install_current, void *uniform _sampler)
 {
-  const AMRVolume *uniform self = (const AMRVolume *uniform)_self;
-  const AMR *uniform amr        = &self->amr;
-
-  const CellRef C = findLeafCell(amr, P);
-  float width     = C.width;
-  if (isnan(width))
-    width = 1.0f;
-  return width;
-}
-
-export void EXPORT_UNIQUE(AMR_install_current, void *uniform _self)
-{
-  AMRVolume *uniform self           = (AMRVolume * uniform) _self;
-  self->super.computeSample_varying = AMR_current;
-  self->computeSampleLevel          = AMR_currentLevel;
+  Sampler *uniform sampler       = (Sampler * uniform) _sampler;
+  sampler->computeSample_varying = AMR_current;
 }

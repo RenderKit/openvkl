@@ -15,18 +15,23 @@ namespace openvkl {
   namespace api {
 
     // helper functions
-    template <typename OSTREAM_T>
-    static inline void installLogFunction(Driver &driver, OSTREAM_T &stream)
+    template <std::ostream &OS>
+    static inline void installLogCallback(Driver &driver)
     {
-      driver.logFunction = [&](const char *msg) { stream << msg; };
+      driver.logUserData = nullptr;
+      driver.logCallback = [](void * /*usrData*/, const char *msg) {
+        OS << msg;
+      };
     }
 
-    template <typename OSTREAM_T>
-    static inline void installErrorFunction(Driver &driver, OSTREAM_T &stream)
+    template <std::ostream &OS>
+    static inline void installErrorCallback(Driver &driver)
     {
-      driver.errorFunction = [&](VKLError e, const char *msg) {
-        stream << "OPENVKL ERROR [" << e << "]: " << msg << std::endl;
-      };
+      driver.errorUserData = nullptr;
+      driver.errorCallback =
+          [](void * /*usrData*/, VKLError e, const char *msg) {
+            OS << "OPENVKL ERROR [" << e << "]: " << msg << std::endl;
+          };
     }
 
     // Driver definitions
@@ -37,9 +42,9 @@ namespace openvkl {
     Driver::Driver()
     {
       // setup default logging functions; after the driver is instantiated, they
-      // may be overridden via vklDriverSet*Func().
-      installLogFunction(*this, std::cout);
-      installErrorFunction(*this, std::cerr);
+      // may be overridden via vklDriverSet*Callback().
+      installLogCallback<std::cout>(*this);
+      installErrorCallback<std::cerr>(*this);
     }
 
     Driver *Driver::createDriver(const std::string &driverName)
@@ -123,11 +128,13 @@ namespace openvkl {
           OPENVKL_LOG_OUTPUT.value_or(getParam<std::string>("logOutput", ""));
 
       if (dst == "cout")
-        installLogFunction(*this, std::cout);
+        installLogCallback<std::cout>(*this);
       else if (dst == "cerr")
-        installLogFunction(*this, std::cerr);
-      else if (dst == "none")
-        logFunction = [](const char *) {};
+        installLogCallback<std::cerr>(*this);
+      else if (dst == "none") {
+        logCallback = [](void *, const char *) {};
+        logUserData = nullptr;
+      }
 
       // error output
       auto OPENVKL_ERROR_OUTPUT =
@@ -137,11 +144,13 @@ namespace openvkl {
           getParam<std::string>("errorOutput", ""));
 
       if (dst == "cout")
-        installErrorFunction(*this, std::cout);
+        installErrorCallback<std::cout>(*this);
       else if (dst == "cerr")
-        installErrorFunction(*this, std::cerr);
-      else if (dst == "none")
-        errorFunction = [](VKLError, const char *) {};
+        installErrorCallback<std::cerr>(*this);
+      else if (dst == "none") {
+        errorCallback = [](void *, VKLError, const char *) {};
+        errorUserData = nullptr;
+      }
 
       // threads
       auto OPENVKL_THREADS = utility::getEnvVar<int>("OPENVKL_THREADS");

@@ -29,7 +29,6 @@ struct DdaState
   // The ray. We need this to reinitialize lower levels when we skip them.
   vec3f rayOrg;
   vec3f rayDir;
-  vec3f rayInvDir;
 
   // The current index. This is in units of leaf level voxels for all levels.
   // NOTE: See DDA_STATE_*_OFFSET macros above for the storage layout.
@@ -171,7 +170,6 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
   dda.t = tMin;
   dda.rayOrg = rayOrg;
   dda.rayDir = rayDir;
-  dda.rayInvDir = iDir;
 
   for (uniform uint32 l = 0; l <= dda.level; ++l) {
     const uniform int32 cellRes = vklVdbLevelRes(l + 1);
@@ -217,8 +215,9 @@ inline void ddaReinitBelow(DdaState &dda,
                            int32 dy, // Only one of dx, dy, dz is nonzero!
                            int32 dz)
 {
-  // Should be cheap to recompute, so we save the storage in DdaState.
-  // TODO: Try *not* storing rayInvDir but instead computing it here.
+  // Relatively cheap to recompute, so we avoid storing these in DdaState as
+  // that impacts memory for all ISPC side iterators.
+  const vec3f iDir = safe_rcp(dda.rayDir);
   const vec3i sgn = safe_sign(dda.rayDir);
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
@@ -266,7 +265,7 @@ inline void ddaReinitBelow(DdaState &dda,
         make_vec3f(((float)(dda.idx[ix] + cellRes * sgnNonNegative.x)),
                    ((float)(dda.idx[iy] + cellRes * sgnNonNegative.y)),
                    ((float)(dda.idx[iz] + cellRes * sgnNonNegative.z)));
-    const vec3f tn = intersect_planes(dda.rayOrg, dda.rayInvDir, planes);
+    const vec3f tn = intersect_planes(dda.rayOrg, iDir, planes);
 
     dda.tNext[ix] = tn.x;
     dda.tNext[iy] = tn.y;

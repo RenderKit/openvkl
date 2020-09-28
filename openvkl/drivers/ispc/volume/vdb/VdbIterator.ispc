@@ -68,18 +68,13 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
   float tEnter = pos_inf;
   float tExit  = neg_inf;
 
-  assert(sampler->super.filter == VKL_FILTER_NEAREST ||
-         sampler->super.filter == VKL_FILTER_TRILINEAR);
-  const float filterSize =
-      (sampler->super.filter == VKL_FILTER_NEAREST) ? 0.f : 1.f;
-
   intersect_box(
       rayOrg,
       safe_rcp(rayDir),
-      ((varying vec3f)make_vec3f(-filterSize, -filterSize, -filterSize)),
-      ((varying vec3f)make_vec3f(grid->activeSize.x + filterSize,
-                                 grid->activeSize.y + filterSize,
-                                 grid->activeSize.z + filterSize)),
+      ((varying vec3f)make_vec3f(0.f, 0.f, 0.f)),
+      ((varying vec3f)make_vec3f(grid->activeSize.x,
+                                 grid->activeSize.y,
+                                 grid->activeSize.z)),
       tEnter,
       tExit);
 

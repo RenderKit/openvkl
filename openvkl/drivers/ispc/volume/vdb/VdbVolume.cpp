@@ -463,7 +463,8 @@ namespace openvkl {
       maxSamplingDepth =
           this->template getParam<int>("maxSamplingDepth", maxSamplingDepth);
       maxSamplingDepth = min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
-      maxIteratorDepth = this->template getParam<int>("maxIteratorDepth", 3);
+      maxIteratorDepth = this->template getParam<int>("maxIteratorDepth",
+                                                      VKL_VDB_NUM_LEVELS - 2u);
 
       // Sanity checks.
       // We will assume that the following conditions hold downstream, so

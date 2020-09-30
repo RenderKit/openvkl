@@ -39,8 +39,9 @@ namespace api {
       if (state.thread_index == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
-        vklSampler           = vklNewSampler(vklVolume);
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+        vklSampler           = vklNewSampler(vklVolume);
+        vklCommit(vklSampler);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -96,8 +97,9 @@ namespace api {
       if (state.thread_index == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
-        vklSampler           = vklNewSampler(vklVolume);
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+        vklSampler           = vklNewSampler(vklVolume);
+        vklCommit(vklSampler);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -166,8 +168,9 @@ namespace api {
       if (state.thread_index == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
-        vklSampler           = vklNewSampler(vklVolume);
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
+        vklSampler           = vklNewSampler(vklVolume);
+        vklCommit(vklSampler);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);

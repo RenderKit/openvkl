@@ -201,8 +201,6 @@ namespace openvkl {
       {
         VKLVolume volume = vklNewVolume("vdb");
         vklSetInt(volume, "filter", filter);
-        vklSetInt(volume, "maxSamplingDepth", vklVdbNumLevels() - 1);
-        vklSetInt(volume, "maxIteratorDepth", 3);
 
         VKLData transformData = vklNewData(12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
         vklSetData(volume, "indexToObject", transformData);

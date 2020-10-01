@@ -78,16 +78,14 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
       tEnter,
       tExit);
 
-  float tMin = tRange.lower;
   if (tEnter > tExit) {
-    tMin       = 0;
     self->tMax = neg_inf;
+    self->dda.t = 0;
   } else {
-    tMin       = max(tRange.lower, tEnter * 0.999f);
+    const float tMin = max(tRange.lower, tEnter * 0.999f);
     self->tMax = min(tRange.upper, tExit * 1.001f);
+    ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
   }
-
-  ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
 }
 
 inline void VdbIterator_iterateIntervalInternal(

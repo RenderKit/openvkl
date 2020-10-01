@@ -79,27 +79,10 @@ inline vec3f intersect_planes(const vec3f &rayOrg,
   const float ty = (planes.y - rayOrg.y) * rayInvDir.y;
   const float tz = (planes.z - rayOrg.z) * rayInvDir.z;
 
-  // NaN will occur if the ray starts on a plane (planes-rayOrg == 0) but
-  // is also fully contained in this plane (rayDir == 0 -> rayInvDir == inf).
-  // We want to ignore such intersections.
-  return make_vec3f(select(isnan(tx), inf, tx),
-                    select(isnan(ty), inf, ty),
-                    select(isnan(tz), inf, tz));
-}
-
-/*
- * We use this variant to determine tNext. In that case, we know that we
- * cannot use intersections behind, so discard them completely!
- */
-inline vec3f intersect_planes_positive(const vec3f &rayOrg,
-                                       const vec3f &rayInvDir,
-                                       const vec3f &planes)
-{
-  vec3f ts = intersect_planes(rayOrg, rayInvDir, planes);
-  ts.x = select(ts.x<0, inf, ts.x);
-  ts.y = select(ts.y<0, inf, ts.y);
-  ts.z = select(ts.z<0, inf, ts.z);
-  return ts;
+  // Do not intersect planes the origin is on!
+  return make_vec3f(select((planes.x == rayOrg.x || isnan(tx)), inf, tx),
+                    select((planes.y == rayOrg.y || isnan(ty)), inf, ty),
+                    select((planes.z == rayOrg.z || isnan(tz)), inf, tz));
 }
 
 /*
@@ -198,7 +181,7 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
                    ((float)(idx.y + cellRes * sgnNonNegative.y)),
                    ((float)(idx.z + cellRes * sgnNonNegative.z)));
 
-    const vec3f tn = intersect_planes_positive(rayOrg, iDir, planes);
+    const vec3f tn = intersect_planes(rayOrg, iDir, planes);
 
     const uniform int32 ix = DDA_STATE_X_OFFSET(l);
     const uniform int32 iy = DDA_STATE_Y_OFFSET(l);
@@ -280,7 +263,7 @@ inline void ddaReinitBelow(DdaState &dda,
         make_vec3f(((float)(dda.idx[ix] + cellRes * sgnNonNegative.x)),
                    ((float)(dda.idx[iy] + cellRes * sgnNonNegative.y)),
                    ((float)(dda.idx[iz] + cellRes * sgnNonNegative.z)));
-    const vec3f tn = intersect_planes_positive(dda.rayOrg, iDir, planes);
+    const vec3f tn = intersect_planes(dda.rayOrg, iDir, planes);
 
     dda.tNext[ix] = tn.x;
     dda.tNext[iy] = tn.y;

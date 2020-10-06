@@ -227,7 +227,7 @@ namespace openvkl {
       if (estimateValueRanges) {
         // restrict to first attribute index
         const unsigned int attributeIndex = 0;
-        const float sampleTime = 0.f;
+        const float time                  = 0.f;
 
         tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
           LeafNode *leafNode         = leafNodes[leafNodeIndex];
@@ -242,7 +242,7 @@ namespace openvkl {
           // initial estimate based sampling particle center
           vfloatn<1> sample;
           sampler->computeSample(
-              (*positions)[particleIndex], sample, attributeIndex, sampleTime);
+              (*positions)[particleIndex], sample, attributeIndex, time);
           computedValueRange.extend(sample[0]);
 
           // sample over regular grid within leaf bounds to improve estimate
@@ -267,7 +267,7 @@ namespace openvkl {
                                   objectCoordinates.data(),
                                   samples.data(),
                                   attributeIndex,
-                                  sampleTime);
+                                  time);
 
           auto minmax = std::minmax_element(samples.begin(), samples.end());
           computedValueRange.extend(range1f(*minmax.first, *minmax.second));

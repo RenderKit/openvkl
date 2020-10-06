@@ -7,6 +7,7 @@ struct DensityPathTracer
 {
   Renderer super;
 
+  float time;
   float sigmaTScale;
   float sigmaSScale;
   int maxNumScatters;
@@ -55,8 +56,10 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    sample        = vklComputeSampleV(
-        scene->sampler, (varying vkl_vec3f *)&c, scene->attributeIndex);
+    sample        = vklComputeSampleV(scene->sampler,
+                               (varying vkl_vec3f *)&c,
+                               scene->attributeIndex,
+                               self->time);
 
     const vec4f sampleColorAndOpacity =
         Renderer_sampleTransferFunction(scene, sample);
@@ -163,6 +166,7 @@ export void *uniform DensityPathTracer_create()
 }
 
 export void DensityPathTracer_set(void *uniform _self,
+                                  const uniform float time,
                                   const uniform float sigmaTScale,
                                   const uniform float sigmaSScale,
                                   const uniform int maxNumScatters,
@@ -170,6 +174,7 @@ export void DensityPathTracer_set(void *uniform _self,
 {
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
 
+  self->time                  = time;
   self->sigmaTScale           = sigmaTScale;
   self->sigmaSScale           = sigmaSScale;
   self->maxNumScatters        = maxNumScatters;

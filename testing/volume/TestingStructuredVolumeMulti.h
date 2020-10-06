@@ -38,7 +38,8 @@ namespace openvkl {
       range1f getComputedValueRange(unsigned int attributeIndex) const;
 
       float computeProceduralValue(const vec3f &objectCoordinates,
-                                   unsigned int attributeIndex) const;
+                                   unsigned int attributeIndex,
+                                   float time = 0.f) const;
 
       vec3f computeProceduralGradient(const vec3f &objectCoordinates,
                                       unsigned int attributeIndex) const;
@@ -53,7 +54,7 @@ namespace openvkl {
       vec3f transformLocalToObjectCoordinates(const vec3f &localCoordinates);
 
      protected:
-      void generateVKLVolume() override;
+      void generateVKLVolume() override final;
 
       std::string gridType;
       vec3i dimensions;
@@ -64,8 +65,10 @@ namespace openvkl {
       VKLDataCreationFlags dataCreationFlags;
       bool useAOSLayout;
 
-      // voxel data may need to be retained for shared data buffers
+      // data may need to be retained for shared data buffers
       std::vector<std::vector<unsigned char>> voxels;
+      std::vector<std::vector<uint8_t>> timeConfig;
+      std::vector<std::vector<float>> timeData;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -119,10 +122,12 @@ namespace openvkl {
     }
 
     inline float TestingStructuredVolumeMulti::computeProceduralValue(
-        const vec3f &objectCoordinates, unsigned int attributeIndex) const
+        const vec3f &objectCoordinates,
+        unsigned int attributeIndex,
+        float time) const
     {
       return attributeVolumes[attributeIndex]->computeProceduralValue(
-          objectCoordinates);
+          objectCoordinates, time);
     }
 
     inline vec3f TestingStructuredVolumeMulti::computeProceduralGradient(
@@ -181,9 +186,25 @@ namespace openvkl {
 
       voxels.resize(attributeVolumes.size());
 
+      // determine if any of the attribute volumes have multiple time steps
+      bool haveTimesteps = false;
+
+      for (const auto &av : attributeVolumes) {
+        if (av->getTemporalConfig().numTimesteps > 1) {
+          haveTimesteps = true;
+          break;
+        }
+      }
+
       std::vector<VKLData> attributesData;
 
       if (useAOSLayout) {
+        if (haveTimesteps) {
+          throw std::runtime_error(
+              "TestingStructuredVolumeMulti does not support AOS layout with "
+              "time-varying attribute volumes");
+        }
+
         // voxel size per attribute
         std::vector<size_t> voxelSizes;
 
@@ -232,12 +253,13 @@ namespace openvkl {
         for (int i = 0; i < attributeVolumes.size(); i++) {
           voxels[i] = attributeVolumes[i]->generateVoxels();
 
-          VKLData attributeData =
-              vklNewData(dimensions.long_product(),
-                         attributeVolumes[i]->getVoxelType(),
-                         voxels[i].data(),
-                         dataCreationFlags,
-                         0);
+          VKLData attributeData = vklNewData(
+              dimensions.long_product() *
+                  attributeVolumes[i]->getTemporalConfig().numTimesteps,
+              attributeVolumes[i]->getVoxelType(),
+              voxels[i].data(),
+              dataCreationFlags,
+              0);
 
           attributesData.push_back(attributeData);
 
@@ -249,13 +271,68 @@ namespace openvkl {
 
       VKLData data =
           vklNewData(attributesData.size(), VKL_DATA, attributesData.data());
-
       for (const auto &d : attributesData) {
         vklRelease(d);
       }
-
       vklSetData(volume, "data", data);
       vklRelease(data);
+
+      // add time parameters if necessary
+      if (haveTimesteps) {
+        timeConfig.resize(attributeVolumes.size());
+        timeData.resize(attributeVolumes.size());
+
+        std::vector<VKLData> attributesTimeConfig;
+        std::vector<VKLData> attributesTimeData;
+
+        for (int i = 0; i < attributeVolumes.size(); i++) {
+          timeConfig[i] = attributeVolumes[i]->generateTimeConfig();
+          timeData[i]   = attributeVolumes[i]->generateTimeData();
+
+          VKLData attributeTimeConfig = vklNewData(timeConfig[i].size(),
+                                                   VKL_UCHAR,
+                                                   timeConfig[i].data(),
+                                                   dataCreationFlags,
+                                                   0);
+          attributesTimeConfig.push_back(attributeTimeConfig);
+
+          if (timeData[i].size() == 0) {
+            attributesTimeData.push_back(nullptr);
+          } else {
+            VKLData attributeTimeData = vklNewData(timeData[i].size(),
+                                                   VKL_FLOAT,
+                                                   timeData[i].data(),
+                                                   dataCreationFlags,
+                                                   0);
+            attributesTimeData.push_back(attributeTimeData);
+          }
+
+          if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+            std::vector<uint8_t>().swap(timeConfig[i]);
+            std::vector<float>().swap(timeData[i]);
+          }
+        }
+
+        VKLData timeConfig = vklNewData(
+            attributesTimeConfig.size(), VKL_DATA, attributesTimeConfig.data());
+        VKLData timeData = vklNewData(
+            attributesTimeData.size(), VKL_DATA, attributesTimeData.data());
+
+        for (const auto &d : attributesTimeConfig) {
+          vklRelease(d);
+        }
+        for (const auto &d : attributesTimeData) {
+          if (d) {
+            vklRelease(d);
+          }
+        }
+
+        vklSetData(volume, "timeConfig", timeConfig);
+        vklSetData(volume, "timeData", timeData);
+
+        vklRelease(timeConfig);
+        vklRelease(timeData);
+      }
 
       vklCommit(volume);
     }
@@ -293,6 +370,43 @@ namespace openvkl {
                                               volumes,
                                               dataCreationFlags,
                                               useAOSLayout);
+    }
+
+    inline TestingStructuredVolumeMulti *
+    generateMultiAttributeStructuredRegularVolumeMB(
+        const vec3i &dimensions,
+        const vec3f &gridOrigin,
+        const vec3f &gridSpacing,
+        VKLDataCreationFlags dataCreationFlags)
+    {
+      std::vector<std::shared_ptr<ProceduralStructuredVolumeBase>> volumes;
+
+      volumes.push_back(std::make_shared<WaveletStructuredRegularVolumeFloat>(
+          dimensions,
+          gridOrigin,
+          gridSpacing,
+          TemporalConfig(1, std::vector<float>())));
+
+      std::vector<float> timeSamples{0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
+      volumes.push_back(std::make_shared<XYZStructuredRegularVolume<float>>(
+          dimensions,
+          gridOrigin,
+          gridSpacing,
+          TemporalConfig(timeSamples.size(), timeSamples)));
+
+      volumes.push_back(std::make_shared<XYZStructuredRegularVolume<float>>(
+          dimensions,
+          gridOrigin,
+          gridSpacing,
+          TemporalConfig(3, std::vector<float>())));
+
+      return new TestingStructuredVolumeMulti("structuredRegular",
+                                              dimensions,
+                                              gridOrigin,
+                                              gridSpacing,
+                                              volumes,
+                                              dataCreationFlags,
+                                              false);
     }
 
   }  // namespace testing

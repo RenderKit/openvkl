@@ -57,10 +57,10 @@ namespace openvkl {
     void VdbSampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
                                       vfloatn<1> &samples,
                                       unsigned int attributeIndex,
-                                      float sampleTime) const
+                                      float time) const
     {
       assert(attributeIndex == 0);
-      assert(sampleTime == 0.f);
+      assert(time == 0.f);
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -72,10 +72,10 @@ namespace openvkl {
                                        const vvec3fn<W> &objectCoordinates,
                                        vfloatn<W> &samples,
                                        unsigned int attributeIndex,
-                                       float sampleTime) const
+                                       float time) const
     {
       assert(attributeIndex == 0);
-      assert(sampleTime == 0.f);
+      assert(time == 0.f);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -88,10 +88,10 @@ namespace openvkl {
                                        const vvec3fn<1> *objectCoordinates,
                                        float *samples,
                                        unsigned int attributeIndex,
-                                       float sampleTime) const
+                                       float time) const
     {
       assert(attributeIndex == 0);
-      assert(sampleTime == 0.f);
+      assert(time == 0.f);
       CALL_ISPC(VdbSampler_computeSample_stream,
                 ispcEquivalent,
                 N,
@@ -144,4 +144,3 @@ namespace openvkl {
 
   }  // namespace ispc_driver
 }  // namespace openvkl
-

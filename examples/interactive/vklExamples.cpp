@@ -49,6 +49,12 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
     }
   }
 
+  static float time = 0.f;
+  if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
+    renderer.setParam<float>("time", time);
+    changed = true;
+  }
+
   static float sigmaTScale = 1.f;
   if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
     renderer.setParam<float>("sigmaTScale", sigmaTScale);
@@ -204,6 +210,7 @@ void usage(const char *progname)
                "\t-voxelType uchar | short | ushort | float | double\n"
                "\t-valueRange <lower> <upper>\n"
                "\t-multiAttribute (structuredRegular only)\n"
+               "\t-motionBlur structured | unstructured (structuredRegular only)\n"
                "\t-file <filename>\n"
                "\t-filter nearest | trilinear (vdb and structured)\n"
                "\t-field <density> (vdb only)\n"
@@ -221,6 +228,11 @@ int main(int argc, const char **argv)
   std::string voxelTypeString("float");
   VKLDataType voxelType(VKL_FLOAT);
   bool multiAttribute(false);
+  bool motionBlurStructured(false);
+  uint8_t motionBlurStructuredNumTimesteps(6);
+  bool motionBlurUnstructured(false);
+  std::vector<float> motionBlurUnstructuredTimeSamples{
+      0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
   std::string filename;
   bool disableVSync(false);
   VKLFilter filter(VKL_FILTER_TRILINEAR);
@@ -305,6 +317,22 @@ int main(int argc, const char **argv)
       voxelType = stringToVKLDataType[voxelTypeString];
     } else if (switchArg == "-multiAttribute") {
       multiAttribute = true;
+    } else if (switchArg == "-motionBlur") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -motionBlur arguments");
+      }
+
+      std::string motionBlurType = argv[argIndex++];
+
+      if (motionBlurType == "structured") {
+        motionBlurStructured = true;
+      }
+      else if (motionBlurType == "unstructured") {
+        motionBlurUnstructured = true;
+      }
+      else {
+        throw std::runtime_error("improper -motionBlur arguments");
+      }
     } else if (switchArg == "-file") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -file arguments");
@@ -395,7 +423,23 @@ int main(int argc, const char **argv)
     }
   } else {
     if (gridType == "structuredRegular") {
+      TemporalConfig temporalConfig(1);
+
+      if (motionBlurStructured) {
+        temporalConfig = TemporalConfig(motionBlurStructuredNumTimesteps);
+      } else if (motionBlurUnstructured) {
+        temporalConfig =
+            TemporalConfig(motionBlurUnstructuredTimeSamples.size(),
+                           motionBlurUnstructuredTimeSamples);
+      }
+
       if (multiAttribute) {
+        if (temporalConfig.numTimesteps > 1) {
+          throw std::runtime_error(
+              "example viewer does not yet support multi-attribute motion blur "
+              "volumes");
+        }
+
         testingVolume = std::shared_ptr<TestingStructuredVolumeMulti>(
             generateMultiAttributeStructuredRegularVolume(
                 dimensions,
@@ -406,21 +450,21 @@ int main(int argc, const char **argv)
       } else {
         if (voxelType == VKL_UCHAR) {
           testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
-              dimensions, gridOrigin, gridSpacing);
+              dimensions, gridOrigin, gridSpacing, temporalConfig);
         } else if (voxelType == VKL_SHORT) {
           testingVolume = std::make_shared<WaveletStructuredRegularVolumeShort>(
-              dimensions, gridOrigin, gridSpacing);
+              dimensions, gridOrigin, gridSpacing, temporalConfig);
         } else if (voxelType == VKL_USHORT) {
           testingVolume =
               std::make_shared<WaveletStructuredRegularVolumeUShort>(
-                  dimensions, gridOrigin, gridSpacing);
+                  dimensions, gridOrigin, gridSpacing, temporalConfig);
         } else if (voxelType == VKL_FLOAT) {
           testingVolume = std::make_shared<WaveletStructuredRegularVolumeFloat>(
-              dimensions, gridOrigin, gridSpacing);
+              dimensions, gridOrigin, gridSpacing, temporalConfig);
         } else if (voxelType == VKL_DOUBLE) {
           testingVolume =
               std::make_shared<WaveletStructuredRegularVolumeDouble>(
-                  dimensions, gridOrigin, gridSpacing);
+                  dimensions, gridOrigin, gridSpacing, temporalConfig);
         } else {
           throw std::runtime_error(
               "cannot create procedural volume for unknown voxel type");

@@ -34,6 +34,8 @@ namespace openvkl {
 
       // Data //
 
+      float time{0.f};
+
       float sigmaTScale{0.f};
       float sigmaSScale{0.f};
       int maxNumScatters{0};

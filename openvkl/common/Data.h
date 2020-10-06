@@ -262,4 +262,17 @@ namespace openvkl {
     return r;
   }
 
+  template <typename T>
+  inline std::vector<const ispc::Data1D *> ispcs(
+      const std::vector<Ref<const DataT<T>>> &dataRefs)
+  {
+    std::vector<const ispc::Data1D *> r;
+
+    for (const auto &d : dataRefs) {
+      r.push_back(ispc(d));
+    }
+
+    return r;
+  }
+
 }  // namespace openvkl

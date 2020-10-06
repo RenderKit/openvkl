@@ -34,7 +34,8 @@ namespace openvkl {
           VKLFilter filter                       = VKL_FILTER_TRILINEAR,
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0)
-          : buffers(new Buffers),
+          : ProceduralVolume(false),
+            buffers(new Buffers),
             dimensions(dimensions),
             gridOrigin(gridOrigin),
             gridSpacing(gridSpacing),
@@ -105,7 +106,8 @@ namespace openvkl {
                     const vec3f samplePosObject =
                         transformLocalToObjectCoordinates(samplePosIndex);
 
-                    const float fieldValue = samplingFunction(samplePosObject, 0.f);
+                    const float fieldValue =
+                        samplingFunction(samplePosObject, 0.f);
 
                     float *leafValueTyped =
                         (float *)(leaf.data() + idx * byteStride);
@@ -155,19 +157,19 @@ namespace openvkl {
         return gridSpacing * localCoordinates + gridOrigin;
       }
 
-      float computeProceduralValue(
-          const vec3f &objectCoordinates) const override
+     protected:
+      float computeProceduralValueImpl(const vec3f &objectCoordinates,
+                                       float time) const override
       {
-        return samplingFunction(objectCoordinates, 0.f);
+        return samplingFunction(objectCoordinates, time);
       }
 
-      vec3f computeProceduralGradient(
+      vec3f computeProceduralGradientImpl(
           const vec3f &objectCoordinates) const override
       {
         return gradientFunction(objectCoordinates);
       }
 
-     protected:
       void generateVKLVolume() override
       {
         if (buffers) {

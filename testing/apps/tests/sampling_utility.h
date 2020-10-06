@@ -16,10 +16,10 @@ inline void test_scalar_and_vector_sampling(
     const float sampleTruth,
     const float sampleTolerance,
     const unsigned int attributeIndex = 0,
-    const float sampleTime = 0.f)
+    const float time                  = 0.f)
 {
   float scalarSampledValue = vklComputeSample(
-      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, sampleTime);
+      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
 
   // std::cout << "attr index: " << attributeIndex << std::endl;
   REQUIRE(scalarSampledValue == Approx(sampleTruth).margin(sampleTolerance));
@@ -45,7 +45,7 @@ inline void test_scalar_and_vector_sampling(
                     (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                     samples_4,
                     attributeIndex,
-                    sampleTime);
+                    time);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
   float samples_8[8]   = {0.f};
@@ -54,7 +54,7 @@ inline void test_scalar_and_vector_sampling(
                     (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                     samples_8,
                     attributeIndex,
-                    sampleTime);
+                    time);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   float samples_16[16] = {0.f};
@@ -63,7 +63,7 @@ inline void test_scalar_and_vector_sampling(
                      (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                      samples_16,
                      attributeIndex,
-                     sampleTime);
+                     time);
 
   REQUIRE(scalarSampledValue == Approx(samples_4[0]).margin(1.e-8));
   REQUIRE(scalarSampledValue == Approx(samples_8[0]).margin(1.e-8));
@@ -147,7 +147,7 @@ inline void test_scalar_and_vector_sampling_multi(
 
 inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
                                  const unsigned int attributeIndex = 0,
-                                 const float time = 0.f)
+                                 const float time                  = 0.f)
 {
   VKLVolume vklVolume   = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
@@ -185,8 +185,8 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
                         time);
 
       for (int i = 0; i < N; i++) {
-        float sampleTruth =
-            vklComputeSample(vklSampler, &objectCoordinates[i], attributeIndex, time);
+        float sampleTruth = vklComputeSample(
+            vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("sample = " << i + 1 << " / " << N);
 

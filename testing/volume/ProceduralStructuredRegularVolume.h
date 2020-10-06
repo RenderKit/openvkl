@@ -28,6 +28,7 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
+          const TemporalConfig &temporalConfig   = TemporalConfig(1),
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0);
 
@@ -52,6 +53,7 @@ namespace openvkl {
             const vec3i &dimensions,
             const vec3f &gridOrigin,
             const vec3f &gridSpacing,
+            const TemporalConfig &temporalConfig,
             VKLDataCreationFlags dataCreationFlags,
             size_t byteStride)
         : ProceduralStructuredVolume<VOXEL_TYPE,
@@ -60,6 +62,7 @@ namespace openvkl {
                                                        dimensions,
                                                        gridOrigin,
                                                        gridSpacing,
+                                                       temporalConfig,
                                                        dataCreationFlags,
                                                        byteStride)
     {

@@ -26,13 +26,15 @@ namespace openvkl {
 
       range1f getComputedValueRange() const override;
 
-      float computeProceduralValue(const vec3f &p) const override;
-      vec3f computeProceduralGradient(const vec3f &p) const override;
-
       const std::vector<vec4f> &getParticles();
 
      protected:
       void generateVKLVolume() override;
+
+      float computeProceduralValueImpl(const vec3f &p,
+                                       float time) const override;
+
+      vec3f computeProceduralGradientImpl(const vec3f &p) const override;
 
       size_t numParticles;
       bool provideWeights;
@@ -56,7 +58,8 @@ namespace openvkl {
         float radiusSupportFactor,
         float clampMaxCumulativeValue,
         bool estimateValueRanges)
-        : numParticles(numParticles),
+        : ProceduralVolume(false),
+          numParticles(numParticles),
           provideWeights(provideWeights),
           radiusSupportFactor(radiusSupportFactor),
           clampMaxCumulativeValue(clampMaxCumulativeValue),
@@ -72,58 +75,6 @@ namespace openvkl {
       }
 
       return computedValueRange;
-    }
-
-    inline float ProceduralParticleVolume::computeProceduralValue(
-        const vec3f &p) const
-    {
-      float referenceSample = 0.f;
-
-      for (size_t j = 0; j < particles.size(); j++) {
-        const vec4f &pj = particles[j];
-        const float wj  = weights[j];
-
-        // This should match whichever RBF is used in ParticleVolume.ispc
-        // Currently, we use Gaussian.
-        const vec3f center(pj.x, pj.y, pj.z);
-        const vec3f distance = p - center;
-
-        if (length(distance) > pj.w * radiusSupportFactor)
-          continue;
-
-        const float kernelValue =
-            wj * expf(-0.5f * dot(distance, distance) / (pj.w * pj.w));
-
-        referenceSample += kernelValue;
-      }
-
-      if (clampMaxCumulativeValue > 0.f) {
-        return std::min(referenceSample, clampMaxCumulativeValue);
-      } else {
-        return referenceSample;
-      }
-    }
-
-    inline vec3f ProceduralParticleVolume::computeProceduralGradient(
-        const vec3f &objectCoordinates) const
-    {
-      const vec3f gradientStep(1e-5f);
-
-      vec3f gradient;
-
-      const float sample = computeProceduralValue(objectCoordinates);
-
-      gradient.x = computeProceduralValue(objectCoordinates +
-                                          vec3f(gradientStep.x, 0.f, 0.f)) -
-                   sample;
-      gradient.y = computeProceduralValue(objectCoordinates +
-                                          vec3f(0.f, gradientStep.y, 0.f)) -
-                   sample;
-      gradient.z = computeProceduralValue(objectCoordinates +
-                                          vec3f(0.f, 0.f, gradientStep.z)) -
-                   sample;
-
-      return gradient / gradientStep;
     }
 
     inline const std::vector<vec4f> &ProceduralParticleVolume::getParticles()
@@ -237,6 +188,62 @@ namespace openvkl {
       };
 
       vklRelease(sampler);
+    }
+
+    inline float ProceduralParticleVolume::computeProceduralValueImpl(
+        const vec3f &p, float time) const
+    {
+      float referenceSample = 0.f;
+
+      for (size_t j = 0; j < particles.size(); j++) {
+        const vec4f &pj = particles[j];
+        const float wj  = weights[j];
+
+        // This should match whichever RBF is used in ParticleVolume.ispc
+        // Currently, we use Gaussian.
+        const vec3f center(pj.x, pj.y, pj.z);
+        const vec3f distance = p - center;
+
+        if (length(distance) > pj.w * radiusSupportFactor)
+          continue;
+
+        const float kernelValue =
+            wj * expf(-0.5f * dot(distance, distance) / (pj.w * pj.w));
+
+        referenceSample += kernelValue;
+      }
+
+      if (clampMaxCumulativeValue > 0.f) {
+        return std::min(referenceSample, clampMaxCumulativeValue);
+      } else {
+        return referenceSample;
+      }
+    }
+
+    inline vec3f ProceduralParticleVolume::computeProceduralGradientImpl(
+        const vec3f &objectCoordinates) const
+    {
+      const vec3f gradientStep(1e-5f);
+      const float time(0.f);
+
+      vec3f gradient;
+
+      const float sample = computeProceduralValue(objectCoordinates, time);
+
+      gradient.x =
+          computeProceduralValue(
+              objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f), time) -
+          sample;
+      gradient.y =
+          computeProceduralValue(
+              objectCoordinates + vec3f(0.f, gradientStep.y, 0.f), time) -
+          sample;
+      gradient.z =
+          computeProceduralValue(
+              objectCoordinates + vec3f(0.f, 0.f, gradientStep.z), time) -
+          sample;
+
+      return gradient / gradientStep;
     }
 
   }  // namespace testing

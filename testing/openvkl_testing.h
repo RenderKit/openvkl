@@ -13,4 +13,3 @@
 #include "volume/ProceduralParticleVolume.h"
 #include "volume/RawFileStructuredVolume.h"
 #include "volume/TestingStructuredVolumeMulti.h"
-#include "volume/TestingStructuredVolumeMB.h"

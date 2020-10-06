@@ -30,27 +30,14 @@ namespace openvkl {
 
       range1f getValueRange() const override;
 
-      VKLFilter getFilter() const {
+      VKLFilter getFilter() const
+      {
         return filter;
       }
 
-      VKLFilter getGradientFilter() const {
+      VKLFilter getGradientFilter() const
+      {
         return gradientFilter;
-      }
-
-      bool hasMotionBlurData () const {
-        return !attributesTimeConfig.empty();
-      }
-
-      bool attributeHasStructuredTimeData (unsigned int attributeID) const {
-        return  hasMotionBlurData() && 
-                attributesTimeConfig[attributeID]->size() == 1 &&
-                attributesTimeConfig[attributeID]->template as<unsigned int>()[0] > 1;
-      }
-
-      bool attributeHasUnstructuredTimeData (unsigned int attributeID) const {
-        return hasMotionBlurData() && 
-               attributesTimeData[attributeID];
       }
 
      protected:
@@ -62,12 +49,15 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
-      std::vector<Ref<const Data>>  attributesTimeConfig;
-      std::vector<Ref<const Data>>  attributesTimeData;
-      std::vector<Ref<const Data>>  attributesData;
-
+      std::vector<Ref<const Data>> attributesData;
+      std::vector<Ref<const DataT<uint8_t>>> attributesTimeConfig;
+      std::vector<Ref<const DataT<float>>> attributesTimeData;
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+
+      // processed on commit(); temporally unstructured `numTimesteps` are
+      // converted to uint64_t indices; other values are passed as is (uint8_t)
+      std::vector<Ref<const Data>> attributesTimeConfigProcessed;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -106,51 +96,74 @@ namespace openvkl {
       // motion blur data provided by user through 2 VKLData arrays
       Ref<const DataT<Data *>> timeConfig =
           this->template getParamDataT<Data *>("timeConfig", nullptr);
+
       if (timeConfig) {
         Ref<const DataT<Data *>> timeData =
             this->template getParamDataT<Data *>("timeData");
-        for (const auto &tc: *timeConfig) {
-          attributesTimeConfig.push_back(tc);
+
+        for (const auto &tc : *timeConfig) {
+          if (tc) {
+            attributesTimeConfig.push_back(&tc->as<uint8_t>());
+          } else {
+            attributesTimeConfig.push_back(nullptr);
+          }
         }
-        for (const auto &td: *timeData) {
-          attributesTimeData.push_back(td);
+
+        for (const auto &td : *timeData) {
+          if (td) {
+            attributesTimeData.push_back(&td->as<float>());
+          } else {
+            attributesTimeData.push_back(nullptr);
+          }
         }
 
         // check input sizes and types
-        if (attributesData.size () != attributesTimeConfig.size () ||
-            attributesTimeConfig.size () != attributesTimeData.size ()) {
+        if (attributesData.size() != attributesTimeConfig.size() ||
+            attributesTimeConfig.size() != attributesTimeData.size()) {
           throw std::runtime_error(
-              "mismatch in number of attributes between data and motion blur inputs");
+              "mismatch in number of attributes between data and motion blur "
+              "inputs");
         }
+
         for (int i = 0; i < attributesData.size(); i++) {
-          if (attributesTimeConfig[i]->dataType != VKL_UINT) {
-            throw std::runtime_error(
-                "incorrect time config type (attribute " +
-                std::to_string(i) +
-                ") must be unsigned int");
-          }
-          if (attributesTimeData[i] && attributesTimeData[i]->dataType != VKL_FLOAT) {
-            throw std::runtime_error(
-                "incorrect time data type (attribute " +
-                std::to_string(i) +
-                ") must be float");
-          }
           if (!attributesTimeConfig[i]) {
             throw std::runtime_error("incorrect data size (attribute " +
-                                    std::to_string(i) +
-                                    ") empty time config");
+                                     std::to_string(i) + ") empty time config");
           }
-          if (attributesTimeConfig[i]->size () > 1 && 
+
+          if (attributesTimeConfig[i]->size() > 1 &&
               (!attributesTimeData[i] ||
-              attributesTimeData[i]->size () != attributesData[i]->size())) {
+               attributesTimeData[i]->size() != attributesData[i]->size())) {
             throw std::runtime_error("incorrect data size (attribute " +
-                                    std::to_string(i) +
-                                    ") mismatched data and time sample sizes");
-          } else if (attributesTimeConfig[i]->size () == 1 &&
+                                     std::to_string(i) +
+                                     ") mismatched data and time sample sizes");
+          } else if (attributesTimeConfig[i]->size() == 1 &&
                      attributesTimeData[i]) {
-            throw std::runtime_error("incorrect data size (attribute " +
-                                    std::to_string(i) +
-                                    ") TUV indices supplied but no time samples provided");         
+            throw std::runtime_error(
+                "incorrect data size (attribute " + std::to_string(i) +
+                ") TUV indices supplied but no time samples provided");
+          }
+        }
+
+        // pre-process TUV `numTimesteps` input into per-voxel indices
+        attributesTimeConfigProcessed.clear();
+
+        for (int i = 0; i < attributesTimeConfig.size(); i++) {
+          if (attributesTimeConfig[i] && attributesTimeConfig[i]->size() > 1) {
+            DataT<uint64_t> *dp =
+                new DataT<uint64_t>(attributesTimeConfig[i]->size());
+
+            // this would be a std::exclusive_scan() in C++17
+            (*dp)[0] = 0;
+            for (size_t j = 1; j < attributesTimeConfig[i]->size(); j++) {
+              (*dp)[j] = (*dp)[j - 1] + (*attributesTimeConfig[i])[j - 1];
+            }
+
+            attributesTimeConfigProcessed.push_back(dp);
+            dp->refDec();
+          } else {
+            // not TUV; use as-is
+            attributesTimeConfigProcessed.push_back(attributesTimeConfig[i]);
           }
         }
       }
@@ -177,8 +190,8 @@ namespace openvkl {
       }
 
       filter = (VKLFilter)this->template getParam<int>("filter", filter);
-      gradientFilter = (VKLFilter)this->template getParam<int>("gradientFilter",
-                                                               filter);
+      gradientFilter =
+          (VKLFilter)this->template getParam<int>("gradientFilter", filter);
     }
 
     template <int W>
@@ -200,7 +213,7 @@ namespace openvkl {
     template <int W>
     inline range1f StructuredVolume<W>::getValueRange() const
     {
-      return valueRange;       
+      return valueRange;
     }
 
     template <int W>
@@ -223,7 +236,8 @@ namespace openvkl {
         CALL_ISPC(GridAccelerator_build, accelerator, taskIndex);
       });
 
-      CALL_ISPC(GridAccelerator_computeValueRange,    // TODO make value range for time samples
+      CALL_ISPC(GridAccelerator_computeValueRange,  // TODO make value range for
+                                                    // time samples
                 accelerator,
                 valueRange.lower,
                 valueRange.upper);

@@ -12,7 +12,7 @@ namespace openvkl {
   namespace testing {
 
     template <typename idxType,
-              float samplingFunction(const vec3f &, float time = 0.f),
+              float samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralUnstructuredVolume : public TestingVolume,
                                           public ProceduralVolume
@@ -34,12 +34,6 @@ namespace openvkl {
       vec3i getDimensions() const;
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
-
-      float computeProceduralValue(
-          const vec3f &objectCoordinates) const override;
-
-      vec3f computeProceduralGradient(
-          const vec3f &objectCoordinates) const override;
 
      private:
       range1f computedValueRange = range1f(rkcommon::math::empty);
@@ -63,6 +57,12 @@ namespace openvkl {
       // data may need to be retained for shared data buffers (`cell.data` or
       // `vertex.data`)
       std::vector<unsigned char> values;
+
+      float computeProceduralValueImpl(const vec3f &objectCoordinates,
+                                       float time) const override;
+
+      vec3f computeProceduralGradientImpl(
+          const vec3f &objectCoordinates) const override;
 
       int vtxPerPrimitive(VKLUnstructuredCellType type) const;
 
@@ -93,7 +93,8 @@ namespace openvkl {
                                      bool hexIterative,
                                      VKLDataCreationFlags dataCreationFlags,
                                      size_t byteStride)
-        : dimensions(dimensions),
+        : ProceduralVolume(false),
+          dimensions(dimensions),
           gridOrigin(gridOrigin),
           gridSpacing(gridSpacing),
           primType(primType),
@@ -158,9 +159,10 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &)>
     inline float
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
-        computeProceduralValue(const vec3f &objectCoordinates) const
+        computeProceduralValueImpl(const vec3f &objectCoordinates,
+                                   float time) const
     {
-      return samplingFunction(objectCoordinates, 0.f);
+      return samplingFunction(objectCoordinates, time);
     }
 
     template <typename idxType,
@@ -168,7 +170,7 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &)>
     inline vec3f
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
-        computeProceduralGradient(const vec3f &objectCoordinates) const
+        computeProceduralGradientImpl(const vec3f &objectCoordinates) const
     {
       return gradientFunction(objectCoordinates);
     }

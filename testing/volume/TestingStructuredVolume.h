@@ -12,6 +12,22 @@
 namespace openvkl {
   namespace testing {
 
+    struct TemporalConfig
+    {
+      TemporalConfig(uint8_t numTimesteps,
+                     std::vector<float> timeSamples = std::vector<float>())
+          : numTimesteps(numTimesteps), timeSamples(timeSamples)
+      {
+        if (!timeSamples.empty() && numTimesteps != timeSamples.size()) {
+          throw std::runtime_error(
+              "timeSamples size not equal to numTimesteps");
+        }
+      }
+
+      uint8_t numTimesteps;
+      std::vector<float> timeSamples;
+    };
+
     struct TestingStructuredVolume : public TestingVolume
     {
       TestingStructuredVolume(
@@ -20,6 +36,7 @@ namespace openvkl {
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
           VKLDataType voxelType,
+          const TemporalConfig &temporalConfig   = TemporalConfig(1),
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0);
 
@@ -30,21 +47,17 @@ namespace openvkl {
       vec3f getGridOrigin() const;
       vec3f getGridSpacing() const;
       VKLDataType getVoxelType() const;
+      TemporalConfig getTemporalConfig() const;
 
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
-      virtual std::vector<unsigned char> generateVoxels(
-          size_t numTimeSamples = 1,
-          const std::vector<float>& timeSamples = std::vector<float>()) = 0;
-      virtual std::vector<float> generateTimeData(
-          size_t numTimeSamples = 1,
-          const std::vector<float>& timeSamples = std::vector<float>()) = 0;
-      virtual std::vector<unsigned int> generateTimeConfig(
-          size_t numTimeSamples = 1,
-          const std::vector<float>& timeSamples = std::vector<float>()) = 0;
+      virtual std::vector<unsigned char> generateVoxels() = 0;
+
+      std::vector<uint8_t> generateTimeConfig();
+      std::vector<float> generateTimeData();
 
      protected:
-      void generateVKLVolume() override;
+      void generateVKLVolume() override final;
 
       range1f computedValueRange = range1f(rkcommon::math::empty);
 
@@ -53,11 +66,14 @@ namespace openvkl {
       vec3f gridOrigin;
       vec3f gridSpacing;
       VKLDataType voxelType;
+      TemporalConfig temporalConfig;
       VKLDataCreationFlags dataCreationFlags;
       size_t byteStride;
 
-      // voxel data may need to be retained for shared data buffers
+      // data may need to be retained for shared data buffers
       std::vector<unsigned char> voxels;
+      std::vector<uint8_t> timeConfig;
+      std::vector<float> timeData;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -68,6 +84,7 @@ namespace openvkl {
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
         VKLDataType voxelType,
+        const TemporalConfig &temporalConfig,
         VKLDataCreationFlags dataCreationFlags,
         size_t _byteStride)
         : gridType(gridType),
@@ -75,6 +92,7 @@ namespace openvkl {
           gridOrigin(gridOrigin),
           gridSpacing(gridSpacing),
           voxelType(voxelType),
+          temporalConfig(temporalConfig),
           dataCreationFlags(dataCreationFlags),
           byteStride(_byteStride)
     {
@@ -122,11 +140,57 @@ namespace openvkl {
       return voxelType;
     }
 
+    inline TemporalConfig TestingStructuredVolume::getTemporalConfig() const
+    {
+      return temporalConfig;
+    }
+
+    inline std::vector<uint8_t> TestingStructuredVolume::generateTimeConfig()
+    {
+      if (temporalConfig.timeSamples.empty()) {
+        return std::vector<uint8_t>(1, temporalConfig.numTimesteps);
+      }
+
+      std::vector<uint8_t> timeConfig(this->dimensions.long_product(),
+                                      temporalConfig.numTimesteps);
+
+      return timeConfig;
+    }
+
+    inline std::vector<float> TestingStructuredVolume::generateTimeData()
+    {
+      if (temporalConfig.numTimesteps == 1 ||
+          temporalConfig.timeSamples.empty()) {
+        return std::vector<float>();
+      }
+
+      auto numValues = this->dimensions.long_product();
+      std::vector<float> timeData(numValues * temporalConfig.numTimesteps);
+
+      rkcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
+        for (size_t y = 0; y < this->dimensions.y; y++) {
+          for (size_t x = 0; x < this->dimensions.x; x++) {
+            for (size_t t = 0; t < temporalConfig.timeSamples.size(); t++) {
+              size_t index =
+                  temporalConfig.numTimesteps * size_t(z) * this->dimensions.y *
+                      this->dimensions.x +
+                  temporalConfig.numTimesteps * y * this->dimensions.x +
+                  temporalConfig.numTimesteps * x + t;
+              timeData[index] = temporalConfig.timeSamples[t];
+            }
+          }
+        }
+      });
+
+      return timeData;
+    }
+
     inline void TestingStructuredVolume::generateVKLVolume()
     {
       voxels = generateVoxels();
 
-      if (voxels.size() != dimensions.long_product() * byteStride) {
+      if (voxels.size() != dimensions.long_product() *
+                               temporalConfig.numTimesteps * byteStride) {
         throw std::runtime_error("generated voxel data has incorrect size");
       }
 
@@ -139,13 +203,55 @@ namespace openvkl {
       vklSetVec3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
-      VKLData data = vklNewData(dimensions.long_product(),
-                                voxelType,
-                                voxels.data(),
-                                dataCreationFlags,
-                                byteStride);
+      VKLData data =
+          vklNewData(dimensions.long_product() * temporalConfig.numTimesteps,
+                     voxelType,
+                     voxels.data(),
+                     dataCreationFlags,
+                     byteStride);
       vklSetData(volume, "data", data);
       vklRelease(data);
+
+      if (temporalConfig.numTimesteps > 1) {
+        timeConfig = generateTimeConfig();
+        timeData   = generateTimeData();
+
+        VKLData attributeTimeConfig = vklNewData(timeConfig.size(),
+                                                 VKL_UCHAR,
+                                                 timeConfig.data(),
+                                                 dataCreationFlags,
+                                                 0);
+
+        VKLData attributeTimeData = nullptr;
+
+        if (timeData.size() > 0) {
+          attributeTimeData = vklNewData(timeData.size(),
+                                         VKL_FLOAT,
+                                         timeData.data(),
+                                         dataCreationFlags,
+                                         0);
+        }
+
+        if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+          std::vector<uint8_t>().swap(timeConfig);
+          std::vector<float>().swap(timeData);
+        }
+
+        VKLData timeConfigData = vklNewData(1, VKL_DATA, &attributeTimeConfig);
+        VKLData timeDataData   = vklNewData(1, VKL_DATA, &attributeTimeData);
+
+        vklRelease(attributeTimeConfig);
+
+        if (attributeTimeData) {
+          vklRelease(attributeTimeData);
+        }
+
+        vklSetData(volume, "timeConfig", timeConfigData);
+        vklSetData(volume, "timeData", timeDataData);
+
+        vklRelease(timeConfigData);
+        vklRelease(timeDataData);
+      }
 
       vklCommit(volume);
 

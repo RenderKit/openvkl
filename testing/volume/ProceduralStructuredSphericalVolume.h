@@ -11,13 +11,14 @@ using namespace rkcommon;
 namespace openvkl {
   namespace testing {
 
-    template <
-        typename VOXEL_TYPE = VoidType /* should be void (we have static_assert
-                                to prevent such instantiation), but isn't due
-                                to Windows Visual Studio compiler bug */
-        ,
-        VOXEL_TYPE samplingFunction(const vec3f &, float) = samplingNotImplemented,
-        vec3f gradientFunction(const vec3f &)      = gradientNotImplemented>
+    template <typename VOXEL_TYPE =
+                  VoidType /* should be void (we have static_assert
+                    to prevent such instantiation), but isn't due
+                    to Windows Visual Studio compiler bug */
+              ,
+              VOXEL_TYPE samplingFunction(const vec3f &, float) =
+                  samplingNotImplemented,
+              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
     struct ProceduralStructuredSphericalVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,

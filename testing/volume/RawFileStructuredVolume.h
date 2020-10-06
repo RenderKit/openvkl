@@ -22,19 +22,7 @@ namespace openvkl {
                               const vec3f &gridSpacing,
                               VKLDataType voxelType);
 
-      std::vector<unsigned char> generateVoxels(
-          size_t numTimeSamples = 1,
-          const std::vector<float>& timeSamples = std::vector<float>()) override;
-      std::vector<float> generateTimeData(
-          size_t numTimeSamples = 1,
-          const std::vector<float>& timeSamples = std::vector<float>()) override {
-        return std::vector<float>();
-      };
-      std::vector<unsigned int> generateTimeConfig(
-          size_t numTimeSamples = 1,
-          const std::vector<float>& timeSamples = std::vector<float>()) override {
-        return std::vector<unsigned int>(1,1);
-      };
+      std::vector<unsigned char> generateVoxels() override;
 
      private:
       std::string filename;
@@ -55,9 +43,7 @@ namespace openvkl {
     {
     }
 
-    inline std::vector<unsigned char> RawFileStructuredVolume::generateVoxels(
-        size_t,
-        const std::vector<float>&)
+    inline std::vector<unsigned char> RawFileStructuredVolume::generateVoxels()
     {
       auto numValues = this->dimensions.long_product();
       std::vector<unsigned char> voxels(numValues *

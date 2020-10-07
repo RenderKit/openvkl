@@ -40,12 +40,14 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data,
   inline univary T get_##T##_compact(const uniform Data1D data,            \
                                      const univary uint32 index32)         \
   {                                                                        \
+    assert(index32 >= 0 && index32 < data.numItems);                       \
     return ((const T *uniform)data.addr)[index32];                         \
   }                                                                        \
                                                                            \
   inline univary T get_##T##_strided(const uniform Data1D data,            \
                                      const univary uint32 index32)         \
   {                                                                        \
+    assert(index32 >= 0 && index32 < data.numItems);                       \
     return *((const uniform T *)(data.addr + index32 * data.byteStride));  \
   }                                                                        \
                                                                            \
@@ -53,6 +55,8 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data,
                                      const uniform uint64 baseIndex64,     \
                                      const univary uint32 offsetIndex32)   \
   {                                                                        \
+    assert(baseIndex64 + offsetIndex32 >= 0 &&                             \
+           baseIndex64 + offsetIndex32 < data.numItems);                   \
     const T *uniform base =                                                \
         (const T *uniform)(data.addr + baseIndex64 * data.byteStride);     \
     return base[offsetIndex32];                                            \
@@ -62,6 +66,8 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data,
                                      const uniform uint64 baseIndex64,     \
                                      const univary uint32 offsetIndex32)   \
   {                                                                        \
+    assert(baseIndex64 + offsetIndex32 >= 0 &&                             \
+           baseIndex64 + offsetIndex32 < data.numItems);                   \
     const uint8 *uniform base =                                            \
         (const uint8 *uniform)(data.addr + baseIndex64 * data.byteStride); \
     return *((const uniform T *)(base + offsetIndex32 * data.byteStride)); \
@@ -70,6 +76,7 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data,
   inline univary T get_##T(const uniform Data1D data,                      \
                            const univary uint64 index64)                   \
   {                                                                        \
+    assert(index64 >= 0 && index64 < data.numItems);                       \
     const univary uint64 address = index64 * data.byteStride;              \
     const univary uint32 hi28    = address >> 28;                          \
     const univary uint32 lo28    = address & ((1 << 28) - 1);              \
@@ -154,5 +161,6 @@ template_get_wrapper(vec4f);
 inline varying float get_float_strided(const uniform Data1D *varying data,
                                        const varying uint32 index32)
 {
+  assert(index32 >= 0 && index32 < data->numItems);
   return *((const uniform float *)(data->addr + index32 * data->byteStride));
 }

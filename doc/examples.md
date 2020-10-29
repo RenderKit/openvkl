@@ -121,6 +121,9 @@ void demoScalarAPI(VKLVolume volume)
           interval.valueRange.upper,
           interval.nominalDeltaT);
     }
+#if defined(_MSC_VER)
+    _freea(buffer);
+#endif
   }
 
   // hit iteration
@@ -147,6 +150,9 @@ void demoScalarAPI(VKLVolume volume)
              hit.sample,
              hit.epsilon);
     }
+#if defined(_MSC_VER)
+    _freea(buffer);
+#endif
   }
 
   vklRelease(selector);

@@ -1394,7 +1394,7 @@ Users should understand the implications of `alloca`. In particular,
 `buffer` also becomes invalid at the end of the scope. As one consequence, it
 cannot be returned from a function.
 On Windows, `_malloca` is a safer option that performs additional error
-checking.
+checking, but requires the use of `_freea`.
 
 In ISPC, variable length or `alloca` do not exist. Applications may instead rely
 on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and `VKL_MAX_HIT_ITERATOR_SIZE` macros:

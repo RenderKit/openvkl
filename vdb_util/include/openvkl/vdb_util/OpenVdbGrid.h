@@ -277,13 +277,13 @@ namespace openvkl {
         const auto &ri2o = indexToObject->getAffineMap()->getMat4();
         const auto *i2o  = ri2o.asPointer();
         buffers->setIndexToObject(i2o[0],
-                                  i2o[4],
-                                  i2o[8],
                                   i2o[1],
-                                  i2o[5],
-                                  i2o[9],
                                   i2o[2],
+                                  i2o[4],
+                                  i2o[5],
                                   i2o[6],
+                                  i2o[8],
+                                  i2o[9],
                                   i2o[10],
                                   i2o[12],
                                   i2o[13],

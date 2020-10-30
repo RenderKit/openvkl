@@ -14,7 +14,7 @@ VKL_API void vklComputeSample4(const int *uniform valid,
                                    objectCoordinates,
                                varying float *uniform samples,
                                uniform unsigned int attributeIndex,
-                               uniform float time);
+                               const varying float *uniform time);
 
 VKL_API void vklComputeSample8(const int *uniform valid,
                                VKLSampler sampler,
@@ -22,7 +22,7 @@ VKL_API void vklComputeSample8(const int *uniform valid,
                                    objectCoordinates,
                                varying float *uniform samples,
                                uniform unsigned int attributeIndex,
-                               uniform float time);
+                               const varying float *uniform time);
 
 VKL_API void vklComputeSample16(const int *uniform valid,
                                 VKLSampler sampler,
@@ -30,13 +30,13 @@ VKL_API void vklComputeSample16(const int *uniform valid,
                                     objectCoordinates,
                                 varying float *uniform samples,
                                 uniform unsigned int attributeIndex,
-                                uniform float time);
+                                const varying float *uniform time);
 
 VKL_FORCEINLINE varying float vklComputeSampleV(
     VKLSampler sampler,
     const varying vkl_vec3f *uniform objectCoordinates,
     uniform unsigned int attributeIndex = 0,
-    uniform float time = 0.f)
+    const varying float *uniform time = NULL)
 {
   varying bool mask = __mask;
   unmasked

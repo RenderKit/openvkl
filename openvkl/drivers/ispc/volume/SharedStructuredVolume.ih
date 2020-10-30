@@ -24,14 +24,14 @@ typedef varying float (*uniform ComputeSampleInnerVaryingFunc)(
     const varying vec3f &clampedLocalCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex,
-    const uniform float time);
+    const varying float &times);
 
 typedef uniform float (*uniform ComputeSampleInnerUniformFunc)(
     const SharedStructuredVolume *uniform self,
     const uniform vec3f &clampedLocalCoordinates,
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex,
-    const uniform float time);
+    const uniform float& times);
 
 typedef varying vec3f (*uniform ComputeGradientVaryingFunc)(
     const SharedStructuredVolume *uniform _self,

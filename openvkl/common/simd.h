@@ -26,6 +26,42 @@ namespace openvkl {
     return W < 4 ? 4 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
+    template <int W>
+  struct alignas(simd_alignment_for_width(W)) vintn
+  {
+    int v[W];
+
+    vintn<W>() = default;
+
+    int &operator[](std::size_t index)
+    {
+      return v[index];
+    }
+
+    const int &operator[](std::size_t index) const
+    {
+      return v[index];
+    }
+
+    operator int *()
+    {
+      return v;
+    }
+
+    operator const int *() const
+    {
+      return v;
+    }
+
+    vintn<W>(const vintn<W> &o)
+    {
+      for (int i = 0; i < W; i++) {
+        v[i] = o[i];
+      }
+    }
+  };
+
+
   template <int W>
   struct alignas(simd_alignment_for_width(W)) vfloatn
   {
@@ -65,41 +101,47 @@ namespace openvkl {
         v[i] = o[i];
       }
     }
-  };
 
-  template <int W>
-  struct alignas(simd_alignment_for_width(W)) vintn
-  {
-    int v[W];
-
-    vintn<W>() = default;
-
-    int &operator[](std::size_t index)
+    template <int OW>
+    explicit operator vfloatn<OW>() const
     {
-      return v[index];
+      static_assert(W <= OW, "can only up-convert vfloatn types");
+
+      vfloatn<OW> newVec;
+
+      for (int i = 0; i < W; i++) {
+        newVec.v[i] = v[i];
+      }
+
+      return newVec;
     }
 
-    const int &operator[](std::size_t index) const
+    template <int OW>
+    vfloatn<OW> extract_pack(int packIndex) const
     {
-      return v[index];
+      vfloatn<OW> newVec;
+
+      for (int i = packIndex * OW; i < (packIndex + 1) * OW && i < W; i++) {
+        newVec.v[i - packIndex * OW] = v[i];
+      }
+
+      return newVec;
     }
 
-    operator int *()
-    {
-      return v;
-    }
-
-    operator const int *() const
-    {
-      return v;
-    }
-
-    vintn<W>(const vintn<W> &o)
+    void fill_inactive_lanes(const vintn<W> &mask)
     {
       for (int i = 0; i < W; i++) {
-        v[i] = o[i];
+        if (mask[i]) {
+          for (int k = 0; k < W; k++) {
+            if (!mask[k]) {
+              v[k] = v[i];
+            }
+          }
+          break;
+        }
       }
     }
+
   };
 
   template <int W>

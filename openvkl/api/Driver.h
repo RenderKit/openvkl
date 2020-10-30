@@ -289,7 +289,7 @@ namespace openvkl {
                                     const vvec3fn<WIDTH> &objectCoordinates, \
                                     float *samples,                          \
                                     unsigned int attributeIndex,             \
-                                    float time) = 0;
+                                    const vfloatn<WIDTH> &times) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -303,7 +303,7 @@ namespace openvkl {
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples,
                                   unsigned int attributeIndex,
-                                  float time) = 0;
+                                  const vfloatn<1> *times) = 0;
 
 #define __define_computeSampleMN(WIDTH)                                       \
   virtual void computeSampleM##WIDTH(const int *valid,                        \
@@ -312,7 +312,7 @@ namespace openvkl {
                                      float *samples,                          \
                                      unsigned int M,                          \
                                      const unsigned int *attributeIndices,    \
-                                     const float time) = 0;
+                                     const vfloatn<WIDTH> &times) = 0;
 
       __define_computeSampleMN(1);
       __define_computeSampleMN(4);
@@ -327,7 +327,7 @@ namespace openvkl {
                                    float *samples,
                                    unsigned int M,
                                    const unsigned int *attributeIndices,
-                                   const float time) = 0;
+                                   const vfloatn<1> *times) = 0;
 
 #define __define_computeGradientN(WIDTH)                                       \
   virtual void computeGradient##WIDTH(const int *valid,                        \

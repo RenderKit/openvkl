@@ -151,11 +151,11 @@ namespace openvkl {
         for (int i = 0; i < attributesTimeConfig.size(); i++) {
           if (attributesTimeConfig[i] && attributesTimeConfig[i]->size() > 1) {
             DataT<uint64_t> *dp =
-                new DataT<uint64_t>(attributesTimeConfig[i]->size());
+                new DataT<uint64_t>(attributesTimeConfig[i]->size()+1);
 
             // this would be a std::exclusive_scan() in C++17
             (*dp)[0] = 0;
-            for (size_t j = 1; j < attributesTimeConfig[i]->size(); j++) {
+            for (size_t j = 1; j <= attributesTimeConfig[i]->size(); j++) {
               (*dp)[j] = (*dp)[j - 1] + (*attributesTimeConfig[i])[j - 1];
             }
 

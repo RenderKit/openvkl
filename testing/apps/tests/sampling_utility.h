@@ -40,30 +40,33 @@ inline void test_scalar_and_vector_sampling(
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
   float samples_4[4]   = {0.f};
+  float times_4[4]     = {time};
   vklComputeSample4(valid.data(),
                     sampler,
                     (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                     samples_4,
                     attributeIndex,
-                    time);
+                    times_4);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
   float samples_8[8]   = {0.f};
+  float times_8[8]     = {time};
   vklComputeSample8(valid.data(),
                     sampler,
                     (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                     samples_8,
                     attributeIndex,
-                    time);
+                    times_8);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   float samples_16[16] = {0.f};
+  float times_16[16]   = {time};
   vklComputeSample16(valid.data(),
                      sampler,
                      (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                      samples_16,
                      attributeIndex,
-                     time);
+                     times_16);
 
   REQUIRE(scalarSampledValue == Approx(samples_4[0]).margin(1.e-8));
   REQUIRE(scalarSampledValue == Approx(samples_8[0]).margin(1.e-8));
@@ -87,7 +90,7 @@ inline void test_scalar_and_vector_sampling_multi(
                     scalarSampledValues.data(),
                     attributeIndices.size(),
                     attributeIndices.data(),
-                    time);
+                    (const float *)&time);
 
   for (unsigned int a = 0; a < attributeIndices.size(); a++) {
     REQUIRE(scalarSampledValues[a] ==
@@ -110,33 +113,36 @@ inline void test_scalar_and_vector_sampling_multi(
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
   std::vector<float> samples_4(4 * attributeIndices.size(), 0.f);
+  std::vector<float> times_4(4, time);
   vklComputeSampleM4(valid.data(),
                      sampler,
                      (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                      samples_4.data(),
                      attributeIndices.size(),
                      attributeIndices.data(),
-                     time);
+                     times_4.data());
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
   std::vector<float> samples_8(8 * attributeIndices.size(), 0.f);
+  std::vector<float> times_8(8, time);
   vklComputeSampleM8(valid.data(),
                      sampler,
                      (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                      samples_8.data(),
                      attributeIndices.size(),
                      attributeIndices.data(),
-                     time);
+                     times_8.data());
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   std::vector<float> samples_16(16 * attributeIndices.size(), 0.f);
+  std::vector<float> times_16(16, time);
   vklComputeSampleM16(valid.data(),
                       sampler,
                       (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                       samples_16.data(),
                       attributeIndices.size(),
                       attributeIndices.data(),
-                      time);
+                      times_16.data());
 
   for (unsigned int a = 0; a < attributeIndices.size(); a++) {
     REQUIRE(scalarSampledValues[a] == Approx(samples_4[a * 4 + 0]).margin(1.e-8));
@@ -171,6 +177,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
 
     for (int N = 1; N < maxN; N++) {
       std::vector<vkl_vec3f> objectCoordinates(N);
+      std::vector<float> times(N, time);
       std::vector<float> samples(N);
 
       for (auto &oc : objectCoordinates) {
@@ -182,7 +189,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
                         objectCoordinates.data(),
                         samples.data(),
                         attributeIndex,
-                        time);
+                        times.data());
 
       for (int i = 0; i < N; i++) {
         float sampleTruth = vklComputeSample(
@@ -228,6 +235,7 @@ inline void test_stream_sampling_multi(
 
     for (int N = 1; N < maxN; N++) {
       std::vector<vkl_vec3f> objectCoordinates(N);
+      std::vector<float> times(N, time);
       std::vector<float> samples(N * attributeIndices.size());
 
       for (auto &oc : objectCoordinates) {
@@ -240,12 +248,12 @@ inline void test_stream_sampling_multi(
                          samples.data(),
                          attributeIndices.size(),
                          attributeIndices.data(),
-                         time);
+                         times.data());
 
       for (unsigned int a = 0; a < attributeIndices.size(); a++) {
         for (int i = 0; i < N; i++) {
           float sampleTruth = vklComputeSample(
-              vklSampler, &objectCoordinates[i], attributeIndices[a], time);
+              vklSampler, &objectCoordinates[i], attributeIndices[a], times[i]);
 
           INFO("sample = " << i + 1 << " / " << N
                            << ", attributeIndex = " << a);

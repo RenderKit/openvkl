@@ -227,7 +227,7 @@ namespace openvkl {
       if (estimateValueRanges) {
         // restrict to first attribute index
         const unsigned int attributeIndex = 0;
-        const float time                  = 0.f;
+        const vfloatn<1> time             = {0.f};
 
         tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
           LeafNode *leafNode         = leafNodes[leafNodeIndex];
@@ -251,8 +251,10 @@ namespace openvkl {
           const int samplesPerDimension = 10;
 
           std::vector<vvec3fn<1>> objectCoordinates;
+          std::vector<vfloatn<1>> times;
           objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
                                     samplesPerDimension);
+          times.reserve(samplesPerDimension);
 
           multidim_index_sequence<3> mis{vec3i(samplesPerDimension)};
 
@@ -260,6 +262,7 @@ namespace openvkl {
             objectCoordinates.push_back(
                 leafBounds.lower + vec3f(ijk) / float(samplesPerDimension - 1) *
                                        leafBounds.size());
+            times.push_back (0.f);
           }
 
           std::vector<float> samples(objectCoordinates.size());
@@ -267,7 +270,7 @@ namespace openvkl {
                                   objectCoordinates.data(),
                                   samples.data(),
                                   attributeIndex,
-                                  time);
+                                  times.data());
 
           auto minmax = std::minmax_element(samples.begin(), samples.end());
           computedValueRange.extend(range1f(*minmax.first, *minmax.second));

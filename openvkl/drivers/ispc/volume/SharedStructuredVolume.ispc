@@ -236,7 +236,7 @@ inline uniform bool attributeHasUnstructuredTimeData(
       const uniform uint32 attributeIndex,                                     \
       const uniform uint64 fixed0Ofs,                                          \
       const univary uint##addr timeOfs,                                        \
-      const uniform float time)                                                \
+      const univary float &time)                                               \
   {                                                                            \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];     \
     const uniform Data1D timesData = self->attributesTimeData[attributeIndex]; \
@@ -425,7 +425,7 @@ template_clampedLocalCoordinates(uniform);
       const univary vec3f &objectCoordinates,                          \
       const uniform VKLFilter filter,                                  \
       const uniform uint32 attributeIndex,                             \
-      const uniform float time)                                        \
+      const univary float &time)                                       \
   {                                                                    \
     univary vec3f clampedLocalCoordinates;                             \
                                                                        \
@@ -490,7 +490,7 @@ inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
       const univary vec3f &clampedLocalCoordinates,                          \
       const uniform VKLFilter filter,                                        \
       const uniform uint32 attributeIndex,                                   \
-      const uniform float _time)                                             \
+      const univary float &_time)                                            \
   {                                                                          \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];   \
                                                                              \
@@ -566,7 +566,7 @@ template_sample_inner_32(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                         \
       const uniform VKLFilter filter,                                       \
       const uniform uint32 attributeIndex,                                  \
-      const uniform float time)                                             \
+      const univary float &time)                                            \
   {                                                                         \
     /* lower corner of the box straddling the voxels to be interpolated. */ \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);     \
@@ -652,7 +652,7 @@ template_sample_inner_TUV_32(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                           \
       const uniform VKLFilter filter,                                         \
       const uniform uint32 attributeIndex,                                    \
-      const uniform float time)                                               \
+      const univary float &time)                                              \
   {                                                                           \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];    \
     const uniform Data1D timesConfig =                                        \
@@ -669,8 +669,8 @@ template_sample_inner_TUV_32(double, uniform);
                                       voxelIndex_0.y * voxelOfs_dy +          \
                                       voxelIndex_0.z * voxelOfs_dz;           \
                                                                               \
-    const uniform uint32 localVoxelOfs = time * (numTimeSamples - 1);         \
-    const uniform float interpolant =                                         \
+    const univary uint32 localVoxelOfs = time * (numTimeSamples - 1);         \
+    const univary float interpolant =                                         \
         time * (float)(numTimeSamples - 1) - (float)localVoxelOfs;            \
                                                                               \
     const univary uint32 voxelOfs = voxelOfs_0 + localVoxelOfs;               \
@@ -768,7 +768,7 @@ template_sample_inner_MB_32(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                          \
       const uniform VKLFilter filter,                                        \
       const uniform uint32 attributeIndex,                                   \
-      const uniform float _time)                                             \
+      const univary float &_time)                                            \
   {                                                                          \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];   \
                                                                              \
@@ -856,7 +856,7 @@ template_sample_inner_64_32(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                           \
       const uniform VKLFilter filter,                                         \
       const uniform uint32 attributeIndex,                                    \
-      const uniform float time)                                               \
+      const univary float &time)                                              \
   {                                                                           \
     /* lower corner of the box straddling the voxels to be interpolated. */   \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);       \
@@ -947,7 +947,7 @@ template_sample_inner_TUV_64_32(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                           \
       const uniform VKLFilter filter,                                         \
       const uniform uint32 attributeIndex,                                    \
-      const uniform float time)                                               \
+      const univary float &time)                                              \
   {                                                                           \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];    \
     const uniform Data1D timesConfig =                                        \
@@ -969,8 +969,8 @@ template_sample_inner_TUV_64_32(double, uniform);
       const univary uint32 voxelOfs_0 =                                       \
           voxelIndex_0.x * voxelOfs_dx + voxelIndex_0.y * voxelOfs_dy;        \
                                                                               \
-      const uniform uint32 localVoxelOfs = time * (numTimeSamples - 1);       \
-      const uniform float interpolant =                                       \
+      const univary uint32 localVoxelOfs = time * (numTimeSamples - 1);       \
+      const univary float interpolant =                                       \
           time * (float)(numTimeSamples - 1) - (float)localVoxelOfs;          \
                                                                               \
       const univary uint32 voxelOfs = voxelOfs_0 + localVoxelOfs;             \
@@ -1073,7 +1073,7 @@ template_sample_inner_MB_64_32(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                         \
       const uniform VKLFilter filter,                                       \
       const uniform uint32 attributeIndex,                                  \
-      const uniform float _time)                                            \
+      const univary float &_time)                                           \
   {                                                                         \
     /* lower and upper corners of the box straddling the voxels to be       \
      interpolated. */                                                       \
@@ -1184,7 +1184,7 @@ template_sample_inner_64(uniform);
       const univary vec3f &clampedLocalCoordinates,                         \
       const uniform VKLFilter filter,                                       \
       const uniform uint32 attributeIndex,                                  \
-      const uniform float time)                                             \
+      const univary float &time)                                            \
   {                                                                         \
     /* lower corner of the box straddling the voxels to be interpolated. */ \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);     \
@@ -1272,7 +1272,7 @@ template_sample_inner_TUV_64(double, uniform);
       const univary vec3f &clampedLocalCoordinates,                           \
       const uniform VKLFilter filter,                                         \
       const uniform uint32 attributeIndex,                                    \
-      const uniform float time)                                               \
+      const univary float &time)                                              \
   {                                                                           \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];    \
     const uniform Data1D timesConfig =                                        \
@@ -1290,8 +1290,8 @@ template_sample_inner_TUV_64(double, uniform);
                                       voxelIndex_0.y * voxelOfs_dy +          \
                                       voxelIndex_0.z * voxelOfs_dz;           \
                                                                               \
-    const uniform uint32 localVoxelOfs = time * (numTimeSamples - 1);         \
-    const uniform float interpolant =                                         \
+    const univary uint32 localVoxelOfs = time * (numTimeSamples - 1);         \
+    const univary float interpolant =                                         \
         time * (float)(numTimeSamples - 1) - (float)localVoxelOfs;            \
                                                                               \
     const univary uint64 voxelOfs = voxelOfs_0 + localVoxelOfs;               \
@@ -1403,30 +1403,31 @@ inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
     gradientStep.z *= -1.f;
 
   vec3f gradient;
+  float time = 0.f;
 
   float sample = SharedStructuredVolume_computeSample_varying(
-      self, objectCoordinates, filter, attributeIndex, 0.f);
+      self, objectCoordinates, filter, attributeIndex, time);
 
   gradient.x = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
                    filter,
                    attributeIndex,
-                   0.f) -
+                   time) -
                sample;
   gradient.y = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
                    filter,
                    attributeIndex,
-                   0.f) -
+                   time) -
                sample;
   gradient.z = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
                    filter,
                    attributeIndex,
-                   0.f) -
+                   time) -
                sample;
 
   return gradient / gradientStep;
@@ -1446,30 +1447,31 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
   const vec3f gradientExtent = objectCoordinates + gradientStep;
 
   vec3f gradient;
+  float time = 0.f;
 
   float sample = SharedStructuredVolume_computeSample_varying(
-      self, objectCoordinates, filter, attributeIndex, 0.f);
+      self, objectCoordinates, filter, attributeIndex, time);
 
   gradient.x = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
                    filter,
                    attributeIndex,
-                   0.f) -
+                   time) -
                sample;
   gradient.y = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
                    filter,
                    attributeIndex,
-                   0.f) -
+                   time) -
                sample;
   gradient.z = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
                    VKL_FILTER_TRILINEAR,
                    attributeIndex,
-                   0.f) -
+                   time) -
                sample;
 
   if (isnan(gradient.x)) {
@@ -1480,7 +1482,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
                      objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
                      filter,
                      attributeIndex,
-                     0.f) -
+                     time) -
                  sample;
   }
 
@@ -1492,7 +1494,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
                      objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
                      filter,
                      attributeIndex,
-                     0.f) -
+                     time) -
                  sample;
   }
 
@@ -1504,7 +1506,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
                      objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
                      filter,
                      attributeIndex,
-                     0.f) -
+                     time) -
                  sample;
   }
 
@@ -1579,23 +1581,25 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
 varying float computeSample_varying_0_iterator_wrapper(
     const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
 {
+  varying float time = 0.f;
   return SharedStructuredVolume_computeSample_varying(
       (const SharedStructuredVolume *uniform)sampler->volume,
       objectCoordinates,
       sampler->filter,
       0,
-      0.f);
+      time);
 }
 
 uniform float computeSample_uniform_0_iterator_wrapper(
     const Sampler *uniform sampler, const uniform vec3f &objectCoordinates)
 {
+  uniform float time = 0.f;
   return SharedStructuredVolume_computeSample_uniform(
       (const SharedStructuredVolume *uniform)sampler->volume,
       objectCoordinates,
       sampler->filter,
       0,
-      0.f);
+      time);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1616,7 +1620,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
                           const uniform uint32 attributeIndex,
-                          const uniform float time,
+                          const void *uniform _time,
                           void *uniform _samples)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -1627,10 +1631,12 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    const varying float *uniform time =
+        (const varying float *uniform)_time;
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples = SharedStructuredVolume_computeSample_varying(
-        self, *objectCoordinates, sampler->filter, attributeIndex, time);
+        self, *objectCoordinates, sampler->filter, attributeIndex, *time);
   }
 }
 
@@ -1638,7 +1644,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_uniform_export,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
                           const uniform uint32 attributeIndex,
-                          const uniform float time,
+                          const void *uniform _time,
                           void *uniform _sample)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -1647,10 +1653,12 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_uniform_export,
 
   const vec3f *uniform objectCoordinates =
       (const vec3f *uniform)_objectCoordinates;
+  const float *uniform time =
+      (const float *uniform)_time;
   float *uniform sample = (float *uniform)_sample;
 
   *sample = SharedStructuredVolume_computeSample_uniform(
-      self, *objectCoordinates, sampler->filter, attributeIndex, time);
+      self, *objectCoordinates, sampler->filter, attributeIndex, *time);
 }
 
 export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
@@ -1658,7 +1666,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
                           const uniform uint32 N,
                           const vec3f *uniform objectCoordinates,
                           const uniform uint32 attributeIndex,
-                          const uniform float time,
+                          const float *uniform time,
                           float *uniform samples)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -1667,9 +1675,10 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
+    varying float t = time[i];
 
     samples[i] = SharedStructuredVolume_computeSample_varying(
-        self, oc, sampler->filter, attributeIndex, time);
+        self, oc, sampler->filter, attributeIndex, t);
   }
 }
 
@@ -1717,7 +1726,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
                           const void *uniform _objectCoordinates,
                           const uniform uint32 M,
                           const uint32 *uniform attributeIndices,
-                          const uniform float time,
+                          const void *uniform _time,
                           float *uniform samples)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -1727,6 +1736,8 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    const varying float *uniform time =
+        (const varying float *uniform)_time;
 
     vec3f clampedLocalCoordinates;
     bool inBounds;
@@ -1741,7 +1752,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
                 clampedLocalCoordinates,
                 sampler->filter,
                 attributeIndices[i],
-                time);
+                *time);
 
         samples[i * VKL_TARGET_WIDTH + programIndex] = attributeSamples;
       }
@@ -1758,7 +1769,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
                           const void *uniform _objectCoordinates,
                           const uniform uint32 M,
                           const uint32 *uniform attributeIndices,
-                          const uniform float time,
+                          const void *uniform _time,
                           float *uniform samples)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -1767,6 +1778,8 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
 
   const vec3f *uniform objectCoordinates =
       (const vec3f *uniform)_objectCoordinates;
+  const float *uniform time =
+      (const float *uniform)_time;
 
   uniform vec3f clampedLocalCoordinates;
   uniform bool inBounds;
@@ -1780,7 +1793,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
           clampedLocalCoordinates,
           sampler->filter,
           attributeIndices[i],
-          time);
+          *time);
     }
   } else {
     for (uniform uint32 i = 0; i < M; i++) {
@@ -1795,7 +1808,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
                           const vec3f *uniform objectCoordinates,
                           const uniform uint32 M,
                           const uint32 *uniform attributeIndices,
-                          const uniform float time,
+                          const float *uniform time,
                           float *uniform samples)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -1804,6 +1817,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f objectCoordinatesV = objectCoordinates[i];
+    varying float timeV = time[i];
 
     vec3f clampedLocalCoordinates;
     bool inBounds;
@@ -1818,7 +1832,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
                 clampedLocalCoordinates,
                 sampler->filter,
                 attributeIndices[a],
-                time);
+                timeV);
 
         samples[i * M + a] = attributeSamples;
       }

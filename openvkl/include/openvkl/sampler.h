@@ -43,7 +43,7 @@ void vklComputeSample4(const int *valid,
                        const vkl_vvec3f4 *objectCoordinates,
                        float *samples,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                       float time VKL_DEFAULT_VAL(= 0));
+                       const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSample8(const int *valid,
@@ -51,7 +51,7 @@ void vklComputeSample8(const int *valid,
                        const vkl_vvec3f8 *objectCoordinates,
                        float *samples,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                       float time VKL_DEFAULT_VAL(= 0));
+                       const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSample16(const int *valid,
@@ -59,7 +59,7 @@ void vklComputeSample16(const int *valid,
                         const vkl_vvec3f16 *objectCoordinates,
                         float *samples,
                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                        float time VKL_DEFAULT_VAL(= 0));
+                        const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSampleN(VKLSampler sampler,
@@ -67,7 +67,7 @@ void vklComputeSampleN(VKLSampler sampler,
                        const vkl_vec3f *objectCoordinates,
                        float *samples,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                       float time VKL_DEFAULT_VAL(= 0));
+                       const float *times VKL_DEFAULT_VAL(= nullptr));
 
 // multi-attribute sampling
 
@@ -77,7 +77,7 @@ void vklComputeSampleM(VKLSampler sampler,
                        float *samples,
                        unsigned int M,
                        const unsigned int *attributeIndices,
-                       float time VKL_DEFAULT_VAL(= 0));
+                       const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSampleM4(const int *valid,
@@ -86,7 +86,7 @@ void vklComputeSampleM4(const int *valid,
                         float *samples,
                         unsigned int M,
                         const unsigned int *attributeIndices,
-                        float time VKL_DEFAULT_VAL(= 0));
+                        const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSampleM8(const int *valid,
@@ -95,7 +95,7 @@ void vklComputeSampleM8(const int *valid,
                         float *samples,
                         unsigned int M,
                         const unsigned int *attributeIndices,
-                        float time VKL_DEFAULT_VAL(= 0));
+                        const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSampleM16(const int *valid,
@@ -104,7 +104,7 @@ void vklComputeSampleM16(const int *valid,
                          float *samples,
                          unsigned int M,
                          const unsigned int *attributeIndices,
-                         float time VKL_DEFAULT_VAL(= 0));
+                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeSampleMN(VKLSampler sampler,
@@ -113,7 +113,7 @@ void vklComputeSampleMN(VKLSampler sampler,
                         float *samples,
                         unsigned int M,
                         const unsigned int *attributeIndices,
-                        float time VKL_DEFAULT_VAL(= 0));
+                        const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 vkl_vec3f vklComputeGradient(VKLSampler sampler,

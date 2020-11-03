@@ -13,16 +13,24 @@
 #include "VdbSampleInner_uniform_@VKL_VDB_LEVEL@.ih"
 #include "VdbSampleInner_varying_@VKL_VDB_LEVEL@.ih"
 
+#if (@VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS)
+#error "VdbSamplerDispatchInner.ih generated for too many levels."
+#endif
+
 /*
- * Dispatch to the sampler implementation based on whether all lanes are looking 
- * at the same voxel.  
+ * Dispatch to the correct implementation of sampleInner based on whether all 
+ * lanes are looking at the same voxel.  
+ *
+ * Returns the voxel containing domainOffset.
+ *
  * The first version is still uniform, but will detect if it must split up 
  * into varying traversal.
  */
-inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
+inline void VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
   const VdbSampler *uniform      sampler,
   const varying vec3ui          &domainOffset,
-  uniform uint64                 nodeIndex)
+  uniform uint64                 nodeIndex,
+  varying uint64                &voxel)
 {
   assert(nodeIndex < sampler->grid->levels[@VKL_VDB_LEVEL@].numNodes);
   const varying uint64 voxelIdx = 
@@ -36,17 +44,19 @@ inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
   uniform uint64 uvidx;
   if (reduce_equal(voxelIdx, &uvidx))
   {
-    return VdbSampler_sampleInner_uniform_@VKL_VDB_LEVEL@(
+    VdbSampler_sampleInner_uniform_@VKL_VDB_LEVEL@(
       sampler,
       domainOffset, 
-      nodeVoxelOffset + uvidx);
+      nodeVoxelOffset + uvidx,
+      voxel);
   }
   else
   {
-    return VdbSampler_sampleInner_varying_@VKL_VDB_LEVEL@(
+    VdbSampler_sampleInner_varying_@VKL_VDB_LEVEL@(
       sampler,
       domainOffset, 
-      nodeVoxelOffset + voxelIdx);
+      nodeVoxelOffset + voxelIdx,
+      voxel);
   }
 }
 
@@ -55,10 +65,11 @@ inline varying float VdbSampler_dispatchInner_uniform_@VKL_VDB_LEVEL@(
  * In this case, there is no chance to get back to coherent traversal, so we might
  * as well skip the test above.
  */
-inline varying float VdbSampler_dispatchInner_varying_@VKL_VDB_LEVEL@(
+inline void VdbSampler_dispatchInner_varying_@VKL_VDB_LEVEL@(
   const VdbSampler *uniform      sampler,
   const varying vec3ui          &domainOffset,
-  varying uint64                 nodeIndex)
+  varying uint64                 nodeIndex,
+  varying uint64                &voxel)
 {
   assert(nodeIndex < sampler->grid->levels[@VKL_VDB_LEVEL@].numNodes);
   const varying uint64 voxelIdx = 
@@ -68,9 +79,10 @@ inline varying float VdbSampler_dispatchInner_varying_@VKL_VDB_LEVEL@(
   const varying uint64 nodeVoxelOffset = nodeIndex * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@;
   assert(voxelIdx < VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@);
 
-  return VdbSampler_sampleInner_varying_@VKL_VDB_LEVEL@(
+  VdbSampler_sampleInner_varying_@VKL_VDB_LEVEL@(
     sampler, 
     domainOffset, 
-    nodeVoxelOffset + voxelIdx);
+    nodeVoxelOffset + voxelIdx,
+    voxel);
 }
 

@@ -33,7 +33,65 @@ inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
     return 0.f;
   }
 
-  return VdbSampler_dispatchInner_uniform_0(sampler, domainOffset, 0);
+  uint64 voxel = vklVdbVoxelMakeEmpty();
+  VdbSampler_dispatchInner_uniform_0(sampler, domainOffset, 0, voxel);
+
+  float sample = 0.f;
+
+  /* TODO: with mixed formats, we will need to detect if all
+      leaves of the same type have the same ptr. */
+
+  uniform uint64 uniformVoxel;
+  const uniform bool isUniform = reduce_equal(voxel, &uniformVoxel);
+  const uniform bool isCompact = sampler->grid->allLeavesCompact;
+
+  if (isUniform) {
+    if (isCompact) {
+      if (vklVdbVoxelIsTile(uniformVoxel)) {
+        sample = vklVdbVoxelTileGet(uniformVoxel);
+      } else if (vklVdbVoxelIsLeafPtr(uniformVoxel)) {
+        const void *uniform leafPtr = vklVdbVoxelLeafGetPtr(uniformVoxel);
+        assert(leafPtr);
+        assert(vklVdbVoxelLeafGetFormat(uniformVoxel) == VKL_FORMAT_CONSTANT_ZYX);
+        sample = VdbSampler_sampleConstantFloatLeaf(
+            ((const uniform float *uniform)leafPtr), domainOffset);
+      }
+    } else /* isCompact */ {
+      if (vklVdbVoxelIsTile(uniformVoxel)) {
+        sample = vklVdbVoxelTileGet(uniformVoxel);
+      } else if (vklVdbVoxelIsLeafPtr(uniformVoxel)) {
+        const void *uniform leafPtr = vklVdbVoxelLeafGetPtr(uniformVoxel);
+        assert(leafPtr);
+        assert(vklVdbVoxelLeafGetFormat(uniformVoxel) == VKL_FORMAT_CONSTANT_ZYX);
+        sample = VdbSampler_sampleConstantFloatLeaf(
+            ((const uniform Data1D *uniform)leafPtr), domainOffset);
+      }
+    }
+  } else /* isUniform */ {
+    if (isCompact) {
+      if (vklVdbVoxelIsTile(voxel)) {
+        sample = vklVdbVoxelTileGet(voxel);
+      } else if (vklVdbVoxelIsLeafPtr(voxel)) {
+        const void *leafPtr = vklVdbVoxelLeafGetPtr(voxel);
+        assert(leafPtr);
+        assert(vklVdbVoxelLeafGetFormat(voxel) == VKL_FORMAT_CONSTANT_ZYX);
+        sample = VdbSampler_sampleConstantFloatLeaf(
+            ((const uniform float *varying)leafPtr), domainOffset);
+      }
+    } else /* isCompact */ {
+      if (vklVdbVoxelIsTile(voxel)) {
+        sample = vklVdbVoxelTileGet(voxel);
+      } else if (vklVdbVoxelIsLeafPtr(voxel)) {
+        const void *leafPtr = vklVdbVoxelLeafGetPtr(voxel);
+        assert(leafPtr);
+        assert(vklVdbVoxelLeafGetFormat(voxel) == VKL_FORMAT_CONSTANT_ZYX);
+        sample = VdbSampler_sampleConstantFloatLeaf(
+            ((const uniform Data1D *varying)leafPtr), domainOffset);
+      }
+    }
+  }
+
+  return sample;
 }
 
 // ---------------------------------------------------------------------------

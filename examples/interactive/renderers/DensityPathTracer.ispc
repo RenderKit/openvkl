@@ -12,6 +12,7 @@ struct DensityPathTracer
   float sigmaSScale;
   int maxNumScatters;
   float ambientLightIntensity;
+  bool hasBlur;
 };
 
 inline vec3f cartesian(const float phi,
@@ -47,6 +48,7 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
 
   while (true) {
     vec2f randomNumbers = RandomTEA__getFloats(rng);
+    vec2f randomNumbers2 = RandomTEA__getFloats(rng);
 
     t = t + -logf(1.f - randomNumbers.x) / sigmaMax;
 
@@ -56,7 +58,7 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    const float st = self->time;
+    const float st = self->hasBlur ? randomNumbers2.x * self->time : self->time;
     sample        = vklComputeSampleV(scene->sampler,
                                (varying vkl_vec3f *)&c,
                                scene->attributeIndex,
@@ -167,6 +169,7 @@ export void *uniform DensityPathTracer_create()
 }
 
 export void DensityPathTracer_set(void *uniform _self,
+                                  const uniform bool hasBlur,
                                   const uniform float time,
                                   const uniform float sigmaTScale,
                                   const uniform float sigmaSScale,
@@ -175,6 +178,7 @@ export void DensityPathTracer_set(void *uniform _self,
 {
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
 
+  self->hasBlur                = hasBlur;
   self->time                  = time;
   self->sigmaTScale           = sigmaTScale;
   self->sigmaSScale           = sigmaSScale;

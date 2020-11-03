@@ -41,6 +41,8 @@ namespace openvkl {
       int maxNumScatters{0};
 
       float ambientLightIntensity{0.f};
+
+      bool hasBlur{false};
     };
 
   }  // namespace examples

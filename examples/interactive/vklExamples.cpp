@@ -55,6 +55,12 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
     changed = true;
   }
 
+  static bool hasBlur = false;
+  if (ImGui::Checkbox("hasBlur", &hasBlur)) {
+    renderer.setParam<bool>("hasBlur", hasBlur);
+    changed = true;
+  }
+
   static float sigmaTScale = 1.f;
   if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
     renderer.setParam<float>("sigmaTScale", sigmaTScale);

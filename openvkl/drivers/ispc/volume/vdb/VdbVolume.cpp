@@ -519,6 +519,10 @@ namespace openvkl {
         }
 
         if (format == VKL_FORMAT_CONSTANT_ZYX &&
+            (level + 1) < VKL_VDB_NUM_LEVELS)
+          runtimeError("leaf nodes are only supported on the lowest level.");
+
+        if (format == VKL_FORMAT_CONSTANT_ZYX &&
             size < vklVdbLevelNumVoxels(level))
           runtimeError("data array too small for constant node");
 

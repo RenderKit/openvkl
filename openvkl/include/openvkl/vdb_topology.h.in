@@ -42,6 +42,8 @@
 #define VKL_VDB_TOTAL_LOG_RES_@VKL_VDB_NEXT_LEVEL@ 0
 #define VKL_VDB_RES_@VKL_VDB_NEXT_LEVEL@           1
 
+#define VKL_VDB_LEAF_LEVEL @VKL_VDB_LEVEL@
+
 #define __vkl_vdb_iterate_levels_@VKL_VDB_NEXT_LEVEL@(Macro, ...)
 
 #endif // @VKL_VDB_NEXT_LEVEL@ < VKL_VDB_NUM_LEVELS
@@ -132,6 +134,16 @@
     __vkl_vdb_domain_offset_to_voxel_uniform_@VKL_VDB_LEVEL@(offy),                 \
     __vkl_vdb_domain_offset_to_voxel_uniform_@VKL_VDB_LEVEL@(offz))
 
+#if !(@VKL_VDB_NEXT_LEVEL@ < @VKL_VDB_NUM_LEVELS@)
+
+#define __vkl_vdb_domain_offset_to_linear_uniform_leaf(offx, offy, offz)            \
+  __vkl_vdb_3d_to_linear_uniform_@VKL_VDB_LEVEL@(                                   \
+    __vkl_vdb_domain_offset_to_voxel_uniform_@VKL_VDB_LEVEL@(offx),                 \
+    __vkl_vdb_domain_offset_to_voxel_uniform_@VKL_VDB_LEVEL@(offy),                 \
+    __vkl_vdb_domain_offset_to_voxel_uniform_@VKL_VDB_LEVEL@(offz))
+
+#endif
+
 #if defined(ISPC)
 
 #define __vkl_vdb_domain_offset_to_linear_varying_@VKL_VDB_LEVEL@(offx, offy, offz) \
@@ -139,6 +151,16 @@
     __vkl_vdb_domain_offset_to_voxel_varying_@VKL_VDB_LEVEL@(offx),                 \
     __vkl_vdb_domain_offset_to_voxel_varying_@VKL_VDB_LEVEL@(offy),                 \
     __vkl_vdb_domain_offset_to_voxel_varying_@VKL_VDB_LEVEL@(offz))
+
+#if !(@VKL_VDB_NEXT_LEVEL@ < @VKL_VDB_NUM_LEVELS@)
+
+#define __vkl_vdb_domain_offset_to_linear_varying_leaf(offx, offy, offz)            \
+  __vkl_vdb_3d_to_linear_varying_@VKL_VDB_LEVEL@(                                   \
+    __vkl_vdb_domain_offset_to_voxel_varying_@VKL_VDB_LEVEL@(offx),                 \
+    __vkl_vdb_domain_offset_to_voxel_varying_@VKL_VDB_LEVEL@(offy),                 \
+    __vkl_vdb_domain_offset_to_voxel_varying_@VKL_VDB_LEVEL@(offz))
+
+#endif
 
 #endif
 

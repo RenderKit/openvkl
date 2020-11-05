@@ -726,21 +726,20 @@ following parameters:
                                                          matrix. The last 3 values are the
                                                          translation of the grid origin.
 
-  uint32[]      node.level                               For each input node, the level on
-                                                         which this node exists. Levels are
-                                                         counted from the root level (0) down.
-                                                         Input nodes may be on levels
-                                                         [1, `VKL_VDB_NUM_LEVELS-1`].
-
-  vec3i[]       node.origin                              For each input node, the node origin
-                                                         index.
-
   uint32[]      node.format                              For each input node, the data format.
                                                          Currently supported are
                                                          `VKL_FORMAT_TILE` for tiles,
                                                          and `VKL_FORMAT_CONSTANT_ZYX` for
-                                                         nodes that are dense regular grids,
-                                                         but temporally constant.
+                                                         nodes that are dense regular grids.
+
+  uint32[]      node.level                               For each input node, the level on
+                                                         which this node exists. Tiles may exist
+                                                         on levels [1, `VKL_VDB_NUM_LEVELS-1`],
+                                                         all other nodes may only exist on level
+                                                         `VKL_VDB_NUM_LEVELS-1`.
+
+  vec3i[]       node.origin                              For each input node, the node origin
+                                                         index.
 
   VKLData[]     node.data                                Node data. Nodes with format
                                                          `VKL_FORMAT_TILE` are expected to

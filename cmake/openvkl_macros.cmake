@@ -232,10 +232,6 @@ function(openvkl_vdb_generate_topology)
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/include/${PROJECT_NAME}/vdb_topology.h.in
       include/${PROJECT_NAME}/vdb/topology${VKL_VDB_POSTFIX}.h
     )
-    configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleConstantLeaf.ih.in
-      include/${PROJECT_NAME}_vdb/VdbSampleConstantLeaf_${VKL_VDB_LEVEL}.ih
-    )
 
     configure_file(
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSamplerDispatchInner.ih.in

@@ -4,6 +4,7 @@
 #include <openvkl/vdb.h>
 #include "../common/Data.ih"
 #include "VdbLeafAccessObserver.ih"
+#include "VdbSampleConstantLeaf.ih"
 #include "VdbSampler.ih"
 #include "VdbVolume.ih"
 #include "common/export_util.h"

@@ -10,8 +10,6 @@
 //       template using CMake.
 // ---------------------------------------------------------------------------
 
-#include "openvkl_vdb/VdbSampleConstantLeaf_@VKL_VDB_NEXT_LEVEL@.ih"
-
 #if (@VKL_VDB_NEXT_LEVEL@+1) < VKL_VDB_NUM_LEVELS
   #include "VdbSamplerDispatchInner_@VKL_VDB_NEXT_LEVEL@.ih"
 #endif
@@ -61,11 +59,11 @@ inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
         leaves of the same type have the same ptr. */
 
     if (sampler->grid->allLeavesCompact) {
-      sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
+      sample = VdbSampler_sampleConstantFloatLeaf(
         ((const uniform float *univary)leafPtr), domainOffset);
     }
     else {
-      sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
+      sample = VdbSampler_sampleConstantFloatLeaf(
         ((const uniform Data1D *univary)leafPtr), domainOffset);
     }
   }

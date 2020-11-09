@@ -55,9 +55,9 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
     changed = true;
   }
 
-  static bool hasBlur = false;
-  if (ImGui::Checkbox("hasBlur", &hasBlur)) {
-    renderer.setParam<bool>("hasBlur", hasBlur);
+  static bool motionBlur = false;
+  if (ImGui::Checkbox("motion blur", &motionBlur)) {
+    renderer.setParam<bool>("motionBlur", motionBlur);
     changed = true;
   }
 
@@ -204,24 +204,25 @@ bool addIntervalIteratorDebugUI(GLFWVKLWindow &window)
 
 void usage(const char *progname)
 {
-  std::cerr << "usage: " << progname << "\n"
-            << "\t-renderer density_pathtracer | hit_iterator |"
-               " ray_march_iterator | interval_iterator_debug\n"
-               "\t-disable-vsync\n"
-               "\t-gridType structuredRegular | structuredSpherical | "
-               "unstructured | amr | vdb | particle\n"
-               "\t-gridOrigin <x> <y> <z>\n"
-               "\t-gridSpacing <x> <y> <z>\n"
-               "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
-               "\t-voxelType uchar | short | ushort | float | double\n"
-               "\t-valueRange <lower> <upper>\n"
-               "\t-multiAttribute (structuredRegular only)\n"
-               "\t-motionBlur structured | unstructured (structuredRegular only)\n"
-               "\t-file <filename>\n"
-               "\t-filter nearest | trilinear (vdb and structured)\n"
-               "\t-field <density> (vdb only)\n"
-               "\t-numParticles <N> (particle only)\n"
-            << std::endl;
+  std::cerr
+      << "usage: " << progname << "\n"
+      << "\t-renderer density_pathtracer | hit_iterator |"
+         " ray_march_iterator | interval_iterator_debug\n"
+         "\t-disable-vsync\n"
+         "\t-gridType structuredRegular | structuredSpherical | "
+         "unstructured | amr | vdb | particle\n"
+         "\t-gridOrigin <x> <y> <z>\n"
+         "\t-gridSpacing <x> <y> <z>\n"
+         "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
+         "\t-voxelType uchar | short | ushort | float | double\n"
+         "\t-valueRange <lower> <upper>\n"
+         "\t-multiAttribute (structuredRegular only)\n"
+         "\t-motionBlur structured | unstructured (structuredRegular only)\n"
+         "\t-file <filename>\n"
+         "\t-filter nearest | trilinear (vdb and structured)\n"
+         "\t-field <density> (vdb only)\n"
+         "\t-numParticles <N> (particle only)\n"
+      << std::endl;
 }
 
 int main(int argc, const char **argv)
@@ -332,11 +333,9 @@ int main(int argc, const char **argv)
 
       if (motionBlurType == "structured") {
         motionBlurStructured = true;
-      }
-      else if (motionBlurType == "unstructured") {
+      } else if (motionBlurType == "unstructured") {
         motionBlurUnstructured = true;
-      }
-      else {
+      } else {
         throw std::runtime_error("improper -motionBlur arguments");
       }
     } else if (switchArg == "-file") {
@@ -429,7 +428,7 @@ int main(int argc, const char **argv)
     }
   } else {
     if (gridType == "structuredRegular") {
-      TemporalConfig temporalConfig(1);
+      TemporalConfig temporalConfig;
 
       if (motionBlurStructured) {
         temporalConfig = TemporalConfig(motionBlurStructuredNumTimesteps);
@@ -440,19 +439,14 @@ int main(int argc, const char **argv)
       }
 
       if (multiAttribute) {
-        if (temporalConfig.numTimesteps > 1) {
-          throw std::runtime_error(
-              "example viewer does not yet support multi-attribute motion blur "
-              "volumes");
-        }
-
         testingVolume = std::shared_ptr<TestingStructuredVolumeMulti>(
             generateMultiAttributeStructuredRegularVolume(
                 dimensions,
                 gridOrigin,
                 gridSpacing,
+                temporalConfig,
                 VKL_DATA_SHARED_BUFFER,
-                true));
+                false));
       } else {
         if (voxelType == VKL_UCHAR) {
           testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(

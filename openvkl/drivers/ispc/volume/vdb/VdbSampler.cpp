@@ -59,8 +59,8 @@ namespace openvkl {
                                       unsigned int attributeIndex,
                                       const vfloatn<1> &time) const
     {
-      assert(attributeIndex == 0);
-      assert(time[0] == 0.f);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -74,10 +74,8 @@ namespace openvkl {
                                        unsigned int attributeIndex,
                                        const vfloatn<W> &time) const
     {
-      assert(attributeIndex == 0);
-      for (auto i=0; i<W; ++i) {
-        assert(time[i] == 0.f);
-      }
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -90,10 +88,10 @@ namespace openvkl {
                                        const vvec3fn<1> *objectCoordinates,
                                        float *samples,
                                        unsigned int attributeIndex,
-                                       const vfloatn<1> *time) const
+                                       const float *times) const
     {
-      assert(attributeIndex == 0);
-      assert(*time[0] == 0.f);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeSample_stream,
                 ispcEquivalent,
                 N,
@@ -107,7 +105,7 @@ namespace openvkl {
                                          vvec3fn<W> &gradients,
                                          unsigned int attributeIndex) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(VdbSampler_computeGradient,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -121,7 +119,7 @@ namespace openvkl {
                                          vvec3fn<1> *gradients,
                                          unsigned int attributeIndex) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
       CALL_ISPC(VdbSampler_computeGradient_stream,
                 ispcEquivalent,
                 N,

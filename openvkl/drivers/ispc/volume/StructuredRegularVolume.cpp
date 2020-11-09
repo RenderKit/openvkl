@@ -23,17 +23,14 @@ namespace openvkl {
 
       std::vector<const ispc::Data1D *> ispcAttributesData =
           ispcs(this->attributesData);
-      std::vector<const ispc::Data1D *> ispcAttributesTimeData =
-          ispcs(this->attributesTimeData);
-      std::vector<const ispc::Data1D *> ispcAttributesTimeConfigProcessed =
-          ispcs(this->attributesTimeConfigProcessed);
 
       bool success = CALL_ISPC(SharedStructuredVolume_set,
                                this->ispcEquivalent,
                                ispcAttributesData.size(),
                                ispcAttributesData.data(),
-                               ispcAttributesTimeData.data(),
-                               ispcAttributesTimeConfigProcessed.data(),
+                               this->temporallyStructuredNumTimesteps,
+                               ispc(this->temporallyUnstructuredIndices),
+                               ispc(this->temporallyUnstructuredTimes),
                                (const ispc::vec3i &)this->dimensions,
                                ispc::structured_regular,
                                (const ispc::vec3f &)this->gridOrigin,

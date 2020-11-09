@@ -14,17 +14,105 @@ namespace openvkl {
 
     struct TemporalConfig
     {
-      TemporalConfig(uint8_t numTimesteps,
+      TemporalConfig(size_t numTimesteps            = 1,
                      std::vector<float> timeSamples = std::vector<float>())
           : numTimesteps(numTimesteps), timeSamples(timeSamples)
       {
+        if (numTimesteps < 1) {
+          throw std::runtime_error("numTimesteps must be >= 1");
+        }
+
         if (!timeSamples.empty() && numTimesteps != timeSamples.size()) {
           throw std::runtime_error(
-              "timeSamples size not equal to numTimesteps");
+              "timeSamples provided with incorrect length");
         }
       }
 
-      uint8_t numTimesteps;
+      bool hasStructuredTime() const
+      {
+        return numTimesteps > 1 && timeSamples.empty();
+      }
+
+      bool hasUnstructuredTime() const
+      {
+        return numTimesteps > 1 && numTimesteps == timeSamples.size();
+      }
+
+      bool hasTime() const
+      {
+        return hasStructuredTime() || hasUnstructuredTime();
+      }
+
+      int getStructuredNumTimesteps() const
+      {
+        return hasStructuredTime() ? numTimesteps : 0;
+      }
+
+      VKLData generateUnstructuredIndicesData(size_t numVoxels) const
+      {
+        if (hasUnstructuredTime()) {
+          if (numVoxels * numTimesteps <
+              size_t(std::numeric_limits<uint32_t>::max())) {
+            std::vector<uint32_t> indices(numVoxels + 1);
+
+            // this would be a std::exclusive_scan() in C++17
+            indices[0] = 0;
+            for (size_t j = 1; j < indices.size(); j++) {
+              indices[j] = indices[j - 1] + numTimesteps;
+            }
+
+            assert(indices.back() == numVoxels * numTimesteps);
+
+            return vklNewData(indices.size(), VKL_UINT, indices.data());
+          } else {
+            std::vector<uint64_t> indices(numVoxels + 1);
+
+            indices[0] = 0;
+            for (size_t j = 1; j < indices.size(); j++) {
+              indices[j] = indices[j - 1] + numTimesteps;
+            }
+
+            assert(indices.back() == numVoxels * numTimesteps);
+
+            return vklNewData(indices.size(), VKL_ULONG, indices.data());
+          }
+
+        } else {
+          return nullptr;
+        }
+      }
+
+      VKLData generateUnstructuredTimesData(size_t numVoxels) const
+      {
+        if (hasUnstructuredTime()) {
+          std::vector<float> times(numVoxels * numTimesteps);
+
+          rkcommon::tasking::parallel_for(numVoxels, [&](size_t i) {
+            for (size_t t = 0; t < timeSamples.size(); t++) {
+              size_t index = numTimesteps * i + t;
+              times[index] = timeSamples[t];
+            }
+          });
+
+          return vklNewData(times.size(), VKL_FLOAT, times.data());
+        }
+
+        else {
+          return nullptr;
+        }
+      }
+
+      bool operator==(const TemporalConfig &other) const
+      {
+        return numTimesteps == other.numTimesteps &&
+               timeSamples == other.timeSamples;
+      }
+
+      // 1 time step indicates temporally constant
+      size_t numTimesteps;
+
+      // for temporally unstructured, we currently assume the same time samples
+      // for every voxel
       std::vector<float> timeSamples;
     };
 
@@ -36,7 +124,7 @@ namespace openvkl {
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
           VKLDataType voxelType,
-          const TemporalConfig &temporalConfig   = TemporalConfig(1),
+          const TemporalConfig &temporalConfig   = TemporalConfig(),
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0);
 
@@ -52,9 +140,6 @@ namespace openvkl {
       // allow external access to underlying voxel data (e.g. for conversion to
       // other volume formats / types)
       virtual std::vector<unsigned char> generateVoxels() = 0;
-
-      std::vector<uint8_t> generateTimeConfig();
-      std::vector<float> generateTimeData();
 
      protected:
       void generateVKLVolume() override final;
@@ -72,8 +157,6 @@ namespace openvkl {
 
       // data may need to be retained for shared data buffers
       std::vector<unsigned char> voxels;
-      std::vector<uint8_t> timeConfig;
-      std::vector<float> timeData;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -145,46 +228,6 @@ namespace openvkl {
       return temporalConfig;
     }
 
-    inline std::vector<uint8_t> TestingStructuredVolume::generateTimeConfig()
-    {
-      if (temporalConfig.timeSamples.empty()) {
-        return std::vector<uint8_t>(1, temporalConfig.numTimesteps);
-      }
-
-      std::vector<uint8_t> timeConfig(this->dimensions.long_product(),
-                                      temporalConfig.numTimesteps);
-
-      return timeConfig;
-    }
-
-    inline std::vector<float> TestingStructuredVolume::generateTimeData()
-    {
-      if (temporalConfig.numTimesteps == 1 ||
-          temporalConfig.timeSamples.empty()) {
-        return std::vector<float>();
-      }
-
-      auto numValues = this->dimensions.long_product();
-      std::vector<float> timeData(numValues * temporalConfig.numTimesteps);
-
-      rkcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
-        for (size_t y = 0; y < this->dimensions.y; y++) {
-          for (size_t x = 0; x < this->dimensions.x; x++) {
-            for (size_t t = 0; t < temporalConfig.timeSamples.size(); t++) {
-              size_t index =
-                  temporalConfig.numTimesteps * size_t(z) * this->dimensions.y *
-                      this->dimensions.x +
-                  temporalConfig.numTimesteps * y * this->dimensions.x +
-                  temporalConfig.numTimesteps * x + t;
-              timeData[index] = temporalConfig.timeSamples[t];
-            }
-          }
-        }
-      });
-
-      return timeData;
-    }
-
     inline void TestingStructuredVolume::generateVKLVolume()
     {
       voxels = generateVoxels();
@@ -212,51 +255,28 @@ namespace openvkl {
       vklSetData(volume, "data", data);
       vklRelease(data);
 
-      if (temporalConfig.numTimesteps > 1) {
-        timeConfig = generateTimeConfig();
-        timeData   = generateTimeData();
+      if (temporalConfig.hasStructuredTime()) {
+        vklSetInt(volume,
+                  "temporallyStructuredNumTimesteps",
+                  temporalConfig.getStructuredNumTimesteps());
+      } else if (temporalConfig.hasUnstructuredTime()) {
+        VKLData indicesData = temporalConfig.generateUnstructuredIndicesData(
+            dimensions.long_product());
+        vklSetData(volume, "temporallyUnstructuredIndices", indicesData);
+        vklRelease(indicesData);
 
-        VKLData attributeTimeConfig = vklNewData(timeConfig.size(),
-                                                 VKL_UCHAR,
-                                                 timeConfig.data(),
-                                                 dataCreationFlags,
-                                                 0);
-
-        VKLData attributeTimeData = nullptr;
-
-        if (timeData.size() > 0) {
-          attributeTimeData = vklNewData(timeData.size(),
-                                         VKL_FLOAT,
-                                         timeData.data(),
-                                         dataCreationFlags,
-                                         0);
-        }
-
-        if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
-          std::vector<uint8_t>().swap(timeConfig);
-          std::vector<float>().swap(timeData);
-        }
-
-        VKLData timeConfigData = vklNewData(1, VKL_DATA, &attributeTimeConfig);
-        VKLData timeDataData   = vklNewData(1, VKL_DATA, &attributeTimeData);
-
-        vklRelease(attributeTimeConfig);
-
-        if (attributeTimeData) {
-          vklRelease(attributeTimeData);
-        }
-
-        vklSetData(volume, "timeConfig", timeConfigData);
-        vklSetData(volume, "timeData", timeDataData);
-
-        vklRelease(timeConfigData);
-        vklRelease(timeDataData);
+        VKLData timesData = temporalConfig.generateUnstructuredTimesData(
+            dimensions.long_product());
+        vklSetData(volume, "temporallyUnstructuredTimes", timesData);
+        vklRelease(timesData);
       }
 
       vklCommit(volume);
 
       computedValueRange = computeValueRange(
-          voxelType, voxels.data(), dimensions.long_product());
+          voxelType,
+          voxels.data(),
+          dimensions.long_product() * temporalConfig.numTimesteps);
 
       if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
         std::vector<unsigned char>().swap(voxels);

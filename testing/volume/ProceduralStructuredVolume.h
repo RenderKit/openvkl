@@ -26,7 +26,7 @@ namespace openvkl {
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
           VKLDataType voxelType,
-          const TemporalConfig &temporalConfig   = TemporalConfig(1),
+          const TemporalConfig &temporalConfig   = TemporalConfig(),
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0)
           : TestingStructuredVolume(gridType,
@@ -55,7 +55,7 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
-          const TemporalConfig &temporalConfig   = TemporalConfig(1),
+          const TemporalConfig &temporalConfig   = TemporalConfig(),
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0);
 

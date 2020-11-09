@@ -15,6 +15,42 @@ using namespace rkcommon;
 namespace openvkl {
   namespace ispc_driver {
 
+    // Helpers ////////////////////////////////////////////////////////////////
+
+    template <int W>
+    inline void assertValidTimes(const vfloatn<W> &time)
+    {
+#ifndef NDEBUG
+      for (auto i = 0; i < W; ++i) {
+        assert(time[i] >= 0.f && time[i] <= 1.0f);
+      }
+#endif
+    }
+
+    inline void assertValidTimes(unsigned int N, const float *times)
+    {
+#ifndef NDEBUG
+      for (auto i = 0; i < N; ++i) {
+        assert(times == nullptr || (times[i] >= 0.f && times[i] <= 1.0f));
+      }
+#endif
+    }
+
+    template <typename VolumeType>
+    inline void assertValidAttributeIndices(
+        const VolumeType &volume,
+        unsigned int M,
+        const unsigned int *attributeIndices)
+    {
+#ifndef NDEBUG
+      for (auto i = 0; i < M; ++i) {
+        assert(attributeIndices[i] < volume->getNumAttributes());
+      }
+#endif
+    }
+
+    // Sampler ////////////////////////////////////////////////////////////////
+
     template <int W>
     class Volume;
 
@@ -48,7 +84,7 @@ namespace openvkl {
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples,
                                   unsigned int attributeIndex,
-                                  const vfloatn<1> *times) const = 0;
+                                  const float *times) const = 0;
 
       virtual void computeGradientV(const vintn<W> &valid,
                                     const vvec3fn<W> &objectCoordinates,
@@ -80,7 +116,7 @@ namespace openvkl {
                                    float *samples,
                                    unsigned int M,
                                    const unsigned int *attributeIndices,
-                                   const vfloatn<1> *times) const;
+                                   const float *times) const;
 
       virtual Observer<W> *newObserver(const char *type) = 0;
 
@@ -117,7 +153,7 @@ namespace openvkl {
       // ISPCDriver<W>::computeSampleAnyWidth()
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
-      vfloatn<W> tW = static_cast<vfloatn<W>>(times);
+      vfloatn<W> tW  = static_cast<vfloatn<W>>(times);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
@@ -175,7 +211,7 @@ namespace openvkl {
         float *samples,
         unsigned int M,
         const unsigned int *attributeIndices,
-        const vfloatn<1> *times) const
+        const float *times) const
     {
       for (unsigned int i = 0; i < N; i++) {
         for (unsigned int a = 0; a < M; a++) {

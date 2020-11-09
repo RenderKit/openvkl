@@ -35,14 +35,13 @@ namespace openvkl {
       // Data //
 
       float time{0.f};
+      bool motionBlur{false};
 
       float sigmaTScale{0.f};
       float sigmaSScale{0.f};
       int maxNumScatters{0};
 
       float ambientLightIntensity{0.f};
-
-      bool hasBlur{false};
     };
 
   }  // namespace examples

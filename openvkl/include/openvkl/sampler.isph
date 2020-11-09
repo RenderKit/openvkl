@@ -135,7 +135,8 @@ VKL_API void vklComputeSampleM4(const int *uniform valid,
                                     objectCoordinates,
                                 varying float *uniform samples,
                                 uniform unsigned int M,
-                                const unsigned int *uniform attributeIndices);
+                                const unsigned int *uniform attributeIndices,
+                                const varying float *uniform time);
 
 VKL_API void vklComputeSampleM8(const int *uniform valid,
                                 VKLSampler sampler,
@@ -143,7 +144,8 @@ VKL_API void vklComputeSampleM8(const int *uniform valid,
                                     objectCoordinates,
                                 varying float *uniform samples,
                                 uniform unsigned int M,
-                                const unsigned int *uniform attributeIndices);
+                                const unsigned int *uniform attributeIndices,
+                                const varying float *uniform time);
 
 VKL_API void vklComputeSampleM16(const int *uniform valid,
                                  VKLSampler sampler,
@@ -151,14 +153,16 @@ VKL_API void vklComputeSampleM16(const int *uniform valid,
                                      objectCoordinates,
                                  varying float *uniform samples,
                                  uniform unsigned int M,
-                                 const unsigned int *uniform attributeIndices);
+                                 const unsigned int *uniform attributeIndices,
+                                 const varying float *uniform time);
 
 VKL_FORCEINLINE void vklComputeSampleMV(
     VKLSampler sampler,
     const varying vkl_vec3f *uniform objectCoordinates,
     varying float *uniform samples,
     uniform unsigned int M,
-    const unsigned int *uniform attributeIndices)
+    const unsigned int *uniform attributeIndices,
+    const varying float *uniform time = NULL)
 {
   varying bool mask = __mask;
   unmasked
@@ -172,20 +176,23 @@ VKL_FORCEINLINE void vklComputeSampleMV(
                        objectCoordinates,
                        samples,
                        M,
-                       attributeIndices);
+                       attributeIndices,
+                       time);
   } else if (sizeof(varying float) == 32) {
     vklComputeSampleM8((uniform int *uniform) & imask,
                        sampler,
                        objectCoordinates,
                        samples,
                        M,
-                       attributeIndices);
+                       attributeIndices,
+                       time);
   } else if (sizeof(varying float) == 64) {
     vklComputeSampleM16((uniform int *uniform) & imask,
                         sampler,
                         objectCoordinates,
                         samples,
                         M,
-                        attributeIndices);
+                        attributeIndices,
+                        time);
   }
 }

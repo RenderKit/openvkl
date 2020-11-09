@@ -39,17 +39,10 @@ typedef varying vec3f (*uniform ComputeGradientVaryingFunc)(
     const uniform VKLFilter filter,
     const uniform uint32 attributeIndex);
 
-typedef void (*uniform GetVoxelVaryingFunc)(
+typedef varying range1f (*uniform ComputeVoxelRangeFunc)(
     const SharedStructuredVolume *uniform self,
-    const varying vec3i &index,
-    const uniform uint32 attributeIndex,
-    varying float &value);
-
-typedef void (*uniform GetVoxelUniformFunc)(
-    const SharedStructuredVolume *uniform self,
-    const uniform vec3i &index,
-    const uniform uint32 attributeIndex,
-    uniform float &value);
+    const varying vec3i &localCoordinates,
+    const uniform uint32 attributeIndex);
 
 struct SharedStructuredVolume
 {
@@ -57,8 +50,10 @@ struct SharedStructuredVolume
 
   uniform uint32 numAttributes;
   Data1D *uniform attributesData;
-  Data1D *uniform attributesTimeData;
-  Data1D *uniform attributesTimeConfig;
+
+  uniform uint32 temporallyStructuredNumTimesteps;
+  uniform Data1D temporallyUnstructuredIndices;
+  uniform Data1D temporallyUnstructuredTimes;
 
   uniform vec3i dimensions;
 
@@ -91,9 +86,10 @@ struct SharedStructuredVolume
       const varying vec3f &objectCoordinates,
       varying vec3f &localCoordinates);
 
+  ComputeVoxelRangeFunc *uniform computeVoxelRange;
+
   ComputeSampleInnerVaryingFunc *uniform computeSamplesInner_varying;
   ComputeGradientVaryingFunc computeGradient_varying;
-  GetVoxelVaryingFunc *uniform getVoxels_varying;
 
   // uniform functions
   void (*uniform transformLocalToObject_uniform)(
@@ -107,5 +103,4 @@ struct SharedStructuredVolume
       uniform vec3f &localCoordinates);
 
   ComputeSampleInnerUniformFunc *uniform computeSamplesInner_uniform;
-  GetVoxelUniformFunc *uniform getVoxels_uniform;
 };

@@ -26,7 +26,7 @@ namespace openvkl {
     return W < 4 ? 4 : (W < 8 ? 16 : (W < 16 ? 32 : 64));
   }
 
-    template <int W>
+  template <int W>
   struct alignas(simd_alignment_for_width(W)) vintn
   {
     int v[W];
@@ -60,7 +60,6 @@ namespace openvkl {
       }
     }
   };
-
 
   template <int W>
   struct alignas(simd_alignment_for_width(W)) vfloatn
@@ -99,6 +98,14 @@ namespace openvkl {
     {
       for (int i = 0; i < W; i++) {
         v[i] = o[i];
+      }
+    }
+
+    vfloatn<W>(const float *o, int oW)
+    {
+      assert(oW <= W);
+      for (int i = 0; i < W; i++) {
+        v[i] = o == nullptr ? 0.f : (i < oW ? o[i] : 0.f);
       }
     }
 

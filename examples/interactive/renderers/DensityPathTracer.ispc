@@ -8,11 +8,11 @@ struct DensityPathTracer
   Renderer super;
 
   float time;
+  bool motionBlur;
   float sigmaTScale;
   float sigmaSScale;
   int maxNumScatters;
   float ambientLightIntensity;
-  bool hasBlur;
 };
 
 inline vec3f cartesian(const float phi,
@@ -47,7 +47,7 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
   const float sigmaMax = self->sigmaTScale;
 
   while (true) {
-    vec2f randomNumbers = RandomTEA__getFloats(rng);
+    vec2f randomNumbers  = RandomTEA__getFloats(rng);
     vec2f randomNumbers2 = RandomTEA__getFloats(rng);
 
     t = t + -logf(1.f - randomNumbers.x) / sigmaMax;
@@ -58,11 +58,10 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    const float st = self->hasBlur ? randomNumbers2.x * self->time : self->time;
-    sample        = vklComputeSampleV(scene->sampler,
-                               (varying vkl_vec3f *)&c,
-                               scene->attributeIndex,
-                               (varying float *)&st);
+    const float time =
+        self->motionBlur ? randomNumbers2.x * self->time : self->time;
+    sample = vklComputeSampleV(
+        scene->sampler, (varying vkl_vec3f *)&c, scene->attributeIndex, &time);
 
     const vec4f sampleColorAndOpacity =
         Renderer_sampleTransferFunction(scene, sample);
@@ -169,8 +168,8 @@ export void *uniform DensityPathTracer_create()
 }
 
 export void DensityPathTracer_set(void *uniform _self,
-                                  const uniform bool hasBlur,
                                   const uniform float time,
+                                  const uniform bool motionBlur,
                                   const uniform float sigmaTScale,
                                   const uniform float sigmaSScale,
                                   const uniform int maxNumScatters,
@@ -178,8 +177,8 @@ export void DensityPathTracer_set(void *uniform _self,
 {
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
 
-  self->hasBlur                = hasBlur;
   self->time                  = time;
+  self->motionBlur            = motionBlur;
   self->sigmaTScale           = sigmaTScale;
   self->sigmaSScale           = sigmaSScale;
   self->maxNumScatters        = maxNumScatters;

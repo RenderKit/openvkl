@@ -28,8 +28,12 @@ struct StructuredMulti
   StructuredMulti()
   {
     volume = std::unique_ptr<TestingStructuredVolumeMulti>(
-        generateMultiAttributeStructuredRegularVolume(
-            vec3i(128), vec3f(0.f), vec3f(1.f), VKL_DATA_SHARED_BUFFER, true));
+        generateMultiAttributeStructuredRegularVolume(vec3i(128),
+                                                      vec3f(0.f),
+                                                      vec3f(1.f),
+                                                      TemporalConfig(),
+                                                      VKL_DATA_SHARED_BUFFER,
+                                                      true));
 
     if (StructuredMulti::getNumAttributes() != volume->getNumAttributes()) {
       throw std::runtime_error("inconsistent StructuredMulti numAttributes");

@@ -50,7 +50,7 @@ namespace openvkl {
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
                           unsigned int attributeIndex,
-                          const vfloatn<1> *time) const override final;
+                          const float *times) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
@@ -82,7 +82,7 @@ namespace openvkl {
                            float *samples,
                            unsigned int M,
                            const unsigned int *attributeIndices,
-                           const vfloatn<1> *time) const override final;
+                           const float *times) const override final;
 
       /////////////////////////////////////////////////////////////////////////
 
@@ -165,8 +165,8 @@ namespace openvkl {
                       unsigned int attributeIndex,
                       const vfloatn<1> &time) const
     {
-      assert(time[0] >= 0.f && time[0] <= 1.0f);
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -188,12 +188,9 @@ namespace openvkl {
                        unsigned int attributeIndex,
                        const vfloatn<W> &time) const
     {
-      for (auto i=0; i<W; ++i) {
-        assert(time[i] >= 0.f && time[i] <= 1.0f);
-      }
       assert(attributeIndex < volume->getNumAttributes());
-      CALL_ISPC(SharedStructuredVolume_sample_export,  // TODO - implement time
-                                                       // sampling
+      assertValidTimes(time);
+      CALL_ISPC(SharedStructuredVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
@@ -213,16 +210,16 @@ namespace openvkl {
                        const vvec3fn<1> *objectCoordinates,
                        float *samples,
                        unsigned int attributeIndex,
-                       const vfloatn<1> *time) const
+                       const float *times) const
     {
-      assert(*time[0] >= 0.f && *time[0] <= 1.0f);
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_sample_N_export,
                 ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 attributeIndex,
-                (float *) time,
+                times,
                 samples);
     }
 
@@ -281,11 +278,8 @@ namespace openvkl {
                        const unsigned int *attributeIndices,
                        const vfloatn<1> &time) const
     {
-      assert(time[0] >= 0.f && time[0] <= 1.0f);
-      for (unsigned int i = 0; i < M; i++) {
-        assert(attributeIndices[i] < volume->getNumAttributes());
-      }
-
+      assertValidAttributeIndices(volume, M, attributeIndices);
+      assertValidTimes(time);
       CALL_ISPC(SharedStructuredVolume_sampleM_uniform_export,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -309,14 +303,9 @@ namespace openvkl {
                         const unsigned int *attributeIndices,
                         const vfloatn<W> &time) const
     {
-      for (auto i=0; i<W; ++i) {
-        assert(time[i] >= 0.f && time[i] <= 1.0f);
-      }
-      for (unsigned int i = 0; i < M; i++) {
-        assert(attributeIndices[i] < volume->getNumAttributes());
-      }
-      CALL_ISPC(SharedStructuredVolume_sampleM_export,  // TODO implement time
-                                                        // sampling
+      assertValidAttributeIndices(volume, M, attributeIndices);
+      assertValidTimes(time);
+      CALL_ISPC(SharedStructuredVolume_sampleM_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
@@ -338,20 +327,17 @@ namespace openvkl {
                         float *samples,
                         unsigned int M,
                         const unsigned int *attributeIndices,
-                        const vfloatn<1> *time) const
+                        const float *times) const
     {
-      assert(*time[0] >= 0.f && *time[0] <= 1.0f);
-      for (unsigned int i = 0; i < M; i++) {
-        assert(attributeIndices[i] < volume->getNumAttributes());
-      }
-
+      assertValidAttributeIndices(volume, M, attributeIndices);
+      assertValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_sampleM_N_export,
                 ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 M,
                 attributeIndices,
-                (float *)time,
+                times,
                 samples);
     }
 

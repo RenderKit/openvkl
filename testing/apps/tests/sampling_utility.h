@@ -21,7 +21,6 @@ inline void test_scalar_and_vector_sampling(
   float scalarSampledValue = vklComputeSample(
       sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
 
-  // std::cout << "attr index: " << attributeIndex << std::endl;
   REQUIRE(scalarSampledValue == Approx(sampleTruth).margin(sampleTolerance));
 
   // since vklComputeSample() can have a specialized implementation separate
@@ -46,7 +45,7 @@ inline void test_scalar_and_vector_sampling(
                     (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                     samples_4,
                     attributeIndex,
-                    times_4);
+                    time == 0.f ? nullptr : times_4);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
   float samples_8[8]   = {0.f};
@@ -56,7 +55,7 @@ inline void test_scalar_and_vector_sampling(
                     (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                     samples_8,
                     attributeIndex,
-                    times_8);
+                    time == 0.f ? nullptr : times_8);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   float samples_16[16] = {0.f};
@@ -66,13 +65,11 @@ inline void test_scalar_and_vector_sampling(
                      (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                      samples_16,
                      attributeIndex,
-                     times_16);
+                     time == 0.f ? nullptr : times_16);
 
-  REQUIRE(scalarSampledValue == Approx(samples_4[0]).margin(1.e-8));
-  REQUIRE(scalarSampledValue == Approx(samples_8[0]).margin(1.e-8));
-  REQUIRE(scalarSampledValue == Approx(samples_16[0]).margin(1.e-8));
-
-  // std::cout << "**************************************** end test_scalar_and_vector_sampling\n";
+  REQUIRE(scalarSampledValue == Approx(samples_4[0]));
+  REQUIRE(scalarSampledValue == Approx(samples_8[0]));
+  REQUIRE(scalarSampledValue == Approx(samples_16[0]));
 }
 
 inline void test_scalar_and_vector_sampling_multi(
@@ -90,7 +87,7 @@ inline void test_scalar_and_vector_sampling_multi(
                     scalarSampledValues.data(),
                     attributeIndices.size(),
                     attributeIndices.data(),
-                    (const float *)&time);
+                    time);
 
   for (unsigned int a = 0; a < attributeIndices.size(); a++) {
     REQUIRE(scalarSampledValues[a] ==
@@ -120,7 +117,7 @@ inline void test_scalar_and_vector_sampling_multi(
                      samples_4.data(),
                      attributeIndices.size(),
                      attributeIndices.data(),
-                     times_4.data());
+                     time == 0.f ? nullptr : times_4.data());
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
   std::vector<float> samples_8(8 * attributeIndices.size(), 0.f);
@@ -131,7 +128,7 @@ inline void test_scalar_and_vector_sampling_multi(
                      samples_8.data(),
                      attributeIndices.size(),
                      attributeIndices.data(),
-                     times_8.data());
+                     time == 0.f ? nullptr : times_8.data());
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   std::vector<float> samples_16(16 * attributeIndices.size(), 0.f);
@@ -142,12 +139,12 @@ inline void test_scalar_and_vector_sampling_multi(
                       samples_16.data(),
                       attributeIndices.size(),
                       attributeIndices.data(),
-                      times_16.data());
+                      time == 0.f ? nullptr : times_16.data());
 
   for (unsigned int a = 0; a < attributeIndices.size(); a++) {
-    REQUIRE(scalarSampledValues[a] == Approx(samples_4[a * 4 + 0]).margin(1.e-8));
-    REQUIRE(scalarSampledValues[a] == Approx(samples_8[a * 8 + 0]).margin(1.e-8));
-    REQUIRE(scalarSampledValues[a] == Approx(samples_16[a * 16 + 0]).margin(1.e-8));
+    REQUIRE(scalarSampledValues[a] == Approx(samples_4[a * 4 + 0]));
+    REQUIRE(scalarSampledValues[a] == Approx(samples_8[a * 8 + 0]));
+    REQUIRE(scalarSampledValues[a] == Approx(samples_16[a * 16 + 0]));
   }
 }
 
@@ -189,7 +186,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
                         objectCoordinates.data(),
                         samples.data(),
                         attributeIndex,
-                        times.data());
+                        time == 0.f ? nullptr : times.data());
 
       for (int i = 0; i < N; i++) {
         float sampleTruth = vklComputeSample(
@@ -248,7 +245,7 @@ inline void test_stream_sampling_multi(
                          samples.data(),
                          attributeIndices.size(),
                          attributeIndices.data(),
-                         times.data());
+                         time == 0.f ? nullptr : times.data());
 
       for (unsigned int a = 0; a < attributeIndices.size(); a++) {
         for (int i = 0; i < N; i++) {

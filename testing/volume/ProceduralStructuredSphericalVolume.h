@@ -119,9 +119,6 @@ namespace openvkl {
                                             getXYZValue<VOXEL_TYPE>,
                                             getXYZGradient>;
 
-    using RadiusProceduralVolume =
-        ProceduralStructuredSphericalVolume<float, getRadiusValue>;
-
     // required due to Windows Visual Studio compiler bugs, which prevent us
     // from writing e.g. WaveletStructuredSphericalVolume<float>
     using WaveletStructuredSphericalVolumeUChar =

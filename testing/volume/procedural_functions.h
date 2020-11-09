@@ -34,14 +34,14 @@ namespace openvkl {
       constexpr double XF = 3.f;
       constexpr double YF = 3.f;
       constexpr double ZF = 3.f;
-      constexpr double XT = 1.f;
-      constexpr double YT = 1.f;
-      constexpr double ZT = 1.f;
 
+      // for exact temporal functional tests, this needs to vary linearly with
+      // time
       double value = M * G *
-                     (XM * ::sin(XF * objectCoordinates.x + XT * time) +
-                      YM * ::sin(YF * objectCoordinates.y + YT * time) +
-                      ZM * ::cos(ZF * objectCoordinates.z + ZT * time));
+                         (XM * ::sin(XF * objectCoordinates.x) +
+                          YM * ::sin(YF * objectCoordinates.y) +
+                          ZM * ::cos(ZF * objectCoordinates.z)) +
+                     objectCoordinates.x * time;
 
       if (std::is_unsigned<VOXEL_TYPE>::value) {
         value = fabs(value);
@@ -67,7 +67,7 @@ namespace openvkl {
       constexpr double ZF = 3.f;
 
       return M * G *
-             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF,
+             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF /* + time */,
                    YM * ::cos(YF * objectCoordinates.y) * YF,
                    -ZM * ::sin(ZF * objectCoordinates.z) * ZF);
     }
@@ -147,13 +147,6 @@ namespace openvkl {
     inline vec3f getConstGradient(const vec3f &objectCoordinates)
     {
       return vec3f(0.f);
-    }
-
-    inline float getRadiusValue(const vec3f &objectCoordinates, float time)
-    {
-      return sqrtf(objectCoordinates.x * objectCoordinates.x +
-                   objectCoordinates.y * objectCoordinates.y +
-                   objectCoordinates.z * objectCoordinates.z + time * time);
     }
 
   }  // namespace testing

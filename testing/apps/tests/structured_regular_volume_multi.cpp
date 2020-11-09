@@ -88,6 +88,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
       const vec3f proceduralGradient =
           v->computeProceduralGradient(objectCoordinates, attributeIndex);
 
+      INFO("attributeIndex = " << attributeIndex);
       INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
                        << offsetWithStep.z);
       INFO("objectCoordinates = " << objectCoordinates.x << " "
@@ -138,8 +139,12 @@ TEST_CASE("Structured regular volume multiple attributes",
       DYNAMIC_SECTION(sectionName.str())
       {
         std::shared_ptr<TestingStructuredVolumeMulti> v(
-            generateMultiAttributeStructuredRegularVolume(
-                dimensions, gridOrigin, gridSpacing, dcf, aos));
+            generateMultiAttributeStructuredRegularVolume(dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          TemporalConfig(),
+                                                          dcf,
+                                                          aos));
 
         num_attributes(v);
         sampling_on_vertices_vs_procedural_values_multi(v, 2);

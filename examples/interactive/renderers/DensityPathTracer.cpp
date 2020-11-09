@@ -36,16 +36,16 @@ namespace openvkl {
     {
       Renderer::commit();
 
-      hasBlur               = getParam<bool>("hasBlur", false);
       time                  = getParam<float>("time", 0.f);
+      motionBlur            = getParam<bool>("motionBlur", false);
       sigmaTScale           = getParam<float>("sigmaTScale", 1.f);
       sigmaSScale           = getParam<float>("sigmaSScale", 1.f);
       maxNumScatters        = getParam<int>("maxNumScatters", 1);
       ambientLightIntensity = getParam<float>("ambientLightIntensity", 1.f);
 
       ispc::DensityPathTracer_set(ispcEquivalent,
-                                  hasBlur,
                                   time,
+                                  motionBlur,
                                   sigmaTScale,
                                   sigmaSScale,
                                   maxNumScatters,
@@ -65,7 +65,8 @@ namespace openvkl {
       const float sigmaMax = sigmaTScale;
 
       while (true) {
-        vec2f randomNumbers = rng.getFloats();
+        vec2f randomNumbers  = rng.getFloats();
+        vec2f randomNumbers2 = rng.getFloats();
 
         t = t + -std::log(1.f - randomNumbers.x) / sigmaMax;
 
@@ -75,12 +76,9 @@ namespace openvkl {
         }
 
         const vec3f c = ray.org + t * ray.dir;
-        float mbt = time;
-        if (hasBlur) {
-          vec2f randomNumbers2 = rng.getFloats();
-          time *= randomNumbers2.x;
-        }
-        sample        = vklComputeSample(
+        const float time =
+            motionBlur ? randomNumbers2.x * this->time : this->time;
+        sample = vklComputeSample(
             scene.sampler, (const vkl_vec3f *)&c, scene.attributeIndex, time);
 
         vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);

@@ -197,186 +197,241 @@ inline void computeStructuredSphericalBoundingBox(
 // Motion blur helper functions ///////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-inline uniform bool hasMotionBlurData(
+inline uniform bool hasStructuredTimeData(
     const SharedStructuredVolume *uniform self)
 {
-  return valid(*self->attributesTimeConfig) &&
-         self->attributesTimeConfig->numItems > 0;
+  return self->temporallyStructuredNumTimesteps > 1;
 }
 
-inline uniform bool attributeHasStructuredTimeData(
-    const SharedStructuredVolume *uniform self,
-    const uniform uint32 attributeIndex)
+inline uniform bool hasUnstructuredTimeData(
+    const SharedStructuredVolume *uniform self)
 {
-  return hasMotionBlurData(self) &&
-         self->attributesTimeConfig[attributeIndex].numItems == 1 &&
-         self->attributesTimeConfig[attributeIndex].dataType == VKL_UCHAR &&
-         get_uint8(self->attributesTimeConfig[attributeIndex], (uint32)0) > 1;
+  return isValid(self->temporallyUnstructuredIndices) &&
+         self->temporallyUnstructuredIndices.numItems > 0;
 }
 
-inline uniform bool attributeHasUnstructuredTimeData(
-    const SharedStructuredVolume *uniform self,
-    const uniform uint32 attributeIndex)
-{
-  return hasMotionBlurData(self) &&
-         self->attributesTimeConfig[attributeIndex].numItems > 1 &&
-         self->attributesTimeConfig[attributeIndex].dataType == VKL_ULONG &&
-         valid(self->attributesTimeData[attributeIndex]) &&
-         self->attributesTimeData[attributeIndex].numItems > 0;
-}
-
-/* Note that the addressing mode `addr` only refers to offsets within
- * `timesConfig`. Since individual voxels can have arbitrary numbers of time
- * steps, we currently only use 64-bit indices and accesses within `timesData`,
- * as it is somewhat difficult to guarantee 32-bit safety within slices as we do
- * for non-TUV cases. */
-#define template_interpolateVoxelTUV(type, univary, addr)                      \
-  inline univary float interpolateVoxelTUV_##type##_##univary(                 \
-      const SharedStructuredVolume *uniform self,                              \
-      const uniform uint32 attributeIndex,                                     \
-      const uniform uint64 fixed0Ofs,                                          \
-      const univary uint##addr timeOfs,                                        \
-      const univary float &time)                                               \
-  {                                                                            \
-    const uniform Data1D voxelData = self->attributesData[attributeIndex];     \
-    const uniform Data1D timesData = self->attributesTimeData[attributeIndex]; \
-    const uniform Data1D timesConfig =                                         \
-        self->attributesTimeConfig[attributeIndex];                            \
-                                                                               \
-    const univary uint64 voxelOfs =                                            \
-        get_uint64(timesConfig, fixed0Ofs, timeOfs);                           \
-    const univary uint64 nextOfs =                                             \
-        get_uint64(timesConfig, fixed0Ofs + 1, timeOfs);                       \
-    assert(nextOfs > voxelOfs);                                                \
-    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                  \
-    univary uint64 lower, upper;                                               \
-    univary float interpolant;                                                 \
-    if (numTimeSamples == 2) {                                                 \
-      lower       = voxelOfs;                                                  \
-      upper       = lower + 1;                                                 \
-      interpolant = time;                                                      \
-      return (1.f - interpolant) * get_##type(voxelData, lower) +              \
-             interpolant * get_##type(voxelData, upper);                       \
-    }                                                                          \
-    lower = 0;                                                                 \
-    upper = numTimeSamples;                                                    \
-    while (lower <= upper) {                                                   \
-      const univary uint64 mid     = (lower + upper) / 2;                      \
-      const univary float timesMid = get_float(timesData, voxelOfs + mid);     \
-      if (time >= timesMid &&                                                  \
-          time <= get_float(timesData, voxelOfs + mid + 1)) {                  \
-        lower = voxelOfs + mid;                                                \
-        upper = lower + 1;                                                     \
-        break;                                                                 \
-      } else if (time < timesMid) {                                            \
-        upper = mid;                                                           \
-      } else {                                                                 \
-        lower = mid;                                                           \
-      }                                                                        \
-    }                                                                          \
-                                                                               \
-    const univary float timesDataLow  = get_float(timesData, lower);           \
-    const univary float timesDataHigh = get_float(timesData, upper);           \
-    interpolant = (time - timesDataLow) * rcp(timesDataHigh - timesDataLow);   \
-                                                                               \
-    return (1.f - interpolant) * get_##type(voxelData, lower) +                \
-           interpolant * get_##type(voxelData, upper);                         \
+// Supports 32-bit and 64/32-bit addressing modes on
+// temporallyUnstructuredIndices
+#define template_interpolateVoxelTUV(type, univary)                          \
+  inline univary float interpolateVoxelTUV_##type##_##univary(               \
+      const SharedStructuredVolume *uniform self,                            \
+      const uniform uint32 attributeIndex,                                   \
+      const uniform uint64 fixed0Ofs,                                        \
+      const univary uint32 timeOfs,                                          \
+      const univary float &time)                                             \
+  {                                                                          \
+    const uniform Data1D voxelData   = self->attributesData[attributeIndex]; \
+    const uniform Data1D indices = self->temporallyUnstructuredIndices;      \
+    const uniform Data1D times   = self->temporallyUnstructuredTimes;        \
+                                                                             \
+    /* unconditionally use 64-bit indices on voxelData and times; this       \
+       could be improved... */                                               \
+    univary uint64 voxelOfs, nextOfs;                                        \
+    if (indices.dataType == VKL_UINT) {                                      \
+      voxelOfs = get_uint32(indices, fixed0Ofs, timeOfs);                    \
+      nextOfs  = get_uint32(indices, fixed0Ofs + 1, timeOfs);                \
+    } else {                                                                 \
+      voxelOfs = get_uint64(indices, fixed0Ofs, timeOfs);                    \
+      nextOfs  = get_uint64(indices, fixed0Ofs + 1, timeOfs);                \
+    }                                                                        \
+                                                                             \
+    assert(nextOfs > voxelOfs);                                              \
+    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                \
+                                                                             \
+    if (numTimeSamples == 2) {                                               \
+      return (1.f - time) * get_##type(voxelData, voxelOfs) +                \
+             time * get_##type(voxelData, voxelOfs + 1);                     \
+    } else if (time == 0.f) {                                                \
+      return get_##type(voxelData, voxelOfs);                                \
+    } else if (time == 1.f) {                                                \
+      return get_##type(voxelData, nextOfs - 1);                             \
+    }                                                                        \
+    univary uint64 lower = 0;                                                \
+    univary uint64 upper = numTimeSamples;                                   \
+    while (lower <= upper) {                                                 \
+      const univary uint64 mid     = (lower + upper) / 2;                    \
+      const univary float timesMid = get_float(times, voxelOfs + mid);       \
+      if (time >= timesMid &&                                                \
+          time <= get_float(times, voxelOfs + mid + 1)) {                    \
+        lower = voxelOfs + mid;                                              \
+        upper = lower + 1;                                                   \
+        break;                                                               \
+      } else if (time < timesMid) {                                          \
+        upper = mid;                                                         \
+      } else {                                                               \
+        lower = mid;                                                         \
+      }                                                                      \
+    }                                                                        \
+                                                                             \
+    const univary float timesLow  = get_float(times, lower);                 \
+    const univary float timesHigh = get_float(times, upper);                 \
+    const univary float interpolant =                                        \
+        (time - timesLow) * rcp(timesHigh - timesLow);                       \
+                                                                             \
+    return (1.f - interpolant) * get_##type(voxelData, lower) +              \
+           interpolant * get_##type(voxelData, upper);                       \
   }
 
-template_interpolateVoxelTUV(uint8, varying, 32);
-template_interpolateVoxelTUV(int16, varying, 32);
-template_interpolateVoxelTUV(uint16, varying, 32);
-template_interpolateVoxelTUV(float, varying, 32);
-template_interpolateVoxelTUV(double, varying, 32);
+template_interpolateVoxelTUV(uint8, varying);
+template_interpolateVoxelTUV(int16, varying);
+template_interpolateVoxelTUV(uint16, varying);
+template_interpolateVoxelTUV(float, varying);
+template_interpolateVoxelTUV(double, varying);
 
-template_interpolateVoxelTUV(uint8, uniform, 32);
-template_interpolateVoxelTUV(int16, uniform, 32);
-template_interpolateVoxelTUV(uint16, uniform, 32);
-template_interpolateVoxelTUV(float, uniform, 32);
-template_interpolateVoxelTUV(double, uniform, 32);
+template_interpolateVoxelTUV(uint8, uniform);
+template_interpolateVoxelTUV(int16, uniform);
+template_interpolateVoxelTUV(uint16, uniform);
+template_interpolateVoxelTUV(float, uniform);
+template_interpolateVoxelTUV(double, uniform);
+#undef template_interpolateVoxelTUV
 
-template_interpolateVoxelTUV(uint8, varying, 64);
-template_interpolateVoxelTUV(int16, varying, 64);
-template_interpolateVoxelTUV(uint16, varying, 64);
-template_interpolateVoxelTUV(float, varying, 64);
-template_interpolateVoxelTUV(double, varying, 64);
+// Supports 64-bit addressing mode on temporallyUnstructuredIndices
+#define template_interpolateVoxelTUV(type, univary)                          \
+  inline univary float interpolateVoxelTUV_##type##_##univary(               \
+      const SharedStructuredVolume *uniform self,                            \
+      const uniform uint32 attributeIndex,                                   \
+      const univary uint64 timeOfs,                                          \
+      const univary float &time)                                             \
+  {                                                                          \
+    const uniform Data1D voxelData   = self->attributesData[attributeIndex]; \
+    const uniform Data1D indices = self->temporallyUnstructuredIndices;      \
+    const uniform Data1D times   = self->temporallyUnstructuredTimes;        \
+                                                                             \
+    assert(indices.dataType == VKL_ULONG);                                   \
+    univary uint64 voxelOfs = get_uint64(indices, timeOfs);                  \
+    univary uint64 nextOfs  = get_uint64(indices, timeOfs + 1);              \
+                                                                             \
+    assert(nextOfs > voxelOfs);                                              \
+    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                \
+                                                                             \
+    if (numTimeSamples == 2) {                                               \
+      return (1.f - time) * get_##type(voxelData, voxelOfs) +                \
+             time * get_##type(voxelData, voxelOfs + 1);                     \
+    } else if (time == 0.f) {                                                \
+      return get_##type(voxelData, voxelOfs);                                \
+    } else if (time == 1.f) {                                                \
+      return get_##type(voxelData, nextOfs - 1);                             \
+    }                                                                        \
+    univary uint64 lower = 0;                                                \
+    univary uint64 upper = numTimeSamples;                                   \
+    while (lower <= upper) {                                                 \
+      const univary uint64 mid     = (lower + upper) / 2;                    \
+      const univary float timesMid = get_float(times, voxelOfs + mid);       \
+      if (time >= timesMid &&                                                \
+          time <= get_float(times, voxelOfs + mid + 1)) {                    \
+        lower = voxelOfs + mid;                                              \
+        upper = lower + 1;                                                   \
+        break;                                                               \
+      } else if (time < timesMid) {                                          \
+        upper = mid;                                                         \
+      } else {                                                               \
+        lower = mid;                                                         \
+      }                                                                      \
+    }                                                                        \
+                                                                             \
+    const univary float timesLow  = get_float(times, lower);                 \
+    const univary float timesHigh = get_float(times, upper);                 \
+    const univary float interpolant =                                        \
+        (time - timesLow) * rcp(timesHigh - timesLow);                       \
+                                                                             \
+    return (1.f - interpolant) * get_##type(voxelData, lower) +              \
+           interpolant * get_##type(voxelData, upper);                       \
+  }
 
-template_interpolateVoxelTUV(uint8, uniform, 64);
-template_interpolateVoxelTUV(int16, uniform, 64);
-template_interpolateVoxelTUV(uint16, uniform, 64);
-template_interpolateVoxelTUV(float, uniform, 64);
-template_interpolateVoxelTUV(double, uniform, 64);
+template_interpolateVoxelTUV(uint8, varying);
+template_interpolateVoxelTUV(int16, varying);
+template_interpolateVoxelTUV(uint16, varying);
+template_interpolateVoxelTUV(float, varying);
+template_interpolateVoxelTUV(double, varying);
 
+template_interpolateVoxelTUV(uint8, uniform);
+template_interpolateVoxelTUV(int16, uniform);
+template_interpolateVoxelTUV(uint16, uniform);
+template_interpolateVoxelTUV(float, uniform);
+template_interpolateVoxelTUV(double, uniform);
 #undef template_interpolateVoxelTUV
 
 ///////////////////////////////////////////////////////////////////////////////
-// getVoxel functions for all addressing / voxel type combinations ////////////
+// computeVoxelRange functions ////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-// used below in template_getVoxel
-#define process_index_z(univary) process_index_z_##univary
-#define process_index_z_varying foreach_unique(z in index.z)
-#define process_index_z_uniform uniform int z = index.z;
-
-#define template_getVoxel(type, univary)                                     \
-  /* for pure 32-bit addressing. volume *MUST* be smaller than 2G */         \
-  inline void SSV_getVoxel_##type##_##univary##_32(                          \
-      const SharedStructuredVolume *uniform self,                            \
-      const univary vec3i &index,                                            \
-      const uniform uint32 attributeIndex,                                   \
-      univary float &value)                                                  \
-  {                                                                          \
-    const univary uint32 index32 =                                           \
-        index.x +                                                            \
-        self->dimensions.x * (index.y + self->dimensions.y * index.z);       \
-                                                                             \
-    value = get_##type(self->attributesData[attributeIndex], index32);       \
-  }                                                                          \
-  /* for 64/32-bit addressing. volume itself can be larger than 2G, but each \
-   * slice must be within the 2G limit. */                                   \
-  inline void SSV_getVoxel_##type##_##univary##_64_32(                       \
-      const SharedStructuredVolume *uniform self,                            \
-      const univary vec3i &index,                                            \
-      const uniform uint32 attributeIndex,                                   \
-      univary float &value)                                                  \
-  {                                                                          \
-    /* iterate over slices, then do 32-bit gather in slice */                \
-    const univary uint32 offsetIndex32 =                                     \
-        index.x + self->dimensions.x * index.y;                              \
-    process_index_z(univary)                                                 \
-    {                                                                        \
-      const uniform uint64 baseIndex64 =                                     \
-          (uint64)z * self->dimensions.x * self->dimensions.y;               \
-      value = get_##type(                                                    \
-          self->attributesData[attributeIndex], baseIndex64, offsetIndex32); \
-    }                                                                        \
-  }                                                                          \
-  /* for full 64-bit addressing, for all dimensions or slice size */         \
-  inline void SSV_getVoxel_##type##_##univary##_64(                          \
-      const SharedStructuredVolume *uniform self,                            \
-      const univary vec3i &index,                                            \
-      const uniform uint32 attributeIndex,                                   \
-      univary float &value)                                                  \
-  {                                                                          \
-    const univary uint64 index64 =                                           \
-        (uint64)index.x +                                                    \
-        self->dimensions.x *                                                 \
-            ((uint64)index.y + self->dimensions.y * ((uint64)index.z));      \
-    value = get_##type(self->attributesData[attributeIndex], index64);       \
+#define template_computeVoxelRange(type)                                       \
+  /* temporally constant */                                                    \
+  inline range1f SSV_computeVoxelRange_##type(                                 \
+      const SharedStructuredVolume *uniform self,                              \
+      const vec3i &localCoordinates,                                           \
+      const uniform uint32 attributeIndex)                                     \
+  {                                                                            \
+    const uint64 index64 =                                                     \
+        (uint64)localCoordinates.x +                                           \
+        self->dimensions.x *                                                   \
+            ((uint64)localCoordinates.y +                                      \
+             self->dimensions.y * ((uint64)localCoordinates.z));               \
+    return make_box1f(                                                         \
+        get_##type(self->attributesData[attributeIndex], index64));            \
+  }                                                                            \
+  /* temporally unstructured */                                                \
+  inline range1f SSV_computeVoxelRange_TUV_##type(                             \
+      const SharedStructuredVolume *uniform self,                              \
+      const vec3i &localCoordinates,                                           \
+      const uniform uint32 attributeIndex)                                     \
+  {                                                                            \
+    const uniform Data1D indices = self->temporallyUnstructuredIndices;        \
+                                                                               \
+    const uint64 index64 =                                                     \
+        (uint64)localCoordinates.x +                                           \
+        self->dimensions.x *                                                   \
+            ((uint64)localCoordinates.y +                                      \
+             self->dimensions.y * ((uint64)localCoordinates.z));               \
+                                                                               \
+    uint64 voxelOfs, nextOfs;                                                  \
+    if (indices.dataType == VKL_UINT) {                                        \
+      voxelOfs = get_uint32(indices, index64);                                 \
+      nextOfs  = get_uint32(indices, index64 + 1);                             \
+    } else {                                                                   \
+      voxelOfs = get_uint64(indices, index64);                                 \
+      nextOfs  = get_uint64(indices, index64 + 1);                             \
+    }                                                                          \
+                                                                               \
+    range1f range = make_box1f(                                                \
+        get_##type(self->attributesData[attributeIndex], voxelOfs));           \
+                                                                               \
+    for (uint64 i = voxelOfs + 1; i < nextOfs; i++) {                          \
+      extend(range, get_##type(self->attributesData[attributeIndex], i));      \
+    }                                                                          \
+                                                                               \
+    return range;                                                              \
+  }                                                                            \
+  /* temporally structured */                                                  \
+  inline range1f SSV_computeVoxelRange_MB_##type(                              \
+      const SharedStructuredVolume *uniform self,                              \
+      const vec3i &localCoordinates,                                           \
+      const uniform uint32 attributeIndex)                                     \
+  {                                                                            \
+    const uint64 index64 =                                                     \
+        self->temporallyStructuredNumTimesteps *                               \
+        ((uint64)localCoordinates.x +                                          \
+         self->dimensions.x *                                                  \
+             ((uint64)localCoordinates.y +                                     \
+              self->dimensions.y * ((uint64)localCoordinates.z)));             \
+                                                                               \
+    range1f range =                                                            \
+        make_box1f(get_##type(self->attributesData[attributeIndex], index64)); \
+                                                                               \
+    for (uint64 i = 1; i < self->temporallyStructuredNumTimesteps; i++) {      \
+      extend(range,                                                            \
+             get_##type(self->attributesData[attributeIndex], index64 + i));   \
+    }                                                                          \
+                                                                               \
+    return range;                                                              \
   }
 
-template_getVoxel(uint8, varying);
-template_getVoxel(int16, varying);
-template_getVoxel(uint16, varying);
-template_getVoxel(float, varying);
-template_getVoxel(double, varying);
-
-template_getVoxel(uint8, uniform);
-template_getVoxel(int16, uniform);
-template_getVoxel(uint16, uniform);
-template_getVoxel(float, uniform);
-template_getVoxel(double, uniform);
-#undef template_getVoxel
+template_computeVoxelRange(uint8);
+template_computeVoxelRange(int16);
+template_computeVoxelRange(uint16);
+template_computeVoxelRange(float);
+template_computeVoxelRange(double);
+#undef template_computeVoxelRange
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sampling functions /////////////////////////////////////////////////////////
@@ -460,24 +515,6 @@ template_sample(uniform);
 ///////////////////////////////////////////////////////////////////////////////
 // Sampling inner functions for all addressing / voxel type combinations //////
 ///////////////////////////////////////////////////////////////////////////////
-
-// overloads for both varying and uniform voxel getters, used in templated
-// sampling functions
-inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
-                            const varying vec3i &index,
-                            const uniform uint32 attributeIndex,
-                            varying float &value)
-{
-  self->getVoxels_varying[attributeIndex](self, index, attributeIndex, value);
-}
-
-inline void getVoxelUnivary(const SharedStructuredVolume *uniform self,
-                            const uniform vec3i &index,
-                            const uniform uint32 attributeIndex,
-                            uniform float &value)
-{
-  self->getVoxels_uniform[attributeIndex](self, index, attributeIndex, value);
-}
 
 // perform trilinear interpolation for given sample. unlike old way of doing
 // this (a single computesample on the StructuredVolume level that calls the
@@ -655,9 +692,8 @@ template_sample_inner_TUV_32(double, uniform);
       const univary float &time)                                              \
   {                                                                           \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];    \
-    const uniform Data1D timesConfig =                                        \
-        self->attributesTimeConfig[attributeIndex];                           \
-    const uniform uint32 numTimeSamples = get_uint8(timesConfig, (uint32)0);  \
+    const uniform uint32 numTimeSamples =                                     \
+        self->temporallyStructuredNumTimesteps;                               \
                                                                               \
     /* lower corner of the box straddling the voxels to be interpolated. */   \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);       \
@@ -950,9 +986,8 @@ template_sample_inner_TUV_64_32(double, uniform);
       const univary float &time)                                              \
   {                                                                           \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];    \
-    const uniform Data1D timesConfig =                                        \
-        self->attributesTimeConfig[attributeIndex];                           \
-    const uniform uint32 numTimeSamples = get_uint8(timesConfig, (uint32)0);  \
+    const uniform uint32 numTimeSamples =                                     \
+        self->temporallyStructuredNumTimesteps;                               \
                                                                               \
     /* lower corner of the box straddling the voxels to be interpolated. */   \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);       \
@@ -1067,115 +1102,84 @@ template_sample_inner_MB_64_32(double, uniform);
 #undef template_sample_inner_MB_64_32
 
 // default sampling function (64-bit addressing)
-#define template_sample_inner_64(univary)                                   \
-  inline univary float SSV_sample_inner_##univary##_64(                     \
-      const SharedStructuredVolume *uniform self,                           \
-      const univary vec3f &clampedLocalCoordinates,                         \
-      const uniform VKLFilter filter,                                       \
-      const uniform uint32 attributeIndex,                                  \
-      const univary float &_time)                                           \
-  {                                                                         \
-    /* lower and upper corners of the box straddling the voxels to be       \
-     interpolated. */                                                       \
-    const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);     \
-    const univary vec3i voxelIndex_1 = voxelIndex_0 + 1;                    \
-                                                                            \
-    univary float val = 0.f;                                                \
-    switch (filter) {                                                       \
-    case VKL_FILTER_NEAREST: {                                              \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),       \
-          attributeIndex,                                                   \
-          val);                                                             \
-      break;                                                                \
-    }                                                                       \
-    case VKL_FILTER_TRILINEAR: {                                            \
-      /* fractional coordinates within the lower corner voxel used during   \
-       interpolation. */                                                    \
-      const univary vec3f fractionalLocalCoordinates =                      \
-          clampedLocalCoordinates - to_float(voxelIndex_0);                 \
-                                                                            \
-      /* look up the voxel values to be interpolated. */                    \
-      univary float voxelValue_000;                                         \
-      univary float voxelValue_001;                                         \
-      univary float voxelValue_010;                                         \
-      univary float voxelValue_011;                                         \
-      univary float voxelValue_100;                                         \
-      univary float voxelValue_101;                                         \
-      univary float voxelValue_110;                                         \
-      univary float voxelValue_111;                                         \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z),       \
-          attributeIndex,                                                   \
-          voxelValue_000);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z),       \
-          attributeIndex,                                                   \
-          voxelValue_001);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z),       \
-          attributeIndex,                                                   \
-          voxelValue_010);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z),       \
-          attributeIndex,                                                   \
-          voxelValue_011);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z),       \
-          attributeIndex,                                                   \
-          voxelValue_100);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z),       \
-          attributeIndex,                                                   \
-          voxelValue_101);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z),       \
-          attributeIndex,                                                   \
-          voxelValue_110);                                                  \
-      getVoxelUnivary(                                                      \
-          self,                                                             \
-          make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z),       \
-          attributeIndex,                                                   \
-          voxelValue_111);                                                  \
-                                                                            \
-      /* interpolate the voxel values. */                                   \
-      const univary float voxelValue_00 =                                   \
-          voxelValue_000 +                                                  \
-          fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000); \
-      const univary float voxelValue_01 =                                   \
-          voxelValue_010 +                                                  \
-          fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010); \
-      const univary float voxelValue_10 =                                   \
-          voxelValue_100 +                                                  \
-          fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100); \
-      const univary float voxelValue_11 =                                   \
-          voxelValue_110 +                                                  \
-          fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110); \
-      const univary float voxelValue_0 =                                    \
-          voxelValue_00 +                                                   \
-          fractionalLocalCoordinates.y * (voxelValue_01 - voxelValue_00);   \
-      const univary float voxelValue_1 =                                    \
-          voxelValue_10 +                                                   \
-          fractionalLocalCoordinates.y * (voxelValue_11 - voxelValue_10);   \
-                                                                            \
-      val = voxelValue_0 +                                                  \
-            fractionalLocalCoordinates.z * (voxelValue_1 - voxelValue_0);   \
-      break;                                                                \
-    }                                                                       \
-    }                                                                       \
-    return val;                                                             \
+#define template_sample_inner_64(type, univary)                                 \
+  inline univary float SSV_sample_inner_##type##_##univary##_64(                \
+      const SharedStructuredVolume *uniform self,                               \
+      const univary vec3f &clampedLocalCoordinates,                             \
+      const uniform VKLFilter filter,                                           \
+      const uniform uint32 attributeIndex,                                      \
+      const univary float &_time)                                               \
+  {                                                                             \
+    const uniform Data1D voxelData = self->attributesData[attributeIndex];      \
+                                                                                \
+    /* lower and upper corners of the box straddling the voxels to be           \
+     interpolated. */                                                           \
+    const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);         \
+                                                                                \
+    const uniform uint64 voxelOfs_dx = 1;                                       \
+    const uniform uint64 voxelOfs_dy = self->dimensions.x;                      \
+    const uniform uint64 voxelOfs_dz =                                          \
+        self->dimensions.x * (uint64)self->dimensions.y;                        \
+    const univary uint64 voxelOfs_0 = voxelIndex_0.x * voxelOfs_dx +            \
+                                      voxelIndex_0.y * voxelOfs_dy +            \
+                                      voxelIndex_0.z * voxelOfs_dz;             \
+                                                                                \
+    univary float val = 0.f;                                                    \
+    switch (filter) {                                                           \
+    case VKL_FILTER_NEAREST: {                                                  \
+      val = get_##type(voxelData, voxelOfs_0);                                  \
+      break;                                                                    \
+    }                                                                           \
+    case VKL_FILTER_TRILINEAR: {                                                \
+      /* fractional coordinates within the lower corner voxel used during       \
+       interpolation. */                                                        \
+      const univary vec3f frac =                                                \
+          clampedLocalCoordinates - to_float(voxelIndex_0);                     \
+                                                                                \
+      const uniform uint64 ofs000 = 0;                                          \
+      const uniform uint64 ofs001 = voxelOfs_dx;                                \
+      const univary float val000  = get_##type(voxelData, ofs000 + voxelOfs_0); \
+      const univary float val001  = get_##type(voxelData, ofs001 + voxelOfs_0); \
+      const univary float val00   = val000 + frac.x * (val001 - val000);        \
+                                                                                \
+      const uniform uint64 ofs010 = voxelOfs_dy;                                \
+      const uniform uint64 ofs011 = voxelOfs_dy + voxelOfs_dx;                  \
+      const univary float val010  = get_##type(voxelData, ofs010 + voxelOfs_0); \
+      const univary float val011  = get_##type(voxelData, ofs011 + voxelOfs_0); \
+      const univary float val01   = val010 + frac.x * (val011 - val010);        \
+                                                                                \
+      const uniform uint64 ofs100 = voxelOfs_dz;                                \
+      const uniform uint64 ofs101 = ofs100 + ofs001;                            \
+      const univary float val100  = get_##type(voxelData, ofs100 + voxelOfs_0); \
+      const univary float val101  = get_##type(voxelData, ofs101 + voxelOfs_0); \
+      const univary float val10   = val100 + frac.x * (val101 - val100);        \
+                                                                                \
+      const uniform uint64 ofs110 = ofs100 + ofs010;                            \
+      const uniform uint64 ofs111 = ofs100 + ofs011;                            \
+      const univary float val110  = get_##type(voxelData, ofs110 + voxelOfs_0); \
+      const univary float val111  = get_##type(voxelData, ofs111 + voxelOfs_0); \
+      const univary float val11   = val110 + frac.x * (val111 - val110);        \
+                                                                                \
+      const univary float val0 = val00 + frac.y * (val01 - val00);              \
+      const univary float val1 = val10 + frac.y * (val11 - val10);              \
+      val                      = val0 + frac.z * (val1 - val0);                 \
+      break;                                                                    \
+    }                                                                           \
+    }                                                                           \
+    return val;                                                                 \
   }
 
-template_sample_inner_64(varying);
-template_sample_inner_64(uniform);
+template_sample_inner_64(uint8, varying);
+template_sample_inner_64(int16, varying);
+template_sample_inner_64(uint16, varying);
+template_sample_inner_64(float, varying);
+template_sample_inner_64(double, varying);
+
+template_sample_inner_64(uint8, uniform);
+template_sample_inner_64(int16, uniform);
+template_sample_inner_64(uint16, uniform);
+template_sample_inner_64(float, uniform);
+template_sample_inner_64(double, uniform);
 #undef template_sample_inner_64
 
 #define template_sample_inner_TUV_64(type, univary)                         \
@@ -1189,16 +1193,21 @@ template_sample_inner_64(uniform);
     /* lower corner of the box straddling the voxels to be interpolated. */ \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);     \
                                                                             \
+    const uniform uint64 voxelOfs_dx = 1;                                   \
+    const uniform uint64 voxelOfs_dy = self->dimensions.x;                  \
+    const uniform uint64 voxelOfs_dz =                                      \
+        self->dimensions.x * (uint64)self->dimensions.y;                    \
+                                                                            \
     const univary uint64 timeOfs =                                          \
-        (uint64)voxelIndex_0.x * self->voxelOfs_dx +                        \
-        (uint64)voxelIndex_0.y * self->voxelOfs_dy +                        \
-        (uint64)voxelIndex_0.z * self->voxelOfs_dz;                         \
+        (uint64)voxelIndex_0.x * voxelOfs_dx +                              \
+        (uint64)voxelIndex_0.y * voxelOfs_dy +                              \
+        (uint64)voxelIndex_0.z * voxelOfs_dz;                               \
                                                                             \
     univary float val = 0.f;                                                \
     switch (filter) {                                                       \
     case VKL_FILTER_NEAREST: {                                              \
       val = interpolateVoxelTUV_##type##_##univary(                         \
-          self, attributeIndex, 0, timeOfs, time);                          \
+          self, attributeIndex, timeOfs, time);                             \
       break;                                                                \
     }                                                                       \
     case VKL_FILTER_TRILINEAR: {                                            \
@@ -1208,38 +1217,38 @@ template_sample_inner_64(uniform);
           clampedLocalCoordinates - to_float(voxelIndex_0);                 \
                                                                             \
       const uniform uint64 ofs000 = 0;                                      \
-      const uniform uint64 ofs001 = self->voxelOfs_dx;                      \
+      const uniform uint64 ofs001 = voxelOfs_dx;                            \
       const univary float val000  = interpolateVoxelTUV_##type##_##univary( \
-          self, attributeIndex, ofs000, timeOfs, time);                     \
+          self, attributeIndex, ofs000 + timeOfs, time);                    \
       const univary float val001 = interpolateVoxelTUV_##type##_##univary(  \
-          self, attributeIndex, ofs001, timeOfs, time);                     \
+          self, attributeIndex, ofs001 + timeOfs, time);                    \
                                                                             \
       const univary float val00 = val000 + frac.x * (val001 - val000);      \
                                                                             \
-      const uniform uint64 ofs010 = self->voxelOfs_dy;                      \
-      const uniform uint64 ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;  \
+      const uniform uint64 ofs010 = voxelOfs_dy;                            \
+      const uniform uint64 ofs011 = voxelOfs_dy + voxelOfs_dx;              \
       const univary float val010  = interpolateVoxelTUV_##type##_##univary( \
-          self, attributeIndex, ofs010, timeOfs, time);                     \
+          self, attributeIndex, ofs010 + timeOfs, time);                    \
       const univary float val011 = interpolateVoxelTUV_##type##_##univary(  \
-          self, attributeIndex, ofs011, timeOfs, time);                     \
+          self, attributeIndex, ofs011 + timeOfs, time);                    \
                                                                             \
       const univary float val01 = val010 + frac.x * (val011 - val010);      \
                                                                             \
-      const uniform uint64 ofs100 = self->voxelOfs_dz;                      \
+      const uniform uint64 ofs100 = voxelOfs_dz;                            \
       const uniform uint64 ofs101 = ofs100 + ofs001;                        \
       const univary float val100  = interpolateVoxelTUV_##type##_##univary( \
-          self, attributeIndex, ofs100, timeOfs, time);                     \
+          self, attributeIndex, ofs100 + timeOfs, time);                    \
       const univary float val101 = interpolateVoxelTUV_##type##_##univary(  \
-          self, attributeIndex, ofs101, timeOfs, time);                     \
+          self, attributeIndex, ofs101 + timeOfs, time);                    \
                                                                             \
       const univary float val10 = val100 + frac.x * (val101 - val100);      \
                                                                             \
       const uniform uint64 ofs110 = ofs100 + ofs010;                        \
       const uniform uint64 ofs111 = ofs100 + ofs011;                        \
       const univary float val110  = interpolateVoxelTUV_##type##_##univary( \
-          self, attributeIndex, ofs110, timeOfs, time);                     \
+          self, attributeIndex, ofs110 + timeOfs, time);                    \
       const univary float val111 = interpolateVoxelTUV_##type##_##univary(  \
-          self, attributeIndex, ofs111, timeOfs, time);                     \
+          self, attributeIndex, ofs111 + timeOfs, time);                    \
                                                                             \
       const univary float val11 = val110 + frac.x * (val111 - val110);      \
                                                                             \
@@ -1275,17 +1284,17 @@ template_sample_inner_TUV_64(double, uniform);
       const univary float &time)                                              \
   {                                                                           \
     const uniform Data1D voxelData = self->attributesData[attributeIndex];    \
-    const uniform Data1D timesConfig =                                        \
-        self->attributesTimeConfig[attributeIndex];                           \
-    const uniform uint32 numTimeSamples = get_uint8(timesConfig, (uint32)0);  \
+    const uniform uint32 numTimeSamples =                                     \
+        self->temporallyStructuredNumTimesteps;                               \
                                                                               \
     /* lower and upper corners of the box straddling the voxels to be         \
      interpolated. */                                                         \
     const univary vec3i voxelIndex_0 = to_int(clampedLocalCoordinates);       \
                                                                               \
-    const uniform uint64 voxelOfs_dx = numTimeSamples * self->voxelOfs_dx;    \
-    const uniform uint64 voxelOfs_dy = numTimeSamples * self->voxelOfs_dy;    \
-    const uniform uint64 voxelOfs_dz = numTimeSamples * self->voxelOfs_dz;    \
+    const uniform uint64 voxelOfs_dx = numTimeSamples;                        \
+    const uniform uint64 voxelOfs_dy = numTimeSamples * self->dimensions.x;   \
+    const uniform uint64 voxelOfs_dz = numTimeSamples * self->dimensions.x *  \
+                                      (uint64)self->dimensions.y;             \
     const univary uint64 voxelOfs_0  = voxelIndex_0.x * voxelOfs_dx +         \
                                       voxelIndex_0.y * voxelOfs_dy +          \
                                       voxelIndex_0.z * voxelOfs_dz;           \
@@ -1526,14 +1535,9 @@ inline void destructAttributesStorage(SharedStructuredVolume *uniform self)
     self->attributesData = NULL;
   }
 
-  if (self->attributesTimeData) {
-    delete[] self->attributesTimeData;
-    self->attributesTimeData = NULL;
-  }
-
-  if (self->attributesTimeConfig) {
-    delete[] self->attributesTimeConfig;
-    self->attributesTimeConfig = NULL;
+  if (self->computeVoxelRange) {
+    delete[] self->computeVoxelRange;
+    self->computeVoxelRange = NULL;
   }
 
   if (self->computeSamplesInner_varying) {
@@ -1541,19 +1545,9 @@ inline void destructAttributesStorage(SharedStructuredVolume *uniform self)
     self->computeSamplesInner_varying = NULL;
   }
 
-  if (self->getVoxels_varying) {
-    delete[] self->getVoxels_varying;
-    self->getVoxels_varying = NULL;
-  }
-
   if (self->computeSamplesInner_uniform) {
     delete[] self->computeSamplesInner_uniform;
     self->computeSamplesInner_uniform = NULL;
-  }
-
-  if (self->getVoxels_uniform) {
-    delete[] self->getVoxels_uniform;
-    self->getVoxels_uniform = NULL;
   }
 }
 
@@ -1562,18 +1556,15 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
 {
   self->numAttributes  = numAttributes;
   self->attributesData = uniform new uniform Data1D[numAttributes];
-  self->attributesTimeData = uniform new uniform Data1D[numAttributes];
-  self->attributesTimeConfig = uniform new uniform Data1D[numAttributes];
+
+  self->computeVoxelRange =
+      uniform new uniform ComputeVoxelRangeFunc[numAttributes];
 
   self->computeSamplesInner_varying =
       uniform new uniform ComputeSampleInnerVaryingFunc[numAttributes];
-  self->getVoxels_varying =
-      uniform new uniform GetVoxelVaryingFunc[numAttributes];
 
   self->computeSamplesInner_uniform =
       uniform new uniform ComputeSampleInnerUniformFunc[numAttributes];
-  self->getVoxels_uniform =
-      uniform new uniform GetVoxelUniformFunc[numAttributes];
 }
 
 // wrappers to enable setting old-style function pointers in the Volume
@@ -1600,6 +1591,415 @@ uniform float computeSample_uniform_0_iterator_wrapper(
       sampler->filter,
       0,
       time);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Helper functions for assigning sampling functions //////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+inline uniform bool assignTemporallyConstantSamplingFunctions(
+    SharedStructuredVolume *uniform self, const uniform uint32 attributeIndex)
+{
+  assert(!(hasStructuredTimeData(self) || hasUnstructuredTimeData(self)));
+
+  ComputeVoxelRangeFunc cvr            = NULL;
+  ComputeSampleInnerVaryingFunc innerV = NULL;
+  ComputeSampleInnerUniformFunc innerU = NULL;
+
+  // default sampling functions (64-bit addressing)
+  switch (self->attributesData[attributeIndex].dataType) {
+  case (VKL_UCHAR): {
+    cvr    = SSV_computeVoxelRange_uint8;
+    innerV = SSV_sample_inner_uint8_varying_64;
+    innerU = SSV_sample_inner_uint8_uniform_64;
+    break;
+  }
+  case (VKL_SHORT): {
+    cvr    = SSV_computeVoxelRange_int16;
+    innerV = SSV_sample_inner_int16_varying_64;
+    innerU = SSV_sample_inner_int16_uniform_64;
+    break;
+  }
+  case (VKL_USHORT): {
+    cvr    = SSV_computeVoxelRange_uint16;
+    innerV = SSV_sample_inner_uint16_varying_64;
+    innerU = SSV_sample_inner_uint16_uniform_64;
+    break;
+  }
+  case (VKL_FLOAT): {
+    cvr    = SSV_computeVoxelRange_float;
+    innerV = SSV_sample_inner_float_varying_64;
+    innerU = SSV_sample_inner_float_uniform_64;
+    break;
+  }
+  case (VKL_DOUBLE): {
+    cvr    = SSV_computeVoxelRange_double;
+    innerV = SSV_sample_inner_double_varying_64;
+    innerU = SSV_sample_inner_double_uniform_64;
+    break;
+  }
+  default: {
+    print("#vkl:shared_structured_volume: unknown voxelType\n");
+    return false;
+  }
+  }
+
+  // sampling functions for 32-bit addressing
+  if (safe_32bit_indexing(self->attributesData[attributeIndex],
+                          self->attributesData[attributeIndex].numItems)) {
+    // in this case, we know ALL addressing can be 32-bit.
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
+
+    switch (self->attributesData[attributeIndex].dataType) {
+    case (VKL_UCHAR): {
+      innerV = SSV_sample_inner_uint8_varying_32;
+      innerU = SSV_sample_inner_uint8_uniform_32;
+      break;
+    }
+    case (VKL_SHORT): {
+      innerV = SSV_sample_inner_int16_varying_32;
+      innerU = SSV_sample_inner_int16_uniform_32;
+      break;
+    }
+    case (VKL_USHORT): {
+      innerV = SSV_sample_inner_uint16_varying_32;
+      innerU = SSV_sample_inner_uint16_uniform_32;
+      break;
+    }
+    case (VKL_FLOAT): {
+      innerV = SSV_sample_inner_float_varying_32;
+      innerU = SSV_sample_inner_float_uniform_32;
+      break;
+    }
+    case (VKL_DOUBLE): {
+      innerV = SSV_sample_inner_double_varying_32;
+      innerU = SSV_sample_inner_double_uniform_32;
+      break;
+    }
+    default: {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
+    }
+    }
+  }
+
+  else if (safe_32bit_indexing(
+               self->attributesData[attributeIndex],
+               self->dimensions.x * (uint64)self->dimensions.y)) {
+    // in this case, we know we can do 32-bit addressing within a
+    // slice, but need 64-bit arithmetic to get slice beginning.
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
+
+    switch (self->attributesData[attributeIndex].dataType) {
+    case (VKL_UCHAR): {
+      innerV = SSV_sample_inner_uint8_varying_64_32;
+      innerU = SSV_sample_inner_uint8_uniform_64_32;
+      break;
+    }
+    case (VKL_SHORT): {
+      innerV = SSV_sample_inner_int16_varying_64_32;
+      innerU = SSV_sample_inner_int16_uniform_64_32;
+      break;
+    }
+    case (VKL_USHORT): {
+      innerV = SSV_sample_inner_uint16_varying_64_32;
+      innerU = SSV_sample_inner_uint16_uniform_64_32;
+      break;
+    }
+    case (VKL_FLOAT): {
+      innerV = SSV_sample_inner_float_varying_64_32;
+      innerU = SSV_sample_inner_float_uniform_64_32;
+      break;
+    }
+    case (VKL_DOUBLE): {
+      innerV = SSV_sample_inner_double_varying_64_32;
+      innerU = SSV_sample_inner_double_uniform_64_32;
+      break;
+    }
+    default: {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
+    }
+    }
+  }
+
+  assert(cvr && innerV && innerU);
+  self->computeVoxelRange[attributeIndex]           = cvr;
+  self->computeSamplesInner_varying[attributeIndex] = innerV;
+  self->computeSamplesInner_uniform[attributeIndex] = innerU;
+
+  return true;
+}
+
+inline uniform bool assignTemporallyStructuredSamplingFunctions(
+    SharedStructuredVolume *uniform self, const uniform uint32 attributeIndex)
+{
+  assert(hasStructuredTimeData(self));
+
+  ComputeVoxelRangeFunc cvr            = NULL;
+  ComputeSampleInnerVaryingFunc innerV = NULL;
+  ComputeSampleInnerUniformFunc innerU = NULL;
+
+  const uniform uint32 numTimeSamples = self->temporallyStructuredNumTimesteps;
+
+  // default sampling functions (64-bit addressing)
+  switch (self->attributesData[attributeIndex].dataType) {
+  case (VKL_UCHAR): {
+    cvr    = SSV_computeVoxelRange_MB_uint8;
+    innerV = SSV_sample_inner_MB_uint8_varying_64;
+    innerU = SSV_sample_inner_MB_uint8_uniform_64;
+    break;
+  }
+  case (VKL_SHORT): {
+    cvr    = SSV_computeVoxelRange_MB_int16;
+    innerV = SSV_sample_inner_MB_int16_varying_64;
+    innerU = SSV_sample_inner_MB_int16_uniform_64;
+    break;
+  }
+  case (VKL_USHORT): {
+    cvr    = SSV_computeVoxelRange_MB_uint16;
+    innerV = SSV_sample_inner_MB_uint16_varying_64;
+    innerU = SSV_sample_inner_MB_uint16_uniform_64;
+    break;
+  }
+  case (VKL_FLOAT): {
+    cvr    = SSV_computeVoxelRange_MB_float;
+    innerV = SSV_sample_inner_MB_float_varying_64;
+    innerU = SSV_sample_inner_MB_float_uniform_64;
+    break;
+  }
+  case (VKL_DOUBLE): {
+    cvr    = SSV_computeVoxelRange_MB_double;
+    innerV = SSV_sample_inner_MB_double_varying_64;
+    innerU = SSV_sample_inner_MB_double_uniform_64;
+    break;
+  }
+  default: {
+    print("#vkl:shared_structured_volume: unknown voxelType\n");
+    return false;
+  }
+  }
+
+  // sampling functions for 32-bit addressing
+  if (safe_32bit_indexing(self->attributesData[attributeIndex],
+                          self->attributesData[attributeIndex].numItems)) {
+    // in this case, we know ALL addressing can be 32-bit.
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
+
+    switch (self->attributesData[attributeIndex].dataType) {
+    case (VKL_UCHAR): {
+      innerV = SSV_sample_inner_MB_uint8_varying_32;
+      innerU = SSV_sample_inner_MB_uint8_uniform_32;
+      break;
+    }
+    case (VKL_SHORT): {
+      innerV = SSV_sample_inner_MB_int16_varying_32;
+      innerU = SSV_sample_inner_MB_int16_uniform_32;
+      break;
+    }
+    case (VKL_USHORT): {
+      innerV = SSV_sample_inner_MB_uint16_varying_32;
+      innerU = SSV_sample_inner_MB_uint16_uniform_32;
+      break;
+    }
+    case (VKL_FLOAT): {
+      innerV = SSV_sample_inner_MB_float_varying_32;
+      innerU = SSV_sample_inner_MB_float_uniform_32;
+      break;
+    }
+    case (VKL_DOUBLE): {
+      innerV = SSV_sample_inner_MB_double_varying_32;
+      innerU = SSV_sample_inner_MB_double_uniform_32;
+      break;
+    }
+    default: {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
+    }
+    }
+  }
+
+  else if (safe_32bit_indexing(self->attributesData[attributeIndex],
+                               numTimeSamples * self->dimensions.x *
+                                   (uint64)self->dimensions.y)) {
+    // in this case, we know we can do 32-bit addressing within a
+    // slice, but need 64-bit arithmetic to get slice beginning.
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
+
+    switch (self->attributesData[attributeIndex].dataType) {
+    case (VKL_UCHAR): {
+      innerV = SSV_sample_inner_MB_uint8_varying_64_32;
+      innerU = SSV_sample_inner_MB_uint8_uniform_64_32;
+      break;
+    }
+    case (VKL_SHORT): {
+      innerV = SSV_sample_inner_MB_int16_varying_64_32;
+      innerU = SSV_sample_inner_MB_int16_uniform_64_32;
+      break;
+    }
+    case (VKL_USHORT): {
+      innerV = SSV_sample_inner_MB_uint16_varying_64_32;
+      innerU = SSV_sample_inner_MB_uint16_uniform_64_32;
+      break;
+    }
+    case (VKL_FLOAT): {
+      innerV = SSV_sample_inner_MB_float_varying_64_32;
+      innerU = SSV_sample_inner_MB_float_uniform_64_32;
+      break;
+    }
+    case (VKL_DOUBLE): {
+      innerV = SSV_sample_inner_MB_double_varying_64_32;
+      innerU = SSV_sample_inner_MB_double_uniform_64_32;
+      break;
+    }
+    default: {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
+    }
+    }
+  }
+
+  assert(cvr && innerV && innerU);
+  self->computeVoxelRange[attributeIndex]           = cvr;
+  self->computeSamplesInner_varying[attributeIndex] = innerV;
+  self->computeSamplesInner_uniform[attributeIndex] = innerU;
+
+  return true;
+}
+
+inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
+    SharedStructuredVolume *uniform self, const uniform uint32 attributeIndex)
+{
+  assert(hasUnstructuredTimeData(self));
+
+  ComputeVoxelRangeFunc cvr            = NULL;
+  ComputeSampleInnerVaryingFunc innerV = NULL;
+  ComputeSampleInnerUniformFunc innerU = NULL;
+
+  // default sampling functions (64-bit addressing on time indices)
+  switch (self->attributesData[attributeIndex].dataType) {
+  case (VKL_UCHAR): {
+    cvr    = SSV_computeVoxelRange_TUV_uint8;
+    innerV = SSV_sample_inner_TUV_uint8_varying_64;
+    innerU = SSV_sample_inner_TUV_uint8_uniform_64;
+    break;
+  }
+  case (VKL_SHORT): {
+    cvr    = SSV_computeVoxelRange_TUV_int16;
+    innerV = SSV_sample_inner_TUV_int16_varying_64;
+    innerU = SSV_sample_inner_TUV_int16_uniform_64;
+    break;
+  }
+  case (VKL_USHORT): {
+    cvr    = SSV_computeVoxelRange_TUV_uint16;
+    innerV = SSV_sample_inner_TUV_uint16_varying_64;
+    innerU = SSV_sample_inner_TUV_uint16_uniform_64;
+    break;
+  }
+  case (VKL_FLOAT): {
+    cvr    = SSV_computeVoxelRange_TUV_float;
+    innerV = SSV_sample_inner_TUV_float_varying_64;
+    innerU = SSV_sample_inner_TUV_float_uniform_64;
+    break;
+  }
+  case (VKL_DOUBLE): {
+    cvr    = SSV_computeVoxelRange_TUV_double;
+    innerV = SSV_sample_inner_TUV_double_varying_64;
+    innerU = SSV_sample_inner_TUV_double_uniform_64;
+    break;
+  }
+  default: {
+    print("#vkl:shared_structured_volume: unknown voxelType\n");
+    return false;
+  }
+  }
+
+  // sampling functions for 32-bit addressing (on time indices)
+  if (safe_32bit_indexing(self->attributesData[attributeIndex],
+                          self->attributesData[attributeIndex].numItems)) {
+    // in this case, we know ALL addressing can be 32-bit.
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
+
+    switch (self->attributesData[attributeIndex].dataType) {
+    case (VKL_UCHAR): {
+      innerV = SSV_sample_inner_TUV_uint8_varying_32;
+      innerU = SSV_sample_inner_TUV_uint8_uniform_32;
+      break;
+    }
+    case (VKL_SHORT): {
+      innerV = SSV_sample_inner_TUV_int16_varying_32;
+      innerU = SSV_sample_inner_TUV_int16_uniform_32;
+      break;
+    }
+    case (VKL_USHORT): {
+      innerV = SSV_sample_inner_TUV_uint16_varying_32;
+      innerU = SSV_sample_inner_TUV_uint16_uniform_32;
+      break;
+    }
+    case (VKL_FLOAT): {
+      innerV = SSV_sample_inner_TUV_float_varying_32;
+      innerU = SSV_sample_inner_TUV_float_uniform_32;
+      break;
+    }
+    case (VKL_DOUBLE): {
+      innerV = SSV_sample_inner_TUV_double_varying_32;
+      innerU = SSV_sample_inner_TUV_double_uniform_32;
+      break;
+    }
+    default: {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
+    }
+    }
+  }
+
+  // sampling functions for 64/32-bit addressing (on time indices)
+  else if (safe_32bit_indexing(
+               self->attributesData[attributeIndex],
+               self->dimensions.x * (uint64)self->dimensions.y)) {
+    // in this case, we know we can do 32-bit addressing within a
+    // slice, but need 64-bit arithmetic to get slice beginning.
+    PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
+
+    switch (self->attributesData[attributeIndex].dataType) {
+    case (VKL_UCHAR): {
+      innerV = SSV_sample_inner_TUV_uint8_varying_64_32;
+      innerU = SSV_sample_inner_TUV_uint8_uniform_64_32;
+      break;
+    }
+    case (VKL_SHORT): {
+      innerV = SSV_sample_inner_TUV_int16_varying_64_32;
+      innerU = SSV_sample_inner_TUV_int16_uniform_64_32;
+      break;
+    }
+    case (VKL_USHORT): {
+      innerV = SSV_sample_inner_TUV_uint16_varying_64_32;
+      innerU = SSV_sample_inner_TUV_uint16_uniform_64_32;
+      break;
+    }
+    case (VKL_FLOAT): {
+      innerV = SSV_sample_inner_TUV_float_varying_64_32;
+      innerU = SSV_sample_inner_TUV_float_uniform_64_32;
+      break;
+    }
+    case (VKL_DOUBLE): {
+      innerV = SSV_sample_inner_TUV_double_varying_64_32;
+      innerU = SSV_sample_inner_TUV_double_uniform_64_32;
+      break;
+    }
+    default: {
+      print("#vkl:shared_structured_volume: unknown voxelType\n");
+      return false;
+    }
+    }
+  }
+
+  assert(cvr && innerV && innerU);
+  self->computeVoxelRange[attributeIndex]           = cvr;
+  self->computeSamplesInner_varying[attributeIndex] = innerV;
+  self->computeSamplesInner_uniform[attributeIndex] = innerU;
+
+  return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1675,7 +2075,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
-    varying float t = time[i];
+    varying float t = time ? time[i] : 0.f;
 
     samples[i] = SharedStructuredVolume_computeSample_varying(
         self, oc, sampler->filter, attributeIndex, t);
@@ -1817,7 +2217,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f objectCoordinatesV = objectCoordinates[i];
-    varying float timeV = time[i];
+    varying float timeV = time ? time[i] : 0.f;
 
     vec3f clampedLocalCoordinates;
     bool inBounds;
@@ -1868,18 +2268,19 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Constructor)
   return self;
 }
 
-export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
-                                  void *uniform _self,
-                                  const uniform uint32 numAttributes,
-                                  const Data1D *uniform *uniform attributesData,
-                                  const Data1D *uniform *uniform attributesTimeData,
-                                  const Data1D *uniform *uniform attributesTimeConfig,
-                                  const uniform vec3i &dimensions,
-                                  const uniform SharedStructuredVolumeGridType
-                                      gridType,
-                                  const uniform vec3f &gridOrigin,
-                                  const uniform vec3f &gridSpacing,
-                                  const uniform VKLFilter filter)
+export uniform bool EXPORT_UNIQUE(
+    SharedStructuredVolume_set,
+    void *uniform _self,
+    const uniform uint32 numAttributes,
+    const Data1D *uniform *uniform attributesData,
+    const uniform uint32 temporallyStructuredNumTimesteps,
+    const Data1D *uniform temporallyUnstructuredIndices,
+    const Data1D *uniform temporallyUnstructuredTimes,
+    const uniform vec3i &dimensions,
+    const uniform SharedStructuredVolumeGridType gridType,
+    const uniform vec3f &gridOrigin,
+    const uniform vec3f &gridSpacing,
+    const uniform VKLFilter filter)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -1889,18 +2290,21 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
 
   for (uniform uint32 i = 0; i < numAttributes; i++) {
     self->attributesData[i] = *(attributesData[i]);
-    if (attributesTimeData && attributesTimeData[i]) {
-      self->attributesTimeData[i] = *(attributesTimeData[i]);
-    } else {
-      self->attributesTimeData[i].addr = NULL;
-      self->attributesTimeData[i].numItems = 0;
-    }
-    if (attributesTimeConfig) {
-      self->attributesTimeConfig[i] = *(attributesTimeConfig[i]);
-    } else {
-      self->attributesTimeConfig[i].addr = NULL;
-      self->attributesTimeConfig[i].numItems = 0;
-    }
+  }
+
+  self->temporallyStructuredNumTimesteps = temporallyStructuredNumTimesteps;
+
+  if (temporallyUnstructuredIndices) {
+    self->temporallyUnstructuredIndices = *(temporallyUnstructuredIndices);
+  } else {
+    self->temporallyUnstructuredIndices.addr     = NULL;
+    self->temporallyUnstructuredIndices.numItems = 0;
+  }
+  if (temporallyUnstructuredTimes) {
+    self->temporallyUnstructuredTimes = *(temporallyUnstructuredTimes);
+  } else {
+    self->temporallyUnstructuredTimes.addr     = NULL;
+    self->temporallyUnstructuredTimes.numItems = 0;
   }
 
   self->dimensions  = dimensions;
@@ -1953,457 +2357,35 @@ export uniform bool EXPORT_UNIQUE(SharedStructuredVolume_set,
   self->filter = filter;
 
   for (uniform uint32 i = 0; i < numAttributes; i++) {
-    // default sampling functions (64-bit addressing)
-    if (attributeHasStructuredTimeData(self, i)) {
-      switch (self->attributesData[i].dataType) {
-      case (VKL_UCHAR): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_MB_uint8_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_MB_uint8_uniform_64;
-        break;
-      }
-      case (VKL_SHORT): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_MB_int16_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_MB_int16_uniform_64;
-        break;
-      }
-      case (VKL_USHORT): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_MB_uint16_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_MB_uint16_uniform_64;
-        break;
-      }
-      case (VKL_FLOAT): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_MB_float_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_MB_float_uniform_64;
-        break;
-      }
-      case (VKL_DOUBLE): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_MB_double_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_MB_double_uniform_64;
-        break;
-      }
-      default: {
-        print("#vkl:shared_structured_volume: unknown voxelType\n");
-        return false;
-      }
-      }
-    } else if (attributeHasUnstructuredTimeData(self, i)) {
-      switch (self->attributesData[i].dataType) {
-      case (VKL_UCHAR): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_TUV_uint8_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_TUV_uint8_uniform_64;
-        break;
-      }
-      case (VKL_SHORT): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_TUV_int16_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_TUV_int16_uniform_64;
-        break;
-      }
-      case (VKL_USHORT): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_TUV_uint16_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_TUV_uint16_uniform_64;
-        break;
-      }
-      case (VKL_FLOAT): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_TUV_float_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_TUV_float_uniform_64;
-        break;
-      }
-      case (VKL_DOUBLE): {
-        self->computeSamplesInner_varying[i] =
-            SSV_sample_inner_TUV_double_varying_64;
-        self->computeSamplesInner_uniform[i] =
-            SSV_sample_inner_TUV_double_uniform_64;
-        break;
-      }
-      default: {
-        print("#vkl:shared_structured_volume: unknown voxelType\n");
-        return false;
-      }
-      }
+    uniform bool success = false;
+
+    if (hasStructuredTimeData(self)) {
+      success = assignTemporallyStructuredSamplingFunctions(self, i);
+      PRINT_DEBUG(
+          "#vkl:shared_structured_volume: attribute % temporally structured\n",
+          i);
+
+    } else if (hasUnstructuredTimeData(self)) {
+      success = assignTemporallyUnstructuredSamplingFunctions(self, i);
+      PRINT_DEBUG(
+          "#vkl:shared_structured_volume: attribute % temporally "
+          "unstructured\n",
+          i);
+
     } else {
-      self->computeSamplesInner_varying[i] = SSV_sample_inner_varying_64;
-      self->computeSamplesInner_uniform[i] = SSV_sample_inner_uniform_64;
+      success = assignTemporallyConstantSamplingFunctions(self, i);
+      PRINT_DEBUG(
+          "#vkl:shared_structured_volume: attribute % temporally constant\n",
+          i);
     }
 
-    // sampling functions for 32-bit addressing
-    if (safe_32bit_indexing(self->attributesData[i],
-                            self->attributesData[i].numItems)) {
-      // in this case, we know ALL addressing can be 32-bit.
-      PRINT_DEBUG("#vkl:shared_structured_volume: using 32-bit mode\n");
-
-      if (attributeHasStructuredTimeData(self, i)) {
-        switch (self->attributesData[i].dataType) {
-        case (VKL_UCHAR): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_uint8_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_uint8_uniform_32;
-          break;
-        }
-        case (VKL_SHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_int16_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_int16_uniform_32;
-          break;
-        }
-        case (VKL_USHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_uint16_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_uint16_uniform_32;
-          break;
-        }
-        case (VKL_FLOAT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_float_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_float_uniform_32;
-          break;
-        }
-        case (VKL_DOUBLE): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_double_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_double_uniform_32;
-          break;
-        }
-        default: {
-          print("#vkl:shared_structured_volume: unknown voxelType\n");
-          return false;
-        }
-        }
-      } else if (attributeHasUnstructuredTimeData(self, i)) {
-        switch (self->attributesData[i].dataType) {
-        case (VKL_UCHAR): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_uint8_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_uint8_uniform_32;
-          break;
-        }
-        case (VKL_SHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_int16_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_int16_uniform_32;
-          break;
-        }
-        case (VKL_USHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_uint16_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_uint16_uniform_32;
-          break;
-        }
-        case (VKL_FLOAT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_float_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_float_uniform_32;
-          break;
-        }
-        case (VKL_DOUBLE): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_double_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_double_uniform_32;
-          break;
-        }
-        default: {
-          print("#vkl:shared_structured_volume: unknown voxelType\n");
-          return false;
-        }
-        }
-      } else {
-        switch (self->attributesData[i].dataType) {
-        case (VKL_UCHAR): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_uint8_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_uint8_uniform_32;
-          break;
-        }
-        case (VKL_SHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_int16_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_int16_uniform_32;
-          break;
-        }
-        case (VKL_USHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_uint16_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_uint16_uniform_32;
-          break;
-        }
-        case (VKL_FLOAT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_float_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_float_uniform_32;
-          break;
-        }
-        case (VKL_DOUBLE): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_double_varying_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_double_uniform_32;
-          break;
-        }
-        default: {
-          print("#vkl:shared_structured_volume: unknown voxelType\n");
-          return false;
-        }
-        }
-      }
-
-      switch (self->attributesData[i].dataType) {
-      case (VKL_UCHAR): {
-        self->getVoxels_varying[i] = SSV_getVoxel_uint8_varying_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_uint8_uniform_32;
-        break;
-      }
-      case (VKL_SHORT): {
-        self->getVoxels_varying[i] = SSV_getVoxel_int16_varying_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_int16_uniform_32;
-        break;
-      }
-      case (VKL_USHORT): {
-        self->getVoxels_varying[i] = SSV_getVoxel_uint16_varying_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_uint16_uniform_32;
-        break;
-      }
-      case (VKL_FLOAT): {
-        self->getVoxels_varying[i] = SSV_getVoxel_float_varying_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_float_uniform_32;
-        break;
-      }
-      case (VKL_DOUBLE): {
-        self->getVoxels_varying[i] = SSV_getVoxel_double_varying_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_double_uniform_32;
-        break;
-      }
-      default: {
-        print("#vkl:shared_structured_volume: unknown voxelType\n");
-        return false;
-      }
-      }
-
-    } else if (safe_32bit_indexing(self->attributesData[i],
-                                   dimensions.x * (uint64)dimensions.y)) {
-      // in this case, we know we can do 32-bit addressing within a
-      // slice, but need 64-bit arithmetic to get slice beginning.
-      PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
-
-      if (attributeHasStructuredTimeData(self, i)) {
-        switch (self->attributesData[i].dataType) {
-        case (VKL_UCHAR): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_uint8_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_uint8_uniform_64_32;
-          break;
-        }
-        case (VKL_SHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_int16_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_int16_uniform_64_32;
-          break;
-        }
-        case (VKL_USHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_uint16_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_uint16_uniform_64_32;
-          break;
-        }
-        case (VKL_FLOAT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_float_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_float_uniform_64_32;
-          break;
-        }
-        case (VKL_DOUBLE): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_MB_double_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_MB_double_uniform_64_32;
-          break;
-        }
-        default: {
-          print("#vkl:shared_structured_volume: unknown voxelType\n");
-          return false;
-        }
-        }
-      } else if (attributeHasUnstructuredTimeData(self, i)) {
-        switch (self->attributesData[i].dataType) {
-        case (VKL_UCHAR): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_uint8_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_uint8_uniform_64_32;
-          break;
-        }
-        case (VKL_SHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_int16_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_int16_uniform_64_32;
-          break;
-        }
-        case (VKL_USHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_uint16_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_uint16_uniform_64_32;
-          break;
-        }
-        case (VKL_FLOAT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_float_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_float_uniform_64_32;
-          break;
-        }
-        case (VKL_DOUBLE): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_TUV_double_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_TUV_double_uniform_64_32;
-          break;
-        }
-        default: {
-          print("#vkl:shared_structured_volume: unknown voxelType\n");
-          return false;
-        }
-        }
-      } else {
-        switch (self->attributesData[i].dataType) {
-        case (VKL_UCHAR): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_uint8_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_uint8_uniform_64_32;
-          break;
-        }
-        case (VKL_SHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_int16_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_int16_uniform_64_32;
-          break;
-        }
-        case (VKL_USHORT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_uint16_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_uint16_uniform_64_32;
-          break;
-        }
-        case (VKL_FLOAT): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_float_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_float_uniform_64_32;
-          break;
-        }
-        case (VKL_DOUBLE): {
-          self->computeSamplesInner_varying[i] =
-              SSV_sample_inner_double_varying_64_32;
-          self->computeSamplesInner_uniform[i] =
-              SSV_sample_inner_double_uniform_64_32;
-          break;
-        }
-        default: {
-          print("#vkl:shared_structured_volume: unknown voxelType\n");
-          return false;
-        }
-        }
-      }
-
-      switch (self->attributesData[i].dataType) {
-      case (VKL_UCHAR): {
-        self->getVoxels_varying[i] = SSV_getVoxel_uint8_varying_64_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_uint8_uniform_64_32;
-        break;
-      }
-      case (VKL_SHORT): {
-        self->getVoxels_varying[i] = SSV_getVoxel_int16_varying_64_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_int16_uniform_64_32;
-        break;
-      }
-      case (VKL_USHORT): {
-        self->getVoxels_varying[i] = SSV_getVoxel_uint16_varying_64_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_uint16_uniform_64_32;
-        break;
-      }
-      case (VKL_FLOAT): {
-        self->getVoxels_varying[i] = SSV_getVoxel_float_varying_64_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_float_uniform_64_32;
-        break;
-      }
-      case (VKL_DOUBLE): {
-        self->getVoxels_varying[i] = SSV_getVoxel_double_varying_64_32;
-        self->getVoxels_uniform[i] = SSV_getVoxel_double_uniform_64_32;
-        break;
-      }
-      default: {
-        print("#vkl:shared_structured_volume: unknown voxelType\n");
-        return false;
-      }
-      }
-
-    } else {
-      // in this case, even a single slice is too big to do 32-bit
-      // addressing, and we have to do 64-bit throughout
-      PRINT_DEBUG("#vkl:shared_structured_volume: using 64-bit mode\n");
-
-      if (self->attributesData[i].dataType == VKL_UCHAR) {
-        self->getVoxels_varying[i] = SSV_getVoxel_uint8_varying_64;
-        self->getVoxels_uniform[i] = SSV_getVoxel_uint8_uniform_64;
-      } else if (self->attributesData[i].dataType == VKL_SHORT) {
-        self->getVoxels_varying[i] = SSV_getVoxel_int16_varying_64;
-        self->getVoxels_uniform[i] = SSV_getVoxel_int16_uniform_64;
-      } else if (self->attributesData[i].dataType == VKL_USHORT) {
-        self->getVoxels_varying[i] = SSV_getVoxel_uint16_varying_64;
-        self->getVoxels_uniform[i] = SSV_getVoxel_uint16_uniform_64;
-      } else if (self->attributesData[i].dataType == VKL_FLOAT) {
-        self->getVoxels_varying[i] = SSV_getVoxel_float_varying_64;
-        self->getVoxels_uniform[i] = SSV_getVoxel_float_uniform_64;
-      } else if (self->attributesData[i].dataType == VKL_DOUBLE) {
-        self->getVoxels_varying[i] = SSV_getVoxel_double_varying_64;
-        self->getVoxels_uniform[i] = SSV_getVoxel_double_uniform_64;
-      } else {
-        print("#vkl:shared_structured_volume: unknown voxelType\n");
-        return false;
-      }
+    if (!success) {
+      print(
+          "#vkl:shared_structured_volume: error assigning sampling "
+          "functions\n");
+      return false;
     }
   }
-
-  // TODO: temporary hack for Volume superclass functions used for iterators,
-  // etc.; restricts to first attribute
 
   return true;
 }

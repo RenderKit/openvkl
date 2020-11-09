@@ -49,7 +49,7 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3];
-  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, &time);
+  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, time);
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 

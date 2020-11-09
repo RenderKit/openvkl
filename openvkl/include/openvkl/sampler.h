@@ -77,7 +77,7 @@ void vklComputeSampleM(VKLSampler sampler,
                        float *samples,
                        unsigned int M,
                        const unsigned int *attributeIndices,
-                       const float *times VKL_DEFAULT_VAL(= nullptr));
+                       float time VKL_DEFAULT_VAL(= 0));
 
 OPENVKL_INTERFACE
 void vklComputeSampleM4(const int *valid,

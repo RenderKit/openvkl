@@ -96,16 +96,20 @@ inline void GridAccelerator_computeCellValueRange(
   foreach (k = 0 ... CELL_WIDTH + 1,
            j = 0 ... CELL_WIDTH + 1,
            i = 0 ... CELL_WIDTH + 1) {
-    const vec3i voxelIndex = make_vec3i(cellIndex.x * CELL_WIDTH + i,
+    const vec3i localCoordinates = make_vec3i(cellIndex.x * CELL_WIDTH + i,
                                         cellIndex.y * CELL_WIDTH + j,
                                         cellIndex.z * CELL_WIDTH + k);
-    float value;
-    volume->getVoxels_varying[attributeIndex](
-        volume, min(volume->dimensions - 1, voxelIndex), attributeIndex, value);
 
-    if (!isnan(value)) {
-      valueRange.lower = min(valueRange.lower, reduce_min(value));
-      valueRange.upper = max(valueRange.upper, reduce_max(value));
+    const range1f voxelRange = volume->computeVoxelRange[attributeIndex](
+        volume, min(volume->dimensions - 1, localCoordinates), attributeIndex);
+
+    if (!isnan(voxelRange.lower)) {
+      extend(valueRange, voxelRange.lower);
+      cellEmpty        = false;
+    }
+
+    if (!isnan(voxelRange.upper)) {
+      extend(valueRange, voxelRange.upper);
       cellEmpty        = false;
     }
   }

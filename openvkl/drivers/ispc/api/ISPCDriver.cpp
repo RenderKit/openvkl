@@ -234,18 +234,18 @@ namespace openvkl {
       return (VKLSampler)volumeObject.newSampler();
     }
 
-#define __define_computeSampleN(WIDTH)                                     \
-  template <int W>                                                         \
-  void ISPCDriver<W>::computeSample##WIDTH(                                \
-      const int *valid,                                                    \
-      VKLSampler sampler,                                                  \
-      const vvec3fn<WIDTH> &objectCoordinates,                             \
-      float *samples,                                                      \
-      unsigned int attributeIndex,                                         \
-      const vfloatn<WIDTH> &times)                                         \
-  {                                                                        \
-    computeSampleAnyWidth<WIDTH>(                                          \
-        valid, sampler, objectCoordinates, samples, attributeIndex, times);\
+#define __define_computeSampleN(WIDTH)                                      \
+  template <int W>                                                          \
+  void ISPCDriver<W>::computeSample##WIDTH(                                 \
+      const int *valid,                                                     \
+      VKLSampler sampler,                                                   \
+      const vvec3fn<WIDTH> &objectCoordinates,                              \
+      float *samples,                                                       \
+      unsigned int attributeIndex,                                          \
+      const float *times)                                                   \
+  {                                                                         \
+    computeSampleAnyWidth<WIDTH>(                                           \
+        valid, sampler, objectCoordinates, samples, attributeIndex, times); \
   }
 
     __define_computeSampleN(4);
@@ -261,12 +261,13 @@ namespace openvkl {
                                        const vvec3fn<1> &objectCoordinates,
                                        float *sample,
                                        unsigned int attributeIndex,
-                                       const vfloatn<1> &times)
+                                       const float *time)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      vfloatn<1> timeW(time, 1);
       vfloatn<1> sampleW;
       samplerObject.computeSample(
-          objectCoordinates, sampleW, attributeIndex, times);
+          objectCoordinates, sampleW, attributeIndex, timeW);
       *sample = sampleW[0];
     }
 
@@ -276,7 +277,7 @@ namespace openvkl {
                                        const vvec3fn<1> *objectCoordinates,
                                        float *samples,
                                        unsigned int attributeIndex,
-                                       const vfloatn<1> *times)
+                                       const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
       samplerObject.computeSampleN(
@@ -292,7 +293,7 @@ namespace openvkl {
       float *samples,                                \
       unsigned int M,                                \
       const unsigned int *attributeIndices,          \
-      const vfloatn<WIDTH> &times)                    \
+      const float *times)                            \
   {                                                  \
     computeSampleMAnyWidth<WIDTH>(valid,             \
                                   sampler,           \
@@ -300,7 +301,7 @@ namespace openvkl {
                                   samples,           \
                                   M,                 \
                                   attributeIndices,  \
-                                  times);             \
+                                  times);            \
   }
 
     __define_computeSampleMN(4);
@@ -317,11 +318,12 @@ namespace openvkl {
                                         float *samples,
                                         unsigned int M,
                                         const unsigned int *attributeIndices,
-                                        const vfloatn<1> &times)
+                                        const float *time)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      vfloatn<1> timeW(time, 1);
       samplerObject.computeSampleM(
-          objectCoordinates, samples, M, attributeIndices, times);
+          objectCoordinates, samples, M, attributeIndices, timeW);
     }
 
     template <int W>
@@ -331,7 +333,7 @@ namespace openvkl {
                                         float *samples,
                                         unsigned int M,
                                         const unsigned int *attributeIndices,
-                                        const vfloatn<1> *times)
+                                        const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
       samplerObject.computeSampleMN(
@@ -425,12 +427,12 @@ namespace openvkl {
                                          const vvec3fn<OW> &objectCoordinates,
                                          float *samples,
                                          unsigned int attributeIndex,
-                                         const vfloatn<OW> &times)
+                                         const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
-      vfloatn<W> tW = static_cast<vfloatn<W>>(times);
+      vfloatn<W> tW(times, OW);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
@@ -455,9 +457,11 @@ namespace openvkl {
                                          const vvec3fn<OW> &objectCoordinates,
                                          float *samples,
                                          unsigned int attributeIndex,
-                                         const vfloatn<OW> &times)
+                                         const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vfloatn<W> tW(times, W);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
@@ -466,7 +470,7 @@ namespace openvkl {
       vfloatn<W> samplesW;
 
       samplerObject.computeSampleV(
-          validW, objectCoordinates, samplesW, attributeIndex, times);
+          validW, objectCoordinates, samplesW, attributeIndex, tW);
 
       for (int i = 0; i < W; i++)
         samples[i] = samplesW[i];
@@ -480,15 +484,17 @@ namespace openvkl {
                                          const vvec3fn<OW> &objectCoordinates,
                                          float *samples,
                                          unsigned int attributeIndex,
-                                         const vfloatn<OW> &times)
+                                         const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vfloatn<OW> tOW(times, OW);
 
       const int numPacks = OW / W + (OW % W != 0);
 
       for (int packIndex = 0; packIndex < numPacks; packIndex++) {
         vvec3fn<W> ocW = objectCoordinates.template extract_pack<W>(packIndex);
-        vfloatn<W> tW = times.template extract_pack<W>(packIndex);
+        vfloatn<W> tW  = tOW.template extract_pack<W>(packIndex);
 
         vintn<W> validW;
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
@@ -499,8 +505,7 @@ namespace openvkl {
 
         vfloatn<W> samplesW;
 
-        samplerObject.computeSampleV(
-            validW, ocW, samplesW, attributeIndex, tW);
+        samplerObject.computeSampleV(validW, ocW, samplesW, attributeIndex, tW);
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           samples[i] = samplesW[i - packIndex * W];
@@ -516,12 +521,12 @@ namespace openvkl {
                                           float *samples,
                                           unsigned int M,
                                           const unsigned int *attributeIndices,
-                                          const vfloatn<OW> &times)
+                                          const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
-      vfloatn<W> tW = static_cast<vfloatn<W>>(times);
+      vfloatn<W> tW(times, OW);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
@@ -551,16 +556,18 @@ namespace openvkl {
                                           float *samples,
                                           unsigned int M,
                                           const unsigned int *attributeIndices,
-                                          const vfloatn<OW> &times)
+                                          const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vfloatn<W> timesW(times, W);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = valid[i];
 
       samplerObject.computeSampleMV(
-          validW, objectCoordinates, samples, M, attributeIndices, times);
+          validW, objectCoordinates, samples, M, attributeIndices, timesW);
     }
 
     template <int W>
@@ -572,15 +579,17 @@ namespace openvkl {
                                           float *samples,
                                           unsigned int M,
                                           const unsigned int *attributeIndices,
-                                          const vfloatn<OW> &times)
+                                          const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vfloatn<OW> tOW(times, OW);
 
       const int numPacks = OW / W + (OW % W != 0);
 
       for (int packIndex = 0; packIndex < numPacks; packIndex++) {
         vvec3fn<W> ocW = objectCoordinates.template extract_pack<W>(packIndex);
-        vfloatn<W> tW = times.template extract_pack<W>(packIndex);
+        vfloatn<W> tW  = tOW.template extract_pack<W>(packIndex);
 
         vintn<W> validW;
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)

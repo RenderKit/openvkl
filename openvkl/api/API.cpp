@@ -699,7 +699,7 @@ extern "C" float vklComputeSample(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
       &sample,
       attributeIndex,
-      reinterpret_cast<const vfloatn<1> &>(time));
+      &time);
   return sample;
 }
 OPENVKL_CATCH_END(rkcommon::math::nan)
@@ -719,7 +719,7 @@ OPENVKL_CATCH_END(rkcommon::math::nan)
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
         samples,                                                      \
         attributeIndex,                                               \
-        reinterpret_cast<const vfloatn<WIDTH> &>(*times));            \
+        times);                                                       \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -742,7 +742,7 @@ extern "C" void vklComputeSampleN(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
       samples,
       attributeIndex,
-      reinterpret_cast<const vfloatn<1> *>(times));
+      times);
 }
 OPENVKL_CATCH_END()
 
@@ -751,7 +751,7 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
                                   float *samples,
                                   unsigned int M,
                                   const unsigned int *attributeIndices,
-                                  const float *times) OPENVKL_CATCH_BEGIN
+                                  float time) OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
   openvkl::api::currentDriver().computeSampleM1(
@@ -761,7 +761,7 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
       samples,
       M,
       attributeIndices,
-      reinterpret_cast<const vfloatn<1> &>(*times));
+      &time);
 }
 OPENVKL_CATCH_END()
 
@@ -782,7 +782,7 @@ OPENVKL_CATCH_END()
         samples,                                                      \
         M,                                                            \
         attributeIndices,                                             \
-        reinterpret_cast<const vfloatn<WIDTH> &>(*times));            \
+        times);                                                       \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -807,7 +807,7 @@ extern "C" void vklComputeSampleMN(VKLSampler sampler,
       samples,
       M,
       attributeIndices,
-      reinterpret_cast<const vfloatn<1> *>(times));
+      times);
 }
 OPENVKL_CATCH_END()
 

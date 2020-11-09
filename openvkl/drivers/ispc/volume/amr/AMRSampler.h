@@ -53,7 +53,7 @@ namespace openvkl {
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
                           unsigned int attributeIndex,
-                          const vfloatn<1> *time) const override final;
+                          const float *time) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
@@ -113,9 +113,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      for (auto i=0; i<W; ++i) {
-        assert(time[i] == 0.f);
-      }
+      assertValidTimes(time);
       CALL_ISPC(AMRVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -129,10 +127,10 @@ namespace openvkl {
         const vvec3fn<1> *objectCoordinates,
         float *samples,
         unsigned int attributeIndex,
-        const vfloatn<1> *time) const
+        const float *time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assert(*time[0] == 0.f);
+      assertValidTimes(N, time);
       CALL_ISPC(Sampler_sample_N_export,
                 ispcEquivalent,
                 N,

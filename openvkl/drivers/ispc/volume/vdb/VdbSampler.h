@@ -43,7 +43,7 @@ namespace openvkl {
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
                           unsigned int attributeIndex,
-                          const vfloatn<1> *time) const override final;
+                          const float *times) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,

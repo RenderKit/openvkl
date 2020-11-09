@@ -251,7 +251,7 @@ namespace openvkl {
           const int samplesPerDimension = 10;
 
           std::vector<vvec3fn<1>> objectCoordinates;
-          std::vector<vfloatn<1>> times;
+          std::vector<float> times;
           objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
                                     samplesPerDimension);
           times.reserve(samplesPerDimension);

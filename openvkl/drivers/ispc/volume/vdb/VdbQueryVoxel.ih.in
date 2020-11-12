@@ -10,7 +10,7 @@
 //       template using CMake.
 // ---------------------------------------------------------------------------
 
-#if @VKL_VDB_NEXT_LEVEL@ == VKL_VDB_NUM_LEVELS
+#if @VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS
 
 struct VdbVoxelDescriptor
 {
@@ -34,11 +34,9 @@ struct VdbVoxelDescriptor
   range1f valueRange;
 };
 
-#endif
+#else // @VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS
 
-#if (@VKL_VDB_NEXT_LEVEL@) < VKL_VDB_NUM_LEVELS
-  #include "VdbQueryVoxel_@VKL_VDB_NEXT_LEVEL@.ih"
-#endif
+#include "VdbQueryVoxel_@VKL_VDB_NEXT_LEVEL@.ih"
 
 #if @VKL_VDB_LEVEL@ == 0
 inline void VdbIterator_queryVoxel(
@@ -104,7 +102,7 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
     desc.level = @VKL_VDB_NEXT_LEVEL@;
   }
 
-#if @VKL_VDB_NEXT_LEVEL@ < @VKL_VDB_NUM_LEVELS@
+#if (@VKL_VDB_NEXT_LEVEL@+1) < @VKL_VDB_NUM_LEVELS@
   const bool lastLevel = (@VKL_VDB_NEXT_LEVEL@ > queryDepth) 
                       || vklVdbVoxelIsTile(desc.voxel) 
                       || isLeafPtr;
@@ -117,3 +115,5 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
     queryDepth, queryValueRange, desc);
 #endif
 }
+
+#endif // @VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS

@@ -96,8 +96,9 @@ inline void GridAccelerator_computeCellValueRange(
   foreach (k = 0 ... CELL_WIDTH + 1,
            j = 0 ... CELL_WIDTH + 1,
            i = 0 ... CELL_WIDTH + 1) {
-    const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
-
+    const vec3i voxelIndex = make_vec3i(cellIndex.x * CELL_WIDTH + i,
+                                        cellIndex.y * CELL_WIDTH + j,
+                                        cellIndex.z * CELL_WIDTH + k);
     float value;
     volume->getVoxels_varying[attributeIndex](
         volume, min(volume->dimensions - 1, voxelIndex), attributeIndex, value);

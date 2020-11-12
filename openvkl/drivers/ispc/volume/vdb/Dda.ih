@@ -142,9 +142,9 @@ inline vec3i clampToCell(
     uniform int32 resolution)  // ... of a single cell on the current level.
 {
   // Offsets are non-negative, but numerical errors might cause problems.
-  vec3i offset = make_vec3i(((int)floor(max(foffset.x, 0))),
-                            ((int)floor(max(foffset.y, 0))),
-                            ((int)floor(max(foffset.z, 0))));
+  vec3i offset = make_vec3i(((int)floor(max(foffset.x, 0.f))),
+                            ((int)floor(max(foffset.y, 0.f))),
+                            ((int)floor(max(foffset.z, 0.f))));
   clampOffsetToCell(offset.x, offset.y, offset.z, resolution);
   return offset;
 }
@@ -164,7 +164,7 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 
-  dda.level = clamp(level, 0, DDA_STATE_MAX_NUM_LEVELS - 1);
+  dda.level = clamp(level, 0u, ((uniform uint32)DDA_STATE_MAX_NUM_LEVELS - 1));
   dda.t = tMin;
   dda.rayOrg = rayOrg;
   dda.rayDir = rayDir;

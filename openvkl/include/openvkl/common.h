@@ -78,3 +78,10 @@ __define_wide_types(8, 32);
 __define_wide_types(16, 64);
 
 #undef __define_wide_types
+
+/*
+ * Force expansion on two tokens and concatenate them.
+ */
+
+#define __vkl_concat(A, B) __vkl_concat_impl(A, B)
+#define __vkl_concat_impl(A, B) A##B

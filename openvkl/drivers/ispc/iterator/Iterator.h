@@ -11,11 +11,8 @@
 
 using namespace rkcommon;
 
-#define paste(A, B) __paste(A, B)
-#define __paste(A, B) A##B
-
 #define __varying_ispc_type(TypeName) \
-  ispc::paste(paste(v, VKL_TARGET_WIDTH), _varying_##TypeName)
+  ispc::__vkl_concat(__vkl_concat(v, VKL_TARGET_WIDTH), _varying_##TypeName)
 
 namespace openvkl {
   namespace ispc_driver {

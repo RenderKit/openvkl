@@ -178,6 +178,9 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
 }
 #undef template_GridAcceleratorIterator_iterateInterval_internal
 
+#define cif_uniform if
+#define cif_varying cif
+
 #define template_GridAcceleratorIterator_iterateHit_internal(univary)          \
   univary GridAcceleratorIterator *uniform self =                              \
       (univary GridAcceleratorIterator * uniform) _self;                       \
@@ -191,7 +194,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
     return;                                                                    \
   }                                                                            \
                                                                                \
-  cif(!self->valueSelector || self->valueSelector->numValues == 0)             \
+  if(!self->valueSelector || self->valueSelector->numValues == 0)              \
   {                                                                            \
     *result = false;                                                           \
     return;                                                                    \
@@ -201,7 +204,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
       (const SharedStructuredVolume *uniform)self->sampler->volume;            \
                                                                                \
   /* first iteration */                                                        \
-  cif(self->hitState.currentCellIndex.x == -1)                                 \
+  __vkl_concat(cif_, univary)(self->hitState.currentCellIndex.x == -1)         \
   {                                                                            \
     self->hitState.activeCell =                                                \
         GridAccelerator_nextCell(volume->accelerator,                          \

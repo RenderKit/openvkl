@@ -177,7 +177,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       (varying DefaultHitIterator * uniform) _self;
 
   // The selector prunes everything - don't iterate at all.
-  cif(!self->valueSelector || self->valueSelector->numValues == 0) return;
+  if(!self->valueSelector || self->valueSelector->numValues == 0) return;
 
   if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
     return;

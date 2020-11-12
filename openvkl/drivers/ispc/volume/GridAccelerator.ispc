@@ -186,6 +186,9 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
   delete accelerator;
 }
 
+#define cif_uniform if
+#define cif_varying cif
+
 #define template_GridAccelerator_nextCell(univary)                          \
   univary bool GridAccelerator_nextCell(                                    \
       const GridAccelerator *uniform accelerator,                           \
@@ -197,7 +200,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
                                                                             \
     const univary bool firstCell = cellIndex.x == -1;                       \
     univary box1f cellInterval;                                             \
-    cif(firstCell)                                                          \
+    __vkl_concat(cif_, univary)(firstCell)                                  \
     {                                                                       \
       /* first iteration */                                                 \
       univary vec3f localCoordinates;                                       \

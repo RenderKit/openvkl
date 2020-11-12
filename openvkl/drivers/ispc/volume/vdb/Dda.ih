@@ -250,9 +250,9 @@ inline void ddaReinitBelow(DdaState &dda,
   for (uniform uint32 l = level+1; l <= dda.level; ++l)
   {
     const uniform int32 cellRes = vklVdbLevelRes(l + 1);
-    const uniform ix = DDA_STATE_X_OFFSET(l);
-    const uniform iy = DDA_STATE_Y_OFFSET(l);
-    const uniform iz = DDA_STATE_Z_OFFSET(l);
+    const uniform uint32 ix = DDA_STATE_X_OFFSET(l);
+    const uniform uint32 iy = DDA_STATE_Y_OFFSET(l);
+    const uniform uint32 iz = DDA_STATE_Z_OFFSET(l);
     const vec3i idx = clampToCell(oo, cellRes);
 
     dda.idx[ix] = idx.x;

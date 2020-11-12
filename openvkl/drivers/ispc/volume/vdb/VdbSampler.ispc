@@ -120,7 +120,7 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
   // These are voxels that can be interpolated into our node, so we must include
   // them for conservative value ranges.
   foreach (z = -radius... res + radius, y = -radius... res + radius) {
-    const x = res;
+    const int32 x = res;
     const float sample =
         VdbSampler_sample(&sampler, make_vec3i(x + os.x, y + os.y, z + os.z));
     vminFilter = min(vminFilter, sample);
@@ -128,7 +128,7 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
   }
   // We only have to go to x = res+radius as we added those voxels above.
   foreach (z = -radius... res + radius, x = -radius... res) {
-    const y = res;
+    const int32 y = res;
     const float sample =
         VdbSampler_sample(&sampler, make_vec3i(x + os.x, y + os.y, z + os.z));
     vminFilter = min(vminFilter, sample);
@@ -137,7 +137,7 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
   // We only have to go to x = res+radius and y = res+radius as we added those
   // voxels above.
   foreach (y = -radius... res, x = -radius... res) {
-    const z = res;
+    const int32 z = res;
     const float sample =
         VdbSampler_sample(&sampler, make_vec3i(x + os.x, y + os.y, z + os.z));
     vminFilter = min(vminFilter, sample);

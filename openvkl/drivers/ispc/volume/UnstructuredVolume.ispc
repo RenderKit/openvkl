@@ -294,7 +294,7 @@ static bool intersectAndSampleTet(const void *uniform userData,
     return false;
 
   // Skip interpolation if values are defined per cell
-  if (valid(self->cellValue)) {
+  if (isValid(self->cellValue)) {
     result = get_float(self->cellValue, id);
     return true;
   }
@@ -454,7 +454,7 @@ static bool intersectAndSampleWedge(const void *uniform userData,
                        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit &&
                        pcoords[0] + pcoords[1] <= upperlimit)) {
     // Evaluation
-    if (valid(self->cellValue)) {
+    if (isValid(self->cellValue)) {
       result = get_float(self->cellValue, id);
     } else {
       float val = 0.f;
@@ -493,7 +493,7 @@ static bool intersectAndSampleHexFast(const void *uniform userData,
   }
 
   // Skip interpolation if values are defined per cell
-  if (valid(self->cellValue)) {
+  if (isValid(self->cellValue)) {
     result = get_float(self->cellValue, id);
     return true;
   }
@@ -672,7 +672,7 @@ static bool intersectAndSampleHexIterative(const void *uniform userData,
                        pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
                        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit)) {
     // Evaluation
-    if (valid(self->cellValue)) {
+    if (isValid(self->cellValue)) {
       result = get_float(self->cellValue, id);
     } else {
       float val = 0.f;
@@ -819,7 +819,7 @@ static bool intersectAndSamplePyramid(const void *uniform userData,
                        pcoords[1] >= lowerlimit && pcoords[1] <= upperlimit &&
                        pcoords[2] >= lowerlimit && pcoords[2] <= upperlimit)) {
     // Evaluation
-    if (valid(self->cellValue)) {
+    if (isValid(self->cellValue)) {
       result = get_float(self->cellValue, id);
     } else {
       float val = 0.f;

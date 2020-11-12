@@ -18,7 +18,7 @@ struct Data1D
 
 // in all inlined functions here, ok to pass-by-value, will be inlined and
 // optimized
-inline uniform bool valid(const uniform Data1D data)
+inline uniform bool isValid(const uniform Data1D data)
 {
   return data.addr != NULL;
 }

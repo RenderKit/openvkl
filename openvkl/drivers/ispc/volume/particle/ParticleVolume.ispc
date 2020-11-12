@@ -17,7 +17,7 @@ inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
 
   uniform float w = 1.f;
 
-  if (valid(self->weights))
+  if (isValid(self->weights))
     w = get_float(self->weights, id);
 
   distance = objectCoordinates - position;

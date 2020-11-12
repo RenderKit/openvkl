@@ -48,17 +48,17 @@
       univary float value   = inf;                                             \
                                                                                \
       if (!isnan(sample0 + sample) && (sample != sample0)) {                   \
-        for (uniform int i = 0; i < numValues; i++) {                          \
-          if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {           \
+        for (uniform int j = 0; j < numValues; j++) {                          \
+          if ((values[j] - sample0) * (values[j] - sample) <= 0.f) {           \
             const univary float rcpSamp = 1.f / (sample - sample0);            \
             univary float tIso          = inf;                                 \
             if (!isnan(rcpSamp)) {                                             \
-              tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);          \
+              tIso = t0 + (values[j] - sample0) * rcpSamp * (t - t0);          \
             }                                                                  \
                                                                                \
             if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) { \
               tHit    = tIso;                                                  \
-              value   = values[i];                                             \
+              value   = values[j];                                             \
               epsilon = step * 0.125f;                                         \
             }                                                                  \
           }                                                                    \

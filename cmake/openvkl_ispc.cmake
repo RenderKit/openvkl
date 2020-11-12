@@ -254,7 +254,7 @@ macro (OPENVKL_ISPC_COMPILE)
       --addressing=${OPENVKL_ISPC_ADDRESSING}
       ${ISPC_OPT_FLAGS}
       --target=${ISPC_TARGET_ARGS}
-      --woff
+      --wno-perf
       ${ISPC_ADDITIONAL_ARGS}
       -h ${ISPC_TARGET_DIR}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep

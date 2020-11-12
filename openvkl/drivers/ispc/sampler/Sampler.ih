@@ -10,7 +10,7 @@
 
 struct Sampler
 {
-  Volume *uniform volume;
+  const Volume *uniform volume;
 
   // these functions do not yet support multi-attribute volumes. they are used
   // in generic stream-wide sampling and gradient implementations, as well as in

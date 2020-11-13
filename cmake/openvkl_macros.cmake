@@ -238,12 +238,29 @@ function(openvkl_vdb_generate_topology)
       include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.ih
     )
 
-    foreach(VKL_VDB_UNIVARY in "uniform" "varying")
-      configure_file(
-        ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
-        include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY}_${VKL_VDB_LEVEL}.ih
-      )
-    endforeach()
+    # Generate uniform, varying, and univary traversal.
+    # a) We know all queries are in the same leaf node. Fully uniform traversal.
+    set(VKL_VDB_UNIVARY_IN "uniform")
+    set(VKL_VDB_UNIVARY_OUT "uniform")
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
+    # b) All lanes are not in the same subtree.
+    set(VKL_VDB_UNIVARY_IN "varying")
+    set(VKL_VDB_UNIVARY_OUT "varying")
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
+    # c) Lanes are not in the same leaf, but currently in the same subtree.
+    #    May degenerate to varying.
+    set(VKL_VDB_UNIVARY_IN "uniform")
+    set(VKL_VDB_UNIVARY_OUT "varying")
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
 
     configure_file(
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbQueryVoxel.ih.in

@@ -33,63 +33,69 @@ inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
     return 0.f;
   }
 
-  uint64 voxel = vklVdbVoxelMakeEmpty();
-  VdbSampler_dispatchInner_uniform_0(sampler, domainOffset, 0, voxel);
+  // We traverse the tree based on the leaf node origin, which we can easily
+  // compute using bit masking operations:
+  // TODO: Mask must be leaf level, not necessarily level 3.
+  const uint32 originMask = ~(((uint32)(VKL_VDB_RES_LEAF - 1)));
+  const vec3ui leafOrigin = make_vec3ui(domainOffset.x & originMask,
+                                        domainOffset.y & originMask,
+                                        domainOffset.z & originMask);
 
-  float sample = 0.f;
-
-  /* TODO: with mixed formats, we will need to detect if all
-      leaves of the same type have the same ptr. */
-
-  uniform uint64 uniformVoxel;
-  const uniform bool isUniform = reduce_equal(voxel, &uniformVoxel);
+  float sample                 = 0.f;
   const uniform bool isCompact = sampler->grid->allLeavesCompact;
 
-  if (isUniform) {
-    if (isCompact) {
-      if (vklVdbVoxelIsTile(uniformVoxel)) {
-        sample = vklVdbVoxelTileGet(uniformVoxel);
-      } else if (vklVdbVoxelIsLeafPtr(uniformVoxel)) {
-        const void *uniform leafPtr = vklVdbVoxelLeafGetPtr(uniformVoxel);
-        assert(leafPtr);
-        assert(vklVdbVoxelLeafGetFormat(uniformVoxel) == VKL_FORMAT_CONSTANT_ZYX);
+  uniform vec3ui uniformLeafOrigin;
+  if (reduce_equal(leafOrigin.x, &uniformLeafOrigin.x) 
+   && reduce_equal(leafOrigin.y, &uniformLeafOrigin.y) 
+   && reduce_equal(leafOrigin.z, &uniformLeafOrigin.z)) {
+    //
+    // All queries are in the same leaf node. Do uniform traversal!
+    //
+    uniform uint64 voxel = vklVdbVoxelMakeEmpty();
+    VdbSampler_dispatchInner_uniform_uniform_0(
+        sampler, 0ul, uniformLeafOrigin, voxel);
+
+    if (vklVdbVoxelIsTile(voxel)) {
+      sample = vklVdbVoxelTileGet(voxel);
+    } else if (vklVdbVoxelIsLeafPtr(voxel)) {
+      const void *uniform leafPtr = vklVdbVoxelLeafGetPtr(voxel);
+      assert(leafPtr);
+      assert(vklVdbVoxelLeafGetFormat(voxel) == VKL_FORMAT_CONSTANT_ZYX);
+      if (isCompact) {
         sample = VdbSampler_sampleConstantFloatLeaf(
             ((const uniform float *uniform)leafPtr), domainOffset);
-      }
-    } else /* isCompact */ {
-      if (vklVdbVoxelIsTile(uniformVoxel)) {
-        sample = vklVdbVoxelTileGet(uniformVoxel);
-      } else if (vklVdbVoxelIsLeafPtr(uniformVoxel)) {
-        const void *uniform leafPtr = vklVdbVoxelLeafGetPtr(uniformVoxel);
-        assert(leafPtr);
-        assert(vklVdbVoxelLeafGetFormat(uniformVoxel) == VKL_FORMAT_CONSTANT_ZYX);
+      } else {
         sample = VdbSampler_sampleConstantFloatLeaf(
             ((const uniform Data1D *uniform)leafPtr), domainOffset);
       }
     }
-  } else /* isUniform */ {
-    if (isCompact) {
-      if (vklVdbVoxelIsTile(voxel)) {
-        sample = vklVdbVoxelTileGet(voxel);
-      } else if (vklVdbVoxelIsLeafPtr(voxel)) {
-        const void *leafPtr = vklVdbVoxelLeafGetPtr(voxel);
-        assert(leafPtr);
-        assert(vklVdbVoxelLeafGetFormat(voxel) == VKL_FORMAT_CONSTANT_ZYX);
+  } else {
+    //
+    // Varying path.
+    //
+    uint64 voxel = vklVdbVoxelMakeEmpty();
+    VdbSampler_dispatchInner_uniform_varying_0(sampler, 0ul, leafOrigin, voxel);
+
+    // TODO: Back up uniform path here?
+
+    if (vklVdbVoxelIsTile(voxel)) {
+      sample = vklVdbVoxelTileGet(voxel);
+    } else if (vklVdbVoxelIsLeafPtr(voxel)) {
+      const void *leafPtr = vklVdbVoxelLeafGetPtr(voxel);
+      assert(leafPtr);
+      assert(vklVdbVoxelLeafGetFormat(voxel) == VKL_FORMAT_CONSTANT_ZYX);
+      if (isCompact) {
         sample = VdbSampler_sampleConstantFloatLeaf(
             ((const uniform float *varying)leafPtr), domainOffset);
-      }
-    } else /* isCompact */ {
-      if (vklVdbVoxelIsTile(voxel)) {
-        sample = vklVdbVoxelTileGet(voxel);
-      } else if (vklVdbVoxelIsLeafPtr(voxel)) {
-        const void *leafPtr = vklVdbVoxelLeafGetPtr(voxel);
-        assert(leafPtr);
-        assert(vklVdbVoxelLeafGetFormat(voxel) == VKL_FORMAT_CONSTANT_ZYX);
+      } else {
         sample = VdbSampler_sampleConstantFloatLeaf(
             ((const uniform Data1D *varying)leafPtr), domainOffset);
       }
     }
   }
+
+  /* TODO: with mixed formats, we will need to detect if all
+      leaves of the same type have the same ptr. */
 
   return sample;
 }
@@ -209,7 +215,7 @@ inline float VdbSampler_interpolateNearest_varying(
 inline uniform float VdbSampler_interpolateNearest_uniform(
     const VdbSampler *uniform sampler, const uniform vec3f &indexCoordinates)
 {
-  const vec3f ic = indexCoordinates;
+  const vec3f ic     = indexCoordinates;
   const float sample = VdbSampler_interpolateNearest_varying(sampler, ic);
   return extract(sample, 0);
 }
@@ -407,14 +413,14 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
   const uniform vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-  switch (sampler->super.filter)
-  {
-    case VKL_FILTER_TRILINEAR:
-      *sample = VdbSampler_interpolateTrilinear_uniform(sampler, indexCoordinates);
-      break;
-    default:
-      *sample = VdbSampler_interpolateNearest_uniform(sampler, indexCoordinates);
-      break;
+  switch (sampler->super.filter) {
+  case VKL_FILTER_TRILINEAR:
+    *sample =
+        VdbSampler_interpolateTrilinear_uniform(sampler, indexCoordinates);
+    break;
+  default:
+    *sample = VdbSampler_interpolateNearest_uniform(sampler, indexCoordinates);
+    break;
   }
 }
 
@@ -436,14 +442,15 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-    switch (sampler->super.filter)
-    {
-      case VKL_FILTER_TRILINEAR:
-        *samples = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
-        break;
-      default:
-        *samples = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
-        break;
+    switch (sampler->super.filter) {
+    case VKL_FILTER_TRILINEAR:
+      *samples =
+          VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
+      break;
+    default:
+      *samples =
+          VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
+      break;
     }
   }
 }
@@ -462,14 +469,15 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
-    switch (sampler->super.filter)
-    {
-      case VKL_FILTER_TRILINEAR:
-        samples[i] = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
-        break;
-      default:
-        samples[i] = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
-        break;
+    switch (sampler->super.filter) {
+    case VKL_FILTER_TRILINEAR:
+      samples[i] =
+          VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
+      break;
+    default:
+      samples[i] =
+          VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
+      break;
     }
   }
 }
@@ -493,14 +501,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
     vec3f gradient;
-    switch (sampler->super.gradientFilter)
-    {
-      case VKL_FILTER_TRILINEAR:
-        gradient = VdbSampler_computeGradientTrilinear(sampler, indexCoordinates);
-        break;
-      default:
-        gradient = VdbSampler_computeGradientNearest(sampler, indexCoordinates);
-        break;
+    switch (sampler->super.gradientFilter) {
+    case VKL_FILTER_TRILINEAR:
+      gradient = VdbSampler_computeGradientTrilinear(sampler, indexCoordinates);
+      break;
+    default:
+      gradient = VdbSampler_computeGradientNearest(sampler, indexCoordinates);
+      break;
     }
 
     // Note: xfmNormal takes inverse!
@@ -523,14 +530,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
     vec3f gradient;
-    switch (sampler->super.gradientFilter)
-    {
-      case VKL_FILTER_TRILINEAR:
-        gradient = VdbSampler_computeGradientTrilinear(sampler, indexCoordinates);
-        break;
-      default:
-        gradient = VdbSampler_computeGradientNearest(sampler, indexCoordinates);
-        break;
+    switch (sampler->super.gradientFilter) {
+    case VKL_FILTER_TRILINEAR:
+      gradient = VdbSampler_computeGradientTrilinear(sampler, indexCoordinates);
+      break;
+    default:
+      gradient = VdbSampler_computeGradientNearest(sampler, indexCoordinates);
+      break;
     }
 
     // Note: xfmNormal takes inverse!
@@ -553,14 +559,13 @@ inline float VdbSampler_iterator_computeSample_varying(
       xfmPoint(sampler->grid->objectToIndex, objectCoordinates);
 
   float sample = 0.f;
-  switch (sampler->super.filter)
-  {
-    case VKL_FILTER_TRILINEAR:
-      sample = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
-      break;
-    default:
-      sample = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
-      break;
+  switch (sampler->super.filter) {
+  case VKL_FILTER_TRILINEAR:
+    sample = VdbSampler_interpolateTrilinear_varying(sampler, indexCoordinates);
+    break;
+  default:
+    sample = VdbSampler_interpolateNearest_varying(sampler, indexCoordinates);
+    break;
   }
 
   return sample;

@@ -8,6 +8,9 @@
 #include "value_selector/ValueSelector.ih"
 #include "volume/UnstructuredVolume.ih"
 
+// Ignore warning about exporting uniform-pointer-to-varying, as this is in
+// fact legal.
+#pragma ignore warning(all)
 export void EXPORT_UNIQUE(UnstructuredIterator_export,
                           uniform vec3i &dummy_vec3i,
                           uniform vec3f &dummy_vec3f,

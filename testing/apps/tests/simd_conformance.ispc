@@ -18,6 +18,7 @@ export uniform int sizeofVaryingRange1f()
   return sizeof(varying box1f);
 }
 
+#pragma ignore warning(all)
 export varying box1f *uniform newVaryingRange1f()
 {
   return uniform new varying box1f;
@@ -28,6 +29,7 @@ export uniform int sizeofVaryingVec3f()
   return sizeof(varying vec3f);
 }
 
+#pragma ignore warning(all)
 export varying vec3f *uniform newVaryingVec3f()
 {
   return uniform new varying vec3f;
@@ -38,6 +40,7 @@ export uniform int sizeofVaryingVKLIntervalIterator()
   return sizeof(varying VKLIntervalIterator);
 }
 
+#pragma ignore warning(all)
 export varying Interval *uniform newVaryingInterval()
 {
   return uniform new varying Interval;
@@ -53,6 +56,7 @@ export uniform int sizeofVaryingHit()
   return sizeof(varying Hit);
 }
 
+#pragma ignore warning(all)
 export varying Hit *uniform newVaryingHit()
 {
   return uniform new varying Hit;

@@ -7,6 +7,9 @@
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
+// Ignore warning about exporting uniform-pointer-to-varying, as this is in
+// fact legal.
+#pragma ignore warning(all)
 export void EXPORT_UNIQUE(DefaultIterator_export,
                           uniform vec3f &dummy_vec3f,
                           const varying DefaultIntervalIterator *uniform

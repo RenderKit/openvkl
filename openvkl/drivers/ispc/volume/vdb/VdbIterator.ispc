@@ -12,6 +12,9 @@
 #include "openvkl_vdb/VdbQueryVoxel_0.ih"
 #include "openvkl_vdb/HDDA_0.ih"
 
+// Ignore warning about exporting uniform-pointer-to-varying, as this is in
+// fact legal.
+#pragma ignore warning(all)
 export void EXPORT_UNIQUE(VdbIterator_export,
                           uniform box1f &dummy_box1f,
                           const varying VdbIterator *uniform it)

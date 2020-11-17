@@ -156,11 +156,11 @@ inline uniform float absf(const uniform float f)
 
 inline uniform float rcp_safe(uniform float f)
 {
-  return rcpf((abs(f) < 1e-8f) ? 1e-8f : f);
+  return rcpf((abs(f) >= 1e-18f) ? f : 1e-18f);
 }
 inline varying float rcp_safe(varying float f)
 {
-  return rcpf((abs(f) < 1e-8f) ? 1e-8f : f);
+  return rcpf((abs(f) >= 1e-18f) ? f : 1e-18f);
 }
 
 inline uniform float sqrt_safe(uniform float f)

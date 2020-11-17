@@ -232,7 +232,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
       const univary vec3f cellDirection =                                   \
           iterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH; \
                                                                             \
-      const univary vec3f rcpCellDirection = 1.f / cellDirection;           \
+      const univary vec3f rcpCellDirection = rcp_safe(cellDirection);       \
                                                                             \
       univary vec3f cellOrigin;                                             \
       volume->transformObjectToLocal_##univary(                             \

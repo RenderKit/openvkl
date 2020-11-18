@@ -4,8 +4,8 @@
 #include "iterator/GridAcceleratorIterator.ih"
 #include "common/Interval.ih"
 #include "common/Hit.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 #include "openvkl/openvkl.isph"
 
 export void delete_uniform(void *uniform ptr)

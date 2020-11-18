@@ -3,8 +3,7 @@
 
 #pragma once
 
-#include "box.ih"
-#include "vec.ih"
+#include "rkcommon/math/box.ih"
 
 #include "Scene.h"
 

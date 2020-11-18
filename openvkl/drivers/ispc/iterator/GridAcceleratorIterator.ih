@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 struct ValueSelector;
 struct Sampler;

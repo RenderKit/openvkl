@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "math/math.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/math.ih"
+#include "rkcommon/math/vec.ih"
 #include "openvkl/VKLDataType.h"
 
 struct Data1D

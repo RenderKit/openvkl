@@ -1,10 +1,10 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "math_utility.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/vec.ih"
 
 #define __lift_unary_fct(F)                             \
   inline uniform vec2f F(const uniform vec2f v)         \
@@ -15,10 +15,6 @@
   { return make_vec3f(F(v.x),F(v.y),F(v.z)); }          \
   inline vec3f F(const vec3f v)                         \
   { return make_vec3f(F(v.x),F(v.y),F(v.z)); }          \
-  inline uniform vec3fa F(const uniform vec3fa v)       \
-  { return make_vec3fa(F(v.x),F(v.y),F(v.z)); }         \
-  inline vec3fa F(const vec3fa v)                       \
-  { return make_vec3fa(F(v.x),F(v.y),F(v.z)); }         \
   inline uniform vec4f F(const uniform vec4f v)         \
   { return make_vec4f(F(v.x),F(v.y),F(v.z),F(v.w)); }   \
   inline vec4f F(const vec4f v)                         \

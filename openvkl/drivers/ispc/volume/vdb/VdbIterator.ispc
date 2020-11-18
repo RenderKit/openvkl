@@ -6,7 +6,7 @@
 #include "VdbSampler.ih"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
-#include "math/math.ih"
+#include "rkcommon/math/math.ih"
 
 // Generated headers.
 #include "openvkl_vdb/VdbQueryVoxel_0.ih"

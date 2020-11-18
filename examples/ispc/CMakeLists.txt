@@ -18,7 +18,10 @@ macro(add_executable_ispc name)
   add_executable(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES} ${VKL_RESOURCE})
 endmacro()
 
-include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
+include_directories_ispc(
+  ${PROJECT_SOURCE_DIR}/openvkl/include
+  ${RKCOMMON_INCLUDE_DIRS}
+)
 
 add_executable_ispc(vklTutorialISPC
   vklTutorialISPC.ispc

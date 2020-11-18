@@ -5,8 +5,8 @@
 
 #include "../common/Data.ih"
 #include "Volume.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 #include "openvkl/VKLDataType.h"
 #include "openvkl/VKLFilter.h"
 

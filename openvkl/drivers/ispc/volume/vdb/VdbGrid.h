@@ -8,9 +8,9 @@
 
 #if defined(ISPC)
 
-#include "math/box.ih"
-#include "math/math.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/math.ih"
+#include "rkcommon/math/vec.ih"
 
 #elif defined(__cplusplus)
 

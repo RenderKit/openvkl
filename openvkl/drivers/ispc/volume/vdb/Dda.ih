@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "math/box.ih"
-#include "math/math.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/math.ih"
+#include "rkcommon/math/vec.ih"
 #include "openvkl/vdb.h"
 
 // Note: Changing this value will probably break our API contract.

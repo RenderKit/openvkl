@@ -81,8 +81,11 @@ endif()
 
 # Functional tests
 if (BUILD_TESTING)
-  include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include
-    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc)
+  include_directories_ispc(
+    ${PROJECT_SOURCE_DIR}/openvkl/include
+    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc
+    ${RKCOMMON_INCLUDE_DIRS}
+  )
 
   openvkl_add_executable_ispc(vklTests
     vklTests.cpp

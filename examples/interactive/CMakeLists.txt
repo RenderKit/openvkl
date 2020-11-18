@@ -15,6 +15,7 @@ find_package(glfw3 REQUIRED)
 include_directories_ispc(
   ${CMAKE_SOURCE_DIR}/openvkl/include
   ${CMAKE_SOURCE_DIR}/openvkl/drivers/ispc/math
+  ${RKCOMMON_INCLUDE_DIRS}
 )
 
 openvkl_add_library_ispc(vkl_example_renderers STATIC

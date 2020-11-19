@@ -287,8 +287,10 @@ test-functional-windows-msvc15:
 
 ## Benchmark Jobs ##
 
-# All pipelines have this manual benchmark job.
-benchmark-x8280-1:
+# All pipelines have these manual benchmark jobs - one for all benchmarks,
+# plus one job for each suite.
+
+.job_template: &manual_benchmark_x8280-1
   <<: *base_benchmark_job
   when: manual
   needs:
@@ -296,7 +298,30 @@ benchmark-x8280-1:
   tags:
     - vis-perf-x8280-1
 
-# A second benchmark job meant for scheduled (nightly, weekly, ...) builds.
+benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+
+structured-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolume$
+
+structured-multi-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+
+vdb-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolume$
+
+example-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^ExampleRenderers$
+
+# Another benchmark job meant for scheduled (nightly, weekly, ...) builds.
 # The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
 # BENCHMARK_MIN_TIME_SECONDS to configure the benchmark run time.
 benchmark-x8280-1-schedule:

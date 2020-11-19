@@ -14,6 +14,8 @@ SOURCE_ROOT=`pwd`
 PROJECT_NAME="Open VKL"
 BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10}"
 
+SUITE_REGEX=${BENCHMARK_SUITE:-.*}
+
 export LD_LIBRARY_PATH=`pwd`/build/install/lib:${LD_LIBRARY_PATH}
 
 cd build/install/bin
@@ -32,94 +34,115 @@ rm -f *.json
 #
 ################################# PLEASE READ ###################################
 
+initContext() {
+  if [ -z "$HAVE_CONTEXT" ]; then
+    HAVE_CONTEXT=1
+    benny insert code_context "${PROJECT_NAME}" ${SOURCE_ROOT} --save-json code_context.json
+    benny insert run_context ${TOKEN} ./code_context.json --save-json run_context.json
+  fi
+}
+
 ################################
 # Structured volume benchmarks #
 ################################
 
 SUITE_NAME="StructuredVolume"
+if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
+then
+  SUBSUITE_NAME="Sampling"
+  SUBSUITE_REGEX="Sample"
+  ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="Sampling"
-SUBSUITE_REGEX="Sample"
-./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  # wait to insert contexts (which will be reused for all subsequent benchmark runs)
+  # until first benchmark successfully finishes.
+  initContext
 
-# wait to insert contexts (which will be reused for all subsequent benchmark runs)
-# until first benchmark successfully finishes.
-benny insert code_context "${PROJECT_NAME}" ${SOURCE_ROOT} --save-json code_context.json
-benny insert run_context ${TOKEN} ./code_context.json --save-json run_context.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  # subsequent subsuite runs...
 
-# subsequent subsuite runs...
+  SUBSUITE_NAME="Gradients"
+  SUBSUITE_REGEX="Gradient"
+  ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="Gradients"
-SUBSUITE_REGEX="Gradient"
-./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-
-SUBSUITE_NAME="IntervalIterators"
-SUBSUITE_REGEX="IntervalIterator"
-./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="IntervalIterators"
+  SUBSUITE_REGEX="IntervalIterator"
+  ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+fi
 
 ##################################################
 # Structured volume (multi-attribute) benchmarks #
 ##################################################
 
 SUITE_NAME="StructuredVolumeMulti"
+if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
+then
+  SUBSUITE_NAME="ScalarSampling"
+  SUBSUITE_REGEX="scalar.*Sample"
+  ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="ScalarSampling"
-SUBSUITE_REGEX="scalar.*Sample"
-./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  initContext
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="VectorSampling"
-SUBSUITE_REGEX="vector.*Sample"
-./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="VectorSampling"
+  SUBSUITE_REGEX="vector.*Sample"
+  ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="StreamSampling"
-SUBSUITE_REGEX="stream.*Sample"
-./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="StreamSampling"
+  SUBSUITE_REGEX="stream.*Sample"
+  ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+fi
 
 #########################
 # VDB volume benchmarks #
 #########################
 
 SUITE_NAME="VDBVolume"
+if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
+then
+  SUBSUITE_NAME="Sampling"
+  SUBSUITE_REGEX="Sample"
+  ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="Sampling"
-SUBSUITE_REGEX="Sample"
-./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  initContext
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="Gradients"
-SUBSUITE_REGEX="Gradient"
-./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="Gradients"
+  SUBSUITE_REGEX="Gradient"
+  ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="IntervalIterators"
-SUBSUITE_REGEX="IntervalIterator"
-./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="IntervalIterators"
+  SUBSUITE_REGEX="IntervalIterator"
+  ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+fi
 
 ###############################
 # Example renderer benchmarks #
 ###############################
 
 SUITE_NAME="ExampleRenderers"
+if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
+then
+  SUBSUITE_NAME="StructuredVolume"
+  SUBSUITE_REGEX="structured_regular"
+  ./vklBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="StructuredVolume"
-SUBSUITE_REGEX="structured_regular"
-./vklBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  initContext
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="VDBVolume"
-SUBSUITE_REGEX="vdb"
-./vklBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="VDBVolume"
+  SUBSUITE_REGEX="vdb"
+  ./vklBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
-SUBSUITE_NAME="UnstructuredVolume"
-SUBSUITE_REGEX="unstructured"
-./vklBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
-benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  SUBSUITE_NAME="UnstructuredVolume"
+  SUBSUITE_REGEX="unstructured"
+  ./vklBenchmark ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+fi

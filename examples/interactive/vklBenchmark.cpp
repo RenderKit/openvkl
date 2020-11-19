@@ -18,6 +18,24 @@ using namespace openvkl::testing;
 using namespace rkcommon::math;
 using openvkl::testing::WaveletVdbVolume;
 
+static void setupSceneDefaults(Scene &scene)
+{
+  if (!scene.volume) {
+    throw std::runtime_error("scene must have an active volume");
+  }
+
+  // set a default transfer function
+  static TransferFunction transferFunction;
+
+  scene.tfValueRange            = box1f(0.f, 1.f);
+  scene.tfColorsAndOpacities    = transferFunction.colorsAndOpacities.data();
+  scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
+
+  // and a default value selector, with default isovalues
+  scene.updateValueSelector(transferFunction,
+                            std::vector<float>{-1.f, 0.f, 1.f});
+}
+
 static void render_wavelet_structured_regular(benchmark::State &state,
                                               const std::string &rendererType,
                                               const vec2i &windowSize,
@@ -30,6 +48,8 @@ static void render_wavelet_structured_regular(benchmark::State &state,
 
   Scene scene;
   scene.updateVolume(proceduralVolume->getVKLVolume());
+
+  setupSceneDefaults(scene);
 
   auto window =
       rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
@@ -106,6 +126,8 @@ static void render_wavelet_vdb(benchmark::State &state,
 
   Scene scene;
   scene.updateVolume(proceduralVolume->getVKLVolume());
+
+  setupSceneDefaults(scene);
 
   auto window =
       rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
@@ -186,6 +208,8 @@ static void render_wavelet_unstructured_hex(benchmark::State &state,
 
   Scene scene;
   scene.updateVolume(proceduralVolume->getVKLVolume());
+
+  setupSceneDefaults(scene);
 
   auto window =
       rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);

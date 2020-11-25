@@ -372,35 +372,70 @@ created by passing a type string of `"structuredRegular"` to `vklNewVolume`.
 The parameters understood by structured regular volumes are summarized in the
 table below.
 
-  --------- ----------- -------------  -----------------------------------
-  Type      Name            Default    Description
-  --------- ----------- -------------  -----------------------------------
-  vec3i     dimensions                 number of voxels in each
-                                       dimension $(x, y, z)$
+  --------- -------------------------------- -------------  ---------------------------------------
+  Type      Name                             Default        Description
+  --------- -------------------------------- -------------  ---------------------------------------
+  vec3i     dimensions                                      number of voxels in each
+                                                            dimension $(x, y, z)$
 
-  VKLData   data                       VKLData object(s) of voxel data,
-  VKLData[]                            supported types are:
+  VKLData   data                                            VKLData object(s) of voxel data,
+  VKLData[]                                                 supported types are:
 
-                                       `VKL_UCHAR`
+                                                            `VKL_UCHAR`
 
-                                       `VKL_SHORT`
+                                                            `VKL_SHORT`
 
-                                       `VKL_USHORT`
+                                                            `VKL_USHORT`
 
-                                       `VKL_FLOAT`
+                                                            `VKL_FLOAT`
 
-                                       `VKL_DOUBLE`
+                                                            `VKL_DOUBLE`
 
-                                       Multiple attributes are supported
-                                       through passing an array of VKLData
-                                       objects.
+                                                            Multiple attributes are supported
+                                                            through passing an array of VKLData
+                                                            objects.
 
-  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in world-space
+  vec3f     gridOrigin                       $(0, 0, 0)$    origin of the grid in world-space
 
-  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in
-                                       world-space
-  --------- ----------- -------------  -----------------------------------
+  vec3f     gridSpacing                      $(1, 1, 1)$    size of the grid cells in
+                                                            world-space
+
+  int       temporallyStructuredNumTimesteps                for temporally structured variation,
+                                                            number of timesteps per voxel
+
+  uint32[]  temporallyUnstructuredIndices                   for temporally unstructured variation,
+  uint64[]                                                  indices to `data` time series beginning
+                                                            per voxel
+
+  float[]   temporallyUnstructuredTimes                     for temporally unstructured variation,
+                                                            time values corresponding to values in
+                                                            `data`
+  --------- -------------------------------- -------------  ---------------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
+
+Structured regular volumes support two forms of temporal variation: temporally
+structured and temporally unstructured. When one of these modes is enabled, the
+volume can be sampled at different times. In both modes, time is assumed to vary
+between zero and one. This can be useful for implementing renderers with motion
+blur, for example.
+
+Temporally structured variation is configured through the
+`temporallyStructuredNumTimesteps` parameter. This specifies how many time steps
+(at least two) are provided for all voxels. Therefore, for a volume with
+dimensions $(x, y, z)$, each attribute must have $x*y*z *
+temporallyStructuredNumTimesteps$ values provided in its `data` array. The
+values are assumed evenly spaced over times $[0, 1]$.
+
+Temporally unstructured variation is configured through the
+`temporallyUnstructuredIndices` and `temporallyUnstructuredTimes` parameters,
+and supports differing time step counts and sample times per voxel.
+`temporallyUnstructuredIndices` specifies the index ranges for each voxel's
+values in `data`, such that values for the the $i$th voxel can be found in the
+indices $[temporallyUnstructuredIndices[i],
+temporallyUnstructuredIndices[i+1])$. Therefore `temporallyUnstructuredIndices`
+must have $x*y*z + 1$ values. `temporallyUnstructuredTimes` specifies the times
+corresponding to the sample values in each attribute's `data` array; the
+beginning and end times for each voxel must be zero and one, respectively.
 
 The following additional parameters can be set both on `"structuredRegular"`
 volumes and their sampler objects. Sampler object parameters default to volume
@@ -939,34 +974,42 @@ Sampling
 
 The scalar API takes a volume and coordinate, and returns a float value. NaN is
 returned for probe points outside the volume. The attribute index selects the
-scalar attribute of interest; not all volumes support multiple attributes.
+scalar attribute of interest; not all volumes support multiple attributes. The
+time value, which must be between 0 and 1, specifies the sampling time. For
+temporally constant volumes, this value has no effect.
 
     float vklComputeSample(VKLSampler sampler,
                            const vkl_vec3f *objectCoordinates,
-                           unsigned int attributeIndex);
+                           unsigned int attributeIndex,
+                           float time);
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
 the machine type and Open VKL driver implementation, these can give greater
 performance.  An active lane mask `valid` is passed in as an array of integers;
-set 0 for lanes to be ignored, -1 for active lanes.
+set 0 for lanes to be ignored, -1 for active lanes. An array of time values
+corresponding to each object coordinate may be provided; a `NULL` value
+indicates all times are zero.
 
     void vklComputeSample4(const int *valid,
                            VKLSampler sampler,
                            const vkl_vvec3f4 *objectCoordinates,
                            float *samples,
-                           unsigned int attributeIndex);
+                           unsigned int attributeIndex,
+                           const float *times);
 
     void vklComputeSample8(const int *valid,
                            VKLSampler sampler,
                            const vkl_vvec3f8 *objectCoordinates,
                            float *samples,
-                           unsigned int attributeIndex);
+                           unsigned int attributeIndex,
+                           const float *times);
 
     void vklComputeSample16(const int *valid,
                             VKLSampler sampler,
                             const vkl_vvec3f16 *objectCoordinates,
                             float *samples,
-                            unsigned int attributeIndex);
+                            unsigned int attributeIndex,
+                            const float *times);
 
 A stream version allows sampling an arbitrary number of positions at once. While
 the vector version requires coordinates to be provided in a structure-of-arrays
@@ -979,7 +1022,8 @@ API can give greater performance than the scalar API.
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
                              float *samples,
-                             unsigned int attributeIndex);
+                             unsigned int attributeIndex,
+                             const float *times);
 
 All of the above sampling APIs can be used, regardless of the driver's native
 SIMD width.
@@ -989,14 +1033,19 @@ SIMD width.
 Open VKL provides additional APIs for sampling multiple scalar attributes in a
 single call through the `vklComputeSampleM*()` interfaces. Beyond convenience,
 these can give improved performance relative to the single attribute sampling
-APIs. A scalar API supports sampling `M` attributes specified by
-`attributeIndices` on a single object space coordinate:
+APIs. As with the single attribute APIs, sampling time values may be specified;
+note that these are provided per object coordinate only (rather than separately
+per attribute).
+
+A scalar API supports sampling `M` attributes specified by `attributeIndices` on
+a single object space coordinate:
 
     void vklComputeSampleM(VKLSampler sampler,
                            const vkl_vec3f *objectCoordinates,
                            float *samples,
                            unsigned int M,
-                           const unsigned int *attributeIndices);
+                           const unsigned int *attributeIndices,
+                           float time);
 
 Vector versions allow sampling at 4, 8, or 16 positions at once across the `M`
 attributes:
@@ -1006,21 +1055,24 @@ attributes:
                             const vkl_vvec3f4 *objectCoordinates,
                             float *samples,
                             unsigned int M,
-                            const unsigned int *attributeIndices);
+                            const unsigned int *attributeIndices,
+                            const float *times);
 
     void vklComputeSampleM8(const int *valid,
                             VKLSampler sampler,
                             const vkl_vvec3f8 *objectCoordinates,
                             float *samples,
                             unsigned int M,
-                            const unsigned int *attributeIndices);
+                            const unsigned int *attributeIndices,
+                            const float *times);
 
     void vklComputeSampleM16(const int *valid,
                              VKLSampler sampler,
                              const vkl_vvec3f16 *objectCoordinates,
                              float *samples,
                              unsigned int M,
-                             const unsigned int *attributeIndices);
+                             const unsigned int *attributeIndices,
+                             const float *times);
 
 The `[4, 8, 16] * M` sampled values are populated in the `samples` array in a
 structure-of-arrays layout, with all values for each attribute provided in
@@ -1041,7 +1093,8 @@ coordinates are provided in an array-of-structures layout.
                             const vkl_vec3f *objectCoordinates,
                             float *samples,
                             unsigned int M,
-                            const unsigned int *attributeIndices);
+                            const unsigned int *attributeIndices,
+                            const float *times);
 
 The `M * N` sampled values are populated in the `samples` array in an
 array-of-structures layout, with all attribute values for each coordinate

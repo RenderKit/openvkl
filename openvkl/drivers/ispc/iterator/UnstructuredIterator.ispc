@@ -291,7 +291,8 @@ inline void UnstructuredIterator_iterateIntervalInternal(
     interval->tRange.upper     = retRange.upper;
     interval->valueRange.lower = hitState.node->valueRange.lower;
     interval->valueRange.upper = hitState.node->valueRange.upper;
-    interval->nominalDeltaT    = abs(hitState.node->nominalLength);
+    interval->nominalDeltaT    = abs(hitState.node->nominalLength)
+                                 * rcp(length(self->direction)); // in ray space
     *result                    = true;
   }
 }

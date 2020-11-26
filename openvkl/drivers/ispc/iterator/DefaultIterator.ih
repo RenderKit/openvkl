@@ -34,9 +34,6 @@ struct DefaultIntervalIterator
   uniform box1f valueRange;  // value range of the full volume
   float nominalIntervalLength;
 
-  vec3f origin;
-  vec3f direction;
-
   box1f boundingBoxTRange;
   Interval currentInterval;
 };

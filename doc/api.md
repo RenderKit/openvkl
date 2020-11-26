@@ -1252,10 +1252,10 @@ returned lane masks indicates that the iterator is still within the volume:
                               int *result);
 
 The intervals returned have a t-value range, a value range, and a
-`nominalDeltaT` which is approximately the step size that should be used to
-walk through the interval, if desired.  The number and length of intervals
-returned is volume type implementation dependent.  There is currently no way of
-requesting a particular splitting.
+`nominalDeltaT` which is approximately the step size (in units of ray direction)
+that should be used to walk through the interval, if desired.  The number and
+length of intervals returned is volume type implementation dependent.  There is
+currently no way of requesting a particular splitting.
 
     typedef struct
     {

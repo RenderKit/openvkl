@@ -43,20 +43,20 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
       (varying DefaultIntervalIterator * uniform) _self;
 
   self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
-  self->origin        = *((varying vec3f * uniform) _origin);
-  self->direction     = *((varying vec3f * uniform) _direction);
+  const vec3f origin    = *((varying vec3f * uniform) _origin);
+  const vec3f direction = *((varying vec3f * uniform) _direction);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->valueRange    = valueRange;
 
   box1f tRange = *((varying box1f * uniform) _tRange);
   self->boundingBoxTRange =
-      intersectBox(self->origin, self->direction, boundingBox, tRange);
+      intersectBox(origin, direction, boundingBox, tRange);
 
   // compute a nominal interval length as a fraction of the largest bounding box
-  // dimension
+  // dimension, in ray space
   uniform float bbMaxDimension =
       reduce_max(boundingBox.upper - boundingBox.lower);
-  self->nominalIntervalLength = 0.1f * bbMaxDimension;
+  self->nominalIntervalLength = 0.1f * bbMaxDimension * rcp(length(direction));
 
   resetInterval(self->currentInterval);
 }

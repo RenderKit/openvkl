@@ -28,7 +28,7 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
     uniform int stackPtr = 0;                                                  \
                                                                                \
     while (1) {                                                                \
-      uniform bool isLeaf = (node->nominalLength < 0);                         \
+      uniform bool isLeaf = (node->nominalLength.x < 0);                       \
       if (isLeaf) {                                                            \
         uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;    \
         if (userFunc(userPtr, leaf->cellID, result, samplePos))                \
@@ -84,7 +84,7 @@ inline void traverseEmbree(uniform Node *uniform root,
   uniform uint32 bitstack    = 0;
 
   while (1) {
-    uniform bool isInner = (node->nominalLength >= 0);
+    uniform bool isInner = (node->nominalLength.x >= 0);
 
     if (isInner) {
       uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;

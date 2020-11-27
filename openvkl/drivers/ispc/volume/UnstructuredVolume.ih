@@ -18,7 +18,7 @@ typedef enum
 } CellType;
 
 struct Node {
-  uniform float nominalLength;
+  uniform vec3f nominalLength;
   uniform box1f valueRange;
   uniform int level;
   uniform Node *uniform parent;

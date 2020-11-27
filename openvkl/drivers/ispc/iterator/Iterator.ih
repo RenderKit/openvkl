@@ -67,7 +67,7 @@
         if (tHit < inf) {                                                      \
           hit.t       = tHit;                                                  \
           hit.sample  = value;                                                 \
-          hit.epsilon = epsilon;                                               \
+          hit.epsilon = epsilon * length(direction); /* in object space */     \
           return true;                                                         \
         }                                                                      \
       }                                                                        \
@@ -202,7 +202,7 @@ template_intersectSurfacesNewton(varying);
       if (tHit < inf) {                                                         \
         hit.t       = tHit;                                                     \
         hit.sample  = value;                                                    \
-        hit.epsilon = epsilon;                                                  \
+        hit.epsilon = epsilon * length(direction); /* in object space */        \
         return true;                                                            \
       }                                                                         \
                                                                                 \

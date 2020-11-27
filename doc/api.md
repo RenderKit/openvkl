@@ -395,10 +395,9 @@ table below.
                                                             through passing an array of VKLData
                                                             objects.
 
-  vec3f     gridOrigin                       $(0, 0, 0)$    origin of the grid in world-space
+  vec3f     gridOrigin                       $(0, 0, 0)$    origin of the grid in object space
 
-  vec3f     gridSpacing                      $(1, 1, 1)$    size of the grid cells in
-                                                            world-space
+  vec3f     gridSpacing                      $(1, 1, 1)$    size of the grid cells in object space
 
   int       temporallyStructuredNumTimesteps                for temporally structured variation,
                                                             number of timesteps per voxel
@@ -556,10 +555,10 @@ and have the following parameters:
                                                     containing the actual scalar voxel data.
                                                     Currently only `VKL_FLOAT` data is supported.
 
-  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in world-space
+  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in object space
 
-  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in
-                                                    world-space
+  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in object
+                                                    space
   -------------- --------------- -----------------  -----------------------------------
   : Configuration parameters for AMR (`"amr"`) volumes.
 
@@ -1355,8 +1354,8 @@ returned lane mask indicates that the iterator is still within the volume.
                          int *result);
 
 Returned hits consist of a t-value, a volume value (equal to one of the
-requested values specified in the value selector), and an epsilon value
-estimating the error in t:
+requested values specified in the value selector), and an (object space) epsilon
+value estimating the error of the intersection:
 
     typedef struct
     {

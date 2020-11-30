@@ -68,12 +68,9 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
                                                                                \
   self->intervalState.currentCellIndex = make_vec3i(-1);                       \
                                                                                \
-  /* compute interval nominal deltaT based on gridSpacing and direction; the   \
-   below is equivalent to: dot(abs(normalize(direction)), gridSpacing) /       \
-   length(direction)*/                                                         \
   self->intervalState.nominalDeltaT =                                          \
-      dot(absf(self->direction), volume->gridSpacing) /                        \
-      dot(self->direction, self->direction);                                   \
+      reduce_min(volume->gridSpacing                                           \
+      * rcp_safe(absf(self->direction))); /* in ray space */                   \
                                                                                \
   self->hitState.currentCellIndex  = make_vec3i(-1);                           \
   self->hitState.currentCellTRange = make_box1f(inf, -inf);

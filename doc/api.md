@@ -434,7 +434,11 @@ indices $[temporallyUnstructuredIndices[i],
 temporallyUnstructuredIndices[i+1])$. Therefore `temporallyUnstructuredIndices`
 must have $x*y*z + 1$ values. `temporallyUnstructuredTimes` specifies the times
 corresponding to the sample values in each attribute's `data` array; the
-beginning and end times for each voxel must be zero and one, respectively.
+time values for each voxel must be between zero and one and strictly increasing:
+$t0 < t1 < ... < tN$.
+To return a value at sample time t, $t0 <= t <= tN$, Open VKL will interpolate
+linearly from the two nearest time steps. Time values outside this range are
+clamped $[t0, tN]$.
 
 The following additional parameters can be set both on `"structuredRegular"`
 volumes and their sampler objects. Sampler object parameters default to volume

@@ -220,9 +220,9 @@ inline uniform bool hasUnstructuredTimeData(
       const univary uint32 timeOfs,                                          \
       const univary float &time)                                             \
   {                                                                          \
-    const uniform Data1D voxelData   = self->attributesData[attributeIndex]; \
-    const uniform Data1D indices = self->temporallyUnstructuredIndices;      \
-    const uniform Data1D times   = self->temporallyUnstructuredTimes;        \
+    const uniform Data1D voxelData = self->attributesData[attributeIndex];   \
+    const uniform Data1D indices   = self->temporallyUnstructuredIndices;    \
+    const uniform Data1D times     = self->temporallyUnstructuredTimes;      \
                                                                              \
     /* unconditionally use 64-bit indices on voxelData and times; this       \
        could be improved... */                                               \
@@ -236,16 +236,21 @@ inline uniform bool hasUnstructuredTimeData(
     }                                                                        \
                                                                              \
     assert(nextOfs > voxelOfs);                                              \
-    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                \
-                                                                             \
-    if (numTimeSamples == 2) {                                               \
-      return (1.f - time) * get_##type(voxelData, voxelOfs) +                \
-             time * get_##type(voxelData, voxelOfs + 1);                     \
-    } else if (time == 0.f) {                                                \
+    const univary float t0 = get_float(times, voxelOfs);                     \
+    if (time <= t0)                                                          \
       return get_##type(voxelData, voxelOfs);                                \
-    } else if (time == 1.f) {                                                \
+                                                                             \
+    const univary float t1 = get_float(times, nextOfs - 1);                  \
+    if (time >= t1)                                                          \
       return get_##type(voxelData, nextOfs - 1);                             \
+                                                                             \
+    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                \
+    if (numTimeSamples == 2) {                                               \
+      const univary float w = (time - t0) * rcp(t1 - t0);                    \
+      return (1.f - w) * get_##type(voxelData, voxelOfs) +                   \
+             w * get_##type(voxelData, voxelOfs + 1);                        \
     }                                                                        \
+                                                                             \
     univary uint64 lower = 0;                                                \
     univary uint64 upper = numTimeSamples;                                   \
     while (lower <= upper) {                                                 \
@@ -293,25 +298,30 @@ template_interpolateVoxelTUV(double, uniform);
       const univary uint64 timeOfs,                                          \
       const univary float &time)                                             \
   {                                                                          \
-    const uniform Data1D voxelData   = self->attributesData[attributeIndex]; \
-    const uniform Data1D indices = self->temporallyUnstructuredIndices;      \
-    const uniform Data1D times   = self->temporallyUnstructuredTimes;        \
+    const uniform Data1D voxelData = self->attributesData[attributeIndex];   \
+    const uniform Data1D indices   = self->temporallyUnstructuredIndices;    \
+    const uniform Data1D times     = self->temporallyUnstructuredTimes;      \
                                                                              \
     assert(indices.dataType == VKL_ULONG);                                   \
     univary uint64 voxelOfs = get_uint64(indices, timeOfs);                  \
     univary uint64 nextOfs  = get_uint64(indices, timeOfs + 1);              \
                                                                              \
     assert(nextOfs > voxelOfs);                                              \
-    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                \
-                                                                             \
-    if (numTimeSamples == 2) {                                               \
-      return (1.f - time) * get_##type(voxelData, voxelOfs) +                \
-             time * get_##type(voxelData, voxelOfs + 1);                     \
-    } else if (time == 0.f) {                                                \
+    const univary float t0 = get_float(times, voxelOfs);                     \
+    if (time <= t0)                                                          \
       return get_##type(voxelData, voxelOfs);                                \
-    } else if (time == 1.f) {                                                \
+                                                                             \
+    const univary float t1 = get_float(times, nextOfs - 1);                  \
+    if (time >= t1)                                                          \
       return get_##type(voxelData, nextOfs - 1);                             \
+                                                                             \
+    const univary uint64 numTimeSamples = nextOfs - voxelOfs;                \
+    if (numTimeSamples == 2) {                                               \
+      const univary float w = (time - t0) * rcp(t1 - t0);                    \
+      return (1.f - w) * get_##type(voxelData, voxelOfs) +                   \
+             w * get_##type(voxelData, voxelOfs + 1);                        \
     }                                                                        \
+                                                                             \
     univary uint64 lower = 0;                                                \
     univary uint64 upper = numTimeSamples;                                   \
     while (lower <= upper) {                                                 \
@@ -1198,10 +1208,9 @@ template_sample_inner_64(double, uniform);
     const uniform uint64 voxelOfs_dz =                                      \
         self->dimensions.x * (uint64)self->dimensions.y;                    \
                                                                             \
-    const univary uint64 timeOfs =                                          \
-        (uint64)voxelIndex_0.x * voxelOfs_dx +                              \
-        (uint64)voxelIndex_0.y * voxelOfs_dy +                              \
-        (uint64)voxelIndex_0.z * voxelOfs_dz;                               \
+    const univary uint64 timeOfs = (uint64)voxelIndex_0.x * voxelOfs_dx +   \
+                                   (uint64)voxelIndex_0.y * voxelOfs_dy +   \
+                                   (uint64)voxelIndex_0.z * voxelOfs_dz;    \
                                                                             \
     univary float val = 0.f;                                                \
     switch (filter) {                                                       \
@@ -1293,9 +1302,9 @@ template_sample_inner_TUV_64(double, uniform);
                                                                               \
     const uniform uint64 voxelOfs_dx = numTimeSamples;                        \
     const uniform uint64 voxelOfs_dy = numTimeSamples * self->dimensions.x;   \
-    const uniform uint64 voxelOfs_dz = numTimeSamples * self->dimensions.x *  \
-                                      (uint64)self->dimensions.y;             \
-    const univary uint64 voxelOfs_0  = voxelIndex_0.x * voxelOfs_dx +         \
+    const uniform uint64 voxelOfs_dz =                                        \
+        numTimeSamples * self->dimensions.x * (uint64)self->dimensions.y;     \
+    const univary uint64 voxelOfs_0 = voxelIndex_0.x * voxelOfs_dx +          \
                                       voxelIndex_0.y * voxelOfs_dy +          \
                                       voxelIndex_0.z * voxelOfs_dz;           \
                                                                               \
@@ -2027,13 +2036,11 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
-
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
-    const varying float *uniform time =
-        (const varying float *uniform)_time;
-    varying float *uniform samples = (varying float *uniform)_samples;
+    const varying float *uniform time = (const varying float *uniform)_time;
+    varying float *uniform samples    = (varying float *uniform)_samples;
 
     *samples = SharedStructuredVolume_computeSample_varying(
         self, *objectCoordinates, sampler->filter, attributeIndex, *time);
@@ -2053,9 +2060,8 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_uniform_export,
 
   const vec3f *uniform objectCoordinates =
       (const vec3f *uniform)_objectCoordinates;
-  const float *uniform time =
-      (const float *uniform)_time;
-  float *uniform sample = (float *uniform)_sample;
+  const float *uniform time = (const float *uniform)_time;
+  float *uniform sample     = (float *uniform)_sample;
 
   *sample = SharedStructuredVolume_computeSample_uniform(
       self, *objectCoordinates, sampler->filter, attributeIndex, *time);
@@ -2075,7 +2081,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
-    varying float t = time ? time[i] : 0.f;
+    varying float t  = time ? time[i] : 0.f;
 
     samples[i] = SharedStructuredVolume_computeSample_varying(
         self, oc, sampler->filter, attributeIndex, t);
@@ -2097,11 +2103,13 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
-    const varying float *uniform time =
-        (const varying float *uniform)_time;
-    varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
-    *gradients                       = self->computeGradient_varying(
-        self, *objectCoordinates, sampler->gradientFilter, attributeIndex, *time);
+    const varying float *uniform time = (const varying float *uniform)_time;
+    varying vec3f *uniform gradients  = (varying vec3f * uniform) _gradients;
+    *gradients                        = self->computeGradient_varying(self,
+                                               *objectCoordinates,
+                                               sampler->gradientFilter,
+                                               attributeIndex,
+                                               *time);
   }
 }
 
@@ -2119,9 +2127,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
-    varying float t = time ? time[i] : 0.f;
+    varying float t  = time ? time[i] : 0.f;
 
-    gradients[i]     = self->computeGradient_varying(
+    gradients[i] = self->computeGradient_varying(
         self, oc, sampler->gradientFilter, attributeIndex, t);
   }
 }
@@ -2142,8 +2150,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
-    const varying float *uniform time =
-        (const varying float *uniform)_time;
+    const varying float *uniform time = (const varying float *uniform)_time;
 
     vec3f clampedLocalCoordinates;
     bool inBounds;
@@ -2184,8 +2191,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
 
   const vec3f *uniform objectCoordinates =
       (const vec3f *uniform)_objectCoordinates;
-  const float *uniform time =
-      (const float *uniform)_time;
+  const float *uniform time = (const float *uniform)_time;
 
   uniform vec3f clampedLocalCoordinates;
   uniform bool inBounds;
@@ -2223,7 +2229,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f objectCoordinatesV = objectCoordinates[i];
-    varying float timeV = time ? time[i] : 0.f;
+    varying float timeV              = time ? time[i] : 0.f;
 
     vec3f clampedLocalCoordinates;
     bool inBounds;

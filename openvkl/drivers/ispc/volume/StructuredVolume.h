@@ -235,8 +235,10 @@ namespace openvkl {
                 1;
           }
 
-          if ((*temporallyUnstructuredTimes)[timeBeginIndex] != 0.f ||
-              (*temporallyUnstructuredTimes)[timeEndIndex] != 1.f) {
+          if ((*temporallyUnstructuredTimes)[timeBeginIndex] < 0.f ||
+              (*temporallyUnstructuredTimes)[timeBeginIndex] > 1.f ||
+              (*temporallyUnstructuredTimes)[timeEndIndex] < 0.f ||
+              (*temporallyUnstructuredTimes)[timeEndIndex] > 1.f) {
             throw std::runtime_error(
                 "temporallyUnstructuredTimes values must be bounded by 0.0 and "
                 "1.0 for every voxel");
@@ -246,8 +248,8 @@ namespace openvkl {
             if (!((*temporallyUnstructuredTimes)[j] <
                   (*temporallyUnstructuredTimes)[j + 1])) {
               throw std::runtime_error(
-                  "temporallyUnstructuredTimes values must be monotonically "
-                  "increasing for every voxel");
+                  "temporallyUnstructuredTimes values must be strictly "
+                  "monotonically increasing for every voxel");
             }
           }
         }

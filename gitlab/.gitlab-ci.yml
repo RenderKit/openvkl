@@ -157,6 +157,12 @@ build-arch-address-sanitizer:
     - export LDFLAGS=-fsanitize=address
     - gitlab/build.sh -D BUILD_GLFW=OFF
 
+build-arch-debug:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  script:
+    - gitlab/build.sh -D CMAKE_BUILD_TYPE=Debug -D BUILD_GLFW=OFF
+
 build-arch-devel-rkdeps:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
@@ -257,6 +263,12 @@ test-functional-arch-address-sanitizer:
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch-address-sanitizer
+
+test-functional-arch-debug:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  needs:
+    - build-arch-debug
 
 test-functional-arch-devel-rkdeps:
   <<: *test_functional_job_docker

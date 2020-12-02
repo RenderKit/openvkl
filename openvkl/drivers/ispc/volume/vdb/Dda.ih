@@ -45,27 +45,27 @@ struct DdaState
 /*
  * Returns -1 for negative v, 0 for 0, and 1 for positive v.
  */
-inline int safe_sign(float v)
+inline int dir_safe_sign(float v)
 {
   return ((int)(0 < v)) - ((int)(v < 0));
 }
 
-inline vec3i safe_sign(const vec3f &v)
+inline vec3i dir_safe_sign(const vec3f &v)
 {
-  return make_vec3i(safe_sign(v.x), safe_sign(v.y), safe_sign(v.z));
+  return make_vec3i(dir_safe_sign(v.x), dir_safe_sign(v.y), dir_safe_sign(v.z));
 }
 
 /*
  * Compute 1/v, returning infinity for 0.
  */
-inline float safe_rcp(float v)
+inline float dir_safe_rcp(float v)
 {
-  return (v == -0) ? -inf : (v == 0) ? inf : rcp(v);
+  return (v == 0) ? inf : rcp(v);
 }
 
-inline vec3f safe_rcp(const vec3f &v)
+inline vec3f dir_safe_rcp(const vec3f &v)
 {
-  return make_vec3f(safe_rcp(v.x), safe_rcp(v.y), safe_rcp(v.z));
+  return make_vec3f(dir_safe_rcp(v.x), dir_safe_rcp(v.y), dir_safe_rcp(v.z));
 }
 
 /*
@@ -159,8 +159,8 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
                     DdaState &dda)
 {
   const vec3f oo   = rayOrg + tMin * rayDir;
-  const vec3i sgn  = safe_sign(rayDir);
-  const vec3f iDir = safe_rcp(rayDir);
+  const vec3i sgn  = dir_safe_sign(rayDir);
+  const vec3f iDir = dir_safe_rcp(rayDir);
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 
@@ -215,8 +215,8 @@ inline void ddaReinitBelow(DdaState &dda,
 {
   // Relatively cheap to recompute, so we avoid storing these in DdaState as
   // that impacts memory for all ISPC side iterators.
-  const vec3f iDir = safe_rcp(dda.rayDir);
-  const vec3i sgn = safe_sign(dda.rayDir);
+  const vec3f iDir = dir_safe_rcp(dda.rayDir);
+  const vec3i sgn = dir_safe_sign(dda.rayDir);
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 

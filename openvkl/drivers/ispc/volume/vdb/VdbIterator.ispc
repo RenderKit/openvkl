@@ -73,7 +73,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   intersect_box(
       rayOrg,
-      safe_rcp(rayDir),
+      dir_safe_rcp(rayDir),
       ((varying vec3f)make_vec3f(0.f, 0.f, 0.f)),
       ((varying vec3f)make_vec3f(grid->activeSize.x,
                                  grid->activeSize.y,

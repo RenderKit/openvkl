@@ -103,8 +103,10 @@ inline void intersectBox(const Ray &ray,
 // TEA - Random numbers based on Tiny Encryption Algorithm ////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-inline void tea8(unsigned int &v0, unsigned int &v1)
+inline void tea8(unsigned int &_v0, unsigned int &_v1)
 {
+  unsigned int v0  = _v0;  // Operate on registers to avoid slowdown!
+  unsigned int v1  = _v1;
   unsigned int sum = 0;
 
   for (uniform int i = 0; i < 8; i++) {  // just 8 instead of 32 rounds
@@ -112,6 +114,9 @@ inline void tea8(unsigned int &v0, unsigned int &v1)
     v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
     v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
   }
+
+  _v0 = v0;
+  _v1 = v1;
 }
 
 struct RandomTEA

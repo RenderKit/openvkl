@@ -43,7 +43,8 @@ namespace openvkl {
                                    float time = 0.f) const;
 
       vec3f computeProceduralGradient(const vec3f &objectCoordinates,
-                                      unsigned int attributeIndex) const;
+                                      unsigned int attributeIndex,
+                                      float time = 0.f) const;
 
       std::string getGridType() const;
       vec3i getDimensions() const;
@@ -135,10 +136,12 @@ namespace openvkl {
     }
 
     inline vec3f TestingStructuredVolumeMulti::computeProceduralGradient(
-        const vec3f &objectCoordinates, unsigned int attributeIndex) const
+        const vec3f &objectCoordinates, 
+        unsigned int attributeIndex,
+        float time) const
     {
       return attributeVolumes[attributeIndex]->computeProceduralGradient(
-          objectCoordinates);
+          objectCoordinates, time);
     }
 
     inline std::string TestingStructuredVolumeMulti::getGridType() const
@@ -319,6 +322,38 @@ namespace openvkl {
 
       volumes.push_back(std::make_shared<WaveletStructuredRegularVolumeFloat>(
           dimensions, gridOrigin, gridSpacing, temporalConfig));
+
+      volumes.push_back(std::make_shared<XProceduralVolume>(
+          dimensions, gridOrigin, gridSpacing, temporalConfig));
+
+      volumes.push_back(std::make_shared<YProceduralVolume>(
+          dimensions, gridOrigin, gridSpacing, temporalConfig));
+
+      volumes.push_back(std::make_shared<ZProceduralVolume>(
+          dimensions, gridOrigin, gridSpacing, temporalConfig));
+
+      return new TestingStructuredVolumeMulti("structuredRegular",
+                                              dimensions,
+                                              gridOrigin,
+                                              gridSpacing,
+                                              temporalConfig,
+                                              volumes,
+                                              dataCreationFlags,
+                                              useAOSLayout);
+    }
+
+    // only has volume attributes suitable for functional testing against
+    // procedural gradients
+    inline TestingStructuredVolumeMulti *
+    generateMultiAttributeStructuredRegularVolumeMBGradients(
+        const vec3i &dimensions,
+        const vec3f &gridOrigin,
+        const vec3f &gridSpacing,
+        const TemporalConfig &temporalConfig,
+        VKLDataCreationFlags dataCreationFlags,
+        bool useAOSLayout)
+    {
+      std::vector<std::shared_ptr<ProceduralStructuredVolumeBase>> volumes;
 
       volumes.push_back(std::make_shared<XProceduralVolume>(
           dimensions, gridOrigin, gridSpacing, temporalConfig));

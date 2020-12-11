@@ -34,7 +34,7 @@ namespace openvkl {
       float computeProceduralValueImpl(const vec3f &p,
                                        float time) const override;
 
-      vec3f computeProceduralGradientImpl(const vec3f &p) const override;
+      vec3f computeProceduralGradientImpl(const vec3f &p, float time) const override;
 
       size_t numParticles;
       bool provideWeights;
@@ -221,10 +221,9 @@ namespace openvkl {
     }
 
     inline vec3f ProceduralParticleVolume::computeProceduralGradientImpl(
-        const vec3f &objectCoordinates) const
+        const vec3f &objectCoordinates, float time) const
     {
       const vec3f gradientStep(1e-5f);
-      const float time(0.f);
 
       vec3f gradient;
 

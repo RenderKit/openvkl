@@ -382,7 +382,8 @@ namespace openvkl {
                               VKLSampler sampler,                      \
                               const vvec3fn<WIDTH> &objectCoordinates, \
                               vvec3fn<WIDTH> &gradients,               \
-                              unsigned int attributeIndex) override;
+                              unsigned int attributeIndex,             \
+                              const float *times) override;
 
       __define_computeGradientN(1);
       __define_computeGradientN(4);
@@ -395,7 +396,8 @@ namespace openvkl {
                             unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
-                            unsigned int attributeIndex) override;
+                            unsigned int attributeIndex,
+                            const float *times) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -473,7 +475,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeGradientAnyWidth(
@@ -481,7 +484,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeGradientAnyWidth(
@@ -489,7 +493,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
     };
 
     ////////////////////////////////////////////////////////////////////////////

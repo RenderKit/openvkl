@@ -25,7 +25,7 @@ namespace openvkl {
                                                float time) const = 0;
 
       virtual vec3f computeProceduralGradientImpl(
-          const vec3f &objectCoordinates) const = 0;
+          const vec3f &objectCoordinates, float time) const = 0;
 
      private:
       bool supportsTime;
@@ -48,12 +48,13 @@ namespace openvkl {
     inline vec3f ProceduralVolume::computeProceduralGradient(
         const vec3f &objectCoordinates, float time) const
     {
-      if (time != 0.f) {
+      if (!supportsTime && time != 0.f) {
         throw std::runtime_error(
-            "time not yet considered for procedural gradients");
+            "computeProceduralGradient() called with non-zero time on "
+            "incompatible volume");
       }
 
-      return computeProceduralGradientImpl(objectCoordinates);
+      return computeProceduralGradientImpl(objectCoordinates, time);
     }
   }  // namespace testing
 }  // namespace openvkl

@@ -8,7 +8,7 @@
 namespace openvkl {
   namespace testing {
 
-    inline vec3f gradientNotImplemented(const vec3f &)
+    inline vec3f gradientNotImplemented(const vec3f &, float)
     {
       throw std::runtime_error(
           "gradient function not implemented for this procedural volume");
@@ -54,7 +54,8 @@ namespace openvkl {
       return VOXEL_TYPE(value);
     }
 
-    inline vec3f getWaveletGradient(const vec3f &objectCoordinates)
+    inline vec3f getWaveletGradient(const vec3f &objectCoordinates,
+                                    float time)
     {
       // wavelet parameters
       constexpr double M  = 1.f;
@@ -67,9 +68,10 @@ namespace openvkl {
       constexpr double ZF = 3.f;
 
       return M * G *
-             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF /* + time */,
+             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF,
                    YM * ::cos(YF * objectCoordinates.y) * YF,
-                   -ZM * ::sin(ZF * objectCoordinates.z) * ZF);
+                   -ZM * ::sin(ZF * objectCoordinates.z) * ZF)
+             + vec3f(time, 0.f, 0.f);
     }
 
     template <typename VOXEL_TYPE>
@@ -89,11 +91,11 @@ namespace openvkl {
       return VOXEL_TYPE(value);
     }
 
-    inline vec3f getXYZGradient(const vec3f &objectCoordinates)
+    inline vec3f getXYZGradient(const vec3f &objectCoordinates, float time)
     {
-      return /*(1.f-time)**/ vec3f(objectCoordinates.y * objectCoordinates.z,
-                                   objectCoordinates.x * objectCoordinates.z,
-                                   objectCoordinates.x * objectCoordinates.y);
+      return (1.f - time)* vec3f(objectCoordinates.y * objectCoordinates.z,
+                                 objectCoordinates.x * objectCoordinates.z,
+                                 objectCoordinates.x * objectCoordinates.y);
     }
 
     inline float getShellValue(const vec3f &objectCoordinates,
@@ -114,9 +116,9 @@ namespace openvkl {
       return (1.f - time) * objectCoordinates.x;
     }
 
-    inline vec3f getXGradient(const vec3f &objectCoordinates)
+    inline vec3f getXGradient(const vec3f &objectCoordinates, float time)
     {
-      return /*(1.f-time) * */ vec3f(1.f, 0.f, 0.f);
+      return (1.f - time) * vec3f(1.f, 0.f, 0.f);
     }
 
     inline float getYValue(const vec3f &objectCoordinates, float time)
@@ -124,9 +126,9 @@ namespace openvkl {
       return (1.f - time) * objectCoordinates.y;
     }
 
-    inline vec3f getYGradient(const vec3f &objectCoordinates)
+    inline vec3f getYGradient(const vec3f &objectCoordinates, float time)
     {
-      return /*(1.f-time) * */ vec3f(0.f, 1.f, 0.f);
+      return (1.f - time) * vec3f(0.f, 1.f, 0.f);
     }
 
     inline float getZValue(const vec3f &objectCoordinates, float time)
@@ -134,9 +136,9 @@ namespace openvkl {
       return (1.f - time) * objectCoordinates.z;
     }
 
-    inline vec3f getZGradient(const vec3f &objectCoordinates)
+    inline vec3f getZGradient(const vec3f &objectCoordinates, float time)
     {
-      return /*(1.f-time) * */ vec3f(0.f, 0.f, 1.f);
+      return (1.f - time) * vec3f(0.f, 0.f, 1.f);
     }
 
     inline float getConstValue(const vec3f &objectCoordinates, float time)
@@ -144,7 +146,7 @@ namespace openvkl {
       return 0.5f;
     }
 
-    inline vec3f getConstGradient(const vec3f &objectCoordinates)
+    inline vec3f getConstGradient(const vec3f &objectCoordinates, float time)
     {
       return vec3f(0.f);
     }

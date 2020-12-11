@@ -77,26 +77,30 @@ VKL_API void vklComputeGradient4(const int *uniform valid,
                                  const varying struct vkl_vec3f *uniform
                                      objectCoordinates,
                                  varying vkl_vec3f *uniform gradients,
-                                 uniform unsigned int attributeIndex);
+                                 uniform unsigned int attributeIndex,
+                                 const varying float *uniform time);
 
 VKL_API void vklComputeGradient8(const int *uniform valid,
                                  VKLSampler sampler,
                                  const varying struct vkl_vec3f *uniform
                                      objectCoordinates,
                                  varying vkl_vec3f *uniform gradients,
-                                 uniform unsigned int attributeIndex);
+                                 uniform unsigned int attributeIndex,
+                                 const varying float *uniform time);
 
 VKL_API void vklComputeGradient16(const int *uniform valid,
                                   VKLSampler sampler,
                                   const varying struct vkl_vec3f *uniform
                                       objectCoordinates,
                                   varying vkl_vec3f *uniform gradients,
-                                  uniform unsigned int attributeIndex);
+                                  uniform unsigned int attributeIndex,
+                                  const varying float *uniform time);
 
 VKL_FORCEINLINE varying vkl_vec3f
 vklComputeGradientV(VKLSampler sampler,
                     const varying vkl_vec3f *uniform objectCoordinates,
-                    uniform unsigned int attributeIndex = 0)
+                    uniform unsigned int attributeIndex = 0,
+                    const varying float *uniform time = NULL)
 {
   varying bool mask = __mask;
   unmasked
@@ -111,19 +115,22 @@ vklComputeGradientV(VKLSampler sampler,
                         sampler,
                         objectCoordinates,
                         &gradients,
-                        attributeIndex);
+                        attributeIndex,
+                        time);
   } else if (sizeof(varying float) == 32) {
     vklComputeGradient8((uniform int *uniform) & imask,
                         sampler,
                         objectCoordinates,
                         &gradients,
-                        attributeIndex);
+                        attributeIndex,
+                        time);
   } else if (sizeof(varying float) == 64) {
     vklComputeGradient16((uniform int *uniform) & imask,
                          sampler,
                          objectCoordinates,
                          &gradients,
-                         attributeIndex);
+                         attributeIndex,
+                         time);
   }
 
   return gradients;

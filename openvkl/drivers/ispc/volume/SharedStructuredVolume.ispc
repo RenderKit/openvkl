@@ -1394,7 +1394,8 @@ inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
     const SharedStructuredVolume *uniform self,
     const varying vec3f &objectCoordinates,
     const uniform VKLFilter filter,
-    const uniform uint32 attributeIndex)
+    const uniform uint32 attributeIndex,
+    const varying float &time)
 {
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gridSpacing;
@@ -1412,7 +1413,6 @@ inline varying vec3f SharedStructuredVolume_computeGradient_bbox_checks(
     gradientStep.z *= -1.f;
 
   vec3f gradient;
-  float time = 0.f;
 
   float sample = SharedStructuredVolume_computeSample_varying(
       self, objectCoordinates, filter, attributeIndex, time);
@@ -1446,7 +1446,8 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
     const SharedStructuredVolume *uniform self,
     const varying vec3f &objectCoordinates,
     const uniform VKLFilter filter,
-    const uniform uint32 attributeIndex)
+    const uniform uint32 attributeIndex,
+    const varying float &time)
 {
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gridSpacing;
@@ -1456,7 +1457,6 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
   const vec3f gradientExtent = objectCoordinates + gradientStep;
 
   vec3f gradient;
-  float time = 0.f;
 
   float sample = SharedStructuredVolume_computeSample_varying(
       self, objectCoordinates, filter, attributeIndex, time);
@@ -2087,6 +2087,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_export,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
                           const uniform uint32 attributeIndex,
+                          const void *uniform _time,
                           void *uniform _gradients)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -2096,9 +2097,11 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    const varying float *uniform time =
+        (const varying float *uniform)_time;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
     *gradients                       = self->computeGradient_varying(
-        self, *objectCoordinates, sampler->gradientFilter, attributeIndex);
+        self, *objectCoordinates, sampler->gradientFilter, attributeIndex, *time);
   }
 }
 
@@ -2107,6 +2110,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_N_export,
                           const uniform unsigned int N,
                           const vec3f *uniform objectCoordinates,
                           const uniform uint32 attributeIndex,
+                          const float *uniform time,
                           vec3f *uniform gradients)
 {
   const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
@@ -2115,8 +2119,10 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
+    varying float t = time ? time[i] : 0.f;
+
     gradients[i]     = self->computeGradient_varying(
-        self, oc, sampler->gradientFilter, attributeIndex);
+        self, oc, sampler->gradientFilter, attributeIndex, t);
   }
 }
 

@@ -340,17 +340,18 @@ namespace openvkl {
           N, objectCoordinates, samples, M, attributeIndices, times);
     }
 
-#define __define_computeGradientN(WIDTH)                               \
-  template <int W>                                                     \
-  void ISPCDriver<W>::computeGradient##WIDTH(                          \
-      const int *valid,                                                \
-      VKLSampler sampler,                                              \
-      const vvec3fn<WIDTH> &objectCoordinates,                         \
-      vvec3fn<WIDTH> &gradients,                                       \
-      unsigned int attributeIndex)                                     \
-  {                                                                    \
-    computeGradientAnyWidth<WIDTH>(                                    \
-        valid, sampler, objectCoordinates, gradients, attributeIndex); \
+#define __define_computeGradientN(WIDTH)                                      \
+  template <int W>                                                            \
+  void ISPCDriver<W>::computeGradient##WIDTH(                                 \
+      const int *valid,                                                       \
+      VKLSampler sampler,                                                     \
+      const vvec3fn<WIDTH> &objectCoordinates,                                \
+      vvec3fn<WIDTH> &gradients,                                              \
+      unsigned int attributeIndex,                                            \
+      const float *times)                                                     \
+  {                                                                           \
+    computeGradientAnyWidth<WIDTH>(                                           \
+        valid, sampler, objectCoordinates, gradients, attributeIndex, times); \
   }
 
     __define_computeGradientN(1);
@@ -365,11 +366,12 @@ namespace openvkl {
                                          unsigned int N,
                                          const vvec3fn<1> *objectCoordinates,
                                          vvec3fn<1> *gradients,
-                                         unsigned int attributeIndex)
+                                         unsigned int attributeIndex,
+                                         const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
       samplerObject.computeGradientN(
-          N, objectCoordinates, gradients, attributeIndex);
+          N, objectCoordinates, gradients, attributeIndex, times);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -617,21 +619,25 @@ namespace openvkl {
                                            VKLSampler sampler,
                                            const vvec3fn<OW> &objectCoordinates,
                                            vvec3fn<OW> &gradients,
-                                           unsigned int attributeIndex)
+                                           unsigned int attributeIndex,
+                                           const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
+      vfloatn<W> tW(times, OW);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = i < OW ? valid[i] : 0;
 
       ocW.fill_inactive_lanes(validW);
+      tW.fill_inactive_lanes(validW);
 
       vvec3fn<W> gradientsW;
 
-      samplerObject.computeGradientV(validW, ocW, gradientsW, attributeIndex);
+      samplerObject.computeGradientV(
+          validW, ocW, gradientsW, attributeIndex, tW);
 
       for (int i = 0; i < OW; i++) {
         gradients.x[i] = gradientsW.x[i];
@@ -647,16 +653,19 @@ namespace openvkl {
                                            VKLSampler sampler,
                                            const vvec3fn<OW> &objectCoordinates,
                                            vvec3fn<OW> &gradients,
-                                           unsigned int attributeIndex)
+                                           unsigned int attributeIndex,
+                                           const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vfloatn<W> tW(times, W);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = valid[i];
 
       samplerObject.computeGradientV(
-          validW, objectCoordinates, gradients, attributeIndex);
+          validW, objectCoordinates, gradients, attributeIndex, tW);
     }
 
     template <int W>
@@ -666,24 +675,30 @@ namespace openvkl {
                                            VKLSampler sampler,
                                            const vvec3fn<OW> &objectCoordinates,
                                            vvec3fn<OW> &gradients,
-                                           unsigned int attributeIndex)
+                                           unsigned int attributeIndex,
+                                           const float *times)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+
+      vfloatn<OW> tOW(times, OW);
 
       const int numPacks = OW / W + (OW % W != 0);
 
       for (int packIndex = 0; packIndex < numPacks; packIndex++) {
         vvec3fn<W> ocW = objectCoordinates.template extract_pack<W>(packIndex);
+        vfloatn<W> tW  = tOW.template extract_pack<W>(packIndex);
 
         vintn<W> validW;
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++)
           validW[i - packIndex * W] = i < OW ? valid[i] : 0;
 
         ocW.fill_inactive_lanes(validW);
+        tW.fill_inactive_lanes(validW);
 
         vvec3fn<W> gradientsW;
 
-        samplerObject.computeGradientV(validW, ocW, gradientsW, attributeIndex);
+        samplerObject.computeGradientV(
+            validW, ocW, gradientsW, attributeIndex, tW);
 
         for (int i = packIndex * W; i < (packIndex + 1) * W && i < OW; i++) {
           gradients.x[i] = gradientsW.x[i - packIndex * W];

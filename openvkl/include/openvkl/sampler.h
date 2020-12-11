@@ -118,35 +118,40 @@ void vklComputeSampleMN(VKLSampler sampler,
 OPENVKL_INTERFACE
 vkl_vec3f vklComputeGradient(VKLSampler sampler,
                              const vkl_vec3f *objectCoordinates,
-                             unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+                             unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+                             float time VKL_DEFAULT_VAL(= 0));
 
 OPENVKL_INTERFACE
 void vklComputeGradient4(const int *valid,
                          VKLSampler sampler,
                          const vkl_vvec3f4 *objectCoordinates,
                          vkl_vvec3f4 *gradients,
-                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeGradient8(const int *valid,
                          VKLSampler sampler,
                          const vkl_vvec3f8 *objectCoordinates,
                          vkl_vvec3f8 *gradients,
-                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeGradient16(const int *valid,
                           VKLSampler sampler,
                           const vkl_vvec3f16 *objectCoordinates,
                           vkl_vvec3f16 *gradients,
-                          unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+                          unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+                          const float *times VKL_DEFAULT_VAL(= nullptr));
 
 OPENVKL_INTERFACE
 void vklComputeGradientN(VKLSampler sampler,
                          unsigned int N,
                          const vkl_vec3f *objectCoordinates,
                          vkl_vec3f *gradients,
-                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+                         unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+                         const float *times VKL_DEFAULT_VAL(= nullptr));
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -99,6 +99,7 @@ if (BUILD_TESTING)
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
     tests/structured_regular_volume_sampling_motion_blur.cpp
+    tests/structured_regular_volume_gradients_motion_blur.cpp
     tests/structured_regular_volume_strides.cpp
     tests/structured_regular_volume_multi.cpp
     tests/structured_spherical_volume_sampling.cpp

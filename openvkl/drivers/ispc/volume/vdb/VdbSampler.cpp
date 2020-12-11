@@ -103,9 +103,11 @@ namespace openvkl {
     void VdbSampler<W>::computeGradientV(const vintn<W> &valid,
                                          const vvec3fn<W> &objectCoordinates,
                                          vvec3fn<W> &gradients,
-                                         unsigned int attributeIndex) const
+                                         unsigned int attributeIndex,
+                                         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VdbSampler_computeGradient,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -117,9 +119,11 @@ namespace openvkl {
     void VdbSampler<W>::computeGradientN(unsigned int N,
                                          const vvec3fn<1> *objectCoordinates,
                                          vvec3fn<1> *gradients,
-                                         unsigned int attributeIndex) const
+                                         unsigned int attributeIndex,
+                                         const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeGradient_stream,
                 ispcEquivalent,
                 N,

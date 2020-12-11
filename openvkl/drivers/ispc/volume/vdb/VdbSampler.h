@@ -48,12 +48,14 @@ namespace openvkl {
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const vfloatn<W> &time) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const float *times) const override final;
 
       Observer<W> *newObserver(const char *type) override;
 

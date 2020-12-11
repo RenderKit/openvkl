@@ -15,7 +15,7 @@ namespace openvkl {
   namespace testing {
 
     template <float samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
     struct ProceduralVdbVolume : public TestingVolume, public ProceduralVolume
     {
       using Buffers = vdb_util::VdbVolumeBuffers<VKL_FLOAT>;
@@ -165,9 +165,9 @@ namespace openvkl {
       }
 
       vec3f computeProceduralGradientImpl(
-          const vec3f &objectCoordinates) const override
+          const vec3f &objectCoordinates, float time) const override
       {
-        return gradientFunction(objectCoordinates);
+        return gradientFunction(objectCoordinates, time);
       }
 
       void generateVKLVolume() override

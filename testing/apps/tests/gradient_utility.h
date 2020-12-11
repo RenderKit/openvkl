@@ -15,10 +15,11 @@ inline void test_scalar_and_vector_gradients(
     const vec3f &objectCoordinates,
     const vec3f gradientTruth,
     const float gradientTolerance,
-    const unsigned int attributeIndex = 0)
+    const unsigned int attributeIndex = 0,
+    const float time                  = 0.f)
 {
   vkl_vec3f scalarGradientValue = vklComputeGradient(
-      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex);
+      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
 
   REQUIRE(scalarGradientValue.x ==
           Approx(gradientTruth.x).margin(gradientTolerance));
@@ -42,28 +43,34 @@ inline void test_scalar_and_vector_gradients(
   AlignedVector<float> objectCoordinatesSOA;
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
+  float times_4[4] = {time};
   vkl_vvec3f4 gradients_4;
   vklComputeGradient4(valid.data(),
                       sampler,
                       (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                       &gradients_4,
-                      attributeIndex);
+                      attributeIndex,
+                      time == 0.f ? nullptr : times_4);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 8);
+  float times_8[8]     = {time};
   vkl_vvec3f8 gradients_8;
   vklComputeGradient8(valid.data(),
                       sampler,
                       (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                       &gradients_8,
-                      attributeIndex);
+                      attributeIndex,
+                      time == 0.f ? nullptr : times_8);
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   vkl_vvec3f16 gradients_16;
+  float times_16[16]   = {time};
   vklComputeGradient16(valid.data(),
                        sampler,
                        (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                        &gradients_16,
-                       attributeIndex);
+                       attributeIndex,
+                       time == 0.f ? nullptr : times_16);
 
   REQUIRE(scalarGradientValue.x == gradients_4.x[0]);
   REQUIRE(scalarGradientValue.y == gradients_4.y[0]);
@@ -79,7 +86,8 @@ inline void test_scalar_and_vector_gradients(
 }
 
 inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
-                                  const unsigned int attributeIndex = 0)
+                                  const unsigned int attributeIndex = 0,
+                                  const float time                  = 0.f)
 {
   VKLVolume vklVolume   = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
@@ -100,6 +108,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
 
     for (int N = 1; N < maxN; N++) {
       std::vector<vkl_vec3f> objectCoordinates(N);
+      std::vector<float> times(N, time);
       std::vector<vkl_vec3f> gradients(N);
 
       for (auto &oc : objectCoordinates) {
@@ -110,11 +119,12 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
                           N,
                           objectCoordinates.data(),
                           gradients.data(),
-                          attributeIndex);
+                          attributeIndex,
+                          time == 0.f ? nullptr : times.data());
 
       for (int i = 0; i < N; i++) {
         vkl_vec3f gradientTruth = vklComputeGradient(
-            vklSampler, &objectCoordinates[i], attributeIndex);
+            vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("gradient = " << i + 1 << " / " << N);
 

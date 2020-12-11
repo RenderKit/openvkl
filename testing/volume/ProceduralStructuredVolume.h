@@ -47,7 +47,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
     struct ProceduralStructuredVolume : public ProceduralStructuredVolumeBase
     {
       ProceduralStructuredVolume(
@@ -69,7 +69,7 @@ namespace openvkl {
                                              float time) const;
 
       vec3f computeProceduralGradientImpl(
-          const vec3f &objectCoordinates) const override;
+          const vec3f &objectCoordinates, float time) const override;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -85,7 +85,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline ProceduralStructuredVolume<VOXEL_TYPE,
                                       samplingFunction,
                                       gradientFunction>::
@@ -113,7 +113,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline std::vector<unsigned char>
     ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
         generateVoxels()
@@ -160,7 +160,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline float
     ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
         computeProceduralValueImpl(const vec3f &objectCoordinates,
@@ -171,7 +171,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline VOXEL_TYPE
     ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
         computeProceduralValueTyped(const vec3f &objectCoordinates,
@@ -182,12 +182,12 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline vec3f
     ProceduralStructuredVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
-        computeProceduralGradientImpl(const vec3f &objectCoordinates) const
+        computeProceduralGradientImpl(const vec3f &objectCoordinates, float time) const
     {
-      return gradientFunction(objectCoordinates);
+      return gradientFunction(objectCoordinates, time);
     }
 
   }  // namespace testing

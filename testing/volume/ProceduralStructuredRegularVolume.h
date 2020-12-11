@@ -18,7 +18,7 @@ namespace openvkl {
               ,
               VOXEL_TYPE samplingFunction(const vec3f &, float) =
                   samplingNotImplemented,
-              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
     struct ProceduralStructuredRegularVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,
@@ -45,7 +45,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline ProceduralStructuredRegularVolume<VOXEL_TYPE,
                                              samplingFunction,
                                              gradientFunction>::
@@ -70,7 +70,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline vec3f ProceduralStructuredRegularVolume<VOXEL_TYPE,
                                                    samplingFunction,
                                                    gradientFunction>::
@@ -81,7 +81,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline void ProceduralStructuredRegularVolume<
         VOXEL_TYPE,
         samplingFunction,

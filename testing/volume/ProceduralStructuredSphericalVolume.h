@@ -18,7 +18,7 @@ namespace openvkl {
               ,
               VOXEL_TYPE samplingFunction(const vec3f &, float) =
                   samplingNotImplemented,
-              vec3f gradientFunction(const vec3f &) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
     struct ProceduralStructuredSphericalVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,
@@ -41,7 +41,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                samplingFunction,
                                                gradientFunction>::
@@ -57,7 +57,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline vec3f ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                      samplingFunction,
                                                      gradientFunction>::
@@ -83,7 +83,7 @@ namespace openvkl {
 
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &)>
+              vec3f gradientFunction(const vec3f &, float)>
     inline void ProceduralStructuredSphericalVolume<
         VOXEL_TYPE,
         samplingFunction,

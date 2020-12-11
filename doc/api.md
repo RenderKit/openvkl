@@ -1113,11 +1113,13 @@ Gradients
 In a very similar API to `vklComputeSample`, `vklComputeGradient` queries the
 value gradient at an object space coordinate.  Again, a scalar API, now
 returning a vec3f instead of a float. NaN values are returned for points outside
-the volume.
+the volume.  The time value, which must be between 0 and 1, specifies the sampling 
+time. For temporally constant volumes, this value has no effect.
 
     vkl_vec3f vklComputeGradient(VKLSampler sampler,
                                  const vkl_vec3f *objectCoordinates,
-                                 unsigned int attributeIndex);
+                                 unsigned int attributeIndex,
+                                 float time);
 
 Vector versions are also provided:
 
@@ -1125,19 +1127,22 @@ Vector versions are also provided:
                              VKLSampler sampler,
                              const vkl_vvec3f4 *objectCoordinates,
                              vkl_vvec3f4 *gradients,
-                             unsigned int attributeIndex);
+                             unsigned int attributeIndex,
+                             const float *times);
 
     void vklComputeGradient8(const int *valid,
                              VKLSampler sampler,
                              const vkl_vvec3f8 *objectCoordinates,
                              vkl_vvec3f8 *gradients,
-                             unsigned int attributeIndex);
+                             unsigned int attributeIndex,
+                             const float *times);
 
     void vklComputeGradient16(const int *valid,
                               VKLSampler sampler,
                               const vkl_vvec3f16 *objectCoordinates,
                               vkl_vvec3f16 *gradients,
-                              unsigned int attributeIndex);
+                              unsigned int attributeIndex,
+                              const float *times);
 
 Finally, a stream version is provided:
 
@@ -1145,7 +1150,8 @@ Finally, a stream version is provided:
                              unsigned int N,
                              const vkl_vec3f *objectCoordinates,
                              vkl_vec3f *gradients,
-                             unsigned int attributeIndex);
+                             unsigned int attributeIndex,
+                             const float *times);
 
 All of the above gradient APIs can be used, regardless of the driver's native
 SIMD width.

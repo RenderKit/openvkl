@@ -55,12 +55,14 @@ namespace openvkl {
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const vfloatn<W> &time) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const float *times) const override final;
 
       // multi-attribute //////////////////////////////////////////////////////
 
@@ -233,14 +235,17 @@ namespace openvkl {
         computeGradientV(const vintn<W> &valid,
                          const vvec3fn<W> &objectCoordinates,
                          vvec3fn<W> &gradients,
-                         unsigned int attributeIndex) const
+                         unsigned int attributeIndex,
+                         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(SharedStructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
                 attributeIndex,
+                time,
                 &gradients);
     }
 
@@ -254,14 +259,17 @@ namespace openvkl {
         computeGradientN(unsigned int N,
                          const vvec3fn<1> *objectCoordinates,
                          vvec3fn<1> *gradients,
-                         unsigned int attributeIndex) const
+                         unsigned int attributeIndex,
+                         const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_gradient_N_export,
                 ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 attributeIndex,
+                times,
                 (ispc::vec3f *)gradients);
     }
 

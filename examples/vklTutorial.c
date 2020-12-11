@@ -40,7 +40,7 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int attributeIndex = 0;
   float time                  = 0.f;
   float sample   = vklComputeSample(sampler, &coord, attributeIndex, time);
-  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex);
+  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex, time);
   printf("\tsampling and gradient computation (first attribute)\n");
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -173,7 +173,7 @@ void demoVectorAPI(VKLVolume volume)
   float sample4[4];
   vkl_vvec3f4 grad4;
   vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex, time4);
-  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex);
+  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex, time4);
 
   printf("\n\tsampling and gradient computation (first attribute)\n");
 
@@ -235,7 +235,7 @@ void demoStreamAPI(VKLVolume volume)
   float sample[5];
   vkl_vec3f grad[5];
   vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
-  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex);
+  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex, time);
 
   for (int i = 0; i < 5; i++) {
     printf("\t\tsample[%d] = %f\n", i, sample[i]);

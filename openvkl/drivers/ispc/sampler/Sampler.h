@@ -89,12 +89,14 @@ namespace openvkl {
       virtual void computeGradientV(const vintn<W> &valid,
                                     const vvec3fn<W> &objectCoordinates,
                                     vvec3fn<W> &gradients,
-                                    unsigned int attributeIndex) const = 0;
+                                    unsigned int attributeIndex,
+                                    const vfloatn<W> &times) const = 0;
 
       virtual void computeGradientN(unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
                                     vvec3fn<1> *gradients,
-                                    unsigned int attributeIndex) const = 0;
+                                    unsigned int attributeIndex,
+                                    const float *times) const = 0;
 
       // multi-attribute //////////////////////////////////////////////////////
 

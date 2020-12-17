@@ -54,8 +54,7 @@ namespace openvkl {
       return VOXEL_TYPE(value);
     }
 
-    inline vec3f getWaveletGradient(const vec3f &objectCoordinates,
-                                    float time)
+    inline vec3f getWaveletGradient(const vec3f &objectCoordinates, float time)
     {
       // wavelet parameters
       constexpr double M  = 1.f;
@@ -68,10 +67,10 @@ namespace openvkl {
       constexpr double ZF = 3.f;
 
       return M * G *
-             vec3f(XM * ::cos(XF * objectCoordinates.x) * XF,
-                   YM * ::cos(YF * objectCoordinates.y) * YF,
-                   -ZM * ::sin(ZF * objectCoordinates.z) * ZF)
-             + vec3f(time, 0.f, 0.f);
+                 vec3f(XM * ::cos(XF * objectCoordinates.x) * XF,
+                       YM * ::cos(YF * objectCoordinates.y) * YF,
+                       -ZM * ::sin(ZF * objectCoordinates.z) * ZF) +
+             vec3f(time, 0.f, 0.f);
     }
 
     template <typename VOXEL_TYPE>
@@ -93,9 +92,9 @@ namespace openvkl {
 
     inline vec3f getXYZGradient(const vec3f &objectCoordinates, float time)
     {
-      return (1.f - time)* vec3f(objectCoordinates.y * objectCoordinates.z,
-                                 objectCoordinates.x * objectCoordinates.z,
-                                 objectCoordinates.x * objectCoordinates.y);
+      return (1.f - time) * vec3f(objectCoordinates.y * objectCoordinates.z,
+                                  objectCoordinates.x * objectCoordinates.z,
+                                  objectCoordinates.x * objectCoordinates.y);
     }
 
     inline float getShellValue(const vec3f &objectCoordinates,
@@ -147,6 +146,26 @@ namespace openvkl {
     }
 
     inline vec3f getConstGradient(const vec3f &objectCoordinates, float time)
+    {
+      return vec3f(0.f);
+    }
+
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getRotatingSphereValue(const vec3f &objectCoordinates,
+                                             float time)
+    {
+      constexpr float cr     = 0.6f;
+      constexpr float radius = 0.1f;
+      const float phase      = time * 4.f * M_PI;
+      const vec3f center{cr * sin(phase), cr * cos(phase), 0.2f + 0.6f * time};
+      const float radSq = radius * radius;
+      const vec3f d     = objectCoordinates - center;
+      const float rr    = dot(d, d);
+      return (rr < radSq) ? VOXEL_TYPE{1} : VOXEL_TYPE{0};
+    }
+
+    inline vec3f getRotatingSphereGradient(const vec3f &objectCoordinates,
+                                           float time)
     {
       return vec3f(0.f);
     }

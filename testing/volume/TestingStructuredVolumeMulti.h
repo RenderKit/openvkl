@@ -71,6 +71,8 @@ namespace openvkl {
 
       // data may need to be retained for shared data buffers
       std::vector<std::vector<unsigned char>> voxels;
+      std::vector<float> time;
+      std::vector<uint32_t> tuvIndex;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -105,7 +107,7 @@ namespace openvkl {
                           (v->getDimensions() == dimensions) &&
                           (v->getGridOrigin() == gridOrigin) &&
                           (v->getGridSpacing() == gridSpacing) &&
-                          (v->getTemporalConfig() == temporalConfig);
+                          temporalConfig.isCompatible(v->getTemporalConfig());
 
         if (!compatible) {
           throw std::runtime_error(
@@ -136,7 +138,7 @@ namespace openvkl {
     }
 
     inline vec3f TestingStructuredVolumeMulti::computeProceduralGradient(
-        const vec3f &objectCoordinates, 
+        const vec3f &objectCoordinates,
         unsigned int attributeIndex,
         float time) const
     {
@@ -223,14 +225,21 @@ namespace openvkl {
         auto &v = voxels[0];
         v.resize(voxelSizeSum * dimensions.long_product());
 
+        std::vector<unsigned char> av;
+
         // for each attribute: populate data into combined AOS voxel buffer, and
         // create (strided) VKL data object
         for (size_t i = 0; i < attributeVolumes.size(); i++) {
           const size_t voxelSizeOffset =
               std::accumulate(voxelSizes.begin(), voxelSizes.begin() + i, 0);
 
-          std::vector<unsigned char> av = attributeVolumes[i]->generateVoxels();
+          av.clear();
+          std::vector<float> at;
+          std::vector<uint32_t> ai;
+          attributeVolumes[i]->generateVoxels(av, at, ai);
 
+          assert(at.empty());  // We do not have time in this branch.
+          assert(ai.empty());
           assert(av.size() == dimensions.long_product() * voxelSizes[i]);
 
           for (size_t j = 0; j < dimensions.long_product(); j++) {
@@ -256,15 +265,15 @@ namespace openvkl {
       } else {
         // SOA layout, where each attribute's data is a compact array
         for (int i = 0; i < attributeVolumes.size(); i++) {
-          voxels[i] = attributeVolumes[i]->generateVoxels();
+          attributeVolumes[i]->generateVoxels(voxels[i], time, tuvIndex);
 
           assert(voxels[i].size() ==
-                 dimensions.long_product() * temporalConfig.numTimesteps *
+                 dimensions.long_product() * temporalConfig.getNumSamples() *
                      sizeOfVKLDataType(attributeVolumes[i]->getVoxelType()));
 
           VKLData attributeData = vklNewData(
               dimensions.long_product() *
-                  attributeVolumes[i]->getTemporalConfig().numTimesteps,
+                  attributeVolumes[i]->getTemporalConfig().getNumSamples(),
               attributeVolumes[i]->getVoxelType(),
               voxels[i].data(),
               dataCreationFlags,
@@ -286,23 +295,38 @@ namespace openvkl {
       vklSetData(volume, "data", data);
       vklRelease(data);
 
-      if (temporalConfig.hasStructuredTime()) {
+      switch (temporalConfig.type) {
+      case TemporalConfig::Constant: {
+        break;
+      }
+      case TemporalConfig::Structured: {
         vklSetInt(volume,
                   "temporallyStructuredNumTimesteps",
-                  temporalConfig.getStructuredNumTimesteps());
-      } else if (temporalConfig.hasUnstructuredTime()) {
-        VKLData indicesData = temporalConfig.generateUnstructuredIndicesData(
-            dimensions.long_product());
-        vklSetData(volume, "temporallyUnstructuredIndices", indicesData);
-        vklRelease(indicesData);
+                  temporalConfig.sampleTime.size());
+        break;
+      }
 
-        VKLData timesData = temporalConfig.generateUnstructuredTimesData(
-            dimensions.long_product());
-        vklSetData(volume, "temporallyUnstructuredTimes", timesData);
-        vklRelease(timesData);
+      case TemporalConfig::Unstructured: {
+        VKLData indexData = vklNewData(
+            tuvIndex.size(), VKL_UINT, tuvIndex.data(), dataCreationFlags);
+        vklSetData(volume, "temporallyUnstructuredIndices", indexData);
+        vklRelease(indexData);
+
+        VKLData timeData =
+            vklNewData(time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
+        vklSetData(volume, "temporallyUnstructuredTimes", timeData);
+        vklRelease(timeData);
+        break;
+      }
       }
 
       vklCommit(volume);
+
+      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+        std::vector<std::vector<unsigned char>>().swap(voxels);
+        std::vector<float>().swap(time);
+        std::vector<uint32_t>().swap(tuvIndex);
+      }
     }
 
     ///////////////////////////////////////////////////////////////////////////

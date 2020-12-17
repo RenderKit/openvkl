@@ -33,7 +33,7 @@ namespace openvkl {
           size_t byteStride                      = 0);
 
       vec3f transformLocalToObjectCoordinates(
-          const vec3f &localCoordinates) override;
+          const vec3f &localCoordinates) const override;
 
       static void generateGridParameters(const vec3i &dimensions,
                                          const float boundingBoxSize,
@@ -74,7 +74,7 @@ namespace openvkl {
     inline vec3f ProceduralStructuredRegularVolume<VOXEL_TYPE,
                                                    samplingFunction,
                                                    gradientFunction>::
-        transformLocalToObjectCoordinates(const vec3f &localCoordinates)
+        transformLocalToObjectCoordinates(const vec3f &localCoordinates) const
     {
       return this->gridOrigin + localCoordinates * this->gridSpacing;
     }
@@ -147,6 +147,48 @@ namespace openvkl {
         ProceduralStructuredRegularVolume<double,
                                           getWaveletValue<double>,
                                           getWaveletGradient>;
+
+    using XYZStructuredRegularVolumeUChar =
+        ProceduralStructuredRegularVolume<unsigned char,
+                                          getXYZValue<unsigned char>,
+                                          getXYZGradient>;
+    using XYZStructuredRegularVolumeShort =
+        ProceduralStructuredRegularVolume<short,
+                                          getXYZValue<short>,
+                                          getXYZGradient>;
+    using XYZStructuredRegularVolumeUShort =
+        ProceduralStructuredRegularVolume<unsigned short,
+                                          getXYZValue<unsigned short>,
+                                          getXYZGradient>;
+    using XYZStructuredRegularVolumeFloat =
+        ProceduralStructuredRegularVolume<float,
+                                          getXYZValue<float>,
+                                          getXYZGradient>;
+    using XYZStructuredRegularVolumeDouble =
+        ProceduralStructuredRegularVolume<double,
+                                          getXYZValue<double>,
+                                          getXYZGradient>;
+
+    using SphereStructuredRegularVolumeUChar =
+        ProceduralStructuredRegularVolume<unsigned char,
+                                          getRotatingSphereValue<unsigned char>,
+                                          getRotatingSphereGradient>;
+    using SphereStructuredRegularVolumeShort =
+        ProceduralStructuredRegularVolume<short,
+                                          getRotatingSphereValue<short>,
+                                          getRotatingSphereGradient>;
+    using SphereStructuredRegularVolumeUShort =
+        ProceduralStructuredRegularVolume<unsigned short,
+                                          getRotatingSphereValue<unsigned short>,
+                                          getRotatingSphereGradient>;
+    using SphereStructuredRegularVolumeFloat =
+        ProceduralStructuredRegularVolume<float,
+                                          getRotatingSphereValue<float>,
+                                          getRotatingSphereGradient>;
+    using SphereStructuredRegularVolumeDouble =
+        ProceduralStructuredRegularVolume<double,
+                                          getRotatingSphereValue<double>,
+                                          getRotatingSphereGradient>;
 
     // using type traits to work around Visual Studio compiler templating bugs
     template <typename VOXEL_TYPE>

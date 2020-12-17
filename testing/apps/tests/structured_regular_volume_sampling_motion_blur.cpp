@@ -183,14 +183,11 @@ TEST_CASE("Structured regular volume sampling with motion blur",
   const vec3f gridSpacing(1.f / (32.f - 1.f));
 
   const std::vector<TemporalConfig> temporalConfigs{
-      TemporalConfig(2),  // temporally structured
-      TemporalConfig(4),  // temporally structured
-      TemporalConfig(2,
-                     std::vector<float>{0.f, 1.f}),  // temporally unstructured
-      TemporalConfig(
-          6,
-          std::vector<float>{
-              0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})  // temporally unstructured
+      TemporalConfig(TemporalConfig::Structured, 2),
+      TemporalConfig(TemporalConfig::Structured, 4),
+      TemporalConfig(TemporalConfig::Unstructured, 2),
+      TemporalConfig(std::vector<float>{
+              0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})
   };
 
   const std::vector<VKLDataCreationFlags> dataCreationFlags{

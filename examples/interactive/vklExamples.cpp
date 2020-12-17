@@ -216,11 +216,11 @@ void usage(const char *progname)
          "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
          "\t-voxelType uchar | short | ushort | float | double\n"
          "\t-valueRange <lower> <upper>\n"
-         "\t-multiAttribute (structuredRegular only)\n"
+         "\t-multiAttribute (structuredRegular only, ignores -field)\n"
          "\t-motionBlur structured | unstructured (structuredRegular only)\n"
-         "\t-file <filename>\n"
          "\t-filter nearest | trilinear (vdb and structured)\n"
-         "\t-field <density> (vdb only)\n"
+         "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
+         "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
       << std::endl;
 }
@@ -246,7 +246,8 @@ int main(int argc, const char **argv)
   VKLFilter gradientFilter(VKL_FILTER_TRILINEAR);
   bool haveFilter(false);
   bool haveVdb(false);
-  std::string field("density");
+  std::string field;
+
   size_t numParticles(1000);
   range1f initialValueRange(0.f, 1.f);
 
@@ -382,6 +383,13 @@ int main(int argc, const char **argv)
     }
   }
 
+  if (field.empty()) {
+    if (filename.empty())
+      field = "wavelet";
+    else
+      field = "density";
+  }
+
   if (haveFilter && gridType != "vdb" && gridType != "structuredRegular" &&
       gridType != "structuredSpherical") {
     std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
@@ -431,11 +439,15 @@ int main(int argc, const char **argv)
       TemporalConfig temporalConfig;
 
       if (motionBlurStructured) {
-        temporalConfig = TemporalConfig(motionBlurStructuredNumTimesteps);
+        temporalConfig = TemporalConfig(TemporalConfig::Structured,
+                                        motionBlurStructuredNumTimesteps);
       } else if (motionBlurUnstructured) {
-        temporalConfig =
-            TemporalConfig(motionBlurUnstructuredTimeSamples.size(),
-                           motionBlurUnstructuredTimeSamples);
+        if (field == "sphere" && !multiAttribute) {
+          temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
+          temporalConfig.numRefitSamples = 4;
+        } else {
+          temporalConfig = TemporalConfig(motionBlurUnstructuredTimeSamples);
+        }
       }
 
       if (multiAttribute) {
@@ -449,22 +461,70 @@ int main(int argc, const char **argv)
                 false));
       } else {
         if (voxelType == VKL_UCHAR) {
-          testingVolume = std::make_shared<WaveletStructuredRegularVolumeUChar>(
-              dimensions, gridOrigin, gridSpacing, temporalConfig);
+          if (field == "xyz") {
+            testingVolume = std::make_shared<XYZStructuredRegularVolumeUChar>(
+                dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else if (field == "sphere") {
+            testingVolume =
+                std::make_shared<SphereStructuredRegularVolumeUChar>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else {
+            testingVolume =
+                std::make_shared<WaveletStructuredRegularVolumeUChar>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          }
         } else if (voxelType == VKL_SHORT) {
-          testingVolume = std::make_shared<WaveletStructuredRegularVolumeShort>(
-              dimensions, gridOrigin, gridSpacing, temporalConfig);
+          if (field == "xyz") {
+            testingVolume = std::make_shared<XYZStructuredRegularVolumeShort>(
+                dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else if (field == "sphere") {
+            testingVolume =
+                std::make_shared<SphereStructuredRegularVolumeShort>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else {
+            testingVolume =
+                std::make_shared<WaveletStructuredRegularVolumeShort>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          }
         } else if (voxelType == VKL_USHORT) {
-          testingVolume =
-              std::make_shared<WaveletStructuredRegularVolumeUShort>(
-                  dimensions, gridOrigin, gridSpacing, temporalConfig);
+          if (field == "xyz") {
+            testingVolume = std::make_shared<XYZStructuredRegularVolumeUShort>(
+                dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else if (field == "sphere") {
+            testingVolume =
+                std::make_shared<SphereStructuredRegularVolumeUShort>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else {
+            testingVolume =
+                std::make_shared<WaveletStructuredRegularVolumeUShort>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          }
         } else if (voxelType == VKL_FLOAT) {
-          testingVolume = std::make_shared<WaveletStructuredRegularVolumeFloat>(
-              dimensions, gridOrigin, gridSpacing, temporalConfig);
+          if (field == "xyz") {
+            testingVolume = std::make_shared<XYZStructuredRegularVolumeFloat>(
+                dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else if (field == "sphere") {
+            testingVolume =
+                std::make_shared<SphereStructuredRegularVolumeFloat>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else {
+            testingVolume =
+                std::make_shared<WaveletStructuredRegularVolumeFloat>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          }
         } else if (voxelType == VKL_DOUBLE) {
-          testingVolume =
-              std::make_shared<WaveletStructuredRegularVolumeDouble>(
-                  dimensions, gridOrigin, gridSpacing, temporalConfig);
+          if (field == "xyz") {
+            testingVolume = std::make_shared<XYZStructuredRegularVolumeDouble>(
+                dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else if (field == "sphere") {
+            testingVolume =
+                std::make_shared<SphereStructuredRegularVolumeDouble>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else {
+            testingVolume =
+                std::make_shared<WaveletStructuredRegularVolumeDouble>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          }
         } else {
           throw std::runtime_error(
               "cannot create procedural volume for unknown voxel type");
@@ -474,22 +534,70 @@ int main(int argc, const char **argv)
 
     else if (gridType == "structuredSpherical") {
       if (voxelType == VKL_UCHAR) {
-        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeUChar>(
-            dimensions, gridOrigin, gridSpacing);
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZStructuredSphericalVolumeUChar>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume =
+              std::make_shared<SphereStructuredSphericalVolumeUChar>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume =
+              std::make_shared<WaveletStructuredSphericalVolumeUChar>(
+                  dimensions, gridOrigin, gridSpacing);
+        }
       } else if (voxelType == VKL_SHORT) {
-        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeShort>(
-            dimensions, gridOrigin, gridSpacing);
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZStructuredSphericalVolumeShort>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume =
+              std::make_shared<SphereStructuredSphericalVolumeShort>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume =
+              std::make_shared<WaveletStructuredSphericalVolumeShort>(
+                  dimensions, gridOrigin, gridSpacing);
+        }
       } else if (voxelType == VKL_USHORT) {
-        testingVolume =
-            std::make_shared<WaveletStructuredSphericalVolumeUShort>(
-                dimensions, gridOrigin, gridSpacing);
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZStructuredSphericalVolumeUShort>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume =
+              std::make_shared<SphereStructuredSphericalVolumeUShort>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume =
+              std::make_shared<WaveletStructuredSphericalVolumeUShort>(
+                  dimensions, gridOrigin, gridSpacing);
+        }
       } else if (voxelType == VKL_FLOAT) {
-        testingVolume = std::make_shared<WaveletStructuredSphericalVolumeFloat>(
-            dimensions, gridOrigin, gridSpacing);
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZStructuredSphericalVolumeFloat>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume =
+              std::make_shared<SphereStructuredSphericalVolumeFloat>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume =
+              std::make_shared<WaveletStructuredSphericalVolumeFloat>(
+                  dimensions, gridOrigin, gridSpacing);
+        }
       } else if (voxelType == VKL_DOUBLE) {
-        testingVolume =
-            std::make_shared<WaveletStructuredSphericalVolumeDouble>(
-                dimensions, gridOrigin, gridSpacing);
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZStructuredSphericalVolumeDouble>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume =
+              std::make_shared<SphereStructuredSphericalVolumeDouble>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume =
+              std::make_shared<WaveletStructuredSphericalVolumeDouble>(
+                  dimensions, gridOrigin, gridSpacing);
+        }
       } else {
         throw std::runtime_error(
             "cannot create procedural volume for unknown voxel type");
@@ -497,9 +605,16 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "unstructured") {
-      testingVolume = std::shared_ptr<WaveletUnstructuredProceduralVolume>(
-          new WaveletUnstructuredProceduralVolume(
-              dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
+      if (field == "xyz") {
+        testingVolume = std::make_shared<XYZUnstructuredProceduralVolume>(
+            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
+      } else if (field == "sphere") {
+        testingVolume = std::make_shared<SphereUnstructuredProceduralVolume>(
+            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
+      } else {
+        testingVolume = std::make_shared<WaveletUnstructuredProceduralVolume>(
+            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
+      }
     }
 
     else if (gridType == "amr") {
@@ -514,8 +629,16 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "vdb") {
-      testingVolume = std::make_shared<WaveletVdbVolume>(
-          dimensions, gridOrigin, gridSpacing, filter);
+      if (field == "xyz") {
+        testingVolume =
+            std::make_shared<XYZVdbVolume>(dimensions, gridOrigin, gridSpacing);
+      } else if (field == "sphere") {
+        testingVolume = std::make_shared<SphereVdbVolume>(
+            dimensions, gridOrigin, gridSpacing);
+      } else {
+        testingVolume = std::make_shared<WaveletVdbVolume>(
+            dimensions, gridOrigin, gridSpacing);
+      }
       haveVdb = true;
     }
 
@@ -559,6 +682,7 @@ int main(int argc, const char **argv)
   std::cout << "gridOrigin:     " << gridOrigin << std::endl;
   std::cout << "gridSpacing:    " << gridSpacing << std::endl;
   std::cout << "voxelType:      " << voxelTypeString << std::endl;
+  std::cout << "field:          " << field << std::endl;
 
   vkl_box3f bbox = vklGetBoundingBox(scene.volume);
 

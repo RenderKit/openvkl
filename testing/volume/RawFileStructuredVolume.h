@@ -13,7 +13,7 @@ using namespace rkcommon;
 namespace openvkl {
   namespace testing {
 
-    struct RawFileStructuredVolume : public TestingStructuredVolume
+    struct RawFileStructuredVolume final : public TestingStructuredVolume
     {
       RawFileStructuredVolume(const std::string &filename,
                               const std::string &gridType,
@@ -22,7 +22,9 @@ namespace openvkl {
                               const vec3f &gridSpacing,
                               VKLDataType voxelType);
 
-      std::vector<unsigned char> generateVoxels() override;
+      void generateVoxels(std::vector<unsigned char> &voxels,
+                          std::vector<float> &time,
+                          std::vector<uint32_t> &tuvIndex) const override final;
 
      private:
       std::string filename;
@@ -38,16 +40,26 @@ namespace openvkl {
         const vec3f &gridSpacing,
         VKLDataType voxelType)
         : filename(filename),
-          TestingStructuredVolume(
-              gridType, dimensions, gridOrigin, gridSpacing, voxelType)
+          TestingStructuredVolume(gridType,
+                                  dimensions,
+                                  gridOrigin,
+                                  gridSpacing,
+                                  TemporalConfig(),
+                                  voxelType)
     {
     }
 
-    inline std::vector<unsigned char> RawFileStructuredVolume::generateVoxels()
+    inline void RawFileStructuredVolume::generateVoxels(
+        std::vector<unsigned char> &voxels,
+        std::vector<float> &time,
+        std::vector<uint32_t> &tuvIndex) const
     {
-      auto numValues = this->dimensions.long_product();
-      std::vector<unsigned char> voxels(numValues *
-                                        sizeOfVKLDataType(voxelType));
+      const size_t numValues = this->dimensions.long_product();
+      const size_t numBytes  = numValues * sizeOfVKLDataType(voxelType);
+
+      voxels.resize(numBytes);
+      time.clear();
+      tuvIndex.clear();
 
       std::ifstream input(filename, std::ios::binary);
 
@@ -55,15 +67,11 @@ namespace openvkl {
         throw std::runtime_error("error opening raw volume file");
       }
 
-      input.read(
-          (char *)voxels.data(),
-          this->dimensions.long_product() * sizeOfVKLDataType(voxelType));
+      input.read((char *)voxels.data(), numBytes);
 
       if (!input.good()) {
         throw std::runtime_error("error reading raw volume file");
       }
-
-      return voxels;
     }
 
   }  // namespace testing

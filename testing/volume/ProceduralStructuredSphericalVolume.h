@@ -29,7 +29,7 @@ namespace openvkl {
                                           const vec3f &gridSpacing);
 
       vec3f transformLocalToObjectCoordinates(
-          const vec3f &localCoordinates) override;
+          const vec3f &localCoordinates) const override;
 
       static void generateGridParameters(const vec3i &dimensions,
                                          const float boundingBoxSize,
@@ -61,7 +61,7 @@ namespace openvkl {
     inline vec3f ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                      samplingFunction,
                                                      gradientFunction>::
-        transformLocalToObjectCoordinates(const vec3f &localCoordinates)
+        transformLocalToObjectCoordinates(const vec3f &localCoordinates) const
     {
       const float degToRad = M_PI / 180.f;
 
@@ -141,6 +141,48 @@ namespace openvkl {
         ProceduralStructuredSphericalVolume<double,
                                             getWaveletValue<double>,
                                             getWaveletGradient>;
+
+    using XYZStructuredSphericalVolumeUChar =
+        ProceduralStructuredSphericalVolume<unsigned char,
+                                            getXYZValue<unsigned char>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeShort =
+        ProceduralStructuredSphericalVolume<short,
+                                            getXYZValue<short>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeUShort =
+        ProceduralStructuredSphericalVolume<unsigned short,
+                                            getXYZValue<unsigned short>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeFloat =
+        ProceduralStructuredSphericalVolume<float,
+                                            getXYZValue<float>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeDouble =
+        ProceduralStructuredSphericalVolume<double,
+                                            getXYZValue<double>,
+                                            getXYZGradient>;
+
+    using SphereStructuredSphericalVolumeUChar =
+        ProceduralStructuredSphericalVolume<unsigned char,
+                                            getRotatingSphereValue<unsigned char>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeShort =
+        ProceduralStructuredSphericalVolume<short,
+                                            getRotatingSphereValue<short>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeUShort =
+        ProceduralStructuredSphericalVolume<unsigned short,
+                                            getRotatingSphereValue<unsigned short>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeFloat =
+        ProceduralStructuredSphericalVolume<float,
+                                            getRotatingSphereValue<float>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeDouble =
+        ProceduralStructuredSphericalVolume<double,
+                                            getRotatingSphereValue<double>,
+                                            getRotatingSphereGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

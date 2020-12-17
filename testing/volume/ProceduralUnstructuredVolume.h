@@ -407,6 +407,9 @@ namespace openvkl {
     using XYZUnstructuredProceduralVolume =
         ProceduralUnstructuredVolume<uint32_t, getXYZValue, getXYZGradient>;
 
+    using SphereUnstructuredProceduralVolume =
+        ProceduralUnstructuredVolume<uint32_t, getRotatingSphereValue, getRotatingSphereGradient>;
+
     using WaveletUnstructuredProceduralVolume64 =
         ProceduralUnstructuredVolume<uint64_t,
                                      getWaveletValue<float>,

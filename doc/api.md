@@ -779,14 +779,19 @@ following parameters:
   vec3i[]       node.origin                              For each input node, the node origin
                                                          index.
 
-  VKLData[]     node.data                                Node data. Nodes with format
-                                                         `VKL_FORMAT_TILE` are expected to
-                                                         have single-entry arrays. Nodes with
-                                                         format `VKL_FORMAT_CONSTANT_ZYX` are
-                                                         expected to have arrays with
+  VKLData[]     node.data                                For each input node, the attribute
+                                                         data. Single-attribute volumes may have
+                                                         one array provided per node, while
+                                                         multi-attribute volumes require an
+                                                         array per attribute for each node.
+                                                         Nodes with format `VKL_FORMAT_TILE` are
+                                                         expected to have single-entry arrays
+                                                         per attribute. Nodes with format
+                                                         `VKL_FORMAT_CONSTANT_ZYX` are expected
+                                                         to have arrays with
                                                          `vklVdbLevelNumVoxels(level[i])`
-                                                         entries. Only `VKL_FLOAT` data is
-                                                         currently supported.
+                                                         entries per attribute. Only `VKL_FLOAT`
+                                                         data is currently supported.
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 

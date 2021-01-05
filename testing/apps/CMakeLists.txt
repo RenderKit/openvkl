@@ -63,6 +63,21 @@ if (BUILD_BENCHMARKS)
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
+  # VDBvolumes (multi-attribute)
+    add_executable(vklBenchmarkVdbVolumeMulti
+    vklBenchmarkVdbVolumeMulti.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkVdbVolumeMulti
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkVdbVolumeMulti
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+
   # Particle volumes
   add_executable(vklBenchmarkParticleVolume
     vklBenchmarkParticleVolume.cpp

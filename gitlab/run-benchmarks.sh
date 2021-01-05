@@ -1,6 +1,6 @@
 #!/bin/bash -xe
 
-## Copyright 2020 Intel Corporation
+## Copyright 2020-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 git log -1
@@ -119,6 +119,31 @@ then
   SUBSUITE_NAME="IntervalIterators"
   SUBSUITE_REGEX="IntervalIterator"
   ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+fi
+
+############################################
+# VDB volume (multi-attribute) benchmarks #
+###########################################
+
+SUITE_NAME="VDBVolumeMulti"
+if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
+then
+  SUBSUITE_NAME="ScalarSampling"
+  SUBSUITE_REGEX="scalar.*Sample"
+  ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
+  initContext
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
+  SUBSUITE_NAME="VectorSampling"
+  SUBSUITE_REGEX="vector.*Sample"
+  ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+
+  SUBSUITE_NAME="StreamSampling"
+  SUBSUITE_REGEX="stream.*Sample"
+  ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 fi
 

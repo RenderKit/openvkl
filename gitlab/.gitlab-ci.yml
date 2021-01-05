@@ -323,6 +323,11 @@ vdb-benchmark-x8280-1:
   variables:
     BENCHMARK_SUITE: ^VDBVolume$
 
+vdb-multi-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolumeMulti$
+
 example-benchmark-x8280-1:
   <<: *manual_benchmark_x8280-1
   variables:

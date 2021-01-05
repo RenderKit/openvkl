@@ -226,7 +226,7 @@ void usage(const char *progname)
          "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
          "\t-voxelType uchar | short | ushort | float | double\n"
          "\t-valueRange <lower> <upper>\n"
-         "\t-multiAttribute (structuredRegular only, ignores -field)\n"
+         "\t-multiAttribute (vdb and structuredRegular only, ignores -field)\n"
          "\t-motionBlur structured | unstructured (structuredRegular only)\n"
          "\t-filter nearest | trilinear (vdb and structured)\n"
          "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
@@ -432,7 +432,8 @@ int main(int argc, const char **argv)
     std::for_each(ext.begin(), ext.end(), [](char &c) { c = ::tolower(c); });
     if (ext == ".vdb") {
       gridType = "vdb";
-      auto vol = std::make_shared<OpenVdbFloatVolume>(filename, field, filter);
+      auto vol = std::shared_ptr<OpenVdbVolume>(
+          OpenVdbVolume::loadVdbFile(filename, field, filter));
       testingVolume = std::move(vol);
       haveVdb       = true;
     } else {
@@ -639,16 +640,27 @@ int main(int argc, const char **argv)
     }
 
     else if (gridType == "vdb") {
-      if (field == "xyz") {
-        testingVolume =
-            std::make_shared<XYZVdbVolume>(dimensions, gridOrigin, gridSpacing);
-      } else if (field == "sphere") {
-        testingVolume = std::make_shared<SphereVdbVolume>(
-            dimensions, gridOrigin, gridSpacing);
+      if (multiAttribute) {
+        testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
+            generateMultiAttributeVdbVolume(dimensions,
+                                            gridOrigin,
+                                            gridSpacing,
+                                            filter,
+                                            VKL_DATA_SHARED_BUFFER,
+                                            false));
       } else {
-        testingVolume = std::make_shared<WaveletVdbVolume>(
-            dimensions, gridOrigin, gridSpacing);
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZVdbVolume>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume = std::make_shared<SphereVdbVolume>(
+              dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume = std::make_shared<WaveletVdbVolume>(
+              dimensions, gridOrigin, gridSpacing);
+        }
       }
+
       haveVdb = true;
     }
 
@@ -681,7 +693,7 @@ int main(int argc, const char **argv)
 
   VKLObserver leafAccessObserver = nullptr;
   {
-    auto vdbVolume = dynamic_cast<OpenVdbFloatVolume *>(testingVolume.get());
+    auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume.get());
     if (vdbVolume)
       leafAccessObserver = vdbVolume->newLeafAccessObserver(scene.sampler);
   }
@@ -843,7 +855,7 @@ int main(int argc, const char **argv)
   });
 
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
-    auto vdbVolume = dynamic_cast<OpenVdbFloatVolume *>(testingVolume.get());
+    auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume.get());
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
       scene.updateVolume(vdbVolume->getVKLVolume());
 

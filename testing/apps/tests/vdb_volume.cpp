@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -74,7 +74,8 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
     vklCommit(volume);
     REQUIRE(vklDriverGetLastErrorCode(vklGetCurrentDriver()) == 1);
     REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver()))
-        == "data array too small for constant node");
+                .find("data array too small for constant node") !=
+            std::string::npos);
   }
 
   vklRelease(volume);

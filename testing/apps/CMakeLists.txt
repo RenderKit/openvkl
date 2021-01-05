@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # Benchmarks
@@ -118,6 +118,7 @@ if (BUILD_TESTING)
     tests/amr_volume_sampling.cpp
     tests/amr_volume_value_range.cpp
     tests/vdb_volume.cpp
+    tests/vdb_volume_multi.cpp
     tests/particle_volume_sampling.cpp
     tests/particle_volume_gradients.cpp
     tests/particle_volume_value_range.cpp

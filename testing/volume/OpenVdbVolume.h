@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -15,24 +15,38 @@ using namespace rkcommon;
 namespace openvkl {
   namespace testing {
 
-    struct OpenVdbFloatVolume : public TestingVolume
+    struct OpenVdbVolume : public TestingVolume
     {
-      using Grid = openvkl::vdb_util::OpenVdbFloatGrid;
+      static OpenVdbVolume *loadVdbFile(const std::string &filename,
+                                        const std::string &field,
+                                        VKLFilter filter);
 
-      OpenVdbFloatVolume(const OpenVdbFloatVolume &other) = delete;
-      OpenVdbFloatVolume &operator=(const OpenVdbFloatVolume &other) = delete;
-      OpenVdbFloatVolume(OpenVdbFloatVolume &&other)                 = default;
-      OpenVdbFloatVolume &operator=(OpenVdbFloatVolume &&other) = default;
+      virtual ~OpenVdbVolume() {}
 
-      OpenVdbFloatVolume(const std::string &filename,
-                         const std::string &field,
-                         VKLFilter filter)
+      virtual bool updateVolume(VKLObserver leafAccessObserver) = 0;
+
+      virtual VKLObserver newLeafAccessObserver(VKLSampler sampler) const = 0;
+    };
+
+    template <typename OpenVdbGridType>
+    struct OpenVdbVolumeImpl : public OpenVdbVolume
+    {
+      using Grid = OpenVdbGridType;
+
+      OpenVdbVolumeImpl(const OpenVdbVolumeImpl &other) = delete;
+      OpenVdbVolumeImpl &operator=(const OpenVdbVolumeImpl &other) = delete;
+      OpenVdbVolumeImpl(OpenVdbVolumeImpl &&other)                 = default;
+      OpenVdbVolumeImpl &operator=(OpenVdbVolumeImpl &&other) = default;
+
+      OpenVdbVolumeImpl(const std::string &filename,
+                        const std::string &field,
+                        VKLFilter filter)
           : grid(filename, field, true), filter(filter)
       {
         volume = grid.createVolume(filter);
       }
 
-      ~OpenVdbFloatVolume()
+      ~OpenVdbVolumeImpl()
       {
         if (asyncLoader) {
           if (asyncLoader->valid())
@@ -44,7 +58,7 @@ namespace openvkl {
         }
       }
 
-      bool updateVolume(VKLObserver leafAccessObserver)
+      bool updateVolume(VKLObserver leafAccessObserver) override
       {
         bool changed = false;
         if (!asyncLoader && grid.numDeferred() > 0) {
@@ -102,7 +116,7 @@ namespace openvkl {
         return range1f(0.f, 1.f);
       }
 
-      VKLObserver newLeafAccessObserver(VKLSampler sampler) const
+      VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
         VKLObserver observer = nullptr;
         if (grid.numDeferred() > 0)
@@ -127,6 +141,31 @@ namespace openvkl {
       std::unique_ptr<rkcommon::tasking::AsyncTask<AsyncResult>> asyncLoader;
     };
 
+    using OpenVdbFloatVolume =
+        OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbFloatGrid>;
+    using OpenVdbVec3sVolume =
+        OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbVec3sGrid>;
+
+    inline OpenVdbVolume *OpenVdbVolume::loadVdbFile(
+        const std::string &filename, const std::string &field, VKLFilter filter)
+    {
+      openvdb::initialize();
+
+      openvdb::io::File file(filename.c_str());
+      file.open();
+
+      openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
+
+      if (baseGrid->valueType() == "float") {
+        return new OpenVdbFloatVolume(filename, field, filter);
+      } else if (baseGrid->valueType() == "vec3s") {
+        return new OpenVdbVec3sVolume(filename, field, filter);
+      } else {
+        throw std::runtime_error("unsupported OpenVDB grid type: " +
+                                 baseGrid->valueType());
+      }
+    }
+
   }  // namespace testing
 }  // namespace openvkl
 
@@ -138,18 +177,34 @@ namespace openvkl {
 namespace openvkl {
   namespace testing {
 
-    struct OpenVdbFloatVolume : public testing::TestingVolume
+    struct OpenVdbVolume : public TestingVolume
     {
-      OpenVdbFloatVolume(const std::string &filename,
-                         const std::string &field,
-                         VKLFilter filter = VKL_FILTER_TRILINEAR,
-                         bool forceInCore = false)
+      static OpenVdbVolume *loadVdbFile(const std::string &filename,
+                                        const std::string &field,
+                                        VKLFilter filter)
       {
         throw std::runtime_error(
-            "You must compile with OpenVDB to use TestingVdbVolume");
+            "You must compile with OpenVDB to use OpenVdbVolume");
       }
 
-      bool updateVolume(VKLObserver leafAccessObserver)
+      virtual ~OpenVdbVolume() {}
+
+      virtual bool updateVolume(VKLObserver leafAccessObserver) = 0;
+
+      virtual VKLObserver newLeafAccessObserver(VKLSampler sampler) const = 0;
+    };
+
+    struct OpenVdbVolumeImpl : public OpenVdbVolume
+    {
+      OpenVdbVolumeImpl(const std::string &filename,
+                        const std::string &field,
+                        VKLFilter filter = VKL_FILTER_TRILINEAR)
+      {
+        throw std::runtime_error(
+            "You must compile with OpenVDB to use OpenVdbVolumeImpl");
+      }
+
+      bool updateVolume(VKLObserver leafAccessObserver) override
       {
         return false;
       }
@@ -159,7 +214,7 @@ namespace openvkl {
         return range1f(0.f, 0.f);
       }
 
-      VKLObserver newLeafAccessObserver(VKLSampler sampler) const
+      VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
         return nullptr;
       }
@@ -168,8 +223,10 @@ namespace openvkl {
       void generateVKLVolume() override {}
     };
 
+    using OpenVdbFloatVolume = OpenVdbVolumeImpl;
+    using OpenVdbVec3sVolume = OpenVdbVolumeImpl;
+
   }  // namespace testing
 }  // namespace openvkl
 
 #endif  // OPENVKL_VDB_UTIL_OPENVDB_ENABLED
-

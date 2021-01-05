@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -7,6 +7,7 @@
 #include "../../external/catch.hpp"
 #include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
+#include "rkcommon/utility/multidim_index_sequence.h"
 
 using namespace openvkl::testing;
 
@@ -83,6 +84,48 @@ inline void test_scalar_and_vector_gradients(
   REQUIRE(scalarGradientValue.x == gradients_16.x[0]);
   REQUIRE(scalarGradientValue.y == gradients_16.y[0]);
   REQUIRE(scalarGradientValue.z == gradients_16.z[0]);
+}
+
+// applicable to procedural structured and VDB volumes
+template <typename VOLUME_TYPE>
+inline void gradients_on_vertices_vs_procedural_values_multi(
+    std::shared_ptr<VOLUME_TYPE> v, vec3i step = vec3i(1))
+{
+  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklCommit(vklSampler);
+
+  multidim_index_sequence<3> mis(v->getDimensions() / step);
+
+  for (unsigned int attributeIndex = 0; attributeIndex < v->getNumAttributes();
+       attributeIndex++) {
+    for (const auto &offset : mis) {
+      const auto offsetWithStep = offset * step;
+
+      vec3f objectCoordinates =
+          v->transformLocalToObjectCoordinates(offsetWithStep);
+
+      const vec3f proceduralGradient =
+          v->computeProceduralGradient(objectCoordinates, attributeIndex);
+
+      INFO("attributeIndex = " << attributeIndex);
+      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                       << offsetWithStep.z);
+      INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                  << objectCoordinates.y << " "
+                                  << objectCoordinates.z);
+
+      // larger tolerance since gradients are not exact (e.g. computed via
+      // finite differences)
+      test_scalar_and_vector_gradients(vklSampler,
+                                       objectCoordinates,
+                                       proceduralGradient,
+                                       0.1f,
+                                       attributeIndex);
+    }
+  }
+
+  vklRelease(vklSampler);
 }
 
 inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,

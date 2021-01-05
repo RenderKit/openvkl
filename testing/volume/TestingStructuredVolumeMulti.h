@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,21 +6,14 @@
 #include <numeric>
 #include <vector>
 // openvkl
+#include "ProceduralVolumeMulti.h"
 #include "TestingVolume.h"
 
 namespace openvkl {
   namespace testing {
 
-    inline std::vector<unsigned int> getAttributeIndices(
-        unsigned int numAttributes)
-    {
-      std::vector<unsigned int> attributeIndices(numAttributes);
-      std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
-
-      return attributeIndices;
-    }
-
-    struct TestingStructuredVolumeMulti : public TestingVolume
+    struct TestingStructuredVolumeMulti : public TestingVolume,
+                                          public ProceduralVolumeMulti
     {
       TestingStructuredVolumeMulti(
           const std::string &gridType,
@@ -38,13 +31,13 @@ namespace openvkl {
 
       range1f getComputedValueRange(unsigned int attributeIndex) const;
 
-      float computeProceduralValue(const vec3f &objectCoordinates,
-                                   unsigned int attributeIndex,
-                                   float time = 0.f) const;
+      float computeProceduralValueImpl(const vec3f &objectCoordinates,
+                                       unsigned int attributeIndex,
+                                       float time) const override;
 
-      vec3f computeProceduralGradient(const vec3f &objectCoordinates,
-                                      unsigned int attributeIndex,
-                                      float time = 0.f) const;
+      vec3f computeProceduralGradientImpl(const vec3f &objectCoordinates,
+                                          unsigned int attributeIndex,
+                                          float time) const override;
 
       std::string getGridType() const;
       vec3i getDimensions() const;
@@ -52,7 +45,7 @@ namespace openvkl {
       vec3f getGridSpacing() const;
       TemporalConfig getTemporalConfig() const;
 
-      unsigned int getNumAttributes();
+      unsigned int getNumAttributes() const override;
 
       vec3f transformLocalToObjectCoordinates(const vec3f &localCoordinates);
 
@@ -94,7 +87,8 @@ namespace openvkl {
           temporalConfig(temporalConfig),
           attributeVolumes(attributeVolumes),
           dataCreationFlags(dataCreationFlags),
-          useAOSLayout(useAOSLayout)
+          useAOSLayout(useAOSLayout),
+          ProceduralVolumeMulti(temporalConfig.hasTime())
     {
       if (attributeVolumes.size() == 0) {
         throw std::runtime_error("no provided attribute volumes");
@@ -128,7 +122,7 @@ namespace openvkl {
       return attributeVolumes[attributeIndex]->getComputedValueRange();
     }
 
-    inline float TestingStructuredVolumeMulti::computeProceduralValue(
+    inline float TestingStructuredVolumeMulti::computeProceduralValueImpl(
         const vec3f &objectCoordinates,
         unsigned int attributeIndex,
         float time) const
@@ -137,7 +131,7 @@ namespace openvkl {
           objectCoordinates, time);
     }
 
-    inline vec3f TestingStructuredVolumeMulti::computeProceduralGradient(
+    inline vec3f TestingStructuredVolumeMulti::computeProceduralGradientImpl(
         const vec3f &objectCoordinates,
         unsigned int attributeIndex,
         float time) const
@@ -172,7 +166,7 @@ namespace openvkl {
       return temporalConfig;
     }
 
-    inline unsigned int TestingStructuredVolumeMulti::getNumAttributes()
+    inline unsigned int TestingStructuredVolumeMulti::getNumAttributes() const
     {
       return attributeVolumes.size();
     }

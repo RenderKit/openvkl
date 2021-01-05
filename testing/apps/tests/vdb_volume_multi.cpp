@@ -17,8 +17,7 @@ inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
   REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 }
 
-TEST_CASE("Structured regular volume multiple attributes",
-          "[volume_multi_attributes]")
+TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
   vklLoadModule("ispc_driver");
 
@@ -47,13 +46,13 @@ TEST_CASE("Structured regular volume multiple attributes",
 
       DYNAMIC_SECTION(sectionName.str())
       {
-        std::shared_ptr<TestingStructuredVolumeMulti> v(
-            generateMultiAttributeStructuredRegularVolume(dimensions,
-                                                          gridOrigin,
-                                                          gridSpacing,
-                                                          TemporalConfig(),
-                                                          dcf,
-                                                          aos));
+        std::shared_ptr<ProceduralVdbVolumeMulti> v(
+            generateMultiAttributeVdbVolume(dimensions,
+                                            gridOrigin,
+                                            gridSpacing,
+                                            VKL_FILTER_TRILINEAR,
+                                            dcf,
+                                            aos));
 
         num_attributes(v);
         sampling_on_vertices_vs_procedural_values_multi(v, 2);

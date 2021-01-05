@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -215,13 +215,14 @@ namespace openvkl {
         const unsigned int *attributeIndices,
         const float *times) const
     {
-      for (unsigned int i = 0; i < N; i++) {
-        for (unsigned int a = 0; a < M; a++) {
-          computeSample(objectCoordinates[i],
-                        reinterpret_cast<vfloatn<1> &>(samples[i * M + a]),
-                        attributeIndices[a],
-                        times[i]);
-        }
+      std::vector<float> samplesN(N);
+
+      for (unsigned int a = 0; a < M; a++) {
+        computeSampleN(
+            N, objectCoordinates, samplesN.data(), attributeIndices[a], times);
+
+        for (unsigned int i = 0; i < N; i++)
+          samples[i * M + a] = samplesN[i];
       }
     }
 

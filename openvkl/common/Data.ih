@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -158,9 +158,30 @@ template_get_wrapper(vec4f);
 
 // limited support for getters on _varying_ Data1D objects
 
+inline varying float get_float_compact(const uniform Data1D *varying data,
+                                       const varying uint32 index32)
+{
+  assert(index32 >= 0 && index32 < data->numItems);
+  return ((const uniform float *)data->addr)[index32];
+}
+
 inline varying float get_float_strided(const uniform Data1D *varying data,
                                        const varying uint32 index32)
 {
   assert(index32 >= 0 && index32 < data->numItems);
   return *((const uniform float *)(data->addr + index32 * data->byteStride));
+}
+
+// helpers for getting the first element only of a Data1D object
+
+inline varying float get_float_0(const uniform Data1D *varying data)
+{
+  assert(data->numItems > 0);
+  return *((const uniform float *)data->addr);
+}
+
+inline uniform float get_float_0(const uniform Data1D data)
+{
+  assert(data.numItems > 0);
+  return *((const uniform float *)data.addr);
 }

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,8 +10,10 @@
 /*
  * Sample a constant leaf at the given offset, assuming compact data.
  */
-inline varying float VdbSampler_sampleConstantFloatLeaf(
-    const uniform float *varying leafPtr, const varying vec3ui &offset)
+inline varying float VdbSampler_sampleConstantFloatLeafCompact(
+    const uniform Data1D *varying leafPtr,
+    const varying vec3ui &offset,
+    uniform uint32 attributeIndex)
 {
   const varying uint64 voxelIdx =
       __vkl_vdb_domain_offset_to_linear_varying_leaf(
@@ -19,14 +21,16 @@ inline varying float VdbSampler_sampleConstantFloatLeaf(
 
   assert(voxelIdx < ((varying uint64)1) << 32);
   const varying uint32 v32 = ((varying uint32)voxelIdx);
-  return leafPtr[v32];
+  return get_float_compact(&leafPtr[attributeIndex], v32);
 }
 
 /*
  * Sample a constant leaf at the given offset, assuming strided data.
  */
-inline varying float VdbSampler_sampleConstantFloatLeaf(
-    const uniform Data1D *varying leafPtr, const varying vec3ui &offset)
+inline varying float VdbSampler_sampleConstantFloatLeafStrided(
+    const uniform Data1D *varying leafPtr,
+    const varying vec3ui &offset,
+    uniform uint32 attributeIndex)
 {
   const varying uint64 voxelIdx =
       __vkl_vdb_domain_offset_to_linear_varying_leaf(
@@ -34,7 +38,7 @@ inline varying float VdbSampler_sampleConstantFloatLeaf(
 
   assert(voxelIdx < ((varying uint64)1) << 32);
   const varying uint32 v32 = ((varying uint32)voxelIdx);
-  return get_float_strided(leafPtr, v32);
+  return get_float_strided(&leafPtr[attributeIndex], v32);
 }
 
 /*
@@ -44,8 +48,10 @@ inline varying float VdbSampler_sampleConstantFloatLeaf(
  */
 
 /* assumes compact data */
-inline varying float VdbSampler_sampleConstantFloatLeaf(
-    const uniform float *uniform leafPtr, const varying vec3ui &offset)
+inline varying float VdbSampler_sampleConstantFloatLeafCompact(
+    const uniform Data1D *uniform leafPtr,
+    const varying vec3ui &offset,
+    uniform uint32 attributeIndex)
 {
   const varying uint64 voxelIdx =
       __vkl_vdb_domain_offset_to_linear_varying_leaf(
@@ -55,14 +61,16 @@ inline varying float VdbSampler_sampleConstantFloatLeaf(
   const varying uint32 v32 = ((varying uint32)voxelIdx);
   uniform uint32 uv32;
   if (reduce_equal(v32, &uv32))
-    return leafPtr[uv32];
+    return get_float_compact(leafPtr[attributeIndex], uv32);
   else
-    return leafPtr[v32];
+    return get_float_compact(leafPtr[attributeIndex], v32);
 }
 
 /* assumes strided data */
-inline varying float VdbSampler_sampleConstantFloatLeaf(
-    const uniform Data1D *uniform leafPtr, const varying vec3ui &offset)
+inline varying float VdbSampler_sampleConstantFloatLeafStrided(
+    const uniform Data1D *uniform leafPtr,
+    const varying vec3ui &offset,
+    uniform uint32 attributeIndex)
 {
   const varying uint64 voxelIdx =
       __vkl_vdb_domain_offset_to_linear_varying_leaf(
@@ -72,7 +80,7 @@ inline varying float VdbSampler_sampleConstantFloatLeaf(
   const varying uint32 v32 = ((varying uint32)voxelIdx);
   uniform uint32 uv32;
   if (reduce_equal(v32, &uv32))
-    return get_float(*leafPtr, uv32);
+    return get_float_strided(leafPtr[attributeIndex], uv32);
   else
-    return get_float(*leafPtr, v32);
+    return get_float_strided(leafPtr[attributeIndex], v32);
 }

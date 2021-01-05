@@ -34,6 +34,8 @@ namespace openvkl {
          VKLDataCreationFlags dataCreationFlags,
          size_t byteStride);
 
+    Data(size_t numItems, VKLDataType dataType);
+
     virtual ~Data() override;
 
     virtual std::string toString() const override;
@@ -141,6 +143,8 @@ namespace openvkl {
   {
     using value_type = T;
     using interator  = Iter1D<T>;
+
+    DataT(size_t numItems) : Data(numItems, VKLTypeFor<T>::value) {}
 
     Iter1D<T> begin() const
     {

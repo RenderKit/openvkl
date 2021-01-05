@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,6 +11,7 @@
 #include "VdbGrid.h"
 #include "VdbIterator.h"
 #include "VdbVolume_ispc.h"
+#include "rkcommon/containers/aligned_allocator.h"
 #include "rkcommon/memory/RefCount.h"
 
 using namespace rkcommon::memory;
@@ -18,15 +19,9 @@ using namespace rkcommon::memory;
 namespace openvkl {
   namespace ispc_driver {
 
-    struct AlignedISPCData1D
-    {
-      // to be represented as VDB leaf pointers, addresses must be 16-byte
-      // aligned
-      alignas(16) ispc::Data1D data;
-    };
-
-    static_assert(sizeof(AlignedISPCData1D) == sizeof(ispc::Data1D),
-                  "AlignedISPCData1D has incorrect size");
+    template <typename T>
+    using AlignedVector16 =
+        std::vector<T, rkcommon::containers::aligned_allocator<T, 16>>;
 
     template <int W>
     struct VdbVolume : public Volume<W>
@@ -64,7 +59,7 @@ namespace openvkl {
        */
       unsigned int getNumAttributes() const override
       {
-        return 1;
+        return numAttributes;
       }
 
       /*
@@ -104,10 +99,11 @@ namespace openvkl {
 
      private:
       box3f bounds;
+      unsigned int numAttributes;
       std::string name;
       range1f valueRange;
       Ref<const DataT<Data *>> leafData;
-      std::vector<AlignedISPCData1D> leafDataISPC;
+      std::vector<AlignedVector16<ispc::Data1D>> leafAttributesDataISPC;
       VdbGrid *grid{nullptr};
       Allocator allocator;
 

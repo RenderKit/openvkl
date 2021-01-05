@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,7 +29,7 @@ struct VdbLevel
   vkl_uint64 *voxels;
 
   // For each voxel, the original leaf index.
-  // Note: These are only valid for leaf and tile voxels.
+  // Note: These are only valid for leaf voxels.
   vkl_uint64 *leafIndex;
 
   // For each voxel, the range of values contained within.
@@ -42,6 +42,7 @@ struct VdbLevel
 struct VdbGrid
 {
   vkl_uint32 type;  // All voxels have this type.
+  vkl_uint32 numAttributes;
   vkl_uint32 maxIteratorDepth;
   float objectToIndex[12];    // Row-major transformation matrix, 3x4,
                               // rotation-shear-scale | translation
@@ -104,10 +105,10 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     // // Voxel encoding
     //
     // empty    : 00 ... 00000
-    // tile     : VV ... 00001 (32 bit tile value, 30 bit empty, 2 bit type)
-    // child    : II ... III10 (62 bit index,   2 bit node type)
-    // leaf     : PP ... PTT11 (60 bit pointer, 2 bit time format, 2 bit node
-    // type)
+    // error    : V .. L .. 01 (32 bit voxel offset, 16 bit empty, 8-bit voxel
+    //                          level, 6 bit empty, 2 bit type)
+    // child    : II ... III10 (62 bit index,   2 bit type)
+    // leaf     : PP ... PTT11 (60 bit pointer, 2 bit node format, 2 bit type)
     //
     // - Child node indices are extracted by masking the lower two bits. This
     // means that indices must be multiples of 4 (which is always true given
@@ -117,12 +118,7 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     // ignored.  32 bit mode is only used if the high bits are 0 for all voxels
     // in the tree.
     //
-    // - Tile values are stored exclusively in the high bits.
-    //
-    // - Timesteps can be 00 (temporally unstructured), 01 (const), or 10
-    // (temporally structured).
-    //
-    // - The lower 4 bits of leaf pointers are used for timestep and type
+    // - The lower 4 bits of leaf pointers are used for node format and type
     // information, which means that leaf data pointers must be aligned to 16
     // byte boundaries. VKLVdb will reject other pointers.
     // ==========================================================================
@@ -135,26 +131,33 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
 
 #define __vkl_vdb_define_voxeltype_functions(univary)                          \
                                                                                \
-  inline univary bool vklVdbVoxelIsEmpty(univary vkl_uint32 voxel)             \
+  inline univary bool vklVdbVoxelIsEmpty(univary vkl_uint64 voxel)             \
   {                                                                            \
     return ((voxel & 0x3u) == 0x0u);                                           \
   }                                                                            \
                                                                                \
-  inline univary vkl_uint64 vklVdbVoxelMakeTile(univary float value)           \
+  inline univary vkl_uint64 vklVdbVoxelMakeError(univary uint8 level,          \
+                                                 univary uint32 voxelOffset)   \
   {                                                                            \
-    const univary vkl_uint32 bits = intbits(value);                            \
-    return ((((univary vkl_uint64)bits) << 32) + 0x1u);                        \
+    const univary vkl_uint64 voxel =                                           \
+        (((univary vkl_uint64)voxelOffset) << 32) +                            \
+        (((univary vkl_uint64)level) << 8) + 0x1u;                             \
+    assert((univary uint8)(voxel >> 8) == level);                              \
+    assert((univary uint32)(voxel >> 32) == voxelOffset);                      \
+    return voxel;                                                              \
   }                                                                            \
                                                                                \
-  inline univary bool vklVdbVoxelIsTile(univary vkl_uint32 voxel)              \
+  inline univary bool vklVdbVoxelIsError(univary vkl_uint64 voxel)             \
   {                                                                            \
     return ((voxel & 0x3u) == 0x1u);                                           \
   }                                                                            \
                                                                                \
-  inline univary float vklVdbVoxelTileGet(univary vkl_uint64 voxel)            \
+  inline void vklVdbVoxelErrorGet(univary vkl_uint64 voxel,                    \
+                                  univary uint8 &level,                        \
+                                  univary uint32 &voxelOffset)                 \
   {                                                                            \
-    const univary vkl_uint32 value = ((univary vkl_uint32)(voxel >> 32));      \
-    return floatbits(value);                                                   \
+    level       = voxel >> 8;                                                  \
+    voxelOffset = voxel >> 32;                                                 \
   }                                                                            \
                                                                                \
   inline univary vkl_uint64 vklVdbVoxelMakeChildPtr(                           \
@@ -164,18 +167,11 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     return (childIdx << 2) | 0x2u;                                             \
   }                                                                            \
                                                                                \
-  inline univary bool vklVdbVoxelIsChildPtr(univary vkl_uint32 voxel)          \
+  inline univary bool vklVdbVoxelIsChildPtr(univary vkl_uint64 voxel)          \
   {                                                                            \
     return ((voxel & 0x3u) == 0x2u);                                           \
   }                                                                            \
                                                                                \
-  /* 32 bit addressing mode */                                                 \
-  inline univary vkl_uint32 vklVdbVoxelChildGetIndex(univary vkl_uint32 voxel) \
-  {                                                                            \
-    return (voxel >> 2);                                                       \
-  }                                                                            \
-                                                                               \
-  /* 64 bit addressing mode */                                                 \
   inline univary vkl_uint64 vklVdbVoxelChildGetIndex(univary vkl_uint64 voxel) \
   {                                                                            \
     return (voxel >> 2);                                                       \
@@ -194,13 +190,12 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     return voxel;                                                              \
   }                                                                            \
                                                                                \
-  inline univary bool vklVdbVoxelIsLeafPtr(univary vkl_uint32 voxel)           \
+  inline univary bool vklVdbVoxelIsLeafPtr(univary vkl_uint64 voxel)           \
   {                                                                            \
     return ((voxel & 0x3u) == 0x3u);                                           \
   }                                                                            \
                                                                                \
-  inline univary VKLFormat vklVdbVoxelLeafGetFormat(                           \
-      univary vkl_uint32 voxel)                                                \
+  inline univary VKLFormat vklVdbVoxelLeafGetFormat(univary vkl_uint64 voxel)  \
   {                                                                            \
     return ((VKLFormat)((voxel >> 2) & 0x3u));                                 \
   }                                                                            \

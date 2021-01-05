@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Data.h"
@@ -68,6 +68,41 @@ namespace openvkl {
           child[i]->refInc();
       }
     }
+
+    // set ISPC-side proxy
+    ispc.addr       = reinterpret_cast<decltype(ispc.addr)>(addr);
+    ispc.byteStride = byteStride;
+    ispc.numItems   = numItems;
+    ispc.dataType   = dataType;
+    ispc.compact    = compact();
+  }
+
+  Data::Data(size_t numItems, VKLDataType dataType)
+      : numItems(numItems),
+        dataType(dataType),
+        dataCreationFlags(VKL_DATA_DEFAULT),
+        byteStride(sizeOf(dataType))
+  {
+    if (numItems == 0) {
+      throw std::out_of_range("VKLData: numItems must be positive");
+    }
+
+    if (isManagedObject(dataType)) {
+      throw std::runtime_error(
+          "VKLData: constructor not allowed on managed objects");
+    }
+
+    const size_t numBytes = numItems * byteStride;
+
+    void *buffer = rkcommon::memory::alignedMalloc(numBytes + 16);
+
+    if (buffer == nullptr) {
+      throw std::bad_alloc();
+    }
+
+    addr = (char *)buffer;
+
+    managedObjectType = VKL_DATA;
 
     // set ISPC-side proxy
     ispc.addr       = reinterpret_cast<decltype(ispc.addr)>(addr);

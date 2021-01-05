@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -49,9 +49,7 @@ inline void VdbSampler_sampleInner_@VKL_VDB_UNIVARY_IN@_@VKL_VDB_UNIVARY_OUT@_@V
   if ((vklVdbVoxelIsLeafPtr(voxelValue) || vklVdbVoxelIsChildPtr(voxelValue))
    && (@VKL_VDB_LEVEL@+1 > sampler->maxSamplingDepth)) // Cannot descend!
   {
-    const univary_in range1f valueRange =
-      sampler->grid->levels[@VKL_VDB_LEVEL@].valueRange[vo32];
-    voxel = vklVdbVoxelMakeTile(0.5f * (valueRange.lower + valueRange.upper));
+    voxel = vklVdbVoxelMakeError(@VKL_VDB_LEVEL@, vo32);
     return;
   }
 

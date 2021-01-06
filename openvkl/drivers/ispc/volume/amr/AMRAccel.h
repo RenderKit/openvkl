@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -45,7 +45,7 @@ namespace openvkl {
 
           /*! list of bricks that overlap this leaf; sorted from finest
             to coarsest level */
-          const AMRData::Brick **brickList;
+          const AMRData::Brick **brickList = nullptr;
 
           /*! bounding box of this leaf - note that the bricks will
             likely "stick out" of this bounding box, and the same

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -52,7 +52,6 @@ namespace openvkl {
     typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
 
     size_t numItems;
-    size_t numBytes;
     VKLDataType dataType;
     VKLDataCreationFlags dataCreationFlags;
     size_t byteStride;

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AppInit.h"
@@ -121,6 +121,12 @@ bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
     isosurfacesChanged = true;  // Update isovalues on init!
   }
 
+  static float time = 0.f;
+  if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
+    renderer.setParam<float>("time", time);
+    isosurfacesChanged = true;
+  }
+
   if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
     isosurfacesChanged = true;
   }
@@ -160,6 +166,10 @@ bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
         }
       }
     }
+  }
+
+  if (isosurfacesChanged) {
+    renderer.commit();
   }
 
   return isosurfacesChanged;

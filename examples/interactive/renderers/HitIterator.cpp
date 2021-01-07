@@ -13,6 +13,15 @@ namespace openvkl {
       ispcEquivalent = ispc::HitIterator_create();
     }
 
+    void HitIterator::commit()
+    {
+      Renderer::commit();
+
+      time = getParam<float>("time", 0.f);
+
+      ispc::HitIterator_set(ispcEquivalent, time);
+    }
+
     vec3f HitIterator::renderPixel(const Scene &scene, Ray &ray, const vec4i &)
     {
       vec3f color(0.f);
@@ -25,8 +34,6 @@ namespace openvkl {
       vkl_range1f tRange;
       tRange.lower = ray.t.lower;
       tRange.upper = ray.t.upper;
-
-      const float time = 0.f;
 
       void *hitIteratorBuffer = alloca(vklGetHitIteratorSize(scene.sampler));
       void *shadowHitIteratorBuffer =

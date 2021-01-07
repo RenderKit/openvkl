@@ -6,6 +6,8 @@
 struct HitIterator
 {
   Renderer super;
+
+  float time;
 };
 
 vec3f HitIterator_renderPixel(Renderer *uniform _self,
@@ -28,7 +30,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  float time = 0.f;
+  const float time = self->time;
 
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
   uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
@@ -108,4 +110,11 @@ export void *uniform HitIterator_create()
   HitIterator *uniform self = uniform new HitIterator;
   self->super.renderPixel   = HitIterator_renderPixel;
   return self;
+}
+
+export void HitIterator_set(void *uniform _self, const uniform float time)
+{
+  HitIterator *uniform self = (HitIterator *)_self;
+
+  self->time = time;
 }

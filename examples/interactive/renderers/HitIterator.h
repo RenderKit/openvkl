@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,7 +13,14 @@ namespace openvkl {
       HitIterator();
       ~HitIterator() override = default;
 
-      vec3f renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID) override;
+      void commit() override;
+
+      vec3f renderPixel(const Scene &scene,
+                        Ray &ray,
+                        const vec4i &sampleID) override;
+
+     private:
+      float time{0.f};
     };
 
   }  // namespace examples

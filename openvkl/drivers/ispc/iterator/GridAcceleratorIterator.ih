@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -28,6 +28,7 @@ struct GridAcceleratorIterator
   vec3f origin;
   vec3f direction;
   box1f tRange;
+  float time;
   ValueSelector *uniform valueSelector;
 
   // common state

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -48,6 +48,7 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   self->origin        = *((univary vec3f * uniform) _origin);                  \
   self->direction     = *((univary vec3f * uniform) _direction);               \
   self->tRange        = *((univary box1f * uniform) _tRange);                  \
+  self->time          = *((univary float * uniform) _time);                    \
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;      \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
@@ -81,6 +82,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorU_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
+                          void *uniform _time,
                           void *uniform _valueSelector)
 {
   template_GridAcceleratorIterator_Initialize_internal(uniform);
@@ -93,6 +95,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
+                          void *uniform _time,
                           void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
@@ -226,6 +229,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                   self->origin,                                \
                                   self->direction,                             \
                                   self->hitState.currentCellTRange,            \
+                                  self->time,                                  \
                                   0.5f * step,                                 \
                                   self->valueSelector->numValues,              \
                                   self->valueSelector->values,                 \

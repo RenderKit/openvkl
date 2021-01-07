@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -210,6 +210,10 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       return;
     }
 
+    varying float time =
+        0.f;  // TODO: should be value from API, as the default hit iterator can
+              // be used with volumes that support time
+
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
@@ -217,6 +221,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,
+                                   time,
                                    0.5f * self->currentInterval.nominalDeltaT,
                                    self->valueSelector->numValues,
                                    self->valueSelector->values,

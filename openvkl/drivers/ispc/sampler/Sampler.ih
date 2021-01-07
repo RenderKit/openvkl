@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -18,10 +18,14 @@ struct Sampler
   // first attribute).
 
   uniform float (*uniform computeSample_uniform)(
-      const Sampler *uniform _self, const uniform vec3f &objectCoordinates);
+      const Sampler *uniform _self,
+      const uniform vec3f &objectCoordinates,
+      const uniform float &time);
 
   varying float (*uniform computeSample_varying)(
-      const Sampler *uniform _self, const varying vec3f &objectCoordinates);
+      const Sampler *uniform _self,
+      const varying vec3f &objectCoordinates,
+      const varying float &time);
 
   varying vec3f (*uniform computeGradient_varying)(
       const Sampler *uniform _self, const varying vec3f &objectCoordinates);

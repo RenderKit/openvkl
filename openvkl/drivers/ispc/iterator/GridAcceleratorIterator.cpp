@@ -23,6 +23,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const ValueSelector<W> *valueSelector)
     {
+      vfloatn<W> times(nullptr, 0);
+
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
@@ -30,6 +32,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
+                (void *)&times,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
@@ -51,12 +54,15 @@ namespace openvkl {
         const vrange1fn<1> &tRange,
         const ValueSelector<W> *valueSelector)
     {
+      float time = 0;
+
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
                 sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
+                (void *)&time,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
@@ -95,6 +101,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
+                (void *)&times,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 
@@ -129,6 +136,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
+                (void *)&time,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -1579,9 +1579,10 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
 // wrappers to enable setting old-style function pointers in the Volume
 // superclass; restricts to first attribute
 varying float computeSample_varying_0_iterator_wrapper(
-    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
+    const Sampler *uniform sampler,
+    const varying vec3f &objectCoordinates,
+    const varying float &time)
 {
-  varying float time = 0.f;
   return SharedStructuredVolume_computeSample_varying(
       (const SharedStructuredVolume *uniform)sampler->volume,
       objectCoordinates,
@@ -1591,9 +1592,10 @@ varying float computeSample_varying_0_iterator_wrapper(
 }
 
 uniform float computeSample_uniform_0_iterator_wrapper(
-    const Sampler *uniform sampler, const uniform vec3f &objectCoordinates)
+    const Sampler *uniform sampler,
+    const uniform vec3f &objectCoordinates,
+    const uniform float &time)
 {
-  uniform float time = 0.f;
   return SharedStructuredVolume_computeSample_uniform(
       (const SharedStructuredVolume *uniform)sampler->volume,
       objectCoordinates,

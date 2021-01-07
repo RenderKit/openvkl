@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.ih"
@@ -441,7 +441,9 @@ varying float doOctant(const AMR *uniform self,
   return lerp(O);
 }
 
-varying float AMR_octant(const Sampler *uniform self, const varying vec3f &P)
+varying float AMR_octant(const Sampler *uniform self,
+                         const varying vec3f &P,
+                         const varying float &time)
 {
   const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;
   const AMR *uniform amr          = &volume->amr;

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/vdb.h>
@@ -549,7 +549,9 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
 // -----------------------------------------------------------------------------
 
 inline float VdbSampler_iterator_computeSample_varying(
-    const Sampler *uniform _sampler, const varying vec3f &objectCoordinates)
+    const Sampler *uniform _sampler,
+    const varying vec3f &objectCoordinates,
+    const varying float &_time)
 {
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);

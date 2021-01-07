@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../common/export_util.h"
@@ -72,7 +72,9 @@ static bool intersectAndGradientParticle(const void *uniform userData,
 }
 
 inline varying float VKLParticleVolume_sample(
-    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
+    const Sampler *uniform sampler,
+    const varying vec3f &objectCoordinates,
+    const varying float &_time)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)sampler->volume;
@@ -114,10 +116,11 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    varying float time             = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLParticleVolume_sample((const Sampler *uniform)_sampler,
-                                        *objectCoordinates);
+    *samples = VKLParticleVolume_sample(
+        (const Sampler *uniform)_sampler, *objectCoordinates, time);
   }
 }
 

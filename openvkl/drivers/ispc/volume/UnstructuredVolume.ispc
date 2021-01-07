@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -869,7 +869,9 @@ static bool intersectAndSampleCell(const void *uniform userData,
 }
 
 inline varying float VKLUnstructuredVolume_sample(
-    const Sampler *uniform sampler, const varying vec3f &worldCoordinates)
+    const Sampler *uniform sampler,
+    const varying vec3f &worldCoordinates,
+    const varying float &_time)
 {
   // Cast to the actual Volume subtype.
   const VKLUnstructuredVolume *uniform self =
@@ -896,50 +898,59 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   // gradient step in each dimension (object coordinates)
   vec3f gradientStep = self->gradientStep;
 
+  // fixed time
+  float time = 0.f;
+
   // compute via forward or backward differences depending on volume / cell
   // boundaries (as determined by NaN sample values outside any volume cell)
   vec3f gradient;
 
-  float sample = VKLUnstructuredVolume_sample(sampler, objectCoordinates);
+  float sample = VKLUnstructuredVolume_sample(sampler, objectCoordinates, time);
 
-  gradient.x =
-      VKLUnstructuredVolume_sample(
-          sampler, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
-      sample;
-  gradient.y =
-      VKLUnstructuredVolume_sample(
-          sampler, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
-      sample;
-  gradient.z =
-      VKLUnstructuredVolume_sample(
-          sampler, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
-      sample;
+  gradient.x = VKLUnstructuredVolume_sample(
+                   sampler,
+                   objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
+                   time) -
+               sample;
+  gradient.y = VKLUnstructuredVolume_sample(
+                   sampler,
+                   objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
+                   time) -
+               sample;
+  gradient.z = VKLUnstructuredVolume_sample(
+                   sampler,
+                   objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
+                   time) -
+               sample;
 
   if (isnan(gradient.x)) {
     gradientStep.x *= -1.f;
 
-    gradient.x =
-        VKLUnstructuredVolume_sample(
-            sampler, objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f)) -
-        sample;
+    gradient.x = VKLUnstructuredVolume_sample(
+                     sampler,
+                     objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
+                     time) -
+                 sample;
   }
 
   if (isnan(gradient.y)) {
     gradientStep.y *= -1.f;
 
-    gradient.y =
-        VKLUnstructuredVolume_sample(
-            sampler, objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f)) -
-        sample;
+    gradient.y = VKLUnstructuredVolume_sample(
+                     sampler,
+                     objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
+                     time) -
+                 sample;
   }
 
   if (isnan(gradient.z)) {
     gradientStep.z *= -1.f;
 
-    gradient.z =
-        VKLUnstructuredVolume_sample(
-            sampler, objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z)) -
-        sample;
+    gradient.z = VKLUnstructuredVolume_sample(
+                     sampler,
+                     objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
+                     time) -
+                 sample;
   }
 
   return gradient / gradientStep;
@@ -955,9 +966,10 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_sample_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    varying float time             = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLUnstructuredVolume_sample(sampler, *objectCoordinates);
+    *samples = VKLUnstructuredVolume_sample(sampler, *objectCoordinates, time);
   }
 }
 

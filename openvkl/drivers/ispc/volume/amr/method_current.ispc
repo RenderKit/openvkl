@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.ih"
@@ -7,7 +7,9 @@
 #include "common/export_util.h"
 #include "sampler/Sampler.ih"
 
-varying float AMR_current(const Sampler *uniform self, const varying vec3f &P)
+varying float AMR_current(const Sampler *uniform self,
+                          const varying vec3f &P,
+                          const varying float &_time)
 {
   const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;
   const AMR *uniform amr          = &volume->amr;

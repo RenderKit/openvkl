@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HitIterator.h"
@@ -26,6 +26,8 @@ namespace openvkl {
       tRange.lower = ray.t.lower;
       tRange.upper = ray.t.upper;
 
+      const float time = 0.f;
+
       void *hitIteratorBuffer = alloca(vklGetHitIteratorSize(scene.sampler));
       void *shadowHitIteratorBuffer =
           alloca(vklGetHitIteratorSize(scene.sampler));
@@ -34,6 +36,7 @@ namespace openvkl {
                                                    (vkl_vec3f *)&ray.org,
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
+                                                   time,
                                                    scene.valueSelector,
                                                    hitIteratorBuffer);
 
@@ -75,6 +78,7 @@ namespace openvkl {
                                      (vkl_vec3f *)&c,
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,
+                                     time,
                                      scene.valueSelector,
                                      shadowHitIteratorBuffer);
               if (!vklIterateHit(shadowIterator, &shadowHit)) {

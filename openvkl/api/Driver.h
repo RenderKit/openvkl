@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -181,6 +181,7 @@ namespace openvkl {
                                               const vvec3fn<1> &origin,
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
+                                              float time,
                                               VKLValueSelector valueSelector,
                                               void *buffer) const
       {
@@ -196,6 +197,7 @@ namespace openvkl {
       const vvec3fn<WIDTH> &origin,                                 \
       const vvec3fn<WIDTH> &direction,                              \
       const vrange1fn<WIDTH> &tRange,                               \
+      const float *times,                                           \
       VKLValueSelector valueSelector,                               \
       void *buffer) const                                           \
   {                                                                 \

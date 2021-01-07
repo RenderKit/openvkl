@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
@@ -89,6 +89,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         AlignedVector<float> tRangesSOA =
             AOStoSOA_range1f(tRanges, callingWidth);
 
+        const std::vector<float> times(callingWidth, 0.f);
+
         if (callingWidth == 4) {
           std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
           VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
@@ -96,6 +98,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
+                              times.data(),
                               valueSelector,
                               buffer.data());
 
@@ -143,6 +146,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
+                              times.data(),
                               valueSelector,
                               buffer.data());
 
@@ -190,6 +194,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
+                               times.data(),
                                valueSelector,
                                buffer.data());
 
@@ -294,6 +299,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         AlignedVector<float> tRangesSOA =
             AOStoSOA_range1f(tRanges, callingWidth);
 
+        const std::vector<float> times(callingWidth, 0.f);
+
         if (callingWidth == 4) {
           std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
           VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
@@ -301,6 +308,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               (const vkl_vvec3f4 *)originsSOA.data(),
                               (const vkl_vvec3f4 *)directionsSOA.data(),
                               (const vkl_vrange1f4 *)tRangesSOA.data(),
+                              times.data(),
                               valueSelector,
                               buffer.data());
 
@@ -363,6 +371,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                               (const vkl_vvec3f8 *)originsSOA.data(),
                               (const vkl_vvec3f8 *)directionsSOA.data(),
                               (const vkl_vrange1f8 *)tRangesSOA.data(),
+                              times.data(),
                               valueSelector,
                               buffer.data());
 
@@ -425,6 +434,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                (const vkl_vvec3f16 *)originsSOA.data(),
                                (const vkl_vvec3f16 *)directionsSOA.data(),
                                (const vkl_vrange1f16 *)tRangesSOA.data(),
+                               times.data(),
                                valueSelector,
                                buffer.data());
 

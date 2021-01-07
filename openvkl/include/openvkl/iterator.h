@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -211,6 +211,7 @@ VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                   const vkl_vec3f *origin,
                                   const vkl_vec3f *direction,
                                   const vkl_range1f *tRange,
+                                  float time,
                                   VKLValueSelector valueSelector,
                                   void *buffer);
 
@@ -220,6 +221,7 @@ VKLHitIterator4 vklInitHitIterator4(const int *valid,
                                     const vkl_vvec3f4 *origin,
                                     const vkl_vvec3f4 *direction,
                                     const vkl_vrange1f4 *tRange,
+                                    const float *times,
                                     VKLValueSelector valueSelector,
                                     void *buffer);
 
@@ -229,6 +231,7 @@ VKLHitIterator8 vklInitHitIterator8(const int *valid,
                                     const vkl_vvec3f8 *origin,
                                     const vkl_vvec3f8 *direction,
                                     const vkl_vrange1f8 *tRange,
+                                    const float *times,
                                     VKLValueSelector valueSelector,
                                     void *buffer);
 
@@ -238,6 +241,7 @@ VKLHitIterator16 vklInitHitIterator16(const int *valid,
                                       const vkl_vvec3f16 *origin,
                                       const vkl_vvec3f16 *direction,
                                       const vkl_vrange1f16 *tRange,
+                                      const float *times,
                                       VKLValueSelector valueSelector,
                                       void *buffer);
 

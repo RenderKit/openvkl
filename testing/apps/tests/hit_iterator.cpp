@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -14,6 +14,7 @@ void scalar_hit_iteration(VKLVolume volume,
                           const vkl_vec3f &direction = vkl_vec3f{0.f, 0.f, 1.f})
 {
   vkl_range1f tRange{0.f, inf};
+  const float time = 0.f;
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
   vklValueSelectorSetValues(valueSelector, isoValues.size(), isoValues.data());
@@ -23,8 +24,13 @@ void scalar_hit_iteration(VKLVolume volume,
   vklCommit(sampler);
 
   std::vector<char> buffer(vklGetHitIteratorSize(sampler));
-  VKLHitIterator iterator = vklInitHitIterator(
-      sampler, &origin, &direction, &tRange, valueSelector, buffer.data());
+  VKLHitIterator iterator = vklInitHitIterator(sampler,
+                                               &origin,
+                                               &direction,
+                                               &tRange,
+                                               time,
+                                               valueSelector,
+                                               buffer.data());
 
   VKLHit hit;
 

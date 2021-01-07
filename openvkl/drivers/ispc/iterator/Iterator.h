@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -160,8 +160,11 @@ namespace openvkl {
       virtual void initializeHitU(const vvec3fn<1> &origin,
                                   const vvec3fn<1> &direction,
                                   const vrange1fn<1> &tRange,
+                                  float time,
                                   const ValueSelector<W> *valueSelector)
       {
+        assert(time >= 0.f && time <= 1.f);
+
         vintn<W> validW;
         for (int i = 0; i < W; i++)
           validW[i] = i == 0 ? -1 : 0;
@@ -169,8 +172,10 @@ namespace openvkl {
         vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
         vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
         vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        vfloatn<W> timesW(&time, 1);
 
-        initializeHitV(validW, originW, directionW, tRangeW, valueSelector);
+        initializeHitV(
+            validW, originW, directionW, tRangeW, timesW, valueSelector);
       }
 
       virtual void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result)
@@ -198,6 +203,7 @@ namespace openvkl {
                                   const vvec3fn<W> &origin,
                                   const vvec3fn<W> &direction,
                                   const vrange1fn<W> &tRange,
+                                  const vfloatn<W> &times,
                                   const ValueSelector<W> *valueSelector) = 0;
 
       virtual void iterateHitV(const vintn<W> &valid,

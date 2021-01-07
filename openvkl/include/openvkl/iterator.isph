@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -198,6 +198,7 @@ vklInitHitIterator4(const int *uniform valid,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
+                    const varying float *uniform time,
                     VKLValueSelector valueSelector,
                     void *uniform buffer);
 
@@ -207,6 +208,7 @@ vklInitHitIterator8(const int *uniform valid,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
+                    const varying float *uniform time,
                     VKLValueSelector valueSelector,
                     void *uniform buffer);
 
@@ -216,6 +218,7 @@ vklInitHitIterator16(const int *uniform valid,
                      const varying vkl_vec3f *uniform origin,
                      const varying vkl_vec3f *uniform direction,
                      const varying vkl_range1f *uniform tRange,
+                     const varying float *uniform time,
                      VKLValueSelector valueSelector,
                      void *uniform buffer);
 
@@ -224,6 +227,7 @@ vklInitHitIteratorV(VKLSampler sampler,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
+                    const varying float *uniform time,
                     VKLValueSelector valueSelector,
                     unsigned int8 *uniform buffer)
 {
@@ -239,6 +243,7 @@ vklInitHitIteratorV(VKLSampler sampler,
                                origin,
                                direction,
                                tRange,
+                               time,
                                valueSelector,
                                buffer);
   } else if (sizeof(varying float) == 32) {
@@ -247,6 +252,7 @@ vklInitHitIteratorV(VKLSampler sampler,
                                origin,
                                direction,
                                tRange,
+                               time,
                                valueSelector,
                                buffer);
   } else if (sizeof(varying float) == 64) {
@@ -255,6 +261,7 @@ vklInitHitIteratorV(VKLSampler sampler,
                                 origin,
                                 direction,
                                 tRange,
+                                time,
                                 valueSelector,
                                 buffer);
   }

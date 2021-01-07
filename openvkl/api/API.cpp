@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/logging.h"
@@ -451,6 +451,7 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                              const vkl_vec3f *origin,
                                              const vkl_vec3f *direction,
                                              const vkl_range1f *tRange,
+                                             float time,
                                              VKLValueSelector valueSelector,
                                              void *buffer) OPENVKL_CATCH_BEGIN
 {
@@ -459,6 +460,7 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
+      time,
       valueSelector,
       buffer);
 }
@@ -471,6 +473,7 @@ OPENVKL_CATCH_END(nullptr)
       const vkl_vvec3f##WIDTH *origin,                           \
       const vkl_vvec3f##WIDTH *direction,                        \
       const vkl_vrange1f##WIDTH *tRange,                         \
+      const float *times,                                        \
       VKLValueSelector valueSelector,                            \
       void *buffer) OPENVKL_CATCH_BEGIN                          \
   {                                                              \
@@ -480,6 +483,7 @@ OPENVKL_CATCH_END(nullptr)
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),       \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),    \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),     \
+        times,                                                   \
         valueSelector,                                           \
         buffer);                                                 \
   }                                                              \

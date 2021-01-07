@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GridAcceleratorIterator.h"
@@ -72,7 +72,8 @@ namespace openvkl {
 
     template class GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>;
 
-    __vkl_verify_max_interval_iterator_size(GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_interval_iterator_size(
+        GridAcceleratorIntervalIterator<VKL_TARGET_WIDTH>);
 
     ////////////////////////////////////////////////////////////////////////////
 
@@ -82,8 +83,11 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
+        const vfloatn<W> &times,
         const ValueSelector<W> *valueSelector)
     {
+      assertValidTimes(times);
+
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
@@ -114,8 +118,11 @@ namespace openvkl {
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
+        float time,
         const ValueSelector<W> *valueSelector)
     {
+      assert(time >= 0.f && time <= 1.f);
+
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
                 sampler->getISPCEquivalent(),

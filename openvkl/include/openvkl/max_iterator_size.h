@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -16,9 +16,9 @@
 #else
   #define VKL_MAX_INTERVAL_ITERATOR_SIZE VKL_MAX_INTERVAL_ITERATOR_SIZE_16
 #endif
-#define VKL_MAX_HIT_ITERATOR_SIZE_4 1215
-#define VKL_MAX_HIT_ITERATOR_SIZE_8 2399
-#define VKL_MAX_HIT_ITERATOR_SIZE_16 4799
+#define VKL_MAX_HIT_ITERATOR_SIZE_4 1231
+#define VKL_MAX_HIT_ITERATOR_SIZE_8 2431
+#define VKL_MAX_HIT_ITERATOR_SIZE_16 4863
 
 #if defined(TARGET_WIDTH) && (TARGET_WIDTH == 4)
   #define VKL_MAX_HIT_ITERATOR_SIZE VKL_MAX_HIT_ITERATOR_SIZE_4

@@ -140,6 +140,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
                           void *uniform _sampler,
                           void *uniform _origin,
                           void *uniform _direction,
+                          void *uniform _time,
                           void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
@@ -153,6 +154,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
+  self->time          = *((varying float *uniform)_time);
   self->intervalIteratorState = _intervalIterator;
 
   // Reset to invalid.
@@ -210,10 +212,6 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       return;
     }
 
-    varying float time =
-        0.f;  // TODO: should be value from API, as the default hit iterator can
-              // be used with volumes that support time
-
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
@@ -221,7 +219,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,
-                                   time,
+                                   self->time,
                                    0.5f * self->currentInterval.nominalDeltaT,
                                    self->valueSelector->numValues,
                                    self->valueSelector->values,

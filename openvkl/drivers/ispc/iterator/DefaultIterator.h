@@ -99,6 +99,7 @@ namespace openvkl {
                 sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
+                (void *)&times,
                 valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
     }
 

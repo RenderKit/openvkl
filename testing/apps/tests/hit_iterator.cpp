@@ -8,13 +8,13 @@ using namespace rkcommon;
 using namespace openvkl::testing;
 
 void scalar_hit_iteration(VKLVolume volume,
+                          float time,
                           const std::vector<float> &isoValues,
                           const std::vector<float> &expectedTValues,
                           const vkl_vec3f &origin = vkl_vec3f{0.5f, 0.5f, -1.f},
                           const vkl_vec3f &direction = vkl_vec3f{0.f, 0.f, 1.f})
 {
   vkl_range1f tRange{0.f, inf};
-  const float time = 0.f;
 
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
   vklValueSelectorSetValues(valueSelector, isoValues.size(), isoValues.data());
@@ -82,7 +82,8 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume();
 
-      scalar_hit_iteration(vklVolume, defaultIsoValues, defaultExpectedTValues);
+      scalar_hit_iteration(
+          vklVolume, 0.f, defaultIsoValues, defaultExpectedTValues);
     }
 
     SECTION(
@@ -103,7 +104,8 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
         macroCellTValues.push_back(float(i) + 1.f);
       }
 
-      scalar_hit_iteration(vklVolume, macroCellBoundaries, macroCellTValues);
+      scalar_hit_iteration(
+          vklVolume, 0.f, macroCellBoundaries, macroCellTValues);
     }
 
     SECTION("structured volumes: single voxel layer edge case")
@@ -117,11 +119,39 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       std::reverse(reversedIsovalues.begin(), reversedIsovalues.end());
 
       scalar_hit_iteration(vklVolume,
+                           0.f,
                            reversedIsovalues,
                            defaultExpectedTValues,
                            vkl_vec3f{0.5f, 0.5f, 2.f},
                            //vkl_vec3f{8.f, 8.f, 18.f},
                            vkl_vec3f{0.f, 0.f, -1.f});
+    }
+
+    SECTION("structured volumes: time varying")
+    {
+      std::vector<TemporalConfig> temporalConfigs{
+          {TemporalConfig::Structured, 4}, {TemporalConfig::Unstructured, 4}};
+
+      for (const auto &temporalConfig : temporalConfigs) {
+        std::unique_ptr<ZProceduralVolume> v(new ZProceduralVolume(
+            dimensions, gridOrigin, gridSpacing, temporalConfig));
+
+        VKLVolume vklVolume = v->getVKLVolume();
+
+        const std::vector<float> times{0.f, 0.2f, 0.4f, 0.6f};
+
+        for (const float time : times) {
+          std::vector<float> isoValuesTime;
+
+          for (const auto &iso : defaultIsoValues) {
+            // procedural function is:  (1.f - time) * objectCoordinates.z;
+            isoValuesTime.push_back((1.f - time) * iso);
+          }
+
+          scalar_hit_iteration(
+              vklVolume, time, isoValuesTime, defaultExpectedTValues);
+        }
+      }
     }
 
     SECTION("unstructured volumes")
@@ -132,7 +162,8 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume();
 
-      scalar_hit_iteration(vklVolume, defaultIsoValues, defaultExpectedTValues);
+      scalar_hit_iteration(
+          vklVolume, 0.f, defaultIsoValues, defaultExpectedTValues);
     }
   }
 }

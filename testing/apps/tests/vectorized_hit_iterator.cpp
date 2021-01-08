@@ -2,13 +2,85 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
+#include <numeric>
 #include "../../external/catch.hpp"
+#include "../common/Traits.h"
 #include "aos_soa_conversion.h"
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 
 using namespace rkcommon;
+using namespace openvkl;
 using namespace openvkl::testing;
+
+template <int W>
+void vector_hit_iteration(VKLSampler vklSampler,
+                          const std::vector<int> &valid,
+                          const AlignedVector<float> &originsSOA,
+                          const AlignedVector<float> &directionsSOA,
+                          const AlignedVector<float> &tRangesSOA,
+                          const std::vector<float> &times,
+                          VKLValueSelector valueSelector,
+                          const std::vector<float> &isoValues)
+{
+  using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
+  using VKLHitW               = typename vklPublicWideTypes<W>::VKLHitW;
+  auto vklGetHitIteratorSizeW = vklPublicWideTypes<W>().vklGetHitIteratorSizeW;
+  auto vklInitHitIteratorW    = vklPublicWideTypes<W>().vklInitHitIteratorW;
+  auto vklIterateHitW         = vklPublicWideTypes<W>().vklIterateHitW;
+
+  using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
+  using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
+
+  const int numActiveLanes = std::accumulate(valid.begin(), valid.end(), 0);
+
+  std::vector<char> buffer(vklGetHitIteratorSizeW(vklSampler));
+  VKLHitIteratorW iterator =
+      vklInitHitIteratorW(valid.data(),
+                          vklSampler,
+                          (const vkl_vvec3fW *)originsSOA.data(),
+                          (const vkl_vvec3fW *)directionsSOA.data(),
+                          (const vkl_vrange1fW *)tRangesSOA.data(),
+                          times.data(),
+                          valueSelector,
+                          buffer.data());
+
+  VKLHitW hit;
+  int result[W];
+
+  int hitCount = 0;
+
+  while (true) {
+    vklIterateHitW(valid.data(), iterator, &hit, result);
+
+    int resultSum = 0;
+
+    for (int i = 0; i < W; i++) {
+      resultSum += valid[i] ? result[i] : 0;
+    }
+
+    // we should have the same result for all active lanes
+    REQUIRE((resultSum == numActiveLanes || resultSum == 0));
+
+    if (!result[0]) {
+      break;
+    }
+
+    for (int i = 0; i < W; i++) {
+      if (valid[i]) {
+        INFO("hit iteration " << hitCount << " lane[" << i << "] t = "
+                              << hit.t[i] << ", sample =" << hit.sample[i]);
+
+        REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
+        REQUIRE(hit.sample[i] == isoValues[hitCount]);
+      }
+    }
+
+    hitCount++;
+  }
+
+  REQUIRE(hitCount == isoValues.size());
+}
 
 TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 {
@@ -92,147 +164,36 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         const std::vector<float> times(callingWidth, 0.f);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
-          VKLHitIterator4 iterator = vklInitHitIterator4(valid.data(),
-                              vklSampler,
-                              (const vkl_vvec3f4 *)originsSOA.data(),
-                              (const vkl_vvec3f4 *)directionsSOA.data(),
-                              (const vkl_vrange1f4 *)tRangesSOA.data(),
-                              times.data(),
-                              valueSelector,
-                              buffer.data());
-
-          VKLHit4 hit;
-          int result[4];
-
-          int hitCount = 0;
-
-          while (true) {
-            vklIterateHit4(valid.data(), iterator, &hit, result);
-
-            int resultSum = 0;
-
-            for (int i = 0; i < width; i++) {
-              resultSum += result[i];
-            }
-
-            // we should have the same result for all active lanes
-            REQUIRE((resultSum == width || resultSum == 0));
-
-            if (!result[0]) {
-              break;
-            }
-
-            for (int i = 0; i < width; i++) {
-              INFO("hit iteration " << hitCount << " lane[" << i
-                                    << "] t = " << hit.t[i]
-                                    << ", sample =" << hit.sample[i]);
-
-              REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
-              REQUIRE(hit.sample[i] == isoValues[hitCount]);
-            }
-
-            hitCount++;
-          }
-
-          REQUIRE(hitCount == isoValues.size());
-
+          vector_hit_iteration<4>(vklSampler,
+                                  valid,
+                                  originsSOA,
+                                  directionsSOA,
+                                  tRangesSOA,
+                                  times,
+                                  valueSelector,
+                                  isoValues);
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
-          VKLHitIterator8 iterator = vklInitHitIterator8(valid.data(),
-                              vklSampler,
-                              (const vkl_vvec3f8 *)originsSOA.data(),
-                              (const vkl_vvec3f8 *)directionsSOA.data(),
-                              (const vkl_vrange1f8 *)tRangesSOA.data(),
-                              times.data(),
-                              valueSelector,
-                              buffer.data());
-
-          VKLHit8 hit;
-          int result[8];
-
-          int hitCount = 0;
-
-          while (true) {
-            vklIterateHit8(valid.data(), iterator, &hit, result);
-
-            int resultSum = 0;
-
-            for (int i = 0; i < width; i++) {
-              resultSum += result[i];
-            }
-
-            // we should have the same result for all active lanes
-            REQUIRE((resultSum == width || resultSum == 0));
-
-            if (!result[0]) {
-              break;
-            }
-
-            for (int i = 0; i < width; i++) {
-              INFO("hit iteration " << hitCount << " lane[" << i
-                                    << "] t = " << hit.t[i]
-                                    << ", sample =" << hit.sample[i]);
-
-              REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
-              REQUIRE(hit.sample[i] == isoValues[hitCount]);
-            }
-
-            hitCount++;
-          }
-
-          REQUIRE(hitCount == isoValues.size());
-
+          vector_hit_iteration<8>(vklSampler,
+                                  valid,
+                                  originsSOA,
+                                  directionsSOA,
+                                  tRangesSOA,
+                                  times,
+                                  valueSelector,
+                                  isoValues);
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
-          VKLHitIterator16 iterator = vklInitHitIterator16(valid.data(),
-                               vklSampler,
-                               (const vkl_vvec3f16 *)originsSOA.data(),
-                               (const vkl_vvec3f16 *)directionsSOA.data(),
-                               (const vkl_vrange1f16 *)tRangesSOA.data(),
-                               times.data(),
-                               valueSelector,
-                               buffer.data());
-
-          VKLHit16 hit;
-          int result[16];
-
-          int hitCount = 0;
-
-          while (true) {
-            vklIterateHit16(valid.data(), iterator, &hit, result);
-
-            int resultSum = 0;
-
-            for (int i = 0; i < width; i++) {
-              resultSum += result[i];
-            }
-
-            // we should have the same result for all active lanes
-            REQUIRE((resultSum == width || resultSum == 0));
-
-            if (!result[0]) {
-              break;
-            }
-
-            for (int i = 0; i < width; i++) {
-              INFO("hit iteration " << hitCount << " lane[" << i
-                                    << "] t = " << hit.t[i]
-                                    << ", sample =" << hit.sample[i]);
-
-              REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
-              REQUIRE(hit.sample[i] == isoValues[hitCount]);
-            }
-
-            hitCount++;
-          }
-
-          REQUIRE(hitCount == isoValues.size());
-
+          vector_hit_iteration<16>(vklSampler,
+                                   valid,
+                                   originsSOA,
+                                   directionsSOA,
+                                   tRangesSOA,
+                                   times,
+                                   valueSelector,
+                                   isoValues);
         }
 
         else {

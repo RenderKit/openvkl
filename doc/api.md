@@ -1294,15 +1294,19 @@ currently no way of requesting a particular splitting.
       float nominalDeltaT[16];
     } VKLInterval16;
 
-Querying for particular values is done using a `VKLHitIterator` in much the
-same fashion.  This API could be used, for example, to find isosurfaces.
-Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
-desired width must be initialized:
+Querying for particular values is done using a `VKLHitIterator` in much the same
+fashion.  This API could be used, for example, to find isosurfaces. In contrast
+to interval iterators, time value(s) may be provided to specify the sampling
+time. These values must be between 0 and 1; for the vector versions, a `NULL`
+value indicates all times are zero. For temporally constant volumes, the time
+values have no effect. Again, a user allocated buffer must be provided, and a
+`VKLHitIterator` of the desired width must be initialized:
 
     VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                       const vkl_vec3f *origin,
                                       const vkl_vec3f *direction,
                                       const vkl_range1f *tRange,
+                                      float time,
                                       VKLValueSelector valueSelector,
                                       void *buffer);
 
@@ -1311,6 +1315,7 @@ desired width must be initialized:
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
+                             const float *times,
                              VKLValueSelector valueSelector,
                              void *buffer);
 
@@ -1319,6 +1324,7 @@ desired width must be initialized:
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
                              const vkl_vrange1f8 *tRange,
+                             const float *times,
                              VKLValueSelector valueSelector,
                              void *buffer);
 
@@ -1327,6 +1333,7 @@ desired width must be initialized:
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
+                              const float *times,
                               VKLValueSelector valueSelector,
                               void *buffer);
 

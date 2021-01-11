@@ -8,115 +8,6 @@
 // #define PRINT_DEBUG_ENABLE
 #include "common/print_debug.ih"
 
-///////////////////////////////////////////////////////////////////////////////
-// Coordinate transformations for all supported structured volume types ///////
-///////////////////////////////////////////////////////////////////////////////
-
-// Structured regular /////////////////////////////////////////////////////////
-
-inline void transformLocalToObject_structured_regular(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3f &localCoordinates,
-    varying vec3f &objectCoordinates)
-{
-  objectCoordinates = self->gridOrigin + localCoordinates * self->gridSpacing;
-}
-
-inline void transformObjectToLocal_structured_regular(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3f &objectCoordinates,
-    varying vec3f &localCoordinates)
-{
-  localCoordinates =
-      1.f / (self->gridSpacing) * (objectCoordinates - self->gridOrigin);
-}
-
-inline void transformLocalToObjectUniform_structured_regular(
-    const SharedStructuredVolume *uniform self,
-    const uniform vec3f &localCoordinates,
-    uniform vec3f &objectCoordinates)
-{
-  objectCoordinates = self->gridOrigin + localCoordinates * self->gridSpacing;
-}
-
-inline void transformObjectToLocalUniform_structured_regular(
-    const SharedStructuredVolume *uniform self,
-    const uniform vec3f &objectCoordinates,
-    uniform vec3f &localCoordinates)
-{
-  localCoordinates =
-      1.f / (self->gridSpacing) * (objectCoordinates - self->gridOrigin);
-}
-
-// Structured spherical ///////////////////////////////////////////////////////
-
-#define template_transformLocalToObject_structured_spherical(univary)       \
-  inline void transformLocalToObject_##univary##_structured_spherical(      \
-      const SharedStructuredVolume *uniform self,                           \
-      const univary vec3f &localCoordinates,                                \
-      univary vec3f &objectCoordinates)                                     \
-  {                                                                         \
-    /* (r, inclination, azimuth) -> (x, y, z), using the ISO convention for \
-     coordinates and ordering. all angles in radians. */                    \
-                                                                            \
-    const univary float r =                                                 \
-        self->gridOrigin.x + localCoordinates.x * self->gridSpacing.x;      \
-                                                                            \
-    const univary float inclination =                                       \
-        self->gridOrigin.y + localCoordinates.y * self->gridSpacing.y;      \
-                                                                            \
-    const univary float azimuth =                                           \
-        self->gridOrigin.z + localCoordinates.z * self->gridSpacing.z;      \
-                                                                            \
-    univary float sinInc, cosInc;                                           \
-    sincos(inclination, &sinInc, &cosInc);                                  \
-                                                                            \
-    univary float sinAz, cosAz;                                             \
-    sincos(azimuth, &sinAz, &cosAz);                                        \
-                                                                            \
-    objectCoordinates.x = r * sinInc * cosAz;                               \
-    objectCoordinates.y = r * sinInc * sinAz;                               \
-    objectCoordinates.z = r * cosInc;                                       \
-  }
-
-template_transformLocalToObject_structured_spherical(varying);
-template_transformLocalToObject_structured_spherical(uniform);
-#undef template_transformLocalToObject_structured_spherical
-
-#define template_transformObjectToLocal_structured_spherical(univary)         \
-  inline void transformObjectToLocal_##univary##_structured_spherical(        \
-      const SharedStructuredVolume *uniform self,                             \
-      const univary vec3f &objectCoordinates,                                 \
-      univary vec3f &localCoordinates)                                        \
-  {                                                                           \
-    /* (x, y, z) -> (r, inclination, azimuth), using the ISO convention for   \
-     coordinates and ordering. all angles in radians. */                      \
-    const univary float r = sqrtf(objectCoordinates.x * objectCoordinates.x + \
-                                  objectCoordinates.y * objectCoordinates.y + \
-                                  objectCoordinates.z * objectCoordinates.z); \
-                                                                              \
-    const univary float inclination = acos(objectCoordinates.z / r);          \
-                                                                              \
-    univary float azimuth = atan2(objectCoordinates.y, objectCoordinates.x);  \
-                                                                              \
-    /* the above returns [-PI, PI], while our azimuth grid convention is [0,  \
-     * 2*PI] */                                                               \
-    if (azimuth < 0.f) {                                                      \
-      azimuth += 2.f * PI;                                                    \
-    }                                                                         \
-                                                                              \
-    localCoordinates.x =                                                      \
-        (1.f / self->gridSpacing.x) * (r - self->gridOrigin.x);               \
-    localCoordinates.y =                                                      \
-        (1.f / self->gridSpacing.y) * (inclination - self->gridOrigin.y);     \
-    localCoordinates.z =                                                      \
-        (1.f / self->gridSpacing.z) * (azimuth - self->gridOrigin.z);         \
-  }
-
-template_transformObjectToLocal_structured_spherical(varying);
-template_transformObjectToLocal_structured_spherical(uniform);
-#undef template_transformObjectToLocal_structured_spherical
-
 inline void computeStructuredSphericalBoundingBox(
     const SharedStructuredVolume *uniform self, uniform box3f &boundingBox)
 {
@@ -462,7 +353,7 @@ inline uniform float nanValue()
   {                                                                    \
     inBounds = true;                                                   \
                                                                        \
-    self->transformObjectToLocal_##univary(                            \
+    transformObjectToLocal_##univary##_dispatch(                            \
         self, objectCoordinates, clampedLocalCoordinates);             \
                                                                        \
     if (clampedLocalCoordinates.x < 0.f ||                             \
@@ -498,7 +389,7 @@ template_clampedLocalCoordinates(uniform);
      * using the above clampedLocalCoordinates_univary() function      \
      * produces more efficient code; clampedLocalCoordinates_univary() \
      * is still used for multi-attribute sampling functions... */      \
-    self->transformObjectToLocal_##univary(                            \
+    transformObjectToLocal_##univary##_dispatch(                            \
         self, objectCoordinates, clampedLocalCoordinates);             \
                                                                        \
     if (clampedLocalCoordinates.x < 0.f ||                             \
@@ -2330,29 +2221,11 @@ export uniform bool EXPORT_UNIQUE(
     self->boundingBox = make_box3f(
         gridOrigin, gridOrigin + make_vec3f(dimensions - 1.f) * gridSpacing);
 
-    self->transformLocalToObject_varying =
-        transformLocalToObject_structured_regular;
-    self->transformObjectToLocal_varying =
-        transformObjectToLocal_structured_regular;
-    self->transformLocalToObject_uniform =
-        transformLocalToObjectUniform_structured_regular;
-    self->transformObjectToLocal_uniform =
-        transformObjectToLocalUniform_structured_regular;
-
     self->computeGradient_varying =
         SharedStructuredVolume_computeGradient_bbox_checks;
 
   } else if (self->gridType == structured_spherical) {
     computeStructuredSphericalBoundingBox(self, self->boundingBox);
-
-    self->transformLocalToObject_varying =
-        transformLocalToObject_varying_structured_spherical;
-    self->transformObjectToLocal_varying =
-        transformObjectToLocal_varying_structured_spherical;
-    self->transformLocalToObject_uniform =
-        transformLocalToObject_uniform_structured_spherical;
-    self->transformObjectToLocal_uniform =
-        transformObjectToLocal_uniform_structured_spherical;
 
     self->computeGradient_varying =
         SharedStructuredVolume_computeGradient_NaN_checks;

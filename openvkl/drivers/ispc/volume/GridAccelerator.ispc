@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -60,12 +60,12 @@
                                                                                \
     /* coordinates of the lower corner of the cell in object coordinates */    \
     univary vec3f lower;                                                       \
-    volume->transformLocalToObject_##univary(                                  \
+    transformLocalToObject_##univary##_dispatch(                               \
         volume, to_float(index << CELL_WIDTH_BITCOUNT), lower);                \
                                                                                \
     /* coordinates of the upper corner of the cell in object coordinates */    \
     univary vec3f upper;                                                       \
-    volume->transformLocalToObject_##univary(                                  \
+    transformLocalToObject_##univary##_dispatch(                               \
         volume, to_float(index + 1 << CELL_WIDTH_BITCOUNT), upper);            \
                                                                                \
     return (make_box3f(lower, upper));                                         \
@@ -209,7 +209,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
     {                                                                       \
       /* first iteration */                                                 \
       univary vec3f localCoordinates;                                       \
-      volume->transformObjectToLocal_##univary(                             \
+      transformObjectToLocal_##univary##_dispatch(                          \
           volume,                                                           \
           iterator->origin +                                                \
               (iterator->boundingBoxTRange.lower) * iterator->direction,    \
@@ -239,7 +239,7 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
       const univary vec3f rcpCellDirection = rcp_safe(cellDirection);       \
                                                                             \
       univary vec3f cellOrigin;                                             \
-      volume->transformObjectToLocal_##univary(                             \
+      transformObjectToLocal_##univary##_dispatch(                          \
           volume, iterator->origin, cellOrigin);                            \
       cellOrigin = cellOrigin * RCP_CELL_WIDTH;                             \
                                                                             \

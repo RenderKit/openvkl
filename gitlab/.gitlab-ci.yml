@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 variables:
@@ -13,6 +13,7 @@ stages:
   - scan2
   - release
   - release-test
+  - scan-binaries
 
 ## Job Templates ##
 
@@ -71,8 +72,6 @@ stages:
 .job_template: &base_release_job
   stage: release
   when: manual
-  tags:
-    - release
   before_script:
     - git submodule sync
     - git submodule init
@@ -80,9 +79,6 @@ stages:
 
 .job_template: &base_release_test_job
   stage: release-test
-  when: manual
-  tags:
-    - release
 
 ## Build Jobs ##
 
@@ -363,16 +359,15 @@ build-kw-scan:
     paths:
         - $CI_PROJECT_DIR/kw_build_number
     expire_in: 1 day
-  dependencies: []
+  needs: []
   allow_failure: true
 
 test-kw-critical:
   stage: scan2
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs: [build-kw-scan]
   script:
     - gitlab/test-kw-critical.sh
-  dependencies:
-    - build-kw-scan
   tags:
     - docker
   allow_failure: true
@@ -386,7 +381,7 @@ source-protex-scan:
     - gitlab/source-scan-protex.sh
   tags:
     - docker
-  dependencies: []
+  needs: []
   allow_failure: true
 
 ## Release Jobs ##
@@ -401,7 +396,7 @@ release-linux-icc:
     - export CXX=icpc
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/release/linux.sh
-  dependencies: []
+  needs: []
   tags:
     - docker
     - modules
@@ -413,7 +408,7 @@ release-macOS:
   <<: *base_release_job
   script:
     - gitlab/release/macos.sh
-  dependencies: []
+  needs: []
   tags:
     - osx
     - clang
@@ -425,7 +420,7 @@ release-windows:
   <<: *base_release_job
   script:
     - gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
-  dependencies: []
+  needs: []
   tags:
     - msvc15
     - win10
@@ -442,7 +437,7 @@ release-linux-test:
     - gitlab/release/linux-test.sh
   tags:
     - docker
-  dependencies:
+  needs:
     - release-linux-icc
 
 release-macOS-test:
@@ -452,7 +447,7 @@ release-macOS-test:
   tags:
     - osx
     - clang
-  dependencies:
+  needs:
     - release-macOS
 
 release-windows-test:
@@ -462,5 +457,29 @@ release-windows-test:
   tags:
     - msvc15
     - win10
-  dependencies:
+  needs:
     - release-windows
+
+scan-bdba-bin:
+  stage: scan-binaries
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  tags: [docker]
+  needs: [release-linux-icc, release-macOS, release-windows]
+  script:
+    - gitlab/bdba.sh "openvkl-*"
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "openvkl-*.pdf"
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "openvkl-*.csv"
+  artifacts:
+    paths:
+      - openvkl-*.pdf
+      - openvkl-*.csv
+
+av:
+  stage: scan-binaries
+  tags: [docker]
+  image: $DOCKER_REGISTRY/clamav:ubuntu20.04
+  needs: [release-linux-icc, release-macOS, release-windows]
+  script:
+    - freshclam | tee -a /tmp/av_scan.log
+    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log

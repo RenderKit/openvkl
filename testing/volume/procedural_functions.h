@@ -170,5 +170,23 @@ namespace openvkl {
       return vec3f(0.f);
     }
 
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getWigglingSphereValue(const vec3f &objectCoordinates,
+                                             float time)
+    {
+      const float radius = 0.01f + 0.09f * std::pow(time, 2.f);
+      const vec3f center{0.9f - time * 1.8f, 0.25f*std::sin(15.f*time) * time, 0.f};
+      const float radSq = radius * radius;
+      const vec3f d     = objectCoordinates - center;
+      const float rr    = dot(d, d);
+      return (rr < radSq) ? VOXEL_TYPE{1} : VOXEL_TYPE{0};
+    }
+
+    inline vec3f getWigglingSphereGradient(const vec3f &objectCoordinates,
+                                           float time)
+    {
+      return vec3f(0.f);
+    }
+
   }  // namespace testing
 }  // namespace openvkl

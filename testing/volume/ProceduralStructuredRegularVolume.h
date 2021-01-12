@@ -202,6 +202,27 @@ namespace openvkl {
                                           getRotatingSphereValue<double>,
                                           getRotatingSphereGradient>;
 
+    using WigglingSphereStructuredRegularVolumeUChar =
+        ProceduralStructuredRegularVolume<unsigned char,
+                                          getWigglingSphereValue<unsigned char>,
+                                          getWigglingSphereGradient>;
+    using WigglingSphereStructuredRegularVolumeShort =
+        ProceduralStructuredRegularVolume<short,
+                                          getWigglingSphereValue<short>,
+                                          getWigglingSphereGradient>;
+    using WigglingSphereStructuredRegularVolumeUShort =
+        ProceduralStructuredRegularVolume<unsigned short,
+                                          getWigglingSphereValue<unsigned short>,
+                                          getWigglingSphereGradient>;
+    using WigglingSphereStructuredRegularVolumeFloat =
+        ProceduralStructuredRegularVolume<float,
+                                          getWigglingSphereValue<float>,
+                                          getWigglingSphereGradient>;
+    using WigglingSphereStructuredRegularVolumeDouble =
+        ProceduralStructuredRegularVolume<double,
+                                          getWigglingSphereValue<double>,
+                                          getWigglingSphereGradient>;
+
     // using type traits to work around Visual Studio compiler templating bugs
     template <typename VOXEL_TYPE>
     struct ProceduralStructuredRegularVolumes

@@ -37,6 +37,7 @@ namespace openvkl {
       Renderer::commit();
 
       time                  = getParam<float>("time", 0.f);
+      shutter               = getParam<float>("shutter", 0.f);
       motionBlur            = getParam<bool>("motionBlur", false);
       sigmaTScale           = getParam<float>("sigmaTScale", 1.f);
       sigmaSScale           = getParam<float>("sigmaSScale", 1.f);
@@ -45,6 +46,7 @@ namespace openvkl {
 
       ispc::DensityPathTracer_set(ispcEquivalent,
                                   time,
+                                  shutter,
                                   motionBlur,
                                   sigmaTScale,
                                   sigmaSScale,
@@ -76,8 +78,11 @@ namespace openvkl {
         }
 
         const vec3f c = ray.org + t * ray.dir;
-        const float time =
-            motionBlur ? randomNumbers2.x * this->time : this->time;
+        float time = this->time;
+        if (motionBlur) {
+          time = time + (randomNumbers2.x-0.5f) * this->shutter;
+        }
+        time = clamp(time, 0.f, 1.f);
         sample = vklComputeSample(
             scene.sampler, (const vkl_vec3f *)&c, scene.attributeIndex, time);
 

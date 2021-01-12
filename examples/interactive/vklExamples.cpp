@@ -94,6 +94,13 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
     changed = true;
   }
 
+  static float shutter = 0.f;
+  if (motionBlur && ImGui::SliderFloat("shutter", &shutter, 0.f, 1.f)) {
+    renderer.setParam<float>("shutter", shutter);
+    changed = true;
+  }
+
+
   static float sigmaTScale = 1.f;
   if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
     renderer.setParam<float>("sigmaTScale", sigmaTScale);

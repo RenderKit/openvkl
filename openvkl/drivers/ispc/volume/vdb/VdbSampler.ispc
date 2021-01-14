@@ -18,7 +18,7 @@
 // ---------------------------------------------------------------------------
 
 /*
- * Sample a volume for given index coordinate.
+ * Sample a volume for given index coordinate (varying).
  */
 inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
                                        const varying vec3i &ic,
@@ -138,6 +138,77 @@ inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
 
   /* TODO: with mixed formats, we will need to detect if all
       leaves of the same type have the same ptr. */
+
+  return sample;
+}
+
+/*
+ * Sample a volume for given index coordinate (uniform).
+ */
+inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
+                                       const uniform vec3i &ic,
+                                       const uniform uint32 attributeIndex)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  const uniform vec3i rootOrg = sampler->grid->rootOrigin;
+  if (ic.x < rootOrg.x || ic.y < rootOrg.y || ic.z < rootOrg.z)
+    return 0.f;
+
+  const uniform vec3ui domainOffset = make_vec3ui(ic - rootOrg);
+  if (domainOffset.x >= VKL_VDB_RES_0 || domainOffset.y >= VKL_VDB_RES_0 ||
+      domainOffset.z >= VKL_VDB_RES_0) {
+    return 0.f;
+  }
+
+  // We traverse the tree based on the leaf node origin, which we can easily
+  // compute using bit masking operations:
+  const uniform uint32 originMask = ~(((uint32)(VKL_VDB_RES_LEAF - 1)));
+  const uniform vec3ui leafOrigin = make_vec3ui(domainOffset.x & originMask,
+                                                domainOffset.y & originMask,
+                                                domainOffset.z & originMask);
+
+  uniform float sample         = 0.f;
+  const uniform bool isCompact = sampler->grid->allLeavesCompact;
+
+  uniform uint64 voxel = vklVdbVoxelMakeEmpty();
+  VdbSampler_dispatchInner_uniform_uniform_0(sampler, 0ul, leafOrigin, voxel);
+
+  if (vklVdbVoxelIsLeafPtr(voxel)) {
+    const void *uniform leafPtr = vklVdbVoxelLeafGetPtr(voxel);
+    assert(leafPtr);
+
+    const uniform VKLFormat leafFormat = vklVdbVoxelLeafGetFormat(voxel);
+
+    if (leafFormat == VKL_FORMAT_TILE) {
+      sample = VdbSampler_sampleTileFloatLeaf(
+          ((const uniform Data1D *uniform)leafPtr), attributeIndex);
+    } else if (isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+      sample = VdbSampler_sampleConstantFloatLeafCompact(
+          ((const uniform Data1D *uniform)leafPtr),
+          domainOffset,
+          attributeIndex);
+    } else if (!isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+      sample = VdbSampler_sampleConstantFloatLeafStrided(
+          ((const uniform Data1D *uniform)leafPtr),
+          domainOffset,
+          attributeIndex);
+    } else {
+      assert(false);
+    }
+  } else if (vklVdbVoxelIsError(voxel)) {
+    uniform uint8 level;
+    uniform uint32 voxelOffset;
+    vklVdbVoxelErrorGet(voxel, level, voxelOffset);
+
+    const uniform range1f valueRange =
+        sampler->grid->levels[level]
+            .valueRange[voxelOffset * sampler->grid->numAttributes +
+                        attributeIndex];
+    sample = 0.5f * (valueRange.lower + valueRange.upper);
+  }
 
   return sample;
 }
@@ -437,10 +508,11 @@ inline uniform float VdbSampler_interpolateNearest_uniform(
     const uniform vec3f &indexCoordinates,
     const uniform uint32 attributeIndex)
 {
-  const vec3f ic = indexCoordinates;
-  const float sample =
-      VdbSampler_interpolateNearest_varying(sampler, ic, attributeIndex);
-  return extract(sample, 0);
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  return VdbSampler_sample(sampler, ic, attributeIndex);
 }
 
 inline void VdbSampler_interpolateNearest_uniform(

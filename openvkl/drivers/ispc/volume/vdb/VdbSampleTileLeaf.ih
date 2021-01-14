@@ -9,7 +9,7 @@ inline varying float VdbSampler_sampleTileFloatLeaf(
   return get_float_0(&leafPtr[attributeIndex]);
 }
 
-inline varying float VdbSampler_sampleTileFloatLeaf(
+inline uniform float VdbSampler_sampleTileFloatLeaf(
     const uniform Data1D *uniform leafPtr, uniform uint32 attributeIndex)
 {
   return get_float_0(leafPtr[attributeIndex]);

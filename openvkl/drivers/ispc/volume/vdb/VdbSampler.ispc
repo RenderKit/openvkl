@@ -167,7 +167,7 @@ inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
 }
 
 /*
- * Traverse a volume for given index coordinate.
+ * Traverse a volume for given index coordinate (varying).
  */
 inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
                                 const varying vec3i &ic,
@@ -217,7 +217,43 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
 }
 
 /*
- * Sample a volume for given pre-traversed voxel and domain offset.
+ * Traverse a volume for given index coordinate (uniform).
+ */
+inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
+                                const uniform vec3i &ic,
+                                uniform uint64 &voxel,
+                                uniform vec3ui &domainOffset)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  const uniform vec3i rootOrg = sampler->grid->rootOrigin;
+  if (ic.x < rootOrg.x || ic.y < rootOrg.y || ic.z < rootOrg.z) {
+    voxel = vklVdbVoxelMakeEmpty();
+    return;
+  }
+
+  domainOffset = make_vec3ui(ic - rootOrg);
+  if (domainOffset.x >= VKL_VDB_RES_0 || domainOffset.y >= VKL_VDB_RES_0 ||
+      domainOffset.z >= VKL_VDB_RES_0) {
+    voxel = vklVdbVoxelMakeEmpty();
+    return;
+  }
+
+  // We traverse the tree based on the leaf node origin, which we can easily
+  // compute using bit masking operations:
+  const uniform uint32 originMask = ~(((uint32)(VKL_VDB_RES_LEAF - 1)));
+  const uniform vec3ui leafOrigin = make_vec3ui(domainOffset.x & originMask,
+                                                domainOffset.y & originMask,
+                                                domainOffset.z & originMask);
+
+  voxel = vklVdbVoxelMakeEmpty();
+  VdbSampler_dispatchInner_uniform_uniform_0(sampler, 0ul, leafOrigin, voxel);
+}
+
+/*
+ * Sample a volume for given pre-traversed voxel and domain offset (varying).
  */
 inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
                                        const varying uint64 &voxel,
@@ -247,6 +283,25 @@ inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
   }
 
   return sample;
+}
+
+/*
+ * Sample a volume for given pre-traversed voxel and domain offset (uniform).
+ */
+inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
+                                       const uniform uint64 &voxel,
+                                       const uniform vec3ui &domainOffset,
+                                       const uniform uint32 attributeIndex)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  if (vklVdbVoxelIsEmpty(voxel)) {
+    return 0.f;
+  }
+
+  return VdbSampler_sample_inner(sampler, voxel, domainOffset, attributeIndex);
 }
 
 // ---------------------------------------------------------------------------
@@ -396,12 +451,12 @@ inline void VdbSampler_interpolateNearest_uniform(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
-  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
-                              floor(indexCoordinates.y),
-                              floor(indexCoordinates.z));
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
 
-  uint64 voxel;
-  vec3ui domainOffset;
+  uniform uint64 voxel;
+  uniform vec3ui domainOffset;
   VdbSampler_traverse(sampler, ic, voxel, domainOffset);
 
   for (uniform unsigned int a = 0; a < M; a++) {

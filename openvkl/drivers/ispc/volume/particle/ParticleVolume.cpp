@@ -143,8 +143,6 @@ namespace openvkl {
         const vec3f &position = (*positions)[taskIndex];
         const float &radius   = (*radii)[taskIndex];
 
-        float weight = weights ? (*weights)[taskIndex] : 1.f;
-
         const float supportRadius = radius * radiusSupportFactor;
 
         prims[taskIndex].lower_x = position.x - supportRadius;

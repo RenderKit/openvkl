@@ -71,7 +71,6 @@ stages:
 
 .job_template: &base_release_job
   stage: release
-  when: manual
   before_script:
     - git submodule sync
     - git submodule init

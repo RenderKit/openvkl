@@ -353,24 +353,33 @@ build-kw-scan:
     - git submodule sync
     - git submodule init
     - git submodule update
-  tags:
-    - docker
+  tags: [docker]
   artifacts:
     paths:
-        - $CI_PROJECT_DIR/kw_build_number
-    expire_in: 1 day
+      - ./klocwork/*
   needs: []
-  allow_failure: true
 
-test-kw-critical:
+check-kw-issues:
   stage: scan2
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs: [build-kw-scan]
   script:
-    - gitlab/test-kw-critical.sh
+    - gitlab/kw-check-issues.sh
   tags:
     - docker
   allow_failure: true
+
+gen-kw-report:
+  stage: scan2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs: [build-kw-scan]
+  tags: [docker]
+  script:
+    - gitlab/kw-gen-report.sh
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID klocwork "klocwork/report.log"
+  artifacts:
+    paths:
+      - ./klocwork/*
 
 ## Protex Job ##
 

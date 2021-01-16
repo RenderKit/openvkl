@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME rkcommon)
@@ -22,6 +22,8 @@ ExternalProject_Add(${COMPONENT_NAME}
   URL "${RKCOMMON_URL}"
   ${RKCOMMON_HASH_ARGS}
   CMAKE_ARGS
+    -DCMAKE_PREFIX_PATH:PATH=${CMAKE_PREFIX_PATH}
+    -DINSTALL_DEPS=OFF
     -DBUILD_TESTING=OFF
     -DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}

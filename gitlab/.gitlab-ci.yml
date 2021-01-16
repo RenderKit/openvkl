@@ -164,6 +164,12 @@ build-arch-devel-rkdeps:
   script:
     - gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
 
+build-arch-TBB2021:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  script:
+    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+
 build-macOS:
   <<: *base_build_job
   stage: build
@@ -173,10 +179,31 @@ build-macOS:
     - osx
     - clang
 
+build-macOS-TBB2021:
+  <<: *base_build_job
+  stage: build
+  script:
+    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+  tags:
+    - osx
+    - clang
+
 build-windows-msvc15:
   stage: build
   script:
     - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win10
+  artifacts:
+    paths:
+      - build/install
+    expire_in: 3 day
+
+build-windows-msvc15-TBB2021:
+  stage: build
+  script:
+    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.1.1"' '"-DTBB_HASH="""'
   tags:
     - msvc15
     - win10
@@ -271,10 +298,27 @@ test-functional-arch-devel-rkdeps:
   needs:
     - build-arch-devel-rkdeps
 
+test-functional-arch-TBB2021:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  needs:
+    - build-arch-TBB2021
+
 test-functional-macOS:
   <<: *base_functional_test_job
   needs:
     - build-macOS
+  tags:
+    - osx
+    - clang
+  script:
+    - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTests
+
+test-functional-macOS-TBB2021:
+  <<: *base_functional_test_job
+  needs:
+    - build-macOS-TBB2021
   tags:
     - osx
     - clang
@@ -288,6 +332,16 @@ test-functional-windows-msvc15:
     - gitlab\run_tests.bat
   needs:
     - build-windows-msvc15
+  tags:
+    - msvc15
+    - win10
+
+test-functional-windows-msvc15-TBB2021:
+  <<: *base_functional_test_job
+  script:
+    - gitlab\run_tests.bat
+  needs:
+    - build-windows-msvc15-TBB2021
   tags:
     - msvc15
     - win10

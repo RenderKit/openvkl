@@ -40,7 +40,6 @@ inline varying float VdbSampler_sample(const VdbSampler *uniform sampler,
 
   // We traverse the tree based on the leaf node origin, which we can easily
   // compute using bit masking operations:
-  // TODO: Mask must be leaf level, not necessarily level 3.
   const uint32 originMask = ~(((uint32)(VKL_VDB_RES_LEAF - 1)));
   const vec3ui leafOrigin = make_vec3ui(domainOffset.x & originMask,
                                         domainOffset.y & originMask,
@@ -170,7 +169,6 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
 
   // We traverse the tree based on the leaf node origin, which we can easily
   // compute using bit masking operations:
-  // TODO: Mask must be leaf level, not necessarily level 3.
   const uint32 originMask = ~(((uint32)(VKL_VDB_RES_LEAF - 1)));
   const vec3ui leafOrigin = make_vec3ui(domainOffset.x & originMask,
                                         domainOffset.y & originMask,

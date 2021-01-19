@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(openvkl_add_library_ispc name type)
@@ -207,10 +207,15 @@ endmacro()
 # and we also define constants that describe the topology
 # in terms of node resolution per level.
 function(openvkl_vdb_generate_topology)
+  set(VKL_VDB_NUM_LEVELS "4")
 
-  list(LENGTH VKL_VDB_LOG_RESOLUTION VKL_VDB_NUM_LEVELS)
+  set(VKL_VDB_LOG_RESOLUTION "")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_3}")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_2}")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_1}")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_0}")
+
   math(EXPR VKL_VDB_LEAF_LEVEL "${VKL_VDB_NUM_LEVELS}-1")
-  list(REVERSE VKL_VDB_LOG_RESOLUTION) # Define from leaf level up.
   set(VKL_VDB_TOTAL_LOG_RES 0)
 
   foreach(I RANGE ${VKL_VDB_LEAF_LEVEL})

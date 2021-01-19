@@ -848,10 +848,19 @@ VDB sampler objects support the following observers:
   - The root level in Open VKL has a single node with resolution 64^3 (cp. [1]. OpenVDB
     uses a hash map, instead).
 
-  - The tree topology can be configured at compile time, but this happens through
-    the CMake option `VKL_VDB_LOG_RESOLUTION`. By default this is set to "6;5;4;3",
-    which means that there are four levels, the root node has a resolution of
-    (2^6^3 = 64^3), first level nodes a resolution of (2^5^3 = 32^3), and so on.
+  - Open VKL supports four-level vdb volumes. The resolution of each level
+    can be configured at compile time using CMake variables.
+    * `VKL_VDB_LOG_RESOLUTION_0` sets the base 2 logarithm of the root level
+      resolution. This variable defaults to 6, which means that the root level
+      has a resolution of $(2^6)^3 = 64^3$.
+    * `VKL_VDB_LOG_RESOLUTION_1` and `VKL_VDB_LOG_RESOLUTION_2` default to
+      5 and 4, respectively. This matches the default Open VDB resolution for
+      inner levels.
+    * `VKL_VDB_LOG_RESOLUTION_3` set the base 2 logarithm of the leaf level
+      resolution, and defaults to 3. Therefore, leaf nodes have a resolution
+      of $8^3$ voxels. Again, this matches the Open VDB default.
+    The default settings lead to a domain resolution of $2^18^3=262144^3$ voxels.
+
 
 #### Loading OpenVDB .vdb files
 

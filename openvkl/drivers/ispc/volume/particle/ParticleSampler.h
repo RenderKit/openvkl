@@ -1,8 +1,9 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include <algorithm>
 #include "../../common/export_util.h"
 #include "../../iterator/UnstructuredIterator.h"
 #include "../../sampler/Sampler.h"
@@ -79,7 +80,7 @@ namespace openvkl {
     inline void ParticleSampler<W>::commit()
     {
       const int maxIteratorDepth =
-          max(this->template getParam<int>("maxIteratorDepth",
+          std::max(this->template getParam<int>("maxIteratorDepth",
                                            volume->getMaxIteratorDepth()),
               0);
 

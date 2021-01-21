@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ParticleVolume.h"
@@ -93,7 +93,7 @@ namespace openvkl {
       }
 
       maxIteratorDepth =
-          max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
 
       buildBvhAndCalculateBounds();
 

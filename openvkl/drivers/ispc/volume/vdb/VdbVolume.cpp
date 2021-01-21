@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbVolume.h"
+#include <algorithm>
 #include <cstring>
 #include <set>
 #include "../../common/export_util.h"
@@ -464,7 +465,7 @@ namespace openvkl {
           (VKLFilter)this->template getParam<int>("gradientFilter", filter);
       maxSamplingDepth =
           this->template getParam<int>("maxSamplingDepth", maxSamplingDepth);
-      maxSamplingDepth = min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
+      maxSamplingDepth = std::min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
       maxIteratorDepth = this->template getParam<int>("maxIteratorDepth",
                                                       VKL_VDB_NUM_LEVELS - 2u);
 
@@ -564,11 +565,11 @@ namespace openvkl {
         }
       });
 
-      grid                 = allocator.allocate<VdbGrid>(1);
-      grid->type           = type;
-      grid->numAttributes  = numAttributes;
-      maxIteratorDepth     = min<uint32_t>(max<uint32_t>(maxIteratorDepth, 0),
-                                       VKL_VDB_NUM_LEVELS - 1);
+      grid                = allocator.allocate<VdbGrid>(1);
+      grid->type          = type;
+      grid->numAttributes = numAttributes;
+      maxIteratorDepth    = std::min<uint32_t>(
+          std::max<uint32_t>(maxIteratorDepth, 0), VKL_VDB_NUM_LEVELS - 1);
       grid->totalNumLeaves = numLeaves;
 
       // Determine if all leaf data is compact (non-strided)

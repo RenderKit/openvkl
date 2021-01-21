@@ -1,7 +1,8 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "UnstructuredVolume.h"
+#include <algorithm>
 #include "../common/Data.h"
 #include "UnstructuredSampler.h"
 #include "rkcommon/containers/AlignedVector.h"
@@ -195,7 +196,7 @@ namespace openvkl {
       }
 
       maxIteratorDepth =
-          max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
 
       buildBvhAndCalculateBounds();
 

@@ -121,13 +121,19 @@ the `vklDriverSet*()` functions.
 
 The following errors are currently used by Open VKL:
 
+  ---------------------- -------------------------------------------------------
   Name                   Description
   ---------------------- -------------------------------------------------------
   VKL_NO_ERROR           no error occurred
+
   VKL_UNKNOWN_ERROR      an unknown error occurred
+
   VKL_INVALID_ARGUMENT   an invalid argument was specified
+
   VKL_INVALID_OPERATION  the operation is not allowed for the specified object
+
   VKL_OUT_OF_MEMORY      there is not enough memory to execute the command
+
   VKL_UNSUPPORTED_CPU    the CPU is not supported (minimum ISA is SSE4.1)
   ---------------------- -------------------------------------------------------
   : Possible error codes, i.e., valid named constants of type `VKLError`.

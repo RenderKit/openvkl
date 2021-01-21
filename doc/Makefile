@@ -13,12 +13,13 @@ ifneq "$(PDOK)" "1"
   $(error You need at least pandoc v2.0)
 endif
 
-all: www doc
+all: www doc spec
 www: $(webpages) www/stylesheet.css $(webimages)
 wwwsync: www
 doc: ../README.md
+spec: openvkl-spec.rst
 
-.PHONY: all www wwwsync doc clean
+.PHONY: all www wwwsync doc clean spec
 
 tmp/version: ../CMakeLists.txt
 	sed -n -e "s/^project(openvkl VERSION \(.*\) LANGUAGES.*)/\1/p" $< | tr -d '\n' > $@
@@ -44,6 +45,14 @@ wwwdir:
 $(process_version) tmp/version: | tmpdir
 tmpdir:
 	@mkdir -p tmp
+
+
+## ----------------------------------------------------------------------------
+## Spec
+## ---------------------------------------------------------------------------
+
+openvkl-spec.rst: api.md
+	$(PANDOC) --wrap=none --email-obfuscation=none -f markdown $(filter-out webtemplate.html,$+) -V select_$(basename $(@F)) --to rst -o $@
 
 ## ----------------------------------------------------------------------------
 ## Webpages
@@ -108,4 +117,4 @@ tmp/api.md: api.md tmp/links.md
 ## ----------------------------------------------------------------------------
 
 clean:
-	rm -rf www tmp changelog.md __pycache__
+	rm -rf www tmp changelog.md __pycache__ openvkl-spec.rst

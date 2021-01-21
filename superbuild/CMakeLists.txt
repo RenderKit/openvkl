@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Global settings ##
@@ -201,8 +201,8 @@ if (BUILD_OPENVDB)
   if (WIN32)
     message(FATAL_ERROR "Open VKL superbuild currently does not support building on Windows.")
     set(BUILD_OPENVDB OFF)
-  elseif (CMAKE_VERSION VERSION_LESS 3.7)
-    message(WARNING "Disabling OpenVDB support because the cmake version is too low (3.7 is required)")
+  elseif (CMAKE_VERSION VERSION_LESS 3.12)
+    message(WARNING "Disabling OpenVDB support because the cmake version is too low (3.12 is required)")
     set(BUILD_OPENVDB OFF)
   elseif (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 6.3)
     message(WARNING "Disabling OpenVDB support because the gcc compiler version is too low (6.3 is required)")
@@ -243,11 +243,11 @@ if (BUILD_OPENVDB)
       include(dep_blosc)
     endif()
 
-    set(OPENVDB_VERSION "7.0.0")
+    set(OPENVDB_VERSION "8.0.0")
     set(OPENVDB_BASE_URL "https://github.com/AcademySoftwareFoundation/openvdb/archive")
     set(OPENVDB_URL "${OPENVDB_BASE_URL}/v${OPENVDB_VERSION}.zip"
       CACHE STRING "URL of the OpenVDB archive.")
-    set(OPENVDB_HASH "fe830cc99039fb0f82e55a1bc655d58e705b29efc7288130e8201de0b2930b90"
+    set(OPENVDB_HASH "8e2969e5c036d5be7679d56d46afe75d89c7e3d5ef750bc00f1d084591c631aa"
       CACHE STRING "SHA256 hash of the OpenVDB archive.")
     include(dep_openvdb)
   endif()

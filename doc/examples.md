@@ -7,12 +7,38 @@ usage of the API, as well as full renderers showing recommended usage.
 Tutorials
 ---------
 
-Simple tutorials can be found in the `examples/` directory. These are:
+Simple tutorials can be found in the
+[`examples/`](https://github.com/openvkl/openvkl/tree/master/examples)
+directory. These are:
 
-* `vklTutorial.c` : usage of the C API
-* `vklTutorialISPC.[cpp,ispc]` : combined usage of the C and ISPC APIs
+* [`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c): usage of the C API
+* [`vklTutorialISPC.cpp`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.cpp)
+  and
+  [`vklTutorialISPC.ispc`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.ispc)
+  : combined usage of the C and ISPC APIs
 
-For quick reference, the contents of `vklTutorial.c` are shown below.
+Interactive examples
+--------------------
+
+Open VKL also ships with an interactive example application,
+[`vklExamples`](https://github.com/openvkl/openvkl/blob/master/examples/interactive/vklExamples.cpp).
+This interactive viewer demonstrates multiple example renderers including a path
+tracer, isosurface renderer (using hit iterators), and ray marcher. The viewer
+UI supports switching between renderers interactively.
+
+Each renderer has both a C++ and ISPC implementation showing recommended API
+usage. These implementations are available in the
+[`examples/interactive/renderers/`](https://github.com/openvkl/openvkl/tree/master/examples/interactive/renderers)
+directory.
+
+![`vklExamples` interactive example application][imgVklExamples]
+
+vklTutorial source
+------------------
+
+For quick reference, the contents of
+[`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c)
+are shown below.
 
 ``` cpp
 
@@ -368,15 +394,3 @@ int main()
   return 0;
 }
 ```
-
-Interactive examples
---------------------
-
-Open VKL also ships with an interactive example application, `vklExamples`. This
-interactive viewer demonstrates multiple example renderers including a path
-tracer, isosurface renderer (using hit iterators), and ray marcher. The viewer
-UI supports switching between renderers interactively.
-
-Each renderer has both a C++ and ISPC implementation showing recommended API
-usage. These implementations are available in the
-`examples/interactive/renderers/` directory.

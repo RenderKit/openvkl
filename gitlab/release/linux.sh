@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2020 Intel Corporation
+## Copyright 2020-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 #### Helper functions ####
@@ -50,7 +50,7 @@ ROOT_DIR=$PWD
 DEP_BUILD_DIR=$ROOT_DIR/build_deps
 DEP_INSTALL_DIR=$ROOT_DIR/install_deps
 
-OPENVKL_PKG_BASE=openvkl-0.11.0.x86_64.linux
+OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.linux
 OPENVKL_BUILD_DIR=$ROOT_DIR/build_release
 OPENVKL_INSTALL_DIR=$ROOT_DIR/install_release/$OPENVKL_PKG_BASE
 

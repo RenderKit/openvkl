@@ -1,12 +1,12 @@
 #!/bin/bash
-## Copyright 2020 Intel Corporation
+## Copyright 2020-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ROOT_DIR=$PWD
 
 #### Extract release package ####
 
-OPENVKL_PKG_BASE=openvkl-0.11.0.x86_64.linux
+OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.linux
 tar -zxvf ${OPENVKL_PKG_BASE}.tar.gz
 
 #### Build tutorial against release package ####

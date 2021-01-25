@@ -1,4 +1,4 @@
-## Copyright 2020 Intel Corporation
+## Copyright 2020-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME openvdb)
@@ -16,8 +16,7 @@ endif()
 # Options that are shared between the OpenVDB and Open VKL builds.
 # We need to define these both for the OpenVDB dependency build and
 # the main Open VKL build.
-set(OPENVKL_EXTRA_OPENVDB_OPTIONS -DOpenVDB_ABI=7
-                                  -DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON)
+set(OPENVKL_EXTRA_OPENVDB_OPTIONS -DCMAKE_NO_SYSTEM_FROM_IMPORTED=ON)
 mark_as_advanced(OPENVKL_EXTRA_OPENVDB_OPTIONS)
 
 

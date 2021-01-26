@@ -142,10 +142,10 @@ endif()
 
 option(BUILD_RKCOMMON "Build rkcommon or search in environment?" ON)
 if (BUILD_RKCOMMON)
-  set(RKCOMMON_VERSION "devel" CACHE STRING "rkcommon version to download")
+  set(RKCOMMON_VERSION "v1.6.0" CACHE STRING "rkcommon version to download")
   set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_VERSION}.zip"
     CACHE STRING "URL of the rkcommon archive.")
-  set(RKCOMMON_HASH ""
+  set(RKCOMMON_HASH "b613b6823073f0ee18c629e1c3bc747e70f85df3e8cca089802615dfaa9e1a61"
     CACHE STRING "SHA256 hash of the rkcommon archive.")
   include(dep_rkcommon)
 endif()

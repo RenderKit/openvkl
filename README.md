@@ -65,6 +65,7 @@ example renderers to demonstrate how to best use the Open VKL API.
       - rkcommon 1.6.0
       - ISPC 1.15.0
       - OpenVDB 8.0.0
+  - Minimum rkcommon version is now 1.6.0
 
 ### Open VKL 0.11.0
 

@@ -99,7 +99,7 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
     {
       sampling_on_vertices_vs_procedural_values<
           WaveletStructuredRegularVolumeDouble>(
-          vec3i(11586, 11586, 2), VKL_DATA_DEFAULT, 0, vec3i(16, 16, 1));
+          vec3i(16385, 16385, 2), VKL_DATA_DEFAULT, 0, vec3i(16, 16, 1));
     }
   }
 }

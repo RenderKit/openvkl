@@ -8,6 +8,9 @@
 #include "value_selector/ValueSelector.ih"
 #include "volume/UnstructuredVolume.ih"
 
+// Ignore warning about exporting uniform-pointer-to-varying, as this is in
+// fact legal.
+#pragma ignore warning(all)
 export void EXPORT_UNIQUE(UnstructuredIterator_export,
                           uniform vec3i &dummy_vec3i,
                           uniform vec3f &dummy_vec3f,
@@ -97,7 +100,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
                                 UnstructuredTraversalState &hitState)
 {
   while (1) {
-    uniform bool isInner = (node->nominalLength >= 0);
+    uniform bool isInner = (node->nominalLength.x >= 0);
 
     if (isInner && node->level < iterator->sampler->maxIteratorDepth) {
       uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
@@ -288,7 +291,8 @@ inline void UnstructuredIterator_iterateIntervalInternal(
     interval->tRange.upper     = retRange.upper;
     interval->valueRange.lower = hitState.node->valueRange.lower;
     interval->valueRange.upper = hitState.node->valueRange.upper;
-    interval->nominalDeltaT    = abs(hitState.node->nominalLength);
+    interval->nominalDeltaT    = reduce_min(absf(hitState.node->nominalLength
+                                 * rcp_safe(self->direction))); // in ray space
     *result                    = true;
   }
 }

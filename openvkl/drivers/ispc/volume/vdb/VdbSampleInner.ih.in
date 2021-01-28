@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,94 +6,79 @@
 // ---------------------------------------------------------------------------
 // Sample inner nodes.
 //
-// Note: We generate files VdbSampleInner_<univary>_<level>.ih from this 
-//       template using CMake.
+// Note: We generate files VdbSampleInner_<univary_in>_<univary_out>_<level>.ih
+//       from this template using CMake.
 // ---------------------------------------------------------------------------
-
-#include "openvkl_vdb/VdbSampleConstantLeaf_@VKL_VDB_NEXT_LEVEL@.ih"
 
 #if (@VKL_VDB_NEXT_LEVEL@+1) < VKL_VDB_NUM_LEVELS
   #include "VdbSamplerDispatchInner_@VKL_VDB_NEXT_LEVEL@.ih"
 #endif
 
-#define univary @VKL_VDB_UNIVARY@
+#define univary_in @VKL_VDB_UNIVARY_IN@
+#define univary_out @VKL_VDB_UNIVARY_OUT@
+
+#if (@VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS)
+#error "VdbSampleInner.ih generated for too many levels."
+#endif
 
 /*
- * Sample an inner node.
- * We generate versions for varying and uniform traversal (when it is known
- * that sample locations are in the same leaf), and for each inner level (so
- * that the compiler can optimize out the tree structure).
- * We also have separate code for versions that collect stats vs. versions that do not.
+ * Find the level @VKL_VDB_LEVEL@ voxel containing domainOffset.
+ *
+ * If the voxel is a child pointer then this function will instead
+ * dispatch to the next level.
+ *
+ * We generate versions for both varying and uniform traversal. The latter
+ * is used when all sample locations are in the same leaf node.
  */
-inline varying float VdbSampler_sampleInner_@VKL_VDB_UNIVARY@_@VKL_VDB_LEVEL@(
-  const VdbSampler *uniform         sampler,
-  const varying vec3ui             &domainOffset,
-  univary uint64                    voxelOffset)
+inline void VdbSampler_sampleInner_@VKL_VDB_UNIVARY_IN@_@VKL_VDB_UNIVARY_OUT@_@VKL_VDB_LEVEL@(
+  const VdbSampler *uniform  sampler,
+  const univary_in uint64    voxelOffset,
+  const univary_out vec3ui  &domainOffset,
+  univary_out uint64        &voxel)
 {
   /* We compute offsets in 64 bit to be safe, but access is in 32 bit! */
-  assert(voxelOffset < ((univary uint64)1) << 32);
-  assert(voxelOffset < sampler->grid->levels[@VKL_VDB_LEVEL@].numNodes 
+  assert(voxelOffset < ((univary_in uint64)1) << 32);
+  assert(voxelOffset < sampler->grid->levels[@VKL_VDB_LEVEL@].numNodes
                      * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@);
-  const univary uint32 vo32 = ((univary uint32)voxelOffset);
-  const univary uint64 voxelValue = sampler->grid->levels[@VKL_VDB_LEVEL@].voxels[vo32];
-  const univary bool isTile = vklVdbVoxelIsTile(voxelValue);
-  const univary bool isLeaf = vklVdbVoxelIsLeafPtr(voxelValue);
+  const univary_in uint32 vo32 = ((univary_in uint32)voxelOffset);
+  const univary_in uint64 voxelValue
+    = sampler->grid->levels[@VKL_VDB_LEVEL@].voxels[vo32];
 
-  varying float sample = 0.f;
-
-  if (isTile)
+  // This voxel is pointing to a child, but we have reached max depth.
+  // Come up with a tile value.
+  if ((vklVdbVoxelIsLeafPtr(voxelValue) || vklVdbVoxelIsChildPtr(voxelValue))
+   && (@VKL_VDB_LEVEL@+1 > sampler->maxSamplingDepth)) // Cannot descend!
   {
-    sample = vklVdbVoxelTileGet(voxelValue);
-  }
-  else if (@VKL_VDB_LEVEL@+1 > sampler->maxSamplingDepth) // Cannot descend!
-  {
-    const univary range1f valueRange = 
-      sampler->grid->levels[@VKL_VDB_LEVEL@].valueRange[vo32];
-    sample = 0.5f * (valueRange.lower + valueRange.upper);
-  }
-  else if (isLeaf)
-  {
-    const void* univary leafPtr = vklVdbVoxelLeafGetPtr(voxelValue);
-    assert(leafPtr);
-
-    assert(vklVdbVoxelLeafGetFormat(voxelValue) == VKL_FORMAT_CONSTANT_ZYX);
-    /* TODO: with mixed formats, we will need to detect if all
-        leaves of the same type have the same ptr. */
-
-    if (sampler->grid->allLeavesCompact) {
-      sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
-        ((const uniform float *univary)leafPtr), domainOffset);
-    }
-    else {
-      sample = VdbSampler_sampleConstantFloatLeaf_@VKL_VDB_NEXT_LEVEL@(
-        ((const uniform Data1D *univary)leafPtr), domainOffset);
-    }
+    voxel = vklVdbVoxelMakeError(@VKL_VDB_LEVEL@, vo32);
+    return;
   }
 
 #if (@VKL_VDB_NEXT_LEVEL@+1) < VKL_VDB_NUM_LEVELS
-  else if (vklVdbVoxelIsChildPtr(voxelValue))
-  {
-    sample = VdbSampler_dispatchInner_@VKL_VDB_UNIVARY@_@VKL_VDB_NEXT_LEVEL@(
+  if (vklVdbVoxelIsChildPtr(voxelValue)) {
+    VdbSampler_dispatchInner_@VKL_VDB_UNIVARY_IN@_@VKL_VDB_UNIVARY_OUT@_@VKL_VDB_NEXT_LEVEL@(
       sampler,
+      vklVdbVoxelChildGetIndex(voxelValue),
       domainOffset,
-      vklVdbVoxelChildGetIndex(voxelValue));
+      voxel);
+    return;
   }
+#else
+  assert(!vklVdbVoxelIsChildPtr(voxelValue));
 #endif
 
-  /* Do nothing for empty voxels. */
-
-  if ((isTile || isLeaf)
+  if (!vklVdbVoxelIsEmpty(voxelValue)
    && VdbLeafAccessObserver_isObservable(sampler))
   {
-    const univary uint64 originalIndex = 
+    const univary_in uint64 originalIndex =
       sampler->grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
-    assert(originalIndex < ((univary uint64)1) << 32);
-    const univary uint32 oi32 = ((univary uint32)originalIndex);
-    VdbLeafAccessObserver_observe_@VKL_VDB_UNIVARY@(sampler, oi32);
+    assert(originalIndex < ((univary_in uint64)1) << 32);
+    const univary_in uint32 oi32 = ((univary_in uint32)originalIndex);
+    VdbLeafAccessObserver_observe_@VKL_VDB_UNIVARY_IN@(sampler, oi32);
   }
 
-  return sample;
+  voxel = voxelValue;
 }
 
-#undef univary
+#undef univary_in
+#undef univary_out
 

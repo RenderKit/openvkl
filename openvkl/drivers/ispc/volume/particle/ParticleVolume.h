@@ -23,7 +23,9 @@ namespace openvkl {
         static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNode),
                       "ParticleLeafNode incompatible with LeafNode");
 
-        nominalLength = -radius;
+        nominalLength.x = -radius;
+        nominalLength.y = radius;
+        nominalLength.z = radius;
 
         // note that valueRange will be set separately in computeValueRanges()
       }

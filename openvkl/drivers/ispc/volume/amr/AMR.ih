@@ -4,7 +4,7 @@
 #pragma once
 
 // ospray
-#include "math/box.ih"
+#include "rkcommon/math/box.ih"
 #include "openvkl/VKLDataType.h"
 #include "../common/Data.ih"
 // ours

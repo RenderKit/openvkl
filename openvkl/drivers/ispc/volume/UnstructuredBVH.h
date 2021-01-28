@@ -16,7 +16,7 @@ namespace openvkl {
 
     struct Node
     {
-      float nominalLength;  // set to negative for LeafNode;
+      vec3f nominalLength;  // x set to negative for LeafNode;
       range1f valueRange;
       int level;
       Node *parent;
@@ -35,7 +35,8 @@ namespace openvkl {
       LeafNode(unsigned id, const box3fa &bounds, const range1f &range)
           : cellID(id), bounds(bounds)
       {
-        nominalLength = -reduce_min(bounds.upper - bounds.lower);
+        nominalLength   = bounds.upper - bounds.lower;
+        nominalLength.x = -nominalLength.x;  // leaf
         valueRange    = range;
       }
 
@@ -85,9 +86,15 @@ namespace openvkl {
           innerNode->children[i]         = (Node *)childPtr[i];
           innerNode->children[i]->parent = innerNode;
         }
-        innerNode->nominalLength =
-            min(fabsf(innerNode->children[0]->nominalLength),
-                fabsf(innerNode->children[1]->nominalLength));
+        innerNode->nominalLength.x =
+            std::min(fabsf(innerNode->children[0]->nominalLength.x),
+                     fabsf(innerNode->children[1]->nominalLength.x));
+        innerNode->nominalLength.y =
+            std::min(innerNode->children[0]->nominalLength.y,
+                     innerNode->children[1]->nominalLength.y);
+        innerNode->nominalLength.z =
+            std::min(innerNode->children[0]->nominalLength.z,
+                     innerNode->children[1]->nominalLength.z);
         innerNode->valueRange = innerNode->children[0]->valueRange;
         innerNode->valueRange.extend(innerNode->children[1]->valueRange);
       }
@@ -107,14 +114,14 @@ namespace openvkl {
 
     inline bool isLeafNode(const Node *node)
     {
-      return (node->nominalLength < 0);
+      return (node->nominalLength.x < 0);
     }
 
     inline void addLevelToNodes(Node *root, int level)
     {
       root->level = level;
 
-      if (root->nominalLength > 0) {
+      if (root->nominalLength.x > 0) {
         auto inner = (InnerNode *)root;
 
         addLevelToNodes(inner->children[0], level + 1);
@@ -232,7 +239,7 @@ namespace openvkl {
 
         struct AccumulatedMetadata
         {
-          float nominalLength;
+          vec3f nominalLength;
           range1f valueRange;
         };
 
@@ -254,13 +261,18 @@ namespace openvkl {
                 if (isLeafNode(node)) {
                   // for leaves, nominalLength is stored as negative (but used
                   // as an absolute value)
-                  accum[nodeIndex].nominalLength =
-                      std::max(accum[nodeIndex].nominalLength,
-                               -fabsf(on->nominalLength));
+                  accum[nodeIndex].nominalLength.x =
+                      std::max(accum[nodeIndex].nominalLength.x,
+                               -fabsf(on->nominalLength.x));
                 } else {
-                  accum[nodeIndex].nominalLength = std::min(
-                      accum[nodeIndex].nominalLength, fabsf(on->nominalLength));
+                  accum[nodeIndex].nominalLength.x =
+                      std::min(accum[nodeIndex].nominalLength.x,
+                               fabsf(on->nominalLength.x));
                 }
+                accum[nodeIndex].nominalLength.y = std::min(
+                    accum[nodeIndex].nominalLength.y, on->nominalLength.y);
+                accum[nodeIndex].nominalLength.z = std::min(
+                    accum[nodeIndex].nominalLength.z, on->nominalLength.z);
 
                 accum[nodeIndex].valueRange.extend(on->valueRange);
               }

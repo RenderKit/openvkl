@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -27,11 +27,121 @@ namespace openvkl {
     using vec3f = rkcommon::math::vec3f;
 
     /*
-     * This class demonstrates how a float grid can be loaded from OpenVDB .vdb
+     * Helper functions for interfacing with VdbVolumeBuffers.
+     */
+    inline size_t addTile(VdbVolumeBuffers &volumeBuffers,
+                          uint32_t level,
+                          const vec3i &origin,
+                          const float *p)
+    {
+      return volumeBuffers.addTile(level, origin, {(void *)p});
+    }
+
+    inline size_t addTile(VdbVolumeBuffers &volumeBuffers,
+                          uint32_t level,
+                          const vec3i &origin,
+                          const openvdb::Vec3s *p)
+    {
+      const float &x = p->x();
+      const float &y = p->y();
+      const float &z = p->z();
+      return volumeBuffers.addTile(
+          level, origin, {(void *)&x, (void *)&y, (void *)&z});
+    }
+
+    inline size_t addConstant(VdbVolumeBuffers &volumeBuffers,
+                              uint32_t level,
+                              const vec3i &origin,
+                              const float *p)
+    {
+      return volumeBuffers.addConstant(
+          level, origin, {(void *)p}, VKL_DATA_SHARED_BUFFER);
+    }
+
+    inline size_t addConstant(VdbVolumeBuffers &volumeBuffers,
+                              uint32_t level,
+                              const vec3i &origin,
+                              const openvdb::Vec3s *p)
+    {
+      return volumeBuffers.addConstant(
+          level,
+          origin,
+          {(void *)(p->asPointer() + 0),
+           (void *)(p->asPointer() + 1),
+           (void *)(p->asPointer() + 2)},
+          VKL_DATA_SHARED_BUFFER,
+          std::vector<size_t>(3, sizeof(openvdb::Vec3s)));
+    }
+
+    inline void makeConstant(VdbVolumeBuffers &volumeBuffers,
+                             size_t index,
+                             const float *p)
+    {
+      volumeBuffers.makeConstant(index, {(void *)p}, VKL_DATA_SHARED_BUFFER);
+    }
+
+    inline void makeConstant(VdbVolumeBuffers &volumeBuffers,
+                             size_t index,
+                             const openvdb::Vec3s *p)
+    {
+      volumeBuffers.makeConstant(
+          index,
+          {(void *)(p->asPointer() + 0),
+           (void *)(p->asPointer() + 1),
+           (void *)(p->asPointer() + 2)},
+          VKL_DATA_SHARED_BUFFER,
+          std::vector<size_t>(3, sizeof(openvdb::Vec3s)));
+    }
+
+    /*
+     * For specializations of OpenVdbGrid.
+     */
+    template <typename VdbFieldType>
+    struct OpenVdbGridTypes
+    {
+      using openvdbNativeGrid                          = void;
+      using openvdbTree                                = void;
+      const std::string openvdbTreeString              = "";
+      const std::vector<VKLDataType> vklAttributeTypes = {};
+    };
+
+    template <>
+    struct OpenVdbGridTypes<float>
+    {
+      using openvdbNativeGrid                          = openvdb::FloatGrid;
+      using openvdbTree                                = openvdb::FloatTree;
+      const std::string openvdbTreeString              = "Tree_float_5_4_3";
+      const std::vector<VKLDataType> vklAttributeTypes = {VKL_FLOAT};
+    };
+
+    template <>
+    struct OpenVdbGridTypes<openvdb::Vec3s>
+    {
+      using openvdbNativeGrid                          = openvdb::Vec3SGrid;
+      using openvdbTree                                = openvdb::Vec3STree;
+      const std::string openvdbTreeString              = "Tree_vec3s_5_4_3";
+      const std::vector<VKLDataType> vklAttributeTypes = {
+          VKL_FLOAT, VKL_FLOAT, VKL_FLOAT};
+    };
+
+    /*
+     * This class demonstrates how a grid can be loaded from OpenVDB .vdb
      * files, and then forwarded to OpenVKL as a "vdb" volume.
      */
-    class OpenVdbFloatGrid
+    template <typename VdbFieldType>
+    class OpenVdbGrid
     {
+      using openvdbNativeGrid =
+          typename OpenVdbGridTypes<VdbFieldType>::openvdbNativeGrid;
+
+      using openvdbTree = typename OpenVdbGridTypes<VdbFieldType>::openvdbTree;
+
+      std::vector<VKLDataType> vklAttributeTypes =
+          OpenVdbGridTypes<VdbFieldType>().vklAttributeTypes;
+
+      std::string openvdbTreeString =
+          OpenVdbGridTypes<VdbFieldType>().openvdbTreeString;
+
      public:
       /*
        * We support deferred loading of leaf data. We use this struct to
@@ -40,11 +150,11 @@ namespace openvkl {
       struct Deferred
       {
         size_t index{0};
-        const openvdb::tree::LeafBuffer<float, 3> *leafBuffer{nullptr};
+        const openvdb::tree::LeafBuffer<VdbFieldType, 3> *leafBuffer{nullptr};
 
         Deferred() = default;
         Deferred(size_t index,
-                 const openvdb::tree::LeafBuffer<float, 3> *leafBuffer)
+                 const openvdb::tree::LeafBuffer<VdbFieldType, 3> *leafBuffer)
             : index(index), leafBuffer(leafBuffer)
         {
         }
@@ -63,13 +173,13 @@ namespace openvkl {
         static constexpr uint32_t nextLevel{level + 1};
 
         static void visit(const VdbNodeType &vdbNode,
-                          VdbVolumeBuffers<VKL_FLOAT> &volumeBuffers,
+                          VdbVolumeBuffers &volumeBuffers,
                           std::vector<Deferred> &deferred)
         {
           for (auto it = vdbNode.cbeginValueOn(); it; ++it) {
             const auto &coord = it.getCoord();
             const vec3i origin(coord[0], coord[1], coord[2]);
-            volumeBuffers.addTile(nextLevel, origin, &*it);
+            addTile(volumeBuffers, nextLevel, origin, &*it);
           }
 
           for (auto it = vdbNode.cbeginChildOn(); it; ++it)
@@ -89,10 +199,10 @@ namespace openvkl {
                                         VdbNodeType::LEVEL};
         static constexpr uint32_t nextLevel{level + 1};
         static_assert(nextLevel == VKL_VDB_NUM_LEVELS - 1,
-                      "OpenVKL is not compiled to match OpenVDB::FloatTree");
+                      "OpenVKL is not compiled to match OpenVDB tree type");
 
         static void visit(const VdbNodeType &vdbNode,
-                          VdbVolumeBuffers<VKL_FLOAT> &volumeBuffers,
+                          VdbVolumeBuffers &volumeBuffers,
                           std::vector<Deferred> &deferred)
         {
           const uint32_t storageRes = vklVdbLevelStorageRes(level);
@@ -102,8 +212,9 @@ namespace openvkl {
               vdbNode.origin()[0], vdbNode.origin()[1], vdbNode.origin()[2]);
 
           // Note: OpenVdb stores data in z-major order!
-          uint64_t vIdx          = 0;
-          const static float one = 1.f;  // Deferred leaves.
+          uint64_t vIdx = 0;
+          const static VdbFieldType one =
+              VdbFieldType(1.f);  // Deferred leaves.
           for (uint32_t x = 0; x < storageRes; ++x)
             for (uint32_t y = 0; y < storageRes; ++y)
               for (uint32_t z = 0; z < storageRes; ++z, ++vIdx) {
@@ -118,216 +229,258 @@ namespace openvkl {
                 const auto &nodeUnion   = vdbVoxels[vIdx];
                 const vec3i childOrigin = origin + childRes * vec3i(x, y, z);
                 if (isTile)
-                  volumeBuffers.addTile(
-                      nextLevel, childOrigin, &nodeUnion.getValue());
+                  addTile(volumeBuffers,
+                          nextLevel,
+                          childOrigin,
+                          &nodeUnion.getValue());
                 else if (isDeferred) {
                   const size_t idx =
-                      volumeBuffers.addTile(nextLevel, childOrigin, &one);
+                      addTile(volumeBuffers, nextLevel, childOrigin, &one);
                   deferred.emplace_back(idx, &nodeUnion.getChild()->buffer());
                 } else if (isChild) {
-                  volumeBuffers.addConstant(
-                      nextLevel,
-                      childOrigin,
-                      nodeUnion.getChild()->buffer().data(),
-                      VKL_DATA_SHARED_BUFFER);
+                  addConstant(volumeBuffers,
+                              nextLevel,
+                              childOrigin,
+                              nodeUnion.getChild()->buffer().data());
                 }
               }
         }
       };
 
      public:
-      OpenVdbFloatGrid() = default;
+      OpenVdbGrid() = default;
 
       /*
        * Load the given file.
        * If deferLeaves is true, then do not load leaf data but instead add
        * tiles.
        */
-      OpenVdbFloatGrid(const std::string &path,
-                       const std::string &field,
-                       bool deferLeaves = false)
-          : buffers(new VdbVolumeBuffers<VKL_FLOAT>)
-      {
-        openvdb::initialize();  // Must initialize first! It's ok to do this
-                                // multiple times.
-
-        try {
-          openvdb::io::File file(path);
-          file.open();
-          grid = file.readGrid(field);
-          file.close();
-        } catch (const std::exception &e) {
-          throw std::runtime_error(e.what());
-        }
-
-        // We only support the default topology in this loader.
-        if (grid->type() != std::string("Tree_float_5_4_3"))
-          throw std::runtime_error(std::string("Incorrect tree type: ") +
-                                   grid->type());
-
-        // Preallocate memory for all leaves; this makes loading the tree much
-        // faster.
-        openvdb::FloatGrid::Ptr vdb =
-            openvdb::gridPtrCast<openvdb::FloatGrid>(grid);
-        loadFromGrid(vdb, deferLeaves);
-      }
+      OpenVdbGrid(const std::string &path,
+                  const std::string &field,
+                  bool deferLeaves = false);
 
       /*
        * Load the given grid.
        * If deferLeaves is true, then do not load leaf data but instead add
        * tiles.
        */
-      OpenVdbFloatGrid(openvdb::FloatGrid::Ptr vdb, bool deferLeaves = false)
-          : buffers(new VdbVolumeBuffers<VKL_FLOAT>)
-      {
-        openvdb::initialize();
-        grid = vdb;
-        loadFromGrid(vdb, deferLeaves);
-      }
+      OpenVdbGrid(typename openvdbNativeGrid::Ptr vdb,
+                  bool deferLeaves = false);
 
       /*
        * To creat a VKLVolume, we simply set our parameters and commit.
        */
-      VKLVolume createVolume(VKLFilter filter) const
-      {
-        assert(buffers);
-        return buffers->createVolume(filter);
-      }
+      VKLVolume createVolume(VKLFilter filter) const;
 
       /*
        * Return the number of nodes in this grid.
        * This includes tiles and leaf nodes.
        */
-      size_t numNodes() const
-      {
-        return buffers ? buffers->numNodes() : 0;
-      }
+      size_t numNodes() const;
 
       /*
        * API for deferred loading.
        */
-      size_t numDeferred() const
-      {
-        return deferred.size();
-      }
+      size_t numDeferred() const;
 
       /*
        * Load all deferred nodes for which the leaf access observer has
        * seen access.
        */
-      void loadDeferred(VKLObserver leafAccessObserver)
-      {
-        if (!buffers || deferred.empty())
-          return;
-
-        const vkl_uint32 *buffer =
-            static_cast<const vkl_uint32 *>(vklMapObserver(leafAccessObserver));
-        if (!buffer)
-          throw std::runtime_error("cannot map leaf access observer buffer.");
-
-        assert(vklGetObserverNumElements(leafAccessObserver) ==
-               buffers->numNodes());
-        assert(vklGetObserverElementType(leafAccessObserver) == VKL_UINT);
-
-        size_t i = 0;
-        while (i < deferred.size())  // loadDeferredAt reduces deferred.size() !
-        {
-          if (buffer[deferred.at(i).index] >
-              0)  // Do not increment i now, this method reduces size!.
-            loadDeferredAt(i);
-          else
-            ++i;
-        }
-
-        vklUnmapObserver(leafAccessObserver);
-      }
+      void loadDeferred(VKLObserver leafAccessObserver);
 
       /*
        * Load as many deferred nodes as possible in maxTimeMS milliseconds,
        * or load them all if maxTimeMS is 0.
        */
-      void loadDeferred(size_t maxTimeMS)
-      {
-        if (!buffers || deferred.empty())
-          return;
-
-        namespace chr  = std::chrono;
-        using Clock    = chr::steady_clock;
-        using TimeUnit = chr::milliseconds;
-        const TimeUnit maxTime(maxTimeMS);
-        const auto start = Clock::now();
-
-        while (!deferred.empty() &&
-               (maxTimeMS == 0 || chr::duration_cast<TimeUnit>(
-                                      Clock::now() - start) <= maxTime)) {
-          loadDeferredAt(0);
-        }
-      }
+      void loadDeferred(size_t maxTimeMS);
 
      private:
-      void loadTransform()
-      {
-        assert(grid);
-        const auto &indexToObject = grid->transform().baseMap();
-        if (!indexToObject->isLinear())
-          throw std::runtime_error(
-              "OpenVKL only supports linearly transformed volumes");
-
-        // Transpose; OpenVDB stores column major (and a full 4x4 matrix).
-        const auto &ri2o = indexToObject->getAffineMap()->getMat4();
-        const auto *i2o  = ri2o.asPointer();
-        buffers->setIndexToObject(i2o[0],
-                                  i2o[4],
-                                  i2o[8],
-                                  i2o[1],
-                                  i2o[5],
-                                  i2o[9],
-                                  i2o[2],
-                                  i2o[6],
-                                  i2o[10],
-                                  i2o[12],
-                                  i2o[13],
-                                  i2o[14]);
-      }
-
-      void loadDeferredAt(size_t i)
-      {
-        using std::swap;
-        const Deferred &d  = deferred.at(i);
-        const size_t index = d.index;
-        assert(d.leafBuffer);
-
-        buffers->makeConstant(
-            index, d.leafBuffer->data(), VKL_DATA_SHARED_BUFFER);
-
-        // Having loaded the leaf, swap to the end and discard.
-        const size_t newSize = deferred.size() - 1;
-        swap(deferred.at(i), deferred.at(newSize));
-        deferred.resize(newSize);
-      }
-
-      void loadFromGrid(openvdb::FloatGrid::Ptr vdb, bool deferLeaves = false)
-      {
-        const size_t numTiles  = vdb->tree().activeTileCount();
-        const size_t numLeaves = vdb->tree().leafCount();
-        buffers->reserve(numTiles + numLeaves);
-        if (deferLeaves)
-          deferred.reserve(numLeaves);
-
-        loadTransform();
-
-        const auto &root = vdb->tree().root();
-        for (auto it = root.cbeginChildOn(); it; ++it)
-          Builder<openvdb::FloatTree::RootNodeType::ChildNodeType>::visit(
-              *it, *buffers, deferred);
-      }
+      void loadTransform();
+      void loadDeferredAt(size_t i);
+      void loadFromGrid(typename openvdbNativeGrid::Ptr vdb,
+                        bool deferLeaves = false);
 
      private:
-      std::unique_ptr<VdbVolumeBuffers<VKL_FLOAT>> buffers;
+      std::unique_ptr<VdbVolumeBuffers> buffers;
       std::vector<Deferred> deferred;
       openvdb::GridBase::Ptr grid{nullptr};
     };
 
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <typename VdbFieldType>
+    inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(const std::string &path,
+                                                  const std::string &field,
+                                                  bool deferLeaves)
+        : buffers(new VdbVolumeBuffers(vklAttributeTypes))
+    {
+      openvdb::initialize();  // Must initialize first! It's ok to do this
+                              // multiple times.
+
+      try {
+        openvdb::io::File file(path);
+        file.open();
+        grid = file.readGrid(field);
+        file.close();
+      } catch (const std::exception &e) {
+        throw std::runtime_error(e.what());
+      }
+
+      // We only support the default topology in this loader.
+      if (grid->type() != openvdbTreeString)
+        throw std::runtime_error(std::string("Incorrect tree type: ") +
+                                 grid->type());
+
+      // Preallocate memory for all leaves; this makes loading the tree much
+      // faster.
+      typename openvdbNativeGrid::Ptr vdb =
+          openvdb::gridPtrCast<openvdbNativeGrid>(grid);
+      loadFromGrid(vdb, deferLeaves);
+    }
+
+    template <typename VdbFieldType>
+    inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(
+        typename openvdbNativeGrid::Ptr vdb, bool deferLeaves)
+        : buffers(new VdbVolumeBuffers(vklAttributeTypes))
+    {
+      openvdb::initialize();
+      grid = vdb;
+      loadFromGrid(vdb, deferLeaves);
+    }
+
+    template <typename VdbFieldType>
+    inline VKLVolume OpenVdbGrid<VdbFieldType>::createVolume(
+        VKLFilter filter) const
+    {
+      assert(buffers);
+      return buffers->createVolume(filter);
+    }
+
+    template <typename VdbFieldType>
+    inline size_t OpenVdbGrid<VdbFieldType>::numNodes() const
+    {
+      return buffers ? buffers->numNodes() : 0;
+    }
+
+    template <typename VdbFieldType>
+    inline size_t OpenVdbGrid<VdbFieldType>::numDeferred() const
+    {
+      return deferred.size();
+    }
+
+    template <typename VdbFieldType>
+    inline void OpenVdbGrid<VdbFieldType>::loadDeferred(
+        VKLObserver leafAccessObserver)
+    {
+      if (!buffers || deferred.empty())
+        return;
+
+      const vkl_uint32 *buffer =
+          static_cast<const vkl_uint32 *>(vklMapObserver(leafAccessObserver));
+      if (!buffer)
+        throw std::runtime_error("cannot map leaf access observer buffer.");
+
+      assert(vklGetObserverNumElements(leafAccessObserver) ==
+             buffers->numNodes());
+      assert(vklGetObserverElementType(leafAccessObserver) == VKL_UINT);
+
+      size_t i = 0;
+      while (i < deferred.size())  // loadDeferredAt reduces deferred.size() !
+      {
+        if (buffer[deferred.at(i).index] >
+            0)  // Do not increment i now, this method reduces size!.
+          loadDeferredAt(i);
+        else
+          ++i;
+      }
+
+      vklUnmapObserver(leafAccessObserver);
+    }
+
+    template <typename VdbFieldType>
+    inline void OpenVdbGrid<VdbFieldType>::loadDeferred(size_t maxTimeMS)
+    {
+      if (!buffers || deferred.empty())
+        return;
+
+      namespace chr  = std::chrono;
+      using Clock    = chr::steady_clock;
+      using TimeUnit = chr::milliseconds;
+      const TimeUnit maxTime(maxTimeMS);
+      const auto start = Clock::now();
+
+      while (!deferred.empty() &&
+             (maxTimeMS == 0 ||
+              chr::duration_cast<TimeUnit>(Clock::now() - start) <= maxTime)) {
+        loadDeferredAt(0);
+      }
+    }
+
+    template <typename VdbFieldType>
+    inline void OpenVdbGrid<VdbFieldType>::loadTransform()
+    {
+      assert(grid);
+      const auto &indexToObject = grid->transform().baseMap();
+      if (!indexToObject->isLinear())
+        throw std::runtime_error(
+            "OpenVKL only supports linearly transformed volumes");
+
+      // Transpose; OpenVDB stores column major (and a full 4x4 matrix).
+      const auto &ri2o = indexToObject->getAffineMap()->getMat4();
+      const auto *i2o  = ri2o.asPointer();
+      buffers->setIndexToObject(i2o[0],
+                                i2o[1],
+                                i2o[2],
+                                i2o[4],
+                                i2o[5],
+                                i2o[6],
+                                i2o[8],
+                                i2o[9],
+                                i2o[10],
+                                i2o[12],
+                                i2o[13],
+                                i2o[14]);
+    }
+
+    template <typename VdbFieldType>
+    inline void OpenVdbGrid<VdbFieldType>::loadDeferredAt(size_t i)
+    {
+      using std::swap;
+      const Deferred &d  = deferred.at(i);
+      const size_t index = d.index;
+      assert(d.leafBuffer);
+
+      makeConstant(*buffers, index, d.leafBuffer->data());
+
+      // Having loaded the leaf, swap to the end and discard.
+      const size_t newSize = deferred.size() - 1;
+      swap(deferred.at(i), deferred.at(newSize));
+      deferred.resize(newSize);
+    }
+
+    template <typename VdbFieldType>
+    inline void OpenVdbGrid<VdbFieldType>::loadFromGrid(
+        typename openvdbNativeGrid::Ptr vdb, bool deferLeaves)
+    {
+      const size_t numTiles  = vdb->tree().activeTileCount();
+      const size_t numLeaves = vdb->tree().leafCount();
+      buffers->reserve(numTiles + numLeaves);
+      if (deferLeaves)
+        deferred.reserve(numLeaves);
+
+      loadTransform();
+
+      const auto &root = vdb->tree().root();
+      for (auto it = root.cbeginChildOn(); it; ++it)
+        Builder<typename openvdbTree::RootNodeType::ChildNodeType>::visit(
+            *it, *buffers, deferred);
+    }
+
+    // Type aliases ///////////////////////////////////////////////////////////
+
+    using OpenVdbFloatGrid = OpenVdbGrid<float>;
+    using OpenVdbVec3sGrid = OpenVdbGrid<openvdb::Vec3s>;
+
   }  // namespace vdb_util
 }  // namespace openvkl
-

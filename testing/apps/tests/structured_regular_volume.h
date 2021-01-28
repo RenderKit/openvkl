@@ -16,8 +16,12 @@ inline void sampling_on_vertices_vs_procedural_values(
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f);
 
-  auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
-      dimensions, gridOrigin, gridSpacing, dataCreationFlags, byteStride);
+  auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         TemporalConfig(),
+                                                         dataCreationFlags,
+                                                         byteStride);
 
   VKLVolume vklVolume   = v->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);

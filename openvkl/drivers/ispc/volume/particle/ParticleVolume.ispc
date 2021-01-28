@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../common/export_util.h"
@@ -10,24 +10,24 @@ inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
                                             const uniform uint64 id,
                                             const vec3f &objectCoordinates,
                                             float &value,
-                                            vec3f &distance)
+                                            vec3f &delta)
 {
   const uniform vec3f position = get_vec3f(self->positions, id);
   const uniform float radius   = get_float(self->radii, id);
 
   uniform float w = 1.f;
 
-  if (valid(self->weights))
+  if (isValid(self->weights))
     w = get_float(self->weights, id);
 
-  distance = objectCoordinates - position;
+  delta = objectCoordinates - position;
 
-  if (length(distance) > radius * self->radiusSupportFactor) {
+  if (length(delta) > radius * self->radiusSupportFactor) {
     value = 0.f;
     return;
   }
 
-  value = w * expf(-0.5f * dot(distance, distance) / (radius * radius));
+  value = w * expf(-0.5f * dot(delta, delta) / (radius * radius));
 }
 
 static bool intersectAndSampleParticle(const void *uniform userData,
@@ -39,8 +39,8 @@ static bool intersectAndSampleParticle(const void *uniform userData,
       (const VKLParticleVolume *uniform)userData;
 
   float value;
-  vec3f distance;
-  getParticleContributionGaussian(self, id, samplePos, value, distance);
+  vec3f delta;
+  getParticleContributionGaussian(self, id, samplePos, value, delta);
 
   result += value;
 
@@ -61,18 +61,20 @@ static bool intersectAndGradientParticle(const void *uniform userData,
       (const VKLParticleVolume *uniform)userData;
 
   float value;
-  vec3f distance;
-  getParticleContributionGaussian(self, id, samplePos, value, distance);
+  vec3f delta;
+  getParticleContributionGaussian(self, id, samplePos, value, delta);
 
   const uniform float radius = get_float(self->radii, id);
 
-  result = result - distance * value / (radius * radius);
+  result = result - delta * value / (radius * radius);
 
   return false;
 }
 
 inline varying float VKLParticleVolume_sample(
-    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
+    const Sampler *uniform sampler,
+    const varying vec3f &objectCoordinates,
+    const varying float &_time)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)sampler->volume;
@@ -114,10 +116,11 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    varying float time             = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLParticleVolume_sample((const Sampler *uniform)_sampler,
-                                        *objectCoordinates);
+    *samples = VKLParticleVolume_sample(
+        (const Sampler *uniform)_sampler, *objectCoordinates, time);
   }
 }
 

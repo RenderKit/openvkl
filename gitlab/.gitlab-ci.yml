@@ -1,9 +1,10 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
+  OPENVKL_RELEASE_PACKAGE_VERSION: "0.12.0"
 
 stages:
   - build
@@ -13,6 +14,7 @@ stages:
   - scan2
   - release
   - release-test
+  - scan-binaries
 
 ## Job Templates ##
 
@@ -70,9 +72,6 @@ stages:
 
 .job_template: &base_release_job
   stage: release
-  when: manual
-  tags:
-    - release
   before_script:
     - git submodule sync
     - git submodule init
@@ -80,9 +79,6 @@ stages:
 
 .job_template: &base_release_test_job
   stage: release-test
-  when: manual
-  tags:
-    - release
 
 ## Build Jobs ##
 
@@ -157,11 +153,23 @@ build-arch-address-sanitizer:
     - export LDFLAGS=-fsanitize=address
     - gitlab/build.sh -D BUILD_GLFW=OFF
 
+build-arch-debug:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  script:
+    - gitlab/build.sh -D CMAKE_BUILD_TYPE=Debug -D BUILD_GLFW=OFF
+
 build-arch-devel-rkdeps:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
     - gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
+
+build-arch-TBB2021:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  script:
+    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
 
 build-macOS:
   <<: *base_build_job
@@ -172,10 +180,31 @@ build-macOS:
     - osx
     - clang
 
+build-macOS-TBB2021:
+  <<: *base_build_job
+  stage: build
+  script:
+    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+  tags:
+    - osx
+    - clang
+
 build-windows-msvc15:
   stage: build
   script:
     - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141"
+  tags:
+    - msvc15
+    - win10
+  artifacts:
+    paths:
+      - build/install
+    expire_in: 3 day
+
+build-windows-msvc15-TBB2021:
+  stage: build
+  script:
+    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.1.1"' '"-DTBB_HASH="""'
   tags:
     - msvc15
     - win10
@@ -258,16 +287,39 @@ test-functional-arch-address-sanitizer:
   needs:
     - build-arch-address-sanitizer
 
+test-functional-arch-debug:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  needs:
+    - build-arch-debug
+
 test-functional-arch-devel-rkdeps:
   <<: *test_functional_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch-devel-rkdeps
 
+test-functional-arch-TBB2021:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:arch
+  needs:
+    - build-arch-TBB2021
+
 test-functional-macOS:
   <<: *base_functional_test_job
   needs:
     - build-macOS
+  tags:
+    - osx
+    - clang
+  script:
+    - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTests
+
+test-functional-macOS-TBB2021:
+  <<: *base_functional_test_job
+  needs:
+    - build-macOS-TBB2021
   tags:
     - osx
     - clang
@@ -285,10 +337,22 @@ test-functional-windows-msvc15:
     - msvc15
     - win10
 
+test-functional-windows-msvc15-TBB2021:
+  <<: *base_functional_test_job
+  script:
+    - gitlab\run_tests.bat
+  needs:
+    - build-windows-msvc15-TBB2021
+  tags:
+    - msvc15
+    - win10
+
 ## Benchmark Jobs ##
 
-# All pipelines have this manual benchmark job.
-benchmark-x8280-1:
+# All pipelines have these manual benchmark jobs - one for all benchmarks,
+# plus one job for each suite.
+
+.job_template: &manual_benchmark_x8280-1
   <<: *base_benchmark_job
   when: manual
   needs:
@@ -296,7 +360,35 @@ benchmark-x8280-1:
   tags:
     - vis-perf-x8280-1
 
-# A second benchmark job meant for scheduled (nightly, weekly, ...) builds.
+benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+
+structured-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolume$
+
+structured-multi-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+
+vdb-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolume$
+
+vdb-multi-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolumeMulti$
+
+example-benchmark-x8280-1:
+  <<: *manual_benchmark_x8280-1
+  variables:
+    BENCHMARK_SUITE: ^ExampleRenderers$
+
+# Another benchmark job meant for scheduled (nightly, weekly, ...) builds.
 # The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
 # BENCHMARK_MIN_TIME_SECONDS to configure the benchmark run time.
 benchmark-x8280-1-schedule:
@@ -320,25 +412,33 @@ build-kw-scan:
     - git submodule sync
     - git submodule init
     - git submodule update
-  tags:
-    - docker
+  tags: [docker]
   artifacts:
     paths:
-        - $CI_PROJECT_DIR/kw_build_number
-    expire_in: 1 day
-  dependencies: []
-  allow_failure: true
+      - ./klocwork/*
+  needs: []
 
-test-kw-critical:
+check-kw-issues:
   stage: scan2
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs: [build-kw-scan]
   script:
-    - gitlab/test-kw-critical.sh
-  dependencies:
-    - build-kw-scan
+    - gitlab/kw-check-issues.sh
   tags:
     - docker
   allow_failure: true
+
+gen-kw-report:
+  stage: scan2
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs: [build-kw-scan]
+  tags: [docker]
+  script:
+    - gitlab/kw-gen-report.sh
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID klocwork "klocwork/report.log"
+  artifacts:
+    paths:
+      - ./klocwork/*
 
 ## Protex Job ##
 
@@ -349,7 +449,7 @@ source-protex-scan:
     - gitlab/source-scan-protex.sh
   tags:
     - docker
-  dependencies: []
+  needs: []
   allow_failure: true
 
 ## Release Jobs ##
@@ -364,7 +464,7 @@ release-linux-icc:
     - export CXX=icpc
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/release/linux.sh
-  dependencies: []
+  needs: []
   tags:
     - docker
     - modules
@@ -376,7 +476,7 @@ release-macOS:
   <<: *base_release_job
   script:
     - gitlab/release/macos.sh
-  dependencies: []
+  needs: []
   tags:
     - osx
     - clang
@@ -388,7 +488,7 @@ release-windows:
   <<: *base_release_job
   script:
     - gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
-  dependencies: []
+  needs: []
   tags:
     - msvc15
     - win10
@@ -405,7 +505,7 @@ release-linux-test:
     - gitlab/release/linux-test.sh
   tags:
     - docker
-  dependencies:
+  needs:
     - release-linux-icc
 
 release-macOS-test:
@@ -415,7 +515,7 @@ release-macOS-test:
   tags:
     - osx
     - clang
-  dependencies:
+  needs:
     - release-macOS
 
 release-windows-test:
@@ -425,5 +525,29 @@ release-windows-test:
   tags:
     - msvc15
     - win10
-  dependencies:
+  needs:
     - release-windows
+
+scan-bdba-bin:
+  stage: scan-binaries
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  tags: [docker]
+  needs: [release-linux-icc, release-macOS, release-windows]
+  script:
+    - gitlab/bdba.sh "openvkl-*"
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "openvkl-*.pdf"
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "openvkl-*.csv"
+  artifacts:
+    paths:
+      - openvkl-*.pdf
+      - openvkl-*.csv
+
+av:
+  stage: scan-binaries
+  tags: [docker]
+  image: $DOCKER_REGISTRY/clamav:ubuntu20.04
+  needs: [release-linux-icc, release-macOS, release-windows]
+  script:
+    - freshclam | tee -a /tmp/av_scan.log
+    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
+    - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log

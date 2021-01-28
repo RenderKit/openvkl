@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -60,12 +60,12 @@
                                                                                \
     /* coordinates of the lower corner of the cell in object coordinates */    \
     univary vec3f lower;                                                       \
-    volume->transformLocalToObject_##univary(                                  \
+    transformLocalToObject_##univary##_dispatch(                               \
         volume, to_float(index << CELL_WIDTH_BITCOUNT), lower);                \
                                                                                \
     /* coordinates of the upper corner of the cell in object coordinates */    \
     univary vec3f upper;                                                       \
-    volume->transformLocalToObject_##univary(                                  \
+    transformLocalToObject_##univary##_dispatch(                               \
         volume, to_float(index + 1 << CELL_WIDTH_BITCOUNT), upper);            \
                                                                                \
     return (make_box3f(lower, upper));                                         \
@@ -96,15 +96,20 @@ inline void GridAccelerator_computeCellValueRange(
   foreach (k = 0 ... CELL_WIDTH + 1,
            j = 0 ... CELL_WIDTH + 1,
            i = 0 ... CELL_WIDTH + 1) {
-    const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
+    const vec3i localCoordinates = make_vec3i(cellIndex.x * CELL_WIDTH + i,
+                                        cellIndex.y * CELL_WIDTH + j,
+                                        cellIndex.z * CELL_WIDTH + k);
 
-    float value;
-    volume->getVoxels_varying[attributeIndex](
-        volume, min(volume->dimensions - 1, voxelIndex), attributeIndex, value);
+    const range1f voxelRange = volume->computeVoxelRange[attributeIndex](
+        volume, min(volume->dimensions - 1, localCoordinates), attributeIndex);
 
-    if (!isnan(value)) {
-      valueRange.lower = min(valueRange.lower, reduce_min(value));
-      valueRange.upper = max(valueRange.upper, reduce_max(value));
+    if (!isnan(voxelRange.lower)) {
+      extend(valueRange, voxelRange.lower);
+      cellEmpty        = false;
+    }
+
+    if (!isnan(voxelRange.upper)) {
+      extend(valueRange, voxelRange.upper);
       cellEmpty        = false;
     }
   }
@@ -186,6 +191,9 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
   delete accelerator;
 }
 
+#define cif_uniform if
+#define cif_varying cif
+
 #define template_GridAccelerator_nextCell(univary)                          \
   univary bool GridAccelerator_nextCell(                                    \
       const GridAccelerator *uniform accelerator,                           \
@@ -197,11 +205,11 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
                                                                             \
     const univary bool firstCell = cellIndex.x == -1;                       \
     univary box1f cellInterval;                                             \
-    cif(firstCell)                                                          \
+    __vkl_concat(cif_, univary)(firstCell)                                  \
     {                                                                       \
       /* first iteration */                                                 \
       univary vec3f localCoordinates;                                       \
-      volume->transformObjectToLocal_##univary(                             \
+      transformObjectToLocal_##univary##_dispatch(                          \
           volume,                                                           \
           iterator->origin +                                                \
               (iterator->boundingBoxTRange.lower) * iterator->direction,    \
@@ -228,10 +236,10 @@ void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
       const univary vec3f cellDirection =                                   \
           iterator->direction * 1.f / volume->gridSpacing * RCP_CELL_WIDTH; \
                                                                             \
-      const univary vec3f rcpCellDirection = 1.f / cellDirection;           \
+      const univary vec3f rcpCellDirection = rcp_safe(cellDirection);       \
                                                                             \
       univary vec3f cellOrigin;                                             \
-      volume->transformObjectToLocal_##univary(                             \
+      transformObjectToLocal_##univary##_dispatch(                          \
           volume, iterator->origin, cellOrigin);                            \
       cellOrigin = cellOrigin * RCP_CELL_WIDTH;                             \
                                                                             \

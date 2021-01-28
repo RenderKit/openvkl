@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "GLFWVKLWindow.h"
@@ -73,7 +73,8 @@ namespace openvkl {
 
       glfwSetKeyCallback(
           glfwWindow,
-          [](GLFWwindow *, int key, int scancode, int action, int mods) {
+          [](GLFWwindow *gw, int key, int scancode, int action, int mods) {
+            ImGui_ImplGlfwGL3_KeyCallback(gw, key, scancode, action, mods);
             if (action == GLFW_PRESS) {
               switch (key) {
               case GLFW_KEY_G:

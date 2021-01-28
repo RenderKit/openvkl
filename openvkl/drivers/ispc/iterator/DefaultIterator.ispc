@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -7,6 +7,9 @@
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
+// Ignore warning about exporting uniform-pointer-to-varying, as this is in
+// fact legal.
+#pragma ignore warning(all)
 export void EXPORT_UNIQUE(DefaultIterator_export,
                           uniform vec3f &dummy_vec3f,
                           const varying DefaultIntervalIterator *uniform
@@ -40,20 +43,20 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
       (varying DefaultIntervalIterator * uniform) _self;
 
   self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
-  self->origin        = *((varying vec3f * uniform) _origin);
-  self->direction     = *((varying vec3f * uniform) _direction);
+  const vec3f origin    = *((varying vec3f * uniform) _origin);
+  const vec3f direction = *((varying vec3f * uniform) _direction);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->valueRange    = valueRange;
 
   box1f tRange = *((varying box1f * uniform) _tRange);
   self->boundingBoxTRange =
-      intersectBox(self->origin, self->direction, boundingBox, tRange);
+      intersectBox(origin, direction, boundingBox, tRange);
 
   // compute a nominal interval length as a fraction of the largest bounding box
-  // dimension
+  // dimension, in ray space
   uniform float bbMaxDimension =
       reduce_max(boundingBox.upper - boundingBox.lower);
-  self->nominalIntervalLength = 0.1f * bbMaxDimension;
+  self->nominalIntervalLength = 0.1f * bbMaxDimension * rcp(length(direction));
 
   resetInterval(self->currentInterval);
 }
@@ -137,6 +140,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
                           void *uniform _sampler,
                           void *uniform _origin,
                           void *uniform _direction,
+                          void *uniform _time,
                           void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
@@ -150,6 +154,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
+  self->time          = *((varying float *uniform)_time);
   self->intervalIteratorState = _intervalIterator;
 
   // Reset to invalid.
@@ -177,7 +182,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       (varying DefaultHitIterator * uniform) _self;
 
   // The selector prunes everything - don't iterate at all.
-  cif(!self->valueSelector || self->valueSelector->numValues == 0) return;
+  if(!self->valueSelector || self->valueSelector->numValues == 0) return;
 
   if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
     return;
@@ -214,6 +219,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,
+                                   self->time,
                                    0.5f * self->currentInterval.nominalDeltaT,
                                    self->valueSelector->numValues,
                                    self->valueSelector->values,

@@ -76,3 +76,4 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
     computed_vs_api_value_range<WaveletStructuredSphericalVolumeDouble>();
   }
 }
+  

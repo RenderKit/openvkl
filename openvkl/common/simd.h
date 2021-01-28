@@ -27,6 +27,41 @@ namespace openvkl {
   }
 
   template <int W>
+  struct alignas(simd_alignment_for_width(W)) vintn
+  {
+    int v[W];
+
+    vintn<W>() = default;
+
+    int &operator[](std::size_t index)
+    {
+      return v[index];
+    }
+
+    const int &operator[](std::size_t index) const
+    {
+      return v[index];
+    }
+
+    operator int *()
+    {
+      return v;
+    }
+
+    operator const int *() const
+    {
+      return v;
+    }
+
+    vintn<W>(const vintn<W> &o)
+    {
+      for (int i = 0; i < W; i++) {
+        v[i] = o[i];
+      }
+    }
+  };
+
+  template <int W>
   struct alignas(simd_alignment_for_width(W)) vfloatn
   {
     float v[W];
@@ -65,41 +100,55 @@ namespace openvkl {
         v[i] = o[i];
       }
     }
-  };
 
-  template <int W>
-  struct alignas(simd_alignment_for_width(W)) vintn
-  {
-    int v[W];
-
-    vintn<W>() = default;
-
-    int &operator[](std::size_t index)
+    vfloatn<W>(const float *o, int oW)
     {
-      return v[index];
-    }
-
-    const int &operator[](std::size_t index) const
-    {
-      return v[index];
-    }
-
-    operator int *()
-    {
-      return v;
-    }
-
-    operator const int *() const
-    {
-      return v;
-    }
-
-    vintn<W>(const vintn<W> &o)
-    {
+      assert(oW <= W);
       for (int i = 0; i < W; i++) {
-        v[i] = o[i];
+        v[i] = o == nullptr ? 0.f : (i < oW ? o[i] : 0.f);
       }
     }
+
+    template <int OW>
+    explicit operator vfloatn<OW>() const
+    {
+      static_assert(W <= OW, "can only up-convert vfloatn types");
+
+      vfloatn<OW> newVec;
+
+      for (int i = 0; i < W; i++) {
+        newVec.v[i] = v[i];
+      }
+
+      return newVec;
+    }
+
+    template <int OW>
+    vfloatn<OW> extract_pack(int packIndex) const
+    {
+      vfloatn<OW> newVec;
+
+      for (int i = packIndex * OW; i < (packIndex + 1) * OW && i < W; i++) {
+        newVec.v[i - packIndex * OW] = v[i];
+      }
+
+      return newVec;
+    }
+
+    void fill_inactive_lanes(const vintn<W> &mask)
+    {
+      for (int i = 0; i < W; i++) {
+        if (mask[i]) {
+          for (int k = 0; k < W; k++) {
+            if (!mask[k]) {
+              v[k] = v[i];
+            }
+          }
+          break;
+        }
+      }
+    }
+
   };
 
   template <int W>

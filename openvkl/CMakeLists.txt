@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(openvkl_ispc)
@@ -35,10 +35,19 @@ target_link_libraries(${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:rkcommon::rkcommon>)
 
-set(VKL_VDB_LOG_RESOLUTION "6;5;4;3" CACHE STRING
-  "Base-2 logarithm of the resolution for each level in the tree.")
-openvkl_vdb_generate_topology()
+set(VKL_VDB_LOG_RESOLUTION_0 "6" CACHE STRING
+  "Base 2 logarithm of the root level resolution in vdb volumes.")
 
+set(VKL_VDB_LOG_RESOLUTION_1 "5" CACHE STRING
+  "Base 2 logarithm of the level 1 resolution in vdb volumes.")
+
+set(VKL_VDB_LOG_RESOLUTION_2 "4" CACHE STRING
+  "Base 2 logarithm of the level 2 resolution in vdb volumes.")
+
+set(VKL_VDB_LOG_RESOLUTION_3 "3" CACHE STRING
+  "Base 2 logarithm of the leaf level resolution in vdb volumes.")
+
+openvkl_vdb_generate_topology()
 
 ## Configure OpenVKL installation ##
 

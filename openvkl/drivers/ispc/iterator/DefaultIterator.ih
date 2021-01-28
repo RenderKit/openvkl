@@ -1,11 +1,11 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "Iterator.ih"
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 struct ValueSelector;
 struct Volume;
@@ -34,9 +34,6 @@ struct DefaultIntervalIterator
   uniform box1f valueRange;  // value range of the full volume
   float nominalIntervalLength;
 
-  vec3f origin;
-  vec3f direction;
-
   box1f boundingBoxTRange;
   Interval currentInterval;
 };
@@ -48,6 +45,7 @@ struct DefaultHitIterator
 
   vec3f origin;
   vec3f direction;
+  float time;
 
   // The interval iterator that we use.
   void *uniform intervalIteratorState;

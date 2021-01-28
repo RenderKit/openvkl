@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "math/box.ih"
-#include "math/math.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/math.ih"
+#include "rkcommon/math/vec.ih"
 #include "openvkl/vdb.h"
 
 // Note: Changing this value will probably break our API contract.
@@ -45,27 +45,27 @@ struct DdaState
 /*
  * Returns -1 for negative v, 0 for 0, and 1 for positive v.
  */
-inline int safe_sign(float v)
+inline int dir_safe_sign(float v)
 {
   return ((int)(0 < v)) - ((int)(v < 0));
 }
 
-inline vec3i safe_sign(const vec3f &v)
+inline vec3i dir_safe_sign(const vec3f &v)
 {
-  return make_vec3i(safe_sign(v.x), safe_sign(v.y), safe_sign(v.z));
+  return make_vec3i(dir_safe_sign(v.x), dir_safe_sign(v.y), dir_safe_sign(v.z));
 }
 
 /*
  * Compute 1/v, returning infinity for 0.
  */
-inline float safe_rcp(float v)
+inline float dir_safe_rcp(float v)
 {
-  return (v == -0) ? -inf : (v == 0) ? inf : rcp(v);
+  return (v == 0) ? inf : rcp(v);
 }
 
-inline vec3f safe_rcp(const vec3f &v)
+inline vec3f dir_safe_rcp(const vec3f &v)
 {
-  return make_vec3f(safe_rcp(v.x), safe_rcp(v.y), safe_rcp(v.z));
+  return make_vec3f(dir_safe_rcp(v.x), dir_safe_rcp(v.y), dir_safe_rcp(v.z));
 }
 
 /*
@@ -79,27 +79,10 @@ inline vec3f intersect_planes(const vec3f &rayOrg,
   const float ty = (planes.y - rayOrg.y) * rayInvDir.y;
   const float tz = (planes.z - rayOrg.z) * rayInvDir.z;
 
-  // NaN will occur if the ray starts on a plane (planes-rayOrg == 0) but
-  // is also fully contained in this plane (rayDir == 0 -> rayInvDir == inf).
-  // We want to ignore such intersections.
-  return make_vec3f(select(isnan(tx), inf, tx),
-                    select(isnan(ty), inf, ty),
-                    select(isnan(tz), inf, tz));
-}
-
-/*
- * We use this variant to determine tNext. In that case, we know that we
- * cannot use intersections behind, so discard them completely!
- */
-inline vec3f intersect_planes_positive(const vec3f &rayOrg,
-                                       const vec3f &rayInvDir,
-                                       const vec3f &planes)
-{
-  vec3f ts = intersect_planes(rayOrg, rayInvDir, planes);
-  ts.x = select(ts.x<0, inf, ts.x);
-  ts.y = select(ts.y<0, inf, ts.y);
-  ts.z = select(ts.z<0, inf, ts.z);
-  return ts;
+  // Do not intersect planes the origin is on!
+  return make_vec3f(select((planes.x == rayOrg.x || isnan(tx)), inf, tx),
+                    select((planes.y == rayOrg.y || isnan(ty)), inf, ty),
+                    select((planes.z == rayOrg.z || isnan(tz)), inf, tz));
 }
 
 /*
@@ -159,9 +142,9 @@ inline vec3i clampToCell(
     uniform int32 resolution)  // ... of a single cell on the current level.
 {
   // Offsets are non-negative, but numerical errors might cause problems.
-  vec3i offset = make_vec3i(((int)floor(max(foffset.x, 0))),
-                            ((int)floor(max(foffset.y, 0))),
-                            ((int)floor(max(foffset.z, 0))));
+  vec3i offset = make_vec3i(((int)floor(max(foffset.x, 0.f))),
+                            ((int)floor(max(foffset.y, 0.f))),
+                            ((int)floor(max(foffset.z, 0.f))));
   clampOffsetToCell(offset.x, offset.y, offset.z, resolution);
   return offset;
 }
@@ -176,12 +159,12 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
                     DdaState &dda)
 {
   const vec3f oo   = rayOrg + tMin * rayDir;
-  const vec3i sgn  = safe_sign(rayDir);
-  const vec3f iDir = safe_rcp(rayDir);
+  const vec3i sgn  = dir_safe_sign(rayDir);
+  const vec3f iDir = dir_safe_rcp(rayDir);
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 
-  dda.level = clamp(level, 0, DDA_STATE_MAX_NUM_LEVELS - 1);
+  dda.level = clamp(level, 0u, ((uniform uint32)DDA_STATE_MAX_NUM_LEVELS - 1));
   dda.t = tMin;
   dda.rayOrg = rayOrg;
   dda.rayDir = rayDir;
@@ -198,7 +181,7 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
                    ((float)(idx.y + cellRes * sgnNonNegative.y)),
                    ((float)(idx.z + cellRes * sgnNonNegative.z)));
 
-    const vec3f tn = intersect_planes_positive(rayOrg, iDir, planes);
+    const vec3f tn = intersect_planes(rayOrg, iDir, planes);
 
     const uniform int32 ix = DDA_STATE_X_OFFSET(l);
     const uniform int32 iy = DDA_STATE_Y_OFFSET(l);
@@ -232,8 +215,8 @@ inline void ddaReinitBelow(DdaState &dda,
 {
   // Relatively cheap to recompute, so we avoid storing these in DdaState as
   // that impacts memory for all ISPC side iterators.
-  const vec3f iDir = safe_rcp(dda.rayDir);
-  const vec3i sgn = safe_sign(dda.rayDir);
+  const vec3f iDir = dir_safe_rcp(dda.rayDir);
+  const vec3i sgn = dir_safe_sign(dda.rayDir);
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 
@@ -267,9 +250,9 @@ inline void ddaReinitBelow(DdaState &dda,
   for (uniform uint32 l = level+1; l <= dda.level; ++l)
   {
     const uniform int32 cellRes = vklVdbLevelRes(l + 1);
-    const uniform ix = DDA_STATE_X_OFFSET(l);
-    const uniform iy = DDA_STATE_Y_OFFSET(l);
-    const uniform iz = DDA_STATE_Z_OFFSET(l);
+    const uniform uint32 ix = DDA_STATE_X_OFFSET(l);
+    const uniform uint32 iy = DDA_STATE_Y_OFFSET(l);
+    const uniform uint32 iz = DDA_STATE_Z_OFFSET(l);
     const vec3i idx = clampToCell(oo, cellRes);
 
     dda.idx[ix] = idx.x;
@@ -280,7 +263,7 @@ inline void ddaReinitBelow(DdaState &dda,
         make_vec3f(((float)(dda.idx[ix] + cellRes * sgnNonNegative.x)),
                    ((float)(dda.idx[iy] + cellRes * sgnNonNegative.y)),
                    ((float)(dda.idx[iz] + cellRes * sgnNonNegative.z)));
-    const vec3f tn = intersect_planes_positive(dda.rayOrg, iDir, planes);
+    const vec3f tn = intersect_planes(dda.rayOrg, iDir, planes);
 
     dda.tNext[ix] = tn.x;
     dda.tNext[iy] = tn.y;

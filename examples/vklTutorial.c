@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
@@ -38,8 +38,9 @@ void demoScalarAPI(VKLVolume volume)
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
-  float sample   = vklComputeSample(sampler, &coord, attributeIndex);
-  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex);
+  float time                  = 0.f;
+  float sample   = vklComputeSample(sampler, &coord, attributeIndex, time);
+  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex, time);
   printf("\tsampling and gradient computation (first attribute)\n");
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -48,7 +49,7 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3];
-  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices);
+  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, time);
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
@@ -106,6 +107,9 @@ void demoScalarAPI(VKLVolume volume)
           interval.valueRange.upper,
           interval.nominalDeltaT);
     }
+#if defined(_MSC_VER)
+    _freea(buffer);
+#endif
   }
 
   // hit iteration
@@ -118,7 +122,7 @@ void demoScalarAPI(VKLVolume volume)
     char buffer[vklGetHitIteratorSize(sampler)];
 #endif
     VKLHitIterator hitIterator = vklInitHitIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+        sampler, &rayOrigin, &rayDirection, &rayTRange, time, selector, buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -132,6 +136,9 @@ void demoScalarAPI(VKLVolume volume)
              hit.sample,
              hit.epsilon);
     }
+#if defined(_MSC_VER)
+    _freea(buffer);
+#endif
   }
 
   vklRelease(selector);
@@ -162,10 +169,11 @@ void demoVectorAPI(VKLVolume volume)
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
+  float time4[4]              = {0.f};
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex);
-  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex);
+  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex, time4);
+  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex, time4);
 
   printf("\n\tsampling and gradient computation (first attribute)\n");
 
@@ -179,7 +187,8 @@ void demoVectorAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 4];
-  vklComputeSampleM4(valid, sampler, &coord4, samples, M, attributeIndices);
+  vklComputeSampleM4(
+      valid, sampler, &coord4, samples, M, attributeIndices, time4);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -222,10 +231,11 @@ void demoStreamAPI(VKLVolume volume)
   // sample, gradient (first attribute)
   printf("\n\tsampling and gradient computation (first attribute)\n");
   unsigned int attributeIndex = 0;
+  float time [5]              = {0.f};
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex);
-  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex);
+  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
+  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex, time);
 
   for (int i = 0; i < 5; i++) {
     printf("\t\tsample[%d] = %f\n", i, sample[i]);
@@ -236,7 +246,7 @@ void demoStreamAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 5];
-  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices);
+  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices, time);
 
   printf("\n\tsampling (multiple attributes)\n");
 

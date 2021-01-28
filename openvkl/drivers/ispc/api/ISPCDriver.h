@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -200,22 +200,30 @@ namespace openvkl {
                                       const vvec3fn<1> &origin,
                                       const vvec3fn<1> &direction,
                                       const vrange1fn<1> &tRange,
+                                      float time,
                                       VKLValueSelector valueSelector,
                                       void *buffer) const override;
 
-#define __define_initHitIteratorN(WIDTH)                                    \
-  VKLHitIterator##WIDTH initHitIterator##WIDTH(                             \
-      const int *valid,                                                     \
-      VKLSampler sampler,                                                   \
-      const vvec3fn<WIDTH> &origin,                                         \
-      const vvec3fn<WIDTH> &direction,                                      \
-      const vrange1fn<WIDTH> &tRange,                                       \
-      VKLValueSelector valueSelector,                                       \
-      void *buffer) const override                                          \
-  {                                                                         \
-    return reinterpret_cast<                                                \
-        VKLHitIterator##WIDTH>(initHitIteratorAnyWidth<WIDTH>(              \
-        valid, sampler, origin, direction, tRange, valueSelector, buffer)); \
+#define __define_initHitIteratorN(WIDTH)              \
+  VKLHitIterator##WIDTH initHitIterator##WIDTH(       \
+      const int *valid,                               \
+      VKLSampler sampler,                             \
+      const vvec3fn<WIDTH> &origin,                   \
+      const vvec3fn<WIDTH> &direction,                \
+      const vrange1fn<WIDTH> &tRange,                 \
+      const float *times,                             \
+      VKLValueSelector valueSelector,                 \
+      void *buffer) const override                    \
+  {                                                   \
+    return reinterpret_cast<VKLHitIterator##WIDTH>(   \
+        initHitIteratorAnyWidth<WIDTH>(valid,         \
+                                       sampler,       \
+                                       origin,        \
+                                       direction,     \
+                                       tRange,        \
+                                       times,         \
+                                       valueSelector, \
+                                       buffer));      \
   }
 
       __define_initHitIteratorN(4);
@@ -232,6 +240,7 @@ namespace openvkl {
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
+          const float *times,
           VKLValueSelector valueSelector,
           void *buffer) const;
 
@@ -242,6 +251,7 @@ namespace openvkl {
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
+          const float *times,
           VKLValueSelector valueSelector,
           void *buffer) const;
 
@@ -336,7 +346,8 @@ namespace openvkl {
                             VKLSampler sampler,                      \
                             const vvec3fn<WIDTH> &objectCoordinates, \
                             float *samples,                          \
-                            unsigned int attributeIndex) override;
+                            unsigned int attributeIndex,             \
+                            const float *times) override;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -349,7 +360,8 @@ namespace openvkl {
                           unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
-                          unsigned int attributeIndex) override;
+                          unsigned int attributeIndex,
+                          const float *times) override;
 
 #define __define_computeSampleMN(WIDTH)                               \
   void computeSampleM##WIDTH(const int *valid,                        \
@@ -357,7 +369,8 @@ namespace openvkl {
                              const vvec3fn<WIDTH> &objectCoordinates, \
                              float *samples,                          \
                              unsigned int M,                          \
-                             const unsigned int *attributeIndices) override;
+                             const unsigned int *attributeIndices,    \
+                             const float *times) override;
 
       __define_computeSampleMN(1);
       __define_computeSampleMN(4);
@@ -371,14 +384,16 @@ namespace openvkl {
                            const vvec3fn<1> *objectCoordinates,
                            float *samples,
                            unsigned int M,
-                           const unsigned int *attributeIndices) override;
+                           const unsigned int *attributeIndices,
+                           const float *times) override;
 
 #define __define_computeGradientN(WIDTH)                               \
   void computeGradient##WIDTH(const int *valid,                        \
                               VKLSampler sampler,                      \
                               const vvec3fn<WIDTH> &objectCoordinates, \
                               vvec3fn<WIDTH> &gradients,               \
-                              unsigned int attributeIndex) override;
+                              unsigned int attributeIndex,             \
+                              const float *times) override;
 
       __define_computeGradientN(1);
       __define_computeGradientN(4);
@@ -391,7 +406,8 @@ namespace openvkl {
                             unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
-                            unsigned int attributeIndex) override;
+                            unsigned int attributeIndex,
+                            const float *times) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
@@ -412,7 +428,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeSampleAnyWidth(
@@ -420,7 +437,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeSampleAnyWidth(
@@ -428,7 +446,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeSampleMAnyWidth(
@@ -437,7 +456,8 @@ namespace openvkl {
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int M,
-          const unsigned int *attributeIndices);
+          const unsigned int *attributeIndices,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeSampleMAnyWidth(
@@ -446,7 +466,8 @@ namespace openvkl {
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int M,
-          const unsigned int *attributeIndices);
+          const unsigned int *attributeIndices,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeSampleMAnyWidth(
@@ -455,7 +476,8 @@ namespace openvkl {
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int M,
-          const unsigned int *attributeIndices);
+          const unsigned int *attributeIndices,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(
@@ -463,7 +485,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeGradientAnyWidth(
@@ -471,7 +494,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
 
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeGradientAnyWidth(
@@ -479,7 +503,8 @@ namespace openvkl {
           VKLSampler sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
-          unsigned int attributeIndex);
+          unsigned int attributeIndex,
+          const float *times);
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -612,6 +637,7 @@ namespace openvkl {
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
+        float time,
         VKLValueSelector valueSelector,
         void *buffer) const
     {
@@ -623,6 +649,7 @@ namespace openvkl {
           origin,
           direction,
           tRange,
+          time,
           reinterpret_cast<const ValueSelector<W> *>(valueSelector));
 
       return reinterpret_cast<VKLHitIterator>(it);
@@ -636,6 +663,7 @@ namespace openvkl {
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
                                            const vrange1fn<OW> &tRange,
+                                           const float *times,
                                            VKLValueSelector valueSelector,
                                            void *buffer) const
     {
@@ -648,11 +676,14 @@ namespace openvkl {
       for (int i = 0; i < W; ++i)
         validW[i] = valid[i];
 
+      vfloatn<W> timesW(times, OW);
+
       it->initializeHitV(
           validW,
           origin,
           direction,
           tRange,
+          timesW,
           reinterpret_cast<const ValueSelector<W> *>(valueSelector));
 
       return it;
@@ -666,6 +697,7 @@ namespace openvkl {
                                            const vvec3fn<OW> &origin,
                                            const vvec3fn<OW> &direction,
                                            const vrange1fn<OW> &tRange,
+                                           const float *times,
                                            VKLValueSelector valueSelector,
                                            void *buffer) const
     {

@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbSampler.h"
@@ -56,12 +56,15 @@ namespace openvkl {
     template <int W>
     void VdbSampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
                                       vfloatn<1> &samples,
-                                      unsigned int attributeIndex) const
+                                      unsigned int attributeIndex,
+                                      const vfloatn<1> &time) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
+                attributeIndex,
                 static_cast<float *>(samples));
     }
 
@@ -69,13 +72,16 @@ namespace openvkl {
     void VdbSampler<W>::computeSampleV(const vintn<W> &valid,
                                        const vvec3fn<W> &objectCoordinates,
                                        vfloatn<W> &samples,
-                                       unsigned int attributeIndex) const
+                                       unsigned int attributeIndex,
+                                       const vfloatn<W> &time) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
+                attributeIndex,
                 static_cast<float *>(samples));
     }
 
@@ -83,13 +89,16 @@ namespace openvkl {
     void VdbSampler<W>::computeSampleN(unsigned int N,
                                        const vvec3fn<1> *objectCoordinates,
                                        float *samples,
-                                       unsigned int attributeIndex) const
+                                       unsigned int attributeIndex,
+                                       const float *times) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeSample_stream,
                 ispcEquivalent,
                 N,
                 (const ispc::vec3f *)objectCoordinates,
+                attributeIndex,
                 samples);
     }
 
@@ -97,13 +106,16 @@ namespace openvkl {
     void VdbSampler<W>::computeGradientV(const vintn<W> &valid,
                                          const vvec3fn<W> &objectCoordinates,
                                          vvec3fn<W> &gradients,
-                                         unsigned int attributeIndex) const
+                                         unsigned int attributeIndex,
+                                         const vfloatn<W> &time) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VdbSampler_computeGradient,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
+                attributeIndex,
                 &gradients);
     }
 
@@ -111,14 +123,75 @@ namespace openvkl {
     void VdbSampler<W>::computeGradientN(unsigned int N,
                                          const vvec3fn<1> *objectCoordinates,
                                          vvec3fn<1> *gradients,
-                                         unsigned int attributeIndex) const
+                                         unsigned int attributeIndex,
+                                         const float *times) const
     {
-      assert(attributeIndex == 0);
+      assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeGradient_stream,
                 ispcEquivalent,
                 N,
                 (const ispc::vec3f *)objectCoordinates,
+                attributeIndex,
                 (ispc::vec3f *)gradients);
+    }
+
+    template <int W>
+    inline void VdbSampler<W>::computeSampleM(
+        const vvec3fn<1> &objectCoordinates,
+        float *samples,
+        unsigned int M,
+        const unsigned int *attributeIndices,
+        const vfloatn<1> &time) const
+    {
+      assertValidAttributeIndices(volume, M, attributeIndices);
+      assertValidTimes(time);
+      CALL_ISPC(VdbSampler_computeSampleM_uniform,
+                ispcEquivalent,
+                &objectCoordinates,
+                M,
+                attributeIndices,
+                samples);
+    }
+
+    template <int W>
+    inline void VdbSampler<W>::computeSampleMV(
+        const vintn<W> &valid,
+        const vvec3fn<W> &objectCoordinates,
+        float *samples,
+        unsigned int M,
+        const unsigned int *attributeIndices,
+        const vfloatn<W> &time) const
+    {
+      assertValidAttributeIndices(volume, M, attributeIndices);
+      assertValidTimes(time);
+      CALL_ISPC(VdbSampler_computeSampleM,
+                static_cast<const int *>(valid),
+                ispcEquivalent,
+                &objectCoordinates,
+                M,
+                attributeIndices,
+                samples);
+    }
+
+    template <int W>
+    inline void VdbSampler<W>::computeSampleMN(
+        unsigned int N,
+        const vvec3fn<1> *objectCoordinates,
+        float *samples,
+        unsigned int M,
+        const unsigned int *attributeIndices,
+        const float *times) const
+    {
+      assertValidAttributeIndices(volume, M, attributeIndices);
+      assertValidTimes(N, times);
+      CALL_ISPC(VdbSampler_computeSampleM_stream,
+                ispcEquivalent,
+                N,
+                (ispc::vec3f *)objectCoordinates,
+                M,
+                attributeIndices,
+                samples);
     }
 
     template <int W>
@@ -138,4 +211,3 @@ namespace openvkl {
 
   }  // namespace ispc_driver
 }  // namespace openvkl
-

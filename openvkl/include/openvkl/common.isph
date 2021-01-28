@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -31,3 +31,10 @@ struct vkl_box3f
 {
   vkl_vec3f lower, upper;
 };
+
+/*
+ * Force expansion on two tokens and concatenate them.
+ */
+
+#define __vkl_concat(A, B) __vkl_concat_impl(A, B)
+#define __vkl_concat_impl(A, B) A##B

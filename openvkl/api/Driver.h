@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -181,6 +181,7 @@ namespace openvkl {
                                               const vvec3fn<1> &origin,
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
+                                              float time,
                                               VKLValueSelector valueSelector,
                                               void *buffer) const
       {
@@ -196,6 +197,7 @@ namespace openvkl {
       const vvec3fn<WIDTH> &origin,                                 \
       const vvec3fn<WIDTH> &direction,                              \
       const vrange1fn<WIDTH> &tRange,                               \
+      const float *times,                                           \
       VKLValueSelector valueSelector,                               \
       void *buffer) const                                           \
   {                                                                 \
@@ -288,7 +290,8 @@ namespace openvkl {
                                     VKLSampler sampler,                      \
                                     const vvec3fn<WIDTH> &objectCoordinates, \
                                     float *samples,                          \
-                                    unsigned int attributeIndex) = 0;
+                                    unsigned int attributeIndex,             \
+                                    const float *times) = 0;
 
       __define_computeSampleN(1);
       __define_computeSampleN(4);
@@ -301,16 +304,17 @@ namespace openvkl {
                                   unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples,
-                                  unsigned int attributeIndex) = 0;
+                                  unsigned int attributeIndex,
+                                  const float *times) = 0;
 
-#define __define_computeSampleMN(WIDTH)        \
-  virtual void computeSampleM##WIDTH(          \
-      const int *valid,                        \
-      VKLSampler sampler,                      \
-      const vvec3fn<WIDTH> &objectCoordinates, \
-      float *samples,                          \
-      unsigned int M,                          \
-      const unsigned int *attributeIndices) = 0;
+#define __define_computeSampleMN(WIDTH)                                       \
+  virtual void computeSampleM##WIDTH(const int *valid,                        \
+                                     VKLSampler sampler,                      \
+                                     const vvec3fn<WIDTH> &objectCoordinates, \
+                                     float *samples,                          \
+                                     unsigned int M,                          \
+                                     const unsigned int *attributeIndices,    \
+                                     const float *times) = 0;
 
       __define_computeSampleMN(1);
       __define_computeSampleMN(4);
@@ -324,14 +328,16 @@ namespace openvkl {
                                    const vvec3fn<1> *objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices) = 0;
+                                   const unsigned int *attributeIndices,
+                                   const float *times) = 0;
 
 #define __define_computeGradientN(WIDTH)                                       \
   virtual void computeGradient##WIDTH(const int *valid,                        \
                                       VKLSampler sampler,                      \
                                       const vvec3fn<WIDTH> &objectCoordinates, \
                                       vvec3fn<WIDTH> &gradients,               \
-                                      unsigned int attributeIndex) = 0;
+                                      unsigned int attributeIndex,             \
+                                      const float *times) = 0;
 
       __define_computeGradientN(1);
       __define_computeGradientN(4);
@@ -344,7 +350,8 @@ namespace openvkl {
                                     unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
                                     vvec3fn<1> *gradients,
-                                    unsigned int attributeIndex) = 0;
+                                    unsigned int attributeIndex,
+                                    const float *times) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////

@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -28,29 +28,58 @@ namespace openvkl {
 
       void commit() override;
 
+      // single attribute /////////////////////////////////////////////////////
+
       void computeSample(const vvec3fn<1> &objectCoordinates,
                          vfloatn<1> &samples,
-                         unsigned int attributeIndex) const override final;
+                         unsigned int attributeIndex,
+                         const vfloatn<1> &time) const override final;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples,
-                          unsigned int attributeIndex) const override final;
+                          unsigned int attributeIndex,
+                          const vfloatn<W> &time) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
-                          unsigned int attributeIndex) const override final;
+                          unsigned int attributeIndex,
+                          const float *times) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const vfloatn<W> &time) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const float *times) const override final;
+
+      // multi-attribute //////////////////////////////////////////////////////
+
+      void computeSampleM(const vvec3fn<1> &objectCoordinates,
+                          float *samples,
+                          unsigned int M,
+                          const unsigned int *attributeIndices,
+                          const vfloatn<1> &time) const override final;
+
+      void computeSampleMV(const vintn<W> &valid,
+                           const vvec3fn<W> &objectCoordinates,
+                           float *samples,
+                           unsigned int M,
+                           const unsigned int *attributeIndices,
+                           const vfloatn<W> &time) const override final;
+
+      void computeSampleMN(unsigned int N,
+                           const vvec3fn<1> *objectCoordinates,
+                           float *samples,
+                           unsigned int M,
+                           const unsigned int *attributeIndices,
+                           const float *times) const override final;
 
       Observer<W> *newObserver(const char *type) override;
 

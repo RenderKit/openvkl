@@ -1,7 +1,8 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "UnstructuredVolume.h"
+#include <algorithm>
 #include "../common/Data.h"
 #include "UnstructuredSampler.h"
 #include "rkcommon/containers/AlignedVector.h"
@@ -36,7 +37,7 @@ namespace openvkl {
 
     static void dumpBVH(Node *root, int indent = 0)
     {
-      if (root->nominalLength < 0) {
+      if (root->nominalLength.x < 0) {
         auto leaf = (LeafNode *)root;
         tabIndent(indent);
         std::cerr << "id: " << leaf->cellID << " bounds: " << leaf->bounds
@@ -195,7 +196,7 @@ namespace openvkl {
       }
 
       maxIteratorDepth =
-          max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
 
       buildBvhAndCalculateBounds();
 
@@ -327,7 +328,7 @@ namespace openvkl {
         throw std::runtime_error("bvh build failure");
       }
 
-      if (rtcRoot->nominalLength < 0) {
+      if (rtcRoot->nominalLength.x < 0) {
         auto &val = ((LeafNode *)rtcRoot)->bounds;
         bounds    = box3f(val.lower, val.upper);
       } else {

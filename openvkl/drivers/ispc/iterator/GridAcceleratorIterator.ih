@@ -1,10 +1,10 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "math/box.ih"
-#include "math/vec.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 struct ValueSelector;
 struct Sampler;
@@ -28,6 +28,7 @@ struct GridAcceleratorIterator
   vec3f origin;
   vec3f direction;
   box1f tRange;
+  float time;
   ValueSelector *uniform valueSelector;
 
   // common state

@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,6 +14,42 @@ using namespace rkcommon;
 
 namespace openvkl {
   namespace ispc_driver {
+
+    // Helpers ////////////////////////////////////////////////////////////////
+
+    template <int W>
+    inline void assertValidTimes(const vfloatn<W> &time)
+    {
+#ifndef NDEBUG
+      for (auto i = 0; i < W; ++i) {
+        assert(time[i] >= 0.f && time[i] <= 1.0f);
+      }
+#endif
+    }
+
+    inline void assertValidTimes(unsigned int N, const float *times)
+    {
+#ifndef NDEBUG
+      for (auto i = 0; i < N; ++i) {
+        assert(times == nullptr || (times[i] >= 0.f && times[i] <= 1.0f));
+      }
+#endif
+    }
+
+    template <typename VolumeType>
+    inline void assertValidAttributeIndices(
+        const VolumeType &volume,
+        unsigned int M,
+        const unsigned int *attributeIndices)
+    {
+#ifndef NDEBUG
+      for (auto i = 0; i < M; ++i) {
+        assert(attributeIndices[i] < volume->getNumAttributes());
+      }
+#endif
+    }
+
+    // Sampler ////////////////////////////////////////////////////////////////
 
     template <int W>
     class Volume;
@@ -35,46 +71,54 @@ namespace openvkl {
       // defined then the default implementation will use computeSampleV()
       virtual void computeSample(const vvec3fn<1> &objectCoordinates,
                                  vfloatn<1> &samples,
-                                 unsigned int attributeIndex) const;
+                                 unsigned int attributeIndex,
+                                 const vfloatn<1> &times) const;
 
       virtual void computeSampleV(const vintn<W> &valid,
                                   const vvec3fn<W> &objectCoordinates,
                                   vfloatn<W> &samples,
-                                  unsigned int attributeIndex) const = 0;
+                                  unsigned int attributeIndex,
+                                  const vfloatn<W> &times) const = 0;
 
       virtual void computeSampleN(unsigned int N,
                                   const vvec3fn<1> *objectCoordinates,
                                   float *samples,
-                                  unsigned int attributeIndex) const = 0;
+                                  unsigned int attributeIndex,
+                                  const float *times) const = 0;
 
       virtual void computeGradientV(const vintn<W> &valid,
                                     const vvec3fn<W> &objectCoordinates,
                                     vvec3fn<W> &gradients,
-                                    unsigned int attributeIndex) const = 0;
+                                    unsigned int attributeIndex,
+                                    const vfloatn<W> &times) const = 0;
 
       virtual void computeGradientN(unsigned int N,
                                     const vvec3fn<1> *objectCoordinates,
                                     vvec3fn<1> *gradients,
-                                    unsigned int attributeIndex) const = 0;
+                                    unsigned int attributeIndex,
+                                    const float *times) const = 0;
 
       // multi-attribute //////////////////////////////////////////////////////
 
       virtual void computeSampleM(const vvec3fn<1> &objectCoordinates,
                                   float *samples,
                                   unsigned int M,
-                                  const unsigned int *attributeIndices) const;
+                                  const unsigned int *attributeIndices,
+                                  const vfloatn<1> &times) const;
 
       virtual void computeSampleMV(const vintn<W> &valid,
                                    const vvec3fn<W> &objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices) const;
+                                   const unsigned int *attributeIndices,
+                                   const vfloatn<W> &times) const;
 
       virtual void computeSampleMN(unsigned int N,
                                    const vvec3fn<1> *objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices) const;
+                                   const unsigned int *attributeIndices,
+                                   const float *times) const;
 
       virtual Observer<W> *newObserver(const char *type) = 0;
 
@@ -104,36 +148,41 @@ namespace openvkl {
     template <int W>
     inline void Sampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
                                           vfloatn<1> &samples,
-                                          unsigned int attributeIndex) const
+                                          unsigned int attributeIndex,
+                                          const vfloatn<1> &times) const
     {
       // gracefully degrade to use computeSampleV(); see
       // ISPCDriver<W>::computeSampleAnyWidth()
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
+      vfloatn<W> tW  = static_cast<vfloatn<W>>(times);
 
       vintn<W> validW;
       for (int i = 0; i < W; i++)
         validW[i] = i == 0 ? 1 : 0;
 
       ocW.fill_inactive_lanes(validW);
+      tW.fill_inactive_lanes(validW);
 
       vfloatn<W> samplesW;
 
-      computeSampleV(validW, ocW, samplesW, attributeIndex);
+      computeSampleV(validW, ocW, samplesW, attributeIndex, tW);
 
       samples[0] = samplesW[0];
     }
 
     template <int W>
-    inline void Sampler<W>::computeSampleM(
-        const vvec3fn<1> &objectCoordinates,
-        float *samples,
-        unsigned int M,
-        const unsigned int *attributeIndices) const
+    inline void Sampler<W>::computeSampleM(const vvec3fn<1> &objectCoordinates,
+                                           float *samples,
+                                           unsigned int M,
+                                           const unsigned int *attributeIndices,
+                                           const vfloatn<1> &times) const
     {
       for (unsigned int a = 0; a < M; a++) {
-        computeSample(
-            objectCoordinates, reinterpret_cast<vfloatn<1> &>(samples[a]), a);
+        computeSample(objectCoordinates,
+                      reinterpret_cast<vfloatn<1> &>(samples[a]),
+                      a,
+                      times);
       }
     }
 
@@ -143,12 +192,14 @@ namespace openvkl {
         const vvec3fn<W> &objectCoordinates,
         float *samples,
         unsigned int M,
-        const unsigned int *attributeIndices) const
+        const unsigned int *attributeIndices,
+        const vfloatn<W> &times) const
     {
       for (unsigned int a = 0; a < M; a++) {
         vfloatn<W> samplesW;
 
-        computeSampleV(valid, objectCoordinates, samplesW, attributeIndices[a]);
+        computeSampleV(
+            valid, objectCoordinates, samplesW, attributeIndices[a], times);
 
         for (int i = 0; i < W; i++)
           samples[a * W + i] = samplesW[i];
@@ -161,14 +212,17 @@ namespace openvkl {
         const vvec3fn<1> *objectCoordinates,
         float *samples,
         unsigned int M,
-        const unsigned int *attributeIndices) const
+        const unsigned int *attributeIndices,
+        const float *times) const
     {
-      for (unsigned int i = 0; i < N; i++) {
-        for (unsigned int a = 0; a < M; a++) {
-          computeSample(objectCoordinates[i],
-                        reinterpret_cast<vfloatn<1> &>(samples[i * M + a]),
-                        attributeIndices[a]);
-        }
+      std::vector<float> samplesN(N);
+
+      for (unsigned int a = 0; a < M; a++) {
+        computeSampleN(
+            N, objectCoordinates, samplesN.data(), attributeIndices[a], times);
+
+        for (unsigned int i = 0; i < N; i++)
+          samples[i * M + a] = samplesN[i];
       }
     }
 

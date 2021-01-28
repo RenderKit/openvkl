@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 # Benchmarks
@@ -63,6 +63,21 @@ if (BUILD_BENCHMARKS)
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
+  # VDBvolumes (multi-attribute)
+    add_executable(vklBenchmarkVdbVolumeMulti
+    vklBenchmarkVdbVolumeMulti.cpp
+    ${VKL_RESOURCE}
+  )
+
+  target_link_libraries(vklBenchmarkVdbVolumeMulti
+    benchmark
+    openvkl_testing
+  )
+
+  install(TARGETS vklBenchmarkVdbVolumeMulti
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+
   # Particle volumes
   add_executable(vklBenchmarkParticleVolume
     vklBenchmarkParticleVolume.cpp
@@ -81,8 +96,11 @@ endif()
 
 # Functional tests
 if (BUILD_TESTING)
-  include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include
-    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc)
+  include_directories_ispc(
+    ${PROJECT_SOURCE_DIR}/openvkl/include
+    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc
+    ${RKCOMMON_INCLUDE_DIRS}
+  )
 
   openvkl_add_executable_ispc(vklTests
     vklTests.cpp
@@ -95,6 +113,8 @@ if (BUILD_TESTING)
     tests/simd_type_conversion.cpp
     tests/structured_volume_gradients.cpp
     tests/structured_regular_volume_sampling.cpp
+    tests/structured_regular_volume_sampling_motion_blur.cpp
+    tests/structured_regular_volume_gradients_motion_blur.cpp
     tests/structured_regular_volume_strides.cpp
     tests/structured_regular_volume_multi.cpp
     tests/structured_spherical_volume_sampling.cpp
@@ -113,6 +133,7 @@ if (BUILD_TESTING)
     tests/amr_volume_sampling.cpp
     tests/amr_volume_value_range.cpp
     tests/vdb_volume.cpp
+    tests/vdb_volume_multi.cpp
     tests/particle_volume_sampling.cpp
     tests/particle_volume_gradients.cpp
     tests/particle_volume_value_range.cpp

@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ParticleVolume.h"
@@ -93,7 +93,7 @@ namespace openvkl {
       }
 
       maxIteratorDepth =
-          max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
 
       buildBvhAndCalculateBounds();
 
@@ -143,8 +143,6 @@ namespace openvkl {
         const vec3f &position = (*positions)[taskIndex];
         const float &radius   = (*radii)[taskIndex];
 
-        float weight = weights ? (*weights)[taskIndex] : 1.f;
-
         const float supportRadius = radius * radiusSupportFactor;
 
         prims[taskIndex].lower_x = position.x - supportRadius;
@@ -192,7 +190,7 @@ namespace openvkl {
         throw std::runtime_error("bvh build failure");
       }
 
-      if (rtcRoot->nominalLength < 0) {
+      if (rtcRoot->nominalLength.x < 0) {
         auto &val = ((LeafNode *)rtcRoot)->bounds;
         bounds    = box3f(val.lower, val.upper);
       } else {
@@ -227,6 +225,7 @@ namespace openvkl {
       if (estimateValueRanges) {
         // restrict to first attribute index
         const unsigned int attributeIndex = 0;
+        const vfloatn<1> time             = {0.f};
 
         tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
           LeafNode *leafNode         = leafNodes[leafNodeIndex];
@@ -241,7 +240,7 @@ namespace openvkl {
           // initial estimate based sampling particle center
           vfloatn<1> sample;
           sampler->computeSample(
-              (*positions)[particleIndex], sample, attributeIndex);
+              (*positions)[particleIndex], sample, attributeIndex, time);
           computedValueRange.extend(sample[0]);
 
           // sample over regular grid within leaf bounds to improve estimate
@@ -250,8 +249,10 @@ namespace openvkl {
           const int samplesPerDimension = 10;
 
           std::vector<vvec3fn<1>> objectCoordinates;
+          std::vector<float> times;
           objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
                                     samplesPerDimension);
+          times.reserve(samplesPerDimension);
 
           multidim_index_sequence<3> mis{vec3i(samplesPerDimension)};
 
@@ -259,13 +260,15 @@ namespace openvkl {
             objectCoordinates.push_back(
                 leafBounds.lower + vec3f(ijk) / float(samplesPerDimension - 1) *
                                        leafBounds.size());
+            times.push_back (0.f);
           }
 
           std::vector<float> samples(objectCoordinates.size());
           sampler->computeSampleN(objectCoordinates.size(),
                                   objectCoordinates.data(),
                                   samples.data(),
-                                  attributeIndex);
+                                  attributeIndex,
+                                  times.data());
 
           auto minmax = std::minmax_element(samples.begin(), samples.end());
           computedValueRange.extend(range1f(*minmax.first, *minmax.second));

@@ -11,13 +11,14 @@ using namespace rkcommon;
 namespace openvkl {
   namespace testing {
 
-    template <
-        typename VOXEL_TYPE = VoidType /* should be void (we have static_assert
-                                to prevent such instantiation), but isn't due
-                                to Windows Visual Studio compiler bug */
-        ,
-        VOXEL_TYPE samplingFunction(const vec3f &) = samplingNotImplemented,
-        vec3f gradientFunction(const vec3f &)      = gradientNotImplemented>
+    template <typename VOXEL_TYPE =
+                  VoidType /* should be void (we have static_assert
+                    to prevent such instantiation), but isn't due
+                    to Windows Visual Studio compiler bug */
+              ,
+              VOXEL_TYPE samplingFunction(const vec3f &, float) =
+                  samplingNotImplemented,
+              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
     struct ProceduralStructuredSphericalVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,
@@ -28,7 +29,7 @@ namespace openvkl {
                                           const vec3f &gridSpacing);
 
       vec3f transformLocalToObjectCoordinates(
-          const vec3f &localCoordinates) override;
+          const vec3f &localCoordinates) const override;
 
       static void generateGridParameters(const vec3i &dimensions,
                                          const float boundingBoxSize,
@@ -39,8 +40,8 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
-              vec3f gradientFunction(const vec3f &)>
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
+              vec3f gradientFunction(const vec3f &, float)>
     inline ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                samplingFunction,
                                                gradientFunction>::
@@ -55,12 +56,12 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
-              vec3f gradientFunction(const vec3f &)>
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
+              vec3f gradientFunction(const vec3f &, float)>
     inline vec3f ProceduralStructuredSphericalVolume<VOXEL_TYPE,
                                                      samplingFunction,
                                                      gradientFunction>::
-        transformLocalToObjectCoordinates(const vec3f &localCoordinates)
+        transformLocalToObjectCoordinates(const vec3f &localCoordinates) const
     {
       const float degToRad = M_PI / 180.f;
 
@@ -81,8 +82,8 @@ namespace openvkl {
     }
 
     template <typename VOXEL_TYPE,
-              VOXEL_TYPE samplingFunction(const vec3f &),
-              vec3f gradientFunction(const vec3f &)>
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
+              vec3f gradientFunction(const vec3f &, float)>
     inline void ProceduralStructuredSphericalVolume<
         VOXEL_TYPE,
         samplingFunction,
@@ -118,9 +119,6 @@ namespace openvkl {
                                             getXYZValue<VOXEL_TYPE>,
                                             getXYZGradient>;
 
-    using RadiusProceduralVolume =
-        ProceduralStructuredSphericalVolume<float, getRadiusValue>;
-
     // required due to Windows Visual Studio compiler bugs, which prevent us
     // from writing e.g. WaveletStructuredSphericalVolume<float>
     using WaveletStructuredSphericalVolumeUChar =
@@ -143,6 +141,48 @@ namespace openvkl {
         ProceduralStructuredSphericalVolume<double,
                                             getWaveletValue<double>,
                                             getWaveletGradient>;
+
+    using XYZStructuredSphericalVolumeUChar =
+        ProceduralStructuredSphericalVolume<unsigned char,
+                                            getXYZValue<unsigned char>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeShort =
+        ProceduralStructuredSphericalVolume<short,
+                                            getXYZValue<short>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeUShort =
+        ProceduralStructuredSphericalVolume<unsigned short,
+                                            getXYZValue<unsigned short>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeFloat =
+        ProceduralStructuredSphericalVolume<float,
+                                            getXYZValue<float>,
+                                            getXYZGradient>;
+    using XYZStructuredSphericalVolumeDouble =
+        ProceduralStructuredSphericalVolume<double,
+                                            getXYZValue<double>,
+                                            getXYZGradient>;
+
+    using SphereStructuredSphericalVolumeUChar =
+        ProceduralStructuredSphericalVolume<unsigned char,
+                                            getRotatingSphereValue<unsigned char>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeShort =
+        ProceduralStructuredSphericalVolume<short,
+                                            getRotatingSphereValue<short>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeUShort =
+        ProceduralStructuredSphericalVolume<unsigned short,
+                                            getRotatingSphereValue<unsigned short>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeFloat =
+        ProceduralStructuredSphericalVolume<float,
+                                            getRotatingSphereValue<float>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeDouble =
+        ProceduralStructuredSphericalVolume<double,
+                                            getRotatingSphereValue<double>,
+                                            getRotatingSphereGradient>;
 
   }  // namespace testing
 }  // namespace openvkl

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/logging.h"
@@ -451,6 +451,7 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                              const vkl_vec3f *origin,
                                              const vkl_vec3f *direction,
                                              const vkl_range1f *tRange,
+                                             float time,
                                              VKLValueSelector valueSelector,
                                              void *buffer) OPENVKL_CATCH_BEGIN
 {
@@ -459,6 +460,7 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
+      time,
       valueSelector,
       buffer);
 }
@@ -471,6 +473,7 @@ OPENVKL_CATCH_END(nullptr)
       const vkl_vvec3f##WIDTH *origin,                           \
       const vkl_vvec3f##WIDTH *direction,                        \
       const vkl_vrange1f##WIDTH *tRange,                         \
+      const float *times,                                        \
       VKLValueSelector valueSelector,                            \
       void *buffer) OPENVKL_CATCH_BEGIN                          \
   {                                                              \
@@ -480,6 +483,7 @@ OPENVKL_CATCH_END(nullptr)
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),       \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),    \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),     \
+        times,                                                   \
         valueSelector,                                           \
         buffer);                                                 \
   }                                                              \
@@ -688,8 +692,8 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" float vklComputeSample(VKLSampler sampler,
                                   const vkl_vec3f *objectCoordinates,
-                                  unsigned int attributeIndex)
-    OPENVKL_CATCH_BEGIN
+                                  unsigned int attributeIndex,
+                                  float time) OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
   float sample;
@@ -698,7 +702,8 @@ extern "C" float vklComputeSample(VKLSampler sampler,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
       &sample,
-      attributeIndex);
+      attributeIndex,
+      &time);
   return sample;
 }
 OPENVKL_CATCH_END(rkcommon::math::nan)
@@ -709,14 +714,16 @@ OPENVKL_CATCH_END(rkcommon::math::nan)
       VKLSampler sampler,                                             \
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       float *samples,                                                 \
-      unsigned int attributeIndex) OPENVKL_CATCH_BEGIN                \
+      unsigned int attributeIndex,                                    \
+      const float *times) OPENVKL_CATCH_BEGIN                         \
   {                                                                   \
     openvkl::api::currentDriver().computeSample##WIDTH(               \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
         samples,                                                      \
-        attributeIndex);                                              \
+        attributeIndex,                                               \
+        times);                                                       \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -730,15 +737,16 @@ extern "C" void vklComputeSampleN(VKLSampler sampler,
                                   unsigned int N,
                                   const vkl_vec3f *objectCoordinates,
                                   float *samples,
-                                  unsigned int attributeIndex)
-    OPENVKL_CATCH_BEGIN
+                                  unsigned int attributeIndex,
+                                  const float *times) OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeSampleN(
       sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
       samples,
-      attributeIndex);
+      attributeIndex,
+      times);
 }
 OPENVKL_CATCH_END()
 
@@ -746,8 +754,8 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
                                   const vkl_vec3f *objectCoordinates,
                                   float *samples,
                                   unsigned int M,
-                                  const unsigned int *attributeIndices)
-    OPENVKL_CATCH_BEGIN
+                                  const unsigned int *attributeIndices,
+                                  float time) OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
   openvkl::api::currentDriver().computeSampleM1(
@@ -756,7 +764,8 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
       samples,
       M,
-      attributeIndices);
+      attributeIndices,
+      &time);
 }
 OPENVKL_CATCH_END()
 
@@ -767,7 +776,8 @@ OPENVKL_CATCH_END()
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       float *samples,                                                 \
       unsigned int M,                                                 \
-      const unsigned int *attributeIndices) OPENVKL_CATCH_BEGIN       \
+      const unsigned int *attributeIndices,                           \
+      const float *times) OPENVKL_CATCH_BEGIN                         \
   {                                                                   \
     openvkl::api::currentDriver().computeSampleM##WIDTH(              \
         valid,                                                        \
@@ -775,7 +785,8 @@ OPENVKL_CATCH_END()
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
         samples,                                                      \
         M,                                                            \
-        attributeIndices);                                            \
+        attributeIndices,                                             \
+        times);                                                       \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -790,8 +801,8 @@ extern "C" void vklComputeSampleMN(VKLSampler sampler,
                                    const vkl_vec3f *objectCoordinates,
                                    float *samples,
                                    unsigned int M,
-                                   const unsigned int *attributeIndices)
-    OPENVKL_CATCH_BEGIN
+                                   const unsigned int *attributeIndices,
+                                   const float *times) OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeSampleMN(
       sampler,
@@ -799,13 +810,15 @@ extern "C" void vklComputeSampleMN(VKLSampler sampler,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
       samples,
       M,
-      attributeIndices);
+      attributeIndices,
+      times);
 }
 OPENVKL_CATCH_END()
 
 extern "C" vkl_vec3f vklComputeGradient(VKLSampler sampler,
                                         const vkl_vec3f *objectCoordinates,
-                                        unsigned int attributeIndex)
+                                        unsigned int attributeIndex,
+                                        float time)
     OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
@@ -815,7 +828,8 @@ extern "C" vkl_vec3f vklComputeGradient(VKLSampler sampler,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
       reinterpret_cast<vvec3fn<1> &>(gradient),
-      attributeIndex);
+      attributeIndex,
+      &time);
   return gradient;
 }
 OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
@@ -826,14 +840,16 @@ OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
       VKLSampler sampler,                                             \
       const vkl_vvec3f##WIDTH *objectCoordinates,                     \
       vkl_vvec3f##WIDTH *gradients,                                   \
-      unsigned int attributeIndex) OPENVKL_CATCH_BEGIN                \
+      unsigned int attributeIndex,                                    \
+      const float *times) OPENVKL_CATCH_BEGIN                         \
   {                                                                   \
     openvkl::api::currentDriver().computeGradient##WIDTH(             \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
         reinterpret_cast<vvec3fn<WIDTH> &>(*gradients),               \
-        attributeIndex);                                              \
+        attributeIndex,                                               \
+        times);                                                       \
   }                                                                   \
   OPENVKL_CATCH_END()
 
@@ -847,7 +863,8 @@ extern "C" void vklComputeGradientN(VKLSampler sampler,
                                     unsigned int N,
                                     const vkl_vec3f *objectCoordinates,
                                     vkl_vec3f *gradients,
-                                    unsigned int attributeIndex)
+                                    unsigned int attributeIndex,
+                                    const float *times)
     OPENVKL_CATCH_BEGIN
 {
   openvkl::api::currentDriver().computeGradientN(
@@ -855,7 +872,8 @@ extern "C" void vklComputeGradientN(VKLSampler sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
       reinterpret_cast<vvec3fn<1> *>(gradients),
-      attributeIndex);
+      attributeIndex,
+      times);
 }
 OPENVKL_CATCH_END()
 

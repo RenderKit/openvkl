@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(openvkl_add_library_ispc name type)
@@ -207,10 +207,15 @@ endmacro()
 # and we also define constants that describe the topology
 # in terms of node resolution per level.
 function(openvkl_vdb_generate_topology)
+  set(VKL_VDB_NUM_LEVELS "4")
 
-  list(LENGTH VKL_VDB_LOG_RESOLUTION VKL_VDB_NUM_LEVELS)
+  set(VKL_VDB_LOG_RESOLUTION "")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_3}")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_2}")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_1}")
+  list(APPEND VKL_VDB_LOG_RESOLUTION "${VKL_VDB_LOG_RESOLUTION_0}")
+
   math(EXPR VKL_VDB_LEAF_LEVEL "${VKL_VDB_NUM_LEVELS}-1")
-  list(REVERSE VKL_VDB_LOG_RESOLUTION) # Define from leaf level up.
   set(VKL_VDB_TOTAL_LOG_RES 0)
 
   foreach(I RANGE ${VKL_VDB_LEAF_LEVEL})
@@ -232,22 +237,35 @@ function(openvkl_vdb_generate_topology)
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/include/${PROJECT_NAME}/vdb_topology.h.in
       include/${PROJECT_NAME}/vdb/topology${VKL_VDB_POSTFIX}.h
     )
-    configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleConstantLeaf.ih.in
-      include/${PROJECT_NAME}_vdb/VdbSampleConstantLeaf_${VKL_VDB_LEVEL}.ih
-    )
 
     configure_file(
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSamplerDispatchInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.ih
     )
 
-    foreach(VKL_VDB_UNIVARY in "uniform" "varying")
-      configure_file(
-        ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
-        include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY}_${VKL_VDB_LEVEL}.ih
-      )
-    endforeach()
+    # Generate uniform, varying, and univary traversal.
+    # a) We know all queries are in the same leaf node. Fully uniform traversal.
+    set(VKL_VDB_UNIVARY_IN "uniform")
+    set(VKL_VDB_UNIVARY_OUT "uniform")
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
+    # b) All lanes are not in the same subtree.
+    set(VKL_VDB_UNIVARY_IN "varying")
+    set(VKL_VDB_UNIVARY_OUT "varying")
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
+    # c) Lanes are not in the same leaf, but currently in the same subtree.
+    #    May degenerate to varying.
+    set(VKL_VDB_UNIVARY_IN "uniform")
+    set(VKL_VDB_UNIVARY_OUT "varying")
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
 
     configure_file(
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbQueryVoxel.ih.in

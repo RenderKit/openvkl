@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ours
@@ -19,28 +19,34 @@ static vec3f AMRVolume_computeGradient(const Sampler *uniform sampler,
   const uniform vec3f gradientStep = make_vec3f(
       volume->samplingStep * .1f);  // Carson TODO: determine correct offset
 
+  // Fixed time.
+  varying float time = 0.f;
+
   // The gradient will be computed using central differences.
   varying vec3f gradient;
 
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = sampler->computeSample_varying(sampler, pos);
+  float sample = sampler->computeSample_varying(sampler, pos, time);
 
   // Gradient magnitude in the X direction.
-  gradient.x = sampler->computeSample_varying(
-                   sampler, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f)) -
-               sample;
+  gradient.x =
+      sampler->computeSample_varying(
+          sampler, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f), time) -
+      sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = sampler->computeSample_varying(
-                   sampler, pos + make_vec3f(0.0f, gradientStep.y, 0.0f)) -
-               sample;
+  gradient.y =
+      sampler->computeSample_varying(
+          sampler, pos + make_vec3f(0.0f, gradientStep.y, 0.0f), time) -
+      sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = sampler->computeSample_varying(
-                   sampler, pos + make_vec3f(0.0f, 0.0f, gradientStep.z)) -
-               sample;
+  gradient.z =
+      sampler->computeSample_varying(
+          sampler, pos + make_vec3f(0.0f, 0.0f, gradientStep.z), time) -
+      sample;
 
   // This approximation may yield image artifacts.
   return (gradient / gradientStep);
@@ -144,9 +150,11 @@ export void EXPORT_UNIQUE(AMRVolume_sample_export,
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    float time                     = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = sampler->computeSample_varying(sampler, *objectCoordinates);
+    *samples =
+        sampler->computeSample_varying(sampler, *objectCoordinates, time);
   }
 }
 

@@ -4,8 +4,8 @@
 #pragma once
 
 #include "../common/Data.ih"
-#include "math/vec.ih"
-#include "math/box.ih"
+#include "rkcommon/math/vec.ih"
+#include "rkcommon/math/box.ih"
 
 #include "Volume.ih"
 
@@ -18,7 +18,7 @@ typedef enum
 } CellType;
 
 struct Node {
-  uniform float nominalLength;
+  uniform vec3f nominalLength;
   uniform box1f valueRange;
   uniform int level;
   uniform Node *uniform parent;

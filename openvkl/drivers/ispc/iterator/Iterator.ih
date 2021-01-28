@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,7 +6,7 @@
 #include "../common/Hit.ih"
 #include "../common/Interval.ih"
 #include "../sampler/Sampler.ih"
-#include "math/box.ih"
+#include "rkcommon/math/box.ih"
 #include "openvkl/iterator.isph"
 
 /*
@@ -17,6 +17,7 @@
                                         const univary vec3f &origin,           \
                                         const univary vec3f &direction,        \
                                         const univary box1f &tRange,           \
+                                        const univary float &time,             \
                                         const uniform float step,              \
                                         const uniform int numValues,           \
                                         const float *uniform values,           \
@@ -33,7 +34,9 @@
                                                                                \
     univary float t0 = minTIndex * step;                                       \
     univary float sample0 =                                                    \
-        sampler->computeSample_##univary(sampler, origin + t0 * direction);    \
+        sampler->computeSample_##univary(sampler,                              \
+                                         origin + t0 * direction,              \
+                                         time);                                \
                                                                                \
     univary float t;                                                           \
                                                                                \
@@ -41,24 +44,26 @@
       t = (i + 1) * step;                                                      \
                                                                                \
       const univary float sample =                                             \
-          sampler->computeSample_##univary(sampler, origin + t * direction);   \
+          sampler->computeSample_##univary(sampler,                            \
+                                           origin + t * direction,             \
+                                           time);                              \
                                                                                \
       univary float tHit    = inf;                                             \
       univary float epsilon = inf;                                             \
       univary float value   = inf;                                             \
                                                                                \
       if (!isnan(sample0 + sample) && (sample != sample0)) {                   \
-        for (uniform int i = 0; i < numValues; i++) {                          \
-          if ((values[i] - sample0) * (values[i] - sample) <= 0.f) {           \
+        for (uniform int j = 0; j < numValues; j++) {                          \
+          if ((values[j] - sample0) * (values[j] - sample) <= 0.f) {           \
             const univary float rcpSamp = 1.f / (sample - sample0);            \
             univary float tIso          = inf;                                 \
             if (!isnan(rcpSamp)) {                                             \
-              tIso = t0 + (values[i] - sample0) * rcpSamp * (t - t0);          \
+              tIso = t0 + (values[j] - sample0) * rcpSamp * (t - t0);          \
             }                                                                  \
                                                                                \
             if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) { \
               tHit    = tIso;                                                  \
-              value   = values[i];                                             \
+              value   = values[j];                                             \
               epsilon = step * 0.125f;                                         \
             }                                                                  \
           }                                                                    \
@@ -67,7 +72,7 @@
         if (tHit < inf) {                                                      \
           hit.t       = tHit;                                                  \
           hit.sample  = value;                                                 \
-          hit.epsilon = epsilon;                                               \
+          hit.epsilon = epsilon * length(direction); /* in object space */     \
           return true;                                                         \
         }                                                                      \
       }                                                                        \
@@ -91,6 +96,7 @@ template_intersectSurfacesNewton(varying);
   inline univary float bisect(const Sampler *uniform sampler,                   \
                               const univary vec3f &origin,                      \
                               const univary vec3f &direction,                   \
+                              const univary float &time,                        \
                               univary float t0,                                 \
                               univary float sample0,                            \
                               univary float t,                                  \
@@ -114,7 +120,9 @@ template_intersectSurfacesNewton(varying);
       }                                                                         \
                                                                                 \
       univary float sampleMid =                                                 \
-          sampler->computeSample_##univary(sampler, origin + tMid * direction); \
+          sampler->computeSample_##univary(sampler,                             \
+                                           origin + tMid * direction,           \
+                                           time);                               \
                                                                                 \
       /* sampling at boundaries between unstructured cells can rarely lead to   \
       NaN values (indicating outside of cell) due to numerical issues; in this  \
@@ -155,6 +163,7 @@ template_intersectSurfacesNewton(varying);
       const univary vec3f &origin,                                              \
       const univary vec3f &direction,                                           \
       const univary box1f &tRange,                                              \
+      const univary float &time,                                                \
       const univary float step,                                                 \
       const uniform int numValues,                                              \
       const float *uniform values,                                              \
@@ -162,14 +171,18 @@ template_intersectSurfacesNewton(varying);
   {                                                                             \
     univary float t0 = tRange.lower;                                            \
     univary float sample0 =                                                     \
-        sampler->computeSample_##univary(sampler, origin + t0 * direction);     \
+        sampler->computeSample_##univary(sampler,                               \
+                                         origin + t0 * direction,               \
+                                         time);                                 \
                                                                                 \
     univary float t;                                                            \
                                                                                 \
     while (t0 < tRange.upper) {                                                 \
       t = t0 + step;                                                            \
       const univary float sample =                                              \
-          sampler->computeSample_##univary(sampler, origin + t * direction);    \
+          sampler->computeSample_##univary(sampler,                             \
+                                           origin + t * direction,              \
+                                           time);                               \
                                                                                 \
       univary float tHit    = inf;                                              \
       univary float epsilon = inf;                                              \
@@ -183,6 +196,7 @@ template_intersectSurfacesNewton(varying);
           univary float tIso = bisect(sampler,                                  \
                                       origin,                                   \
                                       direction,                                \
+                                      time,                                     \
                                       t0,                                       \
                                       sample0,                                  \
                                       t,                                        \
@@ -202,7 +216,7 @@ template_intersectSurfacesNewton(varying);
       if (tHit < inf) {                                                         \
         hit.t       = tHit;                                                     \
         hit.sample  = value;                                                    \
-        hit.epsilon = epsilon;                                                  \
+        hit.epsilon = epsilon * length(direction); /* in object space */        \
         return true;                                                            \
       }                                                                         \
                                                                                 \

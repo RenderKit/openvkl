@@ -1,6 +1,41 @@
 Version History
 ---------------
 
+### Open VKL 0.12.0
+
+-   Added support for temporally varying volumes with associated API changes for
+    sampling, gradients, and hit iteration. This feature can be used to enable
+    motion blurred rendering
+-   Structured regular volumes:
+    -   Support for temporally structured and temporally unstructured (TUV)
+        input data
+    -   Improved `nominalDeltaT` for interval iteration
+    -   Interval iterator robustness improvements for axis-aligned rays
+    -   Sampling performance improvements
+-   VDB volumes:
+    -   Multi-attribute support (including three-component float grids)
+    -   Interval iterator robustness improvements for axis-aligned rays
+    -   Performance improvements for scalar sampling
+    -   Now restricting volumes to exactly four levels
+    -   Allowing leaf nodes on the lowest level only
+-   Unstructured volumes:
+    -   Improved `nominalDeltaT` for interval iteration
+-   `vdb_util` updates:
+    -   Support for loading multi-attribute .vdb files (`float` and `Vec3s`
+        grids)
+    -   Fix order of rotation matrix coefficients loaded from .vdb files
+-   vklExamples additions demonstrating:
+    -   Motion blurred rendering on temporally structured and temporally
+        unstructured volumes (`structuredRegular` only)
+    -   Support for `vdb` multi-attribute volumes
+    -   Hit iterator time support
+-   Superbuild updates to:
+    -   Embree 3.12.2
+    -   rkcommon 1.6.0
+    -   ISPC 1.15.0
+    -   OpenVDB 8.0.0
+-   Minimum rkcommon version is now 1.6.0
+
 ### Open VKL 0.11.0
 
 -   Introduced API support for multi-attribute volumes, including APIs for

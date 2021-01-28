@@ -4,7 +4,10 @@
 include(openvkl_ispc)
 include(openvkl_macros)
 
-include_directories_ispc(${PROJECT_SOURCE_DIR}/openvkl/include)
+include_directories_ispc(
+  ${PROJECT_SOURCE_DIR}/openvkl/include
+  ${RKCOMMON_INCLUDE_DIRS}
+)
 
 option(VKL_BUILD_VDB_ITERATOR_SIZE_HELPER "Build helper program that computes sizeof(VdbIterator)" OFF)
 

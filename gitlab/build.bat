@@ -1,5 +1,5 @@
 @echo off
-rem Copyright 2019-2020 Intel Corporation
+rem Copyright 2019-2021 Intel Corporation
 rem SPDX-License-Identifier: Apache-2.0
 
 setlocal
@@ -15,6 +15,7 @@ cmake -L ^
 -D CMAKE_INSTALL_LIBDIR=lib ^
 -D BUILD_OPENVKL_BENCHMARKS=OFF ^
 -D BUILD_OPENVKL_TESTING=ON ^
+%~3 %~4 %~5 %~6 %~7 %~8 %~9 ^
 ../superbuild
 
 cmake --build . --verbose --config Release --target ALL_BUILD -- /m /nologo

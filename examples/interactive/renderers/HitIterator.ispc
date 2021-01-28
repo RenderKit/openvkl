@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -6,6 +6,8 @@
 struct HitIterator
 {
   Renderer super;
+
+  float time;
 };
 
 vec3f HitIterator_renderPixel(Renderer *uniform _self,
@@ -28,6 +30,8 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
+  const float time = self->time;
+
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
   uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
 
@@ -35,6 +39,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
                                                 (varying vkl_vec3f *)&ray.org,
                                                 (varying vkl_vec3f *)&ray.dir,
                                                 &tRange,
+                                                &time,
                                                 scene->valueSelector,
                                                 hitIteratorBuffer);
 
@@ -76,6 +81,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
                                   (varying vkl_vec3f *)&c,
                                   (varying vkl_vec3f *)&wo,
                                   &tShadowRange,
+                                  &time,
                                   scene->valueSelector,
                                   shadowHitIteratorBuffer);
           if (!vklIterateHitV(shadowIterator, &shadowHit)) {
@@ -104,4 +110,11 @@ export void *uniform HitIterator_create()
   HitIterator *uniform self = uniform new HitIterator;
   self->super.renderPixel   = HitIterator_renderPixel;
   return self;
+}
+
+export void HitIterator_set(void *uniform _self, const uniform float time)
+{
+  HitIterator *uniform self = (HitIterator *)_self;
+
+  self->time = time;
 }

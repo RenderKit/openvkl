@@ -1,8 +1,9 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
+#include <algorithm>
 #include "../../common/export_util.h"
 #include "../../iterator/UnstructuredIterator.h"
 #include "../../sampler/Sampler.h"
@@ -31,22 +32,26 @@ namespace openvkl {
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples,
-                          unsigned int attributeIndex) const override final;
+                          unsigned int attributeIndex,
+                          const vfloatn<W> &time) const override final;
 
       void computeSampleN(unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
-                          unsigned int attributeIndex) const override final;
+                          unsigned int attributeIndex,
+                          const float *times) const override final;
 
       void computeGradientV(const vintn<W> &valid,
                             const vvec3fn<W> &objectCoordinates,
                             vvec3fn<W> &gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const vfloatn<W> &time) const override final;
 
       void computeGradientN(unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
-                            unsigned int attributeIndex) const override final;
+                            unsigned int attributeIndex,
+                            const float *times) const override final;
 
      protected:
       using Sampler<W>::ispcEquivalent;
@@ -75,7 +80,7 @@ namespace openvkl {
     inline void ParticleSampler<W>::commit()
     {
       const int maxIteratorDepth =
-          max(this->template getParam<int>("maxIteratorDepth",
+          std::max(this->template getParam<int>("maxIteratorDepth",
                                            volume->getMaxIteratorDepth()),
               0);
 
@@ -87,9 +92,11 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
         vfloatn<W> &samples,
-        unsigned int attributeIndex) const
+        unsigned int attributeIndex,
+        const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VKLParticleVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -102,9 +109,11 @@ namespace openvkl {
         unsigned int N,
         const vvec3fn<1> *objectCoordinates,
         float *samples,
-        unsigned int attributeIndex) const
+        unsigned int attributeIndex,
+        const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(Sampler_sample_N_export,
                 ispcEquivalent,
                 N,
@@ -117,9 +126,11 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
         vvec3fn<W> &gradients,
-        unsigned int attributeIndex) const
+        unsigned int attributeIndex,
+        const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(time);
       CALL_ISPC(VKLParticleVolume_gradient_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -132,9 +143,11 @@ namespace openvkl {
         unsigned int N,
         const vvec3fn<1> *objectCoordinates,
         vvec3fn<1> *gradients,
-        unsigned int attributeIndex) const
+        unsigned int attributeIndex,
+        const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
+      assertValidTimes(N, times);
       CALL_ISPC(Sampler_gradient_N_export,
                 ispcEquivalent,
                 N,

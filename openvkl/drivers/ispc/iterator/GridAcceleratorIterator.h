@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -67,6 +67,7 @@ namespace openvkl {
                           const vvec3fn<W> &origin,
                           const vvec3fn<W> &direction,
                           const vrange1fn<W> &tRange,
+                          const vfloatn<W> &times,
                           const ValueSelector<W> *valueSelector) override final;
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitN<W> &hit,
@@ -77,6 +78,7 @@ namespace openvkl {
       void initializeHitU(const vvec3fn<1> &origin,
                           const vvec3fn<1> &direction,
                           const vrange1fn<1> &tRange,
+                          float time,
                           const ValueSelector<W> *valueSelector) override final;
 
       void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result) override final;

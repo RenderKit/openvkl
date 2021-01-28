@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "HitIterator.h"
@@ -11,6 +11,15 @@ namespace openvkl {
     HitIterator::HitIterator()
     {
       ispcEquivalent = ispc::HitIterator_create();
+    }
+
+    void HitIterator::commit()
+    {
+      Renderer::commit();
+
+      time = getParam<float>("time", 0.f);
+
+      ispc::HitIterator_set(ispcEquivalent, time);
     }
 
     vec3f HitIterator::renderPixel(const Scene &scene, Ray &ray, const vec4i &)
@@ -34,6 +43,7 @@ namespace openvkl {
                                                    (vkl_vec3f *)&ray.org,
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
+                                                   time,
                                                    scene.valueSelector,
                                                    hitIteratorBuffer);
 
@@ -75,6 +85,7 @@ namespace openvkl {
                                      (vkl_vec3f *)&c,
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,
+                                     time,
                                      scene.valueSelector,
                                      shadowHitIteratorBuffer);
               if (!vklIterateHit(shadowIterator, &shadowHit)) {

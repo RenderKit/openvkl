@@ -7,12 +7,38 @@ usage of the API, as well as full renderers showing recommended usage.
 Tutorials
 ---------
 
-Simple tutorials can be found in the `examples/` directory. These are:
+Simple tutorials can be found in the
+[`examples/`](https://github.com/openvkl/openvkl/tree/master/examples)
+directory. These are:
 
-* `vklTutorial.c` : usage of the C API
-* `vklTutorialISPC.[cpp,ispc]` : combined usage of the C and ISPC APIs
+* [`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c): usage of the C API
+* [`vklTutorialISPC.cpp`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.cpp)
+  and
+  [`vklTutorialISPC.ispc`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.ispc)
+  : combined usage of the C and ISPC APIs
 
-For quick reference, the contents of `vklTutorial.c` are shown below.
+Interactive examples
+--------------------
+
+Open VKL also ships with an interactive example application,
+[`vklExamples`](https://github.com/openvkl/openvkl/blob/master/examples/interactive/vklExamples.cpp).
+This interactive viewer demonstrates multiple example renderers including a path
+tracer, isosurface renderer (using hit iterators), and ray marcher. The viewer
+UI supports switching between renderers interactively.
+
+Each renderer has both a C++ and ISPC implementation showing recommended API
+usage. These implementations are available in the
+[`examples/interactive/renderers/`](https://github.com/openvkl/openvkl/tree/master/examples/interactive/renderers)
+directory.
+
+![`vklExamples` interactive example application][imgVklExamples]
+
+vklTutorial source
+------------------
+
+For quick reference, the contents of
+[`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c)
+are shown below.
 
 ``` cpp
 
@@ -53,8 +79,9 @@ void demoScalarAPI(VKLVolume volume)
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
-  float sample   = vklComputeSample(sampler, &coord, attributeIndex);
-  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex);
+  float time                  = 0.f;
+  float sample   = vklComputeSample(sampler, &coord, attributeIndex, time);
+  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex, time);
   printf("\tsampling and gradient computation (first attribute)\n");
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -63,7 +90,7 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3];
-  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices);
+  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, time);
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
@@ -121,6 +148,9 @@ void demoScalarAPI(VKLVolume volume)
           interval.valueRange.upper,
           interval.nominalDeltaT);
     }
+#if defined(_MSC_VER)
+    _freea(buffer);
+#endif
   }
 
   // hit iteration
@@ -133,7 +163,7 @@ void demoScalarAPI(VKLVolume volume)
     char buffer[vklGetHitIteratorSize(sampler)];
 #endif
     VKLHitIterator hitIterator = vklInitHitIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+        sampler, &rayOrigin, &rayDirection, &rayTRange, time, selector, buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -147,6 +177,9 @@ void demoScalarAPI(VKLVolume volume)
              hit.sample,
              hit.epsilon);
     }
+#if defined(_MSC_VER)
+    _freea(buffer);
+#endif
   }
 
   vklRelease(selector);
@@ -177,10 +210,11 @@ void demoVectorAPI(VKLVolume volume)
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
+  float time4[4]              = {0.f};
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex);
-  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex);
+  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex, time4);
+  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex, time4);
 
   printf("\n\tsampling and gradient computation (first attribute)\n");
 
@@ -194,7 +228,8 @@ void demoVectorAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 4];
-  vklComputeSampleM4(valid, sampler, &coord4, samples, M, attributeIndices);
+  vklComputeSampleM4(
+      valid, sampler, &coord4, samples, M, attributeIndices, time4);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -237,10 +272,11 @@ void demoStreamAPI(VKLVolume volume)
   // sample, gradient (first attribute)
   printf("\n\tsampling and gradient computation (first attribute)\n");
   unsigned int attributeIndex = 0;
+  float time [5]              = {0.f};
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex);
-  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex);
+  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
+  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex, time);
 
   for (int i = 0; i < 5; i++) {
     printf("\t\tsample[%d] = %f\n", i, sample[i]);
@@ -251,7 +287,7 @@ void demoStreamAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 5];
-  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices);
+  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices, time);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -358,15 +394,3 @@ int main()
   return 0;
 }
 ```
-
-Interactive examples
---------------------
-
-Open VKL also ships with an interactive example application, `vklExamples`. This
-interactive viewer demonstrates multiple example renderers including a path
-tracer, isosurface renderer (using hit iterators), and ray marcher. The viewer
-UI supports switching between renderers interactively.
-
-Each renderer has both a C++ and ISPC implementation showing recommended API
-usage. These implementations are available in the
-`examples/interactive/renderers/` directory.

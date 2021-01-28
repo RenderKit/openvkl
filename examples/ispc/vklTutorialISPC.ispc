@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.isph>
@@ -83,6 +83,9 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
         rayTRange.lower,
         rayTRange.upper);
 
+  // time value for hit iteration
+  float time = 0.f;
+
   // interval iteration
   uniform unsigned int8 bufferInterval[VKL_MAX_INTERVAL_ITERATOR_SIZE];
   VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
@@ -107,8 +110,13 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
 
   // hit iteration
   uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
-  VKLHitIterator hitIterator = vklInitHitIteratorV(
-      sampler, &rayOrigin, &rayDirection, &rayTRange, selector, bufferHit);
+  VKLHitIterator hitIterator = vklInitHitIteratorV(sampler,
+                                                   &rayOrigin,
+                                                   &rayDirection,
+                                                   &rayTRange,
+                                                   &time,
+                                                   selector,
+                                                   bufferHit);
 
   print("hit iterator for values % %\n", values[0], values[1]);
 

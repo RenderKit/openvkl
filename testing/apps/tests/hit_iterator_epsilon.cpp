@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -16,6 +16,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
                          const vkl_vec3f &direction = vkl_vec3f{0.f, 0.f, 1.f})
 {
   const vkl_range1f tRange{0.f, inf};
+  const float time = 0.f;
 
   VKLVolume volume = testingVolume->getVKLVolume();
   VKLSampler sampler = vklNewSampler(volume);
@@ -27,7 +28,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   std::vector<char> buffer(vklGetHitIteratorSize(sampler));
   VKLHitIterator iterator = vklInitHitIterator(
-      sampler, &origin, &direction, &tRange, valueSelector, buffer.data());
+      sampler, &origin, &direction, &tRange, time, valueSelector, buffer.data());
 
   VKLHit hit;
   hit.epsilon = 0.f;
@@ -83,6 +84,8 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
     directions.z[i] = direction.z;
   }
 
+  const std::vector<float> times(W, 0.f);
+
   VKLVolume volume = testingVolume->getVKLVolume();
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
@@ -103,6 +106,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
                                                  (vkl_vvec3fW *)&origins,
                                                  (vkl_vvec3fW *)&directions,
                                                  (vkl_vrange1fW *)&tRanges,
+                                                 times.data(),
                                                  valueSelector,
                                                  buffer.data());
 

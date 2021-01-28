@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Sampler.ih"
@@ -29,7 +29,7 @@ export void EXPORT_UNIQUE(Sampler_destroy,
   delete sampler;
 }
 
-// these functions do not yet support multi-attribute volumes.
+// these functions do not yet support multi-attribute or time-varying volumes.
 
 export void EXPORT_UNIQUE(Sampler_sample_N_export,
                           void *uniform _self,
@@ -39,9 +39,11 @@ export void EXPORT_UNIQUE(Sampler_sample_N_export,
 {
   Sampler *uniform self = (Sampler * uniform) _self;
 
+  varying float time = 0.f;
+
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
-    samples[i]       = self->computeSample_varying(self, oc);
+    samples[i]       = self->computeSample_varying(self, oc, time);
   }
 }
 

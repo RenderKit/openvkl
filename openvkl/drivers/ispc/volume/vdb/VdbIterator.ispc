@@ -6,12 +6,15 @@
 #include "VdbSampler.ih"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
-#include "math/math.ih"
+#include "rkcommon/math/math.ih"
 
 // Generated headers.
 #include "openvkl_vdb/VdbQueryVoxel_0.ih"
 #include "openvkl_vdb/HDDA_0.ih"
 
+// Ignore warning about exporting uniform-pointer-to-varying, as this is in
+// fact legal.
+#pragma ignore warning(all)
 export void EXPORT_UNIQUE(VdbIterator_export,
                           uniform box1f &dummy_box1f,
                           const varying VdbIterator *uniform it)
@@ -70,7 +73,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   intersect_box(
       rayOrg,
-      safe_rcp(rayDir),
+      dir_safe_rcp(rayDir),
       ((varying vec3f)make_vec3f(0.f, 0.f, 0.f)),
       ((varying vec3f)make_vec3f(grid->activeSize.x,
                                  grid->activeSize.y,
@@ -78,16 +81,14 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
       tEnter,
       tExit);
 
-  float tMin = tRange.lower;
   if (tEnter > tExit) {
-    tMin       = 0;
     self->tMax = neg_inf;
+    self->dda.t = 0;
   } else {
-    tMin       = max(tRange.lower, tEnter * 0.999f);
+    const float tMin = max(tRange.lower, tEnter * 0.999f);
     self->tMax = min(tRange.upper, tExit * 1.001f);
+    ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
   }
-
-  ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
 }
 
 inline void VdbIterator_iterateIntervalInternal(

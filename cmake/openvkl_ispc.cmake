@@ -4,7 +4,7 @@
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.14.1")
+set(ISPC_VERSION_WORKING "1.15.0" "1.14.1")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -167,7 +167,7 @@ macro (OPENVKL_ISPC_COMPILE)
 
   set(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR}/ispc_${ISPC_TARGETS_STR})
 
-  if(ISPC_INCLUDE_DIR)
+  if (ISPC_INCLUDE_DIR)
     string(REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
     set(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS})
   endif()
@@ -254,7 +254,7 @@ macro (OPENVKL_ISPC_COMPILE)
       --addressing=${OPENVKL_ISPC_ADDRESSING}
       ${ISPC_OPT_FLAGS}
       --target=${ISPC_TARGET_ARGS}
-      --woff
+      --wno-perf
       ${ISPC_ADDITIONAL_ARGS}
       -h ${ISPC_TARGET_DIR}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep

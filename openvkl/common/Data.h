@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -34,6 +34,8 @@ namespace openvkl {
          VKLDataCreationFlags dataCreationFlags,
          size_t byteStride);
 
+    Data(size_t numItems, VKLDataType dataType);
+
     virtual ~Data() override;
 
     virtual std::string toString() const override;
@@ -52,7 +54,6 @@ namespace openvkl {
     typename std::enable_if<!std::is_pointer<T>::value, bool>::type is() const;
 
     size_t numItems;
-    size_t numBytes;
     VKLDataType dataType;
     VKLDataCreationFlags dataCreationFlags;
     size_t byteStride;
@@ -142,6 +143,8 @@ namespace openvkl {
   {
     using value_type = T;
     using interator  = Iter1D<T>;
+
+    DataT(size_t numItems) : Data(numItems, VKLTypeFor<T>::value) {}
 
     Iter1D<T> begin() const
     {
@@ -252,6 +255,19 @@ namespace openvkl {
 
   inline std::vector<const ispc::Data1D *> ispcs(
       const std::vector<Ref<const Data>> &dataRefs)
+  {
+    std::vector<const ispc::Data1D *> r;
+
+    for (const auto &d : dataRefs) {
+      r.push_back(ispc(d));
+    }
+
+    return r;
+  }
+
+  template <typename T>
+  inline std::vector<const ispc::Data1D *> ispcs(
+      const std::vector<Ref<const DataT<T>>> &dataRefs)
   {
     std::vector<const ispc::Data1D *> r;
 

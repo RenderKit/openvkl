@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -48,6 +48,7 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   self->origin        = *((univary vec3f * uniform) _origin);                  \
   self->direction     = *((univary vec3f * uniform) _direction);               \
   self->tRange        = *((univary box1f * uniform) _tRange);                  \
+  self->time          = *((univary float * uniform) _time);                    \
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;      \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
@@ -68,12 +69,9 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
                                                                                \
   self->intervalState.currentCellIndex = make_vec3i(-1);                       \
                                                                                \
-  /* compute interval nominal deltaT based on gridSpacing and direction; the   \
-   below is equivalent to: dot(abs(normalize(direction)), gridSpacing) /       \
-   length(direction)*/                                                         \
   self->intervalState.nominalDeltaT =                                          \
-      dot(absf(self->direction), volume->gridSpacing) /                        \
-      dot(self->direction, self->direction);                                   \
+      reduce_min(volume->gridSpacing                                           \
+      * rcp_safe(absf(self->direction))); /* in ray space */                   \
                                                                                \
   self->hitState.currentCellIndex  = make_vec3i(-1);                           \
   self->hitState.currentCellTRange = make_box1f(inf, -inf);
@@ -84,6 +82,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorU_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
+                          void *uniform _time,
                           void *uniform _valueSelector)
 {
   template_GridAcceleratorIterator_Initialize_internal(uniform);
@@ -96,6 +95,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
+                          void *uniform _time,
                           void *uniform _valueSelector)
 {
   if (!imask[programIndex]) {
@@ -178,6 +178,9 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
 }
 #undef template_GridAcceleratorIterator_iterateInterval_internal
 
+#define cif_uniform if
+#define cif_varying cif
+
 #define template_GridAcceleratorIterator_iterateHit_internal(univary)          \
   univary GridAcceleratorIterator *uniform self =                              \
       (univary GridAcceleratorIterator * uniform) _self;                       \
@@ -191,7 +194,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
     return;                                                                    \
   }                                                                            \
                                                                                \
-  cif(!self->valueSelector || self->valueSelector->numValues == 0)             \
+  if(!self->valueSelector || self->valueSelector->numValues == 0)              \
   {                                                                            \
     *result = false;                                                           \
     return;                                                                    \
@@ -201,7 +204,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
       (const SharedStructuredVolume *uniform)self->sampler->volume;            \
                                                                                \
   /* first iteration */                                                        \
-  cif(self->hitState.currentCellIndex.x == -1)                                 \
+  __vkl_concat(cif_, univary)(self->hitState.currentCellIndex.x == -1)         \
   {                                                                            \
     self->hitState.activeCell =                                                \
         GridAccelerator_nextCell(volume->accelerator,                          \
@@ -226,6 +229,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                   self->origin,                                \
                                   self->direction,                             \
                                   self->hitState.currentCellTRange,            \
+                                  self->time,                                  \
                                   0.5f * step,                                 \
                                   self->valueSelector->numValues,              \
                                   self->valueSelector->values,                 \

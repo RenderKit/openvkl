@@ -3,9 +3,10 @@
 
 #pragma once
 
-#include "box.ih"
-#include "vec.ih"
+#include "rkcommon/math/box.ih"
+
 #include "Scene.h"
+
 // openvkl
 #include "openvkl/openvkl.isph"
 
@@ -31,7 +32,7 @@ struct Renderer
   int frameID;
 
   vec3f (*uniform renderPixel)(uniform Renderer *uniform self,
-                               const uniform Scene* uniform scene,
+                               const uniform Scene *uniform scene,
                                Ray &ray,
                                const vec2i &pixel,
                                const uniform int &frameID,
@@ -54,7 +55,7 @@ inline Ray Renderer_computeRay(uniform Renderer *uniform self,
   return ray;
 }
 
-inline vec4f Renderer_sampleTransferFunction(const uniform Scene* uniform scene,
+inline vec4f Renderer_sampleTransferFunction(const uniform Scene *uniform scene,
                                              float value)
 {
   vec4f colorAndOpacity = make_vec4f(0.f);
@@ -83,7 +84,8 @@ inline vec4f Renderer_sampleTransferFunction(const uniform Scene* uniform scene,
   // the final interpolated value
   return ((1.f - remainder) * scene->tfColorsAndOpacities[index] +
           remainder * scene->tfColorsAndOpacities[min(
-                          index + 1, scene->tfNumColorsAndOpacities - 1)]);
+                          ((int32)(index + 1)),
+                          ((int32)(scene->tfNumColorsAndOpacities - 1)))]);
 }
 
 inline void intersectBox(const Ray &ray,
@@ -101,15 +103,20 @@ inline void intersectBox(const Ray &ray,
 // TEA - Random numbers based on Tiny Encryption Algorithm ////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-inline void tea8(unsigned int& v0, unsigned int& v1)
+inline void tea8(unsigned int &_v0, unsigned int &_v1)
 {
+  unsigned int v0  = _v0;  // Operate on registers to avoid slowdown!
+  unsigned int v1  = _v1;
   unsigned int sum = 0;
 
-  for(uniform int i = 0; i < 8; i++) { // just 8 instead of 32 rounds
+  for (uniform int i = 0; i < 8; i++) {  // just 8 instead of 32 rounds
     sum += 0x9e3779b9;
     v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
     v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
   }
+
+  _v0 = v0;
+  _v1 = v1;
 }
 
 struct RandomTEA
@@ -117,7 +124,7 @@ struct RandomTEA
   unsigned int v0, v1;
 };
 
-inline void RandomTEA__Constructor(varying RandomTEA* uniform this,
+inline void RandomTEA__Constructor(varying RandomTEA *uniform this,
                                    const unsigned int idx,
                                    const unsigned int seed)
 {
@@ -125,8 +132,9 @@ inline void RandomTEA__Constructor(varying RandomTEA* uniform this,
   this->v1 = seed;
 }
 
-inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) {
+inline varying vec2f RandomTEA__getFloats(varying RandomTEA *uniform this)
+{
   tea8(this->v0, this->v1);
-  const float tofloat = 2.3283064365386962890625e-10f; // 1/2^32
+  const float tofloat = 2.3283064365386962890625e-10f;  // 1/2^32
   return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
 }

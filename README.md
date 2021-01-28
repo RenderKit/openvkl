@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v0.12.0 of Intel® Open VKL. For changes and new features
+This is release v0.13.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 

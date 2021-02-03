@@ -114,6 +114,18 @@ build-centos8:
   script:
   - gitlab/build.sh -G Ninja
 
+# uses a newer CMake which allows OpenVDB to build
+build-centos8-module-cmake:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  script:
+    - module use $SHARED_MODULES_PATH
+    - module load cmake
+    - gitlab/build.sh -G Ninja
+  tags:
+    - docker
+    - modules
+
 build-ubuntu16.04:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
@@ -241,6 +253,12 @@ test-functional-centos8:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   needs:
     - build-centos8
+
+test-functional-centos8-module-cmake:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  needs:
+    - build-centos8-module-cmake
 
 test-functional-ubuntu16.04:
   <<: *test_functional_job_docker

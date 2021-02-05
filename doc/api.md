@@ -1,5 +1,5 @@
-Intel® Open VKL API
-===================
+Open VKL API
+============
 
 To access the Open VKL API you first need to include the Open VKL header. For
 C99 or C++:

@@ -37,7 +37,7 @@ namespace openvkl {
       {
         nominalLength   = bounds.upper - bounds.lower;
         nominalLength.x = -nominalLength.x;  // leaf
-        valueRange    = range;
+        valueRange      = range;
       }
 
       static void *create(RTCThreadLocalAllocator alloc,

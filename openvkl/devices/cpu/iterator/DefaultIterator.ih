@@ -14,11 +14,13 @@ struct Volume;
  * Add a pointer of this type as the first member in your interval iterator
  * state struct to make it usable with the default hit iterator.
  */
-typedef void (*uniform IterateIntervalFunc)(const int *uniform imask,
-                                            void *uniform _self,
-                                            void *uniform _interval,
-                                            const uniform box1f &valueRange,
-                                            uniform int *uniform _result);
+typedef void (*uniform IterateIntervalFunc)(
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &valueRange,
+    const uniform bool elementaryCellIteration,
+    uniform int *uniform _result);
 
 /*
  * Default iterators share this state as they represent iteration along
@@ -28,6 +30,7 @@ struct DefaultIntervalIterator
 {
   /* Enable the default hit iterator. */
   IterateIntervalFunc iterateInterval;
+  uniform bool elementaryCellIterationSupported;
 
   ValueSelector *uniform valueSelector;
 

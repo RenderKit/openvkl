@@ -318,9 +318,11 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
         throw std::runtime_error("improper -pixelRange arguments");
       }
       params.pixelRange.lower.x = atoi(argv[argIndex++]);
-      params.pixelRange.lower.y = atoi(argv[argIndex++]);
+      int y0 = atoi(argv[argIndex++]);
       params.pixelRange.upper.x = atoi(argv[argIndex++]);
-      params.pixelRange.upper.y = atoi(argv[argIndex++]);
+      int y1 = atoi(argv[argIndex++]);
+      params.pixelRange.lower.y = params.windowSize.y-y1;
+      params.pixelRange.upper.y = params.windowSize.y-y0;
     } else if (switchArg == "-disable-vsync") {
       params.disableVSync = true;
     } else if (switchArg == "-gridOrigin") {
@@ -804,6 +806,8 @@ void setupVolume(ViewerParams &params,
             params.gridSpacing,
             VKL_HEXAHEDRON,
             false);
+      } else if (params.field == "mixed") {
+        testingVolume = std::make_shared<UnstructuredVolumeMixedSimple>();
       } else {
         testingVolume = std::make_shared<WaveletUnstructuredProceduralVolume>(
             params.dimensions,

@@ -18,12 +18,13 @@ export void EXPORT_UNIQUE(DefaultIterator_export,
 {
 }
 
-void DefaultIntervalIterator_iterateIntervalInternal(const int *uniform imask,
-                                                     void *uniform _self,
-                                                     void *uniform _interval,
-                                                     const uniform box1f &valueRange,
-                                                     uniform int *uniform
-                                                         _result);
+void DefaultIntervalIterator_iterateIntervalInternal(
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &valueRange,
+    const uniform bool /*elementaryCellIteration*/,
+    uniform int *uniform _result);
 
 export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
                           const int *uniform imask,
@@ -42,7 +43,10 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
+  /* Enable the default hit iterator. */
   self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
+  self->elementaryCellIterationSupported = false;
+
   const vec3f origin    = *((varying vec3f * uniform) _origin);
   const vec3f direction = *((varying vec3f * uniform) _direction);
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
@@ -66,6 +70,7 @@ inline void DefaultIntervalIterator_iterateIntervalInternal(
     void *uniform _self,
     void *uniform _interval,
     const uniform box1f &valueRange,
+    const uniform bool /*elementaryCellIteration*/,
     uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
@@ -128,7 +133,7 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
     valueRange.upper = inf;
   }
   DefaultIntervalIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRange, _result);
+      imask, _self, _interval, valueRange, false, _result);
 }
 
 // -----------------------------------------------------------------------------
@@ -164,6 +169,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
 struct IntervalIteratorT
 {
   IterateIntervalFunc iterate;
+  uniform bool elementaryCellIterationSupported;
 };
 
 export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
@@ -196,6 +202,13 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
   // Generate intervals using the interval iterator until we either run out
   // or find an isosurface hit.
 
+  // We enable elementary cell iteration for more robust bracketing intervals,
+  // if the underlying interval iterator supports it. The bisection method can
+  // then use this knowledge (i.e. if we have an elementary cell tRange) to
+  // further improve robustness of returned hits.
+  const uniform bool elementaryCellIteration =
+      intervalIterator->elementaryCellIterationSupported;
+
   for (uniform int i = 0;; ++i) {
     const int needInterval = isempty1f(self->currentInterval.tRange);
     int haveInterval       = !needInterval;
@@ -203,6 +216,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                               self->intervalIteratorState,
                               &self->currentInterval,
                               self->valueSelector->valuesMinMax,
+                              elementaryCellIteration,
                               (int *uniform) & haveInterval);
 
     if (!haveInterval) {
@@ -212,27 +226,46 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       return;
     }
 
-    varying Hit *uniform hit = (varying Hit * uniform) _hit;
-    hit->t                   = inf;
-    bool foundHit =
-        intersectSurfacesBisection(self->sampler,
-                                   self->origin,
-                                   self->direction,
-                                   self->currentInterval.tRange,
-                                   self->time,
-                                   0.5f * self->currentInterval.nominalDeltaT,
-                                   self->valueSelector->numValues,
-                                   self->valueSelector->values,
-                                   *hit);
+    // Interval iteration currently occurs on a single value range spanning all
+    // potential hit values; this can lead to more intervals than necessary when
+    // we have many hit values spread over a wide value range. So we do more
+    // specific checks per hit value here to see if we can skip some of these
+    // intervals.
+    bool intervalOverlapsHitValues = false;
 
-    *result |= foundHit;
+    for (uniform int j = 0; j < self->valueSelector->numValues; j++) {
+      const uniform float value = self->valueSelector->values[j];
 
-    if (foundHit) {
-      self->currentInterval.tRange.lower = hit->t + hit->epsilon;
-      return;
+      if (value >= self->currentInterval.valueRange.lower &&
+          value <= self->currentInterval.valueRange.upper) {
+        intervalOverlapsHitValues = true;
+        break;
+      }
+    }
+
+    if (intervalOverlapsHitValues) {
+      varying Hit *uniform hit = (varying Hit * uniform) _hit;
+      hit->t                   = inf;
+      bool foundHit =
+          intersectSurfacesBisection(self->sampler,
+                                     self->origin,
+                                     self->direction,
+                                     self->currentInterval.tRange,
+                                     self->time,
+                                     self->currentInterval.nominalDeltaT,
+                                     self->valueSelector->numValues,
+                                     self->valueSelector->values,
+                                     elementaryCellIteration,
+                                     *hit);
+
+      *result |= foundHit;
+
+      if (foundHit) {
+        self->currentInterval.tRange.lower = hit->t + hit->epsilon;
+        return;
+      }
     }
 
     self->currentInterval.tRange.lower = inf;
   }
 }
-

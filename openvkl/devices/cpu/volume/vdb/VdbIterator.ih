@@ -12,6 +12,7 @@ struct VdbIterator
 {
   /* Enable the default hit iterator. */
   IterateIntervalFunc iterateInterval;
+  uniform bool elementaryCellIterationSupported;
 
   uniform const VdbGrid *uniform grid;
   uniform const ValueSelector *uniform valueSelector;

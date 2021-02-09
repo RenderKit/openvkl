@@ -110,7 +110,7 @@ inline void traverseEmbree(uniform Node *uniform root,
     } else {
       // leaf
       uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;
-      const bool in0 = pointInAABBTest(leaf->bounds, samplePos);
+      const bool in0                 = pointInAABBTest(leaf->bounds, samplePos);
       if (in0 && userFunc(userPtr, leaf->cellID, result, samplePos))
         return;
     }
@@ -867,6 +867,355 @@ static bool intersectAndSampleCell(const void *uniform userData,
   // Return true if samplePos is inside the cell
   return hit;
 }
+
+#define template_stable_tri_normal(univary)                                   \
+  static inline univary vec3f stable_tri_normal(                              \
+      const univary vec3f &a, const univary vec3f &b, const univary vec3f &c) \
+  {                                                                           \
+    const univary float ab_x = a.z * b.y;                                     \
+    const univary float ab_y = a.x * b.z;                                     \
+    const univary float ab_z = a.y * b.x;                                     \
+    const univary float bc_x = b.z * c.y;                                     \
+    const univary float bc_y = b.x * c.z;                                     \
+    const univary float bc_z = b.y * c.x;                                     \
+    const univary vec3f cross_ab =                                            \
+        make_vec3f(a.y * b.z - ab_x, a.z * b.x - ab_y, a.x * b.y - ab_z);     \
+    const univary vec3f cross_bc =                                            \
+        make_vec3f(b.y * c.z - bc_x, b.z * c.x - bc_y, b.x * c.y - bc_z);     \
+    const univary bool sx = abs(ab_x) < abs(bc_x);                            \
+    const univary bool sy = abs(ab_y) < abs(bc_y);                            \
+    const univary bool sz = abs(ab_z) < abs(bc_z);                            \
+    return make_vec3f(sx ? cross_ab.x : cross_bc.x,                           \
+                      sy ? cross_ab.y : cross_bc.y,                           \
+                      sz ? cross_ab.z : cross_bc.z);                          \
+  }
+// template_stable_tri_normal(uniform);
+template_stable_tri_normal(varying);
+#undef template_stable_tri_normal
+
+#define template_intersectRayTri(univary)                        \
+  static inline void intersectRayTri_##univary(                  \
+      const univary vec3f &origin,                               \
+      const univary vec3f &direction,                            \
+      const uniform vec3f &p0,                                   \
+      const uniform vec3f &p1,                                   \
+      const uniform vec3f &p2,                                   \
+      univary bool &foundEntrance,                               \
+      univary bool &foundExit,                                   \
+      univary box1f &intersectedTRange)                          \
+  {                                                              \
+    const univary vec3f v0 = p0 - origin;                        \
+    const univary vec3f v1 = p1 - origin;                        \
+    const univary vec3f v2 = p2 - origin;                        \
+                                                                 \
+    /* calculate triangle edges */                               \
+    const univary vec3f e0 = v2 - v0;                            \
+    const univary vec3f e1 = v0 - v1;                            \
+    const univary vec3f e2 = v1 - v2;                            \
+                                                                 \
+    /* perform edge tests */                                     \
+    const univary float U = dot(cross(e0, v2 + v0), direction);  \
+    const univary float V = dot(cross(e1, v0 + v1), direction);  \
+    const univary float W = dot(cross(e2, v1 + v2), direction);  \
+    if (!foundEntrance) {                                        \
+      const univary float UVW = U + V + W;                       \
+      const univary float eps = 1e-6f * abs(UVW);                \
+      univary bool isenterhit = (min(U, min(V, W)) >= -eps);     \
+      if (isenterhit) {                                          \
+        const univary vec3f Ng  = stable_tri_normal(e0, e1, e2); \
+        const univary float den = 2.f * dot(Ng, direction);      \
+                                                                 \
+        /* perform depth test */                                 \
+        if (den != 0.f) {                                        \
+          const univary float T   = 2.f * dot(v0, Ng);           \
+          intersectedTRange.lower = rcp(den) * T;                \
+          foundEntrance           = true;                        \
+          return;                                                \
+        }                                                        \
+      }                                                          \
+    }                                                            \
+    if (!foundExit) {                                            \
+      const univary float UVW = U + V + W;                       \
+      const univary float eps = 1e-6f * abs(UVW);                \
+      univary bool isexithit  = (max(U, max(V, W)) <= eps);      \
+      if (isexithit) {                                           \
+        const univary vec3f Ng  = stable_tri_normal(e0, e1, e2); \
+        const univary float den = 2.f * dot(Ng, direction);      \
+                                                                 \
+        /* perform depth test */                                 \
+        if (den != 0.f) {                                        \
+          const univary float T   = 2.f * dot(v0, Ng);           \
+          intersectedTRange.upper = rcp(den) * T;                \
+          foundExit               = true;                        \
+          return;                                                \
+        }                                                        \
+      }                                                          \
+    }                                                            \
+    return;                                                      \
+  }
+// template_intersectRayTri(uniform);
+template_intersectRayTri(varying);
+#undef template_intersectRayTri
+
+#define template_intersectRayTet(univary)                               \
+  static inline univary box1f intersectRayTet_##univary(                \
+      const univary vec3f &origin,                                      \
+      const univary vec3f &direction,                                   \
+      const univary box1f &rangeLimit,                                  \
+      const VKLUnstructuredVolume *uniform volume,                      \
+      const uniform uint64 cellID)                                      \
+  {                                                                     \
+    /* // Get cell offset in index buffer */                            \
+    const uniform uint64 cOffset = getCellOffset(volume, cellID);       \
+                                                                        \
+    const uniform uint64 planes[4][3] = {                               \
+        {cOffset + 2, cOffset + 0, cOffset + 1},                        \
+        {cOffset + 3, cOffset + 1, cOffset + 0},                        \
+        {cOffset + 3, cOffset + 2, cOffset + 1},                        \
+        {cOffset + 2, cOffset + 3, cOffset + 0}};                       \
+    univary box1f intersectedTRange = make_box1f(neg_inf, inf);         \
+    univary bool foundExit          = false;                            \
+    univary bool foundEntrance      = false;                            \
+    for (uniform int i = 0; i < 4; ++i) {                               \
+      if (foundEntrance && foundExit)                                   \
+        break;                                                          \
+      const uniform vec3f p0 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][0])); \
+      const uniform vec3f p1 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][1])); \
+      const uniform vec3f p2 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][2])); \
+                                                                        \
+      intersectRayTri_##univary(origin,                                 \
+                                direction,                              \
+                                p0,                                     \
+                                p1,                                     \
+                                p2,                                     \
+                                foundEntrance,                          \
+                                foundExit,                              \
+                                intersectedTRange);                     \
+    }                                                                   \
+    if (foundEntrance && foundExit) {                                   \
+      intersectedTRange.lower =                                         \
+          max(intersectedTRange.lower, rangeLimit.lower);               \
+      intersectedTRange.upper =                                         \
+          min(intersectedTRange.upper, rangeLimit.upper);               \
+      return intersectedTRange;                                         \
+    }                                                                   \
+    return make_box1f(inf, neg_inf);                                    \
+  }
+
+// template_intersectRayTet(uniform);
+template_intersectRayTet(varying);
+#undef template_intersectRayTet
+
+#define template_intersectRayHex(univary)                               \
+  static inline univary box1f intersectRayHex_##univary(                \
+      const univary vec3f &origin,                                      \
+      const univary vec3f &direction,                                   \
+      const univary box1f &rangeLimit,                                  \
+      const VKLUnstructuredVolume *uniform volume,                      \
+      const uniform uint64 cellID)                                      \
+  {                                                                     \
+    /* // Get cell offset in index buffer */                            \
+    const uniform uint64 cOffset = getCellOffset(volume, cellID);       \
+                                                                        \
+    const uniform uint64 planes[12][3] = {                              \
+        {cOffset + 0, cOffset + 1, cOffset + 2},                        \
+        {cOffset + 0, cOffset + 2, cOffset + 3},                        \
+        {cOffset + 5, cOffset + 6, cOffset + 1},                        \
+        {cOffset + 6, cOffset + 2, cOffset + 1},                        \
+        {cOffset + 7, cOffset + 4, cOffset + 0},                        \
+        {cOffset + 7, cOffset + 0, cOffset + 3},                        \
+        {cOffset + 4, cOffset + 5, cOffset + 1},                        \
+        {cOffset + 4, cOffset + 1, cOffset + 0},                        \
+        {cOffset + 5, cOffset + 4, cOffset + 6},                        \
+        {cOffset + 6, cOffset + 4, cOffset + 7},                        \
+        {cOffset + 6, cOffset + 7, cOffset + 2},                        \
+        {cOffset + 2, cOffset + 7, cOffset + 3}};                       \
+    univary box1f intersectedTRange = make_box1f(neg_inf, inf);         \
+    univary bool foundExit          = false;                            \
+    univary bool foundEntrance      = false;                            \
+    for (uniform int i = 0; i < 12; ++i) {                              \
+      if (foundEntrance && foundExit)                                   \
+        break;                                                          \
+      const uniform vec3f p0 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][0])); \
+      const uniform vec3f p1 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][1])); \
+      const uniform vec3f p2 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][2])); \
+                                                                        \
+      intersectRayTri_##univary(origin,                                 \
+                                direction,                              \
+                                p0,                                     \
+                                p1,                                     \
+                                p2,                                     \
+                                foundEntrance,                          \
+                                foundExit,                              \
+                                intersectedTRange);                     \
+    }                                                                   \
+    if (foundEntrance && foundExit) {                                   \
+      intersectedTRange.lower =                                         \
+          max(intersectedTRange.lower, rangeLimit.lower);               \
+      intersectedTRange.upper =                                         \
+          min(intersectedTRange.upper, rangeLimit.upper);               \
+      return intersectedTRange;                                         \
+    }                                                                   \
+    return make_box1f(inf, neg_inf);                                    \
+  }
+
+// template_intersectRayTet(uniform);
+template_intersectRayHex(varying);
+#undef template_intersectRayHex
+
+#define template_intersectRayWedge(univary)                             \
+  static inline univary box1f intersectRayWedge_##univary(              \
+      const univary vec3f &origin,                                      \
+      const univary vec3f &direction,                                   \
+      const univary box1f &rangeLimit,                                  \
+      const VKLUnstructuredVolume *uniform volume,                      \
+      const uniform uint64 cellID)                                      \
+  {                                                                     \
+    /* // Get cell offset in index buffer */                            \
+    const uniform uint64 cOffset = getCellOffset(volume, cellID);       \
+                                                                        \
+    const uniform uint64 planes[8][3] = {                               \
+        {cOffset + 2, cOffset + 0, cOffset + 1},                        \
+        {cOffset + 4, cOffset + 1, cOffset + 0},                        \
+        {cOffset + 5, cOffset + 2, cOffset + 1},                        \
+        {cOffset + 5, cOffset + 3, cOffset + 0},                        \
+        {cOffset + 5, cOffset + 4, cOffset + 3},                        \
+        {cOffset + 4, cOffset + 0, cOffset + 3},                        \
+        {cOffset + 5, cOffset + 1, cOffset + 4},                        \
+        {cOffset + 5, cOffset + 0, cOffset + 2}};                       \
+    univary box1f intersectedTRange = make_box1f(neg_inf, inf);         \
+    univary bool foundExit          = false;                            \
+    univary bool foundEntrance      = false;                            \
+    for (uniform int i = 0; i < 8; ++i) {                               \
+      if (foundEntrance && foundExit)                                   \
+        break;                                                          \
+      const uniform vec3f p0 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][0])); \
+      const uniform vec3f p1 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][1])); \
+      const uniform vec3f p2 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][2])); \
+                                                                        \
+      intersectRayTri_##univary(origin,                                 \
+                                direction,                              \
+                                p0,                                     \
+                                p1,                                     \
+                                p2,                                     \
+                                foundEntrance,                          \
+                                foundExit,                              \
+                                intersectedTRange);                     \
+    }                                                                   \
+    if (foundEntrance && foundExit) {                                   \
+      intersectedTRange.lower =                                         \
+          max(intersectedTRange.lower, rangeLimit.lower);               \
+      intersectedTRange.upper =                                         \
+          min(intersectedTRange.upper, rangeLimit.upper);               \
+      return intersectedTRange;                                         \
+    }                                                                   \
+    return make_box1f(inf, neg_inf);                                    \
+  }
+
+// template_intersectRayWedge(uniform);
+template_intersectRayWedge(varying);
+#undef template_intersectRayWedge
+
+#define template_intersectRayPyramid(univary)                           \
+  static inline univary box1f intersectRayPyramid_##univary(            \
+      const univary vec3f &origin,                                      \
+      const univary vec3f &direction,                                   \
+      const univary box1f &rangeLimit,                                  \
+      const VKLUnstructuredVolume *uniform volume,                      \
+      const uniform uint64 cellID)                                      \
+  {                                                                     \
+    /* // Get cell offset in index buffer */                            \
+    const uniform uint64 cOffset = getCellOffset(volume, cellID);       \
+                                                                        \
+    const uniform uint64 planes[6][3] = {                               \
+        {cOffset + 3, cOffset + 0, cOffset + 1},                        \
+        {cOffset + 4, cOffset + 1, cOffset + 0},                        \
+        {cOffset + 4, cOffset + 2, cOffset + 1},                        \
+        {cOffset + 4, cOffset + 3, cOffset + 2},                        \
+        {cOffset + 3, cOffset + 4, cOffset + 0},                        \
+        {cOffset + 3, cOffset + 1, cOffset + 2}};                       \
+    univary box1f intersectedTRange = make_box1f(neg_inf, inf);         \
+    univary bool foundExit          = false;                            \
+    univary bool foundEntrance      = false;                            \
+    for (uniform int i = 0; i < 6; ++i) {                               \
+      if (foundEntrance && foundExit)                                   \
+        break;                                                          \
+      const uniform vec3f p0 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][0])); \
+      const uniform vec3f p1 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][1])); \
+      const uniform vec3f p2 =                                          \
+          get_vec3f(volume->vertex, getVertexId(volume, planes[i][2])); \
+                                                                        \
+      intersectRayTri_##univary(origin,                                 \
+                                direction,                              \
+                                p0,                                     \
+                                p1,                                     \
+                                p2,                                     \
+                                foundEntrance,                          \
+                                foundExit,                              \
+                                intersectedTRange);                     \
+    }                                                                   \
+    if (foundEntrance && foundExit) {                                   \
+      intersectedTRange.lower =                                         \
+          max(intersectedTRange.lower, rangeLimit.lower);               \
+      intersectedTRange.upper =                                         \
+          min(intersectedTRange.upper, rangeLimit.upper);               \
+      return intersectedTRange;                                         \
+    }                                                                   \
+    return make_box1f(inf, neg_inf);                                    \
+  }
+
+// template_intersectRayPyramid(uniform);
+template_intersectRayPyramid(varying);
+#undef template_intersectRayPyramid
+
+#define template_intersectRayCell(univary)                         \
+  inline univary box1f intersectRayCell_##univary(                 \
+      const univary vec3f &origin,                                 \
+      const univary vec3f &direction,                              \
+      const univary box1f &rangeLimit,                             \
+      const VKLUnstructuredVolume *uniform volume,                 \
+      const uniform uint64 cellID)                                 \
+  {                                                                \
+    univary box1f intersectedTRange;                               \
+    switch (get_uint8(volume->cellType, cellID)) {                 \
+    case VKL_TETRAHEDRON:                                          \
+      intersectedTRange = intersectRayTet_##univary(               \
+          origin, direction, rangeLimit, volume, cellID);          \
+      break;                                                       \
+    case VKL_HEXAHEDRON:                                           \
+      intersectedTRange = intersectRayHex_##univary(               \
+          origin, direction, rangeLimit, volume, cellID);          \
+      break;                                                       \
+    case VKL_WEDGE:                                                \
+      intersectedTRange = intersectRayWedge_##univary(             \
+          origin, direction, rangeLimit, volume, cellID);          \
+      break;                                                       \
+    case VKL_PYRAMID:                                              \
+      intersectedTRange = intersectRayPyramid_##univary(           \
+          origin, direction, rangeLimit, volume, cellID);          \
+      break;                                                       \
+    }                                                              \
+                                                                   \
+    univary box1f result;                                          \
+    result.lower = max(intersectedTRange.lower, rangeLimit.lower); \
+    result.upper = min(intersectedTRange.upper, rangeLimit.upper); \
+    return result;                                                 \
+  }
+
+// template_intersectNode(uniform);
+template_intersectRayCell(varying);
+#undef template_intersectRayCell
 
 inline varying float VKLUnstructuredVolume_sample(
     const Sampler *uniform sampler,

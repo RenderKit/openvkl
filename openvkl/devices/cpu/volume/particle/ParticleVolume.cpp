@@ -261,7 +261,7 @@ namespace openvkl {
             objectCoordinates.push_back(
                 leafBounds.lower + vec3f(ijk) / float(samplesPerDimension - 1) *
                                        leafBounds.size());
-            times.push_back (0.f);
+            times.push_back(0.f);
           }
 
           std::vector<float> samples(objectCoordinates.size());

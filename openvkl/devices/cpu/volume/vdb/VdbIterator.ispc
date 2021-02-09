@@ -21,11 +21,13 @@ export void EXPORT_UNIQUE(VdbIterator_export,
 {
 }
 
-void VdbIterator_iterateIntervalInternal(const int *uniform imask,
-                                         void *uniform _self,
-                                         void *uniform _interval,
-                                         const uniform box1f &inputValueRange,
-                                         uniform int *uniform _result);
+void VdbIterator_iterateIntervalInternal(
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform box1f &inputValueRange,
+    const uniform bool /*elementaryCellIteration*/,
+    uniform int *uniform _result);
 
 export void EXPORT_UNIQUE(VdbIterator_Initialize,
                           const int *uniform imask,
@@ -49,7 +51,8 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
   self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
 
   // Initialize for hit iteration.
-  self->iterateInterval = VdbIterator_iterateIntervalInternal;
+  self->iterateInterval                  = VdbIterator_iterateIntervalInternal;
+  self->elementaryCellIterationSupported = false;
 
   const vec3f origin    = *((const varying vec3f *uniform)_originObject);
   const vec3f direction = *((const varying vec3f *uniform)_directionObject);
@@ -96,6 +99,7 @@ inline void VdbIterator_iterateIntervalInternal(
     void *uniform _self,
     void *uniform _interval,
     const uniform box1f &inputValueRange,
+    const uniform bool /*elementaryCellIteration*/,
     uniform int *uniform _result)
 {
   if (!imask[programIndex]) {
@@ -163,5 +167,5 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
   }
 
   VdbIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRange, _result);
+      imask, _self, _interval, valueRange, false, _result);
 }

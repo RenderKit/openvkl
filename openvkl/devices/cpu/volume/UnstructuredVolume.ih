@@ -107,3 +107,15 @@ struct VKLUnstructuredVolume
 
   uniform bool hexIterative;
 };
+
+#define template_intersectRayCell(univary)         \
+  univary box1f intersectRayCell_##univary(        \
+      const univary vec3f &origin,                 \
+      const univary vec3f &direction,              \
+      const univary box1f &rangeLimit,             \
+      const VKLUnstructuredVolume *uniform volume, \
+      const uniform uint64 cellID);
+
+// template_intersectNode(uniform);
+template_intersectRayCell(varying);
+#undef template_intersectRayCell

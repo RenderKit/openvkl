@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "apps/AppInit.h"
 #include "volume/OpenVdbVolume.h"
 #include "volume/ProceduralParticleVolume.h"
 #include "volume/ProceduralShellsAMRVolume.h"
@@ -15,5 +16,4 @@
 #include "volume/RawFileStructuredVolume.h"
 #include "volume/RawHFileStructuredVolume.h"
 #include "volume/TestingStructuredVolumeMulti.h"
-
-#include "apps/AppInit.h"
+#include "volume/TestingUnstructuredMixedSimple.h"

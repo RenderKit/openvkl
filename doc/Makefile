@@ -17,7 +17,7 @@ all: www doc spec
 www: $(webpages) www/stylesheet.css $(webimages)
 wwwsync: www
 doc: ../README.md
-spec: openvkl-spec.rst
+spec: tmp/openvkl-spec.rst
 
 .PHONY: all www wwwsync doc clean spec
 
@@ -51,8 +51,12 @@ tmpdir:
 ## Spec
 ## ---------------------------------------------------------------------------
 
-openvkl-spec.rst: api.md
-	$(PANDOC) --wrap=none --email-obfuscation=none -f markdown $(filter-out webtemplate.html,$+) -V select_$(basename $(@F)) --to rst -o $@
+tmp/api_spec.md: api.md images.md tmp/links.md
+	$(PANDOC) $+ -t markdown-fenced_code_attributes -o $@
+
+tmp/openvkl-spec.rst: tmp/api_spec.md
+	$(PANDOC) --wrap=none --email-obfuscation=none -f markdown $+ -V select_$(basename $(@F)) --to rst -o $@
+	rst2html tmp/openvkl-spec.rst tmp/openvkl-spec.html
 
 ## ----------------------------------------------------------------------------
 ## Webpages
@@ -117,4 +121,4 @@ tmp/api.md: api.md tmp/links.md
 ## ----------------------------------------------------------------------------
 
 clean:
-	rm -rf www tmp changelog.md __pycache__ openvkl-spec.rst
+	rm -rf www tmp changelog.md __pycache__

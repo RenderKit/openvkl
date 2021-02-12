@@ -7,10 +7,25 @@
 #include "VdbSampleConstantLeaf.ih"
 #include "VdbSampleTileLeaf.ih"
 #include "VdbSampler.ih"
+#include "VdbSampler_stencilDispatch.ih"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
 
 #include "openvkl_vdb/VdbSamplerDispatchInner.ih"
+
+// -----------------------------------------------------------------------------
+// Filter stencils.
+// -----------------------------------------------------------------------------
+
+#define VKL_STENCIL_TRILINEAR_SIZE    8
+#define VKL_STENCIL_TRILINEAR_OFFSETS {{0, 0, 0},                              \
+                                       {0, 0, 1},                              \
+                                       {0, 1, 0},                              \
+                                       {0, 1, 1},                              \
+                                       {1, 0, 0},                              \
+                                       {1, 0, 1},                              \
+                                       {1, 1, 0},                              \
+                                       {1, 1, 1}}
 
 // ---------------------------------------------------------------------------
 // Helper functions used in sampling voxels
@@ -507,65 +522,9 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const uniform uint32 attributeIndex,
     float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
-  static const uniform vec3i offset[] = {{0, 0, 0},
-                                         {0, 0, 1},
-                                         {0, 1, 0},
-                                         {0, 1, 1},
-                                         {1, 0, 0},
-                                         {1, 0, 1},
-                                         {1, 1, 0},
-                                         {1, 1, 1}};
-
-  // The goal of this code is to keep as many lanes busy as possible.
-  // The first case is that we have as many queries as there are
-  // lanes, so we need not do anything smart (=expensive), no lane will
-  // be idle.
-  if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {
-    for (uniform unsigned int i = 0; i < 8; ++i) {
-      const vec3i coord = ic + offset[i];
-      sample[i * VKL_TARGET_WIDTH + programIndex] =
-          VdbSampler_sample(sampler, coord, attributeIndex);
-    }
-  } else {
-    // The opposite extreme is a single query. We perform as many of the
-    // 8 lookups required for trilinear filtering in parallel as possible.
-    // reduce_equal is a good way to get two pieces of information at
-    // the same time, a) is there only one active instance? b) which one is it?
-    uniform uint32 activeInstance;
-    if (reduce_equal(programIndex, &activeInstance)) {
-      const uniform vec3i iic = make_vec3i(extract(ic.x, activeInstance),
-                                           extract(ic.y, activeInstance),
-                                           extract(ic.z, activeInstance));
-      foreach (o = 0 ... 8) {
-        const vec3i coord = make_vec3i(
-            iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-        sample[o * VKL_TARGET_WIDTH + activeInstance] =
-            VdbSampler_sample(sampler, coord, attributeIndex);
-      }
-    }
-    // Finally, a hybrid version: There are more than one but fewer than
-    // VKL_TARGET_WIDTH queries. We may benefit from calling
-    // VdbSampler_sample for multiple query points at once.
-    else {
-      // ith element is the index of the ith active lane.
-      // packed_store_active2 may store an additional element, but we know
-      // that at least one lane is inactive.
-      uniform int progIdx[VKL_TARGET_WIDTH];
-      const uniform int numActive = packed_store_active2(progIdx, programIndex);
-
-      foreach_tiled(i = 0 ... numActive, o = 0 ... 8)
-      {
-        const int instance = progIdx[i];
-        const vec3i iic    = make_vec3i(shuffle(ic.x, instance),
-                                     shuffle(ic.y, instance),
-                                     shuffle(ic.z, instance));
-        const vec3i coord  = make_vec3i(
-            iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-        sample[o * VKL_TARGET_WIDTH + instance] =
-            VdbSampler_sample(sampler, coord, attributeIndex);
-      }
-    }
-  }
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, {
+      sample[tgtIdx] = VdbSampler_sample(sampler, coord, attributeIndex);
+  });
 }
 
 /*
@@ -577,67 +536,14 @@ inline void VdbSampler_traverseVoxelValuesTrilinear(
     uint64 *uniform voxel,         // Array of VKL_TARGET_WIDTH * 8 elements!
     vec3ui *uniform domainOffset)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
-  static const uniform vec3i offset[] = {{0, 0, 0},
-                                         {0, 0, 1},
-                                         {0, 1, 0},
-                                         {0, 1, 1},
-                                         {1, 0, 0},
-                                         {1, 0, 1},
-                                         {1, 1, 0},
-                                         {1, 1, 1}};
-
-  // This approach modeled after the above
-  // VdbSampler_computeVoxelValuesTrilinear(); see comments there for details.
-  if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {
-    for (uniform unsigned int i = 0; i < 8; ++i) {
-      const vec3i coord = ic + offset[i];
-
-      varying uint64 voxelV;
-      varying vec3ui domainOffsetV;
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, {
+      uint64 voxelV;
+      vec3ui domainOffsetV;
       VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
 
-      voxel[i * VKL_TARGET_WIDTH + programIndex]        = voxelV;
-      domainOffset[i * VKL_TARGET_WIDTH + programIndex] = domainOffsetV;
-    }
-  } else {
-    uniform uint32 activeInstance;
-    if (reduce_equal(programIndex, &activeInstance)) {
-      const uniform vec3i iic = make_vec3i(extract(ic.x, activeInstance),
-                                           extract(ic.y, activeInstance),
-                                           extract(ic.z, activeInstance));
-      foreach (o = 0 ... 8) {
-        const vec3i coord = make_vec3i(
-            iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-
-        varying uint64 voxelV;
-        varying vec3ui domainOffsetV;
-        VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
-
-        voxel[o * VKL_TARGET_WIDTH + activeInstance]        = voxelV;
-        domainOffset[o * VKL_TARGET_WIDTH + activeInstance] = domainOffsetV;
-      }
-    } else {
-      uniform int progIdx[VKL_TARGET_WIDTH];
-      const uniform int numActive = packed_store_active2(progIdx, programIndex);
-
-      foreach_tiled(i = 0 ... numActive, o = 0 ... 8)
-      {
-        const int instance = progIdx[i];
-        const vec3i iic    = make_vec3i(shuffle(ic.x, instance),
-                                     shuffle(ic.y, instance),
-                                     shuffle(ic.z, instance));
-        const vec3i coord  = make_vec3i(
-            iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);
-
-        varying uint64 voxelV;
-        varying vec3ui domainOffsetV;
-        VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
-
-        voxel[o * VKL_TARGET_WIDTH + instance]        = voxelV;
-        domainOffset[o * VKL_TARGET_WIDTH + instance] = domainOffsetV;
-      }
-    }
-  }
+      voxel[tgtIdx]        = voxelV;
+      domainOffset[tgtIdx] = domainOffsetV;
+  });
 }
 
 /*
@@ -652,46 +558,15 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const uniform uint32 attributeIndex,
     float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
-  // This approach modeled after the above
-  // VdbSampler_computeVoxelValuesTrilinear(); see comments there for details.
-  if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {
-    for (uniform unsigned int i = 0; i < 8; ++i) {
-      const varying uint64 voxelV = voxel[i * VKL_TARGET_WIDTH + programIndex];
-      const varying vec3ui domainOffsetV =
-          domainOffset[i * VKL_TARGET_WIDTH + programIndex];
+  // TODO: We might be able to avoid this, but it will complicate the macro.
+  const vec3i ic = {0,0,0};
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, {
+      const uint64 voxelV = voxel[tgtIdx];
+      const vec3ui domainOffsetV = domainOffset[tgtIdx];
 
-      sample[i * VKL_TARGET_WIDTH + programIndex] =
+      sample[tgtIdx] =
           VdbSampler_sample(sampler, voxelV, domainOffsetV, attributeIndex);
-    }
-  } else {
-    uniform uint32 activeInstance;
-    if (reduce_equal(programIndex, &activeInstance)) {
-      foreach (o = 0 ... 8) {
-        const varying uint64 voxelV =
-            voxel[o * VKL_TARGET_WIDTH + activeInstance];
-        const varying vec3ui domainOffsetV =
-            domainOffset[o * VKL_TARGET_WIDTH + activeInstance];
-
-        sample[o * VKL_TARGET_WIDTH + activeInstance] =
-            VdbSampler_sample(sampler, voxelV, domainOffsetV, attributeIndex);
-      }
-    } else {
-      uniform int progIdx[VKL_TARGET_WIDTH];
-      const uniform int numActive = packed_store_active2(progIdx, programIndex);
-
-      foreach_tiled(i = 0 ... numActive, o = 0 ... 8)
-      {
-        const int instance = progIdx[i];
-
-        const varying uint64 voxelV = voxel[o * VKL_TARGET_WIDTH + instance];
-        const varying vec3ui domainOffsetV =
-            domainOffset[o * VKL_TARGET_WIDTH + instance];
-
-        sample[o * VKL_TARGET_WIDTH + instance] =
-            VdbSampler_sample(sampler, voxelV, domainOffsetV, attributeIndex);
-      }
-    }
-  }
+  });
 }
 
 /*
@@ -757,37 +632,24 @@ inline uniform float VdbSampler_interpolateTrilinear_uniform(
     const uniform vec3f &indexCoordinates,
     const uniform uint32 attributeIndex)
 {
-  static const uniform vec3i offset[] = {{0, 0, 0},
-                                         {0, 0, 1},
-                                         {0, 1, 0},
-                                         {0, 1, 1},
-                                         {1, 0, 0},
-                                         {1, 0, 1},
-                                         {1, 1, 0},
-                                         {1, 1, 1}};
-
   const uniform vec3i ic    = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
                                       floor(indexCoordinates.z));
+
+  uniform float sample[8];
+
+  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, {
+    sample[tgtIdx] = VdbSampler_sample(sampler, coord, attributeIndex);
+  })
+
   const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
-
-  unmasked
-  {
-    uniform float sample[8];
-    foreach (o = 0 ... 8) {
-      const vec3i coord = make_vec3i(
-          ic.x + offset[o].x, ic.y + offset[o].y, ic.z + offset[o].z);
-      sample[o] = VdbSampler_sample(sampler, coord, attributeIndex);
-    }
-
-    return lerp(delta.x,
-                lerp(delta.y,
-                     lerp(delta.z, sample[0], sample[1]),
-                     lerp(delta.z, sample[2], sample[3])),
-                lerp(delta.y,
-                     lerp(delta.z, sample[4], sample[5]),
-                     lerp(delta.z, sample[6], sample[7])));
-  }
+  return lerp(delta.x,
+              lerp(delta.y,
+                   lerp(delta.z, sample[0], sample[1]),
+                   lerp(delta.z, sample[2], sample[3])),
+              lerp(delta.y,
+                   lerp(delta.z, sample[4], sample[5]),
+                   lerp(delta.z, sample[6], sample[7])));
 }
 
 inline void VdbSampler_interpolateTrilinear_uniform(
@@ -797,56 +659,42 @@ inline void VdbSampler_interpolateTrilinear_uniform(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
-  static const uniform vec3i offset[] = {{0, 0, 0},
-                                         {0, 0, 1},
-                                         {0, 1, 0},
-                                         {0, 1, 1},
-                                         {1, 0, 0},
-                                         {1, 0, 1},
-                                         {1, 1, 0},
-                                         {1, 1, 1}};
-
   const uniform vec3i ic    = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
                                       floor(indexCoordinates.z));
   const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
 
-  unmasked
-  {
-    uniform uint64 voxel[8];
-    uniform vec3ui domainOffset[8];
+  uniform uint64 voxel[8];
+  uniform vec3ui domainOffset[8];
 
-    foreach (o = 0 ... 8) {
-      const vec3i coord = make_vec3i(
-          ic.x + offset[o].x, ic.y + offset[o].y, ic.z + offset[o].z);
+  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, {
+    // TODO: Why is this necessary?
+    varying uint64 voxelV        = voxel[tgtIdx];
+    varying vec3ui domainOffsetV = domainOffset[tgtIdx];
 
-      varying uint64 voxelV        = voxel[o];
-      varying vec3ui domainOffsetV = domainOffset[o];
-      VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
+    VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
 
-      voxel[o]        = voxelV;
-      domainOffset[o] = domainOffsetV;
-    }
+    voxel[tgtIdx]        = voxelV;
+    domainOffset[tgtIdx] = domainOffsetV;
+  })
 
-    for (uniform unsigned int a = 0; a < M; a++) {
-      uniform float sample[8];
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[8];
 
-      foreach (o = 0 ... 8) {
-        const varying uint64 voxelV        = voxel[o];
-        const varying vec3ui domainOffsetV = domainOffset[o];
+    __vkl_stencil_dispatch_uniform(TRILINEAR, ic, {
+      const varying uint64 voxelV        = voxel[tgtIdx];
+      const varying vec3ui domainOffsetV = domainOffset[tgtIdx];
+      sample[tgtIdx] = VdbSampler_sample(
+          sampler, voxelV, domainOffsetV, attributeIndices[a]);
+    })
 
-        sample[o] = VdbSampler_sample(
-            sampler, voxelV, domainOffsetV, attributeIndices[a]);
-      }
-
-      samples[a] = lerp(delta.x,
-                        lerp(delta.y,
-                             lerp(delta.z, sample[0], sample[1]),
-                             lerp(delta.z, sample[2], sample[3])),
-                        lerp(delta.y,
-                             lerp(delta.z, sample[4], sample[5]),
-                             lerp(delta.z, sample[6], sample[7])));
-    }
+    samples[a] = lerp(delta.x,
+                      lerp(delta.y,
+                           lerp(delta.z, sample[0], sample[1]),
+                           lerp(delta.z, sample[2], sample[3])),
+                      lerp(delta.y,
+                           lerp(delta.z, sample[4], sample[5]),
+                           lerp(delta.z, sample[6], sample[7])));
   }
 }
 

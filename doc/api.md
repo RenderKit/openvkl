@@ -906,6 +906,13 @@ VDB sampler objects support the following observers:
   --------------  --------------------------------------------------------------------------
   : Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
 
+#### Reconstruction filters
+
+VDB volumes support the filter types `VKL_FILTER_NEAREST`, `VKL_FILTER_TRILINEAR`,
+and `VKL_FILTER_TRICUBIC` for both `filter` and `gradientFilter`.
+
+Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
+always $(0, 0, 0)$.
 
 #### Major differences to OpenVDB
 

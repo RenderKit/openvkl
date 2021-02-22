@@ -85,6 +85,35 @@ inline void computeStructuredSphericalBoundingBox(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+// Macro helpers //////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// declares a macro for all voxel types
+#define declare_all_voxel_types(macro) \
+  macro(uint8);                        \
+  macro(int16);                        \
+  macro(uint16);                       \
+  macro(half);                         \
+  macro(float);                        \
+  macro(double);
+
+// declares a macro for all voxel type and uniform / varying combinations
+#define declare_all_voxel_types_univary(macro) \
+  macro(uint8, varying);                       \
+  macro(int16, varying);                       \
+  macro(uint16, varying);                      \
+  macro(half, varying);                        \
+  macro(float, varying);                       \
+  macro(double, varying);                      \
+                                               \
+  macro(uint8, uniform);                       \
+  macro(int16, uniform);                       \
+  macro(uint16, uniform);                      \
+  macro(half, uniform);                        \
+  macro(float, uniform);                       \
+  macro(double, uniform);
+
+///////////////////////////////////////////////////////////////////////////////
 // Motion blur helper functions ///////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -168,17 +197,8 @@ inline uniform bool hasUnstructuredTimeData(
            interpolant * get_##type(voxelData, upper);                       \
   }
 
-template_interpolateVoxelTUV(uint8, varying);
-template_interpolateVoxelTUV(int16, varying);
-template_interpolateVoxelTUV(uint16, varying);
-template_interpolateVoxelTUV(float, varying);
-template_interpolateVoxelTUV(double, varying);
+declare_all_voxel_types_univary(template_interpolateVoxelTUV);
 
-template_interpolateVoxelTUV(uint8, uniform);
-template_interpolateVoxelTUV(int16, uniform);
-template_interpolateVoxelTUV(uint16, uniform);
-template_interpolateVoxelTUV(float, uniform);
-template_interpolateVoxelTUV(double, uniform);
 #undef template_interpolateVoxelTUV
 
 // Supports 64-bit addressing mode on temporallyUnstructuredIndices
@@ -239,17 +259,8 @@ template_interpolateVoxelTUV(double, uniform);
            interpolant * get_##type(voxelData, upper);                       \
   }
 
-template_interpolateVoxelTUV(uint8, varying);
-template_interpolateVoxelTUV(int16, varying);
-template_interpolateVoxelTUV(uint16, varying);
-template_interpolateVoxelTUV(float, varying);
-template_interpolateVoxelTUV(double, varying);
+declare_all_voxel_types_univary(template_interpolateVoxelTUV);
 
-template_interpolateVoxelTUV(uint8, uniform);
-template_interpolateVoxelTUV(int16, uniform);
-template_interpolateVoxelTUV(uint16, uniform);
-template_interpolateVoxelTUV(float, uniform);
-template_interpolateVoxelTUV(double, uniform);
 #undef template_interpolateVoxelTUV
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -327,11 +338,8 @@ template_interpolateVoxelTUV(double, uniform);
     return range;                                                              \
   }
 
-template_computeVoxelRange(uint8);
-template_computeVoxelRange(int16);
-template_computeVoxelRange(uint16);
-template_computeVoxelRange(float);
-template_computeVoxelRange(double);
+declare_all_voxel_types(template_computeVoxelRange);
+
 #undef template_computeVoxelRange
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -485,17 +493,8 @@ template_sample(uniform);
     return val;                                                              \
   }
 
-template_sample_inner_32(uint8, varying);
-template_sample_inner_32(int16, varying);
-template_sample_inner_32(uint16, varying);
-template_sample_inner_32(float, varying);
-template_sample_inner_32(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_32);
 
-template_sample_inner_32(uint8, uniform);
-template_sample_inner_32(int16, uniform);
-template_sample_inner_32(uint16, uniform);
-template_sample_inner_32(float, uniform);
-template_sample_inner_32(double, uniform);
 #undef template_sample_inner_32
 
 #define template_sample_inner_TUV_32(type, univary)                         \
@@ -571,17 +570,8 @@ template_sample_inner_32(double, uniform);
     return val;                                                             \
   }
 
-template_sample_inner_TUV_32(uint8, varying);
-template_sample_inner_TUV_32(int16, varying);
-template_sample_inner_TUV_32(uint16, varying);
-template_sample_inner_TUV_32(float, varying);
-template_sample_inner_TUV_32(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_TUV_32);
 
-template_sample_inner_TUV_32(uint8, uniform);
-template_sample_inner_TUV_32(int16, uniform);
-template_sample_inner_TUV_32(uint16, uniform);
-template_sample_inner_TUV_32(float, uniform);
-template_sample_inner_TUV_32(double, uniform);
 #undef template_sample_inner_TUV_32
 
 #define template_sample_inner_MB_32(type, univary)                            \
@@ -681,17 +671,8 @@ template_sample_inner_TUV_32(double, uniform);
     return val;                                                               \
   }
 
-template_sample_inner_MB_32(uint8, varying);
-template_sample_inner_MB_32(int16, varying);
-template_sample_inner_MB_32(uint16, varying);
-template_sample_inner_MB_32(float, varying);
-template_sample_inner_MB_32(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_MB_32);
 
-template_sample_inner_MB_32(uint8, uniform);
-template_sample_inner_MB_32(int16, uniform);
-template_sample_inner_MB_32(uint16, uniform);
-template_sample_inner_MB_32(float, uniform);
-template_sample_inner_MB_32(double, uniform);
 #undef template_sample_inner_MB_32
 
 // used below in template_sample_inner_64_32
@@ -774,17 +755,8 @@ template_sample_inner_MB_32(double, uniform);
     return ret;                                                              \
   }
 
-template_sample_inner_64_32(uint8, varying);
-template_sample_inner_64_32(int16, varying);
-template_sample_inner_64_32(uint16, varying);
-template_sample_inner_64_32(float, varying);
-template_sample_inner_64_32(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_64_32);
 
-template_sample_inner_64_32(uint8, uniform);
-template_sample_inner_64_32(int16, uniform);
-template_sample_inner_64_32(uint16, uniform);
-template_sample_inner_64_32(float, uniform);
-template_sample_inner_64_32(double, uniform);
 #undef template_sample_inner_64_32
 
 #define template_sample_inner_TUV_64_32(type, univary)                        \
@@ -865,17 +837,8 @@ template_sample_inner_64_32(double, uniform);
     return val;                                                               \
   }
 
-template_sample_inner_TUV_64_32(uint8, varying);
-template_sample_inner_TUV_64_32(int16, varying);
-template_sample_inner_TUV_64_32(uint16, varying);
-template_sample_inner_TUV_64_32(float, varying);
-template_sample_inner_TUV_64_32(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_TUV_64_32);
 
-template_sample_inner_TUV_64_32(uint8, uniform);
-template_sample_inner_TUV_64_32(int16, uniform);
-template_sample_inner_TUV_64_32(uint16, uniform);
-template_sample_inner_TUV_64_32(float, uniform);
-template_sample_inner_TUV_64_32(double, uniform);
 #undef template_sample_inner_TUV_64_32
 
 #define template_sample_inner_MB_64_32(type, univary)                         \
@@ -989,17 +952,8 @@ template_sample_inner_TUV_64_32(double, uniform);
     return val;                                                               \
   }
 
-template_sample_inner_MB_64_32(uint8, varying);
-template_sample_inner_MB_64_32(int16, varying);
-template_sample_inner_MB_64_32(uint16, varying);
-template_sample_inner_MB_64_32(float, varying);
-template_sample_inner_MB_64_32(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_MB_64_32);
 
-template_sample_inner_MB_64_32(uint8, uniform);
-template_sample_inner_MB_64_32(int16, uniform);
-template_sample_inner_MB_64_32(uint16, uniform);
-template_sample_inner_MB_64_32(float, uniform);
-template_sample_inner_MB_64_32(double, uniform);
 #undef template_sample_inner_MB_64_32
 
 // default sampling function (64-bit addressing)
@@ -1070,17 +1024,8 @@ template_sample_inner_MB_64_32(double, uniform);
     return val;                                                                 \
   }
 
-template_sample_inner_64(uint8, varying);
-template_sample_inner_64(int16, varying);
-template_sample_inner_64(uint16, varying);
-template_sample_inner_64(float, varying);
-template_sample_inner_64(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_64);
 
-template_sample_inner_64(uint8, uniform);
-template_sample_inner_64(int16, uniform);
-template_sample_inner_64(uint16, uniform);
-template_sample_inner_64(float, uniform);
-template_sample_inner_64(double, uniform);
 #undef template_sample_inner_64
 
 #define template_sample_inner_TUV_64(type, univary)                         \
@@ -1162,17 +1107,8 @@ template_sample_inner_64(double, uniform);
     return val;                                                             \
   }
 
-template_sample_inner_TUV_64(uint8, varying);
-template_sample_inner_TUV_64(int16, varying);
-template_sample_inner_TUV_64(uint16, varying);
-template_sample_inner_TUV_64(float, varying);
-template_sample_inner_TUV_64(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_TUV_64);
 
-template_sample_inner_TUV_64(uint8, uniform);
-template_sample_inner_TUV_64(int16, uniform);
-template_sample_inner_TUV_64(uint16, uniform);
-template_sample_inner_TUV_64(float, uniform);
-template_sample_inner_TUV_64(double, uniform);
 #undef template_sample_inner_TUV_64
 
 #define template_sample_inner_MB_64(type, univary)                            \
@@ -1273,17 +1209,8 @@ template_sample_inner_TUV_64(double, uniform);
     return val;                                                               \
   }
 
-template_sample_inner_MB_64(uint8, varying);
-template_sample_inner_MB_64(int16, varying);
-template_sample_inner_MB_64(uint16, varying);
-template_sample_inner_MB_64(float, varying);
-template_sample_inner_MB_64(double, varying);
+declare_all_voxel_types_univary(template_sample_inner_MB_64);
 
-template_sample_inner_MB_64(uint8, uniform);
-template_sample_inner_MB_64(int16, uniform);
-template_sample_inner_MB_64(uint16, uniform);
-template_sample_inner_MB_64(float, uniform);
-template_sample_inner_MB_64(double, uniform);
 #undef template_sample_inner_MB_64
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1528,6 +1455,12 @@ inline uniform bool assignTemporallyConstantSamplingFunctions(
     innerU = SSV_sample_inner_uint16_uniform_64;
     break;
   }
+  case (VKL_HALF): {
+    cvr    = SSV_computeVoxelRange_half;
+    innerV = SSV_sample_inner_half_varying_64;
+    innerU = SSV_sample_inner_half_uniform_64;
+    break;
+  }
   case (VKL_FLOAT): {
     cvr    = SSV_computeVoxelRange_float;
     innerV = SSV_sample_inner_float_varying_64;
@@ -1568,6 +1501,11 @@ inline uniform bool assignTemporallyConstantSamplingFunctions(
       innerU = SSV_sample_inner_uint16_uniform_32;
       break;
     }
+    case (VKL_HALF): {
+      innerV = SSV_sample_inner_half_varying_32;
+      innerU = SSV_sample_inner_half_uniform_32;
+      break;
+    }
     case (VKL_FLOAT): {
       innerV = SSV_sample_inner_float_varying_32;
       innerU = SSV_sample_inner_float_uniform_32;
@@ -1606,6 +1544,11 @@ inline uniform bool assignTemporallyConstantSamplingFunctions(
     case (VKL_USHORT): {
       innerV = SSV_sample_inner_uint16_varying_64_32;
       innerU = SSV_sample_inner_uint16_uniform_64_32;
+      break;
+    }
+    case (VKL_HALF): {
+      innerV = SSV_sample_inner_half_varying_64_32;
+      innerU = SSV_sample_inner_half_uniform_64_32;
       break;
     }
     case (VKL_FLOAT): {
@@ -1664,6 +1607,12 @@ inline uniform bool assignTemporallyStructuredSamplingFunctions(
     innerU = SSV_sample_inner_MB_uint16_uniform_64;
     break;
   }
+  case (VKL_HALF): {
+    cvr    = SSV_computeVoxelRange_MB_half;
+    innerV = SSV_sample_inner_MB_half_varying_64;
+    innerU = SSV_sample_inner_MB_half_uniform_64;
+    break;
+  }
   case (VKL_FLOAT): {
     cvr    = SSV_computeVoxelRange_MB_float;
     innerV = SSV_sample_inner_MB_float_varying_64;
@@ -1704,6 +1653,11 @@ inline uniform bool assignTemporallyStructuredSamplingFunctions(
       innerU = SSV_sample_inner_MB_uint16_uniform_32;
       break;
     }
+    case (VKL_HALF): {
+      innerV = SSV_sample_inner_MB_half_varying_32;
+      innerU = SSV_sample_inner_MB_half_uniform_32;
+      break;
+    }
     case (VKL_FLOAT): {
       innerV = SSV_sample_inner_MB_float_varying_32;
       innerU = SSV_sample_inner_MB_float_uniform_32;
@@ -1742,6 +1696,11 @@ inline uniform bool assignTemporallyStructuredSamplingFunctions(
     case (VKL_USHORT): {
       innerV = SSV_sample_inner_MB_uint16_varying_64_32;
       innerU = SSV_sample_inner_MB_uint16_uniform_64_32;
+      break;
+    }
+    case (VKL_HALF): {
+      innerV = SSV_sample_inner_MB_half_varying_64_32;
+      innerU = SSV_sample_inner_MB_half_uniform_64_32;
       break;
     }
     case (VKL_FLOAT): {
@@ -1798,6 +1757,12 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
     innerU = SSV_sample_inner_TUV_uint16_uniform_64;
     break;
   }
+  case (VKL_HALF): {
+    cvr    = SSV_computeVoxelRange_TUV_half;
+    innerV = SSV_sample_inner_TUV_half_varying_64;
+    innerU = SSV_sample_inner_TUV_half_uniform_64;
+    break;
+  }
   case (VKL_FLOAT): {
     cvr    = SSV_computeVoxelRange_TUV_float;
     innerV = SSV_sample_inner_TUV_float_varying_64;
@@ -1836,6 +1801,11 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
     case (VKL_USHORT): {
       innerV = SSV_sample_inner_TUV_uint16_varying_32;
       innerU = SSV_sample_inner_TUV_uint16_uniform_32;
+      break;
+    }
+    case (VKL_HALF): {
+      innerV = SSV_sample_inner_TUV_half_varying_32;
+      innerU = SSV_sample_inner_TUV_half_uniform_32;
       break;
     }
     case (VKL_FLOAT): {
@@ -1877,6 +1847,11 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
     case (VKL_USHORT): {
       innerV = SSV_sample_inner_TUV_uint16_varying_64_32;
       innerU = SSV_sample_inner_TUV_uint16_uniform_64_32;
+      break;
+    }
+    case (VKL_HALF): {
+      innerV = SSV_sample_inner_TUV_half_varying_64_32;
+      innerU = SSV_sample_inner_TUV_half_uniform_64_32;
       break;
     }
     case (VKL_FLOAT): {

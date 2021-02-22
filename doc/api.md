@@ -394,6 +394,8 @@ table below.
 
                                                             `VKL_USHORT`
 
+                                                            `VKL_HALF`
+
                                                             `VKL_FLOAT`
 
                                                             `VKL_DOUBLE`
@@ -489,6 +491,8 @@ structured spherical volumes are summarized below.
                                        `VKL_SHORT`
 
                                        `VKL_USHORT`
+
+                                       `VKL_HALF`
 
                                        `VKL_FLOAT`
 

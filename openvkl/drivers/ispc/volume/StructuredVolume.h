@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -108,7 +108,7 @@ namespace openvkl {
       // validate type of each provided attribute; size validated depending on
       // temporal configuration
       const std::vector<VKLDataType> supportedDataTypes{
-          VKL_UCHAR, VKL_SHORT, VKL_USHORT, VKL_FLOAT, VKL_DOUBLE};
+          VKL_UCHAR, VKL_SHORT, VKL_USHORT, VKL_HALF, VKL_FLOAT, VKL_DOUBLE};
 
       for (int i = 0; i < attributesData.size(); i++) {
         if (std::find(supportedDataTypes.begin(),

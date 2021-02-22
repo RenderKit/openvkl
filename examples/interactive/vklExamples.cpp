@@ -224,7 +224,7 @@ void usage(const char *progname)
          "\t-gridOrigin <x> <y> <z>\n"
          "\t-gridSpacing <x> <y> <z>\n"
          "\t-gridDimensions <dimX> <dimY> <dimZ>\n"
-         "\t-voxelType uchar | short | ushort | float | double\n"
+         "\t-voxelType uchar | short | ushort | half | float | double\n"
          "\t-valueRange <lower> <upper>\n"
          "\t-multiAttribute (vdb and structuredRegular only, ignores -field)\n"
          "\t-motionBlur structured | unstructured (structuredRegular only)\n"
@@ -323,6 +323,7 @@ int main(int argc, const char **argv)
           {"uchar", VKL_UCHAR},
           {"short", VKL_SHORT},
           {"ushort", VKL_USHORT},
+          {"half", VKL_HALF},
           {"float", VKL_FLOAT},
           {"double", VKL_DOUBLE}};
 
@@ -510,6 +511,19 @@ int main(int argc, const char **argv)
                 std::make_shared<WaveletStructuredRegularVolumeUShort>(
                     dimensions, gridOrigin, gridSpacing, temporalConfig);
           }
+        } else if (voxelType == VKL_HALF) {
+          if (field == "xyz") {
+            testingVolume = std::make_shared<XYZStructuredRegularVolumeHalf>(
+                dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else if (field == "sphere") {
+            testingVolume =
+                std::make_shared<SphereStructuredRegularVolumeHalf>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          } else {
+            testingVolume =
+                std::make_shared<WaveletStructuredRegularVolumeHalf>(
+                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+          }
         } else if (voxelType == VKL_FLOAT) {
           if (field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeFloat>(
@@ -581,6 +595,19 @@ int main(int argc, const char **argv)
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeUShort>(
+                  dimensions, gridOrigin, gridSpacing);
+        }
+      } else if (voxelType == VKL_HALF) {
+        if (field == "xyz") {
+          testingVolume = std::make_shared<XYZStructuredSphericalVolumeHalf>(
+              dimensions, gridOrigin, gridSpacing);
+        } else if (field == "sphere") {
+          testingVolume =
+              std::make_shared<SphereStructuredSphericalVolumeHalf>(
+                  dimensions, gridOrigin, gridSpacing);
+        } else {
+          testingVolume =
+              std::make_shared<WaveletStructuredSphericalVolumeHalf>(
                   dimensions, gridOrigin, gridSpacing);
         }
       } else if (voxelType == VKL_FLOAT) {

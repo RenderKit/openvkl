@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,6 +8,8 @@
 // rkcommon
 #include "rkcommon/math/range.h"
 #include "rkcommon/math/vec.h"
+// half
+#include "../external/half.hpp"
 
 using namespace rkcommon::math;
 
@@ -27,6 +29,8 @@ namespace openvkl {
         return VKL_SHORT;
       } else if (std::is_same<T, unsigned short>::value) {
         return VKL_USHORT;
+      } else if (std::is_same<T, half_float::half>::value) {
+        return VKL_HALF;
       } else if (std::is_same<T, float>::value) {
         return VKL_FLOAT;
       } else if (std::is_same<T, double>::value) {
@@ -45,6 +49,8 @@ namespace openvkl {
         return sizeof(short);
       case VKL_USHORT:
         return sizeof(unsigned short);
+      case VKL_HALF:
+        return sizeof(half_float::half);
       case VKL_FLOAT:
         return sizeof(float);
       case VKL_DOUBLE:
@@ -78,6 +84,8 @@ namespace openvkl {
         return computeValueRange<short>(data, numValues);
       else if (dataType == VKL_USHORT)
         return computeValueRange<unsigned short>(data, numValues);
+      else if (dataType == VKL_HALF)
+        return computeValueRange<half_float::half>(data, numValues);
       else if (dataType == VKL_FLOAT)
         return computeValueRange<float>(data, numValues);
       else if (dataType == VKL_DOUBLE)

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -139,6 +139,10 @@ namespace openvkl {
         ProceduralStructuredRegularVolume<unsigned short,
                                           getWaveletValue<unsigned short>,
                                           getWaveletGradient>;
+    using WaveletStructuredRegularVolumeHalf =
+        ProceduralStructuredRegularVolume<half_float::half,
+                                          getWaveletValue<half_float::half>,
+                                          getWaveletGradient>;
     using WaveletStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
                                           getWaveletValue<float>,
@@ -160,6 +164,10 @@ namespace openvkl {
         ProceduralStructuredRegularVolume<unsigned short,
                                           getXYZValue<unsigned short>,
                                           getXYZGradient>;
+    using XYZStructuredRegularVolumeHalf =
+        ProceduralStructuredRegularVolume<half_float::half,
+                                          getXYZValue<half_float::half>,
+                                          getXYZGradient>;
     using XYZStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
                                           getXYZValue<float>,
@@ -180,6 +188,10 @@ namespace openvkl {
     using SphereStructuredRegularVolumeUShort =
         ProceduralStructuredRegularVolume<unsigned short,
                                           getRotatingSphereValue<unsigned short>,
+                                          getRotatingSphereGradient>;
+    using SphereStructuredRegularVolumeHalf =
+        ProceduralStructuredRegularVolume<half_float::half,
+                                          getRotatingSphereValue<half_float::half>,
                                           getRotatingSphereGradient>;
     using SphereStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
@@ -220,6 +232,15 @@ namespace openvkl {
       using Wavelet =
           ProceduralStructuredRegularVolume<unsigned short,
                                             getWaveletValue<unsigned short>,
+                                            getWaveletGradient>;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<half_float::half>
+    {
+      using Wavelet =
+          ProceduralStructuredRegularVolume<half_float::half,
+                                            getWaveletValue<half_float::half>,
                                             getWaveletGradient>;
     };
 

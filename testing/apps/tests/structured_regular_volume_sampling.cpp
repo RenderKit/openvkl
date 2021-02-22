@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -36,6 +36,12 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
           WaveletStructuredRegularVolumeUShort>(vec3i(128));
     }
 
+    SECTION("half")
+    {
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeHalf>(vec3i(128));
+    }
+
     SECTION("float")
     {
       sampling_on_vertices_vs_procedural_values<
@@ -71,6 +77,13 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
     {
       sampling_on_vertices_vs_procedural_values<
           WaveletStructuredRegularVolumeUShort>(
+          vec3i(813), VKL_DATA_DEFAULT, 0, 16);
+    }
+
+    SECTION("half")
+    {
+      sampling_on_vertices_vs_procedural_values<
+          WaveletStructuredRegularVolumeHalf>(
           vec3i(813), VKL_DATA_DEFAULT, 0, 16);
     }
 

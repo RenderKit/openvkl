@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -89,6 +89,12 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
           WaveletStructuredSphericalVolumeUShort>(vec3i(128));
     }
 
+    SECTION("half")
+    {
+      sampling_on_interior_vertices_vs_procedural_values<
+          WaveletStructuredSphericalVolumeHalf>(vec3i(128));
+    }
+
     SECTION("float")
     {
       sampling_on_interior_vertices_vs_procedural_values<
@@ -122,6 +128,12 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
     {
       sampling_on_interior_vertices_vs_procedural_values<
           WaveletStructuredSphericalVolumeUShort>(vec3i(813), 16);
+    }
+
+    SECTION("half")
+    {
+      sampling_on_interior_vertices_vs_procedural_values<
+          WaveletStructuredSphericalVolumeHalf>(vec3i(813), 16);
     }
 
     SECTION("float")

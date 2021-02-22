@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -62,6 +62,12 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
   {
     computed_vs_api_value_range<WaveletStructuredRegularVolumeUShort>();
     computed_vs_api_value_range<WaveletStructuredSphericalVolumeUShort>();
+  }
+
+  SECTION("half")
+  {
+    computed_vs_api_value_range<WaveletStructuredRegularVolumeHalf>();
+    computed_vs_api_value_range<WaveletStructuredSphericalVolumeHalf>();
   }
 
   SECTION("float")

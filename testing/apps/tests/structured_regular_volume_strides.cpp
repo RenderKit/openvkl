@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <sstream>
@@ -92,6 +92,11 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
             test_32bit_addressing<unsigned short>(dcf, strideFactor);
           }
 
+          SECTION("half")
+          {
+            test_32bit_addressing<half_float::half>(dcf, strideFactor);
+          }
+
           SECTION("float")
           {
             test_32bit_addressing<float>(dcf, strideFactor);
@@ -118,6 +123,11 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
           SECTION("unsigned short")
           {
             test_64_32bit_addressing<unsigned short>(dcf, strideFactor);
+          }
+
+          SECTION("half")
+          {
+            test_64_32bit_addressing<half_float::half>(dcf, strideFactor);
           }
 
           SECTION("float")

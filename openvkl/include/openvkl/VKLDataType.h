@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -64,6 +64,9 @@ typedef enum
 
   // Unsigned 64-bit integer scalar and vector types.
   VKL_ULONG = 5550, VKL_VEC2UL, VKL_VEC3UL, VKL_VEC4UL,
+
+  // Half-precision floating-point scalar type (IEEE 754 `binary16`).
+  VKL_HALF = 5800,
 
   // Single precision floating point scalar and vector types.
   VKL_FLOAT = 6000, VKL_VEC2F, VKL_VEC3F, VKL_VEC4F,

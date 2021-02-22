@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VKLCommon.h"
@@ -101,6 +101,8 @@ namespace openvkl {
       return "vec3ul";
     case VKL_VEC4UL:
       return "vec4ul";
+    case VKL_HALF:
+      return "half";
     case VKL_FLOAT:
       return "float";
     case VKL_VEC2F:
@@ -206,6 +208,8 @@ namespace openvkl {
       return sizeof(vec3ul);
     case VKL_VEC4UL:
       return sizeof(vec4ul);
+    case VKL_HALF:
+      return sizeof(float) / 2;
     case VKL_FLOAT:
       return sizeof(float);
     case VKL_VEC2F:

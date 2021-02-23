@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
@@ -39,11 +39,11 @@ namespace api {
       CoordinateGenerator gen(vklGetBoundingBox(wrapper.getVolume()));
       vkl_vec3f objectCoordinates{0.f, 0.f, 0.f};
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<1>(&objectCoordinates);
         benchmark::DoNotOptimize(
             vklComputeGradient(sampler, &objectCoordinates));
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(state.iterations());
@@ -132,11 +132,11 @@ namespace api {
         valid[i] = 1;
       }
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextV<W>(&objectCoordinates);
         impl::VklComputeGradient<W, VolumeWrapper, CoordinateGenerator>::call(
             valid, sampler, objectCoordinates, samples);
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(state.iterations() * W);
@@ -168,11 +168,11 @@ namespace api {
       std::vector<vkl_vec3f> objectCoordinates(N);
       std::vector<vkl_vec3f> samples(N);
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
         vklComputeGradientN(
             sampler, N, objectCoordinates.data(), samples.data());
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(state.iterations() * N);

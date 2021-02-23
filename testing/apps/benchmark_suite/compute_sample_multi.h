@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
@@ -55,14 +55,14 @@ namespace api {
 
       std::vector<unsigned int> attributeIndices = getAttributeIndices(M);
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<1>(&objectCoordinates);
         vklComputeSampleM(sampler,
                           &objectCoordinates,
                           samples.data(),
                           M,
                           attributeIndices.data());
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(M * state.iterations());
@@ -99,13 +99,13 @@ namespace api {
 
       std::vector<unsigned int> attributeIndices = getAttributeIndices(M);
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<1>(&objectCoordinates);
         for (unsigned int a = 0; a < M; a++) {
           samples[a] = vklComputeSample(
               sampler, &objectCoordinates, attributeIndices[a]);
         }
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(M * state.iterations());
@@ -212,11 +212,11 @@ namespace api {
         valid[i] = 1;
       }
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextV<W>(&objectCoordinates);
         impl::VklComputeSampleM<W, VolumeWrapper, CoordinateGenerator>::call(
             valid, sampler, objectCoordinates, samples, M, attributeIndices);
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(M * state.iterations() * W);
@@ -326,11 +326,11 @@ namespace api {
         valid[i] = 1;
       }
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextV<W>(&objectCoordinates);
         impl::VklComputeSampleSeqM<W, VolumeWrapper, CoordinateGenerator>::call(
             valid, sampler, objectCoordinates, samples, M, attributeIndices);
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(M * state.iterations() * W);
@@ -369,7 +369,7 @@ namespace api {
 
       const std::vector<unsigned int> attributeIndices = getAttributeIndices(M);
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
         vklComputeSampleMN(sampler,
                            N,
@@ -377,7 +377,7 @@ namespace api {
                            samples.data(),
                            M,
                            attributeIndices.data());
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(M * state.iterations() * N);
@@ -416,7 +416,7 @@ namespace api {
 
       const std::vector<unsigned int> attributeIndices = getAttributeIndices(M);
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
         for (unsigned int a = 0; a < M; a++) {
           vklComputeSampleN(sampler,
@@ -425,7 +425,7 @@ namespace api {
                             samples.data() + a * N,
                             attributeIndices[a]);
         }
-      }
+      }));
 
       // enables rates in report output
       state.SetItemsProcessed(M * state.iterations() * N);

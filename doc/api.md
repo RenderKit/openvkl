@@ -268,11 +268,12 @@ Large data is passed to Open VKL via a `VKLData` handle created with
                        VKLDataCreationFlags dataCreationFlags,
                        size_t byteStride);
 
-Types accepted are listed in `VKLDataType.h`; basic types (`UCHAR`, `INT`,
-`UINT`, `LONG`, `ULONG`, `FLOAT`) exist as both scalar and chunked formats.
-Half-precision floating-point data is supported via the `VKL_HALF` type;
-provided data is expected to conform with the IEEE 754 `binary16` specification.
-The types accepted vary per volume; read the volume section below for specifics.
+Types accepted are listed in `VKLDataType.h`; basic types (`CHAR`, `UCHAR`,
+`SHORT`, `USHORT`, `INT`, `UINT`, `LONG`, `ULONG`, `HALF`, `FLOAT`, `DOUBLE`)
+exist as both scalar and chunked formats. Half-precision floating-point data is
+supported via the `VKL_HALF` type; provided data is expected to conform with the
+IEEE 754 `binary16` specification. The types accepted vary per volume; read the
+volume section below for specifics.
 
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its

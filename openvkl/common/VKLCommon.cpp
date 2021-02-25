@@ -57,6 +57,12 @@ namespace openvkl {
       return "string";
     case VKL_CHAR:
       return "char";
+    case VKL_VEC2C:
+      return "vec2c";
+    case VKL_VEC3C:
+      return "vec3c";
+    case VKL_VEC4C:
+      return "vec4c";
     case VKL_UCHAR:
       return "uchar";
     case VKL_VEC2UC:
@@ -67,8 +73,20 @@ namespace openvkl {
       return "vec4uc";
     case VKL_SHORT:
       return "short";
+    case VKL_VEC2S:
+      return "vec2s";
+    case VKL_VEC3S:
+      return "vec3s";
+    case VKL_VEC4S:
+      return "vec4s";
     case VKL_USHORT:
       return "ushort";
+    case VKL_VEC2US:
+      return "vec2us";
+    case VKL_VEC3US:
+      return "vec3us";
+    case VKL_VEC4US:
+      return "vec4us";
     case VKL_INT:
       return "int";
     case VKL_VEC2I:
@@ -103,6 +121,12 @@ namespace openvkl {
       return "vec4ul";
     case VKL_HALF:
       return "half";
+    case VKL_VEC2H:
+      return "vec2h";
+    case VKL_VEC3H:
+      return "vec3h";
+    case VKL_VEC4H:
+      return "vec4h";
     case VKL_FLOAT:
       return "float";
     case VKL_VEC2F:
@@ -113,6 +137,12 @@ namespace openvkl {
       return "vec4f";
     case VKL_DOUBLE:
       return "double";
+    case VKL_VEC2D:
+      return "vec2d";
+    case VKL_VEC3D:
+      return "vec3d";
+    case VKL_VEC4D:
+      return "vec4d";
     case VKL_BOX1I:
       return "box1i";
     case VKL_BOX2I:
@@ -164,6 +194,12 @@ namespace openvkl {
       return sizeof(bool);
     case VKL_CHAR:
       return sizeof(int8);
+    case VKL_VEC2C:
+      return sizeof(vec2c);
+    case VKL_VEC3C:
+      return sizeof(vec3c);
+    case VKL_VEC4C:
+      return sizeof(vec4c);
     case VKL_UCHAR:
       return sizeof(uint8);
     case VKL_VEC2UC:
@@ -174,8 +210,20 @@ namespace openvkl {
       return sizeof(vec4uc);
     case VKL_SHORT:
       return sizeof(int16);
+    case VKL_VEC2S:
+      return sizeof(vec2s);
+    case VKL_VEC3S:
+      return sizeof(vec3s);
+    case VKL_VEC4S:
+      return sizeof(vec4s);
     case VKL_USHORT:
       return sizeof(uint16);
+    case VKL_VEC2US:
+      return sizeof(vec2us);
+    case VKL_VEC3US:
+      return sizeof(vec3us);
+    case VKL_VEC4US:
+      return sizeof(vec4us);
     case VKL_INT:
       return sizeof(int32);
     case VKL_VEC2I:
@@ -209,7 +257,13 @@ namespace openvkl {
     case VKL_VEC4UL:
       return sizeof(vec4ul);
     case VKL_HALF:
-      return sizeof(float) / 2;
+      return sizeof(uint16);
+    case VKL_VEC2H:
+      return sizeof(vec2us);
+    case VKL_VEC3H:
+      return sizeof(vec3us);
+    case VKL_VEC4H:
+      return sizeof(vec4us);
     case VKL_FLOAT:
       return sizeof(float);
     case VKL_VEC2F:
@@ -220,6 +274,12 @@ namespace openvkl {
       return sizeof(vec4f);
     case VKL_DOUBLE:
       return sizeof(double);
+    case VKL_VEC2D:
+      return sizeof(vec2d);
+    case VKL_VEC3D:
+      return sizeof(vec3d);
+    case VKL_VEC4D:
+      return sizeof(vec4d);
     case VKL_BOX1I:
       return sizeof(box1i);
     case VKL_BOX2I:

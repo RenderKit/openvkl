@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <algorithm>
@@ -186,16 +186,32 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
 {
   vklLoadModule("ispc_driver");
 
+  VKLDriver driver = vklNewDriver("ispc");
+  vklCommitDriver(driver);
+  vklSetCurrentDriver(driver);
+
+  // the native width for the default driver is the maximum we can instantiate
+  int maximumSIMDWidth = vklGetNativeSIMDWidth();
+
   for (int W: { 4, 8, 16 })
   {
+    if (W > maximumSIMDWidth) {
+      WARN("skipping max iterator size tests on unsupported driver width "
+           << W << " (maximum supported width on this system / build is "
+           << maximumSIMDWidth << ")");
+      continue;
+    }
+
     std::ostringstream os;
     os << "ispc_" << W;
-    VKLDriver driver = vklNewDriver(os.str().c_str());
+    driver = vklNewDriver(os.str().c_str());
     if (driver)
     {
       vklCommitDriver(driver);
       vklSetCurrentDriver(driver);
       int nativeSIMDWidth = vklGetNativeSIMDWidth();
+
+      REQUIRE(nativeSIMDWidth == W);
 
       if (nativeSIMDWidth == 4) {
 #if VKL_TARGET_WIDTH_ENABLED_4
@@ -243,9 +259,12 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         throw std::runtime_error("unsupported native SIMD width for tests");
       }
     }
-    else // (driver) 
+    else // (driver)
     {
-      WARN("skipping SIMD conformance tests on unsupported width " << W);
+      WARN(
+          "cannot run max iterator size tests on unavailable (not compiled) "
+          "driver width "
+          << W);
     }
   }
 

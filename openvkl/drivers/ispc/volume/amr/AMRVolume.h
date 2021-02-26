@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -44,7 +44,7 @@ namespace openvkl {
       vec3f origin;
       vec3f spacing;
 
-      VKLAMRMethod amrMethod;
+      VKLAMRMethod amrMethod{VKL_AMR_CURRENT};
     };
 
   }  // namespace ispc_driver

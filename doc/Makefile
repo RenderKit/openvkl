@@ -31,6 +31,9 @@ tmp/%.md: %.md tmp/version
 
 tmp/links.md: links.md
 
+tmp/images_web.md: images.md
+	sed -e "s@: @: https://openvkl.github.io/@" $< > $@
+
 changelog.md:
 	ln -s ../CHANGELOG.md $@
 
@@ -107,14 +110,14 @@ endif
 ## Markdown
 ## ----------------------------------------------------------------------------
 
-# Pandoc doesn't convert the alt text of an image to a caption in markdown, so we need to do it manually
-convert_image_alt_to_caption = perl -0pe 's/!\[((?:\[.*?\]|.)+?)\]\((.*?)\)/![]\(\2)\n\1/sg'
-
-tmp/api.md: api.md tmp/links.md
+tmp/api.md: api.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md changelog.md support.md tmp/api.md examples.md compilation.md related_projects.md tmp/links.md
-	$(PANDOC) $+ -t gfm | $(convert_image_alt_to_caption) > $@
+tmp/examples.md: examples.md tmp/links.md tmp/images_web.md
+	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
+
+../README.md: tmp/readme_head.md overview.md changelog.md support.md tmp/api.md tmp/examples.md compilation.md related_projects.md tmp/links.md
+	$(PANDOC) $+ -t gfm > $@
 
 ## ----------------------------------------------------------------------------
 ## Clean

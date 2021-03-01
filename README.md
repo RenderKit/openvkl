@@ -216,7 +216,7 @@ Join our [mailing
 list](https://groups.google.com/forum/#!forum/openvkl-announce/join) to
 receive release announcements and major news regarding Open VKL.
 
-# Intel® Open VKL API
+# Open VKL API
 
 To access the Open VKL API you first need to include the Open VKL
 header. For C99 or C++:
@@ -505,10 +505,13 @@ VKLData vklNewData(size_t numItems,
                    size_t byteStride);
 ```
 
-Types accepted are listed in `VKLDataType.h`; basic types (`UCHAR`,
-`INT`, `UINT`, `LONG`, `ULONG`, `FLOAT`) exist as both scalar and
-chunked formats. The types accepted vary per volume at the moment; read
-the volume section below for specifics.
+Types accepted are listed in `VKLDataType.h`; basic types (`CHAR`,
+`UCHAR`, `SHORT`, `USHORT`, `INT`, `UINT`, `LONG`, `ULONG`, `HALF`,
+`FLOAT`, `DOUBLE`) exist as both scalar and chunked formats.
+Half-precision floating-point data is supported via the `VKL_HALF` type;
+provided data is expected to conform with the IEEE 754 `binary16`
+specification. The types accepted vary per volume; read the volume
+section below for specifics.
 
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data
@@ -637,6 +640,7 @@ the table below.
 |                       |                                  |               | `VKL_UCHAR`                                                                              |
 |                       |                                  |               | `VKL_SHORT`                                                                              |
 |                       |                                  |               | `VKL_USHORT`                                                                             |
+|                       |                                  |               | `VKL_HALF`                                                                               |
 |                       |                                  |               | `VKL_FLOAT`                                                                              |
 |                       |                                  |               | `VKL_DOUBLE`                                                                             |
 |                       |                                  |               | Multiple attributes are supported through passing an array of VKLData objects.           |
@@ -701,9 +705,9 @@ conforming with the ISO convention for spherical coordinate systems. The
 coordinate system and parameters understood by structured spherical
 volumes are summarized below.
 
-\[Structured spherical volume coordinate system: radial distance
+![Structured spherical volume coordinate system: radial distance
 (\(r\)), inclination angle (\(\theta\)), and azimuthal angle
-(\(\phi\)).\]\[imgStructuredSphericalCoords\]
+(\(\phi\)).](https://openvkl.github.io/images/structured_spherical_coords.png)
 
 | Type                | Name        |    Default    | Description                                                                    |
 | :------------------ | :---------- | :-----------: | :----------------------------------------------------------------------------- |
@@ -712,6 +716,7 @@ volumes are summarized below.
 |                     |             |               | `VKL_UCHAR`                                                                    |
 |                     |             |               | `VKL_SHORT`                                                                    |
 |                     |             |               | `VKL_USHORT`                                                                   |
+|                     |             |               | `VKL_HALF`                                                                     |
 |                     |             |               | `VKL_FLOAT`                                                                    |
 |                     |             |               | `VKL_DOUBLE`                                                                   |
 |                     |             |               | Multiple attributes are supported through passing an array of VKLData objects. |
@@ -918,8 +923,8 @@ operations (cp. \[1\]).
 VDB leaf nodes are implicit in Open VKL: they are stored as pointers to
 user-provided data.
 
-\[Structure of `"vdb"` volumes in the default
-configuration\]\[imgVdbStructure\]
+![Structure of `"vdb"` volumes in the default
+configuration](https://openvkl.github.io/images/vdb_structure.png)
 
 VDB volumes interpret input data as constant cells (which are then
 potentially filtered). This is in contrast to `structuredRegular`
@@ -1767,7 +1772,8 @@ API usage. These implementations are available in the
 [`examples/interactive/renderers/`](https://github.com/openvkl/openvkl/tree/master/examples/interactive/renderers)
 directory.
 
-\[`vklExamples` interactive example application\]\[imgVklExamples\]
+![`vklExamples` interactive example
+application](https://openvkl.github.io/images/vklExamples.png)
 
 ## vklTutorial source
 

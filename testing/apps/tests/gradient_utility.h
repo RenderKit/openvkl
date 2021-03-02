@@ -95,12 +95,18 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-  multidim_index_sequence<3> mis(v->getDimensions() / step);
+  constexpr int filterRadius = 2;
+  multidim_index_sequence<3> mis((v->getDimensions()-2*filterRadius) / step);
 
   for (unsigned int attributeIndex = 0; attributeIndex < v->getNumAttributes();
        attributeIndex++) {
     for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
+      const auto offsetWithStep = offset * step + filterRadius;
+      if (offsetWithStep.x + filterRadius >= v->getDimensions().x ||
+          offsetWithStep.y + filterRadius >= v->getDimensions().y ||
+          offsetWithStep.z + filterRadius >= v->getDimensions().z) {
+        continue;
+      }
 
       vec3f objectCoordinates =
           v->transformLocalToObjectCoordinates(offsetWithStep);

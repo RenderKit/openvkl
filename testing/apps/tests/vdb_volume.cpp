@@ -24,15 +24,15 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
   init_driver();
   VKLVolume volume = vklNewVolume("vdb");
 
-  const uint32_t level = vklVdbNumLevels()-1;
+  const uint32_t level   = vklVdbNumLevels() - 1;
   const VKLFormat format = VKL_FORMAT_CONSTANT_ZYX;
-  const vec3i origin = vec3i(0,0,0);
+  const vec3i origin     = vec3i(0, 0, 0);
 
   std::vector<float> voxels(vklVdbLevelNumVoxels(level));
 
   SECTION("Invalid level")
   {
-    VKLData data = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
+    VKLData data      = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
     uint32_t invLevel = vklVdbNumLevels();
     VKLData levelData = vklNewData(1, VKL_UINT, &invLevel);
     vklSetData(volume, "node.level", levelData);
@@ -50,13 +50,13 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
 
     vklCommit(volume);
     REQUIRE(vklDriverGetLastErrorCode(vklGetCurrentDriver()) == 1);
-    REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver()))
-        == "invalid node level 4 for this vdb configuration");
+    REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver())) ==
+            "invalid node level 4 for this vdb configuration");
   }
 
   SECTION("Constant data too small")
   {
-    VKLData data = vklNewData(1, VKL_FLOAT, voxels.data());
+    VKLData data      = vklNewData(1, VKL_FLOAT, voxels.data());
     VKLData levelData = vklNewData(1, VKL_UINT, &level);
     vklSetData(volume, "node.level", levelData);
     vklRelease(levelData);
@@ -104,6 +104,19 @@ TEST_CASE("VDB volume value range", "[value_range]")
     range1f valueRange;
     REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
                         128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
+    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
+    REQUIRE(valueRange.upper >= valueRange.lower);
+    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
+            Approx(6.f).epsilon(0.001f));
+    REQUIRE_NOTHROW(delete volume);
+  }
+
+  SECTION("WaveletVdbVolume tricubic")
+  {
+    WaveletVdbVolume *volume = nullptr;
+    range1f valueRange;
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
+                        128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRICUBIC));
     REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
     REQUIRE(valueRange.upper >= valueRange.lower);
     REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
@@ -185,6 +198,41 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     REQUIRE_NOTHROW(delete volume);
     vklRelease(vklSampler);
   }
+
+  SECTION("WaveletVdbVolume tricubic")
+  {
+    WaveletVdbVolume *volume = nullptr;
+    range1f valueRange;
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
+                        128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRICUBIC));
+
+    VKLVolume vklVolume   = volume->getVKLVolume();
+    VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklCommit(vklSampler);
+    const vec3i step(1);
+    multidim_index_sequence<3> mis(volume->getDimensions() / step);
+    for (const auto &offset : mis) {
+      const auto offsetWithStep = offset * step;
+
+      const vec3f objectCoordinates =
+          volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+      const float proceduralValue =
+          volume->computeProceduralValue(objectCoordinates);
+
+      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                       << offsetWithStep.z);
+      INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                  << objectCoordinates.y << " "
+                                  << objectCoordinates.z);
+
+      test_scalar_and_vector_sampling(
+          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+    }
+
+    REQUIRE_NOTHROW(delete volume);
+    vklRelease(vklSampler);
+  }
 }
 
 TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
@@ -196,7 +244,7 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   REQUIRE_NOTHROW(volume = new WaveletVdbVolume(
                       128, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
-  VKLVolume vklVolume = volume->getVKLVolume();
+  VKLVolume vklVolume   = volume->getVKLVolume();
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
   std::vector<char> buffer(vklGetIntervalIteratorSize(vklSampler));
@@ -273,6 +321,57 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
       }
 
       const auto offsetWithStep = offset * step;
+      const vec3f objectCoordinates =
+          volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+      INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                  << objectCoordinates.y << " "
+                                  << objectCoordinates.z);
+
+      const vkl_vec3f vklGradient =
+          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
+      const vec3f gradient = (const vec3f &)vklGradient;
+
+      // compare to analytical gradient
+      const vec3f proceduralGradient =
+          volume->computeProceduralGradient(objectCoordinates);
+
+      static constexpr float tolerance = 0.1f;
+      REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
+      REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
+      REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
+    }
+
+    REQUIRE_NOTHROW(delete volume);
+    vklRelease(vklSampler);
+  }
+
+  SECTION("XYZVdbVolume tricubic")
+  {
+    XYZVdbVolume *volume = nullptr;
+    range1f valueRange;
+    const int dim = 128;
+    REQUIRE_NOTHROW(volume = new XYZVdbVolume(
+                        dim, vec3f(0.f), vec3f(1.f), VKL_FILTER_TRICUBIC));
+
+    VKLVolume vklVolume   = volume->getVKLVolume();
+    VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklCommit(vklSampler);
+    const vec3i step(1);
+
+    // Gradient will be different around the border due to central differencing,
+    // so we discard the outer layer of voxels.
+    constexpr int filterRadius = 2;
+    multidim_index_sequence<3> mis((volume->getDimensions() - 2*filterRadius) / step);
+    for (const auto &offset : mis) {
+      const auto offsetWithStep = offset * step + filterRadius;
+      if (offsetWithStep.x + filterRadius >= volume->getDimensions().x ||
+          offsetWithStep.y + filterRadius >= volume->getDimensions().y ||
+          offsetWithStep.z + filterRadius >= volume->getDimensions().z) {
+        continue;
+      }
+
       const vec3f objectCoordinates =
           volume->transformLocalToObjectCoordinates(offsetWithStep);
 

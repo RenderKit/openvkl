@@ -36,37 +36,36 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &aos : useAOSLayouts) {
-      std::stringstream sectionName;
-      sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
-                                              : "VKL_DATA_SHARED_BUFFER");
+      for (auto filter : {VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC}) {
+        std::stringstream sectionName;
+        sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
+                                                : "VKL_DATA_SHARED_BUFFER");
+        sectionName << " ";
+        sectionName << (filter == VKL_FILTER_TRILINEAR ? "VKL_FILTER_TRILINEAR"
+                                                       : "VKL_FILTER_TRICUBIC");
+        sectionName << " ";
+        sectionName << (aos == true ? "AOS layout" : "SOA layout");
 
-      sectionName << " ";
+        DYNAMIC_SECTION(sectionName.str())
+        {
+          std::shared_ptr<ProceduralVdbVolumeMulti> v(
+              generateMultiAttributeVdbVolume(
+                  dimensions, gridOrigin, gridSpacing, filter, dcf, aos));
 
-      sectionName << (aos == true ? "AOS layout" : "SOA layout");
+          num_attributes(v);
+          sampling_on_vertices_vs_procedural_values_multi(v, 2);
+          gradients_on_vertices_vs_procedural_values_multi(v, 2);
 
-      DYNAMIC_SECTION(sectionName.str())
-      {
-        std::shared_ptr<ProceduralVdbVolumeMulti> v(
-            generateMultiAttributeVdbVolume(dimensions,
-                                            gridOrigin,
-                                            gridSpacing,
-                                            VKL_FILTER_TRILINEAR,
-                                            dcf,
-                                            aos));
+          for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+            test_stream_sampling(v, i);
+            test_stream_gradients(v, i);
+          }
 
-        num_attributes(v);
-        sampling_on_vertices_vs_procedural_values_multi(v, 2);
-        gradients_on_vertices_vs_procedural_values_multi(v, 2);
+          std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+          std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
 
-        for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
-          test_stream_sampling(v, i);
-          test_stream_gradients(v, i);
+          test_stream_sampling_multi(v, attributeIndices);
         }
-
-        std::vector<unsigned int> attributeIndices(v->getNumAttributes());
-        std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
-
-        test_stream_sampling_multi(v, attributeIndices);
       }
     }
   }

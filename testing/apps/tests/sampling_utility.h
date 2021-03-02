@@ -274,8 +274,10 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
 
         // samples may be NaN if out of bounds of the grid (e.g. for samples in
         // the bounding box of a spherical volume but outside the grid)
-        REQUIRE(((sampleTruth == samples[i]) ||
-                 (std::isnan(sampleTruth) && std::isnan(samples[i]))));
+        static constexpr float tolerance = 1e-5f;
+        REQUIRE(
+            ((sampleTruth == Approx(samples[i]).margin(tolerance)) ||
+             (std::isnan(sampleTruth) && std::isnan(samples[i]))));
       }
     }
   }
@@ -337,8 +339,9 @@ inline void test_stream_sampling_multi(
           // in the bounding box of a spherical volume but outside the grid)
           const size_t sampleIndex = i * attributeIndices.size() + a;
 
+          static constexpr float tolerance = 1e-5f;
           REQUIRE(
-              ((sampleTruth == samples[sampleIndex]) ||
+              ((sampleTruth == Approx(samples[sampleIndex]).margin(tolerance)) ||
                (std::isnan(sampleTruth) && std::isnan(samples[sampleIndex]))));
         }
       }

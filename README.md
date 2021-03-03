@@ -505,14 +505,6 @@ VKLData vklNewData(size_t numItems,
                    size_t byteStride);
 ```
 
-Types accepted are listed in `VKLDataType.h`; basic types (`CHAR`,
-`UCHAR`, `SHORT`, `USHORT`, `INT`, `UINT`, `LONG`, `ULONG`, `HALF`,
-`FLOAT`, `DOUBLE`) exist as both scalar and chunked formats.
-Half-precision floating-point data is supported via the `VKL_HALF` type;
-provided data is expected to conform with the IEEE 754 `binary16`
-specification. The types accepted vary per volume; read the volume
-section below for specifics.
-
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data
 for its use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`),
@@ -527,6 +519,38 @@ original `byteStride`.
 
 As with other object types, when data objects are no longer needed they
 should be released via `vklRelease`.
+
+The enum type `VKLDataType` describes the different element types that
+can be represented in Open VKL. The types accepted vary per volume; see
+the volume section for specifics. Valid constants are listed in the
+table below.
+
+| Type/Name                      | Description                                                                                  |
+| :----------------------------- | :------------------------------------------------------------------------------------------- |
+| VKL\_DRIVER                    | API driver object reference                                                                  |
+| VKL\_DATA                      | data reference                                                                               |
+| VKL\_OBJECT                    | generic object reference                                                                     |
+| VKL\_VALUE\_SELECTOR           | value selector object reference                                                              |
+| VKL\_VOLUME                    | volume object reference                                                                      |
+| VKL\_STRING                    | C-style zero-terminated character string                                                     |
+| VKL\_CHAR, VKL\_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
+| VKL\_UCHAR, VKL\_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                   |
+| VKL\_SHORT, VKL\_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_USHORT, VKL\_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_INT, VKL\_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                      |
+| VKL\_UINT, VKL\_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_LONG, VKL\_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                      |
+| VKL\_ULONG, VKL\_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_HALF, VKL\_VEC\[234\]H    | 16 bit half precision floating-point scalar and \[234\]-element vector (IEEE 754 `binary16`) |
+| VKL\_FLOAT, VKL\_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                     |
+| VKL\_DOUBLE, VKL\_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                     |
+| VKL\_BOX\[1234\]I              | 32 bit integer box (lower + upper bounds)                                                    |
+| VKL\_BOX\[1234\]F              | 32 bit single precision floating-point box (lower + upper bounds)                            |
+| VKL\_LINEAR\[23\]F             | 32 bit single precision floating-point linear transform (\[23\] vectors)                     |
+| VKL\_AFFINE\[23\]F             | 32 bit single precision floating-point affine transform (linear transform plus translation)  |
+| VKL\_VOID\_PTR                 | raw memory address                                                                           |
+
+Valid named constants for `VKLDataType`.
 
 ## Observers
 

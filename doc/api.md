@@ -268,13 +268,6 @@ Large data is passed to Open VKL via a `VKLData` handle created with
                        VKLDataCreationFlags dataCreationFlags,
                        size_t byteStride);
 
-Types accepted are listed in `VKLDataType.h`; basic types (`CHAR`, `UCHAR`,
-`SHORT`, `USHORT`, `INT`, `UINT`, `LONG`, `ULONG`, `HALF`, `FLOAT`, `DOUBLE`)
-exist as both scalar and chunked formats. Half-precision floating-point data is
-supported via the `VKL_HALF` type; provided data is expected to conform with the
-IEEE 754 `binary16` specification. The types accepted vary per volume; read the
-volume section below for specifics.
-
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its
 use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try
@@ -288,6 +281,73 @@ naturally-strided array on copy, regardless of the original `byteStride`.
 
 As with other object types, when data objects are no longer needed they should
 be released via `vklRelease`.
+
+The enum type `VKLDataType` describes the different element types that can be
+represented in Open VKL. The types accepted vary per volume; see the volume
+section for specifics. Valid constants are listed in the table below.
+
+  -------------------------- ---------------------------------------------------
+  Type/Name                  Description
+  -------------------------- ---------------------------------------------------
+  VKL_DRIVER                 API driver object reference
+
+  VKL_DATA                   data reference
+
+  VKL_OBJECT                 generic object reference
+
+  VKL_VALUE_SELECTOR         value selector object reference
+
+  VKL_VOLUME                 volume object reference
+
+  VKL_STRING                 C-style zero-terminated character string
+
+  VKL_CHAR, VKL_VEC[234]C    8\ bit signed character scalar and [234]-element
+                             vector
+
+  VKL_UCHAR, VKL_VEC[234]UC  8\ bit unsigned character scalar and [234]-element
+                             vector
+
+  VKL_SHORT, VKL_VEC[234]S   16\ bit unsigned integer scalar and [234]-element
+                             vector
+
+  VKL_USHORT, VKL_VEC[234]US 16\ bit unsigned integer scalar and [234]-element
+                             vector
+
+  VKL_INT, VKL_VEC[234]I     32\ bit signed integer scalar and [234]-element
+                             vector
+
+  VKL_UINT, VKL_VEC[234]UI   32\ bit unsigned integer scalar and [234]-element
+                             vector
+
+  VKL_LONG, VKL_VEC[234]L    64\ bit signed integer scalar and [234]-element
+                             vector
+
+  VKL_ULONG, VKL_VEC[234]UL  64\ bit unsigned integer scalar and [234]-element
+                             vector
+
+  VKL_HALF, VKL_VEC[234]H    16\ bit half precision floating-point scalar and
+                             [234]-element vector (IEEE 754 `binary16`)
+
+  VKL_FLOAT, VKL_VEC[234]F   32\ bit single precision floating-point scalar and
+                             [234]-element vector
+
+  VKL_DOUBLE, VKL_VEC[234]D  64\ bit double precision floating-point scalar and
+                             [234]-element vector
+
+  VKL_BOX[1234]I             32\ bit integer box (lower + upper bounds)
+
+  VKL_BOX[1234]F             32\ bit single precision floating-point box (lower
+                             + upper bounds)
+
+  VKL_LINEAR[23]F            32\ bit single precision floating-point linear
+                             transform ([23] vectors)
+
+  VKL_AFFINE[23]F            32\ bit single precision floating-point affine
+                             transform (linear transform plus translation)
+
+  VKL_VOID_PTR               raw memory address
+  -------------------------- ---------------------------------------------------
+  : Valid named constants for `VKLDataType`.
 
 Observers
 ---------
@@ -1143,7 +1203,7 @@ Gradients
 In a very similar API to `vklComputeSample`, `vklComputeGradient` queries the
 value gradient at an object space coordinate.  Again, a scalar API, now
 returning a vec3f instead of a float. NaN values are returned for points outside
-the volume.  The time value, which must be between 0 and 1, specifies the sampling 
+the volume.  The time value, which must be between 0 and 1, specifies the sampling
 time. For temporally constant volumes, this value has no effect.
 
     vkl_vec3f vklComputeGradient(VKLSampler sampler,

@@ -18,6 +18,39 @@ using namespace rkcommon;
 using namespace openvkl::testing;
 using namespace openvkl::examples;
 
+struct ViewerParams
+{
+  vec3f gridOrigin{rkcommon::nan};
+  vec3f gridSpacing{rkcommon::nan};
+  vec3i dimensions{128};
+  vec2i windowSize{1024};
+  region2i pixelRange{vec2i(0, 0), windowSize};
+  std::string rendererType{"density_pathtracer"};
+  std::string gridType{"structuredRegular"};
+  std::string voxelTypeString{"float"};
+  std::string filename;
+  std::string fileNameOut;
+  std::string field;
+  std::vector<float> motionBlurUnstructuredTimeSamples{
+      0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
+  range1f initialValueRange{0.f, 1.f};
+  VKLDataType voxelType{VKL_FLOAT};
+  VKLFilter filter{VKL_FILTER_TRILINEAR};
+  VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+  size_t numParticles{1000};
+  int maxIteratorDepth{0};
+  int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
+  uint8_t motionBlurStructuredNumTimesteps{6};
+  bool multiAttribute{false};
+  bool motionBlurStructured{false};
+  bool motionBlurUnstructured{false};
+  bool haveFilter{false};
+  bool haveVdb{false};
+  bool disableVSync{false};
+  bool interactive{true};
+  bool useISPC{true};
+};
+
 bool addSamplingRateUI(GLFWVKLWindow &window)
 {
   auto &renderer = window.currentRenderer();
@@ -218,7 +251,6 @@ void usage(const char *progname)
       << "usage: " << progname << "\n"
       << "\t-renderer density_pathtracer | hit_iterator |"
          " ray_march_iterator | interval_iterator_debug\n"
-         "\t-disable-vsync\n"
          "\t-gridType structuredRegular | structuredSpherical | "
          "unstructured | amr | vdb | particle\n"
          "\t-gridOrigin <x> <y> <z>\n"
@@ -232,35 +264,16 @@ void usage(const char *progname)
          "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
          "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
+         "\t-disable-vsync\n"
+         "\t-ispc\n"
+         "\t-windowSize <x> <y>\n"
+         "\t-pixelRange <xMin> <yMin> <xMax> <yMax>\n"
+         "\t-o <output.ppm>\n"
       << std::endl;
 }
 
-int main(int argc, const char **argv)
+bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
 {
-  std::string rendererType("density_pathtracer");
-  std::string gridType("structuredRegular");
-  vec3i dimensions(128);
-  vec3f gridOrigin(rkcommon::nan);
-  vec3f gridSpacing(rkcommon::nan);
-  std::string voxelTypeString("float");
-  VKLDataType voxelType(VKL_FLOAT);
-  bool multiAttribute(false);
-  bool motionBlurStructured(false);
-  uint8_t motionBlurStructuredNumTimesteps(6);
-  bool motionBlurUnstructured(false);
-  std::vector<float> motionBlurUnstructuredTimeSamples{
-      0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
-  std::string filename;
-  bool disableVSync(false);
-  VKLFilter filter(VKL_FILTER_TRILINEAR);
-  VKLFilter gradientFilter(VKL_FILTER_TRILINEAR);
-  bool haveFilter(false);
-  bool haveVdb(false);
-  std::string field;
-
-  size_t numParticles(1000);
-  range1f initialValueRange(0.f, 1.f);
-
   int argIndex = 1;
   while (argIndex < argc) {
     std::string switchArg(argv[argIndex++]);
@@ -270,9 +283,36 @@ int main(int argc, const char **argv)
         throw std::runtime_error("improper -gridType arguments");
       }
 
-      gridType = std::string(argv[argIndex++]);
+      params.gridType = std::string(argv[argIndex++]);
+    } else if (switchArg == "-o") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -o arguments");
+      }
+      params.interactive = false;
+      params.fileNameOut = std::string(argv[argIndex++]);
+    } else if (switchArg == "-ispc") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -ispc arguments");
+      }
+      params.useISPC = atoi(argv[argIndex++]);
+    } else if (switchArg == "-windowSize") {
+      if (argc < argIndex + 2) {
+        throw std::runtime_error("improper -windowSize arguments");
+      }
+      params.windowSize.x     = atoi(argv[argIndex++]);
+      params.windowSize.y     = atoi(argv[argIndex++]);
+      params.pixelRange.lower = vec2i(0);
+      params.pixelRange.upper = params.windowSize;
+    } else if (switchArg == "-pixelRange") {
+      if (argc < argIndex + 4) {
+        throw std::runtime_error("improper -pixelRange arguments");
+      }
+      params.pixelRange.lower.x = atoi(argv[argIndex++]);
+      params.pixelRange.lower.y = atoi(argv[argIndex++]);
+      params.pixelRange.upper.x = atoi(argv[argIndex++]);
+      params.pixelRange.upper.y = atoi(argv[argIndex++]);
     } else if (switchArg == "-disable-vsync") {
-      disableVSync = true;
+      params.disableVSync = true;
     } else if (switchArg == "-gridOrigin") {
       if (argc < argIndex + 3) {
         throw std::runtime_error("improper -gridOrigin arguments");
@@ -282,7 +322,7 @@ int main(int argc, const char **argv)
       const std::string gridOriginY(argv[argIndex++]);
       const std::string gridOriginZ(argv[argIndex++]);
 
-      gridOrigin =
+      params.gridOrigin =
           vec3f(stof(gridOriginX), stof(gridOriginY), stof(gridOriginZ));
     } else if (switchArg == "-gridSpacing") {
       if (argc < argIndex + 3) {
@@ -293,7 +333,7 @@ int main(int argc, const char **argv)
       const std::string gridSpacingY(argv[argIndex++]);
       const std::string gridSpacingZ(argv[argIndex++]);
 
-      gridSpacing =
+      params.gridSpacing =
           vec3f(stof(gridSpacingX), stof(gridSpacingY), stof(gridSpacingZ));
     } else if (switchArg == "-gridDimensions") {
       if (argc < argIndex + 3) {
@@ -304,7 +344,7 @@ int main(int argc, const char **argv)
       const std::string dimY(argv[argIndex++]);
       const std::string dimZ(argv[argIndex++]);
 
-      dimensions = vec3i(stoi(dimX), stoi(dimY), stoi(dimZ));
+      params.dimensions = vec3i(stoi(dimX), stoi(dimY), stoi(dimZ));
     } else if (switchArg == "-valueRange") {
       if (argc < argIndex + 2) {
         throw std::runtime_error("improper -valueRange arguments");
@@ -313,7 +353,7 @@ int main(int argc, const char **argv)
       const std::string rangeLower(argv[argIndex++]);
       const std::string rangeUpper(argv[argIndex++]);
 
-      initialValueRange = range1f(stof(rangeLower), stof(rangeUpper));
+      params.initialValueRange = range1f(stof(rangeLower), stof(rangeUpper));
     } else if (switchArg == "-voxelType") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -voxelType argument");
@@ -327,15 +367,15 @@ int main(int argc, const char **argv)
           {"float", VKL_FLOAT},
           {"double", VKL_DOUBLE}};
 
-      voxelTypeString = std::string(argv[argIndex++]);
+      params.voxelTypeString = std::string(argv[argIndex++]);
 
-      if (!stringToVKLDataType.count(voxelTypeString)) {
+      if (!stringToVKLDataType.count(params.voxelTypeString)) {
         throw std::runtime_error("unsupported -voxelType specified");
       }
 
-      voxelType = stringToVKLDataType[voxelTypeString];
+      params.voxelType = stringToVKLDataType[params.voxelTypeString];
     } else if (switchArg == "-multiAttribute") {
-      multiAttribute = true;
+      params.multiAttribute = true;
     } else if (switchArg == "-motionBlur") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -motionBlur arguments");
@@ -344,9 +384,9 @@ int main(int argc, const char **argv)
       std::string motionBlurType = argv[argIndex++];
 
       if (motionBlurType == "structured") {
-        motionBlurStructured = true;
+        params.motionBlurStructured = true;
       } else if (motionBlurType == "unstructured") {
-        motionBlurUnstructured = true;
+        params.motionBlurUnstructured = true;
       } else {
         throw std::runtime_error("improper -motionBlur arguments");
       }
@@ -355,38 +395,38 @@ int main(int argc, const char **argv)
         throw std::runtime_error("improper -file arguments");
       }
 
-      filename = argv[argIndex++];
+      params.filename = argv[argIndex++];
     } else if (switchArg == "-field") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -field arguments");
       }
 
-      field = argv[argIndex++];
+      params.field = argv[argIndex++];
     } else if (switchArg == "-filter") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -filter arguments");
       }
 
-      haveFilter                  = true;
+      params.haveFilter           = true;
       const std::string filterArg = argv[argIndex++];
       if (filterArg == "trilinear")
-        filter = VKL_FILTER_TRILINEAR;
+        params.filter = VKL_FILTER_TRILINEAR;
       else if (filterArg == "nearest")
-        filter = VKL_FILTER_NEAREST;
+        params.filter = VKL_FILTER_NEAREST;
       else
         throw std::runtime_error("unsupported -filter specified");
-      gradientFilter = filter;
+      params.gradientFilter = params.filter;
     } else if (switchArg == "-numParticles") {
-      numParticles = std::stoul(argv[argIndex++]);
+      params.numParticles = std::stoul(argv[argIndex++]);
     } else if (switchArg == "-renderer") {
       if (argc < argIndex + 1) {
         throw std::runtime_error("improper -renderer arguments");
       }
 
-      rendererType = argv[argIndex++];
+      params.rendererType = argv[argIndex++];
     } else if (switchArg == "-help") {
       usage(argv[0]);
-      return 0;
+      return false;
     } else {
       std::cerr << "unknown argument " << switchArg << std::endl;
       usage(argv[0]);
@@ -394,161 +434,233 @@ int main(int argc, const char **argv)
     }
   }
 
-  if (field.empty()) {
-    if (filename.empty())
-      field = "wavelet";
+  if (area(params.pixelRange) <= 0 || params.pixelRange.lower.x < 0 ||
+      params.pixelRange.lower.y < 0 ||
+      params.pixelRange.upper.x > params.windowSize.x ||
+      params.pixelRange.upper.y > params.windowSize.y) {
+    throw std::runtime_error("invalid pixel range");
+  }
+
+  if (params.field.empty()) {
+    if (params.filename.empty())
+      params.field = "wavelet";
     else
-      field = "density";
+      params.field = "density";
   }
 
-  if (haveFilter && gridType != "vdb" && gridType != "structuredRegular" &&
-      gridType != "structuredSpherical") {
-    std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
-              << std::endl;
+  if (params.haveFilter && params.gridType != "vdb" &&
+      params.gridType != "structuredRegular" &&
+      params.gridType != "structuredSpherical") {
+    std::cerr << "warning: -filter has no effect on " << params.gridType
+              << " volumes" << std::endl;
   }
 
-  // generate gridOrigin and gridSpacing if not specified on the command-line
-  if (std::isnan(gridOrigin.x) || std::isnan(gridSpacing.x)) {
+  // generate params.gridOrigin and params.gridSpacing if not specified on the
+  // command-line
+  if (std::isnan(params.gridOrigin.x) || std::isnan(params.gridSpacing.x)) {
     const float boundingBoxSize = 2.f;
 
-    if (gridType == "structuredSpherical") {
+    if (params.gridType == "structuredSpherical") {
       ProceduralStructuredSphericalVolume<>::generateGridParameters(
-          dimensions, boundingBoxSize, gridOrigin, gridSpacing);
+          params.dimensions,
+          boundingBoxSize,
+          params.gridOrigin,
+          params.gridSpacing);
     } else {
       // all other grid types can use values generated for structured regular
       // volumes
       ProceduralStructuredRegularVolume<>::generateGridParameters(
-          dimensions, boundingBoxSize, gridOrigin, gridSpacing);
+          params.dimensions,
+          boundingBoxSize,
+          params.gridOrigin,
+          params.gridSpacing);
     }
   }
 
-  initializeOpenVKL();
+  return true;
+}
 
-  std::shared_ptr<TestingVolume> testingVolume;
+void setupVolume(ViewerParams &params,
+                 std::shared_ptr<TestingVolume> &testingVolume)
+{
+  if (!params.filename.empty()) {
+    std::cout << "filename:       " << params.filename << std::endl;
 
-  if (!filename.empty()) {
-    std::cout << "filename:       " << filename << std::endl;
-
-    std::string ext = filename.substr(filename.size() - 4);
+    std::string ext = params.filename.substr(params.filename.size() - 4);
     std::for_each(ext.begin(), ext.end(), [](char &c) { c = ::tolower(c); });
     if (ext == ".vdb") {
-      gridType = "vdb";
-      auto vol = std::shared_ptr<OpenVdbVolume>(
-          OpenVdbVolume::loadVdbFile(filename, field, filter));
+      params.gridType = "vdb";
+      auto vol      = std::shared_ptr<OpenVdbVolume>(OpenVdbVolume::loadVdbFile(
+          params.filename, params.field, params.filter));
       testingVolume = std::move(vol);
-      haveVdb       = true;
+      params.haveVdb = true;
     } else {
       testingVolume = std::shared_ptr<RawFileStructuredVolume>(
-          new RawFileStructuredVolume(filename,
-                                      gridType,
-                                      dimensions,
-                                      gridOrigin,
-                                      gridSpacing,
-                                      voxelType));
+          new RawFileStructuredVolume(params.filename,
+                                      params.gridType,
+                                      params.dimensions,
+                                      params.gridOrigin,
+                                      params.gridSpacing,
+                                      params.voxelType));
     }
   } else {
-    if (gridType == "structuredRegular") {
+    if (params.gridType == "structuredRegular") {
       TemporalConfig temporalConfig;
 
-      if (motionBlurStructured) {
-        temporalConfig = TemporalConfig(TemporalConfig::Structured,
-                                        motionBlurStructuredNumTimesteps);
-      } else if (motionBlurUnstructured) {
-        if (field == "sphere" && !multiAttribute) {
+      if (params.motionBlurStructured) {
+        temporalConfig =
+            TemporalConfig(TemporalConfig::Structured,
+                           params.motionBlurStructuredNumTimesteps);
+      } else if (params.motionBlurUnstructured) {
+        if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
           temporalConfig.numRefitSamples = 4;
         } else {
-          temporalConfig = TemporalConfig(motionBlurUnstructuredTimeSamples);
+          temporalConfig =
+              TemporalConfig(params.motionBlurUnstructuredTimeSamples);
         }
       }
 
-      if (multiAttribute) {
+      if (params.multiAttribute) {
         testingVolume = std::shared_ptr<TestingStructuredVolumeMulti>(
             generateMultiAttributeStructuredRegularVolume(
-                dimensions,
-                gridOrigin,
-                gridSpacing,
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
                 temporalConfig,
                 VKL_DATA_SHARED_BUFFER,
                 false));
       } else {
-        if (voxelType == VKL_UCHAR) {
-          if (field == "xyz") {
+        if (params.voxelType == VKL_UCHAR) {
+          if (params.field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeUChar>(
-                dimensions, gridOrigin, gridSpacing, temporalConfig);
-          } else if (field == "sphere") {
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
+          } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereStructuredRegularVolumeUChar>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletStructuredRegularVolumeUChar>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           }
-        } else if (voxelType == VKL_SHORT) {
-          if (field == "xyz") {
+        } else if (params.voxelType == VKL_SHORT) {
+          if (params.field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeShort>(
-                dimensions, gridOrigin, gridSpacing, temporalConfig);
-          } else if (field == "sphere") {
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
+          } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereStructuredRegularVolumeShort>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletStructuredRegularVolumeShort>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           }
-        } else if (voxelType == VKL_USHORT) {
-          if (field == "xyz") {
+        } else if (params.voxelType == VKL_USHORT) {
+          if (params.field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeUShort>(
-                dimensions, gridOrigin, gridSpacing, temporalConfig);
-          } else if (field == "sphere") {
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
+          } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereStructuredRegularVolumeUShort>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletStructuredRegularVolumeUShort>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           }
-        } else if (voxelType == VKL_HALF) {
-          if (field == "xyz") {
+        } else if (params.voxelType == VKL_HALF) {
+          if (params.field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeHalf>(
-                dimensions, gridOrigin, gridSpacing, temporalConfig);
-          } else if (field == "sphere") {
-            testingVolume =
-                std::make_shared<SphereStructuredRegularVolumeHalf>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
+          } else if (params.field == "sphere") {
+            testingVolume = std::make_shared<SphereStructuredRegularVolumeHalf>(
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletStructuredRegularVolumeHalf>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           }
-        } else if (voxelType == VKL_FLOAT) {
-          if (field == "xyz") {
+        } else if (params.voxelType == VKL_FLOAT) {
+          if (params.field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeFloat>(
-                dimensions, gridOrigin, gridSpacing, temporalConfig);
-          } else if (field == "sphere") {
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
+          } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereStructuredRegularVolumeFloat>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletStructuredRegularVolumeFloat>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           }
-        } else if (voxelType == VKL_DOUBLE) {
-          if (field == "xyz") {
+        } else if (params.voxelType == VKL_DOUBLE) {
+          if (params.field == "xyz") {
             testingVolume = std::make_shared<XYZStructuredRegularVolumeDouble>(
-                dimensions, gridOrigin, gridSpacing, temporalConfig);
-          } else if (field == "sphere") {
+                params.dimensions,
+                params.gridOrigin,
+                params.gridSpacing,
+                temporalConfig);
+          } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereStructuredRegularVolumeDouble>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletStructuredRegularVolumeDouble>(
-                    dimensions, gridOrigin, gridSpacing, temporalConfig);
+                    params.dimensions,
+                    params.gridOrigin,
+                    params.gridSpacing,
+                    temporalConfig);
           }
         } else {
           throw std::runtime_error(
@@ -557,84 +669,83 @@ int main(int argc, const char **argv)
       }
     }
 
-    else if (gridType == "structuredSpherical") {
-      if (voxelType == VKL_UCHAR) {
-        if (field == "xyz") {
+    else if (params.gridType == "structuredSpherical") {
+      if (params.voxelType == VKL_UCHAR) {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZStructuredSphericalVolumeUChar>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
           testingVolume =
               std::make_shared<SphereStructuredSphericalVolumeUChar>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeUChar>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         }
-      } else if (voxelType == VKL_SHORT) {
-        if (field == "xyz") {
+      } else if (params.voxelType == VKL_SHORT) {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZStructuredSphericalVolumeShort>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
           testingVolume =
               std::make_shared<SphereStructuredSphericalVolumeShort>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeShort>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         }
-      } else if (voxelType == VKL_USHORT) {
-        if (field == "xyz") {
+      } else if (params.voxelType == VKL_USHORT) {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZStructuredSphericalVolumeUShort>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
           testingVolume =
               std::make_shared<SphereStructuredSphericalVolumeUShort>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeUShort>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         }
-      } else if (voxelType == VKL_HALF) {
-        if (field == "xyz") {
+      } else if (params.voxelType == VKL_HALF) {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZStructuredSphericalVolumeHalf>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
-          testingVolume =
-              std::make_shared<SphereStructuredSphericalVolumeHalf>(
-                  dimensions, gridOrigin, gridSpacing);
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
+          testingVolume = std::make_shared<SphereStructuredSphericalVolumeHalf>(
+              params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeHalf>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         }
-      } else if (voxelType == VKL_FLOAT) {
-        if (field == "xyz") {
+      } else if (params.voxelType == VKL_FLOAT) {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZStructuredSphericalVolumeFloat>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
           testingVolume =
               std::make_shared<SphereStructuredSphericalVolumeFloat>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeFloat>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         }
-      } else if (voxelType == VKL_DOUBLE) {
-        if (field == "xyz") {
+      } else if (params.voxelType == VKL_DOUBLE) {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZStructuredSphericalVolumeDouble>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
           testingVolume =
               std::make_shared<SphereStructuredSphericalVolumeDouble>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume =
               std::make_shared<WaveletStructuredSphericalVolumeDouble>(
-                  dimensions, gridOrigin, gridSpacing);
+                  params.dimensions, params.gridOrigin, params.gridSpacing);
         }
       } else {
         throw std::runtime_error(
@@ -642,57 +753,70 @@ int main(int argc, const char **argv)
       }
     }
 
-    else if (gridType == "unstructured") {
-      if (field == "xyz") {
+    else if (params.gridType == "unstructured") {
+      if (params.field == "xyz") {
         testingVolume = std::make_shared<XYZUnstructuredProceduralVolume>(
-            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
-      } else if (field == "sphere") {
+            params.dimensions,
+            params.gridOrigin,
+            params.gridSpacing,
+            VKL_HEXAHEDRON,
+            false);
+      } else if (params.field == "sphere") {
         testingVolume = std::make_shared<SphereUnstructuredProceduralVolume>(
-            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
+            params.dimensions,
+            params.gridOrigin,
+            params.gridSpacing,
+            VKL_HEXAHEDRON,
+            false);
       } else {
         testingVolume = std::make_shared<WaveletUnstructuredProceduralVolume>(
-            dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
+            params.dimensions,
+            params.gridOrigin,
+            params.gridSpacing,
+            VKL_HEXAHEDRON,
+            false);
       }
     }
 
-    else if (gridType == "amr") {
-      if (voxelType == VKL_FLOAT) {
+    else if (params.gridType == "amr") {
+      if (params.voxelType == VKL_FLOAT) {
         testingVolume = std::shared_ptr<ProceduralShellsAMRVolume<>>(
             new ProceduralShellsAMRVolume<>(
-                dimensions, gridOrigin, gridSpacing));
+                params.dimensions, params.gridOrigin, params.gridSpacing));
       } else {
         throw std::runtime_error(
             "cannot create procedural AMR volume for non-float voxel type");
       }
     }
 
-    else if (gridType == "vdb") {
-      if (multiAttribute) {
+    else if (params.gridType == "vdb") {
+      if (params.multiAttribute) {
         testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
-            generateMultiAttributeVdbVolume(dimensions,
-                                            gridOrigin,
-                                            gridSpacing,
-                                            filter,
+            generateMultiAttributeVdbVolume(params.dimensions,
+                                            params.gridOrigin,
+                                            params.gridSpacing,
+                                            params.filter,
                                             VKL_DATA_SHARED_BUFFER,
                                             false));
       } else {
-        if (field == "xyz") {
+        if (params.field == "xyz") {
           testingVolume = std::make_shared<XYZVdbVolume>(
-              dimensions, gridOrigin, gridSpacing);
-        } else if (field == "sphere") {
+              params.dimensions, params.gridOrigin, params.gridSpacing);
+        } else if (params.field == "sphere") {
           testingVolume = std::make_shared<SphereVdbVolume>(
-              dimensions, gridOrigin, gridSpacing);
+              params.dimensions, params.gridOrigin, params.gridSpacing);
         } else {
           testingVolume = std::make_shared<WaveletVdbVolume>(
-              dimensions, gridOrigin, gridSpacing);
+              params.dimensions, params.gridOrigin, params.gridSpacing);
         }
       }
 
-      haveVdb = true;
+      params.haveVdb = true;
     }
 
-    else if (gridType == "particle") {
-      testingVolume = std::make_shared<ProceduralParticleVolume>(numParticles);
+    else if (params.gridType == "particle") {
+      testingVolume =
+          std::make_shared<ProceduralParticleVolume>(params.numParticles);
     }
 
     else {
@@ -700,38 +824,36 @@ int main(int argc, const char **argv)
     }
   }
 
-  if (haveFilter && !haveVdb) {
-    std::cerr << "warning: -filter has no effect on " << gridType << " volumes"
-              << std::endl;
+  params.maxIteratorDepth =
+      (params.gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
+
+  if (params.haveFilter && !params.haveVdb) {
+    std::cerr << "warning: -filter has no effect on " << params.gridType
+              << " volumes" << std::endl;
   }
+}
 
-  int maxIteratorDepth = (gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
-  int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
-
-  Scene scene;
-  TransferFunction transferFunction;
-  std::vector<float> isoValues;
+void setupScene(const ViewerParams &params,
+                TestingVolume *testingVolume,
+                Scene &scene)
+{
   scene.updateVolume(testingVolume->getVKLVolume());
-  vklSetInt(scene.sampler, "filter", filter);
-  vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
-  vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
-  vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
+  vklSetInt(scene.sampler, "filter", params.filter);
+  vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
+  vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
+  vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
   vklCommit(scene.sampler);
+}
 
-  VKLObserver leafAccessObserver = nullptr;
-  {
-    auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume.get());
-    if (vdbVolume)
-      leafAccessObserver = vdbVolume->newLeafAccessObserver(scene.sampler);
-  }
-
-  std::cout << "renderer:       " << rendererType << std::endl;
-  std::cout << "gridType:       " << gridType << std::endl;
-  std::cout << "gridDimensions: " << dimensions << std::endl;
-  std::cout << "gridOrigin:     " << gridOrigin << std::endl;
-  std::cout << "gridSpacing:    " << gridSpacing << std::endl;
-  std::cout << "voxelType:      " << voxelTypeString << std::endl;
-  std::cout << "field:          " << field << std::endl;
+void logToOutput(const ViewerParams &params, const Scene &scene)
+{
+  std::cout << "renderer:       " << params.rendererType << std::endl;
+  std::cout << "gridType:       " << params.gridType << std::endl;
+  std::cout << "gridDimensions: " << params.dimensions << std::endl;
+  std::cout << "gridOrigin:     " << params.gridOrigin << std::endl;
+  std::cout << "gridSpacing:    " << params.gridSpacing << std::endl;
+  std::cout << "voxelType:      " << params.voxelTypeString << std::endl;
+  std::cout << "field:          " << params.field << std::endl;
 
   vkl_box3f bbox = vklGetBoundingBox(scene.volume);
 
@@ -739,9 +861,24 @@ int main(int argc, const char **argv)
             << "(" << bbox.lower.x << ", " << bbox.lower.y << ", "
             << bbox.lower.z << ") -> (" << bbox.upper.x << ", " << bbox.upper.y
             << ", " << bbox.upper.z << ")" << std::endl;
+}
 
+void interactiveRender(ViewerParams &params,
+                       Scene &scene,
+                       TestingVolume *testingVolume)
+{
+  VKLObserver leafAccessObserver = nullptr;
+  {
+    auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume);
+    if (vdbVolume)
+      leafAccessObserver = vdbVolume->newLeafAccessObserver(scene.sampler);
+  }
+  TransferFunction transferFunction;
+  std::vector<float> isoValues;
   auto glfwVKLWindow = rkcommon::make_unique<GLFWVKLWindow>(
-      vec2i{1024, 1024}, scene, rendererType, disableVSync);
+      params.windowSize, scene, params.rendererType, params.disableVSync);
+
+  glfwVKLWindow->setRenderPixelRange(params.pixelRange);
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
@@ -753,81 +890,82 @@ int main(int argc, const char **argv)
                      "iterator\0interval_iterator_debug\0\0")) {
       switch (whichRenderer) {
       case 0:
-        rendererType = "density_pathtracer";
+        params.rendererType = "density_pathtracer";
         break;
       case 1:
-        rendererType = "hit_iterator";
+        params.rendererType = "hit_iterator";
         break;
       case 2:
-        rendererType = "ray_march_iterator";
+        params.rendererType = "ray_march_iterator";
         break;
       case 3:
-        rendererType = "interval_iterator_debug";
+        params.rendererType = "interval_iterator_debug";
         break;
       default:
         break;
       }
 
-      glfwVKLWindow->setActiveRenderer(rendererType);
+      glfwVKLWindow->setActiveRenderer(params.rendererType);
     }
 
     // maxIteratorDepth parameter currently only applies to unstructured and
     // particle volume samplers (special case below for vdb).
-    if (gridType == "unstructured" || gridType == "particle") {
-      if (ImGui::SliderInt("maxIteratorDepth", &maxIteratorDepth, 0, 31)) {
-        vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
+    if (params.gridType == "unstructured" || params.gridType == "particle") {
+      if (ImGui::SliderInt(
+              "maxIteratorDepth", &params.maxIteratorDepth, 0, 31)) {
+        vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
         vklCommit(scene.sampler);
         changed = true;
       }
     }
 
     // VDB specific parameters.
-    if (gridType == "vdb") {
-      static int whichFilter = (filter == VKL_FILTER_NEAREST ? 0 : 1);
+    if (params.gridType == "vdb") {
+      static int whichFilter = (params.filter == VKL_FILTER_NEAREST ? 0 : 1);
       static int whichGradientFilter =
-          (gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
+          (params.gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
       if (ImGui::Combo("filter", &whichFilter, "nearest\0trilinear\0\0") ||
           ImGui::Combo("gradientFilter",
                        &whichGradientFilter,
                        "nearest\0trilinear\0\0") ||
           ImGui::SliderInt("maxSamplingDepth",
-                           &maxSamplingDepth,
+                           &params.maxSamplingDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1) ||
           ImGui::SliderInt("maxIteratorDepth",
-                           &maxIteratorDepth,
+                           &params.maxIteratorDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1)) {
         switch (whichFilter) {
         case 0:
-          filter = VKL_FILTER_NEAREST;
+          params.filter = VKL_FILTER_NEAREST;
           break;
         case 1:
-          filter = VKL_FILTER_TRILINEAR;
+          params.filter = VKL_FILTER_TRILINEAR;
           break;
         default:
           break;
         }
-        vklSetInt(scene.sampler, "filter", filter);
+        vklSetInt(scene.sampler, "filter", params.filter);
         switch (whichGradientFilter) {
         case 0:
-          gradientFilter = VKL_FILTER_NEAREST;
+          params.gradientFilter = VKL_FILTER_NEAREST;
           break;
         case 1:
-          gradientFilter = VKL_FILTER_TRILINEAR;
+          params.gradientFilter = VKL_FILTER_TRILINEAR;
           break;
         default:
           break;
         }
-        vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
-        vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
-        vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
+        vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
+        vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
+        vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
         vklCommit(scene.sampler);
         changed = true;
       }
     }
 
-    static int useISPC = 1;
+    static int useISPC = params.useISPC;
     if (ImGui::Combo("OpenVKL API used", &useISPC, "C scalar\0ISPC\0\0")) {
       glfwVKLWindow->setUseISPC(useISPC);
       changed = true;
@@ -840,22 +978,22 @@ int main(int argc, const char **argv)
       renderer.commit();
     }
 
-    if (rendererType == "ray_march_iterator") {
+    if (params.rendererType == "ray_march_iterator") {
       changed |= addSamplingRateUI(*glfwVKLWindow);
     }
 
-    if (rendererType == "density_pathtracer") {
+    if (params.rendererType == "density_pathtracer") {
       changed |= addPathTracerUI(*glfwVKLWindow, scene);
     }
 
-    if (rendererType == "hit_iterator") {
+    if (params.rendererType == "hit_iterator") {
       if (addIsosurfacesUI(*glfwVKLWindow, isoValues)) {
         changed = true;
         scene.updateValueSelector(transferFunction, isoValues);
       }
     }
 
-    if (rendererType == "interval_iterator_debug") {
+    if (params.rendererType == "interval_iterator_debug") {
       changed |= addIntervalIteratorDebugUI(*glfwVKLWindow);
     }
 
@@ -873,7 +1011,7 @@ int main(int argc, const char **argv)
         };
 
     static TransferFunctionWidget transferFunctionWidget(
-        transferFunctionUpdatedCallback, initialValueRange);
+        transferFunctionUpdatedCallback, params.initialValueRange);
     transferFunctionWidget.updateUI();
 
     if (changed) {
@@ -882,14 +1020,14 @@ int main(int argc, const char **argv)
   });
 
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
-    auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume.get());
+    auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume);
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
       scene.updateVolume(vdbVolume->getVKLVolume());
 
-      vklSetInt(scene.sampler, "filter", filter);
-      vklSetInt(scene.sampler, "gradientFilter", gradientFilter);
-      vklSetInt(scene.sampler, "maxSamplingDepth", maxSamplingDepth);
-      vklSetInt(scene.sampler, "maxIteratorDepth", maxIteratorDepth);
+      vklSetInt(scene.sampler, "filter", params.filter);
+      vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
+      vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
+      vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
       vklCommit(scene.sampler);
       scene.updateValueSelector(transferFunction, isoValues);
 
@@ -904,14 +1042,66 @@ int main(int argc, const char **argv)
   // start the GLFW main loop, which will continuously render
   glfwVKLWindow->mainLoop();
 
+  if (leafAccessObserver) {
+    vklRelease(leafAccessObserver);
+  }
+
+  glfwVKLWindow.reset();
+}
+
+void imageWrite(ViewerParams &params,
+                Scene &scene,
+                TestingVolume *testingVolume)
+{
+  static TransferFunction transferFunction;
+
+  scene.tfValueRange            = box1f(0.f, 1.f);
+  scene.tfColorsAndOpacities    = transferFunction.colorsAndOpacities.data();
+  scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
+
+  // and a default value selector, with default isovalues
+  scene.updateValueSelector(transferFunction,
+                            std::vector<float>{-1.f, 0.f, 1.f});
+  auto window = rkcommon::make_unique<VKLWindow>(
+      params.windowSize, scene, params.rendererType);
+
+  window->setUseISPC(params.useISPC);
+  window->setRenderPixelRange(params.pixelRange);
+  window->render();
+
+  // save image on completion of benchmark; note we apparently have no way to
+  // get the formal benchmark name, so we'll create one here
+  std::stringstream ss;
+  ss << params.fileNameOut;
+  window->savePPM(ss.str());
+}
+
+int main(int argc, const char **argv)
+{
+  ViewerParams params;
+  if (!parseCommandLine(argc, argv, params)) {
+    return 1;
+  }
+
+  initializeOpenVKL();
+
+  std::shared_ptr<TestingVolume> testingVolume;
+  setupVolume(params, testingVolume);
+
+  Scene scene;
+  setupScene(params, testingVolume.get(), scene);
+
+  logToOutput(params, scene);
+
+  if (params.interactive) {
+    interactiveRender(params, scene, testingVolume.get());
+  } else {
+    imageWrite(params, scene, testingVolume.get());
+  }
+
   // cleanly shut VKL down
   scene = Scene();
-  if (leafAccessObserver)
-    vklRelease(leafAccessObserver);
-
   testingVolume.reset();
-  glfwVKLWindow.reset();
-
   vklShutdown();
 
   return 0;

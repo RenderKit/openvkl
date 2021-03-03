@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -35,6 +35,8 @@ namespace openvkl {
       void savePPM(const std::string &filename);
 
       void setActiveRenderer(const std::string &rendererType);
+
+      void setRenderPixelRange(const region2i &pixelRange);
 
      protected:
       virtual void reshape(const vec2i &newWindowSize);

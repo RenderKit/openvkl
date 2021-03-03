@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -56,6 +56,7 @@ namespace openvkl {
       // Framebuffer access //
 
       void setFrameSize(const vec2i &dims);
+      void setPixelRange(const region2i &pixelRange);
       vec2i frameSize() const;
       void resetAccumulation();
       const FrameBuffer &frameBuffer() const;
@@ -81,6 +82,7 @@ namespace openvkl {
       // Frame data //
 
       index_sequence_2D pixelIndices{vec2i(0)};
+      region2i pixelRange{vec2i(0),vec2i(0)};
       FrameBuffer framebuffer;
       ColorChannel accum_r;
       ColorChannel accum_g;

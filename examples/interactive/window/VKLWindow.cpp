@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VKLWindow.h"
@@ -113,6 +113,20 @@ namespace openvkl {
       // update camera
       arcballCamera->updateWindowSize(windowSize);
       updateCamera();
+    }
+
+    void VKLWindow::setRenderPixelRange(const region2i &pixelRange)
+    {
+      if (area(pixelRange) <= 0 || anyLessThan(pixelRange.lower, vec2i(0)) ||
+          anyLessThan(pixelRange.upper, vec2i(0)) ||
+          anyLessThan(windowSize, pixelRange.lower) ||
+          anyLessThan(windowSize, pixelRange.upper)) {
+        throw std::runtime_error("VKLWindow: bad pixelRange");
+      }
+      renderer_density_pathtracer->setPixelRange(pixelRange);
+      renderer_hit_iterator->setPixelRange(pixelRange);
+      renderer_ray_march_iterator->setPixelRange(pixelRange);
+      renderer_interval_iterator_debug->setPixelRange(pixelRange);
     }
 
     void VKLWindow::updateCamera()

@@ -260,7 +260,7 @@ void usage(const char *progname)
          "\t-valueRange <lower> <upper>\n"
          "\t-multiAttribute (vdb and structuredRegular only, ignores -field)\n"
          "\t-motionBlur structured | unstructured (structuredRegular only)\n"
-         "\t-filter nearest | trilinear (vdb and structured)\n"
+         "\t-filter nearest | trilinear (vdb and structured) | tricubic (vdb)\n"
          "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
          "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
@@ -411,6 +411,8 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
       const std::string filterArg = argv[argIndex++];
       if (filterArg == "trilinear")
         params.filter = VKL_FILTER_TRILINEAR;
+      else if (filterArg == "tricubic")
+        params.filter = VKL_FILTER_TRICUBIC;
       else if (filterArg == "nearest")
         params.filter = VKL_FILTER_NEAREST;
       else
@@ -921,13 +923,22 @@ void interactiveRender(ViewerParams &params,
 
     // VDB specific parameters.
     if (params.gridType == "vdb") {
-      static int whichFilter = (params.filter == VKL_FILTER_NEAREST ? 0 : 1);
-      static int whichGradientFilter =
-          (params.gradientFilter == VKL_FILTER_NEAREST ? 0 : 1);
-      if (ImGui::Combo("filter", &whichFilter, "nearest\0trilinear\0\0") ||
-          ImGui::Combo("gradientFilter",
-                       &whichGradientFilter,
-                       "nearest\0trilinear\0\0") ||
+      static const std::vector<VKLFilter> filters = {
+          VKL_FILTER_NEAREST, VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC};
+      static const char filterOptions[] =
+          "nearest\0"
+          "trilinear\0"
+          "tricubic\0"
+          "\0";
+
+      static int whichFilter = std::distance(
+          filters.begin(),
+          std::find(filters.begin(), filters.end(), params.filter));
+      static int whichGradientFilter = std::distance(
+          filters.begin(),
+          std::find(filters.begin(), filters.end(), params.gradientFilter));
+      if (ImGui::Combo("filter", &whichFilter, filterOptions) ||
+          ImGui::Combo("gradientFilter", &whichGradientFilter, filterOptions) ||
           ImGui::SliderInt("maxSamplingDepth",
                            &params.maxSamplingDepth,
                            0,
@@ -936,27 +947,9 @@ void interactiveRender(ViewerParams &params,
                            &params.maxIteratorDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1)) {
-        switch (whichFilter) {
-        case 0:
-          params.filter = VKL_FILTER_NEAREST;
-          break;
-        case 1:
-          params.filter = VKL_FILTER_TRILINEAR;
-          break;
-        default:
-          break;
-        }
+        params.filter         = filters.at(whichFilter);
+        params.gradientFilter = filters.at(whichGradientFilter);
         vklSetInt(scene.sampler, "filter", params.filter);
-        switch (whichGradientFilter) {
-        case 0:
-          params.gradientFilter = VKL_FILTER_NEAREST;
-          break;
-        case 1:
-          params.gradientFilter = VKL_FILTER_TRILINEAR;
-          break;
-        default:
-          break;
-        }
         vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
         vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
         vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);

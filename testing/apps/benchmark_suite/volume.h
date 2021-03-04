@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
@@ -26,6 +26,12 @@ template <>
 inline constexpr const char *toString<VKL_FILTER_TRILINEAR>()
 {
   return "VKL_FILTER_TRILINEAR";
+}
+
+template <>
+inline constexpr const char *toString<VKL_FILTER_TRICUBIC>()
+{
+  return "VKL_FILTER_TRICUBIC";
 }
 
 /*

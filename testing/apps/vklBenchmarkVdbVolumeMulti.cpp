@@ -77,6 +77,7 @@ int main(int argc, char **argv)
 
   registerVolumeBenchmarks<Vdb<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Vdb<VKL_FILTER_TRILINEAR>>();
+  registerVolumeBenchmarks<Vdb<VKL_FILTER_TRICUBIC>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

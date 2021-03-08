@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -175,7 +175,8 @@ namespace openvkl {
                                              float time)
     {
       const float radius = 0.01f + 0.09f * std::pow(time, 2.f);
-      const vec3f center{0.9f - time * 1.8f, 0.25f*std::sin(15.f*time) * time, 0.f};
+      const vec3f center{
+          0.9f - time * 1.8f, 0.25f * std::sin(15.f * time) * time, 0.f};
       const float radSq = radius * radius;
       const vec3f d     = objectCoordinates - center;
       const float rr    = dot(d, d);

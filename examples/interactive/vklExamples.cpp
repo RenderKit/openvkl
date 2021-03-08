@@ -100,7 +100,6 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
     changed = true;
   }
 
-
   static float sigmaTScale = 1.f;
   if (ImGui::SliderFloat("sigmaTScale", &sigmaTScale, 0.001f, 100.f)) {
     renderer.setParam<float>("sigmaTScale", sigmaTScale);
@@ -503,6 +502,12 @@ void setupVolume(ViewerParams &params,
           params.filename, params.field, params.filter));
       testingVolume = std::move(vol);
       params.haveVdb = true;
+    } else if (ext == ".rwh") {
+      testingVolume = std::shared_ptr<RawHFileStructuredVolume>(
+          new RawHFileStructuredVolume(params.filename,
+                                       params.gridType,
+                                       params.gridOrigin,
+                                       params.gridSpacing));
     } else {
       testingVolume = std::shared_ptr<RawFileStructuredVolume>(
           new RawFileStructuredVolume(params.filename,

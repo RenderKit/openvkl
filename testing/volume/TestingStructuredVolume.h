@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -43,18 +43,20 @@ namespace openvkl {
         assert(!sampleTime.empty());
       }
 
-      bool isCompatible(const TemporalConfig &other) const {
-        return (type == other.type) 
-            && (sampleTime.size() == other.sampleTime.size())
-            && (numRefitSamples == 0)
-            && (other.numRefitSamples == 0);
+      bool isCompatible(const TemporalConfig &other) const
+      {
+        return (type == other.type) &&
+               (sampleTime.size() == other.sampleTime.size()) &&
+               (numRefitSamples == 0) && (other.numRefitSamples == 0);
       }
 
-      bool hasTime() const {
+      bool hasTime() const
+      {
         return type != Constant;
       }
 
-      size_t getNumSamples() const {
+      size_t getNumSamples() const
+      {
         return type == Constant ? 1 : sampleTime.size();
       }
 
@@ -85,33 +87,32 @@ namespace openvkl {
       VKLDataType getVoxelType() const;
       const TemporalConfig &getTemporalConfig() const;
 
-      virtual void generateVoxels(
-          std::vector<unsigned char> &voxels,
-          std::vector<float> &time,
-          std::vector<uint32_t> &tuvIndex) const = 0;
+      virtual void generateVoxels(std::vector<unsigned char> &voxels,
+                                  std::vector<float> &time,
+                                  std::vector<uint32_t> &tuvIndex) const = 0;
 
      protected:
-        TestingStructuredVolume(
-            const std::string &gridType,
-            const vec3i &dimensions,
-            const vec3f &gridOrigin,
-            const vec3f &gridSpacing,
-            const TemporalConfig &temporalConfig,
-            VKLDataType voxelType,
-            VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
-            size_t byteStride = 0);
+      TestingStructuredVolume(
+          const std::string &gridType,
+          const vec3i &dimensions,
+          const vec3f &gridOrigin,
+          const vec3f &gridSpacing,
+          const TemporalConfig &temporalConfig,
+          VKLDataType voxelType,
+          VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
+          size_t byteStride                      = 0);
 
       void generateVKLVolume() override final;
 
       range1f computedValueRange = range1f(rkcommon::math::empty);
 
       const std::string gridType;
-      const vec3i dimensions;
+      vec3i dimensions;
       const vec3f gridOrigin;
       const vec3f gridSpacing;
       const VKLDataType voxelType;
       const VKLDataCreationFlags dataCreationFlags;
-      const TemporalConfig temporalConfig;
+      TemporalConfig temporalConfig;
       size_t byteStride;
 
      private:
@@ -184,7 +185,8 @@ namespace openvkl {
       return voxelType;
     }
 
-    inline const TemporalConfig &TestingStructuredVolume::getTemporalConfig() const
+    inline const TemporalConfig &TestingStructuredVolume::getTemporalConfig()
+        const
     {
       return temporalConfig;
     }
@@ -193,14 +195,14 @@ namespace openvkl {
     {
       volume = vklNewVolume(gridType.c_str());
 
+      generateVoxels(voxels, time, tuvIndex);
+
       vklSetVec3i(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
       vklSetVec3f(
           volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
       vklSetVec3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-
-      generateVoxels(voxels, time, tuvIndex);
 
       size_t totalNumValues = 0;
       switch (temporalConfig.type) {
@@ -253,7 +255,7 @@ namespace openvkl {
       case TemporalConfig::Unstructured: {
         totalNumValues = tuvIndex.empty() ? 0 : *tuvIndex.rbegin();
 
-        if (tuvIndex.size() != dimensions.long_product()+1)
+        if (tuvIndex.size() != dimensions.long_product() + 1)
           throw std::runtime_error(
               "generated TUV index data has incorrect size");
         const size_t totalNumValues = tuvIndex.empty() ? 0 : *tuvIndex.rbegin();

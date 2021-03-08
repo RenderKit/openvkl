@@ -18,7 +18,8 @@ namespace openvkl {
               ,
               VOXEL_TYPE samplingFunction(const vec3f &, float) =
                   samplingNotImplemented,
-              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) =
+                  gradientNotImplemented>
     struct ProceduralStructuredRegularVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,
@@ -179,46 +180,26 @@ namespace openvkl {
 
     using SphereStructuredRegularVolumeUChar =
         ProceduralStructuredRegularVolume<unsigned char,
-                                          getRotatingSphereValue<unsigned char>,
-                                          getRotatingSphereGradient>;
-    using SphereStructuredRegularVolumeShort =
-        ProceduralStructuredRegularVolume<short,
-                                          getRotatingSphereValue<short>,
-                                          getRotatingSphereGradient>;
-    using SphereStructuredRegularVolumeUShort =
-        ProceduralStructuredRegularVolume<unsigned short,
-                                          getRotatingSphereValue<unsigned short>,
-                                          getRotatingSphereGradient>;
-    using SphereStructuredRegularVolumeHalf =
-        ProceduralStructuredRegularVolume<half_float::half,
-                                          getRotatingSphereValue<half_float::half>,
-                                          getRotatingSphereGradient>;
-    using SphereStructuredRegularVolumeFloat =
-        ProceduralStructuredRegularVolume<float,
-                                          getRotatingSphereValue<float>,
-                                          getRotatingSphereGradient>;
-    using SphereStructuredRegularVolumeDouble =
-        ProceduralStructuredRegularVolume<double,
-                                          getRotatingSphereValue<double>,
-                                          getRotatingSphereGradient>;
-
-    using WigglingSphereStructuredRegularVolumeUChar =
-        ProceduralStructuredRegularVolume<unsigned char,
                                           getWigglingSphereValue<unsigned char>,
                                           getWigglingSphereGradient>;
-    using WigglingSphereStructuredRegularVolumeShort =
+    using SphereStructuredRegularVolumeShort =
         ProceduralStructuredRegularVolume<short,
                                           getWigglingSphereValue<short>,
                                           getWigglingSphereGradient>;
-    using WigglingSphereStructuredRegularVolumeUShort =
-        ProceduralStructuredRegularVolume<unsigned short,
-                                          getWigglingSphereValue<unsigned short>,
-                                          getWigglingSphereGradient>;
-    using WigglingSphereStructuredRegularVolumeFloat =
+    using SphereStructuredRegularVolumeUShort =
+        ProceduralStructuredRegularVolume<
+            unsigned short,
+            getWigglingSphereValue<unsigned short>,
+            getWigglingSphereGradient>;
+    using SphereStructuredRegularVolumeHalf = ProceduralStructuredRegularVolume<
+        half_float::half,
+        getWigglingSphereValue<half_float::half>,
+        getWigglingSphereGradient>;
+    using SphereStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
                                           getWigglingSphereValue<float>,
                                           getWigglingSphereGradient>;
-    using WigglingSphereStructuredRegularVolumeDouble =
+    using SphereStructuredRegularVolumeDouble =
         ProceduralStructuredRegularVolume<double,
                                           getWigglingSphereValue<double>,
                                           getWigglingSphereGradient>;

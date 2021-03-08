@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -9,6 +9,7 @@
 #include "TestingVolume.h"
 // rkcommon
 #include <random>
+#include "rkcommon/math/box.h"
 #include "rkcommon/math/range.h"
 #include "rkcommon/math/vec.h"
 
@@ -34,7 +35,8 @@ namespace openvkl {
       float computeProceduralValueImpl(const vec3f &p,
                                        float time) const override;
 
-      vec3f computeProceduralGradientImpl(const vec3f &p, float time) const override;
+      vec3f computeProceduralGradientImpl(const vec3f &p,
+                                          float time) const override;
 
       size_t numParticles;
       bool provideWeights;

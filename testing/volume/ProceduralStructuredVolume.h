@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -193,8 +193,7 @@ namespace openvkl {
 
               size_t first = 0;
               if (refitBuffer[first] == 0) {
-                while ((first + 2) < last &&
-                       refitBuffer[first + 1] == 0) {
+                while ((first + 2) < last && refitBuffer[first + 1] == 0) {
                   ++first;
                 }
               }
@@ -202,7 +201,8 @@ namespace openvkl {
               // Now resample with this new time range.
               const float t0 = temporalConfig.sampleTime[first];
               const float t1 = temporalConfig.sampleTime[last];
-              const float dt = (t1 - t0) / static_cast<float>(numRefitSamples-1);
+              const float dt =
+                  (t1 - t0) / static_cast<float>(numRefitSamples - 1);
 
               const size_t voxelIndex =
                   size_t(z) * this->dimensions.y * this->dimensions.x +

@@ -327,6 +327,18 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
   const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
   const uniform vec3ui os     = *offset;
   const uniform int radius    = 1;  // TRILINEAR INTERPOLATION!
+  foreach (z = -radius... res + radius, 
+           y = -radius... res + radius, 
+           x = -radius... res + radius) {
+    const float sample = VdbSampler_sample(
+        &sampler, make_vec3i(grid->rootOrigin.x + os.x + x, 
+                             grid->rootOrigin.y + os.y + y, 
+                             grid->rootOrigin.z + os.z + z),
+        attributeIndex);
+    vminFilter = min(vminFilter, sample);
+    vmaxFilter = max(vmaxFilter, sample);
+  }
+#if 0
   // We compute min/max over the voxels (one filter radius) after upper bound.
   // These are voxels that can be interpolated into our node, so we must include
   // them for conservative value ranges.
@@ -354,6 +366,7 @@ inline void extendValueRangeFilterFloat(const void *uniform _grid,
     vminFilter = min(vminFilter, sample);
     vmaxFilter = max(vmaxFilter, sample);
   }
+#endif
 
   range->lower = min(reduce_min(vminFilter), range->lower);
   range->upper = max(reduce_max(vmaxFilter), range->upper);

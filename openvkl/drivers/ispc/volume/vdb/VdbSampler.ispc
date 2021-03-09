@@ -308,98 +308,152 @@ inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
 // Value range computation.
 // ---------------------------------------------------------------------------
 
-inline void extendValueRangeFilterFloat(const void *uniform _grid,
-                                        const vec3ui *uniform offset,
-                                        uniform uint32 level,
-                                        uniform uint32 attributeIndex,
-                                        uniform box1f *uniform range)
-{
-  uniform VdbSampler sampler;
-  memset(&sampler, 0, sizeof(uniform VdbSampler));
-  sampler.grid             = (const VdbGrid *uniform)_grid;
-  sampler.maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
-  // We set none of the other members as the internal code does not require
-  // them.
-
-  float vminFilter            = pos_inf;
-  float vmaxFilter            = neg_inf;
-  const uniform uint32 res    = vklVdbLevelRes(level);
-  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
-  const uniform vec3ui os     = *offset;
-  const uniform int radius    = 1;  // TRILINEAR INTERPOLATION!
-  foreach (z = -radius... res + radius, 
-           y = -radius... res + radius, 
-           x = -radius... res + radius) {
-    const float sample = VdbSampler_sample(
-        &sampler, make_vec3i(grid->rootOrigin.x + os.x + x, 
-                             grid->rootOrigin.y + os.y + y, 
-                             grid->rootOrigin.z + os.z + z),
-        attributeIndex);
-    vminFilter = min(vminFilter, sample);
-    vmaxFilter = max(vmaxFilter, sample);
-  }
-#if 0
-  // We compute min/max over the voxels (one filter radius) after upper bound.
-  // These are voxels that can be interpolated into our node, so we must include
-  // them for conservative value ranges.
-  foreach (z = -radius... res + radius, y = -radius... res + radius) {
-    const int32 x      = res;
-    const float sample = VdbSampler_sample(
-        &sampler, make_vec3i(x + os.x, y + os.y, z + os.z), attributeIndex);
-    vminFilter = min(vminFilter, sample);
-    vmaxFilter = max(vmaxFilter, sample);
-  }
-  // We only have to go to x = res+radius as we added those voxels above.
-  foreach (z = -radius... res + radius, x = -radius... res) {
-    const int32 y      = res;
-    const float sample = VdbSampler_sample(
-        &sampler, make_vec3i(x + os.x, y + os.y, z + os.z), attributeIndex);
-    vminFilter = min(vminFilter, sample);
-    vmaxFilter = max(vmaxFilter, sample);
-  }
-  // We only have to go to x = res+radius and y = res+radius as we added those
-  // voxels above.
-  foreach (y = -radius... res, x = -radius... res) {
-    const int32 z      = res;
-    const float sample = VdbSampler_sample(
-        &sampler, make_vec3i(x + os.x, y + os.y, z + os.z), attributeIndex);
-    vminFilter = min(vminFilter, sample);
-    vmaxFilter = max(vmaxFilter, sample);
-  }
-#endif
-
-  range->lower = min(reduce_min(vminFilter), range->lower);
-  range->upper = max(reduce_max(vmaxFilter), range->upper);
-}
-
 /*
- * Compute the value range on the given tile
+ * Compute the value range for the given node and index range.
  */
-export void EXPORT_UNIQUE(VdbSampler_valueRangeTileFloat,
-                          const void *uniform _grid,
-                          const vec3ui *uniform offset,
-                          uniform uint32 level,
-                          uniform uint32 attributeIndex,
-                          uniform box1f *uniform range)
+inline uniform box1f
+VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
+                                 uniform uint64 voxel,
+                                 const uniform vec2ui &rangeX,
+                                 const uniform vec2ui &rangeY,
+                                 const uniform vec2ui &rangeZ,
+                                 uniform uint32 attributeIndex)
 {
-  range->lower = pos_inf;
-  range->upper = neg_inf;
-  extendValueRangeFilterFloat(_grid, offset, level, attributeIndex, range);
+  const uniform VKLFormat leafFormat = vklVdbVoxelIsLeafPtr(voxel)
+                                           ? vklVdbVoxelLeafGetFormat(voxel)
+                                           : VKL_FORMAT_INVALID;
+  const void *uniform leafPtr        = vklVdbVoxelLeafGetPtr(voxel);
+  const uniform float background     = 0.f;
+  uniform box1f valueRange           = make_box1f(background, background);
+
+  switch (leafFormat) {
+  case VKL_FORMAT_TILE:
+    valueRange.lower = VdbSampler_sampleTileFloatLeaf(
+        ((const Data1D *uniform)leafPtr), attributeIndex);
+    valueRange.upper = valueRange.lower;
+    break;
+  case VKL_FORMAT_CONSTANT_ZYX:
+    valueRange = make_box1f(pos_inf, neg_inf);
+    if (grid->allLeavesCompact) {
+      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {
+        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {
+          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {
+            const uniform float sample =
+                VdbSampler_sampleConstantFloatLeafCompact(
+                    ((const uniform Data1D *uniform)leafPtr),
+                    make_vec3ui(x, y, z),
+                    attributeIndex);
+            extend(valueRange, sample);
+          }
+        }
+      }
+    } else {
+      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {
+        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {
+          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {
+            const uniform float sample =
+                VdbSampler_sampleConstantFloatLeafStrided(
+                    ((const uniform Data1D *uniform)leafPtr),
+                    make_vec3ui(x, y, z),
+                    attributeIndex);
+            extend(valueRange, sample);
+          }
+        }
+      }
+    }
+    break;
+  default: 
+    break;
+  }
+
+  return valueRange;
 }
 
 /*
  * Compute the value range on the given constant float leaf.
  */
-export void EXPORT_UNIQUE(VdbSampler_valueRangeConstantFloat,
+export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
                           const void *uniform _grid,
-                          const vec3ui *uniform offset,
+                          const vec3ui *uniform centerNodeOffset,
                           uniform uint32 level,
                           uniform uint32 attributeIndex,
                           uniform box1f *uniform range)
 {
+  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+
+  // We need to consider voxels outside this node in the value range because of
+  // reconstruction filter support.
+  //
+  // In particular, we support filters that use up to a 4x4x4 neighborhood.
+  //
+  // In the following 1D illustration, we show voxels in the current leaf node
+  // marked as a '#'. We also show voxels from neighboring nodes, and
+  // mark those that could be used for interpolation with a '?'.
+  //
+  // | | | | | | | |?|#|#|#|#|#|#|#|#|?|?| | | | | | |
+  //
+  // We therefore iterate over a 3x3x3 neighborhood of nodes and compute the
+  // value range over the following voxel range (in each dimension):
+  //
+  // "previous node" : [VKL_VDB_RES_LEAF - 1, VKL_VDB_RES_LEAF[
+  // "central node"  : [0, VKL_VDB_RES_LEAF[
+  // "next node"     : [0, 2[
+  //
+  // Note that the upper limit is exclusive. In 3D, each dimension follows
+  // the same pattern.
+  //
+  // The following array encodes the iteration range for the previous,
+  // central, and next leaf node:
+  const uniform vec2ui voxelRange[] = {
+    make_vec2ui(VKL_VDB_RES_LEAF - 1, VKL_VDB_RES_LEAF),
+    make_vec2ui(0, VKL_VDB_RES_LEAF),
+    make_vec2ui(0, 2)
+  };
+
   range->lower = pos_inf;
   range->upper = neg_inf;
-  extendValueRangeFilterFloat(_grid, offset, level, attributeIndex, range);
+
+  uniform VdbSampler sampler;
+  memset(&sampler, 0, sizeof(uniform VdbSampler));
+  sampler.grid             = (const VdbGrid *uniform)_grid;
+  sampler.maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
+
+  // Iterate over a 3x3x3 neighborhood of leaf nodes, and compute the value
+  // range for each of those nodes.
+  for (uniform int ix = 0; ix < 3; ++ix) {
+    for (uniform int iy = 0; iy < 3; ++iy) {
+      for (uniform int iz = 0; iz < 3; ++iz) {
+        // This is the offset of the current node relative to the central node.
+        const uniform vec3i nodeOffset =
+            make_vec3i((ix - 1) * VKL_VDB_RES_LEAF,
+                       (iy - 1) * VKL_VDB_RES_LEAF,
+                       (iz - 1) * VKL_VDB_RES_LEAF);
+
+        // *centerNodeOffset is relative to the rootOrigin, but 
+        // VdbSampler_traverse expects an index space coordinate. 
+        const uniform vec3i nodeOrigin = make_vec3i(
+          grid->rootOrigin.x + centerNodeOffset->x + nodeOffset.x,
+          grid->rootOrigin.y + centerNodeOffset->y + nodeOffset.y,
+          grid->rootOrigin.z + centerNodeOffset->z + nodeOffset.z
+        );
+
+        uniform uint64 voxel;
+        uniform vec3ui domainOffset;
+        VdbSampler_traverse(&sampler, nodeOrigin, voxel, domainOffset);
+
+        const uniform range1f nodeValueRange =
+            VdbSampler_computeNodeValueRange(grid,
+                                             voxel,
+                                             voxelRange[ix],
+                                             voxelRange[iy],
+                                             voxelRange[iz],
+                                             attributeIndex);
+
+        range->lower = min(range->lower, nodeValueRange.lower);
+        range->upper = max(range->upper, nodeValueRange.upper);
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

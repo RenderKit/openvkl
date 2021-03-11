@@ -835,16 +835,21 @@ void setupVolume(ViewerParams &params,
   }
 }
 
-void setupScene(const ViewerParams &params,
-                TestingVolume *testingVolume,
-                Scene &scene)
+void setupSampler(const ViewerParams &params, Scene &scene)
 {
-  scene.updateVolume(testingVolume->getVKLVolume());
   vklSetInt(scene.sampler, "filter", params.filter);
   vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
   vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
   vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
   vklCommit(scene.sampler);
+}
+
+void setupScene(const ViewerParams &params,
+                TestingVolume *testingVolume,
+                Scene &scene)
+{
+  scene.updateVolume(testingVolume->getVKLVolume());
+  setupSampler(params, scene);
 }
 
 void logToOutput(const ViewerParams &params, const Scene &scene)
@@ -921,25 +926,49 @@ void interactiveRender(ViewerParams &params,
       }
     }
 
+    bool samplerParamsChanged = false;
+
+    if (params.gridType == "structuredRegular" ||
+        params.gridType == "structuredSpherical" || params.gridType == "vdb") {
+      static std::map<VKLFilter, const char *> filters = {
+          {VKL_FILTER_TRICUBIC, "tricubic"},
+          {VKL_FILTER_NEAREST, "nearest"},
+          {VKL_FILTER_TRILINEAR, "trilinear"}};
+
+      if (ImGui::BeginCombo("filter", filters[params.filter])) {
+        for (auto it : filters) {
+          if (it.first == VKL_FILTER_TRICUBIC && params.gridType != "vdb")
+            continue;
+          const bool isSelected = (params.filter == it.first);
+          if (ImGui::Selectable(filters[it.first], isSelected)) {
+            params.filter        = it.first;
+            samplerParamsChanged = true;
+          }
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+
+      if (ImGui::BeginCombo("gradientFilter", filters[params.gradientFilter])) {
+        for (auto it : filters) {
+          if (it.first == VKL_FILTER_TRICUBIC && params.gridType != "vdb")
+            continue;
+          const bool isSelected = (params.filter == it.first);
+          if (ImGui::Selectable(filters[it.first], isSelected)) {
+            params.gradientFilter = it.first;
+            samplerParamsChanged  = true;
+          }
+          if (isSelected)
+            ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+      }
+    }
+
     // VDB specific parameters.
     if (params.gridType == "vdb") {
-      static const std::vector<VKLFilter> filters = {
-          VKL_FILTER_NEAREST, VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC};
-      static const char filterOptions[] =
-          "nearest\0"
-          "trilinear\0"
-          "tricubic\0"
-          "\0";
-
-      static int whichFilter = std::distance(
-          filters.begin(),
-          std::find(filters.begin(), filters.end(), params.filter));
-      static int whichGradientFilter = std::distance(
-          filters.begin(),
-          std::find(filters.begin(), filters.end(), params.gradientFilter));
-      if (ImGui::Combo("filter", &whichFilter, filterOptions) ||
-          ImGui::Combo("gradientFilter", &whichGradientFilter, filterOptions) ||
-          ImGui::SliderInt("maxSamplingDepth",
+      if (ImGui::SliderInt("maxSamplingDepth",
                            &params.maxSamplingDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1) ||
@@ -947,15 +976,13 @@ void interactiveRender(ViewerParams &params,
                            &params.maxIteratorDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1)) {
-        params.filter         = filters.at(whichFilter);
-        params.gradientFilter = filters.at(whichGradientFilter);
-        vklSetInt(scene.sampler, "filter", params.filter);
-        vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
-        vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
-        vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
-        vklCommit(scene.sampler);
-        changed = true;
+        samplerParamsChanged = true;
       }
+    }
+
+    if (samplerParamsChanged) {
+      setupSampler(params, scene);
+      changed = true;
     }
 
     static int useISPC = params.useISPC;
@@ -1016,12 +1043,7 @@ void interactiveRender(ViewerParams &params,
     auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume);
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
       scene.updateVolume(vdbVolume->getVKLVolume());
-
-      vklSetInt(scene.sampler, "filter", params.filter);
-      vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
-      vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
-      vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
-      vklCommit(scene.sampler);
+      setupSampler(params, scene);
       scene.updateValueSelector(transferFunction, isoValues);
 
       if (leafAccessObserver)

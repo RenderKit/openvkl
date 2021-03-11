@@ -50,6 +50,8 @@ namespace openvkl {
                   gradientNotImplemented>
     struct ProceduralStructuredVolume : public ProceduralStructuredVolumeBase
     {
+      typedef VOXEL_TYPE voxelType;
+
       ProceduralStructuredVolume(
           const std::string &gridType,
           const vec3i &dimensions,

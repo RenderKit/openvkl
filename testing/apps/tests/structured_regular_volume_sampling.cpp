@@ -16,42 +16,48 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
   vklCommitDriver(driver);
   vklSetCurrentDriver(driver);
 
+  // no strides for these tests
+  const float strideFactor = 0.f;
+
+  // use shared buffers to minimize memory usage and improve run time
+  const VKLDataCreationFlags dcf = VKL_DATA_SHARED_BUFFER;
+
   SECTION("32-bit addressing")
   {
     SECTION("unsigned char")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeUChar>(vec3i(128));
+      test_32bit_addressing<WaveletStructuredRegularVolumeUChar>(dcf,
+                                                                 strideFactor);
     }
 
     SECTION("short")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeShort>(vec3i(128));
+      test_32bit_addressing<WaveletStructuredRegularVolumeShort>(dcf,
+                                                                 strideFactor);
     }
 
     SECTION("unsigned short")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeUShort>(vec3i(128));
+      test_32bit_addressing<WaveletStructuredRegularVolumeUShort>(dcf,
+                                                                  strideFactor);
     }
 
     SECTION("half")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeHalf>(vec3i(128));
+      test_32bit_addressing<WaveletStructuredRegularVolumeHalf>(dcf,
+                                                                strideFactor);
     }
 
     SECTION("float")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeFloat>(vec3i(128));
+      test_32bit_addressing<WaveletStructuredRegularVolumeFloat>(dcf,
+                                                                 strideFactor);
     }
 
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeDouble>(vec3i(128));
+      test_32bit_addressing<WaveletStructuredRegularVolumeDouble>(dcf,
+                                                                  strideFactor);
     }
   }
 
@@ -61,44 +67,38 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
   {
     SECTION("unsigned char")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeUChar>(
-          vec3i(1025), VKL_DATA_DEFAULT, 0, 16);
+      test_64_32bit_addressing<WaveletStructuredRegularVolumeUChar>(
+          dcf, strideFactor);
     }
 
     SECTION("short")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeShort>(
-          vec3i(813), VKL_DATA_DEFAULT, 0, 16);
+      test_64_32bit_addressing<WaveletStructuredRegularVolumeShort>(
+          dcf, strideFactor);
     }
 
     SECTION("unsigned short")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeUShort>(
-          vec3i(813), VKL_DATA_DEFAULT, 0, 16);
+      test_64_32bit_addressing<WaveletStructuredRegularVolumeUShort>(
+          dcf, strideFactor);
     }
 
     SECTION("half")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeHalf>(
-          vec3i(813), VKL_DATA_DEFAULT, 0, 16);
+      test_64_32bit_addressing<WaveletStructuredRegularVolumeHalf>(
+          dcf, strideFactor);
     }
 
     SECTION("float")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeFloat>(
-          vec3i(646), VKL_DATA_DEFAULT, 0, 16);
+      test_64_32bit_addressing<WaveletStructuredRegularVolumeFloat>(
+          dcf, strideFactor);
     }
 
     SECTION("double")
     {
-      sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeDouble>(
-          vec3i(513), VKL_DATA_DEFAULT, 0, 16);
+      test_64_32bit_addressing<WaveletStructuredRegularVolumeDouble>(
+          dcf, strideFactor);
     }
   }
 
@@ -112,7 +112,7 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
     {
       sampling_on_vertices_vs_procedural_values<
           WaveletStructuredRegularVolumeDouble>(
-          vec3i(16385, 16385, 2), VKL_DATA_DEFAULT, 0, vec3i(16, 16, 1));
+          vec3i(16385, 16385, 2), dcf, 0, vec3i(32, 32, 1));
     }
   }
 }

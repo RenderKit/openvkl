@@ -9,49 +9,6 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
-template <typename VOXEL_TYPE>
-inline void test_32bit_addressing(VKLDataCreationFlags dataCreationFlags,
-                                  float strideFactor)
-{
-  using VOLUME_TYPE =
-      typename ProceduralStructuredRegularVolumes<VOXEL_TYPE>::Wavelet;
-
-  const size_t byteStride = strideFactor * sizeof(VOXEL_TYPE);
-
-  INFO("byteStride = " << byteStride);
-
-  sampling_on_vertices_vs_procedural_values<VOLUME_TYPE>(
-      vec3i(128), dataCreationFlags, byteStride);
-}
-
-template <typename VOXEL_TYPE>
-inline void test_64_32bit_addressing(VKLDataCreationFlags dataCreationFlags,
-                                     float strideFactor)
-{
-  using VOLUME_TYPE =
-      typename ProceduralStructuredRegularVolumes<VOXEL_TYPE>::Wavelet;
-
-  const size_t byteStride = strideFactor == 0.f
-                                ? sizeof(VOXEL_TYPE)
-                                : strideFactor * sizeof(VOXEL_TYPE);
-  INFO("byteStride = " << byteStride);
-
-  // corresponds to limits in Data.ih
-  constexpr size_t maxSize32bit = 1ULL << 31;
-
-  const size_t dim =
-      size_t(std::cbrt(double(maxSize32bit) / double(byteStride))) + 1;
-  INFO("dim = " << dim);
-
-  if (dim * dim * dim * byteStride <= maxSize32bit) {
-    throw std::runtime_error(
-        "incorrect dimension computed for 64/32-bit addressing mode");
-  }
-
-  sampling_on_vertices_vs_procedural_values<VOLUME_TYPE>(
-      vec3i(dim), dataCreationFlags, byteStride, 16);
-}
-
 TEST_CASE("Structured regular volume strides", "[volume_strides]")
 {
   vklLoadModule("ispc_driver");
@@ -63,7 +20,7 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
   std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT,
                                                       VKL_DATA_SHARED_BUFFER};
 
-  std::vector<float> strideFactors{0.f, 1.f, 1.5f, 2.f};
+  std::vector<float> strideFactors{1.5f, 2.f};
 
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &strideFactor : strideFactors) {
@@ -79,32 +36,38 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
         {
           SECTION("unsigned char")
           {
-            test_32bit_addressing<unsigned char>(dcf, strideFactor);
+            test_32bit_addressing<WaveletStructuredRegularVolumeUChar>(
+                dcf, strideFactor);
           }
 
           SECTION("short")
           {
-            test_32bit_addressing<short>(dcf, strideFactor);
+            test_32bit_addressing<WaveletStructuredRegularVolumeShort>(
+                dcf, strideFactor);
           }
 
           SECTION("unsigned short")
           {
-            test_32bit_addressing<unsigned short>(dcf, strideFactor);
+            test_32bit_addressing<WaveletStructuredRegularVolumeUShort>(
+                dcf, strideFactor);
           }
 
           SECTION("half")
           {
-            test_32bit_addressing<half_float::half>(dcf, strideFactor);
+            test_32bit_addressing<WaveletStructuredRegularVolumeHalf>(
+                dcf, strideFactor);
           }
 
           SECTION("float")
           {
-            test_32bit_addressing<float>(dcf, strideFactor);
+            test_32bit_addressing<WaveletStructuredRegularVolumeFloat>(
+                dcf, strideFactor);
           }
 
           SECTION("double")
           {
-            test_32bit_addressing<double>(dcf, strideFactor);
+            test_32bit_addressing<WaveletStructuredRegularVolumeDouble>(
+                dcf, strideFactor);
           }
         }
 
@@ -112,32 +75,38 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
         {
           SECTION("unsigned char")
           {
-            test_64_32bit_addressing<unsigned char>(dcf, strideFactor);
+            test_64_32bit_addressing<WaveletStructuredRegularVolumeUChar>(
+                dcf, strideFactor);
           }
 
           SECTION("short")
           {
-            test_64_32bit_addressing<short>(dcf, strideFactor);
+            test_64_32bit_addressing<WaveletStructuredRegularVolumeShort>(
+                dcf, strideFactor);
           }
 
           SECTION("unsigned short")
           {
-            test_64_32bit_addressing<unsigned short>(dcf, strideFactor);
+            test_64_32bit_addressing<WaveletStructuredRegularVolumeUShort>(
+                dcf, strideFactor);
           }
 
           SECTION("half")
           {
-            test_64_32bit_addressing<half_float::half>(dcf, strideFactor);
+            test_64_32bit_addressing<WaveletStructuredRegularVolumeHalf>(
+                dcf, strideFactor);
           }
 
           SECTION("float")
           {
-            test_64_32bit_addressing<float>(dcf, strideFactor);
+            test_64_32bit_addressing<WaveletStructuredRegularVolumeFloat>(
+                dcf, strideFactor);
           }
 
           SECTION("double")
           {
-            test_64_32bit_addressing<double>(dcf, strideFactor);
+            test_64_32bit_addressing<WaveletStructuredRegularVolumeDouble>(
+                dcf, strideFactor);
           }
         }
       }

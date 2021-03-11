@@ -34,6 +34,8 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
   const std::vector<bool> useAOSLayouts{true, false};
 
+  const vec3i step = vec3i(4);
+
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &aos : useAOSLayouts) {
       for (auto filter : {VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC}) {
@@ -53,8 +55,8 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
                   dimensions, gridOrigin, gridSpacing, filter, dcf, aos));
 
           num_attributes(v);
-          sampling_on_vertices_vs_procedural_values_multi(v, 2);
-          gradients_on_vertices_vs_procedural_values_multi(v, 2);
+          sampling_on_vertices_vs_procedural_values_multi(v, step);
+          gradients_on_vertices_vs_procedural_values_multi(v, step);
 
           for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
             test_stream_sampling(v, i);

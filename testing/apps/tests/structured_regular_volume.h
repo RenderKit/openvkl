@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -48,4 +48,56 @@ inline void sampling_on_vertices_vs_procedural_values(
   }
 
   vklRelease(vklSampler);
+}
+
+template <typename VOLUME_TYPE>
+inline void test_32bit_addressing(VKLDataCreationFlags dataCreationFlags,
+                                  float strideFactor)
+{
+  const size_t byteStride =
+      strideFactor * sizeof(typename VOLUME_TYPE::voxelType);
+  INFO("byteStride = " << byteStride);
+
+  const vec3i step = vec3i(2);
+
+  sampling_on_vertices_vs_procedural_values<VOLUME_TYPE>(
+      vec3i(128), dataCreationFlags, byteStride, step);
+}
+
+inline const vec3i get_dimensions_for_64_32bit_addressing(size_t byteStride)
+{
+  // corresponds to limits in Data.ih
+  constexpr size_t maxSize32bit = 1ULL << 31;
+
+  const size_t dim =
+      size_t(std::cbrt(double(maxSize32bit) / double(byteStride))) + 1;
+
+  if (dim * dim * dim * byteStride <= maxSize32bit) {
+    throw std::runtime_error(
+        "incorrect dimension computed for 64/32-bit addressing mode");
+  }
+
+  return vec3i(dim);
+}
+
+template <typename VOLUME_TYPE>
+inline void test_64_32bit_addressing(VKLDataCreationFlags dataCreationFlags,
+                                     float strideFactor)
+{
+  const size_t byteStride =
+      strideFactor == 0.f
+          ? sizeof(typename VOLUME_TYPE::voxelType)
+          : strideFactor * sizeof(typename VOLUME_TYPE::voxelType);
+
+  INFO("byteStride = " << byteStride);
+
+  const vec3i dimensions = get_dimensions_for_64_32bit_addressing(byteStride);
+
+  INFO("dimensions = " << dimensions.x << " " << dimensions.y << " "
+                       << dimensions.z);
+
+  const vec3i step = vec3i(32);
+
+  sampling_on_vertices_vs_procedural_values<VOLUME_TYPE>(
+      dimensions, dataCreationFlags, byteStride, step);
 }

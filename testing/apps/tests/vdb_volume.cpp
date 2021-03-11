@@ -139,7 +139,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
-    const vec3i step(1);
+    const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
@@ -174,7 +174,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
-    const vec3i step(1);
+    const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
@@ -209,7 +209,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
-    const vec3i step(1);
+    const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
@@ -275,7 +275,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
-    const vec3i step(1);
+    const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
@@ -311,7 +311,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
-    const vec3i step(1);
+    const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       if (offset.x + 1 >= volume->getDimensions().x ||
@@ -358,7 +358,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     VKLVolume vklVolume   = volume->getVKLVolume();
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
-    const vec3i step(1);
+    const vec3i step(2);
 
     // Gradient will be different around the border due to central differencing,
     // so we discard the outer layer of voxels.

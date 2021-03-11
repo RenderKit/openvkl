@@ -35,6 +35,8 @@ TEST_CASE("Structured regular volume multiple attributes",
 
   const std::vector<bool> useAOSLayouts{true, false};
 
+  const vec3i step = vec3i(4);
+
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &aos : useAOSLayouts) {
       std::stringstream sectionName;
@@ -56,8 +58,8 @@ TEST_CASE("Structured regular volume multiple attributes",
                                                           aos));
 
         num_attributes(v);
-        sampling_on_vertices_vs_procedural_values_multi(v, 2);
-        gradients_on_vertices_vs_procedural_values_multi(v, 2);
+        sampling_on_vertices_vs_procedural_values_multi(v, step);
+        gradients_on_vertices_vs_procedural_values_multi(v, step);
 
         for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
           test_stream_sampling(v, i);

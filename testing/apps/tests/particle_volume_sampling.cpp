@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -67,7 +67,7 @@ void sampling_at_random_points(size_t numParticles,
   std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
   std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-  const size_t N = 100000;
+  const size_t N = 10000;
 
   for (size_t i = 0; i < N; i++) {
     const vec3f objectCoordinates(distX(eng), distY(eng), distZ(eng));

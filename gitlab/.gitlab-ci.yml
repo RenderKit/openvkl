@@ -58,7 +58,7 @@ stages:
 .job_template: &base_functional_test_job
   stage: test
   script:
-    - ./build/openvkl/build/vklTests # NOTE(jda) - base this on install later
+    - ./build/openvkl/build/vklTests --durations yes
 
 .job_template: &test_functional_job_docker
   <<: *base_functional_test_job
@@ -266,7 +266,7 @@ test-functional-ubuntu16.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu16.04
 
@@ -275,7 +275,7 @@ test-functional-ubuntu18.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu18.04
 
@@ -284,7 +284,7 @@ test-functional-ubuntu20.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu20.04
 
@@ -334,7 +334,7 @@ test-functional-macOS:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-macOS-TBB2021:
   <<: *base_functional_test_job
@@ -345,7 +345,7 @@ test-functional-macOS-TBB2021:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-windows-msvc15:
   <<: *base_functional_test_job

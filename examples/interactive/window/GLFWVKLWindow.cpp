@@ -7,7 +7,8 @@
 #include <stdexcept>
 // imgui
 #include <imgui.h>
-#include "imgui_impl_glfw_gl3.h"
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_opengl2.h>
 // rkcommon
 #include "rkcommon/utility/CodeTimer.h"
 
@@ -42,7 +43,12 @@ namespace openvkl {
       if (disableVSync)
         glfwSwapInterval(0);
 
-      ImGui_ImplGlfwGL3_Init(glfwWindow, true);
+      IMGUI_CHECKVERSION();
+      ImGui::CreateContext();
+      ImGuiIO& io = ImGui::GetIO(); (void)io;
+      ImGui::StyleColorsDark();
+      ImGui_ImplGlfw_InitForOpenGL(glfwWindow, true);
+      ImGui_ImplOpenGL2_Init();
 
       glEnable(GL_TEXTURE_2D);
       glDisable(GL_LIGHTING);
@@ -74,7 +80,7 @@ namespace openvkl {
       glfwSetKeyCallback(
           glfwWindow,
           [](GLFWwindow *gw, int key, int scancode, int action, int mods) {
-            ImGui_ImplGlfwGL3_KeyCallback(gw, key, scancode, action, mods);
+            ImGui_ImplGlfw_KeyCallback(gw, key, scancode, action, mods);
             if (action == GLFW_PRESS) {
               switch (key) {
               case GLFW_KEY_G:
@@ -95,7 +101,9 @@ namespace openvkl {
 
     GLFWVKLWindow::~GLFWVKLWindow()
     {
-      ImGui_ImplGlfwGL3_Shutdown();
+      ImGui_ImplOpenGL2_Shutdown();
+      ImGui_ImplGlfw_Shutdown();
+      ImGui::DestroyContext();
       glfwTerminate();
     }
 
@@ -123,7 +131,9 @@ namespace openvkl {
     void GLFWVKLWindow::mainLoop()
     {
       while (!glfwWindowShouldClose(glfwWindow)) {
-        ImGui_ImplGlfwGL3_NewFrame();
+        ImGui_ImplOpenGL2_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
 
         display();
 
@@ -238,6 +248,7 @@ namespace openvkl {
 
       if (showUi && uiCallback) {
         ImGui::Render();
+        ImGui_ImplOpenGL2_RenderDrawData(ImGui::GetDrawData());
       }
 
       glfwSwapBuffers(glfwWindow);

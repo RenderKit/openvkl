@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "TransferFunctionWidget.h"
@@ -347,7 +347,7 @@ void TransferFunctionWidget::drawEditor()
         canvas_x + margin + (*tfnOpacityPoints)[i + 1].x * width + 1,
         canvas_y + height);
     draw_list->AddConvexPolyFilled(
-        polyline.data(), polyline.size(), 0xFFD8D8D8, true);
+        polyline.data(), polyline.size(), 0xFFD8D8D8);
   }
   canvas_y += height + margin;
   canvas_avail_y -= height + margin;

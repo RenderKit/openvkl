@@ -176,6 +176,7 @@ build-arch-devel-rkdeps:
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
     - gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
+  allow_failure: true
 
 build-arch-TBB2021:
   <<: *build_job_docker
@@ -316,6 +317,7 @@ test-functional-arch-devel-rkdeps:
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   needs:
     - build-arch-devel-rkdeps
+  allow_failure: true
 
 test-functional-arch-TBB2021:
   <<: *test_functional_job_docker

@@ -372,6 +372,8 @@ test-functional-windows-msvc15-TBB2021:
 # All pipelines have these manual benchmark jobs - one for all benchmarks,
 # plus one job for each suite.
 
+# vis-perf-x8280-1
+
 .job_template: &manual_benchmark_x8280-1
   <<: *base_benchmark_job
   when: manual
@@ -408,9 +410,47 @@ example-benchmark-x8280-1:
   variables:
     BENCHMARK_SUITE: ^ExampleRenderers$
 
-# Another benchmark job meant for scheduled (nightly, weekly, ...) builds.
+# vis-perf-a-1
+
+.job_template: &manual_benchmark_a-1
+  <<: *base_benchmark_job
+  when: manual
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-perf-a-1
+
+benchmark-a-1:
+  <<: *manual_benchmark_a-1
+
+structured-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolume$
+
+structured-multi-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+
+vdb-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolume$
+
+vdb-multi-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolumeMulti$
+
+example-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^ExampleRenderers$
+
+# Benchmark jobs meant for scheduled (nightly, weekly, ...) builds.
 # The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
-# BENCHMARK_MIN_TIME_SECONDS to configure the benchmark run time.
+# environment variables to configure the benchmark behavior.
 benchmark-x8280-1-schedule:
   <<: *base_benchmark_job
   only:
@@ -420,6 +460,16 @@ benchmark-x8280-1-schedule:
     - build-centos7-icc
   tags:
     - vis-perf-x8280-1
+
+benchmark-a-1-schedule:
+  <<: *base_benchmark_job
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-perf-a-1
 
 ## KW Jobs ##
 

@@ -894,6 +894,26 @@ objects (sampler object parameters default to volume parameters).
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
+VDB volume objects support the following observers:
+  --------------  -----------  -------------------------------------------------------------
+  Name            Buffer Type  Description
+  --------------  -----------  -------------------------------------------------------------
+  InnerNode       float[]      Return an array of bounding boxes, along with value ranges,
+                               of inner nodes in the data structure. The bounding box is
+                               given in object space.
+                               For a volume with M attributes, the entries in this array
+                               are (6+2*M)-tuples
+                               `(minX, minY, minZ, maxX, maxY, maxZ, lower_0, upper_0, 
+                                lower_1, upper_1, ...)`.
+                               This is in effect a low resolution representation of the
+                               volume.
+                               The InnerNode observer can be parametrized using
+                               `int maxDepth` to control the depth at which inner nodes are
+                               returned. Note that the observer will also return leaf nodes
+                               or tiles at lower levels if they exist.
+  --------------  --------------------------------------------------------------------------
+  : Observers supported by VDB (`"vdb"`) volumes.
+
 VDB sampler objects support the following observers:
 
   --------------  -----------  -------------------------------------------------------------

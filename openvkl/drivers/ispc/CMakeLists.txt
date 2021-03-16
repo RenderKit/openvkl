@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(openvkl_ispc)
@@ -74,6 +74,7 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/vdb/VdbVolume.ispc
     volume/vdb/VdbSampler.cpp
     volume/vdb/VdbSampler.ispc
+    volume/vdb/VdbInnerNodeObserver.cpp
     volume/vdb/VdbIterator.cpp
     volume/vdb/VdbIterator.ispc
     volume/vdb/VdbLeafAccessObserver.cpp

@@ -7,7 +7,7 @@
 #include <set>
 #include "../../common/export_util.h"
 #include "../common/logging.h"
-#include "VdbLeafAccessObserver.h"
+#include "VdbInnerNodeObserver.h"
 #include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
 #include "openvkl/vdb.h"
@@ -42,6 +42,7 @@ namespace openvkl {
         //       level buffers! Leaves are not stored in the hierarchy!
         for (uint32_t l = 0; (l + 1) < vklVdbNumLevels(); ++l) {
           VdbLevel &level = grid->levels[l];
+          allocator.deallocate(level.origin);
           allocator.deallocate(level.voxels);
           allocator.deallocate(level.valueRange);
           allocator.deallocate(level.leafIndex);
@@ -57,7 +58,7 @@ namespace openvkl {
     }
 
     template <class... Args>
-    void runtimeError(Args &&... args)
+    void runtimeError(Args &&...args)
     {
       std::ostringstream os;
       int dummy[sizeof...(Args)] = {(os << std::forward<Args>(args), 0)...};
@@ -208,8 +209,9 @@ namespace openvkl {
           innerOrigins.push_back(offsetToNodeOrigin(leafOffsets[leaf], l - 1));
 
         // Also quanitize the child level's inner node origins.
-        for (const vec3ui &org : oldInnerOrigins)
+        for (const vec3ui &org : oldInnerOrigins) {
           innerOrigins.push_back(offsetToNodeOrigin(org, l - 1));
+        }
 
         // We now have a list of inner node origins on level l-1, but it
         // contains duplicates. Sort and remove duplicates, and store for next
@@ -226,9 +228,11 @@ namespace openvkl {
                      1);  // This should be true at this point, but make sure...
           VdbLevel &level = grid->levels[l - 1];
           capacity[l - 1] = levelNumInner;
+          level.origin = allocator.allocate<vec3ui>(levelNumInner);
+
           const size_t totalNumVoxels =
               levelNumInner * vklVdbLevelNumVoxels(l - 1);
-          level.voxels     = allocator.allocate<uint64_t>(totalNumVoxels);
+          level.voxels = allocator.allocate<uint64_t>(totalNumVoxels);
           level.valueRange =
               allocator.allocate<range1f>(totalNumVoxels * grid->numAttributes);
           level.leafIndex = allocator.allocate<uint64>(totalNumVoxels);
@@ -313,13 +317,16 @@ namespace openvkl {
                 nodeIndex = grid->levels[nl].numNodes++;
                 assert(grid->levels[nl].numNodes <= capacity[nl]);
                 voxel = vklVdbVoxelMakeChildPtr(nodeIndex);
+                grid->levels[nl].origin[nodeIndex] = 
+                  offsetToNodeOrigin(offset, nl);
               } else {
                 if (format == VKL_FORMAT_TILE ||
                     format == VKL_FORMAT_CONSTANT_ZYX) {
                   voxel = vklVdbVoxelMakeLeafPtr(
                       leafAttributesDataISPC[idx].data(), format);
-                } else
+                } else {
                   assert(false);
+                }
 
                 level.leafIndex[v] = idx;
               }
@@ -631,6 +638,12 @@ namespace openvkl {
             "committed.");
 
       const std::string t(type);
+
+      if (t == "InnerNode") {
+        auto *obs = new VdbInnerNodeObserver<W>(*this);
+        return obs;
+      }
+
       return Volume<W>::newObserver(type);
     }
 

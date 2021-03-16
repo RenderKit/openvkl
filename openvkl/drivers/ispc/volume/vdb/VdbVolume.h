@@ -6,6 +6,7 @@
 #include <openvkl/vdb.h>
 #include <memory>
 #include "../../common/Allocator.h"
+#include "../../observer/ObserverRegistry.h"
 #include "../Volume.h"
 #include "../common/Data.h"
 #include "VdbGrid.h"
@@ -78,19 +79,23 @@ namespace openvkl {
       Observer<W> *newObserver(const char *type) override;
       Sampler<W> *newSampler() override;
 
-      VKLFilter getFilter() const {
+      VKLFilter getFilter() const
+      {
         return filter;
       }
 
-      VKLFilter getGradientFilter() const {
+      VKLFilter getGradientFilter() const
+      {
         return gradientFilter;
       }
 
-      uint32_t getMaxSamplingDepth() const {
+      uint32_t getMaxSamplingDepth() const
+      {
         return maxSamplingDepth;
       }
 
-      uint32_t getMaxIteratorDepth() const {
+      uint32_t getMaxIteratorDepth() const
+      {
         return maxIteratorDepth;
       }
 

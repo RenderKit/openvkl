@@ -25,6 +25,9 @@ struct VdbLevel
 {
   vkl_uint64 numNodes;
 
+  // For each *node*, the origin in root-relative index space.
+  vec3ui *origin;
+
   // Voxels for node 0, node 1, node 2, ...
   vkl_uint64 *voxels;
 
@@ -32,7 +35,8 @@ struct VdbLevel
   // Note: These are only valid for leaf voxels.
   vkl_uint64 *leafIndex;
 
-  // For each voxel, the range of values contained within.
+  // For each voxel, the range of values contained within, by attribute:
+  // (range0, range1, ..., rangeNumAttributes)_0, [...]
   range1f *valueRange;
 };
 

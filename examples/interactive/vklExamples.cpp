@@ -5,6 +5,7 @@
 #include "window/GLFWVKLWindow.h"
 #include "window/TransferFunctionWidget.h"
 // openvkl_testing
+#include "openvkl/vdb_util/InnerNodes.h"
 #include "openvkl_testing.h"
 // imgui
 #include <imgui.h>
@@ -49,6 +50,8 @@ struct ViewerParams
   bool disableVSync{false};
   bool interactive{true};
   bool useISPC{true};
+  std::string innerNodeOutput;
+  int innerNodeMaxDepth{1};
 };
 
 bool addSamplingRateUI(GLFWVKLWindow &window)
@@ -275,6 +278,8 @@ void usage(const char *progname)
          "\t-windowSize <x> <y>\n"
          "\t-pixelRange <xMin> <yMin> <xMax> <yMax>\n"
          "\t-o <output.ppm>\n"
+         "\t-innerNodeOutput <output.usda> (vdb only)\n"
+         "\t-innerNodeMaxDepth <level> (vdb only)\n"
       << std::endl;
 }
 
@@ -432,6 +437,16 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
       }
 
       params.rendererType = argv[argIndex++];
+    } else if (switchArg == "-innerNodeOutput") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -innerNodeOutput arguments");
+      }
+      params.innerNodeOutput = argv[argIndex++];
+    } else if (switchArg == "-innerNodeMaxDepth") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -innerNodeMaxDepth arguments");
+      }
+      params.innerNodeMaxDepth = stoi(std::string(argv[argIndex++]));
     } else if (switchArg == "-help") {
       usage(argv[0]);
       return false;
@@ -1119,6 +1134,12 @@ int main(int argc, const char **argv)
   setupScene(params, testingVolume.get(), scene);
 
   logToOutput(params, scene);
+
+  if (params.gridType == "vdb" && !params.innerNodeOutput.empty()) {
+    openvkl::vdb_util::exportInnerNodes(params.innerNodeOutput,
+                                        params.innerNodeMaxDepth,
+                                        testingVolume->getVKLVolume());
+  }
 
   if (params.interactive) {
     interactiveRender(params, scene, testingVolume.get());

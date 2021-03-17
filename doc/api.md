@@ -117,6 +117,12 @@ easy changes to Open VKL’s behavior without needing to change the application
 Note that these environment variables take precedence over values set through
 the `vklDriverSet*()` functions.
 
+Additionally, the ISPC driver's default SIMD width can be overriden at run time
+with the `OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH` environment variable. Legal values
+are 4, 8, or 16. This setting is only applicable when the generic `ispc` driver
+is instantiated; if a specific width is requested via the `ispc_[4,8,16]` driver
+names then the environment variable is ignored.
+
 ### Error handling and log messages
 
 The following errors are currently used by Open VKL:

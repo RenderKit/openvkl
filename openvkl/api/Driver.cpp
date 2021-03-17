@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Driver.h"
@@ -49,44 +49,73 @@ namespace openvkl {
 
     Driver *Driver::createDriver(const std::string &driverName)
     {
-      // special case for ISPC driver selection based on runtime native ISPC
-      // vector width
       const std::string ispcDriverName("ispc");
 
-      if (driverName == ispcDriverName) {
-        // determine native width and instantiate that driver for that width
-        int nativeIspcWidth = ispc::get_programCount();
+      // special case for ISPC driver selection
+      if (driverName.find(ispcDriverName) != std::string::npos) {
+        int requestedDriverWidth = 0;
 
-        std::stringstream ss;
-        ss << ispcDriverName << "_" << nativeIspcWidth;
+        const int nativeMaxIspcWidth = ispc::get_programCount();
 
-        return objectFactory<Driver, VKL_DRIVER>(ss.str().c_str());
-      } else if (driverName.find(ispcDriverName + "_") != std::string::npos &&
-                 driverName.size() > ispcDriverName.size() + 1) {
-        // the user chose a specific width for the ISPC driver, e.g.
-        // ispc_[4,8,16]. verify that driver is legal on this system.
-        std::string specifiedWidthStr =
-            driverName.substr(driverName.find("_") + 1, driverName.size());
+        if (driverName == ispcDriverName) {
+          // the generic "ispc" driver was selected
 
-        try {
-          int specifiedWidth  = std::stoi(specifiedWidthStr);
-          int nativeIspcWidth = ispc::get_programCount();
+          // update requested driver width if the user set the env var
+          auto OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH =
+              utility::getEnvVar<int>("OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH");
+          requestedDriverWidth = OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH.value_or(0);
 
-          if (specifiedWidth > nativeIspcWidth) {
-            std::stringstream ss;
-            ss << "driver " << driverName
-               << " cannot run on the system (native SIMD width: "
-               << nativeIspcWidth
-               << ", requested SIMD width: " << specifiedWidthStr << ")";
+          if (requestedDriverWidth) {
+            LogMessageStream(VKL_LOG_DEBUG)
+                << "application requested ISPC driver width "
+                << requestedDriverWidth
+                << " via OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH";
+          } else {
+            // the user did not set the env var, use the runtime native
+            // (maximum) ISPC vector width
+            requestedDriverWidth = nativeMaxIspcWidth;
 
-            throw std::runtime_error(ss.str().c_str());
+            LogMessageStream(VKL_LOG_DEBUG)
+                << "will use ISPC driver native maximum width "
+                << requestedDriverWidth;
           }
 
-        } catch (const std::invalid_argument &ia) {
-          LogMessageStream(VKL_LOG_DEBUG)
-              << "could not verify legality of ISPC driver width: "
-              << driverName;
+        } else if (driverName.find(ispcDriverName + "_") != std::string::npos &&
+                   driverName.size() > ispcDriverName.size() + 1) {
+          // the user chose a specific width for the ISPC driver, e.g.
+          // ispc_[4,8,16]. verify that driver is legal on this system.
+          std::string specifiedWidthStr =
+              driverName.substr(driverName.find("_") + 1, driverName.size());
+
+          try {
+            requestedDriverWidth = std::stoi(specifiedWidthStr);
+
+            LogMessageStream(VKL_LOG_DEBUG)
+                << "application requested ISPC driver width "
+                << requestedDriverWidth << "via driver name " << driverName;
+          } catch (const std::invalid_argument &ia) {
+            LogMessageStream(VKL_LOG_ERROR)
+                << "could not parse requested ISPC driver width for name: "
+                << driverName;
+          }
         }
+
+        // verify legality of the determined width
+        if (requestedDriverWidth <= 0 ||
+            requestedDriverWidth > nativeMaxIspcWidth) {
+          std::stringstream ss;
+          ss << "driver " << driverName
+             << " cannot run on the system (native SIMD width: "
+             << nativeMaxIspcWidth
+             << ", requested SIMD width: " << requestedDriverWidth << ")";
+
+          throw std::runtime_error(ss.str().c_str());
+        }
+
+        std::stringstream ss;
+        ss << ispcDriverName << "_" << requestedDriverWidth;
+
+        return objectFactory<Driver, VKL_DRIVER>(ss.str());
       }
 
       return objectFactory<Driver, VKL_DRIVER>(driverName);

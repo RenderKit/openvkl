@@ -9,7 +9,11 @@
 #include "rkcommon/utility/StringManip.h"
 #include "rkcommon/utility/getEnvVar.h"
 
+#ifdef NDEBUG
 #define LOG_LEVEL_DEFAULT VKL_LOG_INFO
+#else
+#define LOG_LEVEL_DEFAULT VKL_LOG_DEBUG
+#endif
 
 namespace openvkl {
   namespace api {

@@ -513,9 +513,14 @@ void setupVolume(ViewerParams &params,
     std::for_each(ext.begin(), ext.end(), [](char &c) { c = ::tolower(c); });
     if (ext == ".vdb") {
       params.gridType = "vdb";
-      auto vol      = std::shared_ptr<OpenVdbVolume>(OpenVdbVolume::loadVdbFile(
-          params.filename, params.field, params.filter));
-      testingVolume = std::move(vol);
+      // avoid deferred loading when exporting innerNodes to ensure exported
+      // value ranges represent the full data
+      auto vol = std::shared_ptr<OpenVdbVolume>(
+          OpenVdbVolume::loadVdbFile(params.filename,
+                                     params.field,
+                                     params.filter,
+                                     params.innerNodeOutput.empty()));
+      testingVolume  = std::move(vol);
       params.haveVdb = true;
     } else if (ext == ".rwh") {
       testingVolume = std::shared_ptr<RawHFileStructuredVolume>(

@@ -134,6 +134,7 @@ if (BUILD_TESTING)
     tests/amr_volume_value_range.cpp
     tests/vdb_volume.cpp
     tests/vdb_volume_multi.cpp
+    tests/vdb_volume_inner_node_observer.cpp
     tests/particle_volume_sampling.cpp
     tests/particle_volume_gradients.cpp
     tests/particle_volume_value_range.cpp

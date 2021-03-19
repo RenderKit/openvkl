@@ -52,6 +52,7 @@ namespace openvkl {
       const void *mapObserver(VKLObserver observer) override;
       void unmapObserver(VKLObserver observer) override;
       VKLDataType getObserverElementType(VKLObserver observer) const override;
+      size_t getObserverElementSize(VKLObserver observer) const override;
       size_t getObserverNumElements(VKLObserver observer) const override;
 
       /////////////////////////////////////////////////////////////////////////

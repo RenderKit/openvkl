@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -22,6 +22,7 @@ namespace openvkl {
       virtual const void *map()                  = 0;
       virtual void unmap()                       = 0;
       virtual VKLDataType getElementType() const = 0;
+      virtual size_t getElementSize() const      = 0;
       virtual size_t getNumElements() const      = 0;
 
      protected:

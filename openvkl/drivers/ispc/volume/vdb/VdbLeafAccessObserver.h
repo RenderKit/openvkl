@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -33,6 +33,7 @@ namespace openvkl {
       const void *map() override;
       void unmap() override;
       VKLDataType getElementType() const override;
+      size_t getElementSize() const override;
       size_t getNumElements() const override;
 
      private:

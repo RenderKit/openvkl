@@ -144,6 +144,17 @@ extern "C" VKLDataType vklGetObserverElementType(VKLObserver observer)
 }
 OPENVKL_CATCH_END(VKL_UNKNOWN)
 
+extern "C" size_t vklGetObserverElementSize(VKLObserver observer)
+    OPENVKL_CATCH_BEGIN
+{
+  ASSERT_DRIVER();
+  THROW_IF_NULL_OBJECT(observer);
+  size_t size =
+      openvkl::api::currentDriver().getObserverElementSize(observer);
+  return size;
+}
+OPENVKL_CATCH_END(0)
+
 extern "C" size_t vklGetObserverNumElements(VKLObserver observer)
     OPENVKL_CATCH_BEGIN
 {

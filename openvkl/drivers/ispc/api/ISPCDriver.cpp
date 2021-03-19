@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ISPCDriver.h"
@@ -102,6 +102,14 @@ namespace openvkl {
     {
       auto &observerObject = referenceFromHandle<Observer<W>>(observer);
       return observerObject.getElementType();
+    }
+
+    template <int W>
+    size_t ISPCDriver<W>::getObserverElementSize(
+        VKLObserver observer) const
+    {
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
+      return observerObject.getElementSize();
     }
 
     template <int W>

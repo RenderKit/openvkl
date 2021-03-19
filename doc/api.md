@@ -373,10 +373,11 @@ To access the underlying data, an observer must first be mapped using
 
 If this fails, the function returns `NULL`. `vklMapObserver` may fail on
 observers that are already mapped.
-On success, the application may query the underlying type and the number of
-elements in the buffer using
+On success, the application may query the underlying type, element size in
+bytes, and the number of elements in the buffer using
 
     VKLDataType vklGetObserverElementType(VKLObserver observer);
+    size_t vklGetObserverElementSize(VKLObserver observer);
     size_t vklGetObserverNumElements(VKLObserver observer);
 
 On failure, these functions return `VKL_UNKNOWN` and `0`, respectively.

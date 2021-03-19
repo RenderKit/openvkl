@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbLeafAccessObserver.h"
@@ -46,6 +46,12 @@ namespace openvkl {
     VKLDataType VdbLeafAccessObserver<W>::getElementType() const
     {
       return VKL_UINT;
+    }
+
+    template <int W>
+    size_t VdbLeafAccessObserver<W>::getElementSize() const
+    {
+      return sizeof(uint32_t);
     }
 
     template <int W>

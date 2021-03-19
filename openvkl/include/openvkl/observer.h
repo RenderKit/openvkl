@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -60,6 +60,12 @@ void vklUnmapObserver(VKLObserver observer);
 // May fail if the observer is not mapped.
 OPENVKL_INTERFACE
 VKLDataType vklGetObserverElementType(VKLObserver observer);
+
+// Query the size, in bytes, of a single element.
+// Triggers the error handler and returns 0 on error.
+// May fail if the observer is not mapped.
+OPENVKL_INTERFACE
+size_t vklGetObserverElementSize(VKLObserver observer);
 
 // Query the number of elements contained in the observer data buffer.
 // Triggers the error handler and returns 0 on error.

@@ -19,7 +19,8 @@ namespace openvkl {
     {
       static OpenVdbVolume *loadVdbFile(const std::string &filename,
                                         const std::string &field,
-                                        VKLFilter filter);
+                                        VKLFilter filter,
+                                        bool deferLeaves = false);
 
       virtual ~OpenVdbVolume() {}
 
@@ -40,8 +41,9 @@ namespace openvkl {
 
       OpenVdbVolumeImpl(const std::string &filename,
                         const std::string &field,
-                        VKLFilter filter)
-          : grid(filename, field, true), filter(filter)
+                        VKLFilter filter,
+                        bool deferLeaves = false)
+          : grid(filename, field, deferLeaves), filter(filter)
       {
         volume = grid.createVolume(filter);
       }
@@ -147,7 +149,10 @@ namespace openvkl {
         OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbVec3sGrid>;
 
     inline OpenVdbVolume *OpenVdbVolume::loadVdbFile(
-        const std::string &filename, const std::string &field, VKLFilter filter)
+        const std::string &filename,
+        const std::string &field,
+        VKLFilter filter,
+        bool deferLeaves)
     {
       openvdb::initialize();
 
@@ -157,9 +162,9 @@ namespace openvkl {
       openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
 
       if (baseGrid->valueType() == "float") {
-        return new OpenVdbFloatVolume(filename, field, filter);
+        return new OpenVdbFloatVolume(filename, field, filter, deferLeaves);
       } else if (baseGrid->valueType() == "vec3s") {
-        return new OpenVdbVec3sVolume(filename, field, filter);
+        return new OpenVdbVec3sVolume(filename, field, filter, deferLeaves);
       } else {
         throw std::runtime_error("unsupported OpenVDB grid type: " +
                                  baseGrid->valueType());
@@ -181,7 +186,8 @@ namespace openvkl {
     {
       static OpenVdbVolume *loadVdbFile(const std::string &filename,
                                         const std::string &field,
-                                        VKLFilter filter)
+                                        VKLFilter filter,
+                                        bool deferLeaves = false)
       {
         throw std::runtime_error(
             "You must compile with OpenVDB to use OpenVdbVolume");
@@ -198,7 +204,8 @@ namespace openvkl {
     {
       OpenVdbVolumeImpl(const std::string &filename,
                         const std::string &field,
-                        VKLFilter filter = VKL_FILTER_TRILINEAR)
+                        VKLFilter filter,
+                        bool deferLeaves = false)
       {
         throw std::runtime_error(
             "You must compile with OpenVDB to use OpenVdbVolumeImpl");

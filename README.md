@@ -579,10 +579,12 @@ const void * vklMapObserver(VKLObserver observer);
 
 If this fails, the function returns `NULL`. `vklMapObserver` may fail on
 observers that are already mapped. On success, the application may query
-the underlying type and the number of elements in the buffer using
+the underlying type, element size in bytes, and the number of elements
+in the buffer using
 
 ``` cpp
 VKLDataType vklGetObserverElementType(VKLObserver observer);
+size_t vklGetObserverElementSize(VKLObserver observer);
 size_t vklGetObserverNumElements(VKLObserver observer);
 ```
 
@@ -994,6 +996,14 @@ parameters).
 Configuration parameters for VDB (`"vdb"`) volumes and their sampler
 objects.
 
+VDB volume objects support the following observers:
+
+| Name      | Buffer Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| :-------- | ----------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| InnerNode | float\[\]   | Return an array of bounding boxes, along with value ranges, of inner nodes in the data structure. The bounding box is given in object space. For a volume with M attributes, the entries in this array are (6+2\*M)-tuples `(minX, minY, minZ, maxX, maxY, maxZ, lower_0, upper_0, lower_1, upper_1, ...)`. This is in effect a low resolution representation of the volume. The InnerNode observer can be parametrized using `int maxDepth` to control the depth at which inner nodes are returned. Note that the observer will also return leaf nodes or tiles at lower levels if they exist. |
+
+Observers supported by VDB (`"vdb"`) volumes.
+
 VDB sampler objects support the following observers:
 
 | Name           | Buffer Type | Description                                                                                                                                                                                                                                    |
@@ -1001,6 +1011,15 @@ VDB sampler objects support the following observers:
 | LeafNodeAccess | uint32\[\]  | This observer returns an array with as many entries as input nodes were passed. If the input node i was accessed during traversal, then the ith entry in this array has a nonzero value. This can be used for on-demand loading of leaf nodes. |
 
 Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
+
+#### Reconstruction filters
+
+VDB volumes support the filter types `VKL_FILTER_NEAREST`,
+`VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC` for both `filter` and
+`gradientFilter`.
+
+Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`,
+gradients are always \((0, 0, 0)\).
 
 #### Major differences to OpenVDB
 

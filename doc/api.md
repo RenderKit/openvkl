@@ -895,6 +895,7 @@ objects (sampler object parameters default to volume parameters).
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
 VDB volume objects support the following observers:
+
   --------------  -----------  -------------------------------------------------------------
   Name            Buffer Type  Description
   --------------  -----------  -------------------------------------------------------------
@@ -903,7 +904,7 @@ VDB volume objects support the following observers:
                                given in object space.
                                For a volume with M attributes, the entries in this array
                                are (6+2*M)-tuples
-                               `(minX, minY, minZ, maxX, maxY, maxZ, lower_0, upper_0, 
+                               `(minX, minY, minZ, maxX, maxY, maxZ, lower_0, upper_0,
                                 lower_1, upper_1, ...)`.
                                This is in effect a low resolution representation of the
                                volume.

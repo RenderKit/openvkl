@@ -173,30 +173,36 @@ template_get_wrapper(half, float);
 
 // limited support for getters on _varying_ Data1D objects
 
-inline varying float get_float_compact(const uniform Data1D *varying data,
-                                       const varying uint32 index32)
-{
-  assert(index32 >= 0 && index32 < data->numItems);
-  return ((const uniform float *)data->addr)[index32];
-}
+#define template_get_special(T, retT, repT, convFunc)                        \
+  inline varying retT get_##T##_compact(const uniform Data1D *varying data,  \
+                                        const varying uint32 index32)        \
+  {                                                                          \
+    assert(index32 >= 0 && index32 < data->numItems);                        \
+    return convFunc(((const uniform repT *)data->addr)[index32]);            \
+  }                                                                          \
+                                                                             \
+  inline varying retT get_##T##_strided(const uniform Data1D *varying data,  \
+                                        const varying uint32 index32)        \
+  {                                                                          \
+    assert(index32 >= 0 && index32 < data->numItems);                        \
+    return convFunc(                                                         \
+        *((const uniform repT *)(data->addr + index32 * data->byteStride))); \
+  }                                                                          \
+                                                                             \
+  /* helpers for getting the first element only of a Data1D object */        \
+                                                                             \
+  inline varying retT get_##T##_0(const uniform Data1D *varying data)        \
+  {                                                                          \
+    assert(data->numItems > 0);                                              \
+    return convFunc(*((const uniform repT *)data->addr));                    \
+  }                                                                          \
+                                                                             \
+  inline uniform retT get_##T##_0(const uniform Data1D data)                 \
+  {                                                                          \
+    assert(data.numItems > 0);                                               \
+    return convFunc(*((const uniform repT *)data.addr));                     \
+  }
 
-inline varying float get_float_strided(const uniform Data1D *varying data,
-                                       const varying uint32 index32)
-{
-  assert(index32 >= 0 && index32 < data->numItems);
-  return *((const uniform float *)(data->addr + index32 * data->byteStride));
-}
-
-// helpers for getting the first element only of a Data1D object
-
-inline varying float get_float_0(const uniform Data1D *varying data)
-{
-  assert(data->numItems > 0);
-  return *((const uniform float *)data->addr);
-}
-
-inline uniform float get_float_0(const uniform Data1D data)
-{
-  assert(data.numItems > 0);
-  return *((const uniform float *)data.addr);
-}
+template_get_special(half, float, unsigned int16, half_to_float);
+template_get_special(float, float, float, );
+#undef template_get_special

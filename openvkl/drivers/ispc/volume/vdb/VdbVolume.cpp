@@ -47,6 +47,7 @@ namespace openvkl {
           allocator.deallocate(level.valueRange);
           allocator.deallocate(level.leafIndex);
         }
+        allocator.deallocate(grid->attributeTypes);
         allocator.deallocate(grid);
       }
     }
@@ -228,7 +229,7 @@ namespace openvkl {
                      1);  // This should be true at this point, but make sure...
           VdbLevel &level = grid->levels[l - 1];
           capacity[l - 1] = levelNumInner;
-          level.origin = allocator.allocate<vec3ui>(levelNumInner);
+          level.origin    = allocator.allocate<vec3ui>(levelNumInner);
 
           const size_t totalNumVoxels =
               levelNumInner * vklVdbLevelNumVoxels(l - 1);
@@ -245,13 +246,13 @@ namespace openvkl {
     }
 
     /*
-     * Compute the value range for float leaves.
+     * Compute the value range for a leaf.
      */
-    range1f computeValueRangeFloat(const VdbGrid *grid,
-                                   VKLFormat format,
-                                   uint32_t level,
-                                   const vec3ui &offset,
-                                   unsigned int attributeIndex)
+    range1f computeValueRange(const VdbGrid *grid,
+                              VKLFormat format,
+                              uint32_t level,
+                              const vec3ui &offset,
+                              unsigned int attributeIndex)
     {
       range1f range;
 
@@ -270,15 +271,14 @@ namespace openvkl {
      * This function does not allocate anything; allocateInnerLevels() has done
      * this already.
      */
-    void insertLeavesFloat(
-        const std::vector<vec3ui> &leafOffsets,
-        const DataT<uint32_t> &leafFormat,
-        const DataT<Data *> &leafData,
-        const std::vector<AlignedVector16<ispc::Data1D>>
-            &leafAttributesDataISPC,
-        const std::vector<std::vector<uint64_t>> &binnedLeaves,
-        const std::vector<uint64_t> &capacity,
-        VdbGrid *grid)
+    void insertLeaves(const std::vector<vec3ui> &leafOffsets,
+                      const DataT<uint32_t> &leafFormat,
+                      const DataT<Data *> &leafData,
+                      const std::vector<AlignedVector16<ispc::Data1D>>
+                          &leafAttributesDataISPC,
+                      const std::vector<std::vector<uint64_t>> &binnedLeaves,
+                      const std::vector<uint64_t> &capacity,
+                      VdbGrid *grid)
     {
       assert(capacity[0] == 1);
       grid->levels[0].numNodes = 1;
@@ -317,8 +317,8 @@ namespace openvkl {
                 nodeIndex = grid->levels[nl].numNodes++;
                 assert(grid->levels[nl].numNodes <= capacity[nl]);
                 voxel = vklVdbVoxelMakeChildPtr(nodeIndex);
-                grid->levels[nl].origin[nodeIndex] = 
-                  offsetToNodeOrigin(offset, nl);
+                grid->levels[nl].origin[nodeIndex] =
+                    offsetToNodeOrigin(offset, nl);
               } else {
                 if (format == VKL_FORMAT_TILE ||
                     format == VKL_FORMAT_CONSTANT_ZYX) {
@@ -344,10 +344,10 @@ namespace openvkl {
      * The tree must be fully initialized before calling this!
      * This function takes into account filter radius.
      */
-    void computeValueRangesFloat(const std::vector<vec3ui> &leafOffsets,
-                                 const DataT<uint32_t> &leafLevel,
-                                 const DataT<uint32_t> &leafFormat,
-                                 VdbGrid *grid)
+    void computeValueRanges(const std::vector<vec3ui> &leafOffsets,
+                            const DataT<uint32_t> &leafLevel,
+                            const DataT<uint32_t> &leafFormat,
+                            VdbGrid *grid)
     {
       const size_t numLeaves = leafOffsets.size();
 
@@ -362,7 +362,7 @@ namespace openvkl {
 
         for (unsigned int j = 0; j < grid->numAttributes; j++) {
           valueRanges[idx][j] =
-              computeValueRangeFloat(grid, format, leafLevel[idx], offset, j);
+              computeValueRange(grid, format, leafLevel[idx], offset, j);
         }
       });
 
@@ -463,8 +463,8 @@ namespace openvkl {
       // We will assume that the following conditions hold downstream, so
       // better test them now.
 
-      // Currently only VKL_FLOAT data (single attribute) or
-      // VKLData<VKLData<float>> (multi attribute) is supported.
+      // Currently VKL_HALF or VKL_FLOAT data (single attribute) or
+      // VKLData<VKLData<[half, float]>> (multi attribute) is supported.
       std::set<VKLDataType> leafDataTypes;
 
       for (const auto &d : *leafData)
@@ -476,16 +476,31 @@ namespace openvkl {
 
       const VKLDataType type = *leafDataTypes.begin();
 
-      if (type != VKL_FLOAT && type != VKL_DATA)
+      if (type != VKL_HALF && type != VKL_FLOAT && type != VKL_DATA)
         runtimeError("node.data arrays have data type ",
                      type,
                      " but only ",
+                     VKL_HALF,
+                     " (VKL_HALF), ",
                      VKL_FLOAT,
-                     " (VKL_FLOAT) or ",
+                     " (VKL_FLOAT), or ",
                      VKL_DATA,
                      " (VKL_DATA) is supported.");
 
-      numAttributes = type == VKL_FLOAT ? 1 : (*leafData)[0]->size();
+      numAttributes = type != VKL_DATA ? 1 : (*leafData)[0]->size();
+
+      // detect per-attribute data types; note that these will be verified
+      // consistent across leaves during population of leafAttributesDataISPC
+      std::vector<uint32_t> attributeTypes(numAttributes, VKL_UNKNOWN);
+
+      if (numAttributes == 1) {
+        attributeTypes[0] = type;
+      } else {
+        for (unsigned int j = 0; j < numAttributes; j++) {
+          attributeTypes[j] =
+              (*leafData)[0]->template as<Data *>()[j]->dataType;
+        }
+      }
 
       const size_t numLeaves = leafLevel->size();
       if (leafOrigin->size() != numLeaves || leafFormat->size() != numLeaves ||
@@ -499,18 +514,40 @@ namespace openvkl {
           numLeaves, AlignedVector16<ispc::Data1D>(numAttributes));
 
       tasking::parallel_for(numLeaves, [&](size_t i) {
-        if (type == VKL_FLOAT) {
+        if (type != VKL_DATA) {
           // single attribute user parameterization
-          leafAttributesDataISPC[i][0] =
-              (*leafData)[i]->template as<float>().ispc;
+          if (attributeTypes[0] == VKL_HALF) {
+            leafAttributesDataISPC[i][0] = (*leafData)[i]->ispc;
+
+            // manually verify, since we don't use `->as<half>`
+            if (leafAttributesDataISPC[i][0].dataType != VKL_HALF) {
+              throw std::runtime_error(
+                  "inconsistent leaf attribute data type (expected VKL_HALF)");
+            }
+          } else if (attributeTypes[0] == VKL_FLOAT) {
+            leafAttributesDataISPC[i][0] =
+                (*leafData)[i]->template as<float>().ispc;
+          }
 
         } else {
           // multi attribute user parameterization
           for (unsigned int j = 0; j < numAttributes; j++) {
-            leafAttributesDataISPC[i][j] = (*leafData)[i]
-                                               ->template as<Data *>()[j]
-                                               ->template as<float>()
-                                               .ispc;
+            if (attributeTypes[j] == VKL_HALF) {
+              leafAttributesDataISPC[i][j] =
+                  (*leafData)[i]->template as<Data *>()[j]->ispc;
+
+              // manually verify, since we don't use `->as<half>`
+              if (leafAttributesDataISPC[i][j].dataType != VKL_HALF) {
+                throw std::runtime_error(
+                    "inconsistent leaf attribute data type (expected "
+                    "VKL_HALF)");
+              }
+            } else if (attributeTypes[j] == VKL_FLOAT) {
+              leafAttributesDataISPC[i][j] = (*leafData)[i]
+                                                 ->template as<Data *>()[j]
+                                                 ->template as<float>()
+                                                 .ispc;
+            }
           }
         }
 
@@ -556,9 +593,14 @@ namespace openvkl {
       });
 
       grid                = allocator.allocate<VdbGrid>(1);
-      grid->type          = type;
       grid->numAttributes = numAttributes;
-      maxIteratorDepth    = std::min<uint32_t>(
+
+      grid->attributeTypes = allocator.allocate<uint32_t>(grid->numAttributes);
+      for (unsigned int j = 0; j < numAttributes; j++) {
+        grid->attributeTypes[j] = attributeTypes[j];
+      }
+
+      maxIteratorDepth = std::min<uint32_t>(
           std::max<uint32_t>(maxIteratorDepth, 0), VKL_VDB_NUM_LEVELS - 1);
       grid->totalNumLeaves = numLeaves;
 
@@ -608,20 +650,19 @@ namespace openvkl {
       std::vector<uint64_t> capacity(vklVdbNumLevels() - 1, 0);
       allocateInnerLevels(leafOffsets, binnedLeaves, capacity, grid, allocator);
 
-      // TODO: Support other types?
-      insertLeavesFloat(leafOffsets,
-                        *leafFormat,
-                        *leafData,
-                        leafAttributesDataISPC,
-                        binnedLeaves,
-                        capacity,
-                        grid);
+      insertLeaves(leafOffsets,
+                   *leafFormat,
+                   *leafData,
+                   leafAttributesDataISPC,
+                   binnedLeaves,
+                   capacity,
+                   grid);
 
       CALL_ISPC(VdbVolume_setGrid,
                 this->ispcEquivalent,
                 reinterpret_cast<const ispc::VdbGrid *>(grid));
 
-      computeValueRangesFloat(leafOffsets, *leafLevel, *leafFormat, grid);
+      computeValueRanges(leafOffsets, *leafLevel, *leafFormat, grid);
 
       // aggregate value range for first attribute only
       valueRange = range1f();

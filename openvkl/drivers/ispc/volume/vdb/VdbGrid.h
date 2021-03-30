@@ -45,8 +45,8 @@ struct VdbLevel
  */
 struct VdbGrid
 {
-  vkl_uint32 type;  // All voxels have this type.
   vkl_uint32 numAttributes;
+  vkl_uint32 *attributeTypes; // Data type for each attribute.
   vkl_uint32 maxIteratorDepth;
   float objectToIndex[12];    // Row-major transformation matrix, 3x4,
                               // rotation-shear-scale | translation

@@ -3,14 +3,19 @@
 
 #pragma once
 
-inline varying float VdbSampler_sampleTileFloatLeaf(
-    const uniform Data1D *varying leafPtr, uniform uint32 attributeIndex)
-{
-  return get_float_0(&leafPtr[attributeIndex]);
-}
+#define template_VdbSampler_sampleTileLeaf(voxelType)                       \
+  inline varying float VdbSampler_sampleTileLeaf_##voxelType(               \
+      const uniform Data1D *varying leafPtr, uniform uint32 attributeIndex) \
+  {                                                                         \
+    return get_##voxelType##_0(&leafPtr[attributeIndex]);                   \
+  }                                                                         \
+                                                                            \
+  inline uniform float VdbSampler_sampleTileLeaf_##voxelType(               \
+      const uniform Data1D *uniform leafPtr, uniform uint32 attributeIndex) \
+  {                                                                         \
+    return get_##voxelType##_0(leafPtr[attributeIndex]);                    \
+  }
 
-inline uniform float VdbSampler_sampleTileFloatLeaf(
-    const uniform Data1D *uniform leafPtr, uniform uint32 attributeIndex)
-{
-  return get_float_0(leafPtr[attributeIndex]);
-}
+template_VdbSampler_sampleTileLeaf(half);
+template_VdbSampler_sampleTileLeaf(float);
+#undef template_VdbSampler_sampleTileLeaf

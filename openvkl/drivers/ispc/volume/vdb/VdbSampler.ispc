@@ -216,53 +216,77 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
 
 // These helper functions handle all legal combinations of sampling uniform /
 // varying voxels at uniform / varying offsets, and are used just below.
-#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)       \
-  inline univaryOffset float VdbSampler_sample_inner(                       \
-      const VdbSampler *uniform sampler,                                    \
-      const univaryVoxel uint64 &voxel,                                     \
-      const univaryOffset vec3ui &domainOffset,                             \
-      const uniform uint32 attributeIndex)                                  \
-  {                                                                         \
-    univaryOffset float sample = 0.f;                                       \
-                                                                            \
-    if (vklVdbVoxelIsLeafPtr(voxel)) {                                      \
-      const void *univaryVoxel leafPtr = vklVdbVoxelLeafGetPtr(voxel);      \
-      assert(leafPtr);                                                      \
-                                                                            \
-      const uniform bool isCompact = sampler->grid->allLeavesCompact;       \
-                                                                            \
-      const univaryVoxel VKLFormat leafFormat =                             \
-          vklVdbVoxelLeafGetFormat(voxel);                                  \
-                                                                            \
-      if (leafFormat == VKL_FORMAT_TILE) {                                  \
-        sample = VdbSampler_sampleTileFloatLeaf(                            \
-            ((const uniform Data1D *univaryVoxel)leafPtr), attributeIndex); \
-      } else if (isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {      \
-        sample = VdbSampler_sampleConstantFloatLeafCompact(                 \
-            ((const uniform Data1D *univaryVoxel)leafPtr),                  \
-            domainOffset,                                                   \
-            attributeIndex);                                                \
-      } else if (!isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {     \
-        sample = VdbSampler_sampleConstantFloatLeafStrided(                 \
-            ((const uniform Data1D *univaryVoxel)leafPtr),                  \
-            domainOffset,                                                   \
-            attributeIndex);                                                \
-      } else {                                                              \
-        assert(false);                                                      \
-      }                                                                     \
-    } else if (vklVdbVoxelIsError(voxel)) {                                 \
-      univaryVoxel uint8 level;                                             \
-      univaryVoxel uint32 voxelOffset;                                      \
-      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                       \
-                                                                            \
-      const univaryVoxel range1f valueRange =                               \
-          sampler->grid->levels[level]                                      \
-              .valueRange[voxelOffset * sampler->grid->numAttributes +      \
-                          attributeIndex];                                  \
-      sample = 0.5f * (valueRange.lower + valueRange.upper);                \
-    }                                                                       \
-                                                                            \
-    return sample;                                                          \
+#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)         \
+  inline univaryOffset float VdbSampler_sample_inner(                         \
+      const VdbSampler *uniform sampler,                                      \
+      const univaryVoxel uint64 &voxel,                                       \
+      const univaryOffset vec3ui &domainOffset,                               \
+      const uniform uint32 attributeIndex)                                    \
+  {                                                                           \
+    univaryOffset float sample = 0.f;                                         \
+                                                                              \
+    if (vklVdbVoxelIsLeafPtr(voxel)) {                                        \
+      const void *univaryVoxel leafPtr = vklVdbVoxelLeafGetPtr(voxel);        \
+      assert(leafPtr);                                                        \
+                                                                              \
+      const uniform vkl_uint32 voxelType =                                    \
+          sampler->grid->attributeTypes[attributeIndex];                      \
+                                                                              \
+      const uniform bool isCompact = sampler->grid->allLeavesCompact;         \
+                                                                              \
+      const univaryVoxel VKLFormat leafFormat =                               \
+          vklVdbVoxelLeafGetFormat(voxel);                                    \
+                                                                              \
+      if (voxelType == VKL_HALF) {                                            \
+        if (leafFormat == VKL_FORMAT_TILE) {                                  \
+          sample = VdbSampler_sampleTileLeaf_half(                            \
+              ((const uniform Data1D *univaryVoxel)leafPtr), attributeIndex); \
+        } else if (isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {      \
+          sample = VdbSampler_sampleConstantLeafCompact_half(                 \
+              ((const uniform Data1D *univaryVoxel)leafPtr),                  \
+              domainOffset,                                                   \
+              attributeIndex);                                                \
+        } else if (!isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {     \
+          sample = VdbSampler_sampleConstantLeafStrided_half(                 \
+              ((const uniform Data1D *univaryVoxel)leafPtr),                  \
+              domainOffset,                                                   \
+              attributeIndex);                                                \
+        } else {                                                              \
+          assert(false);                                                      \
+        }                                                                     \
+      } else if (voxelType == VKL_FLOAT) {                                    \
+        if (leafFormat == VKL_FORMAT_TILE) {                                  \
+          sample = VdbSampler_sampleTileLeaf_float(                           \
+              ((const uniform Data1D *univaryVoxel)leafPtr), attributeIndex); \
+        } else if (isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {      \
+          sample = VdbSampler_sampleConstantLeafCompact_float(                \
+              ((const uniform Data1D *univaryVoxel)leafPtr),                  \
+              domainOffset,                                                   \
+              attributeIndex);                                                \
+        } else if (!isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {     \
+          sample = VdbSampler_sampleConstantLeafStrided_float(                \
+              ((const uniform Data1D *univaryVoxel)leafPtr),                  \
+              domainOffset,                                                   \
+              attributeIndex);                                                \
+        } else {                                                              \
+          assert(false);                                                      \
+        }                                                                     \
+      } else {                                                                \
+        assert(false);                                                        \
+      }                                                                       \
+    } else if (vklVdbVoxelIsError(voxel)) {                                   \
+      univaryVoxel uint8 level;                                               \
+      univaryVoxel uint32 voxelOffset;                                        \
+      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                         \
+                                                                              \
+      const univaryVoxel range1f valueRange =                                 \
+          sampler->grid->levels[level]                                        \
+              .valueRange[voxelOffset * sampler->grid->numAttributes +        \
+                          attributeIndex];                                    \
+      sample = 0.5f * (valueRange.lower + valueRange.upper);                  \
+    }                                                                         \
+                                                                              \
+    return sample;                                                            \
   }
 
 template_VdbSampler_sample_inner(varying, varying);
@@ -368,6 +392,47 @@ inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
 // Value range computation.
 // ---------------------------------------------------------------------------
 
+#define VdbSampler_computeNodeValueRange_inner(voxelType)              \
+  switch (leafFormat) {                                                \
+  case VKL_FORMAT_TILE:                                                \
+    valueRange.lower = VdbSampler_sampleTileLeaf_##voxelType(          \
+        ((const Data1D *uniform)leafPtr), attributeIndex);             \
+    valueRange.upper = valueRange.lower;                               \
+    break;                                                             \
+  case VKL_FORMAT_CONSTANT_ZYX:                                        \
+    valueRange = make_box1f(pos_inf, neg_inf);                         \
+    if (grid->allLeavesCompact) {                                      \
+      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {     \
+        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {   \
+          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) { \
+            const uniform float sample =                               \
+                VdbSampler_sampleConstantLeafCompact_##voxelType(      \
+                    ((const uniform Data1D *uniform)leafPtr),          \
+                    make_vec3ui(x, y, z),                              \
+                    attributeIndex);                                   \
+            extend(valueRange, sample);                                \
+          }                                                            \
+        }                                                              \
+      }                                                                \
+    } else {                                                           \
+      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {     \
+        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {   \
+          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) { \
+            const uniform float sample =                               \
+                VdbSampler_sampleConstantLeafStrided_##voxelType(      \
+                    ((const uniform Data1D *uniform)leafPtr),          \
+                    make_vec3ui(x, y, z),                              \
+                    attributeIndex);                                   \
+            extend(valueRange, sample);                                \
+          }                                                            \
+        }                                                              \
+      }                                                                \
+    }                                                                  \
+    break;                                                             \
+  default:                                                             \
+    break;                                                             \
+  }
+
 /*
  * Compute the value range for the given node and index range.
  */
@@ -386,48 +451,20 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
   const uniform float background     = 0.f;
   uniform box1f valueRange           = make_box1f(background, background);
 
-  switch (leafFormat) {
-  case VKL_FORMAT_TILE:
-    valueRange.lower = VdbSampler_sampleTileFloatLeaf(
-        ((const Data1D *uniform)leafPtr), attributeIndex);
-    valueRange.upper = valueRange.lower;
-    break;
-  case VKL_FORMAT_CONSTANT_ZYX:
-    valueRange = make_box1f(pos_inf, neg_inf);
-    if (grid->allLeavesCompact) {
-      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {
-        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {
-          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {
-            const uniform float sample =
-                VdbSampler_sampleConstantFloatLeafCompact(
-                    ((const uniform Data1D *uniform)leafPtr),
-                    make_vec3ui(x, y, z),
-                    attributeIndex);
-            extend(valueRange, sample);
-          }
-        }
-      }
-    } else {
-      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {
-        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {
-          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {
-            const uniform float sample =
-                VdbSampler_sampleConstantFloatLeafStrided(
-                    ((const uniform Data1D *uniform)leafPtr),
-                    make_vec3ui(x, y, z),
-                    attributeIndex);
-            extend(valueRange, sample);
-          }
-        }
-      }
-    }
-    break;
-  default:
-    break;
+  const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
+
+  if (voxelType == VKL_HALF) {
+    VdbSampler_computeNodeValueRange_inner(half);
+  } else if (voxelType == VKL_FLOAT) {
+    VdbSampler_computeNodeValueRange_inner(float);
+  } else {
+    assert(false);
   }
 
   return valueRange;
 }
+
+#undef VdbSampler_computeNodeValueRange_inner
 
 /*
  * Compute the value range on the given constant float leaf.
@@ -465,10 +502,9 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
   // The following array encodes the iteration range for the previous,
   // central, and next leaf node:
   const uniform vec2ui voxelRange[] = {
-    make_vec2ui(VKL_VDB_RES_LEAF - 1, VKL_VDB_RES_LEAF),
-    make_vec2ui(0, VKL_VDB_RES_LEAF),
-    make_vec2ui(0, 2)
-  };
+      make_vec2ui(VKL_VDB_RES_LEAF - 1, VKL_VDB_RES_LEAF),
+      make_vec2ui(0, VKL_VDB_RES_LEAF),
+      make_vec2ui(0, 2)};
 
   range->lower = pos_inf;
   range->upper = neg_inf;
@@ -491,11 +527,10 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
 
         // *centerNodeOffset is relative to the rootOrigin, but
         // VdbSampler_traverse expects an index space coordinate.
-        const uniform vec3i nodeOrigin = make_vec3i(
-          grid->rootOrigin.x + centerNodeOffset->x + nodeOffset.x,
-          grid->rootOrigin.y + centerNodeOffset->y + nodeOffset.y,
-          grid->rootOrigin.z + centerNodeOffset->z + nodeOffset.z
-        );
+        const uniform vec3i nodeOrigin =
+            make_vec3i(grid->rootOrigin.x + centerNodeOffset->x + nodeOffset.x,
+                       grid->rootOrigin.y + centerNodeOffset->y + nodeOffset.y,
+                       grid->rootOrigin.z + centerNodeOffset->z + nodeOffset.z);
 
         uniform uint64 voxel;
         uniform vec3ui domainOffset;

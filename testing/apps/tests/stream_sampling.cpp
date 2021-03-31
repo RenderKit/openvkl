@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -46,8 +46,8 @@ TEST_CASE("Stream sampling", "[volume_sampling]")
 
   SECTION("VDB")
   {
-    auto v =
-        std::make_shared<WaveletVdbVolume>(vec3i(128), vec3f(0.f), vec3f(1.f));
+    auto v = std::make_shared<WaveletVdbVolumeFloat>(
+        vec3i(128), vec3f(0.f), vec3f(1.f));
     test_stream_sampling(v);
   }
 }

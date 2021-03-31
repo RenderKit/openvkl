@@ -7,7 +7,7 @@
 
 using namespace openvkl::testing;
 using namespace rkcommon::utility;
-using openvkl::testing::WaveletVdbVolume;
+using openvkl::testing::WaveletVdbVolumeFloat;
 
 /*
  * VDB volume wrapper.
@@ -28,8 +28,8 @@ struct Vdb
 
   Vdb()
   {
-    volume =
-        rkcommon::make_unique<WaveletVdbVolume>(128, vec3f(0.f), vec3f(1.f));
+    volume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
+        128, vec3f(0.f), vec3f(1.f));
 
     vklVolume  = volume->getVKLVolume();
     vklSampler = vklNewSampler(vklVolume);
@@ -54,12 +54,10 @@ struct Vdb
     return vklSampler;
   }
 
-  std::unique_ptr<WaveletVdbVolume> volume;
+  std::unique_ptr<WaveletVdbVolumeFloat> volume;
   VKLVolume vklVolume{nullptr};
   VKLSampler vklSampler{nullptr};
 };
-
-
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

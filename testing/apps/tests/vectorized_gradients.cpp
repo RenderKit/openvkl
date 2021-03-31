@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
@@ -127,8 +127,8 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
       "randomized vectorized gradients varying calling width and masks: "
       "vdb volumes")
   {
-    std::unique_ptr<XYZVdbVolume> v(new XYZVdbVolume(
-            vec3i(128), vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
+    std::unique_ptr<XYZVdbVolumeFloat> v(new XYZVdbVolumeFloat(
+        vec3i(128), vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
 
     VKLVolume volume = v->getVKLVolume();
 

@@ -18,7 +18,7 @@
 using namespace openvkl::examples;
 using namespace openvkl::testing;
 using namespace rkcommon::math;
-using openvkl::testing::WaveletVdbVolume;
+using openvkl::testing::WaveletVdbVolumeFloat;
 
 static bool rendererIsCompatibleWithDriver(const std::string &rendererType,
                                            bool useISPC,
@@ -134,7 +134,7 @@ static void render_wavelet_vdb(benchmark::State &state,
                                int volumeDimension,
                                bool useISPC)
 {
-  auto proceduralVolume = rkcommon::make_unique<WaveletVdbVolume>(
+  auto proceduralVolume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
       vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   Scene scene;

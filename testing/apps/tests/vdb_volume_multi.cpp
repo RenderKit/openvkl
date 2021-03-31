@@ -48,10 +48,33 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
         sectionName << " ";
         sectionName << (aos == true ? "AOS layout" : "SOA layout");
 
-        DYNAMIC_SECTION(sectionName.str())
+        DYNAMIC_SECTION(std::string("half ") + sectionName.str())
         {
           std::shared_ptr<ProceduralVdbVolumeMulti> v(
-              generateMultiAttributeVdbVolume(
+              generateMultiAttributeVdbVolumeHalf(
+                  dimensions, gridOrigin, gridSpacing, filter, dcf, aos));
+
+          num_attributes(v);
+          sampling_on_vertices_vs_procedural_values_multi(v, step);
+
+          // higher gradient tolerance for half due to precision issues
+          gradients_on_vertices_vs_procedural_values_multi(v, step, 0.3f);
+
+          for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+            test_stream_sampling(v, i);
+            test_stream_gradients(v, i);
+          }
+
+          std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+          std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+
+          test_stream_sampling_multi(v, attributeIndices);
+        }
+
+        DYNAMIC_SECTION(std::string("float ") + sectionName.str())
+        {
+          std::shared_ptr<ProceduralVdbVolumeMulti> v(
+              generateMultiAttributeVdbVolumeFloat(
                   dimensions, gridOrigin, gridSpacing, filter, dcf, aos));
 
           num_attributes(v);

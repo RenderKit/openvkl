@@ -8,6 +8,20 @@
 namespace openvkl {
   namespace testing {
 
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE sanitizeValueForType(double value)
+    {
+      if (std::is_unsigned<VOXEL_TYPE>::value) {
+        value = fabs(value);
+      }
+
+      value = clamp(value,
+                    double(std::numeric_limits<VOXEL_TYPE>::lowest()),
+                    double(std::numeric_limits<VOXEL_TYPE>::max()));
+
+      return VOXEL_TYPE(value);
+    }
+
     inline vec3f gradientNotImplemented(const vec3f &, float)
     {
       throw std::runtime_error(
@@ -43,15 +57,7 @@ namespace openvkl {
                           ZM * ::cos(ZF * objectCoordinates.z)) +
                      objectCoordinates.x * time;
 
-      if (std::is_unsigned<VOXEL_TYPE>::value) {
-        value = fabs(value);
-      }
-
-      value = clamp(value,
-                    double(std::numeric_limits<VOXEL_TYPE>::lowest()),
-                    double(std::numeric_limits<VOXEL_TYPE>::max()));
-
-      return VOXEL_TYPE(value);
+      return sanitizeValueForType<VOXEL_TYPE>(value);
     }
 
     inline vec3f getWaveletGradient(const vec3f &objectCoordinates, float time)
@@ -79,15 +85,7 @@ namespace openvkl {
       double value = (1.f - time) * objectCoordinates.x * objectCoordinates.y *
                      objectCoordinates.z;
 
-      if (std::is_unsigned<VOXEL_TYPE>::value) {
-        value = fabs(value);
-      }
-
-      value = clamp(value,
-                    double(std::numeric_limits<VOXEL_TYPE>::lowest()),
-                    double(std::numeric_limits<VOXEL_TYPE>::max()));
-
-      return VOXEL_TYPE(value);
+      return sanitizeValueForType<VOXEL_TYPE>(value);
     }
 
     inline vec3f getXYZGradient(const vec3f &objectCoordinates, float time)
@@ -110,9 +108,11 @@ namespace openvkl {
         return -.5f;
     }
 
-    inline float getXValue(const vec3f &objectCoordinates, float time)
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getXValue(const vec3f &objectCoordinates, float time)
     {
-      return (1.f - time) * objectCoordinates.x;
+      double value = (1.f - time) * objectCoordinates.x;
+      return sanitizeValueForType<VOXEL_TYPE>(value);
     }
 
     inline vec3f getXGradient(const vec3f &objectCoordinates, float time)
@@ -120,9 +120,11 @@ namespace openvkl {
       return (1.f - time) * vec3f(1.f, 0.f, 0.f);
     }
 
-    inline float getYValue(const vec3f &objectCoordinates, float time)
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getYValue(const vec3f &objectCoordinates, float time)
     {
-      return (1.f - time) * objectCoordinates.y;
+      double value = (1.f - time) * objectCoordinates.y;
+      return sanitizeValueForType<VOXEL_TYPE>(value);
     }
 
     inline vec3f getYGradient(const vec3f &objectCoordinates, float time)
@@ -130,9 +132,11 @@ namespace openvkl {
       return (1.f - time) * vec3f(0.f, 1.f, 0.f);
     }
 
-    inline float getZValue(const vec3f &objectCoordinates, float time)
+    template <typename VOXEL_TYPE>
+    inline VOXEL_TYPE getZValue(const vec3f &objectCoordinates, float time)
     {
-      return (1.f - time) * objectCoordinates.z;
+      double value = (1.f - time) * objectCoordinates.z;
+      return sanitizeValueForType<VOXEL_TYPE>(value);
     }
 
     inline vec3f getZGradient(const vec3f &objectCoordinates, float time)

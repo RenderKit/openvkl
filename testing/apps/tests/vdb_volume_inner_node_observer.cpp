@@ -146,7 +146,7 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
     for (const auto &gridSpacing : gridSpacings) {
       // single attributes volumes
       {
-        auto v = rkcommon::make_unique<WaveletVdbVolume>(
+        auto v = rkcommon::make_unique<WaveletVdbVolumeFloat>(
             dimensions, gridOrigin, gridSpacing, VKL_FILTER_NEAREST);
 
         inner_node_tests(
@@ -154,7 +154,7 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
       }
 
       {
-        auto v = rkcommon::make_unique<XYZVdbVolume>(
+        auto v = rkcommon::make_unique<XYZVdbVolumeFloat>(
             dimensions, gridOrigin, gridSpacing, VKL_FILTER_NEAREST);
 
         inner_node_tests(
@@ -164,12 +164,12 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
       // multi-attribute volume
       {
         std::unique_ptr<ProceduralVdbVolumeMulti> v(
-            generateMultiAttributeVdbVolume(dimensions,
-                                            gridOrigin,
-                                            gridSpacing,
-                                            VKL_FILTER_NEAREST,
-                                            VKL_DATA_DEFAULT,
-                                            true));
+            generateMultiAttributeVdbVolumeFloat(dimensions,
+                                                 gridOrigin,
+                                                 gridSpacing,
+                                                 VKL_FILTER_NEAREST,
+                                                 VKL_DATA_DEFAULT,
+                                                 true));
 
         inner_node_tests(
             v->getVKLVolume(), dimensions, gridOrigin, gridSpacing);

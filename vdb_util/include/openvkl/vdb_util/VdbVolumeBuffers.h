@@ -143,9 +143,9 @@ namespace openvkl {
         : attributeDataTypes(attributeDataTypes)
     {
       for (const auto &dt : attributeDataTypes) {
-        if (dt != VKL_FLOAT) {
+        if (dt != VKL_HALF && dt != VKL_FLOAT) {
           throw std::runtime_error(
-              "vdb volumes only support VKL_FLOAT attributes at the moment");
+              "vdb volumes only support VKL_HALF and VKL_FLOAT attributes");
         }
       }
     }

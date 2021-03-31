@@ -698,7 +698,8 @@ void setupVolume(ViewerParams &params,
           }
         } else {
           throw std::runtime_error(
-              "cannot create procedural volume for unknown voxel type");
+              "cannot create procedural structuredRegular volume for unknown "
+              "voxel type");
         }
       }
     }
@@ -783,7 +784,8 @@ void setupVolume(ViewerParams &params,
         }
       } else {
         throw std::runtime_error(
-            "cannot create procedural volume for unknown voxel type");
+            "cannot create procedural structuredSpherical volume for unknown "
+            "voxel type");
       }
     }
 
@@ -825,23 +827,54 @@ void setupVolume(ViewerParams &params,
 
     else if (params.gridType == "vdb") {
       if (params.multiAttribute) {
-        testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
-            generateMultiAttributeVdbVolume(params.dimensions,
-                                            params.gridOrigin,
-                                            params.gridSpacing,
-                                            params.filter,
-                                            VKL_DATA_SHARED_BUFFER,
-                                            false));
-      } else {
-        if (params.field == "xyz") {
-          testingVolume = std::make_shared<XYZVdbVolume>(
-              params.dimensions, params.gridOrigin, params.gridSpacing);
-        } else if (params.field == "sphere") {
-          testingVolume = std::make_shared<SphereVdbVolume>(
-              params.dimensions, params.gridOrigin, params.gridSpacing);
+        if (params.voxelType == VKL_HALF) {
+          testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
+              generateMultiAttributeVdbVolumeHalf(params.dimensions,
+                                                  params.gridOrigin,
+                                                  params.gridSpacing,
+                                                  params.filter,
+                                                  VKL_DATA_SHARED_BUFFER,
+                                                  false));
+        } else if (params.voxelType == VKL_FLOAT) {
+          testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
+              generateMultiAttributeVdbVolumeFloat(params.dimensions,
+                                                   params.gridOrigin,
+                                                   params.gridSpacing,
+                                                   params.filter,
+                                                   VKL_DATA_SHARED_BUFFER,
+                                                   false));
         } else {
-          testingVolume = std::make_shared<WaveletVdbVolume>(
-              params.dimensions, params.gridOrigin, params.gridSpacing);
+          throw std::runtime_error(
+              "can only create procedural VDB multi-attribute volumes for "
+              "VKL_HALF or VKL_FLOAT voxel types");
+        }
+      } else {
+        if (params.voxelType == VKL_HALF) {
+          if (params.field == "xyz") {
+            testingVolume = std::make_shared<XYZVdbVolumeHalf>(
+                params.dimensions, params.gridOrigin, params.gridSpacing);
+          } else if (params.field == "sphere") {
+            testingVolume = std::make_shared<SphereVdbVolumeHalf>(
+                params.dimensions, params.gridOrigin, params.gridSpacing);
+          } else {
+            testingVolume = std::make_shared<WaveletVdbVolumeHalf>(
+                params.dimensions, params.gridOrigin, params.gridSpacing);
+          }
+        } else if (params.voxelType == VKL_FLOAT) {
+          if (params.field == "xyz") {
+            testingVolume = std::make_shared<XYZVdbVolumeFloat>(
+                params.dimensions, params.gridOrigin, params.gridSpacing);
+          } else if (params.field == "sphere") {
+            testingVolume = std::make_shared<SphereVdbVolumeFloat>(
+                params.dimensions, params.gridOrigin, params.gridSpacing);
+          } else {
+            testingVolume = std::make_shared<WaveletVdbVolumeFloat>(
+                params.dimensions, params.gridOrigin, params.gridSpacing);
+          }
+        } else {
+          throw std::runtime_error(
+              "can only create procedural VDB volumes for VKL_HALF or "
+              "VKL_FLOAT voxel types");
         }
       }
 

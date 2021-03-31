@@ -27,12 +27,12 @@ struct Vdb
   Vdb()
   {
     volume = std::unique_ptr<ProceduralVdbVolumeMulti>(
-        generateMultiAttributeVdbVolume(vec3i(128),
-                                        vec3f(0.f),
-                                        vec3f(1.f),
-                                        filter,
-                                        VKL_DATA_SHARED_BUFFER,
-                                        true));
+        generateMultiAttributeVdbVolumeFloat(vec3i(128),
+                                             vec3f(0.f),
+                                             vec3f(1.f),
+                                             filter,
+                                             VKL_DATA_SHARED_BUFFER,
+                                             true));
 
     if (Vdb::getNumAttributes() != volume->getNumAttributes()) {
       throw std::runtime_error("inconsistent Vdb numAttributes");

@@ -18,7 +18,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   const vkl_range1f tRange{0.f, inf};
   const float time = 0.f;
 
-  VKLVolume volume = testingVolume->getVKLVolume();
+  VKLVolume volume   = testingVolume->getVKLVolume();
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
@@ -27,8 +27,13 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   vklCommit(valueSelector);
 
   std::vector<char> buffer(vklGetHitIteratorSize(sampler));
-  VKLHitIterator iterator = vklInitHitIterator(
-      sampler, &origin, &direction, &tRange, time, valueSelector, buffer.data());
+  VKLHitIterator iterator = vklInitHitIterator(sampler,
+                                               &origin,
+                                               &direction,
+                                               &tRange,
+                                               time,
+                                               valueSelector,
+                                               buffer.data());
 
   VKLHit hit;
   hit.epsilon = 0.f;
@@ -86,7 +91,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   const std::vector<float> times(W, 0.f);
 
-  VKLVolume volume = testingVolume->getVKLVolume();
+  VKLVolume volume   = testingVolume->getVKLVolume();
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
@@ -182,7 +187,7 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
   testingVolumes.push_back(std::make_shared<ZUnstructuredProceduralVolume>(
       dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
 
-  testingVolumes.push_back(std::make_shared<ZVdbVolume>(
+  testingVolumes.push_back(std::make_shared<ZVdbVolumeFloat>(
       dimensions, gridOrigin, gridSpacing, VKL_FILTER_TRILINEAR));
 
   testingVolumes.push_back(std::make_shared<ProceduralShellsAMRVolume<>>(

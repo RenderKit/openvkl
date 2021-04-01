@@ -336,6 +336,13 @@ Environment variables understood by all drivers.
 Note that these environment variables take precedence over values set
 through the `vklDriverSet*()` functions.
 
+Additionally, the ISPC driver’s default SIMD width can be overriden at
+run time with the `OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH` environment
+variable. Legal values are 4, 8, or 16. This setting is only applicable
+when the generic `ispc` driver is instantiated; if a specific width is
+requested via the `ispc_[4,8,16]` driver names then the environment
+variable is ignored.
+
 ### Error handling and log messages
 
 The following errors are currently used by Open VKL:
@@ -969,13 +976,13 @@ The VDB implementation in Open VKL follows the following goals:
 VDB volumes are created by passing the type string `"vdb"` to
 `vklNewVolume`, and have the following parameters:
 
-| Type        | Name          | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| :---------- | :------------ | :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| float\[\]   | indexToObject | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | An array of 12 values of type `float` that define the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). The first 9 values are interpreted as a row-major linear transformation matrix. The last 3 values are the translation of the grid origin.                                                                                                                      |
-| uint32\[\]  | node.format   |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_CONSTANT_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                   |
-| uint32\[\]  | node.level    |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                 |
-| vec3i\[\]   | node.origin   |                                    | For each input node, the node origin index.                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| VKLData\[\] | node.data     |                                    | For each input node, the attribute data. Single-attribute volumes may have one array provided per node, while multi-attribute volumes require an array per attribute for each node. Nodes with format `VKL_FORMAT_TILE` are expected to have single-entry arrays per attribute. Nodes with format `VKL_FORMAT_CONSTANT_ZYX` are expected to have arrays with `vklVdbLevelNumVoxels(level[i])` entries per attribute. Only `VKL_FLOAT` data is currently supported. |
+| Type        | Name          | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| :---------- | :------------ | :--------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| float\[\]   | indexToObject | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | An array of 12 values of type `float` that define the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). The first 9 values are interpreted as a row-major linear transformation matrix. The last 3 values are the translation of the grid origin.                                                                                                                                                                                            |
+| uint32\[\]  | node.format   |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_CONSTANT_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                                                                                         |
+| uint32\[\]  | node.level    |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                                                                                       |
+| vec3i\[\]   | node.origin   |                                    | For each input node, the node origin index.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| VKLData\[\] | node.data     |                                    | For each input node, the attribute data. Single-attribute volumes may have one array provided per node, while multi-attribute volumes require an array per attribute for each node. Nodes with format `VKL_FORMAT_TILE` are expected to have single-entry arrays per attribute. Nodes with format `VKL_FORMAT_CONSTANT_ZYX` are expected to have arrays with `vklVdbLevelNumVoxels(level[i])` entries per attribute. `VKL_HALF` and `VKL_FLOAT` data is currently supported; all nodes for a given attribute must be the same data type. |
 
 Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -1030,8 +1037,10 @@ gradients are always \((0, 0, 0)\).
     for rendering only. Authoring or manipulating datasets is not in the
     scope of this implementation.
 
-  - The only supported field type is `VKL_FLOAT` at this point. Other
-    field types may be supported in the future.
+  - The only supported field types are `VKL_HALF` and `VKL_FLOAT` at
+    this point. Other field types may be supported in the future. Note
+    that multi-attribute volumes may be used to represent
+    multi-component (e.g. vector) fields.
 
   - The root level in Open VKL has a single node with resolution 64^3
     (cp. \[1\]. OpenVDB uses a hash map, instead).

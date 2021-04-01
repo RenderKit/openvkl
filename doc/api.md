@@ -869,8 +869,10 @@ following parameters:
                                                          `VKL_FORMAT_CONSTANT_ZYX` are expected
                                                          to have arrays with
                                                          `vklVdbLevelNumVoxels(level[i])`
-                                                         entries per attribute. Only `VKL_FLOAT`
-                                                         data is currently supported.
+                                                         entries per attribute. `VKL_HALF` and
+                                                         `VKL_FLOAT` data is currently
+                                                         supported; all nodes for a given
+                                                         attribute must be the same data type.
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -949,8 +951,9 @@ always $(0, 0, 0)$.
   - VDB volumes in Open VKL are read-only once committed, and designed for rendering only.
     Authoring or manipulating datasets is not in the scope of this implementation.
 
-  - The only supported field type is `VKL_FLOAT` at this point. Other field types
-    may be supported in the future.
+  - The only supported field types are `VKL_HALF` and `VKL_FLOAT` at this point.
+    Other field types may be supported in the future. Note that multi-attribute
+    volumes may be used to represent multi-component (e.g. vector) fields.
 
   - The root level in Open VKL has a single node with resolution 64^3 (cp. [1]. OpenVDB
     uses a hash map, instead).

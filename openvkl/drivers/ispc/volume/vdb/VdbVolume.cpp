@@ -474,11 +474,12 @@ namespace openvkl {
         throw std::runtime_error(
             "all node.data arrays must have the same VKLDataType");
 
-      const VKLDataType type = *leafDataTypes.begin();
+      const VKLDataType leafDataType = *leafDataTypes.begin();
 
-      if (type != VKL_HALF && type != VKL_FLOAT && type != VKL_DATA)
+      if (leafDataType != VKL_HALF && leafDataType != VKL_FLOAT &&
+          leafDataType != VKL_DATA)
         runtimeError("node.data arrays have data type ",
-                     type,
+                     leafDataType,
                      " but only ",
                      VKL_HALF,
                      " (VKL_HALF), ",
@@ -487,14 +488,18 @@ namespace openvkl {
                      VKL_DATA,
                      " (VKL_DATA) is supported.");
 
-      numAttributes = type != VKL_DATA ? 1 : (*leafData)[0]->size();
+      // the single attribute representation has a single typed array per node,
+      // while the multi attribute representation has an array of arrays
+      const bool multiAttributeRep = leafDataType == VKL_DATA;
+
+      numAttributes = multiAttributeRep ? (*leafData)[0]->size() : 1;
 
       // detect per-attribute data types; note that these will be verified
       // consistent across leaves during population of leafAttributesDataISPC
       std::vector<uint32_t> attributeTypes(numAttributes, VKL_UNKNOWN);
 
-      if (numAttributes == 1) {
-        attributeTypes[0] = type;
+      if (!multiAttributeRep) {
+        attributeTypes[0] = leafDataType;
       } else {
         for (unsigned int j = 0; j < numAttributes; j++) {
           attributeTypes[j] =
@@ -514,7 +519,7 @@ namespace openvkl {
           numLeaves, AlignedVector16<ispc::Data1D>(numAttributes));
 
       tasking::parallel_for(numLeaves, [&](size_t i) {
-        if (type != VKL_DATA) {
+        if (!multiAttributeRep) {
           // single attribute user parameterization
           if (attributeTypes[0] == VKL_HALF) {
             leafAttributesDataISPC[i][0] = (*leafData)[i]->ispc;

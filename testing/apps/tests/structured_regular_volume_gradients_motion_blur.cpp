@@ -3,10 +3,10 @@
 
 #include <random>
 #include "../../external/catch.hpp"
+#include "gradient_utility.h"
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 #include "rkcommon/utility/random.h"
-#include "gradient_utility.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
@@ -23,7 +23,7 @@ inline void gradients_on_vertices_vs_procedural_values_motion_blur(
 
   const float sampleTolerance = 0.f;
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -54,11 +54,11 @@ inline void gradients_on_vertices_vs_procedural_values_motion_blur(
       for (unsigned int a = 0; a < v->getNumAttributes(); a++) {
         INFO("attribute index = " << a);
         test_scalar_and_vector_gradients(vklSampler,
-                                        objectCoordinates,
-                                        proceduralGradients[a],
-                                        sampleTolerance,
-                                        a,
-                                        time);
+                                         objectCoordinates,
+                                         proceduralGradients[a],
+                                         sampleTolerance,
+                                         a,
+                                         time);
       }
     }
   }
@@ -70,7 +70,7 @@ inline void gradients_on_vertices_vs_procedural_values_motion_blur(
 // other tests currently use a constant number of time steps per voxel
 inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
 {
-  auto volume = vklNewVolume("structuredRegular");
+  auto volume = vklNewVolume(getOpenVKLDevice(), "structuredRegular");
 
   const vec3i dimensions(3);
   const vec3f gridOrigin(0.f);
@@ -105,9 +105,12 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
   }
   indices[27] = indexSum;
 
-  VKLData data        = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
-  VKLData indicesData = vklNewData(indices.size(), VKL_UINT, indices.data());
-  VKLData timesData   = vklNewData(times.size(), VKL_FLOAT, times.data());
+  VKLData data =
+      vklNewData(getOpenVKLDevice(), voxels.size(), VKL_FLOAT, voxels.data());
+  VKLData indicesData =
+      vklNewData(getOpenVKLDevice(), indices.size(), VKL_UINT, indices.data());
+  VKLData timesData =
+      vklNewData(getOpenVKLDevice(), times.size(), VKL_FLOAT, times.data());
 
   vklSetData(volume, "data", data);
   vklSetData(volume, "temporallyUnstructuredIndices", indicesData);
@@ -130,7 +133,7 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset;
       if ((reduce_min(offset) == 0 || offset.x == dimensions.x - 1 ||
-          offset.y == dimensions.y - 1 || offset.z == dimensions.z - 1)) {
+           offset.y == dimensions.y - 1 || offset.z == dimensions.z - 1)) {
         continue;
       }
 
@@ -144,12 +147,7 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
       INFO("time = " << time);
 
       test_scalar_and_vector_gradients(
-          vklSampler,
-          objectCoordinates,
-          vec3f(time),
-          sampleTolerance,
-          0,
-          time);
+          vklSampler, objectCoordinates, vec3f(time), sampleTolerance, 0, time);
     }
   }
 
@@ -160,11 +158,7 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
 TEST_CASE("Structured regular volume gradient sampling with motion blur",
           "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("temporally unstructured with varying time steps per voxel")
   {
@@ -179,9 +173,7 @@ TEST_CASE("Structured regular volume gradient sampling with motion blur",
       TemporalConfig(TemporalConfig::Structured, 2),
       TemporalConfig(TemporalConfig::Structured, 4),
       TemporalConfig(TemporalConfig::Unstructured, 2),
-      TemporalConfig(std::vector<float>{
-              0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})
-  };
+      TemporalConfig(std::vector<float>{0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})};
 
   const std::vector<VKLDataCreationFlags> dataCreationFlags{
       VKL_DATA_DEFAULT, VKL_DATA_SHARED_BUFFER};
@@ -207,7 +199,7 @@ TEST_CASE("Structured regular volume gradient sampling with motion blur",
                 dcf,
                 false));
 
-        VKLVolume vklVolume = v->getVKLVolume();
+        VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
         REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 
         gradients_on_vertices_vs_procedural_values_motion_blur(v, 2);
@@ -220,4 +212,6 @@ TEST_CASE("Structured regular volume gradient sampling with motion blur",
       }
     }
   }
+
+  shutdownOpenVKL();
 }

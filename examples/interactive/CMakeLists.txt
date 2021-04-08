@@ -59,7 +59,6 @@ add_executable(vklExamples
   window/ArcballCamera.cpp
   window/VKLWindow.cpp
   window/GLFWVKLWindow.cpp
-  AppInit.cpp
   vklExamples.cpp
   window/TransferFunctionWidget.cpp
 
@@ -85,7 +84,6 @@ if (BUILD_BENCHMARKS)
   add_executable(vklBenchmark
     window/ArcballCamera.cpp
     window/VKLWindow.cpp
-    AppInit.cpp
     vklBenchmark.cpp
 
     ${VKL_RESOURCE}

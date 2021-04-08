@@ -19,7 +19,7 @@ void interval_iteration(size_t numParticles,
                                                       radiusSupportFactor,
                                                       clampMaxCumulativeValue);
 
-  VKLVolume volume = v->getVKLVolume();
+  VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
@@ -87,11 +87,7 @@ void interval_iteration(size_t numParticles,
 
 TEST_CASE("Particle volume interval iterator", "[interval_iterators]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   const size_t numParticles                         = 1000;
   const std::vector<bool> provideWeights            = {true, false};
@@ -109,4 +105,6 @@ TEST_CASE("Particle volume interval iterator", "[interval_iterators]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

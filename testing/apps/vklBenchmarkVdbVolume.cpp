@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
-#include "openvkl_testing.h"
 #include "benchmark_suite/volume.h"
+#include "openvkl_testing.h"
 
 using namespace openvkl::testing;
 using namespace rkcommon::utility;
@@ -29,9 +29,9 @@ struct Vdb
   Vdb()
   {
     volume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
-        128, vec3f(0.f), vec3f(1.f));
+        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f));
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -62,11 +62,7 @@ struct Vdb
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Vdb<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Vdb<VKL_FILTER_TRILINEAR>>();
@@ -78,7 +74,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

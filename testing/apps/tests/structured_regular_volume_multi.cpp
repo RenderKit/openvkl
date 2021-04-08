@@ -13,18 +13,14 @@ using namespace openvkl::testing;
 template <typename VOLUME_TYPE>
 inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
 {
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 }
 
 TEST_CASE("Structured regular volume multiple attributes",
           "[volume_multi_attributes]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   const vec3i dimensions(128);
   const vec3f gridOrigin(0.f);
@@ -73,4 +69,6 @@ TEST_CASE("Structured regular volume multiple attributes",
       }
     }
   }
+
+  shutdownOpenVKL();
 }

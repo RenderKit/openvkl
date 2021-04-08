@@ -24,7 +24,6 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
 
   if (device) {
     vklCommitDevice(device);
-    vklSetCurrentDevice(device);
 
     for (const char *volumeType : {"amr",
                                    "structuredRegular",
@@ -32,7 +31,7 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
                                    "particle",
                                    "unstructured",
                                    "vdb"}) {
-      VKLVolume volume   = vklNewVolume(volumeType);
+      VKLVolume volume   = vklNewVolume(device, volumeType);
       VKLSampler sampler = vklNewSampler(volume);
       maxIntervalSize    = std::max<size_t>(maxIntervalSize,
                                          vklGetIntervalIteratorSize(sampler));
@@ -42,7 +41,8 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
     }
   }
 
-  vklShutdown();
+  vklReleaseDevice(device);
+
   return {maxIntervalSize, maxHitSize};
 }
 

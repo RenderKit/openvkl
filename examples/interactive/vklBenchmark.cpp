@@ -1,7 +1,6 @@
 // Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "AppInit.h"
 #include "Renderer_ispc.h"
 #include "window/VKLWindow.h"
 // openvkl_testing
@@ -27,7 +26,7 @@ static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
   // ISPC renderers that use iterator APIs must match width with the
   // instantiated VKL device
   if (useISPC && rendererType.find("iterator") != std::string::npos) {
-    const int deviceNativeSIMDWidth = vklGetNativeSIMDWidth();
+    const int deviceNativeSIMDWidth = vklGetNativeSIMDWidth(getOpenVKLDevice());
     const int ispcRendererSIMDWidth = ispc::Renderer_pixelsPerJob();
 
     if (deviceNativeSIMDWidth != ispcRendererSIMDWidth) {
@@ -102,7 +101,7 @@ static void render_wavelet_structured_regular(benchmark::State &state,
           vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
 
   Scene scene;
-  scene.updateVolume(proceduralVolume->getVKLVolume());
+  scene.updateVolume(proceduralVolume->getVKLVolume(getOpenVKLDevice()));
 
   setupSceneDefaults(scene);
 
@@ -135,10 +134,13 @@ static void render_wavelet_vdb(benchmark::State &state,
                                bool useISPC)
 {
   auto proceduralVolume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
-      vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
+      getOpenVKLDevice(),
+      vec3i(volumeDimension),
+      vec3f(-1.f),
+      vec3f(2.f / volumeDimension));
 
   Scene scene;
-  scene.updateVolume(proceduralVolume->getVKLVolume());
+  scene.updateVolume(proceduralVolume->getVKLVolume(getOpenVKLDevice()));
 
   setupSceneDefaults(scene);
 
@@ -178,7 +180,7 @@ static void render_wavelet_unstructured_hex(benchmark::State &state,
           false);
 
   Scene scene;
-  scene.updateVolume(proceduralVolume->getVKLVolume());
+  scene.updateVolume(proceduralVolume->getVKLVolume(getOpenVKLDevice()));
 
   setupSceneDefaults(scene);
 
@@ -343,5 +345,5 @@ int main(int argc, char **argv)
     return 1;
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 }

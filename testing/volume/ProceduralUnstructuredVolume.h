@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -13,7 +13,8 @@ namespace openvkl {
 
     template <typename idxType,
               float samplingFunction(const vec3f &, float),
-              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) =
+                  gradientNotImplemented>
     struct ProceduralUnstructuredVolume : public TestingVolume,
                                           public ProceduralVolume
     {
@@ -61,14 +62,14 @@ namespace openvkl {
       float computeProceduralValueImpl(const vec3f &objectCoordinates,
                                        float time) const override;
 
-      vec3f computeProceduralGradientImpl(
-          const vec3f &objectCoordinates, float time) const override;
+      vec3f computeProceduralGradientImpl(const vec3f &objectCoordinates,
+                                          float time) const override;
 
       int vtxPerPrimitive(VKLUnstructuredCellType type) const;
 
       std::vector<unsigned char> generateVoxels(vec3i dimensions);
 
-      void generateVKLVolume() override;
+      void generateVKLVolume(VKLDevice device) override;
 
       std::vector<vec3f> generateGrid();
 
@@ -170,7 +171,8 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &, float)>
     inline vec3f
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
-        computeProceduralGradientImpl(const vec3f &objectCoordinates, float time) const
+        computeProceduralGradientImpl(const vec3f &objectCoordinates,
+                                      float time) const
     {
       return gradientFunction(objectCoordinates, time);
     }
@@ -236,7 +238,7 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &, float)>
     inline void
     ProceduralUnstructuredVolume<idxType, samplingFunction, gradientFunction>::
-        generateVKLVolume()
+        generateVKLVolume(VKLDevice device)
     {
       vec3i valueDimensions = dimensions;
       if (!cellValued)
@@ -248,7 +250,7 @@ namespace openvkl {
       std::vector<idxType> cells;
       std::vector<uint8_t> cellType;
 
-      volume = vklNewVolume("unstructured");
+      volume = vklNewVolume(device, "unstructured");
 
       uint64_t numCells = dimensions.long_product();
       cells.reserve(numCells);
@@ -260,6 +262,7 @@ namespace openvkl {
         cellType.push_back(primType);
       }
       VKLData cellData = vklNewData(
+          device,
           cells.size(),
           std::is_same<idxType, uint32_t>::value ? VKL_UINT : VKL_ULONG,
           cells.data());
@@ -268,12 +271,13 @@ namespace openvkl {
 
       if (!indexPrefix) {
         VKLData celltypeData =
-            vklNewData(cellType.size(), VKL_UCHAR, cellType.data());
+            vklNewData(device, cellType.size(), VKL_UCHAR, cellType.data());
         vklSetData(volume, "cell.type", celltypeData);
         vklRelease(celltypeData);
       }
 
-      VKLData valuesData = vklNewData(valueDimensions.long_product(),
+      VKLData valuesData = vklNewData(device,
+                                      valueDimensions.long_product(),
                                       VKL_FLOAT,
                                       values.data(),
                                       dataCreationFlags,
@@ -281,12 +285,13 @@ namespace openvkl {
       vklSetData(volume, cellValued ? "cell.data" : "vertex.data", valuesData);
       vklRelease(valuesData);
 
-      VKLData vtxPositionsData =
-          vklNewData(vtxPositions.size(), VKL_VEC3F, vtxPositions.data());
+      VKLData vtxPositionsData = vklNewData(
+          device, vtxPositions.size(), VKL_VEC3F, vtxPositions.data());
       vklSetData(volume, "vertex.position", vtxPositionsData);
       vklRelease(vtxPositionsData);
 
       VKLData topologyData = vklNewData(
+          device,
           topology.size(),
           std::is_same<idxType, uint32_t>::value ? VKL_UINT : VKL_ULONG,
           topology.data());
@@ -408,7 +413,9 @@ namespace openvkl {
         ProceduralUnstructuredVolume<uint32_t, getXYZValue, getXYZGradient>;
 
     using SphereUnstructuredProceduralVolume =
-        ProceduralUnstructuredVolume<uint32_t, getRotatingSphereValue, getRotatingSphereGradient>;
+        ProceduralUnstructuredVolume<uint32_t,
+                                     getRotatingSphereValue,
+                                     getRotatingSphereGradient>;
 
     using WaveletUnstructuredProceduralVolume64 =
         ProceduralUnstructuredVolume<uint64_t,

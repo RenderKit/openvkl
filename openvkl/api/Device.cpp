@@ -9,12 +9,6 @@
 #include "rkcommon/utility/StringManip.h"
 #include "rkcommon/utility/getEnvVar.h"
 
-#ifdef NDEBUG
-#define LOG_LEVEL_DEFAULT VKL_LOG_INFO
-#else
-#define LOG_LEVEL_DEFAULT VKL_LOG_DEBUG
-#endif
-
 namespace openvkl {
   namespace api {
 
@@ -39,9 +33,6 @@ namespace openvkl {
     }
 
     // Device definitions
-    memory::IntrusivePtr<Device> Device::current;
-
-    VKLLogLevel Device::logLevel = LOG_LEVEL_DEFAULT;
 
     Device::Device()
     {
@@ -54,17 +45,14 @@ namespace openvkl {
     Device *Device::createDevice(const std::string &deviceName)
     {
       const std::string cpuDeviceName("cpu");
-      const std::string cpuDeviceNameDeprecated("ispc");
 
       // special case for CPU device selection
-      if (deviceName.find(cpuDeviceName) != std::string::npos ||
-          deviceName.find(cpuDeviceNameDeprecated) != std::string::npos) {
+      if (deviceName.find(cpuDeviceName) != std::string::npos) {
         int requestedDeviceWidth = 0;
 
         const int nativeMaxIspcWidth = ispc::get_programCount();
 
-        if (deviceName == cpuDeviceName ||
-            deviceName == cpuDeviceNameDeprecated) {
+        if (deviceName == cpuDeviceName) {
           // the generic "cpu" device was selected
 
           // update requested device width if the user set the env var
@@ -73,7 +61,7 @@ namespace openvkl {
           requestedDeviceWidth = OPENVKL_CPU_DEVICE_DEFAULT_WIDTH.value_or(0);
 
           if (requestedDeviceWidth) {
-            LogMessageStream(VKL_LOG_DEBUG)
+            LogMessageStream(nullptr, VKL_LOG_DEBUG)
                 << "application requested CPU device width "
                 << requestedDeviceWidth
                 << " via OPENVKL_CPU_DEVICE_DEFAULT_WIDTH";
@@ -82,16 +70,13 @@ namespace openvkl {
             // (maximum) ISPC vector width
             requestedDeviceWidth = nativeMaxIspcWidth;
 
-            LogMessageStream(VKL_LOG_DEBUG)
+            LogMessageStream(nullptr, VKL_LOG_DEBUG)
                 << "will use ISPC device native maximum width "
                 << requestedDeviceWidth;
           }
 
-        } else if ((deviceName.find(cpuDeviceName + "_") != std::string::npos &&
-                    deviceName.size() > cpuDeviceName.size() + 1) ||
-                   (deviceName.find(cpuDeviceNameDeprecated + "_") !=
-                        std::string::npos &&
-                    deviceName.size() > cpuDeviceNameDeprecated.size() + 1)) {
+        } else if (deviceName.find(cpuDeviceName + "_") != std::string::npos &&
+                   deviceName.size() > cpuDeviceName.size() + 1) {
           // the user chose a specific width for the CPU device, e.g.
           // cpu_[4,8,16]. verify that device is legal on this system.
           std::string specifiedWidthStr =
@@ -100,11 +85,11 @@ namespace openvkl {
           try {
             requestedDeviceWidth = std::stoi(specifiedWidthStr);
 
-            LogMessageStream(VKL_LOG_DEBUG)
+            LogMessageStream(nullptr, VKL_LOG_DEBUG)
                 << "application requested ISPC device width "
                 << requestedDeviceWidth << "via device name " << deviceName;
           } catch (const std::invalid_argument &ia) {
-            LogMessageStream(VKL_LOG_ERROR)
+            LogMessageStream(nullptr, VKL_LOG_ERROR)
                 << "could not parse requested ISPC device width for name: "
                 << deviceName;
           }
@@ -125,10 +110,10 @@ namespace openvkl {
         std::stringstream ss;
         ss << cpuDeviceName << "_" << requestedDeviceWidth;
 
-        return objectFactory<Device, VKL_DEVICE>(ss.str());
+        return objectFactory<Device, VKL_DEVICE>(nullptr, ss.str());
       }
 
-      return objectFactory<Device, VKL_DEVICE>(deviceName);
+      return objectFactory<Device, VKL_DEVICE>(nullptr, deviceName);
     }
 
     void Device::commit()
@@ -153,7 +138,7 @@ namespace openvkl {
         } else if (OPENVKL_LOG_LEVEL == "none") {
           logLevel = VKL_LOG_NONE;
         } else {
-          LogMessageStream(VKL_LOG_ERROR)
+          LogMessageStream(this, VKL_LOG_ERROR)
               << "unknown OPENVKL_LOG_LEVEL env value; must be debug, info, "
                  "warning, error or none";
         }
@@ -210,16 +195,6 @@ namespace openvkl {
     bool Device::isCommitted()
     {
       return committed;
-    }
-
-    bool deviceIsSet()
-    {
-      return Device::current.ptr != nullptr;
-    }
-
-    Device &currentDevice()
-    {
-      return *Device::current;
     }
 
   }  // namespace api

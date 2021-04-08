@@ -18,7 +18,7 @@ void gradients_at_particle_centers(size_t numParticles,
                                                       radiusSupportFactor,
                                                       clampMaxCumulativeValue);
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -48,11 +48,7 @@ void gradients_at_particle_centers(size_t numParticles,
 
 TEST_CASE("Particle volume gradients", "[volume_gradients]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   const size_t numParticles                         = 1000;
   const std::vector<bool> provideWeights            = {true, false};
@@ -70,4 +66,6 @@ TEST_CASE("Particle volume gradients", "[volume_gradients]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

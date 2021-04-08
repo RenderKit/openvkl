@@ -27,7 +27,8 @@ namespace openvkl {
       /*
        * Construction / destruction.
        */
-      VdbVolumeBuffers(const std::vector<VKLDataType> &attributeDataTypes);
+      VdbVolumeBuffers(VKLDevice device,
+                       const std::vector<VKLDataType> &attributeDataTypes);
       ~VdbVolumeBuffers();
 
       VdbVolumeBuffers(const VdbVolumeBuffers &) = delete;
@@ -97,7 +98,14 @@ namespace openvkl {
        */
       VKLVolume createVolume(VKLFilter filter) const;
 
+      VKLDevice getVKLDevice() const;
+
      private:
+      /*
+       * The Open VKL device where we are creating the volume.
+       */
+      VKLDevice device;
+
       /*
        * The data type for each scalar attribute.
        */
@@ -139,8 +147,8 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     inline VdbVolumeBuffers::VdbVolumeBuffers(
-        const std::vector<VKLDataType> &attributeDataTypes)
-        : attributeDataTypes(attributeDataTypes)
+        VKLDevice device, const std::vector<VKLDataType> &attributeDataTypes)
+        : device(device), attributeDataTypes(attributeDataTypes)
     {
       for (const auto &dt : attributeDataTypes) {
         if (dt != VKL_HALF && dt != VKL_FLOAT) {
@@ -226,17 +234,18 @@ namespace openvkl {
 
       // only use array-of-arrays when we have multiple attributes
       if (ptrs.size() == 1) {
-        data.push_back(
-            vklNewData(1, attributeDataTypes[0], ptrs[0], VKL_DATA_DEFAULT));
+        data.push_back(vklNewData(
+            device, 1, attributeDataTypes[0], ptrs[0], VKL_DATA_DEFAULT));
       } else {
         std::vector<VKLData> attributesData;
 
         for (size_t i = 0; i < ptrs.size(); i++) {
-          attributesData.push_back(
-              vklNewData(1, attributeDataTypes[i], ptrs[i], VKL_DATA_DEFAULT));
+          attributesData.push_back(vklNewData(
+              device, 1, attributeDataTypes[i], ptrs[i], VKL_DATA_DEFAULT));
         }
 
-        data.push_back(vklNewData(attributesData.size(),
+        data.push_back(vklNewData(device,
+                                  attributesData.size(),
                                   VKL_DATA,
                                   attributesData.data(),
                                   VKL_DATA_DEFAULT));
@@ -300,7 +309,8 @@ namespace openvkl {
 
       // only use array-of-arrays when we have multiple attributes
       if (ptrs.size() == 1) {
-        data.at(index) = vklNewData(vklVdbLevelNumVoxels(level.at(index)),
+        data.at(index) = vklNewData(device,
+                                    vklVdbLevelNumVoxels(level.at(index)),
                                     attributeDataTypes[0],
                                     ptrs[0],
                                     flags,
@@ -310,14 +320,16 @@ namespace openvkl {
 
         for (size_t i = 0; i < ptrs.size(); i++) {
           attributesData.push_back(
-              vklNewData(vklVdbLevelNumVoxels(level.at(index)),
+              vklNewData(device,
+                         vklVdbLevelNumVoxels(level.at(index)),
                          attributeDataTypes[i],
                          ptrs[i],
                          flags,
                          byteStrides.size() ? byteStrides[i] : 0));
         }
 
-        data.at(index) = vklNewData(attributesData.size(),
+        data.at(index) = vklNewData(device,
+                                    attributesData.size(),
                                     VKL_DATA,
                                     attributesData.data(),
                                     VKL_DATA_DEFAULT);
@@ -330,11 +342,11 @@ namespace openvkl {
 
     inline VKLVolume VdbVolumeBuffers::createVolume(VKLFilter filter) const
     {
-      VKLVolume volume = vklNewVolume("vdb");
+      VKLVolume volume = vklNewVolume(device, "vdb");
       vklSetInt(volume, "filter", filter);
 
       VKLData transformData =
-          vklNewData(12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
+          vklNewData(device, 12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
       vklSetData(volume, "indexToObject", transformData);
       vklRelease(transformData);
 
@@ -346,28 +358,33 @@ namespace openvkl {
       //       object can change safely, including replacing leaf data.
       //       This also means that the VdbVolumeBuffers object can be
       //       destroyed after creating the volume.
-      VKLData levelData =
-          vklNewData(numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
+      VKLData levelData = vklNewData(
+          device, numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.level", levelData);
       vklRelease(levelData);
 
-      VKLData originData =
-          vklNewData(numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
+      VKLData originData = vklNewData(
+          device, numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.origin", originData);
       vklRelease(originData);
 
-      VKLData formatData =
-          vklNewData(numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
+      VKLData formatData = vklNewData(
+          device, numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.format", formatData);
       vklRelease(formatData);
 
       VKLData dataData =
-          vklNewData(numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
+          vklNewData(device, numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.data", dataData);
       vklRelease(dataData);
 
       vklCommit(volume);
       return volume;
+    }
+
+    inline VKLDevice VdbVolumeBuffers::getVKLDevice() const
+    {
+      return device;
     }
 
   }  // namespace vdb_util

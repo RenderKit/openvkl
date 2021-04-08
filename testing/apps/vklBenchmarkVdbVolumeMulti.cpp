@@ -27,7 +27,8 @@ struct Vdb
   Vdb()
   {
     volume = std::unique_ptr<ProceduralVdbVolumeMulti>(
-        generateMultiAttributeVdbVolumeFloat(vec3i(128),
+        generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                             vec3i(128),
                                              vec3f(0.f),
                                              vec3f(1.f),
                                              filter,
@@ -38,7 +39,7 @@ struct Vdb
       throw std::runtime_error("inconsistent Vdb numAttributes");
     }
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -69,11 +70,7 @@ struct Vdb
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Vdb<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Vdb<VKL_FILTER_TRILINEAR>>();
@@ -85,7 +82,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

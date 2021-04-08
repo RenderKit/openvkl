@@ -13,13 +13,9 @@ using namespace openvkl::testing;
 
 TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 {
-  vklLoadModule("cpu_device");
+  initializeOpenVKL();
 
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
-
-  int nativeSIMDWidth = vklGetNativeSIMDWidth();
+  int nativeSIMDWidth = vklGetNativeSIMDWidth(getOpenVKLDevice());
 
   WARN(
       "only performing SIMD vectorized interval iteration tests for width == "
@@ -37,7 +33,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -1054,4 +1050,6 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   }
 
   vklRelease(vklSampler);
+
+  shutdownOpenVKL();
 }

@@ -23,7 +23,7 @@ inline void sampling_on_vertices_vs_procedural_values(
                                                          dataCreationFlags,
                                                          byteStride);
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 

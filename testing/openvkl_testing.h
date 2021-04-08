@@ -15,3 +15,5 @@
 #include "volume/RawFileStructuredVolume.h"
 #include "volume/RawHFileStructuredVolume.h"
 #include "volume/TestingStructuredVolumeMulti.h"
+
+#include "apps/AppInit.h"

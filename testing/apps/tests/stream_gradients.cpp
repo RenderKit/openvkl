@@ -3,19 +3,15 @@
 
 #include <cmath>
 #include "../../external/catch.hpp"
-#include "openvkl_testing.h"
 #include "gradient_utility.h"
+#include "openvkl_testing.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
 
 TEST_CASE("Stream gradients", "[volume_gradients]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("structuredRegular")
   {
@@ -41,7 +37,9 @@ TEST_CASE("Stream gradients", "[volume_gradients]")
   SECTION("vdb")
   {
     auto v = std::make_shared<WaveletVdbVolumeFloat>(
-        vec3i(128), vec3f(0.f), vec3f(1.f));
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f));
     test_stream_gradients(v);
   }
+
+  shutdownOpenVKL();
 }

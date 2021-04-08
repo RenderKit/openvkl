@@ -16,7 +16,7 @@ void test_vectorized_sampling()
   auto v =
       rkcommon::make_unique<VOLUME_TYPE>(vec3i(128), vec3f(0.f), vec3f(1.f));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -90,11 +90,7 @@ void test_vectorized_sampling()
 
 TEST_CASE("Vectorized sampling", "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("structured")
   {
@@ -105,4 +101,6 @@ TEST_CASE("Vectorized sampling", "[volume_sampling]")
   {
     test_vectorized_sampling<WaveletUnstructuredProceduralVolume>();
   }
+
+  shutdownOpenVKL();
 }

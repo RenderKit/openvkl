@@ -5,11 +5,7 @@
 
 TEST_CASE("Unstructured volume strides", "[volume_strides]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   const vec3i dimensions = vec3i(128);
 
@@ -63,4 +59,6 @@ TEST_CASE("Unstructured volume strides", "[volume_strides]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

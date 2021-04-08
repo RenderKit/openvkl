@@ -23,7 +23,7 @@ void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
   auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
   vkl_range1f apiValueRange = vklGetValueRange(vklVolume);
 
@@ -40,11 +40,7 @@ void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
 
 TEST_CASE("Structured volume value range", "[volume_value_range]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("unsigned char")
   {
@@ -81,5 +77,7 @@ TEST_CASE("Structured volume value range", "[volume_value_range]")
     computed_vs_api_value_range<WaveletStructuredRegularVolumeDouble>();
     computed_vs_api_value_range<WaveletStructuredSphericalVolumeDouble>();
   }
+
+  shutdownOpenVKL();
 }
-  
+

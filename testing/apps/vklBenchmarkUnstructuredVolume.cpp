@@ -22,15 +22,6 @@ using namespace rkcommon::utility;
   BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_PYRAMID)     \
       ->Ranges({{0, 1}, {0, 1}, {0, 1}});
 
-void initializeOpenVKL()
-{
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
-}
-
 template <VKLUnstructuredCellType primType>
 static void scalarRandomSample(benchmark::State &state)
 {
@@ -45,7 +36,7 @@ static void scalarRandomSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -84,7 +75,7 @@ void vectorRandomSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -150,7 +141,7 @@ static void scalarFixedSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -184,7 +175,7 @@ void vectorFixedSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -243,7 +234,7 @@ int main(int argc, char **argv)
     return 1;
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

@@ -17,7 +17,8 @@ namespace openvkl {
                                      enum RTCError error,
                                      const char *str)
     {
-      LogMessageStream(VKL_LOG_WARNING)
+      Device *device = reinterpret_cast<Device *>(userPtr);
+      LogMessageStream(device, VKL_LOG_WARNING)
           << "error " << error << ": " << str << std::endl;
     }
 
@@ -129,7 +130,7 @@ namespace openvkl {
       if (!rtcDevice) {
         throw std::runtime_error("cannot create device");
       }
-      rtcSetDeviceErrorFunction(rtcDevice, errorFunction, NULL);
+      rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
 
       containers::AlignedVector<RTCBuildPrimitive> prims;
       containers::AlignedVector<float> primRadii;

@@ -93,7 +93,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
     vec3i step              = vec3i(1),
     float gradientTolerance = 0.1f)
 {
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -141,7 +141,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
                                   const unsigned int attributeIndex = 0,
                                   const float time                  = 0.f)
 {
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 

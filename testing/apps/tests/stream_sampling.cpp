@@ -10,11 +10,7 @@ using namespace openvkl::testing;
 
 TEST_CASE("Stream sampling", "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("AMR")
   {
@@ -47,7 +43,9 @@ TEST_CASE("Stream sampling", "[volume_sampling]")
   SECTION("VDB")
   {
     auto v = std::make_shared<WaveletVdbVolumeFloat>(
-        vec3i(128), vec3f(0.f), vec3f(1.f));
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f));
     test_stream_sampling(v);
   }
+
+  shutdownOpenVKL();
 }

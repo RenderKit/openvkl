@@ -255,7 +255,8 @@ namespace openvkl {
        * If deferLeaves is true, then do not load leaf data but instead add
        * tiles.
        */
-      OpenVdbGrid(const std::string &path,
+      OpenVdbGrid(VKLDevice device,
+                  const std::string &path,
                   const std::string &field,
                   bool deferLeaves = false);
 
@@ -264,7 +265,8 @@ namespace openvkl {
        * If deferLeaves is true, then do not load leaf data but instead add
        * tiles.
        */
-      OpenVdbGrid(typename openvdbNativeGrid::Ptr vdb,
+      OpenVdbGrid(VKLDevice device,
+                  typename openvdbNativeGrid::Ptr vdb,
                   bool deferLeaves = false);
 
       /*
@@ -295,6 +297,8 @@ namespace openvkl {
        */
       void loadDeferred(size_t maxTimeMS);
 
+      VKLDevice getVKLDevice() const;
+
      private:
       void loadTransform();
       void loadDeferredAt(size_t i);
@@ -310,10 +314,11 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <typename VdbFieldType>
-    inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(const std::string &path,
+    inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(VKLDevice device,
+                                                  const std::string &path,
                                                   const std::string &field,
                                                   bool deferLeaves)
-        : buffers(new VdbVolumeBuffers(vklAttributeTypes))
+        : buffers(new VdbVolumeBuffers(device, vklAttributeTypes))
     {
       openvdb::initialize();  // Must initialize first! It's ok to do this
                               // multiple times.
@@ -341,8 +346,8 @@ namespace openvkl {
 
     template <typename VdbFieldType>
     inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(
-        typename openvdbNativeGrid::Ptr vdb, bool deferLeaves)
-        : buffers(new VdbVolumeBuffers(vklAttributeTypes))
+        VKLDevice device, typename openvdbNativeGrid::Ptr vdb, bool deferLeaves)
+        : buffers(new VdbVolumeBuffers(device, vklAttributeTypes))
     {
       openvdb::initialize();
       grid = vdb;
@@ -414,6 +419,16 @@ namespace openvkl {
              (maxTimeMS == 0 ||
               chr::duration_cast<TimeUnit>(Clock::now() - start) <= maxTime)) {
         loadDeferredAt(0);
+      }
+    }
+
+    template <typename VdbFieldType>
+    inline VKLDevice OpenVdbGrid<VdbFieldType>::getVKLDevice() const
+    {
+      if (buffers) {
+        return buffers->getVKLDevice();
+      } else {
+        return nullptr;
       }
     }
 

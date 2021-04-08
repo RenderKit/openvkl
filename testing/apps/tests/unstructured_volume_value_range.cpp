@@ -15,7 +15,7 @@ void computed_vs_api_value_range(vec3i dimensions,
       new WaveletUnstructuredProceduralVolume(
           dimensions, vec3f(0.f), vec3f(1.f), primType, true));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
   vkl_range1f apiValueRange = vklGetValueRange(vklVolume);
 
@@ -32,11 +32,7 @@ void computed_vs_api_value_range(vec3i dimensions,
 
 TEST_CASE("Unstructured volume value range", "[volume_value_range]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("hexahedron")
   {
@@ -57,4 +53,6 @@ TEST_CASE("Unstructured volume value range", "[volume_value_range]")
   {
     computed_vs_api_value_range(vec3i(128), VKL_PYRAMID);
   }
+
+  shutdownOpenVKL();
 }

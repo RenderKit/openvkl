@@ -118,16 +118,6 @@ namespace openvkl {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // Module /////////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    template <int W>
-    VKLError CPUDevice<W>::loadModule(const char *moduleName)
-    {
-      return openvkl::loadLocalModule(moduleName);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // Parameters /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
@@ -389,7 +379,7 @@ namespace openvkl {
       std::string typeStr(type);
 
       if (typeStr.find("_") != std::string::npos) {
-        postLogMessage(VKL_LOG_WARNING)
+        postLogMessage(this, VKL_LOG_WARNING)
             << "volume type name '" << typeStr
             << "' may be deprecated; volume type names are now camelCase (no "
                "underscores)";
@@ -397,7 +387,8 @@ namespace openvkl {
 
       std::stringstream ss;
       ss << type << "_" << W;
-      return (VKLVolume)Volume<W>::createInstance(ss.str());
+
+      return (VKLVolume)Volume<W>::createInstance(this, ss.str());
     }
 
     template <int W>

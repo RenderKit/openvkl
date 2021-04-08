@@ -13,17 +13,13 @@ using namespace openvkl::testing;
 template <typename VOLUME_TYPE>
 inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
 {
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 }
 
 TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   const vec3i dimensions(128);
   const vec3f gridOrigin(0.f);
@@ -51,8 +47,13 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
         DYNAMIC_SECTION(std::string("half ") + sectionName.str())
         {
           std::shared_ptr<ProceduralVdbVolumeMulti> v(
-              generateMultiAttributeVdbVolumeHalf(
-                  dimensions, gridOrigin, gridSpacing, filter, dcf, aos));
+              generateMultiAttributeVdbVolumeHalf(getOpenVKLDevice(),
+                                                  dimensions,
+                                                  gridOrigin,
+                                                  gridSpacing,
+                                                  filter,
+                                                  dcf,
+                                                  aos));
 
           num_attributes(v);
           sampling_on_vertices_vs_procedural_values_multi(v, step);
@@ -74,8 +75,13 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
         DYNAMIC_SECTION(std::string("float ") + sectionName.str())
         {
           std::shared_ptr<ProceduralVdbVolumeMulti> v(
-              generateMultiAttributeVdbVolumeFloat(
-                  dimensions, gridOrigin, gridSpacing, filter, dcf, aos));
+              generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                                   dimensions,
+                                                   gridOrigin,
+                                                   gridSpacing,
+                                                   filter,
+                                                   dcf,
+                                                   aos));
 
           num_attributes(v);
           sampling_on_vertices_vs_procedural_values_multi(v, step);
@@ -94,4 +100,6 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

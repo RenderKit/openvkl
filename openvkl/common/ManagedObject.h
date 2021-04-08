@@ -3,8 +3,10 @@
 
 #pragma once
 
+#include "../api/Device.h"
 #include "VKLCommon.h"
 #include "objectFactory.h"
+#include "rkcommon/memory/IntrusivePtr.h"
 #include "rkcommon/memory/RefCount.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 
@@ -18,7 +20,7 @@ namespace openvkl {
   struct DataT;
 
   struct OPENVKL_CORE_INTERFACE ManagedObject
-      : public rkcommon::memory::RefCount,
+      : public rkcommon::memory::RefCountedObject,
         public rkcommon::utility::ParameterizedObject
   {
     using VKL_PTR = ManagedObject *;
@@ -64,16 +66,20 @@ namespace openvkl {
 
     // subtype of this ManagedObject
     VKLDataType managedObjectType{VKL_UNKNOWN};
+
+    // device this ManagedObject belongs to
+    rkcommon::memory::IntrusivePtr<Device> device;
   };
 
   template <typename OPENVKL_CLASS, VKLDataType VKL_TYPE>
-  inline OPENVKL_CLASS *createInstanceHelper(const std::string &type)
+  inline OPENVKL_CLASS *createInstanceHelper(Device *device,
+                                             const std::string &type)
   {
     static_assert(std::is_base_of<ManagedObject, OPENVKL_CLASS>::value,
                   "createInstanceHelper<>() is only for VKL classes, not"
                   " generic types!");
 
-    auto *object = objectFactory<OPENVKL_CLASS, VKL_TYPE>(type);
+    auto *object = objectFactory<OPENVKL_CLASS, VKL_TYPE>(device, type);
 
     // denote the subclass type in the ManagedObject base class.
     if (object) {

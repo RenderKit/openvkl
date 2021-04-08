@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -37,6 +37,12 @@
 
 namespace openvkl {
 
+  namespace api {
+    struct Device;
+  }
+
+  using openvkl::api::Device;
+
   using int64  = std::int64_t;
   using uint64 = std::uint64_t;
 
@@ -49,7 +55,8 @@ namespace openvkl {
   using int8  = std::int8_t;
   using uint8 = std::uint8_t;
 
-  OPENVKL_CORE_INTERFACE VKLError loadLocalModule(const std::string &moduleName);
+  OPENVKL_CORE_INTERFACE VKLError
+  loadLocalModule(const std::string &moduleName);
 
   OPENVKL_CORE_INTERFACE std::string stringFor(VKLDataType type);
 
@@ -57,6 +64,8 @@ namespace openvkl {
 
   OPENVKL_CORE_INTERFACE bool isManagedObject(VKLDataType type);
 
-  OPENVKL_CORE_INTERFACE void handleError(VKLError e, const std::string &message);
+  OPENVKL_CORE_INTERFACE void handleError(Device *device,
+                                          VKLError e,
+                                          const std::string &message);
 
 }  // namespace openvkl

@@ -180,7 +180,7 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
 {
   const float sampleTolerance = 1e-4f;
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -230,7 +230,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
                                  const unsigned int attributeIndex = 0,
                                  const float time                  = 0.f)
 {
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -290,7 +290,7 @@ inline void test_stream_sampling_multi(
     const std::vector<unsigned int> &attributeIndices,
     const float time = 0.f)
 {
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 

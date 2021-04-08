@@ -5,8 +5,8 @@
 
 #include "common.h"
 
-struct Device;
-typedef struct Device *VKLDevice;
+struct VKLDeviceInternal;
+typedef struct VKLDeviceInternal *VKLDevice;
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,24 +36,18 @@ OPENVKL_INTERFACE void vklDeviceSetString(VKLDevice device,
 
 OPENVKL_INTERFACE void vklCommitDevice(VKLDevice device);
 
-OPENVKL_INTERFACE void vklSetCurrentDevice(VKLDevice device);
-
-OPENVKL_INTERFACE VKLDevice vklGetCurrentDevice();
-
 OPENVKL_INTERFACE VKLError vklDeviceGetLastErrorCode(VKLDevice device);
 
 OPENVKL_INTERFACE const char *vklDeviceGetLastErrorMsg(VKLDevice device);
 
-OPENVKL_INTERFACE int vklGetNativeSIMDWidth();
+OPENVKL_INTERFACE int vklGetNativeSIMDWidth(VKLDevice device);
 
 OPENVKL_INTERFACE void vklCommit(VKLObject object);
 
 OPENVKL_INTERFACE void vklRelease(VKLObject object);
 
-OPENVKL_INTERFACE void vklShutdown();
+OPENVKL_INTERFACE void vklReleaseDevice(VKLDevice device);
 
 #ifdef __cplusplus
 }  // extern "C"
 #endif
-
-#include "driver_deprecated.h"

@@ -39,7 +39,7 @@ struct StructuredMulti
       throw std::runtime_error("inconsistent StructuredMulti numAttributes");
     }
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -70,11 +70,7 @@ struct StructuredMulti
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<StructuredMulti<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<StructuredMulti<VKL_FILTER_TRILINEAR>>();
@@ -85,7 +81,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

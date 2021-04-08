@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,6 +10,7 @@
 #endif
 
 #include "VKLDataType.h"
+#include "device.h"
 
 // flags that can be passed to vklNewData(), which can be OR'ed together
 typedef enum
@@ -35,7 +36,8 @@ typedef ManagedObject Data;
 
 typedef Data *VKLData;
 
-OPENVKL_INTERFACE VKLData vklNewData(size_t numItems,
+OPENVKL_INTERFACE VKLData vklNewData(VKLDevice device,
+                                     size_t numItems,
                                      VKLDataType dataType,
                                      const void *source,
                                      VKLDataCreationFlags dataCreationFlags

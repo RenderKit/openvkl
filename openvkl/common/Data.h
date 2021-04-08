@@ -195,7 +195,7 @@ namespace openvkl {
     }
 
     if (data) {
-      postLogMessage(VKL_LOG_WARNING)
+      postLogMessage(device.ptr, VKL_LOG_WARNING)
           << toString() << " ignoring '" << name
           << "' array with wrong element type (should be "
           << stringFor(VKLTypeFor<T>::value) << ")";

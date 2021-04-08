@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -33,7 +33,7 @@ namespace openvkl {
       virtual std::vector<unsigned char> generateVoxels() = 0;
 
      protected:
-      void generateVKLVolume() override;
+      void generateVKLVolume(VKLDevice device) override;
 
       range1f computedValueRange = range1f(rkcommon::math::empty);
 
@@ -91,7 +91,7 @@ namespace openvkl {
       return gridSpacing;
     }
 
-    inline void TestingAMRVolume::generateVKLVolume()
+    inline void TestingAMRVolume::generateVKLVolume(VKLDevice device)
     {
       std::vector<unsigned char> voxels = generateVoxels();
 
@@ -127,23 +127,24 @@ namespace openvkl {
 
       // convert vector<float> to VKLData
       for (const auto &bv : blockValues)
-        blockData.push_back(vklNewData(bv.size(), VKL_FLOAT, bv.data()));
+        blockData.push_back(
+            vklNewData(device, bv.size(), VKL_FLOAT, bv.data()));
 
       // create a nested VKLData array. This is what gets passed to AMRVolume
       VKLData blockDataData =
-          vklNewData(blockData.size(), VKL_DATA, blockData.data());
+          vklNewData(device, blockData.size(), VKL_DATA, blockData.data());
 
       // create the other VKLData arrays
       VKLData boundsData =
-          vklNewData(blockBounds.size(), VKL_BOX3I, blockBounds.data());
+          vklNewData(device, blockBounds.size(), VKL_BOX3I, blockBounds.data());
       VKLData levelsData =
-          vklNewData(refLevels.size(), VKL_INT, refLevels.data());
+          vklNewData(device, refLevels.size(), VKL_INT, refLevels.data());
       VKLData widthsData =
-          vklNewData(cellWidths.size(), VKL_FLOAT, cellWidths.data());
+          vklNewData(device, cellWidths.size(), VKL_FLOAT, cellWidths.data());
 
       // create the VKL AMR volume
 
-      volume = vklNewVolume("amr");
+      volume = vklNewVolume(device, "amr");
 
       vklSetVec3i(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
@@ -223,59 +224,55 @@ namespace openvkl {
             std::vector<float>(nextLevelSize.product(), 0);
 
         const vec3i numBricks = levelSize / blockSize;
-        rkcommon::tasking::parallel_for(
-            numBricks.product(), [&](int brickIdx) {
-              // dt == cellWidth in osp_amr_brick_info
-              float dt = powf(refinementLevel, numLevels - level - 1);
-              // get 3D brick index from flat brickIdx
-              const vec3i brickID(brickIdx % numBricks.x,
-                                  (brickIdx / numBricks.x) % numBricks.y,
-                                  brickIdx / (numBricks.x * numBricks.y));
-              // set upper and lower bounds of brick based on 3D index and
-              // brick size in input data space
-              box3i box;
-              box.lower = brickID * blockSize;
-              box.upper = box.lower + (blockSize - 1);
-              // current brick data
-              std::vector<float> data(blockSize * blockSize * blockSize);
-              size_t out = 0;
-              range1f brickRange;
-              // traverse the data by brick index
-              for (int iz = box.lower.z; iz <= box.upper.z; iz++) {
-                for (int iy = box.lower.y; iy <= box.upper.y; iy++) {
-                  for (int ix = box.lower.x; ix <= box.upper.x; ix++) {
-                    const size_t thisLevelCoord =
-                        ix + levelSize.y * (iy + iz * levelSize.z);
-                    const size_t nextLevelCoord =
-                        ix / refinementLevel +
-                        nextLevelSize.y *
-                            (iy / refinementLevel +
-                             iz / refinementLevel * nextLevelSize.z);
-                    // get the actual data at current coordinates
-                    const float v = currentLevel[thisLevelCoord];
-                    // insert the data into the current brick
-                    data[out++] = v;
-                    nextLevel[nextLevelCoord] +=
-                        v /
-                        (refinementLevel * refinementLevel * refinementLevel);
-                    // extend the value range of this brick (min/max) as
-                    // needed
-                    brickRange.extend(v);
-                  }
-                }
+        rkcommon::tasking::parallel_for(numBricks.product(), [&](int brickIdx) {
+          // dt == cellWidth in osp_amr_brick_info
+          float dt = powf(refinementLevel, numLevels - level - 1);
+          // get 3D brick index from flat brickIdx
+          const vec3i brickID(brickIdx % numBricks.x,
+                              (brickIdx / numBricks.x) % numBricks.y,
+                              brickIdx / (numBricks.x * numBricks.y));
+          // set upper and lower bounds of brick based on 3D index and
+          // brick size in input data space
+          box3i box;
+          box.lower = brickID * blockSize;
+          box.upper = box.lower + (blockSize - 1);
+          // current brick data
+          std::vector<float> data(blockSize * blockSize * blockSize);
+          size_t out = 0;
+          range1f brickRange;
+          // traverse the data by brick index
+          for (int iz = box.lower.z; iz <= box.upper.z; iz++) {
+            for (int iy = box.lower.y; iy <= box.upper.y; iy++) {
+              for (int ix = box.lower.x; ix <= box.upper.x; ix++) {
+                const size_t thisLevelCoord =
+                    ix + levelSize.y * (iy + iz * levelSize.z);
+                const size_t nextLevelCoord =
+                    ix / refinementLevel +
+                    nextLevelSize.y * (iy / refinementLevel +
+                                       iz / refinementLevel * nextLevelSize.z);
+                // get the actual data at current coordinates
+                const float v = currentLevel[thisLevelCoord];
+                // insert the data into the current brick
+                data[out++] = v;
+                nextLevel[nextLevelCoord] +=
+                    v / (refinementLevel * refinementLevel * refinementLevel);
+                // extend the value range of this brick (min/max) as
+                // needed
+                brickRange.extend(v);
               }
+            }
+          }
 
-              std::lock_guard<std::mutex> lock(blockMutex);
-              if (!((level > 0) &&
-                    ((brickRange.upper - brickRange.lower) <= threshold))) {
-                blockBounds.push_back(box);
-                refinementLevels.push_back(level);
-                cellWidths.resize(
-                    std::max(cellWidths.size(), (size_t)level + 1));
-                cellWidths[level] = dt;
-                brickData.push_back(data);
-              }
-            });  // end parallel for
+          std::lock_guard<std::mutex> lock(blockMutex);
+          if (!((level > 0) &&
+                ((brickRange.upper - brickRange.lower) <= threshold))) {
+            blockBounds.push_back(box);
+            refinementLevels.push_back(level);
+            cellWidths.resize(std::max(cellWidths.size(), (size_t)level + 1));
+            cellWidths[level] = dt;
+            brickData.push_back(data);
+          }
+        });  // end parallel for
         currentLevel = nextLevel;
         levelSize    = nextLevelSize;
       }  // end for loop on levels

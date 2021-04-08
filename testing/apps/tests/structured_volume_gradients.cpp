@@ -25,7 +25,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
   auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -65,11 +65,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
 
 TEST_CASE("Structured volume gradients", "[volume_gradients]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("XYZStructuredRegularVolume<float>")
   {
@@ -85,4 +81,6 @@ TEST_CASE("Structured volume gradients", "[volume_gradients]")
   {
     scalar_gradients<XYZStructuredSphericalVolume<float>>(0.1f, true);
   }
+
+  shutdownOpenVKL();
 }

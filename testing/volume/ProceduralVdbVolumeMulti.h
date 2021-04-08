@@ -20,6 +20,7 @@ namespace openvkl {
       using Buffers = vdb_util::VdbVolumeBuffers;
 
       ProceduralVdbVolumeMulti(
+          VKLDevice device,
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
@@ -52,7 +53,7 @@ namespace openvkl {
                                           unsigned int attributeIndex,
                                           float time) const override;
 
-      void generateVKLVolume() override final;
+      void generateVKLVolume(VKLDevice device) override final;
 
       std::unique_ptr<Buffers> buffers;
       vec3i dimensions;
@@ -70,6 +71,7 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     inline ProceduralVdbVolumeMulti::ProceduralVdbVolumeMulti(
+        VKLDevice device,
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
@@ -125,7 +127,7 @@ namespace openvkl {
             std::accumulate(voxelSizes.begin(), voxelSizes.begin() + a, 0));
       }
 
-      buffers = rkcommon::make_unique<Buffers>(voxelTypes);
+      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes);
 
       buffers->setIndexToObject(gridSpacing.x,
                                 0,
@@ -354,10 +356,16 @@ namespace openvkl {
           localCoordinates);
     }
 
-    inline void ProceduralVdbVolumeMulti::generateVKLVolume()
+    inline void ProceduralVdbVolumeMulti::generateVKLVolume(VKLDevice device)
     {
       if (buffers) {
         release();
+
+        if (device != buffers->getVKLDevice()) {
+          throw std::runtime_error(
+              "specified device not compatible with VdbVolumeBuffers device");
+        }
+
         volume = buffers->createVolume(filter);
       }
     }
@@ -367,6 +375,7 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     inline ProceduralVdbVolumeMulti *generateMultiAttributeVdbVolumeHalf(
+        VKLDevice device,
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
@@ -377,18 +386,19 @@ namespace openvkl {
       std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> volumes;
 
       volumes.push_back(std::make_shared<WaveletVdbVolumeHalf>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
       volumes.push_back(std::make_shared<XVdbVolumeHalf>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
       volumes.push_back(std::make_shared<YVdbVolumeHalf>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
       volumes.push_back(std::make_shared<ZVdbVolumeHalf>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
-      return new ProceduralVdbVolumeMulti(dimensions,
+      return new ProceduralVdbVolumeMulti(device,
+                                          dimensions,
                                           gridOrigin,
                                           gridSpacing,
                                           filter,
@@ -398,6 +408,7 @@ namespace openvkl {
     }
 
     inline ProceduralVdbVolumeMulti *generateMultiAttributeVdbVolumeFloat(
+        VKLDevice device,
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
@@ -408,18 +419,19 @@ namespace openvkl {
       std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> volumes;
 
       volumes.push_back(std::make_shared<WaveletVdbVolumeFloat>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
       volumes.push_back(std::make_shared<XVdbVolumeFloat>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
       volumes.push_back(std::make_shared<YVdbVolumeFloat>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
       volumes.push_back(std::make_shared<ZVdbVolumeFloat>(
-          dimensions, gridOrigin, gridSpacing));
+          device, dimensions, gridOrigin, gridSpacing));
 
-      return new ProceduralVdbVolumeMulti(dimensions,
+      return new ProceduralVdbVolumeMulti(device,
+                                          dimensions,
                                           gridOrigin,
                                           gridSpacing,
                                           filter,

@@ -19,7 +19,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
                                                precomputedNormals,
                                                hexIterative));
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -96,11 +96,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
 TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("hexahedron")
   {
@@ -189,4 +185,6 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
           VKL_PYRAMID, cellValued, indexPrefix, precomputedNormals, false);
     }
   }
+
+  shutdownOpenVKL();
 }

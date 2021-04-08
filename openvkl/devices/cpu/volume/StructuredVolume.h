@@ -172,7 +172,7 @@ namespace openvkl {
 
         if (!require64BitIndices &&
             temporallyUnstructuredIndices->dataType == VKL_ULONG) {
-          postLogMessage(VKL_LOG_WARNING)
+          postLogMessage(this->device.ptr, VKL_LOG_WARNING)
               << "WARNING: temporallyUnstructuredIndices is VKL_ULONG when "
                  "VKL_UINT is sufficient and may be more performant";
         }

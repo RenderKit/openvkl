@@ -37,10 +37,10 @@ void public_wide_types_conformance_test()
 }
 
 template <int W>
-void device_native_simd_width_conformance_test()
+void device_native_simd_width_conformance_test(VKLDevice device)
 {
   INFO("width = " << W);
-  REQUIRE(vklGetNativeSIMDWidth() == W);
+  REQUIRE(vklGetNativeSIMDWidth(device) == W);
 }
 
 template <int W>
@@ -96,9 +96,8 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
-  vklSetCurrentDevice(device);
 
-  int nativeSIMDWidth = vklGetNativeSIMDWidth();
+  int nativeSIMDWidth = vklGetNativeSIMDWidth(device);
 
   WARN("only performing ISPC-side SIMD conformance tests for native width: "
        << nativeSIMDWidth);
@@ -107,7 +106,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 #if VKL_TARGET_WIDTH_ENABLED_4
     SECTION("native (4-wide)")
     {
-      device_native_simd_width_conformance_test<4>();
+      device_native_simd_width_conformance_test<4>(device);
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
       vVKLIntervalN_conformance_test<4>();
@@ -123,7 +122,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 #if VKL_TARGET_WIDTH_ENABLED_8
     SECTION("native (8-wide)")
     {
-      device_native_simd_width_conformance_test<8>();
+      device_native_simd_width_conformance_test<8>(device);
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
       vVKLIntervalN_conformance_test<8>();
@@ -139,7 +138,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 #if VKL_TARGET_WIDTH_ENABLED_16
     SECTION("native (16-wide)")
     {
-      device_native_simd_width_conformance_test<16>();
+      device_native_simd_width_conformance_test<16>(device);
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
       vVKLIntervalN_conformance_test<16>();
@@ -154,10 +153,12 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   else {
     throw std::runtime_error("unsupported native SIMD width for tests");
   }
+
+  vklReleaseDevice(device);
 }
 
 template <int W, int INTERVAL_MACRO, int HIT_MACRO>
-void max_iterator_size_conformance_test()
+void max_iterator_size_conformance_test(VKLDevice device)
 {
   size_t maxIntervalSize = 0;
   size_t maxHitSize      = 0;
@@ -168,7 +169,7 @@ void max_iterator_size_conformance_test()
                                  "particle",
                                  "unstructured",
                                  "vdb"}) {
-    VKLVolume volume = vklNewVolume(volumeType);
+    VKLVolume volume   = vklNewVolume(device, volumeType);
     VKLSampler sampler = vklNewSampler(volume);
     vklCommit(sampler);
     maxIntervalSize =
@@ -188,13 +189,13 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
-  vklSetCurrentDevice(device);
 
   // the native width for the default device is the maximum we can instantiate
-  int maximumSIMDWidth = vklGetNativeSIMDWidth();
+  int maximumSIMDWidth = vklGetNativeSIMDWidth(device);
 
-  for (int W: { 4, 8, 16 })
-  {
+  vklReleaseDevice(device);
+
+  for (int W : {4, 8, 16}) {
     if (W > maximumSIMDWidth) {
       WARN("skipping max iterator size tests on unsupported device width "
            << W << " (maximum supported width on this system / build is "
@@ -205,11 +206,9 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
     std::ostringstream os;
     os << "cpu_" << W;
     device = vklNewDevice(os.str().c_str());
-    if (device)
-    {
+    if (device) {
       vklCommitDevice(device);
-      vklSetCurrentDevice(device);
-      int nativeSIMDWidth = vklGetNativeSIMDWidth();
+      int nativeSIMDWidth = vklGetNativeSIMDWidth(device);
 
       REQUIRE(nativeSIMDWidth == W);
 
@@ -218,8 +217,9 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         SECTION("4-wide")
         {
           max_iterator_size_conformance_test<4,
-                            VKL_MAX_INTERVAL_ITERATOR_SIZE_4,
-                            VKL_MAX_HIT_ITERATOR_SIZE_4>();
+                                             VKL_MAX_INTERVAL_ITERATOR_SIZE_4,
+                                             VKL_MAX_HIT_ITERATOR_SIZE_4>(
+              device);
         }
 #else
         throw std::runtime_error(
@@ -232,8 +232,9 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         SECTION("8-wide")
         {
           max_iterator_size_conformance_test<8,
-                            VKL_MAX_INTERVAL_ITERATOR_SIZE_8,
-                            VKL_MAX_HIT_ITERATOR_SIZE_8>();
+                                             VKL_MAX_INTERVAL_ITERATOR_SIZE_8,
+                                             VKL_MAX_HIT_ITERATOR_SIZE_8>(
+              device);
         }
 #else
         throw std::runtime_error(
@@ -246,8 +247,9 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         SECTION("16-wide")
         {
           max_iterator_size_conformance_test<16,
-                            VKL_MAX_INTERVAL_ITERATOR_SIZE_16,
-                            VKL_MAX_HIT_ITERATOR_SIZE_16>();
+                                             VKL_MAX_INTERVAL_ITERATOR_SIZE_16,
+                                             VKL_MAX_HIT_ITERATOR_SIZE_16>(
+              device);
         }
 #else
         throw std::runtime_error(
@@ -258,8 +260,9 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
       else {
         throw std::runtime_error("unsupported native SIMD width for tests");
       }
-    }
-    else // (device)
+
+      vklReleaseDevice(device);
+    } else  // (device)
     {
       WARN(
           "cannot run max iterator size tests on unavailable (not compiled) "
@@ -267,5 +270,4 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
           << W);
     }
   }
-
 }

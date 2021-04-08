@@ -4,6 +4,7 @@
 #pragma once
 
 #include <type_traits>
+#include "../common/IteratorBase.h"
 #include "../common/align.h"
 #include "../common/simd.h"
 #include "../value_selector/ValueSelector.h"
@@ -24,7 +25,7 @@ namespace openvkl {
      * Base class for all iterators.
      */
     template <int W>
-    struct Iterator
+    struct Iterator : public IteratorBase
     {
       /*
        * Disallow all kinds of copying to be on the safe side.

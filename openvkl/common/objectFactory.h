@@ -1,18 +1,18 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "rkcommon/os/library.h"
 #include <map>
 #include "VKLCommon.h"
 #include "logging.h"
 #include "openvkl/VKLDataType.h"
+#include "rkcommon/os/library.h"
 
 namespace openvkl {
 
   template <typename T, VKLDataType VKL_TYPE = VKL_UNKNOWN>
-  inline T *objectFactory(const std::string &type)
+  inline T *objectFactory(Device *device, const std::string &type)
   {
     // Function pointer type for creating a concrete instance of a subtype of
     // this class.
@@ -24,7 +24,7 @@ namespace openvkl {
 
     // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
-      postLogMessage(VKL_LOG_DEBUG)
+      postLogMessage(device, VKL_LOG_DEBUG)
           << "trying to look up " << type_string << " type '" << type
           << "' for the first time";
 
@@ -39,7 +39,7 @@ namespace openvkl {
       // The named function may not be found if the requested subtype is not
       // known.
       if (!symbolRegistry[type]) {
-        postLogMessage(VKL_LOG_WARNING)
+        postLogMessage(device, VKL_LOG_WARNING)
             << "WARNING: unrecognized " << type_string << " type '" << type
             << "'.";
       }

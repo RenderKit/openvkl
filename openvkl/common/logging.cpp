@@ -10,20 +10,20 @@
 
 namespace openvkl {
 
-  LogMessageStream postLogMessage(VKLLogLevel postAtLogLevel)
+  LogMessageStream postLogMessage(Device *device, VKLLogLevel postAtLogLevel)
   {
-    return LogMessageStream(postAtLogLevel);
+    return LogMessageStream(device, postAtLogLevel);
   }
 
-  void postLogMessage(const std::string &msg, VKLLogLevel postAtLogLevel)
+  void postLogMessage(Device *device,
+                      const std::string &msg,
+                      VKLLogLevel postAtLogLevel)
   {
-    if (postAtLogLevel >= api::Device::logLevel) {
-      if (api::deviceIsSet()) {
-        api::Device::current->logCallback(api::Device::current->logUserData,
-                                          (LOG_PREFIX + msg + '\n').c_str());
-      } else {
-        std::cout << LOG_PREFIX << msg << std::endl;
-      }
+    if (device && postAtLogLevel >= device->logLevel) {
+      device->logCallback(device->logUserData,
+                          (LOG_PREFIX + msg + '\n').c_str());
+    } else if (postAtLogLevel >= LOG_LEVEL_DEFAULT) {
+      std::cout << LOG_PREFIX << msg << std::endl;
     }
   }
 

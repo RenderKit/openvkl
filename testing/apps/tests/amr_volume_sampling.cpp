@@ -14,7 +14,7 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
       new ProceduralShellsAMRVolume<>(
           dimensions, vec3f(0.f), vec3f(1.f)));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -57,14 +57,12 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
 
 TEST_CASE("AMR volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("32-bit addressing")
   {
     amr_sampling_at_shell_boundaries(vec3i(256));
   }
+
+  shutdownOpenVKL();
 }

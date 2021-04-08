@@ -15,7 +15,7 @@ void test_bounding_box(const vec3i &dimensions,
   auto v = rkcommon::make_unique<WaveletStructuredSphericalVolume<float>>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume      = v->getVKLVolume();
+  VKLVolume vklVolume      = v->getVKLVolume(getOpenVKLDevice());
   vkl_box3f vklBoundingBox = vklGetBoundingBox(vklVolume);
 
   INFO("dimensions = " << dimensions.x << " " << dimensions.y << " "
@@ -90,11 +90,7 @@ void test_bounding_box(const vec3i &dimensions,
 
 TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   std::vector<int> dimensions = {4, 32};
 
@@ -161,4 +157,6 @@ TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

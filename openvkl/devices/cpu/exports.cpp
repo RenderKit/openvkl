@@ -34,9 +34,6 @@
 #if VKL_TARGET_WIDTH_ENABLED_4
 VKL_WRAP_DEVICE_REGISTRATION(cpu_device_4, internal_cpu_4, cpu_4)
 
-// DEPRECATED
-VKL_WRAP_DEVICE_REGISTRATION(ispc_driver_4, internal_cpu_4, ispc_4)
-
 VKL_WRAP_VOLUME_REGISTRATION(internal_amr_4, amr_4)
 VKL_WRAP_VOLUME_REGISTRATION(internal_structuredRegular_4, structuredRegular_4)
 VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_4,
@@ -55,9 +52,6 @@ VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_4,
 #if VKL_TARGET_WIDTH_ENABLED_8
 VKL_WRAP_DEVICE_REGISTRATION(cpu_device_8, internal_cpu_8, cpu_8)
 
-// DEPRECATED
-VKL_WRAP_DEVICE_REGISTRATION(ispc_driver_8, internal_cpu_8, ispc_8)
-
 VKL_WRAP_VOLUME_REGISTRATION(internal_amr_8, amr_8)
 VKL_WRAP_VOLUME_REGISTRATION(internal_structuredRegular_8, structuredRegular_8)
 VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_8,
@@ -75,9 +69,6 @@ VKL_WRAP_VOLUME_REGISTRATION(internal_structuredSpherical_8,
 
 #if VKL_TARGET_WIDTH_ENABLED_16
 VKL_WRAP_DEVICE_REGISTRATION(cpu_device_16, internal_cpu_16, cpu_16)
-
-// DEPRECATED
-VKL_WRAP_DEVICE_REGISTRATION(ispc_driver_16, internal_cpu_16, ispc_16)
 
 VKL_WRAP_VOLUME_REGISTRATION(internal_amr_16, amr_16)
 VKL_WRAP_VOLUME_REGISTRATION(internal_structuredRegular_16,
@@ -110,10 +101,4 @@ extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_cpu_device()
 #if VKL_TARGET_WIDTH_ENABLED_16
   openvkl_init_module_cpu_device_16();
 #endif
-}
-
-// DEPRECATED
-extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_ispc_driver()
-{
-  openvkl_init_module_cpu_device();
 }

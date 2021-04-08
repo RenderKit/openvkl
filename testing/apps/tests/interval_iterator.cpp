@@ -223,11 +223,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
 
 TEST_CASE("Interval iterator", "[interval_iterators]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("structured volumes")
   {
@@ -239,7 +235,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         dimensions, gridOrigin, gridSpacing);
 
-    VKLVolume vklVolume = v->getVKLVolume();
+    VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
     SECTION("scalar interval continuity with no value selector")
     {
@@ -267,7 +263,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         dimensions, gridOrigin, gridSpacing);
 
-    VKLVolume vklVolume = v->getVKLVolume();
+    VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
     SECTION("normalized directions")
     {
@@ -341,7 +337,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     auto v = rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
         dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false);
 
-    VKLVolume vklVolume = v->getVKLVolume();
+    VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
     SECTION("scalar interval continuity with no value selector")
     {
@@ -358,4 +354,6 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
       scalar_interval_value_ranges_with_value_selector(vklVolume);
     }
   }
+
+  shutdownOpenVKL();
 }

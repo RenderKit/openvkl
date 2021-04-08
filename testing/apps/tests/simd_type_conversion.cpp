@@ -62,11 +62,7 @@ void vvec3fn_pack_extraction_test()
 
 TEST_CASE("SIMD type conversion", "[simd_conformance]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("vvec3fn upconversion")
   {
@@ -108,4 +104,6 @@ TEST_CASE("SIMD type conversion", "[simd_conformance]")
     vvec3fn_pack_extraction_test<12, 8>();
     vvec3fn_pack_extraction_test<12, 4>();
   }
+
+  shutdownOpenVKL();
 }

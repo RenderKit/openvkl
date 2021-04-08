@@ -30,7 +30,7 @@ struct Structured
     volume = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         vec3i(128), vec3f(0.f), vec3f(1.f));
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -62,11 +62,7 @@ struct Structured
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Structured<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Structured<VKL_FILTER_TRILINEAR>>();
@@ -77,7 +73,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

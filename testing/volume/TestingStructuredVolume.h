@@ -102,7 +102,7 @@ namespace openvkl {
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0);
 
-      void generateVKLVolume() override final;
+      void generateVKLVolume(VKLDevice device) override final;
 
       range1f computedValueRange = range1f(rkcommon::math::empty);
 
@@ -191,9 +191,9 @@ namespace openvkl {
       return temporalConfig;
     }
 
-    inline void TestingStructuredVolume::generateVKLVolume()
+    inline void TestingStructuredVolume::generateVKLVolume(VKLDevice device)
     {
-      volume = vklNewVolume(gridType.c_str());
+      volume = vklNewVolume(device, gridType.c_str());
 
       generateVoxels(voxels, time, tuvIndex);
 
@@ -218,7 +218,8 @@ namespace openvkl {
           throw std::runtime_error(
               "unexpected TUV index data for temporally constant volume");
 
-        VKLData data = vklNewData(totalNumValues,
+        VKLData data = vklNewData(device,
+                                  totalNumValues,
                                   voxelType,
                                   voxels.data(),
                                   dataCreationFlags,
@@ -240,7 +241,8 @@ namespace openvkl {
           throw std::runtime_error(
               "unexpected TUV index data for temporally structured volume");
 
-        VKLData data = vklNewData(totalNumValues,
+        VKLData data = vklNewData(device,
+                                  totalNumValues,
                                   voxelType,
                                   voxels.data(),
                                   dataCreationFlags,
@@ -264,7 +266,8 @@ namespace openvkl {
         if (time.size() != totalNumValues)
           throw std::runtime_error("generated time data has incorrect size");
 
-        VKLData data = vklNewData(totalNumValues,
+        VKLData data = vklNewData(device,
+                                  totalNumValues,
                                   voxelType,
                                   voxels.data(),
                                   dataCreationFlags,
@@ -272,13 +275,16 @@ namespace openvkl {
         vklSetData(volume, "data", data);
         vklRelease(data);
 
-        VKLData indexData = vklNewData(
-            tuvIndex.size(), VKL_UINT, tuvIndex.data(), dataCreationFlags);
+        VKLData indexData = vklNewData(device,
+                                       tuvIndex.size(),
+                                       VKL_UINT,
+                                       tuvIndex.data(),
+                                       dataCreationFlags);
         vklSetData(volume, "temporallyUnstructuredIndices", indexData);
         vklRelease(indexData);
 
-        VKLData timeData =
-            vklNewData(time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
+        VKLData timeData = vklNewData(
+            device, time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
         vklSetData(volume, "temporallyUnstructuredTimes", timeData);
         vklRelease(timeData);
 

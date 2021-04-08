@@ -17,11 +17,10 @@ int main()
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
-  vklSetCurrentDevice(device);
 
   vkl_vec3i dimensions{128, 128, 128};
 
-  VKLVolume volume = vklNewVolume("structuredRegular");
+  VKLVolume volume = vklNewVolume(device, "structuredRegular");
   vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
@@ -37,7 +36,8 @@ int main()
         voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
             (float)i;
 
-  attributes.push_back(vklNewData(voxels.size(), VKL_FLOAT, voxels.data()));
+  attributes.push_back(
+      vklNewData(device, voxels.size(), VKL_FLOAT, voxels.data()));
 
   // volume attribute 1: y-grad
   for (int k = 0; k < dimensions.z; k++)
@@ -46,7 +46,8 @@ int main()
         voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
             (float)j;
 
-  attributes.push_back(vklNewData(voxels.size(), VKL_FLOAT, voxels.data()));
+  attributes.push_back(
+      vklNewData(device, voxels.size(), VKL_FLOAT, voxels.data()));
 
   // volume attribute 2: z-grad
   for (int k = 0; k < dimensions.z; k++)
@@ -55,10 +56,11 @@ int main()
         voxels[k * dimensions.x * dimensions.y + j * dimensions.x + i] =
             (float)k;
 
-  attributes.push_back(vklNewData(voxels.size(), VKL_FLOAT, voxels.data()));
+  attributes.push_back(
+      vklNewData(device, voxels.size(), VKL_FLOAT, voxels.data()));
 
   VKLData attributesData =
-      vklNewData(attributes.size(), VKL_DATA, attributes.data());
+      vklNewData(device, attributes.size(), VKL_DATA, attributes.data());
 
   for (auto &attribute : attributes)
     vklRelease(attribute);
@@ -76,7 +78,7 @@ int main()
   vklRelease(sampler);
   vklRelease(volume);
 
-  vklShutdown();
+  vklReleaseDevice(device);
 
   printf("complete.\n");
 

@@ -8,16 +8,13 @@
 #include "logging.h"
 #include "rkcommon/math/AffineSpace.h"
 
+using namespace rkcommon::math;
+
 namespace openvkl {
 
   VKLError loadLocalModule(const std::string &moduleName)
   {
-    std::string libName = "openvkl_module_" + moduleName;
-
-    // support deprecated module name
-    if (moduleName == "ispc_driver") {
-      libName = "openvkl_module_cpu_device";
-    }
+    const std::string libName = "openvkl_module_" + moduleName;
 
     rkcommon::loadLibrary(libName);
 
@@ -188,7 +185,7 @@ namespace openvkl {
   size_t sizeOf(VKLDataType type)
   {
     switch (type) {
-    case VKL_DRIVER:
+    case VKL_DEVICE:
     case VKL_VOID_PTR:
     case VKL_OBJECT:
     case VKL_DATA:
@@ -326,17 +323,14 @@ namespace openvkl {
     return type & VKL_OBJECT;
   }
 
-  void handleError(VKLError e, const std::string &message)
+  void handleError(Device *device, VKLError e, const std::string &message)
   {
-    if (api::deviceIsSet()) {
-      auto &device = api::currentDevice();
-
-      device.lastErrorCode    = e;
-      device.lastErrorMessage = message;
-
-      device.errorCallback(device.errorUserData, e, message.c_str());
+    if (device) {
+      device->lastErrorCode    = e;
+      device->lastErrorMessage = message;
+      device->errorCallback(device->errorUserData, e, message.c_str());
     } else {
-      LogMessageStream(VKL_LOG_ERROR)
+      LogMessageStream(nullptr, VKL_LOG_ERROR)
           << "INITIALIZATION ERROR: " << message << std::endl;
     }
   }

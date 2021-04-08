@@ -10,11 +10,7 @@ using namespace openvkl::testing;
 
 TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   // no strides for these tests
   const float strideFactor = 0.f;
@@ -115,4 +111,6 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
           vec3i(16385, 16385, 2), dcf, 0, vec3i(32, 32, 1));
     }
   }
+
+  shutdownOpenVKL();
 }

@@ -18,7 +18,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   const vkl_range1f tRange{0.f, inf};
   const float time = 0.f;
 
-  VKLVolume volume   = testingVolume->getVKLVolume();
+  VKLVolume volume   = testingVolume->getVKLVolume(getOpenVKLDevice());
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
@@ -91,7 +91,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   const std::vector<float> times(W, 0.f);
 
-  VKLVolume volume   = testingVolume->getVKLVolume();
+  VKLVolume volume   = testingVolume->getVKLVolume(getOpenVKLDevice());
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
@@ -152,13 +152,9 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
 TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
 {
-  vklLoadModule("cpu_device");
+  initializeOpenVKL();
 
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
-
-  const int nativeWidth = vklGetNativeSIMDWidth();
+  const int nativeWidth = vklGetNativeSIMDWidth(getOpenVKLDevice());
 
   // for structured-like volume types: a unit cube physical grid [(0,0,0),
   // (1,1,1)]
@@ -187,8 +183,12 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
   testingVolumes.push_back(std::make_shared<ZUnstructuredProceduralVolume>(
       dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
 
-  testingVolumes.push_back(std::make_shared<ZVdbVolumeFloat>(
-      dimensions, gridOrigin, gridSpacing, VKL_FILTER_TRILINEAR));
+  testingVolumes.push_back(
+      std::make_shared<ZVdbVolumeFloat>(getOpenVKLDevice(),
+                                        dimensions,
+                                        gridOrigin,
+                                        gridSpacing,
+                                        VKL_FILTER_TRILINEAR));
 
   testingVolumes.push_back(std::make_shared<ProceduralShellsAMRVolume<>>(
       dimensions, gridOrigin, gridSpacing));
@@ -222,4 +222,6 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
       }
     }
   }
+
+  shutdownOpenVKL();
 };

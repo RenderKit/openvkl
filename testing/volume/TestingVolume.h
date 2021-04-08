@@ -105,14 +105,14 @@ namespace openvkl {
       virtual ~TestingVolume();
 
       void release();
-      VKLVolume getVKLVolume();
+      VKLVolume getVKLVolume(VKLDevice device);
 
       // returns an application-side computed value range, for comparison with
       // vklGetValueRange() results
       virtual range1f getComputedValueRange() const = 0;
 
      protected:
-      virtual void generateVKLVolume() = 0;
+      virtual void generateVKLVolume(VKLDevice device) = 0;
 
       VKLVolume volume{nullptr};
     };
@@ -132,10 +132,10 @@ namespace openvkl {
       }
     }
 
-    inline VKLVolume TestingVolume::getVKLVolume()
+    inline VKLVolume TestingVolume::getVKLVolume(VKLDevice device)
     {
       if (!volume) {
-        generateVKLVolume();
+        generateVKLVolume(device);
       }
 
       return volume;

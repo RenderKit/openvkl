@@ -139,6 +139,7 @@ if (BUILD_TESTING)
     tests/particle_volume_gradients.cpp
     tests/particle_volume_value_range.cpp
     tests/particle_volume_interval_iterator.cpp
+    tests/multi_device.cpp
   )
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})

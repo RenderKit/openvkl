@@ -173,13 +173,9 @@ void vector_hit_iteration_time_varying(
 
 TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 {
-  vklLoadModule("cpu_device");
+  initializeOpenVKL();
 
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
-
-  int nativeSIMDWidth = vklGetNativeSIMDWidth();
+  int nativeSIMDWidth = vklGetNativeSIMDWidth(getOpenVKLDevice());
 
   WARN(
       "only performing SIMD vectorized hit iteration tests for widths == "
@@ -196,7 +192,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     std::unique_ptr<ZProceduralVolume> v(
         new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-    VKLVolume vklVolume   = v->getVKLVolume();
+    VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
 
@@ -299,7 +295,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       std::unique_ptr<ZProceduralVolume> v(new ZProceduralVolume(
           dimensions, gridOrigin, gridSpacing, temporalConfig));
 
-      VKLVolume vklVolume   = v->getVKLVolume();
+      VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
       VKLSampler vklSampler = vklNewSampler(vklVolume);
       vklCommit(vklSampler);
 
@@ -409,7 +405,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     std::unique_ptr<ZProceduralVolume> v(
         new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-    VKLVolume vklVolume   = v->getVKLVolume();
+    VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
 
@@ -666,4 +662,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     vklRelease(valueSelector);
     vklRelease(vklSampler);
   }
+
+  shutdownOpenVKL();
 }

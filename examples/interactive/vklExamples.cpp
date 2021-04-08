@@ -1,7 +1,6 @@
 // Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "AppInit.h"
 #include "window/GLFWVKLWindow.h"
 #include "window/TransferFunctionWidget.h"
 // openvkl_testing
@@ -516,7 +515,8 @@ void setupVolume(ViewerParams &params,
       // avoid deferred loading when exporting innerNodes to ensure exported
       // value ranges represent the full data
       auto vol = std::shared_ptr<OpenVdbVolume>(
-          OpenVdbVolume::loadVdbFile(params.filename,
+          OpenVdbVolume::loadVdbFile(getOpenVKLDevice(),
+                                     params.filename,
                                      params.field,
                                      params.filter,
                                      params.innerNodeOutput.empty()));
@@ -829,7 +829,8 @@ void setupVolume(ViewerParams &params,
       if (params.multiAttribute) {
         if (params.voxelType == VKL_HALF) {
           testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
-              generateMultiAttributeVdbVolumeHalf(params.dimensions,
+              generateMultiAttributeVdbVolumeHalf(getOpenVKLDevice(),
+                                                  params.dimensions,
                                                   params.gridOrigin,
                                                   params.gridSpacing,
                                                   params.filter,
@@ -837,7 +838,8 @@ void setupVolume(ViewerParams &params,
                                                   false));
         } else if (params.voxelType == VKL_FLOAT) {
           testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
-              generateMultiAttributeVdbVolumeFloat(params.dimensions,
+              generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                                   params.dimensions,
                                                    params.gridOrigin,
                                                    params.gridSpacing,
                                                    params.filter,
@@ -851,25 +853,43 @@ void setupVolume(ViewerParams &params,
       } else {
         if (params.voxelType == VKL_HALF) {
           if (params.field == "xyz") {
-            testingVolume = std::make_shared<XYZVdbVolumeHalf>(
-                params.dimensions, params.gridOrigin, params.gridSpacing);
+            testingVolume =
+                std::make_shared<XYZVdbVolumeHalf>(getOpenVKLDevice(),
+                                                   params.dimensions,
+                                                   params.gridOrigin,
+                                                   params.gridSpacing);
           } else if (params.field == "sphere") {
-            testingVolume = std::make_shared<SphereVdbVolumeHalf>(
-                params.dimensions, params.gridOrigin, params.gridSpacing);
+            testingVolume =
+                std::make_shared<SphereVdbVolumeHalf>(getOpenVKLDevice(),
+                                                      params.dimensions,
+                                                      params.gridOrigin,
+                                                      params.gridSpacing);
           } else {
-            testingVolume = std::make_shared<WaveletVdbVolumeHalf>(
-                params.dimensions, params.gridOrigin, params.gridSpacing);
+            testingVolume =
+                std::make_shared<WaveletVdbVolumeHalf>(getOpenVKLDevice(),
+                                                       params.dimensions,
+                                                       params.gridOrigin,
+                                                       params.gridSpacing);
           }
         } else if (params.voxelType == VKL_FLOAT) {
           if (params.field == "xyz") {
-            testingVolume = std::make_shared<XYZVdbVolumeFloat>(
-                params.dimensions, params.gridOrigin, params.gridSpacing);
+            testingVolume =
+                std::make_shared<XYZVdbVolumeFloat>(getOpenVKLDevice(),
+                                                    params.dimensions,
+                                                    params.gridOrigin,
+                                                    params.gridSpacing);
           } else if (params.field == "sphere") {
-            testingVolume = std::make_shared<SphereVdbVolumeFloat>(
-                params.dimensions, params.gridOrigin, params.gridSpacing);
+            testingVolume =
+                std::make_shared<SphereVdbVolumeFloat>(getOpenVKLDevice(),
+                                                       params.dimensions,
+                                                       params.gridOrigin,
+                                                       params.gridSpacing);
           } else {
-            testingVolume = std::make_shared<WaveletVdbVolumeFloat>(
-                params.dimensions, params.gridOrigin, params.gridSpacing);
+            testingVolume =
+                std::make_shared<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
+                                                        params.dimensions,
+                                                        params.gridOrigin,
+                                                        params.gridSpacing);
           }
         } else {
           throw std::runtime_error(
@@ -913,7 +933,7 @@ void setupScene(const ViewerParams &params,
                 TestingVolume *testingVolume,
                 Scene &scene)
 {
-  scene.updateVolume(testingVolume->getVKLVolume());
+  scene.updateVolume(testingVolume->getVKLVolume(getOpenVKLDevice()));
   setupSampler(params, scene);
 }
 
@@ -1107,7 +1127,7 @@ void interactiveRender(ViewerParams &params,
   glfwVKLWindow->registerEndOfFrameCallback([&]() {
     auto vdbVolume = dynamic_cast<OpenVdbVolume *>(testingVolume);
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
-      scene.updateVolume(vdbVolume->getVKLVolume());
+      scene.updateVolume(vdbVolume->getVKLVolume(getOpenVKLDevice()));
       setupSampler(params, scene);
       scene.updateValueSelector(transferFunction, isoValues);
 
@@ -1174,9 +1194,10 @@ int main(int argc, const char **argv)
   logToOutput(params, scene);
 
   if (params.gridType == "vdb" && !params.innerNodeOutput.empty()) {
-    openvkl::vdb_util::exportInnerNodes(params.innerNodeOutput,
-                                        params.innerNodeMaxDepth,
-                                        testingVolume->getVKLVolume());
+    openvkl::vdb_util::exportInnerNodes(
+        params.innerNodeOutput,
+        params.innerNodeMaxDepth,
+        testingVolume->getVKLVolume(getOpenVKLDevice()));
   }
 
   if (params.interactive) {
@@ -1188,7 +1209,7 @@ int main(int argc, const char **argv)
   // cleanly shut VKL down
   scene = Scene();
   testingVolume.reset();
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

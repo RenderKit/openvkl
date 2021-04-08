@@ -17,7 +17,8 @@ namespace openvkl {
 
     struct OpenVdbVolume : public TestingVolume
     {
-      static OpenVdbVolume *loadVdbFile(const std::string &filename,
+      static OpenVdbVolume *loadVdbFile(VKLDevice device,
+                                        const std::string &filename,
                                         const std::string &field,
                                         VKLFilter filter,
                                         bool deferLeaves = false);
@@ -39,13 +40,13 @@ namespace openvkl {
       OpenVdbVolumeImpl(OpenVdbVolumeImpl &&other)                 = default;
       OpenVdbVolumeImpl &operator=(OpenVdbVolumeImpl &&other) = default;
 
-      OpenVdbVolumeImpl(const std::string &filename,
+      OpenVdbVolumeImpl(VKLDevice device,
+                        const std::string &filename,
                         const std::string &field,
                         VKLFilter filter,
                         bool deferLeaves = false)
-          : grid(filename, field, deferLeaves), filter(filter)
+          : grid(device, filename, field, deferLeaves), filter(filter)
       {
-        volume = grid.createVolume(filter);
       }
 
       ~OpenVdbVolumeImpl()
@@ -134,7 +135,15 @@ namespace openvkl {
         uint64_t commitMS{0};  // The time it took to commit.
       };
 
-      void generateVKLVolume() override {}
+      void generateVKLVolume(VKLDevice device) override
+      {
+        if (device != grid.getVKLDevice()) {
+          throw std::runtime_error(
+              "specified device not compatible with grid device");
+        }
+
+        volume = grid.createVolume(filter);
+      }
 
      private:
       Grid grid;
@@ -149,6 +158,7 @@ namespace openvkl {
         OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbVec3sGrid>;
 
     inline OpenVdbVolume *OpenVdbVolume::loadVdbFile(
+        VKLDevice device,
         const std::string &filename,
         const std::string &field,
         VKLFilter filter,
@@ -162,9 +172,11 @@ namespace openvkl {
       openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
 
       if (baseGrid->valueType() == "float") {
-        return new OpenVdbFloatVolume(filename, field, filter, deferLeaves);
+        return new OpenVdbFloatVolume(
+            device, filename, field, filter, deferLeaves);
       } else if (baseGrid->valueType() == "vec3s") {
-        return new OpenVdbVec3sVolume(filename, field, filter, deferLeaves);
+        return new OpenVdbVec3sVolume(
+            device, filename, field, filter, deferLeaves);
       } else {
         throw std::runtime_error("unsupported OpenVDB grid type: " +
                                  baseGrid->valueType());
@@ -184,7 +196,8 @@ namespace openvkl {
 
     struct OpenVdbVolume : public TestingVolume
     {
-      static OpenVdbVolume *loadVdbFile(const std::string &filename,
+      static OpenVdbVolume *loadVdbFile(VKLDevice device,
+                                        const std::string &filename,
                                         const std::string &field,
                                         VKLFilter filter,
                                         bool deferLeaves = false)
@@ -227,7 +240,7 @@ namespace openvkl {
       }
 
      protected:
-      void generateVKLVolume() override {}
+      void generateVKLVolume(VKLDevice device) override {}
     };
 
     using OpenVdbFloatVolume = OpenVdbVolumeImpl;

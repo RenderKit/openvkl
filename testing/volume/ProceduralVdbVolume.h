@@ -81,6 +81,7 @@ namespace openvkl {
       ~ProceduralVdbVolume()                                 = default;
 
       ProceduralVdbVolume(
+          VKLDevice device,
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
@@ -100,7 +101,7 @@ namespace openvkl {
       vec3f computeProceduralGradientImpl(const vec3f &objectCoordinates,
                                           float time) const override;
 
-      void generateVKLVolume() override;
+      void generateVKLVolume(VKLDevice device) override;
 
      private:
       std::unique_ptr<Buffers> buffers;
@@ -119,7 +120,8 @@ namespace openvkl {
               VOXEL_TYPE samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &, float)>
     inline ProceduralVdbVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
-        ProceduralVdbVolume(const vec3i &dimensions,
+        ProceduralVdbVolume(VKLDevice device,
+                            const vec3i &dimensions,
                             const vec3f &gridOrigin,
                             const vec3f &gridSpacing,
                             VKLFilter filter,
@@ -129,7 +131,7 @@ namespace openvkl {
                                   gridOrigin,
                                   gridSpacing,
                                   getVKLDataType<VOXEL_TYPE>()),
-          buffers(new Buffers({getVKLDataType<VOXEL_TYPE>()})),
+          buffers(new Buffers(device, {getVKLDataType<VOXEL_TYPE>()})),
           filter(filter),
           dataCreationFlags(dataCreationFlags),
           byteStride(byteStride)
@@ -275,12 +277,18 @@ namespace openvkl {
     template <typename VOXEL_TYPE,
               VOXEL_TYPE samplingFunction(const vec3f &, float),
               vec3f gradientFunction(const vec3f &, float)>
-    inline void ProceduralVdbVolume<VOXEL_TYPE,
-                                    samplingFunction,
-                                    gradientFunction>::generateVKLVolume()
+    inline void
+    ProceduralVdbVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
+        generateVKLVolume(VKLDevice device)
     {
       if (buffers) {
         release();
+
+        if (device != buffers->getVKLDevice()) {
+          throw std::runtime_error(
+              "specified device not compatible with VdbVolumeBuffers device");
+        }
+
         volume = buffers->createVolume(filter);
       }
     }

@@ -534,7 +534,8 @@ namespace openvkl {
     /*
      * Verify that the node format makes sense.
      */
-    inline void verifyNodeFormat(size_t node,  // purely for error reporting.
+    inline void verifyNodeFormat(Device *device,
+                                 size_t node,  // purely for error reporting.
                                  uint32_t level,
                                  VKLFormat format,
                                  uint32_t numAttributes,
@@ -564,7 +565,7 @@ namespace openvkl {
           runtimeError(label + "no voxel data for tile node");
 
         if (format == VKL_FORMAT_TILE && size > 1) {
-          LogMessageStream(VKL_LOG_WARNING)
+          LogMessageStream(device, VKL_LOG_WARNING)
               << label << "data array too big for tile node" << std::endl;
         }
 
@@ -574,7 +575,7 @@ namespace openvkl {
 
         if (format == VKL_FORMAT_CONSTANT_ZYX &&
             size > vklVdbLevelNumVoxels(level)) {
-          LogMessageStream(VKL_LOG_WARNING)
+          LogMessageStream(device, VKL_LOG_WARNING)
               << label << "data array too big for constant node" << std::endl;
         }
       }
@@ -679,7 +680,8 @@ namespace openvkl {
                        grid->numAttributes,
                        grid->leafData + i * grid->numAttributes));
 
-          verifyNodeFormat(i,
+          verifyNodeFormat(this->device.ptr,
+                           i,
                            (*leafLevel)[i],
                            static_cast<VKLFormat>((*leafFormat)[i]),
                            grid->numAttributes,

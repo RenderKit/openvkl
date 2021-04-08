@@ -30,7 +30,7 @@ namespace openvkl {
       const std::vector<vec4f> &getParticles();
 
      protected:
-      void generateVKLVolume() override;
+      void generateVKLVolume(VKLDevice device) override;
 
       float computeProceduralValueImpl(const vec3f &p,
                                        float time) const override;
@@ -84,7 +84,7 @@ namespace openvkl {
       return particles;
     }
 
-    inline void ProceduralParticleVolume::generateVKLVolume()
+    inline void ProceduralParticleVolume::generateVKLVolume(VKLDevice device)
     {
       int32_t randomSeed = 0;
 
@@ -121,9 +121,10 @@ namespace openvkl {
         weights[i] = provideWeights ? weightDistribution(gen) : 1.f;
       }
 
-      volume = vklNewVolume("particle");
+      volume = vklNewVolume(device, "particle");
 
-      VKLData positionsData = vklNewData(numParticles,
+      VKLData positionsData = vklNewData(device,
+                                         numParticles,
                                          VKL_VEC3F,
                                          particles.data(),
                                          VKL_DATA_SHARED_BUFFER,
@@ -131,7 +132,8 @@ namespace openvkl {
       vklSetData(volume, "particle.position", positionsData);
       vklRelease(positionsData);
 
-      VKLData radiiData = vklNewData(numParticles,
+      VKLData radiiData = vklNewData(device,
+                                     numParticles,
                                      VKL_FLOAT,
                                      &(particles.data()[0].w),
                                      VKL_DATA_SHARED_BUFFER,
@@ -141,7 +143,7 @@ namespace openvkl {
 
       if (provideWeights) {
         VKLData weightsData =
-            vklNewData(numParticles, VKL_FLOAT, weights.data());
+            vklNewData(device, numParticles, VKL_FLOAT, weights.data());
         vklSetData(volume, "particle.weight", weightsData);
         vklRelease(weightsData);
       }

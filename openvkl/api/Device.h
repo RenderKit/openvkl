@@ -14,8 +14,13 @@
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/ParameterizedObject.h"
 
+#ifdef NDEBUG
+#define LOG_LEVEL_DEFAULT VKL_LOG_INFO
+#else
+#define LOG_LEVEL_DEFAULT VKL_LOG_DEBUG
+#endif
+
 using namespace rkcommon;
-using namespace rkcommon::math;
 
 namespace openvkl {
   namespace api {
@@ -24,8 +29,6 @@ namespace openvkl {
         : public rkcommon::memory::RefCountedObject,
           public rkcommon::utility::ParameterizedObject
     {
-      static memory::IntrusivePtr<Device> current;
-
       Device();
       virtual ~Device() override = default;
 
@@ -49,7 +52,7 @@ namespace openvkl {
       // Device parameters (updated on commit()) //////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      static VKLLogLevel logLevel;
+      VKLLogLevel logLevel = LOG_LEVEL_DEFAULT;
 
       std::function<void(void *, const char *)> logCallback{
           [](void *, const char *) {}};
@@ -238,12 +241,6 @@ namespace openvkl {
 #undef __define_iterateHitN
 
       /////////////////////////////////////////////////////////////////////////
-      // Module ///////////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      virtual VKLError loadModule(const char *moduleName) = 0;
-
-      /////////////////////////////////////////////////////////////////////////
       // Parameters ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
@@ -254,10 +251,10 @@ namespace openvkl {
       virtual void set1i(VKLObject object, const char *name, const int x)   = 0;
       virtual void setVec3f(VKLObject object,
                             const char *name,
-                            const vec3f &v)                                 = 0;
+                            const math::vec3f &v)                           = 0;
       virtual void setVec3i(VKLObject object,
                             const char *name,
-                            const vec3i &v)                                 = 0;
+                            const math::vec3i &v)                           = 0;
       virtual void setObject(VKLObject object,
                              const char *name,
                              VKLObject setObject)                           = 0;
@@ -274,7 +271,7 @@ namespace openvkl {
 
       virtual void valueSelectorSetRanges(
           VKLValueSelector valueSelector,
-          const utility::ArrayView<const range1f> &ranges) = 0;
+          const utility::ArrayView<const math::range1f> &ranges) = 0;
 
       virtual void valueSelectorSetValues(
           VKLValueSelector valueSelector,
@@ -360,19 +357,15 @@ namespace openvkl {
 
       virtual VKLVolume newVolume(const char *type) = 0;
 
-      virtual box3f getBoundingBox(VKLVolume volume) = 0;
+      virtual math::box3f getBoundingBox(VKLVolume volume) = 0;
 
       virtual unsigned int getNumAttributes(VKLVolume volume) = 0;
 
-      virtual range1f getValueRange(VKLVolume volume) = 0;
+      virtual math::range1f getValueRange(VKLVolume volume) = 0;
 
      private:
       bool committed = false;
     };
-
-    // shorthand functions to query current API device
-    OPENVKL_CORE_INTERFACE bool deviceIsSet();
-    OPENVKL_CORE_INTERFACE Device &currentDevice();
 
 #define VKL_REGISTER_DEVICE(InternalClass, external_name) \
   VKL_REGISTER_OBJECT(                                    \

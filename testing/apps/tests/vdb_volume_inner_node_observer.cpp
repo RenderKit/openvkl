@@ -131,11 +131,7 @@ inline void inner_node_tests(VKLVolume vklVolume,
 
 TEST_CASE("VDB volume inner node observer", "[volume_observers]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   const vec3i dimensions(256);
 
@@ -146,34 +142,50 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
     for (const auto &gridSpacing : gridSpacings) {
       // single attributes volumes
       {
-        auto v = rkcommon::make_unique<WaveletVdbVolumeFloat>(
-            dimensions, gridOrigin, gridSpacing, VKL_FILTER_NEAREST);
+        auto v =
+            rkcommon::make_unique<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_NEAREST);
 
-        inner_node_tests(
-            v->getVKLVolume(), dimensions, gridOrigin, gridSpacing);
+        inner_node_tests(v->getVKLVolume(getOpenVKLDevice()),
+                         dimensions,
+                         gridOrigin,
+                         gridSpacing);
       }
 
       {
-        auto v = rkcommon::make_unique<XYZVdbVolumeFloat>(
-            dimensions, gridOrigin, gridSpacing, VKL_FILTER_NEAREST);
+        auto v = rkcommon::make_unique<XYZVdbVolumeFloat>(getOpenVKLDevice(),
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_NEAREST);
 
-        inner_node_tests(
-            v->getVKLVolume(), dimensions, gridOrigin, gridSpacing);
+        inner_node_tests(v->getVKLVolume(getOpenVKLDevice()),
+                         dimensions,
+                         gridOrigin,
+                         gridSpacing);
       }
 
       // multi-attribute volume
       {
         std::unique_ptr<ProceduralVdbVolumeMulti> v(
-            generateMultiAttributeVdbVolumeFloat(dimensions,
+            generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                                 dimensions,
                                                  gridOrigin,
                                                  gridSpacing,
                                                  VKL_FILTER_NEAREST,
                                                  VKL_DATA_DEFAULT,
                                                  true));
 
-        inner_node_tests(
-            v->getVKLVolume(), dimensions, gridOrigin, gridSpacing);
+        inner_node_tests(v->getVKLVolume(getOpenVKLDevice()),
+                         dimensions,
+                         gridOrigin,
+                         gridSpacing);
       }
     }
   }
+
+  shutdownOpenVKL();
 }

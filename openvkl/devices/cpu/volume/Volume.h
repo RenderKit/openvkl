@@ -28,7 +28,7 @@ namespace openvkl {
       Volume()                   = default;
       virtual ~Volume() override = default;
 
-      static Volume *createInstance(const std::string &type);
+      static Volume *createInstance(Device *device, const std::string &type);
 
       virtual ValueSelector<W> *newValueSelector();
 
@@ -54,9 +54,10 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline Volume<W> *Volume<W>::createInstance(const std::string &type)
+    inline Volume<W> *Volume<W>::createInstance(Device *device,
+                                                const std::string &type)
     {
-      return createInstanceHelper<Volume<W>, VKL_VOLUME>(type);
+      return createInstanceHelper<Volume<W>, VKL_VOLUME>(device, type);
     }
 
     template <int W>

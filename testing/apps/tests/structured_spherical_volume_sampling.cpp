@@ -27,7 +27,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
   auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -64,11 +64,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
 
 TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   SECTION("32-bit addressing")
   {
@@ -164,4 +160,6 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 
   // 64-bit addressing mode is sufficiently addressed in structured regular
   // sampling tests
+
+  shutdownOpenVKL();
 }

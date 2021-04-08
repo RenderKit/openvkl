@@ -11,11 +11,7 @@ using namespace openvkl::testing;
 
 TEST_CASE("Structured regular volume strides", "[volume_strides]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT,
                                                       VKL_DATA_SHARED_BUFFER};
@@ -112,4 +108,6 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

@@ -53,11 +53,7 @@ void scalar_hit_iteration(VKLVolume volume,
 
 TEST_CASE("Hit iterator", "[hit_iterators]")
 {
-  vklLoadModule("cpu_device");
-
-  VKLDevice device = vklNewDevice("cpu");
-  vklCommitDevice(device);
-  vklSetCurrentDevice(device);
+  initializeOpenVKL();
 
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   const vec3i dimensions(128);
@@ -80,7 +76,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       std::unique_ptr<ZProceduralVolume> v(
           new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
-      VKLVolume vklVolume = v->getVKLVolume();
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
       scalar_hit_iteration(
           vklVolume, 0.f, defaultIsoValues, defaultExpectedTValues);
@@ -94,7 +90,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       std::unique_ptr<ZProceduralVolume> v(
           new ZProceduralVolume(vec3i(128), vec3f(0.f), vec3f(1.f)));
 
-      VKLVolume vklVolume = v->getVKLVolume();
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
       std::vector<float> macroCellBoundaries;
       std::vector<float> macroCellTValues;
@@ -113,8 +109,9 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       std::unique_ptr<ZProceduralVolume> v(
           new ZProceduralVolume(vec3i(17, 17, 17), vec3f(0.f), vec3f(1.f) / vec3f(16.f)));
 
-      VKLVolume vklVolume = v->getVKLVolume();
-      // We're tracing from the back, so we'll hit the isovalues in reverse order
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+      // We're tracing from the back, so we'll hit the isovalues in reverse
+      // order
       std::vector<float> reversedIsovalues = defaultIsoValues;
       std::reverse(reversedIsovalues.begin(), reversedIsovalues.end());
 
@@ -136,7 +133,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
         std::unique_ptr<ZProceduralVolume> v(new ZProceduralVolume(
             dimensions, gridOrigin, gridSpacing, temporalConfig));
 
-        VKLVolume vklVolume = v->getVKLVolume();
+        VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
         const std::vector<float> times{0.f, 0.2f, 0.4f, 0.6f};
 
@@ -160,10 +157,12 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
           new ZUnstructuredProceduralVolume(
               dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
 
-      VKLVolume vklVolume = v->getVKLVolume();
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
       scalar_hit_iteration(
           vklVolume, 0.f, defaultIsoValues, defaultExpectedTValues);
     }
   }
+
+  shutdownOpenVKL();
 }

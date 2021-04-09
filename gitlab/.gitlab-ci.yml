@@ -5,6 +5,7 @@ variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
   OPENVKL_RELEASE_PACKAGE_VERSION: "0.13.0"
+  MACOSX_DEPLOYMENT_TARGET: "10.13"
 
 stages:
   - build

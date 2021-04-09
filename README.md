@@ -32,6 +32,12 @@ example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
 
+### Open VKL 0.12.1
+
+  - Fixed bug in VDB volume interval iterator implementation which could
+    lead to missed intervals or incorrect value ranges in returned
+    intervals
+
 ### Open VKL 0.12.0
 
   - Added support for temporally varying volumes with associated API
@@ -1047,7 +1053,7 @@ gradients are always \((0, 0, 0)\).
 
   - Open VKL supports four-level vdb volumes. The resolution of each
     level can be configured at compile time using CMake variables.
-    
+
       - `VKL_VDB_LOG_RESOLUTION_0` sets the base 2 logarithm of the root
         level resolution. This variable defaults to 6, which means that
         the root level has a resolution of \((2^6)^3 = 64^3\).
@@ -2200,7 +2206,7 @@ Open VKL currently supports Linux, Mac OS X, and Windows. In addition,
 before you can build Open VKL you need the following prerequisites:
 
   - You can clone the latest Open VKL sources via:
-    
+
         git clone https://github.com/openvkl/openvkl.git
 
   - To build Open VKL you need [CMake](http://www.cmake.org), any form
@@ -2259,10 +2265,10 @@ Assuming the above prerequisites are all fulfilled, building Open VKL
 through CMake is easy:
 
   - Create a build directory, and go into it
-    
+
         mkdir openvkl/build
         cd openvkl/build
-    
+
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc.).
 
@@ -2271,22 +2277,22 @@ through CMake is easy:
     different compiler, run cmake manually while specifying the desired
     compiler. The default compiler on most linux machines is `gcc`, but
     it can be pointed to `clang` instead by executing the following:
-    
+
         cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
-    
+
     CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run.
 
   - Open the CMake configuration dialog
-    
+
         ccmake ..
 
   - Make sure to properly set build mode and enable the components you
     need, etc.; then type ’c’onfigure and ’g’enerate. When back on the
     command prompt, build it using
-    
+
         make
 
   - You should now have `libopenvkl.so` as well as the tutorial /

@@ -60,7 +60,7 @@ namespace openvkl {
        */
       unsigned int getNumAttributes() const override
       {
-        return numAttributes;
+        return grid ? grid->numAttributes : 0;
       }
 
       /*
@@ -104,11 +104,10 @@ namespace openvkl {
 
      private:
       box3f bounds;
-      unsigned int numAttributes;
       std::string name;
       range1f valueRange;
       Ref<const DataT<Data *>> leafData;
-      std::vector<AlignedVector16<ispc::Data1D>> leafAttributesDataISPC;
+      Ref<const DataT<uint32_t>> leafFormat;
       VdbGrid *grid{nullptr};
       Allocator allocator;
 

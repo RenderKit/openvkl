@@ -69,11 +69,8 @@ inline void VdbSampler_sampleInner_@VKL_VDB_UNIVARY_IN@_@VKL_VDB_UNIVARY_OUT@_@V
   if (!vklVdbVoxelIsEmpty(voxelValue)
    && VdbLeafAccessObserver_isObservable(sampler))
   {
-    const univary_in uint64 originalIndex =
-      sampler->grid->levels[@VKL_VDB_LEVEL@].leafIndex[vo32];
-    assert(originalIndex < ((univary_in uint64)1) << 32);
-    const univary_in uint32 oi32 = ((univary_in uint32)originalIndex);
-    VdbLeafAccessObserver_observe_@VKL_VDB_UNIVARY_IN@(sampler, oi32);
+    const univary_in uint32 leafIndex = vklVdbVoxelLeafGetIndex(voxelValue);
+    VdbLeafAccessObserver_observe_@VKL_VDB_UNIVARY_IN@(sampler, leafIndex);
   }
 
   voxel = voxelValue;

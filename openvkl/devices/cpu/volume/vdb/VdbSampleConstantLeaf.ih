@@ -13,9 +13,7 @@
    * Sample a constant leaf at the given offset, assuming compact data.      \
    */                                                                        \
   inline varying float VdbSampler_sampleConstantLeafCompact_##voxelType(     \
-      const uniform Data1D *varying leafPtr,                                 \
-      const varying vec3ui &offset,                                          \
-      uniform uint32 attributeIndex)                                         \
+      const uniform Data1D *varying leafPtr, const varying vec3ui &offset)   \
   {                                                                          \
     const varying uint64 voxelIdx =                                          \
         __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
@@ -23,16 +21,14 @@
                                                                              \
     assert(voxelIdx < ((varying uint64)1) << 32);                            \
     const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
-    return get_##voxelType##_compact(&leafPtr[attributeIndex], v32);         \
+    return get_##voxelType##_compact(leafPtr, v32);                          \
   }                                                                          \
                                                                              \
   /*                                                                         \
    * Sample a constant leaf at the given offset, assuming strided data.      \
    */                                                                        \
   inline varying float VdbSampler_sampleConstantLeafStrided_##voxelType(     \
-      const uniform Data1D *varying leafPtr,                                 \
-      const varying vec3ui &offset,                                          \
-      uniform uint32 attributeIndex)                                         \
+      const uniform Data1D *varying leafPtr, const varying vec3ui &offset)   \
   {                                                                          \
     const varying uint64 voxelIdx =                                          \
         __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
@@ -40,7 +36,7 @@
                                                                              \
     assert(voxelIdx < ((varying uint64)1) << 32);                            \
     const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
-    return get_##voxelType##_strided(&leafPtr[attributeIndex], v32);         \
+    return get_##voxelType##_strided(leafPtr, v32);                          \
   }                                                                          \
                                                                              \
   /*                                                                         \
@@ -51,9 +47,7 @@
                                                                              \
   /* assumes compact data */                                                 \
   inline varying float VdbSampler_sampleConstantLeafCompact_##voxelType(     \
-      const uniform Data1D *uniform leafPtr,                                 \
-      const varying vec3ui &offset,                                          \
-      uniform uint32 attributeIndex)                                         \
+      const uniform Data1D *uniform leafPtr, const varying vec3ui &offset)   \
   {                                                                          \
     const varying uint64 voxelIdx =                                          \
         __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
@@ -63,16 +57,14 @@
     const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
     uniform uint32 uv32;                                                     \
     if (reduce_equal(v32, &uv32))                                            \
-      return get_##voxelType##_compact(leafPtr[attributeIndex], uv32);       \
+      return get_##voxelType##_compact(*leafPtr, uv32);                      \
     else                                                                     \
-      return get_##voxelType##_compact(leafPtr[attributeIndex], v32);        \
+      return get_##voxelType##_compact(*leafPtr, v32);                       \
   }                                                                          \
                                                                              \
   /* assumes strided data */                                                 \
   inline varying float VdbSampler_sampleConstantLeafStrided_##voxelType(     \
-      const uniform Data1D *uniform leafPtr,                                 \
-      const varying vec3ui &offset,                                          \
-      uniform uint32 attributeIndex)                                         \
+      const uniform Data1D *uniform leafPtr, const varying vec3ui &offset)   \
   {                                                                          \
     const varying uint64 voxelIdx =                                          \
         __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
@@ -82,9 +74,9 @@
     const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
     uniform uint32 uv32;                                                     \
     if (reduce_equal(v32, &uv32))                                            \
-      return get_##voxelType##_strided(leafPtr[attributeIndex], uv32);       \
+      return get_##voxelType##_strided(*leafPtr, uv32);                      \
     else                                                                     \
-      return get_##voxelType##_strided(leafPtr[attributeIndex], v32);        \
+      return get_##voxelType##_strided(*leafPtr, v32);                       \
   }                                                                          \
                                                                              \
   /*                                                                         \
@@ -93,9 +85,7 @@
                                                                              \
   /* assumes compact data */                                                 \
   inline uniform float VdbSampler_sampleConstantLeafCompact_##voxelType(     \
-      const uniform Data1D *uniform leafPtr,                                 \
-      const uniform vec3ui &offset,                                          \
-      uniform uint32 attributeIndex)                                         \
+      const uniform Data1D *uniform leafPtr, const uniform vec3ui &offset)   \
   {                                                                          \
     const uniform uint64 voxelIdx =                                          \
         __vkl_vdb_domain_offset_to_linear_uniform_leaf(                      \
@@ -103,14 +93,12 @@
                                                                              \
     assert(voxelIdx < ((uniform uint64)1) << 32);                            \
     const uniform uint32 v32 = ((uniform uint32)voxelIdx);                   \
-    return get_##voxelType##_compact(leafPtr[attributeIndex], v32);          \
+    return get_##voxelType##_compact(*leafPtr, v32);                         \
   }                                                                          \
                                                                              \
   /* assumes strided data */                                                 \
   inline uniform float VdbSampler_sampleConstantLeafStrided_##voxelType(     \
-      const uniform Data1D *uniform leafPtr,                                 \
-      const uniform vec3ui &offset,                                          \
-      uniform uint32 attributeIndex)                                         \
+      const uniform Data1D *uniform leafPtr, const uniform vec3ui &offset)   \
   {                                                                          \
     const uniform uint64 voxelIdx =                                          \
         __vkl_vdb_domain_offset_to_linear_uniform_leaf(                      \
@@ -118,7 +106,7 @@
                                                                              \
     assert(voxelIdx < ((uniform uint64)1) << 32);                            \
     const uniform uint32 v32 = ((uniform uint32)voxelIdx);                   \
-    return get_##voxelType##_strided(leafPtr[attributeIndex], v32);          \
+    return get_##voxelType##_strided(*leafPtr, v32);                         \
   }
 
 template_VdbSampler_sampleConstantLeaf(half);

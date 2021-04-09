@@ -8,16 +8,20 @@
 
 #if defined(ISPC)
 
+#include "../common/Data.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/math.ih"
 #include "rkcommon/math/vec.ih"
 
 #elif defined(__cplusplus)
 
+#include "../common/Data.h"
 #include "../common/math.h"
 
 namespace openvkl {
   namespace cpu_device {
+
+    using ispc::Data1D;
 
 #endif  // defined(__cplusplus)
 
@@ -31,10 +35,6 @@ struct VdbLevel
   // Voxels for node 0, node 1, node 2, ...
   vkl_uint64 *voxels;
 
-  // For each voxel, the original leaf index.
-  // Note: These are only valid for leaf voxels.
-  vkl_uint64 *leafIndex;
-
   // For each voxel, the range of values contained within, by attribute:
   // (range0, range1, ..., rangeNumAttributes)_0, [...]
   range1f *valueRange;
@@ -45,23 +45,45 @@ struct VdbLevel
  */
 struct VdbGrid
 {
+  // Global grid parameters.
+  float objectToIndex[12];  // Row-major transformation matrix, 3x4,
+                            // rotation-shear-scale | translation
+  float indexToObject[12];  // Row-major transformation matrix, 3x4,
+                            // rotation-shear-scale | translation
+  vec3i rootOrigin;         // In index scale space.
+  vec3ui activeSize;        // Size of the root node, in voxels,
+
+  // Per-node data.
+  vkl_uint64 numLeaves;
   vkl_uint32 numAttributes;
-  vkl_uint32 *attributeTypes; // Data type for each attribute.
-  vkl_uint32 maxIteratorDepth;
-  float objectToIndex[12];    // Row-major transformation matrix, 3x4,
-                              // rotation-shear-scale | translation
-  float indexToObject[12];    // Row-major transformation matrix, 3x4,
-                              // rotation-shear-scale | translation
-  vkl_uint64 totalNumLeaves;  // The total number of leaf nodes in this tree.
-  bool allLeavesCompact;      // If all leaves have compact (non-strided) data
-  vkl_uint64
-      numLeaves[VKL_VDB_NUM_LEVELS];  // The number of leaf nodes per level.
-  vkl_uint64 maxVoxelOffset;  // Used to select 64bit or 32bit traversal. TODO:
-                              // Use this in VDBSampler.ispc
-  vec3i rootOrigin;           // In index scale space.
-  vec3ui activeSize;          // Size of the root node, in voxels (relative to origin).
+  bool allLeavesCompact;        // Do we only have compact (non strided) data?
+  vkl_uint32 *attributeTypes;   // Data type for each attribute.
+  Data1D *leafData;             // Data1D[numLeaves * numAttributes]
+  const VKLFormat *leafFormat;  // For each leaf node, the data format.
+
+  // Level data.
   VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];
 };
+
+/*
+ * Obtain a pointer to the given leaf node and attribute.
+ */
+#define __vkl_vdb_get_leaf_data(univary)                                       \
+  inline const Data1D *univary vklVdbGetLeafData(                              \
+      const VdbGrid *VKL_INTEROP_UNIFORM grid,                                 \
+      univary vkl_uint64 leafIndex,                                            \
+      VKL_INTEROP_UNIFORM vkl_uint32 attributeIndex)                           \
+  {                                                                            \
+    assert(grid);                                                              \
+    assert(leafIndex < grid->numLeaves);                                       \
+    assert(attributeIndex < grid->numAttributes);                              \
+    return grid->leafData +                                                    \
+           ((VKL_INTEROP_UNIFORM vkl_uint64)grid->numAttributes) * leafIndex + \
+           ((VKL_INTEROP_UNIFORM vkl_uint64)attributeIndex);                   \
+  }
+
+__vkl_interop_univary(__vkl_vdb_get_leaf_data)
+#undef __vkl_vdb_get_leaf_data
 
 /*
  * Transform points and vectors with the given affine matrix (in row major
@@ -105,30 +127,29 @@ struct VdbGrid
 __vkl_interop_univary(__vkl_vdb_xfm_functions)
 #undef __vkl_vdb_xfm_functions
 
-    // ==========================================================================
-    // // Voxel encoding
-    //
-    // empty    : 00 ... 00000
-    // error    : V .. L .. 01 (32 bit voxel offset, 16 bit empty, 8-bit voxel
-    //                          level, 6 bit empty, 2 bit type)
-    // child    : II ... III10 (62 bit index,   2 bit type)
-    // leaf     : PP ... PTT11 (60 bit pointer, 2 bit node format, 2 bit type)
-    //
-    // - Child node indices are extracted by masking the lower two bits. This
-    // means that indices must be multiples of 4 (which is always true given
-    // that voxels are 8 bytes apart).
-    //
-    // - In 32 bit mode, only the first 32 bits are read, the second 32 bits are
-    // ignored.  32 bit mode is only used if the high bits are 0 for all voxels
-    // in the tree.
-    //
-    // - The lower 4 bits of leaf pointers are used for node format and type
-    // information, which means that leaf data pointers must be aligned to 16
-    // byte boundaries. VKLVdb will reject other pointers.
-    // ==========================================================================
-    // //
+/*******************************************************************************
+ *
+ * Voxel encoding
+ *
+ * empty    : 00 ... 00000
+ * error    : V .. L .. 01          (32 bit voxel offset, 16 bit empty,
+ *                                   8 bit voxel level, 6 bit empty,
+ *                                   2 bit type)
+ * child    : II ... III 10         (62 bit index, 2 bit type)
+ * leaf     : II .. II .. 00 DF 11  (58 bit leaf index, 2 bit empty,
+ *                                   2 bit data format, 2 bit type)
+ *
+ ******************************************************************************/
 
-    inline VKL_INTEROP_UNIFORM vkl_uint64 vklVdbVoxelMakeEmpty()
+/*
+ * This is the maximum number of leaf data pointers we can store, based on the
+ * size of the index.
+ * Note that numLeaves * numAttributes must be less than this value!
+ */
+#define VKL_VDB_MAX_NUM_LEAF_DATA \
+  ((((VKL_INTEROP_UNIFORM vkl_uint64)1) << 58) - 1)
+
+inline VKL_INTEROP_UNIFORM vkl_uint64 vklVdbVoxelMakeEmpty()
 {
   return 0;
 }
@@ -181,19 +202,6 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
     return (voxel >> 2);                                                       \
   }                                                                            \
                                                                                \
-  inline univary vkl_uint64 vklVdbVoxelMakeLeafPtr(                            \
-      const void *univary leafPtr, univary VKLFormat format)                   \
-  {                                                                            \
-    const univary vkl_uint64 intptr = ((univary vkl_uint64)leafPtr);           \
-    assert((intptr & 0xFu) == 0); /* Require 16 Byte alignment! */             \
-    const univary vkl_uint64 voxel =                                           \
-        (intptr & ~((univary vkl_uint64)0xFu)) +                               \
-        ((((univary vkl_uint64)format) & 0x3u) << 2) + 0x3u;                   \
-    assert((const void *univary)(voxel & ~((univary vkl_uint64)0xFu)) ==       \
-           leafPtr);                                                           \
-    return voxel;                                                              \
-  }                                                                            \
-                                                                               \
   inline univary bool vklVdbVoxelIsLeafPtr(univary vkl_uint64 voxel)           \
   {                                                                            \
     return ((voxel & 0x3u) == 0x3u);                                           \
@@ -201,12 +209,26 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
                                                                                \
   inline univary VKLFormat vklVdbVoxelLeafGetFormat(univary vkl_uint64 voxel)  \
   {                                                                            \
-    return ((VKLFormat)((voxel >> 2) & 0x3u));                                 \
+    return ((univary VKLFormat)((voxel >> 4) & 0x3u));                         \
   }                                                                            \
-  /* Leaf pointers are always 64 bit */                                        \
-  inline const void *univary vklVdbVoxelLeafGetPtr(univary vkl_uint64 voxel)   \
+                                                                               \
+  inline univary vkl_uint64 vklVdbVoxelLeafGetIndex(univary vkl_uint64 voxel)  \
   {                                                                            \
-    return ((const void *univary)(voxel & ~((univary vkl_uint64)0xFu)));       \
+    return ((univary vkl_uint64)(voxel >> 6));                                 \
+  }                                                                            \
+                                                                               \
+  inline univary vkl_uint64 vklVdbVoxelMakeLeafPtr(                            \
+      univary vkl_uint64 leafIndex, univary VKLFormat format)                  \
+  {                                                                            \
+    assert(format <= 4);                                                       \
+    assert(leafIndex < (((univary vkl_uint64)1) << 58));                       \
+    const univary vkl_uint64 voxel =                                           \
+        (((univary vkl_uint64)leafIndex) << 6) +                               \
+        ((((univary vkl_uint64)format) & 0x3u) << 4) + 0x3u;                   \
+    assert(vklVdbVoxelIsLeafPtr(voxel));                                       \
+    assert(vklVdbVoxelLeafGetFormat(voxel) == format);                         \
+    assert(vklVdbVoxelLeafGetIndex(voxel) == leafIndex);                       \
+    return voxel;                                                              \
   }
 
 __vkl_interop_univary(__vkl_vdb_define_voxeltype_functions)

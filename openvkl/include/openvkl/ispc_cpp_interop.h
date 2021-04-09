@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ========================================================================== //
@@ -82,7 +82,10 @@ inline vkl_uint32 intbits(float value)
 #define __vkl_interop_univary(Macro) Macro(VKL_INTEROP_UNIFORM)
 
 // Initializer lists in struct definitions.
-#define VKL_INITIALIZER_LIST(...) { __VA_ARGS__ }
+#define VKL_INITIALIZER_LIST(...) \
+  {                               \
+    __VA_ARGS__                   \
+  }
 
 // ========================================================================== //
 #endif  // defined(ISPC)

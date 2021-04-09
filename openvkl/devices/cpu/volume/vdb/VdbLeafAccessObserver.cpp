@@ -13,8 +13,8 @@ namespace openvkl {
                                                     const VdbGrid &grid)
         : Observer<W>(target)
     {
-      accessBuffer = allocator.allocate<uint32>(grid.totalNumLeaves);
-      size         = grid.totalNumLeaves;
+      accessBuffer = allocator.allocate<uint32>(grid.numLeaves);
+      size         = grid.numLeaves;
       getRegistry().add(accessBuffer);
     }
 

@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## Establish project ##
 
-project(openvkl VERSION 0.12.0 LANGUAGES C CXX)
+project(openvkl VERSION 0.12.1 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 

@@ -251,32 +251,12 @@ namespace openvkl {
     {
       range1f range;
 
-      switch (format) {
-      case VKL_FORMAT_TILE: {
-        CALL_ISPC(VdbSampler_valueRangeTileFloat,
-                  grid,
-                  reinterpret_cast<const ispc::vec3ui *>(&offset),
-                  level,
-                  attributeIndex,
-                  reinterpret_cast<ispc::box1f *>(&range));
-        break;
-      }
-
-      case VKL_FORMAT_CONSTANT_ZYX: {
-        range1f leafRange;
-        CALL_ISPC(VdbSampler_valueRangeConstantFloat,
-                  grid,
-                  reinterpret_cast<const ispc::vec3ui *>(&offset),
-                  level,
-                  attributeIndex,
-                  reinterpret_cast<ispc::box1f *>(&range));
-        break;
-      }
-
-      default:
-        runtimeError(
-            "Only VKL_FORMAT_TILE and VKL_FORMAT_CONSTANT_ZYX are supported.");
-      }
+      CALL_ISPC(VdbSampler_computeValueRange,
+                grid,
+                reinterpret_cast<const ispc::vec3ui *>(&offset),
+                level,
+                attributeIndex,
+                reinterpret_cast<ispc::box1f *>(&range));
 
       return range;
     }
@@ -373,9 +353,10 @@ namespace openvkl {
         const auto format    = static_cast<VKLFormat>(leafFormat[idx]);
         const vec3ui &offset = leafOffsets[idx];
 
-        for (unsigned int j = 0; j < grid->numAttributes; j++)
+        for (unsigned int j = 0; j < grid->numAttributes; j++) {
           valueRanges[idx][j] =
               computeValueRangeFloat(grid, format, leafLevel[idx], offset, j);
+        }
       });
 
       for (size_t idx = 0; idx < numLeaves; ++idx) {
@@ -388,20 +369,22 @@ namespace openvkl {
           assert(nodeIndex < level.numNodes);
 
           const uint64_t voxelIndex = offsetToLinearVoxelIndex(offset, l);
-          // NOTE: If this is every greater than 2^32-1 then we will have to
+          // NOTE: If this is ever greater than 2^32-1 then we will have to
           // use 64 bit addressing.
           const uint64_t v = nodeIndex * vklVdbLevelNumVoxels(l) + voxelIndex;
           assert(v < ((uint64_t)1) << 32);
 
-          for (unsigned int j = 0; j < grid->numAttributes; j++)
+          for (unsigned int j = 0; j < grid->numAttributes; j++) {
             level.valueRange[v * grid->numAttributes + j].extend(
                 valueRanges[idx][j]);
+          }
 
           uint64_t &voxel = level.voxels[v];
           assert(!vklVdbVoxelIsEmpty(voxel));
 
-          if (vklVdbVoxelIsLeafPtr(voxel))
+          if (vklVdbVoxelIsLeafPtr(voxel)) {
             break;
+          }
 
           nodeIndex = vklVdbVoxelChildGetIndex(voxel);
           assert(nodeIndex < grid->levels[l + 1].numNodes);

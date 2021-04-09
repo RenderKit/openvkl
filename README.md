@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v0.12.0 of Intel® Open VKL. For changes and new features
+This is release v0.12.1 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -31,6 +31,12 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 0.12.1
+
+  - Fixed bug in VDB volume interval iterator implementation which could
+    lead to missed intervals or incorrect value ranges in returned
+    intervals
 
 ### Open VKL 0.12.0
 

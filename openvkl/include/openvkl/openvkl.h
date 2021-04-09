@@ -8,6 +8,7 @@
 #include "VKLFilter.h"
 #include "VKLFormat.h"
 #include "VKLLogLevel.h"
+#include "VKLTemporalFormat.h"
 
 #include "common.h"
 #include "data.h"

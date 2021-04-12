@@ -1,0 +1,35 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+struct FindStack
+{
+  varying bool active;
+  uniform int32 nodeID;
+};
+
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
+                                            uniform int nodeID)
+{
+  unmasked {
+    stackPtr->active = false;
+  }
+
+  stackPtr->active = true;
+  stackPtr->nodeID = nodeID;
+  return stackPtr+1;
+}
+
+inline uniform FindStack *uniform pushStack(uniform FindStack *uniform stackPtr,
+                                            uniform int nodeID,
+                                            varying bool valid)
+{
+  unmasked {
+    stackPtr->active = false;
+  }
+
+  stackPtr->active = valid;
+  stackPtr->nodeID = nodeID;
+  return stackPtr+1;
+}

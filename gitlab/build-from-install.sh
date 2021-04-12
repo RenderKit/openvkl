@@ -1,5 +1,5 @@
 #!/bin/bash
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 export ROOT_DIR=`pwd`
@@ -18,4 +18,4 @@ cmake \
 cmake --build .
 
 ./vklTutorial
-./vklTutorialLinkISPCDriver
+./vklTutorialLinkCPUDevice

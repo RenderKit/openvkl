@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -156,7 +156,7 @@ namespace openvkl {
 
 }  // namespace openvkl
 
-// Specializations for ISPCDriver /////////////////////////////////////////////
+// Specializations for CPUDevice //////////////////////////////////////////////
 
 namespace rkcommon {
   namespace utility {

@@ -18,29 +18,28 @@ Initialization and shutdown
 ---------------------------
 
 To use the API, one of the implemented backends must be loaded.  Currently the
-only one that exists is the ISPC driver.  ISPC in the name here just refers to
-the implementation language -- it can also be used from the C99/C++ APIs.  To
-load the module that implements the ISPC driver:
+only one that exists is the CPU device. To load the module that implements the
+CPU device:
 
-    vklLoadModule("ispc_driver");
+    vklLoadModule("cpu_device");
 
-The driver then needs to be instantiated:
+The device then needs to be instantiated:
 
-    VKLDriver driver = vklNewDriver("ispc");
+    VKLDevice device = vklNewDevice("cpu");
 
-By default, the ISPC driver selects the maximum supported SIMD width (and
+By default, the CPU device selects the maximum supported SIMD width (and
 associated ISA) for the system. Optionally, a specific width may be requested
-using the `ispc_4`, `ispc_8`, or `ispc_16` driver names. Note that the system
+using the `cpu_4`, `cpu_8`, or `cpu_16` device names. Note that the system
 must support the given width (SSE4.1 for 4-wide, AVX for 8-wide, and AVX512 for
 16-wide).
 
-Once a driver is created, you can call
+Once a device is created, you can call
 
-    void vklDriverSetInt(VKLDriver, const char *name, int val);
-    void vklDriverSetString(VKLDriver, const char *name, const char *val);
+    void vklDeviceSetInt(VKLDevice, const char *name, int val);
+    void vklDeviceSetString(VKLDevice, const char *name, const char *val);
 
-to set parameters on the driver. The following parameters are understood by all
-drivers:
+to set parameters on the device. The following parameters are understood by all
+devices:
 
   ------ -------------- --------------------------------------------------------
   Type   Name           Description
@@ -61,25 +60,25 @@ drivers:
                         of the MXCSR control and status register (default: 1);
                         see Performance Recommendations section for details
   ------ -------------- --------------------------------------------------------
-  : Parameters shared by all drivers.
+  : Parameters shared by all devices.
 
-Once parameters are set, the driver must be committed with
+Once parameters are set, the device must be committed with
 
-    vklCommitDriver(driver);
+    vklCommitDevice(device);
 
-Finally, to use the newly committed driver, you must call
+Finally, to use the newly committed device, you must call
 
-    vklSetCurrentDriver(driver);
+    vklSetCurrentDevice(device);
 
-Users can change parameters on a driver after initialization. In this case the
-driver would need to be re-committed. If changes are made to the driver that is
-already set as the current driver, it does not need to be set as current again.
-The currently set driver can be retrieved at any time by calling
+Users can change parameters on a device after initialization. In this case the
+device would need to be re-committed. If changes are made to the device that is
+already set as the current device, it does not need to be set as current again.
+The currently set device can be retrieved at any time by calling
 
-    VKLDriver driver = vklGetCurrentDriver();
+    VKLDevice device = vklGetCurrentDevice();
 
 Open VKL provides vector-wide versions for several APIs. To determine the native
-vector width for the given driver, call:
+vector width for the given device, call:
 
     int width = vklGetNativeSIMDWidth();
 
@@ -90,7 +89,7 @@ shutdown function:
 
 ### Environment variables
 
-The generic driver parameters can be overridden via environment variables for
+The generic device parameters can be overridden via environment variables for
 easy changes to Open VKL’s behavior without needing to change the application
 (variables are prefixed by convention with "`OPENVKL_`"):
 
@@ -112,15 +111,15 @@ easy changes to Open VKL’s behavior without needing to change the application
                           of the MXCSR control and status register (default: 1);
                           see Performance Recommendations section for details
   ----------------------- ------------------------------------------------------
-  : Environment variables understood by all drivers.
+  : Environment variables understood by all devices.
 
 Note that these environment variables take precedence over values set through
-the `vklDriverSet*()` functions.
+the `vklDeviceSet*()` functions.
 
-Additionally, the ISPC driver's default SIMD width can be overriden at run time
-with the `OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH` environment variable. Legal values
-are 4, 8, or 16. This setting is only applicable when the generic `ispc` driver
-is instantiated; if a specific width is requested via the `ispc_[4,8,16]` driver
+Additionally, the CPU device's default SIMD width can be overriden at run time
+with the `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment variable. Legal values
+are 4, 8, or 16. This setting is only applicable when the generic `cpu` device
+is instantiated; if a specific width is requested via the `cpu_[4,8,16]` device
 names then the environment variable is ignored.
 
 ### Error handling and log messages
@@ -147,11 +146,11 @@ The following errors are currently used by Open VKL:
 These error codes are either directly returned by some API functions, or are
 recorded to be later queried by the application via
 
-    VKLError vklDriverGetLastErrorCode(VKLDriver);
+    VKLError vklDeviceGetLastErrorCode(VKLDevice);
 
 A more descriptive error message can be queried by calling
 
-    const char* vklDriverGetLastErrorMsg(VKLDriver);
+    const char* vklDeviceGetLastErrorMsg(VKLDevice);
 
 Alternatively, the application can also register a callback function of type
 
@@ -159,7 +158,7 @@ Alternatively, the application can also register a callback function of type
 
 via
 
-    void vklDriverSetErrorCallback(VKLDriver, VKLErrorFunc, void *);
+    void vklDeviceSetErrorCallback(VKLDevice, VKLErrorFunc, void *);
 
 to get notified when errors occur. Applications may be interested in messages
 which Open VKL emits, whether for debugging or logging events. Applications can
@@ -169,16 +168,16 @@ register a callback function of type
 
 via
 
-    void vklDriverSetLogCallback(VKLDriver, VKLLogCallback, void *);
+    void vklDeviceSetLogCallback(VKLDevice, VKLLogCallback, void *);
 
 which Open VKL will use to emit log messages. Applications can clear either
 callback by passing `nullptr` instead of an actual function pointer. By default,
 Open VKL uses `cout` and `cerr` to emit log and error messages, respectively.
-The last parameter to `vklDriverSetErrorCallback` and `vklDriverSetLogCallback`
+The last parameter to `vklDeviceSetErrorCallback` and `vklDeviceSetLogCallback`
 is a user data pointer. Open VKL passes this pointer to the callback functions as
 the first parameter.
 Note that in addition to setting the above callbacks, this behavior can be
-changed via the driver parameters and environment variables described
+changed via the device parameters and environment variables described
 previously.
 
 Basic data types
@@ -295,7 +294,7 @@ section for specifics. Valid constants are listed in the table below.
   -------------------------- ---------------------------------------------------
   Type/Name                  Description
   -------------------------- ---------------------------------------------------
-  VKL_DRIVER                 API driver object reference
+  VKL_DEVICE                 API device object reference
 
   VKL_DATA                   data reference
 
@@ -1111,7 +1110,7 @@ temporally constant volumes, this value has no effect.
                            float time);
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.  Depending on
-the machine type and Open VKL driver implementation, these can give greater
+the machine type and Open VKL device implementation, these can give greater
 performance.  An active lane mask `valid` is passed in as an array of integers;
 set 0 for lanes to be ignored, -1 for active lanes. An array of time values
 corresponding to each object coordinate may be provided; a `NULL` value
@@ -1152,7 +1151,7 @@ API can give greater performance than the scalar API.
                              unsigned int attributeIndex,
                              const float *times);
 
-All of the above sampling APIs can be used, regardless of the driver's native
+All of the above sampling APIs can be used, regardless of the device's native
 SIMD width.
 
 ### Sampling Multiple Attributes
@@ -1232,7 +1231,7 @@ provided in sequence as
                ...,
                s_0,N-1, s_1,N-1, ..., s_M-1,N-1]
 
-All of the above sampling APIs can be used, regardless of the driver's native
+All of the above sampling APIs can be used, regardless of the device's native
 SIMD width.
 
 Gradients
@@ -1281,7 +1280,7 @@ Finally, a stream version is provided:
                              unsigned int attributeIndex,
                              const float *times);
 
-All of the above gradient APIs can be used, regardless of the driver's native
+All of the above gradient APIs can be used, regardless of the device's native
 SIMD width.
 
 Iterators
@@ -1540,7 +1539,7 @@ It is strongly recommended to have the `Flush to Zero` and `Denormals are Zero`
 mode of the MXCSR control and status register enabled for each thread before
 calling the sampling, gradient, or interval API functions. Otherwise, under some
 circumstances special handling of denormalized floating point numbers can
-significantly reduce application and Open VKL performance. The driver parameter
+significantly reduce application and Open VKL performance. The device parameter
 `flushDenormals` or environment variable `OPENVKL_FLUSH_DENORMALS` can be used
 to toggle this mode; by default it is enabled. Alternatively, when using Open
 VKL together with the Intel® Threading Building Blocks, it is sufficient to
@@ -1593,7 +1592,7 @@ on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and `VKL_MAX_HIT_ITERATOR_SIZE` macros:
 
     uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 
-These values are majorants over all drivers and volume types. Note that Open VKL
+These values are majorants over all devices and volume types. Note that Open VKL
 attempts to detect the target SIMD width using `TARGET_WIDTH`, returning smaller
 buffer sizes for narrow architectures. However, Open VKL may fall back to the
 largest buffer size over all targets.

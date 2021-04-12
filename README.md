@@ -245,36 +245,34 @@ figure it out.
 ## Initialization and shutdown
 
 To use the API, one of the implemented backends must be loaded.
-Currently the only one that exists is the ISPC driver. ISPC in the name
-here just refers to the implementation language – it can also be used
-from the C99/C++ APIs. To load the module that implements the ISPC
-driver:
+Currently the only one that exists is the CPU device. To load the module
+that implements the CPU device:
 
 ``` cpp
-vklLoadModule("ispc_driver");
+vklLoadModule("cpu_device");
 ```
 
-The driver then needs to be instantiated:
+The device then needs to be instantiated:
 
 ``` cpp
-VKLDriver driver = vklNewDriver("ispc");
+VKLDevice device = vklNewDevice("cpu");
 ```
 
-By default, the ISPC driver selects the maximum supported SIMD width
-(and associated ISA) for the system. Optionally, a specific width may be
-requested using the `ispc_4`, `ispc_8`, or `ispc_16` driver names. Note
+By default, the CPU device selects the maximum supported SIMD width (and
+associated ISA) for the system. Optionally, a specific width may be
+requested using the `cpu_4`, `cpu_8`, or `cpu_16` device names. Note
 that the system must support the given width (SSE4.1 for 4-wide, AVX for
 8-wide, and AVX512 for 16-wide).
 
-Once a driver is created, you can call
+Once a device is created, you can call
 
 ``` cpp
-void vklDriverSetInt(VKLDriver, const char *name, int val);
-void vklDriverSetString(VKLDriver, const char *name, const char *val);
+void vklDeviceSetInt(VKLDevice, const char *name, int val);
+void vklDeviceSetString(VKLDevice, const char *name, const char *val);
 ```
 
-to set parameters on the driver. The following parameters are understood
-by all drivers:
+to set parameters on the device. The following parameters are understood
+by all devices:
 
 | Type   | Name           | Description                                                                                                                                                       |
 | :----- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -284,32 +282,32 @@ by all drivers:
 | int    | numThreads     | number of threads which Open VKL can use                                                                                                                          |
 | int    | flushDenormals | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register (default: 1); see Performance Recommendations section for details |
 
-Parameters shared by all drivers.
+Parameters shared by all devices.
 
-Once parameters are set, the driver must be committed with
-
-``` cpp
-vklCommitDriver(driver);
-```
-
-Finally, to use the newly committed driver, you must call
+Once parameters are set, the device must be committed with
 
 ``` cpp
-vklSetCurrentDriver(driver);
+vklCommitDevice(device);
 ```
 
-Users can change parameters on a driver after initialization. In this
-case the driver would need to be re-committed. If changes are made to
-the driver that is already set as the current driver, it does not need
-to be set as current again. The currently set driver can be retrieved at
+Finally, to use the newly committed device, you must call
+
+``` cpp
+vklSetCurrentDevice(device);
+```
+
+Users can change parameters on a device after initialization. In this
+case the device would need to be re-committed. If changes are made to
+the device that is already set as the current device, it does not need
+to be set as current again. The currently set device can be retrieved at
 any time by calling
 
 ``` cpp
-VKLDriver driver = vklGetCurrentDriver();
+VKLDevice device = vklGetCurrentDevice();
 ```
 
 Open VKL provides vector-wide versions for several APIs. To determine
-the native vector width for the given driver, call:
+the native vector width for the given device, call:
 
 ``` cpp
 int width = vklGetNativeSIMDWidth();
@@ -324,7 +322,7 @@ vklShutdown();
 
 ### Environment variables
 
-The generic driver parameters can be overridden via environment
+The generic device parameters can be overridden via environment
 variables for easy changes to Open VKL’s behavior without needing to
 change the application (variables are prefixed by convention with
 “`OPENVKL_`”):
@@ -337,16 +335,16 @@ change the application (variables are prefixed by convention with
 | OPENVKL\_THREADS          | number of threads which Open VKL can use                                                                                                                          |
 | OPENVKL\_FLUSH\_DENORMALS | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register (default: 1); see Performance Recommendations section for details |
 
-Environment variables understood by all drivers.
+Environment variables understood by all devices.
 
 Note that these environment variables take precedence over values set
-through the `vklDriverSet*()` functions.
+through the `vklDeviceSet*()` functions.
 
-Additionally, the ISPC driver’s default SIMD width can be overriden at
-run time with the `OPENVKL_ISPC_DRIVER_DEFAULT_WIDTH` environment
+Additionally, the CPU device’s default SIMD width can be overriden at
+run time with the `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment
 variable. Legal values are 4, 8, or 16. This setting is only applicable
-when the generic `ispc` driver is instantiated; if a specific width is
-requested via the `ispc_[4,8,16]` driver names then the environment
+when the generic `cpu` device is instantiated; if a specific width is
+requested via the `cpu_[4,8,16]` device names then the environment
 variable is ignored.
 
 ### Error handling and log messages
@@ -368,13 +366,13 @@ These error codes are either directly returned by some API functions, or
 are recorded to be later queried by the application via
 
 ``` cpp
-VKLError vklDriverGetLastErrorCode(VKLDriver);
+VKLError vklDeviceGetLastErrorCode(VKLDevice);
 ```
 
 A more descriptive error message can be queried by calling
 
 ``` cpp
-const char* vklDriverGetLastErrorMsg(VKLDriver);
+const char* vklDeviceGetLastErrorMsg(VKLDevice);
 ```
 
 Alternatively, the application can also register a callback function of
@@ -387,7 +385,7 @@ typedef void (*VKLErrorCallback)(void *, VKLError, const char* message);
 via
 
 ``` cpp
-void vklDriverSetErrorCallback(VKLDriver, VKLErrorFunc, void *);
+void vklDeviceSetErrorCallback(VKLDevice, VKLErrorFunc, void *);
 ```
 
 to get notified when errors occur. Applications may be interested in
@@ -401,17 +399,17 @@ typedef void (*VKLLogCallback)(void *, const char* message);
 via
 
 ``` cpp
-void vklDriverSetLogCallback(VKLDriver, VKLLogCallback, void *);
+void vklDeviceSetLogCallback(VKLDevice, VKLLogCallback, void *);
 ```
 
 which Open VKL will use to emit log messages. Applications can clear
 either callback by passing `nullptr` instead of an actual function
 pointer. By default, Open VKL uses `cout` and `cerr` to emit log and
 error messages, respectively. The last parameter to
-`vklDriverSetErrorCallback` and `vklDriverSetLogCallback` is a user data
+`vklDeviceSetErrorCallback` and `vklDeviceSetLogCallback` is a user data
 pointer. Open VKL passes this pointer to the callback functions as the
 first parameter. Note that in addition to setting the above callbacks,
-this behavior can be changed via the driver parameters and environment
+this behavior can be changed via the device parameters and environment
 variables described previously.
 
 ## Basic data types
@@ -540,7 +538,7 @@ table below.
 
 | Type/Name                      | Description                                                                                  |
 | :----------------------------- | :------------------------------------------------------------------------------------------- |
-| VKL\_DRIVER                    | API driver object reference                                                                  |
+| VKL\_DEVICE                    | API device object reference                                                                  |
 | VKL\_DATA                      | data reference                                                                               |
 | VKL\_OBJECT                    | generic object reference                                                                     |
 | VKL\_VALUE\_SELECTOR           | value selector object reference                                                              |
@@ -1053,7 +1051,7 @@ gradients are always \((0, 0, 0)\).
 
   - Open VKL supports four-level vdb volumes. The resolution of each
     level can be configured at compile time using CMake variables.
-
+    
       - `VKL_VDB_LOG_RESOLUTION_0` sets the base 2 logarithm of the root
         level resolution. This variable defaults to 6, which means that
         the root level has a resolution of \((2^6)^3 = 64^3\).
@@ -1182,7 +1180,7 @@ float vklComputeSample(VKLSampler sampler,
 ```
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.
-Depending on the machine type and Open VKL driver implementation, these
+Depending on the machine type and Open VKL device implementation, these
 can give greater performance. An active lane mask `valid` is passed in
 as an array of integers; set 0 for lanes to be ignored, -1 for active
 lanes. An array of time values corresponding to each object coordinate
@@ -1228,7 +1226,7 @@ scalar API.
                          const float *times);
 ```
 
-All of the above sampling APIs can be used, regardless of the driver’s
+All of the above sampling APIs can be used, regardless of the device’s
 native SIMD width.
 
 ### Sampling Multiple Attributes
@@ -1320,7 +1318,7 @@ samples = [s_0,0,   s_1,0,   ..., s_M-1,0,
            s_0,N-1, s_1,N-1, ..., s_M-1,N-1]
 ```
 
-All of the above sampling APIs can be used, regardless of the driver’s
+All of the above sampling APIs can be used, regardless of the device’s
 native SIMD width.
 
 ## Gradients
@@ -1375,7 +1373,7 @@ void vklComputeGradientN(VKLSampler sampler,
                          const float *times);
 ```
 
-All of the above gradient APIs can be used, regardless of the driver’s
+All of the above gradient APIs can be used, regardless of the device’s
 native SIMD width.
 
 ## Iterators
@@ -1655,7 +1653,7 @@ are Zero` mode of the MXCSR control and status register enabled for each
 thread before calling the sampling, gradient, or interval API functions.
 Otherwise, under some circumstances special handling of denormalized
 floating point numbers can significantly reduce application and Open VKL
-performance. The driver parameter `flushDenormals` or environment
+performance. The device parameter `flushDenormals` or environment
 variable `OPENVKL_FLUSH_DENORMALS` can be used to toggle this mode; by
 default it is enabled. Alternatively, when using Open VKL together with
 the Intel® Threading Building Blocks, it is sufficient to execute the
@@ -1718,7 +1716,7 @@ instead rely on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and
 uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 ```
 
-These values are majorants over all drivers and volume types. Note that
+These values are majorants over all devices and volume types. Note that
 Open VKL attempts to detect the target SIMD width using `TARGET_WIDTH`,
 returning smaller buffer sizes for narrow architectures. However, Open
 VKL may fall back to the largest buffer size over all targets.
@@ -2206,7 +2204,7 @@ Open VKL currently supports Linux, Mac OS X, and Windows. In addition,
 before you can build Open VKL you need the following prerequisites:
 
   - You can clone the latest Open VKL sources via:
-
+    
         git clone https://github.com/openvkl/openvkl.git
 
   - To build Open VKL you need [CMake](http://www.cmake.org), any form
@@ -2265,10 +2263,10 @@ Assuming the above prerequisites are all fulfilled, building Open VKL
 through CMake is easy:
 
   - Create a build directory, and go into it
-
+    
         mkdir openvkl/build
         cd openvkl/build
-
+    
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc.).
 
@@ -2277,22 +2275,22 @@ through CMake is easy:
     different compiler, run cmake manually while specifying the desired
     compiler. The default compiler on most linux machines is `gcc`, but
     it can be pointed to `clang` instead by executing the following:
-
+    
         cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
-
+    
     CMake will now use Clang instead of GCC. If you are ok with using
     the default compiler on your system, then simply skip this step.
     Note that the compiler variables cannot be changed after the first
     `cmake` or `ccmake` run.
 
   - Open the CMake configuration dialog
-
+    
         ccmake ..
 
   - Make sure to properly set build mode and enable the components you
     need, etc.; then type ’c’onfigure and ’g’enerate. When back on the
     command prompt, build it using
-
+    
         make
 
   - You should now have `libopenvkl.so` as well as the tutorial /

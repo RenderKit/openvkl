@@ -20,7 +20,8 @@ typedef enum
 #endif
 {
   // Driver reference type.
-  VKL_DRIVER = 100,
+  VKL_DEVICE = 100,
+  VKL_DRIVER = 100,  // DEPRECATED
 
   // Void pointer type.
   VKL_VOID_PTR = 200,

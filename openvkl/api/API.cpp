@@ -3,7 +3,7 @@
 
 #include "../common/logging.h"
 #include "../common/simd.h"
-#include "Driver.h"
+#include "Device.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/box.h"
 #include "rkcommon/math/vec.h"
@@ -23,17 +23,17 @@ inline std::string getPidString()
   return s;
 }
 
-#define ASSERT_DRIVER()                                                      \
-  if (!openvkl::api::driverIsSet())                                          \
+#define ASSERT_DEVICE()                                                      \
+  if (!openvkl::api::deviceIsSet())                                          \
     throw std::runtime_error(                                                \
         "Open VKL not yet initialized (most likely this means you tried to " \
-        "call an Open VKL API function before first setting a driver)" +     \
+        "call an Open VKL API function before first setting a device)" +     \
         getPidString());
 
-#define ASSERT_DRIVER_SUPPORTS_WIDTH(WIDTH)                                  \
-  if (!openvkl::api::currentDriver().supportsWidth(WIDTH))                   \
+#define ASSERT_DEVICE_SUPPORTS_WIDTH(WIDTH)                                  \
+  if (!openvkl::api::currentDevice().supportsWidth(WIDTH))                   \
     throw std::runtime_error(                                                \
-        "the current Open VKL driver does not support the requested vector " \
+        "the current Open VKL device does not support the requested vector " \
         "width " +                                                           \
         std::string(#WIDTH));
 
@@ -77,8 +77,8 @@ extern "C" VKLData vklNewData(size_t numItems,
                               VKLDataCreationFlags dataCreationFlags,
                               size_t byteStride) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  VKLData data = openvkl::api::currentDriver().newData(
+  ASSERT_DEVICE();
+  VKLData data = openvkl::api::currentDevice().newData(
       numItems, dataType, source, dataCreationFlags, byteStride);
   return data;
 }
@@ -88,28 +88,28 @@ OPENVKL_CATCH_END(nullptr)
 // Observer ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VKLObserver vklNewVolumeObserver(VKLVolume volume,
-                                            const char *type) OPENVKL_CATCH_BEGIN
+extern "C" VKLObserver vklNewVolumeObserver(VKLVolume volume, const char *type)
+    OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(volume);
   THROW_IF_NULL_OBJECT(type);
   VKLObserver observer =
-      openvkl::api::currentDriver().newObserver(volume, type);
+      openvkl::api::currentDevice().newObserver(volume, type);
   if (!observer)
     throw std::runtime_error(std::string("unsupported observer type: ") + type);
   return observer;
 }
 OPENVKL_CATCH_END(nullptr)
 
-extern "C" VKLObserver vklNewSamplerObserver(VKLSampler sampler,
-                                             const char *type) OPENVKL_CATCH_BEGIN
+extern "C" VKLObserver vklNewSamplerObserver(
+    VKLSampler sampler, const char *type) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(sampler);
   THROW_IF_NULL_OBJECT(type);
   VKLObserver observer =
-      openvkl::api::currentDriver().newObserver(sampler, type);
+      openvkl::api::currentDevice().newObserver(sampler, type);
   if (!observer)
     throw std::runtime_error(std::string("unsupported observer type: ") + type);
   return observer;
@@ -118,28 +118,28 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" const void *vklMapObserver(VKLObserver observer) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(observer);
-  const void *mapped = openvkl::api::currentDriver().mapObserver(observer);
+  const void *mapped = openvkl::api::currentDevice().mapObserver(observer);
   return mapped;
 }
 OPENVKL_CATCH_END(nullptr)
 
 extern "C" void vklUnmapObserver(VKLObserver observer) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(observer);
-  openvkl::api::currentDriver().unmapObserver(observer);
+  openvkl::api::currentDevice().unmapObserver(observer);
 }
 OPENVKL_CATCH_END()
 
 extern "C" VKLDataType vklGetObserverElementType(VKLObserver observer)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(observer);
   VKLDataType type =
-      openvkl::api::currentDriver().getObserverElementType(observer);
+      openvkl::api::currentDevice().getObserverElementType(observer);
   return type;
 }
 OPENVKL_CATCH_END(VKL_UNKNOWN)
@@ -147,10 +147,9 @@ OPENVKL_CATCH_END(VKL_UNKNOWN)
 extern "C" size_t vklGetObserverElementSize(VKLObserver observer)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(observer);
-  size_t size =
-      openvkl::api::currentDriver().getObserverElementSize(observer);
+  size_t size = openvkl::api::currentDevice().getObserverElementSize(observer);
   return size;
 }
 OPENVKL_CATCH_END(0)
@@ -158,69 +157,65 @@ OPENVKL_CATCH_END(0)
 extern "C" size_t vklGetObserverNumElements(VKLObserver observer)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(observer);
   size_t numElements =
-      openvkl::api::currentDriver().getObserverNumElements(observer);
+      openvkl::api::currentDevice().getObserverNumElements(observer);
   return numElements;
 }
 OPENVKL_CATCH_END(0)
 
 ///////////////////////////////////////////////////////////////////////////////
-// Driver /////////////////////////////////////////////////////////////////////
+// Device /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VKLDriver vklNewDriver(const char *driverName) OPENVKL_CATCH_BEGIN
+extern "C" VKLDevice vklNewDevice(const char *deviceName) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_STRING(driverName);
-  return (VKLDriver)openvkl::api::Driver::createDriver(driverName);
+  THROW_IF_NULL_STRING(deviceName);
+  return (VKLDevice)openvkl::api::Device::createDevice(deviceName);
 }
 OPENVKL_CATCH_END(nullptr)
 
-extern "C" void vklDriverSetLogCallback(
-    VKLDriver driver, VKLLogCallback callback, void *userData) OPENVKL_CATCH_BEGIN
+extern "C" void vklDeviceSetLogCallback(VKLDevice device,
+                                        VKLLogCallback callback,
+                                        void *userData) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
-  if (callback == nullptr)
-  {
+  if (callback == nullptr) {
     object->logCallback = [](void *, const char *) {};
     object->logUserData = nullptr;
-  }
-  else
-  {
+  } else {
     object->logCallback = callback;
     object->logUserData = userData;
   }
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklDriverSetErrorCallback(
-    VKLDriver driver, VKLErrorCallback callback, void *userData) OPENVKL_CATCH_BEGIN
+extern "C" void vklDeviceSetErrorCallback(VKLDevice device,
+                                          VKLErrorCallback callback,
+                                          void *userData) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
-  if (callback == nullptr)
-  {
+  if (callback == nullptr) {
     object->errorCallback = [](void *, VKLError, const char *) {};
     object->errorUserData = nullptr;
-  }
-  else
-  {
+  } else {
     object->errorCallback = callback;
     object->errorUserData = userData;
   }
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklDriverSetInt(VKLDriver driver,
+extern "C" void vklDeviceSetInt(VKLDevice device,
                                 const char *name,
                                 int x) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
   THROW_IF_NULL_STRING(name);
 
@@ -228,12 +223,12 @@ extern "C" void vklDriverSetInt(VKLDriver driver,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklDriverSetString(VKLDriver driver,
+extern "C" void vklDeviceSetString(VKLDevice device,
                                    const char *name,
                                    const char *s) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
   THROW_IF_NULL_STRING(name);
 
@@ -241,49 +236,49 @@ extern "C" void vklDriverSetString(VKLDriver driver,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklCommitDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
+extern "C" void vklCommitDevice(VKLDevice device) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
   object->commit();
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetCurrentDriver(VKLDriver driver) OPENVKL_CATCH_BEGIN
+extern "C" void vklSetCurrentDevice(VKLDevice device) OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
   if (!object->isCommitted()) {
-    throw std::runtime_error("You must commit the driver before using it!");
+    throw std::runtime_error("You must commit the device before using it!");
   }
 
-  openvkl::api::Driver::current = object;
+  openvkl::api::Device::current = object;
   object->refDec();
 }
 OPENVKL_CATCH_END()
 
-extern "C" VKLDriver vklGetCurrentDriver() OPENVKL_CATCH_BEGIN
+extern "C" VKLDevice vklGetCurrentDevice() OPENVKL_CATCH_BEGIN
 {
-  return (VKLDriver)openvkl::api::Driver::current.ptr;
+  return (VKLDevice)openvkl::api::Device::current.ptr;
 }
 OPENVKL_CATCH_END(nullptr)
 
-extern "C" VKLError vklDriverGetLastErrorCode(VKLDriver driver)
+extern "C" VKLError vklDeviceGetLastErrorCode(VKLDevice device)
     OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
   return object->lastErrorCode;
 }
 OPENVKL_CATCH_END(VKL_NO_ERROR)
 
-extern "C" const char *vklDriverGetLastErrorMsg(VKLDriver driver)
+extern "C" const char *vklDeviceGetLastErrorMsg(VKLDevice device)
     OPENVKL_CATCH_BEGIN
 {
-  THROW_IF_NULL_OBJECT(driver);
-  auto *object = (openvkl::api::Driver *)driver;
+  THROW_IF_NULL_OBJECT(device);
+  auto *object = (openvkl::api::Device *)device;
 
   return object->lastErrorMessage.c_str();
 }
@@ -291,30 +286,30 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" int vklGetNativeSIMDWidth() OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  return openvkl::api::currentDriver().getNativeSIMDWidth();
+  ASSERT_DEVICE();
+  return openvkl::api::currentDevice().getNativeSIMDWidth();
 }
 OPENVKL_CATCH_END(0)
 
 extern "C" void vklCommit(VKLObject object) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
-  openvkl::api::currentDriver().commit(object);
+  openvkl::api::currentDevice().commit(object);
 }
 OPENVKL_CATCH_END()
 
 extern "C" void vklRelease(VKLObject object) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
-  openvkl::api::currentDriver().release(object);
+  openvkl::api::currentDevice().release(object);
 }
 OPENVKL_CATCH_END()
 
 extern "C" void vklShutdown() OPENVKL_CATCH_BEGIN
 {
-  openvkl::api::Driver::current = nullptr;
+  openvkl::api::Device::current = nullptr;
 }
 OPENVKL_CATCH_END()
 
@@ -325,32 +320,32 @@ OPENVKL_CATCH_END()
 extern "C" size_t vklGetIntervalIteratorSize(VKLSampler sampler)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  return openvkl::api::currentDriver().getIntervalIteratorSize1(sampler);
+  ASSERT_DEVICE();
+  return openvkl::api::currentDevice().getIntervalIteratorSize1(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
 extern "C" size_t vklGetIntervalIteratorSize4(VKLSampler sampler)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  return openvkl::api::currentDriver().getIntervalIteratorSize4(sampler);
+  ASSERT_DEVICE();
+  return openvkl::api::currentDevice().getIntervalIteratorSize4(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
 extern "C" size_t vklGetIntervalIteratorSize8(VKLSampler sampler)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  return openvkl::api::currentDriver().getIntervalIteratorSize8(sampler);
+  ASSERT_DEVICE();
+  return openvkl::api::currentDevice().getIntervalIteratorSize8(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
 extern "C" size_t vklGetIntervalIteratorSize16(VKLSampler sampler)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  return openvkl::api::currentDriver().getIntervalIteratorSize16(sampler);
+  ASSERT_DEVICE();
+  return openvkl::api::currentDevice().getIntervalIteratorSize16(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
@@ -362,7 +357,7 @@ extern "C" VKLIntervalIterator vklInitIntervalIterator(
     VKLValueSelector valueSelector,
     void *buffer) OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().initIntervalIterator1(
+  return openvkl::api::currentDevice().initIntervalIterator1(
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
@@ -382,7 +377,7 @@ OPENVKL_CATCH_END(nullptr)
       VKLValueSelector valueSelector,                                   \
       void *buffer) OPENVKL_CATCH_BEGIN                                 \
   {                                                                     \
-    return openvkl::api::currentDriver().initIntervalIterator##WIDTH(   \
+    return openvkl::api::currentDevice().initIntervalIterator##WIDTH(   \
         valid,                                                          \
         sampler,                                                        \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),              \
@@ -403,7 +398,7 @@ extern "C" int vklIterateInterval(VKLIntervalIterator iterator,
                                   VKLInterval *interval) OPENVKL_CATCH_BEGIN
 {
   int result;
-  openvkl::api::currentDriver().iterateInterval1(
+  openvkl::api::currentDevice().iterateInterval1(
       iterator, reinterpret_cast<vVKLIntervalN<1> &>(*interval), &result);
   return result;
 }
@@ -416,7 +411,7 @@ OPENVKL_CATCH_END(false)
       VKLInterval##WIDTH *interval,                          \
       int *result) OPENVKL_CATCH_BEGIN                       \
   {                                                          \
-    openvkl::api::currentDriver().iterateInterval##WIDTH(    \
+    openvkl::api::currentDevice().iterateInterval##WIDTH(    \
         valid,                                               \
         iterator,                                            \
         reinterpret_cast<vVKLIntervalN<WIDTH> &>(*interval), \
@@ -436,25 +431,26 @@ __define_vklIterateIntervalN(16);
 
 extern "C" size_t vklGetHitIteratorSize(VKLSampler sampler) OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().getHitIteratorSize1(sampler);
+  return openvkl::api::currentDevice().getHitIteratorSize1(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
 extern "C" size_t vklGetHitIteratorSize4(VKLSampler sampler) OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().getHitIteratorSize4(sampler);
+  return openvkl::api::currentDevice().getHitIteratorSize4(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
 extern "C" size_t vklGetHitIteratorSize8(VKLSampler sampler) OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().getHitIteratorSize8(sampler);
+  return openvkl::api::currentDevice().getHitIteratorSize8(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetHitIteratorSize16(VKLSampler sampler) OPENVKL_CATCH_BEGIN
+extern "C" size_t vklGetHitIteratorSize16(VKLSampler sampler)
+    OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().getHitIteratorSize16(sampler);
+  return openvkl::api::currentDevice().getHitIteratorSize16(sampler);
 }
 OPENVKL_CATCH_END(0u)
 
@@ -466,7 +462,7 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLSampler sampler,
                                              VKLValueSelector valueSelector,
                                              void *buffer) OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().initHitIterator1(
+  return openvkl::api::currentDevice().initHitIterator1(
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
@@ -488,7 +484,7 @@ OPENVKL_CATCH_END(nullptr)
       VKLValueSelector valueSelector,                            \
       void *buffer) OPENVKL_CATCH_BEGIN                          \
   {                                                              \
-    return openvkl::api::currentDriver().initHitIterator##WIDTH( \
+    return openvkl::api::currentDevice().initHitIterator##WIDTH( \
         valid,                                                   \
         sampler,                                                 \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),       \
@@ -510,7 +506,7 @@ extern "C" int vklIterateHit(VKLHitIterator iterator,
                              VKLHit *hit) OPENVKL_CATCH_BEGIN
 {
   int result;
-  openvkl::api::currentDriver().iterateHit1(
+  openvkl::api::currentDevice().iterateHit1(
       iterator, reinterpret_cast<vVKLHitN<1> &>(*hit), &result);
   return result;
 }
@@ -522,7 +518,7 @@ OPENVKL_CATCH_END(false)
                                        VKLHit##WIDTH *hit,                   \
                                        int *result) OPENVKL_CATCH_BEGIN      \
   {                                                                          \
-    openvkl::api::currentDriver().iterateHit##WIDTH(                         \
+    openvkl::api::currentDevice().iterateHit##WIDTH(                         \
         valid, iterator, reinterpret_cast<vVKLHitN<WIDTH> &>(*hit), result); \
   }                                                                          \
   OPENVKL_CATCH_END()
@@ -540,8 +536,8 @@ __define_vklIterateHitN(16);
 extern "C" VKLError vklLoadModule(const char *moduleName) OPENVKL_CATCH_BEGIN
 {
   THROW_IF_NULL_STRING(moduleName);
-  if (openvkl::api::driverIsSet()) {
-    return (VKLError)openvkl::api::currentDriver().loadModule(moduleName);
+  if (openvkl::api::deviceIsSet()) {
+    return (VKLError)openvkl::api::currentDevice().loadModule(moduleName);
   } else {
     return openvkl::loadLocalModule(moduleName);
   }
@@ -556,10 +552,10 @@ extern "C" void vklSetBool(VKLObject object,
                            const char *name,
                            int b) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setBool(object, name, static_cast<bool>(b));
+  openvkl::api::currentDevice().setBool(object, name, static_cast<bool>(b));
 }
 OPENVKL_CATCH_END()
 
@@ -567,10 +563,10 @@ extern "C" void vklSetFloat(VKLObject object,
                             const char *name,
                             float x) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().set1f(object, name, x);
+  openvkl::api::currentDevice().set1f(object, name, x);
 }
 OPENVKL_CATCH_END()
 
@@ -580,10 +576,10 @@ extern "C" void vklSetVec3f(VKLObject object,
                             float y,
                             float z) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setVec3f(object, name, vec3f(x, y, z));
+  openvkl::api::currentDevice().setVec3f(object, name, vec3f(x, y, z));
 }
 OPENVKL_CATCH_END()
 
@@ -591,20 +587,20 @@ extern "C" void vklSetInt(VKLObject object,
                           const char *name,
                           int x) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().set1i(object, name, x);
+  openvkl::api::currentDevice().set1i(object, name, x);
 }
 OPENVKL_CATCH_END()
 
 extern "C" void vklSetVec3i(
     VKLObject object, const char *name, int x, int y, int z) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setVec3i(object, name, vec3i(x, y, z));
+  openvkl::api::currentDevice().setVec3i(object, name, vec3i(x, y, z));
 }
 OPENVKL_CATCH_END()
 
@@ -612,10 +608,10 @@ extern "C" void vklSetData(VKLObject object,
                            const char *name,
                            VKLData data) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setObject(object, name, (VKLObject)data);
+  openvkl::api::currentDevice().setObject(object, name, (VKLObject)data);
 }
 OPENVKL_CATCH_END()
 
@@ -623,10 +619,10 @@ extern "C" void vklSetString(VKLObject object,
                              const char *name,
                              const char *s) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setString(object, name, std::string(s));
+  openvkl::api::currentDevice().setString(object, name, std::string(s));
 }
 OPENVKL_CATCH_END()
 
@@ -634,10 +630,10 @@ extern "C" void vklSetVoidPtr(VKLObject object,
                               const char *name,
                               void *v) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_OBJECT(object);
   THROW_IF_NULL_STRING(name);
-  openvkl::api::currentDriver().setVoidPtr(object, name, v);
+  openvkl::api::currentDevice().setVoidPtr(object, name, v);
 }
 OPENVKL_CATCH_END()
 
@@ -648,9 +644,9 @@ OPENVKL_CATCH_END()
 extern "C" VKLValueSelector vklNewValueSelector(VKLVolume volume)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   VKLValueSelector valueSelector =
-      openvkl::api::currentDriver().newValueSelector(volume);
+      openvkl::api::currentDevice().newValueSelector(volume);
   if (valueSelector == nullptr) {
     postLogMessage(VKL_LOG_ERROR) << "could not create value selector";
   }
@@ -664,8 +660,8 @@ extern "C" void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
                                           const vkl_range1f *ranges)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  openvkl::api::currentDriver().valueSelectorSetRanges(
+  ASSERT_DEVICE();
+  openvkl::api::currentDevice().valueSelectorSetRanges(
       valueSelector,
       utility::ArrayView<const range1f>(
           reinterpret_cast<const range1f *>(ranges), numRanges));
@@ -677,8 +673,8 @@ extern "C" void vklValueSelectorSetValues(VKLValueSelector valueSelector,
                                           const float *values)
     OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  openvkl::api::currentDriver().valueSelectorSetValues(
+  ASSERT_DEVICE();
+  openvkl::api::currentDevice().valueSelectorSetValues(
       valueSelector,
       utility::ArrayView<const float>(reinterpret_cast<const float *>(values),
                                       numValues));
@@ -691,8 +687,8 @@ OPENVKL_CATCH_END()
 
 extern "C" VKLSampler vklNewSampler(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
-  VKLSampler sampler = openvkl::api::currentDriver().newSampler(volume);
+  ASSERT_DEVICE();
+  VKLSampler sampler = openvkl::api::currentDevice().newSampler(volume);
   if (sampler == nullptr) {
     postLogMessage(VKL_LOG_ERROR) << "could not create sampler";
   }
@@ -708,7 +704,7 @@ extern "C" float vklComputeSample(VKLSampler sampler,
 {
   constexpr int valid = 1;
   float sample;
-  openvkl::api::currentDriver().computeSample1(
+  openvkl::api::currentDevice().computeSample1(
       &valid,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
@@ -728,7 +724,7 @@ OPENVKL_CATCH_END(rkcommon::math::nan)
       unsigned int attributeIndex,                                    \
       const float *times) OPENVKL_CATCH_BEGIN                         \
   {                                                                   \
-    openvkl::api::currentDriver().computeSample##WIDTH(               \
+    openvkl::api::currentDevice().computeSample##WIDTH(               \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
@@ -751,7 +747,7 @@ extern "C" void vklComputeSampleN(VKLSampler sampler,
                                   unsigned int attributeIndex,
                                   const float *times) OPENVKL_CATCH_BEGIN
 {
-  openvkl::api::currentDriver().computeSampleN(
+  openvkl::api::currentDevice().computeSampleN(
       sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
@@ -769,7 +765,7 @@ extern "C" void vklComputeSampleM(VKLSampler sampler,
                                   float time) OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
-  openvkl::api::currentDriver().computeSampleM1(
+  openvkl::api::currentDevice().computeSampleM1(
       &valid,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
@@ -790,7 +786,7 @@ OPENVKL_CATCH_END()
       const unsigned int *attributeIndices,                           \
       const float *times) OPENVKL_CATCH_BEGIN                         \
   {                                                                   \
-    openvkl::api::currentDriver().computeSampleM##WIDTH(              \
+    openvkl::api::currentDevice().computeSampleM##WIDTH(              \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
@@ -815,7 +811,7 @@ extern "C" void vklComputeSampleMN(VKLSampler sampler,
                                    const unsigned int *attributeIndices,
                                    const float *times) OPENVKL_CATCH_BEGIN
 {
-  openvkl::api::currentDriver().computeSampleMN(
+  openvkl::api::currentDevice().computeSampleMN(
       sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
@@ -829,12 +825,11 @@ OPENVKL_CATCH_END()
 extern "C" vkl_vec3f vklComputeGradient(VKLSampler sampler,
                                         const vkl_vec3f *objectCoordinates,
                                         unsigned int attributeIndex,
-                                        float time)
-    OPENVKL_CATCH_BEGIN
+                                        float time) OPENVKL_CATCH_BEGIN
 {
   constexpr int valid = 1;
   vkl_vec3f gradient;
-  openvkl::api::currentDriver().computeGradient1(
+  openvkl::api::currentDevice().computeGradient1(
       &valid,
       sampler,
       reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
@@ -854,7 +849,7 @@ OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
       unsigned int attributeIndex,                                    \
       const float *times) OPENVKL_CATCH_BEGIN                         \
   {                                                                   \
-    openvkl::api::currentDriver().computeGradient##WIDTH(             \
+    openvkl::api::currentDevice().computeGradient##WIDTH(             \
         valid,                                                        \
         sampler,                                                      \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
@@ -875,10 +870,9 @@ extern "C" void vklComputeGradientN(VKLSampler sampler,
                                     const vkl_vec3f *objectCoordinates,
                                     vkl_vec3f *gradients,
                                     unsigned int attributeIndex,
-                                    const float *times)
-    OPENVKL_CATCH_BEGIN
+                                    const float *times) OPENVKL_CATCH_BEGIN
 {
-  openvkl::api::currentDriver().computeGradientN(
+  openvkl::api::currentDevice().computeGradientN(
       sampler,
       N,
       reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
@@ -894,9 +888,9 @@ OPENVKL_CATCH_END()
 
 extern "C" VKLVolume vklNewVolume(const char *type) OPENVKL_CATCH_BEGIN
 {
-  ASSERT_DRIVER();
+  ASSERT_DEVICE();
   THROW_IF_NULL_STRING(type);
-  VKLVolume volume = openvkl::api::currentDriver().newVolume(type);
+  VKLVolume volume = openvkl::api::currentDevice().newVolume(type);
   if (volume == nullptr) {
     postLogMessage(VKL_LOG_ERROR) << "could not create volume '" << type << "'";
   }
@@ -907,7 +901,7 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
-  const box3f result = openvkl::api::currentDriver().getBoundingBox(volume);
+  const box3f result = openvkl::api::currentDevice().getBoundingBox(volume);
   return reinterpret_cast<const vkl_box3f &>(result);
 }
 OPENVKL_CATCH_END(vkl_box3f{rkcommon::math::nan})
@@ -915,13 +909,13 @@ OPENVKL_CATCH_END(vkl_box3f{rkcommon::math::nan})
 extern "C" unsigned int vklGetNumAttributes(VKLVolume volume)
     OPENVKL_CATCH_BEGIN
 {
-  return openvkl::api::currentDriver().getNumAttributes(volume);
+  return openvkl::api::currentDevice().getNumAttributes(volume);
 }
 OPENVKL_CATCH_END(0)
 
 extern "C" vkl_range1f vklGetValueRange(VKLVolume volume) OPENVKL_CATCH_BEGIN
 {
-  const range1f result = openvkl::api::currentDriver().getValueRange(volume);
+  const range1f result = openvkl::api::currentDevice().getValueRange(volume);
   return reinterpret_cast<const vkl_range1f &>(result);
 }
 OPENVKL_CATCH_END(vkl_range1f{rkcommon::math::nan})

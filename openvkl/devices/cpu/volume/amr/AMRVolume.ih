@@ -1,0 +1,28 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../Volume.ih"
+#include "AMR.ih"
+
+struct AMRVolume
+{
+  Volume super;
+
+  uniform vec3f gridSpacing;
+  uniform vec3f gridOrigin;
+  uniform box3f boundingBox;
+  uniform float samplingStep;
+
+  AMR amr;
+};
+
+inline void AMRVolume_transformObjectToLocal(
+    const AMRVolume *uniform volume,
+    const varying vec3f &objectCoordinates,
+    varying vec3f &localCoordinates)
+{
+  localCoordinates =
+      rcp(volume->gridSpacing) * (objectCoordinates - volume->gridOrigin);
+}

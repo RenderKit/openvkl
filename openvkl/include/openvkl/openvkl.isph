@@ -1,11 +1,11 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
 #include "VKLFormat.h"
 #include "common.isph"
-#include "driver.isph"
+#include "device.isph"
 #include "iterator.isph"
 #include "sampler.isph"
 #include "value_selector.isph"

@@ -1,0 +1,17 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+#include "sampler/Sampler.ih"
+
+struct VdbSampler
+{
+  Sampler super;
+
+  const VdbGrid *uniform grid;
+  const void *uniform leafAccessObservers;
+  vkl_uint32 maxSamplingDepth;
+  vkl_uint32 maxIteratorDepth;
+};

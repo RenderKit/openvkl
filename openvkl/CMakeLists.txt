@@ -12,7 +12,7 @@ set(VKL_RESOURCE ${VKL_RESOURCE} PARENT_SCOPE)
 
 openvkl_add_library_ispc(${PROJECT_NAME} SHARED
   api/API.cpp
-  api/Driver.cpp
+  api/Device.cpp
 
   common/Data.cpp
   common/ispc_util.ispc
@@ -95,14 +95,14 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
 
-## Add OpenVKL drivers ##
+## Add OpenVKL devices ##
 
-add_subdirectory(drivers)
+add_subdirectory(devices)
 
 ## Utilities
 
 add_executable(vklGenerateIteratorSizeHeader
-  util/vklGenerateIteratorSizeHeader.cpp 
+  util/vklGenerateIteratorSizeHeader.cpp
   ${VKL_RESOURCE})
 
 target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl)

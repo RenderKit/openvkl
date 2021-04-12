@@ -1,0 +1,109 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../common/Data.ih"
+#include "rkcommon/math/vec.ih"
+#include "rkcommon/math/box.ih"
+
+#include "Volume.ih"
+
+typedef enum
+{
+  VKL_TETRAHEDRON = 10,
+  VKL_HEXAHEDRON = 12,
+  VKL_WEDGE = 13,
+  VKL_PYRAMID = 14
+} CellType;
+
+struct Node {
+  uniform vec3f nominalLength;
+  uniform box1f valueRange;
+  uniform int level;
+  uniform Node *uniform parent;
+};
+
+struct LeafNode {
+  uniform Node super;
+  uniform box3fa bounds;
+  uniform uint64 cellID;
+};
+
+struct InnerNode {
+  uniform Node super;
+  uniform box3fa bounds[2];
+  uniform Node* uniform children[2];
+};
+
+inline uniform Node *uniform sibling(uniform Node *uniform node)
+{
+  uniform InnerNode *uniform parent = (uniform InnerNode *uniform )node->parent;
+
+  if (parent->children[0] == node) {
+    return parent->children[1];
+  }
+  else {
+    return parent->children[0];
+  }
+}
+
+bool pointInAABBTest(const uniform box3fa &box,
+                            const vec3f &point);
+
+typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
+                                       uniform uint64 id,
+                                       float &result,
+                                       vec3f pos);
+
+typedef bool (*intersectAndGradientPrim)(const void *uniform userData,
+                                         uniform uint64 id,
+                                         vec3f &result,
+                                         vec3f pos);
+
+void traverseEmbree(uniform Node* uniform root,
+                    const void *uniform userPtr,
+                    uniform intersectAndSamplePrim sampleFunc,
+                    float &result,
+                    const vec3f &pos);
+
+void traverseEmbree(uniform Node* uniform root,
+                    const void *uniform userPtr,
+                    uniform intersectAndGradientPrim sampleFunc,
+                    vec3f &result,
+                    const vec3f &pos);
+
+struct VKLUnstructuredBase
+{
+  Volume super;
+
+  uniform box3f boundingBox;
+  uniform Node* uniform bvhRoot;
+};
+
+struct VKLUnstructuredVolume
+{
+  VKLUnstructuredBase super;
+
+  // vertex data
+  uniform Data1D vertex;
+  uniform Data1D vertexValue; // attribute value at each vertex
+
+  // index data
+  uniform Data1D index;       // indices into vertices array
+  uniform bool index32Bit;    // true if index is 32-bit integer, false if 64-bit
+
+  // cell data
+  uniform Data1D cell;        // cell offsets in indices array
+  uniform bool cell32Bit;     // true if cell offset is 32-bit integer, false if 64-bit
+  uniform uint32 cellSkipIds; // skip indices when index array contain other data e.g. size
+  uniform Data1D cellType;    // cell type array
+  uniform Data1D cellValue;   // attribute value at each cell
+
+  const vec3f* uniform faceNormals;
+  const float* uniform iterativeTolerance;
+
+  uniform vec3f gradientStep;
+
+  uniform bool hexIterative;
+};

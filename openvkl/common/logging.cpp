@@ -1,8 +1,8 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "logging.h"
-#include "../api/Driver.h"
+#include "../api/Device.h"
 #include "rkcommon/utility/StringManip.h"
 #include "rkcommon/utility/getEnvVar.h"
 
@@ -17,9 +17,9 @@ namespace openvkl {
 
   void postLogMessage(const std::string &msg, VKLLogLevel postAtLogLevel)
   {
-    if (postAtLogLevel >= api::Driver::logLevel) {
-      if (api::driverIsSet()) {
-        api::Driver::current->logCallback(api::Driver::current->logUserData,
+    if (postAtLogLevel >= api::Device::logLevel) {
+      if (api::deviceIsSet()) {
+        api::Device::current->logCallback(api::Device::current->logUserData,
                                           (LOG_PREFIX + msg + '\n').c_str());
       } else {
         std::cout << LOG_PREFIX << msg << std::endl;

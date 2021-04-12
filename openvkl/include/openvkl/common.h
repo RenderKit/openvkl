@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -23,6 +23,14 @@
 #  endif
 #else
 #  define OPENVKL_INTERFACE
+#endif
+
+#ifdef __GNUC__
+#  define OPENVKL_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#  define OPENVKL_DEPRECATED __declspec(deprecated)
+#else
+#  define OPENVKL_DEPRECATED
 #endif
 
 #ifdef __cplusplus

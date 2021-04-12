@@ -239,7 +239,7 @@ function(openvkl_vdb_generate_topology)
     )
 
     configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSamplerDispatchInner.ih.in
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbSamplerDispatchInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.ih
     )
 
@@ -248,14 +248,14 @@ function(openvkl_vdb_generate_topology)
     set(VKL_VDB_UNIVARY_IN "uniform")
     set(VKL_VDB_UNIVARY_OUT "uniform")
     configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbSampleInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
     )
     # b) All lanes are not in the same subtree.
     set(VKL_VDB_UNIVARY_IN "varying")
     set(VKL_VDB_UNIVARY_OUT "varying")
     configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbSampleInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
     )
     # c) Lanes are not in the same leaf, but currently in the same subtree.
@@ -263,17 +263,17 @@ function(openvkl_vdb_generate_topology)
     set(VKL_VDB_UNIVARY_IN "uniform")
     set(VKL_VDB_UNIVARY_OUT "varying")
     configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbSampleInner.ih.in
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbSampleInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
     )
 
     configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/VdbQueryVoxel.ih.in
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbQueryVoxel.ih.in
       include/${PROJECT_NAME}_vdb/VdbQueryVoxel_${VKL_VDB_LEVEL}.ih
     )
 
     configure_file(
-      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/drivers/ispc/volume/vdb/HDDA.ih.in
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/HDDA.ih.in
       include/${PROJECT_NAME}_vdb/HDDA_${VKL_VDB_LEVEL}.ih
     )
 

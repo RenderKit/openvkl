@@ -117,17 +117,17 @@ check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl.so GLIBC   2 17 0
 check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl.so GLIBCXX 3 4 19
 check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl.so CXXABI  1 3 7
 
-check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver.so GLIBC   2 17 0
-check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver.so GLIBCXX 3 4 19
-check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver.so CXXABI  1 3 7
+check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device.so GLIBC   2 17 0
+check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device.so GLIBCXX 3 4 19
+check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device.so CXXABI  1 3 7
 
-check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver_4.so GLIBC   2 17 0
-check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver_4.so GLIBCXX 3 4 19
-check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver_4.so CXXABI  1 3 7
+check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device_4.so GLIBC   2 17 0
+check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device_4.so GLIBCXX 3 4 19
+check_symbols $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device_4.so CXXABI  1 3 7
 
 check_imf $OPENVKL_INSTALL_DIR/lib/libopenvkl.so
-check_imf $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver.so
-check_imf $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_ispc_driver_4.so
+check_imf $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device.so
+check_imf $OPENVKL_INSTALL_DIR/lib/libopenvkl_module_cpu_device_4.so
 
 # copy dependent libs into the install
 INSTALL_LIB_DIR=$OPENVKL_INSTALL_DIR/lib

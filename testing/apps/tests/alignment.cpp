@@ -1,12 +1,12 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
-#include "../openvkl/drivers/ispc/common/align.h"
+#include "../openvkl/devices/cpu/common/align.h"
 
 #include <iostream>
 
-using namespace openvkl::ispc_driver;
+using namespace openvkl::cpu_device;
 
 TEST_CASE("Alignment", "")
 {
@@ -30,4 +30,3 @@ TEST_CASE("Alignment", "")
     }
   }
 }
-

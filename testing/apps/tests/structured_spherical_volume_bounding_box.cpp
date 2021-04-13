@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -90,11 +90,11 @@ void test_bounding_box(const vec3i &dimensions,
 
 TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   std::vector<int> dimensions = {4, 32};
 

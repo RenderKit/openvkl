@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
@@ -62,11 +62,11 @@ struct Structured
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   registerVolumeBenchmarks<Structured<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Structured<VKL_FILTER_TRILINEAR>>();

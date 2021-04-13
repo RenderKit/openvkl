@@ -20,21 +20,21 @@ using namespace openvkl::testing;
 using namespace rkcommon::math;
 using openvkl::testing::WaveletVdbVolumeFloat;
 
-static bool rendererIsCompatibleWithDriver(const std::string &rendererType,
+static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
                                            bool useISPC,
                                            std::string &errorString)
 {
   // ISPC renderers that use iterator APIs must match width with the
-  // instantiated VKL driver
+  // instantiated VKL device
   if (useISPC && rendererType.find("iterator") != std::string::npos) {
-    const int driverNativeSIMDWidth = vklGetNativeSIMDWidth();
+    const int deviceNativeSIMDWidth = vklGetNativeSIMDWidth();
     const int ispcRendererSIMDWidth = ispc::Renderer_pixelsPerJob();
 
-    if (driverNativeSIMDWidth != ispcRendererSIMDWidth) {
+    if (deviceNativeSIMDWidth != ispcRendererSIMDWidth) {
       std::stringstream ss;
       ss << rendererType << " (useISPC = " << useISPC
-         << ") is not compatible with the current VKL driver (driver width = "
-         << driverNativeSIMDWidth
+         << ") is not compatible with the current VKL device (device width = "
+         << deviceNativeSIMDWidth
          << ", renderer width = " << ispcRendererSIMDWidth << ")";
 
       errorString = ss.str();
@@ -47,7 +47,7 @@ static bool rendererIsCompatibleWithDriver(const std::string &rendererType,
 }
 
 // This macro will only instantiate the benchmark in Google benchmark if it's
-// compatible with the current driver. There are other approaches to abort
+// compatible with the current device. There are other approaches to abort
 // benchmark runs (e.g. `state.SkipWithError()`), but with those benchmark
 // results to still have JSON output populated, which we do not want. This
 // approach avoids that.
@@ -59,7 +59,7 @@ static bool rendererIsCompatibleWithDriver(const std::string &rendererType,
                                         USE_ISPC)                         \
   {                                                                       \
     std::string errorString;                                              \
-    if (!rendererIsCompatibleWithDriver(                                  \
+    if (!rendererIsCompatibleWithDevice(                                  \
             RENDERER_TYPE, USE_ISPC, errorString)) {                      \
       std::cerr << "skipping benchmark capture: " << #FUNC << ", "        \
                 << #TEST_CASE_NAME << "\n\t" << errorString << std::endl; \

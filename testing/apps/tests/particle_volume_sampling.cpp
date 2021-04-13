@@ -83,11 +83,11 @@ void sampling_at_random_points(size_t numParticles,
 
 TEST_CASE("Particle volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   const size_t numParticles                         = 1000;
   const std::vector<bool> provideWeights            = {true, false};

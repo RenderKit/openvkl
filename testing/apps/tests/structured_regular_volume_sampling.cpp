@@ -10,11 +10,11 @@ using namespace openvkl::testing;
 
 TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   // no strides for these tests
   const float strideFactor = 0.f;

@@ -64,11 +64,11 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
 
 TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   SECTION("32-bit addressing")
   {

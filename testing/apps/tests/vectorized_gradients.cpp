@@ -91,11 +91,11 @@ void randomized_vectorized_gradients(VKLVolume volume)
 
 TEST_CASE("Vectorized gradients", "[volume_gradients]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   SECTION(
       "randomized vectorized gradients varying calling width and masks: "

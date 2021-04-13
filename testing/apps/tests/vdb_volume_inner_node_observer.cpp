@@ -131,11 +131,11 @@ inline void inner_node_tests(VKLVolume vklVolume,
 
 TEST_CASE("VDB volume inner node observer", "[volume_observers]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   const vec3i dimensions(256);
 

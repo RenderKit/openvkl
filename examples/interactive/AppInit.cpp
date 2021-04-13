@@ -12,11 +12,11 @@ void initializeOpenVKL()
   static bool initialized = false;
 
   if (!initialized) {
-    vklLoadModule("ispc_driver");
+    vklLoadModule("cpu_device");
 
-    VKLDriver driver = vklNewDriver("ispc");
-    vklCommitDriver(driver);
-    vklSetCurrentDriver(driver);
+    VKLDevice device = vklNewDevice("cpu");
+    vklCommitDevice(device);
+    vklSetCurrentDevice(device);
 
     initialized = true;
   }

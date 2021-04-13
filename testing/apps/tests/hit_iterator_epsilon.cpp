@@ -152,11 +152,11 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
 TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   const int nativeWidth = vklGetNativeSIMDWidth();
 

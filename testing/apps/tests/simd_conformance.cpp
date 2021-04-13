@@ -37,7 +37,7 @@ void public_wide_types_conformance_test()
 }
 
 template <int W>
-void driver_native_simd_width_conformance_test()
+void device_native_simd_width_conformance_test()
 {
   INFO("width = " << W);
   REQUIRE(vklGetNativeSIMDWidth() == W);
@@ -92,11 +92,11 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   public_wide_types_conformance_test<8>();
   public_wide_types_conformance_test<16>();
 
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
@@ -107,7 +107,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 #if VKL_TARGET_WIDTH_ENABLED_4
     SECTION("native (4-wide)")
     {
-      driver_native_simd_width_conformance_test<4>();
+      device_native_simd_width_conformance_test<4>();
       vrange1fn_conformance_test<4>();
       vvec3fn_conformance_test<4>();
       vVKLIntervalN_conformance_test<4>();
@@ -115,7 +115,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
     }
 #else
     throw std::runtime_error(
-        "illegal native SIMD width for driver build configuration");
+        "illegal native SIMD width for device build configuration");
 #endif
   }
 
@@ -123,7 +123,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 #if VKL_TARGET_WIDTH_ENABLED_8
     SECTION("native (8-wide)")
     {
-      driver_native_simd_width_conformance_test<8>();
+      device_native_simd_width_conformance_test<8>();
       vrange1fn_conformance_test<8>();
       vvec3fn_conformance_test<8>();
       vVKLIntervalN_conformance_test<8>();
@@ -131,7 +131,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
     }
 #else
     throw std::runtime_error(
-        "illegal native SIMD width for driver build configuration");
+        "illegal native SIMD width for device build configuration");
 #endif
   }
 
@@ -139,7 +139,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
 #if VKL_TARGET_WIDTH_ENABLED_16
     SECTION("native (16-wide)")
     {
-      driver_native_simd_width_conformance_test<16>();
+      device_native_simd_width_conformance_test<16>();
       vrange1fn_conformance_test<16>();
       vvec3fn_conformance_test<16>();
       vVKLIntervalN_conformance_test<16>();
@@ -147,7 +147,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
     }
 #else
     throw std::runtime_error(
-        "illegal native SIMD width for driver build configuration");
+        "illegal native SIMD width for device build configuration");
 #endif
   }
 
@@ -184,31 +184,31 @@ void max_iterator_size_conformance_test()
 
 TEST_CASE("Max iterator size", "[simd_conformance]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
-  // the native width for the default driver is the maximum we can instantiate
+  // the native width for the default device is the maximum we can instantiate
   int maximumSIMDWidth = vklGetNativeSIMDWidth();
 
   for (int W: { 4, 8, 16 })
   {
     if (W > maximumSIMDWidth) {
-      WARN("skipping max iterator size tests on unsupported driver width "
+      WARN("skipping max iterator size tests on unsupported device width "
            << W << " (maximum supported width on this system / build is "
            << maximumSIMDWidth << ")");
       continue;
     }
 
     std::ostringstream os;
-    os << "ispc_" << W;
-    driver = vklNewDriver(os.str().c_str());
-    if (driver)
+    os << "cpu_" << W;
+    device = vklNewDevice(os.str().c_str());
+    if (device)
     {
-      vklCommitDriver(driver);
-      vklSetCurrentDriver(driver);
+      vklCommitDevice(device);
+      vklSetCurrentDevice(device);
       int nativeSIMDWidth = vklGetNativeSIMDWidth();
 
       REQUIRE(nativeSIMDWidth == W);
@@ -223,7 +223,7 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         }
 #else
         throw std::runtime_error(
-            "illegal native SIMD width for driver build configuration");
+            "illegal native SIMD width for device build configuration");
 #endif
       }
 
@@ -237,7 +237,7 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         }
 #else
         throw std::runtime_error(
-            "illegal native SIMD width for driver build configuration");
+            "illegal native SIMD width for device build configuration");
 #endif
       }
 
@@ -251,7 +251,7 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         }
 #else
         throw std::runtime_error(
-            "illegal native SIMD width for driver build configuration");
+            "illegal native SIMD width for device build configuration");
 #endif
       }
 
@@ -259,11 +259,11 @@ TEST_CASE("Max iterator size", "[simd_conformance]")
         throw std::runtime_error("unsupported native SIMD width for tests");
       }
     }
-    else // (driver)
+    else // (device)
     {
       WARN(
           "cannot run max iterator size tests on unavailable (not compiled) "
-          "driver width "
+          "device width "
           << W);
     }
   }

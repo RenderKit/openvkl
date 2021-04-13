@@ -53,11 +53,11 @@ void scalar_hit_iteration(VKLVolume volume,
 
 TEST_CASE("Hit iterator", "[hit_iterators]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   const vec3i dimensions(128);

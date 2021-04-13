@@ -173,11 +173,11 @@ void vector_hit_iteration_time_varying(
 
 TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   int nativeSIMDWidth = vklGetNativeSIMDWidth();
 

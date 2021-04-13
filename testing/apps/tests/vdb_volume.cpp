@@ -8,12 +8,12 @@
 
 using namespace openvkl;
 
-static void init_driver()
+static void init_device()
 {
-  vklLoadModule("ispc_driver");
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  vklLoadModule("cpu_device");
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 }
 
 using openvkl::testing::WaveletVdbVolumeFloat;
@@ -21,7 +21,7 @@ using openvkl::testing::XYZVdbVolumeFloat;
 
 TEST_CASE("VDB volume leaf validation", "[validation]")
 {
-  init_driver();
+  init_device();
   VKLVolume volume = vklNewVolume("vdb");
 
   const uint32_t level   = vklVdbNumLevels() - 1;
@@ -49,8 +49,8 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
     vklRelease(data);
 
     vklCommit(volume);
-    REQUIRE(vklDriverGetLastErrorCode(vklGetCurrentDriver()) == 1);
-    REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver())) ==
+    REQUIRE(vklDeviceGetLastErrorCode(vklGetCurrentDevice()) == 1);
+    REQUIRE(std::string(vklDeviceGetLastErrorMsg(vklGetCurrentDevice())) ==
             "invalid node level 4 for this vdb configuration");
   }
 
@@ -72,8 +72,8 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
     vklRelease(data);
 
     vklCommit(volume);
-    REQUIRE(vklDriverGetLastErrorCode(vklGetCurrentDriver()) == 1);
-    REQUIRE(std::string(vklDriverGetLastErrorMsg(vklGetCurrentDriver()))
+    REQUIRE(vklDeviceGetLastErrorCode(vklGetCurrentDevice()) == 1);
+    REQUIRE(std::string(vklDeviceGetLastErrorMsg(vklGetCurrentDevice()))
                 .find("data array too small for constant node") !=
             std::string::npos);
   }
@@ -83,7 +83,7 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
 
 TEST_CASE("VDB volume value range", "[value_range]")
 {
-  init_driver();
+  init_device();
 
   // half
 
@@ -170,7 +170,7 @@ TEST_CASE("VDB volume value range", "[value_range]")
 
 TEST_CASE("VDB volume sampling", "[volume_sampling]")
 {
-  init_driver();
+  init_device();
 
   // half
 
@@ -383,7 +383,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
 TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
 {
-  init_driver();
+  init_device();
 
   WaveletVdbVolumeFloat *volume = nullptr;
   range1f valueRange;
@@ -409,7 +409,7 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
 
 TEST_CASE("VDB volume gradients", "[volume_gradients]")
 {
-  init_driver();
+  init_device();
 
   // half
 
@@ -683,7 +683,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
 TEST_CASE("VDB volume strides", "[volume_strides]")
 {
-  init_driver();
+  init_device();
 
   std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT,
                                                       VKL_DATA_SHARED_BUFFER};

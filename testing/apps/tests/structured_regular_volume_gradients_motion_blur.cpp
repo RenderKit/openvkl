@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <random>
@@ -160,11 +160,11 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
 TEST_CASE("Structured regular volume gradient sampling with motion blur",
           "[volume_sampling]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   SECTION("temporally unstructured with varying time steps per voxel")
   {

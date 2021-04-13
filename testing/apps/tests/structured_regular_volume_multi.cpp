@@ -20,11 +20,11 @@ inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
 TEST_CASE("Structured regular volume multiple attributes",
           "[volume_multi_attributes]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   const vec3i dimensions(128);
   const vec3f gridOrigin(0.f);

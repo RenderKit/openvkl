@@ -40,11 +40,11 @@ void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
 
 TEST_CASE("Structured volume value range", "[volume_value_range]")
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
+  vklSetCurrentDevice(device);
 
   SECTION("unsigned char")
   {

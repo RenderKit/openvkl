@@ -17,6 +17,7 @@
 // Keywords.
 #define VKL_INTEROP_UNIFORM uniform
 #define VKL_INTEROP_CONSTEXPR
+#define VKL_INTEROP_STATIC_ASSERT(condition, message)
 
 // Unified integer typedefs.
 
@@ -40,6 +41,8 @@ typedef unsigned int64 vkl_uint64;
 // Keywords.
 #define VKL_INTEROP_UNIFORM
 #define VKL_INTEROP_CONSTEXPR constexpr
+#define VKL_INTEROP_STATIC_ASSERT(condition, message) \
+  static_assert((condition), message)
 
 // Unified integer typedefs.
 

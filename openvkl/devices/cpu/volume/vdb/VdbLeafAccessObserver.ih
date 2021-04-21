@@ -6,7 +6,7 @@
 #include "../../observer/ObserverRegistry.ih"
 #include "VdbSampler.ih"
 
-uniform bool VdbLeafAccessObserver_isObservable(
+inline uniform bool VdbLeafAccessObserver_isObservable(
     const VdbSampler *uniform sampler)
 {
   assert(sampler);
@@ -16,7 +16,7 @@ uniform bool VdbLeafAccessObserver_isObservable(
 }
 
 #define __define_leaf_access_observer(univary)                               \
-  void VdbLeafAccessObserver_observe_##univary(                              \
+  inline void VdbLeafAccessObserver_observe_##univary(                       \
       const VdbSampler *uniform sampler, const univary uint32 leafIndex)     \
   {                                                                          \
     assert(sampler->leafAccessObservers);                                    \
@@ -30,7 +30,6 @@ uniform bool VdbLeafAccessObserver_isObservable(
   }
 
 __define_leaf_access_observer(uniform)
-
 __define_leaf_access_observer(varying)
 
 #undef __define_leaf_access_observer

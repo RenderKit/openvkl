@@ -67,7 +67,7 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
     vklCommit(volume);
     REQUIRE(vklDeviceGetLastErrorCode(getOpenVKLDevice()) == 1);
     REQUIRE(std::string(vklDeviceGetLastErrorMsg(getOpenVKLDevice()))
-                .find("data array too small for constant node") !=
+                .find("Node data too small") !=
             std::string::npos);
   }
 

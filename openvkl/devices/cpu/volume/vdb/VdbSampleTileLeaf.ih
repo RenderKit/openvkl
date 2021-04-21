@@ -3,19 +3,137 @@
 
 #pragma once
 
-#define template_VdbSampler_sampleTileLeaf(voxelType)         \
-  inline varying float VdbSampler_sampleTileLeaf_##voxelType( \
-      const uniform Data1D *varying leafPtr)                  \
-  {                                                           \
-    return get_##voxelType##_0(leafPtr);                      \
-  }                                                           \
-                                                              \
-  inline uniform float VdbSampler_sampleTileLeaf_##voxelType( \
-      const uniform Data1D *uniform leafPtr)                  \
-  {                                                           \
-    return get_##voxelType##_0(*leafPtr);                     \
+//#define INLINENOINLINE inline
+#define INLINENOINLINE noinline
+#warning "noinline is set."
+
+// ---------------------------------------------------------------------------
+// Temporally constant leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define template_VdbSampler_sampleLeafTile_constant(voxelType)                 \
+  INLINENOINLINE varying float VdbSampler_sampleLeafTile_constant_##voxelType( \
+      const uniform Data1D *varying leafPtr)                                   \
+  {                                                                            \
+    return get_##voxelType##_0(leafPtr);                                       \
+  }                                                                            \
+                                                                               \
+  INLINENOINLINE uniform float VdbSampler_sampleLeafTile_constant_##voxelType( \
+      const uniform Data1D *uniform leafPtr)                                   \
+  {                                                                            \
+    return get_##voxelType##_0(*leafPtr);                                      \
+  }                                                                            \
+                                                                               \
+  INLINENOINLINE uniform box1f                                                 \
+      VdbSampler_computeLeafTileValueRange_constant_##voxelType(               \
+          const uniform Data1D *uniform leafPtr)                               \
+  {                                                                            \
+    const uniform float v = get_##voxelType##_0(*leafPtr);                     \
+    return make_box1f(v, v);                                                   \
   }
 
-template_VdbSampler_sampleTileLeaf(half);
-template_VdbSampler_sampleTileLeaf(float);
-#undef template_VdbSampler_sampleTileLeaf
+template_VdbSampler_sampleLeafTile_constant(half)
+template_VdbSampler_sampleLeafTile_constant(float)
+#undef template_VdbSampler_sampleLeafTile_constant
+
+// ---------------------------------------------------------------------------
+// Temporally structured leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define template_VdbSampler_sampleLeafTile_structured(voxelType)     \
+  INLINENOINLINE varying float                                       \
+      VdbSampler_sampleLeafTile_structured_##voxelType(              \
+          const uniform Data1D *varying leafPtr,                     \
+          const varying int32 &numTimesteps,                         \
+          const varying float &time)                                 \
+  {                                                                  \
+    return interpolateTemporallyStructured_##voxelType(              \
+        leafPtr, numTimesteps, ((varying uint32)0u), time);          \
+  }                                                                  \
+                                                                     \
+  INLINENOINLINE uniform float                                       \
+      VdbSampler_sampleLeafTile_structured_##voxelType(              \
+          const uniform Data1D *uniform leafPtr,                     \
+          uniform int32 numTimesteps,                                \
+          uniform float time)                                        \
+  {                                                                  \
+    return interpolateTemporallyStructured_##voxelType(              \
+        leafPtr, numTimesteps, 0u, time);                            \
+  }                                                                  \
+  INLINENOINLINE varying float                                       \
+      VdbSampler_sampleLeafTile_structured_##voxelType(              \
+          const uniform Data1D *uniform leafPtr,                     \
+          uniform int32 numTimesteps,                                \
+          const varying float &time)                                 \
+  {                                                                  \
+    return interpolateTemporallyStructured_##voxelType(              \
+        leafPtr, numTimesteps, ((varying uint32)0u), time);          \
+  }                                                                  \
+                                                                     \
+  INLINENOINLINE uniform box1f                                       \
+      VdbSampler_computeLeafTileValueRange_structured_##voxelType(   \
+          const Data1D *uniform leafPtr, uniform int32 numTimesteps) \
+  {                                                                  \
+    uniform box1f valueRange = make_box1f(0, 0);                     \
+    for (uniform uint32 i = 0; i < numTimesteps; ++i) {              \
+      extend(valueRange, get_##voxelType(*leafPtr, i));              \
+    }                                                                \
+    return valueRange;                                               \
+  }
+
+template_VdbSampler_sampleLeafTile_structured(half)
+template_VdbSampler_sampleLeafTile_structured(float)
+#undef template_VdbSampler_sampleLeafTile_structured
+
+// ---------------------------------------------------------------------------
+// Temporally unstructured leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define template_VdbSampler_sampleLeafTile_unstructured(voxelType)   \
+  INLINENOINLINE varying float                                       \
+      VdbSampler_sampleLeafTile_unstructured_##voxelType(            \
+          const uniform Data1D *varying leafPtr,                     \
+          const uniform Data1D *varying indices,                     \
+          const uniform Data1D *varying times,                       \
+          const varying float &time)                                 \
+  {                                                                  \
+    return interpolateTemporallyUnstructured_##voxelType(            \
+        leafPtr, indices, times, ((varying uint32)0u), time);        \
+  }                                                                  \
+                                                                     \
+  INLINENOINLINE varying float                                       \
+      VdbSampler_sampleLeafTile_unstructured_##voxelType(            \
+          const uniform Data1D *uniform leafPtr,                     \
+          const Data1D *uniform indices,                             \
+          const Data1D *uniform times,                               \
+          const varying float &time)                                 \
+  {                                                                  \
+    return interpolateTemporallyUnstructured_##voxelType(            \
+        leafPtr, indices, times, ((varying uint32)0u), time);        \
+  }                                                                  \
+                                                                     \
+  INLINENOINLINE uniform float                                       \
+      VdbSampler_sampleLeafTile_unstructured_##voxelType(            \
+          const Data1D *uniform leafPtr,                             \
+          const Data1D *uniform indices,                             \
+          const Data1D *uniform times,                               \
+          uniform float time)                                        \
+  {                                                                  \
+    return interpolateTemporallyUnstructured_##voxelType(            \
+        leafPtr, indices, times, 0u, time);                          \
+  }                                                                  \
+                                                                     \
+  INLINENOINLINE uniform box1f                                       \
+      VdbSampler_computeLeafTileValueRange_unstructured_##voxelType( \
+          const uniform Data1D *uniform leafPtr,                     \
+          const Data1D *uniform indices)                             \
+  {                                                                  \
+    return computeValueRangeTemporallyUnstructured_##voxelType(      \
+        leafPtr, indices, 0u);                                       \
+  }
+
+template_VdbSampler_sampleLeafTile_unstructured(half)
+template_VdbSampler_sampleLeafTile_unstructured(float)
+#undef template_VdbSampler_sampleLeafTile_unstructured
+
+#undef INLINENOINLINE

@@ -46,7 +46,7 @@
  * The definition should be commented out again before merging.
  */
 
-//#define VDB_SAMPLER_DISPATCH_INNER_NOINLINE
+#define VDB_SAMPLER_DISPATCH_INNER_NOINLINE
 
 #if defined(VDB_SAMPLER_DISPATCH_INNER_NOINLINE)
 #warning "VDB_SAMPLER_DISPATCH_INNER_NOINLINE is set."
@@ -64,7 +64,7 @@ noinline void VdbSampler_dispatchInner_uniform_uniform(
 noinline void VdbSampler_dispatchInner_uniform_varying(
     const VdbSampler *uniform sampler,
     const uniform uint64 nodeIndex,
-    const varying vec3ui &domainOffset,
+    const vec3ui &domainOffset,
     varying uint64 &voxel)
 {
   VdbSampler_dispatchInner_uniform_varying_0(
@@ -73,9 +73,9 @@ noinline void VdbSampler_dispatchInner_uniform_varying(
 
 noinline void VdbSampler_dispatchInner_varying_varying(
     const VdbSampler *uniform sampler,
-    const varying uint64 nodeIndex,
-    const varying vec3ui &domainOffset,
-    varying uint64 &voxel)
+    const uint64 nodeIndex,
+    const vec3ui &domainOffset,
+    uint64 &voxel)
 {
   VdbSampler_dispatchInner_varying_varying_0(
       sampler, nodeIndex, domainOffset, voxel);
@@ -216,73 +216,163 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
 
 // These helper functions handle all legal combinations of sampling uniform /
 // varying voxels at uniform / varying offsets, and are used just below.
-#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)       \
-  inline univaryOffset float VdbSampler_sample_inner(                       \
-      const VdbSampler *uniform sampler,                                    \
-      const univaryVoxel uint64 &voxel,                                     \
-      const univaryOffset vec3ui &domainOffset,                             \
-      const uniform uint32 attributeIndex)                                  \
-  {                                                                         \
-    univaryOffset float sample = 0.f;                                       \
-                                                                            \
-    if (vklVdbVoxelIsLeafPtr(voxel)) {                                      \
-      const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel); \
-      assert(leafIndex < sampler->grid->numLeaves);                         \
-                                                                            \
-      const uniform vkl_uint32 voxelType =                                  \
-          sampler->grid->attributeTypes[attributeIndex];                    \
-                                                                            \
-      const uniform bool isCompact = sampler->grid->allLeavesCompact;       \
-                                                                            \
-      const univaryVoxel VKLFormat leafFormat =                             \
-          vklVdbVoxelLeafGetFormat(voxel);                                  \
-                                                                            \
-      if (voxelType == VKL_HALF) {                                          \
-        if (leafFormat == VKL_FORMAT_TILE) {                                \
-          sample = VdbSampler_sampleTileLeaf_half(                          \
-              vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex)); \
-        } else if (isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {    \
-          sample = VdbSampler_sampleConstantLeafCompact_half(               \
-              vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),  \
-              domainOffset);                                                \
-        } else if (!isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {   \
-          sample = VdbSampler_sampleConstantLeafStrided_half(               \
-              vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),  \
-              domainOffset);                                                \
-        } else {                                                            \
-          assert(false);                                                    \
-        }                                                                   \
-      } else if (voxelType == VKL_FLOAT) {                                  \
-        if (leafFormat == VKL_FORMAT_TILE) {                                \
-          sample = VdbSampler_sampleTileLeaf_float(                         \
-              vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex)); \
-        } else if (isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {    \
-          sample = VdbSampler_sampleConstantLeafCompact_float(              \
-              vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),  \
-              domainOffset);                                                \
-        } else if (!isCompact && leafFormat == VKL_FORMAT_CONSTANT_ZYX) {   \
-          sample = VdbSampler_sampleConstantLeafStrided_float(              \
-              vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),  \
-              domainOffset);                                                \
-        } else {                                                            \
-          assert(false);                                                    \
-        }                                                                   \
-      } else {                                                              \
-        assert(false);                                                      \
-      }                                                                     \
-    } else if (vklVdbVoxelIsError(voxel)) {                                 \
-      univaryVoxel uint8 level;                                             \
-      univaryVoxel uint32 voxelOffset;                                      \
-      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                       \
-                                                                            \
-      const univaryVoxel range1f valueRange =                               \
-          sampler->grid->levels[level]                                      \
-              .valueRange[voxelOffset * sampler->grid->numAttributes +      \
-                          attributeIndex];                                  \
-      sample = 0.5f * (valueRange.lower + valueRange.upper);                \
-    }                                                                       \
-                                                                            \
-    return sample;                                                          \
+#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)          \
+  inline univaryOffset float VdbSampler_sample_inner(                          \
+      const VdbSampler *uniform sampler,                                       \
+      const univaryVoxel uint64 &voxel,                                        \
+      const univaryOffset vec3ui &domainOffset,                                \
+      const univaryOffset float &time,                                         \
+      const uniform uint32 attributeIndex)                                     \
+  {                                                                            \
+    univaryOffset float sample = 0.f;                                          \
+                                                                               \
+    if (vklVdbVoxelIsLeafPtr(voxel)) {                                         \
+      const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);    \
+      assert(leafIndex < sampler->grid->numLeaves);                            \
+                                                                               \
+      const uniform vkl_uint32 voxelType =                                     \
+          sampler->grid->attributeTypes[attributeIndex];                       \
+                                                                               \
+      const univaryVoxel VKLFormat leafFormat =                                \
+          vklVdbVoxelLeafGetFormat(voxel);                                     \
+      const univaryVoxel VKLTemporalFormat leafTemporalFormat =                \
+          vklVdbVoxelLeafGetTemporalFormat(voxel);                             \
+                                                                               \
+      if (voxelType == VKL_HALF) {                                             \
+        if (leafFormat == VKL_FORMAT_TILE) {                                   \
+          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
+            sample = VdbSampler_sampleLeafTile_constant_half(                  \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex));  \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
+            const univaryVoxel int32 numTimesteps =                            \
+                sampler->grid->leafStructuredTimesteps[leafIndex];             \
+            sample = VdbSampler_sampleLeafTile_structured_half(                \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                numTimesteps,                                                  \
+                time);                                                         \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
+            const uniform Data1D *univaryVoxel indices =                       \
+                sampler->grid->leafUnstructuredIndices + leafIndex;            \
+            assert(indices);                                                   \
+            const uniform Data1D *univaryVoxel times =                         \
+                sampler->grid->leafUnstructuredTimes + leafIndex;              \
+            assert(times);                                                     \
+            sample = VdbSampler_sampleLeafTile_unstructured_half(              \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                indices,                                                       \
+                times,                                                         \
+                time);                                                         \
+          } else {                                                             \
+            assert(false);                                                     \
+          }                                                                    \
+        } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {                    \
+          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
+            sample = VdbSampler_sampleLeafZYX_constant_half(                   \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                domainOffset);                                                 \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
+            const univaryVoxel int32 numTimesteps =                            \
+                sampler->grid->leafStructuredTimesteps[leafIndex];             \
+            sample = VdbSampler_sampleLeafZYX_structured_half(                 \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                numTimesteps,                                                  \
+                domainOffset,                                                  \
+                time);                                                         \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
+            const uniform Data1D *univaryVoxel indices =                       \
+                sampler->grid->leafUnstructuredIndices + leafIndex;            \
+            assert(indices);                                                   \
+            const uniform Data1D *univaryVoxel times =                         \
+                sampler->grid->leafUnstructuredTimes + leafIndex;              \
+            assert(times);                                                     \
+            sample = VdbSampler_sampleLeafZYX_unstructured_half(               \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                indices,                                                       \
+                times,                                                         \
+                domainOffset,                                                  \
+                time);                                                         \
+          } else {                                                             \
+            assert(false);                                                     \
+          }                                                                    \
+        } else {                                                               \
+          assert(false);                                                       \
+        }                                                                      \
+      } else if (voxelType == VKL_FLOAT) {                                     \
+        if (leafFormat == VKL_FORMAT_TILE) {                                   \
+          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
+            sample = VdbSampler_sampleLeafTile_constant_float(                 \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex));  \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
+            const univaryVoxel int32 numTimesteps =                            \
+                sampler->grid->leafStructuredTimesteps[leafIndex];             \
+            sample = VdbSampler_sampleLeafTile_structured_float(               \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                numTimesteps,                                                  \
+                time);                                                         \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
+            const uniform Data1D *univaryVoxel indices =                       \
+                sampler->grid->leafUnstructuredIndices + leafIndex;            \
+            assert(indices);                                                   \
+            const uniform Data1D *univaryVoxel times =                         \
+                sampler->grid->leafUnstructuredTimes + leafIndex;              \
+            assert(times);                                                     \
+            sample = VdbSampler_sampleLeafTile_unstructured_float(             \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                indices,                                                       \
+                times,                                                         \
+                time);                                                         \
+          } else {                                                             \
+            assert(false);                                                     \
+          }                                                                    \
+        } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {                    \
+          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
+            sample = VdbSampler_sampleLeafZYX_constant_float(                  \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                domainOffset);                                                 \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
+            const univaryVoxel int32 numTimesteps =                            \
+                sampler->grid->leafStructuredTimesteps[leafIndex];             \
+            sample = VdbSampler_sampleLeafZYX_structured_float(                \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                numTimesteps,                                                  \
+                domainOffset,                                                  \
+                time);                                                         \
+          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
+            const uniform Data1D *univaryVoxel indices =                       \
+                sampler->grid->leafUnstructuredIndices + leafIndex;            \
+            assert(indices);                                                   \
+            const uniform Data1D *univaryVoxel times =                         \
+                sampler->grid->leafUnstructuredTimes + leafIndex;              \
+            assert(times);                                                     \
+            sample = VdbSampler_sampleLeafZYX_unstructured_float(              \
+                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
+                indices,                                                       \
+                times,                                                         \
+                domainOffset,                                                  \
+                time);                                                         \
+          } else {                                                             \
+            assert(false);                                                     \
+          }                                                                    \
+        } else {                                                               \
+          assert(false);                                                       \
+        }                                                                      \
+                                                                               \
+      } else {                                                                 \
+        assert(false);                                                         \
+      }                                                                        \
+    } else if (vklVdbVoxelIsError(voxel)) {                                    \
+      univaryVoxel uint8 level;                                                \
+      univaryVoxel uint32 voxelOffset;                                         \
+      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                          \
+                                                                               \
+      const univaryVoxel range1f valueRange =                                  \
+          sampler->grid->levels[level]                                         \
+              .valueRange[voxelOffset * sampler->grid->numAttributes +         \
+                          attributeIndex];                                     \
+      sample = 0.5f * (valueRange.lower + valueRange.upper);                   \
+    }                                                                          \
+                                                                               \
+    return sample;                                                             \
   }
 
 template_VdbSampler_sample_inner(varying, varying);
@@ -297,27 +387,27 @@ template_VdbSampler_sample_inner(uniform, uniform);
 inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
                                        const uniform uint64 &voxel,
                                        const uniform vec3ui &domainOffset,
+                                       const uniform float time,
                                        const uniform uint32 attributeIndex)
 {
-  return VdbSampler_sample_inner(sampler, voxel, domainOffset, attributeIndex);
+  return VdbSampler_sample_inner(
+      sampler, voxel, domainOffset, time, attributeIndex);
 }
 
 // Varying sampling.
 inline float VdbSampler_sample(const VdbSampler *uniform sampler,
                                const uint64 &voxel,
                                const vec3ui &domainOffset,
+                               const float &time,
                                const uniform uint32 attributeIndex)
 {
   uniform uint64 uniformVoxel;
   if (reduce_equal(voxel, &uniformVoxel)) {
-    // All queries are in the same leaf node. Do uniform sampling!
     return VdbSampler_sample_inner(
-        sampler, uniformVoxel, domainOffset, attributeIndex);
-
+        sampler, uniformVoxel, domainOffset, time, attributeIndex);
   } else {
-    // Different leaf nodes, so we must use the varying code path.
     return VdbSampler_sample_inner(
-        sampler, voxel, domainOffset, attributeIndex);
+        sampler, voxel, domainOffset, time, attributeIndex);
   }
 }
 
@@ -331,6 +421,7 @@ inline float VdbSampler_sample(const VdbSampler *uniform sampler,
 inline uniform float VdbSampler_traverseAndSample(
     const VdbSampler *uniform sampler,
     const uniform vec3i &ic,
+    const uniform float time,
     const uniform uint32 attributeIndex)
 {
   assert(sampler);
@@ -345,14 +436,21 @@ inline uniform float VdbSampler_traverseAndSample(
     uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
     VdbSampler_dispatchInner_uniform_uniform(sampler, 0ul, leafOrigin, voxelU);
     return VdbSampler_sample_inner(
-        sampler, voxelU, domainOffset, attributeIndex);
+        sampler, voxelU, domainOffset, time, attributeIndex);
   }
 
   return 0.f;
 }
 
+inline uniform bool reduce_equal(const vec3ui &v, vec3ui *uniform uv)
+{
+  return reduce_equal(v.x, &(uv->x)) && reduce_equal(v.y, &(uv->y)) &&
+         reduce_equal(v.z, &(uv->z));
+}
+
 inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
                                           const vec3i &ic,
+                                          const float &time,
                                           const uniform uint32 attributeIndex)
 {
   assert(sampler);
@@ -364,21 +462,19 @@ inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
   if (VdbSampler_isInDomain(domainOffset)) {
     const vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
     uniform vec3ui uniformLeafOrigin;
-    if (reduce_equal(leafOrigin.x, &uniformLeafOrigin.x) &&
-        reduce_equal(leafOrigin.y, &uniformLeafOrigin.y) &&
-        reduce_equal(leafOrigin.z, &uniformLeafOrigin.z)) {
+    if (reduce_equal(leafOrigin, &uniformLeafOrigin)) {
       // All queries are in the same leaf node. Do uniform traversal!
       uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
       VdbSampler_dispatchInner_uniform_uniform(
           sampler, 0ul, uniformLeafOrigin, voxelU);
       return VdbSampler_sample_inner(
-          sampler, voxelU, domainOffset, attributeIndex);
+          sampler, voxelU, domainOffset, time, attributeIndex);
     } else {
       // Varying traversal.
       uint64 voxel = vklVdbVoxelMakeEmpty();
       VdbSampler_dispatchInner_uniform_varying(sampler, 0ul, leafOrigin, voxel);
       return VdbSampler_sample_inner(
-          sampler, voxel, domainOffset, attributeIndex);
+          sampler, voxel, domainOffset, time, attributeIndex);
     }
   }
   return 0.f;
@@ -387,42 +483,6 @@ inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
 // ---------------------------------------------------------------------------
 // Value range computation.
 // ---------------------------------------------------------------------------
-
-#define VdbSampler_computeNodeValueRange_inner(voxelType)              \
-  switch (leafFormat) {                                                \
-  case VKL_FORMAT_TILE:                                                \
-    valueRange.lower = VdbSampler_sampleTileLeaf_##voxelType(leafPtr); \
-    valueRange.upper = valueRange.lower;                               \
-    break;                                                             \
-  case VKL_FORMAT_CONSTANT_ZYX:                                        \
-    valueRange = make_box1f(pos_inf, neg_inf);                         \
-    if (grid->allLeavesCompact) {                                      \
-      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {     \
-        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {   \
-          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) { \
-            const uniform float sample =                               \
-                VdbSampler_sampleConstantLeafCompact_##voxelType(      \
-                    leafPtr, make_vec3ui(x, y, z));                    \
-            extend(valueRange, sample);                                \
-          }                                                            \
-        }                                                              \
-      }                                                                \
-    } else {                                                           \
-      for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {     \
-        for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {   \
-          for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) { \
-            const uniform float sample =                               \
-                VdbSampler_sampleConstantLeafStrided_##voxelType(      \
-                    leafPtr, make_vec3ui(x, y, z));                    \
-            extend(valueRange, sample);                                \
-          }                                                            \
-        }                                                              \
-      }                                                                \
-    }                                                                  \
-    break;                                                             \
-  default:                                                             \
-    break;                                                             \
-  }
 
 /*
  * Compute the value range for the given node and index range.
@@ -438,27 +498,97 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
   const uniform VKLFormat leafFormat = vklVdbVoxelIsLeafPtr(voxel)
                                            ? vklVdbVoxelLeafGetFormat(voxel)
                                            : VKL_FORMAT_INVALID;
-  const uniform uint64 leafIndex     = vklVdbVoxelLeafGetIndex(voxel);
+  const uniform VKLTemporalFormat leafTemporalFormat =
+      vklVdbVoxelIsLeafPtr(voxel) ? vklVdbVoxelLeafGetTemporalFormat(voxel)
+                                  : VKL_TEMPORAL_FORMAT_INVALID;
+  const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
   const Data1D *uniform leafPtr =
       vklVdbGetLeafData(grid, leafIndex, attributeIndex);
-
-  const uniform float background = 0.f;
-  uniform box1f valueRange       = make_box1f(background, background);
-
   const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
+  uniform box1f valueRange           = make_box1f(0.f, 0.f);
 
-  if (voxelType == VKL_HALF) {
-    VdbSampler_computeNodeValueRange_inner(half);
-  } else if (voxelType == VKL_FLOAT) {
-    VdbSampler_computeNodeValueRange_inner(float);
-  } else {
-    assert(false);
+  if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {
+    if (voxelType == VKL_HALF) {
+      if (leafFormat == VKL_FORMAT_TILE) {
+        valueRange =
+            VdbSampler_computeLeafTileValueRange_constant_half(leafPtr);
+      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+        valueRange = 
+               VdbSampler_computeLeafZYXValueRange_constant_half(
+                   leafPtr, rangeX, rangeY, rangeZ);
+      } else {
+        assert(false);
+      }
+    }
+    if (voxelType == VKL_FLOAT) {
+      if (leafFormat == VKL_FORMAT_TILE) {
+        valueRange =
+            VdbSampler_computeLeafTileValueRange_constant_float(leafPtr);
+      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+        valueRange =
+               VdbSampler_computeLeafZYXValueRange_constant_float(
+                   leafPtr, rangeX, rangeY, rangeZ);
+      } else {
+        assert(false);
+      }
+    }
+  } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {
+    const uniform uint32 numTimesteps = grid->leafStructuredTimesteps[leafIndex];
+    if (voxelType == VKL_HALF) {
+      if (leafFormat == VKL_FORMAT_TILE) {
+        valueRange = VdbSampler_computeLeafTileValueRange_structured_half(
+            leafPtr, numTimesteps);
+      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+        valueRange =
+               VdbSampler_computeLeafZYXValueRange_structured_half(
+                   leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
+      } else {
+        assert(false);
+      }
+    }
+    if (voxelType == VKL_FLOAT) {
+      if (leafFormat == VKL_FORMAT_TILE) {
+        valueRange = VdbSampler_computeLeafTileValueRange_structured_float(
+            leafPtr, numTimesteps);
+      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+        valueRange =
+               VdbSampler_computeLeafZYXValueRange_structured_float(
+                   leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
+      } else {
+        assert(false);
+      }
+    }
+  } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) {
+    const Data1D *uniform indices = grid->leafUnstructuredIndices + leafIndex;
+
+    if (voxelType == VKL_HALF) {
+      if (leafFormat == VKL_FORMAT_TILE) {
+        valueRange = VdbSampler_computeLeafTileValueRange_unstructured_half(
+            leafPtr, indices);
+      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+        valueRange =
+               VdbSampler_computeLeafZYXValueRange_unstructured_half(
+                   leafPtr, indices, rangeX, rangeY, rangeZ);
+      } else {
+        assert(false);
+      }
+    }
+    if (voxelType == VKL_FLOAT) {
+      if (leafFormat == VKL_FORMAT_TILE) {
+        valueRange = VdbSampler_computeLeafTileValueRange_unstructured_float(
+            leafPtr, indices);
+      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
+        valueRange =
+               VdbSampler_computeLeafZYXValueRange_unstructured_float(
+                   leafPtr, indices, rangeX, rangeY, rangeZ);
+      } else {
+        assert(false);
+      }
+    }
   }
 
   return valueRange;
 }
-
-#undef VdbSampler_computeNodeValueRange_inner
 
 /*
  * Compute the value range on the given constant float leaf.
@@ -472,8 +602,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
 {
   const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
 
-  // We need to consider voxels outside this node in the value range because of
-  // reconstruction filter support.
+  // We need to consider voxels outside this node in the value range because
+  // of reconstruction filter support.
   //
   // In particular, we support filters that use up to a 4x4x4 neighborhood.
   //
@@ -513,7 +643,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
   for (uniform int ix = 0; ix < 3; ++ix) {
     for (uniform int iy = 0; iy < 3; ++iy) {
       for (uniform int iz = 0; iz < 3; ++iz) {
-        // This is the offset of the current node relative to the central node.
+        // This is the offset of the current node relative to the central
+        // node.
         const uniform vec3i nodeOffset =
             make_vec3i((ix - 1) * VKL_VDB_RES_LEAF,
                        (iy - 1) * VKL_VDB_RES_LEAF,
@@ -555,17 +686,19 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
  */
 inline float VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                            const vec3f &indexCoordinates,
+                                           const float &time,
                                            const uniform uint32 attributeIndex)
 {
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
                               floor(indexCoordinates.y),
                               floor(indexCoordinates.z));
 
-  return VdbSampler_traverseAndSample(sampler, ic, attributeIndex);
+  return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
 }
 
 inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                           const vec3f &indexCoordinates,
+                                          const float &time,
                                           const uniform uint32 M,
                                           const uint32 *uniform
                                               attributeIndices,
@@ -580,8 +713,8 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
   VdbSampler_traverse(sampler, ic, voxel, domainOffset);
 
   for (uniform unsigned int a = 0; a < M; a++) {
-    const float samplesA =
-        VdbSampler_sample(sampler, voxel, domainOffset, attributeIndices[a]);
+    const float samplesA = VdbSampler_sample(
+        sampler, voxel, domainOffset, time, attributeIndices[a]);
 
     samples[a * VKL_TARGET_WIDTH + programIndex] = samplesA;
   }
@@ -590,17 +723,19 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
 inline uniform float VdbSampler_interpolateNearest(
     const VdbSampler *uniform sampler,
     const uniform vec3f &indexCoordinates,
+    const uniform float time,
     const uniform uint32 attributeIndex)
 {
   const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
                                       floor(indexCoordinates.z));
 
-  return VdbSampler_traverseAndSample(sampler, ic, attributeIndex);
+  return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
 }
 
 inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                           const uniform vec3f &indexCoordinates,
+                                          const uniform float time,
                                           const uniform uint32 M,
                                           const uint32 *uniform
                                               attributeIndices,
@@ -615,8 +750,8 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
   VdbSampler_traverse(sampler, ic, voxel, domainOffset);
 
   for (uniform unsigned int a = 0; a < M; a++) {
-    samples[a] =
-        VdbSampler_sample(sampler, voxel, domainOffset, attributeIndices[a]);
+    samples[a] = VdbSampler_sample(
+        sampler, voxel, domainOffset, time, attributeIndices[a]);
   }
 }
 
@@ -624,6 +759,7 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                           const uniform unsigned int N,
                                           const vec3f *uniform
                                               objectCoordinates,
+                                          const float *uniform times,
                                           const uint32 uniform attributeIndex,
                                           float *uniform samples)
 {
@@ -633,8 +769,9 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
     const vec3i ic               = make_vec3i(floor(indexCoordinates.x),
                                               floor(indexCoordinates.y),
                                               floor(indexCoordinates.z));
+    const float time             = times ? times[i] : 0.f;
     const float sample =
-        VdbSampler_traverseAndSample(sampler, ic, attributeIndex);
+        VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
     samples[i] = sample;
   }
 }
@@ -643,6 +780,7 @@ inline void VdbSampler_interpolateNearest(
     const VdbSampler *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
+    const float *uniform times,
     const uniform uint32 M,
     const uint32 *uniform attributeIndices,
     float *uniform samples)
@@ -651,17 +789,18 @@ inline void VdbSampler_interpolateNearest(
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
-    const vec3i ic = make_vec3i(floor(indexCoordinates.x),
-                                floor(indexCoordinates.y),
-                                floor(indexCoordinates.z));
+    const vec3i ic   = make_vec3i(floor(indexCoordinates.x),
+                                  floor(indexCoordinates.y),
+                                  floor(indexCoordinates.z));
+    const float time = times ? times[i] : 0.f;
 
     uint64 voxel;
     vec3ui domainOffset;
     VdbSampler_traverse(sampler, ic, voxel, domainOffset);
 
     for (uniform unsigned int a = 0; a < M; a++) {
-      const float samplesA =
-          VdbSampler_sample(sampler, voxel, domainOffset, attributeIndices[a]);
+      const float samplesA = VdbSampler_sample(
+          sampler, voxel, domainOffset, time, attributeIndices[a]);
 
       samples[i * M + a] = samplesA;
     }
@@ -675,6 +814,7 @@ inline void VdbSampler_interpolateNearest(
 inline vec3f VdbSampler_computeGradientNearest(
     const VdbSampler *uniform sampler,
     const vec3f &indexCoordinates,
+    const float &time,
     const uniform uint32 attributeIndex)
 {
   return make_vec3f(0.f);
@@ -684,6 +824,7 @@ inline void VdbSampler_computeGradientNearest(
     const VdbSampler *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
+    const float *uniform times,
     const uniform uint32 attributeIndex,
     vec3f *uniform gradients)
 {
@@ -719,12 +860,13 @@ inline void VdbSampler_computeGradientNearest(
 inline void VdbSampler_computeVoxelValuesTrilinear(
     const VdbSampler *uniform sampler,
     const vec3i &ic,
+    const float &time,
     const uniform uint32 attributeIndex,
     float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
-  __vkl_stencil_dispatch_varying(TRILINEAR, ic, {
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
     sample[tgtIdx] =
-        VdbSampler_traverseAndSample(sampler, coord, attributeIndex);
+        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
   });
 }
 
@@ -737,10 +879,11 @@ inline void VdbSampler_traverseVoxelValuesTrilinear(
     uint64 *uniform voxel,         // Array of VKL_TARGET_WIDTH * 8 elements!
     vec3ui *uniform domainOffset)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
-  __vkl_stencil_dispatch_varying(TRILINEAR, ic, {
+  const float time = 0.f;
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
     uint64 voxelV;
     vec3ui domainOffsetV;
-    VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
+    VdbSampler_traverse(sampler, icDisp, voxelV, domainOffsetV);
 
     voxel[tgtIdx]        = voxelV;
     domainOffset[tgtIdx] = domainOffsetV;
@@ -756,17 +899,18 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const uint64 *uniform voxel,  // Array of VKL_TARGET_WIDTH * 8 elements!
     const vec3ui *uniform
         domainOffset,  // Array of VKL_TARGET_WIDTH * 8 elements!
+    const float &time,
     const uniform uint32 attributeIndex,
     float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
   // Note: We might be able to avoid this dummy variable, but that would
   // complicate the dispatch macro.
   const vec3i ic = {0, 0, 0};
-  __vkl_stencil_dispatch_varying(TRILINEAR, ic, {
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
     const uint64 voxelV        = voxel[tgtIdx];
     const vec3ui domainOffsetV = domainOffset[tgtIdx];
-    sample[tgtIdx] =
-        VdbSampler_sample(sampler, voxelV, domainOffsetV, attributeIndex);
+    sample[tgtIdx]             = VdbSampler_sample(
+                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
   });
 }
 
@@ -777,6 +921,7 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
 inline varying float VdbSampler_interpolateTrilinear(
     const VdbSampler *uniform sampler,
     const vec3f &indexCoordinates,
+    const float &time,
     const uniform uint32 attributeIndex)
 {
   const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
@@ -784,7 +929,8 @@ inline varying float VdbSampler_interpolateTrilinear(
                                  floor(indexCoordinates.z));
   const vec3f delta = indexCoordinates - make_vec3f(ic);
   uniform float sample[VKL_TARGET_WIDTH * 8];
-  VdbSampler_computeVoxelValuesTrilinear(sampler, ic, attributeIndex, sample);
+  VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = (const varying float *uniform) & sample;
   return lerp(
@@ -795,6 +941,7 @@ inline varying float VdbSampler_interpolateTrilinear(
 
 inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
                                             const vec3f &indexCoordinates,
+                                            const float &time,
                                             const uniform uint32 M,
                                             const uint32 *uniform
                                                 attributeIndices,
@@ -812,7 +959,7 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
   for (uniform unsigned int a = 0; a < M; a++) {
     uniform float sample[VKL_TARGET_WIDTH * 8];
     VdbSampler_computeVoxelValuesTrilinear(
-        sampler, voxel, domainOffset, attributeIndices[a], sample);
+        sampler, voxel, domainOffset, time, attributeIndices[a], sample);
 
     const varying float *uniform s = (const varying float *uniform) & sample;
     varying float samplesA         = lerp(
@@ -831,6 +978,7 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
 inline uniform float VdbSampler_interpolateTrilinear(
     const VdbSampler *uniform sampler,
     const uniform vec3f &indexCoordinates,
+    const uniform float time,
     const uniform uint32 attributeIndex)
 {
   const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
@@ -839,9 +987,9 @@ inline uniform float VdbSampler_interpolateTrilinear(
 
   uniform float sample[8];
 
-  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, {
+  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
     sample[tgtIdx] =
-        VdbSampler_traverseAndSample(sampler, coord, attributeIndex);
+        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
   });
 
   const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
@@ -857,6 +1005,7 @@ inline uniform float VdbSampler_interpolateTrilinear(
 inline void VdbSampler_interpolateTrilinear(
     const VdbSampler *uniform sampler,
     const uniform vec3f &indexCoordinates,
+    const uniform float time,
     const uniform uint32 M,
     const uint32 *uniform attributeIndices,
     float *uniform samples)
@@ -869,10 +1018,10 @@ inline void VdbSampler_interpolateTrilinear(
   uniform uint64 voxel[8];
   uniform vec3ui domainOffset[8];
 
-  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, {
+  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
     uint64 voxelV;
     vec3ui domainOffsetV;
-    VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
+    VdbSampler_traverse(sampler, icDisp, voxelV, domainOffsetV);
 
     voxel[tgtIdx]        = voxelV;
     domainOffset[tgtIdx] = domainOffsetV;
@@ -881,11 +1030,11 @@ inline void VdbSampler_interpolateTrilinear(
   for (uniform unsigned int a = 0; a < M; a++) {
     uniform float sample[8];
 
-    __vkl_stencil_dispatch_uniform(TRILINEAR, ic, {
+    __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
       const uint64 voxelV        = voxel[tgtIdx];
       const vec3ui domainOffsetV = domainOffset[tgtIdx];
       sample[tgtIdx]             = VdbSampler_sample(
-                      sampler, voxelV, domainOffsetV, attributeIndices[a]);
+                      sampler, voxelV, domainOffsetV, timeDisp, attributeIndices[a]);
     });
 
     samples[a] = lerp(delta.x,
@@ -902,14 +1051,16 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
                                             const uniform unsigned int N,
                                             const vec3f *uniform
                                                 objectCoordinates,
+                                            const float *uniform times,
                                             const uint32 uniform attributeIndex,
                                             float *uniform samples)
 {
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
     samples[i]                   = VdbSampler_interpolateTrilinear(
-                          sampler, indexCoordinates, attributeIndex);
+                          sampler, indexCoordinates, time, attributeIndex);
   }
 }
 
@@ -917,6 +1068,7 @@ inline void VdbSampler_interpolateTrilinear(
     const VdbSampler *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
+    const float *uniform times,
     const uniform uint32 M,
     const uint32 *uniform attributeIndices,
     float *uniform samples)
@@ -929,6 +1081,7 @@ inline void VdbSampler_interpolateTrilinear(
                                    floor(indexCoordinates.y),
                                    floor(indexCoordinates.z));
     const vec3f delta = indexCoordinates - make_vec3f(ic);
+    const float time  = times ? times[i] : 0.f;
 
     uniform uint64 voxel[VKL_TARGET_WIDTH * 8];
     uniform vec3ui domainOffset[VKL_TARGET_WIDTH * 8];
@@ -937,7 +1090,7 @@ inline void VdbSampler_interpolateTrilinear(
     for (uniform unsigned int a = 0; a < M; a++) {
       uniform float sample[VKL_TARGET_WIDTH * 8];
       VdbSampler_computeVoxelValuesTrilinear(
-          sampler, voxel, domainOffset, attributeIndices[a], sample);
+          sampler, voxel, domainOffset, time, attributeIndices[a], sample);
 
       const varying float *uniform s = (const varying float *uniform) & sample;
       varying float samplesA         = lerp(
@@ -956,6 +1109,7 @@ inline void VdbSampler_interpolateTrilinear(
 inline vec3f VdbSampler_computeGradientTrilinear(
     const VdbSampler *uniform sampler,
     const vec3f &indexCoordinates,
+    const float &time,
     const uniform uint32 attributeIndex)
 {
   const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
@@ -963,7 +1117,8 @@ inline vec3f VdbSampler_computeGradientTrilinear(
                                  floor(indexCoordinates.z));
   const vec3f delta = indexCoordinates - make_vec3f(ic);
   uniform float sample[VKL_TARGET_WIDTH * 8];
-  VdbSampler_computeVoxelValuesTrilinear(sampler, ic, attributeIndex, sample);
+  VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = (const varying float *uniform) & sample;
 
@@ -984,14 +1139,16 @@ inline void VdbSampler_computeGradientTrilinear(
     const VdbSampler *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
+    const float *uniform times,
     const uniform uint32 attributeIndex,
     vec3f *uniform gradients)
 {
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
     const vec3f gradient         = VdbSampler_computeGradientTrilinear(
-                sampler, indexCoordinates, attributeIndex);
+                sampler, indexCoordinates, time, attributeIndex);
     // Note: xfmNormal takes inverse!
     gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
   }
@@ -1576,10 +1733,11 @@ inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
                                                    uint64 *uniform voxel,
                                                    vec3ui *uniform domainOffset)
 {
-  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, {
+  const float time = 0.f;
+  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
     uint64 voxelV;
     vec3ui domainOffsetV;
-    VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
+    VdbSampler_traverse(sampler, icDisp, voxelV, domainOffsetV);
 
     voxel[tgtIdx]        = voxelV;
     domainOffset[tgtIdx] = domainOffsetV;
@@ -1592,10 +1750,11 @@ inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
                                                    uint64 *uniform voxel,
                                                    vec3ui *uniform domainOffset)
 {
-  __vkl_stencil_dispatch_varying(TRICUBIC, ic, {
+  const float time = 0.f;
+  __vkl_stencil_dispatch_varying(TRICUBIC, ic, time, {
     uint64 voxelV;
     vec3ui domainOffsetV;
-    VdbSampler_traverse(sampler, coord, voxelV, domainOffsetV);
+    VdbSampler_traverse(sampler, icDisp, voxelV, domainOffsetV);
 
     voxel[tgtIdx]        = voxelV;
     domainOffset[tgtIdx] = domainOffsetV;
@@ -1607,14 +1766,15 @@ inline void VdbSampler_computeVoxelValuesTricubic(
     const uniform vec3i &ic,
     const uint64 *uniform voxel,
     const vec3ui *uniform domainOffset,
+    const uniform float time,
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
-  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, {
+  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
     const uint64 voxelV        = voxel[tgtIdx];
     const vec3ui domainOffsetV = domainOffset[tgtIdx];
-    sample[tgtIdx] =
-        VdbSampler_sample(sampler, voxelV, domainOffsetV, attributeIndex);
+    sample[tgtIdx]             = VdbSampler_sample(
+                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
   });
 }
 
@@ -1623,38 +1783,41 @@ inline void VdbSampler_computeVoxelValuesTricubic(
     const vec3i &ic,
     const uint64 *uniform voxel,
     const vec3ui *uniform domainOffset,
+    const float &time,
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
-  __vkl_stencil_dispatch_varying(TRICUBIC, ic, {
+  __vkl_stencil_dispatch_varying(TRICUBIC, ic, time, {
     const uint64 voxelV        = voxel[tgtIdx];
     const vec3ui domainOffsetV = domainOffset[tgtIdx];
-    sample[tgtIdx] =
-        VdbSampler_sample(sampler, voxelV, domainOffsetV, attributeIndex);
+    sample[tgtIdx]             = VdbSampler_sample(
+                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
   });
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic(
     const VdbSampler *uniform sampler,
     const uniform vec3i &ic,
+    const uniform float time,
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
-  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, {
+  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
     sample[tgtIdx] =
-        VdbSampler_traverseAndSample(sampler, coord, attributeIndex);
+        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
   });
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic(
     const VdbSampler *uniform sampler,
     const vec3i &ic,
+    const float &time,
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
-  __vkl_stencil_dispatch_varying(TRICUBIC, ic, {
+  __vkl_stencil_dispatch_varying(TRICUBIC, ic, time, {
     sample[tgtIdx] =
-        VdbSampler_traverseAndSample(sampler, coord, attributeIndex);
+        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
   });
 }
 
@@ -1662,6 +1825,7 @@ inline void VdbSampler_computeVoxelValuesTricubic(
 inline uniform float VdbSampler_interpolateTricubic(
     const VdbSampler *uniform sampler,
     const uniform vec3f &indexCoordinates,
+    const uniform float time,
     const uniform uint32 attributeIndex)
 {
   const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
@@ -1669,7 +1833,8 @@ inline uniform float VdbSampler_interpolateTricubic(
                                       floor(indexCoordinates.z));
 
   uniform float sample[VKL_STENCIL_TRICUBIC_SIZE];
-  VdbSampler_computeVoxelValuesTricubic(sampler, ic, attributeIndex, sample);
+  VdbSampler_computeVoxelValuesTricubic(
+      sampler, ic, time, attributeIndex, sample);
 
   const uniform float constraints[]  = __vkl_tricubic_constraints_array(sample);
   const uniform float coefficients[] = __vkl_tricubic_coefficients(constraints);
@@ -1683,6 +1848,7 @@ inline uniform float VdbSampler_interpolateTricubic(
 // Single attribute varying.
 inline float VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                             const vec3f &indexCoordinates,
+                                            const float &time,
                                             const uniform uint32 attributeIndex)
 {
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
@@ -1690,7 +1856,8 @@ inline float VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                               floor(indexCoordinates.z));
 
   uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
-  VdbSampler_computeVoxelValuesTricubic(sampler, ic, attributeIndex, sample);
+  VdbSampler_computeVoxelValuesTricubic(
+      sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = ((const varying float *uniform) & sample[0]);
   const float constraints[]      = __vkl_tricubic_constraints_array(s);
@@ -1707,14 +1874,16 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                            const uniform unsigned int N,
                                            const vec3f *uniform
                                                objectCoordinates,
+                                           const float *uniform times,
                                            const uint32 uniform attributeIndex,
                                            float *uniform samples)
 {
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
     samples[i]                   = VdbSampler_interpolateTricubic(
-                          sampler, indexCoordinates, attributeIndex);
+                          sampler, indexCoordinates, time, attributeIndex);
   }
 }
 
@@ -1722,6 +1891,7 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
 inline void VdbSampler_interpolateTricubic(
     const VdbSampler *uniform sampler,
     const uniform vec3f &indexCoordinates,
+    const uniform float time,
     const uniform uint32 M,
     const uint32 *uniform attributeIndices,
     float *uniform samples)
@@ -1742,7 +1912,7 @@ inline void VdbSampler_interpolateTricubic(
   for (uniform unsigned int a = 0; a < M; a++) {
     uniform float sample[VKL_STENCIL_TRICUBIC_SIZE];
     VdbSampler_computeVoxelValuesTricubic(
-        sampler, ic, voxel, domainOffset, attributeIndices[a], sample);
+        sampler, ic, voxel, domainOffset, time, attributeIndices[a], sample);
 
     const uniform float constraints[] =
         __vkl_tricubic_constraints_array(sample);
@@ -1755,6 +1925,7 @@ inline void VdbSampler_interpolateTricubic(
 // Multi attribute varying.
 inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                            const vec3f &indexCoordinates,
+                                           const float &time,
                                            const uniform uint32 M,
                                            const uint32 *uniform
                                                attributeIndices,
@@ -1776,7 +1947,7 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
   for (uniform unsigned int a = 0; a < M; a++) {
     uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
     VdbSampler_computeVoxelValuesTricubic(
-        sampler, ic, voxel, domainOffset, attributeIndices[a], sample);
+        sampler, ic, voxel, domainOffset, time, attributeIndices[a], sample);
 
     const varying float *uniform s = (const varying float *uniform) & sample;
     const float constraints[]      = __vkl_tricubic_constraints_array(s);
@@ -1791,6 +1962,7 @@ inline void VdbSampler_interpolateTricubic(
     const VdbSampler *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
+    const float *uniform times,
     const uniform uint32 M,
     const uint32 *uniform attributeIndices,
     float *uniform samples)
@@ -1806,6 +1978,7 @@ inline void VdbSampler_interpolateTricubic(
     uniform vec3ui domainOffset[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
     VdbSampler_traverseVoxelValuesTricubic(sampler, ic, voxel, domainOffset);
 
+    const float time  = times ? times[i] : 0.f;
     const vec3f delta = indexCoordinates - make_vec3f(ic);
     const float x[]   = __vkl_tricubic_powers(delta.x);
     const float y[]   = __vkl_tricubic_powers(delta.y);
@@ -1814,7 +1987,7 @@ inline void VdbSampler_interpolateTricubic(
     for (uniform unsigned int a = 0; a < M; a++) {
       uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
       VdbSampler_computeVoxelValuesTricubic(
-          sampler, ic, voxel, domainOffset, attributeIndices[a], sample);
+          sampler, ic, voxel, domainOffset, time, attributeIndices[a], sample);
 
       const varying float *uniform s = (const varying float *uniform) & sample;
       const float constraints[]      = __vkl_tricubic_constraints_array(s);
@@ -1828,6 +2001,7 @@ inline void VdbSampler_interpolateTricubic(
 inline vec3f VdbSampler_computeGradientTricubic(
     const VdbSampler *uniform sampler,
     const vec3f &indexCoordinates,
+    const float &time,
     const uniform uint32 attributeIndex)
 {
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
@@ -1835,7 +2009,8 @@ inline vec3f VdbSampler_computeGradientTricubic(
                               floor(indexCoordinates.z));
 
   uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
-  VdbSampler_computeVoxelValuesTricubic(sampler, ic, attributeIndex, sample);
+  VdbSampler_computeVoxelValuesTricubic(
+      sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = ((const varying float *uniform) & sample[0]);
   const float constraints[]      = __vkl_tricubic_constraints_array(s);
@@ -1852,14 +2027,16 @@ inline void VdbSampler_computeGradientTricubic(
     const VdbSampler *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
+    const float *uniform times,
     const uniform uint32 attributeIndex,
     vec3f *uniform gradients)
 {
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
     const vec3f gradient         = VdbSampler_computeGradientTricubic(
-                sampler, indexCoordinates, attributeIndex);
+                sampler, indexCoordinates, time, attributeIndex);
     // Note: xfmNormal takes inverse!
     gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
   }
@@ -1897,6 +2074,7 @@ inline void VdbSampler_computeGradientTricubic(
 export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
+                          const float *uniform time,
                           const uniform uint32 attributeIndex,
                           void *uniform _samples)
 {
@@ -1916,6 +2094,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
                       *sample = VdbSampler_interpolate,
                       sampler,
                       indexCoordinates,
+                      *time,
                       attributeIndex);
 }
 
@@ -1923,6 +2102,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
                           const int *uniform imask,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
+                          const float *uniform _time,
                           const uniform uint32 attributeIndex,
                           void *uniform _samples)
 {
@@ -1934,7 +2114,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
 
-    varying float *uniform sample = (varying float *uniform)_samples;
+    const varying float *uniform time = (const varying float *uniform)_time;
+    varying float *uniform sample     = (varying float *uniform)_samples;
 
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
@@ -1943,6 +2124,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
                         *sample = VdbSampler_interpolate,
                         sampler,
                         indexCoordinates,
+                        *time,
                         attributeIndex);
   }
 }
@@ -1950,6 +2132,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
 export void EXPORT_UNIQUE(VdbSampler_computeSampleM_uniform,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
+                          const float *uniform _time,
                           const uniform uint32 M,
                           const uint32 *uniform attributeIndices,
                           float *uniform samples)
@@ -1964,10 +2147,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_uniform,
   const uniform vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
+  const float *uniform time = (const float *uniform)_time;
+
   __vkl_switch_filter(sampler->super.filter,
                       VdbSampler_interpolate,
                       sampler,
                       indexCoordinates,
+                      *time,
                       M,
                       attributeIndices,
                       samples);
@@ -1977,6 +2163,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
                           const int *uniform imask,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
+                          const float *uniform _time,
                           const uniform uint32 M,
                           const uint32 *uniform attributeIndices,
                           float *uniform samples)
@@ -1988,6 +2175,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
 
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
+    const varying float *uniform time = (const varying float *uniform)_time;
 
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
@@ -1996,6 +2184,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
                         VdbSampler_interpolate,
                         sampler,
                         indexCoordinates,
+                        *time,
                         M,
                         attributeIndices,
                         samples);
@@ -2006,6 +2195,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
                           const void *uniform _sampler,
                           uniform unsigned int N,
                           const vec3f *uniform objectCoordinates,
+                          const float *uniform time,
                           const uniform uint32 attributeIndex,
                           float *uniform samples)
 {
@@ -2018,6 +2208,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
                       sampler,
                       N,
                       objectCoordinates,
+                      time,
                       attributeIndex,
                       samples);
 }
@@ -2026,6 +2217,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_stream,
                           const void *uniform _sampler,
                           uniform unsigned int N,
                           const vec3f *uniform objectCoordinates,
+                          const float *uniform time,
                           const uniform uint32 M,
                           const uint32 *uniform attributeIndices,
                           float *uniform samples)
@@ -2039,6 +2231,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_stream,
                       sampler,
                       N,
                       objectCoordinates,
+                      time,
                       M,
                       attributeIndices,
                       samples);
@@ -2048,6 +2241,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
                           const int *uniform imask,
                           const void *uniform _sampler,
                           const void *uniform _objectCoordinates,
+                          const float *uniform _time,
                           const uniform uint32 attributeIndex,
                           void *uniform _gradients)
 {
@@ -2062,12 +2256,14 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
         (const varying vec3f *uniform)_objectCoordinates;
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
+    const varying float *uniform time = (const varying float *uniform)_time;
 
     vec3f gradient;
     __vkl_switch_filter(sampler->super.gradientFilter,
                         gradient = VdbSampler_computeGradient,
                         sampler,
                         indexCoordinates,
+                        *time,
                         attributeIndex);
 
     // Note: xfmNormal takes inverse!
@@ -2079,6 +2275,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
                           const void *uniform _sampler,
                           uniform unsigned int N,
                           const vec3f *uniform objectCoordinates,
+                          const float *uniform time,
                           const uniform uint32 attributeIndex,
                           vec3f *uniform gradients)
 {
@@ -2091,6 +2288,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
                       sampler,
                       N,
                       objectCoordinates,
+                      time,
                       attributeIndex,
                       gradients);
 }
@@ -2102,7 +2300,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
 inline float VdbSampler_iterator_computeSample_varying(
     const Sampler *uniform _sampler,
     const varying vec3f &objectCoordinates,
-    const varying float &_time)
+    const varying float &time)
 {
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
   assert(sampler);
@@ -2119,6 +2317,7 @@ inline float VdbSampler_iterator_computeSample_varying(
                       sample = VdbSampler_interpolate,
                       sampler,
                       indexCoordinates,
+                      time,
                       attributeIndex);
 
   return sample;

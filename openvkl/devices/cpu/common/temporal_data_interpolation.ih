@@ -1,0 +1,204 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../common/Data.ih"
+
+// ---------------------------------------------------------------------------
+// A helper we use because data accessors take references for uniform buffers
+// and pointers for varying buffers.
+// ---------------------------------------------------------------------------
+
+#define __vkl_data_param_uniform(buffer) (*buffer)
+#define __vkl_data_param_varying(buffer) (buffer)
+
+// ---------------------------------------------------------------------------
+// Temporally structured data interpolation.
+// This assumes that time steps are stored in consecutive memory,
+// {v(t0), v(t1), ...}.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_interpolateTemporallyStructured(                      \
+    univaryBuffer, univaryIdx, voxelType)                                    \
+  inline univaryIdx float interpolateTemporallyStructured_##voxelType(       \
+      const uniform Data1D *univaryBuffer buffer,                            \
+      const univaryBuffer int32 &numTimesteps,                               \
+      const univaryIdx uint32 &baseIdx,                                      \
+      const univaryIdx float &time)                                          \
+  {                                                                          \
+    const univaryIdx float timestepFloat =                                   \
+        time * ((univaryIdx float)(numTimesteps - 1));                       \
+    const univaryIdx uint32 timestep = ((univaryIdx uint32)timestepFloat);   \
+    const univaryIdx float w = timestepFloat - ((univaryIdx float)timestep); \
+    /* If interpolant is zero, we don't need to access the next time entry.  \
+     * This also prevents illegal accesses for the time == 1.f case at the   \
+     * volume boundary. */                                                   \
+    const univaryIdx uint32 nextTimestep =                                   \
+        (w == 0.f) ? timestep : timestep + 1;                                \
+                                                                             \
+    if (buffer->compact) {                                                   \
+      const univaryIdx float v0 = get_##voxelType##_compact(                 \
+          __vkl_data_param_##univaryBuffer(buffer), baseIdx + timestep);     \
+      const univaryIdx float v1 = get_##voxelType##_compact(                 \
+          __vkl_data_param_##univaryBuffer(buffer), baseIdx + nextTimestep); \
+      return (1.f - w) * v0 + w * v1;                                        \
+    } else {                                                                 \
+      const univaryIdx float v0 = get_##voxelType##_strided(                 \
+          __vkl_data_param_##univaryBuffer(buffer), baseIdx + timestep);     \
+      const univaryIdx float v1 = get_##voxelType##_strided(                 \
+          __vkl_data_param_##univaryBuffer(buffer), baseIdx + nextTimestep); \
+      return (1.f - w) * v0 + w * v1;                                        \
+    }                                                                        \
+  }
+
+// A single buffer, sampled at a single index and time.
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, half)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, float)
+
+// A single buffer, but sampled at separate indices and/or times.
+// Note that we do not provide a version with uniform base index and varying
+// time. This is because if either is varying, then the code above must use
+// varying quantities.
+__vkl_template_interpolateTemporallyStructured(uniform, varying, half)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, float)
+
+// Varying buffers, varying indices and times.
+// Note that we do not provide a (varying, uniform) version even though that is
+// a potential case (by accident, separate buffers are sampled at the same time
+// and offset). It is unknown at this time if a special code path for this case
+// would provide benefits at all. Potential future work.
+__vkl_template_interpolateTemporallyStructured(varying, varying, half)
+__vkl_template_interpolateTemporallyStructured(varying, varying, float)
+
+#undef __vkl_template_interpolateTemporallyStructured
+
+// ---------------------------------------------------------------------------
+// Temporally unstructured data interpolation.
+// This assumes that time steps are stored in consecutive memory,
+// {v(t0), v(t1), ...}.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_interpolateTemporallyUnstructured(                      \
+    univaryBuffer, univaryIdx, voxelType)                                      \
+                                                                               \
+  inline univaryIdx float interpolateTemporallyUnstructured_##voxelType(       \
+      const uniform Data1D *univaryBuffer dataBuffer,                          \
+      const uniform Data1D *univaryBuffer indices,                             \
+      const uniform Data1D *univaryBuffer times,                               \
+      const univaryIdx uint32 &voxelIdx,                                       \
+      const univaryIdx float &time)                                            \
+  {                                                                            \
+    /* Note that we only support 32 bit indices at the moment, but that could  \
+     * be extended in the future. */                                           \
+    univaryIdx uint32 dataIdx, dataNextIdx;                                    \
+    if (indices->dataType == VKL_UINT) {                                       \
+      dataIdx =                                                                \
+          get_uint32(__vkl_data_param_##univaryBuffer(indices), voxelIdx);     \
+      dataNextIdx =                                                            \
+          get_uint32(__vkl_data_param_##univaryBuffer(indices), voxelIdx + 1); \
+    } else {                                                                   \
+      const univaryIdx uint64 dataIdx64 =                                      \
+          get_uint64(__vkl_data_param_##univaryBuffer(indices), voxelIdx);     \
+      const univaryIdx uint64 dataNextIdx64 =                                  \
+          get_uint64(__vkl_data_param_##univaryBuffer(indices), voxelIdx + 1); \
+      assert(dataIdx64 < ((uniform uint64)1) << 32);                           \
+      assert(dataNextIdx64 < ((uniform uint64)1) << 32);                       \
+      dataIdx     = ((univaryIdx uint32)dataIdx64);                            \
+      dataNextIdx = ((univaryIdx uint32)dataNextIdx64);                        \
+    }                                                                          \
+    assert(dataNextIdx > dataIdx);                                             \
+    const univaryIdx float t0 =                                                \
+        get_float(__vkl_data_param_##univaryBuffer(times), dataIdx);           \
+    if (time <= t0) {                                                          \
+      return get_##voxelType(__vkl_data_param_##univaryBuffer(dataBuffer),     \
+                             dataIdx);                                         \
+    }                                                                          \
+    const univaryIdx float t1 =                                                \
+        get_float(__vkl_data_param_##univaryBuffer(times), dataNextIdx - 1);   \
+    if (time >= t1) {                                                          \
+      return get_##voxelType(__vkl_data_param_##univaryBuffer(dataBuffer),     \
+                             dataNextIdx - 1);                                 \
+    }                                                                          \
+                                                                               \
+    const univaryIdx uint64 numTimeSamples = dataNextIdx - dataIdx;            \
+    if (numTimeSamples == 2) {                                                 \
+      const univaryIdx float w = (time - t0) * rcp(t1 - t0);                   \
+      return (1.f - w) *                                                       \
+                 get_##voxelType(__vkl_data_param_##univaryBuffer(dataBuffer), \
+                                 dataIdx) +                                    \
+             w * get_##voxelType(__vkl_data_param_##univaryBuffer(dataBuffer), \
+                                 dataNextIdx - 1);                             \
+    }                                                                          \
+                                                                               \
+    univaryIdx uint64 lower = 0;                                               \
+    univaryIdx uint64 upper = numTimeSamples;                                  \
+    while (lower <= upper) {                                                   \
+      const univaryIdx uint64 mid = (lower + upper) / 2;                       \
+      const univaryIdx float timesMid =                                        \
+          get_float(__vkl_data_param_##univaryBuffer(times), dataIdx + mid);   \
+      if (time >= timesMid &&                                                  \
+          time <= get_float(__vkl_data_param_##univaryBuffer(times),           \
+                            dataIdx + mid + 1)) {                              \
+        lower = dataIdx + mid;                                                 \
+        upper = lower + 1;                                                     \
+        break;                                                                 \
+      } else if (time < timesMid) {                                            \
+        upper = mid;                                                           \
+      } else {                                                                 \
+        lower = mid;                                                           \
+      }                                                                        \
+    }                                                                          \
+    const univaryIdx float timesLow =                                          \
+        get_float(__vkl_data_param_##univaryBuffer(times), lower);             \
+    const univaryIdx float timesHigh =                                         \
+        get_float(__vkl_data_param_##univaryBuffer(times), upper);             \
+    const univaryIdx float w = (time - timesLow) * rcp(timesHigh - timesLow);  \
+    return (1.f - w) *                                                         \
+               get_##voxelType(__vkl_data_param_##univaryBuffer(dataBuffer),   \
+                               lower) +                                        \
+           w * get_##voxelType(__vkl_data_param_##univaryBuffer(dataBuffer),   \
+                               upper);                                         \
+  }
+
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, half)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, float)
+
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, half)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, float)
+
+__vkl_template_interpolateTemporallyUnstructured(varying, varying, half)
+__vkl_template_interpolateTemporallyUnstructured(varying, varying, float)
+
+#undef __vkl_template_interpolateTemporallyUnstructured
+
+#define __vkl_template_computeValueRangeTemporallyUnstructured(voxelType)    \
+                                                                             \
+  inline uniform box1f computeValueRangeTemporallyUnstructured_##voxelType(  \
+      const uniform Data1D *uniform dataBuffer,                              \
+      const Data1D *uniform indices,                                         \
+      uniform uint32 voxelIdx)                                               \
+  {                                                                          \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                 \
+    if (indices->dataType == VKL_UINT) {                                     \
+      const uniform uint32 dataIdx     = get_uint32(*indices, voxelIdx);     \
+      const uniform uint32 dataIdxNext = get_uint32(*indices, voxelIdx + 1); \
+      for (uniform uint32 i = dataIdx; i < dataIdxNext; ++i) {               \
+        extend(valueRange, get_##voxelType(*dataBuffer, i));                 \
+      }                                                                      \
+    } else {                                                                 \
+      const uniform uint32 dataIdx =                                         \
+          ((uniform uint32)get_uint64(*indices, voxelIdx));                  \
+      const uniform uint32 dataIdxNext =                                     \
+          ((uniform uint32)get_uint64(*indices, voxelIdx + 1));              \
+      for (uniform uint32 i = dataIdx; i < dataIdxNext; ++i) {               \
+        extend(valueRange, get_##voxelType(*dataBuffer, i));                 \
+      }                                                                      \
+    }                                                                        \
+    return valueRange;                                                       \
+  }
+
+__vkl_template_computeValueRangeTemporallyUnstructured(half)
+__vkl_template_computeValueRangeTemporallyUnstructured(float)
+
+#undef __vkl_template_computeValueRangeTemporallyUnstructured

@@ -3,40 +3,109 @@
 
 #pragma once
 
+#include "../../common/temporal_data_interpolation.ih"
+
+//#define INLINENOINLINE inline
+#define INLINENOINLINE noinline
+#warning "noinline is set."
+
 // ---------------------------------------------------------------------------
-// CONSTANT leaf sampling.
+// Temporally constant leaf sampling.
 // ---------------------------------------------------------------------------
 
-#define template_VdbSampler_sampleConstantLeaf(voxelType)                    \
-                                                                             \
-  /*                                                                         \
-   * Sample a constant leaf at the given offset, assuming compact data.      \
-   */                                                                        \
-  inline varying float VdbSampler_sampleConstantLeafCompact_##voxelType(     \
-      const uniform Data1D *varying leafPtr, const varying vec3ui &offset)   \
+#define template_VdbSampler_sampleLeafZYX_constant(voxelType)                 \
+  INLINENOINLINE varying float VdbSampler_sampleLeafZYX_constant_##voxelType( \
+      const uniform Data1D *varying leafPtr, const varying vec3ui &offset)    \
+  {                                                                           \
+    const varying uint64 voxelIdx =                                           \
+        __vkl_vdb_domain_offset_to_linear_varying_leaf(                       \
+            offset.x, offset.y, offset.z);                                    \
+                                                                              \
+    assert(voxelIdx < ((varying uint64)1) << 32);                             \
+    const varying uint32 v32 = ((varying uint32)voxelIdx);                    \
+    return get_##voxelType(leafPtr, v32);                                     \
+  }                                                                           \
+  /*                                                                          \
+   * Special case: all lanes are sampling the same leaf.                      \
+   * This gives us the opportunity to use uniform array indices, at least if  \
+   * all sample points are in the same voxel.                                 \
+   */                                                                         \
+  INLINENOINLINE varying float VdbSampler_sampleLeafZYX_constant_##voxelType( \
+      const Data1D *uniform leafPtr, const varying vec3ui &offset)            \
+  {                                                                           \
+    const varying uint64 voxelIdx =                                           \
+        __vkl_vdb_domain_offset_to_linear_varying_leaf(                       \
+            offset.x, offset.y, offset.z);                                    \
+                                                                              \
+    assert(voxelIdx < ((varying uint64)1) << 32);                             \
+    const varying uint32 v32 = ((varying uint32)voxelIdx);                    \
+    uniform uint32 uv32;                                                      \
+    if (reduce_equal(v32, &uv32))                                             \
+      return get_##voxelType(*leafPtr, uv32);                                 \
+    else                                                                      \
+      return get_##voxelType(*leafPtr, v32);                                  \
+  }                                                                           \
+                                                                              \
+  /*                                                                          \
+   * Special case: uniform sampling of a single offset.                       \
+   */                                                                         \
+  INLINENOINLINE uniform float VdbSampler_sampleLeafZYX_constant_##voxelType( \
+      const Data1D *uniform leafPtr, const uniform vec3ui &offset)            \
+  {                                                                           \
+    const uniform uint64 voxelIdx =                                           \
+        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                       \
+            offset.x, offset.y, offset.z);                                    \
+                                                                              \
+    assert(voxelIdx < ((uniform uint64)1) << 32);                             \
+    const uniform uint32 v32 = ((uniform uint32)voxelIdx);                    \
+    return get_##voxelType(*leafPtr, v32);                                    \
+  }                                                                           \
+                                                                              \
+  INLINENOINLINE uniform box1f                                                \
+      VdbSampler_computeLeafZYXValueRange_constant_##voxelType(               \
+          const uniform Data1D *uniform leafPtr,                              \
+          const uniform vec2ui &rangeX,                                       \
+          const uniform vec2ui &rangeY,                                       \
+          const uniform vec2ui &rangeZ)                                       \
+  {                                                                           \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                  \
+    for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {              \
+      for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {            \
+        for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {          \
+          const uniform uint64 voxelIdx =                                     \
+              __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);        \
+                                                                              \
+          assert(voxelIdx < ((uniform uint64)1) << 32);                       \
+          const uniform uint32 v32 = ((uniform uint32)voxelIdx);              \
+          extend(valueRange, get_##voxelType(*leafPtr, v32));                 \
+        }                                                                     \
+      }                                                                       \
+    }                                                                         \
+    return valueRange;                                                        \
+  }
+
+template_VdbSampler_sampleLeafZYX_constant(half)
+template_VdbSampler_sampleLeafZYX_constant(float)
+#undef template_VdbSampler_sampleLeafZYX_constant
+
+// ---------------------------------------------------------------------------
+
+#define template_VdbSampler_sampleLeafZYX_structured(voxelType)              \
+  INLINENOINLINE varying float                                               \
+      VdbSampler_sampleLeafZYX_structured_##voxelType(                       \
+          const uniform Data1D *varying leafPtr,                             \
+          const varying int32 &numTimesteps,                                 \
+          const varying vec3ui &offset,                                      \
+          const varying float &time)                                         \
   {                                                                          \
     const varying uint64 voxelIdx =                                          \
-        __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
-            offset.x, offset.y, offset.z);                                   \
+        numTimesteps * __vkl_vdb_domain_offset_to_linear_varying_leaf(       \
+                           offset.x, offset.y, offset.z);                    \
                                                                              \
     assert(voxelIdx < ((varying uint64)1) << 32);                            \
     const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
-    return get_##voxelType##_compact(leafPtr, v32);                          \
-  }                                                                          \
-                                                                             \
-  /*                                                                         \
-   * Sample a constant leaf at the given offset, assuming strided data.      \
-   */                                                                        \
-  inline varying float VdbSampler_sampleConstantLeafStrided_##voxelType(     \
-      const uniform Data1D *varying leafPtr, const varying vec3ui &offset)   \
-  {                                                                          \
-    const varying uint64 voxelIdx =                                          \
-        __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
-            offset.x, offset.y, offset.z);                                   \
-                                                                             \
-    assert(voxelIdx < ((varying uint64)1) << 32);                            \
-    const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
-    return get_##voxelType##_strided(leafPtr, v32);                          \
+    return interpolateTemporallyStructured_##voxelType(                      \
+        leafPtr, numTimesteps, v32, time);                                   \
   }                                                                          \
                                                                              \
   /*                                                                         \
@@ -44,71 +113,172 @@
    * This gives us the opportunity to use uniform array indices, at least if \
    * all sample points are in the same voxel.                                \
    */                                                                        \
-                                                                             \
-  /* assumes compact data */                                                 \
-  inline varying float VdbSampler_sampleConstantLeafCompact_##voxelType(     \
-      const uniform Data1D *uniform leafPtr, const varying vec3ui &offset)   \
+  INLINENOINLINE varying float                                               \
+      VdbSampler_sampleLeafZYX_structured_##voxelType(                       \
+          const uniform Data1D *uniform leafPtr,                             \
+          uniform int32 numTimesteps,                                        \
+          const varying vec3ui &offset,                                      \
+          const varying float &time)                                         \
   {                                                                          \
     const varying uint64 voxelIdx =                                          \
-        __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
-            offset.x, offset.y, offset.z);                                   \
+        numTimesteps * __vkl_vdb_domain_offset_to_linear_varying_leaf(       \
+                           offset.x, offset.y, offset.z);                    \
                                                                              \
     assert(voxelIdx < ((varying uint64)1) << 32);                            \
     const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
     uniform uint32 uv32;                                                     \
-    if (reduce_equal(v32, &uv32))                                            \
-      return get_##voxelType##_compact(*leafPtr, uv32);                      \
-    else                                                                     \
-      return get_##voxelType##_compact(*leafPtr, v32);                       \
-  }                                                                          \
-                                                                             \
-  /* assumes strided data */                                                 \
-  inline varying float VdbSampler_sampleConstantLeafStrided_##voxelType(     \
-      const uniform Data1D *uniform leafPtr, const varying vec3ui &offset)   \
-  {                                                                          \
-    const varying uint64 voxelIdx =                                          \
-        __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
-            offset.x, offset.y, offset.z);                                   \
-                                                                             \
-    assert(voxelIdx < ((varying uint64)1) << 32);                            \
-    const varying uint32 v32 = ((varying uint32)voxelIdx);                   \
-    uniform uint32 uv32;                                                     \
-    if (reduce_equal(v32, &uv32))                                            \
-      return get_##voxelType##_strided(*leafPtr, uv32);                      \
-    else                                                                     \
-      return get_##voxelType##_strided(*leafPtr, v32);                       \
+    uniform float utime;                                                     \
+    if (reduce_equal(v32, &uv32) && reduce_equal(time, &utime)) {            \
+      return interpolateTemporallyStructured_##voxelType(                    \
+          leafPtr, numTimesteps, uv32, utime);                               \
+    } else {                                                                 \
+      return interpolateTemporallyStructured_##voxelType(                    \
+          leafPtr, numTimesteps, v32, time);                                 \
+    }                                                                        \
   }                                                                          \
                                                                              \
   /*                                                                         \
    * Special case: uniform sampling of a single offset.                      \
    */                                                                        \
-                                                                             \
-  /* assumes compact data */                                                 \
-  inline uniform float VdbSampler_sampleConstantLeafCompact_##voxelType(     \
-      const uniform Data1D *uniform leafPtr, const uniform vec3ui &offset)   \
+  INLINENOINLINE uniform float                                               \
+      VdbSampler_sampleLeafZYX_structured_##voxelType(                       \
+          const Data1D *uniform leafPtr,                                     \
+          uniform int32 numTimesteps,                                        \
+          const uniform vec3ui &offset,                                      \
+          uniform float time)                                                \
   {                                                                          \
     const uniform uint64 voxelIdx =                                          \
-        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                      \
-            offset.x, offset.y, offset.z);                                   \
+        numTimesteps * __vkl_vdb_domain_offset_to_linear_uniform_leaf(       \
+                           offset.x, offset.y, offset.z);                    \
                                                                              \
     assert(voxelIdx < ((uniform uint64)1) << 32);                            \
     const uniform uint32 v32 = ((uniform uint32)voxelIdx);                   \
-    return get_##voxelType##_compact(*leafPtr, v32);                         \
+    return interpolateTemporallyStructured_##voxelType(                      \
+        leafPtr, numTimesteps, v32, time);                                   \
   }                                                                          \
                                                                              \
-  /* assumes strided data */                                                 \
-  inline uniform float VdbSampler_sampleConstantLeafStrided_##voxelType(     \
-      const uniform Data1D *uniform leafPtr, const uniform vec3ui &offset)   \
+  INLINENOINLINE uniform box1f                                               \
+      VdbSampler_computeLeafZYXValueRange_structured_##voxelType(            \
+          const uniform Data1D *uniform leafPtr,                             \
+          uniform int32 numTimesteps,                                        \
+          const uniform vec2ui &rangeX,                                      \
+          const uniform vec2ui &rangeY,                                      \
+          const uniform vec2ui &rangeZ)                                      \
   {                                                                          \
-    const uniform uint64 voxelIdx =                                          \
-        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                      \
-            offset.x, offset.y, offset.z);                                   \
-                                                                             \
-    assert(voxelIdx < ((uniform uint64)1) << 32);                            \
-    const uniform uint32 v32 = ((uniform uint32)voxelIdx);                   \
-    return get_##voxelType##_strided(*leafPtr, v32);                         \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                 \
+    for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {             \
+      for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {           \
+        for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {         \
+          const uniform uint64 voxelIdx =                                    \
+              __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);       \
+          for (uniform unsigned int t = 0; t < numTimesteps; ++t) {          \
+            assert((voxelIdx + t) < ((uniform uint64)1) << 32);              \
+            const uniform uint32 v32 = ((uniform uint32)(voxelIdx + t));     \
+            extend(valueRange, get_##voxelType(*leafPtr, v32));              \
+          }                                                                  \
+        }                                                                    \
+      }                                                                      \
+    }                                                                        \
+    return valueRange;                                                       \
   }
 
-template_VdbSampler_sampleConstantLeaf(half);
-template_VdbSampler_sampleConstantLeaf(float);
-#undef template_VdbSampler_sampleConstantLeaf
+template_VdbSampler_sampleLeafZYX_structured(half)
+template_VdbSampler_sampleLeafZYX_structured(float)
+#undef template_VdbSampler_sampleLeafZYX_structured
+
+// ---------------------------------------------------------------------------
+
+#define template_VdbSampler_sampleLeafZYX_unstructured(voxelType, univary)   \
+  INLINENOINLINE varying float                                               \
+      VdbSampler_sampleLeafZYX_unstructured_##voxelType(                     \
+          const uniform Data1D *varying dataBuffer,                          \
+          const uniform Data1D *varying indices,                             \
+          const uniform Data1D *varying times,                               \
+          const varying vec3ui &offset,                                      \
+          const varying float &time)                                         \
+  {                                                                          \
+    const varying uint64 voxelIdx64 =                                        \
+        __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
+            offset.x, offset.y, offset.z);                                   \
+    assert(voxelIdx64 < ((varying uint64)1) << 32);                          \
+    const varying uint32 voxelIdx = ((varying uint32)voxelIdx64);            \
+                                                                             \
+    return interpolateTemporallyUnstructured_##voxelType(                    \
+        dataBuffer, indices, times, voxelIdx, time);                         \
+  }                                                                          \
+                                                                             \
+  /*                                                                         \
+   * Special case: all lanes are sampling the same leaf.                     \
+   * This gives us the opportunity to use uniform array indices, at least if \
+   * all sample points are in the same voxel.                                \
+   */                                                                        \
+  INLINENOINLINE varying float                                               \
+      VdbSampler_sampleLeafZYX_unstructured_##voxelType(                     \
+          const uniform Data1D *uniform leafPtr,                             \
+          const Data1D *uniform indices,                                     \
+          const Data1D *uniform times,                                       \
+          const varying vec3ui &offset,                                      \
+          const varying float &time)                                         \
+  {                                                                          \
+    const varying uint64 voxelIdx64 =                                        \
+        __vkl_vdb_domain_offset_to_linear_varying_leaf(                      \
+            offset.x, offset.y, offset.z);                                   \
+    assert(voxelIdx64 < ((varying uint64)1) << 32);                          \
+    const varying uint32 voxelIdx = ((varying uint32)voxelIdx64);            \
+                                                                             \
+    return interpolateTemporallyUnstructured_##voxelType(                    \
+        leafPtr, indices, times, voxelIdx, time);                            \
+  }                                                                          \
+                                                                             \
+  /*                                                                         \
+   * Special case: uniform sampling of a single offset.                      \
+   */                                                                        \
+  INLINENOINLINE uniform float                                               \
+      VdbSampler_sampleLeafZYX_unstructured_##voxelType(                     \
+          const Data1D *uniform leafPtr,                                     \
+          const Data1D *uniform indices,                                     \
+          const Data1D *uniform times,                                       \
+          const uniform vec3ui &offset,                                      \
+          uniform float time)                                                \
+  {                                                                          \
+    const uniform uint64 voxelIdx64 =                                        \
+        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                      \
+            offset.x, offset.y, offset.z);                                   \
+    assert(voxelIdx64 < ((uniform uint64)1) << 32);                          \
+    const uniform uint32 voxelIdx = ((uniform uint32)voxelIdx64);            \
+                                                                             \
+    return interpolateTemporallyUnstructured_##voxelType(                    \
+        leafPtr, indices, times, voxelIdx, time);                            \
+  }                                                                          \
+                                                                             \
+  INLINENOINLINE uniform box1f                                               \
+      VdbSampler_computeLeafZYXValueRange_unstructured_##voxelType(          \
+          const uniform Data1D *uniform leafPtr,                             \
+          const Data1D *uniform indices,                                     \
+          const uniform vec2ui &rangeX,                                      \
+          const uniform vec2ui &rangeY,                                      \
+          const uniform vec2ui &rangeZ)                                      \
+  {                                                                          \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                 \
+                                                                             \
+    for (uniform unsigned int x = rangeX.x; x < rangeX.y; ++x) {             \
+      for (uniform unsigned int y = rangeY.x; y < rangeY.y; ++y) {           \
+        for (uniform unsigned int z = rangeZ.x; z < rangeZ.y; ++z) {         \
+          const uniform uint64 voxelIdx =                                    \
+              __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);       \
+          assert(voxelIdx < ((varying uint64)1) << 32);                      \
+          const uniform uint32 v32 = ((uniform uint32)voxelIdx);             \
+          box_extend(valueRange,                                             \
+                     computeValueRangeTemporallyUnstructured_##voxelType(    \
+                         leafPtr, indices, v32));                            \
+        }                                                                    \
+      }                                                                      \
+    }                                                                        \
+    return valueRange;                                                       \
+  }
+
+template_VdbSampler_sampleLeafZYX_unstructured(half, varying)
+template_VdbSampler_sampleLeafZYX_unstructured(float, varying)
+#undef template_VdbSampler_sampleLeafZYX_unstructured
+
+#undef INLINENOINLINE

@@ -12,7 +12,7 @@
 // They run the block BODY for each element in the FILTER stencil offset by IC.
 //
 // The general goal of this code is to keep as many lanes busy as possible.
-// While the uniform version expects a uniform IC, but parallelizes such that 
+// While the uniform version expects a uniform IC, but parallelizes such that
 // BODY sees varying input.
 //
 // Before running BODY, the macros set the following variables:
@@ -23,101 +23,108 @@
 // uniform const vec3i offset[]
 //  An array of N offsets.
 //
-// vec3i coord
+// vec3i IC##Disp
 //  The current coordinate, obtained by adding the current offset to IC.
+//
+// float TIME##Disp
+//  The time value associated with IC##Disp
 //
 // uint32 tgtIdx
 //  The corresponding index in an array of N univary elements.
 // -----------------------------------------------------------------------------
 
 /*
- * Version for uniform IC.
+ * Version for uniform IC and TIME.
  *
  * This parallelizes over the stencil, so BODY sees coord and tgtIdx as
  * varying quantities!
  */
-#define __vkl_stencil_dispatch_uniform(FILTER, IC, BODY)                       \
-  {                                                                            \
-    static const uniform vec3i offset[] = VKL_STENCIL_##FILTER##_OFFSETS;      \
-    static const uniform size_t N       = VKL_STENCIL_##FILTER##_SIZE;         \
-    unmasked                                                                   \
-    {                                                                          \
-      foreach (o = 0 ... N) {                                                  \
-        const vec3i coord = make_vec3i(                                        \
-            IC.x + offset[o].x, IC.y + offset[o].y, IC.z + offset[o].z);       \
-        const uint32 tgtIdx = o;                                               \
-        BODY                                                                   \
-      }                                                                        \
-    }                                                                          \
+#define __vkl_stencil_dispatch_uniform(FILTER, IC, TIME, BODY)            \
+  {                                                                       \
+    static const uniform vec3i offset[] = VKL_STENCIL_##FILTER##_OFFSETS; \
+    static const uniform size_t N       = VKL_STENCIL_##FILTER##_SIZE;    \
+    unmasked                                                              \
+    {                                                                     \
+      const float TIME##Disp = TIME;                                      \
+      foreach (o = 0 ... N) {                                             \
+        const vec3i IC##Disp = make_vec3i(                                \
+            IC.x + offset[o].x, IC.y + offset[o].y, IC.z + offset[o].z);  \
+        const uint32 tgtIdx = o;                                          \
+        BODY                                                              \
+      }                                                                   \
+    }                                                                     \
   }
 
-/* 
- * Version for varying IC.
+/*
+ * Version for varying IC and TIME.
  */
-#define __vkl_stencil_dispatch_varying(FILTER, IC, BODY)                       \
-  {                                                                            \
-    static const uniform vec3i offset[] = VKL_STENCIL_##FILTER##_OFFSETS;      \
-    static const uniform size_t N       = VKL_STENCIL_##FILTER##_SIZE;         \
-    /*                                                                         \
-     * The first case is that we have as many queries as there are lanes, so   \
-     * we need not do anything smart (=expensive), no lane will be idle.       \
-     */                                                                        \
-    if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {                         \
-      for (uniform unsigned int o = 0; o < N; ++o) {                           \
-        const vec3i coord   = IC + offset[o];                                  \
-        const uint32 tgtIdx = o * VKL_TARGET_WIDTH + programIndex;             \
-        {                                                                      \
-          BODY                                                                 \
-        }                                                                      \
-      }                                                                        \
-    } else {                                                                   \
-      /*                                                                       \
-       * The opposite extreme is a single query. We perform as many of the     \
-       * 8 lookups required for trilinear filtering in parallel as possible.   \
-       * reduce_equal is a good way to get two pieces of information at        \
-       * the same time, a) is there only one active instance? b) which one is  \
-       * it?                                                                   \
-       */                                                                      \
-      uniform uint32 activeInstance;                                           \
-      if (reduce_equal(programIndex, &activeInstance)) {                       \
-        const uniform vec3i iic = make_vec3i(extract(IC.x, activeInstance),    \
-                                             extract(IC.y, activeInstance),    \
-                                             extract(IC.z, activeInstance));   \
-        foreach (o = 0 ... N) {                                                \
-          const vec3i coord = make_vec3i(                                      \
-              iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);  \
-          const uint32 tgtIdx = o * VKL_TARGET_WIDTH + activeInstance;         \
-          {                                                                    \
-            BODY                                                               \
-          }                                                                    \
-        }                                                                      \
-        /*                                                                     \
-         * Finally, a hybrid version: There are more than one but fewer than   \
-         * VKL_TARGET_WIDTH queries. We may benefit from calling               \
-         * VdbSampler_sample for multiple query points at once.                \
-         */                                                                    \
-      } else {                                                                 \
-        /*                                                                     \
-         * ith element is the index of the ith active lane.                    \
-         * packed_store_active2 may store an additional element, but we know   \
-         * that at least one lane is inactive.                                 \
-         */                                                                    \
-        uniform int progIdx[VKL_TARGET_WIDTH];                                 \
-        const uniform int numActive =                                          \
-            packed_store_active2(progIdx, programIndex);                       \
-        foreach_tiled(i = 0 ... numActive, o = 0 ... N)                        \
-        {                                                                      \
-          const int instance = progIdx[i];                                     \
-          const vec3i iic    = make_vec3i(shuffle(IC.x, instance),             \
-                                          shuffle(IC.y, instance),             \
-                                          shuffle(IC.z, instance));            \
-          const vec3i coord  = make_vec3i(                                     \
-               iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z); \
-          const uint32 tgtIdx = o * VKL_TARGET_WIDTH + instance;               \
-          {                                                                    \
-            BODY                                                               \
-          }                                                                    \
-        }                                                                      \
-      }                                                                        \
-    }                                                                          \
+#define __vkl_stencil_dispatch_varying(FILTER, IC, TIME, BODY)                  \
+  {                                                                             \
+    static const uniform vec3i offset[] = VKL_STENCIL_##FILTER##_OFFSETS;       \
+    static const uniform size_t N       = VKL_STENCIL_##FILTER##_SIZE;          \
+    /*                                                                          \
+     * The first case is that we have as many queries as there are lanes, so    \
+     * we need not do anything smart (=expensive), no lane will be idle.        \
+     */                                                                         \
+    if (lanemask() == ((1 << VKL_TARGET_WIDTH) - 1)) {                          \
+      const float TIME##Disp = TIME;                                            \
+      for (uniform unsigned int o = 0; o < N; ++o) {                            \
+        const vec3i IC##Disp = IC + offset[o];                                  \
+        const uint32 tgtIdx  = o * VKL_TARGET_WIDTH + programIndex;             \
+        {                                                                       \
+          BODY                                                                  \
+        }                                                                       \
+      }                                                                         \
+    } else {                                                                    \
+      /*                                                                        \
+       * The opposite extreme is a single query. We perform as many of the      \
+       * 8 lookups required for trilinear filtering in parallel as possible.    \
+       * reduce_equal is a good way to get two pieces of information at         \
+       * the same time, a) is there only one active instance? b) which one is   \
+       * it?                                                                    \
+       */                                                                       \
+      uniform uint32 activeInstance;                                            \
+      if (reduce_equal(programIndex, &activeInstance)) {                        \
+        const uniform vec3i iic = make_vec3i(extract(IC.x, activeInstance),     \
+                                             extract(IC.y, activeInstance),     \
+                                             extract(IC.z, activeInstance));    \
+        const float TIME##Disp  = extract(TIME, activeInstance);                \
+        foreach (o = 0 ... N) {                                                 \
+          const vec3i IC##Disp = make_vec3i(                                    \
+              iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z);   \
+          const uint32 tgtIdx = o * VKL_TARGET_WIDTH + activeInstance;          \
+          {                                                                     \
+            BODY                                                                \
+          }                                                                     \
+        }                                                                       \
+        /*                                                                      \
+         * Finally, a hybrid version: There are more than one but fewer than    \
+         * VKL_TARGET_WIDTH queries. We may benefit from calling                \
+         * VdbSampler_sample for multiple query points at once.                 \
+         */                                                                     \
+      } else {                                                                  \
+        /*                                                                      \
+         * ith element is the index of the ith active lane.                     \
+         * packed_store_active2 may store an additional element, but we know    \
+         * that at least one lane is inactive.                                  \
+         */                                                                     \
+        uniform int progIdx[VKL_TARGET_WIDTH];                                  \
+        const uniform int numActive =                                           \
+            packed_store_active2(progIdx, programIndex);                        \
+        foreach_tiled(i = 0 ... numActive, o = 0 ... N)                         \
+        {                                                                       \
+          const int instance     = progIdx[i];                                  \
+          const vec3i iic        = make_vec3i(shuffle(IC.x, instance),          \
+                                              shuffle(IC.y, instance),          \
+                                              shuffle(IC.z, instance));         \
+          const float TIME##Disp = shuffle(time, instance);                     \
+          const vec3i IC##Disp   = make_vec3i(                                  \
+                iic.x + offset[o].x, iic.y + offset[o].y, iic.z + offset[o].z); \
+          const uint32 tgtIdx = o * VKL_TARGET_WIDTH + instance;                \
+          {                                                                     \
+            BODY                                                                \
+          }                                                                     \
+        }                                                                       \
+      }                                                                         \
+    }                                                                           \
   }

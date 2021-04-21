@@ -64,6 +64,7 @@ namespace openvkl {
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
+                static_cast<const float *>(time),
                 attributeIndex,
                 static_cast<float *>(samples));
     }
@@ -81,6 +82,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
+                static_cast<const float *>(time),
                 attributeIndex,
                 static_cast<float *>(samples));
     }
@@ -98,6 +100,7 @@ namespace openvkl {
                 ispcEquivalent,
                 N,
                 (const ispc::vec3f *)objectCoordinates,
+                times,
                 attributeIndex,
                 samples);
     }
@@ -115,6 +118,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
+                static_cast<const float *>(time),
                 attributeIndex,
                 &gradients);
     }
@@ -132,6 +136,7 @@ namespace openvkl {
                 ispcEquivalent,
                 N,
                 (const ispc::vec3f *)objectCoordinates,
+                times,
                 attributeIndex,
                 (ispc::vec3f *)gradients);
     }
@@ -149,6 +154,7 @@ namespace openvkl {
       CALL_ISPC(VdbSampler_computeSampleM_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
+                static_cast<const float *>(time),
                 M,
                 attributeIndices,
                 samples);
@@ -169,6 +175,7 @@ namespace openvkl {
                 static_cast<const int *>(valid),
                 ispcEquivalent,
                 &objectCoordinates,
+                static_cast<const float *>(time),
                 M,
                 attributeIndices,
                 samples);
@@ -189,6 +196,7 @@ namespace openvkl {
                 ispcEquivalent,
                 N,
                 (ispc::vec3f *)objectCoordinates,
+                times,
                 M,
                 attributeIndices,
                 samples);

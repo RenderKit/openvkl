@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "openvkl/VKLFormat.h"
+#include "openvkl/VKLTemporalFormat.h"
 #include "openvkl/ispc_cpp_interop.h"
 #include "openvkl/vdb.h"
 
@@ -53,13 +55,20 @@ struct VdbGrid
   vec3i rootOrigin;         // In index scale space.
   vec3ui activeSize;        // Size of the root node, in voxels,
 
-  // Per-node data.
   vkl_uint64 numLeaves;
   vkl_uint32 numAttributes;
-  bool allLeavesCompact;        // Do we only have compact (non strided) data?
+  bool allLeavesCompact;        // Do we only have compact (non strided) leaf data?
+  
+  // Per-node data.
   vkl_uint32 *attributeTypes;   // Data type for each attribute.
+  const VKLFormat *leafFormat;
+  const VKLTemporalFormat *leafTemporalFormat;
+  const vkl_int32 *leafStructuredTimesteps;
+  Data1D *leafUnstructuredIndices;
+  Data1D *leafUnstructuredTimes;
+
+  // Per-attribute data.
   Data1D *leafData;             // Data1D[numLeaves * numAttributes]
-  const VKLFormat *leafFormat;  // For each leaf node, the data format.
 
   // Level data.
   VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];
@@ -132,12 +141,11 @@ __vkl_interop_univary(__vkl_vdb_xfm_functions)
  * Voxel encoding
  *
  * empty    : 00 ... 00000
- * error    : V .. L .. 01          (32 bit voxel offset, 16 bit empty,
- *                                   8 bit voxel level, 6 bit empty,
- *                                   2 bit type)
- * child    : II ... III 10         (62 bit index, 2 bit type)
- * leaf     : II .. II .. 00 DF 11  (58 bit leaf index, 2 bit empty,
- *                                   2 bit data format, 2 bit type)
+ * error    : V .. L .. 01       (32 bit voxel offset, 16 bit empty, 8 bit voxel
+ *                                level, 6 bit empty, 2 bit type)
+ * child    : II ... III 10      (62 bit index, 2 bit type)
+ * leaf     : II .. II TF DF 11  (58 bit leaf index, 2 bit temporal format,
+ *                                2 bit data format, 2 bit type)
  *
  ******************************************************************************/
 
@@ -209,7 +217,13 @@ inline VKL_INTEROP_UNIFORM vkl_uint64 vklVdbVoxelMakeEmpty()
                                                                                \
   inline univary VKLFormat vklVdbVoxelLeafGetFormat(univary vkl_uint64 voxel)  \
   {                                                                            \
-    return ((univary VKLFormat)((voxel >> 4) & 0x3u));                         \
+    return ((univary VKLFormat)((voxel >> 2) & 0x3u));                         \
+  }                                                                            \
+                                                                               \
+  inline univary VKLTemporalFormat vklVdbVoxelLeafGetTemporalFormat(           \
+      univary vkl_uint64 voxel)                                                \
+  {                                                                            \
+    return ((univary VKLTemporalFormat)((voxel >> 4) & 0x3u));                 \
   }                                                                            \
                                                                                \
   inline univary vkl_uint64 vklVdbVoxelLeafGetIndex(univary vkl_uint64 voxel)  \
@@ -218,15 +232,20 @@ inline VKL_INTEROP_UNIFORM vkl_uint64 vklVdbVoxelMakeEmpty()
   }                                                                            \
                                                                                \
   inline univary vkl_uint64 vklVdbVoxelMakeLeafPtr(                            \
-      univary vkl_uint64 leafIndex, univary VKLFormat format)                  \
+      univary vkl_uint64 leafIndex,                                            \
+      univary VKLFormat format,                                                \
+      univary VKLTemporalFormat temporalFormat)                                \
   {                                                                            \
     assert(format <= 4);                                                       \
+    assert(temporalFormat <= 4);                                               \
     assert(leafIndex < (((univary vkl_uint64)1) << 58));                       \
     const univary vkl_uint64 voxel =                                           \
         (((univary vkl_uint64)leafIndex) << 6) +                               \
-        ((((univary vkl_uint64)format) & 0x3u) << 4) + 0x3u;                   \
+        ((((univary vkl_uint64)temporalFormat) & 0x3u) << 4) +                 \
+        ((((univary vkl_uint64)format) & 0x3u) << 2) + 0x3u;                   \
     assert(vklVdbVoxelIsLeafPtr(voxel));                                       \
     assert(vklVdbVoxelLeafGetFormat(voxel) == format);                         \
+    assert(vklVdbVoxelLeafGetTemporalFormat(voxel) == temporalFormat);         \
     assert(vklVdbVoxelLeafGetIndex(voxel) == leafIndex);                       \
     return voxel;                                                              \
   }

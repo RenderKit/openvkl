@@ -1,6 +1,8 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 #include "../api/Device.h"
 #include "../common/Data.h"
 #include "../common/logging.h"
@@ -87,7 +89,7 @@ namespace openvkl {
 
         if (!(indexBegin < indexEnd)) {
           runtimeError(
-              "termporallyUnstructuredIndices must increase strictly "
+              "temporallyUnstructuredIndices must increase strictly "
               "monotonically.");
         }
 
@@ -98,11 +100,11 @@ namespace openvkl {
         }
 
         for (uint64_t ti = indexBegin + 1; ti < indexEnd; ++ti) {
-          if (temporallyUnstructuredTimes->template as<float>()[ti - 1] >=
-              temporallyUnstructuredTimes->template as<float>()[ti]) {
+          if (!(temporallyUnstructuredTimes->template as<float>()[ti - 1] <
+                temporallyUnstructuredTimes->template as<float>()[ti])) {
             runtimeError(
                 "temporallyUnstructuredTimes must increase strictly "
-                " monotonically for every voxel.");
+                "monotonically for every voxel.");
           }
         }
 
@@ -166,7 +168,7 @@ namespace openvkl {
               "Temporally unstructured volumes should not have "
               "temporallyStructuredNumTimesteps provided");
         }
-        return verifyTemporallyUnstructuredData(device, 
+        return verifyTemporallyUnstructuredData(device,
                                                 expectedNumVoxels,
                                                 temporallyUnstructuredIndices,
                                                 temporallyUnstructuredTimes);

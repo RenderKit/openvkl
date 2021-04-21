@@ -7,6 +7,8 @@
 #include <cstring>
 #include <set>
 #include "../../common/export_util.h"
+#include "../../common/runtime_error.h"
+#include "../../common/temporal_data_verification.h"
 #include "../common/logging.h"
 #include "VdbInnerNodeObserver.h"
 #include "VdbSampler.h"
@@ -48,29 +50,21 @@ namespace openvkl {
           allocator.deallocate(level.valueRange);
         }
         allocator.deallocate(grid->attributeTypes);
+        allocator.deallocate(grid->leafUnstructuredIndices);
+        allocator.deallocate(grid->leafUnstructuredTimes);
         allocator.deallocate(grid->leafData);
         allocator.deallocate(grid);
       }
 
-      leafData   = nullptr;
-      leafFormat = nullptr;
+      leafData           = nullptr;
+      leafFormat         = nullptr;
+      leafTemporalFormat = nullptr;
     }
 
     template <int W>
     std::string VdbVolume<W>::toString() const
     {
       return "openvkl::VdbVolume";
-    }
-
-    /*
-     * A helper that will join all arguments, and stringify them.
-     */
-    template <class... Args>
-    void runtimeError(Args &&...args)
-    {
-      std::ostringstream os;
-      int dummy[sizeof...(Args)] = {(os << std::forward<Args>(args), 0)...};
-      throw std::runtime_error(os.str());
     }
 
     /*
@@ -279,6 +273,7 @@ namespace openvkl {
      */
     void insertLeaves(const std::vector<vec3ui> &leafOffsets,
                       const DataT<uint32_t> &leafFormat,
+                      const DataT<uint32_t> &leafTemporalFormat,
                       const DataT<Data *> &leafData,
                       const std::vector<std::vector<uint64_t>> &binnedLeaves,
                       const std::vector<uint64_t> &capacity,
@@ -291,6 +286,8 @@ namespace openvkl {
         const auto &leaves = binnedLeaves[leafLevel];
         for (uint64_t idx : leaves) {
           const auto format = static_cast<VKLFormat>(leafFormat[idx]);
+          const auto temporalFormat =
+              static_cast<VKLTemporalFormat>(leafTemporalFormat[idx]);
 
           const vec3ui &offset = leafOffsets[idx];
           uint64_t nodeIndex   = 0;
@@ -326,7 +323,7 @@ namespace openvkl {
               } else {
                 if (format == VKL_FORMAT_TILE ||
                     format == VKL_FORMAT_CONSTANT_ZYX) {
-                  voxel = vklVdbVoxelMakeLeafPtr(idx, format);
+                  voxel = vklVdbVoxelMakeLeafPtr(idx, format, temporalFormat);
                 } else {
                   assert(false);
                 }
@@ -502,21 +499,35 @@ namespace openvkl {
      * Initialize a single node, and verify attribute types in the process.
      *
      * nodeData: an array with numAttributes entries.
+     * expectedNumDataElements: The number of elements expected for each
+     *                          attribute buffer.
      * attributeTypes: an array with numAttributes entries.
-     * format: a pointer to a single VKLFormat.
      * data: an array of numAttributes Data1D objects.
      *
      * Returns true if all buffers are compact, and false if at least one is
      * strided.
      */
     inline bool initNode(Data *const *nodeData,
+                         uint64_t expectedNumDataElements,
                          const uint32_t *attributeTypes,
                          uint32_t numAttributes,
-                         ispc::Data1D *data)  // numAttributes.
+                         ispc::Data1D *data)  // numAttributes values.
     {
       bool allCompact = true;
       for (uint32_t a = 0; a < numAttributes; ++a) {
         allCompact &= nodeData[a]->compact();
+        if (nodeData[a]->size() < expectedNumDataElements) {
+          runtimeError("Node data too small: found ",
+                       nodeData[a]->size(),
+                       " elements, but expected ",
+                       expectedNumDataElements);
+        }
+        if (nodeData[a]->size() > expectedNumDataElements) {
+          runtimeError("Node data too big: found ",
+                       nodeData[a]->size(),
+                       " elements, but expected ",
+                       expectedNumDataElements);
+        }
         if (attributeTypes[a] == VKL_HALF) {
           data[a] = nodeData[a]->ispc;
           // Manual error checking because Data does not support half directly.
@@ -531,54 +542,32 @@ namespace openvkl {
       return allCompact;
     }
 
-    /*
-     * Verify that the node format makes sense.
-     */
-    inline void verifyNodeFormat(Device *device,
-                                 size_t node,  // purely for error reporting.
-                                 uint32_t level,
-                                 VKLFormat format,
-                                 uint32_t numAttributes,
-                                 const ispc::Data1D *data)
+    inline void verifyLevel(uint32_t level)
     {
       if (level >= vklVdbNumLevels()) {
         runtimeError(
             "invalid node level ", level, " for this vdb configuration");
       }
+    }
 
-      if (format == VKL_FORMAT_INVALID) {
+    inline void verifyNodeDataFormat(VKLFormat format, uint32_t level)
+    {
+      switch (format) {
+      case VKL_FORMAT_TILE:
+        break;
+      case VKL_FORMAT_CONSTANT_ZYX:
+        if (level + 1 < VKL_VDB_NUM_LEVELS) {
+          runtimeError("leaf nodes are only supported on the lowest level.");
+        }
+        break;
+      default:
         runtimeError("invalid format specified");
       }
+    }
 
-      if (format == VKL_FORMAT_CONSTANT_ZYX &&
-          (level + 1) < VKL_VDB_NUM_LEVELS) {
-        runtimeError("leaf nodes are only supported on the lowest level.");
-      }
-
-      for (uint32_t i = 0; i < numAttributes; i++) {
-        const uint64_t size = data[i].numItems;
-
-        std::string label = "node " + std::to_string(node) + ", attribute " +
-                            std::to_string(i) + ": ";
-
-        if (format == VKL_FORMAT_TILE && size < 1)
-          runtimeError(label + "no voxel data for tile node");
-
-        if (format == VKL_FORMAT_TILE && size > 1) {
-          LogMessageStream(device, VKL_LOG_WARNING)
-              << label << "data array too big for tile node" << std::endl;
-        }
-
-        if (format == VKL_FORMAT_CONSTANT_ZYX &&
-            size < vklVdbLevelNumVoxels(level))
-          runtimeError(label + "data array too small for constant node");
-
-        if (format == VKL_FORMAT_CONSTANT_ZYX &&
-            size > vklVdbLevelNumVoxels(level)) {
-          LogMessageStream(device, VKL_LOG_WARNING)
-              << label << "data array too big for constant node" << std::endl;
-        }
-      }
+    inline uint64_t getExpectedNumVoxels(VKLFormat format, uint32_t level)
+    {
+      return (format == VKL_FORMAT_TILE) ? 1 : vklVdbLevelNumVoxels(level);
     }
 
     template <int W>
@@ -640,15 +629,66 @@ namespace openvkl {
             this->template getParamDataT<uint32_t>("node.level");
         Ref<const DataT<vec3i>> leafOrigin =
             this->template getParamDataT<vec3i>("node.origin");
+
         leafFormat = this->template getParamDataT<uint32_t>("node.format");
         grid->leafFormat =
             reinterpret_cast<const VKLFormat *>(leafFormat->data());
 
+        leafTemporalFormat = this->template getParamDataT<uint32_t>(
+            "node.temporalFormat", nullptr);
+        if (!leafTemporalFormat) {
+          leafTemporalFormat = new DataT<uint32_t>(
+              grid->numLeaves,
+              static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
+          leafTemporalFormat->refDec();
+        }
+        grid->leafTemporalFormat = reinterpret_cast<const VKLTemporalFormat *>(
+            leafTemporalFormat->data());
+
+        leafStructuredTimesteps = this->template getParamDataT<int>(
+            "node.temporallyStructuredNumTimesteps", nullptr);
+        leafUnstructuredIndices = this->template getParamDataT<Data *>(
+            "node.temporallyUnstructuredIndices", nullptr);
+        leafUnstructuredTimes = this->template getParamDataT<Data *>(
+            "node.temporallyUnstructuredTimes", nullptr);
+
         if (leafLevel->size() != grid->numLeaves ||
             leafOrigin->size() != grid->numLeaves ||
-            leafFormat->size() != grid->numLeaves) {
-          runtimeError("node.level, node.origin, node.format, and node.data ",
-                       "must all have the same size");
+            leafFormat->size() != grid->numLeaves ||
+            leafTemporalFormat->size() != grid->numLeaves) {
+          runtimeError(
+              "node.level, node.origin, node.format, "
+              "node.temporalFormat, and node.data "
+              "must all have the same size");
+        }
+
+        if (leafStructuredTimesteps) {
+          if (leafStructuredTimesteps->size() != grid->numLeaves) {
+            runtimeError(
+                "If node.temporallyStructuredNumTimesteps is set, it "
+                "must have the same size as node.data");
+          }
+          grid->leafStructuredTimesteps = leafStructuredTimesteps->data();
+        }
+
+        if (leafUnstructuredIndices) {
+          if (leafUnstructuredIndices->size() != grid->numLeaves) {
+            runtimeError(
+                "If node.temporallyUnstructuredIndices is set, it "
+                "must have the same size as node.data");
+          }
+          grid->leafUnstructuredIndices =
+              allocator.allocate<ispc::Data1D>(grid->numLeaves);
+        }
+
+        if (leafUnstructuredTimes) {
+          if (leafUnstructuredTimes->size() != grid->numLeaves) {
+            runtimeError(
+                "If node.temporallyUnstructuredTimes is set, it "
+                "must have the same size as node.data");
+          }
+          grid->leafUnstructuredTimes =
+              allocator.allocate<ispc::Data1D>(grid->numLeaves);
         }
 
         const box3i bbox =
@@ -673,19 +713,46 @@ namespace openvkl {
                                                           grid->numAttributes);
 
         tasking::parallel_for(grid->numLeaves, [&](uint64_t i) {
+          const uint32_t level = (*leafLevel)[i];
+          verifyLevel(level);
+
+          const VKLFormat dataFormat = static_cast<VKLFormat>((*leafFormat)[i]);
+          verifyNodeDataFormat(dataFormat, level);
+
+          const uint64_t expectedNumVoxels =
+              getExpectedNumVoxels(dataFormat, level);
+
+          const VKLTemporalFormat temporalFormat =
+              static_cast<VKLTemporalFormat>((*leafTemporalFormat)[i]);
+
+          const int structuredTimesteps =
+              leafStructuredTimesteps ? (*leafStructuredTimesteps)[i] : 0;
+          const Data *unstructuredIndices =
+              leafUnstructuredIndices ? (*leafUnstructuredIndices)[i] : nullptr;
+          const Data *unstructuredTimes =
+              leafUnstructuredTimes ? (*leafUnstructuredTimes)[i] : nullptr;
+
+          const uint64_t expectedNumDataElements =
+              verifyTemporalData(this->device.ptr,
+                                 expectedNumVoxels,
+                                 temporalFormat,
+                                 structuredTimesteps,
+                                 unstructuredIndices,
+                                 unstructuredTimes);
+
           Data *const ld = (*leafData)[i];
           allLeavesCompact &= static_cast<int>(
               initNode(multiAttrib ? ld->template as<Data *>().data() : &ld,
+                       expectedNumDataElements,
                        grid->attributeTypes,
                        grid->numAttributes,
                        grid->leafData + i * grid->numAttributes));
 
-          verifyNodeFormat(this->device.ptr,
-                           i,
-                           (*leafLevel)[i],
-                           static_cast<VKLFormat>((*leafFormat)[i]),
-                           grid->numAttributes,
-                           grid->leafData + i * grid->numAttributes);
+          if (unstructuredIndices && unstructuredTimes) {
+            assert(temporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED);
+            grid->leafUnstructuredIndices[i] = unstructuredIndices->ispc;
+            grid->leafUnstructuredTimes[i]   = unstructuredTimes->ispc;
+          }
         });
 
         grid->allLeavesCompact = static_cast<bool>(allLeavesCompact.load());
@@ -703,8 +770,13 @@ namespace openvkl {
 
         // This is where the magic happens. Insert leaves into the data
         // structure top down.
-        insertLeaves(
-            leafOffsets, *leafFormat, *leafData, binnedLeaves, capacity, grid);
+        insertLeaves(leafOffsets,
+                     *leafFormat,
+                     *leafTemporalFormat,
+                     *leafData,
+                     binnedLeaves,
+                     capacity,
+                     grid);
 
         CALL_ISPC(VdbVolume_setGrid,
                   this->ispcEquivalent,

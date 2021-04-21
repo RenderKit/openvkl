@@ -108,6 +108,10 @@ namespace openvkl {
       range1f valueRange;
       Ref<const DataT<Data *>> leafData;
       Ref<const DataT<uint32_t>> leafFormat;
+      Ref<const DataT<uint32_t>> leafTemporalFormat;
+      Ref<const DataT<int>> leafStructuredTimesteps;
+      Ref<const DataT<Data *>> leafUnstructuredIndices;
+      Ref<const DataT<Data *>> leafUnstructuredTimes;
       VdbGrid *grid{nullptr};
       Allocator allocator;
 

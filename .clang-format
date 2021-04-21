@@ -1,6 +1,6 @@
 ---
 Language:        Cpp
-# BasedOnStyle:  Google
+#BasedOnStyle : Google
 AccessModifierOffset: -1
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
@@ -46,7 +46,18 @@ DerivePointerAlignment: false
 DisableFormat:   false
 ExperimentalAutoDetectBinPacking: false
 ForEachMacros:   [ foreach, Q_FOREACH, BOOST_FOREACH ]
-StatementMacros: [ __vkl_interop_univary ]
+StatementMacros: [ __vkl_interop_univary, 
+                   template_VdbSampler_sampleLeafZYX_constant,
+                   template_VdbSampler_sampleLeafZYX_structured,
+                   template_VdbSampler_sampleLeafZYX_unstructured,
+                   template_VdbSampler_sampleLeafTile_constant,
+                   template_VdbSampler_sampleLeafTile_structured,
+                   template_VdbSampler_sampleLeafTile_unstructured,
+                   __vkl_template_interpolateTemporallyStructured,
+                   __vkl_template_interpolateTemporallyUnstructured,
+                   __define_leaf_access_observer,
+                   __vkl_template_computeValueRangeTemporallyUnstructured,
+                   __vkl_template_computeValueRangeTemporallyStructured ]
 IncludeCategories:
   - Regex:           '^<.*\.h>'
     Priority:        1

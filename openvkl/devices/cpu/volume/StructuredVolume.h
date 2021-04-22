@@ -6,6 +6,7 @@
 #include "../common/Data.h"
 #include "../common/export_util.h"
 #include "../common/math.h"
+#include "../common/temporal_data.h"
 #include "GridAccelerator_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "Volume.h"
@@ -121,149 +122,30 @@ namespace openvkl {
         }
       }
 
-      // validate temporal configuration and attribute data sizes
+      const uint64_t expectedNumVoxels = this->dimensions.long_product();
 
-      if (temporallyStructuredNumTimesteps) {
-        // temporally structured
+      VKLTemporalFormat temporalFormat = VKL_TEMPORAL_FORMAT_CONSTANT;
+      if (temporallyStructuredNumTimesteps > 0)
+        temporalFormat = VKL_TEMPORAL_FORMAT_STRUCTURED;
+      else if (temporallyUnstructuredIndices)
+        temporalFormat = VKL_TEMPORAL_FORMAT_UNSTRUCTURED;
 
-        if (!(temporallyStructuredNumTimesteps > 1)) {
-          throw std::runtime_error(
-              "temporallyStructuredNumTimesteps must be > 1");
-        }
+      const uint64_t expectedNumDataElements =
+          verifyTemporalData(this->device.ptr,
+                             expectedNumVoxels,
+                             temporalFormat,
+                             temporallyStructuredNumTimesteps,
+                             temporallyUnstructuredIndices.ptr,
+                             temporallyUnstructuredTimes.ptr);
 
-        size_t expectedNumDataItems = size_t(temporallyStructuredNumTimesteps) *
-                                      this->dimensions.long_product();
-
-        for (int i = 0; i < attributesData.size(); i++) {
-          if (attributesData[i]->numItems != expectedNumDataItems) {
-            throw std::runtime_error("temporally structured attribute " +
-                                     std::to_string(i) +
-                                     " has improperly sized data");
-          }
-        }
-
-        if (temporallyUnstructuredIndices &&
-            temporallyUnstructuredIndices->size() > 0) {
-          throw std::runtime_error(
-              "temporally structured volume should not have "
-              "temporallyUnstructuredIndices provided");
-        }
-
-        if (temporallyUnstructuredTimes &&
-            temporallyUnstructuredTimes->size() > 0) {
-          throw std::runtime_error(
-              "temporally structured volume should not have "
-              "temporallyUnstructuredTimes provided");
-        }
-
-      } else if (temporallyUnstructuredIndices &&
-                 temporallyUnstructuredIndices->size() > 0) {
-        // temporally unstructured
-
-        bool require64BitIndices = attributesData[0]->numItems >=
-                                   size_t(std::numeric_limits<uint32_t>::max());
-
-        if (require64BitIndices &&
-            temporallyUnstructuredIndices->dataType != VKL_ULONG) {
-          throw std::runtime_error(
-              "temporallyUnstructuredIndices must be VKL_ULONG due to "
-              "attribute data size");
-        }
-
-        if (!require64BitIndices &&
-            temporallyUnstructuredIndices->dataType == VKL_ULONG) {
-          postLogMessage(this->device.ptr, VKL_LOG_WARNING)
-              << "WARNING: temporallyUnstructuredIndices is VKL_ULONG when "
-                 "VKL_UINT is sufficient and may be more performant";
-        }
-
-        if (temporallyUnstructuredIndices->dataType != VKL_UINT &&
-            temporallyUnstructuredIndices->dataType != VKL_ULONG) {
-          throw std::runtime_error(
-              "temporallyUnstructuredIndices must be VKL_UINT or VKL_ULONG");
-        }
-
-        if (temporallyUnstructuredIndices->size() !=
-            this->dimensions.long_product() + 1) {
-          throw std::runtime_error(
-              "temporally unstructured volume has improperly sized "
-              "temporallyUnstructuredIndices");
-        }
-
-        size_t expectedNumDataItems;
-
-        if (temporallyUnstructuredIndices->dataType == VKL_UINT) {
-          expectedNumDataItems =
-              size_t(temporallyUnstructuredIndices->template as<
-                     uint32_t>()[temporallyUnstructuredIndices->size() - 1]);
-        } else if (temporallyUnstructuredIndices->dataType == VKL_ULONG) {
-          expectedNumDataItems =
-              size_t(temporallyUnstructuredIndices->template as<
-                     uint64_t>()[temporallyUnstructuredIndices->size() - 1]);
-        }
-
-        for (int i = 0; i < attributesData.size(); i++) {
-          if (attributesData[i]->numItems != expectedNumDataItems) {
-            throw std::runtime_error("temporally unstructured attribute " +
-                                     std::to_string(i) +
-                                     " has improperly sized data");
-          }
-        }
-
-        if (!temporallyUnstructuredTimes ||
-            temporallyUnstructuredTimes->size() != expectedNumDataItems) {
-          throw std::runtime_error(
-              "temporally unstructured volume has improperly sized "
-              "temporallyUnstructuredTimes");
-        }
-
-        for (size_t i = 0; i < temporallyUnstructuredIndices->size() - 1; i++) {
-          size_t timeBeginIndex;
-          size_t timeEndIndex;
-
-          if (temporallyUnstructuredIndices->dataType == VKL_UINT) {
-            timeBeginIndex =
-                temporallyUnstructuredIndices->template as<uint32_t>()[i];
-            timeEndIndex =
-                temporallyUnstructuredIndices->template as<uint32_t>()[i + 1] -
-                1;
-          } else if (temporallyUnstructuredIndices->dataType == VKL_ULONG) {
-            timeBeginIndex =
-                temporallyUnstructuredIndices->template as<uint64_t>()[i];
-            timeEndIndex =
-                temporallyUnstructuredIndices->template as<uint64_t>()[i + 1] -
-                1;
-          }
-
-          if ((*temporallyUnstructuredTimes)[timeBeginIndex] < 0.f ||
-              (*temporallyUnstructuredTimes)[timeBeginIndex] > 1.f ||
-              (*temporallyUnstructuredTimes)[timeEndIndex] < 0.f ||
-              (*temporallyUnstructuredTimes)[timeEndIndex] > 1.f) {
-            throw std::runtime_error(
-                "temporallyUnstructuredTimes values must be bounded by 0.0 and "
-                "1.0 for every voxel");
-          }
-
-          for (size_t j = timeBeginIndex; j < timeEndIndex; j++) {
-            if (!((*temporallyUnstructuredTimes)[j] <
-                  (*temporallyUnstructuredTimes)[j + 1])) {
-              throw std::runtime_error(
-                  "temporallyUnstructuredTimes values must be strictly "
-                  "monotonically increasing for every voxel");
-            }
-          }
-        }
-      }
-
-      else {
-        // no time configuration
-
-        for (int i = 0; i < attributesData.size(); i++) {
-          if (attributesData[i]->size() != this->dimensions.long_product()) {
-            throw std::runtime_error("incorrect data size (attribute " +
-                                     std::to_string(i) +
-                                     ") for provided volume dimensions");
-          }
+      for (int i = 0; i < attributesData.size(); ++i) {
+        if (attributesData[i]->numItems != expectedNumDataElements) {
+          runtimeError("attribute ",
+                       i,
+                       " has ",
+                       attributesData[i]->numItems,
+                       " elements, but expected ",
+                       expectedNumDataElements);
         }
       }
     }

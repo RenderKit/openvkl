@@ -242,7 +242,7 @@ the same functionality and flavor. Looking at the headers, the
 `vklTutorialISPC` example, and this documentation should be enough to
 figure it out.
 
-## Initialization and shutdown
+## Device initialization and shutdown
 
 To use the API, one of the implemented backends must be loaded.
 Currently the only one that exists is the CPU device. To load the module
@@ -290,34 +290,28 @@ Once parameters are set, the device must be committed with
 vklCommitDevice(device);
 ```
 
-Finally, to use the newly committed device, you must call
+The newly committed device is then ready to use. Users may change
+parameters on a device after initialization. In this case the device
+would need to be re-committed.
 
-``` cpp
-vklSetCurrentDevice(device);
-```
-
-Users can change parameters on a device after initialization. In this
-case the device would need to be re-committed. If changes are made to
-the device that is already set as the current device, it does not need
-to be set as current again. The currently set device can be retrieved at
-any time by calling
-
-``` cpp
-VKLDevice device = vklGetCurrentDevice();
-```
+All Open VKL objects are associated with a device. A device handle must
+be explicitly provided when creating volume and data objects, via
+`vklNewVolume()` and `vklNewData()` respectively. Other object types are
+automatically associated with a device via transitive dependency on a
+volume.
 
 Open VKL provides vector-wide versions for several APIs. To determine
-the native vector width for the given device, call:
+the native vector width for a given device, call:
 
 ``` cpp
-int width = vklGetNativeSIMDWidth();
+int width = vklGetNativeSIMDWidth(VKLDevice device);
 ```
 
-When the application is finished with Open VKL or shutting down, call
-the shutdown function:
+When the application is finished with an Open VKL device or shutting
+down, release the device via:
 
 ``` cpp
-vklShutdown();
+vklReleaseDevice(VKLDevice device);
 ```
 
 ### Environment variables
@@ -509,7 +503,8 @@ Large data is passed to Open VKL via a `VKLData` handle created with
 `vklNewData`:
 
 ``` cpp
-VKLData vklNewData(size_t numItems,
+VKLData vklNewData(VKLDevice device,
+                   size_t numItems,
                    VKLDataType dataType,
                    const void *source,
                    VKLDataCreationFlags dataCreationFlags,
@@ -631,8 +626,12 @@ called concurrently on the same object.
 Open VKL currently supports structured volumes on regular and spherical
 grids; unstructured volumes with tetrahedral, wedge, pyramid, and
 hexaderal primitive types; adaptive mesh refinement (AMR) volumes;
-sparse VDB volumes; and particle volumes. These volumes are created with
-`vklNewVolume` with the appropriate type string.
+sparse VDB volumes; and particle volumes. Volumes are created with
+`vklNewVolume` with a device and appropriate type string:
+
+``` cpp
+VKLVolume vklNewVolume(VKLDevice device, const char *type);
+```
 
 In addition to the usual `vklSet...()` and `vklCommit()` APIs, the
 volume bounding box can be queried:
@@ -1758,31 +1757,34 @@ for (auto &v : velocities) {
 
 std::vector<VKLData> attributes;
 
-attributes.push_back(vklNewData(velocities.size(),
+attributes.push_back(vklNewData(device,
+                                velocities.size(),
                                 VKL_FLOAT,
                                 &velocities[0].x,
                                 VKL_DATA_SHARED_BUFFER,
                                 sizeof(vkl_vec3f)));
 
-attributes.push_back(vklNewData(velocities.size(),
+attributes.push_back(vklNewData(device,
+                                velocities.size(),
                                 VKL_FLOAT,
                                 &velocities[0].y,
                                 VKL_DATA_SHARED_BUFFER,
                                 sizeof(vkl_vec3f)));
 
-attributes.push_back(vklNewData(velocities.size(),
+attributes.push_back(vklNewData(device,
+                                velocities.size(),
                                 VKL_FLOAT,
                                 &velocities[0].z,
                                 VKL_DATA_SHARED_BUFFER,
                                 sizeof(vkl_vec3f)));
 
 VKLData attributesData =
-    vklNewData(attributes.size(), VKL_DATA, attributes.data());
+    vklNewData(device, attributes.size(), VKL_DATA, attributes.data());
 
 for (auto &attribute : attributes)
   vklRelease(attribute);
 
-VKLVolume volume = vklNewVolume("structuredRegular");
+VKLVolume volume = vklNewVolume(device, "structuredRegular");
 
 vklSetData(volume, "data", attributesData);
 vklRelease(attributesData);
@@ -2108,7 +2110,6 @@ int main()
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
-  vklSetCurrentDevice(device);
 
   const int dimensions[] = {128, 128, 128};
 
@@ -2116,7 +2117,7 @@ int main()
 
   const int numAttributes = 3;
 
-  VKLVolume volume = vklNewVolume("structuredRegular");
+  VKLVolume volume = vklNewVolume(device, "structuredRegular");
   vklSetVec3i(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
@@ -2136,7 +2137,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData data0 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data0 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   // volume attribute 1: y-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -2145,7 +2147,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)j;
 
-  VKLData data1 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data1 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   // volume attribute 2: z-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -2154,12 +2157,13 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)k;
 
-  VKLData data2 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data2 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   VKLData attributes[] = {data0, data1, data2};
 
-  VKLData attributesData =
-      vklNewData(numAttributes, VKL_DATA, attributes, VKL_DATA_DEFAULT, 0);
+  VKLData attributesData = vklNewData(
+      device, numAttributes, VKL_DATA, attributes, VKL_DATA_DEFAULT, 0);
 
   vklRelease(data0);
   vklRelease(data1);
@@ -2176,7 +2180,7 @@ int main()
 
   vklRelease(volume);
 
-  vklShutdown();
+  vklReleaseDevice(device);
 
   free(voxels);
 

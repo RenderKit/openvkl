@@ -12,68 +12,6 @@
 namespace openvkl {
   namespace testing {
 
-    struct TemporalConfig
-    {
-      enum Type
-      {
-        Constant,
-        Structured,
-        Unstructured,
-      };
-
-      Type type{Constant};
-      std::vector<float> sampleTime;
-
-      // If type is unstructured and this is nonzero, first sample the function
-      // at sampleTime, then find a time range with nonzero density, and
-      // resample outputting numRefitSamples time steps.
-      size_t numRefitSamples{0};
-
-      TemporalConfig() = default;
-
-      TemporalConfig(Type type, size_t numSamples)
-          : type(type), sampleTime(equidistantTime(numSamples))
-      {
-        assert(type == Constant || numSamples > 0);
-      }
-
-      explicit TemporalConfig(const std::vector<float> &sampleTime)
-          : type(Unstructured), sampleTime(sampleTime)
-      {
-        assert(!sampleTime.empty());
-      }
-
-      bool isCompatible(const TemporalConfig &other) const
-      {
-        return (type == other.type) &&
-               (sampleTime.size() == other.sampleTime.size()) &&
-               (numRefitSamples == 0) && (other.numRefitSamples == 0);
-      }
-
-      bool hasTime() const
-      {
-        return type != Constant;
-      }
-
-      size_t getNumSamples() const
-      {
-        return type == Constant ? 1 : sampleTime.size();
-      }
-
-     private:
-      static std::vector<float> equidistantTime(size_t numSamples)
-      {
-        std::vector<float> st(numSamples);
-        // Initialize to {} for numSamples 0, {0} for numSamples 1,
-        // and a regular grid between 0 and 1 for numSamples > 1.
-        const float dt =
-            1.f / static_cast<float>(std::max<size_t>(numSamples, 2) - 1);
-        for (size_t i = 0; i < numSamples; ++i)
-          st[i] = i * dt;
-        return st;
-      }
-    };
-
     struct TestingStructuredVolume : public TestingVolume
     {
       TestingStructuredVolume() = delete;

@@ -72,17 +72,26 @@ namespace openvkl {
        */
       size_t addTile(uint32_t level,
                      const vec3i &origin,
-                     const std::vector<void *> &ptrs);
+                     const std::vector<void *> &ptrs,
+                     uint32_t temporallyStructuredNumTimesteps     = 0,
+                     uint32_t temporallyUnstructuredNumIndices     = 0,
+                     const uint32_t *temporallyUnstructuredIndices = nullptr,
+                     const float *temporallyUnstructuredTimes      = nullptr);
 
       /*
        * Add a new constant node.
        * Returns the new node's index.
        */
-      size_t addConstant(uint32_t level,
-                         const vec3i &origin,
-                         const std::vector<void *> &ptrs,
-                         VKLDataCreationFlags flags,
-                         const std::vector<size_t> &byteStrides = {});
+      size_t addConstant(
+          uint32_t level,
+          const vec3i &origin,
+          const std::vector<void *> &ptrs,
+          VKLDataCreationFlags flags,
+          const std::vector<size_t> &byteStrides        = {},
+          uint32_t temporallyStructuredNumTimesteps     = 0,
+          uint32_t temporallyUnstructuredNumIndices     = 0,
+          const uint32_t *temporallyUnstructuredIndices = nullptr,
+          const float *temporallyUnstructuredTimes      = nullptr);
 
       /*
        * Change the given node to a constant node.
@@ -91,7 +100,11 @@ namespace openvkl {
       void makeConstant(size_t index,
                         const std::vector<void *> &ptrs,
                         VKLDataCreationFlags flags,
-                        const std::vector<size_t> &byteStrides = {});
+                        const std::vector<size_t> &byteStrides        = {},
+                        uint32_t temporallyStructuredNumTimesteps     = 0,
+                        uint32_t temporallyUnstructuredNumIndices     = 0,
+                        const uint32_t *temporallyUnstructuredIndices = nullptr,
+                        const float *temporallyUnstructuredTimes = nullptr);
 
       /*
        * Create a VKLVolume from these buffers.
@@ -135,6 +148,15 @@ namespace openvkl {
        * VKL_FORMAT_CONSTANT_ZYX at this point.
        */
       std::vector<VKLFormat> format;
+
+      /*
+       * Temporal config. All of these buffers are optional, but we allocate
+       * of them for simplicity.
+       */
+      std::vector<VKLTemporalFormat> temporalFormat;
+      std::vector<uint32_t> temporallyStructuredNumTimesteps;
+      std::vector<VKLData> temporallyUnstructuredIndices;
+      std::vector<VKLData> temporallyUnstructuredTimes;
 
       /*
        * The actual node data. Tiles have exactly one value,
@@ -202,6 +224,10 @@ namespace openvkl {
       level.clear();
       origin.clear();
       format.clear();
+      temporalFormat.clear();
+      temporallyStructuredNumTimesteps.clear();
+      temporallyUnstructuredIndices.clear();
+      temporallyUnstructuredTimes.clear();
       data.clear();
     }
 
@@ -210,17 +236,30 @@ namespace openvkl {
       assert(level.empty());
       assert(origin.empty());
       assert(format.empty());
+      assert(temporalFormat.empty());
+      assert(temporallyStructuredNumTimesteps.empty());
+      assert(temporallyUnstructuredIndices.empty());
+      assert(temporallyUnstructuredTimes.empty());
       assert(data.empty());
 
       level.reserve(numNodes);
       origin.reserve(numNodes);
       format.reserve(numNodes);
+      temporalFormat.reserve(numNodes);
+      temporallyStructuredNumTimesteps.reserve(numNodes);
+      temporallyUnstructuredIndices.reserve(numNodes);
+      temporallyUnstructuredTimes.reserve(numNodes);
       data.reserve(numNodes);
     }
 
-    inline size_t VdbVolumeBuffers::addTile(uint32_t level,
-                                            const vec3i &origin,
-                                            const std::vector<void *> &ptrs)
+    inline size_t VdbVolumeBuffers::addTile(
+        uint32_t level,
+        const vec3i &origin,
+        const std::vector<void *> &ptrs,
+        uint32_t temporallyStructuredNumTimesteps,
+        uint32_t temporallyUnstructuredNumIndices,
+        const uint32_t *temporallyUnstructuredIndices,
+        const float *temporallyUnstructuredTimes)
     {
       if (ptrs.size() != attributeDataTypes.size()) {
         throw std::runtime_error(
@@ -232,16 +271,40 @@ namespace openvkl {
       this->origin.push_back(origin);
       format.push_back(VKL_FORMAT_TILE);
 
+      uint32_t dataSize = 1;
+      if (temporallyStructuredNumTimesteps > 1) {
+        this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_STRUCTURED);
+        this->temporallyStructuredNumTimesteps.push_back(
+            temporallyStructuredNumTimesteps);
+        this->temporallyUnstructuredIndices.push_back(nullptr);
+        this->temporallyUnstructuredTimes.push_back(nullptr);
+        dataSize = temporallyStructuredNumTimesteps;
+      } else if (temporallyUnstructuredIndices && temporallyUnstructuredTimes) {
+        this->temporallyStructuredNumTimesteps.push_back(0);
+        this->temporallyUnstructuredIndices.push_back(nullptr);
+        this->temporallyUnstructuredTimes.push_back(nullptr);
+        throw std::runtime_error("NOT IMPLEMENTED");
+        assert(false);
+      } else {
+        this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_CONSTANT);
+      }
+
       // only use array-of-arrays when we have multiple attributes
       if (ptrs.size() == 1) {
-        data.push_back(vklNewData(
-            device, 1, attributeDataTypes[0], ptrs[0], VKL_DATA_DEFAULT));
+        data.push_back(vklNewData(device,
+                                  dataSize,
+                                  attributeDataTypes[0],
+                                  ptrs[0],
+                                  VKL_DATA_DEFAULT));
       } else {
         std::vector<VKLData> attributesData;
 
         for (size_t i = 0; i < ptrs.size(); i++) {
-          attributesData.push_back(vklNewData(
-              device, 1, attributeDataTypes[i], ptrs[i], VKL_DATA_DEFAULT));
+          attributesData.push_back(vklNewData(device,
+                                              dataSize,
+                                              attributeDataTypes[i],
+                                              ptrs[i],
+                                              VKL_DATA_DEFAULT));
         }
 
         data.push_back(vklNewData(device,
@@ -263,7 +326,11 @@ namespace openvkl {
         const vec3i &origin,
         const std::vector<void *> &ptrs,
         VKLDataCreationFlags flags,
-        const std::vector<size_t> &byteStrides)
+        const std::vector<size_t> &byteStrides,
+        uint32_t temporallyStructuredNumTimesteps,
+        uint32_t temporallyUnstructuredNumIndices,
+        const uint32_t *temporallyUnstructuredIndices,
+        const float *temporallyUnstructuredTimes)
     {
       if (ptrs.size() != attributeDataTypes.size()) {
         throw std::runtime_error(
@@ -280,8 +347,19 @@ namespace openvkl {
       this->level.push_back(level);
       this->origin.push_back(origin);
       format.push_back(VKL_FORMAT_INVALID);
+      this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_INVALID);
+      this->temporallyStructuredNumTimesteps.push_back(0);
+      this->temporallyUnstructuredIndices.push_back(nullptr);
+      this->temporallyUnstructuredTimes.push_back(nullptr);
       data.push_back(nullptr);
-      makeConstant(index, ptrs, flags, byteStrides);
+      makeConstant(index,
+                   ptrs,
+                   flags,
+                   byteStrides,
+                   temporallyStructuredNumTimesteps,
+                   temporallyUnstructuredNumIndices,
+                   temporallyUnstructuredIndices,
+                   temporallyUnstructuredTimes);
       return index;
     }
 
@@ -289,7 +367,11 @@ namespace openvkl {
         size_t index,
         const std::vector<void *> &ptrs,
         VKLDataCreationFlags flags,
-        const std::vector<size_t> &byteStrides)
+        const std::vector<size_t> &byteStrides,
+        uint32_t temporallyStructuredNumTimesteps,
+        uint32_t temporallyUnstructuredNumIndices,
+        const uint32_t *temporallyUnstructuredIndices,
+        const float *temporallyUnstructuredTimes)
     {
       if (ptrs.size() != attributeDataTypes.size()) {
         throw std::runtime_error(
@@ -304,13 +386,37 @@ namespace openvkl {
 
       format.at(index) = VKL_FORMAT_CONSTANT_ZYX;
 
+      uint32_t dataSize = vklVdbLevelNumVoxels(level.at(index));
+      if (temporallyStructuredNumTimesteps > 1) {
+        this->temporalFormat.at(index) = VKL_TEMPORAL_FORMAT_STRUCTURED;
+        this->temporallyStructuredNumTimesteps.at(index) =
+            temporallyStructuredNumTimesteps;
+        dataSize *= temporallyStructuredNumTimesteps;
+      } else if ((temporallyUnstructuredNumIndices > 0) &&
+                 temporallyUnstructuredIndices && temporallyUnstructuredTimes) {
+        this->temporalFormat.at(index) = VKL_TEMPORAL_FORMAT_UNSTRUCTURED;
+        this->temporallyUnstructuredIndices.at(index) =
+            vklNewData(device,
+                       temporallyUnstructuredNumIndices,
+                       VKL_UINT,
+                       temporallyUnstructuredIndices,
+                       flags,
+                       0);
+        dataSize =
+            temporallyUnstructuredIndices[temporallyUnstructuredNumIndices - 1];
+        this->temporallyUnstructuredTimes.at(index) = vklNewData(
+            device, dataSize, VKL_FLOAT, temporallyUnstructuredTimes, flags, 0);
+      } else {
+        this->temporalFormat.at(index) = VKL_TEMPORAL_FORMAT_CONSTANT;
+      }
+
       if (data.at(index))
         vklRelease(data.at(index));
 
       // only use array-of-arrays when we have multiple attributes
       if (ptrs.size() == 1) {
         data.at(index) = vklNewData(device,
-                                    vklVdbLevelNumVoxels(level.at(index)),
+                                    dataSize,
                                     attributeDataTypes[0],
                                     ptrs[0],
                                     flags,
@@ -321,7 +427,7 @@ namespace openvkl {
         for (size_t i = 0; i < ptrs.size(); i++) {
           attributesData.push_back(
               vklNewData(device,
-                         vklVdbLevelNumVoxels(level.at(index)),
+                         dataSize,
                          attributeDataTypes[i],
                          ptrs[i],
                          flags,
@@ -373,8 +479,46 @@ namespace openvkl {
       vklSetData(volume, "node.format", formatData);
       vklRelease(formatData);
 
-      VKLData dataData =
-          vklNewData(device, numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
+      VKLData temporalFormatData = vklNewData(
+          device, numNodes, VKL_UINT, temporalFormat.data(), VKL_DATA_DEFAULT);
+      vklSetData(volume, "node.temporalFormat", temporalFormatData);
+      vklRelease(temporalFormatData);
+
+      VKLData temporallyStructuredNumTimestepsData =
+          vklNewData(device,
+                     numNodes,
+                     VKL_INT,
+                     temporallyStructuredNumTimesteps.data(),
+                     VKL_DATA_DEFAULT);
+      vklSetData(volume,
+                 "node.temporallyStructuredNumTimesteps",
+                 temporallyStructuredNumTimestepsData);
+      vklRelease(temporallyStructuredNumTimestepsData);
+
+      VKLData temporallyUnstructuredIndicesData =
+          vklNewData(device,
+                     numNodes,
+                     VKL_DATA,
+                     temporallyUnstructuredIndices.data(),
+                     VKL_DATA_DEFAULT);
+      vklSetData(volume,
+                 "node.temporallyUnstructuredIndices",
+                 temporallyUnstructuredIndicesData);
+      vklRelease(temporallyUnstructuredIndicesData);
+
+      VKLData temporallyUnstructuredTimesData =
+          vklNewData(device,
+                     numNodes,
+                     VKL_DATA,
+                     temporallyUnstructuredTimes.data(),
+                     VKL_DATA_DEFAULT);
+      vklSetData(volume,
+                 "node.temporallyUnstructuredTimes",
+                 temporallyUnstructuredTimesData);
+      vklRelease(temporallyUnstructuredTimesData);
+
+      VKLData dataData = vklNewData(
+          device, data.size(), VKL_DATA, data.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.data", dataData);
       vklRelease(dataData);
 

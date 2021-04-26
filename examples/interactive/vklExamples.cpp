@@ -268,8 +268,8 @@ void usage(const char *progname)
          "\t-voxelType uchar | short | ushort | half | float | double\n"
          "\t-valueRange <lower> <upper>\n"
          "\t-multiAttribute (vdb and structuredRegular only, ignores -field)\n"
-         "\t-motionBlur structured | unstructured (structuredRegular only)\n"
-         "\t-filter nearest | trilinear (vdb and structured) | tricubic (vdb)\n"
+         "\t-motionBlur structured | unstructured (structuredRegular and vdb)\n"
+         "\t-filter nearest | trilinear (structured and vdb) | tricubic (vdb)\n"
          "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
          "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
@@ -831,6 +831,21 @@ void setupVolume(ViewerParams &params,
     }
 
     else if (params.gridType == "vdb") {
+      TemporalConfig temporalConfig;
+      if (params.motionBlurStructured) {
+        temporalConfig =
+            TemporalConfig(TemporalConfig::Structured,
+                           params.motionBlurStructuredNumTimesteps);
+      } else if (params.motionBlurUnstructured) {
+        if (params.field == "sphere" && !params.multiAttribute) {
+          temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
+          temporalConfig.numRefitSamples = 4;
+        } else {
+          temporalConfig =
+              TemporalConfig(params.motionBlurUnstructuredTimeSamples);
+        }
+      }
+
       if (params.multiAttribute) {
         if (params.voxelType == VKL_HALF) {
           testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
@@ -862,19 +877,25 @@ void setupVolume(ViewerParams &params,
                 std::make_shared<XYZVdbVolumeHalf>(getOpenVKLDevice(),
                                                    params.dimensions,
                                                    params.gridOrigin,
-                                                   params.gridSpacing);
+                                                   params.gridSpacing,
+                                                   params.filter,
+                                                   temporalConfig);
           } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereVdbVolumeHalf>(getOpenVKLDevice(),
                                                       params.dimensions,
                                                       params.gridOrigin,
-                                                      params.gridSpacing);
+                                                      params.gridSpacing,
+                                                      params.filter,
+                                                      temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletVdbVolumeHalf>(getOpenVKLDevice(),
                                                        params.dimensions,
                                                        params.gridOrigin,
-                                                       params.gridSpacing);
+                                                       params.gridSpacing,
+                                                       params.filter,
+                                                       temporalConfig);
           }
         } else if (params.voxelType == VKL_FLOAT) {
           if (params.field == "xyz") {
@@ -882,19 +903,25 @@ void setupVolume(ViewerParams &params,
                 std::make_shared<XYZVdbVolumeFloat>(getOpenVKLDevice(),
                                                     params.dimensions,
                                                     params.gridOrigin,
-                                                    params.gridSpacing);
+                                                    params.gridSpacing,
+                                                    params.filter,
+                                                    temporalConfig);
           } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereVdbVolumeFloat>(getOpenVKLDevice(),
                                                        params.dimensions,
                                                        params.gridOrigin,
-                                                       params.gridSpacing);
+                                                       params.gridSpacing,
+                                                       params.filter,
+                                                       temporalConfig);
           } else {
             testingVolume =
                 std::make_shared<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
                                                         params.dimensions,
                                                         params.gridOrigin,
-                                                        params.gridSpacing);
+                                                        params.gridSpacing,
+                                                        params.filter,
+                                                        temporalConfig);
           }
         } else {
           throw std::runtime_error(

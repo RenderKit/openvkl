@@ -1,3 +1,9 @@
+Packages
+========
+
+Precompiled Open VKL packages for Linux, macOS, and Windows are available via
+[Open VKL GitHub releases](https://github.com/openvkl/openvkl/releases).
+
 Building Open VKL from source
 =============================
 
@@ -20,9 +26,9 @@ you can build Open VKL you need the following prerequisites:
     standard Linux development tools. To build the examples, you should also
     have some version of OpenGL.
 
--   Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please obtain a
-    release of ISPC from the [ISPC downloads
+-   Additionally you require a copy of the [Intel® Implicit SPMD Program
+    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 
 -   Open VKL depends on the Intel RenderKit common library, rkcommon. rkcommon is

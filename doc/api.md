@@ -6,7 +6,7 @@ C99 or C++:
 
     #include <openvkl/openvkl.h>
 
-For the Intel SPMD Program Compiler (ISPC):
+For the Intel® Implicit SPMD Program Compiler (Intel® ISPC):
 
     #include <openvkl/openvkl.isph>
 
@@ -676,6 +676,9 @@ method used when sampling the volume.
   cell. This method avoids discontinuities at refinement level boundaries at
   the cost of performance
 
+Gradients are computed using finite differences, using the `method` defined on
+the sampler.
+
 Details and more information can be found in the publication for the
 implementation [3].
 
@@ -736,6 +739,8 @@ intersections with individual cells by setting the `elementaryCellIteration`
 parameter. Returned intervals will then span exact cell boundaries, rather than
 bounding boxes of BVH nodes. This approach is generally less performant than the
 default interval iteration mode, however.
+
+Gradients are computed using finite differences.
 
 Unstructured volumes are created by passing the type string `"unstructured"` to
 `vklNewVolume`, and have the following parameters:
@@ -1039,7 +1044,9 @@ where P is the particle position, p is the sample position, r is the radius and
 w is the weight.
 
 At each sample, the scalar field value is then computed as the sum of each
-radial basis function phi, for each particle that overlaps it.
+radial basis function phi, for each particle that overlaps it. Gradients are
+similarly computed, based on the summed analytical contributions of each
+contributing particle.
 
 The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the

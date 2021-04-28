@@ -15,11 +15,11 @@ license](http://www.apache.org/licenses/LICENSE-2.0).
 
 
 Open VKL provides a C API, and also supports applications written with the
-Intel® SPMD Program Compiler (ISPC) by also providing an ISPC interface to the
-core volume algorithms. This makes it possible to write a renderer in ISPC that
-automatically vectorizes and leverages SSE, AVX, AVX2, and AVX-512 instructions.
-ISPC also supports runtime code selection, thus ISPC will select the best code
-path for your application.
+Intel® Implicit SPMD Program Compiler (Intel® ISPC) by also providing an ISPC
+interface to the core volume algorithms. This makes it possible to write a
+renderer in ISPC that automatically vectorizes and leverages SSE, AVX, AVX2, and
+AVX-512 instructions. ISPC also supports runtime code selection, thus ISPC will
+select the best code path for your application.
 
 In addition to the volume kernels, Open VKL provides tutorials and example
 renderers to demonstrate how to best use the Open VKL API.

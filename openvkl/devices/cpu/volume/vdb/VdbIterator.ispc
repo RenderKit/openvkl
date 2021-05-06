@@ -25,7 +25,7 @@ void VdbIterator_iterateIntervalInternal(
     const int *uniform imask,
     void *uniform _self,
     void *uniform _interval,
-    const uniform box1f &inputValueRange,
+    const uniform ValueRanges &valueRanges,
     const uniform bool /*elementaryCellIteration*/,
     uniform int *uniform _result);
 
@@ -98,7 +98,7 @@ inline void VdbIterator_iterateIntervalInternal(
     const int *uniform imask,
     void *uniform _self,
     void *uniform _interval,
-    const uniform box1f &inputValueRange,
+    const uniform ValueRanges &inputValueRanges,
     const uniform bool /*elementaryCellIteration*/,
     uniform int *uniform _result)
 {
@@ -123,7 +123,7 @@ inline void VdbIterator_iterateIntervalInternal(
                            self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
                            self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
                            self->dda.level,
-                           ((const uniform range1f &)inputValueRange),
+                           inputValueRanges,
                            voxel);
     if (!voxel.isEmpty)
       break;
@@ -158,14 +158,13 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  uniform box1f valueRange;
-  if (self->valueSelector)
-    valueRange = self->valueSelector->rangesMinMax;
-  else {
-    valueRange.lower = -inf;
-    valueRange.upper = inf;
+  uniform ValueRanges valueRanges;
+  if (self->valueSelector) {
+    valueRanges = self->valueSelector->ranges;
+  } else {
+    valueRanges = make_ValueRanges_full();
   }
 
   VdbIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRange, false, _result);
+      imask, _self, _interval, valueRanges, false, _result);
 }

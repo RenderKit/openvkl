@@ -1,0 +1,57 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "math/box_utility.ih"
+
+struct ValueRanges
+{
+  int numRanges;
+  box1f *ranges;
+  box1f rangesMinMax;
+};
+
+inline uniform ValueRanges make_ValueRanges_full()
+{
+  uniform ValueRanges valueRanges;
+
+  valueRanges.numRanges          = 0;
+  valueRanges.ranges             = NULL;
+  valueRanges.rangesMinMax.lower = -inf;
+  valueRanges.rangesMinMax.upper = inf;
+
+  return valueRanges;
+}
+
+inline uniform bool valueRangesOverlap(const uniform ValueRanges &valueRanges,
+                                       const uniform box1f &r)
+{
+  if (valueRanges.numRanges == 0) {
+    return true;
+  }
+
+  if (overlaps1f(valueRanges.rangesMinMax, r)) {
+    if (overlapsAny1f(r, valueRanges.numRanges, valueRanges.ranges)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+inline varying bool valueRangesOverlap(const uniform ValueRanges &valueRanges,
+                                       const varying box1f &r)
+{
+  if (valueRanges.numRanges == 0) {
+    return true;
+  }
+
+  if (overlaps1f(valueRanges.rangesMinMax, r)) {
+    if (overlapsAny1f(r, valueRanges.numRanges, valueRanges.ranges)) {
+      return true;
+    }
+  }
+
+  return false;
+}

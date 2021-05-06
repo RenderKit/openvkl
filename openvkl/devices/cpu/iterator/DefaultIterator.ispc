@@ -22,7 +22,7 @@ void DefaultIntervalIterator_iterateIntervalInternal(
     const int *uniform imask,
     void *uniform _self,
     void *uniform _interval,
-    const uniform box1f &valueRange,
+    const uniform ValueRanges &valueRanges,
     const uniform bool /*elementaryCellIteration*/,
     uniform int *uniform _result);
 
@@ -49,8 +49,8 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
 
   const vec3f origin    = *((varying vec3f * uniform) _origin);
   const vec3f direction = *((varying vec3f * uniform) _direction);
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-  self->valueRange    = valueRange;
+  self->valueSelector   = (uniform ValueSelector * uniform) _valueSelector;
+  self->valueRange      = valueRange;
 
   box1f tRange = *((varying box1f * uniform) _tRange);
   self->boundingBoxTRange =
@@ -69,7 +69,7 @@ inline void DefaultIntervalIterator_iterateIntervalInternal(
     const int *uniform imask,
     void *uniform _self,
     void *uniform _interval,
-    const uniform box1f &valueRange,
+    const uniform ValueRanges &valueRanges,
     const uniform bool /*elementaryCellIteration*/,
     uniform int *uniform _result)
 {
@@ -89,7 +89,7 @@ inline void DefaultIntervalIterator_iterateIntervalInternal(
     return;
   }
 
-  if (!overlaps1f(valueRange, self->valueRange)) {
+  if (!valueRangesOverlap(valueRanges, self->valueRange)) {
     *result = false;
     return;
   }
@@ -125,15 +125,15 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
-  uniform box1f valueRange;
-  if (self->valueSelector)
-    valueRange = self->valueSelector->rangesMinMax;
-  else {
-    valueRange.lower = -inf;
-    valueRange.upper = inf;
+  uniform ValueRanges valueRanges;
+  if (self->valueSelector) {
+    valueRanges = self->valueSelector->ranges;
+  } else {
+    valueRanges = make_ValueRanges_full();
   }
+
   DefaultIntervalIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRange, false, _result);
+      imask, _self, _interval, valueRanges, false, _result);
 }
 
 // -----------------------------------------------------------------------------
@@ -188,7 +188,8 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       (varying DefaultHitIterator * uniform) _self;
 
   // The selector prunes everything - don't iterate at all.
-  if(!self->valueSelector || self->valueSelector->numValues == 0) return;
+  if (!self->valueSelector || self->valueSelector->numValues == 0)
+    return;
 
   if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
     return;
@@ -215,7 +216,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     intervalIterator->iterate((const int *uniform) & needInterval,
                               self->intervalIteratorState,
                               &self->currentInterval,
-                              self->valueSelector->valuesMinMax,
+                              self->valueSelector->valuesRanges,
                               elementaryCellIteration,
                               (int *uniform) & haveInterval);
 
@@ -226,44 +227,25 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       return;
     }
 
-    // Interval iteration currently occurs on a single value range spanning all
-    // potential hit values; this can lead to more intervals than necessary when
-    // we have many hit values spread over a wide value range. So we do more
-    // specific checks per hit value here to see if we can skip some of these
-    // intervals.
-    bool intervalOverlapsHitValues = false;
+    varying Hit *uniform hit = (varying Hit * uniform) _hit;
+    hit->t                   = inf;
+    bool foundHit =
+        intersectSurfacesBisection(self->sampler,
+                                   self->origin,
+                                   self->direction,
+                                   self->currentInterval.tRange,
+                                   self->time,
+                                   self->currentInterval.nominalDeltaT,
+                                   self->valueSelector->numValues,
+                                   self->valueSelector->values,
+                                   elementaryCellIteration,
+                                   *hit);
 
-    for (uniform int j = 0; j < self->valueSelector->numValues; j++) {
-      const uniform float value = self->valueSelector->values[j];
+    *result |= foundHit;
 
-      if (value >= self->currentInterval.valueRange.lower &&
-          value <= self->currentInterval.valueRange.upper) {
-        intervalOverlapsHitValues = true;
-        break;
-      }
-    }
-
-    if (intervalOverlapsHitValues) {
-      varying Hit *uniform hit = (varying Hit * uniform) _hit;
-      hit->t                   = inf;
-      bool foundHit =
-          intersectSurfacesBisection(self->sampler,
-                                     self->origin,
-                                     self->direction,
-                                     self->currentInterval.tRange,
-                                     self->time,
-                                     self->currentInterval.nominalDeltaT,
-                                     self->valueSelector->numValues,
-                                     self->valueSelector->values,
-                                     elementaryCellIteration,
-                                     *hit);
-
-      *result |= foundHit;
-
-      if (foundHit) {
-        self->currentInterval.tRange.lower = hit->t + hit->epsilon;
-        return;
-      }
+    if (foundHit) {
+      self->currentInterval.tRange.lower = hit->t + hit->epsilon;
+      return;
     }
 
     self->currentInterval.tRange.lower = inf;

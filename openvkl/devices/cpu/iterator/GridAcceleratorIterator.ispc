@@ -135,14 +135,9 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
                                                                                \
     if (!self->valueSelector) {                                                \
       returnInterval = true;                                                   \
-    } else {                                                                   \
-      if (overlaps1f(self->valueSelector->rangesMinMax, cellValueRange)) {     \
-        if (overlapsAny1f(cellValueRange,                                      \
-                          self->valueSelector->numRanges,                      \
-                          self->valueSelector->ranges)) {                      \
-          returnInterval = true;                                               \
-        }                                                                      \
-      }                                                                        \
+    } else if (valueRangesOverlap(self->valueSelector->ranges,                 \
+                                  cellValueRange)) {                           \
+       returnInterval = true;                                                  \
     }                                                                          \
                                                                                \
     if (returnInterval) {                                                      \
@@ -221,7 +216,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
         volume->accelerator, self->hitState.currentCellIndex, cellValueRange); \
                                                                                \
     univary bool cellValueRangeOverlap =                                       \
-        overlaps1f(self->valueSelector->valuesMinMax, cellValueRange);         \
+        valueRangesOverlap(self->valueSelector->valuesRanges, cellValueRange); \
                                                                                \
     if (cellValueRangeOverlap) {                                               \
       univary bool foundHit =                                                  \

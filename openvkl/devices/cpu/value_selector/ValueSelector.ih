@@ -3,17 +3,18 @@
 
 #pragma once
 
-#include "math/box_utility.ih"
+#include "ValueRanges.ih"
 
 struct ValueSelector
 {
   void *uniform volume;
 
-  uniform int numRanges;
-  box1f *uniform ranges;
-  uniform box1f rangesMinMax;
+  uniform ValueRanges ranges;
 
   uniform int numValues;
   float *uniform values;
-  uniform box1f valuesMinMax;
+
+  // value ranges for the discrete values aboved; used to leverage common
+  // range-based interval iteration functionality
+  uniform ValueRanges valuesRanges;
 };

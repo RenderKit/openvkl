@@ -48,7 +48,7 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
     const int32 &y, 
     const int32 &z,
     const uniform uint32 &queryDepth,
-    const uniform range1f &queryValueRange, 
+    const uniform ValueRanges &queryValueRanges,
     VdbVoxelDescriptor &desc)
 {
   assert(queryDepth < @VKL_VDB_NUM_LEVELS@);
@@ -72,8 +72,8 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
   desc.voxel = level.voxels[vo32];
   desc.valueRange = level.valueRange[vo32 * grid->numAttributes + 0]; // FIRST ATTRIBUTE RANGE!
   desc.level = @VKL_VDB_LEVEL@;
-  desc.isEmpty = vklVdbVoxelIsEmpty(desc.voxel) 
-              || !overlaps1f(queryValueRange, desc.valueRange);
+  desc.isEmpty = vklVdbVoxelIsEmpty(desc.voxel)
+              || !valueRangesOverlap(queryValueRanges, desc.valueRange);
 
   if (desc.isEmpty)
     return;
@@ -108,8 +108,8 @@ inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
     return;
 
   desc.nodeIndex = vklVdbVoxelChildGetIndex(desc.voxel);
-  VdbIterator_queryVoxel_@VKL_VDB_NEXT_LEVEL@(grid, x, y, z, 
-    queryDepth, queryValueRange, desc);
+  VdbIterator_queryVoxel_@VKL_VDB_NEXT_LEVEL@(grid, x, y, z,
+    queryDepth, queryValueRanges, desc);
 #endif
 }
 

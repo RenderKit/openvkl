@@ -4,6 +4,7 @@
 // ours
 //#include "CellRef.ih"
 // #include "AMRCommon.h"
+#include "../UnstructuredSamplerBase.ih"
 #include "AMR.ih"
 #include "AMRVolume.ih"
 #include "common/export_util.h"
@@ -122,6 +123,17 @@ export void EXPORT_UNIQUE(AMRVolume_setAMR,
   }
 }
 
+export void EXPORT_UNIQUE(AMRVolume_setBvh,
+                          void *uniform _self,
+                          const void *uniform bvhRoot)
+{
+  AMRVolume *uniform self = (AMRVolume * uniform) _self;
+
+  // sets members of VKLUnstructuredBase required for interval iteration
+  self->super.boundingBox = self->boundingBox;
+  self->super.bvhRoot     = (uniform Node * uniform) bvhRoot;
+}
+
 export void EXPORT_UNIQUE(AMRVolume_set,
                           void *uniform _self,
                           uniform box3f &worldBounds,
@@ -174,18 +186,38 @@ export void EXPORT_UNIQUE(AMRVolume_gradient_export,
   }
 }
 
-export Sampler *uniform EXPORT_UNIQUE(AMRSampler_create, void *uniform _volume)
+export UnstructuredSamplerBase *uniform EXPORT_UNIQUE(AMRSampler_create,
+                                                      void *uniform _volume)
 {
-  Sampler *uniform sampler = CALL_ISPC(Sampler_create, _volume);
+  UnstructuredSamplerBase *uniform sampler =
+      uniform new UnstructuredSamplerBase;
+  memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
+
+  sampler->super.volume = (const Volume *uniform)_volume;
 
   // computeSample functions set in AMR_install* functions
 
-  sampler->computeGradient_varying = AMRVolume_computeGradient;
+  sampler->super.computeGradient_varying = AMRVolume_computeGradient;
 
   return sampler;
 }
 
 export void EXPORT_UNIQUE(AMRSampler_destroy, void *uniform _sampler)
 {
-  CALL_ISPC(Sampler_destroy, _sampler);
+  UnstructuredSamplerBase *uniform sampler =
+      (UnstructuredSamplerBase * uniform) _sampler;
+  delete sampler;
+}
+
+export void EXPORT_UNIQUE(AMRSampler_set,
+                          void *uniform _self,
+                          const uniform int maxIteratorDepth)
+{
+  UnstructuredSamplerBase *uniform self =
+      (UnstructuredSamplerBase * uniform) _self;
+
+  self->maxIteratorDepth = maxIteratorDepth;
+
+  // elementary cell iteration not supported
+  self->elementaryCellIteration = false;
 }

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "../UnstructuredBVH.h"
 #include "../Volume.h"
 #include "AMRAccel.h"
 #include "rkcommon/memory/RefCount.h"
@@ -30,6 +31,8 @@ namespace openvkl {
 
       VKLAMRMethod getAMRMethod() const;
 
+      int getMaxIteratorDepth() const;
+
      private:
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
@@ -45,6 +48,15 @@ namespace openvkl {
       vec3f spacing;
 
       VKLAMRMethod amrMethod{VKL_AMR_CURRENT};
+
+      // for interval iteration
+      int maxIteratorDepth{0};
+
+      RTCBVH rtcBVH{0};
+      RTCDevice rtcDevice{0};
+      Node *rtcRoot{nullptr};
+
+      void buildBvh();
     };
 
   }  // namespace cpu_device

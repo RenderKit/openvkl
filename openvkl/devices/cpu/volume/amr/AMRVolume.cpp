@@ -6,6 +6,7 @@
 #include "../common/Data.h"
 #include "AMRSampler.h"
 // rkcommon
+#include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "rkcommon/utility/getEnvVar.h"
 // ispc exports
@@ -16,6 +17,49 @@
 
 namespace openvkl {
   namespace cpu_device {
+
+    struct AMRLeafNodeUserData
+    {
+      range1f range;
+      float cellWidth;
+      vec3f gridSpacing;
+    };
+
+    struct AMRLeafNode : public LeafNode
+    {
+      AMRLeafNode(unsigned id,
+                  const box3fa &bounds,
+                  const range1f &range,
+                  const float cellWidth,
+                  const vec3f &gridSpacing)
+          : LeafNode(id, bounds, range)
+      {
+        // ISPC-side code assumes the same layout as LeafNode
+        static_assert(sizeof(AMRLeafNode) == sizeof(LeafNode),
+                      "AMRLeafNode incompatible with LeafNode");
+
+        nominalLength.x = -cellWidth * gridSpacing.x;
+        nominalLength.y = cellWidth * gridSpacing.y;
+        nominalLength.z = cellWidth * gridSpacing.z;
+      }
+
+      static void *create(RTCThreadLocalAllocator alloc,
+                          const RTCBuildPrimitive *prims,
+                          size_t numPrims,
+                          void *userPtr)
+      {
+        assert(numPrims == 1);
+
+        auto id          = (uint64_t(prims->geomID) << 32) | prims->primID;
+        auto range       = ((AMRLeafNodeUserData *)userPtr)[id].range;
+        auto cellWidth   = ((AMRLeafNodeUserData *)userPtr)[id].cellWidth;
+        auto gridSpacing = ((AMRLeafNodeUserData *)userPtr)[id].gridSpacing;
+
+        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(AMRLeafNode), 16);
+        return (void *)new (ptr) AMRLeafNode(
+            id, *(const box3fa *)prims, range, cellWidth, gridSpacing);
+      }
+    };
 
     template <int W>
     AMRVolume<W>::AMRVolume()
@@ -29,6 +73,11 @@ namespace openvkl {
       if (this->ispcEquivalent) {
         CALL_ISPC(AMRVolume_Destructor, this->ispcEquivalent);
       }
+
+      if (rtcBVH)
+        rtcReleaseBVH(rtcBVH);
+      if (rtcDevice)
+        rtcReleaseDevice(rtcDevice);
     }
 
     template <int W>
@@ -98,6 +147,9 @@ namespace openvkl {
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       spacing = gridSpacing;
 
+      maxIteratorDepth =
+          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,
                 (ispc::box3f &)bounds,
@@ -127,6 +179,11 @@ namespace openvkl {
       for (const auto &l : accel->leaf) {
         valueRange.extend(l.valueRange);
       }
+
+      // need to do this after value ranges are known
+      buildBvh();
+
+      CALL_ISPC(AMRVolume_setBvh, this->ispcEquivalent, (void *)(rtcRoot));
     }
 
     template <int W>
@@ -138,8 +195,8 @@ namespace openvkl {
     template <int W>
     box3f AMRVolume<W>::getBoundingBox() const
     {
-      return box3f(vec3f(origin+bounds.lower),
-                   vec3f(origin+(bounds.upper-bounds.lower)*spacing));
+      return box3f(vec3f(origin + bounds.lower),
+                   vec3f(origin + (bounds.upper - bounds.lower) * spacing));
     }
 
     template <int W>
@@ -158,6 +215,96 @@ namespace openvkl {
     VKLAMRMethod AMRVolume<W>::getAMRMethod() const
     {
       return amrMethod;
+    }
+
+    template <int W>
+    inline int AMRVolume<W>::getMaxIteratorDepth() const
+    {
+      return maxIteratorDepth;
+    }
+
+    static inline void errorFunction(void *userPtr,
+                                     enum RTCError error,
+                                     const char *str)
+    {
+      Device *device = reinterpret_cast<Device *>(userPtr);
+      LogMessageStream(device, VKL_LOG_WARNING)
+          << "error " << error << ": " << str << std::endl;
+    }
+
+    template <int W>
+    void AMRVolume<W>::buildBvh()
+    {
+      auto &leaves           = accel->leaf;
+      const size_t numLeaves = leaves.size();
+
+      rtcDevice = rtcNewDevice(NULL);
+      if (!rtcDevice) {
+        throw std::runtime_error("cannot create device");
+      }
+      rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
+
+      containers::AlignedVector<RTCBuildPrimitive> prims;
+      containers::AlignedVector<AMRLeafNodeUserData> userData;
+      prims.resize(numLeaves);
+      userData.resize(numLeaves);
+
+      tasking::parallel_for(numLeaves, [&](size_t taskIndex) {
+        const auto &leaf = leaves[taskIndex];
+
+        // leaf bounds are in AMR-space; transform into object-space
+        const box3f bounds = box3f(origin + leaf.bounds.lower * spacing,
+                                   origin + leaf.bounds.upper * spacing);
+
+        prims[taskIndex].lower_x        = bounds.lower.x;
+        prims[taskIndex].lower_y        = bounds.lower.y;
+        prims[taskIndex].lower_z        = bounds.lower.z;
+        prims[taskIndex].geomID         = taskIndex >> 32;
+        prims[taskIndex].upper_x        = bounds.upper.x;
+        prims[taskIndex].upper_y        = bounds.upper.y;
+        prims[taskIndex].upper_z        = bounds.upper.z;
+        prims[taskIndex].primID         = taskIndex & 0xffffffff;
+        userData[taskIndex].range       = leaf.valueRange;
+        userData[taskIndex].cellWidth   = leaf.brickList[0]->cellWidth;
+        userData[taskIndex].gridSpacing = spacing;
+      });
+
+      rtcBVH = rtcNewBVH(rtcDevice);
+      if (!rtcBVH) {
+        throw std::runtime_error("bvh creation failure");
+      }
+
+      RTCBuildArguments arguments      = rtcDefaultBuildArguments();
+      arguments.byteSize               = sizeof(arguments);
+      arguments.buildFlags             = RTC_BUILD_FLAG_NONE;
+      arguments.buildQuality           = RTC_BUILD_QUALITY_MEDIUM;
+      arguments.maxBranchingFactor     = 2;
+      arguments.maxDepth               = 1024;
+      arguments.sahBlockSize           = 1;
+      arguments.minLeafSize            = 1;
+      arguments.maxLeafSize            = 1;
+      arguments.traversalCost          = 1.0f;
+      arguments.intersectionCost       = 10.0f;
+      arguments.bvh                    = rtcBVH;
+      arguments.primitives             = prims.data();
+      arguments.primitiveCount         = prims.size();
+      arguments.primitiveArrayCapacity = prims.size();
+      arguments.createNode             = InnerNode::create;
+      arguments.setNodeChildren        = InnerNode::setChildren;
+      arguments.setNodeBounds          = InnerNode::setBounds;
+      arguments.createLeaf             = AMRLeafNode::create;
+      arguments.splitPrimitive         = nullptr;
+      arguments.buildProgress          = nullptr;
+      arguments.userPtr                = userData.data();
+
+      rtcRoot = (Node *)rtcBuildBVH(&arguments);
+      if (!rtcRoot) {
+        throw std::runtime_error("bvh build failure");
+      }
+
+      addLevelToNodes(rtcRoot, 0);
+
+      computeOverlappingNodeMetadata(rtcRoot);
     }
 
     VKL_REGISTER_VOLUME(AMRVolume<VKL_TARGET_WIDTH>,

@@ -4,8 +4,7 @@
 #pragma once
 
 #include "../../common/export_util.h"
-#include "../../iterator/DefaultIterator.h"
-#include "../../iterator/Iterator.h"
+#include "../../iterator/UnstructuredIterator.h"
 #include "../../sampler/Sampler.h"
 #include "AMRVolume.h"
 #include "AMRVolume_ispc.h"
@@ -19,21 +18,10 @@ namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    using AMRIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
-
-    template <int W>
-    using AMRHitIterator = DefaultHitIterator<W, DefaultIntervalIterator<W>>;
-
-    template <int W>
-    using AMRHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, AMRHitIterator>;
-
-    template <int W>
     using AMRSamplerBase = SamplerBase<W,
                                        AMRVolume,
-                                       AMRIntervalIteratorFactory,
-                                       AMRHitIteratorFactory>;
+                                       UnstructuredIntervalIteratorFactory,
+                                       UnstructuredHitIteratorFactory>;
 
     template <int W>
     struct AMRSampler : public AMRSamplerBase<W>
@@ -104,6 +92,13 @@ namespace openvkl {
         CALL_ISPC(AMR_install_octant, ispcEquivalent);
       else
         throw std::runtime_error("AMRSampler: illegal method specified");
+
+      const int maxIteratorDepth =
+          std::max(this->template getParam<int>("maxIteratorDepth",
+                                                volume->getMaxIteratorDepth()),
+                   0);
+
+      CALL_ISPC(AMRSampler_set, ispcEquivalent, maxIteratorDepth);
     }
 
     template <int W>

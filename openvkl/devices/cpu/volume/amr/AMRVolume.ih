@@ -5,10 +5,11 @@
 
 #include "../Volume.ih"
 #include "AMR.ih"
+#include "../UnstructuredVolume.ih"
 
 struct AMRVolume
 {
-  Volume super;
+  VKLUnstructuredBase super;
 
   uniform vec3f gridSpacing;
   uniform vec3f gridOrigin;

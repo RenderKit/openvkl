@@ -1011,9 +1011,10 @@ void interactiveRender(ViewerParams &params,
 
     bool samplerParamsChanged = false;
 
-    // maxIteratorDepth parameter currently only applies to unstructured and
-    // particle volume samplers (special case below for vdb).
-    if (params.gridType == "unstructured" || params.gridType == "particle") {
+    // maxIteratorDepth parameter currently only applies to unstructured,
+    // particle, and AMR volume samplers (special case below for vdb).
+    if (params.gridType == "unstructured" || params.gridType == "particle" ||
+        params.gridType == "amr") {
       if (ImGui::SliderInt(
               "maxIteratorDepth", &params.maxIteratorDepth, 0, 31)) {
         samplerParamsChanged = true;

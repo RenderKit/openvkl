@@ -622,6 +622,10 @@ which they reside, and the scalar data contained within each block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
+A binary BVH is used internally to accelerate interval iteration. Intervals are
+found by intersecting BVH nodes up to a maximum level of the tree, configurable
+by the `maxIteratorDepth` parameter.
+
 AMR volumes are created by passing the type string `"amr"` to `vklNewVolume`,
 and have the following parameters:
 
@@ -653,18 +657,21 @@ The following additional parameters can be set both on `"amr"`
 volumes and their sampler objects. Sampler object parameters default to volume
 parameters.
 
-  -------------- --------------- -----------------  -----------------------------------
-  Type           Name                      Default  Description
-  -------------- --------------- -----------------  -----------------------------------
-  `VKLAMRMethod` method          `VKL_AMR_CURRENT`  `VKLAMRMethod` sampling method.
-                                                    Supported methods are:
+  -------------- ------------------ -----------------  -------------------------------------
+  Type           Name                         Default  Description
+  -------------- ------------------ -----------------  -------------------------------------
+  `VKLAMRMethod` method             `VKL_AMR_CURRENT`  `VKLAMRMethod` sampling method.
+                                                       Supported methods are:
 
-                                                    `VKL_AMR_CURRENT`
+                                                       `VKL_AMR_CURRENT`
 
-                                                    `VKL_AMR_FINEST`
+                                                       `VKL_AMR_FINEST`
 
-                                                    `VKL_AMR_OCTANT`
-  -------------- --------------- -----------------  -----------------------------------
+                                                       `VKL_AMR_OCTANT`
+
+  int            maxIteratorDepth                   6  Do not descend further than to this
+                                                       BVH depth during interval iteration.
+  -------------- ------------------ -----------------  -------------------------------------
   : Configuration parameters for AMR (`"AMR"`) volumes and their sampler objects.
 
 Open VKL's AMR implementation was designed to cover Berger-Colella [1] and

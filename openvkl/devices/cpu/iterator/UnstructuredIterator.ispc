@@ -390,6 +390,16 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
     valueRanges = make_ValueRanges_full();
   }
 
+  // We specify elementaryCellIteration in the call here, as it may
+  // be toggled for public API interval iteration via a sampler parameter.
+  // It is however typically enabled by default in hit iteration (if supported),
+  // which also calls iterateInterval(). This is why we don't simply detect the
+  // flag inside the interval iteration function itself.
   UnstructuredIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRanges, false, _result);
+      imask,
+      _self,
+      _interval,
+      valueRanges,
+      self->sampler->elementaryCellIteration,
+      _result);
 }

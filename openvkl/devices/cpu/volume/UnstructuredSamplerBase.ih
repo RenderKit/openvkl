@@ -8,4 +8,5 @@ struct UnstructuredSamplerBase
   Sampler super;
 
   int maxIteratorDepth;
+  bool elementaryCellIteration;
 };

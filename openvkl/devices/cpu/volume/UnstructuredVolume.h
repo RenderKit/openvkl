@@ -36,6 +36,8 @@ namespace openvkl {
 
       int getMaxIteratorDepth() const;
 
+      bool getElementaryCellIteration() const;
+
      private:
       void buildBvhAndCalculateBounds();
 
@@ -75,6 +77,7 @@ namespace openvkl {
       bool indexPrefixed{false};
       bool hexIterative{false};
       int maxIteratorDepth{0};
+      bool elementaryCellIteration{false};
 
       // used only if an explicit cell type array is not provided
       std::vector<uint8_t> generatedCellType;
@@ -123,6 +126,12 @@ namespace openvkl {
     inline int UnstructuredVolume<W>::getMaxIteratorDepth() const
     {
       return maxIteratorDepth;
+    }
+
+    template <int W>
+    inline bool UnstructuredVolume<W>::getElementaryCellIteration() const
+    {
+      return elementaryCellIteration;
     }
 
     template <int W>

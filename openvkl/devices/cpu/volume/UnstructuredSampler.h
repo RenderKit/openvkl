@@ -83,10 +83,16 @@ namespace openvkl {
     {
       const int maxIteratorDepth =
           std::max(this->template getParam<int>("maxIteratorDepth",
-                                           volume->getMaxIteratorDepth()),
-              0);
+                                                volume->getMaxIteratorDepth()),
+                   0);
 
-      CALL_ISPC(VKLUnstructuredSampler_set, ispcEquivalent, maxIteratorDepth);
+      const bool elementaryCellIteration = this->template getParam<bool>(
+          "elementaryCellIteration", volume->getElementaryCellIteration());
+
+      CALL_ISPC(VKLUnstructuredSampler_set,
+                ispcEquivalent,
+                maxIteratorDepth,
+                elementaryCellIteration);
     }
 
     template <int W>

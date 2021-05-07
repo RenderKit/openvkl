@@ -729,11 +729,16 @@ through the `indexPrefixed` flag (in which case, the `cell.type` parameter
 should be omitted).
 
 A binary bounding volume hierarchy (BVH) is used internally to accelerate
-interval iteration. Intervals are found by intersecting BVH nodes up to a
-maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
-Larger values of `maxIteratorDepth` lead to smaller individual intervals (up to
-leaf node intersections), yielding potentially more efficient space-skipping
-behavior and tighter bounds on returned interval metadata.
+interval iteration. Intervals are by default found by intersecting BVH nodes up
+to a maximum level of the tree, configurable by the `maxIteratorDepth`
+parameter. Larger values of `maxIteratorDepth` lead to smaller individual
+intervals (up to leaf node intersections), yielding potentially more efficient
+space-skipping behavior and tighter bounds on returned interval metadata. The
+application may instead choose to iterate through intervals based on ray
+intersections with individual cells by setting the `elementaryCellIteration`
+parameter. Returned intervals will then span exact cell boundaries, rather than
+bounding boxes of BVH nodes. This approach is generally less performant than the
+default interval iteration mode, however.
 
 Unstructured volumes are created by passing the type string `"unstructured"` to
 `vklNewVolume`, and have the following parameters:
@@ -787,12 +792,15 @@ The following additional parameters can be set both on `unstructured` volumes
 and their sampler objects (sampler object parameters default to volume
 parameters).
 
-  -------------------  ------------------  --------  ---------------------------------------
-  Type                 Name                Default   Description
-  -------------------  ------------------  --------  ---------------------------------------
-  int                  maxIteratorDepth           6  Do not descend further than to this BVH
-                                                     depth during interval iteration.
-  -------------------  ------------------  --------  ---------------------------------------
+  -------------------  -------------------------  --------  ---------------------------------------
+  Type                 Name                       Default   Description
+  -------------------  -------------------------  --------  ---------------------------------------
+  int                  maxIteratorDepth                  6  Do not descend further than to this BVH
+                                                            depth during interval iteration.
+
+  bool                 elementaryCellIteration       false  Return intervals spanning individual
+                                                            cell intersections.
+  -------------------  -------------------------  --------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes and their sampler objects.
 
 ### VDB Volumes

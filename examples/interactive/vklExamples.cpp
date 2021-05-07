@@ -39,6 +39,7 @@ struct ViewerParams
   VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
   size_t numParticles{1000};
   int maxIteratorDepth{0};
+  bool elementaryCellIteration{false};
   int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
   uint8_t motionBlurStructuredNumTimesteps{6};
   bool multiAttribute{false};
@@ -918,6 +919,8 @@ void setupVolume(ViewerParams &params,
   params.maxIteratorDepth =
       (params.gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
 
+  params.elementaryCellIteration = false;
+
   if (params.haveFilter && !params.haveVdb) {
     std::cerr << "warning: -filter has no effect on " << params.gridType
               << " volumes" << std::endl;
@@ -930,6 +933,8 @@ void setupSampler(const ViewerParams &params, Scene &scene)
   vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
   vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
   vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
+  vklSetBool(
+      scene.sampler, "elementaryCellIteration", params.elementaryCellIteration);
   vklCommit(scene.sampler);
 }
 
@@ -1004,18 +1009,25 @@ void interactiveRender(ViewerParams &params,
       glfwVKLWindow->setActiveRenderer(params.rendererType);
     }
 
+    bool samplerParamsChanged = false;
+
     // maxIteratorDepth parameter currently only applies to unstructured and
     // particle volume samplers (special case below for vdb).
     if (params.gridType == "unstructured" || params.gridType == "particle") {
       if (ImGui::SliderInt(
               "maxIteratorDepth", &params.maxIteratorDepth, 0, 31)) {
-        vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
-        vklCommit(scene.sampler);
-        changed = true;
+        samplerParamsChanged = true;
       }
     }
 
-    bool samplerParamsChanged = false;
+    // elementaryCellIteration parameter currently only appies to unstructured
+    // volume samplers.
+    if (params.gridType == "unstructured") {
+      if (ImGui::Checkbox("elementaryCellIteration",
+                          &params.elementaryCellIteration)) {
+        samplerParamsChanged = true;
+      }
+    }
 
     if (params.gridType == "structuredRegular" ||
         params.gridType == "structuredSpherical" || params.gridType == "vdb") {

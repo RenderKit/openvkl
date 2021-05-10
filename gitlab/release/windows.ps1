@@ -67,6 +67,9 @@ $INSTALL_BIN_DIR = "$OPENVKL_INSTALL_DIR/bin"
 
 cp $DEP_INSTALL_DIR/bin/*.dll $INSTALL_BIN_DIR
 
+# sign
+;& $env:SIGN_FILE_WINDOWS -q -vv (Get-ChildItem $INSTALL_BIN_DIR\* | Select-Object -Expand FullName)
+
 # zip up the results
 $OPENVKL_PKG_BASE_ZIP = "$OPENVKL_PKG_BASE.zip"
 cd $OPENVKL_INSTALL_DIR/..

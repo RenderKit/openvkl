@@ -136,5 +136,9 @@ cp -P $DEP_INSTALL_DIR/lib/lib*.so* $INSTALL_LIB_DIR
 
 # tar up the results
 cd $OPENVKL_INSTALL_DIR/..
-tar -caf $OPENVKL_PKG_BASE.tar.gz $OPENVKL_PKG_BASE
+tar -czf $OPENVKL_PKG_BASE.tar.gz $OPENVKL_PKG_BASE
+
+# sign
+$ROOT_DIR/gitlab/release/sign.sh $OPENVKL_PKG_BASE.tar.gz
+
 mv *.tar.gz $ROOT_DIR

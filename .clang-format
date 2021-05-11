@@ -57,7 +57,26 @@ StatementMacros: [ __vkl_interop_univary,
                    __vkl_template_interpolateTemporallyUnstructured,
                    __define_leaf_access_observer,
                    __vkl_template_computeValueRangeTemporallyUnstructured,
-                   __vkl_template_computeValueRangeTemporallyStructured ]
+                   __vkl_template_computeValueRangeTemporallyStructured,
+                   __vkl_template_VdbGrid_setPtrs_temporalFormat,
+                   __vkl_template_VdbGrid_setPtrs_format,
+                   __vkl_template_VdbGrid_setPtrs_impl,
+                   __vkl_template_VdbSampler_computeValueRange_tile_constant,
+                   __vkl_template_VdbSampler_computeValueRange_tile_structured,
+                   __vkl_template_VdbSampler_computeValueRange_tile_unstructured,
+                   __vkl_template_VdbSampler_sample_tile_constant,
+                   __vkl_template_VdbSampler_sample_tile_structured,
+                   __vkl_template_VdbSampler_sample_tile_unstructured,
+                   __vkl_template_VdbSampler_computeValueRange_denseZYX_constant,
+                   __vkl_template_VdbSampler_computeValueRange_denseZYX_structured,
+                   __vkl_template_VdbSampler_computeValueRange_denseZYX_unstructured,
+                   __vkl_template_VdbSampler_sample_denseZYX_constant,
+                   __vkl_template_VdbSampler_sample_denseZYX_structured,
+                   __vkl_template_VdbSampler_sample_denseZYX_unstructured,
+                   __vkl_leaf_handler_impl,
+                   __vkl_leaf_handler_format,
+                   __vkl_leaf_handler_temporalFormat,
+                   __vkl_leaf_handler ]
 IncludeCategories:
   - Regex:           '^<.*\.h>'
     Priority:        1

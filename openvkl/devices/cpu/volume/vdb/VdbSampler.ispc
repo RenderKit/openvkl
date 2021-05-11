@@ -4,10 +4,10 @@
 #include <openvkl/vdb.h>
 #include "../common/Data.ih"
 #include "VdbLeafAccessObserver.ih"
-#include "VdbSampleConstantLeaf.ih"
-#include "VdbSampleTileLeaf.ih"
 #include "VdbSampler.ih"
+#include "VdbSampler_denseZYX.ih"
 #include "VdbSampler_stencilDispatch.ih"
+#include "VdbSampler_tile.ih"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
 
@@ -45,8 +45,6 @@
  *
  * The definition should be commented out again before merging.
  */
-
-#define VDB_SAMPLER_DISPATCH_INNER_NOINLINE
 
 #if defined(VDB_SAMPLER_DISPATCH_INNER_NOINLINE)
 #warning "VDB_SAMPLER_DISPATCH_INNER_NOINLINE is set."
@@ -93,6 +91,47 @@ noinline void VdbSampler_dispatchInner_varying_varying(
   VdbSampler_dispatchInner_varying_varying_0
 
 #endif
+
+// ---------------------------------------------------------------------------
+// Generate code to dispatch to a leaf handler implementation based on the
+// attribute data type, format, and temporal format.
+// ---------------------------------------------------------------------------
+
+#define __vkl_leaf_handler_impl(handler, postfix, ...) \
+  handler##_##postfix(__VA_ARGS__);
+
+#define __vkl_leaf_handler_format(handler, leafFormat, postfix, ...)  \
+  if (leafFormat == VKL_FORMAT_TILE) {                                \
+    __vkl_leaf_handler_impl(handler, tile_##postfix, __VA_ARGS__)     \
+  } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {                    \
+    __vkl_leaf_handler_impl(handler, denseZYX_##postfix, __VA_ARGS__) \
+  } else {                                                            \
+    assert(false);                                                    \
+  }
+
+#define __vkl_leaf_handler_temporalFormat(handler, leafFormat, postfix, ...) \
+  if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {                  \
+    __vkl_leaf_handler_format(                                               \
+        handler, leafFormat, constant_##postfix, __VA_ARGS__)                \
+  } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {         \
+    __vkl_leaf_handler_format(                                               \
+        handler, leafFormat, structured_##postfix, __VA_ARGS__)              \
+  } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) {       \
+    __vkl_leaf_handler_format(                                               \
+        handler, leafFormat, unstructured_##postfix, __VA_ARGS__)            \
+  } else {                                                                   \
+    assert(false);                                                           \
+  }
+
+#define __vkl_leaf_handler(                                                    \
+    handler, dataType, leafFormat, leafTemporalFormat, ...)                    \
+  if (dataType == VKL_HALF) {                                                  \
+    __vkl_leaf_handler_temporalFormat(handler, leafFormat, half, __VA_ARGS__)  \
+  } else if (dataType == VKL_FLOAT) {                                          \
+    __vkl_leaf_handler_temporalFormat(handler, leafFormat, float, __VA_ARGS__) \
+  } else {                                                                     \
+    assert(false);                                                             \
+  }
 
 // ---------------------------------------------------------------------------
 // Find the origin of the leaf node containing domainOffset.
@@ -216,163 +255,47 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
 
 // These helper functions handle all legal combinations of sampling uniform /
 // varying voxels at uniform / varying offsets, and are used just below.
-#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)          \
-  inline univaryOffset float VdbSampler_sample_inner(                          \
-      const VdbSampler *uniform sampler,                                       \
-      const univaryVoxel uint64 &voxel,                                        \
-      const univaryOffset vec3ui &domainOffset,                                \
-      const univaryOffset float &time,                                         \
-      const uniform uint32 attributeIndex)                                     \
-  {                                                                            \
-    univaryOffset float sample = 0.f;                                          \
-                                                                               \
-    if (vklVdbVoxelIsLeafPtr(voxel)) {                                         \
-      const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);    \
-      assert(leafIndex < sampler->grid->numLeaves);                            \
-                                                                               \
-      const uniform vkl_uint32 voxelType =                                     \
-          sampler->grid->attributeTypes[attributeIndex];                       \
-                                                                               \
-      const univaryVoxel VKLFormat leafFormat =                                \
-          vklVdbVoxelLeafGetFormat(voxel);                                     \
-      const univaryVoxel VKLTemporalFormat leafTemporalFormat =                \
-          vklVdbVoxelLeafGetTemporalFormat(voxel);                             \
-                                                                               \
-      if (voxelType == VKL_HALF) {                                             \
-        if (leafFormat == VKL_FORMAT_TILE) {                                   \
-          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
-            sample = VdbSampler_sampleLeafTile_constant_half(                  \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex));  \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
-            const univaryVoxel int32 numTimesteps =                            \
-                sampler->grid->leafStructuredTimesteps[leafIndex];             \
-            sample = VdbSampler_sampleLeafTile_structured_half(                \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                numTimesteps,                                                  \
-                time);                                                         \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
-            const uniform Data1D *univaryVoxel indices =                       \
-                sampler->grid->leafUnstructuredIndices + leafIndex;            \
-            assert(indices);                                                   \
-            const uniform Data1D *univaryVoxel times =                         \
-                sampler->grid->leafUnstructuredTimes + leafIndex;              \
-            assert(times);                                                     \
-            sample = VdbSampler_sampleLeafTile_unstructured_half(              \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                indices,                                                       \
-                times,                                                         \
-                time);                                                         \
-          } else {                                                             \
-            assert(false);                                                     \
-          }                                                                    \
-        } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {                       \
-          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
-            sample = VdbSampler_sampleLeafZYX_constant_half(                   \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                domainOffset);                                                 \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
-            const univaryVoxel int32 numTimesteps =                            \
-                sampler->grid->leafStructuredTimesteps[leafIndex];             \
-            sample = VdbSampler_sampleLeafZYX_structured_half(                 \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                numTimesteps,                                                  \
-                domainOffset,                                                  \
-                time);                                                         \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
-            const uniform Data1D *univaryVoxel indices =                       \
-                sampler->grid->leafUnstructuredIndices + leafIndex;            \
-            assert(indices);                                                   \
-            const uniform Data1D *univaryVoxel times =                         \
-                sampler->grid->leafUnstructuredTimes + leafIndex;              \
-            assert(times);                                                     \
-            sample = VdbSampler_sampleLeafZYX_unstructured_half(               \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                indices,                                                       \
-                times,                                                         \
-                domainOffset,                                                  \
-                time);                                                         \
-          } else {                                                             \
-            assert(false);                                                     \
-          }                                                                    \
-        } else {                                                               \
-          assert(false);                                                       \
-        }                                                                      \
-      } else if (voxelType == VKL_FLOAT) {                                     \
-        if (leafFormat == VKL_FORMAT_TILE) {                                   \
-          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
-            sample = VdbSampler_sampleLeafTile_constant_float(                 \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex));  \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
-            const univaryVoxel int32 numTimesteps =                            \
-                sampler->grid->leafStructuredTimesteps[leafIndex];             \
-            sample = VdbSampler_sampleLeafTile_structured_float(               \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                numTimesteps,                                                  \
-                time);                                                         \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
-            const uniform Data1D *univaryVoxel indices =                       \
-                sampler->grid->leafUnstructuredIndices + leafIndex;            \
-            assert(indices);                                                   \
-            const uniform Data1D *univaryVoxel times =                         \
-                sampler->grid->leafUnstructuredTimes + leafIndex;              \
-            assert(times);                                                     \
-            sample = VdbSampler_sampleLeafTile_unstructured_float(             \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                indices,                                                       \
-                times,                                                         \
-                time);                                                         \
-          } else {                                                             \
-            assert(false);                                                     \
-          }                                                                    \
-        } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {                       \
-          if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
-            sample = VdbSampler_sampleLeafZYX_constant_float(                  \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                domainOffset);                                                 \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {   \
-            const univaryVoxel int32 numTimesteps =                            \
-                sampler->grid->leafStructuredTimesteps[leafIndex];             \
-            sample = VdbSampler_sampleLeafZYX_structured_float(                \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                numTimesteps,                                                  \
-                domainOffset,                                                  \
-                time);                                                         \
-          } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) { \
-            const uniform Data1D *univaryVoxel indices =                       \
-                sampler->grid->leafUnstructuredIndices + leafIndex;            \
-            assert(indices);                                                   \
-            const uniform Data1D *univaryVoxel times =                         \
-                sampler->grid->leafUnstructuredTimes + leafIndex;              \
-            assert(times);                                                     \
-            sample = VdbSampler_sampleLeafZYX_unstructured_float(              \
-                vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
-                indices,                                                       \
-                times,                                                         \
-                domainOffset,                                                  \
-                time);                                                         \
-          } else {                                                             \
-            assert(false);                                                     \
-          }                                                                    \
-        } else {                                                               \
-          assert(false);                                                       \
-        }                                                                      \
-                                                                               \
-      } else {                                                                 \
-        assert(false);                                                         \
-      }                                                                        \
-    } else if (vklVdbVoxelIsError(voxel)) {                                    \
-      univaryVoxel uint8 level;                                                \
-      univaryVoxel uint32 voxelOffset;                                         \
-      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                          \
-                                                                               \
-      const univaryVoxel range1f valueRange =                                  \
-          sampler->grid->levels[level]                                         \
-              .valueRange[voxelOffset * sampler->grid->numAttributes +         \
-                          attributeIndex];                                     \
-      sample = 0.5f * (valueRange.lower + valueRange.upper);                   \
-    }                                                                          \
-                                                                               \
-    return sample;                                                             \
+#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)               \
+  inline univaryOffset float VdbSampler_sample_inner(                               \
+      const VdbSampler *uniform sampler,                                            \
+      const univaryVoxel uint64 &voxel,                                             \
+      const univaryOffset vec3ui &domainOffset,                                     \
+      const univaryOffset float &time,                                              \
+      const uniform uint32 attributeIndex)                                          \
+  {                                                                                 \
+    univaryOffset float sample  = 0.f;                                              \
+    const VdbGrid *uniform grid = sampler->grid;                                    \
+                                                                                    \
+    if (vklVdbVoxelIsLeafPtr(voxel)) {                                              \
+      const uniform vkl_uint32 voxelType =                                          \
+          sampler->grid->attributeTypes[attributeIndex];                            \
+      const univaryVoxel VKLFormat leafFormat =                                     \
+          vklVdbVoxelLeafGetFormat(voxel);                                          \
+      const univaryVoxel VKLTemporalFormat leafTemporalFormat =                     \
+          vklVdbVoxelLeafGetTemporalFormat(voxel);                                  \
+      const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);         \
+      const univaryVoxel uint64 leafDataIndex =                                     \
+          vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex);                  \
+      __vkl_leaf_handler(                                                           \
+          sample = VdbSampler_sample_##univaryVoxel##_##univaryOffset,              \
+          voxelType,                                                                \
+          leafFormat,                                                               \
+          leafTemporalFormat,                                                       \
+          grid,                                                                     \
+          leafIndex,                                                                \
+          leafDataIndex,                                                            \
+          domainOffset,                                                             \
+          time)                                                                     \
+    } else if (vklVdbVoxelIsError(voxel)) {                                         \
+      univaryVoxel uint8 level;                                                     \
+      univaryVoxel uint32 voxelOffset;                                              \
+      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                               \
+      const univaryVoxel range1f valueRange =                                       \
+          grid->levels[level]                                                       \
+              .valueRange[voxelOffset * grid->numAttributes + attributeIndex];      \
+      sample = 0.5f * (valueRange.lower + valueRange.upper);                        \
+    }                                                                               \
+    return sample;                                                                  \
   }
 
 template_VdbSampler_sample_inner(varying, varying);
@@ -495,94 +418,29 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
                                  const uniform vec2ui &rangeZ,
                                  uniform uint32 attributeIndex)
 {
-  const uniform VKLFormat leafFormat = vklVdbVoxelIsLeafPtr(voxel)
-                                           ? vklVdbVoxelLeafGetFormat(voxel)
-                                           : VKL_FORMAT_INVALID;
-  const uniform VKLTemporalFormat leafTemporalFormat =
-      vklVdbVoxelIsLeafPtr(voxel) ? vklVdbVoxelLeafGetTemporalFormat(voxel)
-                                  : VKL_TEMPORAL_FORMAT_INVALID;
-  const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
-  const Data1D *uniform leafPtr =
-      vklVdbGetLeafData(grid, leafIndex, attributeIndex);
-  const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
-  uniform box1f valueRange           = make_box1f(0.f, 0.f);
-
-  if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {
-    if (voxelType == VKL_HALF) {
-      if (leafFormat == VKL_FORMAT_TILE) {
-        valueRange =
-            VdbSampler_computeLeafTileValueRange_constant_half(leafPtr);
-      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
-        valueRange = VdbSampler_computeLeafZYXValueRange_constant_half(
-            leafPtr, rangeX, rangeY, rangeZ);
-      } else {
-        assert(false);
-      }
-    }
-    if (voxelType == VKL_FLOAT) {
-      if (leafFormat == VKL_FORMAT_TILE) {
-        valueRange =
-            VdbSampler_computeLeafTileValueRange_constant_float(leafPtr);
-      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
-        valueRange = VdbSampler_computeLeafZYXValueRange_constant_float(
-            leafPtr, rangeX, rangeY, rangeZ);
-      } else {
-        assert(false);
-      }
-    }
-  } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {
-    const uniform uint32 numTimesteps =
-        grid->leafStructuredTimesteps[leafIndex];
-    if (voxelType == VKL_HALF) {
-      if (leafFormat == VKL_FORMAT_TILE) {
-        valueRange = VdbSampler_computeLeafTileValueRange_structured_half(
-            leafPtr, numTimesteps);
-      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
-        valueRange = VdbSampler_computeLeafZYXValueRange_structured_half(
-            leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
-      } else {
-        assert(false);
-      }
-    }
-    if (voxelType == VKL_FLOAT) {
-      if (leafFormat == VKL_FORMAT_TILE) {
-        valueRange = VdbSampler_computeLeafTileValueRange_structured_float(
-            leafPtr, numTimesteps);
-      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
-        valueRange = VdbSampler_computeLeafZYXValueRange_structured_float(
-            leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
-      } else {
-        assert(false);
-      }
-    }
-  } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) {
-    const Data1D *uniform indices = grid->leafUnstructuredIndices + leafIndex;
-
-    if (voxelType == VKL_HALF) {
-      if (leafFormat == VKL_FORMAT_TILE) {
-        valueRange = VdbSampler_computeLeafTileValueRange_unstructured_half(
-            leafPtr, indices);
-      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
-        valueRange = VdbSampler_computeLeafZYXValueRange_unstructured_half(
-            leafPtr, indices, rangeX, rangeY, rangeZ);
-      } else {
-        assert(false);
-      }
-    }
-    if (voxelType == VKL_FLOAT) {
-      if (leafFormat == VKL_FORMAT_TILE) {
-        valueRange = VdbSampler_computeLeafTileValueRange_unstructured_float(
-            leafPtr, indices);
-      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
-        valueRange = VdbSampler_computeLeafZYXValueRange_unstructured_float(
-            leafPtr, indices, rangeX, rangeY, rangeZ);
-      } else {
-        assert(false);
-      }
-    }
+  if (!vklVdbVoxelIsLeafPtr(voxel)) {
+    const uniform float background = 0.f;
+    return make_box1f(background, background);
   }
 
-  return valueRange;
+  const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
+  const uniform VKLFormat leafFormat = vklVdbVoxelLeafGetFormat(voxel);
+  const uniform VKLTemporalFormat leafTemporalFormat =
+      vklVdbVoxelLeafGetTemporalFormat(voxel);
+  const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
+  const uniform uint64 leafDataIndex =
+      vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex);
+
+  __vkl_leaf_handler(return VdbSampler_computeValueRange,
+                            voxelType,
+                            leafFormat,
+                            leafTemporalFormat,
+                            grid,
+                            leafIndex,
+                            leafDataIndex,
+                            rangeX,
+                            rangeY,
+                            rangeZ)
 }
 
 /*

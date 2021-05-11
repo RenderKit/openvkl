@@ -57,18 +57,18 @@ struct VdbGrid
 
   vkl_uint64 numLeaves;
   vkl_uint32 numAttributes;
-  bool allLeavesCompact;        // Do we only have compact (non strided) leaf data?
-  
+  bool allLeavesCompact;  // Do we only have compact (non strided) leaf data?
+
   // Per-node data.
-  vkl_uint32 *attributeTypes;   // Data type for each attribute.
+  vkl_uint32 *attributeTypes;  // Data type for each attribute.
   const VKLFormat *leafFormat;
   const VKLTemporalFormat *leafTemporalFormat;
   const vkl_int32 *leafStructuredTimesteps;
   Data1D *leafUnstructuredIndices;
   Data1D *leafUnstructuredTimes;
 
-  // Per-attribute data.
-  Data1D *leafData;             // Data1D[numLeaves * numAttributes]
+  // Per-attribute data: size [numLeaves * numAttributes]
+  Data1D *leafData;
 
   // Level data.
   VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];
@@ -77,8 +77,8 @@ struct VdbGrid
 /*
  * Obtain a pointer to the given leaf node and attribute.
  */
-#define __vkl_vdb_get_leaf_data(univary)                                       \
-  inline const Data1D *univary vklVdbGetLeafData(                              \
+#define __vkl_vdb_get_leaf_data_index(univary)                                 \
+  inline const univary vkl_uint64 vklVdbGetLeafDataIndex(                      \
       const VdbGrid *VKL_INTEROP_UNIFORM grid,                                 \
       univary vkl_uint64 leafIndex,                                            \
       VKL_INTEROP_UNIFORM vkl_uint32 attributeIndex)                           \
@@ -86,13 +86,12 @@ struct VdbGrid
     assert(grid);                                                              \
     assert(leafIndex < grid->numLeaves);                                       \
     assert(attributeIndex < grid->numAttributes);                              \
-    return grid->leafData +                                                    \
-           ((VKL_INTEROP_UNIFORM vkl_uint64)grid->numAttributes) * leafIndex + \
+    return ((VKL_INTEROP_UNIFORM vkl_uint64)grid->numAttributes) * leafIndex + \
            ((VKL_INTEROP_UNIFORM vkl_uint64)attributeIndex);                   \
   }
 
-__vkl_interop_univary(__vkl_vdb_get_leaf_data)
-#undef __vkl_vdb_get_leaf_data
+__vkl_interop_univary(__vkl_vdb_get_leaf_data_index)
+#undef __vkl_vdb_get_leaf_data_index
 
 /*
  * Transform points and vectors with the given affine matrix (in row major

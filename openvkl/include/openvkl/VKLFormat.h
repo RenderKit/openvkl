@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -15,13 +15,12 @@ enum VKLFormat : vkl_uint32
 enum VKLFormat
 #endif
 {
-  // The buffer contains a single value as the data is both temporally and
-  // spatially constant.
+  // The node has no spatial variation.
   VKL_FORMAT_TILE = 0,
-  // The buffer contains a single value for each voxel.
+  // The buffer contains a dense grid of voxels.
   // The suffix _ZYX indicates z-major ordering, i.e., the z-coordinate
   // advances most quickly.
-  VKL_FORMAT_CONSTANT_ZYX,
+  VKL_FORMAT_DENSE_ZYX,
   VKL_FORMAT_INVALID = 100
 };
 

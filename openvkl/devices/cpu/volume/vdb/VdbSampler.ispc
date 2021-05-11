@@ -265,7 +265,7 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
           } else {                                                             \
             assert(false);                                                     \
           }                                                                    \
-        } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {                    \
+        } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {                       \
           if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
             sample = VdbSampler_sampleLeafZYX_constant_half(                   \
                 vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
@@ -324,7 +324,7 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
           } else {                                                             \
             assert(false);                                                     \
           }                                                                    \
-        } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {                    \
+        } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {                       \
           if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT) {            \
             sample = VdbSampler_sampleLeafZYX_constant_float(                  \
                 vklVdbGetLeafData(sampler->grid, leafIndex, attributeIndex),   \
@@ -512,10 +512,9 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
       if (leafFormat == VKL_FORMAT_TILE) {
         valueRange =
             VdbSampler_computeLeafTileValueRange_constant_half(leafPtr);
-      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
-        valueRange = 
-               VdbSampler_computeLeafZYXValueRange_constant_half(
-                   leafPtr, rangeX, rangeY, rangeZ);
+      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
+        valueRange = VdbSampler_computeLeafZYXValueRange_constant_half(
+            leafPtr, rangeX, rangeY, rangeZ);
       } else {
         assert(false);
       }
@@ -524,24 +523,23 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
       if (leafFormat == VKL_FORMAT_TILE) {
         valueRange =
             VdbSampler_computeLeafTileValueRange_constant_float(leafPtr);
-      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
-        valueRange =
-               VdbSampler_computeLeafZYXValueRange_constant_float(
-                   leafPtr, rangeX, rangeY, rangeZ);
+      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
+        valueRange = VdbSampler_computeLeafZYXValueRange_constant_float(
+            leafPtr, rangeX, rangeY, rangeZ);
       } else {
         assert(false);
       }
     }
   } else if (leafTemporalFormat == VKL_TEMPORAL_FORMAT_STRUCTURED) {
-    const uniform uint32 numTimesteps = grid->leafStructuredTimesteps[leafIndex];
+    const uniform uint32 numTimesteps =
+        grid->leafStructuredTimesteps[leafIndex];
     if (voxelType == VKL_HALF) {
       if (leafFormat == VKL_FORMAT_TILE) {
         valueRange = VdbSampler_computeLeafTileValueRange_structured_half(
             leafPtr, numTimesteps);
-      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
-        valueRange =
-               VdbSampler_computeLeafZYXValueRange_structured_half(
-                   leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
+      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
+        valueRange = VdbSampler_computeLeafZYXValueRange_structured_half(
+            leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
       } else {
         assert(false);
       }
@@ -550,10 +548,9 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
       if (leafFormat == VKL_FORMAT_TILE) {
         valueRange = VdbSampler_computeLeafTileValueRange_structured_float(
             leafPtr, numTimesteps);
-      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
-        valueRange =
-               VdbSampler_computeLeafZYXValueRange_structured_float(
-                   leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
+      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
+        valueRange = VdbSampler_computeLeafZYXValueRange_structured_float(
+            leafPtr, numTimesteps, rangeX, rangeY, rangeZ);
       } else {
         assert(false);
       }
@@ -565,10 +562,9 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
       if (leafFormat == VKL_FORMAT_TILE) {
         valueRange = VdbSampler_computeLeafTileValueRange_unstructured_half(
             leafPtr, indices);
-      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
-        valueRange =
-               VdbSampler_computeLeafZYXValueRange_unstructured_half(
-                   leafPtr, indices, rangeX, rangeY, rangeZ);
+      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
+        valueRange = VdbSampler_computeLeafZYXValueRange_unstructured_half(
+            leafPtr, indices, rangeX, rangeY, rangeZ);
       } else {
         assert(false);
       }
@@ -577,10 +573,9 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
       if (leafFormat == VKL_FORMAT_TILE) {
         valueRange = VdbSampler_computeLeafTileValueRange_unstructured_float(
             leafPtr, indices);
-      } else if (leafFormat == VKL_FORMAT_CONSTANT_ZYX) {
-        valueRange =
-               VdbSampler_computeLeafZYXValueRange_unstructured_float(
-                   leafPtr, indices, rangeX, rangeY, rangeZ);
+      } else if (leafFormat == VKL_FORMAT_DENSE_ZYX) {
+        valueRange = VdbSampler_computeLeafZYXValueRange_unstructured_float(
+            leafPtr, indices, rangeX, rangeY, rangeZ);
       } else {
         assert(false);
       }

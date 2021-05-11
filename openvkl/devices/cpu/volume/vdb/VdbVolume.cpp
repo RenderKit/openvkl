@@ -322,7 +322,7 @@ namespace openvkl {
                     offsetToNodeOrigin(offset, nl);
               } else {
                 if (format == VKL_FORMAT_TILE ||
-                    format == VKL_FORMAT_CONSTANT_ZYX) {
+                    format == VKL_FORMAT_DENSE_ZYX) {
                   voxel = vklVdbVoxelMakeLeafPtr(idx, format, temporalFormat);
                 } else {
                   assert(false);
@@ -555,7 +555,7 @@ namespace openvkl {
       switch (format) {
       case VKL_FORMAT_TILE:
         break;
-      case VKL_FORMAT_CONSTANT_ZYX:
+      case VKL_FORMAT_DENSE_ZYX:
         if (level + 1 < VKL_VDB_NUM_LEVELS) {
           runtimeError("leaf nodes are only supported on the lowest level.");
         }

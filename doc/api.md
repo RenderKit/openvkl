@@ -851,7 +851,7 @@ following parameters:
   uint32[]      node.format                                                            For each input node, the data format.
                                                                                        Currently supported are
                                                                                        `VKL_FORMAT_TILE` for tiles,
-                                                                                       and `VKL_FORMAT_CONSTANT_ZYX` for
+                                                                                       and `VKL_FORMAT_DENSE_ZYX` for
                                                                                        nodes that are dense regular grids.
 
   uint32[]      node.level                                                             For each input node, the level on
@@ -871,7 +871,7 @@ following parameters:
                                                                                        Nodes with format `VKL_FORMAT_TILE` are
                                                                                        expected to have single-entry arrays
                                                                                        per attribute. Nodes with format
-                                                                                       `VKL_FORMAT_CONSTANT_ZYX` are expected
+                                                                                       `VKL_FORMAT_DENSE_ZYX` are expected
                                                                                        to have arrays with
                                                                                        `vklVdbLevelNumVoxels(level[i])`
                                                                                        entries per attribute. `VKL_HALF` and

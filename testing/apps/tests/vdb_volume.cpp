@@ -17,7 +17,7 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
   VKLVolume volume = vklNewVolume(getOpenVKLDevice(), "vdb");
 
   const uint32_t level   = vklVdbNumLevels() - 1;
-  const VKLFormat format = VKL_FORMAT_CONSTANT_ZYX;
+  const VKLFormat format = VKL_FORMAT_DENSE_ZYX;
   const vec3i origin     = vec3i(0, 0, 0);
 
   std::vector<float> voxels(vklVdbLevelNumVoxels(level));

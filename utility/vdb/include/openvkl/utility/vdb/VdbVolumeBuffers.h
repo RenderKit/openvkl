@@ -146,7 +146,7 @@ namespace openvkl {
 
       /*
        * The node format. This can be VKL_FORMAT_TILE or
-       * VKL_FORMAT_CONSTANT_ZYX at this point.
+       * VKL_FORMAT_DENSE_ZYX at this point.
        */
       std::vector<VKLFormat> format;
 
@@ -385,7 +385,7 @@ namespace openvkl {
             "makeConstant() called with incorrect number of byteStrides");
       }
 
-      format.at(index) = VKL_FORMAT_CONSTANT_ZYX;
+      format.at(index) = VKL_FORMAT_DENSE_ZYX;
 
       uint32_t dataSize = vklVdbLevelNumVoxels(level.at(index));
       if (temporallyStructuredNumTimesteps > 1) {

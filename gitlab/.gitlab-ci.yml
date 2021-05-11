@@ -183,7 +183,7 @@ build-arch-TBB2021:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
-    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH=""
 
 build-macOS:
   <<: *base_build_job
@@ -198,7 +198,7 @@ build-macOS-TBB2021:
   <<: *base_build_job
   stage: build
   script:
-    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH=""
   tags:
     - osx
     - clang
@@ -218,7 +218,7 @@ build-windows-msvc15:
 build-windows-msvc15-TBB2021:
   stage: build
   script:
-    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.1.1"' '"-DTBB_HASH="""'
+    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.2.0"' '"-DTBB_HASH="""'
   tags:
     - msvc15
     - win10

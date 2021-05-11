@@ -74,6 +74,15 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/vdb/VdbVolume.ispc
     volume/vdb/VdbSampler.cpp
     volume/vdb/VdbSampler.ispc
+    volume/vdb/VdbSampler_valueRange.ispc
+    volume/vdb/VdbSampler_computeSample.ispc
+    volume/vdb/VdbSampler_computeSample_uniform.ispc
+    volume/vdb/VdbSampler_computeSample_stream.ispc
+    volume/vdb/VdbSampler_computeSampleM.ispc
+    volume/vdb/VdbSampler_computeSampleM_uniform.ispc
+    volume/vdb/VdbSampler_computeSampleM_stream.ispc
+    volume/vdb/VdbSampler_computeGradient.ispc
+    volume/vdb/VdbSampler_computeGradient_stream.ispc
     volume/vdb/VdbInnerNodeObserver.cpp
     volume/vdb/VdbIterator.cpp
     volume/vdb/VdbIterator.ispc

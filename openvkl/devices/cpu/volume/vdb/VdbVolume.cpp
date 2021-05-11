@@ -11,13 +11,15 @@
 #include "../../common/temporal_data_verification.h"
 #include "../common/logging.h"
 #include "VdbInnerNodeObserver.h"
-#include "VdbSampler.h"
-#include "VdbSampler_ispc.h"
 #include "openvkl/vdb.h"
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/AsyncTask.h"
 #include "rkcommon/tasking/parallel_for.h"
+
+#include "VdbSampler.h"
+#include "VdbSampler_ispc.h"
+#include "VdbSampler_valueRange_ispc.h"
 
 namespace openvkl {
   namespace cpu_device {

@@ -1,0 +1,164 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbSampler_stencilDispatch.ih"
+#include "VdbSampler_traverseAndSample.ih"
+
+// ---------------------------------------------------------------------------
+// NEAREST interpolation.
+// ---------------------------------------------------------------------------
+
+/*
+ * Nearest neighbor interpolation is the fastest version, but also gives
+ * blocky results. This should be good for indirect light etc.
+ */
+inline float VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
+                                           const vec3f &indexCoordinates,
+                                           const float &time,
+                                           const uniform uint32 attributeIndex)
+{
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+
+  return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
+}
+
+inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
+                                          const vec3f &indexCoordinates,
+                                          const float &time,
+                                          const uniform uint32 M,
+                                          const uint32 *uniform
+                                              attributeIndices,
+                                          float *uniform samples)
+{
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+
+  uint64 voxel;
+  vec3ui domainOffset;
+  VdbSampler_traverse(sampler, ic, voxel, domainOffset);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    const float samplesA = VdbSampler_sample(
+        sampler, voxel, domainOffset, time, attributeIndices[a]);
+
+    samples[a * VKL_TARGET_WIDTH + programIndex] = samplesA;
+  }
+}
+
+inline uniform float VdbSampler_interpolateNearest(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 attributeIndex)
+{
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
+}
+
+inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
+                                          const uniform vec3f &indexCoordinates,
+                                          const uniform float time,
+                                          const uniform uint32 M,
+                                          const uint32 *uniform
+                                              attributeIndices,
+                                          float *uniform samples)
+{
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  uniform uint64 voxel;
+  uniform vec3ui domainOffset;
+  VdbSampler_traverse(sampler, ic, voxel, domainOffset);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    samples[a] = VdbSampler_sample(
+        sampler, voxel, domainOffset, time, attributeIndices[a]);
+  }
+}
+
+inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
+                                          const uniform unsigned int N,
+                                          const vec3f *uniform
+                                              objectCoordinates,
+                                          const float *uniform times,
+                                          const uint32 uniform attributeIndex,
+                                          float *uniform samples)
+{
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const vec3i ic               = make_vec3i(floor(indexCoordinates.x),
+                                              floor(indexCoordinates.y),
+                                              floor(indexCoordinates.z));
+    const float time             = times ? times[i] : 0.f;
+    const float sample =
+        VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
+    samples[i] = sample;
+  }
+}
+
+inline void VdbSampler_interpolateNearest(
+    const VdbSampler *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+
+    const vec3i ic   = make_vec3i(floor(indexCoordinates.x),
+                                  floor(indexCoordinates.y),
+                                  floor(indexCoordinates.z));
+    const float time = times ? times[i] : 0.f;
+
+    uint64 voxel;
+    vec3ui domainOffset;
+    VdbSampler_traverse(sampler, ic, voxel, domainOffset);
+
+    for (uniform unsigned int a = 0; a < M; a++) {
+      const float samplesA = VdbSampler_sample(
+          sampler, voxel, domainOffset, time, attributeIndices[a]);
+
+      samples[i * M + a] = samplesA;
+    }
+  }
+}
+
+/*
+ * Gradients in piecewise constant fields are zero (almost everywhere, we'll
+ * say everywhere...)
+ */
+inline vec3f VdbSampler_computeGradientNearest(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  return make_vec3f(0.f);
+}
+
+inline void VdbSampler_computeGradientNearest(
+    const VdbSampler *uniform sampler,
+    uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 attributeIndex,
+    vec3f *uniform gradients)
+{
+  foreach (i = 0 ... N) {
+    gradients[i] = make_vec3f(0.f);
+  }
+}

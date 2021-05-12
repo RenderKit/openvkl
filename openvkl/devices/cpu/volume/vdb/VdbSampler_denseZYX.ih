@@ -120,59 +120,65 @@ __vkl_template_VdbSampler_computeValueRange_denseZYX_unstructured(float)
 // Constant leaf sampling.
 // ---------------------------------------------------------------------------
 
-#define __vkl_template_VdbSampler_sample_denseZYX_constant(voxelType)       \
-  inline uniform float                                                      \
-      VdbSampler_sample_uniform_uniform_denseZYX_constant_##voxelType(      \
-          const VdbGrid *uniform grid,                                      \
-          uniform vkl_uint64 /*leafIndex*/,                                 \
-          uniform vkl_uint64 leafDataIndex,                                 \
-          const uniform vec3ui &offset,                                     \
-          uniform float /*time*/)                                           \
-  {                                                                         \
-    const uniform uint64 voxelIdx =                                         \
-        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                     \
-            offset.x, offset.y, offset.z);                                  \
-    assert(voxelIdx < ((uniform uint64)1) << 32);                           \
-    const uniform uint32 v32 = ((uniform uint32)voxelIdx);                  \
-                                                                            \
-    return get_##voxelType(grid->leafData[leafDataIndex], v32);             \
-  }                                                                         \
-                                                                            \
-  inline float                                                              \
-      VdbSampler_sample_uniform_varying_denseZYX_constant_##voxelType(      \
-          const VdbGrid *uniform grid,                                      \
-          uniform vkl_uint64 /*leafIndex*/,                                 \
-          uniform vkl_uint64 leafDataIndex,                                 \
-          const vec3ui &offset,                                             \
-          const float & /*time*/)                                           \
-  {                                                                         \
-    const uint64 voxelIdx = __vkl_vdb_domain_offset_to_linear_varying_leaf( \
-        offset.x, offset.y, offset.z);                                      \
-    assert(voxelIdx < ((uint64)1) << 32);                                   \
-    const uint32 v32 = ((varying uint32)voxelIdx);                          \
-                                                                            \
-    uniform uint32 uv32;                                                    \
-    if (reduce_equal(v32, &uv32)) {                                         \
-      return get_##voxelType(grid->leafData[leafDataIndex], uv32);          \
-    } else {                                                                \
-      return get_##voxelType(grid->leafData[leafDataIndex], v32);           \
-    }                                                                       \
-  }                                                                         \
-                                                                            \
-  inline float                                                              \
-      VdbSampler_sample_varying_varying_denseZYX_constant_##voxelType(      \
-          const VdbGrid *uniform grid,                                      \
-          const vkl_uint64 & /*leafIndex*/,                                 \
-          const vkl_uint64 &leafDataIndex,                                  \
-          const vec3ui &offset,                                             \
-          const float & /*time*/)                                           \
-  {                                                                         \
-    const uint64 voxelIdx = __vkl_vdb_domain_offset_to_linear_varying_leaf( \
-        offset.x, offset.y, offset.z);                                      \
-    assert(voxelIdx < ((uint64)1) << 32);                                   \
-    const uint32 v32 = ((uint32)voxelIdx);                                  \
-                                                                            \
-    return get_##voxelType(grid->leafData + leafDataIndex, v32);            \
+#define __vkl_template_VdbSampler_sample_denseZYX_constant(voxelType)        \
+  inline uniform float                                                       \
+      VdbSampler_sample_uniform_uniform_denseZYX_constant_##voxelType(       \
+          const VdbGrid *uniform grid,                                       \
+          uniform vkl_uint64 /*leafIndex*/,                                  \
+          uniform vkl_uint64 leafDataIndex,                                  \
+          const uniform vec3ui &offset,                                      \
+          uniform float /*time*/)                                            \
+  {                                                                          \
+    const uniform uint64 voxelIdx =                                          \
+        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                      \
+            offset.x, offset.y, offset.z);                                   \
+    assert(voxelIdx < ((uniform uint64)1) << 32);                            \
+    const uniform uint32 v32 = ((uniform uint32)voxelIdx);                   \
+                                                                             \
+    return get_##voxelType(grid->leafData[leafDataIndex], v32);              \
+  }                                                                          \
+                                                                             \
+  inline float                                                               \
+      VdbSampler_sample_uniform_varying_denseZYX_constant_##voxelType(       \
+          const VdbGrid *uniform grid,                                       \
+          uniform vkl_uint64 /*leafIndex*/,                                  \
+          uniform vkl_uint64 leafDataIndex,                                  \
+          const vec3ui &offset,                                              \
+          const float & /*time*/)                                            \
+  {                                                                          \
+    const uint64 voxelIdx = __vkl_vdb_domain_offset_to_linear_varying_leaf(  \
+        offset.x, offset.y, offset.z);                                       \
+    assert(voxelIdx < ((uint64)1) << 32);                                    \
+    const uint32 v32 = ((varying uint32)voxelIdx);                           \
+                                                                             \
+    uniform uint32 uv32;                                                     \
+    if (reduce_equal(v32, &uv32)) {                                          \
+      return get_##voxelType(grid->leafData[leafDataIndex], uv32);           \
+    } else {                                                                 \
+      return get_##voxelType(grid->leafData[leafDataIndex], v32);            \
+    }                                                                        \
+  }                                                                          \
+                                                                             \
+  inline float                                                               \
+      VdbSampler_sample_varying_varying_denseZYX_constant_##voxelType(       \
+          const VdbGrid *uniform grid,                                       \
+          const vkl_uint64 & /*leafIndex*/,                                  \
+          const vkl_uint64 &leafDataIndex,                                   \
+          const vec3ui &offset,                                              \
+          const float & /*time*/)                                            \
+  {                                                                          \
+    const uint64 voxelIdx = __vkl_vdb_domain_offset_to_linear_varying_leaf(  \
+        offset.x, offset.y, offset.z);                                       \
+    assert(voxelIdx < ((uint64)1) << 32);                                    \
+    const uint32 v32 = ((uint32)voxelIdx);                                   \
+                                                                             \
+    /* This uniform condition is more efficient that the varying condition   \
+     * in get_##voxelType##(varying). */                                     \
+    if (grid->allLeavesCompact) {                                            \
+      return get_##voxelType##_compact(grid->leafData + leafDataIndex, v32); \
+    } else {                                                                 \
+      return get_##voxelType##_strided(grid->leafData + leafDataIndex, v32); \
+    }                                                                        \
   }
 
 __vkl_template_VdbSampler_sample_denseZYX_constant(half)

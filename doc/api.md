@@ -484,7 +484,7 @@ table below.
                                                                             `VKL_TEMPORAL_FORMAT_STRUCTURED`, and
                                                                             `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
 
-  int    temporallyStructuredNumTimesteps                                   For temporally structured variation,
+  int       temporallyStructuredNumTimesteps                                For temporally structured variation,
                                                                             number of timesteps per voxel. Only
                                                                             valid if `temporalFormat` is
                                                                             `VKL_TEMPORAL_FORMAT_STRUCTURED`.

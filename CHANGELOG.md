@@ -1,6 +1,57 @@
 Version History
 ---------------
 
+### Open VKL 0.13.0
+
+-   Driver (now device) API changes:
+    -   Renamed `VKLDriver` to `VKLDevice` and updated associated device setup
+        APIs
+    -   Use of multiple concurrent devices is now supported; therefore
+        `vklNewVolume()` and `vklNewData()` now require a device handle
+    -   Renamed the `ispc_device` module and `ispc` device to `cpu_device` and
+        `cpu`, respectively
+    -   The `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment variable can now be
+        used to change the `cpu` device's default SIMD width at run time
+-   Added new `VKLTemporalFormat` enum used for temporally varying volume
+    parameterization
+-   VDB volumes:
+    -   Support for temporally structured and temporally unstructured (TUV)
+        attribute data, which can be used for motion blurred rendering
+    -   Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter type
+    -   Added support for half precision float-point (FP16) attribute data via
+        `VKL_HALF` data type
+    -   Added a new `InnerNode` observer and associated utility functions which
+        allows applications to introspect inner nodes of the internal tree
+        structure, including bounding boxes and value ranges
+    -   Renamed `VKL_FORMAT_CONSTANT_ZYX` to `VKL_FORMAT_DENSE_ZYX`
+-   Structured regular and spherical volumes:
+    -   Added support for half precision float-point (FP16) attribute data via
+        `VKL_HALF` data type
+-   Unstructured volumes:
+    -   Added support for elementary cell iteration via the
+        `elementaryCellIteration` parameter
+    -   Robustness improvements for hit iteration
+-   AMR volumes:
+    -   Improved interval iterator implementation, resolving issues with
+        returned interval `nominalDeltaT` values
+    -   Interval iterators now support `maxIteratorDepth` parameter
+-   Interval and hit iteration performance improvements when multiple values
+    ranges / values are selected
+-   Added new temporal compression utilities which applications can use for
+    processing temporally unstructured attribute data
+-   vklExamples additions demonstrating:
+    -   Motion blurred rendering on temporally structured and temporally
+        unstructured `vdb` volumes
+    -   Tricubic filtering on `vdb` volumes
+    -   Half-precision floating-point (FP16) support for `structuredRegular`,
+        `structuredSpherical`, and `vdb` volumes
+    -   Elementary cell interval iteration on `unstructured` volumes
+    -   Use of the `InnerNode` observer on `vdb` volumes
+-   Superbuild updates to:
+    -   Embree 3.13.0
+    -   rkcommon 1.6.1
+-   Minimum rkcommon version is now 1.6.1
+
 ### Open VKL 0.12.1
 
 -   Fixed bug in VDB volume interval iterator implementation which could lead to

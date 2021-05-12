@@ -17,7 +17,7 @@ namespace openvkl {
     struct ProceduralVdbVolumeMulti : public TestingVolume,
                                       public ProceduralVolumeMulti
     {
-      using Buffers = vdb_util::VdbVolumeBuffers;
+      using Buffers = utility::vdb::VdbVolumeBuffers;
 
       ProceduralVdbVolumeMulti(
           VKLDevice device,

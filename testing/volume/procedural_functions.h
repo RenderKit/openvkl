@@ -178,7 +178,7 @@ namespace openvkl {
     inline VOXEL_TYPE getWigglingSphereValue(const vec3f &objectCoordinates,
                                              float time)
     {
-      const float radius = 0.01f + 0.09f * std::pow(time, 2.f);
+      const float radius = 0.05f + 0.085f * std::pow(time, 2.f);
       const vec3f center{
           0.9f - time * 1.8f, 0.25f * std::sin(15.f * time) * time, 0.f};
       const float radSq = radius * radius;

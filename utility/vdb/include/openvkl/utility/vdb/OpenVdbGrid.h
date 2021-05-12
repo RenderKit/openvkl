@@ -21,7 +21,8 @@ static_assert((VKL_VDB_NUM_LEVELS == 4) && (VKL_VDB_LOG_RES_0 == 6) &&
               "use OpenVdbGrid");
 
 namespace openvkl {
-  namespace vdb_util {
+  namespace utility {
+    namespace vdb {
 
     using vec3i = rkcommon::math::vec3i;
     using vec3f = rkcommon::math::vec3f;
@@ -497,5 +498,6 @@ namespace openvkl {
     using OpenVdbFloatGrid = OpenVdbGrid<float>;
     using OpenVdbVec3sGrid = OpenVdbGrid<openvdb::Vec3s>;
 
-  }  // namespace vdb_util
+    }  // namespace vdb
+  }  // namespace utility
 }  // namespace openvkl

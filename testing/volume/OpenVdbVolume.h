@@ -3,10 +3,10 @@
 
 #pragma once
 
-#if OPENVKL_VDB_UTIL_OPENVDB_ENABLED
+#if OPENVKL_UTILITY_VDB_OPENVDB_ENABLED
 
 #include "TestingVolume.h"
-#include "openvkl/vdb_util/OpenVdbGrid.h"
+#include "openvkl/utility/vdb/OpenVdbGrid.h"
 #include "rkcommon/tasking/AsyncTask.h"
 #include "rkcommon/utility/CodeTimer.h"
 
@@ -153,9 +153,9 @@ namespace openvkl {
     };
 
     using OpenVdbFloatVolume =
-        OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbFloatGrid>;
+        OpenVdbVolumeImpl<openvkl::utility::vdb::OpenVdbFloatGrid>;
     using OpenVdbVec3sVolume =
-        OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbVec3sGrid>;
+        OpenVdbVolumeImpl<openvkl::utility::vdb::OpenVdbVec3sGrid>;
 
     inline OpenVdbVolume *OpenVdbVolume::loadVdbFile(
         VKLDevice device,
@@ -249,4 +249,4 @@ namespace openvkl {
   }  // namespace testing
 }  // namespace openvkl
 
-#endif  // OPENVKL_VDB_UTIL_OPENVDB_ENABLED
+#endif  // OPENVKL_UTILITY_VDB_OPENVDB_ENABLED

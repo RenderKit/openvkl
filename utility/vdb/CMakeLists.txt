@@ -1,27 +1,28 @@
-## Copyright 2020 Intel Corporation
+## Copyright 2020-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 cmake_minimum_required(VERSION 3.1)
 
 # A header-only utility library that shows how vdb volumes can be set up.
 
-add_library(openvkl_vdb_util INTERFACE)
+add_library(openvkl_utility_vdb INTERFACE)
 
-target_include_directories(openvkl_vdb_util
+target_include_directories(openvkl_utility_vdb
   INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
 )
 
-target_link_libraries(openvkl_vdb_util
+target_link_libraries(openvkl_utility_vdb
   INTERFACE
     rkcommon::rkcommon
     openvkl
+    openvkl_utility_usda
 )
 
 install(DIRECTORY
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/vdb_util
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/utility/vdb
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}/utility
   FILES_MATCHING
   PATTERN "*.h"
 )
@@ -43,11 +44,11 @@ if (DEFINED OpenVDB_ROOT)
   if (OpenVDB_FOUND)
     # Applications should use this variable to determine if .vdb file loading is
     # enabled.
-    target_compile_definitions(openvkl_vdb_util 
+    target_compile_definitions(openvkl_utility_vdb 
       INTERFACE
-        OPENVKL_VDB_UTIL_OPENVDB_ENABLED)
+        OPENVKL_UTILITY_VDB_ENABLED)
 
-    target_link_libraries(openvkl_vdb_util 
+    target_link_libraries(openvkl_utility_vdb 
       INTERFACE 
         OpenVDB::openvdb)
 

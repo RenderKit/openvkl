@@ -28,10 +28,10 @@ namespace openvkl {
       Type type{Constant};
       std::vector<float> sampleTime;
 
-      // If type is unstructured and this is nonzero, first sample the function
-      // at sampleTime, then find a time range with nonzero density, and
-      // resample outputting numRefitSamples time steps.
-      size_t numRefitSamples{0};
+      // Threshold for temporal compression on temporally unstructured volumes.
+      // Lossy if > 0, but will remove duplicate samples at 0.
+      bool useTemporalCompression = false;
+      float temporalCompressionThreshold = 0;
 
       TemporalConfig() = default;
 
@@ -50,8 +50,7 @@ namespace openvkl {
       bool isCompatible(const TemporalConfig &other) const
       {
         return (type == other.type) &&
-               (sampleTime.size() == other.sampleTime.size()) &&
-               (numRefitSamples == 0) && (other.numRefitSamples == 0);
+               (sampleTime.size() == other.sampleTime.size());
       }
 
       bool hasTime() const

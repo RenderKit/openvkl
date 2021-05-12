@@ -5,8 +5,8 @@
 #include "openvkl_testing.h"
 #include "rkcommon/math/box.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
-// vdb_util
-#include "openvkl/vdb_util/InnerNodes.h"
+
+#include "openvkl/utility/vdb/InnerNodes.h"
 
 using namespace openvkl;
 using namespace openvkl::testing;
@@ -69,8 +69,8 @@ inline void inner_node_tests(VKLVolume vklVolume,
          << maxDepth << " with inner node resolution (voxel dim) "
          << innerNodeRes);
 
-    const std::vector<vdb_util::InnerNode> innerNodes =
-        vdb_util::getInnerNodes(vklVolume, maxDepth);
+    const std::vector<openvkl::utility::vdb::InnerNode> innerNodes =
+        openvkl::utility::vdb::getInnerNodes(vklVolume, maxDepth);
 
     INFO("found " << innerNodes.size() << " inner nodes at maxDepth "
                   << maxDepth);

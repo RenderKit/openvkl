@@ -66,7 +66,7 @@ add_executable(vklExamples
 )
 
 target_link_libraries(vklExamples PRIVATE
-  openvkl_vdb_util
+  openvkl_utility
   openvkl_testing
   imgui
   vkl_example_renderers

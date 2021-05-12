@@ -59,7 +59,7 @@ openvkl_create_embree_target()
 ## Build library, examples, and tests ##
 
 add_subdirectory(openvkl)
-add_subdirectory(vdb_util)
+add_subdirectory(utility)
 
 if (BUILD_EXAMPLES)
   add_subdirectory(examples)

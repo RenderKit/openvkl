@@ -10,7 +10,8 @@
 #include "rkcommon/math/vec.h"
 
 namespace openvkl {
-  namespace vdb_util {
+  namespace utility {
+    namespace vdb {
 
     using vec3i         = rkcommon::math::vec3i;
     using vec3f         = rkcommon::math::vec3f;
@@ -151,7 +152,7 @@ namespace openvkl {
 
       /*
        * Temporal config. All of these buffers are optional, but we allocate
-       * of them for simplicity.
+       * them for simplicity.
        */
       std::vector<VKLTemporalFormat> temporalFormat;
       std::vector<uint32_t> temporallyStructuredNumTimesteps;
@@ -505,6 +506,11 @@ namespace openvkl {
                  "node.temporallyUnstructuredIndices",
                  temporallyUnstructuredIndicesData);
       vklRelease(temporallyUnstructuredIndicesData);
+      for (auto &buf: temporallyUnstructuredIndices) {
+        if (buf) {
+          vklRelease(buf);
+        }
+      }
 
       VKLData temporallyUnstructuredTimesData =
           vklNewData(device,
@@ -516,6 +522,11 @@ namespace openvkl {
                  "node.temporallyUnstructuredTimes",
                  temporallyUnstructuredTimesData);
       vklRelease(temporallyUnstructuredTimesData);
+      for (auto &buf: temporallyUnstructuredTimes) {
+        if (buf) {
+          vklRelease(buf);
+        }
+      }
 
       VKLData dataData = vklNewData(
           device, data.size(), VKL_DATA, data.data(), VKL_DATA_DEFAULT);
@@ -531,5 +542,6 @@ namespace openvkl {
       return device;
     }
 
-  }  // namespace vdb_util
+    }  // namespace vdb
+  }  // namespace utility
 }  // namespace openvkl

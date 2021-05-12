@@ -5,6 +5,7 @@
 
 #include "ProceduralVolume.h"
 #include "TestingStructuredVolume.h"
+#include "openvkl/utility/temporal_compression/douglas_peucker.h"
 // rkcommon
 #include "rkcommon/tasking/parallel_for.h"
 // std
@@ -80,6 +81,9 @@ namespace openvkl {
 
     struct VoidType
     {
+      VoidType() = default;
+      // Required for temporal_compression::douglas_peucker.
+      inline VoidType(int) {}
       // required for Windows Visual Studio compiler issues
       operator float() const
       {
@@ -165,69 +169,54 @@ namespace openvkl {
             }
           }
         });
-      }
-
-      else if (temporalConfig.type == TemporalConfig::Unstructured &&
-               temporalConfig.numRefitSamples > 1) {
-        const size_t numRefitSamples = temporalConfig.numRefitSamples;
-        voxels.resize(numBytes * numRefitSamples);
-        time.resize(numVoxels * numRefitSamples);
+      } else if (temporalConfig.type == TemporalConfig::Unstructured &&
+                 temporalConfig.useTemporalCompression) {
+        size_t lastEnd = 0;
+        std::vector<VOXEL_TYPE> singleVoxelSamples(numTimesteps);
+        std::vector<float> singleVoxelTimes(numTimesteps);
+        voxels.resize(numBytes * numTimesteps);
+        time.resize(numVoxels * numTimesteps);
         tuvIndex.resize(numVoxels + 1);
-        rkcommon::tasking::parallel_for(this->dimensions.z, [&](int z) {
-          std::vector<VOXEL_TYPE> refitBuffer(numTimesteps);
+        for (size_t z = 0; z < this->dimensions.z; z++) {
           for (size_t y = 0; y < this->dimensions.y; y++) {
             for (size_t x = 0; x < this->dimensions.x; x++) {
-              // First, sample our field into a temporary buffer.
-              for (size_t t = 0; t < numTimesteps; ++t) {
-                vec3f objectCoordinates =
-                    transformLocalToObjectCoordinates(vec3f(x, y, z));
-                refitBuffer[t] = samplingFunction(objectCoordinates,
-                                                  temporalConfig.sampleTime[t]);
+              const vec3f objectCoordinates =
+                  transformLocalToObjectCoordinates(vec3f(x, y, z));
+              for (size_t t = 0; t < numTimesteps; t++) {
+                singleVoxelTimes[t]   = temporalConfig.sampleTime[t];
+                singleVoxelSamples[t] = samplingFunction(
+                    objectCoordinates, temporalConfig.sampleTime[t]);
               }
 
-              // Attempt to shrink the time range.
-              size_t last = numTimesteps - 1;
-              if (refitBuffer[last] == 0) {
-                while (last > 2 && refitBuffer[last - 1] == 0) {
-                  --last;
-                }
-              }
+              const size_t compressedNumSamples =
+                  openvkl::utility::temporal_compression::douglas_peucker<
+                      VOXEL_TYPE>(numTimesteps,
+                                  singleVoxelSamples.data(),
+                                  singleVoxelTimes.data(),
+                                  temporalConfig.temporalCompressionThreshold);
 
-              size_t first = 0;
-              if (refitBuffer[first] == 0) {
-                while ((first + 2) < last && refitBuffer[first + 1] == 0) {
-                  ++first;
-                }
+              assert(compressedNumSamples > 0);
+              for (size_t t = 0; t < compressedNumSamples; t++) {
+                const size_t index = lastEnd + t;
+                VOXEL_TYPE *voxelTyped =
+                    (VOXEL_TYPE *)(voxels.data() + index * byteStride);
+                *voxelTyped = singleVoxelSamples[t];
+                time[index] = singleVoxelTimes[t];
               }
-
-              // Now resample with this new time range.
-              const float t0 = temporalConfig.sampleTime[first];
-              const float t1 = temporalConfig.sampleTime[last];
-              const float dt =
-                  (t1 - t0) / static_cast<float>(numRefitSamples - 1);
 
               const size_t voxelIndex =
                   size_t(z) * this->dimensions.y * this->dimensions.x +
                   y * this->dimensions.x + x;
-              tuvIndex[voxelIndex] = numRefitSamples * voxelIndex;
-
-              for (size_t t = 0; t < numRefitSamples; t++) {
-                const size_t index = numRefitSamples * voxelIndex + t;
-                VOXEL_TYPE *voxelTyped =
-                    (VOXEL_TYPE *)(voxels.data() + index * byteStride);
-                vec3f objectCoordinates =
-                    transformLocalToObjectCoordinates(vec3f(x, y, z));
-                const float sampleTime = t0 + t * dt;
-                *voxelTyped = samplingFunction(objectCoordinates, sampleTime);
-                time[index] = sampleTime;
-              }
+              tuvIndex[voxelIndex] = lastEnd;
+              lastEnd += compressedNumSamples;
             }
           }
-        });
+        }
+        assert(lastEnd <= numVoxels * numTimesteps);
+        voxels.resize(lastEnd * byteStride);
+        time.resize(lastEnd);
         *tuvIndex.rbegin() = time.size();
-      }
-
-      else if (temporalConfig.type == TemporalConfig::Unstructured) {
+      } else if (temporalConfig.type == TemporalConfig::Unstructured) {
         voxels.resize(numBytes * numTimesteps);
         time.resize(numVoxels * numTimesteps);
         tuvIndex.resize(numVoxels + 1);

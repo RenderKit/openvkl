@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace openvkl {
-  namespace vdb_util {
+  namespace utility {
     namespace usda {
 
       struct StreamOp
@@ -17,17 +17,17 @@ namespace openvkl {
       };
 
     }  // namespace usda
-  }    // namespace vdb_util
+  }    // namespace utility
 }  // namespace openvkl
 
 inline std::ostream &operator<<(std::ostream &os,
-                                const openvkl::vdb_util::usda::StreamOp &op)
+                                const openvkl::utility::usda::StreamOp &op)
 {
   return os << op.str;
 }
 
 namespace openvkl {
-  namespace vdb_util {
+  namespace utility {
     namespace usda {
 
       struct Scope
@@ -146,5 +146,5 @@ namespace openvkl {
       };
 
     }  // namespace usda
-  }    // namespace vdb_util
+  }    // namespace utility
 }  // namespace openvkl

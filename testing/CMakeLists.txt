@@ -8,7 +8,7 @@ add_library(openvkl_testing STATIC
 target_link_libraries(openvkl_testing PUBLIC
   openvkl
   rkcommon::rkcommon
-  openvkl_vdb_util
+  openvkl_utility
 )
 
 target_include_directories(openvkl_testing

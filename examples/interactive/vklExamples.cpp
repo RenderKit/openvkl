@@ -4,7 +4,7 @@
 #include "window/GLFWVKLWindow.h"
 #include "window/TransferFunctionWidget.h"
 // openvkl_testing
-#include "openvkl/vdb_util/InnerNodes.h"
+#include "openvkl/utility/vdb/InnerNodes.h"
 #include "openvkl_testing.h"
 // imgui
 #include <imgui.h>
@@ -551,7 +551,8 @@ void setupVolume(ViewerParams &params,
       } else if (params.motionBlurUnstructured) {
         if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
-          temporalConfig.numRefitSamples = 4;
+          temporalConfig.useTemporalCompression = true;
+          temporalConfig.temporalCompressionThreshold = 0.05f;
         } else {
           temporalConfig =
               TemporalConfig(params.motionBlurUnstructuredTimeSamples);
@@ -839,7 +840,8 @@ void setupVolume(ViewerParams &params,
       } else if (params.motionBlurUnstructured) {
         if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
-          temporalConfig.numRefitSamples = 4;
+          temporalConfig.useTemporalCompression = true;
+          temporalConfig.temporalCompressionThreshold = 0.05f;
         } else {
           temporalConfig =
               TemporalConfig(params.motionBlurUnstructuredTimeSamples);
@@ -1238,7 +1240,7 @@ int main(int argc, const char **argv)
   logToOutput(params, scene);
 
   if (params.gridType == "vdb" && !params.innerNodeOutput.empty()) {
-    openvkl::vdb_util::exportInnerNodes(
+    openvkl::utility::vdb::exportInnerNodes(
         params.innerNodeOutput,
         params.innerNodeMaxDepth,
         testingVolume->getVKLVolume(getOpenVKLDevice()));

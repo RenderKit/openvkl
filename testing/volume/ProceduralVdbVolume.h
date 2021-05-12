@@ -6,8 +6,9 @@
 #include <rkcommon/math/AffineSpace.h>
 #include "ProceduralVolume.h"
 #include "TestingVolume.h"
+#include "openvkl/utility/temporal_compression/douglas_peucker.h"
+#include "openvkl/utility/vdb/VdbVolumeBuffers.h"
 #include "openvkl/vdb.h"
-#include "openvkl/vdb_util/VdbVolumeBuffers.h"
 
 using namespace rkcommon;
 
@@ -77,7 +78,7 @@ namespace openvkl {
                   gradientNotImplemented>
     struct ProceduralVdbVolume : public ProceduralVdbVolumeBase
     {
-      using Buffers = vdb_util::VdbVolumeBuffers;
+      using Buffers = utility::vdb::VdbVolumeBuffers;
 
       ProceduralVdbVolume()                            = default;
       ProceduralVdbVolume(const ProceduralVdbVolume &) = delete;
@@ -136,6 +137,10 @@ namespace openvkl {
       std::vector<std::vector<unsigned char>> leaves;
       std::vector<std::vector<uint32_t>> indices;
       std::vector<std::vector<float>> times;
+
+      // Some memory stats.
+      size_t bytesUncompressed{0};
+      size_t bytesCompressed{0};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -155,6 +160,8 @@ namespace openvkl {
       leaves.emplace_back(
           std::vector<unsigned char>(numLeafVoxels * byteStride));
       std::vector<unsigned char> &leaf = leaves.back();
+      bytesUncompressed += leaf.size();
+      bytesCompressed += leaf.size();  // We do not compress here.
 
       range1f leafValueRange;
       const vec3i nodeOrigin(leafRes * x, leafRes * y, leafRes * z);
@@ -228,6 +235,8 @@ namespace openvkl {
       leaves.emplace_back(std::vector<unsigned char>(
           numLeafVoxels * byteStride * numTimesteps));
       std::vector<unsigned char> &leaf = leaves.back();
+      bytesCompressed += leaf.size();
+      bytesCompressed += leaf.size();  // We do not compress here.
 
       range1f leafValueRange;
       const vec3i nodeOrigin(leafRes * x, leafRes * y, leafRes * z);
@@ -290,52 +299,83 @@ namespace openvkl {
       const uint32_t leafLevel   = vklVdbNumLevels() - 1;
       const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
       const size_t numLeafVoxels = vklVdbLevelNumVoxels(leafLevel);
-      const uint32_t numTimesteps =
-          static_cast<uint32_t>(temporalConfig.sampleTime.size());
+      const size_t numTimesteps  = temporalConfig.sampleTime.size();
 
-      // Buffer for leaf data.
-      leaves.emplace_back(std::vector<unsigned char>(
-          numLeafVoxels * byteStride * numTimesteps));
-      times.emplace_back(std::vector<float>(numLeafVoxels * numTimesteps));
-      indices.emplace_back(std::vector<uint32_t>(numLeafVoxels + 1));
+      // Buffers for leaf data.
+      leaves.emplace_back();
+      times.emplace_back();
+      indices.emplace_back();
+
       std::vector<unsigned char> &leaf = leaves.back();
       std::vector<uint32_t> &tuvIndex  = indices.back();
       std::vector<float> &time         = times.back();
 
+      tuvIndex.resize(numLeafVoxels + 1);
+      leaf.resize(numLeafVoxels * numTimesteps * byteStride);
+      time.resize(numLeafVoxels * numTimesteps);
+
+      // Buffers for a single voxel, which we will compress.
+      std::vector<VOXEL_TYPE> singleVoxelSamples(numTimesteps);
+      std::vector<float> singleVoxelTimes(numTimesteps);
+      bytesUncompressed += leaf.size();
+
       range1f leafValueRange;
       const vec3i nodeOrigin(leafRes * x, leafRes * y, leafRes * z);
+      uint32_t lastEnd = 0;
       for (uint32_t vx = 0; vx < leafRes; ++vx) {
         for (uint32_t vy = 0; vy < leafRes; ++vy) {
           for (uint32_t vz = 0; vz < leafRes; ++vz) {
-            // Note: column major data!
-            const uint64_t voxelIdx =
-                static_cast<uint64_t>(vx) * leafRes * leafRes +
-                static_cast<uint64_t>(vy) * leafRes + static_cast<uint64_t>(vz);
-            const uint64_t idx64 = voxelIdx * numTimesteps;
-            if (!((idx64+numTimesteps) < (1ul << 32))) {
-              throw std::runtime_error(
-                  "Too many time steps on unstructured volume.");
-            }
-            const uint32_t idx = static_cast<uint32_t>(idx64);
-            tuvIndex[voxelIdx] = idx;
-            tuvIndex[voxelIdx + 1] = idx + numTimesteps;
             const vec3f samplePosIndex =
                 vec3f(nodeOrigin.x + vx, nodeOrigin.y + vy, nodeOrigin.z + vz);
             const vec3f samplePosObject =
                 transformLocalToObjectCoordinates(samplePosIndex);
             for (uint32_t vt = 0; vt < numTimesteps; ++vt) {
-              const VOXEL_TYPE fieldValue = samplingFunction(
-                  samplePosObject, temporalConfig.sampleTime[vt]);
-              time[idx + vt] = temporalConfig.sampleTime[vt];
-
-              VOXEL_TYPE *leafValueTyped =
-                  (VOXEL_TYPE *)(leaf.data() + (idx + vt) * byteStride);
-              *leafValueTyped = fieldValue;
-              leafValueRange.extend(fieldValue);
+              singleVoxelTimes[vt] = temporalConfig.sampleTime[vt];
+              singleVoxelSamples[vt] =
+                  samplingFunction(samplePosObject, singleVoxelTimes[vt]);
             }
+
+            size_t compressedNumSamples = numTimesteps;
+            if (temporalConfig.useTemporalCompression) {
+              compressedNumSamples =
+                  openvkl::utility::temporal_compression::douglas_peucker(
+                      numTimesteps,
+                      singleVoxelSamples.data(),
+                      singleVoxelTimes.data(),
+                      temporalConfig.temporalCompressionThreshold);
+            }
+            assert(compressedNumSamples > 0);
+
+            const uint64_t lastEnd64 = lastEnd + compressedNumSamples;
+            if (!(lastEnd64 < (((uint64_t)1) << 32))) {
+              throw std::runtime_error(
+                  "Too many time steps on temporally unstructured volume.");
+            }
+            float lastTime = -1.f;
+            for (size_t vt = 0; vt < compressedNumSamples; ++vt) {
+              VOXEL_TYPE *leafValueTyped = reinterpret_cast<VOXEL_TYPE *>(
+                  leaf.data() + (lastEnd + vt) * byteStride);
+              *leafValueTyped       = singleVoxelSamples[vt];
+              time.at(lastEnd + vt) = singleVoxelTimes[vt];
+              leafValueRange.extend(*leafValueTyped);
+              lastTime = time.at(lastEnd + vt);
+            }
+
+            // Note: column major data!
+            const uint64_t voxelIdx =
+                static_cast<uint64_t>(vx) * leafRes * leafRes +
+                static_cast<uint64_t>(vy) * leafRes + static_cast<uint64_t>(vz);
+
+            tuvIndex.at(voxelIdx)     = lastEnd;
+            lastEnd                   = static_cast<uint32_t>(lastEnd64);
+            tuvIndex.at(voxelIdx + 1) = lastEnd;
           }
         }
       }
+      leaf.resize(lastEnd * byteStride);
+      time.resize(lastEnd);
+      bytesCompressed += leaf.size();
+
       // Skip empty nodes.
       if (leafValueRange.lower != 0.f || leafValueRange.upper != 0.f) {
         buffers->addConstant(leafLevel,
@@ -347,8 +387,8 @@ namespace openvkl {
                              tuvIndex.size(),
                              tuvIndex.data(),
                              time.data());
+        valueRange.extend(leafValueRange);
       }
-      valueRange.extend(leafValueRange);
 
       if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
         leaves.clear();
@@ -377,7 +417,9 @@ namespace openvkl {
           buffers(new Buffers(device, {getVKLDataType<VOXEL_TYPE>()})),
           filter(filter),
           dataCreationFlags(dataCreationFlags),
-          byteStride(byteStride)
+          byteStride(byteStride),
+          bytesUncompressed(0),
+          bytesCompressed(0)
     {
       if (byteStride == 0) {
         byteStride = sizeOfVKLDataType(voxelType);

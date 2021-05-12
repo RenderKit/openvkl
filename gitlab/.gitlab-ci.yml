@@ -620,5 +620,5 @@ av:
   needs: [release-linux-icc, release-macOS, release-windows]
   script:
     - freshclam | tee -a /tmp/av_scan.log
-    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
+    - clamscan -va --max-filesize=1024M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
     - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log

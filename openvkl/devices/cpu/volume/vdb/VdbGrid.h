@@ -58,6 +58,7 @@ struct VdbGrid
   vkl_uint64 numLeaves;
   vkl_uint32 numAttributes;
   bool allLeavesCompact;  // Do we only have compact (non strided) leaf data?
+  bool allLeavesConstant;  // Are all leaf nodes temporally constant?
 
   // Per-node data.
   vkl_uint32 *attributeTypes;  // Data type for each attribute.

@@ -711,6 +711,7 @@ namespace openvkl {
 
         // Initialize and verify all nodes.
         std::atomic_int allLeavesCompact(true);
+        std::atomic_int allLeavesConstant(true);
         grid->leafData = allocator.allocate<ispc::Data1D>(grid->numLeaves *
                                                           grid->numAttributes);
 
@@ -726,6 +727,8 @@ namespace openvkl {
 
           const VKLTemporalFormat temporalFormat =
               static_cast<VKLTemporalFormat>((*leafTemporalFormat)[i]);
+          allLeavesConstant &=
+              static_cast<int>(temporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT);
 
           const int structuredTimesteps =
               leafStructuredTimesteps ? (*leafStructuredTimesteps)[i] : 0;
@@ -758,6 +761,7 @@ namespace openvkl {
         });
 
         grid->allLeavesCompact = static_cast<bool>(allLeavesCompact.load());
+        grid->allLeavesConstant = static_cast<bool>(allLeavesConstant.load());
 
         const auto binnedLeaves =
             binLeavesPerLevel(grid->numLeaves, *leafLevel);

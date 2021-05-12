@@ -3,9 +3,7 @@
 
 #include "VdbGrid.h"
 #include "VdbSampler.ih"
-#include "VdbSampler_denseZYX.ih"
 #include "VdbSampler_leafHandler.ih"
-#include "VdbSampler_tile.ih"
 #include "VdbSampler_traverseAndSample.ih"
 #include "common/export_util.h"
 
@@ -30,23 +28,20 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
   }
 
   const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
-  const uniform VKLFormat leafFormat = vklVdbVoxelLeafGetFormat(voxel);
-  const uniform VKLTemporalFormat leafTemporalFormat =
-      vklVdbVoxelLeafGetTemporalFormat(voxel);
   const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
-  const uniform uint64 leafDataIndex =
-      vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex);
 
-  __vkl_vdb_leaf_handler(return VdbSampler_computeValueRange,
-                                voxelType,
-                                leafFormat,
-                                leafTemporalFormat,
-                                grid,
-                                leafIndex,
-                                leafDataIndex,
-                                rangeX,
-                                rangeY,
-                                rangeZ)
+  __vkl_vdb_leaf_handler(
+      return VdbSampler_computeValueRange,
+             voxelType,
+             vklVdbVoxelLeafGetFormat(voxel),
+             grid->allLeavesConstant,
+             vklVdbVoxelLeafGetTemporalFormat(voxel),
+             grid,
+             leafIndex,
+             vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),
+             rangeX,
+             rangeY,
+             rangeZ)
 }
 
 /*

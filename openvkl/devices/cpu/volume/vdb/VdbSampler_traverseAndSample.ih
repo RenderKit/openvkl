@@ -4,9 +4,7 @@
 #pragma once
 
 #include "VdbGrid.h"
-#include "VdbSampler_denseZYX.ih"
 #include "VdbSampler_leafHandler.ih"
-#include "VdbSampler_tile.ih"
 
 #include "VdbLeafAccessObserver.ih"
 #include "openvkl_vdb/VdbSamplerDispatchInner.ih"
@@ -203,21 +201,16 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
     if (vklVdbVoxelIsLeafPtr(voxel)) {                                         \
       const uniform vkl_uint32 voxelType =                                     \
           sampler->grid->attributeTypes[attributeIndex];                       \
-      const univaryVoxel VKLFormat leafFormat =                                \
-          vklVdbVoxelLeafGetFormat(voxel);                                     \
-      const univaryVoxel VKLTemporalFormat leafTemporalFormat =                \
-          vklVdbVoxelLeafGetTemporalFormat(voxel);                             \
       const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);    \
-      const univaryVoxel uint64 leafDataIndex =                                \
-          vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex);             \
       __vkl_vdb_leaf_handler(                                                  \
           sample = VdbSampler_sample_##univaryVoxel##_##univaryOffset,         \
           voxelType,                                                           \
-          leafFormat,                                                          \
-          leafTemporalFormat,                                                  \
+          vklVdbVoxelLeafGetFormat(voxel),                                     \
+          grid->allLeavesConstant,                                             \
+          vklVdbVoxelLeafGetTemporalFormat(voxel),                             \
           grid,                                                                \
           leafIndex,                                                           \
-          leafDataIndex,                                                       \
+          vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),             \
           domainOffset,                                                        \
           time)                                                                \
     } else if (vklVdbVoxelIsError(voxel)) {                                    \
@@ -242,7 +235,7 @@ template_VdbSampler_sample_inner(uniform, uniform);
 // keeping this thin wrapper ensures that downstream code is as uniform as
 // possible.
 inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
-                                       const uniform uint64 &voxel,
+                                       const uniform uint64 voxel,
                                        const uniform vec3ui &domainOffset,
                                        const uniform float time,
                                        const uniform uint32 attributeIndex)

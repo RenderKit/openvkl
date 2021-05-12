@@ -94,6 +94,7 @@ namespace openvkl {
           const vec3f &gridSpacing,
           VKLFilter filter                       = VKL_FILTER_TRILINEAR,
           const TemporalConfig &temporalConfig   = TemporalConfig(),
+          uint32_t numAttributes                 = 1,
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
           size_t byteStride                      = 0);
 
@@ -111,19 +112,28 @@ namespace openvkl {
 
       void generateVKLVolume(VKLDevice device) override;
 
-      void addTemporallyConstantLeaf(int x, int y, int z, size_t byteStride);
+      void addTemporallyConstantLeaf(
+          int x, int y, int z, size_t byteStride, uint32_t numAttributes);
 
       void addTemporallyStructuredLeaf(int x,
                                        int y,
                                        int z,
                                        size_t byteStride,
-                                       const TemporalConfig &temporalConfig);
+                                       const TemporalConfig &temporalConfig,
+                                       uint32_t numAttributes);
 
       void addTemporallyUnstructuredLeaf(int x,
                                          int y,
                                          int z,
                                          size_t byteStride,
-                                         const TemporalConfig &temporalConfig);
+                                         const TemporalConfig &temporalConfig,
+                                         uint32_t numAttributes);
+
+      void addLeaf(std::vector<void *> &ptrs,
+                   std::vector<size_t> &byteStrides,
+                   std::vector<range1f> &leafValueRanges,
+                   const vec3i &nodeOrigin,
+                   uint32_t numTimesteps = 0);
 
      private:
       std::unique_ptr<Buffers> buffers;
@@ -131,6 +141,7 @@ namespace openvkl {
       VKLFilter filter;
       VKLDataCreationFlags dataCreationFlags;
       size_t byteStride;
+      uint32_t numAttributes;
 
       // leaf and motion blur data may need to be retained for shared data
       // buffers
@@ -150,64 +161,103 @@ namespace openvkl {
               vec3f gradientFunction(const vec3f &, float)>
     inline void
     ProceduralVdbVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
-        addTemporallyConstantLeaf(int x, int y, int z, size_t byteStride)
+        addLeaf(std::vector<void *> &ptrs,
+                std::vector<size_t> &byteStrides,
+                std::vector<range1f> &leafValueRanges,
+                const vec3i &nodeOrigin,
+                uint32_t numTimesteps)
+    {
+      bool nodeEmpty = true;
+      for (size_t a = 0; a < ptrs.size(); ++a) {
+        if (leafValueRanges[a].lower != 0.f ||
+            leafValueRanges[a].upper != 0.f) {
+          nodeEmpty = false;
+          break;
+        }
+      }
+
+      // Skip empty nodes.
+      if (!nodeEmpty) {
+        const uint32_t leafLevel   = vklVdbNumLevels() - 1;
+        const size_t numLeafVoxels = vklVdbLevelNumVoxels(leafLevel);
+        // We compress constant areas of space into tiles.
+        // We also copy all leaf data so that we do not have to
+        // explicitly store it.
+        if (numTimesteps == 0 && ptrs.size() == 1 &&
+            std::fabs(leafValueRanges[0].upper - leafValueRanges[0].lower) <
+                std::fabs(leafValueRanges[0].upper) *
+                    std::numeric_limits<float>::epsilon()) {
+          buffers->addTile(leafLevel, nodeOrigin, {&leafValueRanges[0].upper});
+        } else {
+          buffers->addConstant(leafLevel,
+                               nodeOrigin,
+                               ptrs,
+                               dataCreationFlags,
+                               byteStrides,
+                               numTimesteps);
+        }
+
+        for (const auto &vr : leafValueRanges) {
+          valueRange.extend(vr);
+        }
+      }
+    }
+
+    template <typename VOXEL_TYPE,
+              VOXEL_TYPE samplingFunction(const vec3f &, float),
+              vec3f gradientFunction(const vec3f &, float)>
+    inline void
+    ProceduralVdbVolume<VOXEL_TYPE, samplingFunction, gradientFunction>::
+        addTemporallyConstantLeaf(
+            int x, int y, int z, size_t byteStride, uint32_t numAttributes)
     {
       const uint32_t leafLevel   = vklVdbNumLevels() - 1;
       const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
       const size_t numLeafVoxels = vklVdbLevelNumVoxels(leafLevel);
 
       // Buffer for leaf data.
-      leaves.emplace_back(
-          std::vector<unsigned char>(numLeafVoxels * byteStride));
+      leaves.emplace_back(std::vector<unsigned char>(
+          numLeafVoxels * numAttributes * byteStride));
       std::vector<unsigned char> &leaf = leaves.back();
       bytesUncompressed += leaf.size();
       bytesCompressed += leaf.size();  // We do not compress here.
 
-      range1f leafValueRange;
+      std::vector<range1f> leafValueRanges(numAttributes);
+      std::vector<void *> ptrs(numAttributes, nullptr);
+      std::vector<size_t> byteStrides(numAttributes, byteStride);
       const vec3i nodeOrigin(leafRes * x, leafRes * y, leafRes * z);
-      for (uint32_t vx = 0; vx < leafRes; ++vx) {
-        for (uint32_t vy = 0; vy < leafRes; ++vy) {
-          for (uint32_t vz = 0; vz < leafRes; ++vz) {
-            // Note: column major data!
-            const uint64_t idx = static_cast<uint64_t>(vx) * leafRes * leafRes +
-                                 static_cast<uint64_t>(vy) * leafRes +
-                                 static_cast<uint64_t>(vz);
+      for (uint32_t va = 0; va < numAttributes; ++va) {
+        ptrs[va] = leaf.data() + static_cast<uint64_t>(va) * leafRes * leafRes *
+                                     leafRes * byteStride;
+        for (uint32_t vx = 0; vx < leafRes; ++vx) {
+          for (uint32_t vy = 0; vy < leafRes; ++vy) {
+            for (uint32_t vz = 0; vz < leafRes; ++vz) {
+              // Note: column major data!
+              const uint64_t idx =
+                  static_cast<uint64_t>(va) * leafRes * leafRes * leafRes +
+                  static_cast<uint64_t>(vx) * leafRes * leafRes +
+                  static_cast<uint64_t>(vy) * leafRes +
+                  static_cast<uint64_t>(vz);
 
-            const vec3f samplePosIndex =
-                vec3f(nodeOrigin.x + vx, nodeOrigin.y + vy, nodeOrigin.z + vz);
-            const vec3f samplePosObject =
-                transformLocalToObjectCoordinates(samplePosIndex);
+              const vec3f samplePosIndex = vec3f(
+                  nodeOrigin.x + vx, nodeOrigin.y + vy, nodeOrigin.z + vz);
+              const vec3f samplePosObject = transformLocalToObjectCoordinates(
+                  static_cast<float>(va + 1) * samplePosIndex);
 
-            const VOXEL_TYPE fieldValue =
-                samplingFunction(samplePosObject, 0.f);
+              const VOXEL_TYPE fieldValue =
+                  samplingFunction(samplePosObject, 0.f);
 
-            VOXEL_TYPE *leafValueTyped =
-                (VOXEL_TYPE *)(leaf.data() + idx * byteStride);
-            *leafValueTyped = fieldValue;
+              VOXEL_TYPE *leafValueTyped =
+                  (VOXEL_TYPE *)(leaf.data() + idx * byteStride);
+              *leafValueTyped = fieldValue;
 
-            leafValueRange.extend(fieldValue);
+              leafValueRanges[va].extend(fieldValue);
+            }
           }
         }
       }
-      // Skip empty nodes.
-      if (leafValueRange.lower != 0.f || leafValueRange.upper != 0.f) {
-        // We compress constant areas of space into tiles.
-        // We also copy all leaf data so that we do not have to
-        // explicitly store it.
-        if (std::fabs(leafValueRange.upper - leafValueRange.lower) <
-            std::fabs(leafValueRange.upper) *
-                std::numeric_limits<float>::epsilon()) {
-          buffers->addTile(leafLevel, nodeOrigin, {&leafValueRange.upper});
-        } else
-          buffers->addConstant(
-              leafLevel,
-              nodeOrigin,
-              {leaf.data()},
-              dataCreationFlags,
-              {byteStride},
-              static_cast<uint32_t>(temporalConfig.sampleTime.size()));
-      }
-      valueRange.extend(leafValueRange);
+
+      addLeaf(ptrs, byteStrides, leafValueRanges, nodeOrigin, 0);
 
       if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
         leaves.clear();
@@ -223,7 +273,8 @@ namespace openvkl {
                                     int y,
                                     int z,
                                     size_t byteStride,
-                                    const TemporalConfig &temporalConfig)
+                                    const TemporalConfig &temporalConfig,
+                                    uint32_t numAttributes)
     {
       const uint32_t leafLevel   = vklVdbNumLevels() - 1;
       const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
@@ -233,52 +284,56 @@ namespace openvkl {
 
       // Buffer for leaf data.
       leaves.emplace_back(std::vector<unsigned char>(
-          numLeafVoxels * byteStride * numTimesteps));
+          numLeafVoxels * numAttributes * byteStride * numTimesteps));
       std::vector<unsigned char> &leaf = leaves.back();
-      bytesCompressed += leaf.size();
+      bytesUncompressed += leaf.size();
       bytesCompressed += leaf.size();  // We do not compress here.
 
-      range1f leafValueRange;
+      std::vector<range1f> leafValueRanges(numAttributes);
+      std::vector<void *> ptrs(numAttributes, nullptr);
+      std::vector<size_t> byteStrides(numAttributes, byteStride);
       const vec3i nodeOrigin(leafRes * x, leafRes * y, leafRes * z);
-      for (uint32_t vx = 0; vx < leafRes; ++vx) {
-        for (uint32_t vy = 0; vy < leafRes; ++vy) {
-          for (uint32_t vz = 0; vz < leafRes; ++vz) {
-            for (uint32_t vt = 0; vt < numTimesteps; ++vt) {
-              // Note: column major data!
-              const uint64_t idx =
-                  static_cast<uint64_t>(vx) * leafRes * leafRes * numTimesteps +
-                  static_cast<uint64_t>(vy) * leafRes * numTimesteps +
-                  static_cast<uint64_t>(vz) * numTimesteps +
-                  static_cast<uint64_t>(vt);
+      for (uint32_t va = 0; va < numAttributes; ++va) {
+        ptrs[va] = leaf.data() + static_cast<uint64_t>(va) * leafRes * leafRes *
+                                     leafRes * numTimesteps * byteStride;
+        for (uint32_t vx = 0; vx < leafRes; ++vx) {
+          for (uint32_t vy = 0; vy < leafRes; ++vy) {
+            for (uint32_t vz = 0; vz < leafRes; ++vz) {
+              for (uint32_t vt = 0; vt < numTimesteps; ++vt) {
+                // Note: z major data!
+                const uint64_t idx =
+                    static_cast<uint64_t>(va) * leafRes * leafRes * leafRes *
+                        numTimesteps +
+                    static_cast<uint64_t>(vx) * leafRes * leafRes *
+                        numTimesteps +
+                    static_cast<uint64_t>(vy) * leafRes * numTimesteps +
+                    static_cast<uint64_t>(vz) * numTimesteps +
+                    static_cast<uint64_t>(vt);
 
-              const vec3f samplePosIndex = vec3f(
-                  nodeOrigin.x + vx, nodeOrigin.y + vy, nodeOrigin.z + vz);
-              const vec3f samplePosObject =
-                  transformLocalToObjectCoordinates(samplePosIndex);
+                const vec3f samplePosIndex = vec3f(
+                    nodeOrigin.x + vx, nodeOrigin.y + vy, nodeOrigin.z + vz);
+                const vec3f samplePosObject = transformLocalToObjectCoordinates(
+                    static_cast<float>(va + 1) * samplePosIndex);
 
-              const VOXEL_TYPE fieldValue = samplingFunction(
-                  samplePosObject, temporalConfig.sampleTime[vt]);
+                const VOXEL_TYPE fieldValue = samplingFunction(
+                    samplePosObject, temporalConfig.sampleTime[vt]);
 
-              VOXEL_TYPE *leafValueTyped =
-                  (VOXEL_TYPE *)(leaf.data() + idx * byteStride);
-              *leafValueTyped = fieldValue;
+                VOXEL_TYPE *leafValueTyped =
+                    (VOXEL_TYPE *)(leaf.data() + idx * byteStride);
+                *leafValueTyped = fieldValue;
 
-              leafValueRange.extend(fieldValue);
+                leafValueRanges[va].extend(fieldValue);
+              }
             }
           }
         }
       }
-      // Skip empty nodes.
-      if (leafValueRange.lower != 0.f || leafValueRange.upper != 0.f) {
-        buffers->addConstant(
-            leafLevel,
-            nodeOrigin,
-            {leaf.data()},
-            dataCreationFlags,
-            {byteStride},
-            static_cast<uint32_t>(temporalConfig.sampleTime.size()));
-      }
-      valueRange.extend(leafValueRange);
+
+      addLeaf(ptrs,
+              byteStrides,
+              leafValueRanges,
+              nodeOrigin,
+              static_cast<uint32_t>(temporalConfig.sampleTime.size()));
 
       if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
         leaves.clear();
@@ -294,7 +349,8 @@ namespace openvkl {
                                       int y,
                                       int z,
                                       size_t byteStride,
-                                      const TemporalConfig &temporalConfig)
+                                      const TemporalConfig &temporalConfig,
+                                      uint32_t numAttributes)
     {
       const uint32_t leafLevel   = vklVdbNumLevels() - 1;
       const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
@@ -407,6 +463,7 @@ namespace openvkl {
                             const vec3f &gridSpacing,
                             VKLFilter filter,
                             const TemporalConfig &temporalConfig,
+                            uint32_t numAttributes,
                             VKLDataCreationFlags dataCreationFlags,
                             size_t byteStride)
         : ProceduralVdbVolumeBase(dimensions,
@@ -414,8 +471,9 @@ namespace openvkl {
                                   gridSpacing,
                                   getVKLDataType<VOXEL_TYPE>(),
                                   temporalConfig),
-          buffers(new Buffers(device, {getVKLDataType<VOXEL_TYPE>()})),
+          buffers(nullptr),
           filter(filter),
+          numAttributes(std::max<uint32_t>(numAttributes, 1u)),
           dataCreationFlags(dataCreationFlags),
           byteStride(byteStride),
           bytesUncompressed(0),
@@ -428,6 +486,10 @@ namespace openvkl {
       if (byteStride < sizeOfVKLDataType(voxelType)) {
         throw std::runtime_error("byteStride must be >= size of voxel type");
       }
+
+      std::vector<VKLDataType> voxelTypes(numAttributes,
+                                          getVKLDataType<VOXEL_TYPE>());
+      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes);
 
       buffers->setIndexToObject(gridSpacing.x,
                                 0,
@@ -459,14 +521,20 @@ namespace openvkl {
           for (int z = 0; z < numLeafNodesIn.z; ++z) {
             switch (temporalConfig.type) {
             case TemporalConfig::Constant:
-              addTemporallyConstantLeaf(x, y, z, byteStride);
+              addTemporallyConstantLeaf(x, y, z, byteStride, numAttributes);
               break;
             case TemporalConfig::Structured:
-              addTemporallyStructuredLeaf(x, y, z, byteStride, temporalConfig);
+              addTemporallyStructuredLeaf(
+                  x, y, z, byteStride, temporalConfig, numAttributes);
               break;
             case TemporalConfig::Unstructured:
-              addTemporallyUnstructuredLeaf(
-                  x, y, z, byteStride, temporalConfig);
+              if (numAttributes == 1) {
+                addTemporallyUnstructuredLeaf(
+                    x, y, z, byteStride, temporalConfig, numAttributes);
+              } else {
+                addTemporallyStructuredLeaf(
+                    x, y, z, byteStride, temporalConfig, numAttributes);
+              }
               break;
             default:
               assert(false);

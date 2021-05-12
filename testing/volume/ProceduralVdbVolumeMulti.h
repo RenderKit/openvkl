@@ -66,6 +66,8 @@ namespace openvkl {
 
       // leaf data may need to be retained for shared data buffers
       std::vector<std::vector<unsigned char>> leaves;
+      std::vector<std::vector<uint32_t>> indices;
+      std::vector<std::vector<float>> times;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -93,12 +95,16 @@ namespace openvkl {
         throw std::runtime_error("no provided attribute volumes");
       }
 
+      const TemporalConfig temporalConfig =
+          attributeVolumes[0]->getTemporalConfig();
+
       // verify provided attribute volumes are consistent with the provided
       // parameters
       for (const auto &v : attributeVolumes) {
         bool compatible = (v->getDimensions() == dimensions) &&
                           (v->getGridOrigin() == gridOrigin) &&
-                          (v->getGridSpacing() == gridSpacing);
+                          (v->getGridSpacing() == gridSpacing) &&
+                          temporalConfig.isCompatible(v->getTemporalConfig());
 
         if (!compatible) {
           throw std::runtime_error(
@@ -381,21 +387,42 @@ namespace openvkl {
         const vec3f &gridSpacing,
         VKLFilter filter,
         VKLDataCreationFlags dataCreationFlags,
-        bool useAOSLayout)
+        bool useAOSLayout,
+        TemporalConfig temporalConfig = TemporalConfig())
     {
+      // Not supported for multi attribute, as attributes share temporal config.
+      temporalConfig.useTemporalCompression = false;
+
       std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> volumes;
 
-      volumes.push_back(std::make_shared<WaveletVdbVolumeHalf>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(
+          std::make_shared<WaveletVdbVolumeHalf>(device,
+                                                 dimensions,
+                                                 gridOrigin,
+                                                 gridSpacing,
+                                                 VKL_FILTER_TRILINEAR,
+                                                 temporalConfig));
 
-      volumes.push_back(std::make_shared<XVdbVolumeHalf>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<XVdbVolumeHalf>(device,
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_TRILINEAR,
+                                                         temporalConfig));
 
-      volumes.push_back(std::make_shared<YVdbVolumeHalf>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<YVdbVolumeHalf>(device,
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_TRILINEAR,
+                                                         temporalConfig));
 
-      volumes.push_back(std::make_shared<ZVdbVolumeHalf>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<ZVdbVolumeHalf>(device,
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_TRILINEAR,
+                                                         temporalConfig));
 
       return new ProceduralVdbVolumeMulti(device,
                                           dimensions,
@@ -414,21 +441,42 @@ namespace openvkl {
         const vec3f &gridSpacing,
         VKLFilter filter,
         VKLDataCreationFlags dataCreationFlags,
-        bool useAOSLayout)
+        bool useAOSLayout,
+        TemporalConfig temporalConfig = TemporalConfig())
     {
+      // Not supported for multi attribute, as attributes share temporal config.
+      temporalConfig.useTemporalCompression = false;
+
       std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> volumes;
 
-      volumes.push_back(std::make_shared<WaveletVdbVolumeFloat>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(
+          std::make_shared<WaveletVdbVolumeFloat>(device,
+                                                  dimensions,
+                                                  gridOrigin,
+                                                  gridSpacing,
+                                                  VKL_FILTER_TRILINEAR,
+                                                  temporalConfig));
 
-      volumes.push_back(std::make_shared<XVdbVolumeFloat>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<XVdbVolumeFloat>(device,
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_TRILINEAR,
+                                                          temporalConfig));
 
-      volumes.push_back(std::make_shared<YVdbVolumeFloat>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<YVdbVolumeFloat>(device,
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_TRILINEAR,
+                                                          temporalConfig));
 
-      volumes.push_back(std::make_shared<ZVdbVolumeFloat>(
-          device, dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<ZVdbVolumeFloat>(device,
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_TRILINEAR,
+                                                          temporalConfig));
 
       return new ProceduralVdbVolumeMulti(device,
                                           dimensions,

@@ -50,7 +50,9 @@ namespace openvkl {
       bool isCompatible(const TemporalConfig &other) const
       {
         return (type == other.type) &&
-               (sampleTime.size() == other.sampleTime.size());
+               (sampleTime.size() == other.sampleTime.size()) &&
+               // If two volumes are compressed differently they incompatible!
+               !(useTemporalCompression || other.useTemporalCompression);
       }
 
       bool hasTime() const

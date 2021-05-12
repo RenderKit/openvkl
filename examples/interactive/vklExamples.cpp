@@ -848,7 +848,7 @@ void setupVolume(ViewerParams &params,
         }
       }
 
-      if (params.multiAttribute) {
+      if (!temporalConfig.hasTime() && params.multiAttribute) {
         if (params.voxelType == VKL_HALF) {
           testingVolume = std::shared_ptr<ProceduralVdbVolumeMulti>(
               generateMultiAttributeVdbVolumeHalf(getOpenVKLDevice(),
@@ -873,6 +873,7 @@ void setupVolume(ViewerParams &params,
               "VKL_HALF or VKL_FLOAT voxel types");
         }
       } else {
+        const uint32_t numAttributes = params.multiAttribute ? 3 : 1;
         if (params.voxelType == VKL_HALF) {
           if (params.field == "xyz") {
             testingVolume =
@@ -881,7 +882,8 @@ void setupVolume(ViewerParams &params,
                                                    params.gridOrigin,
                                                    params.gridSpacing,
                                                    params.filter,
-                                                   temporalConfig);
+                                                   temporalConfig,
+                                                   numAttributes);
           } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereVdbVolumeHalf>(getOpenVKLDevice(),
@@ -889,7 +891,8 @@ void setupVolume(ViewerParams &params,
                                                       params.gridOrigin,
                                                       params.gridSpacing,
                                                       params.filter,
-                                                      temporalConfig);
+                                                      temporalConfig,
+                                                      numAttributes);
           } else {
             testingVolume =
                 std::make_shared<WaveletVdbVolumeHalf>(getOpenVKLDevice(),
@@ -897,7 +900,8 @@ void setupVolume(ViewerParams &params,
                                                        params.gridOrigin,
                                                        params.gridSpacing,
                                                        params.filter,
-                                                       temporalConfig);
+                                                       temporalConfig,
+                                                       numAttributes);
           }
         } else if (params.voxelType == VKL_FLOAT) {
           if (params.field == "xyz") {
@@ -907,7 +911,8 @@ void setupVolume(ViewerParams &params,
                                                     params.gridOrigin,
                                                     params.gridSpacing,
                                                     params.filter,
-                                                    temporalConfig);
+                                                    temporalConfig,
+                                                    numAttributes);
           } else if (params.field == "sphere") {
             testingVolume =
                 std::make_shared<SphereVdbVolumeFloat>(getOpenVKLDevice(),
@@ -915,7 +920,8 @@ void setupVolume(ViewerParams &params,
                                                        params.gridOrigin,
                                                        params.gridSpacing,
                                                        params.filter,
-                                                       temporalConfig);
+                                                       temporalConfig,
+                                                       numAttributes);
           } else {
             testingVolume =
                 std::make_shared<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
@@ -923,7 +929,8 @@ void setupVolume(ViewerParams &params,
                                                         params.gridOrigin,
                                                         params.gridSpacing,
                                                         params.filter,
-                                                        temporalConfig);
+                                                        temporalConfig,
+                                                        numAttributes);
           }
         } else {
           throw std::runtime_error(

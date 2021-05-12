@@ -768,6 +768,7 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
                                                vec3f(1.f),
                                                VKL_FILTER_TRILINEAR,
                                                TemporalConfig(),
+                                               1,
                                                dcf,
                                                strideFactor * sizeof(float)));
 

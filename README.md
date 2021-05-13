@@ -1124,7 +1124,7 @@ leaf data pointers can be passed to Open VKL using shared data buffers,
 avoiding copy operations.
 
 An example of this can be found in
-`vdb_util/include/openvkl/OpenVdbGrid.h`, where the class
+`utility/vdb/include/openvkl/utility/vdb/OpenVdbGrid.h`, where the class
 `OpenVdbFloatGrid` encapsulates the necessary operations. This class is
 also accessible through the `vklExamples` application using the `-file`
 and `-field` command line arguments.

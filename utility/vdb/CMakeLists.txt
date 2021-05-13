@@ -46,7 +46,7 @@ if (DEFINED OpenVDB_ROOT)
     # enabled.
     target_compile_definitions(openvkl_utility_vdb 
       INTERFACE
-        OPENVKL_UTILITY_VDB_ENABLED)
+        OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)
 
     target_link_libraries(openvkl_utility_vdb 
       INTERFACE 

@@ -5,7 +5,7 @@
 
 #include <openvkl/openvkl.h>
 #include <openvkl/vdb.h>
-#include <openvkl/vdb_util/VdbVolumeBuffers.h>
+#include <openvkl/utility/vdb/VdbVolumeBuffers.h>
 
 #include <openvdb/openvdb.h>
 

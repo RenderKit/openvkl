@@ -1018,10 +1018,11 @@ Files generated with OpenVDB can be loaded easily since Open VKL `vdb` volumes
 implement the same leaf data layout. This means that OpenVDB leaf data pointers
 can be passed to Open VKL using shared data buffers, avoiding copy operations.
 
-An example of this can be found in `vdb_util/include/openvkl/OpenVdbGrid.h`,
-where the class `OpenVdbFloatGrid` encapsulates the necessary operations. This
-class is also accessible through the `vklExamples` application using the
-`-file` and `-field` command line arguments.
+An example of this can be found in
+`utility/vdb/include/openvkl/utility/vdb/OpenVdbGrid.h`, where the class
+`OpenVdbFloatGrid` encapsulates the necessary operations. This class is also
+accessible through the `vklExamples` application using the `-file` and `-field`
+command line arguments.
 
 To use this example feature, compile Open VKL with `OpenVDB_ROOT` pointing to
 the OpenVDB prefix.

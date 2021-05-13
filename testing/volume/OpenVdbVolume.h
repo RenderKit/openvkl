@@ -3,7 +3,7 @@
 
 #pragma once
 
-#if OPENVKL_UTILITY_VDB_OPENVDB_ENABLED
+#if defined(OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)
 
 #include "TestingVolume.h"
 #include "openvkl/utility/vdb/OpenVdbGrid.h"
@@ -186,7 +186,7 @@ namespace openvkl {
   }  // namespace testing
 }  // namespace openvkl
 
-#else  // OPENVKL_VDB_UTIL_OPENVDB_ENABLED
+#else  // defined(OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)
 
 #include "TestingVolume.h"
 #include "openvkl/vdb.h"
@@ -249,4 +249,4 @@ namespace openvkl {
   }  // namespace testing
 }  // namespace openvkl
 
-#endif  // OPENVKL_UTILITY_VDB_OPENVDB_ENABLED
+#endif  // defined(OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)

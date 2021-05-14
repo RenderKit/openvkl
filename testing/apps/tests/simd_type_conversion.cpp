@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
@@ -62,11 +62,7 @@ void vvec3fn_pack_extraction_test()
 
 TEST_CASE("SIMD type conversion", "[simd_conformance]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   SECTION("vvec3fn upconversion")
   {
@@ -108,4 +104,6 @@ TEST_CASE("SIMD type conversion", "[simd_conformance]")
     vvec3fn_pack_extraction_test<12, 8>();
     vvec3fn_pack_extraction_test<12, 4>();
   }
+
+  shutdownOpenVKL();
 }

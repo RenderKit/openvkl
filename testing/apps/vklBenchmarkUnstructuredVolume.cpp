@@ -1,9 +1,10 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <random>
 #include "../common/simd.h"
 #include "benchmark/benchmark.h"
+#include "benchmark_suite/utility.h"
 #include "openvkl_testing.h"
 #include "rkcommon/utility/random.h"
 
@@ -21,15 +22,6 @@ using namespace rkcommon::utility;
   BENCHMARK_TEMPLATE(__VA_ARGS__, VKL_PYRAMID)     \
       ->Ranges({{0, 1}, {0, 1}, {0, 1}});
 
-void initializeOpenVKL()
-{
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
-}
-
 template <VKLUnstructuredCellType primType>
 static void scalarRandomSample(benchmark::State &state)
 {
@@ -44,7 +36,7 @@ static void scalarRandomSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -55,12 +47,12 @@ static void scalarRandomSample(benchmark::State &state)
   pcg32_biased_float_distribution distY(rd(), 0, bbox.lower.y, bbox.upper.y);
   pcg32_biased_float_distribution distZ(rd(), 0, bbox.lower.z, bbox.upper.z);
 
-  for (auto _ : state) {
+  BENCHMARK_WARMUP_AND_RUN(({
     vkl_vec3f objectCoordinates{distX(), distY(), distZ()};
 
     benchmark::DoNotOptimize(
         vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
-  }
+  }));
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
@@ -83,7 +75,7 @@ void vectorRandomSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -103,7 +95,7 @@ void vectorRandomSample(benchmark::State &state)
   vvec3fn<W> objectCoordinates;
   float samples[W];
 
-  for (auto _ : state) {
+  BENCHMARK_WARMUP_AND_RUN(({
     for (int i = 0; i < W; i++) {
       objectCoordinates.x[i] = distX();
       objectCoordinates.y[i] = distY();
@@ -124,7 +116,7 @@ void vectorRandomSample(benchmark::State &state)
           "vectorRandomSample benchmark called with unimplemented calling "
           "width");
     }
-  }
+  }));
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
@@ -149,7 +141,7 @@ static void scalarFixedSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -157,10 +149,10 @@ static void scalarFixedSample(benchmark::State &state)
 
   vkl_vec3f objectCoordinates{0.1701f, 0.1701f, 0.1701f};
 
-  for (auto _ : state) {
+  BENCHMARK_WARMUP_AND_RUN(({
     benchmark::DoNotOptimize(
         vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates));
-  }
+  }));
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
@@ -183,7 +175,7 @@ void vectorFixedSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -206,7 +198,7 @@ void vectorFixedSample(benchmark::State &state)
 
   float samples[W];
 
-  for (auto _ : state) {
+  BENCHMARK_WARMUP_AND_RUN(({
     if (W == 4) {
       vklComputeSample4(
           valid, vklSampler, (const vkl_vvec3f4 *)&objectCoordinates, samples);
@@ -221,7 +213,7 @@ void vectorFixedSample(benchmark::State &state)
           "vectorFixedSample benchmark called with unimplemented calling "
           "width");
     }
-  }
+  }));
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
@@ -242,7 +234,7 @@ int main(int argc, char **argv)
     return 1;
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

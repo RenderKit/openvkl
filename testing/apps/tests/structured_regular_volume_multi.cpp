@@ -13,18 +13,14 @@ using namespace openvkl::testing;
 template <typename VOLUME_TYPE>
 inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
 {
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 }
 
 TEST_CASE("Structured regular volume multiple attributes",
           "[volume_multi_attributes]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   const vec3i dimensions(128);
   const vec3f gridOrigin(0.f);
@@ -34,6 +30,8 @@ TEST_CASE("Structured regular volume multiple attributes",
       VKL_DATA_DEFAULT, VKL_DATA_SHARED_BUFFER};
 
   const std::vector<bool> useAOSLayouts{true, false};
+
+  const vec3i step = vec3i(4);
 
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &aos : useAOSLayouts) {
@@ -56,8 +54,8 @@ TEST_CASE("Structured regular volume multiple attributes",
                                                           aos));
 
         num_attributes(v);
-        sampling_on_vertices_vs_procedural_values_multi(v, 2);
-        gradients_on_vertices_vs_procedural_values_multi(v, 2);
+        sampling_on_vertices_vs_procedural_values_multi(v, step);
+        gradients_on_vertices_vs_procedural_values_multi(v, step);
 
         for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
           test_stream_sampling(v, i);
@@ -71,4 +69,6 @@ TEST_CASE("Structured regular volume multiple attributes",
       }
     }
   }
+
+  shutdownOpenVKL();
 }

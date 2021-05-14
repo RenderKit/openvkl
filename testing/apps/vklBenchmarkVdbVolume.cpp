@@ -1,13 +1,13 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
-#include "openvkl_testing.h"
 #include "benchmark_suite/volume.h"
+#include "openvkl_testing.h"
 
 using namespace openvkl::testing;
 using namespace rkcommon::utility;
-using openvkl::testing::WaveletVdbVolume;
+using openvkl::testing::WaveletVdbVolumeFloat;
 
 /*
  * VDB volume wrapper.
@@ -28,10 +28,10 @@ struct Vdb
 
   Vdb()
   {
-    volume =
-        rkcommon::make_unique<WaveletVdbVolume>(128, vec3f(0.f), vec3f(1.f));
+    volume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
+        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f));
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -54,24 +54,19 @@ struct Vdb
     return vklSampler;
   }
 
-  std::unique_ptr<WaveletVdbVolume> volume;
+  std::unique_ptr<WaveletVdbVolumeFloat> volume;
   VKLVolume vklVolume{nullptr};
   VKLSampler vklSampler{nullptr};
 };
 
-
-
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Vdb<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Vdb<VKL_FILTER_TRILINEAR>>();
+  registerVolumeBenchmarks<Vdb<VKL_FILTER_TRICUBIC>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))
@@ -79,7 +74,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

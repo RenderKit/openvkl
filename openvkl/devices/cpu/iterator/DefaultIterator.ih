@@ -1,0 +1,60 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Iterator.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+struct ValueSelector;
+struct ValueRanges;
+struct Volume;
+
+/*
+ * Add a pointer of this type as the first member in your interval iterator
+ * state struct to make it usable with the default hit iterator.
+ */
+typedef void (*uniform IterateIntervalFunc)(
+    const int *uniform imask,
+    void *uniform _self,
+    void *uniform _interval,
+    const uniform ValueRanges &valueRanges,
+    const uniform bool elementaryCellIteration,
+    uniform int *uniform _result);
+
+/*
+ * Default iterators share this state as they represent iteration along
+ * a ray.
+ */
+struct DefaultIntervalIterator
+{
+  /* Enable the default hit iterator. */
+  IterateIntervalFunc iterateInterval;
+  uniform bool elementaryCellIterationSupported;
+
+  ValueSelector *uniform valueSelector;
+
+  uniform box1f valueRange;  // value range of the full volume
+  float nominalIntervalLength;
+
+  box1f boundingBoxTRange;
+  Interval currentInterval;
+};
+
+struct DefaultHitIterator
+{
+  Sampler *uniform sampler;
+  ValueSelector *uniform valueSelector;
+
+  vec3f origin;
+  vec3f direction;
+  float time;
+
+  // The interval iterator that we use.
+  void *uniform intervalIteratorState;
+
+  // Current iteration state.
+  Interval currentInterval;
+};
+

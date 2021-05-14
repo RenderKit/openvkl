@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
@@ -30,7 +30,7 @@ struct Structured
     volume = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
         vec3i(128), vec3f(0.f), vec3f(1.f));
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -62,11 +62,7 @@ struct Structured
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Structured<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Structured<VKL_FILTER_TRILINEAR>>();
@@ -77,7 +73,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

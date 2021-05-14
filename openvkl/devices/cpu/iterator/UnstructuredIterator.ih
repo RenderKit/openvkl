@@ -1,0 +1,50 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Iterator.ih"
+#include "DefaultIterator.ih"
+#include "../volume/UnstructuredSamplerBase.ih"
+#include "../volume/UnstructuredVolume.ih"
+#include "../value_selector/ValueSelector.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+struct ValueSelector;
+
+struct UnstructuredTraversalStatePublic
+{
+  uint64 node;  // can't export structs with varying pointers
+  uint32 bitstack;
+};
+
+struct UnstructuredTraversalState
+{
+  uniform Node *node;
+  uint32 bitstack;
+};
+
+inline uniform UnstructuredTraversalState make_UnstructuredTraversalState(
+    uniform Node *uniform node, const uniform uint32 bitstack)
+{
+  uniform UnstructuredTraversalState uts;
+  uts.node     = node;
+  uts.bitstack = bitstack;
+  return uts;
+}
+
+struct UnstructuredIterator
+{
+  /* Enable the default hit iterator. */
+  IterateIntervalFunc iterateInterval;
+  uniform bool elementaryCellIterationSupported;
+
+  UnstructuredSamplerBase *uniform sampler;
+  vec3f origin;
+  vec3f direction;
+  box1f tRange;
+  ValueSelector *uniform valueSelector;
+
+  UnstructuredTraversalStatePublic traversalState;
+};

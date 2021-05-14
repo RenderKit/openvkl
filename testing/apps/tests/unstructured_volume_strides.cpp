@@ -1,15 +1,11 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "unstructured_volume.h"
 
 TEST_CASE("Unstructured volume strides", "[volume_strides]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   const vec3i dimensions = vec3i(128);
 
@@ -63,4 +59,6 @@ TEST_CASE("Unstructured volume strides", "[volume_strides]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

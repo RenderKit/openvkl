@@ -13,17 +13,13 @@ using namespace openvkl::testing;
 template <typename VOLUME_TYPE>
 inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
 {
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 }
 
 TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   const vec3i dimensions(128);
   const vec3f gridOrigin(0.f);
@@ -34,40 +30,76 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
   const std::vector<bool> useAOSLayouts{true, false};
 
+  const vec3i step = vec3i(4);
+
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &aos : useAOSLayouts) {
-      std::stringstream sectionName;
-      sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
-                                              : "VKL_DATA_SHARED_BUFFER");
+      for (auto filter : {VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC}) {
+        std::stringstream sectionName;
+        sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
+                                                : "VKL_DATA_SHARED_BUFFER");
+        sectionName << " ";
+        sectionName << (filter == VKL_FILTER_TRILINEAR ? "VKL_FILTER_TRILINEAR"
+                                                       : "VKL_FILTER_TRICUBIC");
+        sectionName << " ";
+        sectionName << (aos == true ? "AOS layout" : "SOA layout");
 
-      sectionName << " ";
+        DYNAMIC_SECTION(std::string("half ") + sectionName.str())
+        {
+          std::shared_ptr<ProceduralVdbVolumeMulti> v(
+              generateMultiAttributeVdbVolumeHalf(getOpenVKLDevice(),
+                                                  dimensions,
+                                                  gridOrigin,
+                                                  gridSpacing,
+                                                  filter,
+                                                  dcf,
+                                                  aos));
 
-      sectionName << (aos == true ? "AOS layout" : "SOA layout");
+          num_attributes(v);
+          sampling_on_vertices_vs_procedural_values_multi(v, step);
 
-      DYNAMIC_SECTION(sectionName.str())
-      {
-        std::shared_ptr<ProceduralVdbVolumeMulti> v(
-            generateMultiAttributeVdbVolume(dimensions,
-                                            gridOrigin,
-                                            gridSpacing,
-                                            VKL_FILTER_TRILINEAR,
-                                            dcf,
-                                            aos));
+          // higher gradient tolerance for half due to precision issues
+          gradients_on_vertices_vs_procedural_values_multi(v, step, 0.3f);
 
-        num_attributes(v);
-        sampling_on_vertices_vs_procedural_values_multi(v, 2);
-        gradients_on_vertices_vs_procedural_values_multi(v, 2);
+          for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+            test_stream_sampling(v, i);
+            test_stream_gradients(v, i);
+          }
 
-        for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
-          test_stream_sampling(v, i);
-          test_stream_gradients(v, i);
+          std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+          std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+
+          test_stream_sampling_multi(v, attributeIndices);
         }
 
-        std::vector<unsigned int> attributeIndices(v->getNumAttributes());
-        std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+        DYNAMIC_SECTION(std::string("float ") + sectionName.str())
+        {
+          std::shared_ptr<ProceduralVdbVolumeMulti> v(
+              generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                                   dimensions,
+                                                   gridOrigin,
+                                                   gridSpacing,
+                                                   filter,
+                                                   dcf,
+                                                   aos));
 
-        test_stream_sampling_multi(v, attributeIndices);
+          num_attributes(v);
+          sampling_on_vertices_vs_procedural_values_multi(v, step);
+          gradients_on_vertices_vs_procedural_values_multi(v, step);
+
+          for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+            test_stream_sampling(v, i);
+            test_stream_gradients(v, i);
+          }
+
+          std::vector<unsigned int> attributeIndices(v->getNumAttributes());
+          std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
+
+          test_stream_sampling_multi(v, attributeIndices);
+        }
       }
     }
   }
+
+  shutdownOpenVKL();
 }

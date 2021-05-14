@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -18,7 +18,8 @@ namespace openvkl {
               ,
               VOXEL_TYPE samplingFunction(const vec3f &, float) =
                   samplingNotImplemented,
-              vec3f gradientFunction(const vec3f &, float) = gradientNotImplemented>
+              vec3f gradientFunction(const vec3f &, float) =
+                  gradientNotImplemented>
     struct ProceduralStructuredRegularVolume
         : public ProceduralStructuredVolume<VOXEL_TYPE,
                                             samplingFunction,
@@ -139,6 +140,10 @@ namespace openvkl {
         ProceduralStructuredRegularVolume<unsigned short,
                                           getWaveletValue<unsigned short>,
                                           getWaveletGradient>;
+    using WaveletStructuredRegularVolumeHalf =
+        ProceduralStructuredRegularVolume<half_float::half,
+                                          getWaveletValue<half_float::half>,
+                                          getWaveletGradient>;
     using WaveletStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
                                           getWaveletValue<float>,
@@ -160,6 +165,10 @@ namespace openvkl {
         ProceduralStructuredRegularVolume<unsigned short,
                                           getXYZValue<unsigned short>,
                                           getXYZGradient>;
+    using XYZStructuredRegularVolumeHalf =
+        ProceduralStructuredRegularVolume<half_float::half,
+                                          getXYZValue<half_float::half>,
+                                          getXYZGradient>;
     using XYZStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
                                           getXYZValue<float>,
@@ -171,24 +180,29 @@ namespace openvkl {
 
     using SphereStructuredRegularVolumeUChar =
         ProceduralStructuredRegularVolume<unsigned char,
-                                          getRotatingSphereValue<unsigned char>,
-                                          getRotatingSphereGradient>;
+                                          getWigglingSphereValue<unsigned char>,
+                                          getWigglingSphereGradient>;
     using SphereStructuredRegularVolumeShort =
         ProceduralStructuredRegularVolume<short,
-                                          getRotatingSphereValue<short>,
-                                          getRotatingSphereGradient>;
+                                          getWigglingSphereValue<short>,
+                                          getWigglingSphereGradient>;
     using SphereStructuredRegularVolumeUShort =
-        ProceduralStructuredRegularVolume<unsigned short,
-                                          getRotatingSphereValue<unsigned short>,
-                                          getRotatingSphereGradient>;
+        ProceduralStructuredRegularVolume<
+            unsigned short,
+            getWigglingSphereValue<unsigned short>,
+            getWigglingSphereGradient>;
+    using SphereStructuredRegularVolumeHalf = ProceduralStructuredRegularVolume<
+        half_float::half,
+        getWigglingSphereValue<half_float::half>,
+        getWigglingSphereGradient>;
     using SphereStructuredRegularVolumeFloat =
         ProceduralStructuredRegularVolume<float,
-                                          getRotatingSphereValue<float>,
-                                          getRotatingSphereGradient>;
+                                          getWigglingSphereValue<float>,
+                                          getWigglingSphereGradient>;
     using SphereStructuredRegularVolumeDouble =
         ProceduralStructuredRegularVolume<double,
-                                          getRotatingSphereValue<double>,
-                                          getRotatingSphereGradient>;
+                                          getWigglingSphereValue<double>,
+                                          getWigglingSphereGradient>;
 
     // using type traits to work around Visual Studio compiler templating bugs
     template <typename VOXEL_TYPE>
@@ -220,6 +234,15 @@ namespace openvkl {
       using Wavelet =
           ProceduralStructuredRegularVolume<unsigned short,
                                             getWaveletValue<unsigned short>,
+                                            getWaveletGradient>;
+    };
+
+    template <>
+    struct ProceduralStructuredRegularVolumes<half_float::half>
+    {
+      using Wavelet =
+          ProceduralStructuredRegularVolume<half_float::half,
+                                            getWaveletValue<half_float::half>,
                                             getWaveletGradient>;
     };
 

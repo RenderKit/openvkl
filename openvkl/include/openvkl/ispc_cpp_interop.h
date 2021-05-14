@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ========================================================================== //
@@ -17,6 +17,7 @@
 // Keywords.
 #define VKL_INTEROP_UNIFORM uniform
 #define VKL_INTEROP_CONSTEXPR
+#define VKL_INTEROP_STATIC_ASSERT(condition, message)
 
 // Unified integer typedefs.
 
@@ -40,6 +41,8 @@ typedef unsigned int64 vkl_uint64;
 // Keywords.
 #define VKL_INTEROP_UNIFORM
 #define VKL_INTEROP_CONSTEXPR constexpr
+#define VKL_INTEROP_STATIC_ASSERT(condition, message) \
+  static_assert((condition), message)
 
 // Unified integer typedefs.
 
@@ -79,7 +82,10 @@ inline vkl_uint32 intbits(float value)
 #define __vkl_interop_univary(Macro) Macro(VKL_INTEROP_UNIFORM)
 
 // Initializer lists in struct definitions.
-#define VKL_INITIALIZER_LIST(...) { __VA_ARGS__ }
+#define VKL_INITIALIZER_LIST(...) \
+  {                               \
+    __VA_ARGS__                   \
+  }
 
 // ========================================================================== //
 #endif  // defined(ISPC)

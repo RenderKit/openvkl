@@ -6,6 +6,7 @@
 #include "ManagedObject.h"
 #include "Traits.h"
 #include "openvkl/openvkl.h"
+#include <algorithm>
 
 #ifndef __ISPC_STRUCT_Data1D__
 #define __ISPC_STRUCT_Data1D__
@@ -144,7 +145,15 @@ namespace openvkl {
     using value_type = T;
     using interator  = Iter1D<T>;
 
-    DataT(size_t numItems) : Data(numItems, VKLTypeFor<T>::value) {}
+    explicit DataT(size_t numItems) : Data(numItems, VKLTypeFor<T>::value) {}
+
+    DataT(size_t numItems, const T &value)
+        : Data(numItems, VKLTypeFor<T>::value)
+    {
+      std::fill(reinterpret_cast<T *>(addr),
+                reinterpret_cast<T *>(addr + byteStride * numItems),
+                value);
+    }
 
     Iter1D<T> begin() const
     {
@@ -195,7 +204,7 @@ namespace openvkl {
     }
 
     if (data) {
-      postLogMessage(VKL_LOG_WARNING)
+      postLogMessage(device.ptr, VKL_LOG_WARNING)
           << toString() << " ignoring '" << name
           << "' array with wrong element type (should be "
           << stringFor(VKLTypeFor<T>::value) << ")";

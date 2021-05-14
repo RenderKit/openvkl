@@ -1,9 +1,9 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-// Log levels which can be set on a driver via "logLevel" parameter or
+// Log levels which can be set on a device via "logLevel" parameter or
 // "OPENVKL_LOG_LEVEL" environment variable
 typedef enum
 #if __cplusplus >= 201103L

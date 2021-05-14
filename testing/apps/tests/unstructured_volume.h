@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -30,7 +30,7 @@ inline void scalar_sampling_on_vertices_vs_procedural_values(
           dataCreationFlags,
           byteStride));
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 

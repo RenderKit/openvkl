@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -47,6 +47,8 @@ export void Renderer_setFrameID(void *uniform _self, uniform int frameID)
 export void Renderer_renderPixel(void *uniform _self,
                                  const uniform Scene* uniform scene,
                                  const uniform vec2i &fbDims,
+                                 const uniform vec2i &rangeDims,
+                                 const uniform vec2i &pixelOffset,
                                  const uniform int frameID,
                                  const uniform float accumScale,
                                  const uniform int _taskID)
@@ -55,7 +57,8 @@ export void Renderer_renderPixel(void *uniform _self,
 
   const int pixelID = _taskID * programCount + programIndex;
 
-  vec2i pixel = make_vec2i(pixelID % fbDims.x, pixelID / fbDims.x);
+  vec2i pixel = make_vec2i(pixelOffset.x + (pixelID % rangeDims.x),
+                           pixelOffset.y + (pixelID / rangeDims.x));
 
   if (pixel.x >= fbDims.x)
     return;
@@ -66,25 +69,26 @@ export void Renderer_renderPixel(void *uniform _self,
   Ray ray = Renderer_computeRay(self, screen);
   const vec3f color = self->renderPixel(self, scene, ray, pixel, frameID, fbDims.x);
 
-  float ar = self->accum_r[pixelID];
-  float ag = self->accum_g[pixelID];
-  float ab = self->accum_b[pixelID];
+  const int fbIndex = pixel.x + fbDims.x * pixel.y;
+  float ar = self->accum_r[fbIndex];
+  float ag = self->accum_g[fbIndex];
+  float ab = self->accum_b[fbIndex];
 
   ar += color.x;
   ag += color.y;
   ab += color.z;
 
-  self->accum_r[pixelID] = ar;
-  self->accum_g[pixelID] = ag;
-  self->accum_b[pixelID] = ab;
+  self->accum_r[fbIndex] = ar;
+  self->accum_g[fbIndex] = ag;
+  self->accum_b[fbIndex] = ab;
 
-  self->framebuffer[pixelID] = make_vec3f(ar, ag, ab) * accumScale;
+  self->framebuffer[fbIndex] = make_vec3f(ar, ag, ab) * accumScale;
 
   // linear to sRGB color space conversion
-  self->framebuffer[pixelID] =
-      make_vec3f(pow(self->framebuffer[pixelID].x, 1.f / 2.2f),
-                 pow(self->framebuffer[pixelID].y, 1.f / 2.2f),
-                 pow(self->framebuffer[pixelID].z, 1.f / 2.2f));
+  self->framebuffer[fbIndex] =
+      make_vec3f(pow(self->framebuffer[fbIndex].x, 1.f / 2.2f),
+                 pow(self->framebuffer[fbIndex].y, 1.f / 2.2f),
+                 pow(self->framebuffer[fbIndex].z, 1.f / 2.2f));
 }
 
 export void Renderer_freeRenderer(void *uniform self)

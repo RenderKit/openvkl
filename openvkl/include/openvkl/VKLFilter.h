@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -19,6 +19,8 @@ enum VKLFilter
   // Read the eight voxels surrounding the sample position, and
   // interpolate trilinearly.
   VKL_FILTER_TRILINEAR = 100,
+  // Tricubic interpolation.
+  VKL_FILTER_TRICUBIC = 200,
 };
 
 

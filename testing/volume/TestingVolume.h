@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,11 +8,77 @@
 // rkcommon
 #include "rkcommon/math/range.h"
 #include "rkcommon/math/vec.h"
+// half
+#include "../external/half.hpp"
 
 using namespace rkcommon::math;
 
 namespace openvkl {
   namespace testing {
+
+    struct TemporalConfig
+    {
+      enum Type
+      {
+        Constant,
+        Structured,
+        Unstructured,
+      };
+
+      Type type{Constant};
+      std::vector<float> sampleTime;
+
+      // Threshold for temporal compression on temporally unstructured volumes.
+      // Lossy if > 0, but will remove duplicate samples at 0.
+      bool useTemporalCompression = false;
+      float temporalCompressionThreshold = 0;
+
+      TemporalConfig() = default;
+
+      TemporalConfig(Type type, size_t numSamples)
+          : type(type), sampleTime(equidistantTime(numSamples))
+      {
+        assert(type == Constant || numSamples > 0);
+      }
+
+      explicit TemporalConfig(const std::vector<float> &sampleTime)
+          : type(Unstructured), sampleTime(sampleTime)
+      {
+        assert(!sampleTime.empty());
+      }
+
+      bool isCompatible(const TemporalConfig &other) const
+      {
+        return (type == other.type) &&
+               (sampleTime.size() == other.sampleTime.size()) &&
+               // If two volumes are compressed differently they incompatible!
+               !(useTemporalCompression || other.useTemporalCompression);
+      }
+
+      bool hasTime() const
+      {
+        return type != Constant;
+      }
+
+      size_t getNumSamples() const
+      {
+        return type == Constant ? 1 : sampleTime.size();
+      }
+
+     private:
+      static std::vector<float> equidistantTime(size_t numSamples)
+      {
+        std::vector<float> st(numSamples);
+        // Initialize to {} for numSamples 0, {0} for numSamples 1,
+        // and a regular grid between 0 and 1 for numSamples > 1.
+        const float dt =
+            1.f / static_cast<float>(std::max<size_t>(numSamples, 2) - 1);
+        for (size_t i = 0; i < numSamples; ++i)
+          st[i] = i * dt;
+        return st;
+      }
+    };
+
 
     ///////////////////////////////////////////////////////////////////////////
     // Helper functions ///////////////////////////////////////////////////////
@@ -27,6 +93,8 @@ namespace openvkl {
         return VKL_SHORT;
       } else if (std::is_same<T, unsigned short>::value) {
         return VKL_USHORT;
+      } else if (std::is_same<T, half_float::half>::value) {
+        return VKL_HALF;
       } else if (std::is_same<T, float>::value) {
         return VKL_FLOAT;
       } else if (std::is_same<T, double>::value) {
@@ -45,6 +113,8 @@ namespace openvkl {
         return sizeof(short);
       case VKL_USHORT:
         return sizeof(unsigned short);
+      case VKL_HALF:
+        return sizeof(half_float::half);
       case VKL_FLOAT:
         return sizeof(float);
       case VKL_DOUBLE:
@@ -78,6 +148,8 @@ namespace openvkl {
         return computeValueRange<short>(data, numValues);
       else if (dataType == VKL_USHORT)
         return computeValueRange<unsigned short>(data, numValues);
+      else if (dataType == VKL_HALF)
+        return computeValueRange<half_float::half>(data, numValues);
       else if (dataType == VKL_FLOAT)
         return computeValueRange<float>(data, numValues);
       else if (dataType == VKL_DOUBLE)
@@ -97,14 +169,14 @@ namespace openvkl {
       virtual ~TestingVolume();
 
       void release();
-      VKLVolume getVKLVolume();
+      VKLVolume getVKLVolume(VKLDevice device);
 
       // returns an application-side computed value range, for comparison with
       // vklGetValueRange() results
       virtual range1f getComputedValueRange() const = 0;
 
      protected:
-      virtual void generateVKLVolume() = 0;
+      virtual void generateVKLVolume(VKLDevice device) = 0;
 
       VKLVolume volume{nullptr};
     };
@@ -124,10 +196,10 @@ namespace openvkl {
       }
     }
 
-    inline VKLVolume TestingVolume::getVKLVolume()
+    inline VKLVolume TestingVolume::getVKLVolume(VKLDevice device)
     {
       if (!volume) {
-        generateVKLVolume();
+        generateVKLVolume(device);
       }
 
       return volume;

@@ -13,12 +13,13 @@ ifneq "$(PDOK)" "1"
   $(error You need at least pandoc v2.0)
 endif
 
-all: www doc
+all: www doc spec
 www: $(webpages) www/stylesheet.css $(webimages)
 wwwsync: www
 doc: ../README.md
+spec: tmp/openvkl-spec.rst
 
-.PHONY: all www wwwsync doc clean
+.PHONY: all www wwwsync doc clean spec
 
 tmp/version: ../CMakeLists.txt
 	sed -n -e "s/^project(openvkl VERSION \(.*\) LANGUAGES.*)/\1/p" $< | tr -d '\n' > $@
@@ -29,6 +30,9 @@ tmp/%.md: %.md tmp/version
 	$(replace_version)
 
 tmp/links.md: links.md
+
+tmp/images_web.md: images.md
+	sed -e "s@: @: https://openvkl.github.io/@" $< > $@
 
 changelog.md:
 	ln -s ../CHANGELOG.md $@
@@ -44,6 +48,18 @@ wwwdir:
 $(process_version) tmp/version: | tmpdir
 tmpdir:
 	@mkdir -p tmp
+
+
+## ----------------------------------------------------------------------------
+## Spec
+## ---------------------------------------------------------------------------
+
+tmp/api_spec.md: api.md images.md tmp/links.md
+	$(PANDOC) $+ -t markdown-fenced_code_attributes -o $@
+
+tmp/openvkl-spec.rst: tmp/api_spec.md
+	$(PANDOC) --wrap=none --email-obfuscation=none -f markdown $+ -V select_$(basename $(@F)) --to rst -o $@
+	rst2html tmp/openvkl-spec.rst tmp/openvkl-spec.html
 
 ## ----------------------------------------------------------------------------
 ## Webpages
@@ -94,14 +110,14 @@ endif
 ## Markdown
 ## ----------------------------------------------------------------------------
 
-# Pandoc doesn't convert the alt text of an image to a caption in markdown, so we need to do it manually
-convert_image_alt_to_caption = perl -0pe 's/!\[((?:\[.*?\]|.)+?)\]\((.*?)\)/![]\(\2)\n\1/sg'
-
-tmp/api.md: api.md tmp/links.md
+tmp/api.md: api.md tmp/links.md tmp/images_web.md
 	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
 
-../README.md: tmp/readme_head.md overview.md changelog.md support.md tmp/api.md examples.md compilation.md related_projects.md tmp/links.md
-	$(PANDOC) $+ -t gfm | $(convert_image_alt_to_caption) > $@
+tmp/examples.md: examples.md tmp/links.md tmp/images_web.md
+	$(PANDOC) $+ --indented-code-classes=cpp -t markdown-fenced_code_attributes -o $@
+
+../README.md: tmp/readme_head.md overview.md changelog.md support.md tmp/api.md tmp/examples.md compilation.md related_projects.md tmp/links.md
+	$(PANDOC) $+ -t gfm > $@
 
 ## ----------------------------------------------------------------------------
 ## Clean

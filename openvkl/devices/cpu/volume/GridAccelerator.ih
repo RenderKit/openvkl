@@ -1,0 +1,43 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../iterator/Iterator.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+struct GridAcceleratorIterator;
+struct SharedStructuredVolume;
+
+struct GridAccelerator
+{
+  uniform vec3i bricksPerDimension;
+  uniform size_t cellCount;
+  box1f *uniform cellValueRanges;
+  SharedStructuredVolume *uniform volume;
+};
+
+GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
+
+void GridAccelerator_Destructor(GridAccelerator *uniform accelerator);
+
+bool GridAccelerator_nextCell(const GridAccelerator *uniform accelerator,
+                              const varying GridAcceleratorIterator *uniform
+                                  iterator,
+                              varying vec3i &cellIndex,
+                              varying box1f &cellTRange);
+
+uniform bool GridAccelerator_nextCell(
+    const GridAccelerator *uniform accelerator,
+    const uniform GridAcceleratorIterator *uniform iterator,
+    uniform vec3i &cellIndex,
+    uniform box1f &cellTRange);
+
+void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
+                                       const varying vec3i &cellIndex,
+                                       varying box1f &valueRange);
+
+void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
+                                       const uniform vec3i &cellIndex,
+                                       uniform box1f &valueRange);

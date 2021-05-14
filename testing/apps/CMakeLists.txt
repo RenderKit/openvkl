@@ -98,7 +98,7 @@ endif()
 if (BUILD_TESTING)
   include_directories_ispc(
     ${PROJECT_SOURCE_DIR}/openvkl/include
-    ${PROJECT_SOURCE_DIR}/openvkl/drivers/ispc
+    ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu
     ${RKCOMMON_INCLUDE_DIRS}
   )
 
@@ -134,20 +134,23 @@ if (BUILD_TESTING)
     tests/amr_volume_value_range.cpp
     tests/vdb_volume.cpp
     tests/vdb_volume_multi.cpp
+    tests/vdb_volume_motion_blur.cpp
+    tests/vdb_volume_inner_node_observer.cpp
     tests/particle_volume_sampling.cpp
     tests/particle_volume_gradients.cpp
     tests/particle_volume_value_range.cpp
     tests/particle_volume_interval_iterator.cpp
+    tests/multi_device.cpp
   )
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
 
-  target_link_libraries(vklTests PRIVATE openvkl_testing openvkl_module_ispc_driver)
+  target_link_libraries(vklTests PRIVATE openvkl_testing openvkl_module_cpu_device)
 
   # Needed for SIMD conformance tests
-  foreach(TARGET_NAME "openvkl_module_ispc_driver_4"
-                      "openvkl_module_ispc_driver_8"
-                      "openvkl_module_ispc_driver_16")
+  foreach(TARGET_NAME "openvkl_module_cpu_device_4"
+                      "openvkl_module_cpu_device_8"
+                      "openvkl_module_cpu_device_16")
     if (TARGET ${TARGET_NAME})
       target_link_libraries(vklTests PRIVATE ${TARGET_NAME})
     endif()

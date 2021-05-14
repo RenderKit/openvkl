@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DensityPathTracer.h"
@@ -37,6 +37,7 @@ namespace openvkl {
       Renderer::commit();
 
       time                  = getParam<float>("time", 0.f);
+      shutter               = getParam<float>("shutter", 0.f);
       motionBlur            = getParam<bool>("motionBlur", false);
       sigmaTScale           = getParam<float>("sigmaTScale", 1.f);
       sigmaSScale           = getParam<float>("sigmaSScale", 1.f);
@@ -45,6 +46,7 @@ namespace openvkl {
 
       ispc::DensityPathTracer_set(ispcEquivalent,
                                   time,
+                                  shutter,
                                   motionBlur,
                                   sigmaTScale,
                                   sigmaSScale,
@@ -53,7 +55,7 @@ namespace openvkl {
     }
 
     bool DensityPathTracer::sampleWoodcock(RNG &rng,
-                                           const Scene& scene,
+                                           const Scene &scene,
                                            const Ray &ray,
                                            const range1f &hits,
                                            float &t,
@@ -76,8 +78,11 @@ namespace openvkl {
         }
 
         const vec3f c = ray.org + t * ray.dir;
-        const float time =
-            motionBlur ? randomNumbers2.x * this->time : this->time;
+        float time    = this->time;
+        if (motionBlur) {
+          time = time + (randomNumbers2.x - 0.5f) * this->shutter;
+        }
+        time   = clamp(time, 0.f, 1.f);
         sample = vklComputeSample(
             scene.sampler, (const vkl_vec3f *)&c, scene.attributeIndex, time);
 
@@ -94,17 +99,15 @@ namespace openvkl {
       return true;
     }
 
-    void DensityPathTracer::integrate(RNG &rng,
-                                      const Scene& scene,
-                                      Ray &ray,
-                                      vec3f &Le,
-                                      int scatterIndex)
+    void DensityPathTracer::integrate(
+        RNG &rng, const Scene &scene, Ray &ray, vec3f &Le, int scatterIndex)
     {
       // initialize emitted light to 0
       Le = vec3f(0.f);
 
       const auto volumeBounds = vklGetBoundingBox(scene.volume);
-      ray.t = intersectRayBox(ray.org, ray.dir, *reinterpret_cast<const box3f*>(&volumeBounds));
+      ray.t                   = intersectRayBox(
+          ray.org, ray.dir, *reinterpret_cast<const box3f *>(&volumeBounds));
       if (ray.t.empty())
         return;
 
@@ -134,11 +137,7 @@ namespace openvkl {
       scatteringRay.dir = uniformSampleSphere(1.f, rng.getFloats());
 
       vec3f inscatteredLe;
-      integrate(rng,
-                scene,
-                scatteringRay,
-                inscatteredLe,
-                scatterIndex + 1);
+      integrate(rng, scene, scatteringRay, inscatteredLe, scatterIndex + 1);
 
       const vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);
 
@@ -148,7 +147,9 @@ namespace openvkl {
       Le = Le + sigmaSSample * inscatteredLe;
     }
 
-    vec3f DensityPathTracer::renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID)
+    vec3f DensityPathTracer::renderPixel(const Scene &scene,
+                                         Ray &ray,
+                                         const vec4i &sampleID)
     {
       RNG rng(sampleID.z, (sampleID.w * sampleID.y) + sampleID.x);
       vec3f Le;

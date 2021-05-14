@@ -4,7 +4,7 @@
 variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
-  OPENVKL_RELEASE_PACKAGE_VERSION: "0.12.1"
+  OPENVKL_RELEASE_PACKAGE_VERSION: "0.13.0"
   MACOSX_DEPLOYMENT_TARGET: "10.13"
 
 stages:
@@ -59,7 +59,7 @@ stages:
 .job_template: &base_functional_test_job
   stage: test
   script:
-    - ./build/openvkl/build/vklTests # NOTE(jda) - base this on install later
+    - ./build/openvkl/build/vklTests --durations yes
 
 .job_template: &test_functional_job_docker
   <<: *base_functional_test_job
@@ -114,6 +114,18 @@ build-centos8:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   script:
   - gitlab/build.sh -G Ninja
+
+# uses a newer CMake which allows OpenVDB to build
+build-centos8-module-cmake:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  script:
+    - module use $SHARED_MODULES_PATH
+    - module load cmake
+    - gitlab/build.sh -G Ninja
+  tags:
+    - docker
+    - modules
 
 build-ubuntu16.04:
   <<: *build_job_docker
@@ -171,7 +183,7 @@ build-arch-TBB2021:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
-    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH=""
 
 build-macOS:
   <<: *base_build_job
@@ -186,7 +198,7 @@ build-macOS-TBB2021:
   <<: *base_build_job
   stage: build
   script:
-    - gitlab/build.sh -D TBB_VERSION=2021.1.1 -D TBB_HASH=""
+    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH=""
   tags:
     - osx
     - clang
@@ -206,7 +218,7 @@ build-windows-msvc15:
 build-windows-msvc15-TBB2021:
   stage: build
   script:
-    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.1.1"' '"-DTBB_HASH="""'
+    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.2.0"' '"-DTBB_HASH="""'
   tags:
     - msvc15
     - win10
@@ -244,12 +256,18 @@ test-functional-centos8:
   needs:
     - build-centos8
 
+test-functional-centos8-module-cmake:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos8
+  needs:
+    - build-centos8-module-cmake
+
 test-functional-ubuntu16.04:
   <<: *test_functional_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu16.04
 
@@ -258,7 +276,7 @@ test-functional-ubuntu18.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu18.04
 
@@ -267,7 +285,7 @@ test-functional-ubuntu20.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   script:
     - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu20.04
 
@@ -317,7 +335,7 @@ test-functional-macOS:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-macOS-TBB2021:
   <<: *base_functional_test_job
@@ -328,7 +346,7 @@ test-functional-macOS-TBB2021:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests
+    - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-windows-msvc15:
   <<: *base_functional_test_job
@@ -354,6 +372,8 @@ test-functional-windows-msvc15-TBB2021:
 
 # All pipelines have these manual benchmark jobs - one for all benchmarks,
 # plus one job for each suite.
+
+# vis-perf-x8280-1
 
 .job_template: &manual_benchmark_x8280-1
   <<: *base_benchmark_job
@@ -391,9 +411,47 @@ example-benchmark-x8280-1:
   variables:
     BENCHMARK_SUITE: ^ExampleRenderers$
 
-# Another benchmark job meant for scheduled (nightly, weekly, ...) builds.
+# vis-perf-a-1
+
+.job_template: &manual_benchmark_a-1
+  <<: *base_benchmark_job
+  when: manual
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-perf-a-1
+
+benchmark-a-1:
+  <<: *manual_benchmark_a-1
+
+structured-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolume$
+
+structured-multi-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+
+vdb-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolume$
+
+vdb-multi-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^VDBVolumeMulti$
+
+example-benchmark-a-1:
+  <<: *manual_benchmark_a-1
+  variables:
+    BENCHMARK_SUITE: ^ExampleRenderers$
+
+# Benchmark jobs meant for scheduled (nightly, weekly, ...) builds.
 # The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
-# BENCHMARK_MIN_TIME_SECONDS to configure the benchmark run time.
+# environment variables to configure the benchmark behavior.
 benchmark-x8280-1-schedule:
   <<: *base_benchmark_job
   only:
@@ -403,6 +461,16 @@ benchmark-x8280-1-schedule:
     - build-centos7-icc
   tags:
     - vis-perf-x8280-1
+
+benchmark-a-1-schedule:
+  <<: *base_benchmark_job
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-perf-a-1
 
 ## KW Jobs ##
 
@@ -552,5 +620,5 @@ av:
   needs: [release-linux-icc, release-macOS, release-windows]
   script:
     - freshclam | tee -a /tmp/av_scan.log
-    - clamscan -va --max-filesize=256M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
+    - clamscan -va --max-filesize=1024M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
     - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log

@@ -1,0 +1,20 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "ValueRanges.ih"
+
+struct ValueSelector
+{
+  void *uniform volume;
+
+  uniform ValueRanges ranges;
+
+  uniform int numValues;
+  float *uniform values;
+
+  // value ranges for the discrete values aboved; used to leverage common
+  // range-based interval iteration functionality
+  uniform ValueRanges valuesRanges;
+};

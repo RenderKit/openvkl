@@ -44,7 +44,7 @@ inline void test_scalar_and_vector_gradients(
   AlignedVector<float> objectCoordinatesSOA;
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 4);
-  float times_4[4] = {time};
+  float times_4[4]     = {time};
   vkl_vvec3f4 gradients_4;
   vklComputeGradient4(valid.data(),
                       sampler,
@@ -65,7 +65,7 @@ inline void test_scalar_and_vector_gradients(
 
   objectCoordinatesSOA = AOStoSOA_vec3f(objectCoordinatesVector, 16);
   vkl_vvec3f16 gradients_16;
-  float times_16[16]   = {time};
+  float times_16[16] = {time};
   vklComputeGradient16(valid.data(),
                        sampler,
                        (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
@@ -89,18 +89,27 @@ inline void test_scalar_and_vector_gradients(
 // applicable to procedural structured and VDB volumes
 template <typename VOLUME_TYPE>
 inline void gradients_on_vertices_vs_procedural_values_multi(
-    std::shared_ptr<VOLUME_TYPE> v, vec3i step = vec3i(1))
+    std::shared_ptr<VOLUME_TYPE> v,
+    vec3i step              = vec3i(1),
+    float gradientTolerance = 0.1f)
 {
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
-  multidim_index_sequence<3> mis(v->getDimensions() / step);
+  constexpr int filterRadius = 2;
+  multidim_index_sequence<3> mis((v->getDimensions() - 2 * filterRadius) /
+                                 step);
 
   for (unsigned int attributeIndex = 0; attributeIndex < v->getNumAttributes();
        attributeIndex++) {
     for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
+      const auto offsetWithStep = offset * step + filterRadius;
+      if (offsetWithStep.x + filterRadius >= v->getDimensions().x ||
+          offsetWithStep.y + filterRadius >= v->getDimensions().y ||
+          offsetWithStep.z + filterRadius >= v->getDimensions().z) {
+        continue;
+      }
 
       vec3f objectCoordinates =
           v->transformLocalToObjectCoordinates(offsetWithStep);
@@ -120,7 +129,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
       test_scalar_and_vector_gradients(vklSampler,
                                        objectCoordinates,
                                        proceduralGradient,
-                                       0.1f,
+                                       gradientTolerance,
                                        attributeIndex);
     }
   }
@@ -132,7 +141,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
                                   const unsigned int attributeIndex = 0,
                                   const float time                  = 0.f)
 {
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 

@@ -1,0 +1,331 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+#include "VdbSampler_leafHandler.ih"
+
+#include "VdbLeafAccessObserver.ih"
+#include "openvkl_vdb/VdbSamplerDispatchInner.ih"
+
+/*
+ * This file forces a lot of inlining for maximum run time performance, which
+ * can lead to excessive compile times.
+ *
+ * The macro below creates a noinline barrier for functions in
+ * VdbSamplerDispatchInner.ih. This can improve compile times significantly.
+ *
+ * The definition should be commented out again before merging.
+ */
+
+#if defined(VDB_SAMPLER_DISPATCH_INNER_NOINLINE)
+#warning "VDB_SAMPLER_DISPATCH_INNER_NOINLINE is set."
+
+noinline void VdbSampler_dispatchInner_uniform_uniform(
+    const VdbSampler *uniform sampler,
+    const uniform uint64 nodeIndex,
+    const uniform vec3ui &domainOffset,
+    uniform uint64 &voxel)
+{
+  VdbSampler_dispatchInner_uniform_uniform_0(
+      sampler, nodeIndex, domainOffset, voxel);
+}
+
+noinline void VdbSampler_dispatchInner_uniform_varying(
+    const VdbSampler *uniform sampler,
+    const uniform uint64 nodeIndex,
+    const vec3ui &domainOffset,
+    varying uint64 &voxel)
+{
+  VdbSampler_dispatchInner_uniform_varying_0(
+      sampler, nodeIndex, domainOffset, voxel);
+}
+
+noinline void VdbSampler_dispatchInner_varying_varying(
+    const VdbSampler *uniform sampler,
+    const uint64 nodeIndex,
+    const vec3ui &domainOffset,
+    uint64 &voxel)
+{
+  VdbSampler_dispatchInner_varying_varying_0(
+      sampler, nodeIndex, domainOffset, voxel);
+}
+
+#else
+
+#define VdbSampler_dispatchInner_uniform_uniform \
+  VdbSampler_dispatchInner_uniform_uniform_0
+
+#define VdbSampler_dispatchInner_uniform_varying \
+  VdbSampler_dispatchInner_uniform_varying_0
+
+#define VdbSampler_dispatchInner_varying_varying \
+  VdbSampler_dispatchInner_varying_varying_0
+
+#endif
+
+// ---------------------------------------------------------------------------
+// Find the origin of the leaf node containing domainOffset.
+// Note: Performance is significantly better when these functions return
+//       the leaf origin as opposed to having a reference parameter.
+// ---------------------------------------------------------------------------
+
+inline uniform vec3ui
+VdbSampler_toLeafOrigin(const uniform vec3ui &domainOffset)
+{
+  static const uniform uint32 originMask =
+      ~(((uniform uint32)(VKL_VDB_RES_LEAF - 1)));
+  return make_vec3ui(domainOffset.x & originMask,
+                     domainOffset.y & originMask,
+                     domainOffset.z & originMask);
+}
+
+inline vec3ui VdbSampler_toLeafOrigin(const vec3ui &domainOffset)
+{
+  static const uniform uint32 originMask =
+      ~(((uniform uint32)(VKL_VDB_RES_LEAF - 1)));
+  return make_vec3ui(domainOffset.x & originMask,
+                     domainOffset.y & originMask,
+                     domainOffset.z & originMask);
+}
+
+// ---------------------------------------------------------------------------
+// Map the given index space coordinate to a (root-relative) domain offset.
+// Note that we do not check if the ic-rootOrigin is positive here; instead
+// we rely on the fact that negative numbers in the subtraction below will be
+// mapped very large values in the conversion.
+// ---------------------------------------------------------------------------
+
+inline uniform vec3ui VdbSampler_toDomainOffset(const uniform vec3i &indexCoord,
+                                                const uniform vec3i &rootOrigin)
+{
+  return make_vec3ui(indexCoord.x - rootOrigin.x,
+                     indexCoord.y - rootOrigin.y,
+                     indexCoord.z - rootOrigin.z);
+}
+
+inline vec3ui VdbSampler_toDomainOffset(const vec3i &indexCoord,
+                                        const uniform vec3i &rootOrigin)
+{
+  return make_vec3ui(indexCoord.x - rootOrigin.x,
+                     indexCoord.y - rootOrigin.y,
+                     indexCoord.z - rootOrigin.z);
+}
+
+// ---------------------------------------------------------------------------
+
+inline uniform bool VdbSampler_isInDomain(const uniform vec3ui &domainOffset)
+{
+  return domainOffset.x < VKL_VDB_RES_0 && domainOffset.y < VKL_VDB_RES_0 &&
+         domainOffset.z < VKL_VDB_RES_0;
+}
+
+inline bool VdbSampler_isInDomain(const vec3ui &domainOffset)
+{
+  return domainOffset.x < VKL_VDB_RES_0 && domainOffset.y < VKL_VDB_RES_0 &&
+         domainOffset.z < VKL_VDB_RES_0;
+}
+
+// ---------------------------------------------------------------------------
+// Clip the index space coordinate to the grid bounding box, and traverse
+// the hierarchy to find the correct voxel.
+// ---------------------------------------------------------------------------
+
+// Uniform traversal.
+inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
+                                const uniform vec3i &ic,
+                                uniform uint64 &voxel,
+                                uniform vec3ui &domainOffset)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  voxel        = vklVdbVoxelMakeEmpty();
+  domainOffset = VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
+  if (VdbSampler_isInDomain(domainOffset)) {
+    const uniform vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
+    VdbSampler_dispatchInner_uniform_uniform(sampler, 0ul, leafOrigin, voxel);
+  }
+}
+
+// Varying traversal.
+inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
+                                const vec3i &ic,
+                                uint64 &voxel,
+                                vec3ui &domainOffset)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  voxel        = vklVdbVoxelMakeEmpty();
+  domainOffset = VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
+  if (VdbSampler_isInDomain(domainOffset)) {
+    const vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
+    uniform vec3ui uniformLeafOrigin;
+    if (reduce_equal(leafOrigin.x, &uniformLeafOrigin.x) &&
+        reduce_equal(leafOrigin.y, &uniformLeafOrigin.y) &&
+        reduce_equal(leafOrigin.z, &uniformLeafOrigin.z)) {
+      // All queries are in the same leaf node. Do uniform traversal!
+      uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
+      VdbSampler_dispatchInner_uniform_uniform(
+          sampler, 0ul, uniformLeafOrigin, voxelU);
+      voxel = voxelU;
+    } else {
+      // Varying traversal.
+      VdbSampler_dispatchInner_uniform_varying(sampler, 0ul, leafOrigin, voxel);
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Given a domain relative index space coordinate and a voxel code, sample the
+// leaf node.
+// ---------------------------------------------------------------------------
+
+// These helper functions handle all legal combinations of sampling uniform /
+// varying voxels at uniform / varying offsets, and are used just below.
+#define template_VdbSampler_sample_inner(univaryVoxel, univaryOffset)          \
+  inline univaryOffset float VdbSampler_sample_inner(                          \
+      const VdbSampler *uniform sampler,                                       \
+      const univaryVoxel uint64 &voxel,                                        \
+      const univaryOffset vec3ui &domainOffset,                                \
+      const univaryOffset float &time,                                         \
+      const uniform uint32 attributeIndex)                                     \
+  {                                                                            \
+    univaryOffset float sample  = 0.f;                                         \
+    const VdbGrid *uniform grid = sampler->grid;                               \
+                                                                               \
+    if (vklVdbVoxelIsLeafPtr(voxel)) {                                         \
+      const uniform vkl_uint32 voxelType =                                     \
+          sampler->grid->attributeTypes[attributeIndex];                       \
+      const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);    \
+      __vkl_vdb_leaf_handler(                                                  \
+          sample = VdbSampler_sample_##univaryVoxel##_##univaryOffset,         \
+          voxelType,                                                           \
+          vklVdbVoxelLeafGetFormat(voxel),                                     \
+          grid->allLeavesConstant,                                             \
+          vklVdbVoxelLeafGetTemporalFormat(voxel),                             \
+          grid,                                                                \
+          leafIndex,                                                           \
+          vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),             \
+          domainOffset,                                                        \
+          time)                                                                \
+    } else if (vklVdbVoxelIsError(voxel)) {                                    \
+      univaryVoxel uint8 level;                                                \
+      univaryVoxel uint32 voxelOffset;                                         \
+      vklVdbVoxelErrorGet(voxel, level, voxelOffset);                          \
+      const univaryVoxel range1f valueRange =                                  \
+          grid->levels[level]                                                  \
+              .valueRange[voxelOffset * grid->numAttributes + attributeIndex]; \
+      sample = 0.5f * (valueRange.lower + valueRange.upper);                   \
+    }                                                                          \
+    return sample;                                                             \
+  }
+
+template_VdbSampler_sample_inner(varying, varying);
+template_VdbSampler_sample_inner(uniform, varying);
+template_VdbSampler_sample_inner(uniform, uniform);
+#undef template_VdbSampler_sample_inner
+
+// Uniform sampling.
+// Note: This function may seem unnecessary in the uniform path. However,
+// keeping this thin wrapper ensures that downstream code is as uniform as
+// possible.
+inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
+                                       const uniform uint64 voxel,
+                                       const uniform vec3ui &domainOffset,
+                                       const uniform float time,
+                                       const uniform uint32 attributeIndex)
+{
+  return VdbSampler_sample_inner(
+      sampler, voxel, domainOffset, time, attributeIndex);
+}
+
+// Varying sampling.
+inline float VdbSampler_sample(const VdbSampler *uniform sampler,
+                               const uint64 &voxel,
+                               const vec3ui &domainOffset,
+                               const float &time,
+                               const uniform uint32 attributeIndex)
+{
+  uniform uint64 uniformVoxel;
+  if (reduce_equal(voxel, &uniformVoxel)) {
+    return VdbSampler_sample_inner(
+        sampler, uniformVoxel, domainOffset, time, attributeIndex);
+  } else {
+    return VdbSampler_sample_inner(
+        sampler, voxel, domainOffset, time, attributeIndex);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Traverse and sample in a single call.
+//
+// This is generally more efficient than calling traverse() and sample()
+// separately if only a single element needs to be looked up.
+// ---------------------------------------------------------------------------
+
+inline uniform float VdbSampler_traverseAndSample(
+    const VdbSampler *uniform sampler,
+    const uniform vec3i &ic,
+    const uniform float time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  const uniform vec3ui domainOffset =
+      VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
+  if (VdbSampler_isInDomain(domainOffset)) {
+    const uniform vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
+
+    uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
+    VdbSampler_dispatchInner_uniform_uniform(sampler, 0ul, leafOrigin, voxelU);
+    return VdbSampler_sample_inner(
+        sampler, voxelU, domainOffset, time, attributeIndex);
+  }
+
+  return 0.f;
+}
+
+inline uniform bool reduce_equal(const vec3ui &v, vec3ui *uniform uv)
+{
+  return reduce_equal(v.x, &(uv->x)) && reduce_equal(v.y, &(uv->y)) &&
+         reduce_equal(v.z, &(uv->z));
+}
+
+inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
+                                          const vec3i &ic,
+                                          const float &time,
+                                          const uniform uint32 attributeIndex)
+{
+  assert(sampler);
+  assert(sampler->grid);
+  assert(sampler->grid->levels[0].numNodes == 1);
+
+  const vec3ui domainOffset =
+      VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
+  if (VdbSampler_isInDomain(domainOffset)) {
+    const vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
+    uniform vec3ui uniformLeafOrigin;
+    if (reduce_equal(leafOrigin, &uniformLeafOrigin)) {
+      // All queries are in the same leaf node. Do uniform traversal!
+      uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
+      VdbSampler_dispatchInner_uniform_uniform(
+          sampler, 0ul, uniformLeafOrigin, voxelU);
+      return VdbSampler_sample_inner(
+          sampler, voxelU, domainOffset, time, attributeIndex);
+    } else {
+      // Varying traversal.
+      uint64 voxel = vklVdbVoxelMakeEmpty();
+      VdbSampler_dispatchInner_uniform_varying(sampler, 0ul, leafOrigin, voxel);
+      return VdbSampler_sample_inner(
+          sampler, voxel, domainOffset, time, attributeIndex);
+    }
+  }
+  return 0.f;
+}

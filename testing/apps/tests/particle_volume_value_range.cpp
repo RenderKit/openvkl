@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -25,7 +25,7 @@ void computed_vs_api_value_range(size_t numParticles,
                                                       clampMaxCumulativeValue,
                                                       estimateValueRanges);
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
   vkl_range1f apiValueRange = vklGetValueRange(vklVolume);
 
@@ -55,11 +55,7 @@ void computed_vs_api_value_range(size_t numParticles,
 
 TEST_CASE("Particle volume value range", "[volume_value_range]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   const size_t numParticles                         = 1000;
   const std::vector<bool> provideWeights            = {true, false};
@@ -80,4 +76,6 @@ TEST_CASE("Particle volume value range", "[volume_value_range]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

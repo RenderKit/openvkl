@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
@@ -39,7 +39,7 @@ struct StructuredMulti
       throw std::runtime_error("inconsistent StructuredMulti numAttributes");
     }
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -70,11 +70,7 @@ struct StructuredMulti
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<StructuredMulti<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<StructuredMulti<VKL_FILTER_TRILINEAR>>();
@@ -85,7 +81,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

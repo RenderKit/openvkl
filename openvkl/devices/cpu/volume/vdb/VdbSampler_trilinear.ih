@@ -1,0 +1,328 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbSampler_stencilDispatch.ih"
+#include "VdbSampler_traverseAndSample.ih"
+
+// ---------------------------------------------------------------------------
+// TRILINEAR interpolation.
+// ---------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// Filter stencils.
+// -----------------------------------------------------------------------------
+
+// Defines required for __vkl_stencil_dispatch
+#define VKL_STENCIL_TRILINEAR_SIZE 8
+#define VKL_STENCIL_TRILINEAR_OFFSETS                                 \
+  {                                                                   \
+    {0, 0, 0}, {0, 0, 1}, {0, 1, 0}, {0, 1, 1}, {1, 0, 0}, {1, 0, 1}, \
+        {1, 1, 0},                                                    \
+    {                                                                 \
+      1, 1, 1                                                         \
+    }                                                                 \
+  }
+
+/*
+ * Compute voxel values for the eight corners required in trilinear
+ * interpolation.
+ * This is used for both sampling and gradient computation!
+ */
+inline void VdbSampler_computeVoxelValuesTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3i &ic,
+    const float &time,
+    const uniform uint32 attributeIndex,
+    float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
+{
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
+    sample[tgtIdx] =
+        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
+  });
+}
+
+/*
+ * Traverse for the eight corners required in trilinear interpolation.
+ */
+inline void VdbSampler_traverseVoxelValuesTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3i &ic,
+    uint64 *uniform voxel,         // Array of VKL_TARGET_WIDTH * 8 elements!
+    vec3ui *uniform domainOffset)  // Array of VKL_TARGET_WIDTH * 8 elements!
+{
+  const float time = 0.f;
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
+    uint64 voxelV;
+    vec3ui domainOffsetV;
+    VdbSampler_traverse(sampler, icDisp, voxelV, domainOffsetV);
+
+    voxel[tgtIdx]        = voxelV;
+    domainOffset[tgtIdx] = domainOffsetV;
+  });
+}
+
+/*
+ * Compute voxel values for the eight corners required in trilinear
+ * interpolation for given pre-traversed voxel and domain offset.
+ */
+inline void VdbSampler_computeVoxelValuesTrilinear(
+    const VdbSampler *uniform sampler,
+    const uint64 *uniform voxel,  // Array of VKL_TARGET_WIDTH * 8 elements!
+    const vec3ui *uniform
+        domainOffset,  // Array of VKL_TARGET_WIDTH * 8 elements!
+    const float &time,
+    const uniform uint32 attributeIndex,
+    float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
+{
+  // Note: We might be able to avoid this dummy variable, but that would
+  // complicate the dispatch macro.
+  const vec3i ic = {0, 0, 0};
+  __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
+    const uint64 voxelV        = voxel[tgtIdx];
+    const vec3ui domainOffsetV = domainOffset[tgtIdx];
+    sample[tgtIdx]             = VdbSampler_sample(
+                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
+  });
+}
+
+/*
+ * Trilinear sampling is a good default for directly visible volumes.
+ * The implementation is optimized to exploit SIMD.
+ */
+inline varying float VdbSampler_interpolateTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                 floor(indexCoordinates.y),
+                                 floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  uniform float sample[VKL_TARGET_WIDTH * 8];
+  VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, sample);
+
+  const varying float *uniform s = (const varying float *uniform) & sample;
+  return lerp(
+      delta.x,
+      lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+      lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+}
+
+inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
+                                            const vec3f &indexCoordinates,
+                                            const float &time,
+                                            const uniform uint32 M,
+                                            const uint32 *uniform
+                                                attributeIndices,
+                                            float *uniform samples)
+{
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                 floor(indexCoordinates.y),
+                                 floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+
+  uniform uint64 voxel[VKL_TARGET_WIDTH * 8];
+  uniform vec3ui domainOffset[VKL_TARGET_WIDTH * 8];
+  VdbSampler_traverseVoxelValuesTrilinear(sampler, ic, voxel, domainOffset);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[VKL_TARGET_WIDTH * 8];
+    VdbSampler_computeVoxelValuesTrilinear(
+        sampler, voxel, domainOffset, time, attributeIndices[a], sample);
+
+    const varying float *uniform s = (const varying float *uniform) & sample;
+    varying float samplesA         = lerp(
+                delta.x,
+                lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+                lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+
+    samples[a * VKL_TARGET_WIDTH + programIndex] = samplesA;
+  }
+}
+
+/*
+ * Uniform path. This allows us to skip the selection magic in the function
+ * above if we know that there is only one query.
+ */
+inline uniform float VdbSampler_interpolateTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 attributeIndex)
+{
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  uniform float sample[8];
+
+  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
+    sample[tgtIdx] =
+        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
+  });
+
+  const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
+  return lerp(delta.x,
+              lerp(delta.y,
+                   lerp(delta.z, sample[0], sample[1]),
+                   lerp(delta.z, sample[2], sample[3])),
+              lerp(delta.y,
+                   lerp(delta.z, sample[4], sample[5]),
+                   lerp(delta.z, sample[6], sample[7])));
+}
+
+inline void VdbSampler_interpolateTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  const uniform vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                         floor(indexCoordinates.y),
+                                         floor(indexCoordinates.z));
+  const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
+
+  uniform uint64 voxel[8];
+  uniform vec3ui domainOffset[8];
+
+  __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
+    uint64 voxelV;
+    vec3ui domainOffsetV;
+    VdbSampler_traverse(sampler, icDisp, voxelV, domainOffsetV);
+
+    voxel[tgtIdx]        = voxelV;
+    domainOffset[tgtIdx] = domainOffsetV;
+  });
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[8];
+
+    __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
+      const uint64 voxelV        = voxel[tgtIdx];
+      const vec3ui domainOffsetV = domainOffset[tgtIdx];
+      sample[tgtIdx]             = VdbSampler_sample(
+                      sampler, voxelV, domainOffsetV, timeDisp, attributeIndices[a]);
+    });
+
+    samples[a] = lerp(delta.x,
+                      lerp(delta.y,
+                           lerp(delta.z, sample[0], sample[1]),
+                           lerp(delta.z, sample[2], sample[3])),
+                      lerp(delta.y,
+                           lerp(delta.z, sample[4], sample[5]),
+                           lerp(delta.z, sample[6], sample[7])));
+  }
+}
+
+inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
+                                            const uniform unsigned int N,
+                                            const vec3f *uniform
+                                                objectCoordinates,
+                                            const float *uniform times,
+                                            const uint32 uniform attributeIndex,
+                                            float *uniform samples)
+{
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
+    samples[i]                   = VdbSampler_interpolateTrilinear(
+                          sampler, indexCoordinates, time, attributeIndex);
+  }
+}
+
+inline void VdbSampler_interpolateTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+
+    const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                   floor(indexCoordinates.y),
+                                   floor(indexCoordinates.z));
+    const vec3f delta = indexCoordinates - make_vec3f(ic);
+    const float time  = times ? times[i] : 0.f;
+
+    uniform uint64 voxel[VKL_TARGET_WIDTH * 8];
+    uniform vec3ui domainOffset[VKL_TARGET_WIDTH * 8];
+    VdbSampler_traverseVoxelValuesTrilinear(sampler, ic, voxel, domainOffset);
+
+    for (uniform unsigned int a = 0; a < M; a++) {
+      uniform float sample[VKL_TARGET_WIDTH * 8];
+      VdbSampler_computeVoxelValuesTrilinear(
+          sampler, voxel, domainOffset, time, attributeIndices[a], sample);
+
+      const varying float *uniform s = (const varying float *uniform) & sample;
+      varying float samplesA         = lerp(
+                  delta.x,
+                  lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+                  lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+
+      samples[i * M + a] = samplesA;
+    }
+  }
+}
+
+/*
+ * Gradients in trilinear fields.
+ */
+inline vec3f VdbSampler_computeGradientTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                 floor(indexCoordinates.y),
+                                 floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  uniform float sample[VKL_TARGET_WIDTH * 8];
+  VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, sample);
+
+  const varying float *uniform s = (const varying float *uniform) & sample;
+
+  vec3f gradient;
+  gradient.x = lerp(delta.y,
+                    lerp(delta.z, s[4] - s[0], s[5] - s[1]),
+                    lerp(delta.z, s[6] - s[2], s[7] - s[3]));
+  gradient.y = lerp(delta.x,
+                    lerp(delta.z, s[2] - s[0], s[3] - s[1]),
+                    lerp(delta.z, s[6] - s[4], s[7] - s[5]));
+  gradient.z = lerp(delta.x,
+                    lerp(delta.y, s[1] - s[0], s[3] - s[2]),
+                    lerp(delta.y, s[5] - s[4], s[7] - s[6]));
+  return gradient;
+}
+
+inline void VdbSampler_computeGradientTrilinear(
+    const VdbSampler *uniform sampler,
+    uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 attributeIndex,
+    vec3f *uniform gradients)
+{
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
+    const vec3f gradient         = VdbSampler_computeGradientTrilinear(
+                sampler, indexCoordinates, time, attributeIndex);
+    // Note: xfmNormal takes inverse!
+    gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
+  }
+}

@@ -17,9 +17,10 @@ namespace openvkl {
     struct ProceduralVdbVolumeMulti : public TestingVolume,
                                       public ProceduralVolumeMulti
     {
-      using Buffers = vdb_util::VdbVolumeBuffers;
+      using Buffers = utility::vdb::VdbVolumeBuffers;
 
       ProceduralVdbVolumeMulti(
+          VKLDevice device,
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
@@ -52,7 +53,7 @@ namespace openvkl {
                                           unsigned int attributeIndex,
                                           float time) const override;
 
-      void generateVKLVolume() override final;
+      void generateVKLVolume(VKLDevice device) override final;
 
       std::unique_ptr<Buffers> buffers;
       vec3i dimensions;
@@ -65,11 +66,14 @@ namespace openvkl {
 
       // leaf data may need to be retained for shared data buffers
       std::vector<std::vector<unsigned char>> leaves;
+      std::vector<std::vector<uint32_t>> indices;
+      std::vector<std::vector<float>> times;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     inline ProceduralVdbVolumeMulti::ProceduralVdbVolumeMulti(
+        VKLDevice device,
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
@@ -91,12 +95,16 @@ namespace openvkl {
         throw std::runtime_error("no provided attribute volumes");
       }
 
+      const TemporalConfig temporalConfig =
+          attributeVolumes[0]->getTemporalConfig();
+
       // verify provided attribute volumes are consistent with the provided
       // parameters
       for (const auto &v : attributeVolumes) {
         bool compatible = (v->getDimensions() == dimensions) &&
                           (v->getGridOrigin() == gridOrigin) &&
-                          (v->getGridSpacing() == gridSpacing);
+                          (v->getGridSpacing() == gridSpacing) &&
+                          temporalConfig.isCompatible(v->getTemporalConfig());
 
         if (!compatible) {
           throw std::runtime_error(
@@ -105,8 +113,27 @@ namespace openvkl {
         }
       }
 
-      buffers = rkcommon::make_unique<Buffers>(
-          std::vector<VKLDataType>(attributeVolumes.size(), VKL_FLOAT));
+      // voxel type and size per attribute
+      std::vector<VKLDataType> voxelTypes;
+      std::vector<size_t> voxelSizes;
+
+      for (const auto &av : attributeVolumes) {
+        voxelTypes.push_back(av->getVoxelType());
+        voxelSizes.push_back(sizeOfVKLDataType(av->getVoxelType()));
+      }
+
+      // voxel size for all attributes combined
+      const size_t voxelSizeSum =
+          std::accumulate(voxelSizes.begin(), voxelSizes.end(), 0);
+
+      // voxel offset for each attribute
+      std::vector<size_t> voxelSizeOffsets;
+      for (size_t a = 0; a < attributeVolumes.size(); ++a) {
+        voxelSizeOffsets.push_back(
+            std::accumulate(voxelSizes.begin(), voxelSizes.begin() + a, 0));
+      }
+
+      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes);
 
       buffers->setIndexToObject(gridSpacing.x,
                                 0,
@@ -140,8 +167,8 @@ namespace openvkl {
         for (int y = 0; y < numLeafNodesIn.y; ++y)
           for (int z = 0; z < numLeafNodesIn.z; ++z) {
             // Buffer for leaf data.
-            leaves.emplace_back(std::vector<unsigned char>(
-                numLeafVoxels * attributeVolumes.size() * sizeof(float)));
+            leaves.emplace_back(
+                std::vector<unsigned char>(numLeafVoxels * voxelSizeSum));
             std::vector<unsigned char> &leaf = leaves.back();
 
             std::vector<range1f> leafValueRanges(attributeVolumes.size());
@@ -158,27 +185,36 @@ namespace openvkl {
 
                   for (size_t a = 0; a < attributeVolumes.size(); ++a) {
                     // Note: column major data!
+                    // Index in bytes
                     uint64_t idx;
 
                     if (useAOSLayout) {
                       idx = (static_cast<uint64_t>(vx) * leafRes * leafRes +
                              static_cast<uint64_t>(vy) * leafRes +
                              static_cast<uint64_t>(vz)) *
-                                attributeVolumes.size() +
-                            a;
+                                voxelSizeSum +
+                            voxelSizeOffsets[a];
                     } else {
-                      idx = a * numLeafVoxels +
-                            static_cast<uint64_t>(vx) * leafRes * leafRes +
-                            static_cast<uint64_t>(vy) * leafRes +
-                            static_cast<uint64_t>(vz);
+                      idx = voxelSizeOffsets[a] * numLeafVoxels +
+                            (static_cast<uint64_t>(vx) * leafRes * leafRes +
+                             static_cast<uint64_t>(vy) * leafRes +
+                             static_cast<uint64_t>(vz)) *
+                                voxelSizes[a];
                     }
 
                     const float fieldValue =
                         computeProceduralValue(samplePosObject, a);
 
-                    float *leafValueTyped =
-                        (float *)(leaf.data() + idx * sizeof(float));
-                    *leafValueTyped = fieldValue;
+                    if (voxelTypes[a] == VKL_HALF) {
+                      half_float::half *leafValueTyped =
+                          (half_float::half *)(leaf.data() + idx);
+                      *leafValueTyped = fieldValue;
+                    } else if (voxelTypes[a] == VKL_FLOAT) {
+                      float *leafValueTyped = (float *)(leaf.data() + idx);
+                      *leafValueTyped       = fieldValue;
+                    } else {
+                      throw std::runtime_error("unsupported voxel type");
+                    }
 
                     leafValueRanges[a].extend(fieldValue);
                   }
@@ -213,12 +249,25 @@ namespace openvkl {
               }
 
               if (allConstant) {
-                std::vector<float> tileValues(attributeVolumes.size());
+                std::vector<unsigned char> tileValues(voxelSizeSum);
                 std::vector<void *> ptrs(attributeVolumes.size());
 
                 for (size_t a = 0; a < attributeVolumes.size(); a++) {
-                  tileValues[a] = leafValueRanges[a].upper;
-                  ptrs[a]       = tileValues.data() + a;
+                  if (voxelTypes[a] == VKL_HALF) {
+                    half_float::half *tileValueTyped =
+                        (half_float::half *)(tileValues.data() +
+                                             voxelSizeOffsets[a]);
+                    *tileValueTyped =
+                        half_float::half(leafValueRanges[a].upper);
+                  } else if (voxelTypes[a] == VKL_FLOAT) {
+                    float *tileValueTyped =
+                        (float *)(tileValues.data() + voxelSizeOffsets[a]);
+                    *tileValueTyped = leafValueRanges[a].upper;
+                  } else {
+                    throw std::runtime_error("unsupported voxel type");
+                  }
+
+                  ptrs[a] = tileValues.data() + voxelSizeOffsets[a];
                 }
 
                 buffers->addTile(leafLevel, nodeOrigin, ptrs);
@@ -229,15 +278,14 @@ namespace openvkl {
 
                 if (useAOSLayout) {
                   for (size_t a = 0; a < attributeVolumes.size(); a++) {
-                    ptrs.push_back(leaf.data() + sizeof(float) * a);
-                    byteStrides.push_back(attributeVolumes.size() *
-                                          sizeof(float));
+                    ptrs.push_back(leaf.data() + voxelSizeOffsets[a]);
+                    byteStrides.push_back(voxelSizeSum);
                   }
                 } else {
                   for (size_t a = 0; a < attributeVolumes.size(); a++) {
                     ptrs.push_back(leaf.data() +
-                                   numLeafVoxels * sizeof(float) * a);
-                    byteStrides.push_back(sizeof(float));
+                                   numLeafVoxels * voxelSizeOffsets[a]);
+                    byteStrides.push_back(voxelSizes[a]);
                   }
                 }
 
@@ -314,10 +362,16 @@ namespace openvkl {
           localCoordinates);
     }
 
-    inline void ProceduralVdbVolumeMulti::generateVKLVolume()
+    inline void ProceduralVdbVolumeMulti::generateVKLVolume(VKLDevice device)
     {
       if (buffers) {
         release();
+
+        if (device != buffers->getVKLDevice()) {
+          throw std::runtime_error(
+              "specified device not compatible with VdbVolumeBuffers device");
+        }
+
         volume = buffers->createVolume(filter);
       }
     }
@@ -326,29 +380,106 @@ namespace openvkl {
     // Procedural volume generation helpers ///////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    inline ProceduralVdbVolumeMulti *generateMultiAttributeVdbVolume(
+    inline ProceduralVdbVolumeMulti *generateMultiAttributeVdbVolumeHalf(
+        VKLDevice device,
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
         VKLFilter filter,
         VKLDataCreationFlags dataCreationFlags,
-        bool useAOSLayout)
+        bool useAOSLayout,
+        TemporalConfig temporalConfig = TemporalConfig())
     {
+      // Not supported for multi attribute, as attributes share temporal config.
+      temporalConfig.useTemporalCompression = false;
+
       std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> volumes;
 
-      volumes.push_back(std::make_shared<WaveletVdbVolume>(
-          dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(
+          std::make_shared<WaveletVdbVolumeHalf>(device,
+                                                 dimensions,
+                                                 gridOrigin,
+                                                 gridSpacing,
+                                                 VKL_FILTER_TRILINEAR,
+                                                 temporalConfig));
+
+      volumes.push_back(std::make_shared<XVdbVolumeHalf>(device,
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_TRILINEAR,
+                                                         temporalConfig));
+
+      volumes.push_back(std::make_shared<YVdbVolumeHalf>(device,
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_TRILINEAR,
+                                                         temporalConfig));
+
+      volumes.push_back(std::make_shared<ZVdbVolumeHalf>(device,
+                                                         dimensions,
+                                                         gridOrigin,
+                                                         gridSpacing,
+                                                         VKL_FILTER_TRILINEAR,
+                                                         temporalConfig));
+
+      return new ProceduralVdbVolumeMulti(device,
+                                          dimensions,
+                                          gridOrigin,
+                                          gridSpacing,
+                                          filter,
+                                          volumes,
+                                          dataCreationFlags,
+                                          useAOSLayout);
+    }
+
+    inline ProceduralVdbVolumeMulti *generateMultiAttributeVdbVolumeFloat(
+        VKLDevice device,
+        const vec3i &dimensions,
+        const vec3f &gridOrigin,
+        const vec3f &gridSpacing,
+        VKLFilter filter,
+        VKLDataCreationFlags dataCreationFlags,
+        bool useAOSLayout,
+        TemporalConfig temporalConfig = TemporalConfig())
+    {
+      // Not supported for multi attribute, as attributes share temporal config.
+      temporalConfig.useTemporalCompression = false;
+
+      std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> volumes;
 
       volumes.push_back(
-          std::make_shared<XVdbVolume>(dimensions, gridOrigin, gridSpacing));
+          std::make_shared<WaveletVdbVolumeFloat>(device,
+                                                  dimensions,
+                                                  gridOrigin,
+                                                  gridSpacing,
+                                                  VKL_FILTER_TRILINEAR,
+                                                  temporalConfig));
 
-      volumes.push_back(
-          std::make_shared<YVdbVolume>(dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<XVdbVolumeFloat>(device,
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_TRILINEAR,
+                                                          temporalConfig));
 
-      volumes.push_back(
-          std::make_shared<ZVdbVolume>(dimensions, gridOrigin, gridSpacing));
+      volumes.push_back(std::make_shared<YVdbVolumeFloat>(device,
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_TRILINEAR,
+                                                          temporalConfig));
 
-      return new ProceduralVdbVolumeMulti(dimensions,
+      volumes.push_back(std::make_shared<ZVdbVolumeFloat>(device,
+                                                          dimensions,
+                                                          gridOrigin,
+                                                          gridSpacing,
+                                                          VKL_FILTER_TRILINEAR,
+                                                          temporalConfig));
+
+      return new ProceduralVdbVolumeMulti(device,
+                                          dimensions,
                                           gridOrigin,
                                           gridSpacing,
                                           filter,

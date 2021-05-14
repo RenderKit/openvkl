@@ -12,7 +12,11 @@ source ~/system_token.sh
 # benchmark configuration
 SOURCE_ROOT=`pwd`
 PROJECT_NAME="Open VKL"
-BENCHMARK_FLAGS="--benchmark_min_time=${BENCHMARK_MIN_TIME_SECONDS:-10}"
+BENCHMARK_FLAGS="--benchmark_repetitions=${BENCHMARK_REPETITIONS:-5}"
+
+# can be used to restrict processes to the first CPU core (so only for
+# single-threaded benchmarks!)
+RESTRICT_TO_CORE0="numactl -C 0 -m 0"
 
 SUITE_REGEX=${BENCHMARK_SUITE:-.*}
 
@@ -51,7 +55,7 @@ if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
 then
   SUBSUITE_NAME="Sampling"
   SUBSUITE_REGEX="Sample"
-  ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   # wait to insert contexts (which will be reused for all subsequent benchmark runs)
   # until first benchmark successfully finishes.
@@ -63,12 +67,12 @@ then
 
   SUBSUITE_NAME="Gradients"
   SUBSUITE_REGEX="Gradient"
-  ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="IntervalIterators"
   SUBSUITE_REGEX="IntervalIterator"
-  ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkStructuredVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 fi
 
@@ -81,19 +85,19 @@ if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
 then
   SUBSUITE_NAME="ScalarSampling"
   SUBSUITE_REGEX="scalar.*Sample"
-  ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   initContext
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="VectorSampling"
   SUBSUITE_REGEX="vector.*Sample"
-  ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="StreamSampling"
   SUBSUITE_REGEX="stream.*Sample"
-  ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkStructuredVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 fi
 
@@ -106,19 +110,19 @@ if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
 then
   SUBSUITE_NAME="Sampling"
   SUBSUITE_REGEX="Sample"
-  ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   initContext
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="Gradients"
   SUBSUITE_REGEX="Gradient"
-  ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="IntervalIterators"
   SUBSUITE_REGEX="IntervalIterator"
-  ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkVdbVolume ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 fi
 
@@ -131,25 +135,27 @@ if [[ $SUITE_NAME =~ $SUITE_REGEX ]]
 then
   SUBSUITE_NAME="ScalarSampling"
   SUBSUITE_REGEX="scalar.*Sample"
-  ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   initContext
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="VectorSampling"
   SUBSUITE_REGEX="vector.*Sample"
-  ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 
   SUBSUITE_NAME="StreamSampling"
   SUBSUITE_REGEX="stream.*Sample"
-  ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
+  ${RESTRICT_TO_CORE0} ./vklBenchmarkVdbVolumeMulti ${BENCHMARK_FLAGS} --benchmark_filter=${SUBSUITE_REGEX} --benchmark_out=results-${SUITE_NAME}-${SUBSUITE_NAME}.json
   benny insert googlebenchmark ./run_context.json ${SUITE_NAME} ${SUBSUITE_NAME} ./results-${SUITE_NAME}-${SUBSUITE_NAME}.json
 fi
 
 ###############################
 # Example renderer benchmarks #
 ###############################
+
+# Note that example renderer benchmarks are multi-threaded
 
 SUITE_NAME="ExampleRenderers"
 if [[ $SUITE_NAME =~ $SUITE_REGEX ]]

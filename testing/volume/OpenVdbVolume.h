@@ -3,10 +3,10 @@
 
 #pragma once
 
-#if OPENVKL_VDB_UTIL_OPENVDB_ENABLED
+#if defined(OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)
 
 #include "TestingVolume.h"
-#include "openvkl/vdb_util/OpenVdbGrid.h"
+#include "openvkl/utility/vdb/OpenVdbGrid.h"
 #include "rkcommon/tasking/AsyncTask.h"
 #include "rkcommon/utility/CodeTimer.h"
 
@@ -17,9 +17,11 @@ namespace openvkl {
 
     struct OpenVdbVolume : public TestingVolume
     {
-      static OpenVdbVolume *loadVdbFile(const std::string &filename,
+      static OpenVdbVolume *loadVdbFile(VKLDevice device,
+                                        const std::string &filename,
                                         const std::string &field,
-                                        VKLFilter filter);
+                                        VKLFilter filter,
+                                        bool deferLeaves = false);
 
       virtual ~OpenVdbVolume() {}
 
@@ -38,12 +40,13 @@ namespace openvkl {
       OpenVdbVolumeImpl(OpenVdbVolumeImpl &&other)                 = default;
       OpenVdbVolumeImpl &operator=(OpenVdbVolumeImpl &&other) = default;
 
-      OpenVdbVolumeImpl(const std::string &filename,
+      OpenVdbVolumeImpl(VKLDevice device,
+                        const std::string &filename,
                         const std::string &field,
-                        VKLFilter filter)
-          : grid(filename, field, true), filter(filter)
+                        VKLFilter filter,
+                        bool deferLeaves = false)
+          : grid(device, filename, field, deferLeaves), filter(filter)
       {
-        volume = grid.createVolume(filter);
       }
 
       ~OpenVdbVolumeImpl()
@@ -132,7 +135,15 @@ namespace openvkl {
         uint64_t commitMS{0};  // The time it took to commit.
       };
 
-      void generateVKLVolume() override {}
+      void generateVKLVolume(VKLDevice device) override
+      {
+        if (device != grid.getVKLDevice()) {
+          throw std::runtime_error(
+              "specified device not compatible with grid device");
+        }
+
+        volume = grid.createVolume(filter);
+      }
 
      private:
       Grid grid;
@@ -142,12 +153,16 @@ namespace openvkl {
     };
 
     using OpenVdbFloatVolume =
-        OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbFloatGrid>;
+        OpenVdbVolumeImpl<openvkl::utility::vdb::OpenVdbFloatGrid>;
     using OpenVdbVec3sVolume =
-        OpenVdbVolumeImpl<openvkl::vdb_util::OpenVdbVec3sGrid>;
+        OpenVdbVolumeImpl<openvkl::utility::vdb::OpenVdbVec3sGrid>;
 
     inline OpenVdbVolume *OpenVdbVolume::loadVdbFile(
-        const std::string &filename, const std::string &field, VKLFilter filter)
+        VKLDevice device,
+        const std::string &filename,
+        const std::string &field,
+        VKLFilter filter,
+        bool deferLeaves)
     {
       openvdb::initialize();
 
@@ -157,9 +172,11 @@ namespace openvkl {
       openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
 
       if (baseGrid->valueType() == "float") {
-        return new OpenVdbFloatVolume(filename, field, filter);
+        return new OpenVdbFloatVolume(
+            device, filename, field, filter, deferLeaves);
       } else if (baseGrid->valueType() == "vec3s") {
-        return new OpenVdbVec3sVolume(filename, field, filter);
+        return new OpenVdbVec3sVolume(
+            device, filename, field, filter, deferLeaves);
       } else {
         throw std::runtime_error("unsupported OpenVDB grid type: " +
                                  baseGrid->valueType());
@@ -169,7 +186,7 @@ namespace openvkl {
   }  // namespace testing
 }  // namespace openvkl
 
-#else  // OPENVKL_VDB_UTIL_OPENVDB_ENABLED
+#else  // defined(OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)
 
 #include "TestingVolume.h"
 #include "openvkl/vdb.h"
@@ -179,9 +196,11 @@ namespace openvkl {
 
     struct OpenVdbVolume : public TestingVolume
     {
-      static OpenVdbVolume *loadVdbFile(const std::string &filename,
+      static OpenVdbVolume *loadVdbFile(VKLDevice device,
+                                        const std::string &filename,
                                         const std::string &field,
-                                        VKLFilter filter)
+                                        VKLFilter filter,
+                                        bool deferLeaves = false)
       {
         throw std::runtime_error(
             "You must compile with OpenVDB to use OpenVdbVolume");
@@ -198,7 +217,8 @@ namespace openvkl {
     {
       OpenVdbVolumeImpl(const std::string &filename,
                         const std::string &field,
-                        VKLFilter filter = VKL_FILTER_TRILINEAR)
+                        VKLFilter filter,
+                        bool deferLeaves = false)
       {
         throw std::runtime_error(
             "You must compile with OpenVDB to use OpenVdbVolumeImpl");
@@ -220,7 +240,7 @@ namespace openvkl {
       }
 
      protected:
-      void generateVKLVolume() override {}
+      void generateVKLVolume(VKLDevice device) override {}
     };
 
     using OpenVdbFloatVolume = OpenVdbVolumeImpl;
@@ -229,4 +249,4 @@ namespace openvkl {
   }  // namespace testing
 }  // namespace openvkl
 
-#endif  // OPENVKL_VDB_UTIL_OPENVDB_ENABLED
+#endif  // defined(OPENVKL_UTILITY_VDB_OPENVDB_ENABLED)

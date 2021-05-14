@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -133,6 +133,10 @@ namespace openvkl {
         ProceduralStructuredSphericalVolume<unsigned short,
                                             getWaveletValue<unsigned short>,
                                             getWaveletGradient>;
+    using WaveletStructuredSphericalVolumeHalf =
+        ProceduralStructuredSphericalVolume<half_float::half,
+                                            getWaveletValue<half_float::half>,
+                                            getWaveletGradient>;
     using WaveletStructuredSphericalVolumeFloat =
         ProceduralStructuredSphericalVolume<float,
                                             getWaveletValue<float>,
@@ -154,6 +158,10 @@ namespace openvkl {
         ProceduralStructuredSphericalVolume<unsigned short,
                                             getXYZValue<unsigned short>,
                                             getXYZGradient>;
+    using XYZStructuredSphericalVolumeHalf =
+        ProceduralStructuredSphericalVolume<half_float::half,
+                                            getXYZValue<half_float::half>,
+                                            getXYZGradient>;
     using XYZStructuredSphericalVolumeFloat =
         ProceduralStructuredSphericalVolume<float,
                                             getXYZValue<float>,
@@ -174,6 +182,10 @@ namespace openvkl {
     using SphereStructuredSphericalVolumeUShort =
         ProceduralStructuredSphericalVolume<unsigned short,
                                             getRotatingSphereValue<unsigned short>,
+                                            getRotatingSphereGradient>;
+    using SphereStructuredSphericalVolumeHalf =
+        ProceduralStructuredSphericalVolume<half_float::half,
+                                            getRotatingSphereValue<half_float::half>,
                                             getRotatingSphereGradient>;
     using SphereStructuredSphericalVolumeFloat =
         ProceduralStructuredSphericalVolume<float,

@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v0.12.1 of Intel® Open VKL. For changes and new features
+This is release v0.13.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -20,17 +20,72 @@ released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 
 Open VKL provides a C API, and also supports applications written with
-the Intel® SPMD Program Compiler (ISPC) by also providing an ISPC
-interface to the core volume algorithms. This makes it possible to write
-a renderer in ISPC that automatically vectorizes and leverages SSE, AVX,
-AVX2, and AVX-512 instructions. ISPC also supports runtime code
-selection, thus ISPC will select the best code path for your
-application.
+the Intel® Implicit SPMD Program Compiler (Intel® ISPC) by also
+providing an ISPC interface to the core volume algorithms. This makes it
+possible to write a renderer in ISPC that automatically vectorizes and
+leverages SSE, AVX, AVX2, and AVX-512 instructions. ISPC also supports
+runtime code selection, thus ISPC will select the best code path for
+your application.
 
 In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 0.13.0
+
+  - Driver (now device) API changes:
+      - Renamed `VKLDriver` to `VKLDevice` and updated associated device
+        setup APIs
+      - Use of multiple concurrent devices is now supported; therefore
+        `vklNewVolume()` and `vklNewData()` now require a device handle
+      - Renamed the `ispc_device` module and `ispc` device to
+        `cpu_device` and `cpu`, respectively
+      - The `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment variable can
+        now be used to change the `cpu` device’s default SIMD width at
+        run time
+  - Added new `VKLTemporalFormat` enum used for temporally varying
+    volume parameterization
+  - VDB volumes:
+      - Support for temporally structured and temporally unstructured
+        (TUV) attribute data, which can be used for motion blurred
+        rendering
+      - Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter
+        type
+      - Added support for half precision float-point (FP16) attribute
+        data via `VKL_HALF` data type
+      - Added a new `InnerNode` observer and associated utility
+        functions which allows applications to introspect inner nodes of
+        the internal tree structure, including bounding boxes and value
+        ranges
+      - Renamed `VKL_FORMAT_CONSTANT_ZYX` to `VKL_FORMAT_DENSE_ZYX`
+  - Structured regular and spherical volumes:
+      - Added support for half precision float-point (FP16) attribute
+        data via `VKL_HALF` data type
+  - Unstructured volumes:
+      - Added support for elementary cell iteration via the
+        `elementaryCellIteration` parameter
+      - Robustness improvements for hit iteration
+  - AMR volumes:
+      - Improved interval iterator implementation, resolving issues with
+        returned interval `nominalDeltaT` values
+      - Interval iterators now support `maxIteratorDepth` parameter
+  - Interval and hit iteration performance improvements when multiple
+    values ranges / values are selected
+  - Added new temporal compression utilities which applications can use
+    for processing temporally unstructured attribute data
+  - vklExamples additions demonstrating:
+      - Motion blurred rendering on temporally structured and temporally
+        unstructured `vdb` volumes
+      - Tricubic filtering on `vdb` volumes
+      - Half-precision floating-point (FP16) support for
+        `structuredRegular`, `structuredSpherical`, and `vdb` volumes
+      - Elementary cell interval iteration on `unstructured` volumes
+      - Use of the `InnerNode` observer on `vdb` volumes
+  - Superbuild updates to:
+      - Embree 3.13.0
+      - rkcommon 1.6.1
+  - Minimum rkcommon version is now 1.6.1
 
 ### Open VKL 0.12.1
 
@@ -222,7 +277,7 @@ Join our [mailing
 list](https://groups.google.com/forum/#!forum/openvkl-announce/join) to
 receive release announcements and major news regarding Open VKL.
 
-# Intel® Open VKL API
+# Open VKL API
 
 To access the Open VKL API you first need to include the Open VKL
 header. For C99 or C++:
@@ -231,7 +286,7 @@ header. For C99 or C++:
 #include <openvkl/openvkl.h>
 ```
 
-For the Intel SPMD Program Compiler (ISPC):
+For the Intel® Implicit SPMD Program Compiler (Intel® ISPC):
 
 ``` cpp
 #include <openvkl/openvkl.isph>
@@ -242,39 +297,37 @@ the same functionality and flavor. Looking at the headers, the
 `vklTutorialISPC` example, and this documentation should be enough to
 figure it out.
 
-## Initialization and shutdown
+## Device initialization and shutdown
 
 To use the API, one of the implemented backends must be loaded.
-Currently the only one that exists is the ISPC driver. ISPC in the name
-here just refers to the implementation language – it can also be used
-from the C99/C++ APIs. To load the module that implements the ISPC
-driver:
+Currently the only one that exists is the CPU device. To load the module
+that implements the CPU device:
 
 ``` cpp
-vklLoadModule("ispc_driver");
+vklLoadModule("cpu_device");
 ```
 
-The driver then needs to be instantiated:
+The device then needs to be instantiated:
 
 ``` cpp
-VKLDriver driver = vklNewDriver("ispc");
+VKLDevice device = vklNewDevice("cpu");
 ```
 
-By default, the ISPC driver selects the maximum supported SIMD width
-(and associated ISA) for the system. Optionally, a specific width may be
-requested using the `ispc_4`, `ispc_8`, or `ispc_16` driver names. Note
+By default, the CPU device selects the maximum supported SIMD width (and
+associated ISA) for the system. Optionally, a specific width may be
+requested using the `cpu_4`, `cpu_8`, or `cpu_16` device names. Note
 that the system must support the given width (SSE4.1 for 4-wide, AVX for
 8-wide, and AVX512 for 16-wide).
 
-Once a driver is created, you can call
+Once a device is created, you can call
 
 ``` cpp
-void vklDriverSetInt(VKLDriver, const char *name, int val);
-void vklDriverSetString(VKLDriver, const char *name, const char *val);
+void vklDeviceSetInt(VKLDevice, const char *name, int val);
+void vklDeviceSetString(VKLDevice, const char *name, const char *val);
 ```
 
-to set parameters on the driver. The following parameters are understood
-by all drivers:
+to set parameters on the device. The following parameters are understood
+by all devices:
 
 | Type   | Name           | Description                                                                                                                                                       |
 | :----- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -284,47 +337,41 @@ by all drivers:
 | int    | numThreads     | number of threads which Open VKL can use                                                                                                                          |
 | int    | flushDenormals | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register (default: 1); see Performance Recommendations section for details |
 
-Parameters shared by all drivers.
+Parameters shared by all devices.
 
-Once parameters are set, the driver must be committed with
-
-``` cpp
-vklCommitDriver(driver);
-```
-
-Finally, to use the newly committed driver, you must call
+Once parameters are set, the device must be committed with
 
 ``` cpp
-vklSetCurrentDriver(driver);
+vklCommitDevice(device);
 ```
 
-Users can change parameters on a driver after initialization. In this
-case the driver would need to be re-committed. If changes are made to
-the driver that is already set as the current driver, it does not need
-to be set as current again. The currently set driver can be retrieved at
-any time by calling
+The newly committed device is then ready to use. Users may change
+parameters on a device after initialization. In this case the device
+would need to be re-committed.
 
-``` cpp
-VKLDriver driver = vklGetCurrentDriver();
-```
+All Open VKL objects are associated with a device. A device handle must
+be explicitly provided when creating volume and data objects, via
+`vklNewVolume()` and `vklNewData()` respectively. Other object types are
+automatically associated with a device via transitive dependency on a
+volume.
 
 Open VKL provides vector-wide versions for several APIs. To determine
-the native vector width for the given driver, call:
+the native vector width for a given device, call:
 
 ``` cpp
-int width = vklGetNativeSIMDWidth();
+int width = vklGetNativeSIMDWidth(VKLDevice device);
 ```
 
-When the application is finished with Open VKL or shutting down, call
-the shutdown function:
+When the application is finished with an Open VKL device or shutting
+down, release the device via:
 
 ``` cpp
-vklShutdown();
+vklReleaseDevice(VKLDevice device);
 ```
 
 ### Environment variables
 
-The generic driver parameters can be overridden via environment
+The generic device parameters can be overridden via environment
 variables for easy changes to Open VKL’s behavior without needing to
 change the application (variables are prefixed by convention with
 “`OPENVKL_`”):
@@ -337,10 +384,17 @@ change the application (variables are prefixed by convention with
 | OPENVKL\_THREADS          | number of threads which Open VKL can use                                                                                                                          |
 | OPENVKL\_FLUSH\_DENORMALS | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register (default: 1); see Performance Recommendations section for details |
 
-Environment variables understood by all drivers.
+Environment variables understood by all devices.
 
 Note that these environment variables take precedence over values set
-through the `vklDriverSet*()` functions.
+through the `vklDeviceSet*()` functions.
+
+Additionally, the CPU device’s default SIMD width can be overriden at
+run time with the `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment
+variable. Legal values are 4, 8, or 16. This setting is only applicable
+when the generic `cpu` device is instantiated; if a specific width is
+requested via the `cpu_[4,8,16]` device names then the environment
+variable is ignored.
 
 ### Error handling and log messages
 
@@ -361,13 +415,13 @@ These error codes are either directly returned by some API functions, or
 are recorded to be later queried by the application via
 
 ``` cpp
-VKLError vklDriverGetLastErrorCode(VKLDriver);
+VKLError vklDeviceGetLastErrorCode(VKLDevice);
 ```
 
 A more descriptive error message can be queried by calling
 
 ``` cpp
-const char* vklDriverGetLastErrorMsg(VKLDriver);
+const char* vklDeviceGetLastErrorMsg(VKLDevice);
 ```
 
 Alternatively, the application can also register a callback function of
@@ -380,7 +434,7 @@ typedef void (*VKLErrorCallback)(void *, VKLError, const char* message);
 via
 
 ``` cpp
-void vklDriverSetErrorCallback(VKLDriver, VKLErrorFunc, void *);
+void vklDeviceSetErrorCallback(VKLDevice, VKLErrorFunc, void *);
 ```
 
 to get notified when errors occur. Applications may be interested in
@@ -394,17 +448,17 @@ typedef void (*VKLLogCallback)(void *, const char* message);
 via
 
 ``` cpp
-void vklDriverSetLogCallback(VKLDriver, VKLLogCallback, void *);
+void vklDeviceSetLogCallback(VKLDevice, VKLLogCallback, void *);
 ```
 
 which Open VKL will use to emit log messages. Applications can clear
 either callback by passing `nullptr` instead of an actual function
 pointer. By default, Open VKL uses `cout` and `cerr` to emit log and
 error messages, respectively. The last parameter to
-`vklDriverSetErrorCallback` and `vklDriverSetLogCallback` is a user data
+`vklDeviceSetErrorCallback` and `vklDeviceSetLogCallback` is a user data
 pointer. Open VKL passes this pointer to the callback functions as the
 first parameter. Note that in addition to setting the above callbacks,
-this behavior can be changed via the driver parameters and environment
+this behavior can be changed via the device parameters and environment
 variables described previously.
 
 ## Basic data types
@@ -504,17 +558,13 @@ Large data is passed to Open VKL via a `VKLData` handle created with
 `vklNewData`:
 
 ``` cpp
-VKLData vklNewData(size_t numItems,
+VKLData vklNewData(VKLDevice device,
+                   size_t numItems,
                    VKLDataType dataType,
                    const void *source,
                    VKLDataCreationFlags dataCreationFlags,
                    size_t byteStride);
 ```
-
-Types accepted are listed in `VKLDataType.h`; basic types (`UCHAR`,
-`INT`, `UINT`, `LONG`, `ULONG`, `FLOAT`) exist as both scalar and
-chunked formats. The types accepted vary per volume at the moment; read
-the volume section below for specifics.
 
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data
@@ -530,6 +580,38 @@ original `byteStride`.
 
 As with other object types, when data objects are no longer needed they
 should be released via `vklRelease`.
+
+The enum type `VKLDataType` describes the different element types that
+can be represented in Open VKL. The types accepted vary per volume; see
+the volume section for specifics. Valid constants are listed in the
+table below.
+
+| Type/Name                      | Description                                                                                  |
+| :----------------------------- | :------------------------------------------------------------------------------------------- |
+| VKL\_DEVICE                    | API device object reference                                                                  |
+| VKL\_DATA                      | data reference                                                                               |
+| VKL\_OBJECT                    | generic object reference                                                                     |
+| VKL\_VALUE\_SELECTOR           | value selector object reference                                                              |
+| VKL\_VOLUME                    | volume object reference                                                                      |
+| VKL\_STRING                    | C-style zero-terminated character string                                                     |
+| VKL\_CHAR, VKL\_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
+| VKL\_UCHAR, VKL\_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                   |
+| VKL\_SHORT, VKL\_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_USHORT, VKL\_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_INT, VKL\_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                      |
+| VKL\_UINT, VKL\_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_LONG, VKL\_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                      |
+| VKL\_ULONG, VKL\_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL\_HALF, VKL\_VEC\[234\]H    | 16 bit half precision floating-point scalar and \[234\]-element vector (IEEE 754 `binary16`) |
+| VKL\_FLOAT, VKL\_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                     |
+| VKL\_DOUBLE, VKL\_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                     |
+| VKL\_BOX\[1234\]I              | 32 bit integer box (lower + upper bounds)                                                    |
+| VKL\_BOX\[1234\]F              | 32 bit single precision floating-point box (lower + upper bounds)                            |
+| VKL\_LINEAR\[23\]F             | 32 bit single precision floating-point linear transform (\[23\] vectors)                     |
+| VKL\_AFFINE\[23\]F             | 32 bit single precision floating-point affine transform (linear transform plus translation)  |
+| VKL\_VOID\_PTR                 | raw memory address                                                                           |
+
+Valid named constants for `VKLDataType`.
 
 ## Observers
 
@@ -558,10 +640,12 @@ const void * vklMapObserver(VKLObserver observer);
 
 If this fails, the function returns `NULL`. `vklMapObserver` may fail on
 observers that are already mapped. On success, the application may query
-the underlying type and the number of elements in the buffer using
+the underlying type, element size in bytes, and the number of elements
+in the buffer using
 
 ``` cpp
 VKLDataType vklGetObserverElementType(VKLObserver observer);
+size_t vklGetObserverElementSize(VKLObserver observer);
 size_t vklGetObserverNumElements(VKLObserver observer);
 ```
 
@@ -597,8 +681,12 @@ called concurrently on the same object.
 Open VKL currently supports structured volumes on regular and spherical
 grids; unstructured volumes with tetrahedral, wedge, pyramid, and
 hexaderal primitive types; adaptive mesh refinement (AMR) volumes;
-sparse VDB volumes; and particle volumes. These volumes are created with
-`vklNewVolume` with the appropriate type string.
+sparse VDB volumes; and particle volumes. Volumes are created with
+`vklNewVolume` with a device and appropriate type string:
+
+``` cpp
+VKLVolume vklNewVolume(VKLDevice device, const char *type);
+```
 
 In addition to the usual `vklSet...()` and `vklCommit()` APIs, the
 volume bounding box can be queried:
@@ -636,54 +724,30 @@ by passing a type string of `"structuredRegular"` to `vklNewVolume`. The
 parameters understood by structured regular volumes are summarized in
 the table below.
 
-| Type                  | Name                             | Default       | Description                                                                              |
-| :-------------------- | :------------------------------- | :------------ | :--------------------------------------------------------------------------------------- |
-| vec3i                 | dimensions                       |               | number of voxels in each dimension \((x, y, z)\)                                         |
-| VKLData VKLData\[\]   | data                             |               | VKLData object(s) of voxel data, supported types are:                                    |
-|                       |                                  |               | `VKL_UCHAR`                                                                              |
-|                       |                                  |               | `VKL_SHORT`                                                                              |
-|                       |                                  |               | `VKL_USHORT`                                                                             |
-|                       |                                  |               | `VKL_FLOAT`                                                                              |
-|                       |                                  |               | `VKL_DOUBLE`                                                                             |
-|                       |                                  |               | Multiple attributes are supported through passing an array of VKLData objects.           |
-| vec3f                 | gridOrigin                       | \((0, 0, 0)\) | origin of the grid in object space                                                       |
-| vec3f                 | gridSpacing                      | \((1, 1, 1)\) | size of the grid cells in object space                                                   |
-| int                   | temporallyStructuredNumTimesteps |               | for temporally structured variation, number of timesteps per voxel                       |
-| uint32\[\] uint64\[\] | temporallyUnstructuredIndices    |               | for temporally unstructured variation, indices to `data` time series beginning per voxel |
-| float\[\]             | temporallyUnstructuredTimes      |               | for temporally unstructured variation, time values corresponding to values in `data`     |
+| Type                  | Name                             | Default                        | Description                                                                                                                                                                                                                    |
+| :-------------------- | :------------------------------- | :----------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| vec3i                 | dimensions                       |                                | number of voxels in each dimension \((x, y, z)\)                                                                                                                                                                               |
+| VKLData VKLData\[\]   | data                             |                                | VKLData object(s) of voxel data, supported types are:                                                                                                                                                                          |
+|                       |                                  |                                | `VKL_UCHAR`                                                                                                                                                                                                                    |
+|                       |                                  |                                | `VKL_SHORT`                                                                                                                                                                                                                    |
+|                       |                                  |                                | `VKL_USHORT`                                                                                                                                                                                                                   |
+|                       |                                  |                                | `VKL_HALF`                                                                                                                                                                                                                     |
+|                       |                                  |                                | `VKL_FLOAT`                                                                                                                                                                                                                    |
+|                       |                                  |                                | `VKL_DOUBLE`                                                                                                                                                                                                                   |
+|                       |                                  |                                | Multiple attributes are supported through passing an array of VKLData objects.                                                                                                                                                 |
+| vec3f                 | gridOrigin                       | \((0, 0, 0)\)                  | origin of the grid in object space                                                                                                                                                                                             |
+| vec3f                 | gridSpacing                      | \((1, 1, 1)\)                  | size of the grid cells in object space                                                                                                                                                                                         |
+| uint32                | temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT` | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. Structured regular volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`. |
+| int                   | temporallyStructuredNumTimesteps |                                | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                        |
+| uint32\[\] uint64\[\] | temporallyUnstructuredIndices    |                                | For temporally unstructured variation, indices to `data` time series beginning per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                |
+| float\[\]             | temporallyUnstructuredTimes      |                                | For temporally unstructured variation, time values corresponding to values in `data`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                    |
 
 Configuration parameters for structured regular (`"structuredRegular"`)
 volumes.
 
-Structured regular volumes support two forms of temporal variation:
-temporally structured and temporally unstructured. When one of these
-modes is enabled, the volume can be sampled at different times. In both
-modes, time is assumed to vary between zero and one. This can be useful
-for implementing renderers with motion blur, for example.
-
-Temporally structured variation is configured through the
-`temporallyStructuredNumTimesteps` parameter. This specifies how many
-time steps (at least two) are provided for all voxels. Therefore, for a
-volume with dimensions \((x, y, z)\), each attribute must have
-\(x*y*z * temporallyStructuredNumTimesteps\) values provided in its
-`data` array. The values are assumed evenly spaced over times
-\([0, 1]\).
-
-Temporally unstructured variation is configured through the
-`temporallyUnstructuredIndices` and `temporallyUnstructuredTimes`
-parameters, and supports differing time step counts and sample times per
-voxel. `temporallyUnstructuredIndices` specifies the index ranges for
-each voxel’s values in `data`, such that values for the the \(i\)th
-voxel can be found in the indices
-\([temporallyUnstructuredIndices[i], temporallyUnstructuredIndices[i+1])\).
-Therefore `temporallyUnstructuredIndices` must have \(x*y*z + 1\)
-values. `temporallyUnstructuredTimes` specifies the times corresponding
-to the sample values in each attribute’s `data` array; the time values
-for each voxel must be between zero and one and strictly increasing:
-\(t0 < t1 < ... < tN\). To return a value at sample time t,
-\(t0 <= t <= tN\), Open VKL will interpolate linearly from the two
-nearest time steps. Time values outside this range are clamped
-\([t0, tN]\).
+Structured regular volumes support temporally structured and temporally
+unstructured temporal variation. See section ‘Temporal Variation’ for
+more detail.
 
 The following additional parameters can be set both on
 `"structuredRegular"` volumes and their sampler objects. Sampler object
@@ -707,9 +771,9 @@ conforming with the ISO convention for spherical coordinate systems. The
 coordinate system and parameters understood by structured spherical
 volumes are summarized below.
 
-\[Structured spherical volume coordinate system: radial distance
+![Structured spherical volume coordinate system: radial distance
 (\(r\)), inclination angle (\(\theta\)), and azimuthal angle
-(\(\phi\)).\]\[imgStructuredSphericalCoords\]
+(\(\phi\)).](https://openvkl.github.io/images/structured_spherical_coords.png)
 
 | Type                | Name        |    Default    | Description                                                                    |
 | :------------------ | :---------- | :-----------: | :----------------------------------------------------------------------------- |
@@ -718,6 +782,7 @@ volumes are summarized below.
 |                     |             |               | `VKL_UCHAR`                                                                    |
 |                     |             |               | `VKL_SHORT`                                                                    |
 |                     |             |               | `VKL_USHORT`                                                                   |
+|                     |             |               | `VKL_HALF`                                                                     |
 |                     |             |               | `VKL_FLOAT`                                                                    |
 |                     |             |               | `VKL_DOUBLE`                                                                   |
 |                     |             |               | Multiple attributes are supported through passing an array of VKLData objects. |
@@ -768,6 +833,10 @@ block.
 
 Note that cell widths are defined *per refinement level*, not per block.
 
+A binary BVH is used internally to accelerate interval iteration.
+Intervals are found by intersecting BVH nodes up to a maximum level of
+the tree, configurable by the `maxIteratorDepth` parameter.
+
 AMR volumes are created by passing the type string `"amr"` to
 `vklNewVolume`, and have the following parameters:
 
@@ -790,12 +859,13 @@ The following additional parameters can be set both on `"amr"` volumes
 and their sampler objects. Sampler object parameters default to volume
 parameters.
 
-| Type           | Name   |           Default | Description                                            |
-| :------------- | :----- | ----------------: | :----------------------------------------------------- |
-| `VKLAMRMethod` | method | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are: |
-|                |        |                   | `VKL_AMR_CURRENT`                                      |
-|                |        |                   | `VKL_AMR_FINEST`                                       |
-|                |        |                   | `VKL_AMR_OCTANT`                                       |
+| Type           | Name             |           Default | Description                                                              |
+| :------------- | :--------------- | ----------------: | :----------------------------------------------------------------------- |
+| `VKLAMRMethod` | method           | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are:                   |
+|                |                  |                   | `VKL_AMR_CURRENT`                                                        |
+|                |                  |                   | `VKL_AMR_FINEST`                                                         |
+|                |                  |                   | `VKL_AMR_OCTANT`                                                         |
+| int            | maxIteratorDepth |                 6 | Do not descend further than to this BVH depth during interval iteration. |
 
 Configuration parameters for AMR (`"AMR"`) volumes and their sampler
 objects.
@@ -812,6 +882,9 @@ interpolation method used when sampling the volume.
   - `VKL_AMR_OCTANT` interpolates through all available refinement
     levels at that cell. This method avoids discontinuities at
     refinement level boundaries at the cost of performance
+
+Gradients are computed using finite differences, using the `method`
+defined on the sampler.
 
 Details and more information can be found in the publication for the
 implementation \[3\].
@@ -867,12 +940,19 @@ array layout can be enabled through the `indexPrefixed` flag (in which
 case, the `cell.type` parameter should be omitted).
 
 A binary bounding volume hierarchy (BVH) is used internally to
-accelerate interval iteration. Intervals are found by intersecting BVH
-nodes up to a maximum level of the tree, configurable by the
-`maxIteratorDepth` parameter. Larger values of `maxIteratorDepth` lead
-to smaller individual intervals (up to leaf node intersections),
+accelerate interval iteration. Intervals are by default found by
+intersecting BVH nodes up to a maximum level of the tree, configurable
+by the `maxIteratorDepth` parameter. Larger values of `maxIteratorDepth`
+lead to smaller individual intervals (up to leaf node intersections),
 yielding potentially more efficient space-skipping behavior and tighter
-bounds on returned interval metadata.
+bounds on returned interval metadata. The application may instead choose
+to iterate through intervals based on ray intersections with individual
+cells by setting the `elementaryCellIteration` parameter. Returned
+intervals will then span exact cell boundaries, rather than bounding
+boxes of BVH nodes. This approach is generally less performant than the
+default interval iteration mode, however.
+
+Gradients are computed using finite differences.
 
 Unstructured volumes are created by passing the type string
 `"unstructured"` to `vklNewVolume`, and have the following parameters:
@@ -899,9 +979,10 @@ The following additional parameters can be set both on `unstructured`
 volumes and their sampler objects (sampler object parameters default to
 volume parameters).
 
-| Type | Name             | Default | Description                                                              |
-| :--- | :--------------- | :------ | :----------------------------------------------------------------------- |
-| int  | maxIteratorDepth | 6       | Do not descend further than to this BVH depth during interval iteration. |
+| Type | Name                    | Default | Description                                                              |
+| :--- | :---------------------- | :------ | :----------------------------------------------------------------------- |
+| int  | maxIteratorDepth        | 6       | Do not descend further than to this BVH depth during interval iteration. |
+| bool | elementaryCellIteration | false   | Return intervals spanning individual cell intersections.                 |
 
 Configuration parameters for unstructured (`"unstructured"`) volumes and
 their sampler objects.
@@ -924,8 +1005,8 @@ operations (cp. \[1\]).
 VDB leaf nodes are implicit in Open VKL: they are stored as pointers to
 user-provided data.
 
-\[Structure of `"vdb"` volumes in the default
-configuration\]\[imgVdbStructure\]
+![Structure of `"vdb"` volumes in the default
+configuration](https://openvkl.github.io/images/vdb_structure.png)
 
 VDB volumes interpret input data as constant cells (which are then
 potentially filtered). This is in contrast to `structuredRegular`
@@ -944,18 +1025,25 @@ The VDB implementation in Open VKL follows the following goals:
 VDB volumes are created by passing the type string `"vdb"` to
 `vklNewVolume`, and have the following parameters:
 
-| Type        | Name          | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| :---------- | :------------ | :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| float\[\]   | indexToObject | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | An array of 12 values of type `float` that define the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). The first 9 values are interpreted as a row-major linear transformation matrix. The last 3 values are the translation of the grid origin.                                                                                                                      |
-| uint32\[\]  | node.format   |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_CONSTANT_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                   |
-| uint32\[\]  | node.level    |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                 |
-| vec3i\[\]   | node.origin   |                                    | For each input node, the node origin index.                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| VKLData\[\] | node.data     |                                    | For each input node, the attribute data. Single-attribute volumes may have one array provided per node, while multi-attribute volumes require an array per attribute for each node. Nodes with format `VKL_FORMAT_TILE` are expected to have single-entry arrays per attribute. Nodes with format `VKL_FORMAT_CONSTANT_ZYX` are expected to have arrays with `vklVdbLevelNumVoxels(level[i])` entries per attribute. Only `VKL_FLOAT` data is currently supported. |
+| Type        | Name                                  | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| :---------- | :------------------------------------ | :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| float\[\]   | indexToObject                         | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | An array of 12 values of type `float` that define the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). The first 9 values are interpreted as a row-major linear transformation matrix. The last 3 values are the translation of the grid origin.                                                                                                                                                                                         |
+| uint32\[\]  | node.format                           |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_DENSE_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                                                                                         |
+| uint32\[\]  | node.level                            |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                                                                                    |
+| vec3i\[\]   | node.origin                           |                                    | For each input node, the node origin index.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| VKLData\[\] | node.data                             |                                    | For each input node, the attribute data. Single-attribute volumes may have one array provided per node, while multi-attribute volumes require an array per attribute for each node. Nodes with format `VKL_FORMAT_TILE` are expected to have single-entry arrays per attribute. Nodes with format `VKL_FORMAT_DENSE_ZYX` are expected to have arrays with `vklVdbLevelNumVoxels(level[i])` entries per attribute. `VKL_HALF` and `VKL_FLOAT` data is currently supported; all nodes for a given attribute must be the same data type. |
+| uint32\[\]  | node.temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT`     | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. VDB volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                       |
+| int\[\]     | node.temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                                                                                                                                                                                                                                                                                                               |
+| VKLData\[\] | node.temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, beginning per voxel. Supported data types for each node are `VKL_UINT` and `VKL_ULONG`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                                  |
+| VKLData\[\] | node.temporallyUnstructuredTimes      |                                    | For temporally unstructured variation, time values corresponding to values in `node.data`. For each node, the data must be of type `VKL_FLOAT`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                 |
 
 Configuration parameters for VDB (`"vdb"`) volumes.
 
 The level, origin, format, and data parameters must have the same size,
 and there must be at least one valid node or `commit()` will fail.
+
+VDB volumes support temporally structured and temporally unstructured
+temporal variation. See section ‘Temporal Variation’ for more detail.
 
 The following additional parameters can be set both on `vdb` volumes and
 their sampler objects (sampler object parameters default to volume
@@ -971,6 +1059,14 @@ parameters).
 Configuration parameters for VDB (`"vdb"`) volumes and their sampler
 objects.
 
+VDB volume objects support the following observers:
+
+| Name      | Buffer Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| :-------- | ----------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| InnerNode | float\[\]   | Return an array of bounding boxes, along with value ranges, of inner nodes in the data structure. The bounding box is given in object space. For a volume with M attributes, the entries in this array are (6+2\*M)-tuples `(minX, minY, minZ, maxX, maxY, maxZ, lower_0, upper_0, lower_1, upper_1, ...)`. This is in effect a low resolution representation of the volume. The InnerNode observer can be parametrized using `int maxDepth` to control the depth at which inner nodes are returned. Note that the observer will also return leaf nodes or tiles at lower levels if they exist. |
+
+Observers supported by VDB (`"vdb"`) volumes.
+
 VDB sampler objects support the following observers:
 
 | Name           | Buffer Type | Description                                                                                                                                                                                                                                    |
@@ -978,6 +1074,15 @@ VDB sampler objects support the following observers:
 | LeafNodeAccess | uint32\[\]  | This observer returns an array with as many entries as input nodes were passed. If the input node i was accessed during traversal, then the ith entry in this array has a nonzero value. This can be used for on-demand loading of leaf nodes. |
 
 Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
+
+#### Reconstruction filters
+
+VDB volumes support the filter types `VKL_FILTER_NEAREST`,
+`VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC` for both `filter` and
+`gradientFilter`.
+
+Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`,
+gradients are always \((0, 0, 0)\).
 
 #### Major differences to OpenVDB
 
@@ -988,8 +1093,10 @@ Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
     for rendering only. Authoring or manipulating datasets is not in the
     scope of this implementation.
 
-  - The only supported field type is `VKL_FLOAT` at this point. Other
-    field types may be supported in the future.
+  - The only supported field types are `VKL_HALF` and `VKL_FLOAT` at
+    this point. Other field types may be supported in the future. Note
+    that multi-attribute volumes may be used to represent
+    multi-component (e.g. vector) fields.
 
   - The root level in Open VKL has a single node with resolution 64^3
     (cp. \[1\]. OpenVDB uses a hash map, instead).
@@ -1017,7 +1124,7 @@ leaf data pointers can be passed to Open VKL using shared data buffers,
 avoiding copy operations.
 
 An example of this can be found in
-`vdb_util/include/openvkl/OpenVdbGrid.h`, where the class
+`utility/vdb/include/openvkl/utility/vdb/OpenVdbGrid.h`, where the class
 `OpenVdbFloatGrid` encapsulates the necessary operations. This class is
 also accessible through the `vklExamples` application using the `-file`
 and `-field` command line arguments.
@@ -1043,6 +1150,8 @@ radius and w is the weight.
 
 At each sample, the scalar field value is then computed as the sum of
 each radial basis function phi, for each particle that overlaps it.
+Gradients are similarly computed, based on the summed analytical
+contributions of each contributing particle.
 
 The Open VKL implementation is similar to direct evaluation of samples
 in Reda et al.\[2\]. It uses an Embree-built BVH with a custom
@@ -1089,6 +1198,49 @@ sampler objects.
     Large-Scale Data Analysis and Visualization (LDAV), Atlanta, GA,
     2013, pp. 59-65.
 
+## Temporal Variation
+
+Open VKL supports two types of temporal variation: temporally structured
+and temporally unstructured. When one of these modes is enabled, the
+volume can be sampled at different times. In both modes, time is assumed
+to vary between zero and one. This can be useful for implementing
+renderers with motion blur, for example.
+
+Temporal variation is generally configured through a parameter
+`temporalFormat`, which accepts constants from the `VKLTemporalFormat`
+enum, though not all modes may be supported by all volumes. On volumes
+that expect multiple input nodes, the parameter is an array
+`node.temporalFormat`, and must provide one value per node. Multiple
+attributes in a voxel share the same temporal configuration. Please
+refer to the individual volume sections above to find out supported for
+each volume type.
+
+`temporalFormat` defaults to `VKL_TEMPORAL_FORMAT_CONSTANT` for all
+volume types. This means that no temporal variation is present in the
+data.
+
+Temporally structured variation is configured by setting
+`temporalFormat` to `VKL_TEMPORAL_FORMAT_STRUCTURED`. In this mode, the
+volume expects an additional parameter
+`[node.]temporallyStructuredNumTimesteps`, which specifies how many time
+steps are provided for all voxels, and must be at least 2. A volume, or
+node, with \(N\) voxels expects \(N * temporallyStructuredNumTimesteps\)
+values for each attribute. The values are assumed evenly spaced over
+times \([0, 1]\): \(\{0, 1/(N-1), ..., 1\}\)
+
+Temporally unstructured variation supports differing time step counts
+and sample times per voxel. For \(N\) input voxels,
+`temporallyUnstructuredIndices` is an array of \(N+1\) indices. Voxel
+\(i\) has
+\(N_i = [temporallyUnstructuredIndices[i+1]-temporallyUnstructuredIndices[i])\)
+temporal samples starting at index \(temporallyUnstructuredIndices[i]\).
+`temporallyUnstructuredTimes` specifies the times corresponding to the
+sample values; the time values for each voxel must be between zero and
+one and strictly increasing: \(t0 < t1 < ... < tN\). To return a value
+at sample time t, \(t0 <= t <= tN\), Open VKL will interpolate linearly
+from the two nearest time steps. Time values outside this range are
+clamped to \([t0, tN]\).
+
 ## Sampler Objects
 
 Computing the value of a volume at an object space coordinate is done
@@ -1125,7 +1277,7 @@ float vklComputeSample(VKLSampler sampler,
 ```
 
 Vector versions allow sampling at 4, 8, or 16 positions at once.
-Depending on the machine type and Open VKL driver implementation, these
+Depending on the machine type and Open VKL device implementation, these
 can give greater performance. An active lane mask `valid` is passed in
 as an array of integers; set 0 for lanes to be ignored, -1 for active
 lanes. An array of time values corresponding to each object coordinate
@@ -1171,7 +1323,7 @@ scalar API.
                          const float *times);
 ```
 
-All of the above sampling APIs can be used, regardless of the driver’s
+All of the above sampling APIs can be used, regardless of the device’s
 native SIMD width.
 
 ### Sampling Multiple Attributes
@@ -1263,7 +1415,7 @@ samples = [s_0,0,   s_1,0,   ..., s_M-1,0,
            s_0,N-1, s_1,N-1, ..., s_M-1,N-1]
 ```
 
-All of the above sampling APIs can be used, regardless of the driver’s
+All of the above sampling APIs can be used, regardless of the device’s
 native SIMD width.
 
 ## Gradients
@@ -1318,7 +1470,7 @@ void vklComputeGradientN(VKLSampler sampler,
                          const float *times);
 ```
 
-All of the above gradient APIs can be used, regardless of the driver’s
+All of the above gradient APIs can be used, regardless of the device’s
 native SIMD width.
 
 ## Iterators
@@ -1598,7 +1750,7 @@ are Zero` mode of the MXCSR control and status register enabled for each
 thread before calling the sampling, gradient, or interval API functions.
 Otherwise, under some circumstances special handling of denormalized
 floating point numbers can significantly reduce application and Open VKL
-performance. The driver parameter `flushDenormals` or environment
+performance. The device parameter `flushDenormals` or environment
 variable `OPENVKL_FLUSH_DENORMALS` can be used to toggle this mode; by
 default it is enabled. Alternatively, when using Open VKL together with
 the Intel® Threading Building Blocks, it is sufficient to execute the
@@ -1661,7 +1813,7 @@ instead rely on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and
 uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 ```
 
-These values are majorants over all drivers and volume types. Note that
+These values are majorants over all devices and volume types. Note that
 Open VKL attempts to detect the target SIMD width using `TARGET_WIDTH`,
 returning smaller buffer sizes for narrow architectures. However, Open
 VKL may fall back to the largest buffer size over all targets.
@@ -1703,31 +1855,34 @@ for (auto &v : velocities) {
 
 std::vector<VKLData> attributes;
 
-attributes.push_back(vklNewData(velocities.size(),
+attributes.push_back(vklNewData(device,
+                                velocities.size(),
                                 VKL_FLOAT,
                                 &velocities[0].x,
                                 VKL_DATA_SHARED_BUFFER,
                                 sizeof(vkl_vec3f)));
 
-attributes.push_back(vklNewData(velocities.size(),
+attributes.push_back(vklNewData(device,
+                                velocities.size(),
                                 VKL_FLOAT,
                                 &velocities[0].y,
                                 VKL_DATA_SHARED_BUFFER,
                                 sizeof(vkl_vec3f)));
 
-attributes.push_back(vklNewData(velocities.size(),
+attributes.push_back(vklNewData(device,
+                                velocities.size(),
                                 VKL_FLOAT,
                                 &velocities[0].z,
                                 VKL_DATA_SHARED_BUFFER,
                                 sizeof(vkl_vec3f)));
 
 VKLData attributesData =
-    vklNewData(attributes.size(), VKL_DATA, attributes.data());
+    vklNewData(device, attributes.size(), VKL_DATA, attributes.data());
 
 for (auto &attribute : attributes)
   vklRelease(attribute);
 
-VKLVolume volume = vklNewVolume("structuredRegular");
+VKLVolume volume = vklNewVolume(device, "structuredRegular");
 
 vklSetData(volume, "data", attributesData);
 vklRelease(attributesData);
@@ -1773,7 +1928,8 @@ API usage. These implementations are available in the
 [`examples/interactive/renderers/`](https://github.com/openvkl/openvkl/tree/master/examples/interactive/renderers)
 directory.
 
-\[`vklExamples` interactive example application\]\[imgVklExamples\]
+![`vklExamples` interactive example
+application](https://openvkl.github.io/images/vklExamples.png)
 
 ## vklTutorial source
 
@@ -2013,7 +2169,7 @@ void demoStreamAPI(VKLVolume volume)
   // sample, gradient (first attribute)
   printf("\n\tsampling and gradient computation (first attribute)\n");
   unsigned int attributeIndex = 0;
-  float time [5]              = {0.f};
+  float time[5]               = {0.f};
   float sample[5];
   vkl_vec3f grad[5];
   vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
@@ -2048,11 +2204,10 @@ void demoStreamAPI(VKLVolume volume)
 
 int main()
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
 
   const int dimensions[] = {128, 128, 128};
 
@@ -2060,7 +2215,7 @@ int main()
 
   const int numAttributes = 3;
 
-  VKLVolume volume = vklNewVolume("structuredRegular");
+  VKLVolume volume = vklNewVolume(device, "structuredRegular");
   vklSetVec3i(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
@@ -2080,7 +2235,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData data0 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data0 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   // volume attribute 1: y-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -2089,7 +2245,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)j;
 
-  VKLData data1 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data1 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   // volume attribute 2: z-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -2098,12 +2255,13 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)k;
 
-  VKLData data2 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data2 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   VKLData attributes[] = {data0, data1, data2};
 
-  VKLData attributesData =
-      vklNewData(numAttributes, VKL_DATA, attributes, VKL_DATA_DEFAULT, 0);
+  VKLData attributesData = vklNewData(
+      device, numAttributes, VKL_DATA, attributes, VKL_DATA_DEFAULT, 0);
 
   vklRelease(data0);
   vklRelease(data1);
@@ -2120,7 +2278,7 @@ int main()
 
   vklRelease(volume);
 
-  vklShutdown();
+  vklReleaseDevice(device);
 
   free(voxels);
 
@@ -2135,6 +2293,12 @@ int main()
   return 0;
 }
 ```
+
+# Packages
+
+Precompiled Open VKL packages for Linux, macOS, and Windows are
+available via [Open VKL GitHub
+releases](https://github.com/openvkl/openvkl/releases).
 
 # Building Open VKL from source
 
@@ -2156,9 +2320,9 @@ before you can build Open VKL you need the following prerequisites:
     and MSVC), and standard Linux development tools. To build the
     examples, you should also have some version of OpenGL.
 
-  - Additionally you require a copy of the [Intel® SPMD Program Compiler
-    (ISPC)](http://ispc.github.io), version 1.14.1 or later. Please
-    obtain a release of ISPC from the [ISPC downloads
+  - Additionally you require a copy of the [Intel® Implicit SPMD Program
+    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.14.1 or
+    later. Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 
   - Open VKL depends on the Intel RenderKit common library, rkcommon.

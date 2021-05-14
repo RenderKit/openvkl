@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -10,11 +10,7 @@ using namespace openvkl::testing;
 
 TEST_CASE("Stream sampling", "[volume_sampling]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   SECTION("AMR")
   {
@@ -46,8 +42,10 @@ TEST_CASE("Stream sampling", "[volume_sampling]")
 
   SECTION("VDB")
   {
-    auto v =
-        std::make_shared<WaveletVdbVolume>(vec3i(128), vec3f(0.f), vec3f(1.f));
+    auto v = std::make_shared<WaveletVdbVolumeFloat>(
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f));
     test_stream_sampling(v);
   }
+
+  shutdownOpenVKL();
 }

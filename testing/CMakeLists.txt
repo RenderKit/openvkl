@@ -1,12 +1,14 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-add_library(openvkl_testing INTERFACE)
+add_library(openvkl_testing STATIC
+  apps/AppInit.cpp
+)
 
-target_link_libraries(openvkl_testing INTERFACE
+target_link_libraries(openvkl_testing PUBLIC
   openvkl
   rkcommon::rkcommon
-  openvkl_vdb_util
+  openvkl_utility
 )
 
 target_include_directories(openvkl_testing

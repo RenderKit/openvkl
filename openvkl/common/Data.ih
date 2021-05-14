@@ -3,9 +3,9 @@
 
 #pragma once
 
+#include "openvkl/VKLDataType.h"
 #include "rkcommon/math/math.ih"
 #include "rkcommon/math/vec.ih"
-#include "openvkl/VKLDataType.h"
 
 struct Data1D
 {
@@ -28,7 +28,7 @@ inline uniform bool isValid(const uniform Data1D data)
 inline uniform bool safe_32bit_indexing(const uniform Data1D data,
                                         const uniform uint64 maxIndex)
 {
-  uniform uint64 maxBytes = maxIndex * data.byteStride;
+  const uniform uint64 maxBytes = maxIndex * data.byteStride;
   return (maxBytes < (1ULL << 31));
 }
 
@@ -36,78 +36,90 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data,
 #define process_hi28_varying foreach_unique(hi in hi28)
 #define process_hi28_uniform uniform uint32 hi = hi28;
 
-#define template_get(T, univary)                                           \
-  inline univary T get_##T##_compact(const uniform Data1D data,            \
-                                     const univary uint32 index32)         \
-  {                                                                        \
-    assert(index32 >= 0 && index32 < data.numItems);                       \
-    return ((const T *uniform)data.addr)[index32];                         \
-  }                                                                        \
-                                                                           \
-  inline univary T get_##T##_strided(const uniform Data1D data,            \
-                                     const univary uint32 index32)         \
-  {                                                                        \
-    assert(index32 >= 0 && index32 < data.numItems);                       \
-    return *((const uniform T *)(data.addr + index32 * data.byteStride));  \
-  }                                                                        \
-                                                                           \
-  inline univary T get_##T##_compact(const uniform Data1D data,            \
-                                     const uniform uint64 baseIndex64,     \
-                                     const univary uint32 offsetIndex32)   \
-  {                                                                        \
-    assert(baseIndex64 + offsetIndex32 >= 0 &&                             \
-           baseIndex64 + offsetIndex32 < data.numItems);                   \
-    const T *uniform base =                                                \
-        (const T *uniform)(data.addr + baseIndex64 * data.byteStride);     \
-    return base[offsetIndex32];                                            \
-  }                                                                        \
-                                                                           \
-  inline univary T get_##T##_strided(const uniform Data1D data,            \
-                                     const uniform uint64 baseIndex64,     \
-                                     const univary uint32 offsetIndex32)   \
-  {                                                                        \
-    assert(baseIndex64 + offsetIndex32 >= 0 &&                             \
-           baseIndex64 + offsetIndex32 < data.numItems);                   \
-    const uint8 *uniform base =                                            \
-        (const uint8 *uniform)(data.addr + baseIndex64 * data.byteStride); \
-    return *((const uniform T *)(base + offsetIndex32 * data.byteStride)); \
-  }                                                                        \
-                                                                           \
-  inline univary T get_##T(const uniform Data1D data,                      \
-                           const univary uint64 index64)                   \
-  {                                                                        \
-    assert(index64 >= 0 && index64 < data.numItems);                       \
-    const univary uint64 address = index64 * data.byteStride;              \
-    const univary uint32 hi28    = address >> 28;                          \
-    const univary uint32 lo28    = address & ((1 << 28) - 1);              \
-    univary T value;                                                       \
-    process_hi28(univary)                                                  \
-    {                                                                      \
-      const uniform uint64 hi64 = hi;                                      \
-      value = *((const uniform T *)((data.addr + (hi64 << 28)) + lo28));   \
-    }                                                                      \
-    return value;                                                          \
+// T: user-requested type
+// retT: return type
+// repT: internal representation type
+// univary: uniform or varying
+// convFunc: an optional conversion function to transform from repT to retT
+#define template_get(T, retT, repT, univary, convFunc)                                       \
+  inline univary retT get_##T##_compact(const uniform Data1D data,                           \
+                                        const univary uint32 index32)                        \
+  {                                                                                          \
+    assert(index32 >= 0 && index32 < data.numItems);                                         \
+    return convFunc(((const repT *uniform)data.addr)[index32]);                              \
+  }                                                                                          \
+                                                                                             \
+  inline univary retT get_##T##_strided(const uniform Data1D data,                           \
+                                        const univary uint32 index32)                        \
+  {                                                                                          \
+    assert(index32 >= 0 && index32 < data.numItems);                                         \
+    return convFunc(                                                                         \
+        *((const uniform repT *)(data.addr + index32 * data.byteStride)));                   \
+  }                                                                                          \
+                                                                                             \
+  inline univary retT get_##T##_compact(const uniform Data1D data,                           \
+                                        const uniform uint64 baseIndex64,                    \
+                                        const univary uint32 offsetIndex32)                  \
+  {                                                                                          \
+    assert(baseIndex64 + offsetIndex32 >= 0 &&                                               \
+           baseIndex64 + offsetIndex32 < data.numItems);                                     \
+    const repT *uniform base =                                                               \
+        (const repT *uniform)(data.addr + baseIndex64 * data.byteStride);                    \
+    return convFunc(base[offsetIndex32]);                                                    \
+  }                                                                                          \
+                                                                                             \
+  inline univary retT get_##T##_strided(const uniform Data1D data,                           \
+                                        const uniform uint64 baseIndex64,                    \
+                                        const univary uint32 offsetIndex32)                  \
+  {                                                                                          \
+    assert(baseIndex64 + offsetIndex32 >= 0 &&                                               \
+           baseIndex64 + offsetIndex32 < data.numItems);                                     \
+    const uint8 *uniform base =                                                              \
+        (const uint8 *uniform)(data.addr + baseIndex64 * data.byteStride);                   \
+    return convFunc(                                                                         \
+        *((const uniform repT *)(base + offsetIndex32 * data.byteStride)));                  \
+  }                                                                                          \
+                                                                                             \
+  inline univary retT get_##T(const uniform Data1D data,                                     \
+                              const univary uint64 index64)                                  \
+  {                                                                                          \
+    assert(index64 >= 0 && index64 < data.numItems);                                         \
+    const univary uint64 address = index64 * data.byteStride;                                \
+    const univary uint32 hi28    = address >> 28;                                            \
+    const univary uint32 lo28    = address & ((1 << 28) - 1);                                \
+    univary retT value;                                                                      \
+    process_hi28(univary)                                                                    \
+    {                                                                                        \
+      const uniform uint64 hi64 = hi;                                                        \
+      value                     = convFunc(                                                  \
+                              *((const uniform repT *)((data.addr + (hi64 << 28)) + lo28))); \
+    }                                                                                        \
+    return value;                                                                            \
   }
 
-template_get(uint8, varying);
-template_get(int16, varying);
-template_get(uint16, varying);
-template_get(uint32, varying);
-template_get(uint64, varying);
-template_get(float, varying);
-template_get(double, varying);
-template_get(vec3f, varying);
-template_get(vec4f, varying);
+template_get(uint8, uint8, uint8, varying, );
+template_get(int16, int16, int16, varying, );
+template_get(uint16, uint16, uint16, varying, );
+template_get(uint32, uint32, uint32, varying, );
+template_get(uint64, uint64, uint64, varying, );
+template_get(float, float, float, varying, );
+template_get(double, double, double, varying, );
+template_get(vec3f, vec3f, vec3f, varying, );
+template_get(vec4f, vec4f, vec4f, varying, );
 
-template_get(uint8, uniform);
-template_get(int16, uniform);
-template_get(uint16, uniform);
-template_get(uint32, uniform);
-template_get(uint64, uniform);
-template_get(float, uniform);
-template_get(double, uniform);
-template_get(vec3f, uniform);
-template_get(vec4f, uniform);
+template_get(uint8, uint8, uint8, uniform, );
+template_get(int16, int16, int16, uniform, );
+template_get(uint16, uint16, uint16, uniform, );
+template_get(uint32, uint32, uint32, uniform, );
+template_get(uint64, uint64, uint64, uniform, );
+template_get(float, float, float, uniform, );
+template_get(double, double, double, uniform, );
+template_get(vec3f, vec3f, vec3f, uniform, );
+template_get(vec4f, vec4f, vec4f, uniform, );
+
+// special case: half
+template_get(half, float, unsigned int16, varying, half_to_float);
+template_get(half, float, unsigned int16, uniform, half_to_float);
 
 #undef template_get
 
@@ -115,73 +127,113 @@ template_get(vec4f, uniform);
 // the uniform case, these will always use the strided path (which avoids the
 // conditional and is more performant). for the varying case, the compact or
 // strided functions will be used as appropriate.
-#define template_get_wrapper(T)                                                \
-  inline uniform T get_##T(const uniform Data1D data,                          \
-                           const uniform uint32 index32)                       \
+#define template_get_wrapper(T, retT)                                          \
+  inline uniform retT get_##T(const uniform Data1D data,                       \
+                              const uniform uint32 index32)                    \
   {                                                                            \
     return get_##T##_strided(data, index32);                                   \
   }                                                                            \
                                                                                \
-  inline varying T get_##T(const uniform Data1D data,                          \
-                           const varying uint32 index32)                       \
+  inline varying retT get_##T(const uniform Data1D data,                       \
+                              const varying uint32 index32)                    \
   {                                                                            \
     return data.compact ? get_##T##_compact(data, index32)                     \
                         : get_##T##_strided(data, index32);                    \
   }                                                                            \
                                                                                \
-  inline uniform T get_##T(const uniform Data1D data,                          \
-                           const uniform uint64 baseIndex64,                   \
-                           const uniform uint32 offsetIndex32)                 \
+  inline uniform retT get_##T(const uniform Data1D data,                       \
+                              const uniform uint64 baseIndex64,                \
+                              const uniform uint32 offsetIndex32)              \
   {                                                                            \
     return get_##T##_strided(data, baseIndex64, offsetIndex32);                \
   }                                                                            \
                                                                                \
-  inline varying T get_##T(const uniform Data1D data,                          \
-                           const uniform uint64 baseIndex64,                   \
-                           const varying uint32 offsetIndex32)                 \
+  inline varying retT get_##T(const uniform Data1D data,                       \
+                              const uniform uint64 baseIndex64,                \
+                              const varying uint32 offsetIndex32)              \
   {                                                                            \
     return data.compact ? get_##T##_compact(data, baseIndex64, offsetIndex32)  \
                         : get_##T##_strided(data, baseIndex64, offsetIndex32); \
   }
 
-template_get_wrapper(uint8);
-template_get_wrapper(int16);
-template_get_wrapper(uint16);
-template_get_wrapper(uint32);
-template_get_wrapper(uint64);
-template_get_wrapper(float);
-template_get_wrapper(double);
-template_get_wrapper(vec3f);
-template_get_wrapper(vec4f);
+template_get_wrapper(uint8, uint8);
+template_get_wrapper(int16, int16);
+template_get_wrapper(uint16, uint16);
+template_get_wrapper(uint32, uint32);
+template_get_wrapper(uint64, uint64);
+template_get_wrapper(float, float);
+template_get_wrapper(double, double);
+template_get_wrapper(vec3f, vec3f);
+template_get_wrapper(vec4f, vec4f);
+
+// special case: half
+template_get_wrapper(half, float);
 
 #undef template_get_wrapper
 
 // limited support for getters on _varying_ Data1D objects
 
-inline varying float get_float_compact(const uniform Data1D *varying data,
-                                       const varying uint32 index32)
-{
-  assert(index32 >= 0 && index32 < data->numItems);
-  return ((const uniform float *)data->addr)[index32];
-}
+#define template_get_special(T, retT, repT, convFunc)                        \
+  inline varying retT get_##T##_compact(const uniform Data1D *varying data,  \
+                                        const varying uint32 index32)        \
+  {                                                                          \
+    assert(index32 >= 0 && index32 < data->numItems);                        \
+    return convFunc(((const uniform repT *)data->addr)[index32]);            \
+  }                                                                          \
+                                                                             \
+  inline varying retT get_##T##_strided(const uniform Data1D *varying data,  \
+                                        const varying uint32 index32)        \
+  {                                                                          \
+    assert(index32 >= 0 && index32 < data->numItems);                        \
+    return convFunc(                                                         \
+        *((const uniform repT *)(data->addr + index32 * data->byteStride))); \
+  }                                                                          \
+                                                                             \
+  inline varying retT get_##T(const uniform Data1D *varying data,            \
+                              const varying uint32 index32)                  \
+  {                                                                          \
+    return data->compact ? get_##T##_compact(data, index32)                  \
+                         : get_##T##_strided(data, index32);                 \
+  }                                                                          \
+                                                                             \
+  inline varying retT get_##T##_compact(const uniform Data1D *varying data,  \
+                                        const varying uint64 index64)        \
+  {                                                                          \
+    assert(index64 >= 0 && index64 < data->numItems);                        \
+    return convFunc(((const uniform repT *)data->addr)[index64]);            \
+  }                                                                          \
+                                                                             \
+  inline varying retT get_##T##_strided(const uniform Data1D *varying data,  \
+                                        const varying uint64 index64)        \
+  {                                                                          \
+    assert(index64 >= 0 && index64 < data->numItems);                        \
+    return convFunc(                                                         \
+        *((const uniform repT *)(data->addr + index64 * data->byteStride))); \
+  }                                                                          \
+                                                                             \
+  inline varying retT get_##T(const uniform Data1D *varying data,            \
+                              const varying uint64 index64)                  \
+  {                                                                          \
+    return data->compact ? get_##T##_compact(data, index64)                  \
+                         : get_##T##_strided(data, index64);                 \
+  }                                                                          \
+                                                                             \
+  /* helpers for getting the first element only of a Data1D object */        \
+                                                                             \
+  inline varying retT get_##T##_0(const uniform Data1D *varying data)        \
+  {                                                                          \
+    assert(data->numItems > 0);                                              \
+    return convFunc(*((const uniform repT *)data->addr));                    \
+  }                                                                          \
+                                                                             \
+  inline uniform retT get_##T##_0(const uniform Data1D data)                 \
+  {                                                                          \
+    assert(data.numItems > 0);                                               \
+    return convFunc(*((const uniform repT *)data.addr));                     \
+  }
 
-inline varying float get_float_strided(const uniform Data1D *varying data,
-                                       const varying uint32 index32)
-{
-  assert(index32 >= 0 && index32 < data->numItems);
-  return *((const uniform float *)(data->addr + index32 * data->byteStride));
-}
-
-// helpers for getting the first element only of a Data1D object
-
-inline varying float get_float_0(const uniform Data1D *varying data)
-{
-  assert(data->numItems > 0);
-  return *((const uniform float *)data->addr);
-}
-
-inline uniform float get_float_0(const uniform Data1D data)
-{
-  assert(data.numItems > 0);
-  return *((const uniform float *)data.addr);
-}
+template_get_special(half, float, unsigned int16, half_to_float);
+template_get_special(float, float, float, );
+template_get_special(uint32, uint32, uint32, );
+template_get_special(uint64, uint64, uint64, );
+#undef template_get_special

@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -15,26 +15,26 @@ namespace openvkl {
 
       void commit() override;
 
-      vec3f renderPixel(const Scene& scene, Ray &ray, const vec4i &sampleID) override;
+      vec3f renderPixel(const Scene &scene,
+                        Ray &ray,
+                        const vec4i &sampleID) override;
 
      private:
       bool sampleWoodcock(RNG &rng,
-                          const Scene& scene,
+                          const Scene &scene,
                           const Ray &ray,
                           const range1f &hits,
                           float &t,
                           float &sample,
                           float &transmittance);
 
-      void integrate(RNG &rng,
-                     const Scene& scene,
-                     Ray &ray,
-                     vec3f &Le,
-                     int scatterIndex);
+      void integrate(
+          RNG &rng, const Scene &scene, Ray &ray, vec3f &Le, int scatterIndex);
 
       // Data //
 
       float time{0.f};
+      float shutter{0.f};
       bool motionBlur{false};
 
       float sigmaTScale{0.f};

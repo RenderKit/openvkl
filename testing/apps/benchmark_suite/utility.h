@@ -1,8 +1,9 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
 #include <algorithm>
+#include <chrono>
 #include <random>
 #include "../common/simd.h"
 #include "openvkl_testing.h"
@@ -11,6 +12,32 @@
 /*
  * Utilities for our benchmarking suite.
  */
+
+/*
+ * Macro which can be used to add warm-up iterations to Google benchmarks.
+ */
+
+#define BENCHMARK_WARMUP_MIN_SECONDS 1.f
+
+#define BENCHMARK_WARMUP_AND_RUN(BODY)                                      \
+  /* warm-up iterations */                                                  \
+  auto begin = std::chrono::steady_clock::now();                            \
+  while (true) {                                                            \
+    BODY;                                                                   \
+    auto end = std::chrono::steady_clock::now();                            \
+    float durationSeconds =                                                 \
+        (std::chrono::duration_cast<std::chrono::microseconds>(end - begin) \
+             .count()) /                                                    \
+        1000000.f;                                                          \
+    if (durationSeconds >= BENCHMARK_WARMUP_MIN_SECONDS) {                  \
+      break;                                                                \
+    }                                                                       \
+  }                                                                         \
+                                                                            \
+  /* benchmark loop */                                                      \
+  for (auto _ : state) {                                                    \
+    BODY;                                                                   \
+  }
 
 /*
  * Traits classes for API programming models.

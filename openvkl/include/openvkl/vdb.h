@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 // ========================================================================== //
@@ -10,7 +10,6 @@
 
 #include "VKLDataType.h"
 #include "VKLFilter.h"
-#include "VKLFormat.h"
 #include "ispc_cpp_interop.h"
 
 // ========================================================================== //

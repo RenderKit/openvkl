@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -25,7 +25,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
   auto v = rkcommon::make_unique<PROCEDURAL_VOLUME_TYPE>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume = v->getVKLVolume();
+  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -65,11 +65,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
 
 TEST_CASE("Structured volume gradients", "[volume_gradients]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   SECTION("XYZStructuredRegularVolume<float>")
   {
@@ -85,4 +81,6 @@ TEST_CASE("Structured volume gradients", "[volume_gradients]")
   {
     scalar_gradients<XYZStructuredSphericalVolume<float>>(0.1f, true);
   }
+
+  shutdownOpenVKL();
 }

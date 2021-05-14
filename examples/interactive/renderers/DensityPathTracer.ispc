@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -8,6 +8,7 @@ struct DensityPathTracer
   Renderer super;
 
   float time;
+  float shutter;
   bool motionBlur;
   float sigmaTScale;
   float sigmaSScale;
@@ -58,8 +59,11 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    const float time =
-        self->motionBlur ? randomNumbers2.x * self->time : self->time;
+    float time = self->time;
+    if (self->motionBlur) {
+      time = time + (randomNumbers2.x-0.5f) * self->shutter;
+    }
+    time = clamp(time, 0.f, 1.f);
     sample = vklComputeSampleV(
         scene->sampler, (varying vkl_vec3f *)&c, scene->attributeIndex, &time);
 
@@ -169,6 +173,7 @@ export void *uniform DensityPathTracer_create()
 
 export void DensityPathTracer_set(void *uniform _self,
                                   const uniform float time,
+                                  const uniform float shutter,
                                   const uniform bool motionBlur,
                                   const uniform float sigmaTScale,
                                   const uniform float sigmaSScale,
@@ -178,6 +183,7 @@ export void DensityPathTracer_set(void *uniform _self,
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
 
   self->time                  = time;
+  self->shutter               = shutter;
   self->motionBlur            = motionBlur;
   self->sigmaTScale           = sigmaTScale;
   self->sigmaSScale           = sigmaSScale;

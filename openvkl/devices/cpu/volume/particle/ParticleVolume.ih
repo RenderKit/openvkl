@@ -1,0 +1,22 @@
+// Copyright 2020-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "../common/Data.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+#include "../UnstructuredVolume.ih"
+#include "../Volume.ih"
+
+struct VKLParticleVolume
+{
+  VKLUnstructuredBase super;
+
+  uniform float clampMaxCumulativeValue;
+  uniform float radiusSupportFactor;
+  uniform Data1D positions;
+  uniform Data1D radii;
+  uniform Data1D weights;
+};

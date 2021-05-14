@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -20,7 +20,7 @@ typedef enum
 #endif
 {
   // Driver reference type.
-  VKL_DRIVER = 100,
+  VKL_DEVICE = 100,
 
   // Void pointer type.
   VKL_VOID_PTR = 200,
@@ -39,46 +39,92 @@ typedef enum
   // Pointer to a C-style NULL-terminated character string.
   VKL_STRING = 1500,
 
-  // Character scalar type.
+  // Character scalar and vector types.
   VKL_CHAR = 2000,
+  VKL_VEC2C,
+  VKL_VEC3C,
+  VKL_VEC4C,
 
   // Unsigned character scalar and vector types.
-  VKL_UCHAR = 2500, VKL_VEC2UC, VKL_VEC3UC, VKL_VEC4UC,
-  VKL_BYTE = 2500, //XXX VKL_UCHAR, ISPC issue #1246
-  VKL_RAW = 2500,  //XXX VKL_UCHAR, ISPC issue #1246
+  VKL_UCHAR = 2500,
+  VKL_VEC2UC,
+  VKL_VEC3UC,
+  VKL_VEC4UC,
+  VKL_BYTE = 2500,  // XXX VKL_UCHAR, ISPC issue #1246
+  VKL_RAW  = 2500,  // XXX VKL_UCHAR, ISPC issue #1246
 
-  // Signed 16-bit integer scalar.
+  // Signed 16-bit integer scalar and vector types.
   VKL_SHORT = 3000,
+  VKL_VEC2S,
+  VKL_VEC3S,
+  VKL_VEC4S,
 
-  // Unsigned 16-bit integer scalar.
+  // Unsigned 16-bit integer scalar and vector types.
   VKL_USHORT = 3500,
+  VKL_VEC2US,
+  VKL_VEC3US,
+  VKL_VEC4US,
 
   // Signed 32-bit integer scalar and vector types.
-  VKL_INT = 4000, VKL_VEC2I, VKL_VEC3I, VKL_VEC4I,
+  VKL_INT = 4000,
+  VKL_VEC2I,
+  VKL_VEC3I,
+  VKL_VEC4I,
 
   // Unsigned 32-bit integer scalar and vector types.
-  VKL_UINT = 4500, VKL_VEC2UI, VKL_VEC3UI, VKL_VEC4UI,
+  VKL_UINT = 4500,
+  VKL_VEC2UI,
+  VKL_VEC3UI,
+  VKL_VEC4UI,
 
   // Signed 64-bit integer scalar and vector types.
-  VKL_LONG = 5000, VKL_VEC2L, VKL_VEC3L, VKL_VEC4L,
+  VKL_LONG = 5000,
+  VKL_VEC2L,
+  VKL_VEC3L,
+  VKL_VEC4L,
 
   // Unsigned 64-bit integer scalar and vector types.
-  VKL_ULONG = 5550, VKL_VEC2UL, VKL_VEC3UL, VKL_VEC4UL,
+  VKL_ULONG = 5550,
+  VKL_VEC2UL,
+  VKL_VEC3UL,
+  VKL_VEC4UL,
+
+  // Half-precision floating-point scalar and vector types (IEEE 754
+  // `binary16`).
+  VKL_HALF = 5800,
+  VKL_VEC2H,
+  VKL_VEC3H,
+  VKL_VEC4H,
 
   // Single precision floating point scalar and vector types.
-  VKL_FLOAT = 6000, VKL_VEC2F, VKL_VEC3F, VKL_VEC4F,
+  VKL_FLOAT = 6000,
+  VKL_VEC2F,
+  VKL_VEC3F,
+  VKL_VEC4F,
 
-  // Double precision floating point scalar type.
+  // Double precision floating point scalar and vector types.
   VKL_DOUBLE = 7000,
+  VKL_VEC2D,
+  VKL_VEC3D,
+  VKL_VEC4D,
 
   // Signed 32-bit integer N-dimensional box types
-  VKL_BOX1I = 8000, VKL_BOX2I, VKL_BOX3I, VKL_BOX4I,
+  VKL_BOX1I = 8000,
+  VKL_BOX2I,
+  VKL_BOX3I,
+  VKL_BOX4I,
 
   // Single precision floating point N-dimensional box types
-  VKL_BOX1F = 10000, VKL_BOX2F, VKL_BOX3F, VKL_BOX4F,
+  VKL_BOX1F = 10000,
+  VKL_BOX2F,
+  VKL_BOX3F,
+  VKL_BOX4F,
 
   // Transformation types
-  VKL_LINEAR2F = 12000, VKL_LINEAR3F, VKL_AFFINE2F, VKL_AFFINE3F,
+  VKL_LINEAR2F = 12000,
+  VKL_LINEAR3F,
+  VKL_AFFINE2F,
+  VKL_AFFINE3F,
 
   // Guard value.
   VKL_UNKNOWN = 9999999

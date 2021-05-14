@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
@@ -54,14 +54,14 @@ namespace api {
         buffers.resize(intervalIteratorSize * state.threads);
       }
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
             vklSampler, &origin, &direction, &tRange, nullptr, buffer);
 
         benchmark::DoNotOptimize(iterator);
-      }
+      }));
 
       if (state.thread_index == 0)
         wrapper.reset();
@@ -118,7 +118,7 @@ namespace api {
       VKLInterval interval;
       std::vector<char> buffer;
 
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
@@ -131,7 +131,7 @@ namespace api {
         }
 
         benchmark::DoNotOptimize(interval);
-      }
+      }));
 
       // global teardown only in first thread
       if (state.thread_index == 0)
@@ -184,7 +184,7 @@ namespace api {
       }
 
       VKLInterval interval;
-      for (auto _ : state) {
+      BENCHMARK_WARMUP_AND_RUN(({
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
@@ -199,7 +199,7 @@ namespace api {
         }
 
         benchmark::DoNotOptimize(interval);
-      }
+      }));
 
       if (state.thread_index == 0)
         wrapper.reset();
@@ -219,29 +219,10 @@ inline void registerIntervalIterators()
 {
   using Construction = api::IntervalIteratorConstruction<VolumeWrapper>;
   registerBenchmark<Construction>()->UseRealTime();
-  registerBenchmark<Construction>()->Threads(2)->UseRealTime();
-  registerBenchmark<Construction>()->Threads(4)->UseRealTime();
-  registerBenchmark<Construction>()->Threads(6)->UseRealTime();
-  registerBenchmark<Construction>()->Threads(12)->UseRealTime();
-  registerBenchmark<Construction>()->Threads(36)->UseRealTime();
-  registerBenchmark<Construction>()->Threads(72)->UseRealTime();
 
   using IterateFirst = api::IntervalIteratorIterateFirst<VolumeWrapper>;
   registerBenchmark<IterateFirst>()->UseRealTime();
-  registerBenchmark<IterateFirst>()->Threads(2)->UseRealTime();
-  registerBenchmark<IterateFirst>()->Threads(4)->UseRealTime();
-  registerBenchmark<IterateFirst>()->Threads(6)->UseRealTime();
-  registerBenchmark<IterateFirst>()->Threads(12)->UseRealTime();
-  registerBenchmark<IterateFirst>()->Threads(36)->UseRealTime();
-  registerBenchmark<IterateFirst>()->Threads(72)->UseRealTime();
 
   using IterateSecond = api::IntervalIteratorIterateSecond<VolumeWrapper>;
   registerBenchmark<IterateSecond>()->UseRealTime();
-  registerBenchmark<IterateSecond>()->Threads(2)->UseRealTime();
-  registerBenchmark<IterateSecond>()->Threads(4)->UseRealTime();
-  registerBenchmark<IterateSecond>()->Threads(6)->UseRealTime();
-  registerBenchmark<IterateSecond>()->Threads(12)->UseRealTime();
-  registerBenchmark<IterateSecond>()->Threads(36)->UseRealTime();
-  registerBenchmark<IterateSecond>()->Threads(72)->UseRealTime();
 }
-

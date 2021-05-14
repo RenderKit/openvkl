@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## Establish project ##
 
-project(openvkl VERSION 0.12.1 LANGUAGES C CXX)
+project(openvkl VERSION 0.13.0 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -47,7 +47,7 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-set(RKCOMMON_VERSION_REQUIRED 1.6.0)
+set(RKCOMMON_VERSION_REQUIRED 1.6.1)
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
@@ -59,7 +59,7 @@ openvkl_create_embree_target()
 ## Build library, examples, and tests ##
 
 add_subdirectory(openvkl)
-add_subdirectory(vdb_util)
+add_subdirectory(utility)
 
 if (BUILD_EXAMPLES)
   add_subdirectory(examples)

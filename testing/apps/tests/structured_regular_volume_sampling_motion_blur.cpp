@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <random>
@@ -23,7 +23,7 @@ inline void sampling_on_vertices_vs_procedural_values_motion_blur(
 
   const float sampleTolerance = 0.f;
 
-  VKLVolume vklVolume   = v->getVKLVolume();
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -80,7 +80,7 @@ inline void sampling_on_vertices_vs_procedural_values_motion_blur(
 // other tests currently use a constant number of time steps per voxel
 inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
 {
-  auto volume = vklNewVolume("structuredRegular");
+  auto volume = vklNewVolume(getOpenVKLDevice(), "structuredRegular");
 
   const vec3i dimensions(2);
   const vec3f gridOrigin(0.f);
@@ -115,9 +115,12 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   }
   indices[8] = indexSum;
 
-  VKLData data        = vklNewData(voxels.size(), VKL_FLOAT, voxels.data());
-  VKLData indicesData = vklNewData(indices.size(), VKL_UINT, indices.data());
-  VKLData timesData   = vklNewData(times.size(), VKL_FLOAT, times.data());
+  VKLData data =
+      vklNewData(getOpenVKLDevice(), voxels.size(), VKL_FLOAT, voxels.data());
+  VKLData indicesData =
+      vklNewData(getOpenVKLDevice(), indices.size(), VKL_UINT, indices.data());
+  VKLData timesData =
+      vklNewData(getOpenVKLDevice(), times.size(), VKL_FLOAT, times.data());
 
   vklSetData(volume, "data", data);
   vklSetData(volume, "temporallyUnstructuredIndices", indicesData);
@@ -167,11 +170,7 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
 TEST_CASE("Structured regular volume sampling with motion blur",
           "[volume_sampling]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   SECTION("temporally unstructured with varying time steps per voxel")
   {
@@ -186,9 +185,7 @@ TEST_CASE("Structured regular volume sampling with motion blur",
       TemporalConfig(TemporalConfig::Structured, 2),
       TemporalConfig(TemporalConfig::Structured, 4),
       TemporalConfig(TemporalConfig::Unstructured, 2),
-      TemporalConfig(std::vector<float>{
-              0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})
-  };
+      TemporalConfig(std::vector<float>{0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})};
 
   const std::vector<VKLDataCreationFlags> dataCreationFlags{
       VKL_DATA_DEFAULT, VKL_DATA_SHARED_BUFFER};
@@ -213,7 +210,7 @@ TEST_CASE("Structured regular volume sampling with motion blur",
                                                           dcf,
                                                           false));
 
-        VKLVolume vklVolume = v->getVKLVolume();
+        VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
         REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
 
         sampling_on_vertices_vs_procedural_values_motion_blur(v, 2);
@@ -231,4 +228,6 @@ TEST_CASE("Structured regular volume sampling with motion blur",
       }
     }
   }
+
+  shutdownOpenVKL();
 }

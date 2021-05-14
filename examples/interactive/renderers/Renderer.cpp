@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.h"
@@ -50,9 +50,15 @@ namespace openvkl {
                                (ispc::vec3f &)dir_dv);
     }
 
+    void Renderer::setPixelRange(const region2i &newPixelRange)
+    {
+      pixelRange = newPixelRange;
+    }
+
     void Renderer::setFrameSize(const vec2i &dims)
     {
       pixelIndices = index_sequence_2D(dims);
+      pixelRange = region2i(vec2i(0), vec2i(dims));
 
       const auto numPixels = pixelIndices.total_indices();
       framebuffer.resize(numPixels);
@@ -90,12 +96,13 @@ namespace openvkl {
     void Renderer::renderFrame(const Scene& scene)
     {
       auto fbDims = pixelIndices.dimensions();
+      auto rangeDims = pixelRange.size();
 
       for (int i = 0; i < spp; ++i) {
         float accumScale = 1.f / (frameID + 1);
 
-        tasking::parallel_for(pixelIndices.total_indices(), [&](size_t i) {
-          auto pixel = pixelIndices.reshape(i);
+        tasking::parallel_for(rangeDims.long_product(), [&](size_t i) {
+          auto pixel = vec2i(i % rangeDims.x, i / rangeDims.x) + pixelRange.lower;
 
           vec2f screen(pixel.x * rcp(float(fbDims.x)),
                        pixel.y * rcp(float(fbDims.y)));
@@ -103,20 +110,21 @@ namespace openvkl {
           Ray ray = computeRay(screen);
           const vec3f color = renderPixel(scene, ray, vec4i(pixel.x, pixel.y, frameID, fbDims.x));
 
-          float &ar = accum_r[i];
-          float &ag = accum_g[i];
-          float &ab = accum_b[i];
+          auto fbIndex = pixelIndices.flatten(pixel);
+          float &ar    = accum_r[fbIndex];
+          float &ag    = accum_g[fbIndex];
+          float &ab    = accum_b[fbIndex];
 
           ar += color.x;
           ag += color.y;
           ab += color.z;
 
-          framebuffer[i] = vec3f(ar, ag, ab) * accumScale;
+          framebuffer[fbIndex] = vec3f(ar, ag, ab) * accumScale;
 
           // linear to sRGB color space conversion
-          framebuffer[i] = vec3f(pow(framebuffer[i].x, 1.f / 2.2f),
-                                 pow(framebuffer[i].y, 1.f / 2.2f),
-                                 pow(framebuffer[i].z, 1.f / 2.2f));
+          framebuffer[fbIndex] = vec3f(pow(framebuffer[fbIndex].x, 1.f / 2.2f),
+                                       pow(framebuffer[fbIndex].y, 1.f / 2.2f),
+                                       pow(framebuffer[fbIndex].z, 1.f / 2.2f));
         });
 
         frameID++;
@@ -126,10 +134,13 @@ namespace openvkl {
     void Renderer::renderFrame_ispc(const Scene& scene)
     {
       vec2i fbDims = pixelIndices.dimensions();
+      auto rangeDims = pixelRange.size();
       ispc::vec2i fbDimsISPC{fbDims.x, fbDims.y};
+      ispc::vec2i rangeDimsISPC{rangeDims.x, rangeDims.y};
+      ispc::vec2i pixelOffsetISPC{pixelRange.lower.x, pixelRange.lower.y};
 
       const size_t numJobs =
-          pixelIndices.total_indices() / ispc::Renderer_pixelsPerJob();
+          area(pixelRange) / ispc::Renderer_pixelsPerJob();
 
       for (int i = 0; i < spp; ++i) {
         float accumScale = 1.f / (frameID + 1);
@@ -138,6 +149,8 @@ namespace openvkl {
           ispc::Renderer_renderPixel(ispcEquivalent,
                                      reinterpret_cast<const ispc::Scene*>(&scene),
                                      fbDimsISPC,
+                                     rangeDimsISPC,
+                                     pixelOffsetISPC,
                                      frameID,
                                      accumScale,
                                      i);
@@ -146,6 +159,5 @@ namespace openvkl {
         frameID++;
       }
     }
-
   }  // namespace examples
 }  // namespace openvkl

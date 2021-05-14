@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -32,13 +32,13 @@ namespace openvkl {
       std::vector<unsigned char> generateVoxels() override;  // unused
 
      protected:
-      void generateVKLVolume() override;
+      void generateVKLVolume(VKLDevice device) override;
 
       float computeProceduralValueImpl(const vec3f &objectCoordinates,
                                        float time) const override;
 
-      vec3f computeProceduralGradientImpl(
-          const vec3f &objectCoordinates, float time) const override;
+      vec3f computeProceduralGradientImpl(const vec3f &objectCoordinates,
+                                          float time) const override;
 
       int refFactor      = 4;
       int blockSize      = 16;
@@ -75,7 +75,8 @@ namespace openvkl {
 
     template <vec3f volumeGradientFunction(const vec3f &, float)>
     inline void
-    ProceduralShellsAMRVolume<volumeGradientFunction>::generateVKLVolume()
+    ProceduralShellsAMRVolume<volumeGradientFunction>::generateVKLVolume(
+        VKLDevice device)
     {
       int numLevels = 0;
       int minExtent = reduce_min(dimensions);
@@ -97,7 +98,7 @@ namespace openvkl {
       // block bound upper bounds are inclusive, hence subtracting 1
 
       float cellWidth = gridSpacing.x * float(minExtent) / blockSize;
-      int refLevel = 0;
+      int refLevel    = 0;
       std::vector<float> voxels(numCells, -0.5f);
 
       // outer shell - takes entire world space region
@@ -159,23 +160,24 @@ namespace openvkl {
       // convert the data above to VKLData objects
 
       for (const std::vector<float> &bd : blockDataVectors)
-        blockData.push_back(vklNewData(bd.size(), VKL_FLOAT, bd.data()));
+        blockData.push_back(
+            vklNewData(device, bd.size(), VKL_FLOAT, bd.data()));
 
       VKLData blockDataData =
-          vklNewData(blockData.size(), VKL_DATA, blockData.data());
+          vklNewData(device, blockData.size(), VKL_DATA, blockData.data());
 
       VKLData blockBoundsData =
-          vklNewData(blockBounds.size(), VKL_BOX3I, blockBounds.data());
+          vklNewData(device, blockBounds.size(), VKL_BOX3I, blockBounds.data());
 
-      VKLData refinementLevelsData =
-          vklNewData(refinementLevels.size(), VKL_INT, refinementLevels.data());
+      VKLData refinementLevelsData = vklNewData(
+          device, refinementLevels.size(), VKL_INT, refinementLevels.data());
 
       VKLData cellWidthsData =
-          vklNewData(cellWidths.size(), VKL_FLOAT, cellWidths.data());
+          vklNewData(device, cellWidths.size(), VKL_FLOAT, cellWidths.data());
 
       // create the AMR volume
 
-      volume = vklNewVolume("amr");
+      volume = vklNewVolume(device, "amr");
 
       vklSetData(volume, "block.data", blockDataData);
       vklSetData(volume, "block.bounds", blockBoundsData);

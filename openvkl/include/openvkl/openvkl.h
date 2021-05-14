@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,10 +8,11 @@
 #include "VKLFilter.h"
 #include "VKLFormat.h"
 #include "VKLLogLevel.h"
+#include "VKLTemporalFormat.h"
 
 #include "common.h"
 #include "data.h"
-#include "driver.h"
+#include "device.h"
 #include "iterator.h"
 #include "module.h"
 #include "observer.h"

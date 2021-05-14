@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -14,22 +14,27 @@ namespace openvkl {
   OPENVKL_CORE_INTERFACE VKLLogLevel logLevel();
 
   OPENVKL_CORE_INTERFACE void postLogMessage(
-      const std::string &msg, VKLLogLevel postAtLogLevel = VKL_LOG_DEBUG);
+      Device *device,
+      const std::string &msg,
+      VKLLogLevel postAtLogLevel = VKL_LOG_DEBUG);
 
   // stream class to facilitate usage as e.g.:
   // postLogMessage(VKL_LOG_ERROR) << "my error" << std::endl;
   struct LogMessageStream : public std::stringstream
   {
-    LogMessageStream(VKLLogLevel postAtLogLevel = VKL_LOG_DEBUG);
+    LogMessageStream(Device *device,
+                     VKLLogLevel postAtLogLevel = VKL_LOG_DEBUG);
     LogMessageStream(LogMessageStream &&other);
     ~LogMessageStream();
 
    private:
+    Device *device{nullptr};
     VKLLogLevel logLevel{VKL_LOG_DEBUG};
   };
 
-  inline LogMessageStream::LogMessageStream(VKLLogLevel postAtLogLevel)
-      : logLevel(postAtLogLevel)
+  inline LogMessageStream::LogMessageStream(Device *device,
+                                            VKLLogLevel postAtLogLevel)
+      : device(device), logLevel(postAtLogLevel)
   {
   }
 
@@ -37,7 +42,7 @@ namespace openvkl {
   {
     auto msg = str();
     if (!msg.empty())
-      postLogMessage(msg, logLevel);
+      postLogMessage(device, msg, logLevel);
   }
 
   inline LogMessageStream::LogMessageStream(LogMessageStream &&other)
@@ -46,6 +51,6 @@ namespace openvkl {
   }
 
   OPENVKL_CORE_INTERFACE LogMessageStream
-  postLogMessage(VKLLogLevel postAtLogLevel = VKL_LOG_DEBUG);
+  postLogMessage(Device *device, VKLLogLevel postAtLogLevel = VKL_LOG_DEBUG);
 
 }  // namespace openvkl

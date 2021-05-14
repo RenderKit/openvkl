@@ -1,0 +1,32 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/box.ih"
+
+// this should match the layout of VKLInterval
+struct Interval
+{
+  box1f tRange;
+  box1f valueRange;
+  float nominalDeltaT;
+};
+
+inline void resetInterval(Interval &interval)
+{
+  interval.tRange.lower     = 1.f;
+  interval.tRange.upper     = -1.f;
+  interval.valueRange.lower = 0.f;
+  interval.valueRange.upper = 0.f;
+  interval.nominalDeltaT    = 0.f;
+}
+
+inline void resetInterval(uniform Interval &interval)
+{
+  interval.tRange.lower     = 1.f;
+  interval.tRange.upper     = -1.f;
+  interval.valueRange.lower = 0.f;
+  interval.valueRange.upper = 0.f;
+  interval.nominalDeltaT    = 0.f;
+}

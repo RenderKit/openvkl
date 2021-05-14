@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
@@ -28,7 +28,7 @@ struct Particle
   {
     volume = rkcommon::make_unique<ProceduralParticleVolume>(1000);
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
   }
@@ -57,11 +57,7 @@ struct Particle
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Particle>();
 
@@ -71,7 +67,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

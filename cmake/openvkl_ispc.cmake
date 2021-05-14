@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
@@ -131,7 +131,7 @@ macro(openvkl_configure_ispc_isa)
   endif()
 
   # if only one target is specified for a given width, add a second target to
-  # force ISPC name mangling. this avoids global name conflicts between drivers
+  # force ISPC name mangling. this avoids global name conflicts between devices
   # of different widths.
   foreach (TARGET_LIST OPENVKL_ISPC_TARGET_LIST_4
                        OPENVKL_ISPC_TARGET_LIST_8

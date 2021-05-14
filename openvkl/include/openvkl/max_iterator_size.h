@@ -3,9 +3,9 @@
 
 #pragma once
 
-// Maximum iterator size over all supported volume and driver
+// Maximum iterator size over all supported volume and device
 // types, and for each target SIMD width.
-#define VKL_MAX_INTERVAL_ITERATOR_SIZE_4 991
+#define VKL_MAX_INTERVAL_ITERATOR_SIZE_4 1007
 #define VKL_MAX_INTERVAL_ITERATOR_SIZE_8 1951
 #define VKL_MAX_INTERVAL_ITERATOR_SIZE_16 3903
 
@@ -16,7 +16,7 @@
 #else
   #define VKL_MAX_INTERVAL_ITERATOR_SIZE VKL_MAX_INTERVAL_ITERATOR_SIZE_16
 #endif
-#define VKL_MAX_HIT_ITERATOR_SIZE_4 1231
+#define VKL_MAX_HIT_ITERATOR_SIZE_4 1263
 #define VKL_MAX_HIT_ITERATOR_SIZE_8 2431
 #define VKL_MAX_HIT_ITERATOR_SIZE_16 4863
 

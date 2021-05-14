@@ -1,0 +1,230 @@
+// Copyright 2020-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+#include "common/temporal_data_interpolation.ih"
+
+// ---------------------------------------------------------------------------
+// Value range.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_computeValueRange_tile_constant(voxelType)   \
+  inline uniform box1f VdbSampler_computeValueRange_tile_constant_##voxelType( \
+      const VdbGrid *uniform grid,                                             \
+      uniform uint64 /*leafIndex*/,                                            \
+      uniform uint64 leafDataIndex,                                            \
+      const uniform vec2ui & /*xRange*/,                                       \
+      const uniform vec2ui & /*yRange*/,                                       \
+      const uniform vec2ui & /*zRange*/)                                       \
+  {                                                                            \
+    const uniform float v =                                                    \
+        get_##voxelType##_0(grid->leafData[leafDataIndex]);                    \
+    return make_box1f(v, v);                                                   \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_tile_constant(half)
+__vkl_template_VdbSampler_computeValueRange_tile_constant(float)
+
+#undef __vkl_template_VdbSampler_computeValueRange_tile_constant
+
+#define __vkl_template_VdbSampler_computeValueRange_tile_structured(voxelType) \
+  inline uniform box1f                                                         \
+      VdbSampler_computeValueRange_tile_structured_##voxelType(                \
+          const VdbGrid *uniform grid,                                         \
+          uniform uint64 leafIndex,                                            \
+          uniform uint64 leafDataIndex,                                        \
+          const uniform vec2ui & /*xRange*/,                                   \
+          const uniform vec2ui & /*yRange*/,                                   \
+          const uniform vec2ui & /*zRange*/)                                   \
+  {                                                                            \
+    const uniform uint32 numTimesteps =                                        \
+        grid->leafStructuredTimesteps[leafIndex];                              \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                   \
+    for (uniform uint32 i = 0; i < numTimesteps; ++i) {                        \
+      extend(valueRange, get_##voxelType(grid->leafData[leafDataIndex], i));   \
+    }                                                                          \
+    return valueRange;                                                         \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_tile_structured(half)
+__vkl_template_VdbSampler_computeValueRange_tile_structured(float)
+
+#undef __vkl_template_VdbSampler_computeValueRange_tile_structured
+
+#define __vkl_template_VdbSampler_computeValueRange_tile_unstructured( \
+    voxelType)                                                         \
+  inline uniform box1f                                                 \
+      VdbSampler_computeValueRange_tile_unstructured_##voxelType(      \
+          const VdbGrid *uniform grid,                                 \
+          uniform uint64 leafIndex,                                    \
+          uniform uint64 leafDataIndex,                                \
+          const uniform vec2ui & /*xRange*/,                           \
+          const uniform vec2ui & /*yRange*/,                           \
+          const uniform vec2ui & /*zRange*/)                           \
+  {                                                                    \
+    return computeValueRangeTemporallyUnstructured_##voxelType(        \
+        grid->leafData + leafDataIndex,                                \
+        grid->leafUnstructuredIndices + leafIndex,                     \
+        0u);                                                           \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_tile_unstructured(half)
+__vkl_template_VdbSampler_computeValueRange_tile_unstructured(float)
+
+#undef __vkl_template_VdbSampler_computeValueRange_tile_unstructured
+
+// ---------------------------------------------------------------------------
+// Constant leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_sample_tile_constant(voxelType)           \
+  inline uniform float                                                      \
+      VdbSampler_sample_uniform_uniform_tile_constant_##voxelType(          \
+          const VdbGrid *uniform grid,                                      \
+          uniform vkl_uint64 /*leafIndex*/,                                 \
+          uniform vkl_uint64 leafDataIndex,                                 \
+          const uniform vec3ui & /*offset*/,                                \
+          uniform float /*time*/)                                           \
+  {                                                                         \
+    return get_##voxelType##_0(grid->leafData[leafDataIndex]);              \
+  }                                                                         \
+                                                                            \
+  inline float VdbSampler_sample_uniform_varying_tile_constant_##voxelType( \
+      const VdbGrid *uniform grid,                                          \
+      uniform vkl_uint64 /*leafIndex*/,                                     \
+      uniform vkl_uint64 leafDataIndex,                                     \
+      const vec3ui & /*offset*/,                                            \
+      const float & /*time*/)                                               \
+  {                                                                         \
+    return get_##voxelType##_0(grid->leafData[leafDataIndex]);              \
+  }                                                                         \
+                                                                            \
+  inline float VdbSampler_sample_varying_varying_tile_constant_##voxelType( \
+      const VdbGrid *uniform grid,                                          \
+      const vkl_uint64 & /*leafIndex*/,                                     \
+      const vkl_uint64 &leafDataIndex,                                      \
+      const vec3ui & /*offset*/,                                            \
+      const float & /*time*/)                                               \
+  {                                                                         \
+    return get_##voxelType##_0(grid->leafData + leafDataIndex);             \
+  }
+
+__vkl_template_VdbSampler_sample_tile_constant(half)
+__vkl_template_VdbSampler_sample_tile_constant(float)
+
+#undef __vkl_template_VdbSampler_sample_tile_constant
+
+// ---------------------------------------------------------------------------
+// Structured leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_sample_tile_structured(voxelType)           \
+  inline uniform float                                                        \
+      VdbSampler_sample_uniform_uniform_tile_structured_##voxelType(          \
+          const VdbGrid *uniform grid,                                        \
+          uniform vkl_uint64 leafIndex,                                       \
+          uniform vkl_uint64 leafDataIndex,                                   \
+          const uniform vec3ui & /*offset*/,                                  \
+          uniform float time)                                                 \
+  {                                                                           \
+    return interpolateTemporallyStructured_##voxelType(                       \
+        grid->leafData + leafDataIndex,                                       \
+        grid->leafStructuredTimesteps[leafIndex],                             \
+        0u,                                                                   \
+        time);                                                                \
+  }                                                                           \
+                                                                              \
+  inline float VdbSampler_sample_uniform_varying_tile_structured_##voxelType( \
+      const VdbGrid *uniform grid,                                            \
+      uniform vkl_uint64 leafIndex,                                           \
+      uniform vkl_uint64 leafDataIndex,                                       \
+      const vec3ui & /*offset*/,                                              \
+      const float &time)                                                      \
+  {                                                                           \
+    return interpolateTemporallyStructured_##voxelType(                       \
+        grid->leafData + leafDataIndex,                                       \
+        grid->leafStructuredTimesteps[leafIndex],                             \
+        ((varying uint32)0u),                                                 \
+        time);                                                                \
+  }                                                                           \
+                                                                              \
+  inline float VdbSampler_sample_varying_varying_tile_structured_##voxelType( \
+      const VdbGrid *uniform grid,                                            \
+      const vkl_uint64 &leafIndex,                                            \
+      const vkl_uint64 &leafDataIndex,                                        \
+      const vec3ui & /*offset*/,                                              \
+      const float &time)                                                      \
+  {                                                                           \
+    const int32 numTimesteps = grid->leafStructuredTimesteps[leafIndex];      \
+    return interpolateTemporallyStructured_##voxelType(                       \
+        grid->leafData + leafDataIndex,                                       \
+        numTimesteps,                                                         \
+        ((varying uint32)0u),                                                 \
+        time);                                                                \
+  }
+
+__vkl_template_VdbSampler_sample_tile_structured(half)
+__vkl_template_VdbSampler_sample_tile_structured(float)
+
+#undef __vkl_template_VdbSampler_sample_tile_structured
+
+// ---------------------------------------------------------------------------
+// Unstructured leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_sample_tile_unstructured(voxelType)  \
+  inline uniform float                                                 \
+      VdbSampler_sample_uniform_uniform_tile_unstructured_##voxelType( \
+          const VdbGrid *uniform grid,                                 \
+          uniform vkl_uint64 leafIndex,                                \
+          uniform vkl_uint64 leafDataIndex,                            \
+          const uniform vec3ui & /*offset*/,                           \
+          uniform float time)                                          \
+  {                                                                    \
+    return interpolateTemporallyUnstructured_##voxelType(              \
+        grid->leafData + leafDataIndex,                                \
+        grid->leafUnstructuredIndices + leafIndex,                     \
+        grid->leafUnstructuredTimes + leafIndex,                       \
+        0u,                                                            \
+        time);                                                         \
+  }                                                                    \
+                                                                       \
+  inline float                                                         \
+      VdbSampler_sample_uniform_varying_tile_unstructured_##voxelType( \
+          const VdbGrid *uniform grid,                                 \
+          uniform vkl_uint64 leafIndex,                                \
+          uniform vkl_uint64 leafDataIndex,                            \
+          const vec3ui & /*offset*/,                                   \
+          const float &time)                                           \
+  {                                                                    \
+    return interpolateTemporallyUnstructured_##voxelType(              \
+        grid->leafData + leafDataIndex,                                \
+        grid->leafUnstructuredIndices + leafIndex,                     \
+        grid->leafUnstructuredTimes + leafIndex,                       \
+        ((varying uint32)0u),                                          \
+        time);                                                         \
+  }                                                                    \
+                                                                       \
+  inline float                                                         \
+      VdbSampler_sample_varying_varying_tile_unstructured_##voxelType( \
+          const VdbGrid *uniform grid,                                 \
+          const vkl_uint64 &leafIndex,                                 \
+          const vkl_uint64 &leafDataIndex,                             \
+          const vec3ui & /*offset*/,                                   \
+          const float &time)                                           \
+  {                                                                    \
+    return interpolateTemporallyUnstructured_##voxelType(              \
+        grid->leafData + leafDataIndex,                                \
+        grid->leafUnstructuredIndices + leafIndex,                     \
+        grid->leafUnstructuredTimes + leafIndex,                       \
+        ((varying uint32)0u),                                          \
+        time);                                                         \
+  }
+
+__vkl_template_VdbSampler_sample_tile_unstructured(half)
+__vkl_template_VdbSampler_sample_tile_unstructured(float)
+
+#undef __vkl_template_VdbSampler_sample_tile_unstructured
+

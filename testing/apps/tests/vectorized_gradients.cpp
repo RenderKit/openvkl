@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
@@ -91,11 +91,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
 
 TEST_CASE("Vectorized gradients", "[volume_gradients]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   SECTION(
       "randomized vectorized gradients varying calling width and masks: "
@@ -105,7 +101,7 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
         new XYZStructuredRegularVolume<float>(
             vec3i(128), vec3f(0.f), vec3f(1.f)));
 
-    VKLVolume volume = v->getVKLVolume();
+    VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 
     randomized_vectorized_gradients(volume);
   }
@@ -118,7 +114,7 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
         new XYZUnstructuredProceduralVolume(
             vec3i(128), vec3f(0.f), vec3f(1.f), VKL_HEXAHEDRON, false));
 
-    VKLVolume volume = v->getVKLVolume();
+    VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 
     randomized_vectorized_gradients(volume);
   }
@@ -127,11 +123,17 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
       "randomized vectorized gradients varying calling width and masks: "
       "vdb volumes")
   {
-    std::unique_ptr<XYZVdbVolume> v(new XYZVdbVolume(
-            vec3i(128), vec3f(0.f), vec3f(1.f), VKL_FILTER_TRILINEAR));
+    std::unique_ptr<XYZVdbVolumeFloat> v(
+        new XYZVdbVolumeFloat(getOpenVKLDevice(),
+                              vec3i(128),
+                              vec3f(0.f),
+                              vec3f(1.f),
+                              VKL_FILTER_TRILINEAR));
 
-    VKLVolume volume = v->getVKLVolume();
+    VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 
     randomized_vectorized_gradients(volume);
   }
+
+  shutdownOpenVKL();
 }

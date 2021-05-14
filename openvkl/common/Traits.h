@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -130,7 +130,7 @@ namespace openvkl {
     static constexpr VKLDataType value = vkl_type; \
   };
 
-  VKLTYPEFOR_SPECIALIZATION(VKLDriver, VKL_DRIVER);
+  VKLTYPEFOR_SPECIALIZATION(VKLDevice, VKL_DEVICE);
   VKLTYPEFOR_SPECIALIZATION(void *, VKL_VOID_PTR);
   VKLTYPEFOR_SPECIALIZATION(bool, VKL_BOOL);
   VKLTYPEFOR_SPECIALIZATION(VKLObject, VKL_OBJECT);

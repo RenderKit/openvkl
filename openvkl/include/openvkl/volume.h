@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,6 +12,7 @@
 #endif
 
 #include "common.h"
+#include "device.h"
 
 #ifdef __cplusplus
 struct Volume : public ManagedObject
@@ -51,7 +52,7 @@ extern "C" {
 #endif
 
 OPENVKL_INTERFACE
-VKLVolume vklNewVolume(const char *type);
+VKLVolume vklNewVolume(VKLDevice device, const char *type);
 
 OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);

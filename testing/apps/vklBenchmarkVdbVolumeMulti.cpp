@@ -27,18 +27,19 @@ struct Vdb
   Vdb()
   {
     volume = std::unique_ptr<ProceduralVdbVolumeMulti>(
-        generateMultiAttributeVdbVolume(vec3i(128),
-                                        vec3f(0.f),
-                                        vec3f(1.f),
-                                        filter,
-                                        VKL_DATA_SHARED_BUFFER,
-                                        true));
+        generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                             vec3i(128),
+                                             vec3f(0.f),
+                                             vec3f(1.f),
+                                             filter,
+                                             VKL_DATA_SHARED_BUFFER,
+                                             true));
 
     if (Vdb::getNumAttributes() != volume->getNumAttributes()) {
       throw std::runtime_error("inconsistent Vdb numAttributes");
     }
 
-    vklVolume  = volume->getVKLVolume();
+    vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
     vklSetInt(vklSampler, "filter", filter);
     vklSetInt(vklSampler, "gradientFilter", filter);
@@ -69,14 +70,11 @@ struct Vdb
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   registerVolumeBenchmarks<Vdb<VKL_FILTER_NEAREST>>();
   registerVolumeBenchmarks<Vdb<VKL_FILTER_TRILINEAR>>();
+  registerVolumeBenchmarks<Vdb<VKL_FILTER_TRICUBIC>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))
@@ -84,7 +82,7 @@ int main(int argc, char **argv)
 
   ::benchmark::RunSpecifiedBenchmarks();
 
-  vklShutdown();
+  shutdownOpenVKL();
 
   return 0;
 }

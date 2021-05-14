@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -15,7 +15,7 @@ void test_bounding_box(const vec3i &dimensions,
   auto v = rkcommon::make_unique<WaveletStructuredSphericalVolume<float>>(
       dimensions, gridOrigin, gridSpacing);
 
-  VKLVolume vklVolume      = v->getVKLVolume();
+  VKLVolume vklVolume      = v->getVKLVolume(getOpenVKLDevice());
   vkl_box3f vklBoundingBox = vklGetBoundingBox(vklVolume);
 
   INFO("dimensions = " << dimensions.x << " " << dimensions.y << " "
@@ -90,11 +90,7 @@ void test_bounding_box(const vec3i &dimensions,
 
 TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
 {
-  vklLoadModule("ispc_driver");
-
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  initializeOpenVKL();
 
   std::vector<int> dimensions = {4, 32};
 
@@ -161,4 +157,6 @@ TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
       }
     }
   }
+
+  shutdownOpenVKL();
 }

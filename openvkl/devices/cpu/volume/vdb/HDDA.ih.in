@@ -1,0 +1,101 @@
+// Copyright 2020-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// ---------------------------------------------------------------------------
+// Step through a DDA hierarchy.
+//
+// Note: We generate files HDDA_level>.ih from this 
+//       template using CMake.
+// ---------------------------------------------------------------------------
+
+#if (@VKL_VDB_NEXT_LEVEL@) < VKL_VDB_NUM_LEVELS
+  #include "HDDA_@VKL_VDB_NEXT_LEVEL@.ih"
+#endif
+
+/*
+ * Step once in the hierarchy.
+ * This potentially steps once on each level.
+ *
+ * Precondition: desc points to a voxel on some level. The goal
+ * of hddaStep is to leave this voxel.
+ */
+#if @VKL_VDB_LEVEL@ == 0
+void hddaStep(const VdbGrid *uniform grid, 
+              const VdbVoxelDescriptor &desc,
+              DdaState &dda)
+{
+#else
+bool hddaStep_@VKL_VDB_LEVEL@(const VdbGrid *uniform grid, 
+                              const VdbVoxelDescriptor &desc,
+                              DdaState &dda)
+{
+#endif
+
+  // We traverse depth-first to step on the lowest level possible.
+  const bool lowestLevel = (desc.level == @VKL_VDB_LEVEL@);
+  bool stepped = false;
+
+  // First case: we can potentially descend to the next level.
+#if @VKL_VDB_NEXT_LEVEL@ < @VKL_VDB_NUM_LEVELS@
+  const uniform uint32 ox = DDA_STATE_X_OFFSET(@VKL_VDB_LEVEL@);
+  const uniform uint32 oy = DDA_STATE_Y_OFFSET(@VKL_VDB_LEVEL@);
+  const uniform uint32 oz = DDA_STATE_Z_OFFSET(@VKL_VDB_LEVEL@);
+  if (lowestLevel)
+  {
+    const int32 oldx = dda.idx[ox];
+    const int32 oldy = dda.idx[oy];
+    const int32 oldz = dda.idx[oz];
+    ddaStep(dda, @VKL_VDB_LEVEL@);
+    stepped = true;
+
+    if (@VKL_VDB_LEVEL@ < dda.level)
+    {
+      // We are on the same level as the voxel described by desc, 
+      // but that is NOT the lowest level dda state.
+      // Reinitialize the lower levels to keep them consistent.
+      // This keeps the dda state consistent towards the leaf level.
+      // If this level moved in x-dimension, then all lower levels
+      // will move by the same amount in x-dimension. y and z must be 
+      // recomputed, however, as must tNext for x and y.
+      const int32 dx = dda.idx[ox]-oldx;
+      const int32 dy = dda.idx[oy]-oldy;
+      const int32 dz = dda.idx[oz]-oldz;
+      ddaReinitBelow(dda, @VKL_VDB_LEVEL@, dx, dy, dz);
+    }
+  }
+  else
+  {
+    if (hddaStep_@VKL_VDB_NEXT_LEVEL@(grid, desc, dda))
+    {
+      // We check if the child has left our domain and follow it if it has.
+      // This keeps the dda state consistent towards the root node.
+      const uniform int32 cellRes = VKL_VDB_RES_@VKL_VDB_NEXT_LEVEL@;
+      const uniform uint32 cox = DDA_STATE_X_OFFSET(@VKL_VDB_NEXT_LEVEL@);
+      const uniform uint32 coy = DDA_STATE_Y_OFFSET(@VKL_VDB_NEXT_LEVEL@);
+      const uniform uint32 coz = DDA_STATE_Z_OFFSET(@VKL_VDB_NEXT_LEVEL@);
+      const bool childHasLeftDomain = dda.idx[cox] < dda.idx[ox]
+                                   || dda.idx[coy] < dda.idx[oy]
+                                   || dda.idx[coz] < dda.idx[oz]
+                                   || dda.idx[cox] >= (dda.idx[ox] + cellRes)
+                                   || dda.idx[coy] >= (dda.idx[oy] + cellRes)
+                                   || dda.idx[coz] >= (dda.idx[oz] + cellRes);
+      if (childHasLeftDomain) {
+        ddaStep(dda, @VKL_VDB_LEVEL@);
+        stepped = true;
+      }
+    }
+  }
+
+  // Second case: We cannot descend because there is no next level.
+#else // @VKL_VDB_NEXT_LEVEL@ < @VKL_VDB_NUM_LEVELS@
+  assert(lowestLevel);
+  ddaStep(dda, @VKL_VDB_LEVEL@);
+  stepped = true;
+#endif
+
+#if @VKL_VDB_LEVEL@ > 0
+  return stepped;
+#endif
+}

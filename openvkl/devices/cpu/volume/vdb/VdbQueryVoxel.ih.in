@@ -1,0 +1,116 @@
+// Copyright 2020-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// ---------------------------------------------------------------------------
+// Query voxel information.
+//
+// Note: We generate files VdbQueryVoxel_<level>.ih from this 
+//       template using CMake.
+// ---------------------------------------------------------------------------
+
+#if @VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS
+
+struct VdbVoxelDescriptor
+{
+  // The level at which we found the voxel. 
+  uint32 level; 
+
+  // The voxel type.
+  bool isEmpty;
+  bool isLeaf;
+
+  // The index of the node we found, on its level.
+  // If isLeaf is true, then this is the index of the parent node.
+  uint64 nodeIndex;
+
+  // If isLeaf is false, then this is the voxel value.
+  // If isLeaf is true, then this is the voxel value of the parent voxel.
+  uint64 voxel;
+
+  // The value range of the voxel. For leaf voxels (isLeaf is true), this
+  // is the value range over the whole leaf node.
+  range1f valueRange;
+};
+
+#else // @VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS
+
+#include "VdbQueryVoxel_@VKL_VDB_NEXT_LEVEL@.ih"
+
+#if @VKL_VDB_LEVEL@ == 0
+inline void VdbIterator_queryVoxel(
+#else
+inline void VdbIterator_queryVoxel_@VKL_VDB_LEVEL@(
+#endif
+    const VdbGrid *uniform grid, 
+    const int32 &x, 
+    const int32 &y, 
+    const int32 &z,
+    const uniform uint32 &queryDepth,
+    const uniform ValueRanges &queryValueRanges,
+    VdbVoxelDescriptor &desc)
+{
+  assert(queryDepth < @VKL_VDB_NUM_LEVELS@);
+#if @VKL_VDB_LEVEL@ == 0
+  desc.nodeIndex = 0;
+#endif
+
+  const uniform VdbLevel &level = grid->levels[@VKL_VDB_LEVEL@];
+  const uint64 nodeVoxelOffset  
+    = desc.nodeIndex * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@;
+
+  const uint64 lVidx       
+    = vklVdbDomainOffsetToLinear(@VKL_VDB_LEVEL@, x, y, z);
+
+  const uint64 voxelOffset 
+    = lVidx + desc.nodeIndex * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@;
+
+  assert(voxelOffset < ((uint64)1) << 32);
+  const uint32 vo32 = ((uint32)voxelOffset);
+
+  desc.voxel = level.voxels[vo32];
+  desc.valueRange = level.valueRange[vo32 * grid->numAttributes + 0]; // FIRST ATTRIBUTE RANGE!
+  desc.level = @VKL_VDB_LEVEL@;
+  desc.isEmpty = vklVdbVoxelIsEmpty(desc.voxel)
+              || !valueRangesOverlap(queryValueRanges, desc.valueRange);
+
+  if (desc.isEmpty)
+    return;
+
+  assert(vklVdbVoxelIsLeafPtr(desc.voxel)
+      || vklVdbVoxelIsChildPtr(desc.voxel));
+
+  const uniform bool atQueryDepth = (@VKL_VDB_NEXT_LEVEL@ > queryDepth);
+  const bool isLeafPtr = vklVdbVoxelIsLeafPtr(desc.voxel);
+
+  // Note: if this voxel is a leaf pointer we do not descend to find the leaf
+  // level value range - there is no fast way to obtain it for general filter
+  // kernels. Instead, we return the full leaf node value range, and the leaf
+  // pointer in query.voxel.
+  //
+  // This is a leaf pointer and we are still supposed to descend into that leaf.
+  // Because of filtering, there there is no good way to obtain a value range 
+  // for a given leaf voxel. 
+  // Instead, we return the parent voxel value range (which we just wrote to
+  // desc above), and return the leaf pointer in query.voxel.
+  if (isLeafPtr && !atQueryDepth)
+  {
+    desc.isLeaf = true;
+    desc.level = @VKL_VDB_NEXT_LEVEL@;
+  }
+
+#if (@VKL_VDB_NEXT_LEVEL@+1) < @VKL_VDB_NUM_LEVELS@
+  const bool lastLevel = (@VKL_VDB_NEXT_LEVEL@ > queryDepth)
+                      || isLeafPtr;
+
+  if (atQueryDepth || isLeafPtr)
+    return;
+
+  desc.nodeIndex = vklVdbVoxelChildGetIndex(desc.voxel);
+  VdbIterator_queryVoxel_@VKL_VDB_NEXT_LEVEL@(grid, x, y, z,
+    queryDepth, queryValueRanges, desc);
+#endif
+}
+
+#endif // @VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS

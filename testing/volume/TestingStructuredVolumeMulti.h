@@ -50,7 +50,7 @@ namespace openvkl {
       vec3f transformLocalToObjectCoordinates(const vec3f &localCoordinates);
 
      protected:
-      void generateVKLVolume() override final;
+      void generateVKLVolume(VKLDevice device) override final;
 
       std::string gridType;
       vec3i dimensions;
@@ -182,9 +182,10 @@ namespace openvkl {
           localCoordinates);
     }
 
-    inline void TestingStructuredVolumeMulti::generateVKLVolume()
+    inline void TestingStructuredVolumeMulti::generateVKLVolume(
+        VKLDevice device)
     {
-      volume = vklNewVolume(gridType.c_str());
+      volume = vklNewVolume(device, gridType.c_str());
 
       vklSetVec3i(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
@@ -243,7 +244,8 @@ namespace openvkl {
           }
 
           VKLData attributeData =
-              vklNewData(dimensions.long_product(),
+              vklNewData(device,
+                         dimensions.long_product(),
                          attributeVolumes[i]->getVoxelType(),
                          v.data() + voxelSizeOffset,
                          dataCreationFlags,
@@ -266,6 +268,7 @@ namespace openvkl {
                      sizeOfVKLDataType(attributeVolumes[i]->getVoxelType()));
 
           VKLData attributeData = vklNewData(
+              device,
               dimensions.long_product() *
                   attributeVolumes[i]->getTemporalConfig().getNumSamples(),
               attributeVolumes[i]->getVoxelType(),
@@ -281,8 +284,8 @@ namespace openvkl {
         }
       }
 
-      VKLData data =
-          vklNewData(attributesData.size(), VKL_DATA, attributesData.data());
+      VKLData data = vklNewData(
+          device, attributesData.size(), VKL_DATA, attributesData.data());
       for (const auto &d : attributesData) {
         vklRelease(d);
       }
@@ -301,13 +304,16 @@ namespace openvkl {
       }
 
       case TemporalConfig::Unstructured: {
-        VKLData indexData = vklNewData(
-            tuvIndex.size(), VKL_UINT, tuvIndex.data(), dataCreationFlags);
+        VKLData indexData = vklNewData(device,
+                                       tuvIndex.size(),
+                                       VKL_UINT,
+                                       tuvIndex.data(),
+                                       dataCreationFlags);
         vklSetData(volume, "temporallyUnstructuredIndices", indexData);
         vklRelease(indexData);
 
-        VKLData timeData =
-            vklNewData(time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
+        VKLData timeData = vklNewData(
+            device, time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
         vklSetData(volume, "temporallyUnstructuredTimes", timeData);
         vklRelease(timeData);
         break;

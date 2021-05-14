@@ -231,7 +231,7 @@ void demoStreamAPI(VKLVolume volume)
   // sample, gradient (first attribute)
   printf("\n\tsampling and gradient computation (first attribute)\n");
   unsigned int attributeIndex = 0;
-  float time [5]              = {0.f};
+  float time[5]               = {0.f};
   float sample[5];
   vkl_vec3f grad[5];
   vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
@@ -266,11 +266,10 @@ void demoStreamAPI(VKLVolume volume)
 
 int main()
 {
-  vklLoadModule("ispc_driver");
+  vklLoadModule("cpu_device");
 
-  VKLDriver driver = vklNewDriver("ispc");
-  vklCommitDriver(driver);
-  vklSetCurrentDriver(driver);
+  VKLDevice device = vklNewDevice("cpu");
+  vklCommitDevice(device);
 
   const int dimensions[] = {128, 128, 128};
 
@@ -278,7 +277,7 @@ int main()
 
   const int numAttributes = 3;
 
-  VKLVolume volume = vklNewVolume("structuredRegular");
+  VKLVolume volume = vklNewVolume(device, "structuredRegular");
   vklSetVec3i(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
@@ -298,7 +297,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData data0 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data0 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   // volume attribute 1: y-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -307,7 +307,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)j;
 
-  VKLData data1 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data1 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   // volume attribute 2: z-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -316,12 +317,13 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)k;
 
-  VKLData data2 = vklNewData(numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data2 =
+      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
 
   VKLData attributes[] = {data0, data1, data2};
 
-  VKLData attributesData =
-      vklNewData(numAttributes, VKL_DATA, attributes, VKL_DATA_DEFAULT, 0);
+  VKLData attributesData = vklNewData(
+      device, numAttributes, VKL_DATA, attributes, VKL_DATA_DEFAULT, 0);
 
   vklRelease(data0);
   vklRelease(data1);
@@ -338,7 +340,7 @@ int main()
 
   vklRelease(volume);
 
-  vklShutdown();
+  vklReleaseDevice(device);
 
   free(voxels);
 

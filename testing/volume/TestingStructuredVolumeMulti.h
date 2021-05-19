@@ -327,6 +327,13 @@ namespace openvkl {
         std::vector<float>().swap(time);
         std::vector<uint32_t>().swap(tuvIndex);
       }
+
+      // value range computation occurs during volume generation; we'll rely on
+      // the individual attribute volumes for this, so we need to make sure
+      // those volumes are generated.
+      for (const auto &av : attributeVolumes) {
+        av->getVKLVolume(device);
+      }
     }
 
     ///////////////////////////////////////////////////////////////////////////

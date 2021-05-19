@@ -29,7 +29,7 @@ namespace openvkl {
 
       unsigned int getNumAttributes() const override;
 
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       VKLFilter getFilter() const
       {
@@ -44,7 +44,7 @@ namespace openvkl {
      protected:
       void buildAccelerator();
 
-      range1f valueRange{empty};
+      std::vector<range1f> valueRanges;
 
       // parameters set in commit()
       vec3i dimensions;
@@ -167,9 +167,11 @@ namespace openvkl {
     }
 
     template <int W>
-    inline range1f StructuredVolume<W>::getValueRange() const
+    inline range1f StructuredVolume<W>::getValueRange(
+        unsigned int attributeIndex) const
     {
-      return valueRange;
+      throwOnIllegalAttributeIndex(this, attributeIndex);
+      return valueRanges[attributeIndex];
     }
 
     template <int W>
@@ -192,10 +194,15 @@ namespace openvkl {
         CALL_ISPC(GridAccelerator_build, accelerator, taskIndex);
       });
 
-      CALL_ISPC(GridAccelerator_computeValueRange,
-                accelerator,
-                valueRange.lower,
-                valueRange.upper);
+      valueRanges.resize(getNumAttributes());
+
+      for (unsigned int a = 0; a < getNumAttributes(); a++) {
+        CALL_ISPC(GridAccelerator_computeValueRange,
+                  accelerator,
+                  a,
+                  valueRanges[a].lower,
+                  valueRanges[a].upper);
+      }
     }
 
   }  // namespace cpu_device

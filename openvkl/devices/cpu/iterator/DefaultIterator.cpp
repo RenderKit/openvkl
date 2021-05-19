@@ -23,7 +23,7 @@ namespace openvkl {
     {
       const Volume<W> &volume = sampler->getVolume();
       box3f boundingBox  = volume.getBoundingBox();
-      range1f valueRange = volume.getValueRange();
+      range1f valueRange = volume.getValueRange(0);
 
       CALL_ISPC(DefaultIntervalIterator_Initialize,
                 static_cast<const int *>(valid),

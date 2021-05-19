@@ -59,7 +59,8 @@ vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
 OPENVKL_INTERFACE unsigned int vklGetNumAttributes(VKLVolume volume);
 
-OPENVKL_INTERFACE vkl_range1f vklGetValueRange(VKLVolume volume);
+OPENVKL_INTERFACE vkl_range1f vklGetValueRange(
+    VKLVolume volume, unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
 
 #ifdef __cplusplus
 }  // extern "C"

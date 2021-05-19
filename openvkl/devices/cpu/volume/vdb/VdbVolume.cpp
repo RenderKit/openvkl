@@ -789,11 +789,16 @@ namespace openvkl {
 
         computeValueRanges(leafOffsets, *leafLevel, *leafFormat, grid);
 
-        // aggregate value range for first attribute only
-        valueRange = range1f();
-        for (size_t i = 0; i < vklVdbLevelNumVoxels(0); ++i) {
-          valueRange.extend(
-              grid->levels[0].valueRange[i * grid->numAttributes + 0]);
+        // aggregate value ranges for all attributes
+        valueRanges.clear();
+        valueRanges.resize(getNumAttributes());
+
+        for (unsigned int a = 0; a < getNumAttributes(); ++a) {
+          valueRanges[a] = range1f();
+          for (size_t i = 0; i < vklVdbLevelNumVoxels(0); ++i) {
+            valueRanges[a].extend(
+                grid->levels[0].valueRange[i * grid->numAttributes + a]);
+          }
         }
       } catch (...) {
         cleanup();

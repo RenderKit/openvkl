@@ -36,8 +36,10 @@ uniform bool GridAccelerator_nextCell(
 
 void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
                                        const varying vec3i &cellIndex,
+                                       uniform uint32 attributeIndex,
                                        varying box1f &valueRange);
 
 void GridAccelerator_getCellValueRange(GridAccelerator *uniform accelerator,
                                        const uniform vec3i &cellIndex,
+                                       uniform uint32 attributeIndex,
                                        uniform box1f &valueRange);

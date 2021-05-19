@@ -406,10 +406,11 @@ namespace openvkl {
     }
 
     template <int W>
-    range1f CPUDevice<W>::getValueRange(VKLVolume volume)
+    range1f CPUDevice<W>::getValueRange(VKLVolume volume,
+                                        unsigned int attributeIndex)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return volumeObject.getValueRange();
+      return volumeObject.getValueRange(attributeIndex);
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -414,7 +414,8 @@ namespace openvkl {
 
       unsigned int getNumAttributes(VKLVolume volume) override;
 
-      range1f getValueRange(VKLVolume volume) override;
+      range1f getValueRange(VKLVolume volume,
+                            unsigned int attributeIndex) override;
 
      private:
       template <int OW>

@@ -22,6 +22,19 @@ using namespace rkcommon;
 namespace openvkl {
   namespace cpu_device {
 
+    // Helpers ////////////////////////////////////////////////////////////////
+
+    template <int W>
+    inline void throwOnIllegalAttributeIndex(const Volume<W> *volume,
+                                             unsigned int attributeIndex)
+    {
+      if (attributeIndex >= volume->getNumAttributes()) {
+        throw std::runtime_error("illegal attributeIndex requested on volume");
+      }
+    }
+
+    // Volume /////////////////////////////////////////////////////////////////
+
     template <int W>
     struct Volume : public ManagedObject
     {
@@ -38,7 +51,7 @@ namespace openvkl {
 
       virtual unsigned int getNumAttributes() const = 0;
 
-      virtual range1f getValueRange() const = 0;
+      virtual range1f getValueRange(unsigned int attributeIndex) const = 0;
 
       void *getISPCEquivalent() const;
 

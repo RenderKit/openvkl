@@ -427,9 +427,9 @@ The number of attributes in a volume can also be queried:
 
     unsigned int vklGetNumAttributes(VKLVolume volume);
 
-Finally, the value range of the volume (first attribute only) can be queried:
+Finally, the value range of the volume for a given attribute can be queried:
 
-    vkl_range1f vklGetValueRange(VKLVolume volume);
+    vkl_range1f vklGetValueRange(VKLVolume volume, unsigned int attributeIndex);
 
 ### Structured Volumes
 

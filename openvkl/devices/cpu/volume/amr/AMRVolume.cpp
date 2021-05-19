@@ -206,8 +206,9 @@ namespace openvkl {
     }
 
     template <int W>
-    range1f AMRVolume<W>::getValueRange() const
+    range1f AMRVolume<W>::getValueRange(unsigned int attributeIndex) const
     {
+      throwOnIllegalAttributeIndex(this, attributeIndex);
       return valueRange;
     }
 

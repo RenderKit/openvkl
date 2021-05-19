@@ -27,7 +27,7 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
       unsigned int getNumAttributes() const override;
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       VKLAMRMethod getAMRMethod() const;
 

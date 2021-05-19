@@ -361,7 +361,8 @@ namespace openvkl {
 
       virtual unsigned int getNumAttributes(VKLVolume volume) = 0;
 
-      virtual math::range1f getValueRange(VKLVolume volume) = 0;
+      virtual math::range1f getValueRange(VKLVolume volume,
+                                          unsigned int attributeIndex) = 0;
 
      private:
       bool committed = false;

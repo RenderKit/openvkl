@@ -66,9 +66,10 @@ namespace openvkl {
       /*
        * Get the minimum and maximum value in this volume.
        */
-      range1f getValueRange() const override
+      range1f getValueRange(unsigned int attributeIndex) const override
       {
-        return valueRange;
+        throwOnIllegalAttributeIndex(this, attributeIndex);
+        return valueRanges[attributeIndex];
       }
 
       const VdbGrid *getGrid() const
@@ -105,7 +106,7 @@ namespace openvkl {
      private:
       box3f bounds;
       std::string name;
-      range1f valueRange;
+      std::vector<range1f> valueRanges;
       Ref<const DataT<Data *>> leafData;
       Ref<const DataT<uint32_t>> leafFormat;
       Ref<const DataT<uint32_t>> leafTemporalFormat;

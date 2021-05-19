@@ -129,6 +129,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
     univary box1f cellValueRange;                                              \
     GridAccelerator_getCellValueRange(volume->accelerator,                     \
                                       self->intervalState.currentCellIndex,    \
+                                      0, /* first attribute */                 \
                                       cellValueRange);                         \
                                                                                \
     univary bool returnInterval = false;                                       \
@@ -212,8 +213,10 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                                                                \
   while (self->hitState.activeCell) {                                          \
     univary box1f cellValueRange;                                              \
-    GridAccelerator_getCellValueRange(                                         \
-        volume->accelerator, self->hitState.currentCellIndex, cellValueRange); \
+    GridAccelerator_getCellValueRange(volume->accelerator,                     \
+                                      self->hitState.currentCellIndex,         \
+                                      0, /* first attribute */                 \
+                                      cellValueRange);                         \
                                                                                \
     univary bool cellValueRangeOverlap =                                       \
         valueRangesOverlap(self->valueSelector->valuesRanges, cellValueRange); \

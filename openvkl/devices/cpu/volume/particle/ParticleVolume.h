@@ -59,7 +59,7 @@ namespace openvkl {
 
       unsigned int getNumAttributes() const override;
 
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       const Node *getNodeRoot() const;
 
@@ -101,8 +101,10 @@ namespace openvkl {
     }
 
     template <int W>
-    inline range1f ParticleVolume<W>::getValueRange() const
+    inline range1f ParticleVolume<W>::getValueRange(
+        unsigned int attributeIndex) const
     {
+      throwOnIllegalAttributeIndex(this, attributeIndex);
       return valueRange;
     }
 

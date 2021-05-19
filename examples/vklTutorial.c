@@ -26,15 +26,18 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int numAttributes = vklGetNumAttributes(volume);
   printf("\tnum attributes = %d\n\n", numAttributes);
 
-  // value range (first attribute)
-  vkl_range1f valueRange = vklGetValueRange(volume);
-  printf("\tvalue range (first attribute) = (%f %f)\n\n",
-         valueRange.lower,
-         valueRange.upper);
+  // value range for all attributes
+  for (unsigned int i = 0; i < numAttributes; i++) {
+    vkl_range1f valueRange = vklGetValueRange(volume, i);
+    printf("\tvalue range (attribute %u) = (%f %f)\n",
+           i,
+           valueRange.lower,
+           valueRange.upper);
+  }
 
   // coordinate for sampling / gradients
   vkl_vec3f coord = {1.f, 2.f, 3.f};
-  printf("\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
+  printf("\n\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;

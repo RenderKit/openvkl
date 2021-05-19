@@ -28,7 +28,7 @@ namespace openvkl {
 
       unsigned int getNumAttributes() const override;
 
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       box4f getCellBBox(size_t id);
 
@@ -111,8 +111,10 @@ namespace openvkl {
     }
 
     template <int W>
-    inline range1f UnstructuredVolume<W>::getValueRange() const
+    inline range1f UnstructuredVolume<W>::getValueRange(
+        unsigned int attributeIndex) const
     {
+      throwOnIllegalAttributeIndex(this, attributeIndex);
       return valueRange;
     }
 

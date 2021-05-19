@@ -926,10 +926,11 @@ extern "C" unsigned int vklGetNumAttributes(VKLVolume volume)
 }
 OPENVKL_CATCH_END(0)
 
-extern "C" vkl_range1f vklGetValueRange(VKLVolume volume)
+extern "C" vkl_range1f vklGetValueRange(VKLVolume volume,
+                                        unsigned int attributeIndex)
     OPENVKL_CATCH_BEGIN_UNSAFE(volume)
 {
-  const range1f result = deviceObj->getValueRange(volume);
+  const range1f result = deviceObj->getValueRange(volume, attributeIndex);
   return reinterpret_cast<const vkl_range1f &>(result);
 }
 OPENVKL_CATCH_END(vkl_range1f{rkcommon::math::nan})

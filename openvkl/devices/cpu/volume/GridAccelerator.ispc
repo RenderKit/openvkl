@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
+#include "SharedStructuredVolume.ih"
 #include "../iterator/GridAcceleratorIterator.ih"
 #include "GridAccelerator.ih"
-#include "SharedStructuredVolume.ih"
 #include "math/box_utility.ih"
 
 // bit count used to represent the brick width in macrocells
@@ -26,7 +26,7 @@
 #define RCP_CELL_WIDTH 1.f / CELL_WIDTH
 
 #define template_GridAccelerator_getters(univary)                              \
-  inline univary uint32 GridAccelerator_getCellAddress(                        \
+  inline univary uint32 GridAccelerator_getCellIndex1D(                        \
       GridAccelerator *uniform accelerator, const univary vec3i &cellIndex)    \
   {                                                                            \
     const univary vec3i brickIndex = cellIndex >> BRICK_WIDTH_BITCOUNT;        \
@@ -46,11 +46,14 @@
   inline void GridAccelerator_getCellValueRange(                               \
       GridAccelerator *uniform accelerator,                                    \
       const univary vec3i &cellIndex,                                          \
+      uniform uint32 attributeIndex,                                           \
       univary box1f &valueRange)                                               \
   {                                                                            \
-    const univary uint32 address =                                             \
-        GridAccelerator_getCellAddress(accelerator, cellIndex);                \
-    valueRange = accelerator->cellValueRanges[address];                        \
+    const univary uint32 cellIndex1D =                                         \
+        GridAccelerator_getCellIndex1D(accelerator, cellIndex);                \
+    valueRange =                                                               \
+        accelerator->cellValueRanges[attributeIndex * accelerator->cellCount + \
+                                     cellIndex1D];                             \
   }                                                                            \
                                                                                \
   inline univary box3f GridAccelerator_getCellBounds(                          \
@@ -77,20 +80,21 @@ template_GridAccelerator_getters(varying);
 
 inline void GridAccelerator_setCellValueRange(GridAccelerator *uniform
                                                   accelerator,
-                                              uniform uint32 address,
+                                              uniform uint32 cellIndex1D,
+                                              uniform uint32 attributeIndex,
                                               const uniform box1f &valueRange)
 {
-  accelerator->cellValueRanges[address] = valueRange;
+  accelerator
+      ->cellValueRanges[attributeIndex * accelerator->cellCount + cellIndex1D] =
+      valueRange;
 }
 
 inline void GridAccelerator_computeCellValueRange(
     SharedStructuredVolume *uniform volume,
     const uniform vec3i &cellIndex,
+    uniform uint32 attributeIndex,
     uniform box1f &valueRange)
 {
-  // temporarily restrict grid accelerator to first attribute
-  const uniform uint32 attributeIndex = 0;
-
   uniform bool cellEmpty = true;
 
   foreach (k = 0 ... CELL_WIDTH + 1,
@@ -141,14 +145,17 @@ inline void GridAccelerator_encodeBrick(GridAccelerator *uniform accelerator,
     uniform uint32 y      = offset >> BRICK_WIDTH_BITCOUNT;
     uniform uint32 x      = offset % BRICK_WIDTH;
 
-    uniform vec3i cellIndex = brickIndex * BRICK_WIDTH + make_vec3i(x, y, z);
+    uniform vec3i cellIndex    = brickIndex * BRICK_WIDTH + make_vec3i(x, y, z);
+    uniform uint32 cellIndex1D = brickAddress << (3 * BRICK_WIDTH_BITCOUNT) | i;
 
-    uniform box1f valueRange = make_box1f(inf, -inf);
-    GridAccelerator_computeCellValueRange(
-        accelerator->volume, cellIndex, valueRange);
+    for (uniform uint32 a = 0; a < accelerator->volume->numAttributes; a++) {
+      uniform box1f valueRange = make_box1f(inf, -inf);
+      GridAccelerator_computeCellValueRange(
+          accelerator->volume, cellIndex, a, valueRange);
 
-    uniform uint32 cellAddress = brickAddress << (3 * BRICK_WIDTH_BITCOUNT) | i;
-    GridAccelerator_setCellValueRange(accelerator, cellAddress, valueRange);
+      GridAccelerator_setCellValueRange(
+          accelerator, cellIndex1D, a, valueRange);
+    }
   }
 }
 
@@ -175,7 +182,8 @@ GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
 
   accelerator->cellValueRanges =
       (accelerator->cellCount > 0)
-          ? uniform new uniform box1f[accelerator->cellCount]
+          ? uniform new uniform box1f[accelerator->cellCount *
+                                      volume->numAttributes]
           : NULL;
 
   accelerator->volume = volume;
@@ -326,6 +334,7 @@ export void EXPORT_UNIQUE(GridAccelerator_build,
 
 export void EXPORT_UNIQUE(GridAccelerator_computeValueRange,
                           void *uniform _accelerator,
+                          uniform uint32 attributeIndex,
                           uniform float &lower,
                           uniform float &upper)
 {
@@ -335,7 +344,10 @@ export void EXPORT_UNIQUE(GridAccelerator_computeValueRange,
   uniform box1f valueRange = make_box1f(pos_inf, neg_inf);
 
   for (uniform size_t i = 0; i < accelerator->cellCount; i++) {
-    valueRange = box_extend(valueRange, accelerator->cellValueRanges[i]);
+    valueRange = box_extend(
+        valueRange,
+        accelerator
+            ->cellValueRanges[attributeIndex * accelerator->cellCount + i]);
   }
 
   lower = valueRange.lower;

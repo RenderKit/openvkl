@@ -19,7 +19,6 @@
 
 #include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
-#include "VdbSampler_valueRange_ispc.h"
 
 namespace openvkl {
   namespace cpu_device {

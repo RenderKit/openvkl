@@ -3,14 +3,6 @@
 
 #include "VdbSampler.h"
 #include "VdbLeafAccessObserver.h"
-#include "VdbSampler_computeGradient_ispc.h"
-#include "VdbSampler_computeGradient_stream_ispc.h"
-#include "VdbSampler_computeSampleM_ispc.h"
-#include "VdbSampler_computeSampleM_stream_ispc.h"
-#include "VdbSampler_computeSampleM_uniform_ispc.h"
-#include "VdbSampler_computeSample_ispc.h"
-#include "VdbSampler_computeSample_stream_ispc.h"
-#include "VdbSampler_computeSample_uniform_ispc.h"
 #include "VdbSampler_ispc.h"
 #include "VdbVolume.h"
 

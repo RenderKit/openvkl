@@ -4,66 +4,11 @@
 #pragma once
 
 #include "VdbGrid.h"
+#include "VdbLeafAccessObserver.ih"
+#include "VdbSampler.ih"
 #include "VdbSampler_leafHandler.ih"
 
-#include "VdbLeafAccessObserver.ih"
 #include "openvkl_vdb/VdbSamplerDispatchInner.ih"
-
-/*
- * This file forces a lot of inlining for maximum run time performance, which
- * can lead to excessive compile times.
- *
- * The macro below creates a noinline barrier for functions in
- * VdbSamplerDispatchInner.ih. This can improve compile times significantly.
- *
- * The definition should be commented out again before merging.
- */
-
-#if defined(VDB_SAMPLER_DISPATCH_INNER_NOINLINE)
-#warning "VDB_SAMPLER_DISPATCH_INNER_NOINLINE is set."
-
-noinline void VdbSampler_dispatchInner_uniform_uniform(
-    const VdbSampler *uniform sampler,
-    const uniform uint64 nodeIndex,
-    const uniform vec3ui &domainOffset,
-    uniform uint64 &voxel)
-{
-  VdbSampler_dispatchInner_uniform_uniform_0(
-      sampler, nodeIndex, domainOffset, voxel);
-}
-
-noinline void VdbSampler_dispatchInner_uniform_varying(
-    const VdbSampler *uniform sampler,
-    const uniform uint64 nodeIndex,
-    const vec3ui &domainOffset,
-    varying uint64 &voxel)
-{
-  VdbSampler_dispatchInner_uniform_varying_0(
-      sampler, nodeIndex, domainOffset, voxel);
-}
-
-noinline void VdbSampler_dispatchInner_varying_varying(
-    const VdbSampler *uniform sampler,
-    const uint64 nodeIndex,
-    const vec3ui &domainOffset,
-    uint64 &voxel)
-{
-  VdbSampler_dispatchInner_varying_varying_0(
-      sampler, nodeIndex, domainOffset, voxel);
-}
-
-#else
-
-#define VdbSampler_dispatchInner_uniform_uniform \
-  VdbSampler_dispatchInner_uniform_uniform_0
-
-#define VdbSampler_dispatchInner_uniform_varying \
-  VdbSampler_dispatchInner_uniform_varying_0
-
-#define VdbSampler_dispatchInner_varying_varying \
-  VdbSampler_dispatchInner_varying_varying_0
-
-#endif
 
 // ---------------------------------------------------------------------------
 // Find the origin of the leaf node containing domainOffset.
@@ -133,10 +78,10 @@ inline bool VdbSampler_isInDomain(const vec3ui &domainOffset)
 // ---------------------------------------------------------------------------
 
 // Uniform traversal.
-inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
-                                const uniform vec3i &ic,
-                                uniform uint64 &voxel,
-                                uniform vec3ui &domainOffset)
+noinline void VdbSampler_traverse(const VdbSampler *uniform sampler,
+                                  const uniform vec3i &ic,
+                                  uniform uint64 &voxel,
+                                  uniform vec3ui &domainOffset)
 {
   assert(sampler);
   assert(sampler->grid);
@@ -146,15 +91,15 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
   domainOffset = VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
   if (VdbSampler_isInDomain(domainOffset)) {
     const uniform vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
-    VdbSampler_dispatchInner_uniform_uniform(sampler, 0ul, leafOrigin, voxel);
+    VdbSampler_dispatchInner_uniform_uniform_0(sampler, 0ul, leafOrigin, voxel);
   }
 }
 
 // Varying traversal.
-inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
-                                const vec3i &ic,
-                                uint64 &voxel,
-                                vec3ui &domainOffset)
+noinline void VdbSampler_traverse(const VdbSampler *uniform sampler,
+                                  const vec3i &ic,
+                                  uint64 &voxel,
+                                  vec3ui &domainOffset)
 {
   assert(sampler);
   assert(sampler->grid);
@@ -170,12 +115,13 @@ inline void VdbSampler_traverse(const VdbSampler *uniform sampler,
         reduce_equal(leafOrigin.z, &uniformLeafOrigin.z)) {
       // All queries are in the same leaf node. Do uniform traversal!
       uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
-      VdbSampler_dispatchInner_uniform_uniform(
+      VdbSampler_dispatchInner_uniform_uniform_0(
           sampler, 0ul, uniformLeafOrigin, voxelU);
       voxel = voxelU;
     } else {
       // Varying traversal.
-      VdbSampler_dispatchInner_uniform_varying(sampler, 0ul, leafOrigin, voxel);
+      VdbSampler_dispatchInner_uniform_varying_0(
+          sampler, 0ul, leafOrigin, voxel);
     }
   }
 }
@@ -234,22 +180,22 @@ template_VdbSampler_sample_inner(uniform, uniform);
 // Note: This function may seem unnecessary in the uniform path. However,
 // keeping this thin wrapper ensures that downstream code is as uniform as
 // possible.
-inline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
-                                       const uniform uint64 voxel,
-                                       const uniform vec3ui &domainOffset,
-                                       const uniform float time,
-                                       const uniform uint32 attributeIndex)
+noinline uniform float VdbSampler_sample(const VdbSampler *uniform sampler,
+                                         const uniform uint64 voxel,
+                                         const uniform vec3ui &domainOffset,
+                                         const uniform float time,
+                                         const uniform uint32 attributeIndex)
 {
   return VdbSampler_sample_inner(
       sampler, voxel, domainOffset, time, attributeIndex);
 }
 
 // Varying sampling.
-inline float VdbSampler_sample(const VdbSampler *uniform sampler,
-                               const uint64 &voxel,
-                               const vec3ui &domainOffset,
-                               const float &time,
-                               const uniform uint32 attributeIndex)
+noinline float VdbSampler_sample(const VdbSampler *uniform sampler,
+                                 const uint64 &voxel,
+                                 const vec3ui &domainOffset,
+                                 const float &time,
+                                 const uniform uint32 attributeIndex)
 {
   uniform uint64 uniformVoxel;
   if (reduce_equal(voxel, &uniformVoxel)) {
@@ -268,7 +214,7 @@ inline float VdbSampler_sample(const VdbSampler *uniform sampler,
 // separately if only a single element needs to be looked up.
 // ---------------------------------------------------------------------------
 
-inline uniform float VdbSampler_traverseAndSample(
+noinline uniform float VdbSampler_traverseAndSample(
     const VdbSampler *uniform sampler,
     const uniform vec3i &ic,
     const uniform float time,
@@ -284,7 +230,8 @@ inline uniform float VdbSampler_traverseAndSample(
     const uniform vec3ui leafOrigin = VdbSampler_toLeafOrigin(domainOffset);
 
     uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
-    VdbSampler_dispatchInner_uniform_uniform(sampler, 0ul, leafOrigin, voxelU);
+    VdbSampler_dispatchInner_uniform_uniform_0(
+        sampler, 0ul, leafOrigin, voxelU);
     return VdbSampler_sample_inner(
         sampler, voxelU, domainOffset, time, attributeIndex);
   }
@@ -298,10 +245,10 @@ inline uniform bool reduce_equal(const vec3ui &v, vec3ui *uniform uv)
          reduce_equal(v.z, &(uv->z));
 }
 
-inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
-                                          const vec3i &ic,
-                                          const float &time,
-                                          const uniform uint32 attributeIndex)
+noinline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
+                                            const vec3i &ic,
+                                            const float &time,
+                                            const uniform uint32 attributeIndex)
 {
   assert(sampler);
   assert(sampler->grid);
@@ -315,14 +262,15 @@ inline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
     if (reduce_equal(leafOrigin, &uniformLeafOrigin)) {
       // All queries are in the same leaf node. Do uniform traversal!
       uniform uint64 voxelU = vklVdbVoxelMakeEmpty();
-      VdbSampler_dispatchInner_uniform_uniform(
+      VdbSampler_dispatchInner_uniform_uniform_0(
           sampler, 0ul, uniformLeafOrigin, voxelU);
       return VdbSampler_sample_inner(
           sampler, voxelU, domainOffset, time, attributeIndex);
     } else {
       // Varying traversal.
       uint64 voxel = vklVdbVoxelMakeEmpty();
-      VdbSampler_dispatchInner_uniform_varying(sampler, 0ul, leafOrigin, voxel);
+      VdbSampler_dispatchInner_uniform_varying_0(
+          sampler, 0ul, leafOrigin, voxel);
       return VdbSampler_sample_inner(
           sampler, voxel, domainOffset, time, attributeIndex);
     }

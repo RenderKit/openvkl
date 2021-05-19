@@ -551,6 +551,7 @@ release-macOS:
   tags:
     - osx
     - clang
+    - sign
   artifacts:
     paths:
       - ./*.zip

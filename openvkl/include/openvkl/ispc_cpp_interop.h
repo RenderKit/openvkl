@@ -1,60 +1,93 @@
 // Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// ========================================================================== //
+// -----------------------------------------------------------------------------
 // In this header, we define a number of macros and typedefs to facilitate
-// shared C++ / ISPC source files.
-// ========================================================================== //
+// shared C / C++ / ISPC source files.
+// -----------------------------------------------------------------------------
 
 #pragma once
 
-// ========================================================================== //
-#if defined(ISPC)
-// ========================================================================== //
+#include "types.h"
 
-#include "common.isph"
-
+// -----------------------------------------------------------------------------
 // Keywords.
-#define VKL_INTEROP_UNIFORM uniform
+// -----------------------------------------------------------------------------
+
+#if defined(ISPC)
+
 #define VKL_INTEROP_CONSTEXPR
+#define VKL_INTEROP_UNIFORM uniform
+
+#else  // defined(ISPC)
+
+#if defined(__cplusplus)
+#define VKL_INTEROP_CONSTEXPR constexpr
+#else
+#define VKL_INTEROP_CONSTEXPR
+#endif
+
+#define VKL_INTEROP_UNIFORM
+
+#endif  // defined(ISPC)
+
+// -----------------------------------------------------------------------------
+// Deprecation warnings.
+// -----------------------------------------------------------------------------
+
+#ifdef __GNUC__
+#define VKL_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+#define VKL_DEPRECATED __declspec(deprecated)
+#else
+#define VKL_DEPRECATED
+#endif
+
+// -----------------------------------------------------------------------------
+// Assertions.
+// -----------------------------------------------------------------------------
+
+#if defined(ISPC)
+
 #define VKL_INTEROP_STATIC_ASSERT(condition, message)
 
-// Unified integer typedefs.
+#else
 
-typedef unsigned int vkl_uint32;
-typedef int vkl_int32;
-typedef unsigned int64 vkl_uint64;
-
-// Call macros for both varying and uniform types.
-#define __vkl_interop_univary(Macro) Macro(uniform) Macro(varying)
-
-// Initializer lists in struct definitions.
-#define VKL_INITIALIZER_LIST(...)
-
-// ========================================================================== //
-#elif defined(__cplusplus)
-// ========================================================================== //
-
+#if defined(__cplusplus)
 #include <cassert>
-#include <cstdint>
+#else
+#include <assert.h>
+#endif
 
-// Keywords.
-#define VKL_INTEROP_UNIFORM
-#define VKL_INTEROP_CONSTEXPR constexpr
 #define VKL_INTEROP_STATIC_ASSERT(condition, message) \
   static_assert((condition), message)
 
-// Unified integer typedefs.
+#endif
 
-typedef uint32_t vkl_uint32;
-typedef int32_t vkl_int32;
-typedef uint64_t vkl_uint64;
+// -----------------------------------------------------------------------------
+// Default parameters / initialization.
+// -----------------------------------------------------------------------------
 
-// ISPC library functions missing from C++
+#if defined(__cplusplus)
+
+#define VKL_DEFAULT_VAL(a) a
+
+#else  // defined(__cplusplus)
+
+#define VKL_DEFAULT_VAL(a)
+
+#endif  // defined(__cplusplus)
+
+// -----------------------------------------------------------------------------
+// Standard library functions.
+// -----------------------------------------------------------------------------
+
+#if defined(__cplusplus)
 
 inline float floatbits(vkl_uint32 bits)
 {
-  static_assert(sizeof(float) == sizeof(vkl_uint32), "Float is not 4 Bytes.");
+  VKL_INTEROP_STATIC_ASSERT(sizeof(float) == sizeof(vkl_uint32),
+                            "Float is not 4 Bytes.");
   float fval                         = 0.f;
   reinterpret_cast<char *>(&fval)[0] = reinterpret_cast<const char *>(&bits)[0];
   reinterpret_cast<char *>(&fval)[1] = reinterpret_cast<const char *>(&bits)[1];
@@ -65,7 +98,8 @@ inline float floatbits(vkl_uint32 bits)
 
 inline vkl_uint32 intbits(float value)
 {
-  static_assert(sizeof(float) == sizeof(vkl_uint32), "Float is not 4 Bytes.");
+  VKL_INTEROP_STATIC_ASSERT(sizeof(float) == sizeof(vkl_uint32),
+                            "Float is not 4 Bytes.");
   vkl_uint32 ival = 0;
   reinterpret_cast<char *>(&ival)[0] =
       reinterpret_cast<const char *>(&value)[0];
@@ -78,15 +112,20 @@ inline vkl_uint32 intbits(float value)
   return ival;
 }
 
-// Call macros for both varying and uniform types.
+#endif
+
+// -----------------------------------------------------------------------------
+// Helpers for univary definitions.
+// -----------------------------------------------------------------------------
+
+#if defined(ISPC)
+
+// Call Macro for both varying and uniform types.
+#define __vkl_interop_univary(Macro) Macro(uniform) Macro(varying)
+
+#else
+
+// Call Macro _only_ for uniform types.
 #define __vkl_interop_univary(Macro) Macro(VKL_INTEROP_UNIFORM)
 
-// Initializer lists in struct definitions.
-#define VKL_INITIALIZER_LIST(...) \
-  {                               \
-    __VA_ARGS__                   \
-  }
-
-// ========================================================================== //
-#endif  // defined(ISPC)
-// ========================================================================== //
+#endif

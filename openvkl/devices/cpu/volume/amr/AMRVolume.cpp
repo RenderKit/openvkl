@@ -92,8 +92,15 @@ namespace openvkl {
       amrMethod =
           (VKLAMRMethod)this->template getParam<int>("method", VKL_AMR_CURRENT);
 
+      background = this->template getParamDataT<float>(
+          "background", 1, VKL_BACKGROUND_UNDEFINED);
+
       if (data != nullptr)  // TODO: support data updates
+      {
+        CALL_ISPC(
+            Volume_setBackground, this->ispcEquivalent, background->data());
         return;
+      }
 
       cellWidthsData  = this->template getParamDataT<float>("cellWidth");
       blockBoundsData = this->template getParamDataT<box3i>("block.bounds");
@@ -146,6 +153,8 @@ namespace openvkl {
       const vec3f gridSpacing =
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       spacing = gridSpacing;
+
+      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
 
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,

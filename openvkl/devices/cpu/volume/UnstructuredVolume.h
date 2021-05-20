@@ -70,6 +70,8 @@ namespace openvkl {
       Ref<const DataT<float>> cellValue;
       Ref<const DataT<uint8_t>> cellType;
 
+      Ref<const DataT<float>> background;
+
       bool index32Bit{false};
       bool cell32Bit{false};
       bool indexPrefixed{false};

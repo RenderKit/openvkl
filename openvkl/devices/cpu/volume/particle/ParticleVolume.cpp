@@ -93,11 +93,16 @@ namespace openvkl {
             "clampMaxCumulativeValue greater than zero.");
       }
 
+      background = this->template getParamDataT<float>(
+          "background", 1, VKL_BACKGROUND_UNDEFINED);
+
       buildBvhAndCalculateBounds();
 
       if (!this->ispcEquivalent) {
         this->ispcEquivalent = CALL_ISPC(VKLParticleVolume_Constructor);
       }
+
+      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
 
       CALL_ISPC(VKLParticleVolume_set,
                 this->ispcEquivalent,

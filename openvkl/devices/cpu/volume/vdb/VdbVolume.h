@@ -171,6 +171,8 @@ namespace openvkl {
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
       uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
+
+      Ref<const DataT<float>> background;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

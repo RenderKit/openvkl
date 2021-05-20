@@ -1227,7 +1227,7 @@ inline varying float VKLUnstructuredVolume_sample(
   const VKLUnstructuredVolume *uniform self =
       (const VKLUnstructuredVolume *uniform)sampler->volume;
 
-  float results = floatbits(0xffffffff); /* NaN */
+  float results = self->super.super.background[0];
 
   traverseEmbree(self->super.bvhRoot,
                  self,

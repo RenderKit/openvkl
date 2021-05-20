@@ -4,7 +4,14 @@
 #pragma once
 
 #include "rkcommon/math/vec.ih"
+#include "../common/export_util.h"
 
 struct Volume
 {
+  // Background value, per attribute.
+  const float *uniform background;
 };
+
+export void EXPORT_UNIQUE(Volume_setBackground,
+                          void *uniform _volume,
+                          const float *uniform background);

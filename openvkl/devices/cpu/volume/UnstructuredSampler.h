@@ -52,7 +52,7 @@ namespace openvkl {
                             unsigned int attributeIndex,
                             const float *times) const override final;
 
-     protected:
+     private:
       using Sampler<W>::ispcEquivalent;
       using UnstructuredSamplerBase<W>::volume;
     };

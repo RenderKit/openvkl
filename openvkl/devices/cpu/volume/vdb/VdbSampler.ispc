@@ -368,7 +368,8 @@ float VdbSampler_iterator_computeSample_varying(
  * Compute the value range for the given node and index range.
  */
 inline uniform box1f
-VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
+VdbSampler_computeNodeValueRange(const VdbVolume *uniform volume,
+                                 const VdbGrid *uniform grid,
                                  uniform uint64 voxel,
                                  const uniform vec3ui &domainOffset,
                                  const uniform vec2ui &rangeX,
@@ -376,13 +377,15 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
                                  const uniform vec2ui &rangeZ,
                                  uniform uint32 attributeIndex)
 {
-  const uniform float background = 0.f;
+  const uniform float backgroundOutOfBounds =
+      volume->super.background[attributeIndex];
+  const uniform float backgroundInBounds = 0.f;
 
   const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
 
   if (grid->dense) {
     if (!VdbSampler_isInDomain(grid->activeSize, domainOffset)) {
-      return make_box1f(background, background);
+      return make_box1f(backgroundOutOfBounds, backgroundOutOfBounds);
     }
 
     const uniform VKLTemporalFormat temporalFormat = grid->denseTemporalFormat;
@@ -401,7 +404,11 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
                                    rangeZ);
   } else {
     if (!vklVdbVoxelIsLeafPtr(voxel)) {
-      return make_box1f(background, background);
+      if (!VdbSampler_isInDomain(grid->activeSize, domainOffset)) {
+        return make_box1f(backgroundOutOfBounds, backgroundOutOfBounds);
+      } else {
+        return make_box1f(backgroundInBounds, backgroundInBounds);
+      }
     }
 
     const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
@@ -425,13 +432,15 @@ VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
  * Compute the value range on the given constant float leaf.
  */
 export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
+                          const void *uniform _volume,
                           const void *uniform _grid,
                           const vec3ui *uniform centerNodeOffset,
                           uniform uint32 level,
                           uniform uint32 attributeIndex,
                           uniform box1f *uniform range)
 {
-  const VdbGrid *uniform grid = (const VdbGrid *uniform)_grid;
+  const VdbVolume *uniform volume = (const VdbVolume *uniform)_volume;
+  const VdbGrid *uniform grid     = (const VdbGrid *uniform)_grid;
 
   // We need to consider voxels outside this node in the value range because
   // of reconstruction filter support.
@@ -501,7 +510,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
         }
 
         const uniform range1f nodeValueRange =
-            VdbSampler_computeNodeValueRange(grid,
+            VdbSampler_computeNodeValueRange(volume,
+                                             grid,
                                              voxel,
                                              domainOffset,
                                              voxelRange[ix],
@@ -509,8 +519,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
                                              voxelRange[iz],
                                              attributeIndex);
 
-        range->lower = min(range->lower, nodeValueRange.lower);
-        range->upper = max(range->upper, nodeValueRange.upper);
+        if (!isnan(nodeValueRange.lower)) {
+          range->lower = min(range->lower, nodeValueRange.lower);
+        }
+
+        if (!isnan(nodeValueRange.upper)) {
+          range->upper = max(range->upper, nodeValueRange.upper);
+        }
       }
     }
   }

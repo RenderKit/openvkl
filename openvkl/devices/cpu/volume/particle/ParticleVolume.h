@@ -80,6 +80,8 @@ namespace openvkl {
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
 
+      Ref<const DataT<float>> background;
+
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};

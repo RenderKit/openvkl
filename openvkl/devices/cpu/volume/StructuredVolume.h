@@ -56,6 +56,7 @@ namespace openvkl {
       Ref<const DataT<float>> temporallyUnstructuredTimes;
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      Ref<const DataT<float>> background;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -105,6 +106,9 @@ namespace openvkl {
       filter = (VKLFilter)this->template getParam<int>("filter", filter);
       gradientFilter =
           (VKLFilter)this->template getParam<int>("gradientFilter", filter);
+
+      background = this->template getParamDataT<float>(
+          "background", attributesData.size(), VKL_BACKGROUND_UNDEFINED);
 
       // validate type of each provided attribute; size validated depending on
       // temporal configuration

@@ -85,6 +85,9 @@ namespace openvkl {
       cellValue     = this->template getParamDataT<float>("cell.data", nullptr);
       cellType = this->template getParamDataT<uint8_t>("cell.type", nullptr);
 
+      background = this->template getParamDataT<float>(
+          "background", 1, VKL_BACKGROUND_UNDEFINED);
+
       if (!vertexValue && !cellValue) {
         throw std::runtime_error(
             "unstructured volume must have 'vertex.data' or 'cell.data'");
@@ -202,6 +205,8 @@ namespace openvkl {
       if (!this->ispcEquivalent) {
         this->ispcEquivalent = CALL_ISPC(VKLUnstructuredVolume_Constructor);
       }
+
+      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
 
       CALL_ISPC(
           VKLUnstructuredVolume_set,

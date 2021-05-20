@@ -175,6 +175,8 @@ noinline void VdbSampler_traverse(const VdbSampler *uniform sampler,
           grid->levels[level]                                                  \
               .valueRange[voxelOffset * grid->numAttributes + attributeIndex]; \
       sample = 0.5f * (valueRange.lower + valueRange.upper);                   \
+    } else if (!VdbSampler_isInDomain(grid->activeSize, domainOffset)) {       \
+      sample = sampler->super.volume->background[attributeIndex];              \
     }                                                                          \
     return sample;                                                             \
   }
@@ -248,7 +250,7 @@ noinline uniform float VdbSampler_traverseAndSample(
         sampler, voxelU, domainOffset, time, attributeIndex);
   }
 
-  return 0.f;
+  return sampler->super.volume->background[attributeIndex];
 }
 
 inline uniform bool reduce_equal(const vec3ui &v, vec3ui *uniform uv)
@@ -288,7 +290,7 @@ noinline float VdbSampler_traverseAndSample(const VdbSampler *uniform sampler,
           sampler, voxel, domainOffset, time, attributeIndex);
     }
   }
-  return 0.f;
+  return sampler->super.volume->background[attributeIndex];
 }
 
 // Specialized versions of the above, for dense volumes.
@@ -310,7 +312,7 @@ inline uniform float VdbSampler_traverseAndSample_dense(
     return sampler->denseLeafSample_uniform[attributeIndex](
         sampler->grid, attributeIndex, domainOffset, time);
   }
-  return 0.f;
+  return sampler->super.volume->background[attributeIndex];
 }
 
 inline float VdbSampler_traverseAndSample_dense(
@@ -330,5 +332,5 @@ inline float VdbSampler_traverseAndSample_dense(
     return sampler->denseLeafSample_varying[attributeIndex](
         sampler->grid, attributeIndex, domainOffset, time);
   }
-  return 0.f;
+  return sampler->super.volume->background[attributeIndex];
 }

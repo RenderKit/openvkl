@@ -236,7 +236,8 @@ namespace openvkl {
     /*
      * Compute the value range for a leaf.
      */
-    range1f computeValueRange(const VdbGrid *grid,
+    range1f computeValueRange(const void *volumeISPC,
+                              const VdbGrid *grid,
                               VKLFormat format,
                               uint32_t level,
                               const vec3ui &offset,
@@ -245,6 +246,7 @@ namespace openvkl {
       range1f range;
 
       CALL_ISPC(VdbSampler_computeValueRange,
+                volumeISPC,
                 grid,
                 reinterpret_cast<const ispc::vec3ui *>(&offset),
                 level,
@@ -332,6 +334,7 @@ namespace openvkl {
     void computeValueRanges(const std::vector<vec3ui> &leafOffsets,
                             const DataT<uint32_t> &leafLevel,
                             const DataT<uint32_t> &leafFormat,
+                            const void *volumeISPC,
                             VdbGrid *grid)
     {
       const uint64_t numLeaves = leafOffsets.size();
@@ -346,8 +349,8 @@ namespace openvkl {
         const vec3ui &offset = leafOffsets[idx];
 
         for (unsigned int j = 0; j < grid->numAttributes; j++) {
-          valueRanges[idx][j] =
-              computeValueRange(grid, format, leafLevel[idx], offset, j);
+          valueRanges[idx][j] = computeValueRange(
+              volumeISPC, grid, format, leafLevel[idx], offset, j);
         }
       });
 
@@ -650,6 +653,12 @@ namespace openvkl {
           }
         }
 
+        background = this->template getParamDataT<float>(
+            "background", grid->numAttributes, VKL_BACKGROUND_UNDEFINED);
+
+        CALL_ISPC(
+            Volume_setBackground, this->ispcEquivalent, background->data());
+
         const uint64_t numLeafDataPointers =
             grid->numLeaves * static_cast<uint64_t>(grid->numAttributes);
         if (numLeafDataPointers > VKL_VDB_MAX_NUM_LEAF_DATA) {
@@ -839,7 +848,8 @@ namespace openvkl {
                   this->ispcEquivalent,
                   reinterpret_cast<const ispc::VdbGrid *>(grid));
 
-        computeValueRanges(leafOffsets, *leafLevel, *leafFormat, grid);
+        computeValueRanges(
+            leafOffsets, *leafLevel, *leafFormat, this->ispcEquivalent, grid);
 
         // Aggregate value ranges for all attributes
         valueRanges.clear();

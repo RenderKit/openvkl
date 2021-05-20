@@ -80,6 +80,10 @@ inline varying float VKLParticleVolume_sample(
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)sampler->volume;
 
+  if (!box_contains(self->super.boundingBox, objectCoordinates)) {
+    return self->super.super.background[0];
+  }
+
   float sampleResult = 0.f;
 
   traverseEmbree(self->super.bvhRoot,

@@ -49,6 +49,8 @@ namespace openvkl {
 
       VKLAMRMethod amrMethod{VKL_AMR_CURRENT};
 
+      Ref<const DataT<float>> background;
+
       // for interval iteration
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};

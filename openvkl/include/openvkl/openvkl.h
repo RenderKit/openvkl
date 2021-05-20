@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "VKLBackgroundUndefined.h"
 #include "VKLDataType.h"
 #include "VKLError.h"
 #include "VKLFilter.h"

@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "VKLBackgroundUndefined.h"
 #include "VKLFormat.h"
 #include "common.isph"
 #include "device.isph"

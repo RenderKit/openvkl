@@ -105,6 +105,7 @@ if (BUILD_TESTING)
   openvkl_add_executable_ispc(vklTests
     vklTests.cpp
     tests/alignment.cpp
+    tests/background_undefined.cpp
     tests/hit_iterator.cpp
     tests/hit_iterator_epsilon.cpp
     tests/interval_iterator.cpp

@@ -493,6 +493,10 @@ table below.
                                                                             `data`.
                                                                             Only valid if `temporalFormat` is
                                                                             `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
+
+  float[]   background                       `VKL_BACKGROUND_UNDEFINED`     For each attribute, the value that is
+                                                                            returned when sampling an undefined
+                                                                            region outside the volume domain.
   --------- -------------------------------- -----------------------------  ---------------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
 
@@ -538,37 +542,41 @@ structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
 
-  --------- ----------- -------------  -----------------------------------
-  Type      Name            Default    Description
-  --------- ----------- -------------  -----------------------------------
-  vec3i     dimensions                 number of voxels in each
-                                       dimension $(r, \theta, \phi)$
+  --------- ----------------------- -------------------------- -----------------------------------
+  Type      Name                        Default                Description
+  --------- ----------------------- -------------------------- -----------------------------------
+  vec3i     dimensions                                         number of voxels in each
+                                                               dimension $(r, \theta, \phi)$
 
-  VKLData   data                       VKLData object(s) of voxel data,
-  VKLData[]                            supported types are:
+  VKLData   data                                               VKLData object(s) of voxel data,
+  VKLData[]                                                    supported types are:
 
-                                       `VKL_UCHAR`
+                                                               `VKL_UCHAR`
 
-                                       `VKL_SHORT`
+                                                               `VKL_SHORT`
 
-                                       `VKL_USHORT`
+                                                               `VKL_USHORT`
 
-                                       `VKL_HALF`
+                                                               `VKL_HALF`
 
-                                       `VKL_FLOAT`
+                                                               `VKL_FLOAT`
 
-                                       `VKL_DOUBLE`
+                                                               `VKL_DOUBLE`
 
-                                       Multiple attributes are supported
-                                       through passing an array of VKLData
-                                       objects.
+                                                               Multiple attributes are supported
+                                                               through passing an array of VKLData
+                                                               objects.
 
-  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in units of
-                                       $(r, \theta, \phi)$; angles in degrees
+  vec3f     gridOrigin              $(0, 0, 0)$                origin of the grid in units of
+                                                               $(r, \theta, \phi)$; angles in degrees
 
-  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in units of
-                                       $(r, \theta, \phi)$; angles in degrees
-  --------- ----------- -------------  -----------------------------------
+  vec3f     gridSpacing             $(1, 1, 1)$                size of the grid cells in units of
+                                                               $(r, \theta, \phi)$; angles in degrees
+
+  float[]   background              `VKL_BACKGROUND_UNDEFINED` For each attribute, the value that is
+                                                               returned when sampling an undefined
+                                                               region outside the volume domain.
+  --------- ----------------------- -------------------------- -----------------------------------
   : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,
@@ -618,24 +626,27 @@ Note that cell widths are defined _per refinement level_, not per block.
 AMR volumes are created by passing the type string `"amr"` to `vklNewVolume`,
 and have the following parameters:
 
-  -------------- --------------- -----------------  -----------------------------------
-  Type           Name                      Default  Description
-  -------------- --------------- -----------------  -----------------------------------
-  float[]        cellWidth                          [data] array of each level's cell width
+  -------------- --------------------- -------------------------- -----------------------------------
+  Type           Name                  Default                    Description
+  -------------- --------------------- -------------------------- -----------------------------------
+  float[]        cellWidth                                        [data] array of each level's cell width
 
-  box3i[]        block.bounds                       [data] array of each block's bounds (in voxels)
+  box3i[]        block.bounds                                     [data] array of each block's bounds (in voxels)
 
-  int[]          block.level                        [data] array of each block's refinement level
+  int[]          block.level                                      [data] array of each block's refinement level
 
-  VKLData[]      block.data                         [data] array of each block's VKLData object
-                                                    containing the actual scalar voxel data.
-                                                    Currently only `VKL_FLOAT` data is supported.
+  VKLData[]      block.data                                       [data] array of each block's VKLData object
+                                                                  containing the actual scalar voxel data.
+                                                                  Currently only `VKL_FLOAT` data is supported.
 
-  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in object space
+  vec3f          gridOrigin            $(0, 0, 0)$                origin of the grid in object space
 
-  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in object
-                                                    space
-  -------------- --------------- -----------------  -----------------------------------
+  vec3f          gridSpacing           $(1, 1, 1)$                size of the grid cells in object
+                                                                  space
+
+  float          background            `VKL_BACKGROUND_UNDEFINED` The value that is returned when sampling an
+                                                                  undefined region outside the volume domain.
+  -------------- --------------------- -------------------------- -----------------------------------
   : Configuration parameters for AMR (`"amr"`) volumes.
 
 Note that the `gridOrigin` and `gridSpacing` parameters act just like the
@@ -729,49 +740,53 @@ Gradients are computed using finite differences.
 Unstructured volumes are created by passing the type string `"unstructured"` to
 `vklNewVolume`, and have the following parameters:
 
-  -------------------  ------------------  --------  ---------------------------------------
-  Type                 Name                Default   Description
-  -------------------  ------------------  --------  ---------------------------------------
-  vec3f[]              vertex.position               [data] array of vertex positions
+  -------------------  --------------------  -------------------------  ---------------------------------------
+  Type                 Name                  Default                    Description
+  -------------------  --------------------  -------------------------  ---------------------------------------
+  vec3f[]              vertex.position                                  [data] array of vertex positions
 
-  float[]              vertex.data                   [data] array of vertex data values to
-                                                     be sampled
+  float[]              vertex.data                                      [data] array of vertex data values to
+                                                                        be sampled
 
-  uint32[] / uint64[]  index                         [data] array of indices (into the
-                                                     vertex array(s)) that form cells
+  uint32[] / uint64[]  index                                            [data] array of indices (into the
+                                                                        vertex array(s)) that form cells
 
-  bool                 indexPrefixed          false  indicates that the `index` array is
-                                                     provided in a VTK-compatible format,
-                                                     where the indices of each cell are
-                                                     prefixed with the number of vertices
+  bool                 indexPrefixed         false                      indicates that the `index` array is
+                                                                        provided in a VTK-compatible format,
+                                                                        where the indices of each cell are
+                                                                        prefixed with the number of vertices
 
-  uint32[] / uint64[]  cell.index                    [data] array of locations (into the
-                                                     index array), specifying the first index
-                                                     of each cell
+  uint32[] / uint64[]  cell.index                                       [data] array of locations (into the
+                                                                        index array), specifying the first index
+                                                                        of each cell
 
-  float[]              cell.data                     [data] array of cell data values to be
-                                                     sampled
+  float[]              cell.data                                        [data] array of cell data values to be
+                                                                        sampled
 
-  uint8[]              cell.type                     [data] array of cell types
-                                                     (VTK compatible). Supported types are:
+  uint8[]              cell.type                                        [data] array of cell types
+                                                                        (VTK compatible). Supported types are:
 
-                                                     `VKL_TETRAHEDRON`
+                                                                        `VKL_TETRAHEDRON`
 
-                                                     `VKL_HEXAHEDRON`
+                                                                        `VKL_HEXAHEDRON`
 
-                                                     `VKL_WEDGE`
+                                                                        `VKL_WEDGE`
 
-                                                     `VKL_PYRAMID`
+                                                                        `VKL_PYRAMID`
 
-  bool                 hexIterative           false  hexahedron
-                                                     interpolation method, defaults to fast
-                                                     non-iterative version which could have
-                                                     rendering inaccuracies may appear
-                                                     if hex is not parallelepiped
+  bool                 hexIterative          false                      hexahedron
+                                                                        interpolation method, defaults to fast
+                                                                        non-iterative version which could have
+                                                                        rendering inaccuracies may appear
+                                                                        if hex is not parallelepiped
 
-  bool                 precomputedNormals     false  whether to accelerate by precomputing,
-                                                     at a cost of 12 bytes/face
-  -------------------  ------------------  --------  ---------------------------------------
+  bool                 precomputedNormals    false                      whether to accelerate by precomputing,
+                                                                        at a cost of 12 bytes/face
+
+  float                background            `VKL_BACKGROUND_UNDEFINED` The value that is returned when
+                                                                        sampling an undefined region outside
+                                                                        the volume domain.
+  -------------------  --------------------  -------------------------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes.
 
 ### VDB Volumes
@@ -879,6 +894,10 @@ following parameters:
                                                                                        must be of type `VKL_FLOAT`.
                                                                                        Only valid if `temporalFormat` is
                                                                                        `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
+
+  float[]       background                             `VKL_BACKGROUND_UNDEFINED`      For each attribute, the value that is
+                                                                                       returned when sampling an undefined
+                                                                                       region outside the volume domain.
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -1135,10 +1154,11 @@ Use `vklCommit()` to commit parameters to the sampler object.
 Sampling
 --------
 
-The scalar API takes a volume and coordinate, and returns a float value. NaN is
-returned for probe points outside the volume. The attribute index selects the
-scalar attribute of interest; not all volumes support multiple attributes. The
-time value, which must be between 0 and 1, specifies the sampling time. For
+The scalar API takes a volume and coordinate, and returns a float value. The
+volume's background value (by default `VKL_BACKGROUND_UNDEFINED`) is returned
+for probe points outside the volume. The attribute index selects the scalar
+attribute of interest; not all volumes support multiple attributes. The time
+value, which must be between 0 and 1, specifies the sampling time. For
 temporally constant volumes, this value has no effect.
 
     float vklComputeSample(VKLSampler sampler,

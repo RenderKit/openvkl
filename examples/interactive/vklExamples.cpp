@@ -52,6 +52,7 @@ struct ViewerParams
   bool useISPC{true};
   std::string innerNodeOutput;
   int innerNodeMaxDepth{1};
+  float background{VKL_BACKGROUND_UNDEFINED};
 };
 
 bool addSamplingRateUI(GLFWVKLWindow &window)
@@ -258,6 +259,7 @@ void usage(const char *progname)
          "\t-o <output.ppm>\n"
          "\t-innerNodeOutput <output.usda> (vdb only)\n"
          "\t-innerNodeMaxDepth <level> (vdb only)\n"
+         "\t-background <BG VALUE>| undefined\n"
       << std::endl;
 }
 
@@ -426,6 +428,16 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
         throw std::runtime_error("improper -innerNodeMaxDepth arguments");
       }
       params.innerNodeMaxDepth = stoi(std::string(argv[argIndex++]));
+    } else if (switchArg == "-background") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -background arguments");
+      }
+      const std::string bgArg = argv[argIndex++];
+      if (bgArg == "undefined") {
+        params.background = VKL_BACKGROUND_UNDEFINED;
+      } else {
+        params.background = std::stof(bgArg);
+      }
     } else if (switchArg == "-help") {
       usage(argv[0]);
       return false;
@@ -935,6 +947,11 @@ void setupVolume(ViewerParams &params,
     std::cerr << "warning: -filter has no effect on " << params.gridType
               << " volumes" << std::endl;
   }
+
+  VKLVolume vklVolume = testingVolume->getVKLVolume(getOpenVKLDevice());
+
+  vklSetFloat(vklVolume, "background", params.background);
+  vklCommit(vklVolume);
 }
 
 void setupSampler(const ViewerParams &params, Scene &scene)

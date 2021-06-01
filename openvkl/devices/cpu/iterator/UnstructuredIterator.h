@@ -4,8 +4,9 @@
 #pragma once
 
 #include "../common/math.h"
-#include "Iterator.h"
 #include "DefaultIterator.h"
+#include "Iterator.h"
+#include "IteratorContext.h"
 #include "UnstructuredIterator_ispc.h"
 
 namespace openvkl {
@@ -42,14 +43,20 @@ namespace openvkl {
     using UnstructuredIntervalIteratorFactory =
         ConcreteIteratorFactory<W,
                                 IntervalIterator,
-                                UnstructuredIntervalIterator>;
+                                UnstructuredIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     using UnstructuredHitIterator = DefaultHitIterator<W, UnstructuredIntervalIterator<W>>;
 
     template <int W>
     using UnstructuredHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, UnstructuredHitIterator>;
+        ConcreteIteratorFactory<W,
+                                HitIterator,
+                                UnstructuredHitIterator,
+                                HitIteratorContext,
+                                HitIteratorContext>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

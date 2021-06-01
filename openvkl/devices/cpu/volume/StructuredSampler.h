@@ -357,7 +357,11 @@ namespace openvkl {
 
     template <int W>
     using StructuredSphericalIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                DefaultIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     using StructuredSphericalHitIterator =
@@ -365,7 +369,11 @@ namespace openvkl {
 
     template <int W>
     using StructuredSphericalHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, StructuredSphericalHitIterator>;
+        ConcreteIteratorFactory<W,
+                                HitIterator,
+                                StructuredSphericalHitIterator,
+                                HitIteratorContext,
+                                HitIteratorContext>;
 
     template <int W>
     using StructuredSphericalSampler =

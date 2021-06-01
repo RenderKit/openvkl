@@ -332,31 +332,46 @@ OPENVKL_CATCH_END_NO_DEVICE()
 // Interval iterator //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" size_t vklGetIntervalIteratorSize(VKLSampler sampler)
+extern "C" VKLIntervalIteratorContext vklNewIntervalIteratorContext(
+    VKLSampler sampler, unsigned int attributeIndex)
     OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
 {
-  return deviceObj->getIntervalIteratorSize1(sampler);
+  VKLIntervalIteratorContext context =
+      deviceObj->newIntervalIteratorContext(sampler, attributeIndex);
+  if (context == nullptr) {
+    postLogMessage(deviceObj, VKL_LOG_ERROR)
+        << "could not create interval iterator context";
+  }
+  deviceAttach(deviceObj, context);
+  return context;
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getIntervalIteratorSize1(context);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetIntervalIteratorSize4(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+extern "C" size_t vklGetIntervalIteratorSize4(
+    VKLIntervalIteratorContext context) OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
-  return deviceObj->getIntervalIteratorSize4(sampler);
+  return deviceObj->getIntervalIteratorSize4(context);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetIntervalIteratorSize8(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+extern "C" size_t vklGetIntervalIteratorSize8(
+    VKLIntervalIteratorContext context) OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
-  return deviceObj->getIntervalIteratorSize8(sampler);
+  return deviceObj->getIntervalIteratorSize8(context);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetIntervalIteratorSize16(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+extern "C" size_t vklGetIntervalIteratorSize16(
+    VKLIntervalIteratorContext context) OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
-  return deviceObj->getIntervalIteratorSize16(sampler);
+  return deviceObj->getIntervalIteratorSize16(context);
 }
 OPENVKL_CATCH_END(0u)
 
@@ -445,31 +460,45 @@ __define_vklIterateIntervalN(16);
 // Hit iterator ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" size_t vklGetHitIteratorSize(VKLSampler sampler)
+extern "C" VKLHitIteratorContext vklNewHitIteratorContext(
+    VKLSampler sampler, unsigned int attributeIndex)
     OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
 {
-  return deviceObj->getHitIteratorSize1(sampler);
+  VKLHitIteratorContext context = deviceObj->newHitIteratorContext(sampler, attributeIndex);
+  if (context == nullptr) {
+    postLogMessage(deviceObj, VKL_LOG_ERROR)
+        << "could not create hit iterator context";
+  }
+  deviceAttach(deviceObj, context);
+  return context;
+}
+OPENVKL_CATCH_END(nullptr)
+
+extern "C" size_t vklGetHitIteratorSize(VKLHitIteratorContext context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getHitIteratorSize1(context);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetHitIteratorSize4(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+extern "C" size_t vklGetHitIteratorSize4(VKLHitIteratorContext context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
-  return deviceObj->getHitIteratorSize4(sampler);
+  return deviceObj->getHitIteratorSize4(context);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetHitIteratorSize8(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+extern "C" size_t vklGetHitIteratorSize8(VKLHitIteratorContext context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
-  return deviceObj->getHitIteratorSize8(sampler);
+  return deviceObj->getHitIteratorSize8(context);
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" size_t vklGetHitIteratorSize16(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+extern "C" size_t vklGetHitIteratorSize16(VKLHitIteratorContext context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
-  return deviceObj->getHitIteratorSize16(sampler);
+  return deviceObj->getHitIteratorSize16(context);
 }
 OPENVKL_CATCH_END(0u)
 

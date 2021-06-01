@@ -5,6 +5,7 @@
 
 #include "../../iterator/DefaultIterator.h"
 #include "../../iterator/Iterator.h"
+#include "../../iterator/IteratorContext.h"
 #include "VdbGrid.h"
 #include "VdbIterator_ispc.h"
 
@@ -42,14 +43,21 @@ namespace openvkl {
 
     template <int W>
     using VdbIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, VdbIntervalIterator>;
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                VdbIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     using VdbHitIterator = DefaultHitIterator<W, VdbIntervalIterator<W>>;
 
     template <int W>
-    using VdbHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, VdbHitIterator>;
+    using VdbHitIteratorFactory = ConcreteIteratorFactory<W,
+                                                          HitIterator,
+                                                          VdbHitIterator,
+                                                          HitIteratorContext,
+                                                          HitIteratorContext>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

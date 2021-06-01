@@ -59,17 +59,26 @@ namespace openvkl {
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      size_t getIntervalIteratorSize1(VKLSampler sampler) const override
+      VKLIntervalIteratorContext newIntervalIteratorContext(
+          VKLSampler sampler, unsigned int attributeIndex) override;
+
+      size_t getIntervalIteratorSize1(
+          VKLIntervalIteratorContext context) const override
       {
-        const auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+        const auto &contextObject =
+            referenceFromHandle<IntervalIteratorContext<W>>(context);
+        const auto &samplerObject = contextObject.getSampler();
         return samplerObject.getIntervalIteratorFactory().sizeU();
       }
 
-#define __define_getIntervalIteratorSizeN(WIDTH)                           \
-  size_t getIntervalIteratorSize##WIDTH(VKLSampler sampler) const override \
-  {                                                                        \
-    auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);        \
-    return samplerObject.getIntervalIteratorFactory().sizeV();             \
+#define __define_getIntervalIteratorSizeN(WIDTH)                            \
+  size_t getIntervalIteratorSize##WIDTH(VKLIntervalIteratorContext context) \
+      const override                                                        \
+  {                                                                         \
+    const auto &contextObject =                                             \
+        referenceFromHandle<IntervalIteratorContext<W>>(context);           \
+    const auto &samplerObject = contextObject.getSampler();                 \
+    return samplerObject.getIntervalIteratorFactory().sizeV();              \
   }
 
       __define_getIntervalIteratorSizeN(4);
@@ -175,17 +184,25 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
      public:
-      size_t getHitIteratorSize1(VKLSampler sampler) const override
+      VKLHitIteratorContext newHitIteratorContext(
+          VKLSampler sampler, unsigned int attributeIndex) override;
+
+      size_t getHitIteratorSize1(VKLHitIteratorContext context) const override
       {
-        auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+        const auto &contextObject =
+            referenceFromHandle<HitIteratorContext<W>>(context);
+        const auto &samplerObject = contextObject.getSampler();
         return samplerObject.getHitIteratorFactory().sizeU();
       }
 
-#define __define_getHitIteratorSizeN(WIDTH)                           \
-  size_t getHitIteratorSize##WIDTH(VKLSampler sampler) const override \
-  {                                                                   \
-    auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);   \
-    return samplerObject.getHitIteratorFactory().sizeV();             \
+#define __define_getHitIteratorSizeN(WIDTH)                       \
+  size_t getHitIteratorSize##WIDTH(VKLHitIteratorContext context) \
+      const override                                              \
+  {                                                               \
+    const auto &contextObject =                                   \
+        referenceFromHandle<HitIteratorContext<W>>(context);      \
+    const auto &samplerObject = contextObject.getSampler();       \
+    return samplerObject.getHitIteratorFactory().sizeV();         \
   }
 
       __define_getHitIteratorSizeN(4);

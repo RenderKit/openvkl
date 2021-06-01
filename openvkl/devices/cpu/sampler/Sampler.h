@@ -6,6 +6,7 @@
 #include "../common/ManagedObject.h"
 #include "../common/simd.h"
 #include "../iterator/Iterator.h"
+#include "../iterator/IteratorContext.h"
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
@@ -131,11 +132,13 @@ namespace openvkl {
       /*
        * Return the iterator factories for this volume.
        */
-      virtual const IteratorFactory<W, IntervalIterator>
+      virtual const IteratorFactory<W,
+                                    IntervalIterator,
+                                    IntervalIteratorContext>
           &getIntervalIteratorFactory() const = 0;
 
-      virtual const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const = 0;
+      virtual const IteratorFactory<W, HitIterator, HitIteratorContext>
+          &getHitIteratorFactory() const = 0;
 
       void *getISPCEquivalent() const;
 
@@ -268,14 +271,14 @@ namespace openvkl {
         return nullptr;
       }
 
-      const IteratorFactory<W, IntervalIterator> &getIntervalIteratorFactory()
-          const override final
+      const IteratorFactory<W, IntervalIterator, IntervalIteratorContext>
+          &getIntervalIteratorFactory() const override final
       {
         return intervalIteratorFactory;
       }
 
-      const IteratorFactory<W, HitIterator> &getHitIteratorFactory()
-          const override final
+      const IteratorFactory<W, HitIterator, HitIteratorContext>
+          &getHitIteratorFactory() const override final
       {
         return hitIteratorFactory;
       }

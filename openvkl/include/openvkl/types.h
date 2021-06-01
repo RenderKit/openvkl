@@ -61,7 +61,11 @@ struct ManagedObject
 typedef void ManagedObject;
 #endif
 
+#if defined(ISPC)
+typedef ManagedObject *uniform VKLObject;
+#else
 typedef ManagedObject *VKLObject;
+#endif
 
 // -----------------------------------------------------------------------------
 // VKL_CHAR

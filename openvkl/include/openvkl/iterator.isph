@@ -8,6 +8,12 @@
 #include "sampler.isph"
 #include "max_iterator_size.h"
 
+struct IntervalIteratorContext;
+typedef IntervalIteratorContext *uniform VKLIntervalIteratorContext;
+
+struct HitIteratorContext;
+typedef HitIteratorContext *uniform VKLHitIteratorContext;
+
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterators /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -15,13 +21,17 @@
 struct IntervalIterator;
 typedef IntervalIterator *uniform VKLIntervalIterator;
 
-VKL_API uniform size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
+VKL_API uniform size_t
+vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
 
-VKL_API uniform size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
+VKL_API uniform size_t
+vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
 
-VKL_API uniform size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
+VKL_API uniform size_t
+vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
 
-VKL_FORCEINLINE uniform size_t vklGetIntervalIteratorSizeV(VKLSampler sampler)
+VKL_FORCEINLINE uniform size_t
+vklGetIntervalIteratorSizeV(VKLIntervalIteratorContext context)
 {
   varying bool mask = __mask;
   unmasked
@@ -30,11 +40,11 @@ VKL_FORCEINLINE uniform size_t vklGetIntervalIteratorSizeV(VKLSampler sampler)
   }
 
   if (sizeof(varying float) == 16)
-    return vklGetIntervalIteratorSize4(sampler);
+    return vklGetIntervalIteratorSize4(context);
   else if (sizeof(varying float) == 32)
-    return vklGetIntervalIteratorSize8(sampler);
+    return vklGetIntervalIteratorSize8(context);
   else if (sizeof(varying float) == 64)
-    return vklGetIntervalIteratorSize16(sampler);
+    return vklGetIntervalIteratorSize16(context);
 }
 
 struct VKLInterval
@@ -163,13 +173,14 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
 struct HitIterator;
 typedef HitIterator *uniform VKLHitIterator;
 
-VKL_API uniform size_t vklGetHitIteratorSize4(VKLSampler sampler);
+VKL_API uniform size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
 
-VKL_API uniform size_t vklGetHitIteratorSize8(VKLSampler sampler);
+VKL_API uniform size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
 
-VKL_API uniform size_t vklGetHitIteratorSize16(VKLSampler sampler);
+VKL_API uniform size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
 
-VKL_FORCEINLINE uniform size_t vklGetHitIteratorSizeV(VKLSampler sampler)
+VKL_FORCEINLINE uniform size_t
+vklGetHitIteratorSizeV(VKLHitIteratorContext context)
 {
   varying bool mask = __mask;
   unmasked
@@ -178,11 +189,11 @@ VKL_FORCEINLINE uniform size_t vklGetHitIteratorSizeV(VKLSampler sampler)
   }
 
   if (sizeof(varying float) == 16)
-    return vklGetHitIteratorSize4(sampler);
+    return vklGetHitIteratorSize4(context);
   else if (sizeof(varying float) == 32)
-    return vklGetHitIteratorSize8(sampler);
+    return vklGetHitIteratorSize8(context);
   else if (sizeof(varying float) == 64)
-    return vklGetHitIteratorSize16(sampler);
+    return vklGetHitIteratorSize16(context);
 }
 
 struct VKLHit

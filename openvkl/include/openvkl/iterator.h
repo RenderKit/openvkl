@@ -9,12 +9,35 @@
 #include "max_iterator_size.h"
 
 #ifdef __cplusplus
+struct IntervalIteratorContext : public ManagedObject
+{
+};
+struct HitIteratorContext : public ManagedObject
+{
+};
+#else
+typedef ManagedObject IntervalIteratorContext;
+typedef ManagedObject HitIteratorContext;
+#endif
+
+typedef IntervalIteratorContext *VKLIntervalIteratorContext;
+typedef HitIteratorContext *VKLHitIteratorContext;
+
+#ifdef __cplusplus
 extern "C" {
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterators /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Interval iterators require a context.
+ */
+
+OPENVKL_INTERFACE
+VKLIntervalIteratorContext vklNewIntervalIteratorContext(
+    VKLSampler sampler, unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
 
 /*
  * Interval iterator types are opaque. See vklGetIntervalIteratorSize()
@@ -39,16 +62,16 @@ typedef struct IntervalIterator16 *VKLIntervalIterator16;
  * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
 
 /*
  * Initialize an interval iterator for the given volume.
@@ -158,6 +181,14 @@ void vklIterateInterval16(const int *valid,
 // Hit iterators //////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
+ * Hit iterators require a context.
+ */
+
+OPENVKL_INTERFACE
+VKLHitIteratorContext vklNewHitIteratorContext(
+    VKLSampler sampler, unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+
 struct HitIterator;
 typedef struct HitIterator *VKLHitIterator;
 
@@ -175,16 +206,16 @@ typedef struct HitIterator16 *VKLHitIterator16;
  * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize(VKLSampler sampler);
+size_t vklGetHitIteratorSize(VKLHitIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize4(VKLSampler sampler);
+size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize8(VKLSampler sampler);
+size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize16(VKLSampler sampler);
+size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
 
 /*
  * Initialize a hit iterator for the given volume.
@@ -244,7 +275,6 @@ VKLHitIterator16 vklInitHitIterator16(const int *valid,
                                       const float *times,
                                       VKLValueSelector valueSelector,
                                       void *buffer);
-
 
 typedef struct
 {

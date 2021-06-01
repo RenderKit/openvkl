@@ -5,6 +5,7 @@
 
 #include "GridAcceleratorIteratorSize_ispc.h"
 #include "Iterator.h"
+#include "IteratorContext.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -54,7 +55,9 @@ namespace openvkl {
     using GridAcceleratorIntervalIteratorFactory =
         ConcreteIteratorFactory<W,
                                 IntervalIterator,
-                                GridAcceleratorIntervalIterator>;
+                                GridAcceleratorIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     struct GridAcceleratorHitIterator : public HitIterator<W>
@@ -91,7 +94,11 @@ namespace openvkl {
 
     template <int W>
     using GridAcceleratorHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, GridAcceleratorHitIterator>;
+        ConcreteIteratorFactory<W,
+                                HitIterator,
+                                GridAcceleratorHitIterator,
+                                HitIteratorContext,
+                                HitIteratorContext>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

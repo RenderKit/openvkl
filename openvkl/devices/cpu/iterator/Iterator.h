@@ -248,10 +248,20 @@ namespace openvkl {
      * consider implementing both varying and uniform code paths for maximum
      * performance.
      */
-    template <int W, template <int> class IteratorT>
+    template <int W,
+              template <int>
+              class IteratorT,
+              template <int>
+              class ContextT>
     struct IteratorFactory
     {
       virtual ~IteratorFactory() = default;
+
+      /*
+       * Constructs a new context.
+       */
+      virtual ContextT<W> *newContext(const Sampler<W> &sampler,
+                                      unsigned int attributeIndex) const = 0;
 
       /*
        * Construct a new varying iterator into the provided buffer.
@@ -292,11 +302,23 @@ namespace openvkl {
               template <int>
               class IteratorBaseT,
               template <int>
-              class IteratorT>
-    struct ConcreteIteratorFactory : public IteratorFactory<W, IteratorBaseT>
+              class IteratorT,
+              template <int>
+              class ContextBaseT,
+              template <int>
+              class ContextT>
+    struct ConcreteIteratorFactory
+        : public IteratorFactory<W, IteratorBaseT, ContextT>
     {
-      static_assert(std::is_base_of<IteratorBaseT<W>, IteratorT<W>>::value,
+      static_assert(std::is_base_of<IteratorBaseT<W>, IteratorT<W>>::value &&
+                        std::is_base_of<ContextBaseT<W>, ContextT<W>>::value,
                     "ConcreteIteratorFactory used with incompatible types.");
+
+      ContextT<W> *newContext(const Sampler<W> &sampler,
+                              unsigned int attributeIndex) const override final
+      {
+        return new ContextT<W>(sampler, attributeIndex);
+      }
 
       IteratorBaseT<W> *constructV(const Sampler<W> &sampler,
                                    void *buffer) const override final

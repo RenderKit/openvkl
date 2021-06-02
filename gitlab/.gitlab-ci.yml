@@ -59,12 +59,23 @@ stages:
 .job_template: &base_functional_test_job
   stage: test
   script:
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
 .job_template: &test_functional_job_docker
   <<: *base_functional_test_job
   tags:
     - docker
+
+# Ubuntu test runs require LD_LIBRARY_PATH to be set
+.job_template: &test_functional_job_docker_ubuntu
+  <<: *test_functional_job_docker
+  script:
+    - export LD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
+    - ./build/openvkl/build/vklTests --durations yes
 
 .job_template: &base_benchmark_job
   stage: benchmark
@@ -271,29 +282,20 @@ test-functional-centos8-module-cmake:
     - build-centos8-module-cmake
 
 test-functional-ubuntu16.04:
-  <<: *test_functional_job_docker
+  <<: *test_functional_job_docker_ubuntu
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
-  script:
-    - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
-  <<: *test_functional_job_docker
+  <<: *test_functional_job_docker_ubuntu
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
-  script:
-    - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu18.04
 
 test-functional-ubuntu20.04:
-  <<: *test_functional_job_docker
+  <<: *test_functional_job_docker_ubuntu
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
-  script:
-    - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu20.04
 
@@ -343,6 +345,8 @@ test-functional-macOS:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-macOS-TBB2021:
@@ -354,6 +358,8 @@ test-functional-macOS-TBB2021:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-macOS-arm-TBB2021:

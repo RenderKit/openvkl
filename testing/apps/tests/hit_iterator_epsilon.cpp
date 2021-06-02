@@ -26,7 +26,10 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   vklValueSelectorSetValues(valueSelector, isovalues.size(), isovalues.data());
   vklCommit(valueSelector);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(sampler));
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+  vklCommit(hitContext);
+
+  std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
   VKLHitIterator iterator = vklInitHitIterator(sampler,
                                                &origin,
                                                &direction,
@@ -53,6 +56,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   REQUIRE(hitCount > 0);
 
+  vklRelease(hitContext);
   vklRelease(sampler);
   vklRelease(valueSelector);
 }
@@ -95,6 +99,9 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+  vklCommit(hitContext);
+
   VKLValueSelector valueSelector = vklNewValueSelector(volume);
   vklValueSelectorSetValues(valueSelector, isovalues.size(), isovalues.data());
   vklCommit(valueSelector);
@@ -105,7 +112,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   // lanes
   valid[1] = 0;
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(sampler));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
   VKLHitIteratorW iterator = vklInitHitIteratorW(valid.data(),
                                                  sampler,
                                                  (vkl_vvec3fW *)&origins,
@@ -146,6 +153,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   REQUIRE(hitCount > 0);
 
+  vklRelease(hitContext);
   vklRelease(sampler);
   vklRelease(valueSelector);
 }

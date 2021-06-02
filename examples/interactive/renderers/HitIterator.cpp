@@ -35,9 +35,9 @@ namespace openvkl {
       tRange.lower = ray.t.lower;
       tRange.upper = ray.t.upper;
 
-      void *hitIteratorBuffer = alloca(vklGetHitIteratorSize(scene.sampler));
+      void *hitIteratorBuffer = alloca(vklGetHitIteratorSize(scene.hitContext));
       void *shadowHitIteratorBuffer =
-          alloca(vklGetHitIteratorSize(scene.sampler));
+          alloca(vklGetHitIteratorSize(scene.hitContext));
 
       VKLHitIterator iterator = vklInitHitIterator(scene.sampler,
                                                    (vkl_vec3f *)&ray.org,

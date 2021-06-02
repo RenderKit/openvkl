@@ -431,7 +431,10 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
-  std::vector<char> buffer(vklGetIntervalIteratorSize(vklSampler));
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(vklSampler);
+  vklCommit(intervalContext);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator;
   VKLInterval interval;
   vkl_vec3f origin{0, 0, -5.f};
@@ -441,6 +444,7 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
       iterator = vklInitIntervalIterator(
           vklSampler, &origin, &direction, &tRange, nullptr, buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
+  REQUIRE_NOTHROW(vklRelease(intervalContext));
   REQUIRE_NOTHROW(vklRelease(vklSampler));
   REQUIRE_NOTHROW(delete volume);
 

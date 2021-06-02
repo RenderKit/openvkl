@@ -24,6 +24,10 @@ void interval_iteration(size_t numParticles,
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler);
+  vklCommit(intervalContext);
+
   const vkl_box3f bbox = vklGetBoundingBox(volume);
 
   // iterate in the +z direction, from random points in (x, y) beginning outside
@@ -44,7 +48,7 @@ void interval_iteration(size_t numParticles,
   for (size_t i = 0; i < N; i++) {
     vkl_vec3f origin{distX(eng), distY(eng), z};
 
-    std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
+    std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
     VKLIntervalIterator iterator = vklInitIntervalIterator(
         sampler, &origin, &direction, &tRange, nullptr, buffer.data());
 
@@ -82,6 +86,7 @@ void interval_iteration(size_t numParticles,
   // Not all rays hit something, but most of them should.
   REQUIRE(totalIntervals / static_cast<double>(N) > 0.9);
 
+  vklRelease(intervalContext);
   vklRelease(sampler);
 }
 

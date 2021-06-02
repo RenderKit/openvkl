@@ -66,6 +66,16 @@ void demoScalarAPI(VKLVolume volume)
   vklValueSelectorSetValues(selector, num_values, values);
   vklCommit(selector);
 
+  // TODO: this will replace the value selector above
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler, attributeIndex);
+  vklCommit(intervalContext);
+
+    // TODO: this will replace the value selector above
+  VKLHitIteratorContext hitContext =
+      vklNewHitIteratorContext(sampler, attributeIndex);
+  vklCommit(hitContext);
+
   // ray definition for iterators
   vkl_vec3f rayOrigin    = {0, 1, 1};
   vkl_vec3f rayDirection = {1, 0, 0};
@@ -83,9 +93,9 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetIntervalIteratorSize(sampler));
+    char *buffer = _malloca(vklGetIntervalIteratorSize(intervalContext));
 #else
-    char buffer[vklGetIntervalIteratorSize(sampler)];
+    char buffer[vklGetIntervalIteratorSize(intervalContext)];
 #endif
     VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
         sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
@@ -120,9 +130,9 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetHitIteratorSize(sampler));
+    char *buffer = _malloca(vklGetHitIteratorSize(hitContext));
 #else
-    char buffer[vklGetHitIteratorSize(sampler)];
+    char buffer[vklGetHitIteratorSize(hitContext)];
 #endif
     VKLHitIterator hitIterator = vklInitHitIterator(
         sampler, &rayOrigin, &rayDirection, &rayTRange, time, selector, buffer);
@@ -144,6 +154,8 @@ void demoScalarAPI(VKLVolume volume)
 #endif
   }
 
+  vklRelease(hitContext);
+  vklRelease(intervalContext);
   vklRelease(selector);
   vklRelease(sampler);
 }

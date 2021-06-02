@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "IntervalIteratorDebug.h"
@@ -41,7 +41,7 @@ namespace openvkl {
       tRange.upper = ray.t.upper;
 
       void *intervalIteratorBuffer =
-          alloca(vklGetIntervalIteratorSize(scene.sampler));
+          alloca(vklGetIntervalIteratorSize(scene.intervalContext));
       VKLIntervalIterator iterator =
           vklInitIntervalIterator(scene.sampler,
                                   (vkl_vec3f *)&ray.org,

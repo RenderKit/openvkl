@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -30,6 +30,8 @@ namespace openvkl {
        */
       VKLVolume volume;
       VKLSampler sampler;
+      VKLIntervalIteratorContext intervalContext;
+      VKLHitIteratorContext hitContext;
       VKLValueSelector valueSelector;
       unsigned int attributeIndex;
 
@@ -44,6 +46,8 @@ namespace openvkl {
       Scene()
           : volume(nullptr),
             sampler(nullptr),
+            intervalContext(nullptr),
+            hitContext(nullptr),
             valueSelector(nullptr),
             attributeIndex(0),
             tfNumColorsAndOpacities(0),
@@ -61,6 +65,8 @@ namespace openvkl {
         }
       }
 
+      // TODO: we'll split this into separate methods for interval and hit
+      // context setup
       void updateValueSelector(const TransferFunction &transferFunction,
                                const std::vector<float> &isoValues)
       {
@@ -90,6 +96,24 @@ namespace openvkl {
         }
 
         vklCommit(valueSelector);
+
+        // context setup
+        if (intervalContext) {
+          vklRelease(intervalContext);
+          intervalContext = nullptr;
+        }
+
+        intervalContext =
+            vklNewIntervalIteratorContext(sampler, attributeIndex);
+        vklCommit(intervalContext);
+
+        if (hitContext) {
+          vklRelease(hitContext);
+          hitContext = nullptr;
+        }
+
+        hitContext = vklNewHitIteratorContext(sampler, attributeIndex);
+        vklCommit(hitContext);
       }
 
       void updateVolume(VKLVolume volume)

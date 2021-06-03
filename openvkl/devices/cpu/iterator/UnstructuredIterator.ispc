@@ -5,7 +5,6 @@
 #include "common/export_util.h"
 #include "common/print_debug.ih"
 #include "math/box_utility.ih"
-#include "value_selector/ValueSelector.ih"
 #include "volume/UnstructuredVolume.ih"
 
 // Ignore warning about exporting uniform-pointer-to-varying, as this is in
@@ -35,7 +34,7 @@ void UnstructuredIterator_iterateIntervalInternal(
 export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          void *uniform _sampler,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
@@ -52,14 +51,14 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
   self->iterateInterval = UnstructuredIterator_iterateIntervalInternal;
   self->elementaryCellIterationSupported = elementaryCellIterationSupported;
 
-  self->sampler       = (UnstructuredSamplerBase * uniform) _sampler;
-  self->origin        = *((varying vec3f * uniform) _origin);
-  self->direction     = *((varying vec3f * uniform) _direction);
-  self->tRange        = *((varying box1f * uniform) _tRange);
-  self->valueSelector = NULL;
+  self->context   = (const IntervalIteratorContext *uniform)_context;
+  self->sampler = (UnstructuredSamplerBase *uniform)(self->context->sampler);
+  self->origin    = *((varying vec3f * uniform) _origin);
+  self->direction = *((varying vec3f * uniform) _direction);
+  self->tRange    = *((varying box1f * uniform) _tRange);
 
   const VKLUnstructuredBase *uniform volume =
-      (const VKLUnstructuredBase *uniform)self->sampler->super.volume;
+      (const VKLUnstructuredBase *uniform)self->context->sampler->volume;
 
   self->traversalState.node     = (uint64)(volume->bvhRoot);
   self->traversalState.bitstack = 0;
@@ -130,11 +129,14 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
                                 box1f hitTRange,
                                 UnstructuredTraversalState &hitState)
 {
+  const UnstructuredSamplerBase *uniform sampler =
+      (const UnstructuredSamplerBase *uniform)iterator->context->sampler;
+
   while (1) {
     uniform bool isInner = (node->nominalLength.x >= 0);
 
-    if (isInner && (elementaryCellIteration ||
-                    node->level < iterator->sampler->maxIteratorDepth)) {
+    if (isInner &&
+        (elementaryCellIteration || node->level < sampler->maxIteratorDepth)) {
       uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
 
       box1f intersectedTRange0;
@@ -234,7 +236,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
         if (elementaryCellIteration) {
           const VKLUnstructuredVolume *uniform volume =
               (const VKLUnstructuredVolume *uniform)
-                  iterator->sampler->super.volume;
+                  iterator->context->sampler->volume;
           intersectLeaf_varying(
               iterator->origin,
               iterator->direction,
@@ -382,13 +384,6 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
   varying UnstructuredIterator *uniform self =
       (varying UnstructuredIterator * uniform) _self;
 
-  uniform ValueRanges valueRanges;
-  if (self->valueSelector) {
-    valueRanges = self->valueSelector->ranges;
-  } else {
-    valueRanges = make_ValueRanges_full();
-  }
-
   // We specify elementaryCellIteration in the call here, as it may
   // be toggled for public API interval iteration via a sampler parameter.
   // It is however typically enabled by default in hit iteration (if supported),
@@ -398,7 +393,7 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
       imask,
       _self,
       _interval,
-      valueRanges,
+      self->context->valueRanges,
       self->sampler->elementaryCellIteration,
       _result);
 }

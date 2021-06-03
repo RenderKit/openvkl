@@ -7,7 +7,6 @@
 #include "../iterator/Iterator.h"
 #include "../observer/Observer.h"
 #include "../sampler/Sampler.h"
-#include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
 #include "CPUDevice_ispc.h"
 

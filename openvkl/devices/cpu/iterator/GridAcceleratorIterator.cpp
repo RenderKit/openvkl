@@ -4,7 +4,6 @@
 #include "GridAcceleratorIterator.h"
 #include "../common/export_util.h"
 #include "../common/math.h"
-#include "../value_selector/ValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
 #include "GridAcceleratorIterator_ispc.h"
 
@@ -27,7 +26,7 @@ namespace openvkl {
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -55,7 +54,7 @@ namespace openvkl {
 
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -92,7 +91,7 @@ namespace openvkl {
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
@@ -125,7 +124,7 @@ namespace openvkl {
 
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,

@@ -4,14 +4,12 @@
 #pragma once
 
 #include "Iterator.ih"
+#include "IteratorContext.ih"
 #include "DefaultIterator.ih"
 #include "../volume/UnstructuredSamplerBase.ih"
 #include "../volume/UnstructuredVolume.ih"
-#include "../value_selector/ValueSelector.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
-
-struct ValueSelector;
 
 struct UnstructuredTraversalStatePublic
 {
@@ -36,6 +34,8 @@ inline uniform UnstructuredTraversalState make_UnstructuredTraversalState(
 
 struct UnstructuredIterator
 {
+  const IntervalIteratorContext *uniform context;
+
   /* Enable the default hit iterator. */
   IterateIntervalFunc iterateInterval;
   uniform bool elementaryCellIterationSupported;
@@ -44,7 +44,6 @@ struct UnstructuredIterator
   vec3f origin;
   vec3f direction;
   box1f tRange;
-  ValueSelector *uniform valueSelector;
 
   UnstructuredTraversalStatePublic traversalState;
 };

@@ -512,7 +512,7 @@ namespace openvkl {
       const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getIntervalIteratorFactory();
 
-      IntervalIterator<W> *it = factory.constructU(spl, buffer);
+      IntervalIterator<W> *it = factory.constructU(ctx, buffer);
       it->initializeIntervalU(origin, direction, tRange);
 
       return reinterpret_cast<VKLIntervalIterator>(it);
@@ -534,7 +534,7 @@ namespace openvkl {
       const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getIntervalIteratorFactory();
 
-      IntervalIterator<W> *it = factory.constructV(spl, buffer);
+      IntervalIterator<W> *it = factory.constructV(ctx, buffer);
 
       vintn<W> validW;
       for (int i = 0; i < W; ++i)
@@ -624,7 +624,7 @@ namespace openvkl {
       const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getHitIteratorFactory();
 
-      HitIterator<W> *it = factory.constructU(spl, buffer);
+      HitIterator<W> *it = factory.constructU(ctx, buffer);
       it->initializeHitU(origin, direction, tRange, time);
 
       return reinterpret_cast<VKLHitIterator>(it);
@@ -645,7 +645,7 @@ namespace openvkl {
       const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getHitIteratorFactory();
 
-      HitIterator<W> *it = factory.constructV(spl, buffer);
+      HitIterator<W> *it = factory.constructV(ctx, buffer);
 
       vintn<W> validW;
       for (int i = 0; i < W; ++i)

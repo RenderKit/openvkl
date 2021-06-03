@@ -4,10 +4,11 @@
 #pragma once
 
 #include "Iterator.ih"
+#include "IteratorContext.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-struct ValueSelector;
+struct IntervalIteratorContext;
 struct ValueRanges;
 struct Volume;
 
@@ -29,11 +30,11 @@ typedef void (*uniform IterateIntervalFunc)(
  */
 struct DefaultIntervalIterator
 {
+  const IntervalIteratorContext *uniform context;
+
   /* Enable the default hit iterator. */
   IterateIntervalFunc iterateInterval;
   uniform bool elementaryCellIterationSupported;
-
-  ValueSelector *uniform valueSelector;
 
   uniform box1f valueRange;  // value range of the full volume
   float nominalIntervalLength;
@@ -44,8 +45,7 @@ struct DefaultIntervalIterator
 
 struct DefaultHitIterator
 {
-  Sampler *uniform sampler;
-  ValueSelector *uniform valueSelector;
+  const HitIteratorContext *uniform context;
 
   vec3f origin;
   vec3f direction;

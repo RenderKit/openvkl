@@ -3,7 +3,6 @@
 
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
-#include "../value_selector/ValueSelector.ih"
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
@@ -29,6 +28,7 @@ void DefaultIntervalIterator_iterateIntervalInternal(
 export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
@@ -42,13 +42,14 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
+  self->context = (const IntervalIteratorContext *uniform)_context;
+
   /* Enable the default hit iterator. */
   self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
   self->elementaryCellIterationSupported = false;
 
   const vec3f origin    = *((varying vec3f * uniform) _origin);
   const vec3f direction = *((varying vec3f * uniform) _direction);
-  self->valueSelector   = NULL;
   self->valueRange      = valueRange;
 
   box1f tRange = *((varying box1f * uniform) _tRange);
@@ -124,15 +125,8 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
-  uniform ValueRanges valueRanges;
-  if (self->valueSelector) {
-    valueRanges = self->valueSelector->ranges;
-  } else {
-    valueRanges = make_ValueRanges_full();
-  }
-
   DefaultIntervalIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRanges, false, _result);
+      imask, _self, _interval, self->context->valueRanges, false, _result);
 }
 
 // -----------------------------------------------------------------------------
@@ -141,7 +135,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
                           void *uniform _intervalIterator,
-                          void *uniform _sampler,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _time)
@@ -153,11 +147,10 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   varying DefaultHitIterator *uniform self =
       (varying DefaultHitIterator * uniform) _self;
 
-  self->sampler       = (Sampler * uniform) _sampler;
-  self->valueSelector = NULL;
-  self->origin        = *((varying vec3f * uniform) _origin);
-  self->direction     = *((varying vec3f * uniform) _direction);
-  self->time          = *((varying float *uniform)_time);
+  self->context               = (const HitIteratorContext *uniform)_context;
+  self->origin                = *((varying vec3f * uniform) _origin);
+  self->direction             = *((varying vec3f * uniform) _direction);
+  self->time                  = *((varying float *uniform)_time);
   self->intervalIteratorState = _intervalIterator;
 
   // Reset to invalid.
@@ -166,6 +159,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
 
 struct IntervalIteratorT
 {
+  const IntervalIteratorContext *uniform context;
   IterateIntervalFunc iterate;
   uniform bool elementaryCellIterationSupported;
 };
@@ -186,7 +180,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       (varying DefaultHitIterator * uniform) _self;
 
   // The selector prunes everything - don't iterate at all.
-  if (!self->valueSelector || self->valueSelector->numValues == 0)
+  if (self->context->numValues == 0)
     return;
 
   if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
@@ -214,7 +208,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     intervalIterator->iterate((const int *uniform) & needInterval,
                               self->intervalIteratorState,
                               &self->currentInterval,
-                              self->valueSelector->valuesRanges,
+                              self->context->super.valueRanges,
                               elementaryCellIteration,
                               (int *uniform) & haveInterval);
 
@@ -228,14 +222,14 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
-        intersectSurfacesBisection(self->sampler,
+        intersectSurfacesBisection(self->context->super.sampler,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,
                                    self->time,
                                    self->currentInterval.nominalDeltaT,
-                                   self->valueSelector->numValues,
-                                   self->valueSelector->values,
+                                   self->context->numValues,
+                                   self->context->values,
                                    elementaryCellIteration,
                                    *hit);
 

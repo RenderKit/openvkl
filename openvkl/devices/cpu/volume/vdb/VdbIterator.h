@@ -35,7 +35,7 @@ namespace openvkl {
       }
 
      protected:
-      using Iterator<W>::sampler;
+      using Iterator<W>::context;
       using IspcIterator = __varying_ispc_type(VdbIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };

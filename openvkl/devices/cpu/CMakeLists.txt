@@ -42,6 +42,8 @@ foreach(TARGET_WIDTH 4 8 16)
     iterator/GridAcceleratorIterator.cpp
     iterator/GridAcceleratorIterator.ispc
     iterator/GridAcceleratorIteratorSize.ispc
+    iterator/IteratorContext.cpp
+    iterator/IteratorContext.ispc
     iterator/UnstructuredIterator.cpp
     iterator/UnstructuredIterator.ispc
     observer/Observer.cpp
@@ -49,8 +51,6 @@ foreach(TARGET_WIDTH 4 8 16)
     observer/ObserverRegistry.ispc
     sampler/Sampler.cpp
     sampler/Sampler.ispc
-    value_selector/ValueSelector.cpp
-    value_selector/ValueSelector.ispc
     volume/amr/AMRAccel.cpp
     volume/amr/AMRData.cpp
     volume/amr/AMRVolume.cpp

@@ -7,7 +7,7 @@
 #include "../common/IteratorBase.h"
 #include "../common/align.h"
 #include "../common/simd.h"
-#include "../value_selector/ValueSelector.h"
+#include "IteratorContext.h"
 #include "openvkl/openvkl.h"
 
 using namespace rkcommon;
@@ -35,14 +35,17 @@ namespace openvkl {
       Iterator(Iterator &&)                 = delete;
       Iterator &operator=(Iterator &&) = delete;
 
-      explicit Iterator(const Sampler<W> &sampler) : sampler{&sampler} {}
-
       // WORKAROUND ICC 15: This destructor must be public!
       virtual ~Iterator() = default;
 
      protected:
+      explicit Iterator(const IteratorContext<W> &context)
+          : context{&context}
+      {
+      }
+
       // Not a Ref<>! Destructors will not run.
-      Sampler<W> const *sampler{nullptr};
+      IteratorContext<W> const *context{nullptr};
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -53,6 +56,11 @@ namespace openvkl {
     struct IntervalIterator : public Iterator<W>
     {
       using Iterator<W>::Iterator;
+
+      explicit IntervalIterator(const IntervalIteratorContext<W> &context)
+          : Iterator<W>(context)
+      {
+      }
 
       /*
        * Uniform path.
@@ -147,6 +155,11 @@ namespace openvkl {
     struct HitIterator : public Iterator<W>
     {
       using Iterator<W>::Iterator;
+
+      explicit HitIterator(const HitIteratorContext<W> &context)
+          : Iterator<W>(context)
+      {
+      }
 
       /*
        * Uniform path.
@@ -259,7 +272,7 @@ namespace openvkl {
       /*
        * Construct a new varying iterator into the provided buffer.
        */
-      virtual IteratorT<W> *constructV(const Sampler<W> &sampler,
+      virtual IteratorT<W> *constructV(const ContextT<W> &context,
                                        void *buffer) const = 0;
 
       /*
@@ -274,7 +287,7 @@ namespace openvkl {
       /*
        * Construct a new uniform iterator into the provided buffer.
        */
-      virtual IteratorT<W> *constructU(const Sampler<W> &sampler,
+      virtual IteratorT<W> *constructU(const ContextT<W> &context,
                                        void *buffer) const = 0;
 
       /*
@@ -313,10 +326,10 @@ namespace openvkl {
         return new ContextT<W>(sampler, attributeIndex);
       }
 
-      IteratorBaseT<W> *constructV(const Sampler<W> &sampler,
+      IteratorBaseT<W> *constructV(const ContextBaseT<W> &context,
                                    void *buffer) const override final
       {
-        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(sampler);
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(context);
       }
 
       size_t sizeV() const override final
@@ -324,10 +337,10 @@ namespace openvkl {
         return alignedSize<IteratorT<W>>();
       }
 
-      IteratorBaseT<W> *constructU(const Sampler<W> &sampler,
+      IteratorBaseT<W> *constructU(const ContextBaseT<W> &context,
                                    void *buffer) const override final
       {
-        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(sampler);
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(context);
       }
 
       size_t sizeU() const override final

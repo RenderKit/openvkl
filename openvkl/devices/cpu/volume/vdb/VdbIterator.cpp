@@ -20,7 +20,7 @@ namespace openvkl {
       CALL_ISPC(VdbIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange);

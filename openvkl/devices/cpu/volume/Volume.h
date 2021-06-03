@@ -8,7 +8,6 @@
 #include "../common/objectFactory.h"
 #include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
-#include "../value_selector/ValueSelector.h"
 #include "Volume_ispc.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/box.h"
@@ -43,8 +42,6 @@ namespace openvkl {
 
       static Volume *createInstance(Device *device, const std::string &type);
 
-      virtual ValueSelector<W> *newValueSelector();
-
       virtual Sampler<W> *newSampler() = 0;
 
       virtual box3f getBoundingBox() const = 0;
@@ -71,12 +68,6 @@ namespace openvkl {
                                                 const std::string &type)
     {
       return createInstanceHelper<Volume<W>, VKL_VOLUME>(device, type);
-    }
-
-    template <int W>
-    inline ValueSelector<W> *Volume<W>::newValueSelector()
-    {
-      return new ValueSelector<W>(this);
     }
 
     template <int W>

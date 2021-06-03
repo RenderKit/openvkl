@@ -32,7 +32,7 @@ void VdbIterator_iterateIntervalInternal(
 export void EXPORT_UNIQUE(VdbIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          const void *uniform _sampler,
+                          const void *uniform _context,
                           void *uniform _originObject,
                           void *uniform _directionObject,
                           void *uniform _tRangeWorld)
@@ -41,13 +41,15 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
     return;
   }
 
+  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
+
+  self->context = (const IntervalIteratorContext *uniform)_context;
+
   const uniform VdbSampler *uniform sampler =
-      (const uniform VdbSampler *uniform)_sampler;
+      (const uniform VdbSampler *uniform)(self->context->sampler);
   const uniform VdbGrid *uniform grid = sampler->grid;
 
-  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
-  self->grid                        = grid;
-  self->valueSelector               = NULL;
+  self->grid = grid;
 
   // Initialize for hit iteration.
   self->iterateInterval                  = VdbIterator_iterateIntervalInternal;
@@ -156,13 +158,6 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  uniform ValueRanges valueRanges;
-  if (self->valueSelector) {
-    valueRanges = self->valueSelector->ranges;
-  } else {
-    valueRanges = make_ValueRanges_full();
-  }
-
   VdbIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRanges, false, _result);
+      imask, _self, _interval, self->context->valueRanges, false, _result);
 }

@@ -4,6 +4,9 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
+#include "rkcommon/math/range.h"
+
+using namespace rkcommon::math;
 
 namespace openvkl {
   namespace cpu_device {
@@ -22,9 +25,10 @@ namespace openvkl {
 
       virtual ~IteratorContext();
 
+      virtual void commit() = 0;
+
       void *getISPCEquivalent() const;
 
-      Sampler<W> &getSampler();
       const Sampler<W> &getSampler() const;
 
      protected:
@@ -37,14 +41,14 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    IteratorContext<W>::IteratorContext(const Sampler<W> &sampler,
-                                        unsigned int attributeIndex)
+    inline IteratorContext<W>::IteratorContext(const Sampler<W> &sampler,
+                                               unsigned int attributeIndex)
         : sampler(&sampler), attributeIndex(attributeIndex)
     {
     }
 
     template <int W>
-    IteratorContext<W>::~IteratorContext()
+    inline IteratorContext<W>::~IteratorContext()
     {
       assert(!ispcEquivalent);  // Detect leaks in derived classes if possible.
     }
@@ -56,13 +60,7 @@ namespace openvkl {
     }
 
     template <int W>
-    inline Sampler<W> &IteratorContext<W>::getSampler()
-    {
-      return *sampler;
-    }
-
-    template <int W>
-    const Sampler<W> &IteratorContext<W>::getSampler() const
+    inline const Sampler<W> &IteratorContext<W>::getSampler() const
     {
       return *sampler;
     }
@@ -75,54 +73,41 @@ namespace openvkl {
     struct IntervalIteratorContext : public IteratorContext<W>
     {
       IntervalIteratorContext(const Sampler<W> &sampler,
-                              unsigned int attributeIndex);
+                              unsigned int attributeIndex)
+          : IteratorContext<W>(sampler, attributeIndex)
+      {
+      }
 
       virtual ~IntervalIteratorContext();
 
-      void commit() override {}
+      void commit() override;
+
+     private:
+      std::vector<range1f> valueRanges;
     };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    template <int W>
-    IntervalIteratorContext<W>::IntervalIteratorContext(
-        const Sampler<W> &sampler, unsigned int attributeIndex)
-        : IteratorContext<W>(sampler, attributeIndex)
-    {
-    }
-
-    template <int W>
-    IntervalIteratorContext<W>::~IntervalIteratorContext()
-    {
-    }
 
     ///////////////////////////////////////////////////////////////////////////
     // Hit iterator context ///////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
+    // hit iterator contexts inherit from interval contexts; this is because hit
+    // iteration is often implemented using interval iteration, and we would
+    // like to use the same context for that purpose.
     template <int W>
-    struct HitIteratorContext : public IteratorContext<W>
+    struct HitIteratorContext : public IntervalIteratorContext<W>
     {
-      HitIteratorContext(const Sampler<W> &sampler,
-                         unsigned int attributeIndex);
+      HitIteratorContext(const Sampler<W> &sampler, unsigned int attributeIndex)
+          : IntervalIteratorContext<W>(sampler, attributeIndex)
+      {
+      }
+
       virtual ~HitIteratorContext();
 
-      void commit() override {}
+      void commit() override;
+
+     private:
+      std::vector<float> values;
     };
-
-    // Inlined definitions ////////////////////////////////////////////////////
-
-    template <int W>
-    HitIteratorContext<W>::HitIteratorContext(const Sampler<W> &sampler,
-                                              unsigned int attributeIndex)
-        : IteratorContext<W>(sampler, attributeIndex)
-    {
-    }
-
-    template <int W>
-    HitIteratorContext<W>::~HitIteratorContext()
-    {
-    }
 
   }  // namespace cpu_device
 }  // namespace openvkl

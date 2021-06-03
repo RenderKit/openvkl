@@ -15,8 +15,7 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vrange1fn<W> &tRange)
     {
       CALL_ISPC(VdbIterator_Initialize,
                 static_cast<const int *>(valid),
@@ -24,8 +23,7 @@ namespace openvkl {
                 sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
-                (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&tRange);
     }
 
     template <int W>

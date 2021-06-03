@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,6 +12,7 @@
 #endif
 
 #include "common.h"
+#include "volume.h"
 
 #ifdef __cplusplus
 struct Sampler : public ManagedObject

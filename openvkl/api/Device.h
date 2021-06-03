@@ -108,7 +108,6 @@ namespace openvkl {
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
-          VKLValueSelector valueSelector,
           void *buffer) const = 0;
 
 #define __define_initIntervalIteratorN(WIDTH)                     \
@@ -118,7 +117,6 @@ namespace openvkl {
       const vvec3fn<WIDTH> &origin,                               \
       const vvec3fn<WIDTH> &direction,                            \
       const vrange1fn<WIDTH> &tRange,                             \
-      VKLValueSelector valueSelector,                             \
       void *buffer) const = 0;
 
       __define_initIntervalIteratorN(4);
@@ -166,7 +164,6 @@ namespace openvkl {
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
                                               float time,
-                                              VKLValueSelector valueSelector,
                                               void *buffer) const = 0;
 
 #define __define_initHitIteratorN(WIDTH)                \
@@ -177,7 +174,6 @@ namespace openvkl {
       const vvec3fn<WIDTH> &direction,                  \
       const vrange1fn<WIDTH> &tRange,                   \
       const float *times,                               \
-      VKLValueSelector valueSelector,                   \
       void *buffer) const = 0;
 
       __define_initHitIteratorN(4);
@@ -224,20 +220,6 @@ namespace openvkl {
                              const char *name,
                              const std::string &s)                          = 0;
       virtual void setVoidPtr(VKLObject object, const char *name, void *v)  = 0;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Value selector ///////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      virtual VKLValueSelector newValueSelector(VKLVolume volume) = 0;
-
-      virtual void valueSelectorSetRanges(
-          VKLValueSelector valueSelector,
-          const utility::ArrayView<const math::range1f> &ranges) = 0;
-
-      virtual void valueSelectorSetValues(
-          VKLValueSelector valueSelector,
-          const utility::ArrayView<const float> &values) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////

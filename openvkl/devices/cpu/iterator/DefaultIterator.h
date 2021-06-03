@@ -15,12 +15,10 @@ namespace openvkl {
     {
       using IntervalIterator<W>::IntervalIterator;
 
-      void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+      void initializeIntervalV(const vintn<W> &valid,
+                               const vvec3fn<W> &origin,
+                               const vvec3fn<W> &direction,
+                               const vrange1fn<W> &tRange) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -48,8 +46,7 @@ namespace openvkl {
                           const vvec3fn<W> &origin,
                           const vvec3fn<W> &direction,
                           const vrange1fn<W> &tRange,
-                          const vfloatn<W> &times,
-                          const ValueSelector<W> *valueSelector) override final;
+                          const vfloatn<W> &times) override final;
 
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitN<W> &hit,
@@ -81,16 +78,11 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const vfloatn<W> &times,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &times)
     {
       assertValidTimes(times);
 
-      intervalIterator.initializeIntervalV(valid,
-                                           origin,
-                                           direction,
-                                           tRange,
-                                           valueSelector);
+      intervalIterator.initializeIntervalV(valid, origin, direction, tRange);
 
       CALL_ISPC(DefaultHitIterator_Initialize,
                 static_cast<const int *>(valid),
@@ -99,8 +91,7 @@ namespace openvkl {
                 sampler->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
-                (void *)&times,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&times);
     }
 
     template <int W, class IntervalIterator>

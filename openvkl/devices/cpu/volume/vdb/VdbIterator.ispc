@@ -35,8 +35,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
                           const void *uniform _sampler,
                           void *uniform _originObject,
                           void *uniform _directionObject,
-                          void *uniform _tRangeWorld,
-                          void *uniform _valueSelector)
+                          void *uniform _tRangeWorld)
 {
   if (!imask[programIndex]) {
     return;
@@ -48,7 +47,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
   self->grid                        = grid;
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
+  self->valueSelector               = NULL;
 
   // Initialize for hit iteration.
   self->iterateInterval                  = VdbIterator_iterateIntervalInternal;
@@ -113,7 +112,6 @@ inline void VdbIterator_iterateIntervalInternal(
   if (!(self->dda.t <= self->tMax)) {
     return;
   }
-
 
   VdbVoxelDescriptor voxel;
   while (self->dda.t <= self->tMax) {

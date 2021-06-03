@@ -4,7 +4,6 @@
 #pragma once
 
 #include "common.h"
-#include "value_selector.h"
 #include "sampler.h"
 #include "max_iterator_size.h"
 
@@ -97,7 +96,6 @@ VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                             const vkl_vec3f *origin,
                                             const vkl_vec3f *direction,
                                             const vkl_range1f *tRange,
-                                            VKLValueSelector valueSelector,
                                             void *buffer);
 
 OPENVKL_INTERFACE
@@ -107,7 +105,6 @@ VKLIntervalIterator4 vklInitIntervalIterator4(
     const vkl_vvec3f4 *origin,
     const vkl_vvec3f4 *direction,
     const vkl_vrange1f4 *tRange,
-    VKLValueSelector valueSelector,
     void *buffer);
 
 OPENVKL_INTERFACE
@@ -117,7 +114,6 @@ VKLIntervalIterator8 vklInitIntervalIterator8(
     const vkl_vvec3f8 *origin,
     const vkl_vvec3f8 *direction,
     const vkl_vrange1f8 *tRange,
-    VKLValueSelector valueSelector,
     void *buffer);
 
 OPENVKL_INTERFACE
@@ -127,7 +123,6 @@ VKLIntervalIterator16 vklInitIntervalIterator16(
     const vkl_vvec3f16 *origin,
     const vkl_vvec3f16 *direction,
     const vkl_vrange1f16 *tRange,
-    VKLValueSelector valueSelector,
     void *buffer);
 
 typedef struct
@@ -246,7 +241,6 @@ VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                   const vkl_vec3f *direction,
                                   const vkl_range1f *tRange,
                                   float time,
-                                  VKLValueSelector valueSelector,
                                   void *buffer);
 
 OPENVKL_INTERFACE
@@ -256,7 +250,6 @@ VKLHitIterator4 vklInitHitIterator4(const int *valid,
                                     const vkl_vvec3f4 *direction,
                                     const vkl_vrange1f4 *tRange,
                                     const float *times,
-                                    VKLValueSelector valueSelector,
                                     void *buffer);
 
 OPENVKL_INTERFACE
@@ -266,7 +259,6 @@ VKLHitIterator8 vklInitHitIterator8(const int *valid,
                                     const vkl_vvec3f8 *direction,
                                     const vkl_vrange1f8 *tRange,
                                     const float *times,
-                                    VKLValueSelector valueSelector,
                                     void *buffer);
 
 OPENVKL_INTERFACE
@@ -276,7 +268,6 @@ VKLHitIterator16 vklInitHitIterator16(const int *valid,
                                       const vkl_vvec3f16 *direction,
                                       const vkl_vrange1f16 *tRange,
                                       const float *times,
-                                      VKLValueSelector valueSelector,
                                       void *buffer);
 
 typedef struct

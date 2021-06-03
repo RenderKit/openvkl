@@ -39,7 +39,6 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _valueSelector,
                           const uniform bool elementaryCellIterationSupported)
 {
   if (!imask[programIndex]) {
@@ -57,7 +56,7 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
   self->tRange        = *((varying box1f * uniform) _tRange);
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
+  self->valueSelector = NULL;
 
   const VKLUnstructuredBase *uniform volume =
       (const VKLUnstructuredBase *uniform)self->sampler->super.volume;

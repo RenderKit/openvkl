@@ -20,8 +20,7 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vrange1fn<W> &tRange)
     {
       vfloatn<W> times(nullptr, 0);
 
@@ -32,8 +31,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&times,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&times);
     }
 
     template <int W>
@@ -51,8 +49,7 @@ namespace openvkl {
     void GridAcceleratorIntervalIterator<W>::initializeIntervalU(
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
-        const vrange1fn<1> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vrange1fn<1> &tRange)
     {
       float time = 0;
 
@@ -62,8 +59,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&time,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&time);
     }
 
     template <int W>
@@ -89,8 +85,7 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const vfloatn<W> &times,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &times)
     {
       assertValidTimes(times);
 
@@ -101,8 +96,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&times,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&times);
     }
 
     template <int W>
@@ -125,8 +119,7 @@ namespace openvkl {
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
-        float time,
-        const ValueSelector<W> *valueSelector)
+        float time)
     {
       assert(time >= 0.f && time <= 1.f);
 
@@ -136,8 +129,7 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&time,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&time);
     }
 
     template <int W>

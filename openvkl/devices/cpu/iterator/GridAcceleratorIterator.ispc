@@ -48,8 +48,8 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   self->origin        = *((univary vec3f * uniform) _origin);                  \
   self->direction     = *((univary vec3f * uniform) _direction);               \
   self->tRange        = *((univary box1f * uniform) _tRange);                  \
-  self->time          = *((univary float * uniform) _time);                    \
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;      \
+  self->time          = *((univary float *uniform)_time);                      \
+  self->valueSelector = NULL;                                                  \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
       (const SharedStructuredVolume *uniform)self->sampler->volume;            \
@@ -70,8 +70,8 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   self->intervalState.currentCellIndex = make_vec3i(-1);                       \
                                                                                \
   self->intervalState.nominalDeltaT =                                          \
-      reduce_min(volume->gridSpacing                                           \
-      * rcp_safe(absf(self->direction))); /* in ray space */                   \
+      reduce_min(volume->gridSpacing *                                         \
+                 rcp_safe(absf(self->direction))); /* in ray space */          \
                                                                                \
   self->hitState.currentCellIndex  = make_vec3i(-1);                           \
   self->hitState.currentCellTRange = make_box1f(inf, -inf);
@@ -82,8 +82,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorU_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _time,
-                          void *uniform _valueSelector)
+                          void *uniform _time)
 {
   template_GridAcceleratorIterator_Initialize_internal(uniform);
 }
@@ -95,8 +94,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _time,
-                          void *uniform _valueSelector)
+                          void *uniform _time)
 {
   if (!imask[programIndex]) {
     return;
@@ -138,7 +136,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
       returnInterval = true;                                                   \
     } else if (valueRangesOverlap(self->valueSelector->ranges,                 \
                                   cellValueRange)) {                           \
-       returnInterval = true;                                                  \
+      returnInterval = true;                                                   \
     }                                                                          \
                                                                                \
     if (returnInterval) {                                                      \
@@ -190,8 +188,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
     return;                                                                    \
   }                                                                            \
                                                                                \
-  if(!self->valueSelector || self->valueSelector->numValues == 0)              \
-  {                                                                            \
+  if (!self->valueSelector || self->valueSelector->numValues == 0) {           \
     *result = false;                                                           \
     return;                                                                    \
   }                                                                            \

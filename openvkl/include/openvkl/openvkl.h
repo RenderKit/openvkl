@@ -18,6 +18,5 @@
 #include "observer.h"
 #include "parameters.h"
 #include "sampler.h"
-#include "value_selector.h"
 #include "version.h"
 #include "volume.h"

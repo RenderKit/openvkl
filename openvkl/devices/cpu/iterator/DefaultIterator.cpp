@@ -18,8 +18,7 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vrange1fn<W> &tRange)
     {
       const Volume<W> &volume = sampler->getVolume();
       box3f boundingBox  = volume.getBoundingBox();
@@ -31,7 +30,6 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr,
                 (const ispc::box3f &)boundingBox,
                 (const ispc::box1f &)valueRange);
     }

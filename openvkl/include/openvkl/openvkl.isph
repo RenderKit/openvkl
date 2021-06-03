@@ -8,5 +8,4 @@
 #include "device.isph"
 #include "iterator.isph"
 #include "sampler.isph"
-#include "value_selector.isph"
 #include "volume.isph"

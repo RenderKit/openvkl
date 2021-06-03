@@ -61,8 +61,7 @@ namespace openvkl {
        */
       virtual void initializeIntervalU(const vvec3fn<1> &origin,
                                        const vvec3fn<1> &direction,
-                                       const vrange1fn<1> &tRange,
-                                       const ValueSelector<W> *valueSelector)
+                                       const vrange1fn<1> &tRange)
       {
         vintn<W> validW;
         for (int i = 0; i < W; i++)
@@ -72,8 +71,7 @@ namespace openvkl {
         vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
         vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
 
-        initializeIntervalV(
-            validW, originW, directionW, tRangeW, valueSelector);
+        initializeIntervalV(validW, originW, directionW, tRangeW);
       }
 
       virtual void iterateIntervalU(vVKLIntervalN<1> &interval,
@@ -101,12 +99,10 @@ namespace openvkl {
       /*
        * Varying code path.
        */
-      virtual void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) = 0;
+      virtual void initializeIntervalV(const vintn<W> &valid,
+                                       const vvec3fn<W> &origin,
+                                       const vvec3fn<W> &direction,
+                                       const vrange1fn<W> &tRange) = 0;
 
       virtual void iterateIntervalV(const vintn<W> &valid,
                                     vVKLIntervalN<W> &interval,
@@ -161,8 +157,7 @@ namespace openvkl {
       virtual void initializeHitU(const vvec3fn<1> &origin,
                                   const vvec3fn<1> &direction,
                                   const vrange1fn<1> &tRange,
-                                  float time,
-                                  const ValueSelector<W> *valueSelector)
+                                  float time)
       {
         assert(time >= 0.f && time <= 1.f);
 
@@ -175,8 +170,7 @@ namespace openvkl {
         vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
         vfloatn<W> timesW(&time, 1);
 
-        initializeHitV(
-            validW, originW, directionW, tRangeW, timesW, valueSelector);
+        initializeHitV(validW, originW, directionW, tRangeW, timesW);
       }
 
       virtual void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result)
@@ -204,8 +198,7 @@ namespace openvkl {
                                   const vvec3fn<W> &origin,
                                   const vvec3fn<W> &direction,
                                   const vrange1fn<W> &tRange,
-                                  const vfloatn<W> &times,
-                                  const ValueSelector<W> *valueSelector) = 0;
+                                  const vfloatn<W> &times) = 0;
 
       virtual void iterateHitV(const vintn<W> &valid,
                                vVKLHitN<W> &hit,

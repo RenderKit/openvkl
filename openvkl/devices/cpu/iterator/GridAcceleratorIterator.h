@@ -17,12 +17,10 @@ namespace openvkl {
 
       // Varying.
 
-      void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+      void initializeIntervalV(const vintn<W> &valid,
+                               const vvec3fn<W> &origin,
+                               const vvec3fn<W> &direction,
+                               const vrange1fn<W> &tRange) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -30,19 +28,16 @@ namespace openvkl {
 
       // Uniform.
 
-      void initializeIntervalU(
-          const vvec3fn<1> &origin,
-          const vvec3fn<1> &direction,
-          const vrange1fn<1> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+      void initializeIntervalU(const vvec3fn<1> &origin,
+                               const vvec3fn<1> &direction,
+                               const vrange1fn<1> &tRange) override final;
 
       void iterateIntervalU(vVKLIntervalN<1> &interval,
                             vintn<1> &result) override final;
 
-
       void *getIspcStorage() override final
       {
-        return reinterpret_cast<void*>(ispcStorage);
+        return reinterpret_cast<void *>(ispcStorage);
       }
 
      protected:
@@ -70,8 +65,7 @@ namespace openvkl {
                           const vvec3fn<W> &origin,
                           const vvec3fn<W> &direction,
                           const vrange1fn<W> &tRange,
-                          const vfloatn<W> &times,
-                          const ValueSelector<W> *valueSelector) override final;
+                          const vfloatn<W> &times) override final;
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override final;
@@ -81,8 +75,7 @@ namespace openvkl {
       void initializeHitU(const vvec3fn<1> &origin,
                           const vvec3fn<1> &direction,
                           const vrange1fn<1> &tRange,
-                          float time,
-                          const ValueSelector<W> *valueSelector) override final;
+                          float time) override final;
 
       void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result) override final;
 

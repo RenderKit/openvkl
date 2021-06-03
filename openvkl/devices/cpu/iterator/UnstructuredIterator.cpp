@@ -23,8 +23,7 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vrange1fn<W> &tRange)
     {
       // We use the same iterator implementation for both unstructured and
       // particle volumes. However, only unstructured volumes support elementary
@@ -39,7 +38,6 @@ namespace openvkl {
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr,
                 elementaryCellIterationSupported);
     }
 

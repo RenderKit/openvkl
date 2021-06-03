@@ -380,7 +380,6 @@ extern "C" VKLIntervalIterator vklInitIntervalIterator(
     const vkl_vec3f *origin,
     const vkl_vec3f *direction,
     const vkl_range1f *tRange,
-    VKLValueSelector valueSelector,
     void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
   auto it = deviceObj->initIntervalIterator1(
@@ -388,7 +387,6 @@ extern "C" VKLIntervalIterator vklInitIntervalIterator(
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
-      valueSelector,
       buffer);
   deviceAttach(deviceObj, it);
   return it;
@@ -402,7 +400,6 @@ OPENVKL_CATCH_END(nullptr)
       const vkl_vvec3f##WIDTH *origin,                                  \
       const vkl_vvec3f##WIDTH *direction,                               \
       const vkl_vrange1f##WIDTH *tRange,                                \
-      VKLValueSelector valueSelector,                                   \
       void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)                 \
   {                                                                     \
     auto it = deviceObj->initIntervalIterator##WIDTH(                   \
@@ -411,7 +408,6 @@ OPENVKL_CATCH_END(nullptr)
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),              \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),           \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),            \
-        valueSelector,                                                  \
         buffer);                                                        \
     deviceAttach(deviceObj, it);                                        \
     return it;                                                          \
@@ -464,7 +460,8 @@ extern "C" VKLHitIteratorContext vklNewHitIteratorContext(
     VKLSampler sampler, unsigned int attributeIndex)
     OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
 {
-  VKLHitIteratorContext context = deviceObj->newHitIteratorContext(sampler, attributeIndex);
+  VKLHitIteratorContext context =
+      deviceObj->newHitIteratorContext(sampler, attributeIndex);
   if (context == nullptr) {
     postLogMessage(deviceObj, VKL_LOG_ERROR)
         << "could not create hit iterator context";
@@ -507,7 +504,6 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                              const vkl_vec3f *direction,
                                              const vkl_range1f *tRange,
                                              float time,
-                                             VKLValueSelector valueSelector,
                                              void *buffer)
     OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
@@ -517,7 +513,6 @@ extern "C" VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
       time,
-      valueSelector,
       buffer);
   deviceAttach(deviceObj, it);
   return it;
@@ -532,7 +527,6 @@ OPENVKL_CATCH_END(nullptr)
       const vkl_vvec3f##WIDTH *direction,                     \
       const vkl_vrange1f##WIDTH *tRange,                      \
       const float *times,                                     \
-      VKLValueSelector valueSelector,                         \
       void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)       \
   {                                                           \
     auto it = deviceObj->initHitIterator##WIDTH(              \
@@ -542,7 +536,6 @@ OPENVKL_CATCH_END(nullptr)
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction), \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),  \
         times,                                                \
-        valueSelector,                                        \
         buffer);                                              \
     deviceAttach(deviceObj, it);                              \
     return it;                                                \
@@ -666,47 +659,6 @@ extern "C" void vklSetVoidPtr(VKLObject object, const char *name, void *v)
 {
   THROW_IF_NULL(name);
   deviceObj->setVoidPtr(object, name, v);
-}
-OPENVKL_CATCH_END()
-
-///////////////////////////////////////////////////////////////////////////////
-// Value selector /////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-extern "C" VKLValueSelector vklNewValueSelector(VKLVolume volume)
-    OPENVKL_CATCH_BEGIN_UNSAFE(volume)
-{
-  VKLValueSelector valueSelector = deviceObj->newValueSelector(volume);
-  if (valueSelector == nullptr) {
-    postLogMessage(deviceObj, VKL_LOG_ERROR)
-        << "could not create value selector";
-  }
-  deviceAttach(deviceObj, valueSelector);
-  return valueSelector;
-}
-OPENVKL_CATCH_END(nullptr)
-
-extern "C" void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
-                                          size_t numRanges,
-                                          const vkl_range1f *ranges)
-    OPENVKL_CATCH_BEGIN_UNSAFE(valueSelector)
-{
-  deviceObj->valueSelectorSetRanges(
-      valueSelector,
-      utility::ArrayView<const range1f>(
-          reinterpret_cast<const range1f *>(ranges), numRanges));
-}
-OPENVKL_CATCH_END()
-
-extern "C" void vklValueSelectorSetValues(VKLValueSelector valueSelector,
-                                          size_t numValues,
-                                          const float *values)
-    OPENVKL_CATCH_BEGIN_UNSAFE(valueSelector)
-{
-  deviceObj->valueSelectorSetValues(
-      valueSelector,
-      utility::ArrayView<const float>(reinterpret_cast<const float *>(values),
-                                      numValues));
 }
 OPENVKL_CATCH_END()
 

@@ -32,7 +32,6 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _valueSelector,
                           const uniform box3f &boundingBox,
                           const uniform box1f &valueRange)
 {
@@ -49,7 +48,7 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
 
   const vec3f origin    = *((varying vec3f * uniform) _origin);
   const vec3f direction = *((varying vec3f * uniform) _direction);
-  self->valueSelector   = (uniform ValueSelector * uniform) _valueSelector;
+  self->valueSelector   = NULL;
   self->valueRange      = valueRange;
 
   box1f tRange = *((varying box1f * uniform) _tRange);
@@ -145,8 +144,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
                           void *uniform _sampler,
                           void *uniform _origin,
                           void *uniform _direction,
-                          void *uniform _time,
-                          void *uniform _valueSelector)
+                          void *uniform _time)
 {
   if (!imask[programIndex]) {
     return;
@@ -156,7 +154,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
       (varying DefaultHitIterator * uniform) _self;
 
   self->sampler       = (Sampler * uniform) _sampler;
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
+  self->valueSelector = NULL;
   self->origin        = *((varying vec3f * uniform) _origin);
   self->direction     = *((varying vec3f * uniform) _direction);
   self->time          = *((varying float *uniform)_time);

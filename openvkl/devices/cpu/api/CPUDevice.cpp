@@ -214,37 +214,6 @@ namespace openvkl {
     }
 
     ///////////////////////////////////////////////////////////////////////////
-    // Value selector /////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    template <int W>
-    VKLValueSelector CPUDevice<W>::newValueSelector(VKLVolume volume)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return (VKLValueSelector)volumeObject.newValueSelector();
-    }
-
-    template <int W>
-    void CPUDevice<W>::valueSelectorSetRanges(
-        VKLValueSelector valueSelector,
-        const utility::ArrayView<const range1f> &ranges)
-    {
-      auto &valueSelectorObject =
-          referenceFromHandle<ValueSelector<W>>(valueSelector);
-      valueSelectorObject.setRanges(ranges);
-    }
-
-    template <int W>
-    void CPUDevice<W>::valueSelectorSetValues(
-        VKLValueSelector valueSelector,
-        const utility::ArrayView<const float> &values)
-    {
-      auto &valueSelectorObject =
-          referenceFromHandle<ValueSelector<W>>(valueSelector);
-      valueSelectorObject.setValues(values);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
     // Sampler ////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 

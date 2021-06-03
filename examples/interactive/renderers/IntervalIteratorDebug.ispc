@@ -36,7 +36,6 @@ vec3f IntervalIteratorDebug_renderPixel(Renderer *uniform _self,
                                (varying vkl_vec3f * uniform) & ray.org,
                                (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,
-                               scene->valueSelector,
                                intervalIteratorBuffer);
 
   VKLInterval interval;

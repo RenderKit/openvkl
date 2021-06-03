@@ -6,7 +6,9 @@
 export void demo_ispc(void *uniform _volume,
                       void *uniform _sampler,
                       void *uniform _intervalContext,
-                      void *uniform _hitContext)
+                      void *uniform _hitContext,
+                      void *uniform _ranges,
+                      void *uniform _values)
 {
   uniform VKLVolume volume   = (uniform VKLVolume)_volume;
   uniform VKLSampler sampler = (uniform VKLSampler)_sampler;
@@ -14,6 +16,8 @@ export void demo_ispc(void *uniform _volume,
       (uniform VKLIntervalIteratorContext)_intervalContext;
   uniform VKLHitIteratorContext hitContext =
       (uniform VKLHitIteratorContext)_hitContext;
+  vkl_range1f *uniform ranges = (vkl_range1f * uniform) _ranges;
+  float *uniform values       = (float *uniform)_values;
 
   // bounding box
   uniform vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -52,16 +56,6 @@ export void demo_ispc(void *uniform _volume,
     print("\tsamples[%]: %\n", i, samples[i]);
   print("\n");
 
-  // value selector setup (note the commit at the end)
-  uniform vkl_range1f ranges[2] = {{10, 20}, {50, 75}};
-  uniform int num_ranges        = 2;
-  uniform float values[2]       = {32, 96};
-  uniform int num_values        = 2;
-  VKLValueSelector selector     = vklNewValueSelector(volume);
-  vklValueSelectorSetRanges(selector, num_ranges, ranges);
-  vklValueSelectorSetValues(selector, num_values, values);
-  vklCommit((uniform VKLObject)selector);
-
   // ray definition for iterators
   vkl_vec3f rayOrigin = {0, 1, 1};
   vkl_vec3f rayDirection;
@@ -96,13 +90,8 @@ export void demo_ispc(void *uniform _volume,
   // interval iteration
   void *uniform bufferInterval =
       alloca(vklGetIntervalIteratorSizeV(intervalContext));
-  VKLIntervalIterator intervalIterator =
-      vklInitIntervalIteratorV(intervalContext,
-                               &rayOrigin,
-                               &rayDirection,
-                               &rayTRange,
-                               selector,
-                               bufferInterval);
+  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
+      intervalContext, &rayOrigin, &rayDirection, &rayTRange, bufferInterval);
 
   print("interval iterator for value ranges {% %} {% %}\n",
         ranges[0].lower,
@@ -123,13 +112,8 @@ export void demo_ispc(void *uniform _volume,
 
   // hit iteration
   void *uniform bufferHit    = alloca(vklGetHitIteratorSizeV(hitContext));
-  VKLHitIterator hitIterator = vklInitHitIteratorV(hitContext,
-                                                   &rayOrigin,
-                                                   &rayDirection,
-                                                   &rayTRange,
-                                                   &time,
-                                                   selector,
-                                                   bufferHit);
+  VKLHitIterator hitIterator = vklInitHitIteratorV(
+      hitContext, &rayOrigin, &rayDirection, &rayTRange, &time, bufferHit);
 
   print("hit iterator for values % %\n", values[0], values[1]);
 
@@ -138,6 +122,4 @@ export void demo_ispc(void *uniform _volume,
     print(
         "\tt: %\n\tsample %\n\tepsilon %\n\n", hit.t, hit.sample, hit.epsilon);
   }
-
-  vklRelease((uniform VKLObject)selector);
 }

@@ -22,9 +22,6 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
 
-  if (scene->valueSelector == NULL)
-    return color;
-
   // create volume iterator
   vkl_range1f tRange;
   tRange.lower = ray.tnear;
@@ -43,7 +40,6 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
                           (varying vkl_vec3f * uniform) & ray.dir,
                           &tRange,
                           &time,
-                          scene->valueSelector,
                           hitIteratorBuffer);
 
   // the current surface hit
@@ -85,7 +81,6 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
                                   (varying vkl_vec3f * uniform) & wo,
                                   &tShadowRange,
                                   &time,
-                                  scene->valueSelector,
                                   shadowHitIteratorBuffer);
           if (!vklIterateHitV(shadowIterator, &shadowHit)) {
             illum += abs(co) * emission[i];  // Lambertian surface shading.

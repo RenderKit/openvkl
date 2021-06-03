@@ -9,7 +9,7 @@
 #include <windows.h>  // Sleep
 #endif
 
-void demoScalarAPI(VKLVolume volume)
+void demoScalarAPI(VKLDevice device, VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
 
@@ -56,24 +56,32 @@ void demoScalarAPI(VKLVolume volume)
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
-  // value selector setup (note the commit at the end)
-  vkl_range1f ranges[2]     = {{10, 20}, {50, 75}};
-  int num_ranges            = 2;
-  float values[2]           = {32, 96};
-  int num_values            = 2;
-  VKLValueSelector selector = vklNewValueSelector(volume);
-  vklValueSelectorSetRanges(selector, num_ranges, ranges);
-  vklValueSelectorSetValues(selector, num_values, values);
-  vklCommit(selector);
+  // interval iterator context setup
+  vkl_range1f ranges[2] = {{10, 20}, {50, 75}};
+  int num_ranges        = 2;
+  VKLData rangesData =
+      vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
 
-  // TODO: this will replace the value selector above
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler, attributeIndex);
+
+  vklSetData(intervalContext, "valueRanges", rangesData);
+  vklRelease(rangesData);
+
   vklCommit(intervalContext);
 
-  // TODO: this will replace the value selector above
+  // hit iterator context setup
+  float values[2] = {32, 96};
+  int num_values  = 2;
+  VKLData valuesData =
+      vklNewData(device, num_values, VKL_FLOAT, values, VKL_DATA_DEFAULT, 0);
+
   VKLHitIteratorContext hitContext =
       vklNewHitIteratorContext(sampler, attributeIndex);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
   vklCommit(hitContext);
 
   // ray definition for iterators
@@ -102,7 +110,6 @@ void demoScalarAPI(VKLVolume volume)
                                 &rayOrigin,
                                 &rayDirection,
                                 &rayTRange,
-                                selector,
                                 buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
@@ -144,7 +151,6 @@ void demoScalarAPI(VKLVolume volume)
                                                     &rayDirection,
                                                     &rayTRange,
                                                     time,
-                                                    selector,
                                                     buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
@@ -166,7 +172,6 @@ void demoScalarAPI(VKLVolume volume)
 
   vklRelease(hitContext);
   vklRelease(intervalContext);
-  vklRelease(selector);
   vklRelease(sampler);
 }
 
@@ -359,7 +364,7 @@ int main()
 
   vklCommit(volume);
 
-  demoScalarAPI(volume);
+  demoScalarAPI(device, volume);
   demoVectorAPI(volume);
   demoStreamAPI(volume);
 

@@ -50,7 +50,7 @@ void interval_iteration(size_t numParticles,
 
     std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
     VKLIntervalIterator iterator = vklInitIntervalIterator(
-        intervalContext, &origin, &direction, &tRange, nullptr, buffer.data());
+        intervalContext, &origin, &direction, &tRange, buffer.data());
 
     VKLInterval interval;
 

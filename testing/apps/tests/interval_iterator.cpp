@@ -30,7 +30,7 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, nullptr, buffer.data());
+      intervalContext, &origin, &direction, &tRange, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
@@ -71,7 +71,7 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, nullptr, buffer.data());
+      intervalContext, &origin, &direction, &tRange, buffer.data());
   VKLInterval interval;
 
   int intervalCount = 0;
@@ -124,26 +124,25 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
-  VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler);
-  vklCommit(intervalContext);
-
-  VKLValueSelector valueSelector = vklNewValueSelector(volume);
-
   // will trigger intervals covering individual ranges separately
   std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
 
-  vklValueSelectorSetRanges(
-      valueSelector, valueRanges.size(), valueRanges.data());
+  VKLData valueRangesData = vklNewData(
+      getOpenVKLDevice(), valueRanges.size(), VKL_BOX1F, valueRanges.data());
 
-  vklCommit(valueSelector);
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetData(intervalContext, "valueRanges", valueRangesData);
+  vklRelease(valueRangesData);
+
+  vklCommit(intervalContext);
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(intervalContext,
                                                          &origin,
                                                          &direction,
                                                          &tRange,
-                                                         valueSelector,
                                                          buffer.data());
 
   VKLInterval interval;
@@ -197,7 +196,6 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   REQUIRE(intervalCount > 0);
 
   vklRelease(intervalContext);
-  vklRelease(valueSelector);
   vklRelease(sampler);
 }
 
@@ -227,7 +225,6 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
                               &origin,
                               &(const vkl_vec3f &)direction,
                               &tRange,
-                              nullptr,
                               buffer.data());
 
   VKLInterval interval;

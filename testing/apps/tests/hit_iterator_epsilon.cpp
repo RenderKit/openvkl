@@ -22,21 +22,19 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
-  VKLValueSelector valueSelector = vklNewValueSelector(volume);
-  vklValueSelectorSetValues(valueSelector, isovalues.size(), isovalues.data());
-  vklCommit(valueSelector);
+  VKLData valuesData = vklNewData(
+      getOpenVKLDevice(), isovalues.size(), VKL_FLOAT, isovalues.data());
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
   vklCommit(hitContext);
 
   std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
-  VKLHitIterator iterator = vklInitHitIterator(hitContext,
-                                               &origin,
-                                               &direction,
-                                               &tRange,
-                                               time,
-                                               valueSelector,
-                                               buffer.data());
+  VKLHitIterator iterator = vklInitHitIterator(
+      hitContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLHit hit;
   hit.epsilon = 0.f;
@@ -58,7 +56,6 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   vklRelease(hitContext);
   vklRelease(sampler);
-  vklRelease(valueSelector);
 }
 
 template <int W>
@@ -99,12 +96,15 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
-  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
-  vklCommit(hitContext);
+  VKLData valuesData = vklNewData(
+      getOpenVKLDevice(), isovalues.size(), VKL_FLOAT, isovalues.data());
 
-  VKLValueSelector valueSelector = vklNewValueSelector(volume);
-  vklValueSelectorSetValues(valueSelector, isovalues.size(), isovalues.data());
-  vklCommit(valueSelector);
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
+  vklCommit(hitContext);
 
   std::vector<int> valid(W, 1);
 
@@ -119,7 +119,6 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
                                                  (vkl_vvec3fW *)&directions,
                                                  (vkl_vrange1fW *)&tRanges,
                                                  times.data(),
-                                                 valueSelector,
                                                  buffer.data());
 
   VKLHitW hit;
@@ -155,7 +154,6 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   vklRelease(hitContext);
   vklRelease(sampler);
-  vklRelease(valueSelector);
 }
 
 TEST_CASE("Hit iterator epsilon", "[hit_iterators]")

@@ -34,7 +34,6 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
                                (varying vkl_vec3f * uniform) & ray.org,
                                (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,
-                               scene->valueSelector,
                                intervalIteratorBuffer);
 
   // the current ray interval

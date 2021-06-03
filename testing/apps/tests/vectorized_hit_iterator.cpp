@@ -22,7 +22,6 @@ void vector_hit_iteration(VKLSampler vklSampler,
                           const AlignedVector<float> &originsSOA,
                           const AlignedVector<float> &directionsSOA,
                           const AlignedVector<float> &tRangesSOA,
-                          VKLValueSelector valueSelector,
                           const std::vector<float> &isoValues)
 {
   using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
@@ -44,7 +43,6 @@ void vector_hit_iteration(VKLSampler vklSampler,
                           (const vkl_vvec3fW *)directionsSOA.data(),
                           (const vkl_vrange1fW *)tRangesSOA.data(),
                           nullptr,
-                          valueSelector,
                           buffer.data());
 
   VKLHitW hit;
@@ -95,7 +93,6 @@ void vector_hit_iteration_time_varying(
     const AlignedVector<float> &directionsSOA,
     const AlignedVector<float> &tRangesSOA,
     const std::vector<float> &times,
-    VKLValueSelector valueSelector,
     const std::vector<float> &isoValues)
 {
   using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
@@ -115,7 +112,6 @@ void vector_hit_iteration_time_varying(
                           (const vkl_vvec3fW *)directionsSOA.data(),
                           (const vkl_vrange1fW *)tRangesSOA.data(),
                           times.data(),
-                          valueSelector,
                           buffer.data());
 
   VKLHitW hit;
@@ -198,21 +194,21 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
 
-    VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
-    vklCommit(hitContext);
-
-    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
-
     std::vector<float> isoValues;
 
     for (float f = 0.1f; f < 1.f; f += 0.1f) {
       isoValues.push_back(f);
     }
 
-    vklValueSelectorSetValues(
-        valueSelector, isoValues.size(), isoValues.data());
+    VKLData valuesData = vklNewData(
+        getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
 
-    vklCommit(valueSelector);
+    VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
+
+    vklSetData(hitContext, "values", valuesData);
+    vklRelease(valuesData);
+
+    vklCommit(hitContext);
 
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -258,7 +254,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                   originsSOA,
                                   directionsSOA,
                                   tRangesSOA,
-                                  valueSelector,
                                   isoValues);
         }
 
@@ -269,7 +264,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                   originsSOA,
                                   directionsSOA,
                                   tRangesSOA,
-                                  valueSelector,
                                   isoValues);
         }
 
@@ -280,7 +274,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                    originsSOA,
                                    directionsSOA,
                                    tRangesSOA,
-                                   valueSelector,
                                    isoValues);
         }
 
@@ -291,7 +284,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     }
 
     vklRelease(hitContext);
-    vklRelease(valueSelector);
     vklRelease(vklSampler);
   }
 
@@ -308,21 +300,21 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       VKLSampler vklSampler = vklNewSampler(vklVolume);
       vklCommit(vklSampler);
 
-      VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
-      vklCommit(hitContext);
-
-      VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
-
       std::vector<float> isoValues;
 
       for (float f = 0.1f; f < 1.f; f += 0.1f) {
         isoValues.push_back(f);
       }
 
-      vklValueSelectorSetValues(
-          valueSelector, isoValues.size(), isoValues.data());
+      VKLData valuesData = vklNewData(
+          getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
 
-      vklCommit(valueSelector);
+      VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
+
+      vklSetData(hitContext, "values", valuesData);
+      vklRelease(valuesData);
+
+      vklCommit(hitContext);
 
       vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -376,7 +368,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                                  directionsSOA,
                                                  tRangesSOA,
                                                  timesVarying,
-                                                 valueSelector,
                                                  isoValues);
           }
 
@@ -388,7 +379,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                                  directionsSOA,
                                                  tRangesSOA,
                                                  timesVarying,
-                                                 valueSelector,
                                                  isoValues);
           }
 
@@ -400,7 +390,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                                   directionsSOA,
                                                   tRangesSOA,
                                                   timesVarying,
-                                                  valueSelector,
                                                   isoValues);
           }
 
@@ -411,7 +400,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       }
 
       vklRelease(hitContext);
-      vklRelease(valueSelector);
       vklRelease(vklSampler);
     }
   }
@@ -425,24 +413,24 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
 
-    VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
-    vklCommit(hitContext);
-
-    // will be used to initialize all members of hit struct
-    constexpr float initialHitValue = 999999.f;
-
-    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
-
     std::vector<float> isoValues;
 
     for (float f = 0.1f; f < 1.f; f += 0.1f) {
       isoValues.push_back(f);
     }
 
-    vklValueSelectorSetValues(
-        valueSelector, isoValues.size(), isoValues.data());
+    VKLData valuesData = vklNewData(
+        getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
 
-    vklCommit(valueSelector);
+    VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
+
+    vklSetData(hitContext, "values", valuesData);
+    vklRelease(valuesData);
+
+    vklCommit(hitContext);
+
+    // will be used to initialize all members of hit struct
+    constexpr float initialHitValue = 999999.f;
 
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -492,7 +480,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                   (const vkl_vvec3f4 *)directionsSOA.data(),
                                   (const vkl_vrange1f4 *)tRangesSOA.data(),
                                   times.data(),
-                                  valueSelector,
                                   buffer.data());
 
           VKLHit4 hit;
@@ -556,7 +543,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                   (const vkl_vvec3f8 *)directionsSOA.data(),
                                   (const vkl_vrange1f8 *)tRangesSOA.data(),
                                   times.data(),
-                                  valueSelector,
                                   buffer.data());
 
           VKLHit8 hit;
@@ -620,7 +606,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
                                    (const vkl_vvec3f16 *)directionsSOA.data(),
                                    (const vkl_vrange1f16 *)tRangesSOA.data(),
                                    times.data(),
-                                   valueSelector,
                                    buffer.data());
 
           VKLHit16 hit;
@@ -682,7 +667,6 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     }
 
     vklRelease(hitContext);
-    vklRelease(valueSelector);
     vklRelease(vklSampler);
   }
 

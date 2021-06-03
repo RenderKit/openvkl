@@ -12,6 +12,7 @@
 #if defined(__cplusplus)
 
 #include "TransferFunction.h"
+#include "apps/AppInit.h"
 #include "openvkl/openvkl.h"
 
 namespace openvkl {
@@ -32,7 +33,6 @@ namespace openvkl {
       VKLSampler sampler;
       VKLIntervalIteratorContext intervalContext;
       VKLHitIteratorContext hitContext;
-      VKLValueSelector valueSelector;
       unsigned int attributeIndex;
 
       /*
@@ -48,7 +48,6 @@ namespace openvkl {
             sampler(nullptr),
             intervalContext(nullptr),
             hitContext(nullptr),
-            valueSelector(nullptr),
             attributeIndex(0),
             tfNumColorsAndOpacities(0),
             tfColorsAndOpacities(nullptr)
@@ -57,8 +56,11 @@ namespace openvkl {
 
       ~Scene()
       {
-        if (valueSelector) {
-          vklRelease(valueSelector);
+        if (intervalContext) {
+          vklRelease(intervalContext);
+        }
+        if (hitContext) {
+          vklRelease(hitContext);
         }
         if (sampler) {
           vklRelease(sampler);
@@ -70,32 +72,29 @@ namespace openvkl {
       void updateValueSelector(const TransferFunction &transferFunction,
                                const std::vector<float> &isoValues)
       {
-        if (valueSelector) {
-          vklRelease(valueSelector);
-          valueSelector = nullptr;
-        }
+        // set interval context value ranges based on transfer function positive
+        // opacity intervals, if we have any
+        VKLData valueRangesData = nullptr;
 
-        if (!volume)
-          return;
-
-        valueSelector = vklNewValueSelector(volume);
-
-        // set value selector value ranges based on transfer function positive
-        // opacity intervals
         std::vector<range1f> valueRanges =
             transferFunction.getPositiveOpacityValueRanges();
 
-        vklValueSelectorSetRanges(valueSelector,
-                                  valueRanges.size(),
-                                  (const vkl_range1f *)valueRanges.data());
-
-        // if we have isovalues, set these values on the value selector
-        if (!isoValues.empty()) {
-          vklValueSelectorSetValues(
-              valueSelector, isoValues.size(), isoValues.data());
+        if (!valueRanges.empty()) {
+          valueRangesData = vklNewData(getOpenVKLDevice(),
+                                       valueRanges.size(),
+                                       VKL_BOX1F,
+                                       valueRanges.data());
         }
 
-        vklCommit(valueSelector);
+        // if we have isovalues, set these values on the value selector
+        VKLData valuesData = nullptr;
+
+        if (!isoValues.empty()) {
+          valuesData = vklNewData(getOpenVKLDevice(),
+                                  isoValues.size(),
+                                  VKL_FLOAT,
+                                  isoValues.data());
+        }
 
         // context setup
         if (intervalContext) {
@@ -105,6 +104,12 @@ namespace openvkl {
 
         intervalContext =
             vklNewIntervalIteratorContext(sampler, attributeIndex);
+
+        if (valueRangesData) {
+          vklSetData(intervalContext, "valueRanges", valueRangesData);
+          vklRelease(valueRangesData);
+        }
+
         vklCommit(intervalContext);
 
         if (hitContext) {
@@ -113,6 +118,12 @@ namespace openvkl {
         }
 
         hitContext = vklNewHitIteratorContext(sampler, attributeIndex);
+
+        if (valuesData) {
+          vklSetData(hitContext, "values", valuesData);
+          vklRelease(valuesData);
+        }
+
         vklCommit(hitContext);
       }
 
@@ -139,4 +150,3 @@ namespace openvkl {
 }  // namespace openvkl
 
 #endif  // defined(__cplusplus)
-

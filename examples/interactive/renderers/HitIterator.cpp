@@ -27,9 +27,6 @@ namespace openvkl {
       vec3f color(0.f);
       float alpha = 0.f;
 
-      if (scene.valueSelector == nullptr)
-        return color;
-
       // create volume iterator
       vkl_range1f tRange;
       tRange.lower = ray.t.lower;
@@ -44,7 +41,6 @@ namespace openvkl {
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
                                                    time,
-                                                   scene.valueSelector,
                                                    hitIteratorBuffer);
 
       // the current surface hit
@@ -86,7 +82,6 @@ namespace openvkl {
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,
                                      time,
-                                     scene.valueSelector,
                                      shadowHitIteratorBuffer);
               if (!vklIterateHit(shadowIterator, &shadowHit)) {
                 illum += abs(co) * emission[i];  // Lambertian surface shading.

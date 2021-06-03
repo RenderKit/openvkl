@@ -35,7 +35,7 @@ openvkl_add_library_ispc(vkl_example_renderers STATIC
 
 target_include_directories(vkl_example_renderers PUBLIC ${ISPC_TARGET_DIR})
 
-target_link_libraries(vkl_example_renderers PUBLIC openvkl rkcommon::rkcommon)
+target_link_libraries(vkl_example_renderers PUBLIC openvkl openvkl_testing rkcommon::rkcommon)
 
 
 

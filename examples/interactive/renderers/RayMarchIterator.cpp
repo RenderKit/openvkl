@@ -37,7 +37,7 @@ namespace openvkl {
       void *intervalIteratorBuffer =
           alloca(vklGetIntervalIteratorSize(scene.intervalContext));
       VKLIntervalIterator iterator =
-          vklInitIntervalIterator(scene.sampler,
+          vklInitIntervalIterator(scene.intervalContext,
                                   (vkl_vec3f *)&ray.org,
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,

@@ -376,15 +376,15 @@ extern "C" size_t vklGetIntervalIteratorSize16(
 OPENVKL_CATCH_END(0u)
 
 extern "C" VKLIntervalIterator vklInitIntervalIterator(
-    VKLSampler sampler,
+    VKLIntervalIteratorContext context,
     const vkl_vec3f *origin,
     const vkl_vec3f *direction,
     const vkl_range1f *tRange,
     VKLValueSelector valueSelector,
-    void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
   auto it = deviceObj->initIntervalIterator1(
-      sampler,
+      context,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
@@ -398,16 +398,16 @@ OPENVKL_CATCH_END(nullptr)
 #define __define_vklInitIntervalIteratorN(WIDTH)                        \
   extern "C" VKLIntervalIterator##WIDTH vklInitIntervalIterator##WIDTH( \
       const int *valid,                                                 \
-      VKLSampler sampler,                                               \
+      VKLIntervalIteratorContext context,                               \
       const vkl_vvec3f##WIDTH *origin,                                  \
       const vkl_vvec3f##WIDTH *direction,                               \
       const vkl_vrange1f##WIDTH *tRange,                                \
       VKLValueSelector valueSelector,                                   \
-      void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)                 \
+      void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)                 \
   {                                                                     \
     auto it = deviceObj->initIntervalIterator##WIDTH(                   \
         valid,                                                          \
-        sampler,                                                        \
+        context,                                                        \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),              \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),           \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),            \
@@ -502,17 +502,17 @@ extern "C" size_t vklGetHitIteratorSize16(VKLHitIteratorContext context)
 }
 OPENVKL_CATCH_END(0u)
 
-extern "C" VKLHitIterator vklInitHitIterator(VKLSampler sampler,
+extern "C" VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                              const vkl_vec3f *origin,
                                              const vkl_vec3f *direction,
                                              const vkl_range1f *tRange,
                                              float time,
                                              VKLValueSelector valueSelector,
                                              void *buffer)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
   auto it = deviceObj->initHitIterator1(
-      sampler,
+      context,
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
@@ -527,17 +527,17 @@ OPENVKL_CATCH_END(nullptr)
 #define __define_vklInitHitIteratorN(WIDTH)                   \
   extern "C" VKLHitIterator##WIDTH vklInitHitIterator##WIDTH( \
       const int *valid,                                       \
-      VKLSampler sampler,                                     \
+      VKLHitIteratorContext context,                          \
       const vkl_vvec3f##WIDTH *origin,                        \
       const vkl_vvec3f##WIDTH *direction,                     \
       const vkl_vrange1f##WIDTH *tRange,                      \
       const float *times,                                     \
       VKLValueSelector valueSelector,                         \
-      void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)       \
+      void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)       \
   {                                                           \
     auto it = deviceObj->initHitIterator##WIDTH(              \
         valid,                                                \
-        sampler,                                              \
+        context,                                              \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),    \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction), \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),  \

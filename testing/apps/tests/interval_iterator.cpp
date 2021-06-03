@@ -30,7 +30,7 @@ void scalar_interval_continuity_with_no_value_selector(VKLVolume volume)
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      sampler, &origin, &direction, &tRange, nullptr, buffer.data());
+      intervalContext, &origin, &direction, &tRange, nullptr, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
@@ -71,7 +71,7 @@ void scalar_interval_value_ranges_with_no_value_selector(VKLVolume volume)
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      sampler, &origin, &direction, &tRange, nullptr, buffer.data());
+      intervalContext, &origin, &direction, &tRange, nullptr, buffer.data());
   VKLInterval interval;
 
   int intervalCount = 0;
@@ -139,8 +139,12 @@ void scalar_interval_value_ranges_with_value_selector(VKLVolume volume)
   vklCommit(valueSelector);
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
-  VKLIntervalIterator iterator = vklInitIntervalIterator(
-      sampler, &origin, &direction, &tRange, valueSelector, buffer.data());
+  VKLIntervalIterator iterator = vklInitIntervalIterator(intervalContext,
+                                                         &origin,
+                                                         &direction,
+                                                         &tRange,
+                                                         valueSelector,
+                                                         buffer.data());
 
   VKLInterval interval;
 
@@ -219,7 +223,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator =
-      vklInitIntervalIterator(sampler,
+      vklInitIntervalIterator(intervalContext,
                               &origin,
                               &(const vkl_vec3f &)direction,
                               &tRange,

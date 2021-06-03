@@ -39,7 +39,7 @@ namespace openvkl {
       void *shadowHitIteratorBuffer =
           alloca(vklGetHitIteratorSize(scene.hitContext));
 
-      VKLHitIterator iterator = vklInitHitIterator(scene.sampler,
+      VKLHitIterator iterator = vklInitHitIterator(scene.hitContext,
                                                    (vkl_vec3f *)&ray.org,
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
@@ -81,7 +81,7 @@ namespace openvkl {
               tShadowRange.lower = hit.epsilon;
               tShadowRange.upper = inf;
               VKLHitIterator shadowIterator =
-                  vklInitHitIterator(scene.sampler,
+                  vklInitHitIterator(scene.hitContext,
                                      (vkl_vec3f *)&c,
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,

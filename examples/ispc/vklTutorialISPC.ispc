@@ -3,10 +3,17 @@
 
 #include <openvkl/openvkl.isph>
 
-export void demo_ispc(void *uniform _volume, void *uniform _sampler)
+export void demo_ispc(void *uniform _volume,
+                      void *uniform _sampler,
+                      void *uniform _intervalContext,
+                      void *uniform _hitContext)
 {
   uniform VKLVolume volume   = (uniform VKLVolume)_volume;
   uniform VKLSampler sampler = (uniform VKLSampler)_sampler;
+  uniform VKLIntervalIteratorContext intervalContext =
+      (uniform VKLIntervalIteratorContext)_intervalContext;
+  uniform VKLHitIteratorContext hitContext =
+      (uniform VKLHitIteratorContext)_hitContext;
 
   // bounding box
   uniform vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -87,9 +94,15 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   float time = 0.f;
 
   // interval iteration
-  void *uniform bufferInterval = alloca(vklGetIntervalIteratorSizeV(sampler));
-  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
-      sampler, &rayOrigin, &rayDirection, &rayTRange, selector, bufferInterval);
+  void *uniform bufferInterval =
+      alloca(vklGetIntervalIteratorSizeV(intervalContext));
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIteratorV(intervalContext,
+                               &rayOrigin,
+                               &rayDirection,
+                               &rayTRange,
+                               selector,
+                               bufferInterval);
 
   print("interval iterator for value ranges {% %} {% %}\n",
         ranges[0].lower,
@@ -109,8 +122,8 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   }
 
   // hit iteration
-  void *uniform bufferHit    = alloca(vklGetHitIteratorSizeV(sampler));
-  VKLHitIterator hitIterator = vklInitHitIteratorV(sampler,
+  void *uniform bufferHit    = alloca(vklGetHitIteratorSizeV(hitContext));
+  VKLHitIterator hitIterator = vklInitHitIteratorV(hitContext,
                                                    &rayOrigin,
                                                    &rayDirection,
                                                    &rayTRange,

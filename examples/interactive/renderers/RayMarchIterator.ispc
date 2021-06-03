@@ -27,10 +27,10 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
   tRange.upper = ray.tfar;
 
   void *uniform intervalIteratorBuffer =
-      alloca(vklGetIntervalIteratorSizeV(scene->sampler));
+      alloca(vklGetIntervalIteratorSizeV(scene->intervalContext));
 
   VKLIntervalIterator iterator =
-      vklInitIntervalIteratorV(scene->sampler,
+      vklInitIntervalIteratorV(scene->intervalContext,
                                (varying vkl_vec3f * uniform) & ray.org,
                                (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,

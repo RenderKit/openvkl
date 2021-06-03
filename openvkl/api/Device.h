@@ -104,7 +104,7 @@ namespace openvkl {
 #undef __define_getIntervalIteratorSizeN
 
       virtual VKLIntervalIterator initIntervalIterator1(
-          VKLSampler sampler,
+          VKLIntervalIteratorContext context,
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
@@ -114,7 +114,7 @@ namespace openvkl {
 #define __define_initIntervalIteratorN(WIDTH)                     \
   virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH( \
       const int *valid,                                           \
-      VKLSampler sampler,                                         \
+      VKLIntervalIteratorContext context,                         \
       const vvec3fn<WIDTH> &origin,                               \
       const vvec3fn<WIDTH> &direction,                            \
       const vrange1fn<WIDTH> &tRange,                             \
@@ -161,7 +161,7 @@ namespace openvkl {
 
 #undef __define_getHitIteratorSizeN
 
-      virtual VKLHitIterator initHitIterator1(VKLSampler sampler,
+      virtual VKLHitIterator initHitIterator1(VKLHitIteratorContext context,
                                               const vvec3fn<1> &origin,
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
@@ -172,7 +172,7 @@ namespace openvkl {
 #define __define_initHitIteratorN(WIDTH)                \
   virtual VKLHitIterator##WIDTH initHitIterator##WIDTH( \
       const int *valid,                                 \
-      VKLSampler sampler,                               \
+      VKLHitIteratorContext context,                    \
       const vvec3fn<WIDTH> &origin,                     \
       const vvec3fn<WIDTH> &direction,                  \
       const vrange1fn<WIDTH> &tRange,                   \

@@ -30,7 +30,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   vklCommit(hitContext);
 
   std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
-  VKLHitIterator iterator = vklInitHitIterator(sampler,
+  VKLHitIterator iterator = vklInitHitIterator(hitContext,
                                                &origin,
                                                &direction,
                                                &tRange,
@@ -114,7 +114,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
   VKLHitIteratorW iterator = vklInitHitIteratorW(valid.data(),
-                                                 sampler,
+                                                 hitContext,
                                                  (vkl_vvec3fW *)&origins,
                                                  (vkl_vvec3fW *)&directions,
                                                  (vkl_vrange1fW *)&tRanges,

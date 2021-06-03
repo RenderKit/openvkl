@@ -27,7 +27,7 @@ void scalar_hit_iteration(VKLVolume volume,
   vklCommit(hitContext);
 
   std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
-  VKLHitIterator iterator = vklInitHitIterator(sampler,
+  VKLHitIterator iterator = vklInitHitIterator(hitContext,
                                                &origin,
                                                &direction,
                                                &tRange,

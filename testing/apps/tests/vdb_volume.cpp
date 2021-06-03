@@ -67,8 +67,7 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
     vklCommit(volume);
     REQUIRE(vklDeviceGetLastErrorCode(getOpenVKLDevice()) == 1);
     REQUIRE(std::string(vklDeviceGetLastErrorMsg(getOpenVKLDevice()))
-                .find("Node data too small") !=
-            std::string::npos);
+                .find("Node data too small") != std::string::npos);
   }
 
   vklRelease(volume);
@@ -440,9 +439,12 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   vkl_vec3f origin{0, 0, -5.f};
   vkl_vec3f direction{0, 0, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
-  REQUIRE_NOTHROW(
-      iterator = vklInitIntervalIterator(
-          vklSampler, &origin, &direction, &tRange, nullptr, buffer.data()));
+  REQUIRE_NOTHROW(iterator = vklInitIntervalIterator(intervalContext,
+                                                     &origin,
+                                                     &direction,
+                                                     &tRange,
+                                                     nullptr,
+                                                     buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
   REQUIRE_NOTHROW(vklRelease(intervalContext));
   REQUIRE_NOTHROW(vklRelease(vklSampler));

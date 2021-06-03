@@ -61,7 +61,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            vklSampler, &origin, &direction, &tRange, nullptr, buffer);
+            intervalContext, &origin, &direction, &tRange, nullptr, buffer);
 
         benchmark::DoNotOptimize(iterator);
       }));
@@ -128,7 +128,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            vklSampler, &origin, &direction, &tRange, nullptr, buffer);
+            intervalContext, &origin, &direction, &tRange, nullptr, buffer);
 
         bool success = vklIterateInterval(iterator, &interval);
 
@@ -197,7 +197,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            vklSampler, &origin, &direction, &tRange, nullptr, buffer);
+            intervalContext, &origin, &direction, &tRange, nullptr, buffer);
 
         vklIterateInterval(iterator, &interval);
 

@@ -71,7 +71,7 @@ void demoScalarAPI(VKLVolume volume)
       vklNewIntervalIteratorContext(sampler, attributeIndex);
   vklCommit(intervalContext);
 
-    // TODO: this will replace the value selector above
+  // TODO: this will replace the value selector above
   VKLHitIteratorContext hitContext =
       vklNewHitIteratorContext(sampler, attributeIndex);
   vklCommit(hitContext);
@@ -97,8 +97,13 @@ void demoScalarAPI(VKLVolume volume)
 #else
     char buffer[vklGetIntervalIteratorSize(intervalContext)];
 #endif
-    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIterator(intervalContext,
+                                &rayOrigin,
+                                &rayDirection,
+                                &rayTRange,
+                                selector,
+                                buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -134,8 +139,13 @@ void demoScalarAPI(VKLVolume volume)
 #else
     char buffer[vklGetHitIteratorSize(hitContext)];
 #endif
-    VKLHitIterator hitIterator = vklInitHitIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, time, selector, buffer);
+    VKLHitIterator hitIterator = vklInitHitIterator(hitContext,
+                                                    &rayOrigin,
+                                                    &rayDirection,
+                                                    &rayTRange,
+                                                    time,
+                                                    selector,
+                                                    buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 

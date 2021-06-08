@@ -43,17 +43,15 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  self->context = (const IntervalIteratorContext *uniform)_context;
+  self->super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.iterate = VdbIterator_iterateIntervalInternal;
+  self->super.elementaryCellIterationSupported = false;
 
   const uniform VdbSampler *uniform sampler =
-      (const uniform VdbSampler *uniform)(self->context->sampler);
+      (const uniform VdbSampler *uniform)(self->super.context->sampler);
   const uniform VdbGrid *uniform grid = sampler->grid;
 
   self->grid = grid;
-
-  // Initialize for hit iteration.
-  self->iterateInterval                  = VdbIterator_iterateIntervalInternal;
-  self->elementaryCellIterationSupported = false;
 
   const vec3f origin    = *((const varying vec3f *uniform)_originObject);
   const vec3f direction = *((const varying vec3f *uniform)_directionObject);
@@ -158,6 +156,10 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  VdbIterator_iterateIntervalInternal(
-      imask, _self, _interval, self->context->valueRanges, false, _result);
+  VdbIterator_iterateIntervalInternal(imask,
+                                      _self,
+                                      _interval,
+                                      self->super.context->valueRanges,
+                                      false,
+                                      _result);
 }

@@ -42,11 +42,9 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
-  self->context = (const IntervalIteratorContext *uniform)_context;
-
-  /* Enable the default hit iterator. */
-  self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
-  self->elementaryCellIterationSupported = false;
+  self->super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.iterate = DefaultIntervalIterator_iterateIntervalInternal;
+  self->super.elementaryCellIterationSupported = false;
 
   const vec3f origin    = *((varying vec3f * uniform) _origin);
   const vec3f direction = *((varying vec3f * uniform) _direction);
@@ -126,7 +124,12 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
       (varying DefaultIntervalIterator * uniform) _self;
 
   DefaultIntervalIterator_iterateIntervalInternal(
-      imask, _self, _interval, self->context->valueRanges, false, _result);
+      imask,
+      _self,
+      _interval,
+      self->super.context->valueRanges,
+      false,
+      _result);
 }
 
 // -----------------------------------------------------------------------------
@@ -157,13 +160,6 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   resetInterval(self->currentInterval);
 }
 
-struct IntervalIteratorT
-{
-  const IntervalIteratorContext *uniform context;
-  IterateIntervalFunc iterate;
-  uniform bool elementaryCellIterationSupported;
-};
-
 export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                           const int *uniform imask,
                           void *uniform _self,
@@ -186,11 +182,11 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
   if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
     return;
 
-  // Note: We simply assume the presence of a functor as the first element
-  //       in the interval iterator state. This will wreak havoc if that
-  //       functor is not present.
-  const IntervalIteratorT *uniform intervalIterator =
-      (IntervalIteratorT * uniform) self->intervalIteratorState;
+  // Note: For an interval iterator to be compatible with the default hit
+  // iterator, it must inherit from DefaultHitIteratorIntervalIterator.
+  const DefaultHitIteratorIntervalIterator *uniform intervalIterator =
+      (DefaultHitIteratorIntervalIterator * uniform)
+          self->intervalIteratorState;
 
   // Generate intervals using the interval iterator until we either run out
   // or find an isosurface hit.

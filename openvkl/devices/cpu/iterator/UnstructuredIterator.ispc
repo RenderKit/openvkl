@@ -47,18 +47,19 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
   varying UnstructuredIterator *uniform self =
       (varying UnstructuredIterator * uniform) _self;
 
-  /* Enable the default hit iterator. */
-  self->iterateInterval = UnstructuredIterator_iterateIntervalInternal;
-  self->elementaryCellIterationSupported = elementaryCellIterationSupported;
+  self->super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.iterate = UnstructuredIterator_iterateIntervalInternal;
+  self->super.elementaryCellIterationSupported =
+      elementaryCellIterationSupported;
 
-  self->context   = (const IntervalIteratorContext *uniform)_context;
-  self->sampler = (UnstructuredSamplerBase *uniform)(self->context->sampler);
+  self->sampler =
+      (UnstructuredSamplerBase * uniform)(self->super.context->sampler);
   self->origin    = *((varying vec3f * uniform) _origin);
   self->direction = *((varying vec3f * uniform) _direction);
   self->tRange    = *((varying box1f * uniform) _tRange);
 
   const VKLUnstructuredBase *uniform volume =
-      (const VKLUnstructuredBase *uniform)self->context->sampler->volume;
+      (const VKLUnstructuredBase *uniform)self->super.context->sampler->volume;
 
   self->traversalState.node     = (uint64)(volume->bvhRoot);
   self->traversalState.bitstack = 0;
@@ -130,7 +131,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
                                 UnstructuredTraversalState &hitState)
 {
   const UnstructuredSamplerBase *uniform sampler =
-      (const UnstructuredSamplerBase *uniform)iterator->context->sampler;
+      (const UnstructuredSamplerBase *uniform)iterator->super.context->sampler;
 
   while (1) {
     uniform bool isInner = (node->nominalLength.x >= 0);
@@ -236,7 +237,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
         if (elementaryCellIteration) {
           const VKLUnstructuredVolume *uniform volume =
               (const VKLUnstructuredVolume *uniform)
-                  iterator->context->sampler->volume;
+                  iterator->super.context->sampler->volume;
           intersectLeaf_varying(
               iterator->origin,
               iterator->direction,
@@ -393,7 +394,7 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
       imask,
       _self,
       _interval,
-      self->context->valueRanges,
+      self->super.context->valueRanges,
       self->sampler->elementaryCellIteration,
       _result);
 }

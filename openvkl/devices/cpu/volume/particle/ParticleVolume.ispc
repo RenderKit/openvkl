@@ -74,6 +74,7 @@ static bool intersectAndGradientParticle(const void *uniform userData,
 inline varying float VKLParticleVolume_sample(
     const Sampler *uniform sampler,
     const varying vec3f &objectCoordinates,
+    const uniform uint32 _attributeIndex,
     const varying float &_time)
 {
   const VKLParticleVolume *uniform self =
@@ -120,7 +121,7 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples = VKLParticleVolume_sample(
-        (const Sampler *uniform)_sampler, *objectCoordinates, time);
+        (const Sampler *uniform)_sampler, *objectCoordinates, 0, time);
   }
 }
 

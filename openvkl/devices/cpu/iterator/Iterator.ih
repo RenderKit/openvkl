@@ -37,6 +37,7 @@ inline varying float nextafter(const varying float a, const varying float b)
                                         const univary vec3f &origin,           \
                                         const univary vec3f &direction,        \
                                         const univary box1f &tRange,           \
+                                        const uniform uint32 attributeIndex,   \
                                         const univary float &time,             \
                                         const uniform float step,              \
                                         const uniform int numValues,           \
@@ -56,6 +57,7 @@ inline varying float nextafter(const varying float a, const varying float b)
     univary float sample0 =                                                    \
         sampler->computeSample_##univary(sampler,                              \
                                          origin + t0 * direction,              \
+                                         attributeIndex,                       \
                                          time);                                \
                                                                                \
     univary float t;                                                           \
@@ -66,6 +68,7 @@ inline varying float nextafter(const varying float a, const varying float b)
       const univary float sample =                                             \
           sampler->computeSample_##univary(sampler,                            \
                                            origin + t * direction,             \
+                                           attributeIndex,                     \
                                            time);                              \
                                                                                \
       univary float tHit    = inf;                                             \
@@ -121,6 +124,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
   inline univary float bisect(const Sampler *uniform sampler,                   \
                               const univary vec3f &origin,                      \
                               const univary vec3f &direction,                   \
+                              const uniform uint32 attributeIndex,              \
                               const univary float &time,                        \
                               univary float t0,                                 \
                               univary float sample0,                            \
@@ -147,6 +151,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
       univary float sampleMid =                                                 \
           sampler->computeSample_##univary(sampler,                             \
                                            origin + tMid * direction,           \
+                                           attributeIndex,                      \
                                            time);                               \
                                                                                 \
       /* sampling at boundaries between unstructured cells can rarely lead to   \
@@ -188,6 +193,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
       const univary vec3f &origin,                                              \
       const univary vec3f &direction,                                           \
       const univary box1f &tRange,                                              \
+      const uniform uint32 attributeIndex,                                      \
       const univary float &time,                                                \
       const univary float step,                                                 \
       const uniform int numValues,                                              \
@@ -201,6 +207,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
     univary float sample0 =                                                     \
         sampler->computeSample_##univary(sampler,                               \
                                          origin + t0 * direction,               \
+                                         attributeIndex,                        \
                                          time);                                 \
                                                                                 \
     if (elementaryCellTRange) {                                                 \
@@ -211,6 +218,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
         sample0 =                                                               \
           sampler->computeSample_##univary(sampler,                             \
                                            origin + t0 * direction,             \
+                                           attributeIndex,                      \
                                            time);                               \
         iters++;                                                                \
       }                                                                         \
@@ -224,6 +232,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
       univary float sample =                                                    \
           sampler->computeSample_##univary(sampler,                             \
                                            origin + t * direction,              \
+                                           attributeIndex,                      \
                                            time);                               \
       univary float ts = t;                                                     \
                                                                                 \
@@ -235,6 +244,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
           sample =                                                              \
             sampler->computeSample_##univary(sampler,                           \
                                              origin + ts * direction,           \
+                                             attributeIndex,                    \
                                              time);                             \
           iters++;                                                              \
         }                                                                       \
@@ -261,6 +271,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
           univary float tIso = bisect(sampler,                                  \
                                       origin,                                   \
                                       direction,                                \
+                                      attributeIndex,                           \
                                       time,                                     \
                                       t0,                                       \
                                       sample0,                                  \

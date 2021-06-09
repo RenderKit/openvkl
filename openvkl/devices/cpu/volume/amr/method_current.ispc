@@ -9,6 +9,7 @@
 
 varying float AMR_current(const Sampler *uniform self,
                           const varying vec3f &P,
+                          const uniform uint32 _attributeIndex,
                           const varying float &_time)
 {
   const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;

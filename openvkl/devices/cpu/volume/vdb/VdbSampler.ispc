@@ -246,6 +246,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
 float VdbSampler_iterator_computeSample_varying(
     const Sampler *uniform _sampler,
     const varying vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
     const varying float &time)
 {
   const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
@@ -254,8 +255,6 @@ float VdbSampler_iterator_computeSample_varying(
 
   const vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, objectCoordinates);
-
-  const uniform uint32 attributeIndex = 0;
 
   float sample = 0.f;
 

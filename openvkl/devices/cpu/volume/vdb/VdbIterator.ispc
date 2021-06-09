@@ -121,6 +121,7 @@ inline void VdbIterator_iterateIntervalInternal(
                            self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
                            self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
                            self->dda.level,
+                           self->super.context->attributeIndex,
                            inputValueRanges,
                            voxel);
     if (!voxel.isEmpty)

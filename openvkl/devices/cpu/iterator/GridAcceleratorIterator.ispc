@@ -127,7 +127,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
     univary box1f cellValueRange;                                              \
     GridAccelerator_getCellValueRange(volume->accelerator,                     \
                                       self->intervalState.currentCellIndex,    \
-                                      0, /* first attribute */                 \
+                                      self->context->attributeIndex,           \
                                       cellValueRange);                         \
                                                                                \
     univary bool returnInterval = false;                                       \
@@ -212,7 +212,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
     univary box1f cellValueRange;                                              \
     GridAccelerator_getCellValueRange(volume->accelerator,                     \
                                       self->hitState.currentCellIndex,         \
-                                      0, /* first attribute */                 \
+                                      self->context->attributeIndex,           \
                                       cellValueRange);                         \
                                                                                \
     univary bool cellValueRangeOverlap =                                       \
@@ -224,6 +224,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                   self->origin,                                \
                                   self->direction,                             \
                                   self->hitState.currentCellTRange,            \
+                                  self->context->attributeIndex,               \
                                   self->time,                                  \
                                   0.5f * step,                                 \
                                   hitContext->numValues,                       \

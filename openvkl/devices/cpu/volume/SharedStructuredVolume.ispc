@@ -1399,26 +1399,28 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
 varying float computeSample_varying_0_iterator_wrapper(
     const Sampler *uniform sampler,
     const varying vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
     const varying float &time)
 {
   return SharedStructuredVolume_computeSample_varying(
       (const SharedStructuredVolume *uniform)sampler->volume,
       objectCoordinates,
       sampler->filter,
-      0,
+      attributeIndex,
       time);
 }
 
 uniform float computeSample_uniform_0_iterator_wrapper(
     const Sampler *uniform sampler,
     const uniform vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
     const uniform float &time)
 {
   return SharedStructuredVolume_computeSample_uniform(
       (const SharedStructuredVolume *uniform)sampler->volume,
       objectCoordinates,
       sampler->filter,
-      0,
+      attributeIndex,
       time);
 }
 

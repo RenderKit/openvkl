@@ -29,24 +29,24 @@ static vec3f AMRVolume_computeGradient(const Sampler *uniform sampler,
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = sampler->computeSample_varying(sampler, pos, time);
+  float sample = sampler->computeSample_varying(sampler, pos, 0, time);
 
   // Gradient magnitude in the X direction.
   gradient.x =
       sampler->computeSample_varying(
-          sampler, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f), time) -
+          sampler, pos + make_vec3f(gradientStep.x, 0.0f, 0.0f), 0, time) -
       sample;
 
   // Gradient magnitude in the Y direction.
   gradient.y =
       sampler->computeSample_varying(
-          sampler, pos + make_vec3f(0.0f, gradientStep.y, 0.0f), time) -
+          sampler, pos + make_vec3f(0.0f, gradientStep.y, 0.0f), 0, time) -
       sample;
 
   // Gradient magnitude in the Z direction.
   gradient.z =
       sampler->computeSample_varying(
-          sampler, pos + make_vec3f(0.0f, 0.0f, gradientStep.z), time) -
+          sampler, pos + make_vec3f(0.0f, 0.0f, gradientStep.z), 0, time) -
       sample;
 
   // This approximation may yield image artifacts.
@@ -166,7 +166,7 @@ export void EXPORT_UNIQUE(AMRVolume_sample_export,
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples =
-        sampler->computeSample_varying(sampler, *objectCoordinates, time);
+        sampler->computeSample_varying(sampler, *objectCoordinates, 0, time);
   }
 }
 

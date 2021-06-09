@@ -63,7 +63,8 @@ namespace openvkl {
 
           // get volume sample
           vec3f c      = ray.org + t * ray.dir;
-          float sample = vklComputeSample(scene.sampler, (vkl_vec3f *)&c);
+          float sample = vklComputeSample(
+              scene.sampler, (vkl_vec3f *)&c, scene.attributeIndex);
 
           // map through transfer function
           vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);

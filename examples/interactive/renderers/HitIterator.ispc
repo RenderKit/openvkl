@@ -52,7 +52,10 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   while (vklIterateHitV(iterator, &hit) && alpha < 0.99f) {
     const vec3f c = ray.org + hit.t * ray.dir;
     const vkl_vec3f grad =
-        vklComputeGradientV(scene->sampler, (varying vkl_vec3f * uniform) & c);
+        vklComputeGradientV(scene->sampler,
+                            (varying vkl_vec3f * uniform) & c,
+                            scene->attributeIndex,
+                            &time);
     vec3f N = normalize(make_vec3f(grad.x, grad.y, grad.z));
     if (isnan(N.x) || isnan(N.y) || isnan(N.z))
       N = make_vec3f(0.f);

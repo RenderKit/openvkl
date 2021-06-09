@@ -75,17 +75,6 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
 
   bool changed = false;
 
-  static int attributeIndex  = 0;
-  unsigned int numAttributes = vklGetNumAttributes(scene.volume);
-
-  if (numAttributes > 1) {
-    if (ImGui::SliderInt(
-            "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
-      scene.attributeIndex = attributeIndex;
-      changed              = true;
-    }
-  }
-
   static float time = 0.f;
   if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
     renderer.setParam<float>("time", time);
@@ -1139,6 +1128,22 @@ void interactiveRender(ViewerParams &params,
       renderer.commit();
     }
 
+    static int attributeIndex  = 0;
+    unsigned int numAttributes = vklGetNumAttributes(scene.volume);
+
+    if (numAttributes > 1) {
+      if (ImGui::SliderInt(
+              "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
+        scene.attributeIndex = attributeIndex;
+
+        // changing attributes requires updating iterator contexts
+        scene.updateIntervalIteratorContext(transferFunction);
+        scene.updateHitIteratorContext(isoValues);
+
+        changed              = true;
+      }
+    }
+
     if (params.rendererType == "ray_march_iterator") {
       changed |= addSamplingRateUI(*glfwVKLWindow);
     }
@@ -1150,7 +1155,7 @@ void interactiveRender(ViewerParams &params,
     if (params.rendererType == "hit_iterator") {
       if (addIsosurfacesUI(*glfwVKLWindow, isoValues)) {
         changed = true;
-        scene.updateValueSelector(transferFunction, isoValues);
+        scene.updateHitIteratorContext(isoValues);
       }
     }
 
@@ -1167,7 +1172,7 @@ void interactiveRender(ViewerParams &params,
           scene.tfNumColorsAndOpacities =
               transferFunction.colorsAndOpacities.size();
           scene.tfValueRange = valueRange;
-          scene.updateValueSelector(transferFunction, isoValues);
+          scene.updateIntervalIteratorContext(transferFunction);
           glfwVKLWindow->resetAccumulation();
         };
 
@@ -1185,7 +1190,8 @@ void interactiveRender(ViewerParams &params,
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
       scene.updateVolume(vdbVolume->getVKLVolume(getOpenVKLDevice()));
       setupSampler(params, scene);
-      scene.updateValueSelector(transferFunction, isoValues);
+      scene.updateIntervalIteratorContext(transferFunction);
+      scene.updateHitIteratorContext(isoValues);
 
       if (leafAccessObserver)
         vklRelease(leafAccessObserver);
@@ -1215,9 +1221,10 @@ void imageWrite(ViewerParams &params,
   scene.tfColorsAndOpacities    = transferFunction.colorsAndOpacities.data();
   scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
 
-  // and a default value selector, with default isovalues
-  scene.updateValueSelector(transferFunction,
-                            std::vector<float>{-1.f, 0.f, 1.f});
+  // and default iterator contexts
+  scene.updateIntervalIteratorContext(transferFunction);
+  scene.updateHitIteratorContext(std::vector<float>{-1.f, 0.f, 1.f});
+
   auto window = rkcommon::make_unique<VKLWindow>(
       params.windowSize, scene, params.rendererType);
 

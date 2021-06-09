@@ -67,10 +67,8 @@ namespace openvkl {
         }
       }
 
-      // TODO: we'll split this into separate methods for interval and hit
-      // context setup
-      void updateValueSelector(const TransferFunction &transferFunction,
-                               const std::vector<float> &isoValues)
+      void updateIntervalIteratorContext(
+          const TransferFunction &transferFunction)
       {
         // set interval context value ranges based on transfer function positive
         // opacity intervals, if we have any
@@ -84,16 +82,6 @@ namespace openvkl {
                                        valueRanges.size(),
                                        VKL_BOX1F,
                                        valueRanges.data());
-        }
-
-        // if we have isovalues, set these values on the value selector
-        VKLData valuesData = nullptr;
-
-        if (!isoValues.empty()) {
-          valuesData = vklNewData(getOpenVKLDevice(),
-                                  isoValues.size(),
-                                  VKL_FLOAT,
-                                  isoValues.data());
         }
 
         // context setup
@@ -111,7 +99,21 @@ namespace openvkl {
         }
 
         vklCommit(intervalContext);
+      }
 
+      void updateHitIteratorContext(const std::vector<float> &isoValues)
+      {
+        // if we have isovalues, set these values on the context
+        VKLData valuesData = nullptr;
+
+        if (!isoValues.empty()) {
+          valuesData = vklNewData(getOpenVKLDevice(),
+                                  isoValues.size(),
+                                  VKL_FLOAT,
+                                  isoValues.data());
+        }
+
+        // context setup
         if (hitContext) {
           vklRelease(hitContext);
           hitContext = nullptr;

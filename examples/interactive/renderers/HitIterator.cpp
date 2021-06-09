@@ -52,8 +52,8 @@ namespace openvkl {
 
       while (vklIterateHit(iterator, &hit) && alpha < 0.99f) {
         const vec3f c = ray.org + hit.t * ray.dir;
-        const vkl_vec3f grad =
-            vklComputeGradient(scene.sampler, (vkl_vec3f *)&c);
+        const vkl_vec3f grad = vklComputeGradient(
+            scene.sampler, (vkl_vec3f *)&c, scene.attributeIndex, time);
         vec3f N = normalize(vec3f(grad.x, grad.y, grad.z));
         if (std::isnan(N.x) || std::isnan(N.y) || std::isnan(N.z))
           N = vec3f(0.f);

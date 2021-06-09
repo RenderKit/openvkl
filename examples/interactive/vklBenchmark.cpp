@@ -85,9 +85,9 @@ static void setupSceneDefaults(Scene &scene)
   scene.tfColorsAndOpacities    = transferFunction.colorsAndOpacities.data();
   scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
 
-  // and a default value selector, with default isovalues
-  scene.updateValueSelector(transferFunction,
-                            std::vector<float>{-1.f, 0.f, 1.f});
+  // and default iterator contexts
+  scene.updateIntervalIteratorContext(transferFunction);
+  scene.updateHitIteratorContext(std::vector<float>{-1.f, 0.f, 1.f});
 }
 
 static void render_wavelet_structured_regular(benchmark::State &state,

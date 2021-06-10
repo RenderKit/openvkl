@@ -37,8 +37,10 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
+  const unsigned int attributeIndex = 0;
+
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(vklSampler);
+      vklNewIntervalIteratorContext(vklSampler, attributeIndex);
   vklCommit(intervalContext);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
@@ -53,7 +55,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   std::array<int, 3> nativeWidths{4, 8, 16};
 
-  SECTION("randomized interval continuity with no value selector")
+  SECTION("randomized interval continuity with no context value ranges")
   {
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -282,7 +284,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     }
   }
 
-  SECTION("randomized interval value ranges with no value selector")
+  SECTION("randomized interval value ranges with no context value ranges")
   {
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -351,6 +353,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -415,6 +418,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -479,6 +483,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -508,7 +513,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     }
   }
 
-  SECTION("randomized interval value ranges with value selector")
+  SECTION("randomized interval value ranges with context value ranges")
   {
     // will trigger intervals covering individual ranges separately
     std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
@@ -589,6 +594,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -603,21 +609,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the value selector
-              // value range(s)
-              bool rangeIntersectsValueSelector = false;
+              // the interval value range should overlap the context value
+              // range(s)
+              bool rangeIntersectsContextValueRanges = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsValueSelector = true;
+                  rangeIntersectsContextValueRanges = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsValueSelector);
+              REQUIRE(rangeIntersectsContextValueRanges);
             }
 
             intervalCount++;
@@ -670,6 +676,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -684,21 +691,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the value selector
-              // value range(s)
-              bool rangeIntersectsValueSelector = false;
+              // the interval value range should overlap the context value
+              // range(s)
+              bool rangeIntersectsContextValueRanges = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsValueSelector = true;
+                  rangeIntersectsContextValueRanges = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsValueSelector);
+              REQUIRE(rangeIntersectsContextValueRanges);
             }
 
             intervalCount++;
@@ -751,6 +758,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -765,21 +773,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the value selector
-              // value range(s)
-              bool rangeIntersectsValueSelector = false;
+              // the interval value range should overlap the context value
+              // range(s)
+              bool rangeIntersectsContextValueRanges = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsValueSelector = true;
+                  rangeIntersectsContextValueRanges = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsValueSelector);
+              REQUIRE(rangeIntersectsContextValueRanges);
             }
 
             intervalCount++;

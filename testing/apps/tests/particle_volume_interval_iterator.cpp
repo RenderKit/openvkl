@@ -24,8 +24,10 @@ void interval_iteration(size_t numParticles,
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  const unsigned int attributeIndex = 0;
+
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler);
+      vklNewIntervalIteratorContext(sampler, attributeIndex);
   vklCommit(intervalContext);
 
   const vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -64,7 +66,7 @@ void interval_iteration(size_t numParticles,
            << ", nominalDeltaT = " << interval.nominalDeltaT);
 
       vkl_range1f sampledValueRange = computeIntervalValueRange(
-          sampler, origin, direction, interval.tRange);
+          sampler, attributeIndex, origin, direction, interval.tRange);
 
       INFO("sampled value range = " << sampledValueRange.lower << ", "
                                     << sampledValueRange.upper);

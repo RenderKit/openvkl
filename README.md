@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v0.13.0 of Intel® Open VKL. For changes and new features
+This is release v0.14.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -532,11 +532,6 @@ void vklSetString(VKLObject object, const char *name, const char *s);
 void vklSetVoidPtr(VKLObject object, const char *name, void *v);
 ```
 
-The exception to this rule is the `VKLValueSelector` object (described
-in the iterators section below), which has object-specific set methods.
-The reason for this is to align the C99/C++ API with the ISPC API, which
-can’t use a parameter method due to language limitations.
-
 After parameters have been set, `vklCommit` must be called on the object
 to make them take effect.
 
@@ -591,7 +586,6 @@ table below.
 | VKL\_DEVICE                    | API device object reference                                                                  |
 | VKL\_DATA                      | data reference                                                                               |
 | VKL\_OBJECT                    | generic object reference                                                                     |
-| VKL\_VALUE\_SELECTOR           | value selector object reference                                                              |
 | VKL\_VOLUME                    | volume object reference                                                                      |
 | VKL\_STRING                    | C-style zero-terminated character string                                                     |
 | VKL\_CHAR, VKL\_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
@@ -701,11 +695,11 @@ The number of attributes in a volume can also be queried:
 unsigned int vklGetNumAttributes(VKLVolume volume);
 ```
 
-Finally, the value range of the volume (first attribute only) can be
+Finally, the value range of the volume for a given attribute can be
 queried:
 
 ``` cpp
-vkl_range1f vklGetValueRange(VKLVolume volume);
+vkl_range1f vklGetValueRange(VKLVolume volume, unsigned int attributeIndex);
 ```
 
 ### Structured Volumes
@@ -1477,57 +1471,59 @@ native SIMD width.
 
 Open VKL has APIs to search for particular volume values along a ray.
 Queries can be for ranges of volume values (`vklIterateInterval`) or for
-particular values (`vklIterateHit`). Only the first volume attribute is
-currently considered in the iterator APIs.
+particular values (`vklIterateHit`).
 
-The desired values are set in a `VKLValueSelector`, which needs to be
-created, filled in with values, and then committed.
+Interval iterators require a context object to define the volume
+(referenced through the sampler) and attribute of interest. Contexts
+additionally hold parameters related to iteration behavior. An interval
+iterator context is created via
 
 ``` cpp
-VKLValueSelector vklNewValueSelector(VKLVolume volume);
-
-void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
-                               size_t numRanges,
-                               const vkl_range1f *ranges);
-
-void vklValueSelectorSetValues(VKLValueSelector valueSelector,
-                               size_t numValues,
-                               const float *values);
+VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler,
+                                                         unsigned int attributeIndex);
 ```
+
+The parameters understood by interval iterator contexts are defined in
+the table below.
+
+| Type             | Name        | Default       | Description                                                                                                                 |
+| :--------------- | :---------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------- |
+| vkl\_range1f\[\] | valueRanges | \[-inf, inf\] | Defines the value ranges of interest. Intervals not containing any of these values ranges will be skipped during iteration. |
+
+Configuration parameters for interval iterator contexts.
+
+As with other objects, the interval iterator context must be committed
+before being used.
 
 To query an interval, a `VKLIntervalIterator` of scalar or vector width
 must be initialized with `vklInitIntervalIterator`.
 
 ``` cpp
-VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
+VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                             const vkl_vec3f *origin,
                                             const vkl_vec3f *direction,
                                             const vkl_range1f *tRange,
-                                            VKLValueSelector valueSelector,
                                             void *buffer);
 
 VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                              VKLSampler sampler,
+                                              VKLIntervalIteratorContext context,
                                               const vkl_vvec3f4 *origin,
                                               const vkl_vvec3f4 *direction,
                                               const vkl_vrange1f4 *tRange,
-                                              VKLValueSelector valueSelector,
                                               void *buffer);
 
 VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                              VKLSampler sampler,
+                                              VKLIntervalIteratorContext context,
                                               const vkl_vvec3f8 *origin,
                                               const vkl_vvec3f8 *direction,
                                               const vkl_vrange1f8 *tRange,
-                                              VKLValueSelector valueSelector,
                                               void *buffer);
 
 VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                VKLSampler sampler,
+                                                VKLIntervalIteratorContext context,
                                                 const vkl_vvec3f16 *origin,
                                                 const vkl_vvec3f16 *direction,
                                                 const vkl_vrange1f16 *tRange,
-                                                VKLValueSelector valueSelector,
                                                 void *buffer);
 ```
 
@@ -1539,13 +1535,13 @@ exist. Copying iterator buffers is currently not supported.
 The required size, in bytes, of the buffer can be queried with
 
 ``` cpp
-size_t vklGetIntervalIteratorSize(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
 
-size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
 
-size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
 
-size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
 ```
 
 The values these functions return may change depending on the parameters
@@ -1624,56 +1620,74 @@ isosurfaces. In contrast to interval iterators, time value(s) may be
 provided to specify the sampling time. These values must be between 0
 and 1; for the vector versions, a `NULL` value indicates all times are
 zero. For temporally constant volumes, the time values have no effect.
+
+Hit iterators similarly require a context object to define the volume
+(referenced through the sampler), attribute of interest, and other
+parameters related to iteration behavior. A hit iterator context is
+created via
+
+``` cpp
+VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler,
+                                               unsigned int attributeIndex);
+```
+
+The parameters understood by hit iterator contexts are defined in the
+table below.
+
+| Type      | Name   | Default | Description                       |
+| :-------- | :----- | :------ | :-------------------------------- |
+| float\[\] | values |         | Defines the value(s) of interest. |
+
+Configuration parameters for hit iterator contexts.
+
+The hit iterator context must be committed before being used.
+
 Again, a user allocated buffer must be provided, and a `VKLHitIterator`
 of the desired width must be initialized:
 
 ``` cpp
-VKLHitIterator vklInitHitIterator(VKLSampler sampler,
+VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                   const vkl_vec3f *origin,
                                   const vkl_vec3f *direction,
                                   const vkl_range1f *tRange,
                                   float time,
-                                  VKLValueSelector valueSelector,
                                   void *buffer);
 
 VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                         VKLSampler sampler,
+                         VKLHitIteratorContext context,
                          const vkl_vvec3f4 *origin,
                          const vkl_vvec3f4 *direction,
                          const vkl_vrange1f4 *tRange,
                          const float *times,
-                         VKLValueSelector valueSelector,
                          void *buffer);
 
 VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                         VKLSampler sampler,
+                         VKLHitIteratorContext context,
                          const vkl_vvec3f8 *origin,
                          const vkl_vvec3f8 *direction,
                          const vkl_vrange1f8 *tRange,
                          const float *times,
-                         VKLValueSelector valueSelector,
                          void *buffer);
 
 VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                          VKLSampler sampler,
+                          VKLHitIteratorContext context,
                           const vkl_vvec3f16 *origin,
                           const vkl_vvec3f16 *direction,
                           const vkl_vrange1f16 *tRange,
                           const float *times,
-                          VKLValueSelector valueSelector,
                           void *buffer);
 ```
 
 Buffer size can be queried with
 
 ``` cpp
-size_t vklGetHitIteratorSize(VKLSampler sampler);
+size_t vklGetHitIteratorSize(VKLHitIteratorContext context);
 
-size_t vklGetHitIteratorSize4(VKLSampler sampler);
+size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
 
-size_t vklGetHitIteratorSize8(VKLSampler sampler);
+size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
 
-size_t vklGetHitIteratorSize16(VKLSampler sampler);
+size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
 ```
 
 Open VKL also provides the macro `VKL_MAX_HIT_ITERATOR_SIZE` as a
@@ -1703,7 +1717,7 @@ void vklIterateHit16(const int *valid,
 ```
 
 Returned hits consist of a t-value, a volume value (equal to one of the
-requested values specified in the value selector), and an (object space)
+requested values specified in the context), and an (object space)
 epsilon value estimating the error of the intersection:
 
 ``` cpp
@@ -1947,7 +1961,7 @@ are shown below.
 #include <windows.h>  // Sleep
 #endif
 
-void demoScalarAPI(VKLVolume volume)
+void demoScalarAPI(VKLDevice device, VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
 
@@ -1964,15 +1978,18 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int numAttributes = vklGetNumAttributes(volume);
   printf("\tnum attributes = %d\n\n", numAttributes);
 
-  // value range (first attribute)
-  vkl_range1f valueRange = vklGetValueRange(volume);
-  printf("\tvalue range (first attribute) = (%f %f)\n\n",
-         valueRange.lower,
-         valueRange.upper);
+  // value range for all attributes
+  for (unsigned int i = 0; i < numAttributes; i++) {
+    vkl_range1f valueRange = vklGetValueRange(volume, i);
+    printf("\tvalue range (attribute %u) = (%f %f)\n",
+           i,
+           valueRange.lower,
+           valueRange.upper);
+  }
 
   // coordinate for sampling / gradients
   vkl_vec3f coord = {1.f, 2.f, 3.f};
-  printf("\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
+  printf("\n\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
@@ -1991,15 +2008,33 @@ void demoScalarAPI(VKLVolume volume)
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
-  // value selector setup (note the commit at the end)
-  vkl_range1f ranges[2]     = {{10, 20}, {50, 75}};
-  int num_ranges            = 2;
-  float values[2]           = {32, 96};
-  int num_values            = 2;
-  VKLValueSelector selector = vklNewValueSelector(volume);
-  vklValueSelectorSetRanges(selector, num_ranges, ranges);
-  vklValueSelectorSetValues(selector, num_values, values);
-  vklCommit(selector);
+  // interval iterator context setup
+  vkl_range1f ranges[2] = {{10, 20}, {50, 75}};
+  int num_ranges        = 2;
+  VKLData rangesData =
+      vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
+
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler, attributeIndex);
+
+  vklSetData(intervalContext, "valueRanges", rangesData);
+  vklRelease(rangesData);
+
+  vklCommit(intervalContext);
+
+  // hit iterator context setup
+  float values[2] = {32, 96};
+  int num_values  = 2;
+  VKLData valuesData =
+      vklNewData(device, num_values, VKL_FLOAT, values, VKL_DATA_DEFAULT, 0);
+
+  VKLHitIteratorContext hitContext =
+      vklNewHitIteratorContext(sampler, attributeIndex);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
+  vklCommit(hitContext);
 
   // ray definition for iterators
   vkl_vec3f rayOrigin    = {0, 1, 1};
@@ -2018,12 +2053,16 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetIntervalIteratorSize(sampler));
+    char *buffer = _malloca(vklGetIntervalIteratorSize(intervalContext));
 #else
-    char buffer[vklGetIntervalIteratorSize(sampler)];
+    char buffer[vklGetIntervalIteratorSize(intervalContext)];
 #endif
-    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIterator(intervalContext,
+                                &rayOrigin,
+                                &rayDirection,
+                                &rayTRange,
+                                buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -2055,12 +2094,16 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetHitIteratorSize(sampler));
+    char *buffer = _malloca(vklGetHitIteratorSize(hitContext));
 #else
-    char buffer[vklGetHitIteratorSize(sampler)];
+    char buffer[vklGetHitIteratorSize(hitContext)];
 #endif
-    VKLHitIterator hitIterator = vklInitHitIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, time, selector, buffer);
+    VKLHitIterator hitIterator = vklInitHitIterator(hitContext,
+                                                    &rayOrigin,
+                                                    &rayDirection,
+                                                    &rayTRange,
+                                                    time,
+                                                    buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -2079,7 +2122,8 @@ void demoScalarAPI(VKLVolume volume)
 #endif
   }
 
-  vklRelease(selector);
+  vklRelease(hitContext);
+  vklRelease(intervalContext);
   vklRelease(sampler);
 }
 
@@ -2272,7 +2316,7 @@ int main()
 
   vklCommit(volume);
 
-  demoScalarAPI(volume);
+  demoScalarAPI(device, volume);
   demoVectorAPI(volume);
   demoStreamAPI(volume);
 

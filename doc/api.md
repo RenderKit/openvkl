@@ -241,11 +241,6 @@ passed as a string. Below are all variants of `vklSet...`.
     void vklSetString(VKLObject object, const char *name, const char *s);
     void vklSetVoidPtr(VKLObject object, const char *name, void *v);
 
-The exception to this rule is the `VKLValueSelector` object (described in the
-iterators section below), which has object-specific set methods.  The reason for
-this is to align the C99/C++ API with the ISPC API, which can't use a parameter
-method due to language limitations.
-
 After parameters have been set, `vklCommit` must be called on the object to make
 them take effect.
 
@@ -298,8 +293,6 @@ section for specifics. Valid constants are listed in the table below.
   VKL_DATA                   data reference
 
   VKL_OBJECT                 generic object reference
-
-  VKL_VALUE_SELECTOR         value selector object reference
 
   VKL_VOLUME                 volume object reference
 
@@ -1375,54 +1368,60 @@ Iterators
 
 Open VKL has APIs to search for particular volume values along a ray.  Queries
 can be for ranges of volume values (`vklIterateInterval`) or for particular
-values (`vklIterateHit`).  Only the first volume attribute is currently
-considered in the iterator APIs.
+values (`vklIterateHit`).
 
-The desired values are set in a `VKLValueSelector`, which needs to be created,
-filled in with values, and then committed.
+Interval iterators require a context object to define the volume (referenced
+through the sampler) and attribute of interest. Contexts additionally hold
+parameters related to iteration behavior. An interval iterator context is
+created via
 
-    VKLValueSelector vklNewValueSelector(VKLVolume volume);
+    VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler,
+                                                             unsigned int attributeIndex);
 
-    void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
-                                   size_t numRanges,
-                                   const vkl_range1f *ranges);
+The parameters understood by interval iterator contexts are defined in the table
+below.
 
-    void vklValueSelectorSetValues(VKLValueSelector valueSelector,
-                                   size_t numValues,
-                                   const float *values);
+  -------------- ------------ ------------ -------------------------------------
+  Type           Name         Default      Description
+  -------------- ------------ ------------ -------------------------------------
+  vkl_range1f[]  valueRanges  [-inf, inf]  Defines the value ranges of interest.
+                                           Intervals not containing any of these
+                                           values ranges will be skipped during
+                                           iteration.
+  -------------- ------------ ------------ -------------------------------------
+  : Configuration parameters for interval iterator contexts.
+
+As with other objects, the interval iterator context must be committed before
+being used.
 
 To query an interval, a `VKLIntervalIterator` of scalar or vector width must be
 initialized with `vklInitIntervalIterator`.
 
-    VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
+    VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                                 const vkl_vec3f *origin,
                                                 const vkl_vec3f *direction,
                                                 const vkl_range1f *tRange,
-                                                VKLValueSelector valueSelector,
                                                 void *buffer);
 
     VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                                  VKLSampler sampler,
+                                                  VKLIntervalIteratorContext context,
                                                   const vkl_vvec3f4 *origin,
                                                   const vkl_vvec3f4 *direction,
                                                   const vkl_vrange1f4 *tRange,
-                                                  VKLValueSelector valueSelector,
                                                   void *buffer);
 
     VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                                  VKLSampler sampler,
+                                                  VKLIntervalIteratorContext context,
                                                   const vkl_vvec3f8 *origin,
                                                   const vkl_vvec3f8 *direction,
                                                   const vkl_vrange1f8 *tRange,
-                                                  VKLValueSelector valueSelector,
                                                   void *buffer);
 
     VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                    VKLSampler sampler,
+                                                    VKLIntervalIteratorContext context,
                                                     const vkl_vvec3f16 *origin,
                                                     const vkl_vvec3f16 *direction,
                                                     const vkl_vrange1f16 *tRange,
-                                                    VKLValueSelector valueSelector,
                                                     void *buffer);
 
 Open VKL places the iterator struct into a user-provided buffer, and the
@@ -1432,13 +1431,13 @@ Copying iterator buffers is currently not supported.
 
 The required size, in bytes, of the buffer can be queried with
 
-    size_t vklGetIntervalIteratorSize(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
 
-    size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
 
-    size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
 
-    size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
 
 The values these functions return may change depending on the parameters set
 on `sampler`.
@@ -1509,53 +1508,70 @@ fashion.  This API could be used, for example, to find isosurfaces. In contrast
 to interval iterators, time value(s) may be provided to specify the sampling
 time. These values must be between 0 and 1; for the vector versions, a `NULL`
 value indicates all times are zero. For temporally constant volumes, the time
-values have no effect. Again, a user allocated buffer must be provided, and a
-`VKLHitIterator` of the desired width must be initialized:
+values have no effect.
 
-    VKLHitIterator vklInitHitIterator(VKLSampler sampler,
+Hit iterators similarly require a context object to define the volume
+(referenced through the sampler), attribute of interest, and other parameters
+related to iteration behavior. A hit iterator context is created via
+
+    VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler,
+                                                   unsigned int attributeIndex);
+
+The parameters understood by hit iterator contexts are defined in the table
+below.
+
+  -------------- ------------ ------------ -------------------------------------
+  Type           Name         Default      Description
+  -------------- ------------ ------------ -------------------------------------
+  float[]        values                    Defines the value(s) of interest.
+  -------------- ------------ ------------ -------------------------------------
+  : Configuration parameters for hit iterator contexts.
+
+The hit iterator context must be committed before being used.
+
+Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
+desired width must be initialized:
+
+    VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                       const vkl_vec3f *origin,
                                       const vkl_vec3f *direction,
                                       const vkl_range1f *tRange,
                                       float time,
-                                      VKLValueSelector valueSelector,
                                       void *buffer);
 
     VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                             VKLSampler sampler,
+                             VKLHitIteratorContext context,
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
                              const float *times,
-                             VKLValueSelector valueSelector,
                              void *buffer);
 
     VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                             VKLSampler sampler,
+                             VKLHitIteratorContext context,
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
                              const vkl_vrange1f8 *tRange,
                              const float *times,
-                             VKLValueSelector valueSelector,
                              void *buffer);
 
     VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                              VKLSampler sampler,
+                              VKLHitIteratorContext context,
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
                               const float *times,
-                              VKLValueSelector valueSelector,
                               void *buffer);
 
 Buffer size can be queried with
 
-    size_t vklGetHitIteratorSize(VKLSampler sampler);
+    size_t vklGetHitIteratorSize(VKLHitIteratorContext context);
 
-    size_t vklGetHitIteratorSize4(VKLSampler sampler);
+    size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
 
-    size_t vklGetHitIteratorSize8(VKLSampler sampler);
+    size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
 
-    size_t vklGetHitIteratorSize16(VKLSampler sampler);
+    size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
 
 Open VKL also provides the macro `VKL_MAX_HIT_ITERATOR_SIZE` as a conservative
 estimate.
@@ -1581,8 +1597,8 @@ returned lane mask indicates that the iterator is still within the volume.
                          int *result);
 
 Returned hits consist of a t-value, a volume value (equal to one of the
-requested values specified in the value selector), and an (object space) epsilon
-value estimating the error of the intersection:
+requested values specified in the context), and an (object space) epsilon value
+estimating the error of the intersection:
 
     typedef struct
     {

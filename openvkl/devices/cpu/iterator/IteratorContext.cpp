@@ -27,6 +27,8 @@ namespace openvkl {
     template <int W>
     void IntervalIteratorContext<W>::commit()
     {
+      this->attributeIndex = this->template getParam<int>("attributeIndex", 0);
+
       throwOnIllegalAttributeIndex(&this->getSampler().getVolume(),
                                    this->attributeIndex);
 
@@ -70,6 +72,8 @@ namespace openvkl {
     template <int W>
     void HitIteratorContext<W>::commit()
     {
+      this->attributeIndex = this->template getParam<int>("attributeIndex", 0);
+
       throwOnIllegalAttributeIndex(&this->getSampler().getVolume(),
                                    this->attributeIndex);
 

@@ -27,7 +27,10 @@ void interval_iteration(size_t numParticles,
   const unsigned int attributeIndex = 0;
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler, attributeIndex);
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
   vklCommit(intervalContext);
 
   const vkl_box3f bbox = vklGetBoundingBox(volume);

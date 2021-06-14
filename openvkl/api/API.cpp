@@ -333,11 +333,10 @@ OPENVKL_CATCH_END_NO_DEVICE()
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" VKLIntervalIteratorContext vklNewIntervalIteratorContext(
-    VKLSampler sampler, unsigned int attributeIndex)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    VKLSampler sampler) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
 {
   VKLIntervalIteratorContext context =
-      deviceObj->newIntervalIteratorContext(sampler, attributeIndex);
+      deviceObj->newIntervalIteratorContext(sampler);
   if (context == nullptr) {
     postLogMessage(deviceObj, VKL_LOG_ERROR)
         << "could not create interval iterator context";
@@ -456,12 +455,10 @@ __define_vklIterateIntervalN(16);
 // Hit iterator ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" VKLHitIteratorContext vklNewHitIteratorContext(
-    VKLSampler sampler, unsigned int attributeIndex)
+extern "C" VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler)
     OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
 {
-  VKLHitIteratorContext context =
-      deviceObj->newHitIteratorContext(sampler, attributeIndex);
+  VKLHitIteratorContext context = deviceObj->newHitIteratorContext(sampler);
   if (context == nullptr) {
     postLogMessage(deviceObj, VKL_LOG_ERROR)
         << "could not create hit iterator context";

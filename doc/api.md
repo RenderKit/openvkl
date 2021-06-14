@@ -1370,25 +1370,25 @@ Open VKL has APIs to search for particular volume values along a ray.  Queries
 can be for ranges of volume values (`vklIterateInterval`) or for particular
 values (`vklIterateHit`).
 
-Interval iterators require a context object to define the volume (referenced
-through the sampler) and attribute of interest. Contexts additionally hold
-parameters related to iteration behavior. An interval iterator context is
-created via
+Interval iterators require a context object to define the sampler and parameters
+related to iteration behavior. An interval iterator context is created via
 
-    VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler,
-                                                             unsigned int attributeIndex);
+    VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 
 The parameters understood by interval iterator contexts are defined in the table
 below.
 
-  -------------- ------------ ------------ -------------------------------------
-  Type           Name         Default      Description
-  -------------- ------------ ------------ -------------------------------------
-  vkl_range1f[]  valueRanges  [-inf, inf]  Defines the value ranges of interest.
-                                           Intervals not containing any of these
-                                           values ranges will be skipped during
-                                           iteration.
-  -------------- ------------ ------------ -------------------------------------
+  -------------- ---------------- ------------ -------------------------------------
+  Type           Name             Default      Description
+  -------------- ---------------- ------------ -------------------------------------
+  int            attributeIndex   0            Defines the volume attribute of
+                                               interest.
+
+  vkl_range1f[]  valueRanges      [-inf, inf]  Defines the value ranges of interest.
+                                               Intervals not containing any of these
+                                               values ranges will be skipped during
+                                               iteration.
+  -------------- ---------------- ------------ -------------------------------------
   : Configuration parameters for interval iterator contexts.
 
 As with other objects, the interval iterator context must be committed before
@@ -1510,21 +1510,22 @@ time. These values must be between 0 and 1; for the vector versions, a `NULL`
 value indicates all times are zero. For temporally constant volumes, the time
 values have no effect.
 
-Hit iterators similarly require a context object to define the volume
-(referenced through the sampler), attribute of interest, and other parameters
-related to iteration behavior. A hit iterator context is created via
+Hit iterators similarly require a context object to define the sampler and other
+iteration parameters. A hit iterator context is created via
 
-    VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler,
-                                                   unsigned int attributeIndex);
+    VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler);
 
 The parameters understood by hit iterator contexts are defined in the table
 below.
 
-  -------------- ------------ ------------ -------------------------------------
-  Type           Name         Default      Description
-  -------------- ------------ ------------ -------------------------------------
-  float[]        values                    Defines the value(s) of interest.
-  -------------- ------------ ------------ -------------------------------------
+  -------------- ---------------- ------------ -------------------------------------
+  Type           Name             Default      Description
+  -------------- ---------------- ------------ -------------------------------------
+  int            attributeIndex   0            Defines the volume attribute of
+                                               interest.
+
+  float[]        values                        Defines the value(s) of interest.
+  -------------- ---------------- ------------ -------------------------------------
   : Configuration parameters for hit iterator contexts.
 
 The hit iterator context must be committed before being used.

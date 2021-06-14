@@ -122,12 +122,12 @@ namespace openvkl {
 
     template <int W>
     VKLIntervalIteratorContext CPUDevice<W>::newIntervalIteratorContext(
-        VKLSampler sampler, unsigned int attributeIndex)
+        VKLSampler sampler)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
       return (VKLIntervalIteratorContext)samplerObject
           .getIntervalIteratorFactory()
-          .newContext(samplerObject, attributeIndex);
+          .newContext(samplerObject);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -136,11 +136,11 @@ namespace openvkl {
 
     template <int W>
     VKLHitIteratorContext CPUDevice<W>::newHitIteratorContext(
-        VKLSampler sampler, unsigned int attributeIndex)
+        VKLSampler sampler)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
       return (VKLHitIteratorContext)samplerObject.getHitIteratorFactory()
-          .newContext(samplerObject, attributeIndex);
+          .newContext(samplerObject);
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -50,7 +50,10 @@ void scalar_interval_continuity_with_no_value_ranges(
   vklCommit(sampler);
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler, attributeIndex);
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
   vklCommit(intervalContext);
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
@@ -97,7 +100,10 @@ void scalar_interval_value_ranges_with_no_value_ranges(
   vklCommit(sampler);
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler, attributeIndex);
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
   vklCommit(intervalContext);
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
@@ -153,7 +159,9 @@ void scalar_interval_value_ranges_with_value_ranges(
       getOpenVKLDevice(), valueRanges.size(), VKL_BOX1F, valueRanges.data());
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler, attributeIndex);
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
   vklSetData(intervalContext, "valueRanges", valueRangesData);
   vklRelease(valueRangesData);

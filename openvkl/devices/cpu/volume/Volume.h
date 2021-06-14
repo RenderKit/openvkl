@@ -23,11 +23,12 @@ namespace openvkl {
 
     // Helpers ////////////////////////////////////////////////////////////////
 
-    template <int W>
+    // this helper may be used on both signed and unsigned int types
+    template <int W, typename INT_TYPE>
     inline void throwOnIllegalAttributeIndex(const Volume<W> *volume,
-                                             unsigned int attributeIndex)
+                                             INT_TYPE attributeIndex)
     {
-      if (attributeIndex >= volume->getNumAttributes()) {
+      if (attributeIndex < 0 || attributeIndex >= volume->getNumAttributes()) {
         throw std::runtime_error("illegal attributeIndex requested on volume");
       }
     }

@@ -1134,13 +1134,9 @@ void interactiveRender(ViewerParams &params,
     if (numAttributes > 1) {
       if (ImGui::SliderInt(
               "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
-        scene.attributeIndex = attributeIndex;
+        scene.updateAttributeIndex(attributeIndex);
 
-        // changing attributes requires updating iterator contexts
-        scene.updateIntervalIteratorContext(transferFunction);
-        scene.updateHitIteratorContext(isoValues);
-
-        changed              = true;
+        changed = true;
       }
     }
 
@@ -1155,7 +1151,7 @@ void interactiveRender(ViewerParams &params,
     if (params.rendererType == "hit_iterator") {
       if (addIsosurfacesUI(*glfwVKLWindow, isoValues)) {
         changed = true;
-        scene.updateHitIteratorContext(isoValues);
+        scene.updateHitIteratorContextValues(isoValues);
       }
     }
 
@@ -1172,7 +1168,7 @@ void interactiveRender(ViewerParams &params,
           scene.tfNumColorsAndOpacities =
               transferFunction.colorsAndOpacities.size();
           scene.tfValueRange = valueRange;
-          scene.updateIntervalIteratorContext(transferFunction);
+          scene.updateIntervalIteratorContextValueRanges(transferFunction);
           glfwVKLWindow->resetAccumulation();
         };
 
@@ -1190,8 +1186,8 @@ void interactiveRender(ViewerParams &params,
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
       scene.updateVolume(vdbVolume->getVKLVolume(getOpenVKLDevice()));
       setupSampler(params, scene);
-      scene.updateIntervalIteratorContext(transferFunction);
-      scene.updateHitIteratorContext(isoValues);
+      scene.updateIntervalIteratorContextValueRanges(transferFunction);
+      scene.updateHitIteratorContextValues(isoValues);
 
       if (leafAccessObserver)
         vklRelease(leafAccessObserver);
@@ -1222,8 +1218,8 @@ void imageWrite(ViewerParams &params,
   scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
 
   // and default iterator contexts
-  scene.updateIntervalIteratorContext(transferFunction);
-  scene.updateHitIteratorContext(std::vector<float>{-1.f, 0.f, 1.f});
+  scene.updateIntervalIteratorContextValueRanges(transferFunction);
+  scene.updateHitIteratorContextValues(std::vector<float>{-1.f, 0.f, 1.f});
 
   auto window = rkcommon::make_unique<VKLWindow>(
       params.windowSize, scene, params.rendererType);

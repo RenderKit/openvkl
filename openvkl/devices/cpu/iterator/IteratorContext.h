@@ -21,7 +21,7 @@ namespace openvkl {
     template <int W>
     struct IteratorContext : public ManagedObject
     {
-      IteratorContext(const Sampler<W> &sampler, unsigned int attributeIndex);
+      IteratorContext(const Sampler<W> &sampler);
 
       virtual ~IteratorContext();
 
@@ -33,7 +33,7 @@ namespace openvkl {
 
      protected:
       Ref<const Sampler<W>> sampler;
-      const unsigned int attributeIndex;
+      int attributeIndex = 0;
 
       void *ispcEquivalent{nullptr};
     };
@@ -41,9 +41,8 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline IteratorContext<W>::IteratorContext(const Sampler<W> &sampler,
-                                               unsigned int attributeIndex)
-        : sampler(&sampler), attributeIndex(attributeIndex)
+    inline IteratorContext<W>::IteratorContext(const Sampler<W> &sampler)
+        : sampler(&sampler)
     {
     }
 
@@ -72,9 +71,8 @@ namespace openvkl {
     template <int W>
     struct IntervalIteratorContext : public IteratorContext<W>
     {
-      IntervalIteratorContext(const Sampler<W> &sampler,
-                              unsigned int attributeIndex)
-          : IteratorContext<W>(sampler, attributeIndex)
+      IntervalIteratorContext(const Sampler<W> &sampler)
+          : IteratorContext<W>(sampler)
       {
       }
 
@@ -96,8 +94,8 @@ namespace openvkl {
     template <int W>
     struct HitIteratorContext : public IntervalIteratorContext<W>
     {
-      HitIteratorContext(const Sampler<W> &sampler, unsigned int attributeIndex)
-          : IntervalIteratorContext<W>(sampler, attributeIndex)
+      HitIteratorContext(const Sampler<W> &sampler)
+          : IntervalIteratorContext<W>(sampler)
       {
       }
 

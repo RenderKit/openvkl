@@ -35,8 +35,7 @@ extern "C" {
  */
 
 OPENVKL_INTERFACE
-VKLIntervalIteratorContext vklNewIntervalIteratorContext(
-    VKLSampler sampler, unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 
 /*
  * Interval iterator types are opaque. See vklGetIntervalIteratorSize()
@@ -184,8 +183,7 @@ void vklIterateInterval16(const int *valid,
  */
 
 OPENVKL_INTERFACE
-VKLHitIteratorContext vklNewHitIteratorContext(
-    VKLSampler sampler, unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler);
 
 struct HitIterator;
 typedef struct HitIterator *VKLHitIterator;

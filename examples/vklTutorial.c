@@ -63,7 +63,9 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
       vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler, attributeIndex);
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
   vklSetData(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
@@ -76,8 +78,9 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   VKLData valuesData =
       vklNewData(device, num_values, VKL_FLOAT, values, VKL_DATA_DEFAULT, 0);
 
-  VKLHitIteratorContext hitContext =
-      vklNewHitIteratorContext(sampler, attributeIndex);
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
 
   vklSetData(hitContext, "values", valuesData);
   vklRelease(valuesData);

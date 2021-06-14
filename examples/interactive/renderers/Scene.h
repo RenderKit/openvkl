@@ -67,7 +67,7 @@ namespace openvkl {
         }
       }
 
-      void updateIntervalIteratorContext(
+      void updateIntervalIteratorContextValueRanges(
           const TransferFunction &transferFunction)
       {
         // set interval context value ranges based on transfer function positive
@@ -84,24 +84,16 @@ namespace openvkl {
                                        valueRanges.data());
         }
 
-        // context setup
-        if (intervalContext) {
-          vklRelease(intervalContext);
-          intervalContext = nullptr;
-        }
-
-        intervalContext =
-            vklNewIntervalIteratorContext(sampler, attributeIndex);
+        vklSetData(intervalContext, "valueRanges", valueRangesData);
 
         if (valueRangesData) {
-          vklSetData(intervalContext, "valueRanges", valueRangesData);
           vklRelease(valueRangesData);
         }
 
         vklCommit(intervalContext);
       }
 
-      void updateHitIteratorContext(const std::vector<float> &isoValues)
+      void updateHitIteratorContextValues(const std::vector<float> &isoValues)
       {
         // if we have isovalues, set these values on the context
         VKLData valuesData = nullptr;
@@ -113,19 +105,23 @@ namespace openvkl {
                                   isoValues.data());
         }
 
-        // context setup
-        if (hitContext) {
-          vklRelease(hitContext);
-          hitContext = nullptr;
-        }
-
-        hitContext = vklNewHitIteratorContext(sampler, attributeIndex);
+        vklSetData(hitContext, "values", valuesData);
 
         if (valuesData) {
-          vklSetData(hitContext, "values", valuesData);
           vklRelease(valuesData);
         }
 
+        vklCommit(hitContext);
+      }
+
+      void updateAttributeIndex(unsigned int attributeIndex)
+      {
+        this->attributeIndex = attributeIndex;
+
+        vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+        vklCommit(intervalContext);
+
+        vklSetInt(hitContext, "attributeIndex", attributeIndex);
         vklCommit(hitContext);
       }
 
@@ -135,6 +131,17 @@ namespace openvkl {
           vklRelease(sampler);
           sampler = nullptr;
         }
+
+        if (intervalContext) {
+          vklRelease(intervalContext);
+          intervalContext = nullptr;
+        }
+
+        if (hitContext) {
+          vklRelease(hitContext);
+          hitContext = nullptr;
+        }
+
         this->volume = volume;
 
         if (!this->volume)
@@ -142,6 +149,12 @@ namespace openvkl {
 
         sampler = vklNewSampler(volume);
         vklCommit(sampler);
+
+        intervalContext = vklNewIntervalIteratorContext(sampler);
+        vklCommit(intervalContext);
+
+        hitContext = vklNewHitIteratorContext(sampler);
+        vklCommit(hitContext);
       }
 #endif  // defined(__cplusplus)
     };

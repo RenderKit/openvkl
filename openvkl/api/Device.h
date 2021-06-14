@@ -90,7 +90,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       virtual VKLIntervalIteratorContext newIntervalIteratorContext(
-          VKLSampler sampler, unsigned int attributeIndex) = 0;
+          VKLSampler sampler) = 0;
 
 #define __define_getIntervalIteratorSizeN(WIDTH) \
   virtual size_t getIntervalIteratorSize##WIDTH( \
@@ -146,7 +146,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       virtual VKLHitIteratorContext newHitIteratorContext(
-          VKLSampler sampler, unsigned int attributeIndex) = 0;
+          VKLSampler sampler) = 0;
 
 #define __define_getHitIteratorSizeN(WIDTH)                               \
   virtual size_t getHitIteratorSize##WIDTH(VKLHitIteratorContext context) \

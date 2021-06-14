@@ -23,8 +23,9 @@ void scalar_hit_iteration(VKLVolume volume,
   VKLData valuesData = vklNewData(
       getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
 
-  VKLHitIteratorContext hitContext =
-      vklNewHitIteratorContext(sampler, attributeIndex);
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
 
   vklSetData(hitContext, "values", valuesData);
   vklRelease(valuesData);

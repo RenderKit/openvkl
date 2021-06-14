@@ -60,7 +60,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       VKLIntervalIteratorContext newIntervalIteratorContext(
-          VKLSampler sampler, unsigned int attributeIndex) override;
+          VKLSampler sampler) override;
 
       size_t getIntervalIteratorSize1(
           VKLIntervalIteratorContext context) const override
@@ -181,8 +181,7 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
      public:
-      VKLHitIteratorContext newHitIteratorContext(
-          VKLSampler sampler, unsigned int attributeIndex) override;
+      VKLHitIteratorContext newHitIteratorContext(VKLSampler sampler) override;
 
       size_t getHitIteratorSize1(VKLHitIteratorContext context) const override
       {

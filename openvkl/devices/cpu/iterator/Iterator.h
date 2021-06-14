@@ -39,8 +39,7 @@ namespace openvkl {
       virtual ~Iterator() = default;
 
      protected:
-      explicit Iterator(const IteratorContext<W> &context)
-          : context{&context}
+      explicit Iterator(const IteratorContext<W> &context) : context{&context}
       {
       }
 
@@ -266,8 +265,7 @@ namespace openvkl {
       /*
        * Constructs a new context.
        */
-      virtual ContextT<W> *newContext(const Sampler<W> &sampler,
-                                      unsigned int attributeIndex) const = 0;
+      virtual ContextT<W> *newContext(const Sampler<W> &sampler) const = 0;
 
       /*
        * Construct a new varying iterator into the provided buffer.
@@ -320,10 +318,9 @@ namespace openvkl {
                         std::is_base_of<ContextBaseT<W>, ContextT<W>>::value,
                     "ConcreteIteratorFactory used with incompatible types.");
 
-      ContextT<W> *newContext(const Sampler<W> &sampler,
-                              unsigned int attributeIndex) const override final
+      ContextT<W> *newContext(const Sampler<W> &sampler) const override final
       {
-        return new ContextT<W>(sampler, attributeIndex);
+        return new ContextT<W>(sampler);
       }
 
       IteratorBaseT<W> *constructV(const ContextBaseT<W> &context,

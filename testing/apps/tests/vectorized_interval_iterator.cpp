@@ -40,7 +40,10 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   const unsigned int attributeIndex = 0;
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(vklSampler, attributeIndex);
+      vklNewIntervalIteratorContext(vklSampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
   vklCommit(intervalContext);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);

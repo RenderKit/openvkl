@@ -582,8 +582,6 @@ namespace openvkl {
       maxSamplingDepth =
           this->template getParam<int>("maxSamplingDepth", maxSamplingDepth);
       maxSamplingDepth = std::min(maxSamplingDepth, VKL_VDB_NUM_LEVELS - 1u);
-      maxIteratorDepth = this->template getParam<int>("maxIteratorDepth",
-                                                      VKL_VDB_NUM_LEVELS - 2u);
 
       // Set up the grid data structure.
       // We use exceptions for error reporting, so make sure to release

@@ -147,9 +147,6 @@ namespace openvkl {
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       spacing = gridSpacing;
 
-      maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
-
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,
                 (ispc::box3f &)bounds,
@@ -216,12 +213,6 @@ namespace openvkl {
     VKLAMRMethod AMRVolume<W>::getAMRMethod() const
     {
       return amrMethod;
-    }
-
-    template <int W>
-    inline int AMRVolume<W>::getMaxIteratorDepth() const
-    {
-      return maxIteratorDepth;
     }
 
     static inline void errorFunction(void *userPtr,

@@ -605,10 +605,6 @@ which they reside, and the scalar data contained within each block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
-A binary BVH is used internally to accelerate interval iteration. Intervals are
-found by intersecting BVH nodes up to a maximum level of the tree, configurable
-by the `maxIteratorDepth` parameter.
-
 AMR volumes are created by passing the type string `"amr"` to `vklNewVolume`,
 and have the following parameters:
 
@@ -651,9 +647,6 @@ parameters.
                                                        `VKL_AMR_FINEST`
 
                                                        `VKL_AMR_OCTANT`
-
-  int            maxIteratorDepth                   6  Do not descend further than to this
-                                                       BVH depth during interval iteration.
   -------------- ------------------ -----------------  -------------------------------------
   : Configuration parameters for AMR (`"AMR"`) volumes and their sampler objects.
 
@@ -721,18 +714,6 @@ id_n, m, id_1, ..., id_m$. This alternative `index` array layout can be enabled
 through the `indexPrefixed` flag (in which case, the `cell.type` parameter
 should be omitted).
 
-A binary bounding volume hierarchy (BVH) is used internally to accelerate
-interval iteration. Intervals are by default found by intersecting BVH nodes up
-to a maximum level of the tree, configurable by the `maxIteratorDepth`
-parameter. Larger values of `maxIteratorDepth` lead to smaller individual
-intervals (up to leaf node intersections), yielding potentially more efficient
-space-skipping behavior and tighter bounds on returned interval metadata. The
-application may instead choose to iterate through intervals based on ray
-intersections with individual cells by setting the `elementaryCellIteration`
-parameter. Returned intervals will then span exact cell boundaries, rather than
-bounding boxes of BVH nodes. This approach is generally less performant than the
-default interval iteration mode, however.
-
 Gradients are computed using finite differences.
 
 Unstructured volumes are created by passing the type string `"unstructured"` to
@@ -782,21 +763,6 @@ Unstructured volumes are created by passing the type string `"unstructured"` to
                                                      at a cost of 12 bytes/face
   -------------------  ------------------  --------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes.
-
-The following additional parameters can be set both on `unstructured` volumes
-and their sampler objects (sampler object parameters default to volume
-parameters).
-
-  -------------------  -------------------------  --------  ---------------------------------------
-  Type                 Name                       Default   Description
-  -------------------  -------------------------  --------  ---------------------------------------
-  int                  maxIteratorDepth                  6  Do not descend further than to this BVH
-                                                            depth during interval iteration.
-
-  bool                 elementaryCellIteration       false  Return intervals spanning individual
-                                                            cell intersections.
-  -------------------  -------------------------  --------  ---------------------------------------
-  : Configuration parameters for unstructured (`"unstructured"`) volumes and their sampler objects.
 
 ### VDB Volumes
 
@@ -928,10 +894,6 @@ objects (sampler object parameters default to volume parameters).
 
   int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`-1 Do not descend further than to this
                                                          depth during sampling.
-
-  int           maxIteratorDepth  `VKL_VDB_NUM_LEVELS`-2 Do not descend further than to this
-                                                         depth during iteration.
-
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
@@ -1046,10 +1008,6 @@ The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
 method in [1].
 
-Similar to unstructured volumes, a binary BVH is used internally to accelerate
-interval iteration. Intervals are found by intersecting BVH nodes up to a
-maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
-
 Particle volumes are created by passing the type string `"particle"` to
 `vklNewVolume`, and have the following parameters:
 
@@ -1095,17 +1053,6 @@ Particle volumes are created by passing the type string `"particle"` to
                                                   less efficient.
   --------  --------------------------  --------  ---------------------------------------
   : Configuration parameters for particle (`"particle"`) volumes.
-
-The following additional parameters can be set both on `particle` volumes and
-their sampler objects (sampler object parameters default to volume parameters).
-
-  --------  --------------------------  --------  ---------------------------------------
-  Type      Name                        Default   Description
-  --------  --------------------------  --------  ---------------------------------------
-  int       maxIteratorDepth            6         Do not descend further than to this BVH
-                                                  depth during interval iteration.
-  --------  --------------------------  --------  ---------------------------------------
-  : Configuration parameters for particle (`"particle"`) volumes and their sampler objects.
 
 1. Knoll, A., Wald, I., Navratil, P., Bowen, A., Reda, K., Papka, M.E. and
    Gaither, K. (2014), RBF Volume Ray Casting on Multicore and Manycore CPUs.
@@ -1378,18 +1325,39 @@ related to iteration behavior. An interval iterator context is created via
 The parameters understood by interval iterator contexts are defined in the table
 below.
 
-  -------------- ---------------- ------------ -------------------------------------
-  Type           Name             Default      Description
-  -------------- ---------------- ------------ -------------------------------------
-  int            attributeIndex   0            Defines the volume attribute of
-                                               interest.
+  -------------- ------------------------- ------------ -------------------------------------
+  Type           Name                      Default      Description
+  -------------- ------------------------- ------------ -------------------------------------
+  int            attributeIndex            0            Defines the volume attribute of
+                                                        interest.
 
-  vkl_range1f[]  valueRanges      [-inf, inf]  Defines the value ranges of interest.
-                                               Intervals not containing any of these
-                                               values ranges will be skipped during
-                                               iteration.
-  -------------- ---------------- ------------ -------------------------------------
+  vkl_range1f[]  valueRanges               [-inf, inf]  Defines the value ranges of interest.
+                                                        Intervals not containing any of these
+                                                        values ranges may be skipped during
+                                                        iteration.
+
+  int            maxIteratorDepth          volume       Do not descend further than to this
+                                           dependent    depth during interval iteration.
+
+  bool           elementaryCellIteration   false        Return intervals spanning individual
+                                                        cell intersections.
+  -------------- ------------------------- ------------ -------------------------------------
   : Configuration parameters for interval iterator contexts.
+
+Some volume types support parameters that can impact the size of intervals
+returned during iteration. `amr`, `particle`, `unstructured`, and `vdb` volumes
+support the `maxIteratorDepth` parameter. For these volume types, an internal
+tree structure is used to accelerate iteration, and this parameter defines what
+level of the tree nodes will be intersected to find intervals. In general, a
+higher depth value will give smaller intervals with tighter bounds on value
+ranges. The default `maxIteratorDepth` value is `VKL_VDB_NUM_LEVELS`-2 for `vdb`
+volumes, and 6 for all other types.
+
+`unstructured` volumes further support the `elementaryCellIteration` parameter.
+Enabling this will give intervals spanning individual cell intersections, rather
+than intersections with internal acceleration structure nodes which can span
+multiple cells or empty space in between. Elementary cell iteration is
+significantly slower than the default interval iteration mode.
 
 As with other objects, the interval iterator context must be committed before
 being used.

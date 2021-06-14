@@ -12,7 +12,9 @@ export void *uniform EXPORT_UNIQUE(IntervalIteratorContext_Constructor,
                                    void *uniform sampler,
                                    const uniform uint32 attributeIndex,
                                    const uniform int numValueRanges,
-                                   const box1f *uniform valueRanges)
+                                   const box1f *uniform valueRanges,
+                                   const uniform uint32 maxIteratorDepth,
+                                   const uniform bool elementaryCellIteration)
 {
   uniform IntervalIteratorContext *uniform self =
       uniform new uniform IntervalIteratorContext;
@@ -21,6 +23,9 @@ export void *uniform EXPORT_UNIQUE(IntervalIteratorContext_Constructor,
   self->attributeIndex = attributeIndex;
 
   ValueRanges_Constructor(self->valueRanges, numValueRanges, valueRanges);
+
+  self->maxIteratorDepth = maxIteratorDepth;
+  self->elementaryCellIteration = elementaryCellIteration;
 
   return self;
 }
@@ -44,7 +49,8 @@ export void *uniform EXPORT_UNIQUE(HitIteratorContext_Constructor,
                                    void *uniform sampler,
                                    const uniform uint32 attributeIndex,
                                    const uniform int numValues,
-                                   const float *uniform values)
+                                   const float *uniform values,
+                                   const uniform uint32 maxIteratorDepth)
 {
   uniform HitIteratorContext *uniform self =
       uniform new uniform HitIteratorContext;
@@ -61,6 +67,11 @@ export void *uniform EXPORT_UNIQUE(HitIteratorContext_Constructor,
   self->super.attributeIndex = attributeIndex;
 
   ValueRanges_Constructor(self->super.valueRanges, numValues, values);
+
+  self->super.maxIteratorDepth = maxIteratorDepth;
+
+  // always attempt to use elementary cell iteration for hit iteration
+  self->super.elementaryCellIteration = true;
 
   return self;
 }

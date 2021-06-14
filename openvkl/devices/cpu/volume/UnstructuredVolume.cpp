@@ -195,12 +195,6 @@ namespace openvkl {
         }
       }
 
-      maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
-
-      elementaryCellIteration =
-          this->template getParam<bool>("elementaryCellIteration", false);
-
       buildBvhAndCalculateBounds();
 
       computeOverlappingNodeMetadata(rtcRoot);

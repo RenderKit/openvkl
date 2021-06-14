@@ -419,8 +419,7 @@ export void EXPORT_UNIQUE(VdbSampler_set,
                           void *uniform _sampler,
                           uniform VKLFilter filter,
                           uniform VKLFilter gradientFilter,
-                          uniform vkl_uint32 maxSamplingDepth,
-                          uniform vkl_uint32 maxIteratorDepth)
+                          uniform vkl_uint32 maxSamplingDepth)
 {
   VdbSampler *uniform sampler = (VdbSampler * uniform) _sampler;
   CALL_ISPC(Sampler_setFilters, &sampler->super, filter, gradientFilter);
@@ -430,7 +429,6 @@ export void EXPORT_UNIQUE(VdbSampler_set,
       VdbSampler_iterator_computeSample_varying;
 
   sampler->maxSamplingDepth = maxSamplingDepth;
-  sampler->maxIteratorDepth = maxIteratorDepth;
 }
 
 export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler)

@@ -958,10 +958,16 @@ void setupSampler(const ViewerParams &params, Scene &scene)
   vklSetInt(scene.sampler, "filter", params.filter);
   vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
   vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
-  vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
-  vklSetBool(
-      scene.sampler, "elementaryCellIteration", params.elementaryCellIteration);
   vklCommit(scene.sampler);
+}
+
+void setupIntervalIteratorContext(const ViewerParams &params, Scene &scene)
+{
+  vklSetInt(scene.intervalContext, "maxIteratorDepth", params.maxIteratorDepth);
+  vklSetBool(scene.intervalContext,
+             "elementaryCellIteration",
+             params.elementaryCellIteration);
+  vklCommit(scene.intervalContext);
 }
 
 void setupScene(const ViewerParams &params,
@@ -970,6 +976,7 @@ void setupScene(const ViewerParams &params,
 {
   scene.updateVolume(testingVolume->getVKLVolume(getOpenVKLDevice()));
   setupSampler(params, scene);
+  setupIntervalIteratorContext(params, scene);
 }
 
 void logToOutput(const ViewerParams &params, const Scene &scene)
@@ -1037,7 +1044,8 @@ void interactiveRender(ViewerParams &params,
       glfwVKLWindow->setActiveRenderer(params.rendererType);
     }
 
-    bool samplerParamsChanged = false;
+    bool samplerParamsChanged                 = false;
+    bool intervalIteratorContextParamsChanged = false;
 
     // maxIteratorDepth parameter currently only applies to unstructured,
     // particle, and AMR volume samplers (special case below for vdb).
@@ -1045,7 +1053,7 @@ void interactiveRender(ViewerParams &params,
         params.gridType == "amr") {
       if (ImGui::SliderInt(
               "maxIteratorDepth", &params.maxIteratorDepth, 0, 31)) {
-        samplerParamsChanged = true;
+        intervalIteratorContextParamsChanged = true;
       }
     }
 
@@ -1054,7 +1062,7 @@ void interactiveRender(ViewerParams &params,
     if (params.gridType == "unstructured") {
       if (ImGui::Checkbox("elementaryCellIteration",
                           &params.elementaryCellIteration)) {
-        samplerParamsChanged = true;
+        intervalIteratorContextParamsChanged = true;
       }
     }
 
@@ -1106,12 +1114,18 @@ void interactiveRender(ViewerParams &params,
                            &params.maxIteratorDepth,
                            0,
                            VKL_VDB_NUM_LEVELS - 1)) {
-        samplerParamsChanged = true;
+        samplerParamsChanged                 = true;
+        intervalIteratorContextParamsChanged = true;
       }
     }
 
     if (samplerParamsChanged) {
       setupSampler(params, scene);
+      changed = true;
+    }
+
+    if (intervalIteratorContextParamsChanged) {
+      setupIntervalIteratorContext(params, scene);
       changed = true;
     }
 

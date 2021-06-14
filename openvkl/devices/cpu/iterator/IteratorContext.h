@@ -4,7 +4,6 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
-#include "rkcommon/math/range.h"
 
 using namespace rkcommon::math;
 
@@ -79,9 +78,6 @@ namespace openvkl {
       virtual ~IntervalIteratorContext();
 
       void commit() override;
-
-     private:
-      std::vector<range1f> valueRanges;
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -102,9 +98,6 @@ namespace openvkl {
       virtual ~HitIteratorContext();
 
       void commit() override;
-
-     private:
-      std::vector<float> values;
     };
 
   }  // namespace cpu_device

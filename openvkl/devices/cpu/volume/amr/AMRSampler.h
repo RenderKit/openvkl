@@ -92,13 +92,6 @@ namespace openvkl {
         CALL_ISPC(AMR_install_octant, ispcEquivalent);
       else
         throw std::runtime_error("AMRSampler: illegal method specified");
-
-      const int maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth",
-                                                volume->getMaxIteratorDepth()),
-                   0);
-
-      CALL_ISPC(AMRSampler_set, ispcEquivalent, maxIteratorDepth);
     }
 
     template <int W>

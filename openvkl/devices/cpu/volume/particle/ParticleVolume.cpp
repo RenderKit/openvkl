@@ -93,9 +93,6 @@ namespace openvkl {
             "clampMaxCumulativeValue greater than zero.");
       }
 
-      maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
-
       buildBvhAndCalculateBounds();
 
       if (!this->ispcEquivalent) {

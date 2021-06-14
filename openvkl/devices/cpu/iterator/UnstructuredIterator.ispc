@@ -136,8 +136,8 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
   while (1) {
     uniform bool isInner = (node->nominalLength.x >= 0);
 
-    if (isInner &&
-        (elementaryCellIteration || node->level < sampler->maxIteratorDepth)) {
+    if (isInner && (elementaryCellIteration ||
+                    node->level < iterator->super.context->maxIteratorDepth)) {
       uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node;
 
       box1f intersectedTRange0;
@@ -395,6 +395,6 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
       _self,
       _interval,
       self->super.context->valueRanges,
-      self->sampler->elementaryCellIteration,
+      self->super.context->elementaryCellIteration,
       _result);
 }

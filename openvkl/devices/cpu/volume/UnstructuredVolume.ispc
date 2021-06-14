@@ -1426,15 +1426,3 @@ export void EXPORT_UNIQUE(VKLUnstructuredSampler_Destructor,
       (UnstructuredSamplerBase * uniform) _sampler;
   delete sampler;
 }
-
-export void EXPORT_UNIQUE(VKLUnstructuredSampler_set,
-                          void *uniform _self,
-                          const uniform int maxIteratorDepth,
-                          const uniform bool elementaryCellIteration)
-{
-  UnstructuredSamplerBase *uniform self =
-      (UnstructuredSamplerBase * uniform) _self;
-
-  self->maxIteratorDepth        = maxIteratorDepth;
-  self->elementaryCellIteration = elementaryCellIteration;
-}

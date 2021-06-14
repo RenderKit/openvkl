@@ -197,17 +197,3 @@ export void EXPORT_UNIQUE(VKLParticleSampler_Destructor, void *uniform _sampler)
       (UnstructuredSamplerBase * uniform) _sampler;
   delete sampler;
 }
-
-export void EXPORT_UNIQUE(VKLParticleSampler_set,
-                          void *uniform _self,
-                          const uniform int maxIteratorDepth)
-{
-  UnstructuredSamplerBase *uniform self =
-      (UnstructuredSamplerBase * uniform) _self;
-
-  self->maxIteratorDepth = maxIteratorDepth;
-
-  // particle volumes use the unstructured sampler, but do not support
-  // elementary cell iteration
-  self->elementaryCellIteration = false;
-}

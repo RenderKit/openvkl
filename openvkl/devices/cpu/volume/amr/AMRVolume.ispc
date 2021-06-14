@@ -208,16 +208,3 @@ export void EXPORT_UNIQUE(AMRSampler_destroy, void *uniform _sampler)
       (UnstructuredSamplerBase * uniform) _sampler;
   delete sampler;
 }
-
-export void EXPORT_UNIQUE(AMRSampler_set,
-                          void *uniform _self,
-                          const uniform int maxIteratorDepth)
-{
-  UnstructuredSamplerBase *uniform self =
-      (UnstructuredSamplerBase * uniform) _self;
-
-  self->maxIteratorDepth = maxIteratorDepth;
-
-  // elementary cell iteration not supported
-  self->elementaryCellIteration = false;
-}

@@ -14,6 +14,9 @@ struct IntervalIteratorContext
   uniform uint32 attributeIndex;
 
   uniform ValueRanges valueRanges;
+
+  uniform uint32 maxIteratorDepth;
+  uniform bool elementaryCellIteration;
 };
 
 // hit iterator contexts inherit from interval contexts; this is because hit

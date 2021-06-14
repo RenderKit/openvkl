@@ -63,8 +63,6 @@ namespace openvkl {
 
       const Node *getNodeRoot() const;
 
-      int getMaxIteratorDepth() const;
-
      private:
       void buildBvhAndCalculateBounds();
       void computeValueRanges();
@@ -79,7 +77,6 @@ namespace openvkl {
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
-      int maxIteratorDepth;
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
@@ -112,12 +109,6 @@ namespace openvkl {
     inline const Node *ParticleVolume<W>::getNodeRoot() const
     {
       return rtcRoot;
-    }
-
-    template <int W>
-    inline int ParticleVolume<W>::getMaxIteratorDepth() const
-    {
-      return maxIteratorDepth;
     }
 
     // Helper functions ///////////////////////////////////////////////////////

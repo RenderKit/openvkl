@@ -88,8 +88,9 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
     self->dda.t = 0;
   } else {
     const float tMin = max(tRange.lower, tEnter);
-    self->tMax = min(tRange.upper, tExit);
-    ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
+    self->tMax       = min(tRange.upper, tExit);
+    ddaInit(
+        rayOrg, rayDir, tMin, self->super.context->maxIteratorDepth, self->dda);
   }
 }
 

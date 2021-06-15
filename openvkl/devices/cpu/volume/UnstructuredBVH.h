@@ -196,6 +196,7 @@ namespace openvkl {
 
           if (overlap0) {
             if (overlap1) {
+              assert(stackPtr < 32);
               nodeStack[stackPtr++] = inner->children[1];
               node                  = inner->children[0];
               continue;

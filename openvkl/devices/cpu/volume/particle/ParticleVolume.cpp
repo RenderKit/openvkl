@@ -222,6 +222,7 @@ namespace openvkl {
 
       // compute value ranges of leaf nodes in parallel
       std::unique_ptr<Sampler<W>> sampler(newSampler());
+      sampler->commit();
 
       if (estimateValueRanges) {
         // restrict to first attribute index

@@ -77,7 +77,7 @@ vklInitIntervalIteratorV(VKLSampler sampler,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
                          VKLValueSelector valueSelector,
-                         unsigned int8 *uniform buffer)
+                         void *uniform buffer)
 {
   varying bool mask = __mask;
   unmasked
@@ -229,7 +229,7 @@ vklInitHitIteratorV(VKLSampler sampler,
                     const varying vkl_range1f *uniform tRange,
                     const varying float *uniform time,
                     VKLValueSelector valueSelector,
-                    unsigned int8 *uniform buffer)
+                    void *uniform buffer)
 {
   varying bool mask = __mask;
   unmasked

@@ -32,8 +32,10 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
 
   const float time = self->time;
 
-  uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
+  void *uniform hitIteratorBuffer =
+      alloca(vklGetHitIteratorSizeV(scene->sampler));
+  void *uniform shadowHitIteratorBuffer =
+      alloca(vklGetHitIteratorSizeV(scene->sampler));
 
   VKLHitIterator iterator =
       vklInitHitIteratorV(scene->sampler,

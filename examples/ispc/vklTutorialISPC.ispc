@@ -87,7 +87,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   float time = 0.f;
 
   // interval iteration
-  uniform unsigned int8 bufferInterval[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  void *uniform bufferInterval = alloca(vklGetIntervalIteratorSizeV(sampler));
   VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
       sampler, &rayOrigin, &rayDirection, &rayTRange, selector, bufferInterval);
 
@@ -109,7 +109,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   }
 
   // hit iteration
-  uniform unsigned int8 bufferHit[VKL_MAX_HIT_ITERATOR_SIZE];
+  void *uniform bufferHit    = alloca(vklGetHitIteratorSizeV(sampler));
   VKLHitIterator hitIterator = vklInitHitIteratorV(sampler,
                                                    &rayOrigin,
                                                    &rayDirection,

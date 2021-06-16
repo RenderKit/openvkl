@@ -1444,10 +1444,10 @@ The values these functions return may change depending on the parameters set
 on `sampler`.
 
 Open VKL also provides a conservative maximum size over all volume types as a
-preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). This is particularly
-useful for stack-based allocation in ISPC. Open VKL will attempt to
-detect the native vector width using `TARGET_WIDTH`, which is defined in recent
-versions of ISPC.
+preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). For ISPC use cases,
+Open VKL will attempt to detect the native vector width using `TARGET_WIDTH`,
+which is defined in recent versions of ISPC, to provide a less conservative
+size.
 
 Intervals can then be processed by calling `vklIterateInterval` as long as the
 returned lane masks indicates that the iterator is still within the volume:
@@ -1665,7 +1665,13 @@ rely on `alloca` and similar functions:
 
     #include <alloca.h>
     const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
-    char *buffer = alloca(bufferSize);
+    void *buffer = alloca(bufferSize);
+
+Similarly for ISPC, variable length arrays are not supported, but `alloca` may
+be used:
+
+    const uniform size_t bufferSize = vklGetIntervalIteratorSizeV(sampler);
+    void *uniform buffer = alloca(bufferSize);
 
 Users should understand the implications of `alloca`. In particular,
 `alloca` does check available stack space and may result in stack overflow.
@@ -1674,8 +1680,8 @@ cannot be returned from a function.
 On Windows, `_malloca` is a safer option that performs additional error
 checking, but requires the use of `_freea`.
 
-In ISPC, variable length or `alloca` do not exist. Applications may instead rely
-on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and `VKL_MAX_HIT_ITERATOR_SIZE` macros:
+Applications may instead rely on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and
+`VKL_MAX_HIT_ITERATOR_SIZE` macros. For example, in ISPC:
 
     uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 

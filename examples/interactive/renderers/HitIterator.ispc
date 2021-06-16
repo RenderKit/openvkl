@@ -35,13 +35,14 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
   uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
 
-  VKLHitIterator iterator = vklInitHitIteratorV(scene->sampler,
-                                                (varying vkl_vec3f *)&ray.org,
-                                                (varying vkl_vec3f *)&ray.dir,
-                                                &tRange,
-                                                &time,
-                                                scene->valueSelector,
-                                                hitIteratorBuffer);
+  VKLHitIterator iterator =
+      vklInitHitIteratorV(scene->sampler,
+                          (varying vkl_vec3f * uniform) & ray.org,
+                          (varying vkl_vec3f * uniform) & ray.dir,
+                          &tRange,
+                          &time,
+                          scene->valueSelector,
+                          hitIteratorBuffer);
 
   // the current surface hit
   VKLHit hit;
@@ -53,7 +54,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   while (vklIterateHitV(iterator, &hit) && alpha < 0.99f) {
     const vec3f c = ray.org + hit.t * ray.dir;
     const vkl_vec3f grad =
-        vklComputeGradientV(scene->sampler, (varying vkl_vec3f *)&c);
+        vklComputeGradientV(scene->sampler, (varying vkl_vec3f * uniform) & c);
     vec3f N = normalize(make_vec3f(grad.x, grad.y, grad.z));
     if (isnan(N.x) || isnan(N.y) || isnan(N.z))
       N = make_vec3f(0.f);
@@ -78,8 +79,8 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
           tShadowRange.upper = inf;
           VKLHitIterator shadowIterator =
               vklInitHitIteratorV(scene->sampler,
-                                  (varying vkl_vec3f *)&c,
-                                  (varying vkl_vec3f *)&wo,
+                                  (varying vkl_vec3f * uniform) & c,
+                                  (varying vkl_vec3f * uniform) & wo,
                                   &tShadowRange,
                                   &time,
                                   scene->valueSelector,

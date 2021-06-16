@@ -53,7 +53,7 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
   VKLValueSelector selector     = vklNewValueSelector(volume);
   vklValueSelectorSetRanges(selector, num_ranges, ranges);
   vklValueSelectorSetValues(selector, num_values, values);
-  vklCommit((VKLObject)selector);
+  vklCommit((uniform VKLObject)selector);
 
   // ray definition for iterators
   vkl_vec3f rayOrigin = {0, 1, 1};
@@ -126,5 +126,5 @@ export void demo_ispc(void *uniform _volume, void *uniform _sampler)
         "\tt: %\n\tsample %\n\tepsilon %\n\n", hit.t, hit.sample, hit.epsilon);
   }
 
-  vklRelease((VKLObject)selector);
+  vklRelease((uniform VKLObject)selector);
 }

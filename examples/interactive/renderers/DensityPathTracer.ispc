@@ -64,8 +64,10 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
       time = time + (randomNumbers2.x-0.5f) * self->shutter;
     }
     time = clamp(time, 0.f, 1.f);
-    sample = vklComputeSampleV(
-        scene->sampler, (varying vkl_vec3f *)&c, scene->attributeIndex, &time);
+    sample = vklComputeSampleV(scene->sampler,
+                               (varying vkl_vec3f * uniform) & c,
+                               scene->attributeIndex,
+                               &time);
 
     const vec4f sampleColorAndOpacity =
         Renderer_sampleTransferFunction(scene, sample);

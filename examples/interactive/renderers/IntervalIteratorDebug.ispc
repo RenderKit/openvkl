@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -32,8 +32,8 @@ vec3f IntervalIteratorDebug_renderPixel(Renderer *uniform _self,
 
   VKLIntervalIterator iterator =
       vklInitIntervalIteratorV(scene->sampler,
-                               (varying vkl_vec3f *)&ray.org,
-                               (varying vkl_vec3f *)&ray.dir,
+                               (varying vkl_vec3f * uniform) & ray.org,
+                               (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,
                                scene->valueSelector,
                                intervalIteratorBuffer);

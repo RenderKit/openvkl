@@ -1525,7 +1525,7 @@ inline uniform bool assignTemporallyConstantSamplingFunctions(
 
   else if (safe_32bit_indexing(
                self->attributesData[attributeIndex],
-               self->dimensions.x * (uint64)self->dimensions.y)) {
+               self->dimensions.x * (uniform uint64)self->dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice beginning.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
@@ -1677,7 +1677,7 @@ inline uniform bool assignTemporallyStructuredSamplingFunctions(
 
   else if (safe_32bit_indexing(self->attributesData[attributeIndex],
                                numTimeSamples * self->dimensions.x *
-                                   (uint64)self->dimensions.y)) {
+                                   (uniform uint64)self->dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice beginning.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
@@ -1828,7 +1828,7 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
   // sampling functions for 64/32-bit addressing (on time indices)
   else if (safe_32bit_indexing(
                self->attributesData[attributeIndex],
-               self->dimensions.x * (uint64)self->dimensions.y)) {
+               self->dimensions.x * (uniform uint64)self->dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice beginning.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");

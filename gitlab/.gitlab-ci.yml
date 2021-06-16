@@ -203,6 +203,14 @@ build-macOS-TBB2021:
     - osx
     - clang
 
+build-macOS-arm-TBB2021:
+  <<: *base_build_job
+  stage: build
+  script:
+    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH="" -DBUILD_TBB_FROM_SOURCE=ON
+  tags:
+    - mac-arm
+
 build-windows-msvc15:
   stage: build
   script:
@@ -344,6 +352,16 @@ test-functional-macOS-TBB2021:
   tags:
     - osx
     - clang
+  script:
+    - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTests --durations yes
+
+test-functional-macOS-arm-TBB2021:
+  <<: *base_functional_test_job
+  needs:
+    - build-macOS-arm-TBB2021
+  tags:
+    - mac-arm
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests --durations yes

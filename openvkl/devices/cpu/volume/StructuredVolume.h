@@ -153,8 +153,9 @@ namespace openvkl {
     template <int W>
     inline box3f StructuredVolume<W>::getBoundingBox() const
     {
-      ispc::box3f bb = CALL_ISPC(SharedStructuredVolume_getBoundingBox,
-                                 this->ispcEquivalent);
+      ispc::box3f bb;
+      CALL_ISPC(
+          SharedStructuredVolume_getBoundingBox, this->ispcEquivalent, bb);
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));

@@ -1883,13 +1883,14 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
 // SharedStructuredVolume exported functions //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-export uniform box3f EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
-                                   void *uniform _self)
+export void EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
+                          void *uniform _self,
+                          uniform box3f &boundingBox)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
 
-  return self->boundingBox;
+  boundingBox = self->boundingBox;
 }
 
 export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,

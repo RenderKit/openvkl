@@ -24,7 +24,8 @@ struct ViewerParams
   vec3f gridSpacing{rkcommon::nan};
   vec3i dimensions{128};
   vec2i windowSize{1024};
-  region2i pixelRange{vec2i(0, 0), windowSize};
+  region2i pixelRange{vec2i(0, 0), vec2i(0, 0)};
+  bool cmdlinePixelRange = false;
   std::string rendererType{"density_pathtracer"};
   std::string gridType{"structuredRegular"};
   std::string voxelTypeString{"float"};
@@ -310,20 +311,19 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
       if (argc < argIndex + 2) {
         throw std::runtime_error("improper -windowSize arguments");
       }
-      params.windowSize.x     = atoi(argv[argIndex++]);
-      params.windowSize.y     = atoi(argv[argIndex++]);
-      params.pixelRange.lower = vec2i(0);
-      params.pixelRange.upper = params.windowSize;
+      params.windowSize.x = atoi(argv[argIndex++]);
+      params.windowSize.y = atoi(argv[argIndex++]);
     } else if (switchArg == "-pixelRange") {
       if (argc < argIndex + 4) {
         throw std::runtime_error("improper -pixelRange arguments");
       }
+      params.cmdlinePixelRange  = true;
       params.pixelRange.lower.x = atoi(argv[argIndex++]);
-      int y0 = atoi(argv[argIndex++]);
+      int y0                    = atoi(argv[argIndex++]);
       params.pixelRange.upper.x = atoi(argv[argIndex++]);
-      int y1 = atoi(argv[argIndex++]);
-      params.pixelRange.lower.y = params.windowSize.y-y1;
-      params.pixelRange.upper.y = params.windowSize.y-y0;
+      int y1                    = atoi(argv[argIndex++]);
+      params.pixelRange.lower.y = params.windowSize.y - y1;
+      params.pixelRange.upper.y = params.windowSize.y - y0;
     } else if (switchArg == "-disable-vsync") {
       params.disableVSync = true;
     } else if (switchArg == "-gridOrigin") {
@@ -459,10 +459,11 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
     }
   }
 
-  if (area(params.pixelRange) <= 0 || params.pixelRange.lower.x < 0 ||
-      params.pixelRange.lower.y < 0 ||
-      params.pixelRange.upper.x > params.windowSize.x ||
-      params.pixelRange.upper.y > params.windowSize.y) {
+  if (params.cmdlinePixelRange &&
+      (area(params.pixelRange) <= 0 || params.pixelRange.lower.x < 0 ||
+       params.pixelRange.lower.y < 0 ||
+       params.pixelRange.upper.x > params.windowSize.x ||
+       params.pixelRange.upper.y > params.windowSize.y)) {
     throw std::runtime_error("invalid pixel range");
   }
 
@@ -551,7 +552,7 @@ void setupVolume(ViewerParams &params,
       } else if (params.motionBlurUnstructured) {
         if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
-          temporalConfig.useTemporalCompression = true;
+          temporalConfig.useTemporalCompression       = true;
           temporalConfig.temporalCompressionThreshold = 0.05f;
         } else {
           temporalConfig =
@@ -840,7 +841,7 @@ void setupVolume(ViewerParams &params,
       } else if (params.motionBlurUnstructured) {
         if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
-          temporalConfig.useTemporalCompression = true;
+          temporalConfig.useTemporalCompression       = true;
           temporalConfig.temporalCompressionThreshold = 0.05f;
         } else {
           temporalConfig =
@@ -1015,7 +1016,9 @@ void interactiveRender(ViewerParams &params,
   auto glfwVKLWindow = rkcommon::make_unique<GLFWVKLWindow>(
       params.windowSize, scene, params.rendererType, params.disableVSync);
 
-  glfwVKLWindow->setRenderPixelRange(params.pixelRange);
+  if (params.cmdlinePixelRange) {
+    glfwVKLWindow->setRenderPixelRange(params.pixelRange);
+  }
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
@@ -1219,7 +1222,9 @@ void imageWrite(ViewerParams &params,
       params.windowSize, scene, params.rendererType);
 
   window->setUseISPC(params.useISPC);
-  window->setRenderPixelRange(params.pixelRange);
+  if (params.cmdlinePixelRange) {
+    window->setRenderPixelRange(params.pixelRange);
+  }
   window->render();
 
   // save image on completion of benchmark; note we apparently have no way to

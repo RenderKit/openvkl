@@ -85,6 +85,8 @@ terms are listed below.
     half
     Copyright (c) 2012-2019 Christian Rau <rauy@users.sourceforge.net>
 
+    SSE2NEON
+
     The MIT License (MIT)
 
     Permission is hereby granted, free of charge, to any person obtaining a copy

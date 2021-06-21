@@ -8,18 +8,18 @@ performance of their volume rendering applications by leveraging Open VKL’s
 performance-optimized kernels, which include volume traversal and sampling
 functionality for a variety of volumetric data formats. The kernels are
 optimized for the latest Intel® processors with support for SSE, AVX, AVX2, and
-AVX-512 instructions. Open VKL is part of the [Intel® oneAPI Rendering
+AVX-512 instructions, and for ARM processors with support for NEON instructions.
+Open VKL is part of the [Intel® oneAPI Rendering
 Toolkit](https://software.intel.com/en-us/rendering-framework) and is released
 under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
 
-
 Open VKL provides a C API, and also supports applications written with the
 Intel® Implicit SPMD Program Compiler (Intel® ISPC) by also providing an ISPC
 interface to the core volume algorithms. This makes it possible to write a
-renderer in ISPC that automatically vectorizes and leverages SSE, AVX, AVX2, and
-AVX-512 instructions. ISPC also supports runtime code selection, thus ISPC will
-select the best code path for your application.
+renderer in ISPC that automatically vectorizes and leverages SSE, AVX, AVX2,
+AVX-512, and NEON instructions. ISPC also supports runtime code selection,
+thus ISPC will select the best code path for your application.
 
 In addition to the volume kernels, Open VKL provides tutorials and example
 renderers to demonstrate how to best use the Open VKL API.

@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Open VKL 0.14.0
+
+-   OpenVKL can now be built for ARM CPUs that support Neon. This requires
+    ISPC 1.16.0 and Embree 3.14.0
+
 ### Open VKL 0.13.0
 
 -   Driver (now device) API changes:

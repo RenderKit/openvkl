@@ -179,9 +179,24 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
             vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("gradient = " << i + 1 << " / " << N);
+        INFO("gradientTruth = " << gradientTruth.x << ", "
+                           << gradientTruth.y << ", " << gradientTruth.z);
+        INFO("gradients[i] = " << gradients[i].x << ", "
+                           << gradients[i].y << ", " << gradients[i].z);
 
         // gradients may be NaN if out of bounds of the grid (e.g. for gradients
         // in the bounding box of a spherical volume but outside the grid)
+#ifdef __ARM_NEON
+        static constexpr float tolerance = 0.1f;
+
+        REQUIRE(
+            (((gradientTruth.x == Approx(gradients[i].x).margin(tolerance)) ||
+              (std::isnan(gradientTruth.x) && std::isnan(gradients[i].x))) &&
+             ((gradientTruth.y == Approx(gradients[i].y).margin(tolerance)) ||
+              (std::isnan(gradientTruth.y) && std::isnan(gradients[i].y))) &&
+             ((gradientTruth.z == Approx(gradients[i].z).margin(tolerance)) ||
+              (std::isnan(gradientTruth.z) && std::isnan(gradients[i].z)))));
+#else
         REQUIRE(
             (((gradientTruth.x == gradients[i].x) ||
               (std::isnan(gradientTruth.x) && std::isnan(gradients[i].x))) &&
@@ -189,6 +204,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
               (std::isnan(gradientTruth.y) && std::isnan(gradients[i].y))) &&
              ((gradientTruth.z == gradients[i].z) ||
               (std::isnan(gradientTruth.z) && std::isnan(gradients[i].z)))));
+#endif
       }
     }
   }

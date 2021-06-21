@@ -77,9 +77,17 @@ inline void test_scalar_and_vector_sampling(
 
     for (int i = 0; i < valid.size(); i++) {
       if (valid[i] != 0) {
+#ifdef __ARM_NEON
+        static constexpr float tolerance = 1e-3f;
+
+        REQUIRE(scalarSampledValue == Approx(samples_4[i]).margin(tolerance));
+        REQUIRE(scalarSampledValue == Approx(samples_8[i]).margin(tolerance));
+        REQUIRE(scalarSampledValue == Approx(samples_16[i]).margin(tolerance));
+#else
         REQUIRE(scalarSampledValue == Approx(samples_4[i]));
         REQUIRE(scalarSampledValue == Approx(samples_8[i]));
         REQUIRE(scalarSampledValue == Approx(samples_16[i]));
+#endif
       }
     }
   }
@@ -274,7 +282,12 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
 
         // samples may be NaN if out of bounds of the grid (e.g. for samples in
         // the bounding box of a spherical volume but outside the grid)
+#ifdef __ARM_NEON
+        static constexpr float tolerance = 1e-3f;
+#else
         static constexpr float tolerance = 1e-5f;
+#endif
+
         REQUIRE(
             ((sampleTruth == Approx(samples[i]).margin(tolerance)) ||
              (std::isnan(sampleTruth) && std::isnan(samples[i]))));
@@ -339,7 +352,12 @@ inline void test_stream_sampling_multi(
           // in the bounding box of a spherical volume but outside the grid)
           const size_t sampleIndex = i * attributeIndices.size() + a;
 
+#ifdef __ARM_NEON
+          static constexpr float tolerance = 1e-3f;
+#else
           static constexpr float tolerance = 1e-5f;
+#endif
+
           REQUIRE(
               ((sampleTruth == Approx(samples[sampleIndex]).margin(tolerance)) ||
                (std::isnan(sampleTruth) && std::isnan(samples[sampleIndex]))));

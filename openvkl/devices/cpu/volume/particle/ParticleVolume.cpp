@@ -166,7 +166,7 @@ namespace openvkl {
       RTCBuildArguments arguments      = rtcDefaultBuildArguments();
       arguments.byteSize               = sizeof(arguments);
       arguments.buildFlags             = RTC_BUILD_FLAG_NONE;
-      arguments.buildQuality           = RTC_BUILD_QUALITY_MEDIUM;
+      arguments.buildQuality           = RTC_BUILD_QUALITY_LOW;
       arguments.maxBranchingFactor     = 2;
       arguments.maxDepth               = 1024;
       arguments.sahBlockSize           = 1;

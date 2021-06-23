@@ -13,8 +13,9 @@ improve the performance of their volume rendering applications by
 leveraging Open VKL’s performance-optimized kernels, which include
 volume traversal and sampling functionality for a variety of volumetric
 data formats. The kernels are optimized for the latest Intel® processors
-with support for SSE, AVX, AVX2, and AVX-512 instructions. Open VKL is
-part of the [Intel® oneAPI Rendering
+with support for SSE, AVX, AVX2, and AVX-512 instructions, and for ARM
+processors with support for NEON instructions. Open VKL is part of the
+[Intel® oneAPI Rendering
 Toolkit](https://software.intel.com/en-us/rendering-framework) and is
 released under the permissive [Apache 2.0
 license](http://www.apache.org/licenses/LICENSE-2.0).
@@ -23,14 +24,19 @@ Open VKL provides a C API, and also supports applications written with
 the Intel® Implicit SPMD Program Compiler (Intel® ISPC) by also
 providing an ISPC interface to the core volume algorithms. This makes it
 possible to write a renderer in ISPC that automatically vectorizes and
-leverages SSE, AVX, AVX2, and AVX-512 instructions. ISPC also supports
-runtime code selection, thus ISPC will select the best code path for
-your application.
+leverages SSE, AVX, AVX2, AVX-512, and NEON instructions. ISPC also
+supports runtime code selection, thus ISPC will select the best code
+path for your application.
 
 In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 0.14.0
+
+  - OpenVKL can now be built for ARM CPUs that support Neon. This
+    requires ISPC 1.16.0 and Embree 3.14.0
 
 ### Open VKL 0.13.0
 
@@ -827,10 +833,6 @@ block.
 
 Note that cell widths are defined *per refinement level*, not per block.
 
-A binary BVH is used internally to accelerate interval iteration.
-Intervals are found by intersecting BVH nodes up to a maximum level of
-the tree, configurable by the `maxIteratorDepth` parameter.
-
 AMR volumes are created by passing the type string `"amr"` to
 `vklNewVolume`, and have the following parameters:
 
@@ -853,13 +855,12 @@ The following additional parameters can be set both on `"amr"` volumes
 and their sampler objects. Sampler object parameters default to volume
 parameters.
 
-| Type           | Name             |           Default | Description                                                              |
-| :------------- | :--------------- | ----------------: | :----------------------------------------------------------------------- |
-| `VKLAMRMethod` | method           | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are:                   |
-|                |                  |                   | `VKL_AMR_CURRENT`                                                        |
-|                |                  |                   | `VKL_AMR_FINEST`                                                         |
-|                |                  |                   | `VKL_AMR_OCTANT`                                                         |
-| int            | maxIteratorDepth |                 6 | Do not descend further than to this BVH depth during interval iteration. |
+| Type           | Name   |           Default | Description                                            |
+| :------------- | :----- | ----------------: | :----------------------------------------------------- |
+| `VKLAMRMethod` | method | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are: |
+|                |        |                   | `VKL_AMR_CURRENT`                                      |
+|                |        |                   | `VKL_AMR_FINEST`                                       |
+|                |        |                   | `VKL_AMR_OCTANT`                                       |
 
 Configuration parameters for AMR (`"AMR"`) volumes and their sampler
 objects.
@@ -933,19 +934,6 @@ with cell sizes interleaved with vertex indices in the following format:
 array layout can be enabled through the `indexPrefixed` flag (in which
 case, the `cell.type` parameter should be omitted).
 
-A binary bounding volume hierarchy (BVH) is used internally to
-accelerate interval iteration. Intervals are by default found by
-intersecting BVH nodes up to a maximum level of the tree, configurable
-by the `maxIteratorDepth` parameter. Larger values of `maxIteratorDepth`
-lead to smaller individual intervals (up to leaf node intersections),
-yielding potentially more efficient space-skipping behavior and tighter
-bounds on returned interval metadata. The application may instead choose
-to iterate through intervals based on ray intersections with individual
-cells by setting the `elementaryCellIteration` parameter. Returned
-intervals will then span exact cell boundaries, rather than bounding
-boxes of BVH nodes. This approach is generally less performant than the
-default interval iteration mode, however.
-
 Gradients are computed using finite differences.
 
 Unstructured volumes are created by passing the type string
@@ -968,18 +956,6 @@ Unstructured volumes are created by passing the type string
 | bool                    | precomputedNormals | false   | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
 
 Configuration parameters for unstructured (`"unstructured"`) volumes.
-
-The following additional parameters can be set both on `unstructured`
-volumes and their sampler objects (sampler object parameters default to
-volume parameters).
-
-| Type | Name                    | Default | Description                                                              |
-| :--- | :---------------------- | :------ | :----------------------------------------------------------------------- |
-| int  | maxIteratorDepth        | 6       | Do not descend further than to this BVH depth during interval iteration. |
-| bool | elementaryCellIteration | false   | Return intervals spanning individual cell intersections.                 |
-
-Configuration parameters for unstructured (`"unstructured"`) volumes and
-their sampler objects.
 
 ### VDB Volumes
 
@@ -1048,7 +1024,6 @@ parameters).
 | int  | filter           | `VKL_FILTER_TRILINEAR` | The filter used for reconstructing the field. Use `VKLFilter` for named constants.                              |
 | int  | gradientFilter   | `filter`               | The filter used for reconstructing the field during gradient computations. Use `VKLFilter` for named constants. |
 | int  | maxSamplingDepth | `VKL_VDB_NUM_LEVELS`-1 | Do not descend further than to this depth during sampling.                                                      |
-| int  | maxIteratorDepth | `VKL_VDB_NUM_LEVELS`-2 | Do not descend further than to this depth during iteration.                                                     |
 
 Configuration parameters for VDB (`"vdb"`) volumes and their sampler
 objects.
@@ -1151,11 +1126,6 @@ The Open VKL implementation is similar to direct evaluation of samples
 in Reda et al.\[2\]. It uses an Embree-built BVH with a custom
 traversal, similar to the method in \[1\].
 
-Similar to unstructured volumes, a binary BVH is used internally to
-accelerate interval iteration. Intervals are found by intersecting BVH
-nodes up to a maximum level of the tree, configurable by the
-`maxIteratorDepth` parameter.
-
 Particle volumes are created by passing the type string `"particle"` to
 `vklNewVolume`, and have the following parameters:
 
@@ -1169,17 +1139,6 @@ Particle volumes are created by passing the type string `"particle"` to
 | bool      | estimateValueRanges     | true    | Enable heuristic estimation of value ranges which are used in internal acceleration structures for interval and hit iterators, as well as for determining the volume’s overall value range. When set to `false`, the user *must* specify `clampMaxCumulativeValue`, and all value ranges will be assumed \[0, `clampMaxCumulativeValue`\]. Disabling this may improve volume commit time, but will make interval and hit iteration less efficient. |
 
 Configuration parameters for particle (`"particle"`) volumes.
-
-The following additional parameters can be set both on `particle`
-volumes and their sampler objects (sampler object parameters default to
-volume parameters).
-
-| Type | Name             | Default | Description                                                              |
-| :--- | :--------------- | :------ | :----------------------------------------------------------------------- |
-| int  | maxIteratorDepth | 6       | Do not descend further than to this BVH depth during interval iteration. |
-
-Configuration parameters for particle (`"particle"`) volumes and their
-sampler objects.
 
 1.  Knoll, A., Wald, I., Navratil, P., Bowen, A., Reda, K., Papka, M.E.
     and Gaither, K. (2014), RBF Volume Ray Casting on Multicore and
@@ -1473,24 +1432,42 @@ Open VKL has APIs to search for particular volume values along a ray.
 Queries can be for ranges of volume values (`vklIterateInterval`) or for
 particular values (`vklIterateHit`).
 
-Interval iterators require a context object to define the volume
-(referenced through the sampler) and attribute of interest. Contexts
-additionally hold parameters related to iteration behavior. An interval
-iterator context is created via
+Interval iterators require a context object to define the sampler and
+parameters related to iteration behavior. An interval iterator context
+is created via
 
 ``` cpp
-VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler,
-                                                         unsigned int attributeIndex);
+VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 ```
 
 The parameters understood by interval iterator contexts are defined in
 the table below.
 
-| Type             | Name        | Default       | Description                                                                                                                 |
-| :--------------- | :---------- | :------------ | :-------------------------------------------------------------------------------------------------------------------------- |
-| vkl\_range1f\[\] | valueRanges | \[-inf, inf\] | Defines the value ranges of interest. Intervals not containing any of these values ranges will be skipped during iteration. |
+| Type             | Name                    | Default          | Description                                                                                                                |
+| :--------------- | :---------------------- | :--------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| int              | attributeIndex          | 0                | Defines the volume attribute of interest.                                                                                  |
+| vkl\_range1f\[\] | valueRanges             | \[-inf, inf\]    | Defines the value ranges of interest. Intervals not containing any of these values ranges may be skipped during iteration. |
+| int              | maxIteratorDepth        | volume dependent | Do not descend further than to this depth during interval iteration.                                                       |
+| bool             | elementaryCellIteration | false            | Return intervals spanning individual cell intersections.                                                                   |
 
 Configuration parameters for interval iterator contexts.
+
+Some volume types support parameters that can impact the size of
+intervals returned during iteration. `amr`, `particle`, `unstructured`,
+and `vdb` volumes support the `maxIteratorDepth` parameter. For these
+volume types, an internal tree structure is used to accelerate
+iteration, and this parameter defines what level of the tree nodes will
+be intersected to find intervals. In general, a higher depth value will
+give smaller intervals with tighter bounds on value ranges. The default
+`maxIteratorDepth` value is `VKL_VDB_NUM_LEVELS`-2 for `vdb` volumes,
+and 6 for all other types.
+
+`unstructured` volumes further support the `elementaryCellIteration`
+parameter. Enabling this will give intervals spanning individual cell
+intersections, rather than intersections with internal acceleration
+structure nodes which can span multiple cells or empty space in between.
+Elementary cell iteration is significantly slower than the default
+interval iteration mode.
 
 As with other objects, the interval iterator context must be committed
 before being used.
@@ -1548,10 +1525,10 @@ The values these functions return may change depending on the parameters
 set on `sampler`.
 
 Open VKL also provides a conservative maximum size over all volume types
-as a preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). This is
-particularly useful for stack-based allocation in ISPC. Open VKL will
-attempt to detect the native vector width using `TARGET_WIDTH`, which is
-defined in recent versions of ISPC.
+as a preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). For
+ISPC use cases, Open VKL will attempt to detect the native vector width
+using `TARGET_WIDTH`, which is defined in recent versions of ISPC, to
+provide a less conservative size.
 
 Intervals can then be processed by calling `vklIterateInterval` as long
 as the returned lane masks indicates that the iterator is still within
@@ -1621,22 +1598,20 @@ provided to specify the sampling time. These values must be between 0
 and 1; for the vector versions, a `NULL` value indicates all times are
 zero. For temporally constant volumes, the time values have no effect.
 
-Hit iterators similarly require a context object to define the volume
-(referenced through the sampler), attribute of interest, and other
-parameters related to iteration behavior. A hit iterator context is
-created via
+Hit iterators similarly require a context object to define the sampler
+and other iteration parameters. A hit iterator context is created via
 
 ``` cpp
-VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler,
-                                               unsigned int attributeIndex);
+VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler);
 ```
 
 The parameters understood by hit iterator contexts are defined in the
 table below.
 
-| Type      | Name   | Default | Description                       |
-| :-------- | :----- | :------ | :-------------------------------- |
-| float\[\] | values |         | Defines the value(s) of interest. |
+| Type      | Name           | Default | Description                               |
+| :-------- | :------------- | :------ | :---------------------------------------- |
+| int       | attributeIndex | 0       | Defines the volume attribute of interest. |
+| float\[\] | values         |         | Defines the value(s) of interest.         |
 
 Configuration parameters for hit iterator contexts.
 
@@ -1809,7 +1784,15 @@ may rely on `alloca` and similar functions:
 ``` cpp
 #include <alloca.h>
 const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
-char *buffer = alloca(bufferSize);
+void *buffer = alloca(bufferSize);
+```
+
+Similarly for ISPC, variable length arrays are not supported, but
+`alloca` may be used:
+
+``` cpp
+const uniform size_t bufferSize = vklGetIntervalIteratorSizeV(sampler);
+void *uniform buffer = alloca(bufferSize);
 ```
 
 Users should understand the implications of `alloca`. In particular,
@@ -1819,9 +1802,8 @@ consequence, it cannot be returned from a function. On Windows,
 `_malloca` is a safer option that performs additional error checking,
 but requires the use of `_freea`.
 
-In ISPC, variable length or `alloca` do not exist. Applications may
-instead rely on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and
-`VKL_MAX_HIT_ITERATOR_SIZE` macros:
+Applications may instead rely on the `VKL_MAX_INTERVAL_ITERATOR_SIZE`
+and `VKL_MAX_HIT_ITERATOR_SIZE` macros. For example, in ISPC:
 
 ``` cpp
 uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
@@ -2015,7 +1997,9 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
       vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
 
   VKLIntervalIteratorContext intervalContext =
-      vklNewIntervalIteratorContext(sampler, attributeIndex);
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
   vklSetData(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
@@ -2028,8 +2012,9 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   VKLData valuesData =
       vklNewData(device, num_values, VKL_FLOAT, values, VKL_DATA_DEFAULT, 0);
 
-  VKLHitIteratorContext hitContext =
-      vklNewHitIteratorContext(sampler, attributeIndex);
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
 
   vklSetData(hitContext, "values", valuesData);
   vklRelease(valuesData);
@@ -2340,9 +2325,10 @@ int main()
 
 # Packages
 
-Precompiled Open VKL packages for Linux, macOS, and Windows are
-available via [Open VKL GitHub
-releases](https://github.com/openvkl/openvkl/releases).
+Precompiled Open VKL packages for Linux, macOS, and Windows on x86
+platforms are available via [Open VKL GitHub
+releases](https://github.com/openvkl/openvkl/releases). Open VKL can be
+compiled for ARM platforms following the compilation instructions below.
 
 # Building Open VKL from source
 
@@ -2365,7 +2351,7 @@ before you can build Open VKL you need the following prerequisites:
     examples, you should also have some version of OpenGL.
 
   - Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.14.1 or
+    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.16.0 or
     later. Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 
@@ -2406,6 +2392,9 @@ CMake options to note (all have sensible defaults):
   - `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
   - `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all
     libraries in separate or the same directory.
+  - `BUILD_TBB_FROM_SOURCE` specifies whether TBB should be built from
+    source or the releases on Gitub should be used. This must be ON when
+    compiling for ARM.
 
 For the full set of options, run `ccmake [<VKL_ROOT>/superbuild]`.
 

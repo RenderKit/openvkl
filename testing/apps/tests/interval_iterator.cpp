@@ -43,6 +43,8 @@ void scalar_interval_continuity_with_no_value_ranges(
 
   vkl_range1f tRange{0.f, inf};
 
+  const float time = 0.f;
+
   range1f expectedTRange = intersectRayBox(
       (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
@@ -58,7 +60,7 @@ void scalar_interval_continuity_with_no_value_ranges(
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, buffer.data());
+      intervalContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
@@ -96,6 +98,8 @@ void scalar_interval_value_ranges_with_no_value_ranges(
 {
   vkl_range1f tRange{0.f, inf};
 
+  const float time = 0.f;
+
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
@@ -108,7 +112,7 @@ void scalar_interval_value_ranges_with_no_value_ranges(
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, buffer.data());
+      intervalContext, &origin, &direction, &tRange, time, buffer.data());
   VKLInterval interval;
 
   int intervalCount = 0;
@@ -152,6 +156,8 @@ void scalar_interval_value_ranges_with_value_ranges(
 {
   vkl_range1f tRange{0.f, inf};
 
+  const float time = 0.f;
+
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
@@ -170,7 +176,7 @@ void scalar_interval_value_ranges_with_value_ranges(
 
   std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, buffer.data());
+      intervalContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLInterval interval;
 
@@ -228,6 +234,8 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
 
   vkl_range1f tRange{0.f, inf};
 
+  const float time = 0.f;
+
   INFO("direction = " << direction.x << " " << direction.y << " "
                       << direction.z);
 
@@ -244,6 +252,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
                               &origin,
                               &(const vkl_vec3f &)direction,
                               &tRange,
+                              time,
                               buffer.data());
 
   VKLInterval interval;

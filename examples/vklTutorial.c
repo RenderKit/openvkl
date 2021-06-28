@@ -113,6 +113,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
                                 &rayOrigin,
                                 &rayDirection,
                                 &rayTRange,
+                                time,
                                 buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",

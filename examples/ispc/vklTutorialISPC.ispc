@@ -84,14 +84,19 @@ export void demo_ispc(void *uniform _volume,
         rayTRange.lower,
         rayTRange.upper);
 
-  // time value for hit iteration
+  // time value for iteration
   float time = 0.f;
 
   // interval iteration
   void *uniform bufferInterval =
       alloca(vklGetIntervalIteratorSizeV(intervalContext));
-  VKLIntervalIterator intervalIterator = vklInitIntervalIteratorV(
-      intervalContext, &rayOrigin, &rayDirection, &rayTRange, bufferInterval);
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIteratorV(intervalContext,
+                               &rayOrigin,
+                               &rayDirection,
+                               &rayTRange,
+                               &time,
+                               bufferInterval);
 
   print("interval iterator for value ranges {% %} {% %}\n",
         ranges[0].lower,

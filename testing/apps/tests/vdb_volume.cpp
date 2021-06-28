@@ -439,9 +439,10 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   vkl_vec3f origin{0, 0, -5.f};
   vkl_vec3f direction{0, 0, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
+  const float time = 0.f;
   REQUIRE_NOTHROW(
       iterator = vklInitIntervalIterator(
-          intervalContext, &origin, &direction, &tRange, buffer.data()));
+          intervalContext, &origin, &direction, &tRange, time, buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
   REQUIRE_NOTHROW(vklRelease(intervalContext));
   REQUIRE_NOTHROW(vklRelease(vklSampler));

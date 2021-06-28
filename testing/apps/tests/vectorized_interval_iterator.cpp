@@ -94,6 +94,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval4 intervalPrevious, intervalCurrent;
@@ -159,6 +160,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval8 intervalPrevious, intervalCurrent;
@@ -224,6 +226,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval16 intervalPrevious, intervalCurrent;
@@ -323,6 +326,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval4 interval;
@@ -388,6 +392,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval8 interval;
@@ -453,6 +458,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval16 interval;
@@ -563,6 +569,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval4 interval;
@@ -645,6 +652,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval8 interval;
@@ -727,6 +735,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval16 interval;
@@ -846,6 +855,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval4 interval;
@@ -919,6 +929,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval8 interval;
@@ -992,6 +1003,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
+              nullptr,
               buffer.data());
 
           VKLInterval16 interval;

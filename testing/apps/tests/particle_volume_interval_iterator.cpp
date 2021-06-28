@@ -46,6 +46,7 @@ void interval_iteration(size_t numParticles,
 
   const vkl_vec3f direction{0.f, 0.f, 1.f};
   const vkl_range1f tRange{0.f, inf};
+  const float time = 0.f;
 
   const size_t N        = 1000;
   size_t totalIntervals = 0;
@@ -55,7 +56,7 @@ void interval_iteration(size_t numParticles,
 
     std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
     VKLIntervalIterator iterator = vklInitIntervalIterator(
-        intervalContext, &origin, &direction, &tRange, buffer.data());
+        intervalContext, &origin, &direction, &tRange, time, buffer.data());
 
     VKLInterval interval;
 

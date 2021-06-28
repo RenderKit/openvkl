@@ -32,6 +32,7 @@ namespace api {
       static vkl_vec3f origin;
       static const vkl_vec3f direction{0.f, 0.f, 1.f};
       static const vkl_range1f tRange{0.f, 1000.f};
+      static const float time{0.f};
       static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
@@ -61,7 +62,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            intervalContext, &origin, &direction, &tRange, buffer);
+            intervalContext, &origin, &direction, &tRange, time, buffer);
 
         benchmark::DoNotOptimize(iterator);
       }));
@@ -95,6 +96,7 @@ namespace api {
       static vkl_vec3f origin;
       static const vkl_vec3f direction{0.f, 0.f, 1.f};
       static const vkl_range1f tRange{0.f, 1000.f};
+      static const float time{0.f};
       static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
@@ -128,7 +130,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            intervalContext, &origin, &direction, &tRange, buffer);
+            intervalContext, &origin, &direction, &tRange, time, buffer);
 
         bool success = vklIterateInterval(iterator, &interval);
 
@@ -169,6 +171,7 @@ namespace api {
       static vkl_vec3f origin;
       static const vkl_vec3f direction{0.f, 0.f, 1.f};
       static const vkl_range1f tRange{0.f, 1000.f};
+      static const float time{0.f};
       static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
@@ -197,7 +200,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index;
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            intervalContext, &origin, &direction, &tRange, buffer);
+            intervalContext, &origin, &direction, &tRange, time, buffer);
 
         vklIterateInterval(iterator, &interval);
 

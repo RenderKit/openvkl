@@ -1473,13 +1473,17 @@ As with other objects, the interval iterator context must be committed
 before being used.
 
 To query an interval, a `VKLIntervalIterator` of scalar or vector width
-must be initialized with `vklInitIntervalIterator`.
+must be initialized with `vklInitIntervalIterator`. Time value(s) may be
+provided to specify the sampling time. These values must be between 0
+and 1; for the vector versions, a `NULL` value indicates all times are
+zero. For temporally constant volumes, the time values have no effect.
 
 ``` cpp
 VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                             const vkl_vec3f *origin,
                                             const vkl_vec3f *direction,
                                             const vkl_range1f *tRange,
+                                            float time,
                                             void *buffer);
 
 VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
@@ -1487,6 +1491,7 @@ VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
                                               const vkl_vvec3f4 *origin,
                                               const vkl_vvec3f4 *direction,
                                               const vkl_vrange1f4 *tRange,
+                                              const float *times,
                                               void *buffer);
 
 VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
@@ -1494,6 +1499,7 @@ VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
                                               const vkl_vvec3f8 *origin,
                                               const vkl_vvec3f8 *direction,
                                               const vkl_vrange1f8 *tRange,
+                                              const float *times,
                                               void *buffer);
 
 VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
@@ -1501,6 +1507,7 @@ VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
                                                 const vkl_vvec3f16 *origin,
                                                 const vkl_vvec3f16 *direction,
                                                 const vkl_vrange1f16 *tRange,
+                                                const float *times,
                                                 void *buffer);
 ```
 
@@ -1593,10 +1600,10 @@ typedef struct
 
 Querying for particular values is done using a `VKLHitIterator` in much
 the same fashion. This API could be used, for example, to find
-isosurfaces. In contrast to interval iterators, time value(s) may be
-provided to specify the sampling time. These values must be between 0
-and 1; for the vector versions, a `NULL` value indicates all times are
-zero. For temporally constant volumes, the time values have no effect.
+isosurfaces. As with interval iterators, time value(s) may be provided
+to specify the sampling time. These values must be between 0 and 1; for
+the vector versions, a `NULL` value indicates all times are zero. For
+temporally constant volumes, the time values have no effect.
 
 Hit iterators similarly require a context object to define the sampler
 and other iteration parameters. A hit iterator context is created via
@@ -2047,6 +2054,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
                                 &rayOrigin,
                                 &rayDirection,
                                 &rayTRange,
+                                time,
                                 buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",

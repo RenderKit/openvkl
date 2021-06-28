@@ -379,6 +379,7 @@ extern "C" VKLIntervalIterator vklInitIntervalIterator(
     const vkl_vec3f *origin,
     const vkl_vec3f *direction,
     const vkl_range1f *tRange,
+    float time,
     void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)
 {
   auto it = deviceObj->initIntervalIterator1(
@@ -386,6 +387,7 @@ extern "C" VKLIntervalIterator vklInitIntervalIterator(
       reinterpret_cast<const vvec3fn<1> &>(*origin),
       reinterpret_cast<const vvec3fn<1> &>(*direction),
       reinterpret_cast<const vrange1fn<1> &>(*tRange),
+      time,
       buffer);
   deviceAttach(deviceObj, it);
   return it;
@@ -399,6 +401,7 @@ OPENVKL_CATCH_END(nullptr)
       const vkl_vvec3f##WIDTH *origin,                                  \
       const vkl_vvec3f##WIDTH *direction,                               \
       const vkl_vrange1f##WIDTH *tRange,                                \
+      const float *times,                                               \
       void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)                 \
   {                                                                     \
     auto it = deviceObj->initIntervalIterator##WIDTH(                   \
@@ -407,6 +410,7 @@ OPENVKL_CATCH_END(nullptr)
         reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),              \
         reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),           \
         reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),            \
+        times,                                                          \
         buffer);                                                        \
     deviceAttach(deviceObj, it);                                        \
     return it;                                                          \

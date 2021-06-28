@@ -59,6 +59,7 @@ vklInitIntervalIterator4(const int *uniform valid,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
+                         const varying float *uniform time,
                          void *uniform buffer);
 
 VKL_API VKLIntervalIterator
@@ -67,6 +68,7 @@ vklInitIntervalIterator8(const int *uniform valid,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
+                         const varying float *uniform time,
                          void *uniform buffer);
 
 VKL_API VKLIntervalIterator
@@ -75,6 +77,7 @@ vklInitIntervalIterator16(const int *uniform valid,
                           const varying vkl_vec3f *uniform origin,
                           const varying vkl_vec3f *uniform direction,
                           const varying vkl_range1f *uniform tRange,
+                          const varying float *uniform time,
                           void *uniform buffer);
 
 VKL_FORCEINLINE VKLIntervalIterator
@@ -82,6 +85,7 @@ vklInitIntervalIteratorV(VKLIntervalIteratorContext context,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
+                         const varying float *uniform time,
                          void *uniform buffer)
 {
   varying bool mask = __mask;
@@ -96,6 +100,7 @@ vklInitIntervalIteratorV(VKLIntervalIteratorContext context,
                                     origin,
                                     direction,
                                     tRange,
+                                    time,
                                     buffer);
   } else if (sizeof(varying float) == 32) {
     return vklInitIntervalIterator8((uniform int *uniform) & imask,
@@ -103,6 +108,7 @@ vklInitIntervalIteratorV(VKLIntervalIteratorContext context,
                                     origin,
                                     direction,
                                     tRange,
+                                    time,
                                     buffer);
   } else if (sizeof(varying float) == 64) {
     return vklInitIntervalIterator16((uniform int *uniform) & imask,
@@ -110,6 +116,7 @@ vklInitIntervalIteratorV(VKLIntervalIteratorContext context,
                                      origin,
                                      direction,
                                      tRange,
+                                     time,
                                      buffer);
   }
 }

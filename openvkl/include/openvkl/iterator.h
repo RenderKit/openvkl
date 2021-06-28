@@ -95,6 +95,7 @@ VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                             const vkl_vec3f *origin,
                                             const vkl_vec3f *direction,
                                             const vkl_range1f *tRange,
+                                            float time,
                                             void *buffer);
 
 OPENVKL_INTERFACE
@@ -104,6 +105,7 @@ VKLIntervalIterator4 vklInitIntervalIterator4(
     const vkl_vvec3f4 *origin,
     const vkl_vvec3f4 *direction,
     const vkl_vrange1f4 *tRange,
+    const float *times,
     void *buffer);
 
 OPENVKL_INTERFACE
@@ -113,6 +115,7 @@ VKLIntervalIterator8 vklInitIntervalIterator8(
     const vkl_vvec3f8 *origin,
     const vkl_vvec3f8 *direction,
     const vkl_vrange1f8 *tRange,
+    const float *times,
     void *buffer);
 
 OPENVKL_INTERFACE
@@ -122,6 +125,7 @@ VKLIntervalIterator16 vklInitIntervalIterator16(
     const vkl_vvec3f16 *origin,
     const vkl_vvec3f16 *direction,
     const vkl_vrange1f16 *tRange,
+    const float *times,
     void *buffer);
 
 typedef struct

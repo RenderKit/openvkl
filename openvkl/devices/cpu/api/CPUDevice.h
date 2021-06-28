@@ -94,20 +94,22 @@ namespace openvkl {
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
+          float time,
           void *buffer) const override;
 
-#define __define_initIntervalIteratorN(WIDTH)                    \
-  VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(        \
-      const int *valid,                                          \
-      VKLIntervalIteratorContext context,                        \
-      const vvec3fn<WIDTH> &origin,                              \
-      const vvec3fn<WIDTH> &direction,                           \
-      const vrange1fn<WIDTH> &tRange,                            \
-      void *buffer) const override                               \
-  {                                                              \
-    return reinterpret_cast<VKLIntervalIterator##WIDTH>(         \
-        initIntervalIteratorAnyWidth<WIDTH>(                     \
-            valid, context, origin, direction, tRange, buffer)); \
+#define __define_initIntervalIteratorN(WIDTH)                           \
+  VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(               \
+      const int *valid,                                                 \
+      VKLIntervalIteratorContext context,                               \
+      const vvec3fn<WIDTH> &origin,                                     \
+      const vvec3fn<WIDTH> &direction,                                  \
+      const vrange1fn<WIDTH> &tRange,                                   \
+      const float *times,                                               \
+      void *buffer) const override                                      \
+  {                                                                     \
+    return reinterpret_cast<VKLIntervalIterator##WIDTH>(                \
+        initIntervalIteratorAnyWidth<WIDTH>(                            \
+            valid, context, origin, direction, tRange, times, buffer)); \
   }
 
       __define_initIntervalIteratorN(4);
@@ -124,6 +126,7 @@ namespace openvkl {
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
+          const float *times,
           void *buffer) const;
 
       template <int OW>
@@ -133,6 +136,7 @@ namespace openvkl {
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
+          const float *times,
           void *buffer) const;
 
       //////////////////////////////////////////////////////////////////////////
@@ -504,6 +508,7 @@ namespace openvkl {
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
+        float time,
         void *buffer) const
     {
       const auto &ctx =
@@ -511,8 +516,10 @@ namespace openvkl {
       const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getIntervalIteratorFactory();
 
+      assertValidTime(time);
+
       IntervalIterator<W> *it = factory.constructU(ctx, buffer);
-      it->initializeIntervalU(origin, direction, tRange);
+      it->initializeIntervalU(origin, direction, tRange, time);
 
       return reinterpret_cast<VKLIntervalIterator>(it);
     }
@@ -526,6 +533,7 @@ namespace openvkl {
         const vvec3fn<OW> &origin,
         const vvec3fn<OW> &direction,
         const vrange1fn<OW> &tRange,
+        const float *times,
         void *buffer) const
     {
       const auto &ctx =
@@ -539,7 +547,11 @@ namespace openvkl {
       for (int i = 0; i < W; ++i)
         validW[i] = valid[i];
 
-      it->initializeIntervalV(validW, origin, direction, tRange);
+      const vfloatn<W> timesW(times, OW);
+      assertValidTimes(timesW);
+
+      it->initializeIntervalV(validW, origin, direction, tRange, timesW);
+
       return it;
     }
 
@@ -552,6 +564,7 @@ namespace openvkl {
         const vvec3fn<OW> &origin,
         const vvec3fn<OW> &direction,
         const vrange1fn<OW> &tRange,
+        const float *times,
         void *buffer) const
     {
       throw std::runtime_error(
@@ -623,6 +636,8 @@ namespace openvkl {
       const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getHitIteratorFactory();
 
+      assertValidTime(time);
+
       HitIterator<W> *it = factory.constructU(ctx, buffer);
       it->initializeHitU(origin, direction, tRange, time);
 
@@ -650,7 +665,8 @@ namespace openvkl {
       for (int i = 0; i < W; ++i)
         validW[i] = valid[i];
 
-      vfloatn<W> timesW(times, OW);
+      const vfloatn<W> timesW(times, OW);
+      assertValidTimes(timesW);
 
       it->initializeHitV(validW, origin, direction, tRange, timesW);
 

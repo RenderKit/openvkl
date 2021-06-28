@@ -108,6 +108,7 @@ namespace openvkl {
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
+          float time,
           void *buffer) const = 0;
 
 #define __define_initIntervalIteratorN(WIDTH)                     \
@@ -117,6 +118,7 @@ namespace openvkl {
       const vvec3fn<WIDTH> &origin,                               \
       const vvec3fn<WIDTH> &direction,                            \
       const vrange1fn<WIDTH> &tRange,                             \
+      const float *times,                                         \
       void *buffer) const = 0;
 
       __define_initIntervalIteratorN(4);

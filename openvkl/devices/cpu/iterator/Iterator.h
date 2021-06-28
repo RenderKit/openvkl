@@ -68,7 +68,8 @@ namespace openvkl {
        */
       virtual void initializeIntervalU(const vvec3fn<1> &origin,
                                        const vvec3fn<1> &direction,
-                                       const vrange1fn<1> &tRange)
+                                       const vrange1fn<1> &tRange,
+                                       float time)
       {
         vintn<W> validW;
         for (int i = 0; i < W; i++)
@@ -77,8 +78,9 @@ namespace openvkl {
         vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
         vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
         vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        vfloatn<W> timesW(&time, 1);
 
-        initializeIntervalV(validW, originW, directionW, tRangeW);
+        initializeIntervalV(validW, originW, directionW, tRangeW, timesW);
       }
 
       virtual void iterateIntervalU(vVKLIntervalN<1> &interval,
@@ -109,7 +111,8 @@ namespace openvkl {
       virtual void initializeIntervalV(const vintn<W> &valid,
                                        const vvec3fn<W> &origin,
                                        const vvec3fn<W> &direction,
-                                       const vrange1fn<W> &tRange) = 0;
+                                       const vrange1fn<W> &tRange,
+                                       const vfloatn<W> &times) = 0;
 
       virtual void iterateIntervalV(const vintn<W> &valid,
                                     vVKLIntervalN<W> &interval,
@@ -171,8 +174,6 @@ namespace openvkl {
                                   const vrange1fn<1> &tRange,
                                   float time)
       {
-        assert(time >= 0.f && time <= 1.f);
-
         vintn<W> validW;
         for (int i = 0; i < W; i++)
           validW[i] = i == 0 ? -1 : 0;

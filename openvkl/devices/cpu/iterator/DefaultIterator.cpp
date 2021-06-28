@@ -17,7 +17,8 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange)
+        const vrange1fn<W> &tRange,
+        const vfloatn<W> &_times)
     {
       const Volume<W> &volume = context->getSampler().getVolume();
       box3f boundingBox  = volume.getBoundingBox();

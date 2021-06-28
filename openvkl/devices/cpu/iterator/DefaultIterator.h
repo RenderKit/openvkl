@@ -18,7 +18,8 @@ namespace openvkl {
       void initializeIntervalV(const vintn<W> &valid,
                                const vvec3fn<W> &origin,
                                const vvec3fn<W> &direction,
-                               const vrange1fn<W> &tRange) override final;
+                               const vrange1fn<W> &tRange,
+                               const vfloatn<W> &times) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -80,9 +81,8 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const vfloatn<W> &times)
     {
-      assertValidTimes(times);
-
-      intervalIterator.initializeIntervalV(valid, origin, direction, tRange);
+      intervalIterator.initializeIntervalV(
+          valid, origin, direction, tRange, times);
 
       CALL_ISPC(DefaultHitIterator_Initialize,
                 static_cast<const int *>(valid),

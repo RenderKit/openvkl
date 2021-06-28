@@ -22,7 +22,8 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange)
+        const vrange1fn<W> &tRange,
+        const vfloatn<W> &_times)
     {
       // We use the same iterator implementation for both unstructured and
       // particle volumes. However, only unstructured volumes support elementary

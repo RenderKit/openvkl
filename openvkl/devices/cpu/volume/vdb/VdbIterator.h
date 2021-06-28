@@ -23,7 +23,8 @@ namespace openvkl {
           const vintn<W> &valid,
           const vvec3fn<W> &origin,
           const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange) override final;
+          const vrange1fn<W> &tRange,
+          const vfloatn<W> &times) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,

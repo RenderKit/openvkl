@@ -19,10 +19,9 @@ namespace openvkl {
         const vintn<W> &valid,
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
-        const vrange1fn<W> &tRange)
+        const vrange1fn<W> &tRange,
+        const vfloatn<W> &times)
     {
-      vfloatn<W> times(nullptr, 0);
-
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
@@ -48,10 +47,9 @@ namespace openvkl {
     void GridAcceleratorIntervalIterator<W>::initializeIntervalU(
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
-        const vrange1fn<1> &tRange)
+        const vrange1fn<1> &tRange,
+        float time)
     {
-      float time = 0;
-
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
                 context->getISPCEquivalent(),
@@ -86,8 +84,6 @@ namespace openvkl {
         const vrange1fn<W> &tRange,
         const vfloatn<W> &times)
     {
-      assertValidTimes(times);
-
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
@@ -120,8 +116,6 @@ namespace openvkl {
         const vrange1fn<1> &tRange,
         float time)
     {
-      assert(time >= 0.f && time <= 1.f);
-
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
                 context->getISPCEquivalent(),

@@ -18,6 +18,13 @@ namespace openvkl {
 
     // Helpers ////////////////////////////////////////////////////////////////
 
+    inline void assertValidTime(const float time)
+    {
+#ifndef NDEBUG
+      assert(time >= 0.f && time <= 1.0f);
+#endif
+    }
+
     template <int W>
     inline void assertValidTimes(const vfloatn<W> &time)
     {

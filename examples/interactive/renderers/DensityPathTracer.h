@@ -33,7 +33,6 @@ namespace openvkl {
 
       // Data //
 
-      float time{0.f};
       float shutter{0.f};
       bool motionBlur{false};
 

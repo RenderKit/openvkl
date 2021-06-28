@@ -34,6 +34,7 @@ namespace openvkl {
       VKLIntervalIteratorContext intervalContext;
       VKLHitIteratorContext hitContext;
       unsigned int attributeIndex;
+      float time;
 
       /*
        * Shading is done through a transfer function.
@@ -49,6 +50,7 @@ namespace openvkl {
             intervalContext(nullptr),
             hitContext(nullptr),
             attributeIndex(0),
+            time(0.f),
             tfNumColorsAndOpacities(0),
             tfColorsAndOpacities(nullptr)
       {

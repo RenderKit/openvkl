@@ -6,8 +6,6 @@
 struct HitIterator
 {
   Renderer super;
-
-  float time;
 };
 
 vec3f HitIterator_renderPixel(Renderer *uniform _self,
@@ -27,7 +25,7 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  const float time = self->time;
+  const float time = scene->time;
 
   void *uniform hitIteratorBuffer =
       alloca(vklGetHitIteratorSizeV(scene->hitContext));
@@ -111,11 +109,4 @@ export void *uniform HitIterator_create()
   HitIterator *uniform self = uniform new HitIterator;
   self->super.renderPixel   = HitIterator_renderPixel;
   return self;
-}
-
-export void HitIterator_set(void *uniform _self, const uniform float time)
-{
-  HitIterator *uniform self = (HitIterator *)_self;
-
-  self->time = time;
 }

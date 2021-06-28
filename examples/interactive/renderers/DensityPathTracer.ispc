@@ -59,7 +59,7 @@ inline bool sampleWoodcock(DensityPathTracer *uniform self,
     }
 
     const vec3f c = ray.org + t * ray.dir;
-    float time = self->time;
+    float time = scene->time;
     if (self->motionBlur) {
       time = time + (randomNumbers2.x-0.5f) * self->shutter;
     }
@@ -174,7 +174,6 @@ export void *uniform DensityPathTracer_create()
 }
 
 export void DensityPathTracer_set(void *uniform _self,
-                                  const uniform float time,
                                   const uniform float shutter,
                                   const uniform bool motionBlur,
                                   const uniform float sigmaTScale,
@@ -184,7 +183,6 @@ export void DensityPathTracer_set(void *uniform _self,
 {
   DensityPathTracer *uniform self = (DensityPathTracer *)_self;
 
-  self->time                  = time;
   self->shutter               = shutter;
   self->motionBlur            = motionBlur;
   self->sigmaTScale           = sigmaTScale;

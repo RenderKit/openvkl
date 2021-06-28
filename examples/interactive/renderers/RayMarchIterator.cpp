@@ -41,6 +41,7 @@ namespace openvkl {
                                   (vkl_vec3f *)&ray.org,
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,
+                                  scene.time,
                                   intervalIteratorBuffer);
 
       // the current ray interval
@@ -64,7 +65,7 @@ namespace openvkl {
           // get volume sample
           vec3f c      = ray.org + t * ray.dir;
           float sample = vklComputeSample(
-              scene.sampler, (vkl_vec3f *)&c, scene.attributeIndex);
+              scene.sampler, (vkl_vec3f *)&c, scene.attributeIndex, scene.time);
 
           // map through transfer function
           vec4f sampleColorAndOpacity = sampleTransferFunction(scene, sample);

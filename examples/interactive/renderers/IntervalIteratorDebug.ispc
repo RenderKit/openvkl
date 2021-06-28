@@ -28,6 +28,8 @@ vec3f IntervalIteratorDebug_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
+  const float time = scene->time;
+
   void *uniform intervalIteratorBuffer =
       alloca(vklGetIntervalIteratorSizeV(scene->intervalContext));
 
@@ -36,6 +38,7 @@ vec3f IntervalIteratorDebug_renderPixel(Renderer *uniform _self,
                                (varying vkl_vec3f * uniform) & ray.org,
                                (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,
+                               &time,
                                intervalIteratorBuffer);
 
   VKLInterval interval;

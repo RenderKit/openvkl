@@ -47,6 +47,7 @@ namespace openvkl {
                                   (vkl_vec3f *)&ray.org,
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,
+                                  scene.time,
                                   intervalIteratorBuffer);
 
       VKLInterval interval;

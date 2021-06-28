@@ -26,6 +26,8 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
+  const float time = scene->time;
+
   void *uniform intervalIteratorBuffer =
       alloca(vklGetIntervalIteratorSizeV(scene->intervalContext));
 
@@ -34,6 +36,7 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
                                (varying vkl_vec3f * uniform) & ray.org,
                                (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,
+                               &time,
                                intervalIteratorBuffer);
 
   // the current ray interval
@@ -58,7 +61,8 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
       vec3f c      = ray.org + t * ray.dir;
       float sample = vklComputeSampleV(scene->sampler,
                                        (varying vkl_vec3f * uniform) & c,
-                                       scene->attributeIndex);
+                                       scene->attributeIndex,
+                                       &time);
 
       // map through transfer function
       vec4f sampleColorAndOpacity =

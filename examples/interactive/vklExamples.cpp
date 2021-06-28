@@ -75,12 +75,6 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
 
   bool changed = false;
 
-  static float time = 0.f;
-  if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
-    renderer.setParam<float>("time", time);
-    changed = true;
-  }
-
   static bool motionBlur = false;
   if (ImGui::Checkbox("motion blur", &motionBlur)) {
     renderer.setParam<bool>("motionBlur", motionBlur);
@@ -151,12 +145,6 @@ bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
 
     initialized        = true;
     isosurfacesChanged = true;  // Update isovalues on init!
-  }
-
-  static float time = 0.f;
-  if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
-    renderer.setParam<float>("time", time);
-    isosurfacesChanged = true;
   }
 
   if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
@@ -1149,7 +1137,14 @@ void interactiveRender(ViewerParams &params,
       if (ImGui::SliderInt(
               "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
         scene.updateAttributeIndex(attributeIndex);
+        changed = true;
+      }
+    }
 
+    if (params.motionBlurStructured || params.motionBlurUnstructured) {
+      static float time = 0.f;
+      if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
+        scene.time = time;
         changed = true;
       }
     }

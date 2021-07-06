@@ -25,13 +25,26 @@ export void demo_ispc(void *uniform _volume,
   print("\tlower: % % %\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
   print("\tupper: % % %\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
 
+  // number of attributes
+  uniform unsigned int numAttributes = vklGetNumAttributes(volume);
+  print("num attributes = %\n\n", numAttributes);
+
+  // value range for all attributes
+  for (uniform unsigned int i = 0; i < numAttributes; i++) {
+    uniform vkl_range1f valueRange = vklGetValueRange(volume, i);
+    print("value range (attribute %) = (% %)\n",
+           i,
+           valueRange.lower,
+           valueRange.upper);
+  }
+
   // coordinates for sampling and gradients
   vkl_vec3f objectCoordinates;
   objectCoordinates.x = programIndex * 3 + 0;
   objectCoordinates.y = programIndex * 3 + 1;
   objectCoordinates.z = programIndex * 3 + 2;
 
-  print("objectCoordinates:\n\tx: %\n\ty: %\n\tz: %\n\n",
+  print("\nobjectCoordinates:\n\tx: %\n\ty: %\n\tz: %\n\n",
         objectCoordinates.x,
         objectCoordinates.y,
         objectCoordinates.z);

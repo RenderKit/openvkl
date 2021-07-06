@@ -916,3 +916,29 @@ extern "C" vkl_range1f vklGetValueRange(VKLVolume volume,
   return reinterpret_cast<const vkl_range1f &>(result);
 }
 OPENVKL_CATCH_END(vkl_range1f{rkcommon::math::nan})
+
+// For use from ISPC.
+//
+// We need to avoid returning structs from extern functions called from ISPC,
+// see: https://github.com/ispc/ispc/issues/1590 and
+// https://github.com/ispc/ispc/issues/2106
+
+extern "C" void vklGetBoundingBoxRef(VKLVolume volume, vkl_box3f *boundingBox)
+    OPENVKL_CATCH_BEGIN_UNSAFE(volume)
+{
+  THROW_IF_NULL(boundingBox);
+  const box3f result = deviceObj->getBoundingBox(volume);
+  *boundingBox       = reinterpret_cast<const vkl_box3f &>(result);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklGetValueRangeRef(VKLVolume volume,
+                                    unsigned int attributeIndex,
+                                    vkl_range1f *valueRange)
+    OPENVKL_CATCH_BEGIN_UNSAFE(volume)
+{
+  THROW_IF_NULL(valueRange);
+  const range1f result = deviceObj->getValueRange(volume, attributeIndex);
+  *valueRange          = reinterpret_cast<const vkl_range1f &>(result);
+}
+OPENVKL_CATCH_END()

@@ -26,19 +26,6 @@ namespace openvkl {
     // -------------------------------------------------------------------------
 
     template <int W>
-    VdbVolume<W>::VdbVolume()
-    {
-      this->ispcEquivalent = CALL_ISPC(VdbVolume_create);
-    }
-
-    template <int W>
-    VdbVolume<W>::~VdbVolume()
-    {
-      cleanup();
-      CALL_ISPC(VdbVolume_destroy, this->ispcEquivalent);
-    }
-
-    template <int W>
     void VdbVolume<W>::cleanup()
     {
       if (grid) {
@@ -53,13 +40,13 @@ namespace openvkl {
         allocator.deallocate(grid->attributeTypes);
         allocator.deallocate(grid->leafUnstructuredIndices);
         allocator.deallocate(grid->leafUnstructuredTimes);
+        allocator.deallocate(grid->denseData);
         allocator.deallocate(grid->leafData);
         allocator.deallocate(grid);
       }
 
-      leafData           = nullptr;
-      leafFormat         = nullptr;
-      leafTemporalFormat = nullptr;
+      // other Data members are cleared in commit() as they are replaced, or on
+      // destruction
     }
 
     template <int W>
@@ -275,7 +262,6 @@ namespace openvkl {
     void insertLeaves(const std::vector<vec3ui> &leafOffsets,
                       const DataT<uint32_t> &leafFormat,
                       const DataT<uint32_t> &leafTemporalFormat,
-                      const DataT<Data *> &leafData,
                       const std::vector<std::vector<uint64_t>> &binnedLeaves,
                       const std::vector<uint64_t> &capacity,
                       VdbGrid *grid)
@@ -417,51 +403,50 @@ namespace openvkl {
       return a;
     }
 
-    /*
-     * Store the given transformation in a format that our ISPC implementation
-     * can work with.
-     */
-    inline void writeTransform(const AffineSpace3f &a, float *buffer)
+    template <int W>
+    void VdbVolume<W>::initIndexSpaceTransforms()
     {
-      assert(buffer);
-      buffer[0]  = a.l.row0().x;
-      buffer[1]  = a.l.row0().y;
-      buffer[2]  = a.l.row0().z;
-      buffer[3]  = a.l.row1().x;
-      buffer[4]  = a.l.row1().y;
-      buffer[5]  = a.l.row1().z;
-      buffer[6]  = a.l.row2().x;
-      buffer[7]  = a.l.row2().y;
-      buffer[8]  = a.l.row2().z;
-      buffer[9]  = a.p.x;
-      buffer[10] = a.p.y;
-      buffer[11] = a.p.z;
-    }
-
-    inline void initIndexSpaceTransforms(ManagedObject *obj,
-                                         float *indexToObject,
-                                         float *objectToIndex)
-    {
-      const AffineSpace3f i2o = getParamAffineSpace3f(obj, "indexToObject");
-      writeTransform(i2o, indexToObject);
+      const AffineSpace3f i2o = getParamAffineSpace3f(this, "indexToObject");
+      writeTransform(i2o, grid->indexToObject);
 
       AffineSpace3f o2i;
       o2i.l = i2o.l.inverse();
       o2i.p = -(o2i.l * i2o.p);
-      writeTransform(o2i, objectToIndex);
+      writeTransform(o2i, grid->objectToIndex);
     }
 
     /*
      * Extract the main node data array, and verify that there are nodes.
      */
-    inline Ref<const DataT<Data *>> getLeafNodeData(ManagedObject *obj)
+    template <int W>
+    void VdbVolume<W>::initLeafNodeData()
     {
-      Ref<const DataT<Data *>> leafData =
-          obj->template getParamDataT<Data *>("node.data");
-      if (leafData->size() == 0) {
+      leafData = this->template getParamDataT<Data *>("node.data");
+
+      numLeaves = leafData->size();
+
+      if (numLeaves == 0) {
         runtimeError("Vdb volumes must have at least one leaf node.");
       }
-      return leafData;
+
+      leafLevel  = this->template getParamDataT<uint32_t>("node.level");
+      leafOrigin = this->template getParamDataT<vec3i>("node.origin");
+      leafFormat = this->template getParamDataT<uint32_t>("node.format");
+
+      leafTemporalFormat = this->template getParamDataT<uint32_t>(
+          "node.temporalFormat", nullptr);
+      if (!leafTemporalFormat) {
+        leafTemporalFormat = new DataT<uint32_t>(
+            numLeaves, static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
+        leafTemporalFormat->refDec();
+      }
+
+      leafStructuredTimesteps = this->template getParamDataT<int>(
+          "node.temporallyStructuredNumTimesteps", nullptr);
+      leafUnstructuredIndices = this->template getParamDataT<Data *>(
+          "node.temporallyUnstructuredIndices", nullptr);
+      leafUnstructuredTimes = this->template getParamDataT<Data *>(
+          "node.temporallyUnstructuredTimes", nullptr);
     }
 
     /*
@@ -529,15 +514,13 @@ namespace openvkl {
                        " elements, but expected ",
                        expectedNumDataElements);
         }
-        if (attributeTypes[a] == VKL_HALF) {
-          data[a] = nodeData[a]->ispc;
-          // Manual error checking because Data does not support half directly.
-          if (nodeData[a]->dataType != VKL_HALF) {
-            runtimeError("inconsistent leaf attribute data type ",
-                         "(expected VKL_HALF)");
-          }
-        } else if (attributeTypes[a] == VKL_FLOAT) {
-          data[a] = nodeData[a]->template as<float>().ispc;
+        data[a] = nodeData[a]->ispc;
+
+        if (nodeData[a]->dataType != attributeTypes[a]) {
+          runtimeError("inconsistent leaf attribute data type ",
+                       "(expected ",
+                       attributeTypes[a],
+                       ")");
         }
       }
       return allCompact;
@@ -589,19 +572,83 @@ namespace openvkl {
       try {
         grid = allocator.allocate<VdbGrid>(1);
 
-        initIndexSpaceTransforms(
-            this, grid->indexToObject, grid->objectToIndex);
+        if (dense && !denseData.size()) {
+          runtimeError("VdbVolume has dense flag set, but no dense data");
+        }
 
-        // As a first step, we must find out how many leaves and attributes we
-        // have. We do this based on the first node, and then simply enforce
-        // that all nodes must share this configuration.
+        initIndexSpaceTransforms();
 
-        leafData = getLeafNodeData(this);
+        grid->constantCellData = constantCellData;
 
-        grid->numLeaves                = leafData->size();
-        const VKLDataType leafDataType = getLeafDataType(leafData);
-        const bool multiAttrib         = (leafDataType == VKL_DATA);
-        grid->numAttributes = multiAttrib ? (*leafData)[0]->size() : 1;
+        // Populate grid parameters specific to dense volumes
+        grid->dense = dense;
+
+        if (grid->dense) {
+          grid->denseDimensions = this->denseDimensions;
+
+          grid->denseData = allocator.allocate<ispc::Data1D>(denseData.size());
+
+          for (size_t i = 0; i < denseData.size(); i++) {
+            grid->denseData[i] = denseData[i]->ispc;
+          }
+
+          grid->denseTemporalFormat = denseTemporalFormat;
+          grid->denseTemporallyStructuredNumTimesteps =
+              denseTemporallyStructuredNumTimesteps;
+
+          if (denseTemporallyUnstructuredIndices) {
+            grid->denseTemporallyUnstructuredIndices =
+                denseTemporallyUnstructuredIndices->ispc;
+          } else {
+            grid->denseTemporallyUnstructuredIndices = Data::emptyData1D;
+          }
+
+          if (denseTemporallyUnstructuredTimes) {
+            grid->denseTemporallyUnstructuredTimes =
+                denseTemporallyUnstructuredTimes->ispc;
+          } else {
+            grid->denseTemporallyUnstructuredTimes = Data::emptyData1D;
+          }
+        }
+
+        initLeafNodeData();
+
+        grid->numLeaves = numLeaves;
+
+        // Determine number of attributes and attribute types.
+        if (grid->dense) {
+          grid->numAttributes = denseData.size();
+
+          grid->attributeTypes =
+              allocator.allocate<uint32_t>(grid->numAttributes);
+
+          for (uint32_t i = 0; i < grid->numAttributes; ++i) {
+            grid->attributeTypes[i] = denseData[i]->dataType;
+          }
+        } else {
+          // We find how many attributes we have and their types based on the
+          // first node, and then simply enforce that all nodes must share this
+          // configuration.
+          VKLDataType leafDataType = getLeafDataType(leafData);
+
+          const bool multiAttrib = (leafDataType == VKL_DATA);
+
+          grid->numAttributes = multiAttrib ? (*leafData)[0]->size() : 1;
+
+          // Initialize the attribute type vector. Note that we again use the
+          // first node as a template.
+          grid->attributeTypes =
+              allocator.allocate<uint32_t>(grid->numAttributes);
+
+          if (multiAttrib) {
+            for (uint32_t i = 0; i < grid->numAttributes; ++i) {
+              grid->attributeTypes[i] =
+                  (*leafData)[0]->template as<Data *>()[i]->dataType;
+            }
+          } else {
+            grid->attributeTypes[0] = leafDataType;
+          }
+        }
 
         const uint64_t numLeafDataPointers =
             grid->numLeaves * static_cast<uint64_t>(grid->numAttributes);
@@ -611,45 +658,15 @@ namespace openvkl {
               VKL_VDB_MAX_NUM_LEAF_DATA);
         }
 
-        // Initialize the attribute type vector. Note that we again use the
-        // first node as a template.
-        grid->attributeTypes =
-            allocator.allocate<uint32_t>(grid->numAttributes);
-        if (multiAttrib) {
-          for (uint32_t i = 0; i < grid->numAttributes; ++i) {
-            grid->attributeTypes[i] =
-                (*leafData)[0]->template as<Data *>()[i]->dataType;
-          }
-        } else {
-          grid->attributeTypes[0] = leafDataType;
-        }
-
-        Ref<const DataT<uint32_t>> leafLevel =
-            this->template getParamDataT<uint32_t>("node.level");
-        Ref<const DataT<vec3i>> leafOrigin =
-            this->template getParamDataT<vec3i>("node.origin");
-
-        leafFormat = this->template getParamDataT<uint32_t>("node.format");
         grid->leafFormat =
             reinterpret_cast<const VKLFormat *>(leafFormat->data());
 
-        leafTemporalFormat = this->template getParamDataT<uint32_t>(
-            "node.temporalFormat", nullptr);
-        if (!leafTemporalFormat) {
-          leafTemporalFormat = new DataT<uint32_t>(
-              grid->numLeaves,
-              static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
-          leafTemporalFormat->refDec();
-        }
         grid->leafTemporalFormat = reinterpret_cast<const VKLTemporalFormat *>(
             leafTemporalFormat->data());
 
-        leafStructuredTimesteps = this->template getParamDataT<int>(
-            "node.temporallyStructuredNumTimesteps", nullptr);
-        leafUnstructuredIndices = this->template getParamDataT<Data *>(
-            "node.temporallyUnstructuredIndices", nullptr);
-        leafUnstructuredTimes = this->template getParamDataT<Data *>(
-            "node.temporallyUnstructuredTimes", nullptr);
+        if (leafData && leafData->size() != grid->numLeaves) {
+          runtimeError("node.data has incorrect size");
+        }
 
         if (leafLevel->size() != grid->numLeaves ||
             leafOrigin->size() != grid->numLeaves ||
@@ -690,76 +707,114 @@ namespace openvkl {
               allocator.allocate<ispc::Data1D>(grid->numLeaves);
         }
 
-        const box3i bbox =
-            computeBbox(grid->numLeaves, *leafLevel, *leafOrigin);
-        grid->rootOrigin = computeRootOrigin(bbox);
-        grid->activeSize = bbox.upper - grid->rootOrigin;
+        // Compute rootOrigin, activeSize, and indexBoundingBox
+        if (grid->dense) {
+          grid->rootOrigin = vec3i(0);
+
+          grid->activeSize = grid->denseDimensions;
+
+          if (constantCellData) {
+            grid->indexBoundingBox =
+                box3f(vec3f(0.f), vec3f(grid->denseDimensions));
+          } else {
+            grid->indexBoundingBox =
+                box3f(vec3f(0.f), vec3f(grid->denseDimensions - 1));
+          }
+        } else {
+          if (!constantCellData) {
+            runtimeError(
+                "only constant cell data is allowed for non-dense Vdb volumes");
+          }
+
+          const box3i bbox =
+              computeBbox(grid->numLeaves, *leafLevel, *leafOrigin);
+          grid->rootOrigin = computeRootOrigin(bbox);
+
+          grid->activeSize = bbox.upper - grid->rootOrigin;
+
+          grid->indexBoundingBox = box3f(bbox);
+        }
 
         // VKL requires a float bbox.
         bounds = empty;
 
         for (int i = 0; i < 8; ++i) {
-          const vec3f v = vec3f((i & 1) ? bbox.upper.x : bbox.lower.x,
-                                (i & 2) ? bbox.upper.y : bbox.lower.y,
-                                (i & 4) ? bbox.upper.z : bbox.lower.z);
+          const vec3f v = vec3f((i & 1) ? grid->indexBoundingBox.upper.x
+                                        : grid->indexBoundingBox.lower.x,
+                                (i & 2) ? grid->indexBoundingBox.upper.y
+                                        : grid->indexBoundingBox.lower.y,
+                                (i & 4) ? grid->indexBoundingBox.upper.z
+                                        : grid->indexBoundingBox.lower.z);
 
           bounds.extend(xfmPoint(grid->indexToObject, v));
         }
 
-        // Initialize and verify all nodes.
-        std::atomic_int allLeavesCompact(true);
-        std::atomic_int allLeavesConstant(true);
-        grid->leafData = allocator.allocate<ispc::Data1D>(grid->numLeaves *
-                                                          grid->numAttributes);
+        // Initialize and verify all nodes for sparse / non-dense volumes.
+        if (!dense) {
+          std::atomic_int allLeavesCompact(true);
+          std::atomic_int allLeavesConstant(true);
 
-        tasking::parallel_for(grid->numLeaves, [&](uint64_t i) {
-          const uint32_t level = (*leafLevel)[i];
-          verifyLevel(level);
+          grid->leafData = allocator.allocate<ispc::Data1D>(
+              grid->numLeaves * grid->numAttributes);
 
-          const VKLFormat dataFormat = static_cast<VKLFormat>((*leafFormat)[i]);
-          verifyNodeDataFormat(dataFormat, level);
+          tasking::parallel_for(grid->numLeaves, [&](uint64_t i) {
+            const uint32_t level = (*leafLevel)[i];
+            verifyLevel(level);
 
-          const uint64_t expectedNumVoxels =
-              getExpectedNumVoxels(dataFormat, level);
+            const VKLFormat dataFormat =
+                static_cast<VKLFormat>((*leafFormat)[i]);
+            verifyNodeDataFormat(dataFormat, level);
 
-          const VKLTemporalFormat temporalFormat =
-              static_cast<VKLTemporalFormat>((*leafTemporalFormat)[i]);
-          allLeavesConstant &=
-              static_cast<int>(temporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT);
+            const uint64_t expectedNumVoxels =
+                getExpectedNumVoxels(dataFormat, level);
 
-          const int structuredTimesteps =
-              leafStructuredTimesteps ? (*leafStructuredTimesteps)[i] : 0;
-          const Data *unstructuredIndices =
-              leafUnstructuredIndices ? (*leafUnstructuredIndices)[i] : nullptr;
-          const Data *unstructuredTimes =
-              leafUnstructuredTimes ? (*leafUnstructuredTimes)[i] : nullptr;
+            const VKLTemporalFormat temporalFormat =
+                static_cast<VKLTemporalFormat>((*leafTemporalFormat)[i]);
+            allLeavesConstant &= static_cast<int>(temporalFormat ==
+                                                  VKL_TEMPORAL_FORMAT_CONSTANT);
 
-          const uint64_t expectedNumDataElements =
-              verifyTemporalData(this->device.ptr,
-                                 expectedNumVoxels,
-                                 temporalFormat,
-                                 structuredTimesteps,
-                                 unstructuredIndices,
-                                 unstructuredTimes);
+            const int structuredTimesteps =
+                leafStructuredTimesteps ? (*leafStructuredTimesteps)[i] : 0;
+            const Data *unstructuredIndices =
+                leafUnstructuredIndices ? (*leafUnstructuredIndices)[i]
+                                        : nullptr;
+            const Data *unstructuredTimes =
+                leafUnstructuredTimes ? (*leafUnstructuredTimes)[i] : nullptr;
 
-          Data *const ld = (*leafData)[i];
-          allLeavesCompact &= static_cast<int>(
-              initNode(multiAttrib ? ld->template as<Data *>().data() : &ld,
-                       expectedNumDataElements,
-                       grid->attributeTypes,
-                       grid->numAttributes,
-                       grid->leafData + i * grid->numAttributes));
+            const uint64_t expectedNumDataElements =
+                verifyTemporalData(this->device.ptr,
+                                   expectedNumVoxels,
+                                   temporalFormat,
+                                   structuredTimesteps,
+                                   unstructuredIndices,
+                                   unstructuredTimes);
 
-          if (unstructuredIndices && unstructuredTimes) {
-            assert(temporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED);
-            grid->leafUnstructuredIndices[i] = unstructuredIndices->ispc;
-            grid->leafUnstructuredTimes[i]   = unstructuredTimes->ispc;
-          }
-        });
+            const VKLDataType leafDataType = getLeafDataType(leafData);
+            const bool multiAttrib         = (leafDataType == VKL_DATA);
 
-        grid->allLeavesCompact = static_cast<bool>(allLeavesCompact.load());
-        grid->allLeavesConstant = static_cast<bool>(allLeavesConstant.load());
+            Data *const ld = (*leafData)[i];
+            allLeavesCompact &= static_cast<int>(
+                initNode(multiAttrib ? ld->template as<Data *>().data() : &ld,
+                         expectedNumDataElements,
+                         grid->attributeTypes,
+                         grid->numAttributes,
+                         grid->leafData + i * grid->numAttributes));
 
+            if (unstructuredIndices && unstructuredTimes) {
+              assert(temporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED);
+              grid->leafUnstructuredIndices[i] = unstructuredIndices->ispc;
+              grid->leafUnstructuredTimes[i]   = unstructuredTimes->ispc;
+            }
+          });
+
+          grid->allLeavesCompact  = static_cast<bool>(allLeavesCompact.load());
+          grid->allLeavesConstant = static_cast<bool>(allLeavesConstant.load());
+        } else {
+          grid->allLeavesCompact  = false;
+          grid->allLeavesConstant = false;
+        }
+
+        // Build the data structure.
         const auto binnedLeaves =
             binLeavesPerLevel(grid->numLeaves, *leafLevel);
         const auto leafOffsets =
@@ -776,7 +831,6 @@ namespace openvkl {
         insertLeaves(leafOffsets,
                      *leafFormat,
                      *leafTemporalFormat,
-                     *leafData,
                      binnedLeaves,
                      capacity,
                      grid);
@@ -787,7 +841,7 @@ namespace openvkl {
 
         computeValueRanges(leafOffsets, *leafLevel, *leafFormat, grid);
 
-        // aggregate value ranges for all attributes
+        // Aggregate value ranges for all attributes
         valueRanges.clear();
         valueRanges.resize(getNumAttributes());
 

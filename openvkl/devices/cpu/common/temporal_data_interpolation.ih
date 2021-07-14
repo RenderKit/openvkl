@@ -20,11 +20,11 @@
 // ---------------------------------------------------------------------------
 
 #define __vkl_template_interpolateTemporallyStructured(                      \
-    univaryBuffer, univaryIdx, voxelType)                                    \
+    univaryBuffer, univaryIdx, typeIdx, voxelType)                           \
   inline univaryIdx float interpolateTemporallyStructured_##voxelType(       \
       const uniform Data1D *univaryBuffer buffer,                            \
       const univaryBuffer int32 &numTimesteps,                               \
-      const univaryIdx uint32 &baseIdx,                                      \
+      const univaryIdx typeIdx &baseIdx,                                     \
       const univaryIdx float &time)                                          \
   {                                                                          \
     const univaryIdx float timestepFloat =                                   \
@@ -53,23 +53,50 @@
   }
 
 // A single buffer, sampled at a single index and time.
-__vkl_template_interpolateTemporallyStructured(uniform, uniform, half)
-__vkl_template_interpolateTemporallyStructured(uniform, uniform, float)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint32, uint8)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint32, int16)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint32, uint16)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint32, half)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint32, float)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint32, double)
 
 // A single buffer, but sampled at separate indices and/or times.
 // Note that we do not provide a version with uniform base index and varying
 // time. This is because if either is varying, then the code above must use
 // varying quantities.
-__vkl_template_interpolateTemporallyStructured(uniform, varying, half)
-__vkl_template_interpolateTemporallyStructured(uniform, varying, float)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint32, uint8)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint32, int16)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint32, uint16)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint32, half)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint32, float)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint32, double)
+
+// same as above, supporting 64-bit indexing used only for dense volumes.
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint64, uint8)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint64, int16)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint64, uint16)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint64, half)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint64, float)
+__vkl_template_interpolateTemporallyStructured(uniform, uniform, uint64, double)
+
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint64, uint8)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint64, int16)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint64, uint16)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint64, half)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint64, float)
+__vkl_template_interpolateTemporallyStructured(uniform, varying, uint64, double)
+
 
 // Varying buffers, varying indices and times.
 // Note that we do not provide a (varying, uniform) version even though that is
 // a potential case (by accident, separate buffers are sampled at the same time
 // and offset). It is unknown at this time if a special code path for this case
 // would provide benefits at all. Potential future work.
-__vkl_template_interpolateTemporallyStructured(varying, varying, half)
-__vkl_template_interpolateTemporallyStructured(varying, varying, float)
+//
+// Note: Dense VDB volumes additionally use [uint8, int16, uint16, double] voxel
+// types, but only with uniform buffers (above cases).
+__vkl_template_interpolateTemporallyStructured(varying, varying, uint32, half)
+__vkl_template_interpolateTemporallyStructured(varying, varying, uint32, float)
 
 #undef __vkl_template_interpolateTemporallyStructured
 
@@ -80,18 +107,18 @@ __vkl_template_interpolateTemporallyStructured(varying, varying, float)
 // ---------------------------------------------------------------------------
 
 #define __vkl_template_interpolateTemporallyUnstructured(                      \
-    univaryBuffer, univaryIdx, voxelType)                                      \
+    univaryBuffer, univaryIdx, idxType, voxelType)                             \
                                                                                \
   inline univaryIdx float interpolateTemporallyUnstructured_##voxelType(       \
       const uniform Data1D *univaryBuffer dataBuffer,                          \
       const uniform Data1D *univaryBuffer indices,                             \
       const uniform Data1D *univaryBuffer times,                               \
-      const univaryIdx uint32 &voxelIdx,                                       \
+      const univaryIdx idxType &voxelIdx,                                      \
       const univaryIdx float &time)                                            \
   {                                                                            \
     /* Note that we only support 32 bit indices at the moment, but that could  \
      * be extended in the future. */                                           \
-    univaryIdx uint32 dataIdx, dataNextIdx;                                    \
+    univaryIdx idxType dataIdx, dataNextIdx;                                    \
     if (indices->dataType == VKL_UINT) {                                       \
       dataIdx =                                                                \
           get_uint32(__vkl_data_param_##univaryBuffer(indices), voxelIdx);     \
@@ -102,10 +129,10 @@ __vkl_template_interpolateTemporallyStructured(varying, varying, float)
           get_uint64(__vkl_data_param_##univaryBuffer(indices), voxelIdx);     \
       const univaryIdx uint64 dataNextIdx64 =                                  \
           get_uint64(__vkl_data_param_##univaryBuffer(indices), voxelIdx + 1); \
-      assert(dataIdx64 < ((uniform uint64)1) << 32);                           \
-      assert(dataNextIdx64 < ((uniform uint64)1) << 32);                       \
-      dataIdx     = ((univaryIdx uint32)dataIdx64);                            \
-      dataNextIdx = ((univaryIdx uint32)dataNextIdx64);                        \
+      assert(dataIdx64 < ((uniform uint64)1) << sizeof(uniform idxType));      \
+      assert(dataNextIdx64 < ((uniform uint64)1) << sizeof(uniform idxType));  \
+      dataIdx     = ((univaryIdx idxType)dataIdx64);                           \
+      dataNextIdx = ((univaryIdx idxType)dataNextIdx64);                       \
     }                                                                          \
     assert(dataNextIdx > dataIdx);                                             \
     const univaryIdx float t0 =                                                \
@@ -161,44 +188,83 @@ __vkl_template_interpolateTemporallyStructured(varying, varying, float)
                                upper);                                         \
   }
 
-__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, half)
-__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, float)
+// Dense VDB volumes additionally use [uint8, int16, uint16, double] voxel
+// types, but only with uniform buffers.
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint32, uint8)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint32, int16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint32, uint16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint32, half)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint32, float)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint32, double)
 
-__vkl_template_interpolateTemporallyUnstructured(uniform, varying, half)
-__vkl_template_interpolateTemporallyUnstructured(uniform, varying, float)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint32, uint8)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint32, int16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint32, uint16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint32, half)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint32, float)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint32, double)
 
-__vkl_template_interpolateTemporallyUnstructured(varying, varying, half)
-__vkl_template_interpolateTemporallyUnstructured(varying, varying, float)
+// same as above, supporting 64-bit indexing used only for dense volumes.
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint64, uint8)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint64, int16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint64, uint16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint64, half)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint64, float)
+__vkl_template_interpolateTemporallyUnstructured(uniform, uniform, uint64, double)
+
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint64, uint8)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint64, int16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint64, uint16)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint64, half)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint64, float)
+__vkl_template_interpolateTemporallyUnstructured(uniform, varying, uint64, double)
+
+__vkl_template_interpolateTemporallyUnstructured(varying, varying, uint32, half)
+__vkl_template_interpolateTemporallyUnstructured(varying, varying, uint32, float)
 
 #undef __vkl_template_interpolateTemporallyUnstructured
 
-#define __vkl_template_computeValueRangeTemporallyUnstructured(voxelType)    \
-                                                                             \
-  inline uniform box1f computeValueRangeTemporallyUnstructured_##voxelType(  \
-      const uniform Data1D *uniform dataBuffer,                              \
-      const Data1D *uniform indices,                                         \
-      uniform uint32 voxelIdx)                                               \
-  {                                                                          \
-    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                 \
-    if (indices->dataType == VKL_UINT) {                                     \
-      const uniform uint32 dataIdx     = get_uint32(*indices, voxelIdx);     \
-      const uniform uint32 dataIdxNext = get_uint32(*indices, voxelIdx + 1); \
-      for (uniform uint32 i = dataIdx; i < dataIdxNext; ++i) {               \
-        extend(valueRange, get_##voxelType(*dataBuffer, i));                 \
-      }                                                                      \
-    } else {                                                                 \
-      const uniform uint32 dataIdx =                                         \
-          ((uniform uint32)get_uint64(*indices, voxelIdx));                  \
-      const uniform uint32 dataIdxNext =                                     \
-          ((uniform uint32)get_uint64(*indices, voxelIdx + 1));              \
-      for (uniform uint32 i = dataIdx; i < dataIdxNext; ++i) {               \
-        extend(valueRange, get_##voxelType(*dataBuffer, i));                 \
-      }                                                                      \
-    }                                                                        \
-    return valueRange;                                                       \
+#define __vkl_template_computeValueRangeTemporallyUnstructured(voxelType,   \
+                                                               idxType)     \
+                                                                            \
+  inline uniform box1f computeValueRangeTemporallyUnstructured_##voxelType( \
+      const uniform Data1D *uniform dataBuffer,                             \
+      const Data1D *uniform indices,                                        \
+      uniform idxType voxelIdx)                                             \
+  {                                                                         \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                \
+    if (indices->dataType == VKL_UINT) {                                    \
+      const uniform idxType dataIdx =                                       \
+          ((uniform idxType)get_uint32(*indices, voxelIdx));                \
+      const uniform idxType dataIdxNext =                                   \
+          ((uniform idxType)get_uint32(*indices, voxelIdx + 1));            \
+      for (uniform idxType i = dataIdx; i < dataIdxNext; ++i) {             \
+        extend(valueRange, get_##voxelType(*dataBuffer, i));                \
+      }                                                                     \
+    } else {                                                                \
+      const uniform idxType dataIdx =                                       \
+          ((uniform idxType)get_uint64(*indices, voxelIdx));                \
+      const uniform idxType dataIdxNext =                                   \
+          ((uniform idxType)get_uint64(*indices, voxelIdx + 1));            \
+      for (uniform idxType i = dataIdx; i < dataIdxNext; ++i) {             \
+        extend(valueRange, get_##voxelType(*dataBuffer, i));                \
+      }                                                                     \
+    }                                                                       \
+    return valueRange;                                                      \
   }
 
-__vkl_template_computeValueRangeTemporallyUnstructured(half)
-__vkl_template_computeValueRangeTemporallyUnstructured(float)
+__vkl_template_computeValueRangeTemporallyUnstructured(uint8, uint32)
+__vkl_template_computeValueRangeTemporallyUnstructured(int16, uint32)
+__vkl_template_computeValueRangeTemporallyUnstructured(uint16, uint32)
+__vkl_template_computeValueRangeTemporallyUnstructured(half, uint32)
+__vkl_template_computeValueRangeTemporallyUnstructured(float, uint32)
+__vkl_template_computeValueRangeTemporallyUnstructured(double, uint32)
+
+__vkl_template_computeValueRangeTemporallyUnstructured(uint8, uint64)
+__vkl_template_computeValueRangeTemporallyUnstructured(int16, uint64)
+__vkl_template_computeValueRangeTemporallyUnstructured(uint16, uint64)
+__vkl_template_computeValueRangeTemporallyUnstructured(half, uint64)
+__vkl_template_computeValueRangeTemporallyUnstructured(float, uint64)
+__vkl_template_computeValueRangeTemporallyUnstructured(double, uint64)
 
 #undef __vkl_template_computeValueRangeTemporallyUnstructured

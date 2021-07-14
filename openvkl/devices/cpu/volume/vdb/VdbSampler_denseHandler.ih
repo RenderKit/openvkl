@@ -1,0 +1,74 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbSampler_dense.ih"
+
+// ---------------------------------------------------------------------------
+// Helper that generates code to dispatch to a dense handler implementation
+// based on the attribute data type, temporal format, and addressing mode.
+// ---------------------------------------------------------------------------
+
+#define __vkl_vdb_dense_handler_impl(handler, postfix, ...) \
+  handler##_##postfix(__VA_ARGS__);
+
+#define __vkl_vdb_dense_handler_addressing_mode(                            \
+    handler, addressing32bit, postfix, ...)                                 \
+  if (addressing32bit) {                                                    \
+    __vkl_vdb_dense_handler_impl(handler, 32_##postfix, __VA_ARGS__) break; \
+  } else {                                                                  \
+    __vkl_vdb_dense_handler_impl(handler, 64_##postfix, __VA_ARGS__) break; \
+  }
+
+#define __vkl_vdb_dense_handler_temporalFormat(                               \
+    handler, temporalFormat, addressing32bit, postfix, ...)                   \
+  switch (temporalFormat) {                                                   \
+  case VKL_TEMPORAL_FORMAT_CONSTANT: {                                        \
+    __vkl_vdb_dense_handler_addressing_mode(                                  \
+        handler, addressing32bit, constant_##postfix, __VA_ARGS__) break;     \
+  }                                                                           \
+  case VKL_TEMPORAL_FORMAT_STRUCTURED: {                                      \
+    __vkl_vdb_dense_handler_addressing_mode(                                  \
+        handler, addressing32bit, structured_##postfix, __VA_ARGS__) break;   \
+  }                                                                           \
+  case VKL_TEMPORAL_FORMAT_UNSTRUCTURED: {                                    \
+    __vkl_vdb_dense_handler_addressing_mode(                                  \
+        handler, addressing32bit, unstructured_##postfix, __VA_ARGS__) break; \
+  }                                                                           \
+  default:                                                                    \
+    assert(false);                                                            \
+    break;                                                                    \
+  }
+
+#define __vkl_vdb_dense_handler(                                              \
+    handler, dataType, temporalFormat, addressing32bit, ...)                  \
+  switch (dataType) {                                                         \
+  case VKL_UCHAR: {                                                           \
+    __vkl_vdb_dense_handler_temporalFormat(                                   \
+        handler, temporalFormat, addressing32bit, uint8, __VA_ARGS__) break;  \
+  }                                                                           \
+  case VKL_SHORT: {                                                           \
+    __vkl_vdb_dense_handler_temporalFormat(                                   \
+        handler, temporalFormat, addressing32bit, int16, __VA_ARGS__) break;  \
+  }                                                                           \
+  case VKL_USHORT: {                                                          \
+    __vkl_vdb_dense_handler_temporalFormat(                                   \
+        handler, temporalFormat, addressing32bit, uint16, __VA_ARGS__) break; \
+  }                                                                           \
+  case VKL_HALF: {                                                            \
+    __vkl_vdb_dense_handler_temporalFormat(                                   \
+        handler, temporalFormat, addressing32bit, half, __VA_ARGS__) break;   \
+  }                                                                           \
+  case VKL_FLOAT: {                                                           \
+    __vkl_vdb_dense_handler_temporalFormat(                                   \
+        handler, temporalFormat, addressing32bit, float, __VA_ARGS__) break;  \
+  }                                                                           \
+  case VKL_DOUBLE: {                                                          \
+    __vkl_vdb_dense_handler_temporalFormat(                                   \
+        handler, temporalFormat, addressing32bit, double, __VA_ARGS__) break; \
+  }                                                                           \
+  default:                                                                    \
+    assert(false);                                                            \
+    break;                                                                    \
+  }

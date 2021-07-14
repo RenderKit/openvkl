@@ -6,6 +6,7 @@
 #include "VdbSampler.ih"
 #include "VdbSampler_filter.ih"
 #include "VdbSampler_leafHandler.ih"
+#include "VdbSampler_denseHandler.ih"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
 
@@ -278,31 +279,55 @@ float VdbSampler_iterator_computeSample_varying(
 inline uniform box1f
 VdbSampler_computeNodeValueRange(const VdbGrid *uniform grid,
                                  uniform uint64 voxel,
+                                 const uniform vec3ui &domainOffset,
                                  const uniform vec2ui &rangeX,
                                  const uniform vec2ui &rangeY,
                                  const uniform vec2ui &rangeZ,
                                  uniform uint32 attributeIndex)
 {
-  if (!vklVdbVoxelIsLeafPtr(voxel)) {
-    const uniform float background = 0.f;
-    return make_box1f(background, background);
-  }
+  const uniform float background = 0.f;
 
   const uniform vkl_uint32 voxelType = grid->attributeTypes[attributeIndex];
-  const uniform uint64 leafIndex     = vklVdbVoxelLeafGetIndex(voxel);
 
-  __vkl_vdb_leaf_handler(
-      return VdbSampler_computeValueRange,
-             voxelType,
-             vklVdbVoxelLeafGetFormat(voxel),
-             grid->allLeavesConstant,
-             vklVdbVoxelLeafGetTemporalFormat(voxel),
-             grid,
-             leafIndex,
-             vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),
-             rangeX,
-             rangeY,
-             rangeZ)
+  if (grid->dense) {
+    if (!VdbSampler_isInDomain(grid->activeSize, domainOffset)) {
+      return make_box1f(background, background);
+    }
+
+    const uniform VKLTemporalFormat temporalFormat = grid->denseTemporalFormat;
+    const uniform bool addressing32bit =
+        safe_32bit_indexing(grid->denseData[attributeIndex]);
+
+    __vkl_vdb_dense_handler(return VdbSampler_computeValueRange_dense,
+                                   voxelType,
+                                   temporalFormat,
+                                   addressing32bit,
+                                   grid,
+                                   attributeIndex,
+                                   domainOffset,
+                                   rangeX,
+                                   rangeY,
+                                   rangeZ);
+  } else {
+    if (!vklVdbVoxelIsLeafPtr(voxel)) {
+      return make_box1f(background, background);
+    }
+
+    const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
+
+    __vkl_vdb_leaf_handler(
+        return VdbSampler_computeValueRange,
+               voxelType,
+               vklVdbVoxelLeafGetFormat(voxel),
+               grid->allLeavesConstant,
+               vklVdbVoxelLeafGetTemporalFormat(voxel),
+               grid,
+               leafIndex,
+               vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),
+               rangeX,
+               rangeY,
+               rangeZ);
+  }
 }
 
 /*
@@ -379,6 +404,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
         const uniform range1f nodeValueRange =
             VdbSampler_computeNodeValueRange(grid,
                                              voxel,
+                                             domainOffset,
                                              voxelRange[ix],
                                              voxelRange[iy],
                                              voxelRange[iz],

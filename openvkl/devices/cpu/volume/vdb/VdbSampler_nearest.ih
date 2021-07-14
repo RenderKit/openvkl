@@ -10,6 +10,14 @@
 // NEAREST interpolation.
 // ---------------------------------------------------------------------------
 
+// for vertex-centered data, we need to offset the index coordinate by one half
+// voxel for correct results.
+inline uniform float VdbSampler_getNearestIndexOffset(
+    const VdbSampler *uniform sampler)
+{
+  return sampler->grid->constantCellData ? 0.f : 0.5f;
+}
+
 /*
  * Nearest neighbor interpolation is the fastest version, but also gives
  * blocky results. This should be good for indirect light etc.
@@ -19,9 +27,11 @@ inline float VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                            const float &time,
                                            const uniform uint32 attributeIndex)
 {
-  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
-                              floor(indexCoordinates.y),
-                              floor(indexCoordinates.z));
+  const uniform float offset = VdbSampler_getNearestIndexOffset(sampler);
+
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x + offset),
+                              floor(indexCoordinates.y + offset),
+                              floor(indexCoordinates.z + offset));
 
   return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
 }
@@ -34,9 +44,11 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                               attributeIndices,
                                           float *uniform samples)
 {
-  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
-                              floor(indexCoordinates.y),
-                              floor(indexCoordinates.z));
+  const uniform float offset = VdbSampler_getNearestIndexOffset(sampler);
+
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x + offset),
+                              floor(indexCoordinates.y + offset),
+                              floor(indexCoordinates.z + offset));
 
   uint64 voxel;
   vec3ui domainOffset;
@@ -56,9 +68,11 @@ inline uniform float VdbSampler_interpolateNearest(
     const uniform float time,
     const uniform uint32 attributeIndex)
 {
-  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
-                                      floor(indexCoordinates.y),
-                                      floor(indexCoordinates.z));
+  const uniform float offset = VdbSampler_getNearestIndexOffset(sampler);
+
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x + offset),
+                                      floor(indexCoordinates.y + offset),
+                                      floor(indexCoordinates.z + offset));
 
   return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
 }
@@ -71,9 +85,11 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                               attributeIndices,
                                           float *uniform samples)
 {
-  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
-                                      floor(indexCoordinates.y),
-                                      floor(indexCoordinates.z));
+  const uniform float offset = VdbSampler_getNearestIndexOffset(sampler);
+
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x + offset),
+                                      floor(indexCoordinates.y + offset),
+                                      floor(indexCoordinates.z + offset));
 
   uniform uint64 voxel;
   uniform vec3ui domainOffset;
@@ -93,13 +109,15 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
                                           const uint32 uniform attributeIndex,
                                           float *uniform samples)
 {
+  const uniform float offset = VdbSampler_getNearestIndexOffset(sampler);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
-    const vec3i ic               = make_vec3i(floor(indexCoordinates.x),
-                                              floor(indexCoordinates.y),
-                                              floor(indexCoordinates.z));
-    const float time             = times ? times[i] : 0.f;
+    const vec3i ic   = make_vec3i(floor(indexCoordinates.x + offset),
+                                floor(indexCoordinates.y + offset),
+                                floor(indexCoordinates.z + offset));
+    const float time = times ? times[i] : 0.f;
     const float sample =
         VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
     samples[i] = sample;
@@ -115,13 +133,15 @@ inline void VdbSampler_interpolateNearest(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
+  const uniform float offset = VdbSampler_getNearestIndexOffset(sampler);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
-    const vec3i ic   = make_vec3i(floor(indexCoordinates.x),
-                                  floor(indexCoordinates.y),
-                                  floor(indexCoordinates.z));
+    const vec3i ic   = make_vec3i(floor(indexCoordinates.x + offset),
+                                floor(indexCoordinates.y + offset),
+                                floor(indexCoordinates.z + offset));
     const float time = times ? times[i] : 0.f;
 
     uint64 voxel;

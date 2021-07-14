@@ -24,6 +24,37 @@ namespace openvkl {
     using AlignedVector16 =
         std::vector<T, rkcommon::containers::aligned_allocator<T, 16>>;
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Helpers ////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    // These may be used in VdbVolume and derived classes
+
+    /*
+     * Store the given transformation in a format that our ISPC implementation
+     * can work with.
+     */
+    inline void writeTransform(const AffineSpace3f &a, float *buffer)
+    {
+      assert(buffer);
+      buffer[0]  = a.l.row0().x;
+      buffer[1]  = a.l.row0().y;
+      buffer[2]  = a.l.row0().z;
+      buffer[3]  = a.l.row1().x;
+      buffer[4]  = a.l.row1().y;
+      buffer[5]  = a.l.row1().z;
+      buffer[6]  = a.l.row2().x;
+      buffer[7]  = a.l.row2().y;
+      buffer[8]  = a.l.row2().z;
+      buffer[9]  = a.p.x;
+      buffer[10] = a.p.y;
+      buffer[11] = a.p.z;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // VdbVolume //////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
     template <int W>
     struct VdbVolume : public Volume<W>
     {
@@ -33,6 +64,7 @@ namespace openvkl {
       VdbVolume &operator=(VdbVolume &&other) = delete;
 
       VdbVolume();
+
       ~VdbVolume() override;
 
       /*
@@ -95,26 +127,66 @@ namespace openvkl {
         return maxSamplingDepth;
       }
 
+     protected:
+      virtual void initIndexSpaceTransforms();
+      virtual void initLeafNodeData();
+
      private:
       void cleanup();
 
-     private:
+     protected:
       box3f bounds;
-      std::string name;
       std::vector<range1f> valueRanges;
-      Ref<const DataT<Data *>> leafData;
+
+      // populated in initLeafNodeData()
+      size_t numLeaves;
+      Ref<const DataT<uint32_t>> leafLevel;
+      Ref<const DataT<vec3i>> leafOrigin;
       Ref<const DataT<uint32_t>> leafFormat;
       Ref<const DataT<uint32_t>> leafTemporalFormat;
+
+      // populated in initLeafNodeData(), only for sparse (non-dense) volumes
+      Ref<const DataT<Data *>> leafData;
       Ref<const DataT<int>> leafStructuredTimesteps;
       Ref<const DataT<Data *>> leafUnstructuredIndices;
       Ref<const DataT<Data *>> leafUnstructuredTimes;
+
+      // populated for dense volumes only on commit
+      bool dense{false};
+      vec3i denseDimensions;
+      std::vector<Ref<const Data>> denseData;
+      VKLTemporalFormat denseTemporalFormat;
+      int denseTemporallyStructuredNumTimesteps;
+      Ref<const Data> denseTemporallyUnstructuredIndices;
+      Ref<const DataT<float>> denseTemporallyUnstructuredTimes;
+
       VdbGrid *grid{nullptr};
       Allocator allocator;
+
+      // Data can either be interpreted as constant cell data, or
+      // vertex-centered data. Note that the vertex-centered interpretation is
+      // only legal for the dense configuration.
+      bool constantCellData{true};
 
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
       uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    VdbVolume<W>::VdbVolume()
+    {
+      this->ispcEquivalent = CALL_ISPC(VdbVolume_create);
+    }
+
+    template <int W>
+    VdbVolume<W>::~VdbVolume()
+    {
+      cleanup();
+      CALL_ISPC(VdbVolume_destroy, this->ispcEquivalent);
+    }
 
   }  // namespace cpu_device
 }  // namespace openvkl

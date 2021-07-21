@@ -247,7 +247,8 @@ void usage(const char *progname)
          "\t-valueRange <lower> <upper>\n"
          "\t-multiAttribute (vdb and structuredRegular only, ignores -field)\n"
          "\t-motionBlur structured | unstructured (structuredRegular and vdb)\n"
-         "\t-filter nearest | trilinear (structured and vdb) | tricubic (vdb)\n"
+         "\t-filter nearest | trilinear (structured and vdb) | tricubic "
+         "(structured and vdb)\n"
          "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
          "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
@@ -931,7 +932,9 @@ void setupVolume(ViewerParams &params,
   }
 
   params.maxIteratorDepth =
-      (params.gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
+      (params.gridType == "vdb" || params.gridType == "structuredRegular"
+           ? VKL_VDB_NUM_LEVELS - 2
+           : 6);
 
   params.elementaryCellIteration = false;
 
@@ -1063,7 +1066,9 @@ void interactiveRender(ViewerParams &params,
 
       if (ImGui::BeginCombo("filter", filters[params.filter])) {
         for (auto it : filters) {
-          if (it.first == VKL_FILTER_TRICUBIC && params.gridType != "vdb")
+          if (it.first == VKL_FILTER_TRICUBIC &&
+              (params.gridType != "vdb" &&
+               params.gridType != "structuredRegular"))
             continue;
           const bool isSelected = (params.filter == it.first);
           if (ImGui::Selectable(filters[it.first], isSelected)) {
@@ -1078,7 +1083,9 @@ void interactiveRender(ViewerParams &params,
 
       if (ImGui::BeginCombo("gradientFilter", filters[params.gradientFilter])) {
         for (auto it : filters) {
-          if (it.first == VKL_FILTER_TRICUBIC && params.gridType != "vdb")
+          if (it.first == VKL_FILTER_TRICUBIC &&
+              (params.gridType != "vdb" &&
+               params.gridType != "structuredRegular"))
             continue;
           const bool isSelected = (params.filter == it.first);
           if (ImGui::Selectable(filters[it.first], isSelected)) {
@@ -1092,8 +1099,8 @@ void interactiveRender(ViewerParams &params,
       }
     }
 
-    // VDB specific parameters.
-    if (params.gridType == "vdb") {
+    // VDB and structuredRegular specific parameters.
+    if (params.gridType == "vdb" || params.gridType == "structuredRegular") {
       if (ImGui::SliderInt("maxSamplingDepth",
                            &params.maxSamplingDepth,
                            0,

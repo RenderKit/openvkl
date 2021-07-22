@@ -80,7 +80,7 @@ void test_vectorized_sampling()
 
           INFO("sample = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);
-          REQUIRE(sampleTruth == samples[i]);
+          REQUIRE(sampleTruth == Approx(samples[i]));
         }
       }
     }

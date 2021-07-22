@@ -24,7 +24,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   constexpr int DIMENSION      = 128;
-  constexpr int MACROCELL_SIZE = 16;
+  constexpr int MACROCELL_SIZE = VKL_VDB_RES_LEAF;
 
   const vec3i dimensions(DIMENSION);
   const vec3f gridOrigin(0.f);

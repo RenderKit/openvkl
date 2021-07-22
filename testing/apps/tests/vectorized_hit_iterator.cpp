@@ -71,7 +71,7 @@ void vector_hit_iteration(VKLSampler vklSampler,
         INFO("hit iteration " << hitCount << " lane[" << i << "] t = "
                               << hit.t[i] << ", sample = " << hit.sample[i]);
 
-        REQUIRE(hit.t[i] == 1.f + isoValues[hitCount]);
+        REQUIRE(hit.t[i] == Approx(1.f + isoValues[hitCount]));
         REQUIRE(hit.sample[i] == isoValues[hitCount]);
       }
     }
@@ -157,7 +157,7 @@ void vector_hit_iteration_time_varying(
       int expectedHitCount = 0;
 
       for (int j = 0; j < isoValues.size(); j++) {
-        if (isoValues[j] < maxIsoValueExpected) {
+        if (isoValues[j] <= maxIsoValueExpected) {
           expectedHitCount++;
         }
       }

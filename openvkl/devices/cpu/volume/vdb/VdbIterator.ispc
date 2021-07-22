@@ -70,27 +70,25 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
   self->nominalDeltaT = length(direction) / length(rayDir);
 
   // Clip on active region.
-  float tEnter = pos_inf;
-  float tExit  = neg_inf;
+  const box1f tRangeIntersected =
+      intersectBox(rayOrg,
+                   rayDir,
+                   make_box3f(make_vec3f(0.f),
+                              make_vec3f(grid->activeSize.x,
+                                         grid->activeSize.y,
+                                         grid->activeSize.z)),
+                   tRange);
 
-  intersect_box(
-      rayOrg,
-      dir_safe_rcp(rayDir),
-      ((varying vec3f)make_vec3f(0.f, 0.f, 0.f)),
-      ((varying vec3f)make_vec3f(grid->activeSize.x,
-                                 grid->activeSize.y,
-                                 grid->activeSize.z)),
-      tEnter,
-      tExit);
-
-  if (tEnter > tExit) {
-    self->tMax = neg_inf;
+  if (isempty1f(tRangeIntersected)) {
+    self->tMax  = neg_inf;
     self->dda.t = 0;
   } else {
-    const float tMin = max(tRange.lower, tEnter);
-    self->tMax       = min(tRange.upper, tExit);
-    ddaInit(
-        rayOrg, rayDir, tMin, self->super.context->maxIteratorDepth, self->dda);
+    self->tMax = tRangeIntersected.upper;
+    ddaInit(rayOrg,
+            rayDir,
+            tRangeIntersected.lower,
+            self->super.context->maxIteratorDepth,
+            self->dda);
   }
 }
 
@@ -131,7 +129,7 @@ inline void VdbIterator_iterateIntervalInternal(
     hddaStep(self->grid, voxel, self->dda);
   }
 
-  if (self->dda.t <= self->tMax) {
+  if (self->dda.t < self->tMax) {
     varying Interval *uniform interval = (varying Interval * uniform) _interval;
     interval->valueRange               = voxel.valueRange;
     interval->tRange.lower             = self->dda.t;

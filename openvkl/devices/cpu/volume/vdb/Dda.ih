@@ -60,7 +60,7 @@ inline vec3i dir_safe_sign(const vec3f &v)
  */
 inline float dir_safe_rcp(float v)
 {
-  return (v == 0) ? inf : rcp(v);
+  return (v == 0) ? inf : divide_safe(v);
 }
 
 inline vec3f dir_safe_rcp(const vec3f &v)
@@ -83,24 +83,6 @@ inline vec3f intersect_planes(const vec3f &rayOrg,
   return make_vec3f(select((planes.x == rayOrg.x || isnan(tx)), inf, tx),
                     select((planes.y == rayOrg.y || isnan(ty)), inf, ty),
                     select((planes.z == rayOrg.z || isnan(tz)), inf, tz));
-}
-
-/*
- * Intersect a box.
- */
-inline void intersect_box(const vec3f &rayOrg,
-                          const vec3f &rayInvDir,
-                          const vec3f &boxMin,
-                          const vec3f &boxMax,
-                          float &tEnter,
-                          float &tExit)
-{
-  const vec3f pmins = intersect_planes(rayOrg, rayInvDir, boxMin);
-  const vec3f pmaxs = intersect_planes(rayOrg, rayInvDir, boxMax);
-  const vec3f mins  = min(pmins, pmaxs);
-  const vec3f maxs  = max(pmins, pmaxs);
-  tEnter            = max(mins.x, max(mins.y, mins.z));
-  tExit             = min(maxs.x, min(maxs.y, maxs.z));
 }
 
 /*

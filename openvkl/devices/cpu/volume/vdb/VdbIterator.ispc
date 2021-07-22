@@ -66,8 +66,10 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   // This is an estimate of how far apart voxels are along the ray in object
   // space. We are basically measuring here how much the volume is scaled along
-  // the ray, and voxels in index space have size 1.
-  self->nominalDeltaT = length(direction) / length(rayDir);
+  // the ray, and voxels in index space have size 1. Note that this also
+  // accounts for potentially different object-space voxel spacings per
+  // dimension.
+  self->nominalDeltaT = reduce_min(1.f * rcp_safe(absf(rayDir)));
 
   // Clip on active region.
   const box1f tRangeIntersected =

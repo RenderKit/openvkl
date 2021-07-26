@@ -155,6 +155,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   self->direction             = *((varying vec3f * uniform) _direction);
   self->time                  = *((varying float *uniform)_time);
   self->intervalIteratorState = _intervalIterator;
+  self->lastHitOffsetT        = neg_inf;
 
   // Reset to invalid.
   resetInterval(self->currentInterval);
@@ -208,6 +209,19 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                               elementaryCellIteration,
                               (int *uniform) & haveInterval);
 
+    // We've found a new interval, but it's possible the last hit may have moved
+    // us past the beginning of this new interval. This can occur with hits on
+    // interval boundaries, for example. We also need to check if this nudges us
+    // out of the current interval.
+    if (needInterval && haveInterval) {
+      self->currentInterval.tRange.lower =
+          max(self->currentInterval.tRange.lower, self->lastHitOffsetT);
+
+      if (isempty1f(self->currentInterval.tRange)) {
+        continue;
+      }
+    }
+
     if (!haveInterval) {
       // We use this to indicate that this lane has run out of intervals,
       // so that we can use an early exit on the next iterateHit call.
@@ -234,6 +248,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
 
     if (foundHit) {
       self->currentInterval.tRange.lower = hit->t + hit->epsilon;
+      self->lastHitOffsetT               = hit->t + hit->epsilon;
       return;
     }
 

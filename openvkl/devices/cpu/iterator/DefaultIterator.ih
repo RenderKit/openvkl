@@ -59,5 +59,7 @@ struct DefaultHitIterator
 
   // Current iteration state.
   Interval currentInterval;
-};
 
+  // For the last hit: t + epsilon.
+  float lastHitOffsetT;
+};

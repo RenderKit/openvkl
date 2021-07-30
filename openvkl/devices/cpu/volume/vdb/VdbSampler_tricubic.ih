@@ -585,6 +585,8 @@ inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
                                                    uint64 *uniform voxel,
                                                    vec3ui *uniform domainOffset)
 {
+  assert(!sampler->grid->dense);
+
   const float time = 0.f;
   __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
     uint64 voxelV;
@@ -602,6 +604,8 @@ inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
                                                    uint64 *uniform voxel,
                                                    vec3ui *uniform domainOffset)
 {
+  assert(!sampler->grid->dense);
+
   const float time = 0.f;
   __vkl_stencil_dispatch_varying(TRICUBIC, ic, time, {
     uint64 voxelV;
@@ -622,11 +626,13 @@ inline void VdbSampler_computeVoxelValuesTricubic(
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
+  assert(!sampler->grid->dense);
+
   __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
     const uint64 voxelV        = voxel[tgtIdx];
     const vec3ui domainOffsetV = domainOffset[tgtIdx];
     sample[tgtIdx]             = VdbSampler_sample(
-                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
+        sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
   });
 }
 
@@ -639,11 +645,13 @@ inline void VdbSampler_computeVoxelValuesTricubic(
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
+  assert(!sampler->grid->dense);
+
   __vkl_stencil_dispatch_varying(TRICUBIC, ic, time, {
     const uint64 voxelV        = voxel[tgtIdx];
     const vec3ui domainOffsetV = domainOffset[tgtIdx];
     sample[tgtIdx]             = VdbSampler_sample(
-                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
+        sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
   });
 }
 
@@ -654,9 +662,26 @@ inline void VdbSampler_computeVoxelValuesTricubic(
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
+  assert(!sampler->grid->dense);
+
   __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
     sample[tgtIdx] =
         VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
+  });
+}
+
+inline void VdbSampler_computeVoxelValuesTricubic_dense(
+    const VdbSampler *uniform sampler,
+    const uniform vec3i &ic,
+    const uniform float time,
+    const uniform uint32 attributeIndex,
+    float *uniform sample)
+{
+  assert(sampler->grid->dense);
+
+  __vkl_stencil_dispatch_uniform(TRICUBIC, ic, time, {
+    sample[tgtIdx] = VdbSampler_traverseAndSample_dense(
+        sampler, icDisp, timeDisp, attributeIndex);
   });
 }
 
@@ -667,9 +692,26 @@ inline void VdbSampler_computeVoxelValuesTricubic(
     const uniform uint32 attributeIndex,
     float *uniform sample)
 {
+  assert(!sampler->grid->dense);
+
   __vkl_stencil_dispatch_varying(TRICUBIC, ic, time, {
     sample[tgtIdx] =
         VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
+  });
+}
+
+inline void VdbSampler_computeVoxelValuesTricubic_dense(
+    const VdbSampler *uniform sampler,
+    const vec3i &ic,
+    const float &time,
+    const uniform uint32 attributeIndex,
+    float *uniform sample)
+{
+  assert(sampler->grid->dense);
+
+  __vkl_stencil_dispatch_simple_varying(TRICUBIC, ic, time, {
+    sample[tgtIdx] = VdbSampler_traverseAndSample_dense(
+        sampler, icDisp, timeDisp, attributeIndex);
   });
 }
 
@@ -680,6 +722,8 @@ inline uniform float VdbSampler_interpolateTricubic(
     const uniform float time,
     const uniform uint32 attributeIndex)
 {
+  assert(!sampler->grid->dense);
+
   const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
                                       floor(indexCoordinates.z));
@@ -697,18 +741,71 @@ inline uniform float VdbSampler_interpolateTricubic(
   return VdbSampler_tricubicPolynomial(x, y, z, coefficients);
 }
 
+inline uniform float VdbSampler_interpolate_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler->grid->dense);
+
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  uniform float sample[VKL_STENCIL_TRICUBIC_SIZE];
+  VdbSampler_computeVoxelValuesTricubic_dense(
+      sampler, ic, time, attributeIndex, sample);
+
+  const uniform float constraints[]  = __vkl_tricubic_constraints_array(sample);
+  const uniform float coefficients[] = __vkl_tricubic_coefficients(constraints);
+  const uniform vec3f delta          = indexCoordinates - make_vec3f(ic);
+  const uniform float x[]            = __vkl_tricubic_powers(delta.x);
+  const uniform float y[]            = __vkl_tricubic_powers(delta.y);
+  const uniform float z[]            = __vkl_tricubic_powers(delta.z);
+  return VdbSampler_tricubicPolynomial(x, y, z, coefficients);
+}
+
 // Single attribute varying.
 inline float VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                             const vec3f &indexCoordinates,
                                             const float &time,
                                             const uniform uint32 attributeIndex)
 {
+  assert(!sampler->grid->dense);
+
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
                               floor(indexCoordinates.y),
                               floor(indexCoordinates.z));
 
   uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
   VdbSampler_computeVoxelValuesTricubic(
+      sampler, ic, time, attributeIndex, sample);
+
+  const varying float *uniform s = ((const varying float *uniform) & sample[0]);
+  const float constraints[]      = __vkl_tricubic_constraints_array(s);
+  const float coefficients[]     = __vkl_tricubic_coefficients(constraints);
+  const vec3f delta              = indexCoordinates - make_vec3f(ic);
+  const float x[]                = __vkl_tricubic_powers(delta.x);
+  const float y[]                = __vkl_tricubic_powers(delta.y);
+  const float z[]                = __vkl_tricubic_powers(delta.z);
+  return VdbSampler_tricubicPolynomial(x, y, z, coefficients);
+}
+
+inline float VdbSampler_interpolate_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler->grid->dense);
+
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+
+  uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
+  VdbSampler_computeVoxelValuesTricubic_dense(
       sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = ((const varying float *uniform) & sample[0]);
@@ -730,12 +827,33 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                            const uint32 uniform attributeIndex,
                                            float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
     const float time             = times ? times[i] : 0.f;
     samples[i]                   = VdbSampler_interpolateTricubic(
-                          sampler, indexCoordinates, time, attributeIndex);
+        sampler, indexCoordinates, time, attributeIndex);
+  }
+}
+
+inline void VdbSampler_interpolate_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uint32 uniform attributeIndex,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
+    samples[i]                   = VdbSampler_interpolate_denseTricubic(
+        sampler, indexCoordinates, time, attributeIndex);
   }
 }
 
@@ -748,6 +866,8 @@ inline void VdbSampler_interpolateTricubic(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
                                       floor(indexCoordinates.z));
@@ -774,6 +894,38 @@ inline void VdbSampler_interpolateTricubic(
   }
 }
 
+inline void VdbSampler_interpolate_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
+  const uniform float x[]   = __vkl_tricubic_powers(delta.x);
+  const uniform float y[]   = __vkl_tricubic_powers(delta.y);
+  const uniform float z[]   = __vkl_tricubic_powers(delta.z);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[VKL_STENCIL_TRICUBIC_SIZE];
+    VdbSampler_computeVoxelValuesTricubic_dense(
+        sampler, ic, time, attributeIndices[a], sample);
+
+    const uniform float constraints[] =
+        __vkl_tricubic_constraints_array(sample);
+    const uniform float coefficients[] =
+        __vkl_tricubic_coefficients(constraints);
+    samples[a] = VdbSampler_tricubicPolynomial(x, y, z, coefficients);
+  }
+}
+
 // Multi attribute varying.
 inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                            const vec3f &indexCoordinates,
@@ -783,6 +935,8 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
                                                attributeIndices,
                                            float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
                               floor(indexCoordinates.y),
                               floor(indexCoordinates.z));
@@ -809,6 +963,38 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
   }
 }
 
+inline void VdbSampler_interpolate_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  const float x[]   = __vkl_tricubic_powers(delta.x);
+  const float y[]   = __vkl_tricubic_powers(delta.y);
+  const float z[]   = __vkl_tricubic_powers(delta.z);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
+    VdbSampler_computeVoxelValuesTricubic_dense(
+        sampler, ic, time, attributeIndices[a], sample);
+
+    const varying float *uniform s = (const varying float *uniform) & sample;
+    const float constraints[]      = __vkl_tricubic_constraints_array(s);
+    const float coefficients[]     = __vkl_tricubic_coefficients(constraints);
+    samples[a * VKL_TARGET_WIDTH + programIndex] =
+        VdbSampler_tricubicPolynomial(x, y, z, coefficients);
+  }
+}
+
 // Multi attribute stream.
 inline void VdbSampler_interpolateTricubic(
     const VdbSampler *uniform sampler,
@@ -819,12 +1005,14 @@ inline void VdbSampler_interpolateTricubic(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
     const vec3i ic               = make_vec3i(floor(indexCoordinates.x),
-                                              floor(indexCoordinates.y),
-                                              floor(indexCoordinates.z));
+                                floor(indexCoordinates.y),
+                                floor(indexCoordinates.z));
 
     uniform uint64 voxel[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
     uniform vec3ui domainOffset[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
@@ -849,6 +1037,43 @@ inline void VdbSampler_interpolateTricubic(
   }
 }
 
+inline void VdbSampler_interpolate_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const vec3i ic               = make_vec3i(floor(indexCoordinates.x),
+                                floor(indexCoordinates.y),
+                                floor(indexCoordinates.z));
+
+    const float time  = times ? times[i] : 0.f;
+    const vec3f delta = indexCoordinates - make_vec3f(ic);
+    const float x[]   = __vkl_tricubic_powers(delta.x);
+    const float y[]   = __vkl_tricubic_powers(delta.y);
+    const float z[]   = __vkl_tricubic_powers(delta.z);
+
+    for (uniform unsigned int a = 0; a < M; a++) {
+      uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
+      VdbSampler_computeVoxelValuesTricubic_dense(
+          sampler, ic, time, attributeIndices[a], sample);
+
+      const varying float *uniform s = (const varying float *uniform) & sample;
+      const float constraints[]      = __vkl_tricubic_constraints_array(s);
+      const float coefficients[]     = __vkl_tricubic_coefficients(constraints);
+      samples[i * M + a] = VdbSampler_tricubicPolynomial(x, y, z, coefficients);
+    }
+  }
+}
+
 // Gradient varying.
 inline vec3f VdbSampler_computeGradientTricubic(
     const VdbSampler *uniform sampler,
@@ -856,12 +1081,40 @@ inline vec3f VdbSampler_computeGradientTricubic(
     const float &time,
     const uniform uint32 attributeIndex)
 {
+  assert(!sampler->grid->dense);
+
   const vec3i ic = make_vec3i(floor(indexCoordinates.x),
                               floor(indexCoordinates.y),
                               floor(indexCoordinates.z));
 
   uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
   VdbSampler_computeVoxelValuesTricubic(
+      sampler, ic, time, attributeIndex, sample);
+
+  const varying float *uniform s = ((const varying float *uniform) & sample[0]);
+  const float constraints[]      = __vkl_tricubic_constraints_array(s);
+  const float coefficients[]     = __vkl_tricubic_coefficients(constraints);
+  const vec3f delta              = indexCoordinates - make_vec3f(ic);
+  const float x[]                = __vkl_tricubic_powers(delta.x);
+  const float y[]                = __vkl_tricubic_powers(delta.y);
+  const float z[]                = __vkl_tricubic_powers(delta.z);
+  return VdbSampler_tricubicPolynomialGradient(x, y, z, coefficients);
+}
+
+inline vec3f VdbSampler_computeGradient_denseTricubic(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler->grid->dense);
+
+  const vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+
+  uniform float sample[VKL_TARGET_WIDTH * VKL_STENCIL_TRICUBIC_SIZE];
+  VdbSampler_computeVoxelValuesTricubic_dense(
       sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = ((const varying float *uniform) & sample[0]);
@@ -883,12 +1136,35 @@ inline void VdbSampler_computeGradientTricubic(
     const uniform uint32 attributeIndex,
     vec3f *uniform gradients)
 {
+  assert(!sampler->grid->dense);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
     const float time             = times ? times[i] : 0.f;
     const vec3f gradient         = VdbSampler_computeGradientTricubic(
-                sampler, indexCoordinates, time, attributeIndex);
+        sampler, indexCoordinates, time, attributeIndex);
+    // Note: xfmNormal takes inverse!
+    gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
+  }
+}
+
+inline void VdbSampler_computeGradient_denseTricubic(
+    const VdbSampler *uniform sampler,
+    uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 attributeIndex,
+    vec3f *uniform gradients)
+{
+  assert(sampler->grid->dense);
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
+    const vec3f gradient         = VdbSampler_computeGradient_denseTricubic(
+        sampler, indexCoordinates, time, attributeIndex);
     // Note: xfmNormal takes inverse!
     gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
   }

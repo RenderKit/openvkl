@@ -5,8 +5,6 @@
 #include "VdbGrid.h"
 #include "VdbSampler.ih"
 #include "VdbSampler_filter.ih"
-#include "VdbSampler_leafHandler.ih"
-#include "VdbSampler_denseHandler.ih"
 #include "VdbVolume.ih"
 #include "common/export_util.h"
 
@@ -36,12 +34,21 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-    __vkl_switch_filter(sampler->super.filter,
-                        *sample = VdbSampler_interpolate,
-                        sampler,
-                        indexCoordinates,
-                        *time,
-                        attributeIndex);
+    if (sampler->grid->dense) {
+      __vkl_switch_filter(sampler->super.filter,
+                          *sample = VdbSampler_interpolate_dense,
+                          sampler,
+                          indexCoordinates,
+                          *time,
+                          attributeIndex);
+    } else {
+      __vkl_switch_filter(sampler->super.filter,
+                          *sample = VdbSampler_interpolate,
+                          sampler,
+                          indexCoordinates,
+                          *time,
+                          attributeIndex);
+    }
   }
 }
 
@@ -64,12 +71,21 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
   const uniform vec3f indexCoordinates =
       xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-  __vkl_switch_filter(sampler->super.filter,
-                      *sample = VdbSampler_interpolate,
-                      sampler,
-                      indexCoordinates,
-                      *time,
-                      attributeIndex);
+  if (sampler->grid->dense) {
+    __vkl_switch_filter(sampler->super.filter,
+                        *sample = VdbSampler_interpolate_dense,
+                        sampler,
+                        indexCoordinates,
+                        *time,
+                        attributeIndex);
+  } else {
+    __vkl_switch_filter(sampler->super.filter,
+                        *sample = VdbSampler_interpolate,
+                        sampler,
+                        indexCoordinates,
+                        *time,
+                        attributeIndex);
+  }
 }
 
 export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
@@ -84,14 +100,25 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
   assert(sampler);
   assert(sampler->grid);
 
-  __vkl_switch_filter(sampler->super.filter,
-                      VdbSampler_interpolate,
-                      sampler,
-                      N,
-                      objectCoordinates,
-                      time,
-                      attributeIndex,
-                      samples);
+  if (sampler->grid->dense) {
+    __vkl_switch_filter(sampler->super.filter,
+                        VdbSampler_interpolate_dense,
+                        sampler,
+                        N,
+                        objectCoordinates,
+                        time,
+                        attributeIndex,
+                        samples);
+  } else {
+    __vkl_switch_filter(sampler->super.filter,
+                        VdbSampler_interpolate,
+                        sampler,
+                        N,
+                        objectCoordinates,
+                        time,
+                        attributeIndex,
+                        samples);
+  }
 }
 
 export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
@@ -115,14 +142,25 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
     const vec3f indexCoordinates =
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
-    __vkl_switch_filter(sampler->super.filter,
-                        VdbSampler_interpolate,
-                        sampler,
-                        indexCoordinates,
-                        *time,
-                        M,
-                        attributeIndices,
-                        samples);
+    if (sampler->grid->dense) {
+      __vkl_switch_filter(sampler->super.filter,
+                          VdbSampler_interpolate_dense,
+                          sampler,
+                          indexCoordinates,
+                          *time,
+                          M,
+                          attributeIndices,
+                          samples);
+    } else {
+      __vkl_switch_filter(sampler->super.filter,
+                          VdbSampler_interpolate,
+                          sampler,
+                          indexCoordinates,
+                          *time,
+                          M,
+                          attributeIndices,
+                          samples);
+    }
   }
 }
 
@@ -146,14 +184,25 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_uniform,
 
   const float *uniform time = (const float *uniform)_time;
 
-  __vkl_switch_filter(sampler->super.filter,
-                      VdbSampler_interpolate,
-                      sampler,
-                      indexCoordinates,
-                      *time,
-                      M,
-                      attributeIndices,
-                      samples);
+  if (sampler->grid->dense) {
+    __vkl_switch_filter(sampler->super.filter,
+                        VdbSampler_interpolate_dense,
+                        sampler,
+                        indexCoordinates,
+                        *time,
+                        M,
+                        attributeIndices,
+                        samples);
+  } else {
+    __vkl_switch_filter(sampler->super.filter,
+                        VdbSampler_interpolate,
+                        sampler,
+                        indexCoordinates,
+                        *time,
+                        M,
+                        attributeIndices,
+                        samples);
+  }
 }
 
 export void EXPORT_UNIQUE(VdbSampler_computeSampleM_stream,
@@ -169,15 +218,27 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_stream,
   assert(sampler);
   assert(sampler->grid);
 
-  __vkl_switch_filter(sampler->super.filter,
-                      VdbSampler_interpolate,
-                      sampler,
-                      N,
-                      objectCoordinates,
-                      time,
-                      M,
-                      attributeIndices,
-                      samples);
+  if (sampler->grid->dense) {
+    __vkl_switch_filter(sampler->super.filter,
+                        VdbSampler_interpolate_dense,
+                        sampler,
+                        N,
+                        objectCoordinates,
+                        time,
+                        M,
+                        attributeIndices,
+                        samples);
+  } else {
+    __vkl_switch_filter(sampler->super.filter,
+                        VdbSampler_interpolate,
+                        sampler,
+                        N,
+                        objectCoordinates,
+                        time,
+                        M,
+                        attributeIndices,
+                        samples);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -206,12 +267,22 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
     const varying float *uniform time = (const varying float *uniform)_time;
 
     vec3f gradient;
-    __vkl_switch_filter(sampler->super.gradientFilter,
-                        gradient = VdbSampler_computeGradient,
-                        sampler,
-                        indexCoordinates,
-                        *time,
-                        attributeIndex);
+
+    if (sampler->grid->dense) {
+      __vkl_switch_filter(sampler->super.gradientFilter,
+                          gradient = VdbSampler_computeGradient_dense,
+                          sampler,
+                          indexCoordinates,
+                          *time,
+                          attributeIndex);
+    } else {
+      __vkl_switch_filter(sampler->super.gradientFilter,
+                          gradient = VdbSampler_computeGradient,
+                          sampler,
+                          indexCoordinates,
+                          *time,
+                          attributeIndex);
+    }
 
     // Note: xfmNormal takes inverse!
     *gradients = xfmNormal(sampler->grid->objectToIndex, gradient);
@@ -230,14 +301,25 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
   assert(sampler);
   assert(sampler->grid);
 
-  __vkl_switch_filter(sampler->super.gradientFilter,
-                      VdbSampler_computeGradient,
-                      sampler,
-                      N,
-                      objectCoordinates,
-                      time,
-                      attributeIndex,
-                      gradients);
+  if (sampler->grid->dense) {
+    __vkl_switch_filter(sampler->super.gradientFilter,
+                        VdbSampler_computeGradient_dense,
+                        sampler,
+                        N,
+                        objectCoordinates,
+                        time,
+                        attributeIndex,
+                        gradients);
+  } else {
+    __vkl_switch_filter(sampler->super.gradientFilter,
+                        VdbSampler_computeGradient,
+                        sampler,
+                        N,
+                        objectCoordinates,
+                        time,
+                        attributeIndex,
+                        gradients);
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -259,12 +341,21 @@ float VdbSampler_iterator_computeSample_varying(
 
   float sample = 0.f;
 
-  __vkl_switch_filter(sampler->super.filter,
-                      sample = VdbSampler_interpolate,
-                      sampler,
-                      indexCoordinates,
-                      time,
-                      attributeIndex);
+  if (sampler->grid->dense) {
+    __vkl_switch_filter(sampler->super.filter,
+                        sample = VdbSampler_interpolate_dense,
+                        sampler,
+                        indexCoordinates,
+                        time,
+                        attributeIndex);
+  } else {
+    __vkl_switch_filter(sampler->super.filter,
+                        sample = VdbSampler_interpolate,
+                        sampler,
+                        indexCoordinates,
+                        time,
+                        attributeIndex);
+  }
 
   return sample;
 }
@@ -399,7 +490,15 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
 
         uniform uint64 voxel;
         uniform vec3ui domainOffset;
-        VdbSampler_traverse(&sampler, nodeOrigin, voxel, domainOffset);
+
+        // voxel is only needed for non-dense case
+        if (grid->dense) {
+          assert(grid->rootOrigin.x == 0 && grid->rootOrigin.y == 0 &&
+                 grid->rootOrigin.z == 0);
+          domainOffset = make_vec3ui(nodeOrigin.x, nodeOrigin.y, nodeOrigin.z);
+        } else {
+          VdbSampler_traverse(&sampler, nodeOrigin, voxel, domainOffset);
+        }
 
         const uniform range1f nodeValueRange =
             VdbSampler_computeNodeValueRange(grid,
@@ -421,7 +520,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
 // Construction.
 // -----------------------------------------------------------------------------
 
-export VdbSampler *uniform
+export void *uniform
 EXPORT_UNIQUE(VdbSampler_create,
               const void *uniform _volume,
               const void *uniform leafAccessObservers)
@@ -455,10 +554,54 @@ export void EXPORT_UNIQUE(VdbSampler_set,
       VdbSampler_iterator_computeSample_varying;
 
   sampler->maxSamplingDepth = maxSamplingDepth;
+
+  if (sampler->grid && sampler->grid->dense) {
+    // Redefine handler macros to allow us to use them for setting function
+    // pointers, rather than making function calls.
+#undef __vkl_vdb_dense_handler_impl
+#define __vkl_vdb_dense_handler_impl(handler, postfix, ...) handler##_##postfix;
+
+    const uniform uint32 numAttributes = sampler->grid->numAttributes;
+
+    sampler->denseLeafSample_varying =
+        uniform new DenseLeafSamplingVaryingFunc[numAttributes];
+    sampler->denseLeafSample_uniform =
+        uniform new DenseLeafSamplingUniformFunc[numAttributes];
+
+    for (uniform uint32 i = 0; i < numAttributes; i++) {
+      const uniform vkl_uint32 voxelType = sampler->grid->attributeTypes[i];
+      const uniform VKLTemporalFormat temporalFormat =
+          sampler->grid->denseTemporalFormat;
+      const uniform bool addressing32bit =
+          safe_32bit_indexing(sampler->grid->denseData[i]);
+
+      __vkl_vdb_dense_handler(
+          sampler->denseLeafSample_uniform[i] = VdbSampler_sample_dense_uniform,
+          voxelType,
+          temporalFormat,
+          addressing32bit);
+
+      __vkl_vdb_dense_handler(
+          sampler->denseLeafSample_varying[i] = VdbSampler_sample_dense_varying,
+          voxelType,
+          temporalFormat,
+          addressing32bit);
+    }
+#undef __vkl_vdb_dense_handler_impl
+  }
 }
 
 export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler)
 {
   VdbSampler *uniform sampler = (VdbSampler * uniform) _sampler;
+
+  if (sampler->denseLeafSample_varying) {
+    delete[] sampler->denseLeafSample_varying;
+  }
+
+  if (sampler->denseLeafSample_uniform) {
+    delete[] sampler->denseLeafSample_uniform;
+  }
+
   delete sampler;
 }

@@ -3,6 +3,7 @@
 
 #include "VdbGrid.h"
 #include "VdbIterator.ih"
+#include "VdbQueryVoxelDense.ih"
 #include "VdbSampler.ih"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
@@ -111,14 +112,27 @@ inline void VdbIterator_iterateIntervalInternal(
   VdbVoxelDescriptor voxel;
   while (self->dda.t <= self->tMax) {
     uint32 exitDepth = 0;
-    VdbIterator_queryVoxel(self->grid,
-                           self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
-                           self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
-                           self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
-                           self->dda.level,
-                           self->super.context->attributeIndex,
-                           inputValueRanges,
-                           voxel);
+    if (self->grid->dense) {
+      VdbIterator_queryVoxel_dense(
+          self->grid,
+          self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
+          self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
+          self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
+          self->dda.level,
+          self->super.context->attributeIndex,
+          inputValueRanges,
+          voxel);
+    } else {
+      VdbIterator_queryVoxel(self->grid,
+                             self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
+                             self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
+                             self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
+                             self->dda.level,
+                             self->super.context->attributeIndex,
+                             inputValueRanges,
+                             voxel);
+    }
+
     if (!voxel.isEmpty)
       break;
 

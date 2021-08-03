@@ -517,6 +517,16 @@ parameters.
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes and their sampler objects.
 
+
+##### Reconstruction filters
+
+Structured regular volumes support the filter types `VKL_FILTER_NEAREST`,
+`VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC` for both `filter` and
+`gradientFilter`.
+
+Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
+always $(0, 0, 0)$.
+
 #### Structured Spherical Volumes
 
 Structured spherical volumes are also supported, which are created by passing a
@@ -1345,13 +1355,14 @@ below.
   : Configuration parameters for interval iterator contexts.
 
 Some volume types support parameters that can impact the size of intervals
-returned during iteration. `amr`, `particle`, `unstructured`, and `vdb` volumes
-support the `maxIteratorDepth` parameter. For these volume types, an internal
-tree structure is used to accelerate iteration, and this parameter defines what
-level of the tree nodes will be intersected to find intervals. In general, a
-higher depth value will give smaller intervals with tighter bounds on value
-ranges. The default `maxIteratorDepth` value is `VKL_VDB_NUM_LEVELS`-2 for `vdb`
-volumes, and 6 for all other types.
+returned during iteration. `amr`, `particle`, `structuredRegular`,
+`unstructured`, and `vdb` volumes support the `maxIteratorDepth` parameter. For
+these volume types, an internal tree structure is used to accelerate iteration,
+and this parameter defines what level of the tree nodes will be intersected to
+find intervals. In general, a higher depth value will give smaller intervals
+with tighter bounds on value ranges. The default `maxIteratorDepth` value is
+`VKL_VDB_NUM_LEVELS`-2 for `structuredRegular` and `vdb` volumes, and 6 for all
+other types.
 
 `unstructured` volumes further support the `elementaryCellIteration` parameter.
 Enabling this will give intervals spanning individual cell intersections, rather

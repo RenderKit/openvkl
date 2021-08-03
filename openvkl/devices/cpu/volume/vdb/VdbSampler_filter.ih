@@ -22,7 +22,7 @@
       break;                                               \
     }                                                      \
     default: {                                             \
-      assert(sampler->super.filter == VKL_FILTER_NEAREST); \
+      assert(FilterEnum == VKL_FILTER_NEAREST);            \
       F##Nearest(__VA_ARGS__);                             \
       break;                                               \
     }                                                      \

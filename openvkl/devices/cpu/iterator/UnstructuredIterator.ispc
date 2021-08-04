@@ -390,11 +390,16 @@ export void EXPORT_UNIQUE(UnstructuredIterator_iterateInterval,
   // It is however typically enabled by default in hit iteration (if supported),
   // which also calls iterateInterval(). This is why we don't simply detect the
   // flag inside the interval iteration function itself.
+  //
+  // Also, some volume types use the unstructured iterator but do not support
+  // elementary cell intersections; in those case elementary iteration will not
+  // be used.
   UnstructuredIterator_iterateIntervalInternal(
       imask,
       _self,
       _interval,
       self->super.context->valueRanges,
-      self->super.context->elementaryCellIteration,
+      self->super.elementaryCellIterationSupported &&
+          self->super.context->elementaryCellIteration,
       _result);
 }

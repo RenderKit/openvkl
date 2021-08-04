@@ -1346,29 +1346,31 @@ below.
                                                         values ranges may be skipped during
                                                         iteration.
 
-  int            maxIteratorDepth          volume       Do not descend further than to this
-                                           dependent    depth during interval iteration.
-
-  bool           elementaryCellIteration   false        Return intervals spanning individual
-                                                        cell intersections.
+  float          intervalResolutionHint    0.5          A value in the range [0, 1] affecting
+                                                        the resolution (size) of returned
+                                                        intervals. A value of 0 yields the
+                                                        lowest resolution (largest) intervals
+                                                        while 1 gives the highest resolution
+                                                        (smallest) intervals. This value is
+                                                        only a hint; it may not impact
+                                                        behavior for all volume types.
   -------------- ------------------------- ------------ -------------------------------------
   : Configuration parameters for interval iterator contexts.
 
-Some volume types support parameters that can impact the size of intervals
-returned during iteration. `amr`, `particle`, `structuredRegular`,
-`unstructured`, and `vdb` volumes support the `maxIteratorDepth` parameter. For
-these volume types, an internal tree structure is used to accelerate iteration,
-and this parameter defines what level of the tree nodes will be intersected to
-find intervals. In general, a higher depth value will give smaller intervals
-with tighter bounds on value ranges. The default `maxIteratorDepth` value is
-`VKL_VDB_NUM_LEVELS`-2 for `structuredRegular` and `vdb` volumes, and 6 for all
-other types.
 
-`unstructured` volumes further support the `elementaryCellIteration` parameter.
-Enabling this will give intervals spanning individual cell intersections, rather
-than intersections with internal acceleration structure nodes which can span
-multiple cells or empty space in between. Elementary cell iteration is
-significantly slower than the default interval iteration mode.
+Most volume types support the `intervalResolutionHint` parameter that can impact
+the size of intervals returned duration iteration. These include `amr`,
+`particle`, `structuredRegular`, `unstructured`, and `vdb` volumes. In all cases
+a value of 1.0 yields the highest resolution (smallest) intervals possible,
+while a value of 0.0 gives the lowest resolution (largest) intervals. In
+general, smaller intervals will have tighter bounds on value ranges, and more
+efficient space skipping behavior than larger intervals, which can be beneficial
+for some rendering methods.
+
+For `structuredRegular`, `unstructured`, and `vdb` volumes, a value of 1.0 will
+enable elementary cell iteration, such that each interval spans an individual
+voxel / cell intersection. Note that interval iteration can be significantly
+slower in this case.
 
 As with other objects, the interval iterator context must be committed before
 being used.

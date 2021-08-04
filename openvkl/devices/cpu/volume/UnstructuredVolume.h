@@ -34,6 +34,8 @@ namespace openvkl {
 
       const Node *getNodeRoot() const;
 
+      int getBvhDepth() const;
+
      private:
       void buildBvhAndCalculateBounds();
 
@@ -82,6 +84,7 @@ namespace openvkl {
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      int bvhDepth{0};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -116,6 +119,12 @@ namespace openvkl {
     inline const Node *UnstructuredVolume<W>::getNodeRoot() const
     {
       return rtcRoot;
+    }
+
+    template <int W>
+    inline int UnstructuredVolume<W>::getBvhDepth() const
+    {
+      return bvhDepth;
     }
 
     template <int W>

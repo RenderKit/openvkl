@@ -296,6 +296,8 @@ namespace openvkl {
 
       addLevelToNodes(rtcRoot, 0);
 
+      bvhDepth = getMaxNodeLevel(rtcRoot);
+
       computeOverlappingNodeMetadata(rtcRoot);
     }
 

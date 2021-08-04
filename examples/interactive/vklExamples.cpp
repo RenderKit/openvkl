@@ -39,8 +39,7 @@ struct ViewerParams
   VKLFilter filter{VKL_FILTER_TRILINEAR};
   VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
   size_t numParticles{1000};
-  int maxIteratorDepth{0};
-  bool elementaryCellIteration{false};
+  float intervalResolutionHint{0.5f};
   int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
   uint8_t motionBlurStructuredNumTimesteps{6};
   bool multiAttribute{false};
@@ -931,14 +930,8 @@ void setupVolume(ViewerParams &params,
     }
   }
 
-  params.maxIteratorDepth =
-      (params.gridType == "vdb" || params.gridType == "structuredRegular"
-           ? VKL_VDB_NUM_LEVELS - 2
-           : 6);
-
-  params.elementaryCellIteration = false;
-
-  if (params.haveFilter && !params.haveVdb) {
+  if (params.haveFilter && !params.haveVdb &&
+      params.gridType != "structuredRegular") {
     std::cerr << "warning: -filter has no effect on " << params.gridType
               << " volumes" << std::endl;
   }
@@ -954,10 +947,9 @@ void setupSampler(const ViewerParams &params, Scene &scene)
 
 void setupIntervalIteratorContext(const ViewerParams &params, Scene &scene)
 {
-  vklSetInt(scene.intervalContext, "maxIteratorDepth", params.maxIteratorDepth);
-  vklSetBool(scene.intervalContext,
-             "elementaryCellIteration",
-             params.elementaryCellIteration);
+  vklSetFloat(scene.intervalContext,
+              "intervalResolutionHint",
+              params.intervalResolutionHint);
   vklCommit(scene.intervalContext);
 }
 
@@ -1038,23 +1030,11 @@ void interactiveRender(ViewerParams &params,
     bool samplerParamsChanged                 = false;
     bool intervalIteratorContextParamsChanged = false;
 
-    // maxIteratorDepth parameter currently only applies to unstructured,
-    // particle, and AMR volume samplers (special case below for vdb).
-    if (params.gridType == "unstructured" || params.gridType == "particle" ||
-        params.gridType == "amr") {
-      if (ImGui::SliderInt(
-              "maxIteratorDepth", &params.maxIteratorDepth, 0, 31)) {
-        intervalIteratorContextParamsChanged = true;
-      }
-    }
-
-    // elementaryCellIteration parameter currently only appies to unstructured
-    // volume samplers.
-    if (params.gridType == "unstructured") {
-      if (ImGui::Checkbox("elementaryCellIteration",
-                          &params.elementaryCellIteration)) {
-        intervalIteratorContextParamsChanged = true;
-      }
+    if (ImGui::SliderFloat("intervalResolutionHint",
+                           &params.intervalResolutionHint,
+                           0.f,
+                           1.f)) {
+      intervalIteratorContextParamsChanged = true;
     }
 
     if (params.gridType == "structuredRegular" ||
@@ -1099,18 +1079,13 @@ void interactiveRender(ViewerParams &params,
       }
     }
 
-    // VDB and structuredRegular specific parameters.
-    if (params.gridType == "vdb" || params.gridType == "structuredRegular") {
+    // VDB specific parameters.
+    if (params.gridType == "vdb") {
       if (ImGui::SliderInt("maxSamplingDepth",
                            &params.maxSamplingDepth,
                            0,
-                           VKL_VDB_NUM_LEVELS - 1) ||
-          ImGui::SliderInt("maxIteratorDepth",
-                           &params.maxIteratorDepth,
-                           0,
                            VKL_VDB_NUM_LEVELS - 1)) {
         samplerParamsChanged                 = true;
-        intervalIteratorContextParamsChanged = true;
       }
     }
 

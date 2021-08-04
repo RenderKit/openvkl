@@ -287,6 +287,7 @@ namespace openvkl {
 
       accumulateNodeValueRanges(rtcRoot);
       addLevelToNodes(rtcRoot, 0);
+      bvhDepth = getMaxNodeLevel(rtcRoot);
 
       valueRange = rtcRoot->valueRange;
     }

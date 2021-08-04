@@ -31,6 +31,8 @@ namespace openvkl {
 
       VKLAMRMethod getAMRMethod() const;
 
+      int getBvhDepth() const;
+
      private:
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
@@ -51,9 +53,18 @@ namespace openvkl {
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      int bvhDepth{0};
 
       void buildBvh();
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline int AMRVolume<W>::getBvhDepth() const
+    {
+      return bvhDepth;
+    }
 
   }  // namespace cpu_device
 }  // namespace openvkl

@@ -337,6 +337,8 @@ namespace openvkl {
       valueRange = rtcRoot->valueRange;
 
       addLevelToNodes(rtcRoot, 0);
+
+      bvhDepth = getMaxNodeLevel(rtcRoot);
     }
 
     template <int W>

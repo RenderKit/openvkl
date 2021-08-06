@@ -55,7 +55,7 @@ namespace openvkl {
                                       const vfloatn<1> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTime(time[0]);
       CALL_ISPC(VdbSampler_computeSample_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -72,7 +72,7 @@ namespace openvkl {
                                        const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VdbSampler_computeSample,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -90,7 +90,7 @@ namespace openvkl {
                                        const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeSample_stream,
                 ispcEquivalent,
                 N,
@@ -108,7 +108,7 @@ namespace openvkl {
                                          const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VdbSampler_computeGradient,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -126,7 +126,7 @@ namespace openvkl {
                                          const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeGradient_stream,
                 ispcEquivalent,
                 N,
@@ -145,7 +145,7 @@ namespace openvkl {
         const vfloatn<1> &time) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
-      assertValidTimes(time);
+      assertValidTime(time[0]);
       CALL_ISPC(VdbSampler_computeSampleM_uniform,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -165,7 +165,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VdbSampler_computeSampleM,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -186,7 +186,7 @@ namespace openvkl {
         const float *times) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(VdbSampler_computeSampleM_stream,
                 ispcEquivalent,
                 N,

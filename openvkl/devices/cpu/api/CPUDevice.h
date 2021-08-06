@@ -548,7 +548,7 @@ namespace openvkl {
         validW[i] = valid[i];
 
       const vfloatn<W> timesW(times, OW);
-      assertValidTimes(timesW);
+      assertValidTimes(validW, timesW);
 
       it->initializeIntervalV(validW, origin, direction, tRange, timesW);
 
@@ -666,7 +666,7 @@ namespace openvkl {
         validW[i] = valid[i];
 
       const vfloatn<W> timesW(times, OW);
-      assertValidTimes(timesW);
+      assertValidTimes(validW, timesW);
 
       it->initializeHitV(validW, origin, direction, tRange, timesW);
 

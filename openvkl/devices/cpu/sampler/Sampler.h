@@ -26,16 +26,19 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void assertValidTimes(const vfloatn<W> &time)
+    inline void assertValidTimes(const vintn<W> &valid, const vfloatn<W> &time)
     {
 #ifndef NDEBUG
       for (auto i = 0; i < W; ++i) {
+        if (!valid[i]) {
+          continue;
+        }
         assert(time[i] >= 0.f && time[i] <= 1.0f);
       }
 #endif
     }
 
-    inline void assertValidTimes(unsigned int N, const float *times)
+    inline void assertAllValidTimes(unsigned int N, const float *times)
     {
 #ifndef NDEBUG
       for (auto i = 0; i < N; ++i) {

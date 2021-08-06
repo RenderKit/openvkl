@@ -83,7 +83,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VKLParticleVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -100,7 +100,7 @@ namespace openvkl {
         const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(Sampler_sample_N_export,
                 ispcEquivalent,
                 N,
@@ -117,7 +117,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VKLParticleVolume_gradient_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -134,7 +134,7 @@ namespace openvkl {
         const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(Sampler_gradient_N_export,
                 ispcEquivalent,
                 N,

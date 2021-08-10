@@ -135,6 +135,7 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   const float sampleTolerance = 0.f;
 
   VKLSampler vklSampler = vklNewSampler(volume);
+  vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
   vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(dimensions);

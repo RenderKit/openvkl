@@ -70,8 +70,21 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
   std::vector<vec3f> objectCoordinates;
   std::vector<float> proceduralValues;
 
+  // ignore boundary areas where the filter (trilinear) will cause us to
+  // interpolate with the background (which may be NaN!)
+  const int lowerSpan = 0;
+  const int upperSpan = 1;
+
   for (const auto &offset : mis) {
     const auto offsetWithStep = offset * step;
+
+    if (coordinate_in_boundary_span(
+            offsetWithStep,
+            deviceContext->proceduralVolume->getDimensions(),
+            lowerSpan,
+            upperSpan)) {
+      continue;
+    }
 
     vec3f oc =
         deviceContext->proceduralVolume->transformLocalToObjectCoordinates(

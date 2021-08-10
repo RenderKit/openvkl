@@ -275,9 +275,19 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(2);
+
+    // tricubic support span; ignore coordinates here since they will interpolate with background
+    const int lowerSpan = 1;
+    const int upperSpan = 2;
+
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
+
+      if (coordinate_in_boundary_span(
+              offsetWithStep, volume->getDimensions(), lowerSpan, upperSpan)) {
+        continue;
+      }
 
       const vec3f objectCoordinates =
           volume->transformLocalToObjectCoordinates(offsetWithStep);
@@ -388,9 +398,19 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(2);
+
+    // tricubic support span; ignore coordinates here since they will interpolate with background
+    const int lowerSpan = 1;
+    const int upperSpan = 2;
+
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
+
+      if (coordinate_in_boundary_span(
+              offsetWithStep, volume->getDimensions(), lowerSpan, upperSpan)) {
+        continue;
+      }
 
       const vec3f objectCoordinates =
           volume->transformLocalToObjectCoordinates(offsetWithStep);

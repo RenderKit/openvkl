@@ -7,6 +7,7 @@
 #include "../sampler/Sampler.h"
 #include "../volume/Volume.h"
 #include "../volume/vdb/VdbVolume.h"
+#include "../volume/vdb/DenseVdbVolume.h"
 #include "IteratorContext_ispc.h"
 #include "rkcommon/math/range.h"
 #include "../volume/UnstructuredVolume.h"
@@ -212,7 +213,19 @@ namespace openvkl {
       }
 
       // default interval iterator depth used for hit iteration
-      const int maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
+      int maxIteratorDepth;
+
+      const Volume<W> &volume = this->getSampler().getVolume();
+
+      if (dynamic_cast<const VdbVolume<W> *>(&volume) &&
+          !dynamic_cast<const DenseVdbVolume<W> *>(&volume)) {
+        // VdbVolume, but not DenseVdbVolume.
+        // For sparse VDB volumes (constant cell data), we use elementary cell
+        // iteration to avoid hit artifacts near boundaries.
+        maxIteratorDepth = mapToMaxIteratorDepth(*this, 1.f);
+      } else {
+        maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
+      }
 
       if (this->ispcEquivalent) {
         CALL_ISPC(HitIteratorContext_Destructor, this->ispcEquivalent);

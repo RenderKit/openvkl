@@ -10,25 +10,6 @@
 #include "rkcommon/math/math.ih"
 #include "openvkl/iterator.isph"
 
-inline varying float nextafter(const varying float a, const varying float b)
-{
-  //! Match the behavior of the C99 math.h function.
-  if (a == b)
-    return (b);
-
-  //! We will compute the smallest representable floating increment or decrement
-  //! around 'a'.
-  varying float delta = (b > a) ? 1.0f : -1.0f;
-
-  //! Iteratively compute the positive or negative increment.
-  while (a + 0.5f * delta != a)
-    delta *= 0.5f;
-
-  //! Return the smallest number greater than 'a' or the largest number smaller
-  //! than 'a'.
-  return (a + delta);
-}
-
 /*
  * Intersect isosurfaces along the given ray using Newton-Raphson iteration.
  */
@@ -198,7 +179,6 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
       const univary float step,                                                 \
       const uniform int numValues,                                              \
       const float *uniform values,                                              \
-      const uniform bool elementaryCellTRange,                                  \
       univary Hit &hit)                                                         \
   {                                                                             \
     assert(tRange.lower < tRange.upper);                                        \
@@ -210,11 +190,11 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
                                          attributeIndex,                        \
                                          time);                                 \
                                                                                 \
-    if (elementaryCellTRange) {                                                 \
+    {                                                                           \
       univary int iters = 0;                                                    \
       while (iters < BISECT_MAX_BACKTRACK_ITERS &&                              \
              isnan(sample0) && t0 < tRange.upper) {                             \
-        t0 = nextafter(t0, t0 + 1.f);                                           \
+        t0 += max(1e-5f, 1e-5f * step);                                         \
         sample0 =                                                               \
           sampler->computeSample_##univary(sampler,                             \
                                            origin + t0 * direction,             \
@@ -236,11 +216,11 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
                                            time);                               \
       univary float ts = t;                                                     \
                                                                                 \
-      if (elementaryCellTRange) {                                               \
+      {                                                                         \
         univary int iters = 0;                                                  \
         while (iters < BISECT_MAX_BACKTRACK_ITERS &&                            \
                isnan(sample) && ts > t0) {                                      \
-          ts = nextafter(ts, ts - 1.f);                                         \
+          ts -= max(1e-5f, 1e-5f * step);                                       \
           sample =                                                              \
             sampler->computeSample_##univary(sampler,                           \
                                              origin + ts * direction,           \

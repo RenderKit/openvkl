@@ -193,9 +193,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
   // or find an isosurface hit.
 
   // We enable elementary cell iteration for more robust bracketing intervals,
-  // if the underlying interval iterator supports it. The bisection method can
-  // then use this knowledge (i.e. if we have an elementary cell tRange) to
-  // further improve robustness of returned hits.
+  // if the underlying interval iterator supports it.
   const uniform bool elementaryCellIteration =
       intervalIterator->elementaryCellIterationSupported;
 
@@ -241,7 +239,6 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                                    self->currentInterval.nominalDeltaT,
                                    self->context->numValues,
                                    self->context->values,
-                                   elementaryCellIteration,
                                    *hit);
 
     *result |= foundHit;

@@ -263,11 +263,11 @@ if (BUILD_OPENVDB)
       include(dep_blosc)
     endif()
 
-    set(OPENVDB_VERSION "8.0.0")
+    set(OPENVDB_VERSION "8.1.0")
     set(OPENVDB_BASE_URL "https://github.com/AcademySoftwareFoundation/openvdb/archive")
     set(OPENVDB_URL "${OPENVDB_BASE_URL}/v${OPENVDB_VERSION}.zip"
       CACHE STRING "URL of the OpenVDB archive.")
-    set(OPENVDB_HASH "8e2969e5c036d5be7679d56d46afe75d89c7e3d5ef750bc00f1d084591c631aa"
+    set(OPENVDB_HASH "2ede3edfc0259b6602ed0025a91b4a6118a2e1aea14c41d9e036fe5ceb539d5a"
       CACHE STRING "SHA256 hash of the OpenVDB archive.")
     include(dep_openvdb)
   endif()

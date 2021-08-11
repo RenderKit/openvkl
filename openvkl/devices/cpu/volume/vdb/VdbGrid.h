@@ -54,7 +54,7 @@ struct VdbGrid
                             // rotation-shear-scale | translation
   vec3i rootOrigin;         // In index scale space.
   vec3ui activeSize;        // Size of the root node, in voxels,
-  box3f indexBoundingBox;   // Index space bounding box (different
+  box3f domainBoundingBox;  // Domain space bounding box (different
                             // for constant cell data vs vertex centered data
                             // interpretation)
   bool constantCellData;    // Data is either considered constant per cell, or

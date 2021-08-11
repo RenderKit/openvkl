@@ -95,25 +95,6 @@ namespace openvkl {
     }
 
     /*
-     * Compute the root node origin from the bounding box.
-     */
-    vec3i computeRootOrigin(const box3i &bbox)
-    {
-      const vec3ui bboxRes = bbox.upper - bbox.lower;
-      if (bboxRes.x > vklVdbLevelRes(0) || bboxRes.y > vklVdbLevelRes(0) ||
-          bboxRes.z > vklVdbLevelRes(0)) {
-        runtimeError("input leaves do not fit into a single root level node");
-      }
-      return vec3i(
-          vklVdbLevelRes(1) *
-              (int)std::floor(bbox.lower.x / (float)vklVdbLevelRes(1)),
-          vklVdbLevelRes(1) *
-              (int)std::floor(bbox.lower.y / (float)vklVdbLevelRes(1)),
-          vklVdbLevelRes(1) *
-              (int)std::floor(bbox.lower.z / (float)vklVdbLevelRes(1)));
-    }
-
-    /*
      * We don't want to deal with the complexity of negative
      * indices in our tree, so only consider offsets relative to the root node
      * origin.
@@ -717,16 +698,17 @@ namespace openvkl {
         }
 
         // Compute rootOrigin, activeSize, and indexBoundingBox
+        box3f indexBoundingBox;
+
         if (grid->dense) {
           grid->rootOrigin = vec3i(0);
 
           grid->activeSize = grid->denseDimensions;
 
           if (constantCellData) {
-            grid->indexBoundingBox =
-                box3f(vec3f(0.f), vec3f(grid->denseDimensions));
+            indexBoundingBox = box3f(vec3f(0.f), vec3f(grid->denseDimensions));
           } else {
-            grid->indexBoundingBox =
+            indexBoundingBox =
                 box3f(vec3f(0.f), vec3f(grid->denseDimensions - 1));
           }
         } else {
@@ -737,23 +719,26 @@ namespace openvkl {
 
           const box3i bbox =
               computeBbox(grid->numLeaves, *leafLevel, *leafOrigin);
-          grid->rootOrigin = computeRootOrigin(bbox);
+          grid->rootOrigin = bbox.lower;
 
           grid->activeSize = bbox.upper - grid->rootOrigin;
 
-          grid->indexBoundingBox = box3f(bbox);
+          indexBoundingBox = box3f(bbox);
         }
+
+        // The domain-space bounding box.
+        grid->domainBoundingBox =
+            box3f(indexBoundingBox.lower - grid->rootOrigin,
+                  indexBoundingBox.upper - grid->rootOrigin);
 
         // VKL requires a float bbox.
         bounds = empty;
 
         for (int i = 0; i < 8; ++i) {
-          const vec3f v = vec3f((i & 1) ? grid->indexBoundingBox.upper.x
-                                        : grid->indexBoundingBox.lower.x,
-                                (i & 2) ? grid->indexBoundingBox.upper.y
-                                        : grid->indexBoundingBox.lower.y,
-                                (i & 4) ? grid->indexBoundingBox.upper.z
-                                        : grid->indexBoundingBox.lower.z);
+          const vec3f v = vec3f(
+              (i & 1) ? indexBoundingBox.upper.x : indexBoundingBox.lower.x,
+              (i & 2) ? indexBoundingBox.upper.y : indexBoundingBox.lower.y,
+              (i & 4) ? indexBoundingBox.upper.z : indexBoundingBox.lower.z);
 
           bounds.extend(xfmPoint(grid->indexToObject, v));
         }

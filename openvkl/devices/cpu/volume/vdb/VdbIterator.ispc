@@ -74,7 +74,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   // Clip on active region.
   const box1f tRangeIntersected =
-      intersectBox(rayOrg, rayDir, grid->indexBoundingBox, tRange);
+      intersectBox(rayOrg, rayDir, grid->domainBoundingBox, tRange);
 
   if (isempty1f(tRangeIntersected)) {
     self->tMax  = neg_inf;

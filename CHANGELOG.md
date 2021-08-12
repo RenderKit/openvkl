@@ -1,10 +1,41 @@
 Version History
 ---------------
 
-### Open VKL 0.14.0
+### Open VKL 1.0.0
 
--   OpenVKL can now be built for ARM CPUs that support Neon. This requires
-    ISPC 1.16.0 and Embree 3.14.0
+-   The version 1.0 release marks long term API stability (until v2.0)
+-   Open VKL can now be built for ARM CPUs that support Neon
+-   Iterator API updates:
+    -   Introducing interval and hit iterator contexts, which hold
+        iterator-specific configuration (eliminates value selector objects)
+    -   Interval and hit iteration is now supported on any volume attribute
+    -   Interval iterators now include a `time` parameter
+    -   Interval iterators now support the `intervalResolutionHint` parameter,
+        replacing `maxIteratorDepth` and `elementaryCellIteration`
+-   Supporting configurable background values; default is now
+    `VKL_BACKGROUND_UNDEFINED` (NaN) for all volume types
+-   `vklGetValueRange()` now supports all volume attributes
+-   Added ISPC-side API bindings for `vklGetNumAttributes()` and
+    `vklGetValueRange()`
+-   Structured regular volumes:
+    -   Added support for tricubic filtering
+    -   More accurate gradient computations respecting filter mode
+    -   Hit iteration robustness improvements
+-   VDB volumes:
+    -   Interval and hit iteration robustness improvements
+    -   Corrected interval iterator `nominalDeltaT` computation for
+        non-normalized ray directions and non-uniform object-space grid spacings
+    -   Fixed bug which could cause incorrect value range computations for
+        temporally varying volumes
+-   vklExamples additions demonstrating:
+    -   Multi-attribute interval / hit iteration
+    -   Configurable background values
+    -   Temporally varying volumes
+-   Superbuild updates to latest versions of dependencies
+-   Now requiring minimum versions:
+    -   Embree 3.13.1
+    -   rkcommon 1.7.0
+    -   ISPC 1.16.0
 
 ### Open VKL 0.13.0
 

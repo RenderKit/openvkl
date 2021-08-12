@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v0.14.0 of Intel® Open VKL. For changes and new features
+This is release v1.0.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -33,10 +33,45 @@ example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
 
-### Open VKL 0.14.0
+### Open VKL 1.0.0
 
-  - OpenVKL can now be built for ARM CPUs that support Neon. This
-    requires ISPC 1.16.0 and Embree 3.14.0
+  - The version 1.0 release marks long term API stability (until v2.0)
+  - Open VKL can now be built for ARM CPUs that support Neon
+  - Iterator API updates:
+      - Introducing interval and hit iterator contexts, which hold
+        iterator-specific configuration (eliminates value selector
+        objects)
+      - Interval and hit iteration is now supported on any volume
+        attribute
+      - Interval iterators now include a `time` parameter
+      - Interval iterators now support the `intervalResolutionHint`
+        parameter, replacing `maxIteratorDepth` and
+        `elementaryCellIteration`
+  - Supporting configurable background values; default is now
+    `VKL_BACKGROUND_UNDEFINED` (NaN) for all volume types
+  - `vklGetValueRange()` now supports all volume attributes
+  - Added ISPC-side API bindings for `vklGetNumAttributes()` and
+    `vklGetValueRange()`
+  - Structured regular volumes:
+      - Added support for tricubic filtering
+      - More accurate gradient computations respecting filter mode
+      - Hit iteration robustness improvements
+  - VDB volumes:
+      - Interval and hit iteration robustness improvements
+      - Corrected interval iterator `nominalDeltaT` computation for
+        non-normalized ray directions and non-uniform object-space grid
+        spacings
+      - Fixed bug which could cause incorrect value range computations
+        for temporally varying volumes
+  - vklExamples additions demonstrating:
+      - Multi-attribute interval / hit iteration
+      - Configurable background values
+      - Temporally varying volumes
+  - Superbuild updates to latest versions of dependencies
+  - Now requiring minimum versions:
+      - Embree 3.13.1
+      - rkcommon 1.7.0
+      - ISPC 1.16.0
 
 ### Open VKL 0.13.0
 
@@ -741,6 +776,7 @@ the table below.
 | int                   | temporallyStructuredNumTimesteps |                                | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                        |
 | uint32\[\] uint64\[\] | temporallyUnstructuredIndices    |                                | For temporally unstructured variation, indices to `data` time series beginning per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                |
 | float\[\]             | temporallyUnstructuredTimes      |                                | For temporally unstructured variation, time values corresponding to values in `data`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                    |
+| float\[\]             | background                       | `VKL_BACKGROUND_UNDEFINED`     | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                    |
 
 Configuration parameters for structured regular (`"structuredRegular"`)
 volumes.
@@ -761,6 +797,15 @@ parameters default to volume parameters.
 Configuration parameters for structured regular (`"structuredRegular"`)
 volumes and their sampler objects.
 
+##### Reconstruction filters
+
+Structured regular volumes support the filter types
+`VKL_FILTER_NEAREST`, `VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC`
+for both `filter` and `gradientFilter`.
+
+Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`,
+gradients are always \((0, 0, 0)\).
+
 #### Structured Spherical Volumes
 
 Structured spherical volumes are also supported, which are created by
@@ -775,19 +820,20 @@ volumes are summarized below.
 (\(r\)), inclination angle (\(\theta\)), and azimuthal angle
 (\(\phi\)).](https://openvkl.github.io/images/structured_spherical_coords.png)
 
-| Type                | Name        |    Default    | Description                                                                    |
-| :------------------ | :---------- | :-----------: | :----------------------------------------------------------------------------- |
-| vec3i               | dimensions  |               | number of voxels in each dimension \((r, \theta, \phi)\)                       |
-| VKLData VKLData\[\] | data        |               | VKLData object(s) of voxel data, supported types are:                          |
-|                     |             |               | `VKL_UCHAR`                                                                    |
-|                     |             |               | `VKL_SHORT`                                                                    |
-|                     |             |               | `VKL_USHORT`                                                                   |
-|                     |             |               | `VKL_HALF`                                                                     |
-|                     |             |               | `VKL_FLOAT`                                                                    |
-|                     |             |               | `VKL_DOUBLE`                                                                   |
-|                     |             |               | Multiple attributes are supported through passing an array of VKLData objects. |
-| vec3f               | gridOrigin  | \((0, 0, 0)\) | origin of the grid in units of \((r, \theta, \phi)\); angles in degrees        |
-| vec3f               | gridSpacing | \((1, 1, 1)\) | size of the grid cells in units of \((r, \theta, \phi)\); angles in degrees    |
+| Type                | Name        |          Default           | Description                                                                                                 |
+| :------------------ | :---------- | :------------------------: | :---------------------------------------------------------------------------------------------------------- |
+| vec3i               | dimensions  |                            | number of voxels in each dimension \((r, \theta, \phi)\)                                                    |
+| VKLData VKLData\[\] | data        |                            | VKLData object(s) of voxel data, supported types are:                                                       |
+|                     |             |                            | `VKL_UCHAR`                                                                                                 |
+|                     |             |                            | `VKL_SHORT`                                                                                                 |
+|                     |             |                            | `VKL_USHORT`                                                                                                |
+|                     |             |                            | `VKL_HALF`                                                                                                  |
+|                     |             |                            | `VKL_FLOAT`                                                                                                 |
+|                     |             |                            | `VKL_DOUBLE`                                                                                                |
+|                     |             |                            | Multiple attributes are supported through passing an array of VKLData objects.                              |
+| vec3f               | gridOrigin  |       \((0, 0, 0)\)        | origin of the grid in units of \((r, \theta, \phi)\); angles in degrees                                     |
+| vec3f               | gridSpacing |       \((1, 1, 1)\)        | size of the grid cells in units of \((r, \theta, \phi)\); angles in degrees                                 |
+| float\[\]           | background  | `VKL_BACKGROUND_UNDEFINED` | For each attribute, the value that is returned when sampling an undefined region outside the volume domain. |
 
 Configuration parameters for structured spherical
 (`"structuredSpherical"`) volumes.
@@ -836,14 +882,15 @@ Note that cell widths are defined *per refinement level*, not per block.
 AMR volumes are created by passing the type string `"amr"` to
 `vklNewVolume`, and have the following parameters:
 
-| Type        | Name         |       Default | Description                                                                                                                          |
-| :---------- | :----------- | ------------: | :----------------------------------------------------------------------------------------------------------------------------------- |
-| float\[\]   | cellWidth    |               | \[data\] array of each level’s cell width                                                                                            |
-| box3i\[\]   | block.bounds |               | \[data\] array of each block’s bounds (in voxels)                                                                                    |
-| int\[\]     | block.level  |               | \[data\] array of each block’s refinement level                                                                                      |
-| VKLData\[\] | block.data   |               | \[data\] array of each block’s VKLData object containing the actual scalar voxel data. Currently only `VKL_FLOAT` data is supported. |
-| vec3f       | gridOrigin   | \((0, 0, 0)\) | origin of the grid in object space                                                                                                   |
-| vec3f       | gridSpacing  | \((1, 1, 1)\) | size of the grid cells in object space                                                                                               |
+| Type        | Name         | Default                    | Description                                                                                                                          |
+| :---------- | :----------- | :------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| float\[\]   | cellWidth    |                            | \[data\] array of each level’s cell width                                                                                            |
+| box3i\[\]   | block.bounds |                            | \[data\] array of each block’s bounds (in voxels)                                                                                    |
+| int\[\]     | block.level  |                            | \[data\] array of each block’s refinement level                                                                                      |
+| VKLData\[\] | block.data   |                            | \[data\] array of each block’s VKLData object containing the actual scalar voxel data. Currently only `VKL_FLOAT` data is supported. |
+| vec3f       | gridOrigin   | \((0, 0, 0)\)              | origin of the grid in object space                                                                                                   |
+| vec3f       | gridSpacing  | \((1, 1, 1)\)              | size of the grid cells in object space                                                                                               |
+| float       | background   | `VKL_BACKGROUND_UNDEFINED` | The value that is returned when sampling an undefined region outside the volume domain.                                              |
 
 Configuration parameters for AMR (`"amr"`) volumes.
 
@@ -939,21 +986,22 @@ Gradients are computed using finite differences.
 Unstructured volumes are created by passing the type string
 `"unstructured"` to `vklNewVolume`, and have the following parameters:
 
-| Type                    | Name               | Default | Description                                                                                                                                             |
-| :---------------------- | :----------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| vec3f\[\]               | vertex.position    |         | \[data\] array of vertex positions                                                                                                                      |
-| float\[\]               | vertex.data        |         | \[data\] array of vertex data values to be sampled                                                                                                      |
-| uint32\[\] / uint64\[\] | index              |         | \[data\] array of indices (into the vertex array(s)) that form cells                                                                                    |
-| bool                    | indexPrefixed      | false   | indicates that the `index` array is provided in a VTK-compatible format, where the indices of each cell are prefixed with the number of vertices        |
-| uint32\[\] / uint64\[\] | cell.index         |         | \[data\] array of locations (into the index array), specifying the first index of each cell                                                             |
-| float\[\]               | cell.data          |         | \[data\] array of cell data values to be sampled                                                                                                        |
-| uint8\[\]               | cell.type          |         | \[data\] array of cell types (VTK compatible). Supported types are:                                                                                     |
-|                         |                    |         | `VKL_TETRAHEDRON`                                                                                                                                       |
-|                         |                    |         | `VKL_HEXAHEDRON`                                                                                                                                        |
-|                         |                    |         | `VKL_WEDGE`                                                                                                                                             |
-|                         |                    |         | `VKL_PYRAMID`                                                                                                                                           |
-| bool                    | hexIterative       | false   | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
-| bool                    | precomputedNormals | false   | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
+| Type                    | Name               | Default                    | Description                                                                                                                                             |
+| :---------------------- | :----------------- | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| vec3f\[\]               | vertex.position    |                            | \[data\] array of vertex positions                                                                                                                      |
+| float\[\]               | vertex.data        |                            | \[data\] array of vertex data values to be sampled                                                                                                      |
+| uint32\[\] / uint64\[\] | index              |                            | \[data\] array of indices (into the vertex array(s)) that form cells                                                                                    |
+| bool                    | indexPrefixed      | false                      | indicates that the `index` array is provided in a VTK-compatible format, where the indices of each cell are prefixed with the number of vertices        |
+| uint32\[\] / uint64\[\] | cell.index         |                            | \[data\] array of locations (into the index array), specifying the first index of each cell                                                             |
+| float\[\]               | cell.data          |                            | \[data\] array of cell data values to be sampled                                                                                                        |
+| uint8\[\]               | cell.type          |                            | \[data\] array of cell types (VTK compatible). Supported types are:                                                                                     |
+|                         |                    |                            | `VKL_TETRAHEDRON`                                                                                                                                       |
+|                         |                    |                            | `VKL_HEXAHEDRON`                                                                                                                                        |
+|                         |                    |                            | `VKL_WEDGE`                                                                                                                                             |
+|                         |                    |                            | `VKL_PYRAMID`                                                                                                                                           |
+| bool                    | hexIterative       | false                      | hexahedron interpolation method, defaults to fast non-iterative version which could have rendering inaccuracies may appear if hex is not parallelepiped |
+| bool                    | precomputedNormals | false                      | whether to accelerate by precomputing, at a cost of 12 bytes/face                                                                                       |
+| float                   | background         | `VKL_BACKGROUND_UNDEFINED` | The value that is returned when sampling an undefined region outside the volume domain.                                                                 |
 
 Configuration parameters for unstructured (`"unstructured"`) volumes.
 
@@ -1006,6 +1054,7 @@ VDB volumes are created by passing the type string `"vdb"` to
 | int\[\]     | node.temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                                                                                                                                                                                                                                                                                                               |
 | VKLData\[\] | node.temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, beginning per voxel. Supported data types for each node are `VKL_UINT` and `VKL_ULONG`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                                  |
 | VKLData\[\] | node.temporallyUnstructuredTimes      |                                    | For temporally unstructured variation, time values corresponding to values in `node.data`. For each node, the data must be of type `VKL_FLOAT`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                 |
+| float\[\]   | background                            | `VKL_BACKGROUND_UNDEFINED`         | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                                                                                                                                                                                                                                                                                                                           |
 
 Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -1216,7 +1265,8 @@ object.
 ## Sampling
 
 The scalar API takes a volume and coordinate, and returns a float value.
-NaN is returned for probe points outside the volume. The attribute index
+The volume’s background value (by default `VKL_BACKGROUND_UNDEFINED`) is
+returned for probe points outside the volume. The attribute index
 selects the scalar attribute of interest; not all volumes support
 multiple attributes. The time value, which must be between 0 and 1,
 specifies the sampling time. For temporally constant volumes, this value
@@ -1443,31 +1493,28 @@ VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 The parameters understood by interval iterator contexts are defined in
 the table below.
 
-| Type             | Name                    | Default          | Description                                                                                                                |
-| :--------------- | :---------------------- | :--------------- | :------------------------------------------------------------------------------------------------------------------------- |
-| int              | attributeIndex          | 0                | Defines the volume attribute of interest.                                                                                  |
-| vkl\_range1f\[\] | valueRanges             | \[-inf, inf\]    | Defines the value ranges of interest. Intervals not containing any of these values ranges may be skipped during iteration. |
-| int              | maxIteratorDepth        | volume dependent | Do not descend further than to this depth during interval iteration.                                                       |
-| bool             | elementaryCellIteration | false            | Return intervals spanning individual cell intersections.                                                                   |
+| Type             | Name                   | Default       | Description                                                                                                                                                                                                                                                                               |
+| :--------------- | :--------------------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| int              | attributeIndex         | 0             | Defines the volume attribute of interest.                                                                                                                                                                                                                                                 |
+| vkl\_range1f\[\] | valueRanges            | \[-inf, inf\] | Defines the value ranges of interest. Intervals not containing any of these values ranges may be skipped during iteration.                                                                                                                                                                |
+| float            | intervalResolutionHint | 0.5           | A value in the range \[0, 1\] affecting the resolution (size) of returned intervals. A value of 0 yields the lowest resolution (largest) intervals while 1 gives the highest resolution (smallest) intervals. This value is only a hint; it may not impact behavior for all volume types. |
 
 Configuration parameters for interval iterator contexts.
 
-Some volume types support parameters that can impact the size of
-intervals returned during iteration. `amr`, `particle`, `unstructured`,
-and `vdb` volumes support the `maxIteratorDepth` parameter. For these
-volume types, an internal tree structure is used to accelerate
-iteration, and this parameter defines what level of the tree nodes will
-be intersected to find intervals. In general, a higher depth value will
-give smaller intervals with tighter bounds on value ranges. The default
-`maxIteratorDepth` value is `VKL_VDB_NUM_LEVELS`-2 for `vdb` volumes,
-and 6 for all other types.
+Most volume types support the `intervalResolutionHint` parameter that
+can impact the size of intervals returned duration iteration. These
+include `amr`, `particle`, `structuredRegular`, `unstructured`, and
+`vdb` volumes. In all cases a value of 1.0 yields the highest resolution
+(smallest) intervals possible, while a value of 0.0 gives the lowest
+resolution (largest) intervals. In general, smaller intervals will have
+tighter bounds on value ranges, and more efficient space skipping
+behavior than larger intervals, which can be beneficial for some
+rendering methods.
 
-`unstructured` volumes further support the `elementaryCellIteration`
-parameter. Enabling this will give intervals spanning individual cell
-intersections, rather than intersections with internal acceleration
-structure nodes which can span multiple cells or empty space in between.
-Elementary cell iteration is significantly slower than the default
-interval iteration mode.
+For `structuredRegular`, `unstructured`, and `vdb` volumes, a value of
+1.0 will enable elementary cell iteration, such that each interval spans
+an individual voxel / cell intersection. Note that interval iteration
+can be significantly slower in this case.
 
 As with other objects, the interval iterator context must be committed
 before being used.

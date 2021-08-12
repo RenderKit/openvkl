@@ -538,6 +538,25 @@ namespace openvkl {
       return (format == VKL_FORMAT_TILE) ? 1 : vklVdbLevelNumVoxels(level);
     }
 
+    /*
+     * Compute the root node origin from the bounding box.
+     */
+    vec3i computeRootOrigin(const box3i &bbox)
+    {
+      const vec3ui bboxRes = bbox.upper - bbox.lower;
+      if (bboxRes.x > vklVdbLevelRes(0) || bboxRes.y > vklVdbLevelRes(0) ||
+          bboxRes.z > vklVdbLevelRes(0)) {
+        runtimeError("input leaves do not fit into a single root level node");
+      }
+      return vec3i(
+          vklVdbLevelRes(1) *
+              (int)std::floor(bbox.lower.x / (float)vklVdbLevelRes(1)),
+          vklVdbLevelRes(1) *
+              (int)std::floor(bbox.lower.y / (float)vklVdbLevelRes(1)),
+          vklVdbLevelRes(1) *
+              (int)std::floor(bbox.lower.z / (float)vklVdbLevelRes(1)));
+    }
+
     template <int W>
     void VdbVolume<W>::commit()
     {
@@ -719,7 +738,7 @@ namespace openvkl {
 
           const box3i bbox =
               computeBbox(grid->numLeaves, *leafLevel, *leafOrigin);
-          grid->rootOrigin = bbox.lower;
+          grid->rootOrigin = computeRootOrigin(bbox);
 
           grid->activeSize = bbox.upper - grid->rootOrigin;
 
@@ -750,6 +769,8 @@ namespace openvkl {
 
           grid->leafData = allocator.allocate<ispc::Data1D>(
               grid->numLeaves * grid->numAttributes);
+
+          const VKLDataType leafDataType = getLeafDataType(leafData);
 
           tasking::parallel_for(grid->numLeaves, [&](uint64_t i) {
             const uint32_t level = (*leafLevel)[i];
@@ -783,7 +804,6 @@ namespace openvkl {
                                    unstructuredIndices,
                                    unstructuredTimes);
 
-            const VKLDataType leafDataType = getLeafDataType(leafData);
             const bool multiAttrib         = (leafDataType == VKL_DATA);
 
             Data *const ld = (*leafData)[i];

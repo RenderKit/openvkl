@@ -3,6 +3,7 @@
 
 #include "VdbGrid.h"
 #include "VdbIterator.ih"
+#include "VdbQueryVoxelDense.ih"
 #include "VdbSampler.ih"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
@@ -32,27 +33,26 @@ void VdbIterator_iterateIntervalInternal(
 export void EXPORT_UNIQUE(VdbIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          const void *uniform _sampler,
+                          const void *uniform _context,
                           void *uniform _originObject,
                           void *uniform _directionObject,
-                          void *uniform _tRangeWorld,
-                          void *uniform _valueSelector)
+                          void *uniform _tRangeWorld)
 {
   if (!imask[programIndex]) {
     return;
   }
 
+  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
+
+  self->super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.iterate = VdbIterator_iterateIntervalInternal;
+  self->super.elementaryCellIterationSupported = false;
+
   const uniform VdbSampler *uniform sampler =
-      (const uniform VdbSampler *uniform)_sampler;
+      (const uniform VdbSampler *uniform)(self->super.context->sampler);
   const uniform VdbGrid *uniform grid = sampler->grid;
 
-  varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
-  self->grid                        = grid;
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-
-  // Initialize for hit iteration.
-  self->iterateInterval                  = VdbIterator_iterateIntervalInternal;
-  self->elementaryCellIterationSupported = false;
+  self->grid = grid;
 
   const vec3f origin    = *((const varying vec3f *uniform)_originObject);
   const vec3f direction = *((const varying vec3f *uniform)_directionObject);
@@ -67,30 +67,25 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   // This is an estimate of how far apart voxels are along the ray in object
   // space. We are basically measuring here how much the volume is scaled along
-  // the ray, and voxels in index space have size 1.
-  self->nominalDeltaT = length(direction) / length(rayDir);
+  // the ray, and voxels in index space have size 1. Note that this also
+  // accounts for potentially different object-space voxel spacings per
+  // dimension.
+  self->nominalDeltaT = reduce_min(1.f * rcp_safe(absf(rayDir)));
 
   // Clip on active region.
-  float tEnter = pos_inf;
-  float tExit  = neg_inf;
+  const box1f tRangeIntersected =
+      intersectBox(rayOrg, rayDir, grid->domainBoundingBox, tRange);
 
-  intersect_box(
-      rayOrg,
-      dir_safe_rcp(rayDir),
-      ((varying vec3f)make_vec3f(0.f, 0.f, 0.f)),
-      ((varying vec3f)make_vec3f(grid->activeSize.x,
-                                 grid->activeSize.y,
-                                 grid->activeSize.z)),
-      tEnter,
-      tExit);
-
-  if (tEnter > tExit) {
-    self->tMax = neg_inf;
+  if (isempty1f(tRangeIntersected)) {
+    self->tMax  = neg_inf;
     self->dda.t = 0;
   } else {
-    const float tMin = max(tRange.lower, tEnter * 0.999f);
-    self->tMax = min(tRange.upper, tExit * 1.001f);
-    ddaInit(rayOrg, rayDir, tMin, sampler->maxIteratorDepth, self->dda);
+    self->tMax = tRangeIntersected.upper;
+    ddaInit(rayOrg,
+            rayDir,
+            tRangeIntersected.lower,
+            self->super.context->maxIteratorDepth,
+            self->dda);
   }
 }
 
@@ -114,24 +109,37 @@ inline void VdbIterator_iterateIntervalInternal(
     return;
   }
 
-
   VdbVoxelDescriptor voxel;
   while (self->dda.t <= self->tMax) {
     uint32 exitDepth = 0;
-    VdbIterator_queryVoxel(self->grid,
-                           self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
-                           self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
-                           self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
-                           self->dda.level,
-                           inputValueRanges,
-                           voxel);
+    if (self->grid->dense) {
+      VdbIterator_queryVoxel_dense(
+          self->grid,
+          self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
+          self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
+          self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
+          self->dda.level,
+          self->super.context->attributeIndex,
+          inputValueRanges,
+          voxel);
+    } else {
+      VdbIterator_queryVoxel(self->grid,
+                             self->dda.idx[DDA_STATE_X_OFFSET(self->dda.level)],
+                             self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
+                             self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
+                             self->dda.level,
+                             self->super.context->attributeIndex,
+                             inputValueRanges,
+                             voxel);
+    }
+
     if (!voxel.isEmpty)
       break;
 
     hddaStep(self->grid, voxel, self->dda);
   }
 
-  if (self->dda.t <= self->tMax) {
+  if (self->dda.t < self->tMax) {
     varying Interval *uniform interval = (varying Interval * uniform) _interval;
     interval->valueRange               = voxel.valueRange;
     interval->tRange.lower             = self->dda.t;
@@ -158,13 +166,10 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  uniform ValueRanges valueRanges;
-  if (self->valueSelector) {
-    valueRanges = self->valueSelector->ranges;
-  } else {
-    valueRanges = make_ValueRanges_full();
-  }
-
-  VdbIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRanges, false, _result);
+  VdbIterator_iterateIntervalInternal(imask,
+                                      _self,
+                                      _interval,
+                                      self->super.context->valueRanges,
+                                      false,
+                                      _result);
 }

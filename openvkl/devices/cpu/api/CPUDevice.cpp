@@ -7,7 +7,6 @@
 #include "../iterator/Iterator.h"
 #include "../observer/Observer.h"
 #include "../sampler/Sampler.h"
-#include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
 #include "CPUDevice_ispc.h"
 
@@ -118,6 +117,33 @@ namespace openvkl {
     }
 
     ///////////////////////////////////////////////////////////////////////////
+    // Interval iterator //////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    VKLIntervalIteratorContext CPUDevice<W>::newIntervalIteratorContext(
+        VKLSampler sampler)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      return (VKLIntervalIteratorContext)samplerObject
+          .getIntervalIteratorFactory()
+          .newContext(samplerObject);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Hit iterator ///////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    VKLHitIteratorContext CPUDevice<W>::newHitIteratorContext(
+        VKLSampler sampler)
+    {
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      return (VKLHitIteratorContext)samplerObject.getHitIteratorFactory()
+          .newContext(samplerObject);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
     // Parameters /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
@@ -184,37 +210,6 @@ namespace openvkl {
     {
       ManagedObject *managedObject = (ManagedObject *)object;
       managedObject->setParam(name, v);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Value selector /////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    template <int W>
-    VKLValueSelector CPUDevice<W>::newValueSelector(VKLVolume volume)
-    {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return (VKLValueSelector)volumeObject.newValueSelector();
-    }
-
-    template <int W>
-    void CPUDevice<W>::valueSelectorSetRanges(
-        VKLValueSelector valueSelector,
-        const utility::ArrayView<const range1f> &ranges)
-    {
-      auto &valueSelectorObject =
-          referenceFromHandle<ValueSelector<W>>(valueSelector);
-      valueSelectorObject.setRanges(ranges);
-    }
-
-    template <int W>
-    void CPUDevice<W>::valueSelectorSetValues(
-        VKLValueSelector valueSelector,
-        const utility::ArrayView<const float> &values)
-    {
-      auto &valueSelectorObject =
-          referenceFromHandle<ValueSelector<W>>(valueSelector);
-      valueSelectorObject.setValues(values);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -406,10 +401,11 @@ namespace openvkl {
     }
 
     template <int W>
-    range1f CPUDevice<W>::getValueRange(VKLVolume volume)
+    range1f CPUDevice<W>::getValueRange(VKLVolume volume,
+                                        unsigned int attributeIndex)
     {
       auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return volumeObject.getValueRange();
+      return volumeObject.getValueRange(attributeIndex);
     }
 
     ///////////////////////////////////////////////////////////////////////////

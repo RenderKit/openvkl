@@ -24,7 +24,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   // for a unit cube physical grid [(0,0,0), (1,1,1)]
   constexpr int DIMENSION      = 128;
-  constexpr int MACROCELL_SIZE = 16;
+  constexpr int MACROCELL_SIZE = VKL_VDB_RES_LEAF;
 
   const vec3i dimensions(DIMENSION);
   const vec3f gridOrigin(0.f);
@@ -36,6 +36,15 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
+
+  const unsigned int attributeIndex = 0;
+
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(vklSampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
+  vklCommit(intervalContext);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -49,7 +58,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   std::array<int, 3> nativeWidths{4, 8, 16};
 
-  SECTION("randomized interval continuity with no value selector")
+  SECTION("randomized interval continuity with no context value ranges")
   {
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -77,10 +86,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize4(intervalContext));
           VKLIntervalIterator4 iterator = vklInitIntervalIterator4(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -142,10 +152,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize8(intervalContext));
           VKLIntervalIterator8 iterator = vklInitIntervalIterator8(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -207,10 +218,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize16(intervalContext));
           VKLIntervalIterator16 iterator = vklInitIntervalIterator16(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
@@ -278,7 +290,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     }
   }
 
-  SECTION("randomized interval value ranges with no value selector")
+  SECTION("randomized interval value ranges with no context value ranges")
   {
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -306,10 +318,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize4(intervalContext));
           VKLIntervalIterator4 iterator = vklInitIntervalIterator4(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -347,6 +360,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -370,10 +384,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize8(intervalContext));
           VKLIntervalIterator8 iterator = vklInitIntervalIterator8(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -411,6 +426,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -434,10 +450,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize16(intervalContext));
           VKLIntervalIterator16 iterator = vklInitIntervalIterator16(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
@@ -475,6 +492,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -504,17 +522,18 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     }
   }
 
-  SECTION("randomized interval value ranges with value selector")
+  SECTION("randomized interval value ranges with context value ranges")
   {
-    VKLValueSelector valueSelector = vklNewValueSelector(vklVolume);
-
     // will trigger intervals covering individual ranges separately
     std::vector<vkl_range1f> valueRanges{{0.9f, 1.f}, {1.9f, 2.f}};
 
-    vklValueSelectorSetRanges(
-        valueSelector, valueRanges.size(), valueRanges.data());
+    VKLData valueRangesData = vklNewData(
+        getOpenVKLDevice(), valueRanges.size(), VKL_BOX1F, valueRanges.data());
 
-    vklCommit(valueSelector);
+    vklSetData(intervalContext, "valueRanges", valueRangesData);
+    vklRelease(valueRangesData);
+
+    vklCommit(intervalContext);
 
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -542,14 +561,15 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize4(intervalContext));
           VKLIntervalIterator4 iterator = vklInitIntervalIterator4(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
-              valueSelector,
+              nullptr,
               buffer.data());
 
           VKLInterval4 interval;
@@ -584,6 +604,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -598,21 +619,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the value selector
-              // value range(s)
-              bool rangeIntersectsValueSelector = false;
+              // the interval value range should overlap the context value
+              // range(s)
+              bool rangeIntersectsContextValueRanges = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsValueSelector = true;
+                  rangeIntersectsContextValueRanges = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsValueSelector);
+              REQUIRE(rangeIntersectsContextValueRanges);
             }
 
             intervalCount++;
@@ -623,14 +644,15 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize8(intervalContext));
           VKLIntervalIterator8 iterator = vklInitIntervalIterator8(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
-              valueSelector,
+              nullptr,
               buffer.data());
 
           VKLInterval8 interval;
@@ -665,6 +687,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -679,21 +702,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the value selector
-              // value range(s)
-              bool rangeIntersectsValueSelector = false;
+              // the interval value range should overlap the context value
+              // range(s)
+              bool rangeIntersectsContextValueRanges = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsValueSelector = true;
+                  rangeIntersectsContextValueRanges = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsValueSelector);
+              REQUIRE(rangeIntersectsContextValueRanges);
             }
 
             intervalCount++;
@@ -704,14 +727,15 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize16(intervalContext));
           VKLIntervalIterator16 iterator = vklInitIntervalIterator16(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
-              valueSelector,
+              nullptr,
               buffer.data());
 
           VKLInterval16 interval;
@@ -746,6 +770,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
               vkl_range1f sampledValueRange = computeIntervalValueRange(
                   vklSampler,
+                  attributeIndex,
                   reinterpret_cast<vkl_vec3f &>(origins[i]),
                   reinterpret_cast<vkl_vec3f &>(directions[i]),
                   vkl_range1f{interval.tRange.lower[i],
@@ -760,21 +785,21 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
                   (sampledValueRange.lower >= interval.valueRange.lower[i] &&
                    sampledValueRange.upper <= interval.valueRange.upper[i]));
 
-              // the interval value range should overlap the value selector
-              // value range(s)
-              bool rangeIntersectsValueSelector = false;
+              // the interval value range should overlap the context value
+              // range(s)
+              bool rangeIntersectsContextValueRanges = false;
 
               for (const auto &r : valueRanges) {
                 if (rangesIntersect(
                         r,
                         vkl_range1f{interval.valueRange.lower[i],
                                     interval.valueRange.upper[i]})) {
-                  rangeIntersectsValueSelector = true;
+                  rangeIntersectsContextValueRanges = true;
                   break;
                 }
               }
 
-              REQUIRE(rangeIntersectsValueSelector);
+              REQUIRE(rangeIntersectsContextValueRanges);
             }
 
             intervalCount++;
@@ -789,8 +814,6 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
       }
     }
-
-    vklRelease(valueSelector);
   }
 
   SECTION("only write intervals for active lanes")
@@ -824,10 +847,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
             AOStoSOA_range1f(tRanges, callingWidth);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize4(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize4(intervalContext));
           VKLIntervalIterator4 iterator = vklInitIntervalIterator4(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f4 *)originsSOA.data(),
               (const vkl_vvec3f4 *)directionsSOA.data(),
               (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -897,10 +921,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize8(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize8(intervalContext));
           VKLIntervalIterator8 iterator = vklInitIntervalIterator8(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f8 *)originsSOA.data(),
               (const vkl_vvec3f8 *)directionsSOA.data(),
               (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -970,10 +995,11 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetIntervalIteratorSize16(vklSampler));
+          std::vector<char> buffer(
+              vklGetIntervalIteratorSize16(intervalContext));
           VKLIntervalIterator16 iterator = vklInitIntervalIterator16(
               valid.data(),
-              vklSampler,
+              intervalContext,
               (const vkl_vvec3f16 *)originsSOA.data(),
               (const vkl_vvec3f16 *)directionsSOA.data(),
               (const vkl_vrange1f16 *)tRangesSOA.data(),
@@ -1047,8 +1073,10 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
         }
       }
     }
+
   }
 
+  vklRelease(intervalContext);
   vklRelease(vklSampler);
 
   shutdownOpenVKL();

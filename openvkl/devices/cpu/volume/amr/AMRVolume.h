@@ -27,11 +27,11 @@ namespace openvkl {
 
       box3f getBoundingBox() const override;
       unsigned int getNumAttributes() const override;
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       VKLAMRMethod getAMRMethod() const;
 
-      int getMaxIteratorDepth() const;
+      int getBvhDepth() const;
 
      private:
       std::unique_ptr<amr::AMRData> data;
@@ -49,15 +49,24 @@ namespace openvkl {
 
       VKLAMRMethod amrMethod{VKL_AMR_CURRENT};
 
-      // for interval iteration
-      int maxIteratorDepth{0};
+      Ref<const DataT<float>> background;
 
+      // for interval iteration
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      int bvhDepth{0};
 
       void buildBvh();
     };
+
+    // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    inline int AMRVolume<W>::getBvhDepth() const
+    {
+      return bvhDepth;
+    }
 
   }  // namespace cpu_device
 }  // namespace openvkl

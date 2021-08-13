@@ -106,9 +106,16 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
     // accelerator build overhead, which we need to resolve.
     SECTION("double")
     {
+      const int lowerSpan = 0;
+      const int upperSpan = 1;
+
       sampling_on_vertices_vs_procedural_values<
-          WaveletStructuredRegularVolumeDouble>(
-          vec3i(16385, 16385, 2), dcf, 0, vec3i(32, 32, 1));
+          WaveletStructuredRegularVolumeDouble>(vec3i(16385, 16385, 2),
+                                                dcf,
+                                                0,
+                                                vec3i(32, 32, 1),
+                                                lowerSpan,
+                                                upperSpan);
     }
   }
 

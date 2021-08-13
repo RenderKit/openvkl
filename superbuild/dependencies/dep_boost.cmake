@@ -1,4 +1,4 @@
-## Copyright 2020 Intel Corporation
+## Copyright 2020-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 set(COMPONENT_NAME boost)
@@ -12,6 +12,13 @@ set(BOOST_CONF "./bootstrap.sh")
 set(BOOST_BUILD "./b2")
 set(BOOST_LINK "shared")
 
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
+  set(BOOST_ARCH "arm")
+else()
+  set(BOOST_ARCH "x86")
+endif()
+
+
 ExternalProject_Add(${COMPONENT_NAME}
   PREFIX ${COMPONENT_NAME}
   DOWNLOAD_DIR ${COMPONENT_NAME}
@@ -23,7 +30,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   CONFIGURE_COMMAND ${BOOST_CONF}
   BUILD_COMMAND ${BOOST_BUILD} -d0 --with-system --with-iostreams --with-regex --layout=system
     --prefix=${COMPONENT_PATH} variant=release threading=multi address-model=64
-    link=${BOOST_LINK} architecture=x86 install
+    link=${BOOST_LINK} architecture=${BOOST_ARCH} install
   INSTALL_COMMAND ""
   BUILD_ALWAYS OFF
 )

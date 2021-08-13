@@ -117,16 +117,22 @@ namespace openvkl {
 
     void VKLWindow::setRenderPixelRange(const region2i &pixelRange)
     {
-      if (area(pixelRange) <= 0 || anyLessThan(pixelRange.lower, vec2i(0)) ||
-          anyLessThan(pixelRange.upper, vec2i(0)) ||
-          anyLessThan(windowSize, pixelRange.lower) ||
-          anyLessThan(windowSize, pixelRange.upper)) {
+      if (area(pixelRange) <= 0) {
         throw std::runtime_error("VKLWindow: bad pixelRange");
       }
-      renderer_density_pathtracer->setPixelRange(pixelRange);
-      renderer_hit_iterator->setPixelRange(pixelRange);
-      renderer_ray_march_iterator->setPixelRange(pixelRange);
-      renderer_interval_iterator_debug->setPixelRange(pixelRange);
+
+      region2i windowSizeRange(0, windowSize);
+      region2i clampedPixelRange = intersectionOf(windowSizeRange, pixelRange);
+
+      if (clampedPixelRange != pixelRange) {
+        std::cerr << "warning: clamped requested pixelRange to window bounds"
+                  << std::endl;
+      }
+
+      renderer_density_pathtracer->setPixelRange(clampedPixelRange);
+      renderer_hit_iterator->setPixelRange(clampedPixelRange);
+      renderer_ray_march_iterator->setPixelRange(clampedPixelRange);
+      renderer_interval_iterator_debug->setPixelRange(clampedPixelRange);
     }
 
     void VKLWindow::updateCamera()

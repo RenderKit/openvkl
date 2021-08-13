@@ -3,9 +3,10 @@
 
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
-#include "../value_selector/ValueSelector.ih"
+#include "../common/ValueRanges.ih"
 #include "../volume/GridAccelerator.ih"
 #include "../volume/SharedStructuredVolume.ih"
+#include "../iterator/IteratorContext.ih"
 #include "GridAcceleratorIterator.ih"
 
 export void EXPORT_UNIQUE(GridAcceleratorIterator_declare_types_dummy,
@@ -44,15 +45,14 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   univary GridAcceleratorIterator *uniform self =                              \
       (univary GridAcceleratorIterator * uniform) _self;                       \
                                                                                \
-  self->sampler       = (const Sampler *uniform)_sampler;                      \
-  self->origin        = *((univary vec3f * uniform) _origin);                  \
-  self->direction     = *((univary vec3f * uniform) _direction);               \
-  self->tRange        = *((univary box1f * uniform) _tRange);                  \
-  self->time          = *((univary float * uniform) _time);                    \
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;      \
+  self->context   = (const IntervalIteratorContext *uniform)_context;          \
+  self->origin    = *((univary vec3f * uniform) _origin);                      \
+  self->direction = *((univary vec3f * uniform) _direction);                   \
+  self->tRange    = *((univary box1f * uniform) _tRange);                      \
+  self->time      = *((univary float *uniform)_time);                          \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
-      (const SharedStructuredVolume *uniform)self->sampler->volume;            \
+      (const SharedStructuredVolume *uniform)self->context->sampler->volume;   \
                                                                                \
   self->boundingBoxTRange = intersectBox(                                      \
       self->origin, self->direction, volume->boundingBox, self->tRange);       \
@@ -70,20 +70,19 @@ export uniform int EXPORT_UNIQUE(GridAcceleratorIteratorV_sizeOf)
   self->intervalState.currentCellIndex = make_vec3i(-1);                       \
                                                                                \
   self->intervalState.nominalDeltaT =                                          \
-      reduce_min(volume->gridSpacing                                           \
-      * rcp_safe(absf(self->direction))); /* in ray space */                   \
+      reduce_min(volume->gridSpacing *                                         \
+                 rcp_safe(absf(self->direction))); /* in ray space */          \
                                                                                \
   self->hitState.currentCellIndex  = make_vec3i(-1);                           \
   self->hitState.currentCellTRange = make_box1f(inf, -inf);
 
 export void EXPORT_UNIQUE(GridAcceleratorIteratorU_Initialize,
                           void *uniform _self,
-                          void *uniform _sampler,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _time,
-                          void *uniform _valueSelector)
+                          void *uniform _time)
 {
   template_GridAcceleratorIterator_Initialize_internal(uniform);
 }
@@ -91,12 +90,11 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorU_Initialize,
 export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
-                          void *uniform _sampler,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _time,
-                          void *uniform _valueSelector)
+                          void *uniform _time)
 {
   if (!imask[programIndex]) {
     return;
@@ -120,7 +118,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
   }                                                                            \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
-      (const SharedStructuredVolume *uniform)self->sampler->volume;            \
+      (const SharedStructuredVolume *uniform)self->context->sampler->volume;   \
                                                                                \
   while (GridAccelerator_nextCell(volume->accelerator,                         \
                                   self,                                        \
@@ -129,15 +127,13 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_Initialize,
     univary box1f cellValueRange;                                              \
     GridAccelerator_getCellValueRange(volume->accelerator,                     \
                                       self->intervalState.currentCellIndex,    \
+                                      self->context->attributeIndex,           \
                                       cellValueRange);                         \
                                                                                \
     univary bool returnInterval = false;                                       \
                                                                                \
-    if (!self->valueSelector) {                                                \
+    if (valueRangesOverlap(self->context->valueRanges, cellValueRange)) {      \
       returnInterval = true;                                                   \
-    } else if (valueRangesOverlap(self->valueSelector->ranges,                 \
-                                  cellValueRange)) {                           \
-       returnInterval = true;                                                  \
     }                                                                          \
                                                                                \
     if (returnInterval) {                                                      \
@@ -180,6 +176,9 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
   univary GridAcceleratorIterator *uniform self =                              \
       (univary GridAcceleratorIterator * uniform) _self;                       \
                                                                                \
+  const HitIteratorContext *uniform hitContext =                               \
+      (const HitIteratorContext *uniform) self->context;                       \
+                                                                               \
   univary Hit *uniform hit = (univary Hit * uniform) _hit;                     \
                                                                                \
   univary int *uniform result = (univary int *uniform)_result;                 \
@@ -189,14 +188,13 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
     return;                                                                    \
   }                                                                            \
                                                                                \
-  if(!self->valueSelector || self->valueSelector->numValues == 0)              \
-  {                                                                            \
+  if (hitContext->numValues == 0) {                                            \
     *result = false;                                                           \
     return;                                                                    \
   }                                                                            \
                                                                                \
   const SharedStructuredVolume *uniform volume =                               \
-      (const SharedStructuredVolume *uniform)self->sampler->volume;            \
+      (const SharedStructuredVolume *uniform)self->context->sampler->volume;   \
                                                                                \
   /* first iteration */                                                        \
   __vkl_concat(cif_, univary)(self->hitState.currentCellIndex.x == -1)         \
@@ -212,22 +210,25 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                                                                \
   while (self->hitState.activeCell) {                                          \
     univary box1f cellValueRange;                                              \
-    GridAccelerator_getCellValueRange(                                         \
-        volume->accelerator, self->hitState.currentCellIndex, cellValueRange); \
+    GridAccelerator_getCellValueRange(volume->accelerator,                     \
+                                      self->hitState.currentCellIndex,         \
+                                      self->context->attributeIndex,           \
+                                      cellValueRange);                         \
                                                                                \
     univary bool cellValueRangeOverlap =                                       \
-        valueRangesOverlap(self->valueSelector->valuesRanges, cellValueRange); \
+        valueRangesOverlap(self->context->valueRanges, cellValueRange);        \
                                                                                \
     if (cellValueRangeOverlap) {                                               \
       univary bool foundHit =                                                  \
-          intersectSurfacesNewton(self->sampler,                               \
+          intersectSurfacesNewton(self->context->sampler,                      \
                                   self->origin,                                \
                                   self->direction,                             \
                                   self->hitState.currentCellTRange,            \
+                                  self->context->attributeIndex,               \
                                   self->time,                                  \
                                   0.5f * step,                                 \
-                                  self->valueSelector->numValues,              \
-                                  self->valueSelector->values,                 \
+                                  hitContext->numValues,                       \
+                                  hitContext->values,                          \
                                   *hit);                                       \
                                                                                \
       if (foundHit) {                                                          \

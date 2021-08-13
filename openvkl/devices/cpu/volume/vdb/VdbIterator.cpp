@@ -16,16 +16,15 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &_times)
     {
       CALL_ISPC(VdbIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
-                (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&tRange);
     }
 
     template <int W>

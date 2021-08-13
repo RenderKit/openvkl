@@ -79,9 +79,12 @@ void randomized_vectorized_gradients(VKLVolume volume)
         INFO("gradient = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);
 
-        REQUIRE(gradientTruth.x == gradients[i].x);
-        REQUIRE(gradientTruth.y == gradients[i].y);
-        REQUIRE(gradientTruth.z == gradients[i].z);
+        REQUIRE(((std::isnan(gradientTruth.x) && std::isnan(gradients[i].x)) ||
+                 (gradientTruth.x == gradients[i].x)));
+        REQUIRE(((std::isnan(gradientTruth.y) && std::isnan(gradients[i].y)) ||
+                 (gradientTruth.y == gradients[i].y)));
+        REQUIRE(((std::isnan(gradientTruth.z) && std::isnan(gradients[i].z)) ||
+                 (gradientTruth.z == gradients[i].z)));
       }
     }
   }

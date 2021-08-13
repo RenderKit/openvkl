@@ -5,6 +5,7 @@
 
 #include "GridAcceleratorIteratorSize_ispc.h"
 #include "Iterator.h"
+#include "IteratorContext.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -16,12 +17,11 @@ namespace openvkl {
 
       // Varying.
 
-      void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+      void initializeIntervalV(const vintn<W> &valid,
+                               const vvec3fn<W> &origin,
+                               const vvec3fn<W> &direction,
+                               const vrange1fn<W> &tRange,
+                               const vfloatn<W> &times) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -29,23 +29,21 @@ namespace openvkl {
 
       // Uniform.
 
-      void initializeIntervalU(
-          const vvec3fn<1> &origin,
-          const vvec3fn<1> &direction,
-          const vrange1fn<1> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+      void initializeIntervalU(const vvec3fn<1> &origin,
+                               const vvec3fn<1> &direction,
+                               const vrange1fn<1> &tRange,
+                               float time) override final;
 
       void iterateIntervalU(vVKLIntervalN<1> &interval,
                             vintn<1> &result) override final;
 
-
       void *getIspcStorage() override final
       {
-        return reinterpret_cast<void*>(ispcStorage);
+        return reinterpret_cast<void *>(ispcStorage);
       }
 
      protected:
-      using Iterator<W>::sampler;
+      using Iterator<W>::context;
       using IspcIterator = __varying_ispc_type(GridAcceleratorIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
@@ -54,7 +52,9 @@ namespace openvkl {
     using GridAcceleratorIntervalIteratorFactory =
         ConcreteIteratorFactory<W,
                                 IntervalIterator,
-                                GridAcceleratorIntervalIterator>;
+                                GridAcceleratorIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     struct GridAcceleratorHitIterator : public HitIterator<W>
@@ -67,8 +67,7 @@ namespace openvkl {
                           const vvec3fn<W> &origin,
                           const vvec3fn<W> &direction,
                           const vrange1fn<W> &tRange,
-                          const vfloatn<W> &times,
-                          const ValueSelector<W> *valueSelector) override final;
+                          const vfloatn<W> &times) override final;
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitN<W> &hit,
                        vintn<W> &result) override final;
@@ -78,20 +77,23 @@ namespace openvkl {
       void initializeHitU(const vvec3fn<1> &origin,
                           const vvec3fn<1> &direction,
                           const vrange1fn<1> &tRange,
-                          float time,
-                          const ValueSelector<W> *valueSelector) override final;
+                          float time) override final;
 
       void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result) override final;
 
      protected:
-      using Iterator<W>::sampler;
+      using Iterator<W>::context;
       using IspcIterator = __varying_ispc_type(GridAcceleratorIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
 
     template <int W>
     using GridAcceleratorHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, GridAcceleratorHitIterator>;
+        ConcreteIteratorFactory<W,
+                                HitIterator,
+                                GridAcceleratorHitIterator,
+                                HitIteratorContext,
+                                HitIteratorContext>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

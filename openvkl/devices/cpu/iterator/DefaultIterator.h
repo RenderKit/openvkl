@@ -15,12 +15,11 @@ namespace openvkl {
     {
       using IntervalIterator<W>::IntervalIterator;
 
-      void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+      void initializeIntervalV(const vintn<W> &valid,
+                               const vvec3fn<W> &origin,
+                               const vvec3fn<W> &direction,
+                               const vrange1fn<W> &tRange,
+                               const vfloatn<W> &times) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -32,7 +31,7 @@ namespace openvkl {
       }
 
      protected:
-      using Iterator<W>::sampler;
+      using Iterator<W>::context;
       using IspcIterator = __varying_ispc_type(DefaultIntervalIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
@@ -42,14 +41,13 @@ namespace openvkl {
     template <int W, class IntervalIterator>
     struct DefaultHitIterator : public HitIterator<W>
     {
-      explicit DefaultHitIterator(const Sampler<W> &sampler);
+      explicit DefaultHitIterator(const HitIteratorContext<W> &context);
 
       void initializeHitV(const vintn<W> &valid,
                           const vvec3fn<W> &origin,
                           const vvec3fn<W> &direction,
                           const vrange1fn<W> &tRange,
-                          const vfloatn<W> &times,
-                          const ValueSelector<W> *valueSelector) override final;
+                          const vfloatn<W> &times) override final;
 
       void iterateHitV(const vintn<W> &valid,
                        vVKLHitN<W> &hit,
@@ -58,7 +56,7 @@ namespace openvkl {
      protected:
       IntervalIterator intervalIterator;
 
-      using Iterator<W>::sampler;
+      using Iterator<W>::context;
       using IspcIterator = __varying_ispc_type(DefaultHitIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
@@ -70,8 +68,8 @@ namespace openvkl {
 
     template <int W, class IntervalIterator>
     DefaultHitIterator<W, IntervalIterator>::DefaultHitIterator(
-        const Sampler<W> &sampler)
-        : HitIterator<W>(sampler), intervalIterator(sampler)
+        const HitIteratorContext<W> &context)
+        : HitIterator<W>(context), intervalIterator(context)
     {
     }
 
@@ -81,26 +79,19 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const vfloatn<W> &times,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &times)
     {
-      assertValidTimes(times);
-
-      intervalIterator.initializeIntervalV(valid,
-                                           origin,
-                                           direction,
-                                           tRange,
-                                           valueSelector);
+      intervalIterator.initializeIntervalV(
+          valid, origin, direction, tRange, times);
 
       CALL_ISPC(DefaultHitIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
                 intervalIterator.getIspcStorage(),
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
-                (void *)&times,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&times);
     }
 
     template <int W, class IntervalIterator>

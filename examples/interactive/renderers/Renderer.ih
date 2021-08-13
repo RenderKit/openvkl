@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -83,9 +83,10 @@ inline vec4f Renderer_sampleTransferFunction(const uniform Scene *uniform scene,
 
   // the final interpolated value
   return ((1.f - remainder) * scene->tfColorsAndOpacities[index] +
-          remainder * scene->tfColorsAndOpacities[min(
-                          ((int32)(index + 1)),
-                          ((int32)(scene->tfNumColorsAndOpacities - 1)))]);
+          remainder *
+              scene->tfColorsAndOpacities[min(
+                  ((int32)(index + 1)),
+                  ((uniform int32)(scene->tfNumColorsAndOpacities - 1)))]);
 }
 
 inline void intersectBox(const Ray &ray,

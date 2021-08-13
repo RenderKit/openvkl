@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -6,6 +6,7 @@
 #include "openvkl_testing.h"
 
 inline vkl_range1f computeIntervalValueRange(VKLSampler sampler,
+                                             const unsigned int attributeIndex,
                                              const vkl_vec3f &origin,
                                              const vkl_vec3f &direction,
                                              const vkl_range1f &tRange)
@@ -22,7 +23,7 @@ inline vkl_range1f computeIntervalValueRange(VKLSampler sampler,
                 origin.y + t * direction.y,
                 origin.z + t * direction.z};
 
-    float sample = vklComputeSample(sampler, &c);
+    float sample = vklComputeSample(sampler, &c, attributeIndex);
 
     sampledValueRange.lower = std::min(sampledValueRange.lower, sample);
     sampledValueRange.upper = std::max(sampledValueRange.upper, sample);

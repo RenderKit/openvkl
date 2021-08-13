@@ -44,12 +44,15 @@ namespace openvkl {
         throw std::runtime_error("failed to commit StructuredRegularVolume");
       }
 
+      CALL_ISPC(
+          Volume_setBackground, this->ispcEquivalent, this->background->data());
+
       // must be last
       this->buildAccelerator();
     }
 
-    VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
-                        CONCAT1(internal_structuredRegular_, VKL_TARGET_WIDTH))
+    //VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
+    //                    CONCAT1(internal_structuredRegular_, VKL_TARGET_WIDTH))
 
   }  // namespace cpu_device
 }  // namespace openvkl

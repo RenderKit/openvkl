@@ -8,7 +8,8 @@ using namespace rkcommon;
 using namespace openvkl::testing;
 
 void scalar_hit_iteration(VKLVolume volume,
-                          float time,
+                          const unsigned int attributeIndex,
+                          const float time,
                           const std::vector<float> &isoValues,
                           const std::vector<float> &expectedTValues,
                           const vkl_vec3f &origin = vkl_vec3f{0.5f, 0.5f, -1.f},
@@ -16,21 +17,24 @@ void scalar_hit_iteration(VKLVolume volume,
 {
   vkl_range1f tRange{0.f, inf};
 
-  VKLValueSelector valueSelector = vklNewValueSelector(volume);
-  vklValueSelectorSetValues(valueSelector, isoValues.size(), isoValues.data());
-  vklCommit(valueSelector);
-
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(sampler));
-  VKLHitIterator iterator = vklInitHitIterator(sampler,
-                                               &origin,
-                                               &direction,
-                                               &tRange,
-                                               time,
-                                               valueSelector,
-                                               buffer.data());
+  VKLData valuesData = vklNewData(
+      getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
+
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
+  vklCommit(hitContext);
+
+  std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
+  VKLHitIterator iterator = vklInitHitIterator(
+      hitContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLHit hit;
 
@@ -38,6 +42,15 @@ void scalar_hit_iteration(VKLVolume volume,
 
   while (vklIterateHit(iterator, &hit)) {
     INFO("hit t = " << hit.t << ", sample = " << hit.sample);
+
+    if (hitCount >= isoValues.size()) {
+      WARN(
+          "found too many hits; this can occur at the volume boundaries when "
+          "interpolating with zero background values (instead of NaN), for "
+          "example");
+
+      break;
+    }
 
     REQUIRE(hit.t == Approx(expectedTValues[hitCount]).margin(1e-3f));
     REQUIRE(hit.sample == isoValues[hitCount]);
@@ -47,7 +60,7 @@ void scalar_hit_iteration(VKLVolume volume,
 
   REQUIRE(hitCount == isoValues.size());
 
-  vklRelease(valueSelector);
+  vklRelease(hitContext);
   vklRelease(sampler);
 }
 
@@ -71,15 +84,112 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
   SECTION("scalar hit iteration")
   {
-    SECTION("structured volumes")
+    SECTION("structured volumes: single attribute")
     {
       std::unique_ptr<ZProceduralVolume> v(
           new ZProceduralVolume(dimensions, gridOrigin, gridSpacing));
 
       VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
-      scalar_hit_iteration(
-          vklVolume, 0.f, defaultIsoValues, defaultExpectedTValues);
+      const unsigned int attributeIndex = 0;
+
+      scalar_hit_iteration(vklVolume,
+                           attributeIndex,
+                           0.f,
+                           defaultIsoValues,
+                           defaultExpectedTValues);
+    }
+
+    SECTION("structured volumes: multi attribute")
+    {
+      std::shared_ptr<TestingStructuredVolumeMulti> v(
+          generateMultiAttributeStructuredRegularVolume(dimensions,
+                                                        gridOrigin,
+                                                        gridSpacing,
+                                                        TemporalConfig(),
+                                                        VKL_DATA_DEFAULT,
+                                                        true));
+
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+
+      const unsigned int numAttributes = vklGetNumAttributes(vklVolume);
+
+      // setup appropriate rays for the procedural volume
+      // note that we'll skip the first attribute and focus only on the x-, y-,
+      // and z- varying attributes
+      assert(numAttributes == 4);
+      std::vector<vkl_vec3f> origins{
+          {-1.f, 0.5f, 0.5f}, {0.5f, -1.f, 0.5f}, {0.5f, 0.5f, -1.f}};
+
+      std::vector<vkl_vec3f> directions{
+          {1.f, 0.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}};
+
+      for (unsigned int i = 1; i < numAttributes; i++) {
+        scalar_hit_iteration(vklVolume,
+                             i,
+                             0.f,
+                             defaultIsoValues,
+                             defaultExpectedTValues,
+                             origins[i - 1],
+                             directions[i - 1]);
+      }
+    }
+
+    SECTION("VDB volumes: single attribute")
+    {
+      std::unique_ptr<ZVdbVolumeFloat> v(
+          new ZVdbVolumeFloat(getOpenVKLDevice(),
+                              dimensions,
+                              gridOrigin,
+                              gridSpacing,
+                              VKL_FILTER_TRILINEAR));
+
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+
+      const unsigned int attributeIndex = 0;
+
+      scalar_hit_iteration(vklVolume,
+                           attributeIndex,
+                           0.f,
+                           defaultIsoValues,
+                           defaultExpectedTValues);
+    }
+
+    SECTION("VDB volumes: multi attribute")
+    {
+      std::shared_ptr<ProceduralVdbVolumeMulti> v(
+          generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                               dimensions,
+                                               gridOrigin,
+                                               gridSpacing,
+                                               VKL_FILTER_TRILINEAR,
+                                               VKL_DATA_DEFAULT,
+                                               true,
+                                               TemporalConfig()));
+
+      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+
+      const unsigned int numAttributes = vklGetNumAttributes(vklVolume);
+
+      // setup appropriate rays for the procedural volume
+      // note that we'll skip the first attribute and focus only on the x-, y-,
+      // and z- varying attributes
+      assert(numAttributes == 4);
+      std::vector<vkl_vec3f> origins{
+          {-1.f, 0.5f, 0.5f}, {0.5f, -1.f, 0.5f}, {0.5f, 0.5f, -1.f}};
+
+      std::vector<vkl_vec3f> directions{
+          {1.f, 0.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}};
+
+      for (unsigned int i = 1; i < numAttributes; i++) {
+        scalar_hit_iteration(vklVolume,
+                             i,
+                             0.f,
+                             defaultIsoValues,
+                             defaultExpectedTValues,
+                             origins[i - 1],
+                             directions[i - 1]);
+      }
     }
 
     SECTION(
@@ -92,6 +202,8 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
+      const unsigned int attributeIndex = 0;
+
       std::vector<float> macroCellBoundaries;
       std::vector<float> macroCellTValues;
 
@@ -100,14 +212,19 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
         macroCellTValues.push_back(float(i) + 1.f);
       }
 
-      scalar_hit_iteration(
-          vklVolume, 0.f, macroCellBoundaries, macroCellTValues);
+      scalar_hit_iteration(vklVolume,
+                           attributeIndex,
+                           0.f,
+                           macroCellBoundaries,
+                           macroCellTValues);
     }
 
     SECTION("structured volumes: single voxel layer edge case")
     {
-      std::unique_ptr<ZProceduralVolume> v(
-          new ZProceduralVolume(vec3i(17, 17, 17), vec3f(0.f), vec3f(1.f) / vec3f(16.f)));
+      std::unique_ptr<ZProceduralVolume> v(new ZProceduralVolume(
+          vec3i(17, 17, 17), vec3f(0.f), vec3f(1.f) / vec3f(16.f)));
+
+      const unsigned int attributeIndex = 0;
 
       VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
       // We're tracing from the back, so we'll hit the isovalues in reverse
@@ -116,6 +233,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
       std::reverse(reversedIsovalues.begin(), reversedIsovalues.end());
 
       scalar_hit_iteration(vklVolume,
+                           attributeIndex,
                            0.f,
                            reversedIsovalues,
                            defaultExpectedTValues,
@@ -135,6 +253,8 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
         VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
+        const unsigned int attributeIndex = 0;
+
         const std::vector<float> times{0.f, 0.2f, 0.4f, 0.6f};
 
         for (const float time : times) {
@@ -145,8 +265,11 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
             isoValuesTime.push_back((1.f - time) * iso);
           }
 
-          scalar_hit_iteration(
-              vklVolume, time, isoValuesTime, defaultExpectedTValues);
+          scalar_hit_iteration(vklVolume,
+                               attributeIndex,
+                               time,
+                               isoValuesTime,
+                               defaultExpectedTValues);
         }
       }
     }
@@ -159,8 +282,13 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
-      scalar_hit_iteration(
-          vklVolume, 0.f, defaultIsoValues, defaultExpectedTValues);
+      const unsigned int attributeIndex = 0;
+
+      scalar_hit_iteration(vklVolume,
+                           attributeIndex,
+                           0.f,
+                           defaultIsoValues,
+                           defaultExpectedTValues);
     }
   }
 

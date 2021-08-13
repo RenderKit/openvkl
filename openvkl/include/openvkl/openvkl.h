@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "VKLBackgroundUndefined.h"
 #include "VKLDataType.h"
 #include "VKLError.h"
 #include "VKLFilter.h"
@@ -18,6 +19,5 @@
 #include "observer.h"
 #include "parameters.h"
 #include "sampler.h"
-#include "value_selector.h"
 #include "version.h"
 #include "volume.h"

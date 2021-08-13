@@ -1,4 +1,4 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -26,15 +26,18 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  const float time = scene->time;
 
-  VKLIntervalIterator iterator = vklInitIntervalIteratorV(
-                           scene->sampler,
-                           (varying vkl_vec3f *)&ray.org,
-                           (varying vkl_vec3f *)&ray.dir,
-                           &tRange,
-                           scene->valueSelector,
-                           intervalIteratorBuffer);
+  void *uniform intervalIteratorBuffer =
+      alloca(vklGetIntervalIteratorSizeV(scene->intervalContext));
+
+  VKLIntervalIterator iterator =
+      vklInitIntervalIteratorV(scene->intervalContext,
+                               (varying vkl_vec3f * uniform) & ray.org,
+                               (varying vkl_vec3f * uniform) & ray.dir,
+                               &tRange,
+                               &time,
+                               intervalIteratorBuffer);
 
   // the current ray interval
   VKLInterval interval;
@@ -55,9 +58,11 @@ vec3f RayMarchIterator_renderPixel(Renderer *uniform _self,
       const float dt = subInterval.upper - subInterval.lower;
 
       // get volume sample
-      vec3f c = ray.org + t * ray.dir;
-      float sample =
-          vklComputeSampleV(scene->sampler, (varying vkl_vec3f *)&c);
+      vec3f c      = ray.org + t * ray.dir;
+      float sample = vklComputeSampleV(scene->sampler,
+                                       (varying vkl_vec3f * uniform) & c,
+                                       scene->attributeIndex,
+                                       &time);
 
       // map through transfer function
       vec4f sampleColorAndOpacity =

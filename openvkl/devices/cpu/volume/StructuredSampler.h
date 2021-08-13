@@ -168,7 +168,7 @@ namespace openvkl {
                       const vfloatn<1> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTime(time[0]);
       CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -191,7 +191,7 @@ namespace openvkl {
                        const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(SharedStructuredVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -215,7 +215,7 @@ namespace openvkl {
                        const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_sample_N_export,
                 ispcEquivalent,
                 N,
@@ -239,7 +239,7 @@ namespace openvkl {
                          const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(SharedStructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -263,7 +263,7 @@ namespace openvkl {
                          const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_gradient_N_export,
                 ispcEquivalent,
                 N,
@@ -287,7 +287,7 @@ namespace openvkl {
                        const vfloatn<1> &time) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
-      assertValidTimes(time);
+      assertValidTime(time[0]);
       CALL_ISPC(SharedStructuredVolume_sampleM_uniform_export,
                 ispcEquivalent,
                 &objectCoordinates,
@@ -312,7 +312,7 @@ namespace openvkl {
                         const vfloatn<W> &time) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(SharedStructuredVolume_sampleM_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -338,7 +338,7 @@ namespace openvkl {
                         const float *times) const
     {
       assertValidAttributeIndices(volume, M, attributeIndices);
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_sampleM_N_export,
                 ispcEquivalent,
                 N,
@@ -357,7 +357,11 @@ namespace openvkl {
 
     template <int W>
     using StructuredSphericalIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, DefaultIntervalIterator>;
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                DefaultIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     using StructuredSphericalHitIterator =
@@ -365,7 +369,11 @@ namespace openvkl {
 
     template <int W>
     using StructuredSphericalHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, StructuredSphericalHitIterator>;
+        ConcreteIteratorFactory<W,
+                                HitIterator,
+                                StructuredSphericalHitIterator,
+                                HitIteratorContext,
+                                HitIteratorContext>;
 
     template <int W>
     using StructuredSphericalSampler =

@@ -18,9 +18,6 @@ namespace openvkl {
       vec3f renderPixel(const Scene &scene,
                         Ray &ray,
                         const vec4i &sampleID) override;
-
-     private:
-      float time{0.f};
     };
 
   }  // namespace examples

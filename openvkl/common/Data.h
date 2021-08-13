@@ -3,10 +3,10 @@
 
 #pragma once
 
+#include <algorithm>
 #include "ManagedObject.h"
 #include "Traits.h"
 #include "openvkl/openvkl.h"
-#include <algorithm>
 
 #ifndef __ISPC_STRUCT_Data1D__
 #define __ISPC_STRUCT_Data1D__
@@ -226,6 +226,29 @@ namespace openvkl {
     throw std::runtime_error(toString() + " must have '" + name +
                              "' array with element type " +
                              stringFor(VKLTypeFor<T>::value));
+  }
+
+  template <typename T>
+  inline const Ref<const DataT<T>> ManagedObject::getParamDataT(
+      const char *name, size_t expectedSize, T valIfNotFound)
+  {
+    Ref<const DataT<T>> data;
+    try {
+      data = getParamDataT<T>(name);
+    } catch (...) {
+      // Fallback: expand scalar parameters into arrays!
+      valIfNotFound = getParam<T>(name, valIfNotFound);
+      Ref<const DataT<T>> d = new DataT<T>(expectedSize, valIfNotFound);
+      d->refDec();
+      return d;
+    }
+
+    if (data->size() != expectedSize) {
+      throw std::runtime_error("found parameter '" + std::string(name) +
+                               "', but it does not have the expected size");
+    }
+
+    return data;
   }
 
   inline void ManagedObject::requireParamDataIsCompact(const char *name)

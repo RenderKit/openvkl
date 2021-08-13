@@ -37,10 +37,265 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const uniform uint32 attributeIndex,
     float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
+  assert(!sampler->grid->dense);
+
   __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
     sample[tgtIdx] =
         VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
   });
+}
+
+#define template_computeVoxelValuesTrilinear_dense_fast_inner_32(type)     \
+  inline void computeVoxelValuesTrilinear_dense_fast_inner_##type##_32(    \
+      const VdbGrid *uniform grid,                                         \
+      const varying vec3ui &domainOffset,                                  \
+      const uniform uint32 attributeIndex,                                 \
+      float *uniform sample /* Array of VKL_TARGET_WIDTH * 8 elements! */) \
+  {                                                                        \
+    assert(grid->dense);                                                   \
+    assert(grid->denseTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT);     \
+    assert(safe_32bit_indexing(grid->denseData[attributeIndex]));          \
+    assert(all(VdbSampler_isInDomain(grid->activeSize, domainOffset)));    \
+    assert((VdbSampler_isInDomain(grid->activeSize, domainOffset + 1)));   \
+                                                                           \
+    const uniform uint64 dx = 1;                                           \
+    const uniform uint64 dy = grid->activeSize.x;                          \
+    const uniform uint64 dz = grid->activeSize.x * grid->activeSize.y;     \
+                                                                           \
+    const varying uint32 voxelOfs =                                        \
+        domainOffset.x * dx + domainOffset.y * dy + domainOffset.z * dz;   \
+                                                                           \
+    const uniform Data1D voxelData = grid->denseData[attributeIndex];      \
+                                                                           \
+    const uniform uint64 ofs000 = 0;                                       \
+    const uniform uint64 ofs001 = dx;                                      \
+    const varying float val000 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs000, voxelOfs);     \
+    const varying float val001 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs001, voxelOfs);     \
+                                                                           \
+    const uniform uint64 ofs010 = dy;                                      \
+    const uniform uint64 ofs011 = dy + dx;                                 \
+    const varying float val010 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs010, voxelOfs);     \
+    const varying float val011 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs011, voxelOfs);     \
+                                                                           \
+    const uniform uint64 ofs100 = dz;                                      \
+    const uniform uint64 ofs101 = ofs100 + ofs001;                         \
+    const varying float val100 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs100, voxelOfs);     \
+    const varying float val101 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs101, voxelOfs);     \
+                                                                           \
+    const uniform uint64 ofs110 = ofs100 + ofs010;                         \
+    const uniform uint64 ofs111 = ofs100 + ofs011;                         \
+    const varying float val110 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs110, voxelOfs);     \
+    const varying float val111 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs111, voxelOfs);     \
+                                                                           \
+    /* note the slightly different assignment order from the computations  \
+     * above*/                                                             \
+    sample[0 * VKL_TARGET_WIDTH + programIndex] = val000;                  \
+    sample[1 * VKL_TARGET_WIDTH + programIndex] = val100;                  \
+    sample[2 * VKL_TARGET_WIDTH + programIndex] = val010;                  \
+    sample[3 * VKL_TARGET_WIDTH + programIndex] = val110;                  \
+    sample[4 * VKL_TARGET_WIDTH + programIndex] = val001;                  \
+    sample[5 * VKL_TARGET_WIDTH + programIndex] = val101;                  \
+    sample[6 * VKL_TARGET_WIDTH + programIndex] = val011;                  \
+    sample[7 * VKL_TARGET_WIDTH + programIndex] = val111;                  \
+  }                                                                        \
+                                                                           \
+  inline void computeVoxelValuesTrilinear_dense_fast_inner_##type##_32(    \
+      const VdbGrid *uniform grid,                                         \
+      const uniform vec3ui &domainOffset,                                  \
+      const uniform uint32 attributeIndex,                                 \
+      float *uniform sample /* Array of 8 elements! */)                    \
+  {                                                                        \
+    assert(grid->dense);                                                   \
+    assert(grid->denseTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT);     \
+    assert(safe_32bit_indexing(grid->denseData[attributeIndex]));          \
+    assert(all(VdbSampler_isInDomain(grid->activeSize, domainOffset)));    \
+    assert((VdbSampler_isInDomain(grid->activeSize, domainOffset + 1)));   \
+                                                                           \
+    const uniform uint64 dx = 1;                                           \
+    const uniform uint64 dy = grid->activeSize.x;                          \
+    const uniform uint64 dz = grid->activeSize.x * grid->activeSize.y;     \
+                                                                           \
+    const uniform uint32 voxelOfs =                                        \
+        domainOffset.x * dx + domainOffset.y * dy + domainOffset.z * dz;   \
+                                                                           \
+    const uniform Data1D voxelData = grid->denseData[attributeIndex];      \
+                                                                           \
+    const uniform uint64 ofs000 = 0;                                       \
+    const uniform uint64 ofs001 = dx;                                      \
+    const uniform float val000 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs000, voxelOfs);     \
+    const uniform float val001 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs001, voxelOfs);     \
+                                                                           \
+    const uniform uint64 ofs010 = dy;                                      \
+    const uniform uint64 ofs011 = dy + dx;                                 \
+    const uniform float val010 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs010, voxelOfs);     \
+    const uniform float val011 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs011, voxelOfs);     \
+                                                                           \
+    const uniform uint64 ofs100 = dz;                                      \
+    const uniform uint64 ofs101 = ofs100 + ofs001;                         \
+    const uniform float val100 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs100, voxelOfs);     \
+    const uniform float val101 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs101, voxelOfs);     \
+                                                                           \
+    const uniform uint64 ofs110 = ofs100 + ofs010;                         \
+    const uniform uint64 ofs111 = ofs100 + ofs011;                         \
+    const uniform float val110 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs110, voxelOfs);     \
+    const uniform float val111 =                                           \
+        get_##type(grid->denseData[attributeIndex], ofs111, voxelOfs);     \
+                                                                           \
+    /* note the slightly different assignment order from the computations  \
+     * above*/                                                             \
+    sample[0] = val000;                                                    \
+    sample[1] = val100;                                                    \
+    sample[2] = val010;                                                    \
+    sample[3] = val110;                                                    \
+    sample[4] = val001;                                                    \
+    sample[5] = val101;                                                    \
+    sample[6] = val011;                                                    \
+    sample[7] = val111;                                                    \
+  }
+
+template_computeVoxelValuesTrilinear_dense_fast_inner_32(uint8);
+template_computeVoxelValuesTrilinear_dense_fast_inner_32(int16);
+template_computeVoxelValuesTrilinear_dense_fast_inner_32(uint16);
+template_computeVoxelValuesTrilinear_dense_fast_inner_32(half);
+template_computeVoxelValuesTrilinear_dense_fast_inner_32(float);
+template_computeVoxelValuesTrilinear_dense_fast_inner_32(double);
+#undef template_computeVoxelValuesTrilinear_dense_fast_inner_32
+
+inline void VdbSampler_computeVoxelValuesTrilinear_dense(
+    const VdbSampler *uniform sampler,
+    const vec3i &ic,
+    const float &time,
+    const uniform uint32 attributeIndex,
+    float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
+{
+  assert(sampler->grid->dense);
+
+  // if the entire domain of the trilinear interpolation is in bounds, and other
+  // constraints are satisfied, we can take a fast path.
+  const vec3ui domainOffset = make_vec3ui(ic.x, ic.y, ic.z);
+
+  if (sampler->grid->denseTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT &&
+      safe_32bit_indexing(sampler->grid->denseData[attributeIndex]) &&
+      all(VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset)) &&
+      all(VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset + 1))) {
+    switch (sampler->grid->attributeTypes[attributeIndex]) {
+    case (VKL_UCHAR): {
+      computeVoxelValuesTrilinear_dense_fast_inner_uint8_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_SHORT): {
+      computeVoxelValuesTrilinear_dense_fast_inner_int16_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_USHORT): {
+      computeVoxelValuesTrilinear_dense_fast_inner_uint16_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_HALF): {
+      computeVoxelValuesTrilinear_dense_fast_inner_half_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_FLOAT): {
+      computeVoxelValuesTrilinear_dense_fast_inner_float_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_DOUBLE): {
+      computeVoxelValuesTrilinear_dense_fast_inner_double_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    default: {
+      assert(false);
+    }
+    }
+
+  } else {
+    __vkl_stencil_dispatch_simple_varying(TRILINEAR, ic, time, {
+      sample[tgtIdx] = VdbSampler_traverseAndSample_dense(
+          sampler, icDisp, timeDisp, attributeIndex);
+    });
+  }
+}
+
+inline void VdbSampler_computeVoxelValuesTrilinear_dense(
+    const VdbSampler *uniform sampler,
+    const uniform vec3i &ic,
+    const uniform float time,
+    const uniform uint32 attributeIndex,
+    float *uniform sample)  // Array of 8 elements!
+{
+  assert(sampler->grid->dense);
+
+  // if the entire domain of the trilinear interpolation is in bounds, and other
+  // constraints are satisfied, we can take a fast path.
+  const uniform vec3ui domainOffset = make_vec3ui(ic.x, ic.y, ic.z);
+
+  if (sampler->grid->denseTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT &&
+      safe_32bit_indexing(sampler->grid->denseData[attributeIndex]) &&
+      all(VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset)) &&
+      all(VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset + 1))) {
+    switch (sampler->grid->attributeTypes[attributeIndex]) {
+    case (VKL_UCHAR): {
+      computeVoxelValuesTrilinear_dense_fast_inner_uint8_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_SHORT): {
+      computeVoxelValuesTrilinear_dense_fast_inner_int16_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_USHORT): {
+      computeVoxelValuesTrilinear_dense_fast_inner_uint16_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_HALF): {
+      computeVoxelValuesTrilinear_dense_fast_inner_half_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_FLOAT): {
+      computeVoxelValuesTrilinear_dense_fast_inner_float_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    case (VKL_DOUBLE): {
+      computeVoxelValuesTrilinear_dense_fast_inner_double_32(
+          sampler->grid, domainOffset, attributeIndex, sample);
+      break;
+    }
+    default: {
+      assert(false);
+    }
+    }
+
+  } else {
+    __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
+      sample[tgtIdx] = VdbSampler_traverseAndSample_dense(
+          sampler, icDisp, timeDisp, attributeIndex);
+    });
+  }
 }
 
 /*
@@ -52,6 +307,8 @@ inline void VdbSampler_traverseVoxelValuesTrilinear(
     uint64 *uniform voxel,         // Array of VKL_TARGET_WIDTH * 8 elements!
     vec3ui *uniform domainOffset)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
+  assert(!sampler->grid->dense);
+
   const float time = 0.f;
   __vkl_stencil_dispatch_varying(TRILINEAR, ic, time, {
     uint64 voxelV;
@@ -76,6 +333,8 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const uniform uint32 attributeIndex,
     float *uniform sample)  // Array of VKL_TARGET_WIDTH * 8 elements!
 {
+  assert(!sampler->grid->dense);
+
   // Note: We might be able to avoid this dummy variable, but that would
   // complicate the dispatch macro.
   const vec3i ic = {0, 0, 0};
@@ -83,7 +342,7 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const uint64 voxelV        = voxel[tgtIdx];
     const vec3ui domainOffsetV = domainOffset[tgtIdx];
     sample[tgtIdx]             = VdbSampler_sample(
-                    sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
+        sampler, voxelV, domainOffsetV, timeDisp, attributeIndex);
   });
 }
 
@@ -97,12 +356,37 @@ inline varying float VdbSampler_interpolateTrilinear(
     const float &time,
     const uniform uint32 attributeIndex)
 {
+  assert(!sampler->grid->dense);
+
   const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
-                                 floor(indexCoordinates.y),
-                                 floor(indexCoordinates.z));
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
   const vec3f delta = indexCoordinates - make_vec3f(ic);
   uniform float sample[VKL_TARGET_WIDTH * 8];
   VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, sample);
+
+  const varying float *uniform s = (const varying float *uniform) & sample;
+  return lerp(
+      delta.x,
+      lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+      lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+}
+
+inline varying float VdbSampler_interpolate_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler->grid->dense);
+
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  uniform float sample[VKL_TARGET_WIDTH * 8];
+  VdbSampler_computeVoxelValuesTrilinear_dense(
       sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = (const varying float *uniform) & sample;
@@ -120,9 +404,11 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
                                                 attributeIndices,
                                             float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
-                                 floor(indexCoordinates.y),
-                                 floor(indexCoordinates.z));
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
   const vec3f delta = indexCoordinates - make_vec3f(ic);
 
   uniform uint64 voxel[VKL_TARGET_WIDTH * 8];
@@ -136,9 +422,39 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
 
     const varying float *uniform s = (const varying float *uniform) & sample;
     varying float samplesA         = lerp(
-                delta.x,
-                lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
-                lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+        delta.x,
+        lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+        lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+
+    samples[a * VKL_TARGET_WIDTH + programIndex] = samplesA;
+  }
+}
+
+inline void VdbSampler_interpolate_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[VKL_TARGET_WIDTH * 8];
+    VdbSampler_computeVoxelValuesTrilinear_dense(
+        sampler, ic, time, attributeIndices[a], sample);
+
+    const varying float *uniform s = (const varying float *uniform) & sample;
+    varying float samplesA         = lerp(
+        delta.x,
+        lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+        lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
 
     samples[a * VKL_TARGET_WIDTH + programIndex] = samplesA;
   }
@@ -154,6 +470,8 @@ inline uniform float VdbSampler_interpolateTrilinear(
     const uniform float time,
     const uniform uint32 attributeIndex)
 {
+  assert(!sampler->grid->dense);
+
   const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
                                       floor(indexCoordinates.y),
                                       floor(indexCoordinates.z));
@@ -175,6 +493,32 @@ inline uniform float VdbSampler_interpolateTrilinear(
                    lerp(delta.z, sample[6], sample[7])));
 }
 
+inline uniform float VdbSampler_interpolate_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler->grid->dense);
+
+  const uniform vec3i ic = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+
+  uniform float sample[8];
+  VdbSampler_computeVoxelValuesTrilinear_dense(
+      sampler, ic, time, attributeIndex, sample);
+
+  const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
+  return lerp(delta.x,
+              lerp(delta.y,
+                   lerp(delta.z, sample[0], sample[1]),
+                   lerp(delta.z, sample[2], sample[3])),
+              lerp(delta.y,
+                   lerp(delta.z, sample[4], sample[5]),
+                   lerp(delta.z, sample[6], sample[7])));
+}
+
 inline void VdbSampler_interpolateTrilinear(
     const VdbSampler *uniform sampler,
     const uniform vec3f &indexCoordinates,
@@ -183,9 +527,11 @@ inline void VdbSampler_interpolateTrilinear(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   const uniform vec3i ic    = make_vec3i(floor(indexCoordinates.x),
-                                         floor(indexCoordinates.y),
-                                         floor(indexCoordinates.z));
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
   const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
 
   uniform uint64 voxel[8];
@@ -207,8 +553,38 @@ inline void VdbSampler_interpolateTrilinear(
       const uint64 voxelV        = voxel[tgtIdx];
       const vec3ui domainOffsetV = domainOffset[tgtIdx];
       sample[tgtIdx]             = VdbSampler_sample(
-                      sampler, voxelV, domainOffsetV, timeDisp, attributeIndices[a]);
+          sampler, voxelV, domainOffsetV, timeDisp, attributeIndices[a]);
     });
+
+    samples[a] = lerp(delta.x,
+                      lerp(delta.y,
+                           lerp(delta.z, sample[0], sample[1]),
+                           lerp(delta.z, sample[2], sample[3])),
+                      lerp(delta.y,
+                           lerp(delta.z, sample[4], sample[5]),
+                           lerp(delta.z, sample[6], sample[7])));
+  }
+}
+
+inline void VdbSampler_interpolate_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  const uniform vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                      floor(indexCoordinates.y),
+                                      floor(indexCoordinates.z));
+  const uniform vec3f delta = indexCoordinates - make_vec3f(ic);
+
+  for (uniform unsigned int a = 0; a < M; a++) {
+    uniform float sample[8];
+    VdbSampler_computeVoxelValuesTrilinear_dense(
+        sampler, ic, time, attributeIndices[a], sample);
 
     samples[a] = lerp(delta.x,
                       lerp(delta.y,
@@ -228,12 +604,33 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
                                             const uint32 uniform attributeIndex,
                                             float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
     const float time             = times ? times[i] : 0.f;
     samples[i]                   = VdbSampler_interpolateTrilinear(
-                          sampler, indexCoordinates, time, attributeIndex);
+        sampler, indexCoordinates, time, attributeIndex);
+  }
+}
+
+inline void VdbSampler_interpolate_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uint32 uniform attributeIndex,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
+    samples[i]                   = VdbSampler_interpolate_denseTrilinear(
+        sampler, indexCoordinates, time, attributeIndex);
   }
 }
 
@@ -246,13 +643,15 @@ inline void VdbSampler_interpolateTrilinear(
     const uint32 *uniform attributeIndices,
     float *uniform samples)
 {
+  assert(!sampler->grid->dense);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
 
     const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
-                                   floor(indexCoordinates.y),
-                                   floor(indexCoordinates.z));
+                                floor(indexCoordinates.y),
+                                floor(indexCoordinates.z));
     const vec3f delta = indexCoordinates - make_vec3f(ic);
     const float time  = times ? times[i] : 0.f;
 
@@ -267,9 +666,46 @@ inline void VdbSampler_interpolateTrilinear(
 
       const varying float *uniform s = (const varying float *uniform) & sample;
       varying float samplesA         = lerp(
-                  delta.x,
-                  lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
-                  lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+          delta.x,
+          lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+          lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
+
+      samples[i * M + a] = samplesA;
+    }
+  }
+}
+
+inline void VdbSampler_interpolate_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
+{
+  assert(sampler->grid->dense);
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+
+    const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                                floor(indexCoordinates.y),
+                                floor(indexCoordinates.z));
+    const vec3f delta = indexCoordinates - make_vec3f(ic);
+    const float time  = times ? times[i] : 0.f;
+
+    for (uniform unsigned int a = 0; a < M; a++) {
+      uniform float sample[VKL_TARGET_WIDTH * 8];
+      VdbSampler_computeVoxelValuesTrilinear_dense(
+          sampler, ic, time, attributeIndices[a], sample);
+
+      const varying float *uniform s = (const varying float *uniform) & sample;
+      varying float samplesA         = lerp(
+          delta.x,
+          lerp(delta.y, lerp(delta.z, s[0], s[1]), lerp(delta.z, s[2], s[3])),
+          lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
 
       samples[i * M + a] = samplesA;
     }
@@ -285,12 +721,45 @@ inline vec3f VdbSampler_computeGradientTrilinear(
     const float &time,
     const uniform uint32 attributeIndex)
 {
+  assert(!sampler->grid->dense);
+
   const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
-                                 floor(indexCoordinates.y),
-                                 floor(indexCoordinates.z));
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
   const vec3f delta = indexCoordinates - make_vec3f(ic);
   uniform float sample[VKL_TARGET_WIDTH * 8];
   VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, sample);
+
+  const varying float *uniform s = (const varying float *uniform) & sample;
+
+  vec3f gradient;
+  gradient.x = lerp(delta.y,
+                    lerp(delta.z, s[4] - s[0], s[5] - s[1]),
+                    lerp(delta.z, s[6] - s[2], s[7] - s[3]));
+  gradient.y = lerp(delta.x,
+                    lerp(delta.z, s[2] - s[0], s[3] - s[1]),
+                    lerp(delta.z, s[6] - s[4], s[7] - s[5]));
+  gradient.z = lerp(delta.x,
+                    lerp(delta.y, s[1] - s[0], s[3] - s[2]),
+                    lerp(delta.y, s[5] - s[4], s[7] - s[6]));
+  return gradient;
+}
+
+inline vec3f VdbSampler_computeGradient_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 attributeIndex)
+{
+  assert(sampler->grid->dense);
+
+  const vec3i ic    = make_vec3i(floor(indexCoordinates.x),
+                              floor(indexCoordinates.y),
+                              floor(indexCoordinates.z));
+  const vec3f delta = indexCoordinates - make_vec3f(ic);
+  uniform float sample[VKL_TARGET_WIDTH * 8];
+  VdbSampler_computeVoxelValuesTrilinear_dense(
       sampler, ic, time, attributeIndex, sample);
 
   const varying float *uniform s = (const varying float *uniform) & sample;
@@ -316,12 +785,35 @@ inline void VdbSampler_computeGradientTrilinear(
     const uniform uint32 attributeIndex,
     vec3f *uniform gradients)
 {
+  assert(!sampler->grid->dense);
+
   foreach (i = 0 ... N) {
     const vec3f oc               = objectCoordinates[i];
     const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
     const float time             = times ? times[i] : 0.f;
     const vec3f gradient         = VdbSampler_computeGradientTrilinear(
-                sampler, indexCoordinates, time, attributeIndex);
+        sampler, indexCoordinates, time, attributeIndex);
+    // Note: xfmNormal takes inverse!
+    gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
+  }
+}
+
+inline void VdbSampler_computeGradient_denseTrilinear(
+    const VdbSampler *uniform sampler,
+    uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uniform uint32 attributeIndex,
+    vec3f *uniform gradients)
+{
+  assert(sampler->grid->dense);
+
+  foreach (i = 0 ... N) {
+    const vec3f oc               = objectCoordinates[i];
+    const vec3f indexCoordinates = xfmPoint(sampler->grid->objectToIndex, oc);
+    const float time             = times ? times[i] : 0.f;
+    const vec3f gradient         = VdbSampler_computeGradient_denseTrilinear(
+        sampler, indexCoordinates, time, attributeIndex);
     // Note: xfmNormal takes inverse!
     gradients[i] = xfmNormal(sampler->grid->objectToIndex, gradient);
   }

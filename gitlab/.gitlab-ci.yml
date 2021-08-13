@@ -4,7 +4,7 @@
 variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
-  OPENVKL_RELEASE_PACKAGE_VERSION: "0.13.0"
+  OPENVKL_RELEASE_PACKAGE_VERSION: "1.0.0"
   MACOSX_DEPLOYMENT_TARGET: "10.13"
 
 stages:
@@ -59,12 +59,23 @@ stages:
 .job_template: &base_functional_test_job
   stage: test
   script:
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
 .job_template: &test_functional_job_docker
   <<: *base_functional_test_job
   tags:
     - docker
+
+# Ubuntu test runs require LD_LIBRARY_PATH to be set
+.job_template: &test_functional_job_docker_ubuntu
+  <<: *test_functional_job_docker
+  script:
+    - export LD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
+    - ./build/openvkl/build/vklTests --durations yes
 
 .job_template: &base_benchmark_job
   stage: benchmark
@@ -183,7 +194,7 @@ build-arch-TBB2021:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
   script:
-    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH=""
+    - gitlab/build.sh -D TBB_VERSION=2021.3.0 -D TBB_HASH=""
 
 build-macOS:
   <<: *base_build_job
@@ -198,10 +209,18 @@ build-macOS-TBB2021:
   <<: *base_build_job
   stage: build
   script:
-    - gitlab/build.sh -D TBB_VERSION=2021.2.0 -D TBB_HASH=""
+    - gitlab/build.sh -D TBB_VERSION=2021.3.0 -D TBB_HASH="" -DBUILD_TBB_FROM_SOURCE=ON
   tags:
     - osx
     - clang
+
+build-macOS-arm-TBB2021:
+  <<: *base_build_job
+  stage: build
+  script:
+    - gitlab/build.sh -D TBB_VERSION=2021.3.0 -D TBB_HASH="" -DBUILD_TBB_FROM_SOURCE=ON
+  tags:
+    - mac-arm
 
 build-windows-msvc15:
   stage: build
@@ -218,7 +237,7 @@ build-windows-msvc15:
 build-windows-msvc15-TBB2021:
   stage: build
   script:
-    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.2.0"' '"-DTBB_HASH="""'
+    - gitlab\build.bat "Visual Studio 15 2017 Win64" "v141" '"-DTBB_VERSION=2021.3.0"' '"-DTBB_HASH="""'
   tags:
     - msvc15
     - win10
@@ -263,29 +282,20 @@ test-functional-centos8-module-cmake:
     - build-centos8-module-cmake
 
 test-functional-ubuntu16.04:
-  <<: *test_functional_job_docker
+  <<: *test_functional_job_docker_ubuntu
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
-  script:
-    - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
-  <<: *test_functional_job_docker
+  <<: *test_functional_job_docker_ubuntu
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
-  script:
-    - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu18.04
 
 test-functional-ubuntu20.04:
-  <<: *test_functional_job_docker
+  <<: *test_functional_job_docker_ubuntu
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
-  script:
-    - export LD_LIBRARY_PATH=./build/install/lib
-    - ./build/openvkl/build/vklTests --durations yes
   needs:
     - build-ubuntu20.04
 
@@ -335,6 +345,8 @@ test-functional-macOS:
     - clang
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
 test-functional-macOS-TBB2021:
@@ -344,6 +356,18 @@ test-functional-macOS-TBB2021:
   tags:
     - osx
     - clang
+  script:
+    - export DYLD_LIBRARY_PATH=./build/install/lib
+    - ./build/openvkl/build/vklTutorial
+    - ./build/openvkl/build/vklTutorialISPC
+    - ./build/openvkl/build/vklTests --durations yes
+
+test-functional-macOS-arm-TBB2021:
+  <<: *base_functional_test_job
+  needs:
+    - build-macOS-arm-TBB2021
+  tags:
+    - mac-arm
   script:
     - export DYLD_LIBRARY_PATH=./build/install/lib
     - ./build/openvkl/build/vklTests --durations yes

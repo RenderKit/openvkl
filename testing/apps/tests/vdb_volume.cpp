@@ -67,8 +67,7 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
     vklCommit(volume);
     REQUIRE(vklDeviceGetLastErrorCode(getOpenVKLDevice()) == 1);
     REQUIRE(std::string(vklDeviceGetLastErrorMsg(getOpenVKLDevice()))
-                .find("Node data too small") !=
-            std::string::npos);
+                .find("Node data too small") != std::string::npos);
   }
 
   vklRelease(volume);
@@ -276,9 +275,19 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(2);
+
+    // tricubic support span; ignore coordinates here since they will interpolate with background
+    const int lowerSpan = 1;
+    const int upperSpan = 2;
+
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
+
+      if (coordinate_in_boundary_span(
+              offsetWithStep, volume->getDimensions(), lowerSpan, upperSpan)) {
+        continue;
+      }
 
       const vec3f objectCoordinates =
           volume->transformLocalToObjectCoordinates(offsetWithStep);
@@ -389,9 +398,19 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     VKLSampler vklSampler = vklNewSampler(vklVolume);
     vklCommit(vklSampler);
     const vec3i step(2);
+
+    // tricubic support span; ignore coordinates here since they will interpolate with background
+    const int lowerSpan = 1;
+    const int upperSpan = 2;
+
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
     for (const auto &offset : mis) {
       const auto offsetWithStep = offset * step;
+
+      if (coordinate_in_boundary_span(
+              offsetWithStep, volume->getDimensions(), lowerSpan, upperSpan)) {
+        continue;
+      }
 
       const vec3f objectCoordinates =
           volume->transformLocalToObjectCoordinates(offsetWithStep);
@@ -431,16 +450,21 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
-  std::vector<char> buffer(vklGetIntervalIteratorSize(vklSampler));
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(vklSampler);
+  vklCommit(intervalContext);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
   VKLIntervalIterator iterator;
   VKLInterval interval;
   vkl_vec3f origin{0, 0, -5.f};
   vkl_vec3f direction{0, 0, 1.f};
   vkl_range1f tRange{0.f, 1000.f};
+  const float time = 0.f;
   REQUIRE_NOTHROW(
       iterator = vklInitIntervalIterator(
-          vklSampler, &origin, &direction, &tRange, nullptr, buffer.data()));
+          intervalContext, &origin, &direction, &tRange, time, buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
+  REQUIRE_NOTHROW(vklRelease(intervalContext));
   REQUIRE_NOTHROW(vklRelease(vklSampler));
   REQUIRE_NOTHROW(delete volume);
 

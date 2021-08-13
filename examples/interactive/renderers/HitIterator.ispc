@@ -6,8 +6,6 @@
 struct HitIterator
 {
   Renderer super;
-
-  float time;
 };
 
 vec3f HitIterator_renderPixel(Renderer *uniform _self,
@@ -22,26 +20,25 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   vec3f color = make_vec3f(0.f);
   float alpha = 0.f;
 
-  if (scene->valueSelector == NULL)
-    return color;
-
   // create volume iterator
   vkl_range1f tRange;
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  const float time = self->time;
+  const float time = scene->time;
 
-  uniform unsigned int8 hitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
-  uniform unsigned int8 shadowHitIteratorBuffer[VKL_MAX_HIT_ITERATOR_SIZE];
+  void *uniform hitIteratorBuffer =
+      alloca(vklGetHitIteratorSizeV(scene->hitContext));
+  void *uniform shadowHitIteratorBuffer =
+      alloca(vklGetHitIteratorSizeV(scene->hitContext));
 
-  VKLHitIterator iterator = vklInitHitIteratorV(scene->sampler,
-                                                (varying vkl_vec3f *)&ray.org,
-                                                (varying vkl_vec3f *)&ray.dir,
-                                                &tRange,
-                                                &time,
-                                                scene->valueSelector,
-                                                hitIteratorBuffer);
+  VKLHitIterator iterator =
+      vklInitHitIteratorV(scene->hitContext,
+                          (varying vkl_vec3f * uniform) & ray.org,
+                          (varying vkl_vec3f * uniform) & ray.dir,
+                          &tRange,
+                          &time,
+                          hitIteratorBuffer);
 
   // the current surface hit
   VKLHit hit;
@@ -53,7 +50,10 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
   while (vklIterateHitV(iterator, &hit) && alpha < 0.99f) {
     const vec3f c = ray.org + hit.t * ray.dir;
     const vkl_vec3f grad =
-        vklComputeGradientV(scene->sampler, (varying vkl_vec3f *)&c);
+        vklComputeGradientV(scene->sampler,
+                            (varying vkl_vec3f * uniform) & c,
+                            scene->attributeIndex,
+                            &time);
     vec3f N = normalize(make_vec3f(grad.x, grad.y, grad.z));
     if (isnan(N.x) || isnan(N.y) || isnan(N.z))
       N = make_vec3f(0.f);
@@ -77,12 +77,11 @@ vec3f HitIterator_renderPixel(Renderer *uniform _self,
           tShadowRange.lower = hit.epsilon;
           tShadowRange.upper = inf;
           VKLHitIterator shadowIterator =
-              vklInitHitIteratorV(scene->sampler,
-                                  (varying vkl_vec3f *)&c,
-                                  (varying vkl_vec3f *)&wo,
+              vklInitHitIteratorV(scene->hitContext,
+                                  (varying vkl_vec3f * uniform) & c,
+                                  (varying vkl_vec3f * uniform) & wo,
                                   &tShadowRange,
                                   &time,
-                                  scene->valueSelector,
                                   shadowHitIteratorBuffer);
           if (!vklIterateHitV(shadowIterator, &shadowHit)) {
             illum += abs(co) * emission[i];  // Lambertian surface shading.
@@ -110,11 +109,4 @@ export void *uniform HitIterator_create()
   HitIterator *uniform self = uniform new HitIterator;
   self->super.renderPixel   = HitIterator_renderPixel;
   return self;
-}
-
-export void HitIterator_set(void *uniform _self, const uniform float time)
-{
-  HitIterator *uniform self = (HitIterator *)_self;
-
-  self->time = time;
 }

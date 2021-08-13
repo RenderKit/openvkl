@@ -4,18 +4,12 @@
 #include <array>
 #include "../../external/catch.hpp"
 #include "gradient_utility.h"
+#include "multi_attrib_utility.h"
 #include "openvkl_testing.h"
 #include "sampling_utility.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
-
-template <typename VOLUME_TYPE>
-inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
-{
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
-  REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
-}
 
 TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
@@ -44,6 +38,19 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
         sectionName << " ";
         sectionName << (aos == true ? "AOS layout" : "SOA layout");
 
+        // ignore boundary areas where the filter will cause us to interpolate
+        // with the background (which may be NaN!)
+        int lowerSpan = 0;
+        int upperSpan = 0;
+
+        if (filter == VKL_FILTER_TRILINEAR) {
+          upperSpan = 1;
+        }
+        else if (filter == VKL_FILTER_TRICUBIC) {
+          lowerSpan = 1;
+          upperSpan = 2;
+        }
+
         DYNAMIC_SECTION(std::string("half ") + sectionName.str())
         {
           std::shared_ptr<ProceduralVdbVolumeMulti> v(
@@ -56,12 +63,14 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
                                                   aos));
 
           num_attributes(v);
-          sampling_on_vertices_vs_procedural_values_multi(v, step);
+          sampling_on_vertices_vs_procedural_values_multi(
+              v, step, lowerSpan, upperSpan);
 
           // higher gradient tolerance for half due to precision issues
           gradients_on_vertices_vs_procedural_values_multi(v, step, 0.3f);
 
           for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+            computed_vs_api_value_range(v, i);
             test_stream_sampling(v, i);
             test_stream_gradients(v, i);
           }
@@ -84,10 +93,12 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
                                                    aos));
 
           num_attributes(v);
-          sampling_on_vertices_vs_procedural_values_multi(v, step);
+          sampling_on_vertices_vs_procedural_values_multi(
+              v, step, lowerSpan, upperSpan);
           gradients_on_vertices_vs_procedural_values_multi(v, step);
 
           for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+            computed_vs_api_value_range(v, i);
             test_stream_sampling(v, i);
             test_stream_gradients(v, i);
           }

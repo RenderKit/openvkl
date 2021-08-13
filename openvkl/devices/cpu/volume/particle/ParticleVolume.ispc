@@ -74,10 +74,15 @@ static bool intersectAndGradientParticle(const void *uniform userData,
 inline varying float VKLParticleVolume_sample(
     const Sampler *uniform sampler,
     const varying vec3f &objectCoordinates,
+    const uniform uint32 _attributeIndex,
     const varying float &_time)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)sampler->volume;
+
+  if (!box_contains(self->super.boundingBox, objectCoordinates)) {
+    return self->super.super.background[0];
+  }
 
   float sampleResult = 0.f;
 
@@ -120,7 +125,7 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
     varying float *uniform samples = (varying float *uniform)_samples;
 
     *samples = VKLParticleVolume_sample(
-        (const Sampler *uniform)_sampler, *objectCoordinates, time);
+        (const Sampler *uniform)_sampler, *objectCoordinates, 0, time);
   }
 }
 
@@ -195,18 +200,4 @@ export void EXPORT_UNIQUE(VKLParticleSampler_Destructor, void *uniform _sampler)
   UnstructuredSamplerBase *uniform sampler =
       (UnstructuredSamplerBase * uniform) _sampler;
   delete sampler;
-}
-
-export void EXPORT_UNIQUE(VKLParticleSampler_set,
-                          void *uniform _self,
-                          const uniform int maxIteratorDepth)
-{
-  UnstructuredSamplerBase *uniform self =
-      (UnstructuredSamplerBase * uniform) _self;
-
-  self->maxIteratorDepth = maxIteratorDepth;
-
-  // particle volumes use the unstructured sampler, but do not support
-  // elementary cell iteration
-  self->elementaryCellIteration = false;
 }

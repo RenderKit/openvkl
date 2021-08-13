@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## Establish project ##
 
-project(openvkl VERSION 0.13.0 LANGUAGES C CXX)
+project(openvkl VERSION 1.0.0 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -47,13 +47,13 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-set(RKCOMMON_VERSION_REQUIRED 1.6.1)
+set(RKCOMMON_VERSION_REQUIRED 1.7.0)
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
 
-find_package(embree 3.6.1 REQUIRED)
+find_package(embree 3.13.1 REQUIRED)
 openvkl_create_embree_target()
 
 ## Build library, examples, and tests ##

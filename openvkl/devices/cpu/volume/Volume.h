@@ -8,7 +8,6 @@
 #include "../common/objectFactory.h"
 #include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
-#include "../value_selector/ValueSelector.h"
 #include "Volume_ispc.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/box.h"
@@ -22,6 +21,20 @@ using namespace rkcommon;
 namespace openvkl {
   namespace cpu_device {
 
+    // Helpers ////////////////////////////////////////////////////////////////
+
+    // this helper may be used on both signed and unsigned int types
+    template <int W, typename INT_TYPE>
+    inline void throwOnIllegalAttributeIndex(const Volume<W> *volume,
+                                             INT_TYPE attributeIndex)
+    {
+      if (attributeIndex < 0 || attributeIndex >= volume->getNumAttributes()) {
+        throw std::runtime_error("illegal attributeIndex requested on volume");
+      }
+    }
+
+    // Volume /////////////////////////////////////////////////////////////////
+
     template <int W>
     struct Volume : public ManagedObject
     {
@@ -30,15 +43,13 @@ namespace openvkl {
 
       static Volume *createInstance(Device *device, const std::string &type);
 
-      virtual ValueSelector<W> *newValueSelector();
-
       virtual Sampler<W> *newSampler() = 0;
 
       virtual box3f getBoundingBox() const = 0;
 
       virtual unsigned int getNumAttributes() const = 0;
 
-      virtual range1f getValueRange() const = 0;
+      virtual range1f getValueRange(unsigned int attributeIndex) const = 0;
 
       void *getISPCEquivalent() const;
 
@@ -58,12 +69,6 @@ namespace openvkl {
                                                 const std::string &type)
     {
       return createInstanceHelper<Volume<W>, VKL_VOLUME>(device, type);
-    }
-
-    template <int W>
-    inline ValueSelector<W> *Volume<W>::newValueSelector()
-    {
-      return new ValueSelector<W>(this);
     }
 
     template <int W>

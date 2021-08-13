@@ -11,6 +11,25 @@
 
 using namespace openvkl::testing;
 
+// Returns true if the provided coordinate is near the boundary of a box with
+// given dimensions. A separate lower span and upper span defines the size of
+// the region near the lower and upper boundary of the box, respectively.
+inline bool coordinate_in_boundary_span(const vec3i &coord,
+                                        const vec3i &dimensions,
+                                        int lowerSpan,
+                                        int upperSpan)
+{
+  if (reduce_min(coord) < lowerSpan) {
+    return true;
+  }
+
+  if (reduce_min(dimensions - 1 - coord) < upperSpan) {
+    return true;
+  }
+
+  return false;
+}
+
 inline void test_scalar_and_vector_sampling(
     VKLSampler sampler,
     const vec3f &objectCoordinates,
@@ -77,9 +96,17 @@ inline void test_scalar_and_vector_sampling(
 
     for (int i = 0; i < valid.size(); i++) {
       if (valid[i] != 0) {
+#ifdef __ARM_NEON
+        static constexpr float tolerance = 1e-3f;
+
+        REQUIRE(scalarSampledValue == Approx(samples_4[i]).margin(tolerance));
+        REQUIRE(scalarSampledValue == Approx(samples_8[i]).margin(tolerance));
+        REQUIRE(scalarSampledValue == Approx(samples_16[i]).margin(tolerance));
+#else
         REQUIRE(scalarSampledValue == Approx(samples_4[i]));
         REQUIRE(scalarSampledValue == Approx(samples_8[i]));
         REQUIRE(scalarSampledValue == Approx(samples_16[i]));
+#endif
       }
     }
   }
@@ -176,7 +203,10 @@ inline void test_scalar_and_vector_sampling_multi(
 // applicable to procedural structured and VDB volumes
 template <typename VOLUME_TYPE>
 inline void sampling_on_vertices_vs_procedural_values_multi(
-    std::shared_ptr<VOLUME_TYPE> v, vec3i step = vec3i(1))
+    std::shared_ptr<VOLUME_TYPE> v,
+    vec3i step    = vec3i(1),
+    int lowerSpan = 0,
+    int upperSpan = 0)
 {
   const float sampleTolerance = 1e-4f;
 
@@ -188,6 +218,11 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
 
   for (const auto &offset : mis) {
     const auto offsetWithStep = offset * step;
+
+    if (coordinate_in_boundary_span(
+            offsetWithStep, v->getDimensions(), lowerSpan, upperSpan)) {
+      continue;
+    }
 
     const vec3f objectCoordinates =
         v->transformLocalToObjectCoordinates(offsetWithStep);
@@ -274,7 +309,12 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
 
         // samples may be NaN if out of bounds of the grid (e.g. for samples in
         // the bounding box of a spherical volume but outside the grid)
+#ifdef __ARM_NEON
+        static constexpr float tolerance = 1e-3f;
+#else
         static constexpr float tolerance = 1e-5f;
+#endif
+
         REQUIRE(
             ((sampleTruth == Approx(samples[i]).margin(tolerance)) ||
              (std::isnan(sampleTruth) && std::isnan(samples[i]))));
@@ -339,7 +379,12 @@ inline void test_stream_sampling_multi(
           // in the bounding box of a spherical volume but outside the grid)
           const size_t sampleIndex = i * attributeIndices.size() + a;
 
+#ifdef __ARM_NEON
+          static constexpr float tolerance = 1e-3f;
+#else
           static constexpr float tolerance = 1e-5f;
+#endif
+
           REQUIRE(
               ((sampleTruth == Approx(samples[sampleIndex]).margin(tolerance)) ||
                (std::isnan(sampleTruth) && std::isnan(samples[sampleIndex]))));

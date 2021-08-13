@@ -1,4 +1,4 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2020-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer.ih"
@@ -28,14 +28,17 @@ vec3f IntervalIteratorDebug_renderPixel(Renderer *uniform _self,
   tRange.lower = ray.tnear;
   tRange.upper = ray.tfar;
 
-  uniform unsigned int8 intervalIteratorBuffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
+  const float time = scene->time;
+
+  void *uniform intervalIteratorBuffer =
+      alloca(vklGetIntervalIteratorSizeV(scene->intervalContext));
 
   VKLIntervalIterator iterator =
-      vklInitIntervalIteratorV(scene->sampler,
-                               (varying vkl_vec3f *)&ray.org,
-                               (varying vkl_vec3f *)&ray.dir,
+      vklInitIntervalIteratorV(scene->intervalContext,
+                               (varying vkl_vec3f * uniform) & ray.org,
+                               (varying vkl_vec3f * uniform) & ray.dir,
                                &tRange,
-                               scene->valueSelector,
+                               &time,
                                intervalIteratorBuffer);
 
   VKLInterval interval;

@@ -6,8 +6,7 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-struct ValueSelector;
-struct Sampler;
+struct IntervalIteratorContext;
 
 struct GridAcceleratorIteratorIntervalState
 {
@@ -24,12 +23,11 @@ struct GridAcceleratorIteratorHitState
 
 struct GridAcceleratorIterator
 {
-  const Sampler *uniform sampler;
+  const IntervalIteratorContext *uniform context;
   vec3f origin;
   vec3f direction;
   box1f tRange;
   float time;
-  ValueSelector *uniform valueSelector;
 
   // common state
   box1f boundingBoxTRange;

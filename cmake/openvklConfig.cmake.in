@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 @PACKAGE_INIT@
@@ -16,6 +16,7 @@ set(OPENVKL_ISA_AVX @OPENVKL_ISA_AVX@)
 set(OPENVKL_ISA_AVX2 @OPENVKL_ISA_AVX2@)
 set(OPENVKL_ISA_AVX512KNL @OPENVKL_ISA_AVX512KNL@)
 set(OPENVKL_ISA_AVX512SKX @OPENVKL_ISA_AVX512SKX@)
+set(OPENVKL_ISA_NEON @OPENVKL_ISA_NEON@)
 
 ## Standard signal that the package was found ##
 

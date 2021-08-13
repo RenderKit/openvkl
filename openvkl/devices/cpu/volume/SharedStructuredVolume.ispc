@@ -346,12 +346,6 @@ declare_all_voxel_types(template_computeVoxelRange);
 // Sampling functions /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-inline uniform float nanValue()
-{
-  const uniform int NaN_bits = 0x7fc00000;
-  return floatbits(NaN_bits);
-}
-
 #define template_clampedLocalCoordinates(univary)                      \
   inline void clampedLocalCoordinates_##univary(                       \
       const SharedStructuredVolume *uniform self,                      \
@@ -361,7 +355,7 @@ inline uniform float nanValue()
   {                                                                    \
     inBounds = true;                                                   \
                                                                        \
-    transformObjectToLocal_##univary##_dispatch(                            \
+    transformObjectToLocal_##univary##_dispatch(                       \
         self, objectCoordinates, clampedLocalCoordinates);             \
                                                                        \
     if (clampedLocalCoordinates.x < 0.f ||                             \
@@ -397,7 +391,7 @@ template_clampedLocalCoordinates(uniform);
      * using the above clampedLocalCoordinates_univary() function      \
      * produces more efficient code; clampedLocalCoordinates_univary() \
      * is still used for multi-attribute sampling functions... */      \
-    transformObjectToLocal_##univary##_dispatch(                            \
+    transformObjectToLocal_##univary##_dispatch(                       \
         self, objectCoordinates, clampedLocalCoordinates);             \
                                                                        \
     if (clampedLocalCoordinates.x < 0.f ||                             \
@@ -406,7 +400,7 @@ template_clampedLocalCoordinates(uniform);
         clampedLocalCoordinates.y > self->dimensions.y - 1.f ||        \
         clampedLocalCoordinates.z < 0.f ||                             \
         clampedLocalCoordinates.z > self->dimensions.z - 1.f) {        \
-      return nanValue();                                               \
+      return self->super.background[attributeIndex];                   \
     }                                                                  \
                                                                        \
     clampedLocalCoordinates = clamp(clampedLocalCoordinates,           \
@@ -1394,34 +1388,6 @@ inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
       uniform new uniform ComputeSampleInnerUniformFunc[numAttributes];
 }
 
-// wrappers to enable setting old-style function pointers in the Volume
-// superclass; restricts to first attribute
-varying float computeSample_varying_0_iterator_wrapper(
-    const Sampler *uniform sampler,
-    const varying vec3f &objectCoordinates,
-    const varying float &time)
-{
-  return SharedStructuredVolume_computeSample_varying(
-      (const SharedStructuredVolume *uniform)sampler->volume,
-      objectCoordinates,
-      sampler->filter,
-      0,
-      time);
-}
-
-uniform float computeSample_uniform_0_iterator_wrapper(
-    const Sampler *uniform sampler,
-    const uniform vec3f &objectCoordinates,
-    const uniform float &time)
-{
-  return SharedStructuredVolume_computeSample_uniform(
-      (const SharedStructuredVolume *uniform)sampler->volume,
-      objectCoordinates,
-      sampler->filter,
-      0,
-      time);
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 // Helper functions for assigning sampling functions //////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1525,7 +1491,7 @@ inline uniform bool assignTemporallyConstantSamplingFunctions(
 
   else if (safe_32bit_indexing(
                self->attributesData[attributeIndex],
-               self->dimensions.x * (uint64)self->dimensions.y)) {
+               self->dimensions.x * (uniform uint64)self->dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice beginning.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
@@ -1677,7 +1643,7 @@ inline uniform bool assignTemporallyStructuredSamplingFunctions(
 
   else if (safe_32bit_indexing(self->attributesData[attributeIndex],
                                numTimeSamples * self->dimensions.x *
-                                   (uint64)self->dimensions.y)) {
+                                   (uniform uint64)self->dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice beginning.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
@@ -1828,7 +1794,7 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
   // sampling functions for 64/32-bit addressing (on time indices)
   else if (safe_32bit_indexing(
                self->attributesData[attributeIndex],
-               self->dimensions.x * (uint64)self->dimensions.y)) {
+               self->dimensions.x * (uniform uint64)self->dimensions.y)) {
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice beginning.
     PRINT_DEBUG("#vkl:shared_structured_volume: using 64/32-bit mode\n");
@@ -1883,13 +1849,14 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
 // SharedStructuredVolume exported functions //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-export uniform box3f EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
-                                   void *uniform _self)
+export void EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
+                          void *uniform _self,
+                          uniform box3f &boundingBox)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
 
-  return self->boundingBox;
+  boundingBox = self->boundingBox;
 }
 
 export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
@@ -2039,7 +2006,8 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
       }
     } else {
       for (uniform uint32 i = 0; i < M; i++) {
-        samples[i * VKL_TARGET_WIDTH + programIndex] = nanValue();
+        samples[i * VKL_TARGET_WIDTH + programIndex] =
+            sampler->volume->background[i];
       }
     }
   }
@@ -2077,7 +2045,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
     }
   } else {
     for (uniform uint32 i = 0; i < M; i++) {
-      samples[i] = nanValue();
+      samples[i] = sampler->volume->background[i];
     }
   }
 }
@@ -2118,7 +2086,7 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
       }
     } else {
       for (uniform uint32 a = 0; a < M; a++) {
-        samples[i * M + a] = nanValue();
+        samples[i * M + a] = sampler->volume->background[a];
       }
     }
   }
@@ -2267,8 +2235,44 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_createAccelerator,
   return self->accelerator;
 }
 
+// wrappers to enable setting old-style function pointers in the Volume
+// superclass; restricts to first attribute
+varying float computeSample_varying_0_iterator_wrapper(
+    const Sampler *uniform _sampler,
+    const varying vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
+    const varying float &time)
+{
+  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  assert(sampler);
+
+  return SharedStructuredVolume_computeSample_varying(
+      (const SharedStructuredVolume *uniform)sampler->volume,
+      objectCoordinates,
+      sampler->filter,
+      attributeIndex,
+      time);
+}
+
+uniform float computeSample_uniform_0_iterator_wrapper(
+    const Sampler *uniform _sampler,
+    const uniform vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
+    const uniform float &time)
+{
+  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  assert(sampler);
+
+  return SharedStructuredVolume_computeSample_uniform(
+      (const SharedStructuredVolume *uniform)sampler->volume,
+      objectCoordinates,
+      sampler->filter,
+      attributeIndex,
+      time);
+}
+
 export Sampler *uniform EXPORT_UNIQUE(StructuredSampler_create,
-                                      void *uniform _volume)
+                                      const void *uniform _volume)
 {
   Sampler *uniform sampler       = CALL_ISPC(Sampler_create, _volume);
   sampler->computeSample_uniform = computeSample_uniform_0_iterator_wrapper;

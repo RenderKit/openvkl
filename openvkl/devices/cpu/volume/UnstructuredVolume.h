@@ -28,15 +28,13 @@ namespace openvkl {
 
       unsigned int getNumAttributes() const override;
 
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       box4f getCellBBox(size_t id);
 
       const Node *getNodeRoot() const;
 
-      int getMaxIteratorDepth() const;
-
-      bool getElementaryCellIteration() const;
+      int getBvhDepth() const;
 
      private:
       void buildBvhAndCalculateBounds();
@@ -72,12 +70,12 @@ namespace openvkl {
       Ref<const DataT<float>> cellValue;
       Ref<const DataT<uint8_t>> cellType;
 
+      Ref<const DataT<float>> background;
+
       bool index32Bit{false};
       bool cell32Bit{false};
       bool indexPrefixed{false};
       bool hexIterative{false};
-      int maxIteratorDepth{0};
-      bool elementaryCellIteration{false};
 
       // used only if an explicit cell type array is not provided
       std::vector<uint8_t> generatedCellType;
@@ -88,6 +86,7 @@ namespace openvkl {
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      int bvhDepth{0};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -111,8 +110,10 @@ namespace openvkl {
     }
 
     template <int W>
-    inline range1f UnstructuredVolume<W>::getValueRange() const
+    inline range1f UnstructuredVolume<W>::getValueRange(
+        unsigned int attributeIndex) const
     {
+      throwOnIllegalAttributeIndex(this, attributeIndex);
       return valueRange;
     }
 
@@ -123,15 +124,9 @@ namespace openvkl {
     }
 
     template <int W>
-    inline int UnstructuredVolume<W>::getMaxIteratorDepth() const
+    inline int UnstructuredVolume<W>::getBvhDepth() const
     {
-      return maxIteratorDepth;
-    }
-
-    template <int W>
-    inline bool UnstructuredVolume<W>::getElementaryCellIteration() const
-    {
-      return elementaryCellIteration;
+      return bvhDepth;
     }
 
     template <int W>

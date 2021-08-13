@@ -42,6 +42,8 @@ foreach(TARGET_WIDTH 4 8 16)
     iterator/GridAcceleratorIterator.cpp
     iterator/GridAcceleratorIterator.ispc
     iterator/GridAcceleratorIteratorSize.ispc
+    iterator/IteratorContext.cpp
+    iterator/IteratorContext.ispc
     iterator/UnstructuredIterator.cpp
     iterator/UnstructuredIterator.ispc
     observer/Observer.cpp
@@ -49,8 +51,6 @@ foreach(TARGET_WIDTH 4 8 16)
     observer/ObserverRegistry.ispc
     sampler/Sampler.cpp
     sampler/Sampler.ispc
-    value_selector/ValueSelector.cpp
-    value_selector/ValueSelector.ispc
     volume/amr/AMRAccel.cpp
     volume/amr/AMRData.cpp
     volume/amr/AMRVolume.cpp
@@ -74,19 +74,11 @@ foreach(TARGET_WIDTH 4 8 16)
     volume/vdb/VdbVolume.ispc
     volume/vdb/VdbSampler.cpp
     volume/vdb/VdbSampler.ispc
-    volume/vdb/VdbSampler_valueRange.ispc
-    volume/vdb/VdbSampler_computeSample.ispc
-    volume/vdb/VdbSampler_computeSample_uniform.ispc
-    volume/vdb/VdbSampler_computeSample_stream.ispc
-    volume/vdb/VdbSampler_computeSampleM.ispc
-    volume/vdb/VdbSampler_computeSampleM_uniform.ispc
-    volume/vdb/VdbSampler_computeSampleM_stream.ispc
-    volume/vdb/VdbSampler_computeGradient.ispc
-    volume/vdb/VdbSampler_computeGradient_stream.ispc
     volume/vdb/VdbInnerNodeObserver.cpp
     volume/vdb/VdbIterator.cpp
     volume/vdb/VdbIterator.ispc
     volume/vdb/VdbLeafAccessObserver.cpp
+    volume/vdb/DenseVdbVolume.cpp
   )
 
   unset(ISPC_DEFINITIONS)

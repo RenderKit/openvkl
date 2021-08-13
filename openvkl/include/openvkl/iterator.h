@@ -4,9 +4,23 @@
 #pragma once
 
 #include "common.h"
-#include "value_selector.h"
 #include "sampler.h"
 #include "max_iterator_size.h"
+
+#ifdef __cplusplus
+struct IntervalIteratorContext : public ManagedObject
+{
+};
+struct HitIteratorContext : public ManagedObject
+{
+};
+#else
+typedef ManagedObject IntervalIteratorContext;
+typedef ManagedObject HitIteratorContext;
+#endif
+
+typedef IntervalIteratorContext *VKLIntervalIteratorContext;
+typedef HitIteratorContext *VKLHitIteratorContext;
 
 #ifdef __cplusplus
 extern "C" {
@@ -15,6 +29,13 @@ extern "C" {
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterators /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+/*
+ * Interval iterators require a context.
+ */
+
+OPENVKL_INTERFACE
+VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 
 /*
  * Interval iterator types are opaque. See vklGetIntervalIteratorSize()
@@ -39,16 +60,16 @@ typedef struct IntervalIterator16 *VKLIntervalIterator16;
  * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
+size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
 
 /*
  * Initialize an interval iterator for the given volume.
@@ -70,39 +91,42 @@ size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
  * buffer. It however may be distinct from buffer.
  */
 OPENVKL_INTERFACE
-VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
+VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                             const vkl_vec3f *origin,
                                             const vkl_vec3f *direction,
                                             const vkl_range1f *tRange,
-                                            VKLValueSelector valueSelector,
+                                            float time,
                                             void *buffer);
 
 OPENVKL_INTERFACE
-VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                              VKLSampler sampler,
-                                              const vkl_vvec3f4 *origin,
-                                              const vkl_vvec3f4 *direction,
-                                              const vkl_vrange1f4 *tRange,
-                                              VKLValueSelector valueSelector,
-                                              void *buffer);
+VKLIntervalIterator4 vklInitIntervalIterator4(
+    const int *valid,
+    VKLIntervalIteratorContext context,
+    const vkl_vvec3f4 *origin,
+    const vkl_vvec3f4 *direction,
+    const vkl_vrange1f4 *tRange,
+    const float *times,
+    void *buffer);
 
 OPENVKL_INTERFACE
-VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                              VKLSampler sampler,
-                                              const vkl_vvec3f8 *origin,
-                                              const vkl_vvec3f8 *direction,
-                                              const vkl_vrange1f8 *tRange,
-                                              VKLValueSelector valueSelector,
-                                              void *buffer);
+VKLIntervalIterator8 vklInitIntervalIterator8(
+    const int *valid,
+    VKLIntervalIteratorContext context,
+    const vkl_vvec3f8 *origin,
+    const vkl_vvec3f8 *direction,
+    const vkl_vrange1f8 *tRange,
+    const float *times,
+    void *buffer);
 
 OPENVKL_INTERFACE
-VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                VKLSampler sampler,
-                                                const vkl_vvec3f16 *origin,
-                                                const vkl_vvec3f16 *direction,
-                                                const vkl_vrange1f16 *tRange,
-                                                VKLValueSelector valueSelector,
-                                                void *buffer);
+VKLIntervalIterator16 vklInitIntervalIterator16(
+    const int *valid,
+    VKLIntervalIteratorContext context,
+    const vkl_vvec3f16 *origin,
+    const vkl_vvec3f16 *direction,
+    const vkl_vrange1f16 *tRange,
+    const float *times,
+    void *buffer);
 
 typedef struct
 {
@@ -158,6 +182,13 @@ void vklIterateInterval16(const int *valid,
 // Hit iterators //////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
+ * Hit iterators require a context.
+ */
+
+OPENVKL_INTERFACE
+VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler);
+
 struct HitIterator;
 typedef struct HitIterator *VKLHitIterator;
 
@@ -175,16 +206,16 @@ typedef struct HitIterator16 *VKLHitIterator16;
  * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize(VKLSampler sampler);
+size_t vklGetHitIteratorSize(VKLHitIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize4(VKLSampler sampler);
+size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize8(VKLSampler sampler);
+size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize16(VKLSampler sampler);
+size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
 
 /*
  * Initialize a hit iterator for the given volume.
@@ -207,44 +238,39 @@ size_t vklGetHitIteratorSize16(VKLSampler sampler);
  */
 
 OPENVKL_INTERFACE
-VKLHitIterator vklInitHitIterator(VKLSampler sampler,
+VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                   const vkl_vec3f *origin,
                                   const vkl_vec3f *direction,
                                   const vkl_range1f *tRange,
                                   float time,
-                                  VKLValueSelector valueSelector,
                                   void *buffer);
 
 OPENVKL_INTERFACE
 VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                                    VKLSampler sampler,
+                                    VKLHitIteratorContext context,
                                     const vkl_vvec3f4 *origin,
                                     const vkl_vvec3f4 *direction,
                                     const vkl_vrange1f4 *tRange,
                                     const float *times,
-                                    VKLValueSelector valueSelector,
                                     void *buffer);
 
 OPENVKL_INTERFACE
 VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                                    VKLSampler sampler,
+                                    VKLHitIteratorContext context,
                                     const vkl_vvec3f8 *origin,
                                     const vkl_vvec3f8 *direction,
                                     const vkl_vrange1f8 *tRange,
                                     const float *times,
-                                    VKLValueSelector valueSelector,
                                     void *buffer);
 
 OPENVKL_INTERFACE
 VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                                      VKLSampler sampler,
+                                      VKLHitIteratorContext context,
                                       const vkl_vvec3f16 *origin,
                                       const vkl_vvec3f16 *direction,
                                       const vkl_vrange1f16 *tRange,
                                       const float *times,
-                                      VKLValueSelector valueSelector,
                                       void *buffer);
-
 
 typedef struct
 {

@@ -11,7 +11,9 @@ inline void sampling_on_vertices_vs_procedural_values(
     vec3i dimensions,
     VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
     size_t byteStride                      = 0,
-    vec3i step                             = vec3i(1))
+    vec3i step                             = vec3i(1),
+    int lowerSpan                          = 0,
+    int upperSpan                          = 0)
 {
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f);
@@ -31,6 +33,11 @@ inline void sampling_on_vertices_vs_procedural_values(
 
   for (const auto &offset : mis) {
     const auto offsetWithStep = offset * step;
+
+    if (coordinate_in_boundary_span(
+            offsetWithStep, v->getDimensions(), lowerSpan, upperSpan)) {
+      continue;
+    }
 
     vec3f objectCoordinates =
         v->transformLocalToObjectCoordinates(offsetWithStep);

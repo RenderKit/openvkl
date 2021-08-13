@@ -59,7 +59,18 @@ vkl_box3f vklGetBoundingBox(VKLVolume volume);
 
 OPENVKL_INTERFACE unsigned int vklGetNumAttributes(VKLVolume volume);
 
-OPENVKL_INTERFACE vkl_range1f vklGetValueRange(VKLVolume volume);
+OPENVKL_INTERFACE vkl_range1f vklGetValueRange(
+    VKLVolume volume, unsigned int attributeIndex VKL_DEFAULT_VAL(= 0));
+
+// The below are primarily used to enable ISPC bindings, which cannot handle
+// returning structs by value.
+
+OPENVKL_INTERFACE void vklGetBoundingBoxRef(VKLVolume volume,
+                                            vkl_box3f *boundingBox);
+
+OPENVKL_INTERFACE void vklGetValueRangeRef(VKLVolume volume,
+                                           unsigned int attributeIndex,
+                                           vkl_range1f *valueRange);
 
 #ifdef __cplusplus
 }  // extern "C"

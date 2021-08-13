@@ -1,0 +1,544 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+#include "common/temporal_data_interpolation.ih"
+
+// ---------------------------------------------------------------------------
+// Helpers.
+// ---------------------------------------------------------------------------
+
+// allows correct handling of partially filled leaves (i.e. when denseDimensions
+// is not an even multiple of VKL_VDB_RES_LEAF)
+inline uniform bool VdbSampler_isInDenseDomain(const VdbGrid *uniform grid,
+                                               const uniform vec3ui &offset)
+{
+  return offset.x < grid->denseDimensions.x &&
+         offset.y < grid->denseDimensions.y &&
+         offset.z < grid->denseDimensions.z;
+}
+
+inline bool VdbSampler_isInDenseDomain(const VdbGrid *uniform grid,
+                                       const vec3ui &offset)
+{
+  return offset.x < grid->denseDimensions.x &&
+         offset.y < grid->denseDimensions.y &&
+         offset.z < grid->denseDimensions.z;
+}
+
+// ---------------------------------------------------------------------------
+// Value range.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_computeValueRange_dense_constant(voxelType) \
+  inline uniform box1f                                                        \
+      VdbSampler_computeValueRange_dense_32_constant_##voxelType(             \
+          const VdbGrid *uniform grid,                                        \
+          uniform uint32 attributeIndex,                                      \
+          const uniform vec3ui &domainOffset,                                 \
+          const uniform vec2ui &xRange,                                       \
+          const uniform vec2ui &yRange,                                       \
+          const uniform vec2ui &zRange)                                       \
+  {                                                                           \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                  \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {              \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {            \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {          \
+          if (!VdbSampler_isInDenseDomain(                                    \
+                  grid, domainOffset + make_vec3ui(x, y, z))) {               \
+            continue;                                                         \
+          }                                                                   \
+          const uniform uint64 voxelIdx =                                     \
+              (domainOffset.z + z) * grid->activeSize.y *                     \
+                  (uint64)grid->activeSize.x +                                \
+              (domainOffset.y + y) * (uint64)grid->activeSize.x +             \
+              (uint64)(domainOffset.x + x);                                   \
+          assert(voxelIdx < ((uniform uint64)1) << 32);                       \
+          const uniform uint32 v32 = ((uniform uint32)voxelIdx);              \
+          extend(valueRange,                                                  \
+                 get_##voxelType(grid->denseData[attributeIndex], v32));      \
+        }                                                                     \
+      }                                                                       \
+    }                                                                         \
+    return valueRange;                                                        \
+  }                                                                           \
+                                                                              \
+  inline uniform box1f                                                        \
+      VdbSampler_computeValueRange_dense_64_constant_##voxelType(             \
+          const VdbGrid *uniform grid,                                        \
+          uniform uint32 attributeIndex,                                      \
+          const uniform vec3ui &domainOffset,                                 \
+          const uniform vec2ui &xRange,                                       \
+          const uniform vec2ui &yRange,                                       \
+          const uniform vec2ui &zRange)                                       \
+  {                                                                           \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                  \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {              \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {            \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {          \
+          if (!VdbSampler_isInDenseDomain(                                    \
+                  grid, domainOffset + make_vec3ui(x, y, z))) {               \
+            continue;                                                         \
+          }                                                                   \
+          const uniform uint64 voxelIdx =                                     \
+              (domainOffset.z + z) * grid->activeSize.y *                     \
+                  (uint64)grid->activeSize.x +                                \
+              (domainOffset.y + y) * (uint64)grid->activeSize.x +             \
+              (uint64)(domainOffset.x + x);                                   \
+          extend(valueRange,                                                  \
+                 get_##voxelType(grid->denseData[attributeIndex], voxelIdx)); \
+        }                                                                     \
+      }                                                                       \
+    }                                                                         \
+    return valueRange;                                                        \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_dense_constant(uint8);
+__vkl_template_VdbSampler_computeValueRange_dense_constant(int16);
+__vkl_template_VdbSampler_computeValueRange_dense_constant(uint16);
+__vkl_template_VdbSampler_computeValueRange_dense_constant(half);
+__vkl_template_VdbSampler_computeValueRange_dense_constant(float);
+__vkl_template_VdbSampler_computeValueRange_dense_constant(double);
+
+#undef __vkl_template_VdbSampler_computeValueRange_dense_constant
+
+#define __vkl_template_VdbSampler_computeValueRange_dense_structured(      \
+    voxelType)                                                             \
+  inline uniform box1f                                                     \
+      VdbSampler_computeValueRange_dense_32_structured_##voxelType(        \
+          const VdbGrid *uniform grid,                                     \
+          uniform uint32 attributeIndex,                                   \
+          const uniform vec3ui &domainOffset,                              \
+          const uniform vec2ui &xRange,                                    \
+          const uniform vec2ui &yRange,                                    \
+          const uniform vec2ui &zRange)                                    \
+  {                                                                        \
+    const uniform uint32 numTimesteps =                                    \
+        grid->denseTemporallyStructuredNumTimesteps;                       \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);               \
+                                                                           \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {           \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {         \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {       \
+          if (!VdbSampler_isInDenseDomain(                                 \
+                  grid, domainOffset + make_vec3ui(x, y, z))) {            \
+            continue;                                                      \
+          }                                                                \
+          const uniform uint64 voxelIdx =                                  \
+              numTimesteps *                                               \
+              ((domainOffset.z + z) * grid->activeSize.y *                 \
+                   (uint64)grid->activeSize.x +                            \
+               (domainOffset.y + y) * (uint64)grid->activeSize.x +         \
+               (uint64)(domainOffset.x + x));                              \
+          for (uniform unsigned int t = 0; t < numTimesteps; ++t) {        \
+            assert((voxelIdx + t) < ((uniform uint64)1) << 32);            \
+            const uniform uint32 v32 = ((uniform uint32)(voxelIdx + t));   \
+            extend(valueRange,                                             \
+                   get_##voxelType(grid->denseData[attributeIndex], v32)); \
+          }                                                                \
+        }                                                                  \
+      }                                                                    \
+    }                                                                      \
+    return valueRange;                                                     \
+  }                                                                        \
+                                                                           \
+  inline uniform box1f                                                     \
+      VdbSampler_computeValueRange_dense_64_structured_##voxelType(        \
+          const VdbGrid *uniform grid,                                     \
+          uniform uint32 attributeIndex,                                   \
+          const uniform vec3ui &domainOffset,                              \
+          const uniform vec2ui &xRange,                                    \
+          const uniform vec2ui &yRange,                                    \
+          const uniform vec2ui &zRange)                                    \
+  {                                                                        \
+    const uniform uint32 numTimesteps =                                    \
+        grid->denseTemporallyStructuredNumTimesteps;                       \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);               \
+                                                                           \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {           \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {         \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {       \
+          if (!VdbSampler_isInDenseDomain(                                 \
+                  grid, domainOffset + make_vec3ui(x, y, z))) {            \
+            continue;                                                      \
+          }                                                                \
+          const uniform uint64 voxelIdx =                                  \
+              numTimesteps *                                               \
+              ((domainOffset.z + z) * grid->activeSize.y *                 \
+                   (uint64)grid->activeSize.x +                            \
+               (domainOffset.y + y) * (uint64)grid->activeSize.x +         \
+               (uint64)(domainOffset.x + x));                              \
+          for (uniform unsigned int t = 0; t < numTimesteps; ++t) {        \
+            const uniform uint64 v64 = ((uniform uint64)(voxelIdx + t));   \
+            extend(valueRange,                                             \
+                   get_##voxelType(grid->denseData[attributeIndex], v64)); \
+          }                                                                \
+        }                                                                  \
+      }                                                                    \
+    }                                                                      \
+    return valueRange;                                                     \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_dense_structured(uint8);
+__vkl_template_VdbSampler_computeValueRange_dense_structured(uint16);
+__vkl_template_VdbSampler_computeValueRange_dense_structured(int16);
+__vkl_template_VdbSampler_computeValueRange_dense_structured(half);
+__vkl_template_VdbSampler_computeValueRange_dense_structured(float);
+__vkl_template_VdbSampler_computeValueRange_dense_structured(double);
+
+#undef __vkl_template_VdbSampler_computeValueRange_dense_structured
+
+#define __vkl_template_VdbSampler_computeValueRange_dense_unstructured(       \
+    voxelType)                                                                \
+  inline uniform box1f                                                        \
+      VdbSampler_computeValueRange_dense_32_unstructured_##voxelType(         \
+          const VdbGrid *uniform grid,                                        \
+          uniform uint32 attributeIndex,                                      \
+          const uniform vec3ui &domainOffset,                                 \
+          const uniform vec2ui &xRange,                                       \
+          const uniform vec2ui &yRange,                                       \
+          const uniform vec2ui &zRange)                                       \
+  {                                                                           \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                  \
+                                                                              \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {              \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {            \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {          \
+          if (!VdbSampler_isInDenseDomain(                                    \
+                  grid, domainOffset + make_vec3ui(x, y, z))) {               \
+            continue;                                                         \
+          }                                                                   \
+          const uniform uint64 voxelIdx =                                     \
+              (domainOffset.z + z) * grid->activeSize.y *                     \
+                  (uint64)grid->activeSize.x +                                \
+              (domainOffset.y + y) * (uint64)grid->activeSize.x +             \
+              (uint64)(domainOffset.x + x);                                   \
+          assert(voxelIdx < ((uniform uint64)1) << 32);                       \
+          const uniform uint32 v32 = ((uniform uint32)voxelIdx);              \
+          valueRange =                                                        \
+              box_extend(valueRange,                                          \
+                         computeValueRangeTemporallyUnstructured_##voxelType( \
+                             &grid->denseData[attributeIndex],                \
+                             &grid->denseTemporallyUnstructuredIndices,       \
+                             v32));                                           \
+        }                                                                     \
+      }                                                                       \
+    }                                                                         \
+                                                                              \
+    return valueRange;                                                        \
+  }                                                                           \
+                                                                              \
+  inline uniform box1f                                                        \
+      VdbSampler_computeValueRange_dense_64_unstructured_##voxelType(         \
+          const VdbGrid *uniform grid,                                        \
+          uniform uint32 attributeIndex,                                      \
+          const uniform vec3ui &domainOffset,                                 \
+          const uniform vec2ui &xRange,                                       \
+          const uniform vec2ui &yRange,                                       \
+          const uniform vec2ui &zRange)                                       \
+  {                                                                           \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                  \
+                                                                              \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {              \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {            \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {          \
+          if (!VdbSampler_isInDenseDomain(                                    \
+                  grid, domainOffset + make_vec3ui(x, y, z))) {               \
+            continue;                                                         \
+          }                                                                   \
+          const uniform uint64 voxelIdx =                                     \
+              (domainOffset.z + z) * grid->activeSize.y *                     \
+                  (uint64)grid->activeSize.x +                                \
+              (domainOffset.y + y) * (uint64)grid->activeSize.x +             \
+              (uint64)(domainOffset.x + x);                                   \
+          valueRange =                                                        \
+              box_extend(valueRange,                                          \
+                         computeValueRangeTemporallyUnstructured_##voxelType( \
+                             &grid->denseData[attributeIndex],                \
+                             &grid->denseTemporallyUnstructuredIndices,       \
+                             voxelIdx));                                      \
+        }                                                                     \
+      }                                                                       \
+    }                                                                         \
+                                                                              \
+    return valueRange;                                                        \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_dense_unstructured(uint8);
+__vkl_template_VdbSampler_computeValueRange_dense_unstructured(uint16);
+__vkl_template_VdbSampler_computeValueRange_dense_unstructured(int16);
+__vkl_template_VdbSampler_computeValueRange_dense_unstructured(half);
+__vkl_template_VdbSampler_computeValueRange_dense_unstructured(float);
+__vkl_template_VdbSampler_computeValueRange_dense_unstructured(double);
+
+#undef __vkl_template_VdbSampler_computeValueRange_dense_unstructured
+
+// ---------------------------------------------------------------------------
+// Constant leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_sample_dense_constant(voxelType)        \
+  inline uniform float                                                    \
+      VdbSampler_sample_dense_uniform_32_constant_##voxelType(            \
+          const VdbGrid *uniform grid,                                    \
+          uniform uint32 attributeIndex,                                  \
+          const uniform vec3ui &offset,                                   \
+          uniform float /*time*/)                                         \
+  {                                                                       \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                     \
+    assert(offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +   \
+               offset.y * (uint64)grid->activeSize.x + (uint64)offset.x < \
+           ((uniform uint64)1) << 32);                                    \
+    const uniform uint32 voxelIdx =                                       \
+        offset.z * grid->activeSize.y * grid->activeSize.x +              \
+        offset.y * grid->activeSize.x + offset.x;                         \
+                                                                          \
+    return get_##voxelType(grid->denseData[attributeIndex], voxelIdx);    \
+  }                                                                       \
+                                                                          \
+  inline float VdbSampler_sample_dense_varying_32_constant_##voxelType(   \
+      const VdbGrid *uniform grid,                                        \
+      uniform uint32 attributeIndex,                                      \
+      const vec3ui &offset,                                               \
+      const float & /*time*/)                                             \
+  {                                                                       \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                     \
+    assert(offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +   \
+               offset.y * (uint64)grid->activeSize.x + (uint64)offset.x < \
+           ((uint64)1) << 32);                                            \
+    const uint32 voxelIdx =                                               \
+        offset.z * grid->activeSize.y * grid->activeSize.x +              \
+        offset.y * grid->activeSize.x + offset.x;                         \
+                                                                          \
+    return get_##voxelType(grid->denseData[attributeIndex], voxelIdx);    \
+  }                                                                       \
+                                                                          \
+  inline uniform float                                                    \
+      VdbSampler_sample_dense_uniform_64_constant_##voxelType(            \
+          const VdbGrid *uniform grid,                                    \
+          uniform uint32 attributeIndex,                                  \
+          const uniform vec3ui &offset,                                   \
+          uniform float /*time*/)                                         \
+  {                                                                       \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                     \
+    const uniform uint64 voxelIdx =                                       \
+        offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +      \
+        offset.y * (uint64)grid->activeSize.x + (uint64)offset.x;         \
+                                                                          \
+    return get_##voxelType(grid->denseData[attributeIndex], voxelIdx);    \
+  }                                                                       \
+                                                                          \
+  inline float VdbSampler_sample_dense_varying_64_constant_##voxelType(   \
+      const VdbGrid *uniform grid,                                        \
+      uniform uint32 attributeIndex,                                      \
+      const vec3ui &offset,                                               \
+      const float & /*time*/)                                             \
+  {                                                                       \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                     \
+    const uint64 voxelIdx =                                               \
+        offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +      \
+        offset.y * (uint64)grid->activeSize.x + (uint64)offset.x;         \
+                                                                          \
+    return get_##voxelType(grid->denseData[attributeIndex], voxelIdx);    \
+  }
+
+__vkl_template_VdbSampler_sample_dense_constant(uint8);
+__vkl_template_VdbSampler_sample_dense_constant(int16);
+__vkl_template_VdbSampler_sample_dense_constant(uint16);
+__vkl_template_VdbSampler_sample_dense_constant(half);
+__vkl_template_VdbSampler_sample_dense_constant(float);
+__vkl_template_VdbSampler_sample_dense_constant(double);
+
+#undef __vkl_template_VdbSampler_sample_dense_constant
+
+// ---------------------------------------------------------------------------
+// Structured leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_sample_dense_structured(voxelType)         \
+  inline uniform float                                                       \
+      VdbSampler_sample_dense_uniform_32_structured_##voxelType(             \
+          const VdbGrid *uniform grid,                                       \
+          uniform uint32 attributeIndex,                                     \
+          const uniform vec3ui &offset,                                      \
+          uniform float time)                                                \
+  {                                                                          \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                        \
+    const uniform int32 numTimesteps =                                       \
+        grid->denseTemporallyStructuredNumTimesteps;                         \
+    assert(numTimesteps *(                                                   \
+               offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +  \
+               offset.y * (uint64)grid->activeSize.x + (uint64)offset.x) <   \
+           ((uniform uint64)1) << 32);                                       \
+    const uniform uint32 v32 =                                               \
+        numTimesteps * (offset.z * grid->activeSize.y * grid->activeSize.x + \
+                        offset.y * grid->activeSize.x + offset.x);           \
+                                                                             \
+    return interpolateTemporallyStructured_##voxelType(                      \
+        &grid->denseData[attributeIndex], numTimesteps, v32, time);          \
+  }                                                                          \
+                                                                             \
+  inline float VdbSampler_sample_dense_varying_32_structured_##voxelType(    \
+      const VdbGrid *uniform grid,                                           \
+      uniform uint32 attributeIndex,                                         \
+      const vec3ui &offset,                                                  \
+      const float &time)                                                     \
+  {                                                                          \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                        \
+    const uniform int32 numTimesteps =                                       \
+        grid->denseTemporallyStructuredNumTimesteps;                         \
+    assert(numTimesteps *(                                                   \
+               offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +  \
+               offset.y * (uint64)grid->activeSize.x + (uint64)offset.x) <   \
+           ((uint64)1) << 32);                                               \
+    const uint32 v32 =                                                       \
+        numTimesteps * (offset.z * grid->activeSize.y * grid->activeSize.x + \
+                        offset.y * grid->activeSize.x + offset.x);           \
+                                                                             \
+    return interpolateTemporallyStructured_##voxelType(                      \
+        &grid->denseData[attributeIndex], numTimesteps, v32, time);          \
+  }                                                                          \
+                                                                             \
+  inline uniform float                                                       \
+      VdbSampler_sample_dense_uniform_64_structured_##voxelType(             \
+          const VdbGrid *uniform grid,                                       \
+          uniform uint32 attributeIndex,                                     \
+          const uniform vec3ui &offset,                                      \
+          uniform float time)                                                \
+  {                                                                          \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                        \
+    const uniform int32 numTimesteps =                                       \
+        grid->denseTemporallyStructuredNumTimesteps;                         \
+    const uniform uint64 voxelIdx =                                          \
+        numTimesteps *                                                       \
+        (offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +        \
+         offset.y * (uint64)grid->activeSize.x + (uint64)offset.x);          \
+                                                                             \
+    return interpolateTemporallyStructured_##voxelType(                      \
+        &grid->denseData[attributeIndex], numTimesteps, voxelIdx, time);     \
+  }                                                                          \
+                                                                             \
+  inline float VdbSampler_sample_dense_varying_64_structured_##voxelType(    \
+      const VdbGrid *uniform grid,                                           \
+      uniform uint32 attributeIndex,                                         \
+      const vec3ui &offset,                                                  \
+      const float &time)                                                     \
+  {                                                                          \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                        \
+    const uniform int32 numTimesteps =                                       \
+        grid->denseTemporallyStructuredNumTimesteps;                         \
+    const uint64 voxelIdx =                                                  \
+        numTimesteps *                                                       \
+        (offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +        \
+         offset.y * (uint64)grid->activeSize.x + (uint64)offset.x);          \
+                                                                             \
+    return interpolateTemporallyStructured_##voxelType(                      \
+        &grid->denseData[attributeIndex], numTimesteps, voxelIdx, time);     \
+  }
+
+__vkl_template_VdbSampler_sample_dense_structured(uint8);
+__vkl_template_VdbSampler_sample_dense_structured(int16);
+__vkl_template_VdbSampler_sample_dense_structured(uint16);
+__vkl_template_VdbSampler_sample_dense_structured(half);
+__vkl_template_VdbSampler_sample_dense_structured(float);
+__vkl_template_VdbSampler_sample_dense_structured(double);
+
+#undef __vkl_template_VdbSampler_sample_dense_structured
+
+// ---------------------------------------------------------------------------
+// Unstructured leaf sampling.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_sample_dense_unstructured(voxelType)      \
+  inline uniform float                                                      \
+      VdbSampler_sample_dense_uniform_32_unstructured_##voxelType(          \
+          const VdbGrid *uniform grid,                                      \
+          uniform uint32 attributeIndex,                                    \
+          const uniform vec3ui &offset,                                     \
+          uniform float time)                                               \
+  {                                                                         \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                       \
+    const uniform uint64 voxelIdx64 =                                       \
+        offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +        \
+        offset.y * (uint64)grid->activeSize.x + (uint64)offset.x;           \
+    assert(voxelIdx64 < ((uniform uint64)1) << 32);                         \
+    const uniform uint32 voxelIdx = ((uniform uint32)voxelIdx64);           \
+                                                                            \
+    return interpolateTemporallyUnstructured_##voxelType(                   \
+        &grid->denseData[attributeIndex],                                   \
+        &grid->denseTemporallyUnstructuredIndices,                          \
+        &grid->denseTemporallyUnstructuredTimes,                            \
+        voxelIdx,                                                           \
+        time);                                                              \
+  }                                                                         \
+                                                                            \
+  inline float VdbSampler_sample_dense_varying_32_unstructured_##voxelType( \
+      const VdbGrid *uniform grid,                                          \
+      uniform uint32 attributeIndex,                                        \
+      const vec3ui &offset,                                                 \
+      const float &time)                                                    \
+  {                                                                         \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                       \
+    const uint64 voxelIdx64 =                                               \
+        offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +        \
+        offset.y * (uint64)grid->activeSize.x + (uint64)offset.x;           \
+    assert(voxelIdx64 < ((uint64)1) << 32);                                 \
+    const varying uint32 voxelIdx = ((uint32)voxelIdx64);                   \
+                                                                            \
+    return interpolateTemporallyUnstructured_##voxelType(                   \
+        &grid->denseData[attributeIndex],                                   \
+        &grid->denseTemporallyUnstructuredIndices,                          \
+        &grid->denseTemporallyUnstructuredTimes,                            \
+        voxelIdx,                                                           \
+        time);                                                              \
+  }                                                                         \
+                                                                            \
+  inline uniform float                                                      \
+      VdbSampler_sample_dense_uniform_64_unstructured_##voxelType(          \
+          const VdbGrid *uniform grid,                                      \
+          uniform uint32 attributeIndex,                                    \
+          const uniform vec3ui &offset,                                     \
+          uniform float time)                                               \
+  {                                                                         \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                       \
+    const uniform uint64 voxelIdx64 =                                       \
+        offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +        \
+        offset.y * (uint64)grid->activeSize.x + (uint64)offset.x;           \
+                                                                            \
+    return interpolateTemporallyUnstructured_##voxelType(                   \
+        &grid->denseData[attributeIndex],                                   \
+        &grid->denseTemporallyUnstructuredIndices,                          \
+        &grid->denseTemporallyUnstructuredTimes,                            \
+        voxelIdx64,                                                         \
+        time);                                                              \
+  }                                                                         \
+                                                                            \
+  inline float VdbSampler_sample_dense_varying_64_unstructured_##voxelType( \
+      const VdbGrid *uniform grid,                                          \
+      uniform uint32 attributeIndex,                                        \
+      const vec3ui &offset,                                                 \
+      const float &time)                                                    \
+  {                                                                         \
+    assert(VdbSampler_isInDenseDomain(grid, offset));                       \
+    const uint64 voxelIdx64 =                                               \
+        offset.z * grid->activeSize.y * (uint64)grid->activeSize.x +        \
+        offset.y * (uint64)grid->activeSize.x + (uint64)offset.x;           \
+                                                                            \
+    return interpolateTemporallyUnstructured_##voxelType(                   \
+        &grid->denseData[attributeIndex],                                   \
+        &grid->denseTemporallyUnstructuredIndices,                          \
+        &grid->denseTemporallyUnstructuredTimes,                            \
+        voxelIdx64,                                                         \
+        time);                                                              \
+  }
+
+__vkl_template_VdbSampler_sample_dense_unstructured(uint8);
+__vkl_template_VdbSampler_sample_dense_unstructured(int16);
+__vkl_template_VdbSampler_sample_dense_unstructured(uint16);
+__vkl_template_VdbSampler_sample_dense_unstructured(half);
+__vkl_template_VdbSampler_sample_dense_unstructured(float);
+__vkl_template_VdbSampler_sample_dense_unstructured(double);
+
+#undef __vkl_template_VdbSampler_sample_dense_unstructured

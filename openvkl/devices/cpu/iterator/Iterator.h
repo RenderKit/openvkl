@@ -7,7 +7,7 @@
 #include "../common/IteratorBase.h"
 #include "../common/align.h"
 #include "../common/simd.h"
-#include "../value_selector/ValueSelector.h"
+#include "IteratorContext.h"
 #include "openvkl/openvkl.h"
 
 using namespace rkcommon;
@@ -35,14 +35,16 @@ namespace openvkl {
       Iterator(Iterator &&)                 = delete;
       Iterator &operator=(Iterator &&) = delete;
 
-      explicit Iterator(const Sampler<W> &sampler) : sampler{&sampler} {}
-
       // WORKAROUND ICC 15: This destructor must be public!
       virtual ~Iterator() = default;
 
      protected:
+      explicit Iterator(const IteratorContext<W> &context) : context{&context}
+      {
+      }
+
       // Not a Ref<>! Destructors will not run.
-      Sampler<W> const *sampler{nullptr};
+      IteratorContext<W> const *context{nullptr};
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -54,6 +56,11 @@ namespace openvkl {
     {
       using Iterator<W>::Iterator;
 
+      explicit IntervalIterator(const IntervalIteratorContext<W> &context)
+          : Iterator<W>(context)
+      {
+      }
+
       /*
        * Uniform path.
        * Implementing this can have substantial performance benefits, however,
@@ -62,7 +69,7 @@ namespace openvkl {
       virtual void initializeIntervalU(const vvec3fn<1> &origin,
                                        const vvec3fn<1> &direction,
                                        const vrange1fn<1> &tRange,
-                                       const ValueSelector<W> *valueSelector)
+                                       float time)
       {
         vintn<W> validW;
         for (int i = 0; i < W; i++)
@@ -71,9 +78,9 @@ namespace openvkl {
         vvec3fn<W> originW    = static_cast<vvec3fn<W>>(origin);
         vvec3fn<W> directionW = static_cast<vvec3fn<W>>(direction);
         vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
+        vfloatn<W> timesW(&time, 1);
 
-        initializeIntervalV(
-            validW, originW, directionW, tRangeW, valueSelector);
+        initializeIntervalV(validW, originW, directionW, tRangeW, timesW);
       }
 
       virtual void iterateIntervalU(vVKLIntervalN<1> &interval,
@@ -101,12 +108,11 @@ namespace openvkl {
       /*
        * Varying code path.
        */
-      virtual void initializeIntervalV(
-          const vintn<W> &valid,
-          const vvec3fn<W> &origin,
-          const vvec3fn<W> &direction,
-          const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) = 0;
+      virtual void initializeIntervalV(const vintn<W> &valid,
+                                       const vvec3fn<W> &origin,
+                                       const vvec3fn<W> &direction,
+                                       const vrange1fn<W> &tRange,
+                                       const vfloatn<W> &times) = 0;
 
       virtual void iterateIntervalV(const vintn<W> &valid,
                                     vVKLIntervalN<W> &interval,
@@ -152,6 +158,11 @@ namespace openvkl {
     {
       using Iterator<W>::Iterator;
 
+      explicit HitIterator(const HitIteratorContext<W> &context)
+          : Iterator<W>(context)
+      {
+      }
+
       /*
        * Uniform path.
        * Implementing this can have substantial performance benefits, however,
@@ -161,11 +172,8 @@ namespace openvkl {
       virtual void initializeHitU(const vvec3fn<1> &origin,
                                   const vvec3fn<1> &direction,
                                   const vrange1fn<1> &tRange,
-                                  float time,
-                                  const ValueSelector<W> *valueSelector)
+                                  float time)
       {
-        assert(time >= 0.f && time <= 1.f);
-
         vintn<W> validW;
         for (int i = 0; i < W; i++)
           validW[i] = i == 0 ? -1 : 0;
@@ -175,8 +183,7 @@ namespace openvkl {
         vrange1fn<W> tRangeW  = static_cast<vrange1fn<W>>(tRange);
         vfloatn<W> timesW(&time, 1);
 
-        initializeHitV(
-            validW, originW, directionW, tRangeW, timesW, valueSelector);
+        initializeHitV(validW, originW, directionW, tRangeW, timesW);
       }
 
       virtual void iterateHitU(vVKLHitN<1> &hit, vintn<1> &result)
@@ -204,8 +211,7 @@ namespace openvkl {
                                   const vvec3fn<W> &origin,
                                   const vvec3fn<W> &direction,
                                   const vrange1fn<W> &tRange,
-                                  const vfloatn<W> &times,
-                                  const ValueSelector<W> *valueSelector) = 0;
+                                  const vfloatn<W> &times) = 0;
 
       virtual void iterateHitV(const vintn<W> &valid,
                                vVKLHitN<W> &hit,
@@ -248,15 +254,24 @@ namespace openvkl {
      * consider implementing both varying and uniform code paths for maximum
      * performance.
      */
-    template <int W, template <int> class IteratorT>
+    template <int W,
+              template <int>
+              class IteratorT,
+              template <int>
+              class ContextT>
     struct IteratorFactory
     {
       virtual ~IteratorFactory() = default;
 
       /*
+       * Constructs a new context.
+       */
+      virtual ContextT<W> *newContext(const Sampler<W> &sampler) const = 0;
+
+      /*
        * Construct a new varying iterator into the provided buffer.
        */
-      virtual IteratorT<W> *constructV(const Sampler<W> &sampler,
+      virtual IteratorT<W> *constructV(const ContextT<W> &context,
                                        void *buffer) const = 0;
 
       /*
@@ -271,7 +286,7 @@ namespace openvkl {
       /*
        * Construct a new uniform iterator into the provided buffer.
        */
-      virtual IteratorT<W> *constructU(const Sampler<W> &sampler,
+      virtual IteratorT<W> *constructU(const ContextT<W> &context,
                                        void *buffer) const = 0;
 
       /*
@@ -292,16 +307,27 @@ namespace openvkl {
               template <int>
               class IteratorBaseT,
               template <int>
-              class IteratorT>
-    struct ConcreteIteratorFactory : public IteratorFactory<W, IteratorBaseT>
+              class IteratorT,
+              template <int>
+              class ContextBaseT,
+              template <int>
+              class ContextT>
+    struct ConcreteIteratorFactory
+        : public IteratorFactory<W, IteratorBaseT, ContextT>
     {
-      static_assert(std::is_base_of<IteratorBaseT<W>, IteratorT<W>>::value,
+      static_assert(std::is_base_of<IteratorBaseT<W>, IteratorT<W>>::value &&
+                        std::is_base_of<ContextBaseT<W>, ContextT<W>>::value,
                     "ConcreteIteratorFactory used with incompatible types.");
 
-      IteratorBaseT<W> *constructV(const Sampler<W> &sampler,
+      ContextT<W> *newContext(const Sampler<W> &sampler) const override final
+      {
+        return new ContextT<W>(sampler);
+      }
+
+      IteratorBaseT<W> *constructV(const ContextBaseT<W> &context,
                                    void *buffer) const override final
       {
-        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(sampler);
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(context);
       }
 
       size_t sizeV() const override final
@@ -309,10 +335,10 @@ namespace openvkl {
         return alignedSize<IteratorT<W>>();
       }
 
-      IteratorBaseT<W> *constructU(const Sampler<W> &sampler,
+      IteratorBaseT<W> *constructU(const ContextBaseT<W> &context,
                                    void *buffer) const override final
       {
-        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(sampler);
+        return new (align<IteratorT<W>>(buffer)) IteratorT<W>(context);
       }
 
       size_t sizeU() const override final

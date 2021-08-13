@@ -24,6 +24,15 @@ void interval_iteration(size_t numParticles,
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
+  const unsigned int attributeIndex = 0;
+
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
+  vklCommit(intervalContext);
+
   const vkl_box3f bbox = vklGetBoundingBox(volume);
 
   // iterate in the +z direction, from random points in (x, y) beginning outside
@@ -37,16 +46,17 @@ void interval_iteration(size_t numParticles,
 
   const vkl_vec3f direction{0.f, 0.f, 1.f};
   const vkl_range1f tRange{0.f, inf};
+  const float time = 0.f;
 
-  const size_t N = 1000;
+  const size_t N        = 1000;
   size_t totalIntervals = 0;
 
   for (size_t i = 0; i < N; i++) {
     vkl_vec3f origin{distX(eng), distY(eng), z};
 
-    std::vector<char> buffer(vklGetIntervalIteratorSize(sampler));
+    std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
     VKLIntervalIterator iterator = vklInitIntervalIterator(
-        sampler, &origin, &direction, &tRange, nullptr, buffer.data());
+        intervalContext, &origin, &direction, &tRange, time, buffer.data());
 
     VKLInterval interval;
 
@@ -60,7 +70,7 @@ void interval_iteration(size_t numParticles,
            << ", nominalDeltaT = " << interval.nominalDeltaT);
 
       vkl_range1f sampledValueRange = computeIntervalValueRange(
-          sampler, origin, direction, interval.tRange);
+          sampler, attributeIndex, origin, direction, interval.tRange);
 
       INFO("sampled value range = " << sampledValueRange.lower << ", "
                                     << sampledValueRange.upper);
@@ -70,8 +80,10 @@ void interval_iteration(size_t numParticles,
       // Uncertainty is there because it is hard to compute correct value ranges
       // for particle volumes. Compare ParticleVolume.cpp.
       constexpr float uncertainty = 0.05f;
-      REQUIRE(sampledValueRange.lower >= interval.valueRange.lower * (1-uncertainty));
-      REQUIRE(sampledValueRange.upper <= interval.valueRange.upper * (1+uncertainty));
+      REQUIRE(sampledValueRange.lower >=
+              interval.valueRange.lower * (1 - uncertainty));
+      REQUIRE(sampledValueRange.upper <=
+              interval.valueRange.upper * (1 + uncertainty));
 
       intervalCount++;
     }
@@ -82,6 +94,7 @@ void interval_iteration(size_t numParticles,
   // Not all rays hit something, but most of them should.
   REQUIRE(totalIntervals / static_cast<double>(N) > 0.9);
 
+  vklRelease(intervalContext);
   vklRelease(sampler);
 }
 

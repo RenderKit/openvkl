@@ -92,8 +92,15 @@ namespace openvkl {
       amrMethod =
           (VKLAMRMethod)this->template getParam<int>("method", VKL_AMR_CURRENT);
 
+      background = this->template getParamDataT<float>(
+          "background", 1, VKL_BACKGROUND_UNDEFINED);
+
       if (data != nullptr)  // TODO: support data updates
+      {
+        CALL_ISPC(
+            Volume_setBackground, this->ispcEquivalent, background->data());
         return;
+      }
 
       cellWidthsData  = this->template getParamDataT<float>("cellWidth");
       blockBoundsData = this->template getParamDataT<box3i>("block.bounds");
@@ -147,8 +154,7 @@ namespace openvkl {
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       spacing = gridSpacing;
 
-      maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
 
       CALL_ISPC(AMRVolume_set,
                 this->ispcEquivalent,
@@ -206,8 +212,9 @@ namespace openvkl {
     }
 
     template <int W>
-    range1f AMRVolume<W>::getValueRange() const
+    range1f AMRVolume<W>::getValueRange(unsigned int attributeIndex) const
     {
+      throwOnIllegalAttributeIndex(this, attributeIndex);
       return valueRange;
     }
 
@@ -215,12 +222,6 @@ namespace openvkl {
     VKLAMRMethod AMRVolume<W>::getAMRMethod() const
     {
       return amrMethod;
-    }
-
-    template <int W>
-    inline int AMRVolume<W>::getMaxIteratorDepth() const
-    {
-      return maxIteratorDepth;
     }
 
     static inline void errorFunction(void *userPtr,
@@ -277,7 +278,7 @@ namespace openvkl {
       RTCBuildArguments arguments      = rtcDefaultBuildArguments();
       arguments.byteSize               = sizeof(arguments);
       arguments.buildFlags             = RTC_BUILD_FLAG_NONE;
-      arguments.buildQuality           = RTC_BUILD_QUALITY_MEDIUM;
+      arguments.buildQuality           = RTC_BUILD_QUALITY_LOW;
       arguments.maxBranchingFactor     = 2;
       arguments.maxDepth               = 1024;
       arguments.sahBlockSize           = 1;
@@ -303,6 +304,8 @@ namespace openvkl {
       }
 
       addLevelToNodes(rtcRoot, 0);
+
+      bvhDepth = getMaxNodeLevel(rtcRoot);
 
       computeOverlappingNodeMetadata(rtcRoot);
     }

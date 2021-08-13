@@ -4,17 +4,14 @@
 #pragma once
 
 #include "Iterator.ih"
+#include "IteratorContext.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
-struct ValueSelector;
+struct IntervalIteratorContext;
 struct ValueRanges;
 struct Volume;
 
-/*
- * Add a pointer of this type as the first member in your interval iterator
- * state struct to make it usable with the default hit iterator.
- */
 typedef void (*uniform IterateIntervalFunc)(
     const int *uniform imask,
     void *uniform _self,
@@ -24,16 +21,23 @@ typedef void (*uniform IterateIntervalFunc)(
     uniform int *uniform _result);
 
 /*
+ * Your interval iterator should inherit from this (first member) to make it
+ * usable with the default hit iterator.
+ */
+struct DefaultHitIteratorIntervalIterator
+{
+  const IntervalIteratorContext *uniform context;
+  IterateIntervalFunc iterate;
+  uniform bool elementaryCellIterationSupported;
+};
+
+/*
  * Default iterators share this state as they represent iteration along
  * a ray.
  */
 struct DefaultIntervalIterator
 {
-  /* Enable the default hit iterator. */
-  IterateIntervalFunc iterateInterval;
-  uniform bool elementaryCellIterationSupported;
-
-  ValueSelector *uniform valueSelector;
+  uniform DefaultHitIteratorIntervalIterator super;
 
   uniform box1f valueRange;  // value range of the full volume
   float nominalIntervalLength;
@@ -44,8 +48,7 @@ struct DefaultIntervalIterator
 
 struct DefaultHitIterator
 {
-  Sampler *uniform sampler;
-  ValueSelector *uniform valueSelector;
+  const HitIteratorContext *uniform context;
 
   vec3f origin;
   vec3f direction;
@@ -56,5 +59,7 @@ struct DefaultHitIterator
 
   // Current iteration state.
   Interval currentInterval;
-};
 
+  // For the last hit: t + epsilon.
+  float lastHitOffsetT;
+};

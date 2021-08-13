@@ -29,7 +29,7 @@ namespace openvkl {
 
       unsigned int getNumAttributes() const override;
 
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       VKLFilter getFilter() const
       {
@@ -44,7 +44,7 @@ namespace openvkl {
      protected:
       void buildAccelerator();
 
-      range1f valueRange{empty};
+      std::vector<range1f> valueRanges;
 
       // parameters set in commit()
       vec3i dimensions;
@@ -56,6 +56,7 @@ namespace openvkl {
       Ref<const DataT<float>> temporallyUnstructuredTimes;
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      Ref<const DataT<float>> background;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -106,6 +107,9 @@ namespace openvkl {
       gradientFilter =
           (VKLFilter)this->template getParam<int>("gradientFilter", filter);
 
+      background = this->template getParamDataT<float>(
+          "background", attributesData.size(), VKL_BACKGROUND_UNDEFINED);
+
       // validate type of each provided attribute; size validated depending on
       // temporal configuration
       const std::vector<VKLDataType> supportedDataTypes{
@@ -153,8 +157,9 @@ namespace openvkl {
     template <int W>
     inline box3f StructuredVolume<W>::getBoundingBox() const
     {
-      ispc::box3f bb = CALL_ISPC(SharedStructuredVolume_getBoundingBox,
-                                 this->ispcEquivalent);
+      ispc::box3f bb;
+      CALL_ISPC(
+          SharedStructuredVolume_getBoundingBox, this->ispcEquivalent, bb);
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
@@ -167,9 +172,11 @@ namespace openvkl {
     }
 
     template <int W>
-    inline range1f StructuredVolume<W>::getValueRange() const
+    inline range1f StructuredVolume<W>::getValueRange(
+        unsigned int attributeIndex) const
     {
-      return valueRange;
+      throwOnIllegalAttributeIndex(this, attributeIndex);
+      return valueRanges[attributeIndex];
     }
 
     template <int W>
@@ -192,10 +199,15 @@ namespace openvkl {
         CALL_ISPC(GridAccelerator_build, accelerator, taskIndex);
       });
 
-      CALL_ISPC(GridAccelerator_computeValueRange,
-                accelerator,
-                valueRange.lower,
-                valueRange.upper);
+      valueRanges.resize(getNumAttributes());
+
+      for (unsigned int a = 0; a < getNumAttributes(); a++) {
+        CALL_ISPC(GridAccelerator_computeValueRange,
+                  accelerator,
+                  a,
+                  valueRanges[a].lower,
+                  valueRanges[a].upper);
+      }
     }
 
   }  // namespace cpu_device

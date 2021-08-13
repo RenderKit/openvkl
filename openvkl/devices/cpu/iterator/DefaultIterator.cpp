@@ -4,7 +4,6 @@
 #include "DefaultIterator.h"
 #include "../common/export_util.h"
 #include "../common/math.h"
-#include "../value_selector/ValueSelector.h"
 #include "../volume/Volume.h"
 #include "DefaultIterator_ispc.h"
 
@@ -19,19 +18,19 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &_times)
     {
-      const Volume<W> &volume = sampler->getVolume();
+      const Volume<W> &volume = context->getSampler().getVolume();
       box3f boundingBox  = volume.getBoundingBox();
-      range1f valueRange = volume.getValueRange();
+      range1f valueRange = volume.getValueRange(0);
 
       CALL_ISPC(DefaultIntervalIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr,
                 (const ispc::box3f &)boundingBox,
                 (const ispc::box1f &)valueRange);
     }

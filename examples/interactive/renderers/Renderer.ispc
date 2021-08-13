@@ -63,8 +63,8 @@ export void Renderer_renderPixel(void *uniform _self,
   if (pixel.x >= fbDims.x)
     return;
 
-  const vec2f screen = make_vec2f(pixel.x * rcp((float)fbDims.x),
-                                  pixel.y * rcp((float)fbDims.y));
+  const vec2f screen = make_vec2f(pixel.x * rcp((uniform float)fbDims.x),
+                                  pixel.y * rcp((uniform float)fbDims.y));
 
   Ray ray = Renderer_computeRay(self, screen);
   const vec3f color = self->renderPixel(self, scene, ray, pixel, frameID, fbDims.x);

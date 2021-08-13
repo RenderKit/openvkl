@@ -4,18 +4,12 @@
 #include <array>
 #include "../../external/catch.hpp"
 #include "gradient_utility.h"
+#include "multi_attrib_utility.h"
 #include "openvkl_testing.h"
 #include "sampling_utility.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
-
-template <typename VOLUME_TYPE>
-inline void num_attributes(std::shared_ptr<VOLUME_TYPE> v)
-{
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
-  REQUIRE(vklGetNumAttributes(vklVolume) == v->getNumAttributes());
-}
 
 TEST_CASE("Structured regular volume multiple attributes",
           "[volume_multi_attributes]")
@@ -58,6 +52,7 @@ TEST_CASE("Structured regular volume multiple attributes",
         gradients_on_vertices_vs_procedural_values_multi(v, step);
 
         for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
+          computed_vs_api_value_range(v, i);
           test_stream_sampling(v, i);
           test_stream_gradients(v, i);
         }

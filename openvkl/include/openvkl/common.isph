@@ -1,7 +1,9 @@
-// Copyright 2019-2020 Intel Corporation
+// Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
+
+#include "types.h"
 
 #if !defined(VKL_API)
 #define VKL_API extern "C" unmasked
@@ -11,30 +13,6 @@
 #define VKL_FORCEINLINE inline
 #endif
 
-struct ManagedObject
-{
-};
-
-typedef ManagedObject *uniform VKLObject;
-
-struct vkl_vec3f
-{
-  float x, y, z;
-};
-
-struct vkl_range1f
-{
-  float lower, upper;
-};
-
-struct vkl_box3f
-{
-  vkl_vec3f lower, upper;
-};
-
-/*
- * Force expansion on two tokens and concatenate them.
- */
-
+// Force expansion on two tokens and concatenate them.
 #define __vkl_concat(A, B) __vkl_concat_impl(A, B)
 #define __vkl_concat_impl(A, B) A##B

@@ -54,22 +54,39 @@ struct VdbGrid
                             // rotation-shear-scale | translation
   vec3i rootOrigin;         // In index scale space.
   vec3ui activeSize;        // Size of the root node, in voxels,
+  box3f domainBoundingBox;  // Domain space bounding box (different
+                            // for constant cell data vs vertex centered data
+                            // interpretation)
+  bool constantCellData;    // Data is either considered constant per cell, or
+                            // vertex-centered.
 
   vkl_uint64 numLeaves;
   vkl_uint32 numAttributes;
-  bool allLeavesCompact;  // Do we only have compact (non strided) leaf data?
+  bool allLeavesCompact;   // Do we only have compact (non strided) leaf data?
   bool allLeavesConstant;  // Are all leaf nodes temporally constant?
 
   // Per-node data.
   vkl_uint32 *attributeTypes;  // Data type for each attribute.
   const VKLFormat *leafFormat;
   const VKLTemporalFormat *leafTemporalFormat;
+
+  // Per-node data for sparse / non-dense volumes only.
   const vkl_int32 *leafStructuredTimesteps;
   Data1D *leafUnstructuredIndices;
   Data1D *leafUnstructuredTimes;
 
-  // Per-attribute data: size [numLeaves * numAttributes]
+  // Per-attribute data for sparse / non-dense volumes only: size [numLeaves *
+  // numAttributes]
   Data1D *leafData;
+
+  // Parameters for dense volumes only.
+  bool dense;
+  vec3i denseDimensions;
+  Data1D *denseData;  // Per-attribute data: size [numAttributes]
+  VKLTemporalFormat denseTemporalFormat;
+  int denseTemporallyStructuredNumTimesteps;
+  Data1D denseTemporallyUnstructuredIndices;
+  Data1D denseTemporallyUnstructuredTimes;
 
   // Level data.
   VdbLevel levels[VKL_VDB_NUM_LEVELS - 1];

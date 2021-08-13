@@ -9,10 +9,15 @@
 
 varying float AMR_current(const Sampler *uniform self,
                           const varying vec3f &P,
+                          const uniform uint32 _attributeIndex,
                           const varying float &_time)
 {
   const AMRVolume *uniform volume = (const AMRVolume *uniform)self->volume;
   const AMR *uniform amr          = &volume->amr;
+
+  if (!box_contains(volume->boundingBox, P)) {
+    return volume->super.super.background[0];
+  }
 
   vec3f lP;  // local amr space
   AMRVolume_transformObjectToLocal(volume, P, lP);

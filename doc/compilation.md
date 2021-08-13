@@ -1,8 +1,11 @@
 Packages
 ========
 
-Precompiled Open VKL packages for Linux, macOS, and Windows are available via
+Precompiled Open VKL packages for Linux, macOS, and Windows on x86 platforms
+are available via
 [Open VKL GitHub releases](https://github.com/openvkl/openvkl/releases).
+Open VKL can be compiled for ARM platforms following the compilation
+instructions below.
 
 Building Open VKL from source
 =============================
@@ -27,7 +30,7 @@ you can build Open VKL you need the following prerequisites:
     have some version of OpenGL.
 
 -   Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.14.1 or later.
+    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.16.0 or later.
     Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 
@@ -68,6 +71,9 @@ CMake options to note (all have sensible defaults):
 - `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
 - `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all libraries in
   separate or the same directory.
+- `BUILD_TBB_FROM_SOURCE` specifies whether TBB should be built from
+   source or the releases on Gitub should be used. This must be ON
+   when compiling for ARM.
 
 For the full set of options, run `ccmake [<VKL_ROOT>/superbuild]`.
 

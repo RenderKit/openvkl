@@ -43,7 +43,7 @@ export void EXPORT_UNIQUE(Sampler_sample_N_export,
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];
-    samples[i]       = self->computeSample_varying(self, oc, time);
+    samples[i]       = self->computeSample_varying(self, oc, 0, time);
   }
 }
 

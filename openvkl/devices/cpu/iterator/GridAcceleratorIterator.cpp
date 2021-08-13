@@ -4,7 +4,6 @@
 #include "GridAcceleratorIterator.h"
 #include "../common/export_util.h"
 #include "../common/math.h"
-#include "../value_selector/ValueSelector.h"
 #include "../volume/StructuredRegularVolume.h"
 #include "GridAcceleratorIterator_ispc.h"
 
@@ -21,19 +20,16 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &times)
     {
-      vfloatn<W> times(nullptr, 0);
-
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&times,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&times);
     }
 
     template <int W>
@@ -52,18 +48,15 @@ namespace openvkl {
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
-        const ValueSelector<W> *valueSelector)
+        float time)
     {
-      float time = 0;
-
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&time,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&time);
     }
 
     template <int W>
@@ -89,20 +82,16 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const vfloatn<W> &times,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &times)
     {
-      assertValidTimes(times);
-
       CALL_ISPC(GridAcceleratorIteratorV_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&times,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&times);
     }
 
     template <int W>
@@ -125,19 +114,15 @@ namespace openvkl {
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
-        float time,
-        const ValueSelector<W> *valueSelector)
+        float time)
     {
-      assert(time >= 0.f && time <= 1.f);
-
       CALL_ISPC(GridAcceleratorIteratorU_Initialize,
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                (void *)&time,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr);
+                (void *)&time);
     }
 
     template <int W>

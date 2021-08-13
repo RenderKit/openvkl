@@ -61,6 +61,7 @@ __vkl_template_VdbSampler_computeValueRange_denseZYX_constant(float)
       for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {       \
         for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {     \
           const uniform uint64 voxelIdx =                                \
+              numTimesteps *                                             \
               __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);   \
           for (uniform unsigned int t = 0; t < numTimesteps; ++t) {      \
             assert((voxelIdx + t) < ((uniform uint64)1) << 32);          \
@@ -99,7 +100,7 @@ __vkl_template_VdbSampler_computeValueRange_denseZYX_structured(float)
               __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);     \
           assert(voxelIdx < ((uniform uint64)1) << 32);                    \
           const uniform uint32 v32 = ((uniform uint32)voxelIdx);           \
-          box_extend(valueRange,                                           \
+          valueRange = box_extend(valueRange,                              \
                      computeValueRangeTemporallyUnstructured_##voxelType(  \
                          grid->leafData + leafDataIndex,                   \
                          grid->leafUnstructuredIndices + leafIndex,        \

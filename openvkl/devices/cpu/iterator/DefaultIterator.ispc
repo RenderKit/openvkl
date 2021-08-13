@@ -3,7 +3,6 @@
 
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
-#include "../value_selector/ValueSelector.ih"
 #include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 
@@ -29,10 +28,10 @@ void DefaultIntervalIterator_iterateIntervalInternal(
 export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
                           void *uniform _tRange,
-                          void *uniform _valueSelector,
                           const uniform box3f &boundingBox,
                           const uniform box1f &valueRange)
 {
@@ -43,13 +42,12 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_Initialize,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
-  /* Enable the default hit iterator. */
-  self->iterateInterval = DefaultIntervalIterator_iterateIntervalInternal;
-  self->elementaryCellIterationSupported = false;
+  self->super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.iterate = DefaultIntervalIterator_iterateIntervalInternal;
+  self->super.elementaryCellIterationSupported = false;
 
   const vec3f origin    = *((varying vec3f * uniform) _origin);
   const vec3f direction = *((varying vec3f * uniform) _direction);
-  self->valueSelector   = (uniform ValueSelector * uniform) _valueSelector;
   self->valueRange      = valueRange;
 
   box1f tRange = *((varying box1f * uniform) _tRange);
@@ -125,15 +123,13 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
   varying DefaultIntervalIterator *uniform self =
       (varying DefaultIntervalIterator * uniform) _self;
 
-  uniform ValueRanges valueRanges;
-  if (self->valueSelector) {
-    valueRanges = self->valueSelector->ranges;
-  } else {
-    valueRanges = make_ValueRanges_full();
-  }
-
   DefaultIntervalIterator_iterateIntervalInternal(
-      imask, _self, _interval, valueRanges, false, _result);
+      imask,
+      _self,
+      _interval,
+      self->super.context->valueRanges,
+      false,
+      _result);
 }
 
 // -----------------------------------------------------------------------------
@@ -142,11 +138,10 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
                           const int *uniform imask,
                           void *uniform _self,
                           void *uniform _intervalIterator,
-                          void *uniform _sampler,
+                          void *uniform _context,
                           void *uniform _origin,
                           void *uniform _direction,
-                          void *uniform _time,
-                          void *uniform _valueSelector)
+                          void *uniform _time)
 {
   if (!imask[programIndex]) {
     return;
@@ -155,22 +150,16 @@ export void EXPORT_UNIQUE(DefaultHitIterator_Initialize,
   varying DefaultHitIterator *uniform self =
       (varying DefaultHitIterator * uniform) _self;
 
-  self->sampler       = (Sampler * uniform) _sampler;
-  self->valueSelector = (uniform ValueSelector * uniform) _valueSelector;
-  self->origin        = *((varying vec3f * uniform) _origin);
-  self->direction     = *((varying vec3f * uniform) _direction);
-  self->time          = *((varying float *uniform)_time);
+  self->context               = (const HitIteratorContext *uniform)_context;
+  self->origin                = *((varying vec3f * uniform) _origin);
+  self->direction             = *((varying vec3f * uniform) _direction);
+  self->time                  = *((varying float *uniform)_time);
   self->intervalIteratorState = _intervalIterator;
+  self->lastHitOffsetT        = neg_inf;
 
   // Reset to invalid.
   resetInterval(self->currentInterval);
 }
-
-struct IntervalIteratorT
-{
-  IterateIntervalFunc iterate;
-  uniform bool elementaryCellIterationSupported;
-};
 
 export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
                           const int *uniform imask,
@@ -188,25 +177,23 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
       (varying DefaultHitIterator * uniform) _self;
 
   // The selector prunes everything - don't iterate at all.
-  if (!self->valueSelector || self->valueSelector->numValues == 0)
+  if (self->context->numValues == 0)
     return;
 
   if (self->currentInterval.tRange.lower == inf)  // Ray has finished already.
     return;
 
-  // Note: We simply assume the presence of a functor as the first element
-  //       in the interval iterator state. This will wreak havoc if that
-  //       functor is not present.
-  const IntervalIteratorT *uniform intervalIterator =
-      (IntervalIteratorT * uniform) self->intervalIteratorState;
+  // Note: For an interval iterator to be compatible with the default hit
+  // iterator, it must inherit from DefaultHitIteratorIntervalIterator.
+  const DefaultHitIteratorIntervalIterator *uniform intervalIterator =
+      (DefaultHitIteratorIntervalIterator * uniform)
+          self->intervalIteratorState;
 
   // Generate intervals using the interval iterator until we either run out
   // or find an isosurface hit.
 
   // We enable elementary cell iteration for more robust bracketing intervals,
-  // if the underlying interval iterator supports it. The bisection method can
-  // then use this knowledge (i.e. if we have an elementary cell tRange) to
-  // further improve robustness of returned hits.
+  // if the underlying interval iterator supports it.
   const uniform bool elementaryCellIteration =
       intervalIterator->elementaryCellIterationSupported;
 
@@ -216,9 +203,22 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     intervalIterator->iterate((const int *uniform) & needInterval,
                               self->intervalIteratorState,
                               &self->currentInterval,
-                              self->valueSelector->valuesRanges,
+                              self->context->super.valueRanges,
                               elementaryCellIteration,
                               (int *uniform) & haveInterval);
+
+    // We've found a new interval, but it's possible the last hit may have moved
+    // us past the beginning of this new interval. This can occur with hits on
+    // interval boundaries, for example. We also need to check if this nudges us
+    // out of the current interval.
+    if (needInterval && haveInterval) {
+      self->currentInterval.tRange.lower =
+          max(self->currentInterval.tRange.lower, self->lastHitOffsetT);
+
+      if (isempty1f(self->currentInterval.tRange)) {
+        continue;
+      }
+    }
 
     if (!haveInterval) {
       // We use this to indicate that this lane has run out of intervals,
@@ -230,21 +230,22 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
-        intersectSurfacesBisection(self->sampler,
+        intersectSurfacesBisection(self->context->super.sampler,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,
+                                   self->context->super.attributeIndex,
                                    self->time,
                                    self->currentInterval.nominalDeltaT,
-                                   self->valueSelector->numValues,
-                                   self->valueSelector->values,
-                                   elementaryCellIteration,
+                                   self->context->numValues,
+                                   self->context->values,
                                    *hit);
 
     *result |= foundHit;
 
     if (foundHit) {
       self->currentInterval.tRange.lower = hit->t + hit->epsilon;
+      self->lastHitOffsetT               = hit->t + hit->epsilon;
       return;
     }
 

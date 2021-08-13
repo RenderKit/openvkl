@@ -1220,13 +1220,14 @@ template_intersectRayCell(varying);
 inline varying float VKLUnstructuredVolume_sample(
     const Sampler *uniform sampler,
     const varying vec3f &worldCoordinates,
+    const uniform uint32 _attributeIndex,
     const varying float &_time)
 {
   // Cast to the actual Volume subtype.
   const VKLUnstructuredVolume *uniform self =
       (const VKLUnstructuredVolume *uniform)sampler->volume;
 
-  float results = floatbits(0xffffffff); /* NaN */
+  float results = self->super.super.background[0];
 
   traverseEmbree(self->super.bvhRoot,
                  self,
@@ -1254,21 +1255,24 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   // boundaries (as determined by NaN sample values outside any volume cell)
   vec3f gradient;
 
-  float sample = VKLUnstructuredVolume_sample(sampler, objectCoordinates, time);
+  float sample = VKLUnstructuredVolume_sample(sampler, objectCoordinates, 0, time);
 
   gradient.x = VKLUnstructuredVolume_sample(
                    sampler,
                    objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
+                   0,
                    time) -
                sample;
   gradient.y = VKLUnstructuredVolume_sample(
                    sampler,
                    objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
+                   0,
                    time) -
                sample;
   gradient.z = VKLUnstructuredVolume_sample(
                    sampler,
                    objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
+                   0,
                    time) -
                sample;
 
@@ -1278,6 +1282,7 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
     gradient.x = VKLUnstructuredVolume_sample(
                      sampler,
                      objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
+                     0,
                      time) -
                  sample;
   }
@@ -1288,6 +1293,7 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
     gradient.y = VKLUnstructuredVolume_sample(
                      sampler,
                      objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
+                     0,
                      time) -
                  sample;
   }
@@ -1298,6 +1304,7 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
     gradient.z = VKLUnstructuredVolume_sample(
                      sampler,
                      objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
+                     0,
                      time) -
                  sample;
   }
@@ -1318,7 +1325,7 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_sample_export,
     varying float time             = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLUnstructuredVolume_sample(sampler, *objectCoordinates, time);
+    *samples = VKLUnstructuredVolume_sample(sampler, *objectCoordinates, 0, time);
   }
 }
 
@@ -1418,16 +1425,4 @@ export void EXPORT_UNIQUE(VKLUnstructuredSampler_Destructor,
   UnstructuredSamplerBase *uniform sampler =
       (UnstructuredSamplerBase * uniform) _sampler;
   delete sampler;
-}
-
-export void EXPORT_UNIQUE(VKLUnstructuredSampler_set,
-                          void *uniform _self,
-                          const uniform int maxIteratorDepth,
-                          const uniform bool elementaryCellIteration)
-{
-  UnstructuredSamplerBase *uniform self =
-      (UnstructuredSamplerBase * uniform) _self;
-
-  self->maxIteratorDepth        = maxIteratorDepth;
-  self->elementaryCellIteration = elementaryCellIteration;
 }

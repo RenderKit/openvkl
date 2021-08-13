@@ -241,11 +241,6 @@ passed as a string. Below are all variants of `vklSet...`.
     void vklSetString(VKLObject object, const char *name, const char *s);
     void vklSetVoidPtr(VKLObject object, const char *name, void *v);
 
-The exception to this rule is the `VKLValueSelector` object (described in the
-iterators section below), which has object-specific set methods.  The reason for
-this is to align the C99/C++ API with the ISPC API, which can't use a parameter
-method due to language limitations.
-
 After parameters have been set, `vklCommit` must be called on the object to make
 them take effect.
 
@@ -298,8 +293,6 @@ section for specifics. Valid constants are listed in the table below.
   VKL_DATA                   data reference
 
   VKL_OBJECT                 generic object reference
-
-  VKL_VALUE_SELECTOR         value selector object reference
 
   VKL_VOLUME                 volume object reference
 
@@ -427,9 +420,9 @@ The number of attributes in a volume can also be queried:
 
     unsigned int vklGetNumAttributes(VKLVolume volume);
 
-Finally, the value range of the volume (first attribute only) can be queried:
+Finally, the value range of the volume for a given attribute can be queried:
 
-    vkl_range1f vklGetValueRange(VKLVolume volume);
+    vkl_range1f vklGetValueRange(VKLVolume volume, unsigned int attributeIndex);
 
 ### Structured Volumes
 
@@ -500,6 +493,10 @@ table below.
                                                                             `data`.
                                                                             Only valid if `temporalFormat` is
                                                                             `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
+
+  float[]   background                       `VKL_BACKGROUND_UNDEFINED`     For each attribute, the value that is
+                                                                            returned when sampling an undefined
+                                                                            region outside the volume domain.
   --------- -------------------------------- -----------------------------  ---------------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes.
 
@@ -524,6 +521,16 @@ parameters.
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for structured regular (`"structuredRegular"`) volumes and their sampler objects.
 
+
+##### Reconstruction filters
+
+Structured regular volumes support the filter types `VKL_FILTER_NEAREST`,
+`VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC` for both `filter` and
+`gradientFilter`.
+
+Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
+always $(0, 0, 0)$.
+
 #### Structured Spherical Volumes
 
 Structured spherical volumes are also supported, which are created by passing a
@@ -535,37 +542,41 @@ structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
 
-  --------- ----------- -------------  -----------------------------------
-  Type      Name            Default    Description
-  --------- ----------- -------------  -----------------------------------
-  vec3i     dimensions                 number of voxels in each
-                                       dimension $(r, \theta, \phi)$
+  --------- ----------------------- -------------------------- -----------------------------------
+  Type      Name                        Default                Description
+  --------- ----------------------- -------------------------- -----------------------------------
+  vec3i     dimensions                                         number of voxels in each
+                                                               dimension $(r, \theta, \phi)$
 
-  VKLData   data                       VKLData object(s) of voxel data,
-  VKLData[]                            supported types are:
+  VKLData   data                                               VKLData object(s) of voxel data,
+  VKLData[]                                                    supported types are:
 
-                                       `VKL_UCHAR`
+                                                               `VKL_UCHAR`
 
-                                       `VKL_SHORT`
+                                                               `VKL_SHORT`
 
-                                       `VKL_USHORT`
+                                                               `VKL_USHORT`
 
-                                       `VKL_HALF`
+                                                               `VKL_HALF`
 
-                                       `VKL_FLOAT`
+                                                               `VKL_FLOAT`
 
-                                       `VKL_DOUBLE`
+                                                               `VKL_DOUBLE`
 
-                                       Multiple attributes are supported
-                                       through passing an array of VKLData
-                                       objects.
+                                                               Multiple attributes are supported
+                                                               through passing an array of VKLData
+                                                               objects.
 
-  vec3f     gridOrigin  $(0, 0, 0)$    origin of the grid in units of
-                                       $(r, \theta, \phi)$; angles in degrees
+  vec3f     gridOrigin              $(0, 0, 0)$                origin of the grid in units of
+                                                               $(r, \theta, \phi)$; angles in degrees
 
-  vec3f     gridSpacing $(1, 1, 1)$    size of the grid cells in units of
-                                       $(r, \theta, \phi)$; angles in degrees
-  --------- ----------- -------------  -----------------------------------
+  vec3f     gridSpacing             $(1, 1, 1)$                size of the grid cells in units of
+                                                               $(r, \theta, \phi)$; angles in degrees
+
+  float[]   background              `VKL_BACKGROUND_UNDEFINED` For each attribute, the value that is
+                                                               returned when sampling an undefined
+                                                               region outside the volume domain.
+  --------- ----------------------- -------------------------- -----------------------------------
   : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,
@@ -612,31 +623,30 @@ which they reside, and the scalar data contained within each block.
 
 Note that cell widths are defined _per refinement level_, not per block.
 
-A binary BVH is used internally to accelerate interval iteration. Intervals are
-found by intersecting BVH nodes up to a maximum level of the tree, configurable
-by the `maxIteratorDepth` parameter.
-
 AMR volumes are created by passing the type string `"amr"` to `vklNewVolume`,
 and have the following parameters:
 
-  -------------- --------------- -----------------  -----------------------------------
-  Type           Name                      Default  Description
-  -------------- --------------- -----------------  -----------------------------------
-  float[]        cellWidth                          [data] array of each level's cell width
+  -------------- --------------------- -------------------------- -----------------------------------
+  Type           Name                  Default                    Description
+  -------------- --------------------- -------------------------- -----------------------------------
+  float[]        cellWidth                                        [data] array of each level's cell width
 
-  box3i[]        block.bounds                       [data] array of each block's bounds (in voxels)
+  box3i[]        block.bounds                                     [data] array of each block's bounds (in voxels)
 
-  int[]          block.level                        [data] array of each block's refinement level
+  int[]          block.level                                      [data] array of each block's refinement level
 
-  VKLData[]      block.data                         [data] array of each block's VKLData object
-                                                    containing the actual scalar voxel data.
-                                                    Currently only `VKL_FLOAT` data is supported.
+  VKLData[]      block.data                                       [data] array of each block's VKLData object
+                                                                  containing the actual scalar voxel data.
+                                                                  Currently only `VKL_FLOAT` data is supported.
 
-  vec3f          gridOrigin            $(0, 0, 0)$  origin of the grid in object space
+  vec3f          gridOrigin            $(0, 0, 0)$                origin of the grid in object space
 
-  vec3f          gridSpacing           $(1, 1, 1)$  size of the grid cells in object
-                                                    space
-  -------------- --------------- -----------------  -----------------------------------
+  vec3f          gridSpacing           $(1, 1, 1)$                size of the grid cells in object
+                                                                  space
+
+  float          background            `VKL_BACKGROUND_UNDEFINED` The value that is returned when sampling an
+                                                                  undefined region outside the volume domain.
+  -------------- --------------------- -------------------------- -----------------------------------
   : Configuration parameters for AMR (`"amr"`) volumes.
 
 Note that the `gridOrigin` and `gridSpacing` parameters act just like the
@@ -658,9 +668,6 @@ parameters.
                                                        `VKL_AMR_FINEST`
 
                                                        `VKL_AMR_OCTANT`
-
-  int            maxIteratorDepth                   6  Do not descend further than to this
-                                                       BVH depth during interval iteration.
   -------------- ------------------ -----------------  -------------------------------------
   : Configuration parameters for AMR (`"AMR"`) volumes and their sampler objects.
 
@@ -728,82 +735,59 @@ id_n, m, id_1, ..., id_m$. This alternative `index` array layout can be enabled
 through the `indexPrefixed` flag (in which case, the `cell.type` parameter
 should be omitted).
 
-A binary bounding volume hierarchy (BVH) is used internally to accelerate
-interval iteration. Intervals are by default found by intersecting BVH nodes up
-to a maximum level of the tree, configurable by the `maxIteratorDepth`
-parameter. Larger values of `maxIteratorDepth` lead to smaller individual
-intervals (up to leaf node intersections), yielding potentially more efficient
-space-skipping behavior and tighter bounds on returned interval metadata. The
-application may instead choose to iterate through intervals based on ray
-intersections with individual cells by setting the `elementaryCellIteration`
-parameter. Returned intervals will then span exact cell boundaries, rather than
-bounding boxes of BVH nodes. This approach is generally less performant than the
-default interval iteration mode, however.
-
 Gradients are computed using finite differences.
 
 Unstructured volumes are created by passing the type string `"unstructured"` to
 `vklNewVolume`, and have the following parameters:
 
-  -------------------  ------------------  --------  ---------------------------------------
-  Type                 Name                Default   Description
-  -------------------  ------------------  --------  ---------------------------------------
-  vec3f[]              vertex.position               [data] array of vertex positions
+  -------------------  --------------------  -------------------------  ---------------------------------------
+  Type                 Name                  Default                    Description
+  -------------------  --------------------  -------------------------  ---------------------------------------
+  vec3f[]              vertex.position                                  [data] array of vertex positions
 
-  float[]              vertex.data                   [data] array of vertex data values to
-                                                     be sampled
+  float[]              vertex.data                                      [data] array of vertex data values to
+                                                                        be sampled
 
-  uint32[] / uint64[]  index                         [data] array of indices (into the
-                                                     vertex array(s)) that form cells
+  uint32[] / uint64[]  index                                            [data] array of indices (into the
+                                                                        vertex array(s)) that form cells
 
-  bool                 indexPrefixed          false  indicates that the `index` array is
-                                                     provided in a VTK-compatible format,
-                                                     where the indices of each cell are
-                                                     prefixed with the number of vertices
+  bool                 indexPrefixed         false                      indicates that the `index` array is
+                                                                        provided in a VTK-compatible format,
+                                                                        where the indices of each cell are
+                                                                        prefixed with the number of vertices
 
-  uint32[] / uint64[]  cell.index                    [data] array of locations (into the
-                                                     index array), specifying the first index
-                                                     of each cell
+  uint32[] / uint64[]  cell.index                                       [data] array of locations (into the
+                                                                        index array), specifying the first index
+                                                                        of each cell
 
-  float[]              cell.data                     [data] array of cell data values to be
-                                                     sampled
+  float[]              cell.data                                        [data] array of cell data values to be
+                                                                        sampled
 
-  uint8[]              cell.type                     [data] array of cell types
-                                                     (VTK compatible). Supported types are:
+  uint8[]              cell.type                                        [data] array of cell types
+                                                                        (VTK compatible). Supported types are:
 
-                                                     `VKL_TETRAHEDRON`
+                                                                        `VKL_TETRAHEDRON`
 
-                                                     `VKL_HEXAHEDRON`
+                                                                        `VKL_HEXAHEDRON`
 
-                                                     `VKL_WEDGE`
+                                                                        `VKL_WEDGE`
 
-                                                     `VKL_PYRAMID`
+                                                                        `VKL_PYRAMID`
 
-  bool                 hexIterative           false  hexahedron
-                                                     interpolation method, defaults to fast
-                                                     non-iterative version which could have
-                                                     rendering inaccuracies may appear
-                                                     if hex is not parallelepiped
+  bool                 hexIterative          false                      hexahedron
+                                                                        interpolation method, defaults to fast
+                                                                        non-iterative version which could have
+                                                                        rendering inaccuracies may appear
+                                                                        if hex is not parallelepiped
 
-  bool                 precomputedNormals     false  whether to accelerate by precomputing,
-                                                     at a cost of 12 bytes/face
-  -------------------  ------------------  --------  ---------------------------------------
+  bool                 precomputedNormals    false                      whether to accelerate by precomputing,
+                                                                        at a cost of 12 bytes/face
+
+  float                background            `VKL_BACKGROUND_UNDEFINED` The value that is returned when
+                                                                        sampling an undefined region outside
+                                                                        the volume domain.
+  -------------------  --------------------  -------------------------  ---------------------------------------
   : Configuration parameters for unstructured (`"unstructured"`) volumes.
-
-The following additional parameters can be set both on `unstructured` volumes
-and their sampler objects (sampler object parameters default to volume
-parameters).
-
-  -------------------  -------------------------  --------  ---------------------------------------
-  Type                 Name                       Default   Description
-  -------------------  -------------------------  --------  ---------------------------------------
-  int                  maxIteratorDepth                  6  Do not descend further than to this BVH
-                                                            depth during interval iteration.
-
-  bool                 elementaryCellIteration       false  Return intervals spanning individual
-                                                            cell intersections.
-  -------------------  -------------------------  --------  ---------------------------------------
-  : Configuration parameters for unstructured (`"unstructured"`) volumes and their sampler objects.
 
 ### VDB Volumes
 
@@ -910,6 +894,10 @@ following parameters:
                                                                                        must be of type `VKL_FLOAT`.
                                                                                        Only valid if `temporalFormat` is
                                                                                        `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
+
+  float[]       background                             `VKL_BACKGROUND_UNDEFINED`      For each attribute, the value that is
+                                                                                       returned when sampling an undefined
+                                                                                       region outside the volume domain.
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -935,10 +923,6 @@ objects (sampler object parameters default to volume parameters).
 
   int           maxSamplingDepth  `VKL_VDB_NUM_LEVELS`-1 Do not descend further than to this
                                                          depth during sampling.
-
-  int           maxIteratorDepth  `VKL_VDB_NUM_LEVELS`-2 Do not descend further than to this
-                                                         depth during iteration.
-
   ------------  ----------------  ---------------------- ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes and their sampler objects.
 
@@ -1053,10 +1037,6 @@ The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
 method in [1].
 
-Similar to unstructured volumes, a binary BVH is used internally to accelerate
-interval iteration. Intervals are found by intersecting BVH nodes up to a
-maximum level of the tree, configurable by the `maxIteratorDepth` parameter.
-
 Particle volumes are created by passing the type string `"particle"` to
 `vklNewVolume`, and have the following parameters:
 
@@ -1102,17 +1082,6 @@ Particle volumes are created by passing the type string `"particle"` to
                                                   less efficient.
   --------  --------------------------  --------  ---------------------------------------
   : Configuration parameters for particle (`"particle"`) volumes.
-
-The following additional parameters can be set both on `particle` volumes and
-their sampler objects (sampler object parameters default to volume parameters).
-
-  --------  --------------------------  --------  ---------------------------------------
-  Type      Name                        Default   Description
-  --------  --------------------------  --------  ---------------------------------------
-  int       maxIteratorDepth            6         Do not descend further than to this BVH
-                                                  depth during interval iteration.
-  --------  --------------------------  --------  ---------------------------------------
-  : Configuration parameters for particle (`"particle"`) volumes and their sampler objects.
 
 1. Knoll, A., Wald, I., Navratil, P., Bowen, A., Reda, K., Papka, M.E. and
    Gaither, K. (2014), RBF Volume Ray Casting on Multicore and Manycore CPUs.
@@ -1185,10 +1154,11 @@ Use `vklCommit()` to commit parameters to the sampler object.
 Sampling
 --------
 
-The scalar API takes a volume and coordinate, and returns a float value. NaN is
-returned for probe points outside the volume. The attribute index selects the
-scalar attribute of interest; not all volumes support multiple attributes. The
-time value, which must be between 0 and 1, specifies the sampling time. For
+The scalar API takes a volume and coordinate, and returns a float value. The
+volume's background value (by default `VKL_BACKGROUND_UNDEFINED`) is returned
+for probe points outside the volume. The attribute index selects the scalar
+attribute of interest; not all volumes support multiple attributes. The time
+value, which must be between 0 and 1, specifies the sampling time. For
 temporally constant volumes, this value has no effect.
 
     float vklComputeSample(VKLSampler sampler,
@@ -1375,54 +1345,91 @@ Iterators
 
 Open VKL has APIs to search for particular volume values along a ray.  Queries
 can be for ranges of volume values (`vklIterateInterval`) or for particular
-values (`vklIterateHit`).  Only the first volume attribute is currently
-considered in the iterator APIs.
+values (`vklIterateHit`).
 
-The desired values are set in a `VKLValueSelector`, which needs to be created,
-filled in with values, and then committed.
+Interval iterators require a context object to define the sampler and parameters
+related to iteration behavior. An interval iterator context is created via
 
-    VKLValueSelector vklNewValueSelector(VKLVolume volume);
+    VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 
-    void vklValueSelectorSetRanges(VKLValueSelector valueSelector,
-                                   size_t numRanges,
-                                   const vkl_range1f *ranges);
+The parameters understood by interval iterator contexts are defined in the table
+below.
 
-    void vklValueSelectorSetValues(VKLValueSelector valueSelector,
-                                   size_t numValues,
-                                   const float *values);
+  -------------- ------------------------- ------------ -------------------------------------
+  Type           Name                      Default      Description
+  -------------- ------------------------- ------------ -------------------------------------
+  int            attributeIndex            0            Defines the volume attribute of
+                                                        interest.
+
+  vkl_range1f[]  valueRanges               [-inf, inf]  Defines the value ranges of interest.
+                                                        Intervals not containing any of these
+                                                        values ranges may be skipped during
+                                                        iteration.
+
+  float          intervalResolutionHint    0.5          A value in the range [0, 1] affecting
+                                                        the resolution (size) of returned
+                                                        intervals. A value of 0 yields the
+                                                        lowest resolution (largest) intervals
+                                                        while 1 gives the highest resolution
+                                                        (smallest) intervals. This value is
+                                                        only a hint; it may not impact
+                                                        behavior for all volume types.
+  -------------- ------------------------- ------------ -------------------------------------
+  : Configuration parameters for interval iterator contexts.
+
+
+Most volume types support the `intervalResolutionHint` parameter that can impact
+the size of intervals returned duration iteration. These include `amr`,
+`particle`, `structuredRegular`, `unstructured`, and `vdb` volumes. In all cases
+a value of 1.0 yields the highest resolution (smallest) intervals possible,
+while a value of 0.0 gives the lowest resolution (largest) intervals. In
+general, smaller intervals will have tighter bounds on value ranges, and more
+efficient space skipping behavior than larger intervals, which can be beneficial
+for some rendering methods.
+
+For `structuredRegular`, `unstructured`, and `vdb` volumes, a value of 1.0 will
+enable elementary cell iteration, such that each interval spans an individual
+voxel / cell intersection. Note that interval iteration can be significantly
+slower in this case.
+
+As with other objects, the interval iterator context must be committed before
+being used.
 
 To query an interval, a `VKLIntervalIterator` of scalar or vector width must be
-initialized with `vklInitIntervalIterator`.
+initialized with `vklInitIntervalIterator`. Time value(s) may be provided to
+specify the sampling time. These values must be between 0 and 1; for the vector
+versions, a `NULL` value indicates all times are zero. For temporally constant
+volumes, the time values have no effect.
 
-    VKLIntervalIterator vklInitIntervalIterator(VKLSampler sampler,
+    VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
                                                 const vkl_vec3f *origin,
                                                 const vkl_vec3f *direction,
                                                 const vkl_range1f *tRange,
-                                                VKLValueSelector valueSelector,
+                                                float time,
                                                 void *buffer);
 
     VKLIntervalIterator4 vklInitIntervalIterator4(const int *valid,
-                                                  VKLSampler sampler,
+                                                  VKLIntervalIteratorContext context,
                                                   const vkl_vvec3f4 *origin,
                                                   const vkl_vvec3f4 *direction,
                                                   const vkl_vrange1f4 *tRange,
-                                                  VKLValueSelector valueSelector,
+                                                  const float *times,
                                                   void *buffer);
 
     VKLIntervalIterator8 vklInitIntervalIterator8(const int *valid,
-                                                  VKLSampler sampler,
+                                                  VKLIntervalIteratorContext context,
                                                   const vkl_vvec3f8 *origin,
                                                   const vkl_vvec3f8 *direction,
                                                   const vkl_vrange1f8 *tRange,
-                                                  VKLValueSelector valueSelector,
+                                                  const float *times,
                                                   void *buffer);
 
     VKLIntervalIterator16 vklInitIntervalIterator16(const int *valid,
-                                                    VKLSampler sampler,
+                                                    VKLIntervalIteratorContext context,
                                                     const vkl_vvec3f16 *origin,
                                                     const vkl_vvec3f16 *direction,
                                                     const vkl_vrange1f16 *tRange,
-                                                    VKLValueSelector valueSelector,
+                                                    const float *times,
                                                     void *buffer);
 
 Open VKL places the iterator struct into a user-provided buffer, and the
@@ -1432,22 +1439,22 @@ Copying iterator buffers is currently not supported.
 
 The required size, in bytes, of the buffer can be queried with
 
-    size_t vklGetIntervalIteratorSize(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
 
-    size_t vklGetIntervalIteratorSize4(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
 
-    size_t vklGetIntervalIteratorSize8(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
 
-    size_t vklGetIntervalIteratorSize16(VKLSampler sampler);
+    size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
 
 The values these functions return may change depending on the parameters set
 on `sampler`.
 
 Open VKL also provides a conservative maximum size over all volume types as a
-preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). This is particularly
-useful for stack-based allocation in ISPC. Open VKL will attempt to
-detect the native vector width using `TARGET_WIDTH`, which is defined in recent
-versions of ISPC.
+preprocessor definition (`VKL_MAX_INTERVAL_ITERATOR_SIZE`). For ISPC use cases,
+Open VKL will attempt to detect the native vector width using `TARGET_WIDTH`,
+which is defined in recent versions of ISPC, to provide a less conservative
+size.
 
 Intervals can then be processed by calling `vklIterateInterval` as long as the
 returned lane masks indicates that the iterator is still within the volume:
@@ -1505,57 +1512,75 @@ currently no way of requesting a particular splitting.
     } VKLInterval16;
 
 Querying for particular values is done using a `VKLHitIterator` in much the same
-fashion.  This API could be used, for example, to find isosurfaces. In contrast
-to interval iterators, time value(s) may be provided to specify the sampling
-time. These values must be between 0 and 1; for the vector versions, a `NULL`
-value indicates all times are zero. For temporally constant volumes, the time
-values have no effect. Again, a user allocated buffer must be provided, and a
-`VKLHitIterator` of the desired width must be initialized:
+fashion.  This API could be used, for example, to find isosurfaces. As with
+interval iterators, time value(s) may be provided to specify the sampling time.
+These values must be between 0 and 1; for the vector versions, a `NULL` value
+indicates all times are zero. For temporally constant volumes, the time values
+have no effect.
 
-    VKLHitIterator vklInitHitIterator(VKLSampler sampler,
+Hit iterators similarly require a context object to define the sampler and other
+iteration parameters. A hit iterator context is created via
+
+    VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler);
+
+The parameters understood by hit iterator contexts are defined in the table
+below.
+
+  -------------- ---------------- ------------ -------------------------------------
+  Type           Name             Default      Description
+  -------------- ---------------- ------------ -------------------------------------
+  int            attributeIndex   0            Defines the volume attribute of
+                                               interest.
+
+  float[]        values                        Defines the value(s) of interest.
+  -------------- ---------------- ------------ -------------------------------------
+  : Configuration parameters for hit iterator contexts.
+
+The hit iterator context must be committed before being used.
+
+Again, a user allocated buffer must be provided, and a `VKLHitIterator` of the
+desired width must be initialized:
+
+    VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
                                       const vkl_vec3f *origin,
                                       const vkl_vec3f *direction,
                                       const vkl_range1f *tRange,
                                       float time,
-                                      VKLValueSelector valueSelector,
                                       void *buffer);
 
     VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                             VKLSampler sampler,
+                             VKLHitIteratorContext context,
                              const vkl_vvec3f4 *origin,
                              const vkl_vvec3f4 *direction,
                              const vkl_vrange1f4 *tRange,
                              const float *times,
-                             VKLValueSelector valueSelector,
                              void *buffer);
 
     VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                             VKLSampler sampler,
+                             VKLHitIteratorContext context,
                              const vkl_vvec3f8 *origin,
                              const vkl_vvec3f8 *direction,
                              const vkl_vrange1f8 *tRange,
                              const float *times,
-                             VKLValueSelector valueSelector,
                              void *buffer);
 
     VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                              VKLSampler sampler,
+                              VKLHitIteratorContext context,
                               const vkl_vvec3f16 *origin,
                               const vkl_vvec3f16 *direction,
                               const vkl_vrange1f16 *tRange,
                               const float *times,
-                              VKLValueSelector valueSelector,
                               void *buffer);
 
 Buffer size can be queried with
 
-    size_t vklGetHitIteratorSize(VKLSampler sampler);
+    size_t vklGetHitIteratorSize(VKLHitIteratorContext context);
 
-    size_t vklGetHitIteratorSize4(VKLSampler sampler);
+    size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
 
-    size_t vklGetHitIteratorSize8(VKLSampler sampler);
+    size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
 
-    size_t vklGetHitIteratorSize16(VKLSampler sampler);
+    size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
 
 Open VKL also provides the macro `VKL_MAX_HIT_ITERATOR_SIZE` as a conservative
 estimate.
@@ -1581,8 +1606,8 @@ returned lane mask indicates that the iterator is still within the volume.
                          int *result);
 
 Returned hits consist of a t-value, a volume value (equal to one of the
-requested values specified in the value selector), and an (object space) epsilon
-value estimating the error of the intersection:
+requested values specified in the context), and an (object space) epsilon value
+estimating the error of the intersection:
 
     typedef struct
     {
@@ -1665,7 +1690,13 @@ rely on `alloca` and similar functions:
 
     #include <alloca.h>
     const size_t bufferSize = vklGetIntervalIteratorSize(sampler);
-    char *buffer = alloca(bufferSize);
+    void *buffer = alloca(bufferSize);
+
+Similarly for ISPC, variable length arrays are not supported, but `alloca` may
+be used:
+
+    const uniform size_t bufferSize = vklGetIntervalIteratorSizeV(sampler);
+    void *uniform buffer = alloca(bufferSize);
 
 Users should understand the implications of `alloca`. In particular,
 `alloca` does check available stack space and may result in stack overflow.
@@ -1674,8 +1705,8 @@ cannot be returned from a function.
 On Windows, `_malloca` is a safer option that performs additional error
 checking, but requires the use of `_freea`.
 
-In ISPC, variable length or `alloca` do not exist. Applications may instead rely
-on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and `VKL_MAX_HIT_ITERATOR_SIZE` macros:
+Applications may instead rely on the `VKL_MAX_INTERVAL_ITERATOR_SIZE` and
+`VKL_MAX_HIT_ITERATOR_SIZE` macros. For example, in ISPC:
 
     uniform unsigned int8 buffer[VKL_MAX_INTERVAL_ITERATOR_SIZE];
 

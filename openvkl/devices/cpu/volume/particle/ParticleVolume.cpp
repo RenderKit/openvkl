@@ -93,14 +93,16 @@ namespace openvkl {
             "clampMaxCumulativeValue greater than zero.");
       }
 
-      maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth", 6), 0);
+      background = this->template getParamDataT<float>(
+          "background", 1, VKL_BACKGROUND_UNDEFINED);
 
       buildBvhAndCalculateBounds();
 
       if (!this->ispcEquivalent) {
         this->ispcEquivalent = CALL_ISPC(VKLParticleVolume_Constructor);
       }
+
+      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
 
       CALL_ISPC(VKLParticleVolume_set,
                 this->ispcEquivalent,
@@ -166,7 +168,7 @@ namespace openvkl {
       RTCBuildArguments arguments      = rtcDefaultBuildArguments();
       arguments.byteSize               = sizeof(arguments);
       arguments.buildFlags             = RTC_BUILD_FLAG_NONE;
-      arguments.buildQuality           = RTC_BUILD_QUALITY_MEDIUM;
+      arguments.buildQuality           = RTC_BUILD_QUALITY_LOW;
       arguments.maxBranchingFactor     = 2;
       arguments.maxDepth               = 1024;
       arguments.sahBlockSize           = 1;
@@ -222,6 +224,7 @@ namespace openvkl {
 
       // compute value ranges of leaf nodes in parallel
       std::unique_ptr<Sampler<W>> sampler(newSampler());
+      sampler->commit();
 
       if (estimateValueRanges) {
         // restrict to first attribute index
@@ -289,6 +292,7 @@ namespace openvkl {
 
       accumulateNodeValueRanges(rtcRoot);
       addLevelToNodes(rtcRoot, 0);
+      bvhDepth = getMaxNodeLevel(rtcRoot);
 
       valueRange = rtcRoot->valueRange;
     }

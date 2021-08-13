@@ -1,0 +1,166 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "openvkl_vdb/VdbQueryVoxel_0.ih"
+
+// we have similar functions elsewhere, but we repeat it here to avoid extensive
+// compile times from including those headers
+inline bool VdbIterator_isInDomain(const uniform vec3ui &activeSize,
+                                   const vec3ui &domainOffset)
+{
+  return domainOffset.x < activeSize.x && domainOffset.y < activeSize.y &&
+         domainOffset.z < activeSize.z;
+}
+
+inline void VdbIterator_computeVoxel_0(const VdbGrid *uniform grid,
+                                       const vec3ui &nodeOrigin,
+                                       uint64 &nodeIndex,
+                                       uint64 &voxel)
+{
+  assert(grid);
+  assert(grid->dense);
+
+  // assume we only ever have a single level 0 node
+  assert(grid->levels[0].numNodes == 1);
+
+  const uint64 voxelIdx0 = __vkl_vdb_domain_offset_to_linear_varying_0(
+      nodeOrigin.x, nodeOrigin.y, nodeOrigin.z);
+
+  nodeIndex = voxelIdx0;
+
+  assert(nodeIndex < grid->levels[0].numNodes * VKL_VDB_NUM_VOXELS_0);
+  voxel = grid->levels[0].voxels[voxelIdx0];
+}
+
+inline void VdbIterator_computeVoxel_1(const VdbGrid *uniform grid,
+                                       const vec3ui &nodeOrigin,
+                                       uint64 &nodeIndex,
+                                       uint64 &voxel)
+{
+  assert(grid);
+  assert(grid->dense);
+
+  // assume we only ever have a single level 0 node
+  assert(grid->levels[0].numNodes == 1);
+
+  const uint64 level1NodeIndex =
+      (nodeOrigin.z >> VKL_VDB_TOTAL_LOG_RES_1) *
+          ((grid->activeSize.y + VKL_VDB_RES_1 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_1) *
+          ((grid->activeSize.x + VKL_VDB_RES_1 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_1) +
+      (nodeOrigin.y >> VKL_VDB_TOTAL_LOG_RES_1) *
+          ((grid->activeSize.x + VKL_VDB_RES_1 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_1) +
+      (nodeOrigin.x >> VKL_VDB_TOTAL_LOG_RES_1);
+
+  const uint64 nodeVoxelOffset1 = level1NodeIndex * VKL_VDB_NUM_VOXELS_1;
+
+  const uint64 voxelIdx1 = __vkl_vdb_domain_offset_to_linear_varying_1(
+      nodeOrigin.x, nodeOrigin.y, nodeOrigin.z);
+
+  nodeIndex = nodeVoxelOffset1 + voxelIdx1;
+
+  assert(nodeIndex < grid->levels[1].numNodes * VKL_VDB_NUM_VOXELS_1);
+  voxel = grid->levels[1].voxels[nodeIndex];
+}
+
+inline void VdbIterator_computeVoxel_2(const VdbGrid *uniform grid,
+                                       const vec3ui &nodeOrigin,
+                                       uint64 &nodeIndex,
+                                       uint64 &voxel)
+{
+  assert(grid);
+  assert(grid->dense);
+
+  // assume we only ever have a single level 0 node
+  assert(grid->levels[0].numNodes == 1);
+
+  const uint64 level1NodeIndex =
+      (nodeOrigin.z >> VKL_VDB_TOTAL_LOG_RES_1) *
+          ((grid->activeSize.y + VKL_VDB_RES_1 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_1) *
+          ((grid->activeSize.x + VKL_VDB_RES_1 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_1) +
+      (nodeOrigin.y >> VKL_VDB_TOTAL_LOG_RES_1) *
+          ((grid->activeSize.x + VKL_VDB_RES_1 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_1) +
+      (nodeOrigin.x >> VKL_VDB_TOTAL_LOG_RES_1);
+
+  const uint64 level2NodeIndex =
+      (nodeOrigin.z >> VKL_VDB_TOTAL_LOG_RES_2) *
+          ((grid->activeSize.y + VKL_VDB_RES_2 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_2) *
+          ((grid->activeSize.x + VKL_VDB_RES_2 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_2) +
+      (nodeOrigin.y >> VKL_VDB_TOTAL_LOG_RES_2) *
+          ((grid->activeSize.x + VKL_VDB_RES_2 - 1) >>
+           VKL_VDB_TOTAL_LOG_RES_2) +
+      (nodeOrigin.x >> VKL_VDB_TOTAL_LOG_RES_2);
+
+  const uint64 nodeVoxelOffset2 = level1NodeIndex * VKL_VDB_NUM_VOXELS_1 +
+                                  level2NodeIndex * VKL_VDB_NUM_VOXELS_2;
+
+  const uint64 voxelIdx2 = __vkl_vdb_domain_offset_to_linear_varying_2(
+      nodeOrigin.x, nodeOrigin.y, nodeOrigin.z);
+
+  nodeIndex = nodeVoxelOffset2 + voxelIdx2;
+
+  assert(nodeIndex < grid->levels[2].numNodes * VKL_VDB_NUM_VOXELS_2);
+  voxel = grid->levels[2].voxels[nodeIndex];
+}
+
+inline void VdbIterator_queryVoxel_dense(
+    const VdbGrid *uniform grid,
+    const int32 &x,
+    const int32 &y,
+    const int32 &z,
+    const uniform uint32 &queryDepth,
+    const uniform uint32 &attributeIndex,
+    const uniform ValueRanges &queryValueRanges,
+    VdbVoxelDescriptor &desc)
+{
+  assert(grid);
+  assert(grid->dense);
+  assert(queryDepth <= 3);
+
+  desc.level = queryDepth;
+
+  assert(grid->rootOrigin.x == 0 && grid->rootOrigin.y == 0 &&
+         grid->rootOrigin.z == 0);
+  const vec3ui domainOffset = make_vec3ui(x, y, z);
+
+  if (!VdbIterator_isInDomain(grid->activeSize, domainOffset)) {
+    desc.isEmpty = true;
+    return;
+  }
+
+  if (queryDepth == 3 || queryDepth == 2) {
+    desc.isLeaf = true;
+    VdbIterator_computeVoxel_2(grid, domainOffset, desc.nodeIndex, desc.voxel);
+    desc.valueRange =
+        grid->levels[2]
+            .valueRange[desc.nodeIndex * grid->numAttributes + attributeIndex];
+
+  } else if (queryDepth == 1) {
+    desc.isLeaf = false;
+    VdbIterator_computeVoxel_1(grid, domainOffset, desc.nodeIndex, desc.voxel);
+    desc.valueRange =
+        grid->levels[1]
+            .valueRange[desc.nodeIndex * grid->numAttributes + attributeIndex];
+
+  } else if (queryDepth == 0) {
+    desc.isLeaf = false;
+    VdbIterator_computeVoxel_0(grid, domainOffset, desc.nodeIndex, desc.voxel);
+    desc.valueRange =
+        grid->levels[0]
+            .valueRange[desc.nodeIndex * grid->numAttributes + attributeIndex];
+
+  } else {
+    assert(false);
+  }
+
+  desc.isEmpty = !valueRangesOverlap(queryValueRanges, desc.valueRange);
+}

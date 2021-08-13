@@ -9,8 +9,11 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
+// skipBoundaries is true by default; filtered gradients at boundaries will
+// interpolate with background values (i.e. zero), and thus not align with
+// procedurally-computed values.
 template <typename PROCEDURAL_VOLUME_TYPE>
-void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = false)
+void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
 {
   const vec3i dimensions(128);
   const float boundingBoxSize = 2.f;
@@ -79,7 +82,7 @@ TEST_CASE("Structured volume gradients", "[volume_gradients]")
 
   SECTION("XYZStructuredSphericalVolume<float>")
   {
-    scalar_gradients<XYZStructuredSphericalVolume<float>>(0.1f, true);
+    scalar_gradients<XYZStructuredSphericalVolume<float>>();
   }
 
   shutdownOpenVKL();

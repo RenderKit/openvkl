@@ -28,8 +28,6 @@ namespace openvkl {
       UnstructuredSampler(UnstructuredVolume<W> *volume);
       ~UnstructuredSampler() override;
 
-      void commit() override;
-
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples,
@@ -54,7 +52,7 @@ namespace openvkl {
                             unsigned int attributeIndex,
                             const float *times) const override final;
 
-     protected:
+     private:
       using Sampler<W>::ispcEquivalent;
       using UnstructuredSamplerBase<W>::volume;
     };
@@ -79,23 +77,6 @@ namespace openvkl {
     }
 
     template <int W>
-    inline void UnstructuredSampler<W>::commit()
-    {
-      const int maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth",
-                                                volume->getMaxIteratorDepth()),
-                   0);
-
-      const bool elementaryCellIteration = this->template getParam<bool>(
-          "elementaryCellIteration", volume->getElementaryCellIteration());
-
-      CALL_ISPC(VKLUnstructuredSampler_set,
-                ispcEquivalent,
-                maxIteratorDepth,
-                elementaryCellIteration);
-    }
-
-    template <int W>
     inline void UnstructuredSampler<W>::computeSampleV(
         const vintn<W> &valid,
         const vvec3fn<W> &objectCoordinates,
@@ -104,7 +85,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VKLUnstructuredVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -121,7 +102,7 @@ namespace openvkl {
         const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(Sampler_sample_N_export,
                 ispcEquivalent,
                 N,
@@ -138,7 +119,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(VKLUnstructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -155,7 +136,7 @@ namespace openvkl {
         const float *times) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, times);
+      assertAllValidTimes(N, times);
       CALL_ISPC(Sampler_gradient_N_export,
                 ispcEquivalent,
                 N,

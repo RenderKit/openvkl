@@ -89,13 +89,12 @@ namespace openvkl {
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-#define __define_getIntervalIteratorSizeN(WIDTH)                            \
-  virtual size_t getIntervalIteratorSize##WIDTH(VKLSampler sampler) const   \
-  {                                                                         \
-    throw std::runtime_error(                                               \
-        "getIntervalIteratorSize##WIDTH() not implemented on this device"); \
-    return 0;                                                               \
-  }
+      virtual VKLIntervalIteratorContext newIntervalIteratorContext(
+          VKLSampler sampler) = 0;
+
+#define __define_getIntervalIteratorSizeN(WIDTH) \
+  virtual size_t getIntervalIteratorSize##WIDTH( \
+      VKLIntervalIteratorContext context) const = 0;
 
       __define_getIntervalIteratorSizeN(1);
       __define_getIntervalIteratorSizeN(4);
@@ -105,32 +104,22 @@ namespace openvkl {
 #undef __define_getIntervalIteratorSizeN
 
       virtual VKLIntervalIterator initIntervalIterator1(
-          VKLSampler sampler,
+          VKLIntervalIteratorContext context,
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
-          VKLValueSelector valueSelector,
-          void *buffer) const
-      {
-        throw std::runtime_error(
-            "initIntervalIterator1() not implemented on this device");
-        return nullptr;
-      }
+          float time,
+          void *buffer) const = 0;
 
-#define __define_initIntervalIteratorN(WIDTH)                            \
-  virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(        \
-      const int *valid,                                                  \
-      VKLSampler sampler,                                                \
-      const vvec3fn<WIDTH> &origin,                                      \
-      const vvec3fn<WIDTH> &direction,                                   \
-      const vrange1fn<WIDTH> &tRange,                                    \
-      VKLValueSelector valueSelector,                                    \
-      void *buffer) const                                                \
-  {                                                                      \
-    throw std::runtime_error(                                            \
-        "initIntervalIterator##WIDTH() not implemented on this device"); \
-    return nullptr;                                                      \
-  }
+#define __define_initIntervalIteratorN(WIDTH)                     \
+  virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH( \
+      const int *valid,                                           \
+      VKLIntervalIteratorContext context,                         \
+      const vvec3fn<WIDTH> &origin,                               \
+      const vvec3fn<WIDTH> &direction,                            \
+      const vrange1fn<WIDTH> &tRange,                             \
+      const float *times,                                         \
+      void *buffer) const = 0;
 
       __define_initIntervalIteratorN(4);
       __define_initIntervalIteratorN(8);
@@ -140,21 +129,13 @@ namespace openvkl {
 
       virtual void iterateInterval1(VKLIntervalIterator iterator,
                                     vVKLIntervalN<1> &interval,
-                                    int *result) const
-      {
-        throw std::runtime_error(
-            "iterateInterval1() not implemented on this device");
-      }
+                                    int *result) const = 0;
 
 #define __define_iterateIntervalN(WIDTH)                                   \
   virtual void iterateInterval##WIDTH(const int *valid,                    \
                                       VKLIntervalIterator##WIDTH iterator, \
                                       vVKLIntervalN<WIDTH> &interval,      \
-                                      int *result) const                   \
-  {                                                                        \
-    throw std::runtime_error(                                              \
-        "iterateInterval##WIDTH() not implemented on this device");        \
-  }
+                                      int *result) const = 0;
 
       __define_iterateIntervalN(4);
       __define_iterateIntervalN(8);
@@ -166,13 +147,12 @@ namespace openvkl {
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-#define __define_getHitIteratorSizeN(WIDTH)                            \
-  virtual size_t getHitIteratorSize##WIDTH(VKLSampler sampler) const   \
-  {                                                                    \
-    throw std::runtime_error(                                          \
-        "getHitIteratorSize##WIDTH() not implemented on this device"); \
-    return 0;                                                          \
-  }
+      virtual VKLHitIteratorContext newHitIteratorContext(
+          VKLSampler sampler) = 0;
+
+#define __define_getHitIteratorSizeN(WIDTH)                               \
+  virtual size_t getHitIteratorSize##WIDTH(VKLHitIteratorContext context) \
+      const = 0;
 
       __define_getHitIteratorSizeN(1);
       __define_getHitIteratorSizeN(4);
@@ -181,34 +161,22 @@ namespace openvkl {
 
 #undef __define_getHitIteratorSizeN
 
-      virtual VKLHitIterator initHitIterator1(VKLSampler sampler,
+      virtual VKLHitIterator initHitIterator1(VKLHitIteratorContext context,
                                               const vvec3fn<1> &origin,
                                               const vvec3fn<1> &direction,
                                               const vrange1fn<1> &tRange,
                                               float time,
-                                              VKLValueSelector valueSelector,
-                                              void *buffer) const
-      {
-        throw std::runtime_error(
-            "initHitIterator1() not implemented on this device");
-        return nullptr;
-      }
+                                              void *buffer) const = 0;
 
-#define __define_initHitIteratorN(WIDTH)                            \
-  virtual VKLHitIterator##WIDTH initHitIterator##WIDTH(             \
-      const int *valid,                                             \
-      VKLSampler sampler,                                           \
-      const vvec3fn<WIDTH> &origin,                                 \
-      const vvec3fn<WIDTH> &direction,                              \
-      const vrange1fn<WIDTH> &tRange,                               \
-      const float *times,                                           \
-      VKLValueSelector valueSelector,                               \
-      void *buffer) const                                           \
-  {                                                                 \
-    throw std::runtime_error(                                       \
-        "initHitIterator##WIDTH() not implemented on this device"); \
-    return nullptr;                                                 \
-  }
+#define __define_initHitIteratorN(WIDTH)                \
+  virtual VKLHitIterator##WIDTH initHitIterator##WIDTH( \
+      const int *valid,                                 \
+      VKLHitIteratorContext context,                    \
+      const vvec3fn<WIDTH> &origin,                     \
+      const vvec3fn<WIDTH> &direction,                  \
+      const vrange1fn<WIDTH> &tRange,                   \
+      const float *times,                               \
+      void *buffer) const = 0;
 
       __define_initHitIteratorN(4);
       __define_initHitIteratorN(8);
@@ -218,21 +186,13 @@ namespace openvkl {
 
       virtual void iterateHit1(VKLHitIterator iterator,
                                vVKLHitN<1> &hit,
-                               int *result) const
-      {
-        throw std::runtime_error(
-            "iterateHit1() not implemented on this device");
-      }
+                               int *result) const = 0;
 
 #define __define_iterateHitN(WIDTH)                              \
   virtual void iterateHit##WIDTH(const int *valid,               \
                                  VKLHitIterator##WIDTH iterator, \
                                  vVKLHitN<WIDTH> &hit,           \
-                                 int *result) const              \
-  {                                                              \
-    throw std::runtime_error(                                    \
-        "iterateHit##WIDTH() not implemented on this device");   \
-  }
+                                 int *result) const = 0;
 
       __define_iterateHitN(4);
       __define_iterateHitN(8);
@@ -262,20 +222,6 @@ namespace openvkl {
                              const char *name,
                              const std::string &s)                          = 0;
       virtual void setVoidPtr(VKLObject object, const char *name, void *v)  = 0;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Value selector ///////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      virtual VKLValueSelector newValueSelector(VKLVolume volume) = 0;
-
-      virtual void valueSelectorSetRanges(
-          VKLValueSelector valueSelector,
-          const utility::ArrayView<const math::range1f> &ranges) = 0;
-
-      virtual void valueSelectorSetValues(
-          VKLValueSelector valueSelector,
-          const utility::ArrayView<const float> &values) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////
@@ -361,7 +307,8 @@ namespace openvkl {
 
       virtual unsigned int getNumAttributes(VKLVolume volume) = 0;
 
-      virtual math::range1f getValueRange(VKLVolume volume) = 0;
+      virtual math::range1f getValueRange(VKLVolume volume,
+                                          unsigned int attributeIndex) = 0;
 
      private:
       bool committed = false;

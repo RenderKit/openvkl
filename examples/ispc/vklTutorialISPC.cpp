@@ -73,8 +73,37 @@ int main()
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
 
-  ispc::demo_ispc(volume, sampler);
+  // interval iterator context setup
+  vkl_range1f ranges[2] = {{10, 20}, {50, 75}};
+  int num_ranges        = 2;
+  VKLData rangesData =
+      vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
 
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetData(intervalContext, "valueRanges", rangesData);
+  vklRelease(rangesData);
+
+  vklCommit(intervalContext);
+
+  // hit iterator context setup
+  float values[2] = {32, 96};
+  int num_values  = 2;
+  VKLData valuesData =
+      vklNewData(device, num_values, VKL_FLOAT, values, VKL_DATA_DEFAULT, 0);
+
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
+  vklCommit(hitContext);
+
+  ispc::demo_ispc(volume, sampler, intervalContext, hitContext, ranges, values);
+
+  vklRelease(hitContext);
+  vklRelease(intervalContext);
   vklRelease(sampler);
   vklRelease(volume);
 

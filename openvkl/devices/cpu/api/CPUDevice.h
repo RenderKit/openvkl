@@ -59,17 +59,26 @@ namespace openvkl {
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      size_t getIntervalIteratorSize1(VKLSampler sampler) const override
+      VKLIntervalIteratorContext newIntervalIteratorContext(
+          VKLSampler sampler) override;
+
+      size_t getIntervalIteratorSize1(
+          VKLIntervalIteratorContext context) const override
       {
-        const auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+        const auto &contextObject =
+            referenceFromHandle<IntervalIteratorContext<W>>(context);
+        const auto &samplerObject = contextObject.getSampler();
         return samplerObject.getIntervalIteratorFactory().sizeU();
       }
 
-#define __define_getIntervalIteratorSizeN(WIDTH)                           \
-  size_t getIntervalIteratorSize##WIDTH(VKLSampler sampler) const override \
-  {                                                                        \
-    auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);        \
-    return samplerObject.getIntervalIteratorFactory().sizeV();             \
+#define __define_getIntervalIteratorSizeN(WIDTH)                            \
+  size_t getIntervalIteratorSize##WIDTH(VKLIntervalIteratorContext context) \
+      const override                                                        \
+  {                                                                         \
+    const auto &contextObject =                                             \
+        referenceFromHandle<IntervalIteratorContext<W>>(context);           \
+    const auto &samplerObject = contextObject.getSampler();                 \
+    return samplerObject.getIntervalIteratorFactory().sizeV();              \
   }
 
       __define_getIntervalIteratorSizeN(4);
@@ -80,26 +89,27 @@ namespace openvkl {
 
       //////////////////////////////////////////////////////////////////////////
      public:
-      VKLIntervalIterator initIntervalIterator1(VKLSampler sampler,
-                                                const vvec3fn<1> &origin,
-                                                const vvec3fn<1> &direction,
-                                                const vrange1fn<1> &tRange,
-                                                VKLValueSelector valueSelector,
-                                                void *buffer) const override;
+      VKLIntervalIterator initIntervalIterator1(
+          VKLIntervalIteratorContext context,
+          const vvec3fn<1> &origin,
+          const vvec3fn<1> &direction,
+          const vrange1fn<1> &tRange,
+          float time,
+          void *buffer) const override;
 
-#define __define_initIntervalIteratorN(WIDTH)                               \
-  VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(                   \
-      const int *valid,                                                     \
-      VKLSampler sampler,                                                   \
-      const vvec3fn<WIDTH> &origin,                                         \
-      const vvec3fn<WIDTH> &direction,                                      \
-      const vrange1fn<WIDTH> &tRange,                                       \
-      VKLValueSelector valueSelector,                                       \
-      void *buffer) const override                                          \
-  {                                                                         \
-    return reinterpret_cast<                                                \
-        VKLIntervalIterator##WIDTH>(initIntervalIteratorAnyWidth<WIDTH>(    \
-        valid, sampler, origin, direction, tRange, valueSelector, buffer)); \
+#define __define_initIntervalIteratorN(WIDTH)                           \
+  VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH(               \
+      const int *valid,                                                 \
+      VKLIntervalIteratorContext context,                               \
+      const vvec3fn<WIDTH> &origin,                                     \
+      const vvec3fn<WIDTH> &direction,                                  \
+      const vrange1fn<WIDTH> &tRange,                                   \
+      const float *times,                                               \
+      void *buffer) const override                                      \
+  {                                                                     \
+    return reinterpret_cast<VKLIntervalIterator##WIDTH>(                \
+        initIntervalIteratorAnyWidth<WIDTH>(                            \
+            valid, context, origin, direction, tRange, times, buffer)); \
   }
 
       __define_initIntervalIteratorN(4);
@@ -112,21 +122,21 @@ namespace openvkl {
       template <int OW>
       EnableIf<(W == OW), IntervalIterator<W> *> initIntervalIteratorAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          VKLIntervalIteratorContext context,
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
-          VKLValueSelector valueSelector,
+          const float *times,
           void *buffer) const;
 
       template <int OW>
       EnableIf<(W != OW), IntervalIterator<W> *> initIntervalIteratorAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          VKLIntervalIteratorContext context,
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
-          VKLValueSelector valueSelector,
+          const float *times,
           void *buffer) const;
 
       //////////////////////////////////////////////////////////////////////////
@@ -175,17 +185,24 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
      public:
-      size_t getHitIteratorSize1(VKLSampler sampler) const override
+      VKLHitIteratorContext newHitIteratorContext(VKLSampler sampler) override;
+
+      size_t getHitIteratorSize1(VKLHitIteratorContext context) const override
       {
-        auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+        const auto &contextObject =
+            referenceFromHandle<HitIteratorContext<W>>(context);
+        const auto &samplerObject = contextObject.getSampler();
         return samplerObject.getHitIteratorFactory().sizeU();
       }
 
-#define __define_getHitIteratorSizeN(WIDTH)                           \
-  size_t getHitIteratorSize##WIDTH(VKLSampler sampler) const override \
-  {                                                                   \
-    auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);   \
-    return samplerObject.getHitIteratorFactory().sizeV();             \
+#define __define_getHitIteratorSizeN(WIDTH)                       \
+  size_t getHitIteratorSize##WIDTH(VKLHitIteratorContext context) \
+      const override                                              \
+  {                                                               \
+    const auto &contextObject =                                   \
+        referenceFromHandle<HitIteratorContext<W>>(context);      \
+    const auto &samplerObject = contextObject.getSampler();       \
+    return samplerObject.getHitIteratorFactory().sizeV();         \
   }
 
       __define_getHitIteratorSizeN(4);
@@ -197,34 +214,26 @@ namespace openvkl {
       //////////////////////////////////////////////////////////////////////////
 
      public:
-      VKLHitIterator initHitIterator1(VKLSampler sampler,
+      VKLHitIterator initHitIterator1(VKLHitIteratorContext context,
                                       const vvec3fn<1> &origin,
                                       const vvec3fn<1> &direction,
                                       const vrange1fn<1> &tRange,
                                       float time,
-                                      VKLValueSelector valueSelector,
                                       void *buffer) const override;
 
-#define __define_initHitIteratorN(WIDTH)              \
-  VKLHitIterator##WIDTH initHitIterator##WIDTH(       \
-      const int *valid,                               \
-      VKLSampler sampler,                             \
-      const vvec3fn<WIDTH> &origin,                   \
-      const vvec3fn<WIDTH> &direction,                \
-      const vrange1fn<WIDTH> &tRange,                 \
-      const float *times,                             \
-      VKLValueSelector valueSelector,                 \
-      void *buffer) const override                    \
-  {                                                   \
-    return reinterpret_cast<VKLHitIterator##WIDTH>(   \
-        initHitIteratorAnyWidth<WIDTH>(valid,         \
-                                       sampler,       \
-                                       origin,        \
-                                       direction,     \
-                                       tRange,        \
-                                       times,         \
-                                       valueSelector, \
-                                       buffer));      \
+#define __define_initHitIteratorN(WIDTH)                                \
+  VKLHitIterator##WIDTH initHitIterator##WIDTH(                         \
+      const int *valid,                                                 \
+      VKLHitIteratorContext context,                                    \
+      const vvec3fn<WIDTH> &origin,                                     \
+      const vvec3fn<WIDTH> &direction,                                  \
+      const vrange1fn<WIDTH> &tRange,                                   \
+      const float *times,                                               \
+      void *buffer) const override                                      \
+  {                                                                     \
+    return reinterpret_cast<VKLHitIterator##WIDTH>(                     \
+        initHitIteratorAnyWidth<WIDTH>(                                 \
+            valid, context, origin, direction, tRange, times, buffer)); \
   }
 
       __define_initHitIteratorN(4);
@@ -237,23 +246,21 @@ namespace openvkl {
       template <int OW>
       EnableIf<(W == OW), HitIterator<W> *> initHitIteratorAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          VKLHitIteratorContext context,
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
           const float *times,
-          VKLValueSelector valueSelector,
           void *buffer) const;
 
       template <int OW>
       EnableIf<(W != OW), HitIterator<W> *> initHitIteratorAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          VKLHitIteratorContext context,
           const vvec3fn<OW> &origin,
           const vvec3fn<OW> &direction,
           const vrange1fn<OW> &tRange,
           const float *times,
-          VKLValueSelector valueSelector,
           void *buffer) const;
 
       //////////////////////////////////////////////////////////////////////////
@@ -315,20 +322,6 @@ namespace openvkl {
                      const char *name,
                      const std::string &s) override;
       void setVoidPtr(VKLObject object, const char *name, void *v) override;
-
-      /////////////////////////////////////////////////////////////////////////
-      // Value selector ///////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      VKLValueSelector newValueSelector(VKLVolume volume) override;
-
-      void valueSelectorSetRanges(
-          VKLValueSelector valueSelector,
-          const utility::ArrayView<const range1f> &ranges) override;
-
-      void valueSelectorSetValues(
-          VKLValueSelector valueSelector,
-          const utility::ArrayView<const float> &values) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////
@@ -414,7 +407,8 @@ namespace openvkl {
 
       unsigned int getNumAttributes(VKLVolume volume) override;
 
-      range1f getValueRange(VKLVolume volume) override;
+      range1f getValueRange(VKLVolume volume,
+                            unsigned int attributeIndex) override;
 
      private:
       template <int OW>
@@ -510,22 +504,22 @@ namespace openvkl {
 
     template <int W>
     inline VKLIntervalIterator CPUDevice<W>::initIntervalIterator1(
-        VKLSampler sampler,
+        VKLIntervalIteratorContext context,
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
-        VKLValueSelector valueSelector,
+        float time,
         void *buffer) const
     {
-      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &ctx =
+          referenceFromHandle<IntervalIteratorContext<W>>(context);
+      const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getIntervalIteratorFactory();
 
-      IntervalIterator<W> *it = factory.constructU(spl, buffer);
-      it->initializeIntervalU(
-          origin,
-          direction,
-          tRange,
-          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
+      assertValidTime(time);
+
+      IntervalIterator<W> *it = factory.constructU(ctx, buffer);
+      it->initializeIntervalU(origin, direction, tRange, time);
 
       return reinterpret_cast<VKLIntervalIterator>(it);
     }
@@ -533,42 +527,45 @@ namespace openvkl {
     template <int W>
     template <int OW>
     inline EnableIf<(W == OW), IntervalIterator<W> *>
-    CPUDevice<W>::initIntervalIteratorAnyWidth(const int *valid,
-                                                VKLSampler sampler,
-                                                const vvec3fn<OW> &origin,
-                                                const vvec3fn<OW> &direction,
-                                                const vrange1fn<OW> &tRange,
-                                                VKLValueSelector valueSelector,
-                                                void *buffer) const
+    CPUDevice<W>::initIntervalIteratorAnyWidth(
+        const int *valid,
+        VKLIntervalIteratorContext context,
+        const vvec3fn<OW> &origin,
+        const vvec3fn<OW> &direction,
+        const vrange1fn<OW> &tRange,
+        const float *times,
+        void *buffer) const
     {
-      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &ctx =
+          referenceFromHandle<IntervalIteratorContext<W>>(context);
+      const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getIntervalIteratorFactory();
 
-      IntervalIterator<W> *it = factory.constructV(spl, buffer);
+      IntervalIterator<W> *it = factory.constructV(ctx, buffer);
 
       vintn<W> validW;
       for (int i = 0; i < W; ++i)
         validW[i] = valid[i];
 
-      it->initializeIntervalV(
-          validW,
-          origin,
-          direction,
-          tRange,
-          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
+      const vfloatn<W> timesW(times, OW);
+      assertValidTimes(validW, timesW);
+
+      it->initializeIntervalV(validW, origin, direction, tRange, timesW);
+
       return it;
     }
 
     template <int W>
     template <int OW>
     inline EnableIf<(W != OW), IntervalIterator<W> *>
-    CPUDevice<W>::initIntervalIteratorAnyWidth(const int *valid,
-                                                VKLSampler sampler,
-                                                const vvec3fn<OW> &origin,
-                                                const vvec3fn<OW> &direction,
-                                                const vrange1fn<OW> &tRange,
-                                                VKLValueSelector valueSelector,
-                                                void *buffer) const
+    CPUDevice<W>::initIntervalIteratorAnyWidth(
+        const int *valid,
+        VKLIntervalIteratorContext context,
+        const vvec3fn<OW> &origin,
+        const vvec3fn<OW> &direction,
+        const vrange1fn<OW> &tRange,
+        const float *times,
+        void *buffer) const
     {
       throw std::runtime_error(
           "interval iterators are only supported for the "
@@ -628,24 +625,21 @@ namespace openvkl {
 
     template <int W>
     inline VKLHitIterator CPUDevice<W>::initHitIterator1(
-        VKLSampler sampler,
+        VKLHitIteratorContext context,
         const vvec3fn<1> &origin,
         const vvec3fn<1> &direction,
         const vrange1fn<1> &tRange,
         float time,
-        VKLValueSelector valueSelector,
         void *buffer) const
     {
-      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &ctx     = referenceFromHandle<HitIteratorContext<W>>(context);
+      const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getHitIteratorFactory();
 
-      HitIterator<W> *it = factory.constructU(spl, buffer);
-      it->initializeHitU(
-          origin,
-          direction,
-          tRange,
-          time,
-          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
+      assertValidTime(time);
+
+      HitIterator<W> *it = factory.constructU(ctx, buffer);
+      it->initializeHitU(origin, direction, tRange, time);
 
       return reinterpret_cast<VKLHitIterator>(it);
     }
@@ -654,32 +648,27 @@ namespace openvkl {
     template <int OW>
     inline EnableIf<(W == OW), HitIterator<W> *>
     CPUDevice<W>::initHitIteratorAnyWidth(const int *valid,
-                                           VKLSampler sampler,
-                                           const vvec3fn<OW> &origin,
-                                           const vvec3fn<OW> &direction,
-                                           const vrange1fn<OW> &tRange,
-                                           const float *times,
-                                           VKLValueSelector valueSelector,
-                                           void *buffer) const
+                                          VKLHitIteratorContext context,
+                                          const vvec3fn<OW> &origin,
+                                          const vvec3fn<OW> &direction,
+                                          const vrange1fn<OW> &tRange,
+                                          const float *times,
+                                          void *buffer) const
     {
-      const auto &spl     = referenceFromHandle<Sampler<W>>(sampler);
+      const auto &ctx     = referenceFromHandle<HitIteratorContext<W>>(context);
+      const auto &spl     = ctx.getSampler();
       const auto &factory = spl.getHitIteratorFactory();
 
-      HitIterator<W> *it = factory.constructV(spl, buffer);
+      HitIterator<W> *it = factory.constructV(ctx, buffer);
 
       vintn<W> validW;
       for (int i = 0; i < W; ++i)
         validW[i] = valid[i];
 
-      vfloatn<W> timesW(times, OW);
+      const vfloatn<W> timesW(times, OW);
+      assertValidTimes(validW, timesW);
 
-      it->initializeHitV(
-          validW,
-          origin,
-          direction,
-          tRange,
-          timesW,
-          reinterpret_cast<const ValueSelector<W> *>(valueSelector));
+      it->initializeHitV(validW, origin, direction, tRange, timesW);
 
       return it;
     }
@@ -688,13 +677,12 @@ namespace openvkl {
     template <int OW>
     inline EnableIf<(W != OW), HitIterator<W> *>
     CPUDevice<W>::initHitIteratorAnyWidth(const int *valid,
-                                           VKLSampler sampler,
-                                           const vvec3fn<OW> &origin,
-                                           const vvec3fn<OW> &direction,
-                                           const vrange1fn<OW> &tRange,
-                                           const float *times,
-                                           VKLValueSelector valueSelector,
-                                           void *buffer) const
+                                          VKLHitIteratorContext context,
+                                          const vvec3fn<OW> &origin,
+                                          const vvec3fn<OW> &direction,
+                                          const vrange1fn<OW> &tRange,
+                                          const float *times,
+                                          void *buffer) const
     {
       throw std::runtime_error(
           "hit iterators are only supported for the "
@@ -705,8 +693,8 @@ namespace openvkl {
 
     template <int W>
     inline void CPUDevice<W>::iterateHit1(const VKLHitIterator iterator,
-                                           vVKLHitN<1> &hit,
-                                           int *result) const
+                                          vVKLHitN<1> &hit,
+                                          int *result) const
     {
       auto &it = referenceFromHandle<HitIterator<W>>(iterator);
       it.iterateHitU(*reinterpret_cast<vVKLHitN<1> *>(&hit),

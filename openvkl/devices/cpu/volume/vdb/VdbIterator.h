@@ -5,6 +5,7 @@
 
 #include "../../iterator/DefaultIterator.h"
 #include "../../iterator/Iterator.h"
+#include "../../iterator/IteratorContext.h"
 #include "VdbGrid.h"
 #include "VdbIterator_ispc.h"
 
@@ -23,7 +24,7 @@ namespace openvkl {
           const vvec3fn<W> &origin,
           const vvec3fn<W> &direction,
           const vrange1fn<W> &tRange,
-          const ValueSelector<W> *valueSelector) override final;
+          const vfloatn<W> &times) override final;
 
       void iterateIntervalV(const vintn<W> &valid,
                             vVKLIntervalN<W> &interval,
@@ -35,21 +36,28 @@ namespace openvkl {
       }
 
      protected:
-      using Iterator<W>::sampler;
+      using Iterator<W>::context;
       using IspcIterator = __varying_ispc_type(VdbIterator);
       alignas(alignof(IspcIterator)) char ispcStorage[sizeof(IspcIterator)];
     };
 
     template <int W>
     using VdbIntervalIteratorFactory =
-        ConcreteIteratorFactory<W, IntervalIterator, VdbIntervalIterator>;
+        ConcreteIteratorFactory<W,
+                                IntervalIterator,
+                                VdbIntervalIterator,
+                                IntervalIteratorContext,
+                                IntervalIteratorContext>;
 
     template <int W>
     using VdbHitIterator = DefaultHitIterator<W, VdbIntervalIterator<W>>;
 
     template <int W>
-    using VdbHitIteratorFactory =
-        ConcreteIteratorFactory<W, HitIterator, VdbHitIterator>;
+    using VdbHitIteratorFactory = ConcreteIteratorFactory<W,
+                                                          HitIterator,
+                                                          VdbHitIterator,
+                                                          HitIteratorContext,
+                                                          HitIteratorContext>;
 
   }  // namespace cpu_device
 }  // namespace openvkl

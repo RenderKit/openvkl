@@ -92,13 +92,6 @@ namespace openvkl {
         CALL_ISPC(AMR_install_octant, ispcEquivalent);
       else
         throw std::runtime_error("AMRSampler: illegal method specified");
-
-      const int maxIteratorDepth =
-          std::max(this->template getParam<int>("maxIteratorDepth",
-                                                volume->getMaxIteratorDepth()),
-                   0);
-
-      CALL_ISPC(AMRSampler_set, ispcEquivalent, maxIteratorDepth);
     }
 
     template <int W>
@@ -110,7 +103,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(AMRVolume_sample_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -127,7 +120,7 @@ namespace openvkl {
         const float *time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, time);
+      assertAllValidTimes(N, time);
       CALL_ISPC(Sampler_sample_N_export,
                 ispcEquivalent,
                 N,
@@ -144,7 +137,7 @@ namespace openvkl {
         const vfloatn<W> &time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(time);
+      assertValidTimes(valid, time);
       CALL_ISPC(AMRVolume_gradient_export,
                 static_cast<const int *>(valid),
                 ispcEquivalent,
@@ -161,7 +154,7 @@ namespace openvkl {
         const float *time) const
     {
       assert(attributeIndex < volume->getNumAttributes());
-      assertValidTimes(N, time);
+      assertAllValidTimes(N, time);
       CALL_ISPC(Sampler_gradient_N_export,
                 ispcEquivalent,
                 N,

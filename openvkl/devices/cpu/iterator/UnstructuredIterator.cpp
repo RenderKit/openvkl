@@ -4,7 +4,6 @@
 #include "UnstructuredIterator.h"
 #include "../common/export_util.h"
 #include "../common/math.h"
-#include "../value_selector/ValueSelector.h"
 #include "../volume/UnstructuredSampler.h"
 #include "../volume/UnstructuredVolume.h"
 #include "../volume/Volume.h"
@@ -24,22 +23,21 @@ namespace openvkl {
         const vvec3fn<W> &origin,
         const vvec3fn<W> &direction,
         const vrange1fn<W> &tRange,
-        const ValueSelector<W> *valueSelector)
+        const vfloatn<W> &_times)
     {
       // We use the same iterator implementation for both unstructured and
       // particle volumes. However, only unstructured volumes support elementary
       // cell iteration.
       const bool elementaryCellIterationSupported =
-          dynamic_cast<const UnstructuredSampler<W> *>(sampler);
+          dynamic_cast<const UnstructuredSampler<W> *>(&context->getSampler());
 
       CALL_ISPC(UnstructuredIterator_Initialize,
                 static_cast<const int *>(valid),
                 ispcStorage,
-                sampler->getISPCEquivalent(),
+                context->getISPCEquivalent(),
                 (void *)&origin,
                 (void *)&direction,
                 (void *)&tRange,
-                valueSelector ? valueSelector->getISPCEquivalent() : nullptr,
                 elementaryCellIterationSupported);
     }
 

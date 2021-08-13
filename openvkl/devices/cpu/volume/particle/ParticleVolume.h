@@ -59,11 +59,11 @@ namespace openvkl {
 
       unsigned int getNumAttributes() const override;
 
-      range1f getValueRange() const override;
+      range1f getValueRange(unsigned int attributeIndex) const override;
 
       const Node *getNodeRoot() const;
 
-      int getMaxIteratorDepth() const;
+      int getBvhDepth() const;
 
      private:
       void buildBvhAndCalculateBounds();
@@ -79,11 +79,13 @@ namespace openvkl {
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
-      int maxIteratorDepth;
+
+      Ref<const DataT<float>> background;
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
+      int bvhDepth{0};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -101,8 +103,10 @@ namespace openvkl {
     }
 
     template <int W>
-    inline range1f ParticleVolume<W>::getValueRange() const
+    inline range1f ParticleVolume<W>::getValueRange(
+        unsigned int attributeIndex) const
     {
+      throwOnIllegalAttributeIndex(this, attributeIndex);
       return valueRange;
     }
 
@@ -113,9 +117,9 @@ namespace openvkl {
     }
 
     template <int W>
-    inline int ParticleVolume<W>::getMaxIteratorDepth() const
+    inline int ParticleVolume<W>::getBvhDepth() const
     {
-      return maxIteratorDepth;
+      return bvhDepth;
     }
 
     // Helper functions ///////////////////////////////////////////////////////

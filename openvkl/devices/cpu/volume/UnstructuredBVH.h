@@ -129,6 +129,17 @@ namespace openvkl {
       }
     }
 
+    inline int getMaxNodeLevel(Node *root)
+    {
+      if (root->nominalLength.x > 0) {
+        auto inner = (InnerNode *)root;
+        return std::max(getMaxNodeLevel(inner->children[0]),
+                        getMaxNodeLevel(inner->children[1]));
+      } else {
+        return root->level;
+      }
+    }
+
     inline void getNodesAtLevel(Node *root,
                                 int level,
                                 std::vector<Node *> &nodes)
@@ -196,6 +207,7 @@ namespace openvkl {
 
           if (overlap0) {
             if (overlap1) {
+              assert(stackPtr < 32);
               nodeStack[stackPtr++] = inner->children[1];
               node                  = inner->children[0];
               continue;

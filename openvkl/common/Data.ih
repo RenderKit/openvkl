@@ -32,6 +32,13 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data,
   return (maxBytes < (1ULL << 31));
 }
 
+// same as above, but assumes maximum index allowed by the array
+inline uniform bool safe_32bit_indexing(const uniform Data1D data)
+{
+  const uniform uint64 maxBytes = (data.numItems - 1) * data.byteStride;
+  return (maxBytes < (1ULL << 31));
+}
+
 #define process_hi28(univary) process_hi28_##univary
 #define process_hi28_varying foreach_unique(hi in hi28)
 #define process_hi28_uniform uniform uint32 hi = hi28;
@@ -232,8 +239,10 @@ template_get_wrapper(half, float);
     return convFunc(*((const uniform repT *)data.addr));                     \
   }
 
+// these are required for sparse VDB motion blur cases.
 template_get_special(half, float, unsigned int16, half_to_float);
 template_get_special(float, float, float, );
+
 template_get_special(uint32, uint32, uint32, );
 template_get_special(uint64, uint64, uint64, );
 #undef template_get_special

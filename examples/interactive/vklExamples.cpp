@@ -24,7 +24,8 @@ struct ViewerParams
   vec3f gridSpacing{rkcommon::nan};
   vec3i dimensions{128};
   vec2i windowSize{1024};
-  region2i pixelRange{vec2i(0, 0), windowSize};
+  region2i pixelRange{vec2i(0, 0), vec2i(0, 0)};
+  bool cmdlinePixelRange = false;
   std::string rendererType{"density_pathtracer"};
   std::string gridType{"structuredRegular"};
   std::string voxelTypeString{"float"};
@@ -38,8 +39,7 @@ struct ViewerParams
   VKLFilter filter{VKL_FILTER_TRILINEAR};
   VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
   size_t numParticles{1000};
-  int maxIteratorDepth{0};
-  bool elementaryCellIteration{false};
+  float intervalResolutionHint{0.5f};
   int maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
   uint8_t motionBlurStructuredNumTimesteps{6};
   bool multiAttribute{false};
@@ -52,6 +52,7 @@ struct ViewerParams
   bool useISPC{true};
   std::string innerNodeOutput;
   int innerNodeMaxDepth{1};
+  float background{VKL_BACKGROUND_UNDEFINED};
 };
 
 bool addSamplingRateUI(GLFWVKLWindow &window)
@@ -73,23 +74,6 @@ bool addPathTracerUI(GLFWVKLWindow &window, Scene &scene)
   auto &renderer = window.currentRenderer();
 
   bool changed = false;
-
-  static int attributeIndex  = 0;
-  unsigned int numAttributes = vklGetNumAttributes(scene.volume);
-
-  if (numAttributes > 1) {
-    if (ImGui::SliderInt(
-            "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
-      scene.attributeIndex = attributeIndex;
-      changed              = true;
-    }
-  }
-
-  static float time = 0.f;
-  if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
-    renderer.setParam<float>("time", time);
-    changed = true;
-  }
 
   static bool motionBlur = false;
   if (ImGui::Checkbox("motion blur", &motionBlur)) {
@@ -161,12 +145,6 @@ bool addIsosurfacesUI(GLFWVKLWindow &window, std::vector<float> &isoValues)
 
     initialized        = true;
     isosurfacesChanged = true;  // Update isovalues on init!
-  }
-
-  static float time = 0.f;
-  if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
-    renderer.setParam<float>("time", time);
-    isosurfacesChanged = true;
   }
 
   if (ImGui::Checkbox("show isosurfaces", &showIsosurfaces)) {
@@ -269,7 +247,8 @@ void usage(const char *progname)
          "\t-valueRange <lower> <upper>\n"
          "\t-multiAttribute (vdb and structuredRegular only, ignores -field)\n"
          "\t-motionBlur structured | unstructured (structuredRegular and vdb)\n"
-         "\t-filter nearest | trilinear (structured and vdb) | tricubic (vdb)\n"
+         "\t-filter nearest | trilinear (structured and vdb) | tricubic "
+         "(structured and vdb)\n"
          "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
          "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
@@ -280,6 +259,7 @@ void usage(const char *progname)
          "\t-o <output.ppm>\n"
          "\t-innerNodeOutput <output.usda> (vdb only)\n"
          "\t-innerNodeMaxDepth <level> (vdb only)\n"
+         "\t-background <BG VALUE>| undefined\n"
       << std::endl;
 }
 
@@ -310,20 +290,19 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
       if (argc < argIndex + 2) {
         throw std::runtime_error("improper -windowSize arguments");
       }
-      params.windowSize.x     = atoi(argv[argIndex++]);
-      params.windowSize.y     = atoi(argv[argIndex++]);
-      params.pixelRange.lower = vec2i(0);
-      params.pixelRange.upper = params.windowSize;
+      params.windowSize.x = atoi(argv[argIndex++]);
+      params.windowSize.y = atoi(argv[argIndex++]);
     } else if (switchArg == "-pixelRange") {
       if (argc < argIndex + 4) {
         throw std::runtime_error("improper -pixelRange arguments");
       }
+      params.cmdlinePixelRange  = true;
       params.pixelRange.lower.x = atoi(argv[argIndex++]);
-      int y0 = atoi(argv[argIndex++]);
+      int y0                    = atoi(argv[argIndex++]);
       params.pixelRange.upper.x = atoi(argv[argIndex++]);
-      int y1 = atoi(argv[argIndex++]);
-      params.pixelRange.lower.y = params.windowSize.y-y1;
-      params.pixelRange.upper.y = params.windowSize.y-y0;
+      int y1                    = atoi(argv[argIndex++]);
+      params.pixelRange.lower.y = params.windowSize.y - y1;
+      params.pixelRange.upper.y = params.windowSize.y - y0;
     } else if (switchArg == "-disable-vsync") {
       params.disableVSync = true;
     } else if (switchArg == "-gridOrigin") {
@@ -449,6 +428,16 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
         throw std::runtime_error("improper -innerNodeMaxDepth arguments");
       }
       params.innerNodeMaxDepth = stoi(std::string(argv[argIndex++]));
+    } else if (switchArg == "-background") {
+      if (argc < argIndex + 1) {
+        throw std::runtime_error("improper -background arguments");
+      }
+      const std::string bgArg = argv[argIndex++];
+      if (bgArg == "undefined") {
+        params.background = VKL_BACKGROUND_UNDEFINED;
+      } else {
+        params.background = std::stof(bgArg);
+      }
     } else if (switchArg == "-help") {
       usage(argv[0]);
       return false;
@@ -459,10 +448,11 @@ bool parseCommandLine(int argc, const char **argv, ViewerParams &params)
     }
   }
 
-  if (area(params.pixelRange) <= 0 || params.pixelRange.lower.x < 0 ||
-      params.pixelRange.lower.y < 0 ||
-      params.pixelRange.upper.x > params.windowSize.x ||
-      params.pixelRange.upper.y > params.windowSize.y) {
+  if (params.cmdlinePixelRange &&
+      (area(params.pixelRange) <= 0 || params.pixelRange.lower.x < 0 ||
+       params.pixelRange.lower.y < 0 ||
+       params.pixelRange.upper.x > params.windowSize.x ||
+       params.pixelRange.upper.y > params.windowSize.y)) {
     throw std::runtime_error("invalid pixel range");
   }
 
@@ -551,7 +541,7 @@ void setupVolume(ViewerParams &params,
       } else if (params.motionBlurUnstructured) {
         if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
-          temporalConfig.useTemporalCompression = true;
+          temporalConfig.useTemporalCompression       = true;
           temporalConfig.temporalCompressionThreshold = 0.05f;
         } else {
           temporalConfig =
@@ -840,7 +830,7 @@ void setupVolume(ViewerParams &params,
       } else if (params.motionBlurUnstructured) {
         if (params.field == "sphere" && !params.multiAttribute) {
           temporalConfig = TemporalConfig(TemporalConfig::Unstructured, 256);
-          temporalConfig.useTemporalCompression = true;
+          temporalConfig.useTemporalCompression       = true;
           temporalConfig.temporalCompressionThreshold = 0.05f;
         } else {
           temporalConfig =
@@ -952,15 +942,16 @@ void setupVolume(ViewerParams &params,
     }
   }
 
-  params.maxIteratorDepth =
-      (params.gridType == "vdb" ? VKL_VDB_NUM_LEVELS - 2 : 6);
-
-  params.elementaryCellIteration = false;
-
-  if (params.haveFilter && !params.haveVdb) {
+  if (params.haveFilter && !params.haveVdb &&
+      params.gridType != "structuredRegular") {
     std::cerr << "warning: -filter has no effect on " << params.gridType
               << " volumes" << std::endl;
   }
+
+  VKLVolume vklVolume = testingVolume->getVKLVolume(getOpenVKLDevice());
+
+  vklSetFloat(vklVolume, "background", params.background);
+  vklCommit(vklVolume);
 }
 
 void setupSampler(const ViewerParams &params, Scene &scene)
@@ -968,10 +959,15 @@ void setupSampler(const ViewerParams &params, Scene &scene)
   vklSetInt(scene.sampler, "filter", params.filter);
   vklSetInt(scene.sampler, "gradientFilter", params.gradientFilter);
   vklSetInt(scene.sampler, "maxSamplingDepth", params.maxSamplingDepth);
-  vklSetInt(scene.sampler, "maxIteratorDepth", params.maxIteratorDepth);
-  vklSetBool(
-      scene.sampler, "elementaryCellIteration", params.elementaryCellIteration);
   vklCommit(scene.sampler);
+}
+
+void setupIntervalIteratorContext(const ViewerParams &params, Scene &scene)
+{
+  vklSetFloat(scene.intervalContext,
+              "intervalResolutionHint",
+              params.intervalResolutionHint);
+  vklCommit(scene.intervalContext);
 }
 
 void setupScene(const ViewerParams &params,
@@ -980,6 +976,7 @@ void setupScene(const ViewerParams &params,
 {
   scene.updateVolume(testingVolume->getVKLVolume(getOpenVKLDevice()));
   setupSampler(params, scene);
+  setupIntervalIteratorContext(params, scene);
 }
 
 void logToOutput(const ViewerParams &params, const Scene &scene)
@@ -1015,7 +1012,9 @@ void interactiveRender(ViewerParams &params,
   auto glfwVKLWindow = rkcommon::make_unique<GLFWVKLWindow>(
       params.windowSize, scene, params.rendererType, params.disableVSync);
 
-  glfwVKLWindow->setRenderPixelRange(params.pixelRange);
+  if (params.cmdlinePixelRange) {
+    glfwVKLWindow->setRenderPixelRange(params.pixelRange);
+  }
 
   glfwVKLWindow->registerImGuiCallback([&]() {
     bool changed = false;
@@ -1045,25 +1044,14 @@ void interactiveRender(ViewerParams &params,
       glfwVKLWindow->setActiveRenderer(params.rendererType);
     }
 
-    bool samplerParamsChanged = false;
+    bool samplerParamsChanged                 = false;
+    bool intervalIteratorContextParamsChanged = false;
 
-    // maxIteratorDepth parameter currently only applies to unstructured,
-    // particle, and AMR volume samplers (special case below for vdb).
-    if (params.gridType == "unstructured" || params.gridType == "particle" ||
-        params.gridType == "amr") {
-      if (ImGui::SliderInt(
-              "maxIteratorDepth", &params.maxIteratorDepth, 0, 31)) {
-        samplerParamsChanged = true;
-      }
-    }
-
-    // elementaryCellIteration parameter currently only appies to unstructured
-    // volume samplers.
-    if (params.gridType == "unstructured") {
-      if (ImGui::Checkbox("elementaryCellIteration",
-                          &params.elementaryCellIteration)) {
-        samplerParamsChanged = true;
-      }
+    if (ImGui::SliderFloat("intervalResolutionHint",
+                           &params.intervalResolutionHint,
+                           0.f,
+                           1.f)) {
+      intervalIteratorContextParamsChanged = true;
     }
 
     if (params.gridType == "structuredRegular" ||
@@ -1075,7 +1063,9 @@ void interactiveRender(ViewerParams &params,
 
       if (ImGui::BeginCombo("filter", filters[params.filter])) {
         for (auto it : filters) {
-          if (it.first == VKL_FILTER_TRICUBIC && params.gridType != "vdb")
+          if (it.first == VKL_FILTER_TRICUBIC &&
+              (params.gridType != "vdb" &&
+               params.gridType != "structuredRegular"))
             continue;
           const bool isSelected = (params.filter == it.first);
           if (ImGui::Selectable(filters[it.first], isSelected)) {
@@ -1090,7 +1080,9 @@ void interactiveRender(ViewerParams &params,
 
       if (ImGui::BeginCombo("gradientFilter", filters[params.gradientFilter])) {
         for (auto it : filters) {
-          if (it.first == VKL_FILTER_TRICUBIC && params.gridType != "vdb")
+          if (it.first == VKL_FILTER_TRICUBIC &&
+              (params.gridType != "vdb" &&
+               params.gridType != "structuredRegular"))
             continue;
           const bool isSelected = (params.filter == it.first);
           if (ImGui::Selectable(filters[it.first], isSelected)) {
@@ -1109,17 +1101,18 @@ void interactiveRender(ViewerParams &params,
       if (ImGui::SliderInt("maxSamplingDepth",
                            &params.maxSamplingDepth,
                            0,
-                           VKL_VDB_NUM_LEVELS - 1) ||
-          ImGui::SliderInt("maxIteratorDepth",
-                           &params.maxIteratorDepth,
-                           0,
                            VKL_VDB_NUM_LEVELS - 1)) {
-        samplerParamsChanged = true;
+        samplerParamsChanged                 = true;
       }
     }
 
     if (samplerParamsChanged) {
       setupSampler(params, scene);
+      changed = true;
+    }
+
+    if (intervalIteratorContextParamsChanged) {
+      setupIntervalIteratorContext(params, scene);
       changed = true;
     }
 
@@ -1136,6 +1129,25 @@ void interactiveRender(ViewerParams &params,
       renderer.commit();
     }
 
+    static int attributeIndex  = 0;
+    unsigned int numAttributes = vklGetNumAttributes(scene.volume);
+
+    if (numAttributes > 1) {
+      if (ImGui::SliderInt(
+              "attributeIndex", &attributeIndex, 0, numAttributes - 1)) {
+        scene.updateAttributeIndex(attributeIndex);
+        changed = true;
+      }
+    }
+
+    if (params.motionBlurStructured || params.motionBlurUnstructured) {
+      static float time = 0.f;
+      if (ImGui::SliderFloat("time", &time, 0.f, 1.f)) {
+        scene.time = time;
+        changed = true;
+      }
+    }
+
     if (params.rendererType == "ray_march_iterator") {
       changed |= addSamplingRateUI(*glfwVKLWindow);
     }
@@ -1147,7 +1159,7 @@ void interactiveRender(ViewerParams &params,
     if (params.rendererType == "hit_iterator") {
       if (addIsosurfacesUI(*glfwVKLWindow, isoValues)) {
         changed = true;
-        scene.updateValueSelector(transferFunction, isoValues);
+        scene.updateHitIteratorContextValues(isoValues);
       }
     }
 
@@ -1164,7 +1176,7 @@ void interactiveRender(ViewerParams &params,
           scene.tfNumColorsAndOpacities =
               transferFunction.colorsAndOpacities.size();
           scene.tfValueRange = valueRange;
-          scene.updateValueSelector(transferFunction, isoValues);
+          scene.updateIntervalIteratorContextValueRanges(transferFunction);
           glfwVKLWindow->resetAccumulation();
         };
 
@@ -1182,7 +1194,8 @@ void interactiveRender(ViewerParams &params,
     if (vdbVolume && vdbVolume->updateVolume(leafAccessObserver)) {
       scene.updateVolume(vdbVolume->getVKLVolume(getOpenVKLDevice()));
       setupSampler(params, scene);
-      scene.updateValueSelector(transferFunction, isoValues);
+      scene.updateIntervalIteratorContextValueRanges(transferFunction);
+      scene.updateHitIteratorContextValues(isoValues);
 
       if (leafAccessObserver)
         vklRelease(leafAccessObserver);
@@ -1212,14 +1225,17 @@ void imageWrite(ViewerParams &params,
   scene.tfColorsAndOpacities    = transferFunction.colorsAndOpacities.data();
   scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
 
-  // and a default value selector, with default isovalues
-  scene.updateValueSelector(transferFunction,
-                            std::vector<float>{-1.f, 0.f, 1.f});
+  // and default iterator contexts
+  scene.updateIntervalIteratorContextValueRanges(transferFunction);
+  scene.updateHitIteratorContextValues(std::vector<float>{-1.f, 0.f, 1.f});
+
   auto window = rkcommon::make_unique<VKLWindow>(
       params.windowSize, scene, params.rendererType);
 
   window->setUseISPC(params.useISPC);
-  window->setRenderPixelRange(params.pixelRange);
+  if (params.cmdlinePixelRange) {
+    window->setRenderPixelRange(params.pixelRange);
+  }
   window->render();
 
   // save image on completion of benchmark; note we apparently have no way to

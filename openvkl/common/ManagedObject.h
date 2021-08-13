@@ -54,6 +54,17 @@ namespace openvkl {
     template <typename T>
     const Ref<const DataT<T>> getParamDataT(const char *name);
 
+    // gets a data array of the given size and type.
+    // uses the provided default value if the parameter is not set.
+    // expands the data into an array if only a single value is given.
+    // throws an error if the array has more than one element but a different
+    // size than expectedSize.
+    template <typename T>
+    const Ref<const DataT<T>> getParamDataT(const char *name,
+                                            size_t expectedSize,
+                                            T valIfNotFound);
+
+
     // throws an error if the named Data parameter is present and not compact
     void requireParamDataIsCompact(const char *name);
 

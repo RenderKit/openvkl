@@ -16,10 +16,6 @@ namespace openvkl {
     void HitIterator::commit()
     {
       Renderer::commit();
-
-      time = getParam<float>("time", 0.f);
-
-      ispc::HitIterator_set(ispcEquivalent, time);
     }
 
     vec3f HitIterator::renderPixel(const Scene &scene, Ray &ray, const vec4i &)
@@ -27,24 +23,20 @@ namespace openvkl {
       vec3f color(0.f);
       float alpha = 0.f;
 
-      if (scene.valueSelector == nullptr)
-        return color;
-
       // create volume iterator
       vkl_range1f tRange;
       tRange.lower = ray.t.lower;
       tRange.upper = ray.t.upper;
 
-      void *hitIteratorBuffer = alloca(vklGetHitIteratorSize(scene.sampler));
+      void *hitIteratorBuffer = alloca(vklGetHitIteratorSize(scene.hitContext));
       void *shadowHitIteratorBuffer =
-          alloca(vklGetHitIteratorSize(scene.sampler));
+          alloca(vklGetHitIteratorSize(scene.hitContext));
 
-      VKLHitIterator iterator = vklInitHitIterator(scene.sampler,
+      VKLHitIterator iterator = vklInitHitIterator(scene.hitContext,
                                                    (vkl_vec3f *)&ray.org,
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
-                                                   time,
-                                                   scene.valueSelector,
+                                                   scene.time,
                                                    hitIteratorBuffer);
 
       // the current surface hit
@@ -56,8 +48,8 @@ namespace openvkl {
 
       while (vklIterateHit(iterator, &hit) && alpha < 0.99f) {
         const vec3f c = ray.org + hit.t * ray.dir;
-        const vkl_vec3f grad =
-            vklComputeGradient(scene.sampler, (vkl_vec3f *)&c);
+        const vkl_vec3f grad = vklComputeGradient(
+            scene.sampler, (vkl_vec3f *)&c, scene.attributeIndex, scene.time);
         vec3f N = normalize(vec3f(grad.x, grad.y, grad.z));
         if (std::isnan(N.x) || std::isnan(N.y) || std::isnan(N.z))
           N = vec3f(0.f);
@@ -81,12 +73,11 @@ namespace openvkl {
               tShadowRange.lower = hit.epsilon;
               tShadowRange.upper = inf;
               VKLHitIterator shadowIterator =
-                  vklInitHitIterator(scene.sampler,
+                  vklInitHitIterator(scene.hitContext,
                                      (vkl_vec3f *)&c,
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,
-                                     time,
-                                     scene.valueSelector,
+                                     scene.time,
                                      shadowHitIteratorBuffer);
               if (!vklIterateHit(shadowIterator, &shadowHit)) {
                 illum += abs(co) * emission[i];  // Lambertian surface shading.

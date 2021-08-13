@@ -9,7 +9,7 @@
 #include <windows.h>  // Sleep
 #endif
 
-void demoScalarAPI(VKLVolume volume)
+void demoScalarAPI(VKLDevice device, VKLVolume volume)
 {
   printf("demo of 1-wide API\n");
 
@@ -26,15 +26,18 @@ void demoScalarAPI(VKLVolume volume)
   unsigned int numAttributes = vklGetNumAttributes(volume);
   printf("\tnum attributes = %d\n\n", numAttributes);
 
-  // value range (first attribute)
-  vkl_range1f valueRange = vklGetValueRange(volume);
-  printf("\tvalue range (first attribute) = (%f %f)\n\n",
-         valueRange.lower,
-         valueRange.upper);
+  // value range for all attributes
+  for (unsigned int i = 0; i < numAttributes; i++) {
+    vkl_range1f valueRange = vklGetValueRange(volume, i);
+    printf("\tvalue range (attribute %u) = (%f %f)\n",
+           i,
+           valueRange.lower,
+           valueRange.upper);
+  }
 
   // coordinate for sampling / gradients
   vkl_vec3f coord = {1.f, 2.f, 3.f};
-  printf("\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
+  printf("\n\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
 
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
@@ -53,15 +56,36 @@ void demoScalarAPI(VKLVolume volume)
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
-  // value selector setup (note the commit at the end)
-  vkl_range1f ranges[2]     = {{10, 20}, {50, 75}};
-  int num_ranges            = 2;
-  float values[2]           = {32, 96};
-  int num_values            = 2;
-  VKLValueSelector selector = vklNewValueSelector(volume);
-  vklValueSelectorSetRanges(selector, num_ranges, ranges);
-  vklValueSelectorSetValues(selector, num_values, values);
-  vklCommit(selector);
+  // interval iterator context setup
+  vkl_range1f ranges[2] = {{10, 20}, {50, 75}};
+  int num_ranges        = 2;
+  VKLData rangesData =
+      vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
+
+  VKLIntervalIteratorContext intervalContext =
+      vklNewIntervalIteratorContext(sampler);
+
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+
+  vklSetData(intervalContext, "valueRanges", rangesData);
+  vklRelease(rangesData);
+
+  vklCommit(intervalContext);
+
+  // hit iterator context setup
+  float values[2] = {32, 96};
+  int num_values  = 2;
+  VKLData valuesData =
+      vklNewData(device, num_values, VKL_FLOAT, values, VKL_DATA_DEFAULT, 0);
+
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
+
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
+
+  vklCommit(hitContext);
 
   // ray definition for iterators
   vkl_vec3f rayOrigin    = {0, 1, 1};
@@ -80,12 +104,17 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetIntervalIteratorSize(sampler));
+    char *buffer = _malloca(vklGetIntervalIteratorSize(intervalContext));
 #else
-    char buffer[vklGetIntervalIteratorSize(sampler)];
+    char buffer[vklGetIntervalIteratorSize(intervalContext)];
 #endif
-    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, selector, buffer);
+    VKLIntervalIterator intervalIterator =
+        vklInitIntervalIterator(intervalContext,
+                                &rayOrigin,
+                                &rayDirection,
+                                &rayTRange,
+                                time,
+                                buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -117,12 +146,16 @@ void demoScalarAPI(VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetHitIteratorSize(sampler));
+    char *buffer = _malloca(vklGetHitIteratorSize(hitContext));
 #else
-    char buffer[vklGetHitIteratorSize(sampler)];
+    char buffer[vklGetHitIteratorSize(hitContext)];
 #endif
-    VKLHitIterator hitIterator = vklInitHitIterator(
-        sampler, &rayOrigin, &rayDirection, &rayTRange, time, selector, buffer);
+    VKLHitIterator hitIterator = vklInitHitIterator(hitContext,
+                                                    &rayOrigin,
+                                                    &rayDirection,
+                                                    &rayTRange,
+                                                    time,
+                                                    buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -141,7 +174,8 @@ void demoScalarAPI(VKLVolume volume)
 #endif
   }
 
-  vklRelease(selector);
+  vklRelease(hitContext);
+  vklRelease(intervalContext);
   vklRelease(sampler);
 }
 
@@ -334,7 +368,7 @@ int main()
 
   vklCommit(volume);
 
-  demoScalarAPI(volume);
+  demoScalarAPI(device, volume);
   demoVectorAPI(volume);
   demoStreamAPI(volume);
 

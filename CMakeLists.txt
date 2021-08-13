@@ -53,7 +53,7 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
 
-find_package(embree 3.6.1 REQUIRED)
+find_package(embree 3.13.1 REQUIRED)
 openvkl_create_embree_target()
 
 ## Build library, examples, and tests ##

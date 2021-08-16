@@ -39,7 +39,7 @@ target_link_libraries(vkl_example_renderers PUBLIC openvkl openvkl_testing rkcom
 
 
 
-set(OPENVKL_IMGUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/imgui-1.81" 
+set(OPENVKL_IMGUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/imgui-1.83" 
   CACHE PATH "Path to imgui.")
 
 add_library(imgui STATIC 

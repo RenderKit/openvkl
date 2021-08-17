@@ -28,7 +28,6 @@ TEST_CASE("VDB volume motion blur", "[volume_sampling]")
                                                         128,
                                                         vec3f(0.f),
                                                         vec3f(1.f),
-                                                        VKL_FILTER_NEAREST,
                                                         temporalConfigs[tc]));
       VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
       VKLSampler vklSampler = vklNewSampler(vklVolume);

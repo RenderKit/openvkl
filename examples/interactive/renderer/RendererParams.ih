@@ -1,0 +1,17 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include <rkcommon/math/box.ih>
+#include <rkcommon/math/vec.ih>
+
+struct RendererParams
+{
+  int attributeIndex;
+  float time;
+
+  // Only render pixels in this range.
+  bool restrictPixelRange;
+  box2i pixelRange;
+};

@@ -1,91 +1,69 @@
 ## Copyright 2019-2021 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-## OpenGL dependency ##
+add_subdirectory(renderer)
 
-set(OpenGL_GL_PREFERENCE "LEGACY")
-find_package(OpenGL 2 REQUIRED)
+### vklExamples app ##
 
-## GLFW dependency ##
+set(OpenGL_GL_PREFERENCE "GLVND") # Request new ABI, but this is only a hint.
+find_package(OpenGL 2)
 
-find_package(glfw3 REQUIRED)
+if (OPENGL_FOUND)
+  add_library(vkl_opengl INTERFACE)
+  target_compile_definitions(vkl_opengl INTERFACE GL_SILENCE_DEPRECATION)
+  if (TARGET OpenGL::GL)
+    target_link_libraries(vkl_opengl INTERFACE OpenGL::GL)
+  else ()
+    # Old versions of cmake do not create the GL targets.
+    target_link_libraries(vkl_opengl INTERFACE ${OPENGL_LIBRARIES})
+    target_include_directories(vkl_opengl INTERFACE ${OPENGL_INCLUDE_DIR})
+  endif ()
 
-## Example renderers ##
+  find_package(glfw3 REQUIRED)
 
-include_directories_ispc(
-  ${CMAKE_SOURCE_DIR}/openvkl/include
-  ${CMAKE_SOURCE_DIR}/openvkl/devices/cpu/math
-  ${RKCOMMON_INCLUDE_DIRS}
-)
+  set(OPENVKL_IMGUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/imgui-1.83"
+    CACHE PATH "Path to imgui.")
 
-openvkl_add_library_ispc(vkl_example_renderers STATIC
-  renderers/Renderer.cpp
-  renderers/Renderer.ih
-  renderers/Renderer.ispc
+  add_library(imgui STATIC
+    ${OPENVKL_IMGUI_ROOT}/imgui.cpp
+    ${OPENVKL_IMGUI_ROOT}/imgui_draw.cpp
+    ${OPENVKL_IMGUI_ROOT}/imgui_tables.cpp
+    ${OPENVKL_IMGUI_ROOT}/imgui_widgets.cpp
+    ${OPENVKL_IMGUI_ROOT}/backends/imgui_impl_glfw.cpp
+    ${OPENVKL_IMGUI_ROOT}/backends/imgui_impl_opengl2.cpp)
 
-  renderers/DensityPathTracer.cpp
-  renderers/DensityPathTracer.ispc
-  renderers/HitIterator.cpp
-  renderers/HitIterator.ispc
-  renderers/IntervalIteratorDebug.cpp
-  renderers/IntervalIteratorDebug.ispc
-  renderers/RayMarchIterator.cpp
-  renderers/RayMarchIterator.ispc
-)
+  target_include_directories(imgui PUBLIC ${OPENVKL_IMGUI_ROOT})
+  target_link_libraries(imgui PUBLIC glfw vkl_opengl)
+  target_compile_definitions(imgui PUBLIC VKL_HAVE_IMGUI)
+endif()
 
-target_include_directories(vkl_example_renderers PUBLIC ${ISPC_TARGET_DIR})
+if (TARGET imgui)
+  add_executable(vklExamples
+    vklExamples.cpp
+    BatchApplication.cpp
+    InteractiveApplication.cpp
+    ParameterGui.cpp
+    RenderView.cpp
+    TransferFunctionWidget.cpp
+    ${VKL_RESOURCE}
+  )
 
-target_link_libraries(vkl_example_renderers PUBLIC openvkl openvkl_testing rkcommon::rkcommon)
+  target_link_libraries(vklExamples
+    PRIVATE
+      imgui
+      vkl_example_renderers
+  )
 
+  install(TARGETS vklExamples
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+  )
+endif()
 
-
-set(OPENVKL_IMGUI_ROOT "${CMAKE_CURRENT_LIST_DIR}/imgui-1.83" 
-  CACHE PATH "Path to imgui.")
-
-add_library(imgui STATIC 
-  ${OPENVKL_IMGUI_ROOT}/imgui.cpp
-  ${OPENVKL_IMGUI_ROOT}/imgui_draw.cpp
-  ${OPENVKL_IMGUI_ROOT}/imgui_tables.cpp
-  ${OPENVKL_IMGUI_ROOT}/imgui_widgets.cpp
-  ${OPENVKL_IMGUI_ROOT}/backends/imgui_impl_glfw.cpp
-  ${OPENVKL_IMGUI_ROOT}/backends/imgui_impl_opengl2.cpp)
-
-target_include_directories(imgui PUBLIC ${OPENVKL_IMGUI_ROOT})
-target_link_libraries(imgui PUBLIC glfw)
-
-## Interactive example app ##
-
-add_executable(vklExamples
-  window/ArcballCamera.cpp
-  window/VKLWindow.cpp
-  window/GLFWVKLWindow.cpp
-  vklExamples.cpp
-  window/TransferFunctionWidget.cpp
-
-  ${VKL_RESOURCE}
-)
-
-target_link_libraries(vklExamples PRIVATE
-  openvkl_utility
-  openvkl_testing
-  imgui
-  vkl_example_renderers
-  ${OPENGL_LIBRARIES}
-)
-
-target_include_directories(vklExamples PRIVATE ${CMAKE_CURRENT_LIST_DIR})
-target_compile_definitions(vklExamples PRIVATE GL_SILENCE_DEPRECATION)
-
-install(TARGETS vklExamples RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-## Benchmark app ##
+### vklBenchmark app ##
 
 if (BUILD_BENCHMARKS)
   add_executable(vklBenchmark
-    window/ArcballCamera.cpp
-    window/VKLWindow.cpp
     vklBenchmark.cpp
-
     ${VKL_RESOURCE}
   )
 
@@ -95,8 +73,6 @@ if (BUILD_BENCHMARKS)
     openvkl_testing
     vkl_example_renderers
   )
-
-  target_include_directories(vklBenchmark PRIVATE ${CMAKE_CURRENT_LIST_DIR})
 
   install(TARGETS vklBenchmark RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

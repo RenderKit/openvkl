@@ -1,18 +1,22 @@
 // Copyright 2019-2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Renderer_ispc.h"
-#include "window/VKLWindow.h"
+#include "Renderer_ispc.h"  // for Renderer_pixelsPerJob()
+#include "renderer/Renderer.h"
+#include "renderer/Scene.h"
+
 // openvkl_testing
 #include "openvkl_testing.h"
 // google benchmark
 #include "benchmark/benchmark.h"
 // std
+#include <iomanip>
 #include <sstream>
 #include <string>
 // rkcommon
 #include "rkcommon/common.h"
 #include "rkcommon/math/box.h"
+#include "rkcommon/utility/SaveImage.h"
 
 using namespace openvkl::examples;
 using namespace openvkl::testing;
@@ -20,19 +24,19 @@ using namespace rkcommon::math;
 using openvkl::testing::WaveletVdbVolumeFloat;
 
 static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
-                                           bool useISPC,
                                            std::string &errorString)
 {
   // ISPC renderers that use iterator APIs must match width with the
   // instantiated VKL device
-  if (useISPC && rendererType.find("iterator") != std::string::npos) {
+  if (rendererType.find("ispc") &&
+      rendererType.find("iterator") != std::string::npos) {
     const int deviceNativeSIMDWidth = vklGetNativeSIMDWidth(getOpenVKLDevice());
     const int ispcRendererSIMDWidth = ispc::Renderer_pixelsPerJob();
 
     if (deviceNativeSIMDWidth != ispcRendererSIMDWidth) {
       std::stringstream ss;
-      ss << rendererType << " (useISPC = " << useISPC
-         << ") is not compatible with the current VKL device (device width = "
+      ss << rendererType
+         << " is not compatible with the current VKL device (device width = "
          << deviceNativeSIMDWidth
          << ", renderer width = " << ispcRendererSIMDWidth << ")";
 
@@ -50,160 +54,116 @@ static bool rendererIsCompatibleWithDevice(const std::string &rendererType,
 // benchmark runs (e.g. `state.SkipWithError()`), but with those benchmark
 // results to still have JSON output populated, which we do not want. This
 // approach avoids that.
-#define BENCHMARK_CAPTURE_IF_COMPATIBLE(FUNC,                             \
-                                        TEST_CASE_NAME,                   \
-                                        RENDERER_TYPE,                    \
-                                        WINDOW_SIZE,                      \
-                                        VOLUME_DIMENSION,                 \
-                                        USE_ISPC)                         \
-  {                                                                       \
-    std::string errorString;                                              \
-    if (!rendererIsCompatibleWithDevice(                                  \
-            RENDERER_TYPE, USE_ISPC, errorString)) {                      \
-      std::cerr << "skipping benchmark capture: " << #FUNC << ", "        \
-                << #TEST_CASE_NAME << "\n\t" << errorString << std::endl; \
-    } else {                                                              \
-      BENCHMARK_CAPTURE(FUNC,                                             \
-                        TEST_CASE_NAME,                                   \
-                        RENDERER_TYPE,                                    \
-                        WINDOW_SIZE,                                      \
-                        VOLUME_DIMENSION,                                 \
-                        USE_ISPC);                                        \
-    }                                                                     \
+#define BENCHMARK_CAPTURE_IF_COMPATIBLE(                                       \
+    FUNC, TEST_CASE_NAME, RENDERER_TYPE, WINDOW_SIZE, VOLUME_DIMENSION)        \
+  {                                                                            \
+    std::string errorString;                                                   \
+    if (!rendererIsCompatibleWithDevice(RENDERER_TYPE, errorString)) {         \
+      std::cerr << "skipping benchmark capture: " << #FUNC << ", "             \
+                << #TEST_CASE_NAME << "\n\t" << errorString << std::endl;      \
+    } else {                                                                   \
+      BENCHMARK_CAPTURE(                                                       \
+          FUNC, TEST_CASE_NAME, RENDERER_TYPE, WINDOW_SIZE, VOLUME_DIMENSION); \
+    }                                                                          \
   }
 
-static void setupSceneDefaults(Scene &scene)
+static void run_benchmark(benchmark::State &state,
+                          const std::string &field,
+                          const std::string &volumeType,
+                          const std::string &rendererType,
+                          const vec2i &resolution,
+                          int volumeDimension)
 {
-  if (!scene.volume) {
-    throw std::runtime_error("scene must have an active volume");
+  const std::list<std::string> args = {"vklBenchmark",
+                                       "-sync",
+                                       "-volumeType",
+                                       volumeType,
+                                       "-field",
+                                       field,
+                                       "-framebufferSize",
+                                       std::to_string(resolution.x),
+                                       std::to_string(resolution.y),
+                                       "-gridDimensions",
+                                       std::to_string(volumeDimension),
+                                       std::to_string(volumeDimension),
+                                       std::to_string(volumeDimension)};
+
+  Scene scene;
+  scene.parseCommandLine(args);
+
+  auto &scheduler = scene.scheduler;
+  auto &volume    = scene.volume;
+
+  volume.updateVKLObjects();
+  scene.camera->fitToScreen(volume.getBounds());
+  scene.camera.incrementVersion();
+
+  auto rendererPtr = scene.createRenderer(rendererType);
+  assert(rendererPtr);
+
+  Renderer &renderer = *(rendererPtr.get());
+  // This call will resize the framebuffer to our desired output
+  // resolution.
+  renderer.getFramebuffer(resolution.x, resolution.y);
+
+  scheduler.start(renderer);
+  for (auto _ : state) {
+    scheduler.renderFrame(renderer);
   }
+  scheduler.stop(renderer);
 
-  // set a default transfer function
-  static TransferFunction transferFunction;
+  // enables rates in report output
+  state.SetItemsProcessed(state.iterations());
 
-  scene.tfValueRange            = box1f(0.f, 1.f);
-  scene.tfColorsAndOpacities    = transferFunction.colorsAndOpacities.data();
-  scene.tfNumColorsAndOpacities = transferFunction.colorsAndOpacities.size();
+  static size_t ctr = 0;
+  std::ostringstream os;
+  os << std::setw(4) << std::setfill('0') << ctr++ << "_" << field
+     << "_" << volumeType << "_" << rendererType << ".ppm";
 
-  // and default iterator contexts
-  scene.updateIntervalIteratorContextValueRanges(transferFunction);
-  scene.updateHitIteratorContextValues(std::vector<float>{-1.f, 0.f, 1.f});
+  const auto &framebuffer = renderer.getFramebuffer(resolution.x, resolution.y);
+  const auto &fb          = framebuffer.getFrontBuffer();
+  rkcommon::utility::writePFM(
+      os.str(), fb.getWidth(), fb.getHeight(), fb.getRgba());
 }
 
 static void render_wavelet_structured_regular(benchmark::State &state,
                                               const std::string &rendererType,
                                               const vec2i &windowSize,
-                                              int volumeDimension,
-                                              bool useISPC)
+                                              int volumeDimension)
 {
-  auto proceduralVolume =
-      rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
-          vec3i(volumeDimension), vec3f(-1.f), vec3f(2.f / volumeDimension));
-
-  Scene scene;
-  scene.updateVolume(proceduralVolume->getVKLVolume(getOpenVKLDevice()));
-
-  setupSceneDefaults(scene);
-
-  auto window =
-      rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
-
-  window->setUseISPC(useISPC);
-
-  for (auto _ : state) {
-    window->render();
-  }
-
-  // enables rates in report output
-  state.SetItemsProcessed(state.iterations());
-
-  // save image on completion of benchmark; note we apparently have no way to
-  // get the formal benchmark name, so we'll create one here
-  static int ppmCounter = 0;
-  std::stringstream ss;
-  ss << "render_wavelet_structured_regular" << rendererType << "_" << ppmCounter
-     << ".ppm";
-  window->savePPM(ss.str());
-  ppmCounter++;
+  run_benchmark(state,
+                "wavelet",
+                "structuredRegular",
+                rendererType,
+                windowSize,
+                volumeDimension);
 }
 
 static void render_wavelet_vdb(benchmark::State &state,
                                const std::string &rendererType,
                                const vec2i &windowSize,
-                               int volumeDimension,
-                               bool useISPC)
+                               int volumeDimension)
 {
-  auto proceduralVolume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
-      getOpenVKLDevice(),
-      vec3i(volumeDimension),
-      vec3f(-1.f),
-      vec3f(2.f / volumeDimension));
-
-  Scene scene;
-  scene.updateVolume(proceduralVolume->getVKLVolume(getOpenVKLDevice()));
-
-  setupSceneDefaults(scene);
-
-  auto window =
-      rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
-
-  window->setUseISPC(useISPC);
-
-  for (auto _ : state) {
-    window->render();
-  }
-
-  // enables rates in report output
-  state.SetItemsProcessed(state.iterations());
-
-  // save image on completion of benchmark; note we apparently have no way to
-  // get the formal benchmark name, so we'll create one here
-  static int ppmCounter = 0;
-  std::stringstream ss;
-  ss << "render_wavelet_vdb" << rendererType << "_" << ppmCounter << ".ppm";
-  window->savePPM(ss.str());
-  ppmCounter++;
+  run_benchmark(state,
+                "wavelet",
+                "vdb",
+                rendererType,
+                windowSize,
+                volumeDimension);
 }
 
 static void render_wavelet_unstructured_hex(benchmark::State &state,
                                             const std::string &rendererType,
                                             const vec2i &windowSize,
-                                            int volumeDimension,
-                                            bool useISPC)
+                                            int volumeDimension)
 {
-  auto proceduralVolume =
-      rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
-          vec3i(volumeDimension),
-          vec3f(-1.f),
-          vec3f(2.f / volumeDimension),
-          VKL_HEXAHEDRON,
-          false);
-
-  Scene scene;
-  scene.updateVolume(proceduralVolume->getVKLVolume(getOpenVKLDevice()));
-
-  setupSceneDefaults(scene);
-
-  auto window =
-      rkcommon::make_unique<VKLWindow>(windowSize, scene, rendererType);
-
-  window->setUseISPC(useISPC);
-
-  for (auto _ : state) {
-    window->render();
-  }
-
-  // enables rates in report output
-  state.SetItemsProcessed(state.iterations());
-
-  // save image on completion of benchmark; note we apparently have no way to
-  // get the formal benchmark name, so we'll create one here
-  static int ppmCounter = 0;
-  std::stringstream ss;
-  ss << "render_wavelet_unstructured_hex" << rendererType << "_" << ppmCounter
-     << ".ppm";
-  window->savePPM(ss.str());
-  ppmCounter++;
+  // Note: this is a hex volume because hex cells are the default!
+  run_benchmark(state,
+                "wavelet",
+                "unstructured",
+                rendererType,
+                windowSize,
+                volumeDimension);
 }
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
@@ -216,129 +176,111 @@ int main(int argc, char **argv)
                                   density_pathtracer / 512 / scalar,
                                   "density_pathtracer",
                                   vec2i(1024),
-                                  512,
-                                  false);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   density_pathtracer / 512 / ispc,
-                                  "density_pathtracer",
+                                  "density_pathtracer_ispc",
                                   vec2i(1024),
-                                  512,
-                                  true);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / scalar,
                                   "hit_iterator",
                                   vec2i(1024),
-                                  512,
-                                  false);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / ispc,
-                                  "hit_iterator",
+                                  "hit_iterator_ispc",
                                   vec2i(1024),
-                                  512,
-                                  true);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   ray_march_iterator / 512 / scalar,
                                   "ray_march_iterator",
                                   vec2i(1024),
-                                  512,
-                                  false);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   ray_march_iterator / 512 / ispc,
-                                  "ray_march_iterator",
+                                  "ray_march_iterator_ispc",
                                   vec2i(1024),
-                                  512,
-                                  true);
+                                  512);
 
   // wavelet vdb
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   density_pathtracer / 512 / scalar,
                                   "density_pathtracer",
                                   vec2i(1024),
-                                  512,
-                                  false);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   density_pathtracer / 512 / ispc,
-                                  "density_pathtracer",
+                                  "density_pathtracer_ispc",
                                   vec2i(1024),
-                                  512,
-                                  true);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   hit_iterator / 512 / scalar,
                                   "hit_iterator",
                                   vec2i(1024),
-                                  512,
-                                  false);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   hit_iterator / 512 / ispc,
-                                  "hit_iterator",
+                                  "hit_iterator_ispc",
                                   vec2i(1024),
-                                  512,
-                                  true);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   ray_march_iterator / 512 / scalar,
                                   "ray_march_iterator",
                                   vec2i(1024),
-                                  512,
-                                  false);
+                                  512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   ray_march_iterator / 512 / ispc,
-                                  "ray_march_iterator",
+                                  "ray_march_iterator_ispc",
                                   vec2i(1024),
-                                  512,
-                                  true);
+                                  512);
 
   // wavelet unstructured
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   density_pathtracer / 128 / scalar,
                                   "density_pathtracer",
                                   vec2i(1024),
-                                  128,
-                                  false);
+                                  128);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   density_pathtracer / 128 / ispc,
-                                  "density_pathtracer",
+                                  "density_pathtracer_ispc",
                                   vec2i(1024),
-                                  128,
-                                  true);
+                                  128);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   hit_iterator / 128 / scalar,
                                   "hit_iterator",
                                   vec2i(1024),
-                                  128,
-                                  false);
+                                  128);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   hit_iterator / 128 / ispc,
-                                  "hit_iterator",
+                                  "hit_iterator_ispc",
                                   vec2i(1024),
-                                  128,
-                                  true);
+                                  128);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   ray_march_iterator / 128 / scalar,
                                   "ray_march_iterator",
                                   vec2i(1024),
-                                  128,
-                                  false);
+                                  128);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   ray_march_iterator / 128 / ispc,
-                                  "ray_march_iterator",
+                                  "ray_march_iterator_ispc",
                                   vec2i(1024),
-                                  128,
-                                  true);
+                                  128);
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

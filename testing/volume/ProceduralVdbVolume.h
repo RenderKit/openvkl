@@ -92,7 +92,6 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
-          VKLFilter filter                       = VKL_FILTER_TRILINEAR,
           const TemporalConfig &temporalConfig   = TemporalConfig(),
           uint32_t numAttributes                 = 1,
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
@@ -138,7 +137,6 @@ namespace openvkl {
      private:
       std::unique_ptr<Buffers> buffers;
       range1f valueRange;
-      VKLFilter filter;
       VKLDataCreationFlags dataCreationFlags;
       size_t byteStride;
       uint32_t numAttributes;
@@ -461,7 +459,6 @@ namespace openvkl {
                             const vec3i &dimensions,
                             const vec3f &gridOrigin,
                             const vec3f &gridSpacing,
-                            VKLFilter filter,
                             const TemporalConfig &temporalConfig,
                             uint32_t numAttributes,
                             VKLDataCreationFlags dataCreationFlags,
@@ -472,7 +469,6 @@ namespace openvkl {
                                   getVKLDataType<VOXEL_TYPE>(),
                                   temporalConfig),
           buffers(nullptr),
-          filter(filter),
           numAttributes(std::max<uint32_t>(numAttributes, 1u)),
           dataCreationFlags(dataCreationFlags),
           byteStride(byteStride),
@@ -602,7 +598,7 @@ namespace openvkl {
               "specified device not compatible with VdbVolumeBuffers device");
         }
 
-        volume = buffers->createVolume(filter);
+        volume = buffers->createVolume();
       }
     }
 

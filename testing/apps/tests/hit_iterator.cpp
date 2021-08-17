@@ -141,8 +141,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
           new ZVdbVolumeFloat(getOpenVKLDevice(),
                               dimensions,
                               gridOrigin,
-                              gridSpacing,
-                              VKL_FILTER_TRILINEAR));
+                              gridSpacing));
 
       VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
@@ -162,7 +161,6 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
                                                dimensions,
                                                gridOrigin,
                                                gridSpacing,
-                                               VKL_FILTER_TRILINEAR,
                                                VKL_DATA_DEFAULT,
                                                true,
                                                TemporalConfig()));

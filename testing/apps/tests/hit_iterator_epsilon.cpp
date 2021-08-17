@@ -193,8 +193,7 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
       std::make_shared<ZVdbVolumeFloat>(getOpenVKLDevice(),
                                         dimensions,
                                         gridOrigin,
-                                        gridSpacing,
-                                        VKL_FILTER_TRILINEAR));
+                                        gridSpacing));
 
   testingVolumes.push_back(std::make_shared<ProceduralShellsAMRVolume<>>(
       dimensions, gridOrigin, gridSpacing));

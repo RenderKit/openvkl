@@ -31,7 +31,6 @@ struct Vdb
                                              vec3i(128),
                                              vec3f(0.f),
                                              vec3f(1.f),
-                                             filter,
                                              VKL_DATA_SHARED_BUFFER,
                                              true));
 

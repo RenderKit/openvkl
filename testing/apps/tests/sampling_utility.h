@@ -206,12 +206,15 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
     std::shared_ptr<VOLUME_TYPE> v,
     vec3i step    = vec3i(1),
     int lowerSpan = 0,
-    int upperSpan = 0)
+    int upperSpan = 0,
+    VKLFilter filter = VKL_FILTER_TRILINEAR)
 {
   const float sampleTolerance = 1e-4f;
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklSetInt(vklSampler, "filter", filter);
+  vklSetInt(vklSampler, "gradientFilter", filter);
   vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);

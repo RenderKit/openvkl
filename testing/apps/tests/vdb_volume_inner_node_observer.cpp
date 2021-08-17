@@ -54,6 +54,8 @@ inline void inner_node_tests(VKLVolume vklVolume,
   const unsigned int numAttributes = vklGetNumAttributes(vklVolume);
 
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+  vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
   vklCommit(vklSampler);
 
   // the inner node observer returns _child_ nodes of nodes at the specified
@@ -146,8 +148,7 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
             rkcommon::make_unique<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
                                                          dimensions,
                                                          gridOrigin,
-                                                         gridSpacing,
-                                                         VKL_FILTER_NEAREST);
+                                                         gridSpacing);
 
         inner_node_tests(v->getVKLVolume(getOpenVKLDevice()),
                          dimensions,
@@ -159,8 +160,7 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
         auto v = rkcommon::make_unique<XYZVdbVolumeFloat>(getOpenVKLDevice(),
                                                           dimensions,
                                                           gridOrigin,
-                                                          gridSpacing,
-                                                          VKL_FILTER_NEAREST);
+                                                          gridSpacing);
 
         inner_node_tests(v->getVKLVolume(getOpenVKLDevice()),
                          dimensions,
@@ -175,7 +175,6 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
                                                  dimensions,
                                                  gridOrigin,
                                                  gridSpacing,
-                                                 VKL_FILTER_NEAREST,
                                                  VKL_DATA_DEFAULT,
                                                  true));
 

@@ -1,0 +1,49 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include <openvkl/openvkl.isph>
+#include "Camera.ih"
+#include "RendererParams.ih"
+#include "TransferFunction.ih"
+
+struct Scene
+{
+  VKLVolume volume;
+  VKLSampler sampler;
+  Camera camera;
+  RendererParams rendererParams;
+  TransferFunction transferFunction;
+};
+
+// Returns false for pixels outside the valid range.
+// pixelIdx is the linear pixel index for each lane.
+inline bool Scene_computePixel(const uniform Scene &scene,
+                               int w,
+                               int h,
+                               uint32 pixelIdx,
+                               vec2i &pixel)
+{
+  bool inRange = false;
+
+  if (w > 0) {
+    const int x   = pixelIdx % w;
+    const int y   = pixelIdx / w;
+    inRange          = (x < w && y < h);
+
+    if (scene.rendererParams.restrictPixelRange) {
+      const uniform box2i &range = scene.rendererParams.pixelRange;
+      inRange                    = inRange && (h - y - 1) >= range.lower.y &&
+                (h - y - 1) < range.upper.y && (w - x - 1) >= range.lower.x &&
+                (w - x - 1) < range.upper.x;
+    }
+
+    if (inRange) {
+      pixel.x  = x;
+      pixel.y  = y;
+    }
+  }
+
+  return inRange;
+}

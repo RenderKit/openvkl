@@ -82,47 +82,12 @@ TEST_CASE("VDB volume value range", "[value_range]")
 
   // half
 
-  SECTION("WaveletVdbVolumeHalf nearest")
+  SECTION("WaveletVdbVolumeHalf")
   {
     WaveletVdbVolumeHalf *volume = nullptr;
     range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
-                                                      vec3f(0.f),
-                                                      vec3f(1.f),
-                                                      VKL_FILTER_NEAREST));
-    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
-    REQUIRE(valueRange.upper >= valueRange.lower);
-    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
-            Approx(6.f).epsilon(0.001f));
-    REQUIRE_NOTHROW(delete volume);
-  }
-
-  SECTION("WaveletVdbVolumeHalf trilinear")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
-                                                      vec3f(0.f),
-                                                      vec3f(1.f),
-                                                      VKL_FILTER_TRILINEAR));
-    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
-    REQUIRE(valueRange.upper >= valueRange.lower);
-    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
-            Approx(6.f).epsilon(0.001f));
-    REQUIRE_NOTHROW(delete volume);
-  }
-
-  SECTION("WaveletVdbVolumeHalf tricubic")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
-                                                      vec3f(0.f),
-                                                      vec3f(1.f),
-                                                      VKL_FILTER_TRICUBIC));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
     REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
     REQUIRE(valueRange.upper >= valueRange.lower);
     REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
@@ -132,47 +97,12 @@ TEST_CASE("VDB volume value range", "[value_range]")
 
   // float
 
-  SECTION("WaveletVdbVolumeFloat nearest")
+  SECTION("WaveletVdbVolumeFloat")
   {
     WaveletVdbVolumeFloat *volume = nullptr;
     range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_NEAREST));
-    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
-    REQUIRE(valueRange.upper >= valueRange.lower);
-    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
-            Approx(6.f).epsilon(0.001f));
-    REQUIRE_NOTHROW(delete volume);
-  }
-
-  SECTION("WaveletVdbVolumeFloat trilinear")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_TRILINEAR));
-    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
-    REQUIRE(valueRange.upper >= valueRange.lower);
-    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
-            Approx(6.f).epsilon(0.001f));
-    REQUIRE_NOTHROW(delete volume);
-  }
-
-  SECTION("WaveletVdbVolumeFloat tricubic")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_TRICUBIC));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
     REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
     REQUIRE(valueRange.upper >= valueRange.lower);
     REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
@@ -192,14 +122,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
   SECTION("WaveletVdbVolumeHalf nearest")
   {
     WaveletVdbVolumeHalf *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
-                                                      vec3f(0.f),
-                                                      vec3f(1.f),
-                                                      VKL_FILTER_NEAREST));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -229,14 +158,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
   SECTION("WaveletVdbVolumeHalf trilinear")
   {
     WaveletVdbVolumeHalf *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
-                                                      vec3f(0.f),
-                                                      vec3f(1.f),
-                                                      VKL_FILTER_TRILINEAR));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -266,14 +194,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
   SECTION("WaveletVdbVolumeHalf tricubic")
   {
     WaveletVdbVolumeHalf *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
-                                                      vec3f(0.f),
-                                                      vec3f(1.f),
-                                                      VKL_FILTER_TRICUBIC));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
     vklCommit(vklSampler);
     const vec3i step(2);
 
@@ -316,14 +243,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
   SECTION("WaveletVdbVolumeFloat nearest")
   {
     WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_NEAREST));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -353,14 +279,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
   SECTION("WaveletVdbVolumeFloat trilinear")
   {
     WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_TRILINEAR));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -390,14 +315,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
   SECTION("WaveletVdbVolumeFloat tricubic")
   {
     WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_TRICUBIC));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
     vklCommit(vklSampler);
     const vec3i step(2);
 
@@ -444,14 +368,13 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
 
   WaveletVdbVolumeFloat *volume = nullptr;
   range1f valueRange;
-  REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                     128,
-                                                     vec3f(0.f),
-                                                     vec3f(1.f),
-                                                     VKL_FILTER_TRILINEAR));
+  REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                      getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
   VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
+  vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+  vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
   vklCommit(vklSampler);
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(vklSampler);
@@ -487,11 +410,12 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
                                                       128,
                                                       vec3f(0.f),
-                                                      vec3f(0.01f),
-                                                      VKL_FILTER_NEAREST));
+                                                      vec3f(0.01f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -526,11 +450,12 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     REQUIRE_NOTHROW(volume = new XYZVdbVolumeHalf(getOpenVKLDevice(),
                                                   dim,
                                                   vec3f(0.f),
-                                                  vec3f(0.01f),
-                                                  VKL_FILTER_TRILINEAR));
+                                                  vec3f(0.01f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -576,11 +501,12 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
     REQUIRE_NOTHROW(volume = new XYZVdbVolumeHalf(getOpenVKLDevice(),
                                                   dim,
                                                   vec3f(0.f),
-                                                  vec3f(0.01f),
-                                                  VKL_FILTER_TRICUBIC));
+                                                  vec3f(0.01f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
     vklCommit(vklSampler);
     const vec3i step(2);
 
@@ -625,17 +551,16 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
   // float
 
-  SECTION("WaveletVdbVolumeFloat nearest")
+  SECTION("WaveletVdbVolumeFloat")
   {
     WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                       128,
-                                                       vec3f(0.f),
-                                                       vec3f(1.f),
-                                                       VKL_FILTER_NEAREST));
+    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -666,14 +591,13 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
   {
     XYZVdbVolumeFloat *volume = nullptr;
     const int dim             = 128;
-    REQUIRE_NOTHROW(volume = new XYZVdbVolumeFloat(getOpenVKLDevice(),
-                                                   dim,
-                                                   vec3f(0.f),
-                                                   vec3f(1.f),
-                                                   VKL_FILTER_TRILINEAR));
+    REQUIRE_NOTHROW(volume = new XYZVdbVolumeFloat(
+                        getOpenVKLDevice(), dim, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
     vklCommit(vklSampler);
     const vec3i step(2);
     multidim_index_sequence<3> mis(volume->getDimensions() / step);
@@ -715,14 +639,13 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
   {
     XYZVdbVolumeFloat *volume = nullptr;
     const int dim             = 128;
-    REQUIRE_NOTHROW(volume = new XYZVdbVolumeFloat(getOpenVKLDevice(),
-                                                   dim,
-                                                   vec3f(0.f),
-                                                   vec3f(1.f),
-                                                   VKL_FILTER_TRICUBIC));
+    REQUIRE_NOTHROW(volume = new XYZVdbVolumeFloat(
+                        getOpenVKLDevice(), dim, vec3f(0.f), vec3f(1.f)));
 
     VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
+    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
     vklCommit(vklSampler);
     const vec3i step(2);
 
@@ -793,7 +716,6 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
                                                128,
                                                vec3f(0.f),
                                                vec3f(1.f),
-                                               VKL_FILTER_TRILINEAR,
                                                TemporalConfig(),
                                                1,
                                                dcf,

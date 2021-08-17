@@ -110,7 +110,7 @@ namespace openvkl {
       /*
        * Create a VKLVolume from these buffers.
        */
-      VKLVolume createVolume(VKLFilter filter) const;
+      VKLVolume createVolume() const;
 
       VKLDevice getVKLDevice() const;
 
@@ -447,10 +447,9 @@ namespace openvkl {
       }
     }
 
-    inline VKLVolume VdbVolumeBuffers::createVolume(VKLFilter filter) const
+    inline VKLVolume VdbVolumeBuffers::createVolume() const
     {
       VKLVolume volume = vklNewVolume(device, "vdb");
-      vklSetInt(volume, "filter", filter);
 
       VKLData transformData =
           vklNewData(device, 12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);

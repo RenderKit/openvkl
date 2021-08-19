@@ -71,11 +71,17 @@ namespace openvkl {
         const float defaultRangeBegin = 0.45f;
         const float defaultRangeEnd   = 0.55f;
 
-        for (int i = 0; i <= defaultDepth; i++) {
-          float f = float(i) / float(defaultDepth) * defaultRangeBegin;
-          hintToDepth.emplace_back(f, i);
+        // mapping defined for intervalResolutionHint in [0, defaultRangeBegin]
+        if (defaultDepth == 0) {
+          hintToDepth.emplace_back(0.f, 0);
+        } else {
+          for (int i = 0; i <= defaultDepth; i++) {
+            float f = float(i) / float(defaultDepth) * defaultRangeBegin;
+            hintToDepth.emplace_back(f, i);
+          }
         }
 
+        // mapping defined for intervalResolutionHint in [defaultRangeEnd, 1)
         for (int i = defaultDepth + 1; i <= bvhDepth - 1; i++) {
           float f = defaultRangeEnd + float(i - (defaultDepth + 1)) /
                                           float(bvhDepth - (defaultDepth + 1)) *
@@ -84,6 +90,7 @@ namespace openvkl {
           hintToDepth.emplace_back(f, i);
         }
 
+        // mapping defined for intervalResolutionHint == 1
         hintToDepth.emplace_back(1.f, bvhDepth);
       }
 

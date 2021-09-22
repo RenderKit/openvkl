@@ -1,6 +1,14 @@
 Version History
 ---------------
 
+### Open VKL 1.0.1
+
+-   Fixed issue in `structuredRegular` and `vdb` interval iterators that could
+    lead to erroneous initial intervals for certain ray inputs
+-   Fixed handling of `intervalResolutionHint` interval iterator context
+    parameter for `amr`, `particle`, and `unstructured` volumes with small
+    numbers of cells / primitives
+
 ### Open VKL 1.0.0
 
 -   The version 1.0 release marks long term API stability (until v2.0)

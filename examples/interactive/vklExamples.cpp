@@ -249,7 +249,8 @@ void usage(const char *progname)
          "\t-motionBlur structured | unstructured (structuredRegular and vdb)\n"
          "\t-filter nearest | trilinear (structured and vdb) | tricubic "
          "(structured and vdb)\n"
-         "\t-field wavelet | xyz | sphere | <vdb grid name>\n"
+         "\t-field wavelet | xyz | sphere | torus (vdb float only) | <vdb grid "
+         "name>\n"
          "\t-file <filename>\n"
          "\t-numParticles <N> (particle only)\n"
          "\t-disable-vsync\n"
@@ -912,6 +913,8 @@ void setupVolume(ViewerParams &params,
                                                        params.filter,
                                                        temporalConfig,
                                                        numAttributes);
+          } else if (params.field == "torus") {
+            testingVolume = std::make_shared<TestingVdbTorusVolume>();
           } else {
             testingVolume =
                 std::make_shared<WaveletVdbVolumeFloat>(getOpenVKLDevice(),

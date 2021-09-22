@@ -11,6 +11,8 @@
 // half
 #include "../external/half.hpp"
 
+#include <vector>
+
 using namespace rkcommon::math;
 
 namespace openvkl {

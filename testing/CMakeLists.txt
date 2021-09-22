@@ -3,6 +3,7 @@
 
 add_library(openvkl_testing STATIC
   apps/AppInit.cpp
+  volume/TestingVdbTorusVolume.cpp
 )
 
 target_link_libraries(openvkl_testing PUBLIC

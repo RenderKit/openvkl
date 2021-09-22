@@ -8,6 +8,7 @@
 
 using namespace openvkl;
 
+using openvkl::testing::TestingVdbTorusVolume;
 using openvkl::testing::WaveletVdbVolumeFloat;
 using openvkl::testing::XYZVdbVolumeFloat;
 
@@ -276,7 +277,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     vklCommit(vklSampler);
     const vec3i step(2);
 
-    // tricubic support span; ignore coordinates here since they will interpolate with background
+    // tricubic support span; ignore coordinates here since they will
+    // interpolate with background
     const int lowerSpan = 1;
     const int upperSpan = 2;
 
@@ -399,7 +401,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
     vklCommit(vklSampler);
     const vec3i step(2);
 
-    // tricubic support span; ignore coordinates here since they will interpolate with background
+    // tricubic support span; ignore coordinates here since they will
+    // interpolate with background
     const int lowerSpan = 1;
     const int upperSpan = 2;
 
@@ -824,6 +827,82 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
         vklRelease(vklSampler);
       }
     }
+  }
+
+  shutdownOpenVKL();
+}
+
+TEST_CASE("VDB volume special cases", "[interval_iterators]")
+{
+  initializeOpenVKL();
+
+  SECTION("torus interval iteration")
+  {
+    TestingVdbTorusVolume *volume = nullptr;
+    REQUIRE_NOTHROW(volume = new TestingVdbTorusVolume());
+
+    VKLVolume vklVolume = volume->getVKLVolume(getOpenVKLDevice());
+
+    VKLSampler sampler = vklNewSampler(vklVolume);
+    vklCommit(sampler);
+
+    VKLIntervalIteratorContext intervalContext =
+        vklNewIntervalIteratorContext(sampler);
+    vklCommit(intervalContext);
+
+    std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+
+    // failure case found from OSPRay
+    {
+      // intbits() representation of ray
+      const uint32_t rayOrigin[]    = {1112900070, 1116163650, 1103628776};
+      const uint32_t rayDirection[] = {1081551625, 1098411576, 2984533223};
+
+      const vkl_range1f rayTRange = {0.f, inf};
+      const float time            = 0.f;
+
+      VKLIntervalIterator intervalIterator =
+          vklInitIntervalIterator(intervalContext,
+                                  (vkl_vec3f *)&rayOrigin,
+                                  (vkl_vec3f *)&rayDirection,
+                                  &rayTRange,
+                                  time,
+                                  buffer.data());
+
+      int numIntervalsFound = 0;
+      VKLInterval prevInterval;
+
+      while (true) {
+        VKLInterval interval;
+        int result = vklIterateInterval(intervalIterator, &interval);
+        if (!result)
+          break;
+
+        INFO("tRange = " << interval.tRange.lower << " "
+                         << interval.tRange.upper
+                         << "\nvalueRange = " << interval.valueRange.lower
+                         << " " << interval.valueRange.upper
+                         << "\nnominalDeltaT = " << interval.nominalDeltaT);
+
+        REQUIRE(interval.tRange.lower >= 0.f);
+        REQUIRE(interval.tRange.upper >= 0.f);
+        REQUIRE(interval.tRange.upper > interval.tRange.lower);
+
+        if (numIntervalsFound > 0) {
+          REQUIRE(interval.tRange.lower == prevInterval.tRange.upper);
+        }
+
+        numIntervalsFound++;
+        prevInterval = interval;
+      }
+
+      REQUIRE(numIntervalsFound > 0);
+    }
+
+    vklRelease(intervalContext);
+    vklRelease(sampler);
+
+    REQUIRE_NOTHROW(delete volume);
   }
 
   shutdownOpenVKL();

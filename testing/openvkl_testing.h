@@ -17,3 +17,4 @@
 #include "volume/RawHFileStructuredVolume.h"
 #include "volume/TestingStructuredVolumeMulti.h"
 #include "volume/TestingUnstructuredMixedSimple.h"
+#include "volume/TestingVdbTorusVolume.h"

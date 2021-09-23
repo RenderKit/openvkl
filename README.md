@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v1.0.0 of Intel® Open VKL. For changes and new features
+This is release v1.0.1 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -32,6 +32,14 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 1.0.1
+
+  - Fixed issue in `structuredRegular` and `vdb` interval iterators that
+    could lead to erroneous initial intervals for certain ray inputs
+  - Fixed handling of `intervalResolutionHint` interval iterator context
+    parameter for `amr`, `particle`, and `unstructured` volumes with
+    small numbers of cells / primitives
 
 ### Open VKL 1.0.0
 

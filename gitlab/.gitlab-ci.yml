@@ -77,11 +77,6 @@ stages:
     - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
-.job_template: &base_benchmark_job
-  stage: benchmark
-  script:
-    - gitlab/run-benchmarks.sh
-
 .job_template: &base_release_job
   stage: release
   before_script:
@@ -91,6 +86,35 @@ stages:
 
 .job_template: &base_release_test_job
   stage: release-test
+
+## Job Templates: Benchmarks ##
+
+.job_template: &base_benchmark_job
+  stage: benchmark
+  script:
+    - gitlab/run-benchmarks.sh
+
+# the below can be merged in to run only specific benchmark suites
+
+.job_template: &benchmark_select_structured
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolume$
+
+.job_template: &benchmark_select_structured-multi
+  variables:
+    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+
+.job_template: &benchmark_select_vdb
+  variables:
+    BENCHMARK_SUITE: ^VDBVolume$
+
+.job_template: &benchmark_select_vdb-multi
+  variables:
+    BENCHMARK_SUITE: ^VDBVolumeMulti$
+
+.job_template: &benchmark_select_examples
+  variables:
+    BENCHMARK_SUITE: ^ExampleRenderers$
 
 ## Build Jobs ##
 
@@ -407,33 +431,23 @@ test-functional-windows-msvc15-TBB2021:
   tags:
     - vis-perf-x8280-1
 
-benchmark-x8280-1:
+all-x8280-1:
   <<: *manual_benchmark_x8280-1
 
-structured-benchmark-x8280-1:
-  <<: *manual_benchmark_x8280-1
-  variables:
-    BENCHMARK_SUITE: ^StructuredVolume$
+structured-x8280-1:
+  <<: [*manual_benchmark_x8280-1, *benchmark_select_structured]
 
-structured-multi-benchmark-x8280-1:
-  <<: *manual_benchmark_x8280-1
-  variables:
-    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+structured-multi-x8280-1:
+  <<: [*manual_benchmark_x8280-1, *benchmark_select_structured-multi]
 
-vdb-benchmark-x8280-1:
-  <<: *manual_benchmark_x8280-1
-  variables:
-    BENCHMARK_SUITE: ^VDBVolume$
+vdb-x8280-1:
+  <<: [*manual_benchmark_x8280-1, *benchmark_select_vdb]
 
-vdb-multi-benchmark-x8280-1:
-  <<: *manual_benchmark_x8280-1
-  variables:
-    BENCHMARK_SUITE: ^VDBVolumeMulti$
+vdb-multi-x8280-1:
+  <<: [*manual_benchmark_x8280-1, *benchmark_select_vdb-multi]
 
-example-benchmark-x8280-1:
-  <<: *manual_benchmark_x8280-1
-  variables:
-    BENCHMARK_SUITE: ^ExampleRenderers$
+examples-x8280-1:
+  <<: [*manual_benchmark_x8280-1, *benchmark_select_examples]
 
 # vis-perf-a-1
 
@@ -445,33 +459,79 @@ example-benchmark-x8280-1:
   tags:
     - vis-perf-a-1
 
-benchmark-a-1:
+all-a-1:
   <<: *manual_benchmark_a-1
 
-structured-benchmark-a-1:
-  <<: *manual_benchmark_a-1
-  variables:
-    BENCHMARK_SUITE: ^StructuredVolume$
+structured-a-1:
+  <<: [*manual_benchmark_a-1, *benchmark_select_structured]
 
-structured-multi-benchmark-a-1:
-  <<: *manual_benchmark_a-1
-  variables:
-    BENCHMARK_SUITE: ^StructuredVolumeMulti$
+structured-multi-a-1:
+  <<: [*manual_benchmark_a-1, *benchmark_select_structured-multi]
 
-vdb-benchmark-a-1:
-  <<: *manual_benchmark_a-1
-  variables:
-    BENCHMARK_SUITE: ^VDBVolume$
+vdb-a-1:
+  <<: [*manual_benchmark_a-1, *benchmark_select_vdb]
 
-vdb-multi-benchmark-a-1:
-  <<: *manual_benchmark_a-1
-  variables:
-    BENCHMARK_SUITE: ^VDBVolumeMulti$
+vdb-multi-a-1:
+  <<: [*manual_benchmark_a-1, *benchmark_select_vdb-multi]
 
-example-benchmark-a-1:
-  <<: *manual_benchmark_a-1
-  variables:
-    BENCHMARK_SUITE: ^ExampleRenderers$
+examples-a-1:
+  <<: [*manual_benchmark_a-1, *benchmark_select_examples]
+
+# vis-sdp-adl-1-perf
+
+.job_template: &manual_benchmark_adl-1
+  <<: *base_benchmark_job
+  when: manual
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-sdp-adl-1-perf
+
+all-adl-1:
+  <<: *manual_benchmark_adl-1
+
+structured-adl-1:
+  <<: [*manual_benchmark_adl-1, *benchmark_select_structured]
+
+structured-multi-adl-1:
+  <<: [*manual_benchmark_adl-1, *benchmark_select_structured-multi]
+
+vdb-adl-1:
+  <<: [*manual_benchmark_adl-1, *benchmark_select_vdb]
+
+vdb-multi-adl-1:
+  <<: [*manual_benchmark_adl-1, *benchmark_select_vdb-multi]
+
+examples-adl-1:
+  <<: [*manual_benchmark_adl-1, *benchmark_select_examples]
+
+# vis-sdp-dg2-01-perf
+
+.job_template: &manual_benchmark_tgl-1
+  <<: *base_benchmark_job
+  when: manual
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-sdp-dg2-01-perf
+
+all-tgl-1:
+  <<: *manual_benchmark_tgl-1
+
+structured-tgl-1:
+  <<: [*manual_benchmark_tgl-1, *benchmark_select_structured]
+
+structured-multi-tgl-1:
+  <<: [*manual_benchmark_tgl-1, *benchmark_select_structured-multi]
+
+vdb-tgl-1:
+  <<: [*manual_benchmark_tgl-1, *benchmark_select_vdb]
+
+vdb-multi-tgl-1:
+  <<: [*manual_benchmark_tgl-1, *benchmark_select_vdb-multi]
+
+examples-tgl-1:
+  <<: [*manual_benchmark_tgl-1, *benchmark_select_examples]
 
 # Benchmark jobs meant for scheduled (nightly, weekly, ...) builds.
 # The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
@@ -495,6 +555,26 @@ benchmark-a-1-schedule:
     - build-centos7-icc
   tags:
     - vis-perf-a-1
+
+benchmark-adl-1-schedule:
+  <<: *base_benchmark_job
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-sdp-adl-1-perf
+
+benchmark-tgl-1-schedule:
+  <<: *base_benchmark_job
+  only:
+    variables:
+      - $RUN_SCHEDULE_BENCHMARKS
+  needs:
+    - build-centos7-icc
+  tags:
+    - vis-sdp-dg2-01-perf
 
 ## KW Jobs ##
 

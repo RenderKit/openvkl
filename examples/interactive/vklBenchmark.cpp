@@ -299,45 +299,45 @@ int main(int argc, char **argv)
 
   // wavelet unstructured
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
-                                  density_pathtracer / 512 / scalar,
+                                  density_pathtracer / 128 / scalar,
                                   "density_pathtracer",
                                   vec2i(1024),
-                                  512,
+                                  128,
                                   false);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
-                                  density_pathtracer / 512 / ispc,
+                                  density_pathtracer / 128 / ispc,
                                   "density_pathtracer",
                                   vec2i(1024),
-                                  512,
+                                  128,
                                   true);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
-                                  hit_iterator / 512 / scalar,
+                                  hit_iterator / 128 / scalar,
                                   "hit_iterator",
                                   vec2i(1024),
-                                  512,
+                                  128,
                                   false);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
-                                  hit_iterator / 512 / ispc,
+                                  hit_iterator / 128 / ispc,
                                   "hit_iterator",
                                   vec2i(1024),
-                                  512,
+                                  128,
                                   true);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
-                                  ray_march_iterator / 512 / scalar,
+                                  ray_march_iterator / 128 / scalar,
                                   "ray_march_iterator",
                                   vec2i(1024),
-                                  512,
+                                  128,
                                   false);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
-                                  ray_march_iterator / 512 / ispc,
+                                  ray_march_iterator / 128 / ispc,
                                   "ray_march_iterator",
                                   vec2i(1024),
-                                  512,
+                                  128,
                                   true);
 
   ::benchmark::Initialize(&argc, argv);

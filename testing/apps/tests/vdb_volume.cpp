@@ -832,6 +832,53 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
   shutdownOpenVKL();
 }
 
+void vdb_special_case_interval_iterator(
+    VKLIntervalIteratorContext intervalContext,
+    const vkl_vec3f &rayOrigin,
+    const vkl_vec3f &rayDirection)
+{
+  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+
+  const vkl_range1f rayTRange = {0.f, inf};
+  const float time            = 0.f;
+
+  VKLIntervalIterator intervalIterator =
+      vklInitIntervalIterator(intervalContext,
+                              &rayOrigin,
+                              &rayDirection,
+                              &rayTRange,
+                              time,
+                              buffer.data());
+
+  int numIntervalsFound = 0;
+  VKLInterval prevInterval;
+
+  while (true) {
+    VKLInterval interval;
+    int result = vklIterateInterval(intervalIterator, &interval);
+    if (!result)
+      break;
+
+    INFO("tRange = " << interval.tRange.lower << " " << interval.tRange.upper
+                     << "\nvalueRange = " << interval.valueRange.lower << " "
+                     << interval.valueRange.upper
+                     << "\nnominalDeltaT = " << interval.nominalDeltaT);
+
+    REQUIRE(interval.tRange.lower >= 0.f);
+    REQUIRE(interval.tRange.upper >= 0.f);
+    REQUIRE(interval.tRange.upper > interval.tRange.lower);
+
+    if (numIntervalsFound > 0) {
+      REQUIRE(interval.tRange.lower == prevInterval.tRange.upper);
+    }
+
+    numIntervalsFound++;
+    prevInterval = interval;
+  }
+
+  REQUIRE(numIntervalsFound > 0);
+}
+
 TEST_CASE("VDB volume special cases", "[interval_iterators]")
 {
   initializeOpenVKL();
@@ -850,53 +897,41 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
         vklNewIntervalIteratorContext(sampler);
     vklCommit(intervalContext);
 
-    std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
-
     // failure case found from OSPRay
     {
       // intbits() representation of ray
-      const uint32_t rayOrigin[]    = {1112900070, 1116163650, 1103628776};
-      const uint32_t rayDirection[] = {1081551625, 1098411576, 2984533223};
+      const uint32_t rayOrigin[] = {
+          1112900070, 1116163650, 1103628776};  // 53.3769 67.6528 25.0048
+      const uint32_t rayDirection[] = {
+          1081551625, 1098411576, 2984533223};  // 3.862 15.5269 -6.64624e-09
 
-      const vkl_range1f rayTRange = {0.f, inf};
-      const float time            = 0.f;
+      vdb_special_case_interval_iterator(intervalContext,
+                                         *(vkl_vec3f *)&rayOrigin,
+                                         *(vkl_vec3f *)&rayDirection);
 
-      VKLIntervalIterator intervalIterator =
-          vklInitIntervalIterator(intervalContext,
-                                  (vkl_vec3f *)&rayOrigin,
-                                  (vkl_vec3f *)&rayDirection,
-                                  &rayTRange,
-                                  time,
-                                  buffer.data());
+      // additional cases based on the above testing updated divide_safe()
+      // implementation
 
-      int numIntervalsFound = 0;
-      VKLInterval prevInterval;
+      // from rkCommon: smallest positive normal number 2^-126=0x1p-126 (needs a
+      // C++17 compiler)
+      static const float rkcommon_flt_min = 1.17549435e-38;
 
-      while (true) {
-        VKLInterval interval;
-        int result = vklIterateInterval(intervalIterator, &interval);
-        if (!result)
-          break;
+      const vkl_vec3f rayDirectionVec3f = *(vkl_vec3f *)&rayDirection;
 
-        INFO("tRange = " << interval.tRange.lower << " "
-                         << interval.tRange.upper
-                         << "\nvalueRange = " << interval.valueRange.lower
-                         << " " << interval.valueRange.upper
-                         << "\nnominalDeltaT = " << interval.nominalDeltaT);
+      std::vector<float> dirZs{0.f,
+                               rkcommon_flt_min,
+                               1.1f * rkcommon_flt_min,
+                               -0.f,
+                               -rkcommon_flt_min,
+                               -1.1f * rkcommon_flt_min};
 
-        REQUIRE(interval.tRange.lower >= 0.f);
-        REQUIRE(interval.tRange.upper >= 0.f);
-        REQUIRE(interval.tRange.upper > interval.tRange.lower);
+      for (const auto &dirZ : dirZs) {
+        vkl_vec3f dir = rayDirectionVec3f;
+        dir.z         = dirZ;
 
-        if (numIntervalsFound > 0) {
-          REQUIRE(interval.tRange.lower == prevInterval.tRange.upper);
-        }
-
-        numIntervalsFound++;
-        prevInterval = interval;
+        vdb_special_case_interval_iterator(
+            intervalContext, *(vkl_vec3f *)&rayOrigin, dir);
       }
-
-      REQUIRE(numIntervalsFound > 0);
     }
 
     vklRelease(intervalContext);

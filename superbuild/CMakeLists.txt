@@ -117,14 +117,14 @@ option(BUILD_TBB "Build Intel Threading Building Blocks or search in environment
 option(BUILD_TBB_FROM_SOURCE "Build Intel Threading Building Blocks from source or use pre-built version?" OFF)
 if (BUILD_TBB)
   if (BUILD_TBB_FROM_SOURCE)
-    set(TBB_VERSION "2021.3.0" CACHE STRING "TBB version to download")
+    set(TBB_VERSION "2021.4.0" CACHE STRING "TBB version to download")
     if (TBB_VERSION VERSION_LESS 2021)
       message(FATAL_ERROR "Only TBB 2021 and later are supported when building TBB from source")
     endif()
 
     string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" TBB_ARCHIVE ${TBB_VERSION})
     set(_TBB_URL "https://github.com/oneapi-src/oneTBB/archive/refs/tags/${TBB_ARCHIVE}.zip")
-    set(_TBB_HASH "aadd36731bdc38702868303a8d08a7e34c5beb54031c99976533e2ca18d4e9ed")
+    set(_TBB_HASH "08ade531be2e4e904eb6bec8e01da51eb3b0e4e86738128eb2722b95e3fcb5e6")
   else()
     set(TBB_VERSION "2020.3" CACHE STRING "TBB version to download")
 

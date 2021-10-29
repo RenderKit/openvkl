@@ -47,7 +47,7 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-set(RKCOMMON_VERSION_REQUIRED 1.7.0)
+set(RKCOMMON_VERSION_REQUIRED 1.8.0)
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)

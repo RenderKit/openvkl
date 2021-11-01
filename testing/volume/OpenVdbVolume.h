@@ -165,14 +165,21 @@ namespace openvkl {
       openvdb::io::File file(filename.c_str());
       file.open();
 
+      if (!file.hasGrid(field)) {
+        std::ostringstream os;
+        os << "invalid field '" << field << "'. valid field names are:";
+        for (auto it = file.beginName(); it != file.endName(); ++it) {
+          os << " '" << *it << "'";
+        }
+        throw std::runtime_error(os.str().c_str());
+      }
+
       openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
 
       if (baseGrid->valueType() == "float") {
-        return new OpenVdbFloatVolume(
-            device, filename, field, deferLeaves);
+        return new OpenVdbFloatVolume(device, filename, field, deferLeaves);
       } else if (baseGrid->valueType() == "vec3s") {
-        return new OpenVdbVec3sVolume(
-            device, filename, field, deferLeaves);
+        return new OpenVdbVec3sVolume(device, filename, field, deferLeaves);
       } else {
         throw std::runtime_error("unsupported OpenVDB grid type: " +
                                  baseGrid->valueType());

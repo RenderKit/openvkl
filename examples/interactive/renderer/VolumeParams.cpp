@@ -64,7 +64,7 @@ namespace openvkl {
 
         else if (arg == "-file") {
           filename = cmd::consume_1<std::string>(args, it);
-          source = "file";
+          source   = "file";
         }
 
         else if (arg == "-field") {
@@ -214,12 +214,15 @@ namespace openvkl {
         testingVolume = pp.createParticleVolume();
       }
 
-      // We checked the volume type in validate()!
+      // The above calls may throw, in which case we never execute anything
+      // below.
       assert(testingVolume);
 
-      VKLVolume vklVolume = testingVolume->getVKLVolume(getOpenVKLDevice());
-      vklSetFloat(vklVolume, "background", pp.background);
-      vklCommit(vklVolume);
+      if (testingVolume) {
+        VKLVolume vklVolume = testingVolume->getVKLVolume(getOpenVKLDevice());
+        vklSetFloat(vklVolume, "background", pp.background);
+        vklCommit(vklVolume);
+      }
 
       return testingVolume;
     }

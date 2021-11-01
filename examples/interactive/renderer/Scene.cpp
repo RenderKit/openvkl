@@ -88,7 +88,13 @@ namespace openvkl {
           samplerParams.updateSampler(vklSampler);
         }
       } catch (const std::exception &e) {
-        std::cerr << e.what() << std::endl;
+        if (testingVolume) {
+          std::cerr << e.what() << std::endl;
+        } else {
+          // If we have no volume at all, we terminate. This will be caught
+          // in vklExamples::main().
+          throw;
+        }
       }
 
       // If the update failed, do not try to update again.

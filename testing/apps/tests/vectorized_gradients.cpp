@@ -130,8 +130,7 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
         new XYZVdbVolumeFloat(getOpenVKLDevice(),
                               vec3i(128),
                               vec3f(0.f),
-                              vec3f(1.f),
-                              VKL_FILTER_TRILINEAR));
+                              vec3f(1.f)));
 
     VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 

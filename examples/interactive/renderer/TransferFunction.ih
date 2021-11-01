@@ -1,0 +1,48 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include <rkcommon/math/box.ih>
+#include <rkcommon/math/vec.ih>
+
+struct TransferFunction
+{
+  box1f valueRange;
+  size_t numValues;
+  const vec4f *uniform colorsAndOpacities;
+};
+
+inline vec4f TransferFunction_sample(const uniform TransferFunction &self,
+                                     float value)
+{
+  vec4f colorAndOpacity = make_vec4f(0.f);
+
+  if (isnan(value) || self.numValues == 0) {
+    return colorAndOpacity;
+  }
+
+  if (value <= self.valueRange.lower) {
+    return self.colorsAndOpacities[0];
+  }
+
+  if (value >= self.valueRange.upper) {
+    return self.colorsAndOpacities[self.numValues - 1];
+  }
+
+  // map the value into the range [0, size - 1]
+  value = (value - self.valueRange.lower) /
+          (self.valueRange.upper - self.valueRange.lower) *
+          (self.numValues - 1.f);
+
+  // index and fractional offset
+  const int index       = floor(value);
+  const float remainder = value - index;
+
+  // the final interpolated value
+  return (
+      (1.f - remainder) * self.colorsAndOpacities[index] +
+      remainder *
+          self.colorsAndOpacities[min(
+              ((int32)(index + 1)), ((uniform int32)(self.numValues - 1)))]);
+}

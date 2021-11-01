@@ -1,6 +1,15 @@
 Version History
 ---------------
 
+### Open VKL 1.1.0
+
+-   vklExamples improvements: asynchronous rendering, multiple viewports,
+    docking, and more
+-   Fixed bug in `openvkl_utility_vdb` which could lead to crashes when creating
+    VDB volumes with temporally constant tiles
+-   Superbuild updates to latest versions of dependencies
+-   Minimum rkcommon version is now 1.8.0
+
 ### Open VKL 1.0.1
 
 -   Fixed issue in `structuredRegular` and `vdb` interval iterators that could

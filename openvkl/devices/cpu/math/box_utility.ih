@@ -4,7 +4,7 @@
 #pragma once
 
 #include "rkcommon/math/box.ih"
-#include "math/vec_utility.ih"
+#include "rkcommon/math/vec.ih"
 
 inline bool isempty1f(const box1f &box)
 {

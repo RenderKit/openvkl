@@ -366,8 +366,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
           rkcommon::make_unique<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
                                                        dimensions,
                                                        gridOrigin,
-                                                       gridSpacing,
-                                                       VKL_FILTER_TRILINEAR);
+                                                       gridSpacing);
 
       scalar_single_attribute_interval_iterator_tests(v);
     }
@@ -400,7 +399,6 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
                                                dimensions,
                                                gridOrigin,
                                                gridSpacing,
-                                               VKL_FILTER_TRILINEAR,
                                                VKL_DATA_DEFAULT,
                                                true,
                                                TemporalConfig()));

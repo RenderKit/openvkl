@@ -1,0 +1,40 @@
+// Copyright 2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "Ray.ih"
+
+struct Camera
+{
+  float sensorWidth;
+  float focalLength;
+  vec3f ctw_R[3];  // Three rows of the rotation camera -> world.
+  vec3f ctw_t;     // Translation camera -> world.
+};
+
+inline void Camera_createRay(const uniform Camera &camera,
+                             const uniform vec2i &res,
+                             const vec2f &p,
+                             Ray &ray)
+{
+  // Note: units of sensor width!
+  const uniform float irx = rcp((uniform float)res.x);
+  const vec2f pSensor =
+      make_vec2f((p.x - 0.5f * res.x) * irx, -(p.y - 0.5f * res.y) * irx);
+  const vec3f pCamera = make_vec3f(
+      camera.sensorWidth * pSensor.x, camera.sensorWidth * pSensor.y, 0.f);
+
+  // This is where the aperture is located, in camera coordinates.
+  const vec3f pAperture = make_vec3f(0.f, 0.f, -camera.focalLength);
+  const vec3f dCamera   = pAperture - pCamera;
+
+  ray.org   = make_vec3f(dot(camera.ctw_R[0], pCamera) + camera.ctw_t.x,
+                       dot(camera.ctw_R[1], pCamera) + camera.ctw_t.y,
+                       dot(camera.ctw_R[2], pCamera) + camera.ctw_t.z);
+  ray.dir   = normalize(make_vec3f(dot(camera.ctw_R[0], dCamera),
+                                 dot(camera.ctw_R[1], dCamera),
+                                 dot(camera.ctw_R[2], dCamera)));
+  ray.tnear = 0.f;
+  ray.tfar  = inf;
+}

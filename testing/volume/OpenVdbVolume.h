@@ -20,7 +20,6 @@ namespace openvkl {
       static OpenVdbVolume *loadVdbFile(VKLDevice device,
                                         const std::string &filename,
                                         const std::string &field,
-                                        VKLFilter filter,
                                         bool deferLeaves = false);
 
       virtual ~OpenVdbVolume() {}
@@ -43,9 +42,8 @@ namespace openvkl {
       OpenVdbVolumeImpl(VKLDevice device,
                         const std::string &filename,
                         const std::string &field,
-                        VKLFilter filter,
                         bool deferLeaves = false)
-          : grid(device, filename, field, deferLeaves), filter(filter)
+          : grid(device, filename, field, deferLeaves)
       {
       }
 
@@ -85,7 +83,7 @@ namespace openvkl {
 
                 rkcommon::utility::CodeTimer commitTimer;
                 commitTimer.start();
-                result.volume = grid.createVolume(filter);
+                result.volume = grid.createVolume();
                 commitTimer.stop();
                 result.commitMS = commitTimer.milliseconds();
 
@@ -142,12 +140,11 @@ namespace openvkl {
               "specified device not compatible with grid device");
         }
 
-        volume = grid.createVolume(filter);
+        volume = grid.createVolume();
       }
 
      private:
       Grid grid;
-      VKLFilter filter{VKL_FILTER_TRILINEAR};
       uint64_t lastLoadMS{30};
       std::unique_ptr<rkcommon::tasking::AsyncTask<AsyncResult>> asyncLoader;
     };
@@ -161,7 +158,6 @@ namespace openvkl {
         VKLDevice device,
         const std::string &filename,
         const std::string &field,
-        VKLFilter filter,
         bool deferLeaves)
     {
       openvdb::initialize();
@@ -169,14 +165,21 @@ namespace openvkl {
       openvdb::io::File file(filename.c_str());
       file.open();
 
+      if (!file.hasGrid(field)) {
+        std::ostringstream os;
+        os << "invalid field '" << field << "'. valid field names are:";
+        for (auto it = file.beginName(); it != file.endName(); ++it) {
+          os << " '" << *it << "'";
+        }
+        throw std::runtime_error(os.str().c_str());
+      }
+
       openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
 
       if (baseGrid->valueType() == "float") {
-        return new OpenVdbFloatVolume(
-            device, filename, field, filter, deferLeaves);
+        return new OpenVdbFloatVolume(device, filename, field, deferLeaves);
       } else if (baseGrid->valueType() == "vec3s") {
-        return new OpenVdbVec3sVolume(
-            device, filename, field, filter, deferLeaves);
+        return new OpenVdbVec3sVolume(device, filename, field, deferLeaves);
       } else {
         throw std::runtime_error("unsupported OpenVDB grid type: " +
                                  baseGrid->valueType());
@@ -199,7 +202,6 @@ namespace openvkl {
       static OpenVdbVolume *loadVdbFile(VKLDevice device,
                                         const std::string &filename,
                                         const std::string &field,
-                                        VKLFilter filter,
                                         bool deferLeaves = false)
       {
         throw std::runtime_error(
@@ -217,7 +219,6 @@ namespace openvkl {
     {
       OpenVdbVolumeImpl(const std::string &filename,
                         const std::string &field,
-                        VKLFilter filter,
                         bool deferLeaves = false)
       {
         throw std::runtime_error(

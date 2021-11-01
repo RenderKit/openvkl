@@ -24,7 +24,6 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
-          VKLFilter filter,
           const std::vector<std::shared_ptr<ProceduralVdbVolumeBase>>
               &attributeVolumes,
           VKLDataCreationFlags dataCreationFlags,
@@ -59,7 +58,6 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
-      VKLFilter filter;
       std::vector<std::shared_ptr<ProceduralVdbVolumeBase>> attributeVolumes;
       VKLDataCreationFlags dataCreationFlags;
       bool useAOSLayout;
@@ -77,7 +75,6 @@ namespace openvkl {
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
-        VKLFilter filter,
         const std::vector<std::shared_ptr<ProceduralVdbVolumeBase>>
             &attributeVolumes,
         VKLDataCreationFlags dataCreationFlags,
@@ -85,7 +82,6 @@ namespace openvkl {
         : dimensions(dimensions),
           gridOrigin(gridOrigin),
           gridSpacing(gridSpacing),
-          filter(filter),
           attributeVolumes(attributeVolumes),
           dataCreationFlags(dataCreationFlags),
           useAOSLayout(useAOSLayout),
@@ -372,7 +368,7 @@ namespace openvkl {
               "specified device not compatible with VdbVolumeBuffers device");
         }
 
-        volume = buffers->createVolume(filter);
+        volume = buffers->createVolume();
       }
     }
 
@@ -385,7 +381,6 @@ namespace openvkl {
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
-        VKLFilter filter,
         VKLDataCreationFlags dataCreationFlags,
         bool useAOSLayout,
         TemporalConfig temporalConfig = TemporalConfig())
@@ -400,35 +395,30 @@ namespace openvkl {
                                                  dimensions,
                                                  gridOrigin,
                                                  gridSpacing,
-                                                 VKL_FILTER_TRILINEAR,
                                                  temporalConfig));
 
       volumes.push_back(std::make_shared<XVdbVolumeHalf>(device,
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
-                                                         VKL_FILTER_TRILINEAR,
                                                          temporalConfig));
 
       volumes.push_back(std::make_shared<YVdbVolumeHalf>(device,
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
-                                                         VKL_FILTER_TRILINEAR,
                                                          temporalConfig));
 
       volumes.push_back(std::make_shared<ZVdbVolumeHalf>(device,
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
-                                                         VKL_FILTER_TRILINEAR,
                                                          temporalConfig));
 
       return new ProceduralVdbVolumeMulti(device,
                                           dimensions,
                                           gridOrigin,
                                           gridSpacing,
-                                          filter,
                                           volumes,
                                           dataCreationFlags,
                                           useAOSLayout);
@@ -439,7 +429,6 @@ namespace openvkl {
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
-        VKLFilter filter,
         VKLDataCreationFlags dataCreationFlags,
         bool useAOSLayout,
         TemporalConfig temporalConfig = TemporalConfig())
@@ -454,35 +443,30 @@ namespace openvkl {
                                                   dimensions,
                                                   gridOrigin,
                                                   gridSpacing,
-                                                  VKL_FILTER_TRILINEAR,
                                                   temporalConfig));
 
       volumes.push_back(std::make_shared<XVdbVolumeFloat>(device,
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
-                                                          VKL_FILTER_TRILINEAR,
                                                           temporalConfig));
 
       volumes.push_back(std::make_shared<YVdbVolumeFloat>(device,
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
-                                                          VKL_FILTER_TRILINEAR,
                                                           temporalConfig));
 
       volumes.push_back(std::make_shared<ZVdbVolumeFloat>(device,
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
-                                                          VKL_FILTER_TRILINEAR,
                                                           temporalConfig));
 
       return new ProceduralVdbVolumeMulti(device,
                                           dimensions,
                                           gridOrigin,
                                           gridSpacing,
-                                          filter,
                                           volumes,
                                           dataCreationFlags,
                                           useAOSLayout);

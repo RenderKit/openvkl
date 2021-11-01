@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v1.0.1 of Intel® Open VKL. For changes and new features
+This is release v1.1.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -32,6 +32,15 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 1.1.0
+
+  - vklExamples improvements: asynchronous rendering, multiple
+    viewports, docking, and more
+  - Fixed bug in `openvkl_utility_vdb` which could lead to crashes when
+    creating VDB volumes with temporally constant tiles
+  - Superbuild updates to latest versions of dependencies
+  - Minimum rkcommon version is now 1.8.0
 
 ### Open VKL 1.0.1
 

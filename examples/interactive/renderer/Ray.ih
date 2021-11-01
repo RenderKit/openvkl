@@ -1,0 +1,26 @@
+// Copyright 2019-2021 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "rkcommon/math/vec.ih"
+#include "rkcommon/math/box.ih"
+
+struct Ray
+{
+  vec3f org;
+  vec3f dir;
+  float tnear;
+  float tfar;
+};
+
+inline void intersectBox(const Ray &ray,
+                         const uniform box3f &box,
+                         float &tnear,
+                         float &tfar)
+{
+  const vec3f mins = (box.lower - ray.org) * rcp_safe(ray.dir);
+  const vec3f maxs = (box.upper - ray.org) * rcp_safe(ray.dir);
+  tnear            = reduce_max(make_vec4f(min(mins, maxs), ray.tnear));
+  tfar             = reduce_min(make_vec4f(max(mins, maxs), ray.tfar));
+}

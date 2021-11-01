@@ -58,13 +58,12 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
                                                   dimensions,
                                                   gridOrigin,
                                                   gridSpacing,
-                                                  filter,
                                                   dcf,
                                                   aos));
 
           num_attributes(v);
           sampling_on_vertices_vs_procedural_values_multi(
-              v, step, lowerSpan, upperSpan);
+              v, step, lowerSpan, upperSpan, filter);
 
           // higher gradient tolerance for half due to precision issues
           gradients_on_vertices_vs_procedural_values_multi(v, step, 0.3f);
@@ -88,13 +87,12 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
                                                    dimensions,
                                                    gridOrigin,
                                                    gridSpacing,
-                                                   filter,
                                                    dcf,
                                                    aos));
 
           num_attributes(v);
           sampling_on_vertices_vs_procedural_values_multi(
-              v, step, lowerSpan, upperSpan);
+              v, step, lowerSpan, upperSpan, filter);
           gradients_on_vertices_vs_procedural_values_multi(v, step);
 
           for (unsigned int i = 0; i < v->getNumAttributes(); i++) {

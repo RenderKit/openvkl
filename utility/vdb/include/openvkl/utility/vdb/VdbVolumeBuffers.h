@@ -110,7 +110,7 @@ namespace openvkl {
       /*
        * Create a VKLVolume from these buffers.
        */
-      VKLVolume createVolume(VKLFilter filter) const;
+      VKLVolume createVolume() const;
 
       VKLDevice getVKLDevice() const;
 
@@ -288,6 +288,9 @@ namespace openvkl {
         assert(false);
       } else {
         this->temporalFormat.push_back(VKL_TEMPORAL_FORMAT_CONSTANT);
+        this->temporallyStructuredNumTimesteps.push_back(0);
+        this->temporallyUnstructuredIndices.push_back(nullptr);
+        this->temporallyUnstructuredTimes.push_back(nullptr);
       }
 
       // only use array-of-arrays when we have multiple attributes
@@ -447,10 +450,9 @@ namespace openvkl {
       }
     }
 
-    inline VKLVolume VdbVolumeBuffers::createVolume(VKLFilter filter) const
+    inline VKLVolume VdbVolumeBuffers::createVolume() const
     {
       VKLVolume volume = vklNewVolume(device, "vdb");
-      vklSetInt(volume, "filter", filter);
 
       VKLData transformData =
           vklNewData(device, 12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
@@ -465,26 +467,31 @@ namespace openvkl {
       //       object can change safely, including replacing leaf data.
       //       This also means that the VdbVolumeBuffers object can be
       //       destroyed after creating the volume.
+      assert(level.size() == numNodes);
       VKLData levelData = vklNewData(
           device, numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.level", levelData);
       vklRelease(levelData);
 
+      assert(origin.size() == numNodes);
       VKLData originData = vklNewData(
           device, numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.origin", originData);
       vklRelease(originData);
 
+      assert(format.size() == numNodes);
       VKLData formatData = vklNewData(
           device, numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.format", formatData);
       vklRelease(formatData);
 
+      assert(temporalFormat.size() == numNodes);
       VKLData temporalFormatData = vklNewData(
           device, numNodes, VKL_UINT, temporalFormat.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.temporalFormat", temporalFormatData);
       vklRelease(temporalFormatData);
 
+      assert(temporallyStructuredNumTimesteps.size() == numNodes);
       VKLData temporallyStructuredNumTimestepsData =
           vklNewData(device,
                      numNodes,
@@ -496,6 +503,7 @@ namespace openvkl {
                  temporallyStructuredNumTimestepsData);
       vklRelease(temporallyStructuredNumTimestepsData);
 
+      assert(temporallyUnstructuredIndices.size() == numNodes);
       VKLData temporallyUnstructuredIndicesData =
           vklNewData(device,
                      numNodes,
@@ -512,6 +520,7 @@ namespace openvkl {
         }
       }
 
+      assert(temporallyUnstructuredTimes.size() == numNodes);
       VKLData temporallyUnstructuredTimesData =
           vklNewData(device,
                      numNodes,
@@ -528,8 +537,9 @@ namespace openvkl {
         }
       }
 
+      assert(data.size() == numNodes);
       VKLData dataData = vklNewData(
-          device, data.size(), VKL_DATA, data.data(), VKL_DATA_DEFAULT);
+          device, numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
       vklSetData(volume, "node.data", dataData);
       vklRelease(dataData);
 

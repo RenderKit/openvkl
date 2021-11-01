@@ -273,7 +273,7 @@ namespace openvkl {
       /*
        * To creat a VKLVolume, we simply set our parameters and commit.
        */
-      VKLVolume createVolume(VKLFilter filter) const;
+      VKLVolume createVolume() const;
 
       /*
        * Return the number of nodes in this grid.
@@ -357,10 +357,10 @@ namespace openvkl {
 
     template <typename VdbFieldType>
     inline VKLVolume OpenVdbGrid<VdbFieldType>::createVolume(
-        VKLFilter filter) const
+) const
     {
       assert(buffers);
-      return buffers->createVolume(filter);
+      return buffers->createVolume();
     }
 
     template <typename VdbFieldType>

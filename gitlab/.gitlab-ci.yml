@@ -7,6 +7,15 @@ variables:
   OPENVKL_RELEASE_PACKAGE_VERSION: "1.2.0"
   MACOSX_DEPLOYMENT_TARGET: "10.13"
 
+default:
+  retry:
+    max: 2
+    when:
+      - unknown_failure
+      - api_failure
+      - runner_system_failure
+      - scheduler_failure
+
 stages:
   - build
   - test

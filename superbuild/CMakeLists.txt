@@ -227,9 +227,6 @@ if (BUILD_OPENVDB)
   elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 19.1)
     message(WARNING "Disabling OpenVDB support because the icc compiler version is too low (19.1 is required)")
     set(BUILD_OPENVDB OFF)
-  elseif (BUILD_TBB AND (NOT TBB_VERSION VERSION_LESS 2021))
-    message(WARNING "Disabling OpenVDB support because TBB 2021 is not supported")
-    set(BUILD_OPENVDB OFF)
   else()
     set(ILMBASE_VERSION "2.4.1")
     set(ILMBASE_URL "https://github.com/AcademySoftwareFoundation/openexr/archive/v${ILMBASE_VERSION}.zip"
@@ -245,29 +242,29 @@ if (BUILD_OPENVDB)
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 
-    set(BOOST_VERSION "1.72.0")
+    set(BOOST_VERSION "1.77.0")
     string(REPLACE "." "_" BOOST_FILE_BASE "${BOOST_VERSION}")
     set(BOOST_BASE_URL "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost")
     set(_BOOST_URL "${BOOST_BASE_URL}_${BOOST_FILE_BASE}.tar.gz")
-    set(_BOOST_HASH "c66e88d5786f2ca4dbebb14e06b566fb642a1a6947ad8cc9091f9f445134143f")
+    set(_BOOST_HASH "5347464af5b14ac54bb945dc68f1dd7c56f0dad7262816b956138fc53bcc0131")
     set(BOOST_URL "${_BOOST_URL}" CACHE STRING "URL of the boost archive.")
     set(BOOST_HASH "${_BOOST_HASH}" CACHE STRING "SHA256 hash of the boost archive.")
     include(dep_boost)
 
     if (BUILD_BLOSC)
-      set(BLOSC_VERSION "1.5.0")
+      set(BLOSC_VERSION "1.21.1")
       set(BLOSC_URL "https://github.com/Blosc/c-blosc/archive/v${BLOSC_VERSION}.zip"
         CACHE STRING "URL of the c-BLOSC archive.")
-      set(BLOSC_HASH "fddd00ae717fc840c49509c367444f37bc50daea7d7d431b6c05e9570bc443a9" 
+      set(BLOSC_HASH "abdf8ad8e5f8a876d67b38d16ff0c40c0456cdce1dcbafe58b589671ff55d31a"
         CACHE STRING "SHA256 hash of the c-BLOSC archive.")
       include(dep_blosc)
     endif()
 
-    set(OPENVDB_VERSION "8.1.0")
+    set(OPENVDB_VERSION "9.0.0")
     set(OPENVDB_BASE_URL "https://github.com/AcademySoftwareFoundation/openvdb/archive")
     set(OPENVDB_URL "${OPENVDB_BASE_URL}/v${OPENVDB_VERSION}.zip"
       CACHE STRING "URL of the OpenVDB archive.")
-    set(OPENVDB_HASH "2ede3edfc0259b6602ed0025a91b4a6118a2e1aea14c41d9e036fe5ceb539d5a"
+    set(OPENVDB_HASH "631443144a1d584519e83d7e883ecf52ef6dd32260bf5435324b53453d2e095a"
       CACHE STRING "SHA256 hash of the OpenVDB archive.")
     include(dep_openvdb)
   endif()

@@ -8,6 +8,7 @@ variables:
   MACOSX_DEPLOYMENT_TARGET: "10.13"
 
 default:
+  interruptible: true
   retry:
     max: 2
     when:
@@ -17,6 +18,7 @@ default:
       - scheduler_failure
 
 stages:
+  - pre
   - build
   - test
   - benchmark
@@ -124,6 +126,22 @@ stages:
 .job_template: &benchmark_select_examples
   variables:
     BENCHMARK_SUITE: ^ExampleRenderers$
+
+## Pre Jobs ##
+
+# Do not allow pipelines for master, release, or devel branches to be
+# interrupted. See https://gitlab.com/gitlab-org/gitlab/-/issues/34221
+non-interruptible-pipeline:
+  stage: pre
+  interruptible: false
+  only:
+    - master
+    - /release/
+    - devel
+  script:
+    - echo this is a non-interruptible pipeline
+  tags:
+    - docker
 
 ## Build Jobs ##
 

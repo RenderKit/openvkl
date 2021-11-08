@@ -88,7 +88,14 @@ stages:
     - ./build/openvkl/build/vklTutorialISPC
     - ./build/openvkl/build/vklTests --durations yes
 
+.job_template: &master_release_devel_only
+  only:
+    - master
+    - /release/
+    - devel
+
 .job_template: &base_release_job
+  <<: *master_release_devel_only
   stage: release
   before_script:
     - git submodule sync
@@ -96,6 +103,7 @@ stages:
     - git submodule update
 
 .job_template: &base_release_test_job
+  <<: *master_release_devel_only
   stage: release-test
 
 ## Job Templates: Benchmarks ##
@@ -132,12 +140,9 @@ stages:
 # Do not allow pipelines for master, release, or devel branches to be
 # interrupted. See https://gitlab.com/gitlab-org/gitlab/-/issues/34221
 non-interruptible-pipeline:
+  <<: *master_release_devel_only
   stage: pre
   interruptible: false
-  only:
-    - master
-    - /release/
-    - devel
   script:
     - echo this is a non-interruptible pipeline
   tags:
@@ -732,6 +737,7 @@ release-windows-test:
     - release-windows
 
 scan-bdba-bin:
+  <<: *master_release_devel_only
   stage: scan-binaries
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   tags: [docker]
@@ -746,6 +752,7 @@ scan-bdba-bin:
       - openvkl-*.csv
 
 av:
+  <<: *master_release_devel_only
   stage: scan-binaries
   tags: [docker]
   image: $DOCKER_REGISTRY/clamav:ubuntu20.04

@@ -189,7 +189,7 @@ build-centos8-module-cmake:
   script:
     - module use $SHARED_MODULES_PATH
     - module load cmake
-    - gitlab/build.sh -G Ninja
+    - gitlab/build.sh -G Ninja -D TBB_VERSION=2020.3 -D TBB_HASH=""
   tags:
     - docker
     - modules

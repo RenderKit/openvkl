@@ -142,17 +142,28 @@ namespace openvkl {
               const vec3ui offset     = totalRes * vec3ui(vx, vy, vz);
               const vec3i origin = grid->rootOrigin + level.origin[n] + offset;
               const vec3f bbMin(origin.x, origin.y, origin.z);
-              const vec3f bbMax    = bbMin + vec3f(totalRes);
-              const vec3f bbMinObj = xfmPoint(grid->indexToObject, bbMin);
-              const vec3f bbMaxObj = xfmPoint(grid->indexToObject, bbMax);
-              float *node          = buffer + outputIdx * numFloats;
-              node[0]              = bbMinObj.x;
-              node[1]              = bbMinObj.y;
-              node[2]              = bbMinObj.z;
-              node[3]              = bbMaxObj.x;
-              node[4]              = bbMaxObj.y;
-              node[5]              = bbMaxObj.z;
-              const size_t vrIdx   = vidx * grid->numAttributes;
+              const vec3f bbMax = bbMin + vec3f(totalRes);
+
+              const box3f bboxIndex(bbMin, bbMax);
+              box3f bboxObject = empty;
+
+              for (int i = 0; i < 8; ++i) {
+                const vec3f v =
+                    vec3f((i & 1) ? bboxIndex.upper.x : bboxIndex.lower.x,
+                          (i & 2) ? bboxIndex.upper.y : bboxIndex.lower.y,
+                          (i & 4) ? bboxIndex.upper.z : bboxIndex.lower.z);
+
+                bboxObject.extend(xfmPoint(grid->indexToObject, v));
+              }
+
+              float *node        = buffer + outputIdx * numFloats;
+              node[0]            = bboxObject.lower.x;
+              node[1]            = bboxObject.lower.y;
+              node[2]            = bboxObject.lower.z;
+              node[3]            = bboxObject.upper.x;
+              node[4]            = bboxObject.upper.y;
+              node[5]            = bboxObject.upper.z;
+              const size_t vrIdx = vidx * grid->numAttributes;
               for (uint32_t a = 0; a < grid->numAttributes; ++a) {
                 node[6 + 2 * a] = level.valueRange[vrIdx + a].lower;
                 node[7 + 2 * a] = level.valueRange[vrIdx + a].upper;

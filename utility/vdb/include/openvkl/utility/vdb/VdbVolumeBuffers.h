@@ -109,8 +109,10 @@ namespace openvkl {
 
       /*
        * Create a VKLVolume from these buffers.
+       * If commit is true, the volume will be committed. Otherwise, the
+       * application will need to commit the volume before use.
        */
-      VKLVolume createVolume() const;
+      VKLVolume createVolume(bool commit = true) const;
 
       VKLDevice getVKLDevice() const;
 
@@ -450,7 +452,7 @@ namespace openvkl {
       }
     }
 
-    inline VKLVolume VdbVolumeBuffers::createVolume() const
+    inline VKLVolume VdbVolumeBuffers::createVolume(bool commit) const
     {
       VKLVolume volume = vklNewVolume(device, "vdb");
 
@@ -543,7 +545,10 @@ namespace openvkl {
       vklSetData(volume, "node.data", dataData);
       vklRelease(dataData);
 
-      vklCommit(volume);
+      if (commit) {
+        vklCommit(volume);
+      }
+
       return volume;
     }
 

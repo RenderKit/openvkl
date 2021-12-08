@@ -271,9 +271,11 @@ namespace openvkl {
                   bool deferLeaves = false);
 
       /*
-       * To creat a VKLVolume, we simply set our parameters and commit.
+       * Create a VKLVolume.
+       * If commit is true, the volume will be committed. Otherwise, the
+       * application will need to commit the volume before use.
        */
-      VKLVolume createVolume() const;
+      VKLVolume createVolume(bool commit = true) const;
 
       /*
        * Return the number of nodes in this grid.
@@ -356,11 +358,10 @@ namespace openvkl {
     }
 
     template <typename VdbFieldType>
-    inline VKLVolume OpenVdbGrid<VdbFieldType>::createVolume(
-) const
+    inline VKLVolume OpenVdbGrid<VdbFieldType>::createVolume(bool commit) const
     {
       assert(buffers);
-      return buffers->createVolume();
+      return buffers->createVolume(commit);
     }
 
     template <typename VdbFieldType>

@@ -911,6 +911,14 @@ following parameters:
   float[]       background                             `VKL_BACKGROUND_UNDEFINED`      For each attribute, the value that is
                                                                                        returned when sampling an undefined
                                                                                        region outside the volume domain.
+
+  box3i         indexClippingBounds                                                    Clips the volume to the specified
+                                                                                       index-space bounding box. This is
+                                                                                       useful for volumes with dimensions that
+                                                                                       are not even multiples of the leaf node
+                                                                                       dimensions, or .vdb files with
+                                                                                       restrictive active voxel bounding
+                                                                                       boxes.
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 

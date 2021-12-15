@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbVolume.h"
@@ -743,6 +743,16 @@ namespace openvkl {
           grid->activeSize = bbox.upper - grid->rootOrigin;
 
           indexBoundingBox = box3f(bbox);
+
+          // support an index-space clipping bounding box, which may clip
+          // portions of leaf nodes; this is primarily used for .vdb volumes
+          // with a restrictive active voxel bounding box
+          const box3i indexBoundingBoxI =
+              this->template getParam<box3i>("indexClippingBounds", empty);
+
+          if (!indexBoundingBoxI.empty()) {
+            indexBoundingBox = box3f(indexBoundingBoxI);
+          }
         }
 
         // The domain-space bounding box.

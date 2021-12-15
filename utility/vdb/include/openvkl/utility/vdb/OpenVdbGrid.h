@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -304,6 +304,7 @@ namespace openvkl {
 
      private:
       void loadTransform();
+      void loadActiveVoxelsBoundingBox();
       void loadDeferredAt(size_t i);
       void loadFromGrid(typename openvdbNativeGrid::Ptr vdb,
                         bool deferLeaves = false);
@@ -461,6 +462,21 @@ namespace openvkl {
     }
 
     template <typename VdbFieldType>
+    inline void OpenVdbGrid<VdbFieldType>::loadActiveVoxelsBoundingBox()
+    {
+      assert(grid);
+      const auto &activeVoxelBoundingBox = grid->evalActiveVoxelBoundingBox();
+
+      buffers->setActiveVoxelsBoundingBox(
+          box3i(vec3i(activeVoxelBoundingBox.min().x(),
+                      activeVoxelBoundingBox.min().y(),
+                      activeVoxelBoundingBox.min().z()),
+                vec3i(activeVoxelBoundingBox.max().x(),
+                      activeVoxelBoundingBox.max().y(),
+                      activeVoxelBoundingBox.max().z())));
+    }
+
+    template <typename VdbFieldType>
     inline void OpenVdbGrid<VdbFieldType>::loadDeferredAt(size_t i)
     {
       using std::swap;
@@ -487,6 +503,8 @@ namespace openvkl {
         deferred.reserve(numLeaves);
 
       loadTransform();
+
+      loadActiveVoxelsBoundingBox();
 
       const auto &root = vdb->tree().root();
       for (auto it = root.cbeginChildOn(); it; ++it)

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -52,6 +52,8 @@ namespace openvkl {
                             float p0,
                             float p1,
                             float p2);
+
+      void setActiveVoxelsBoundingBox(const box3i &bbox);
 
       size_t numNodes() const;
 
@@ -133,6 +135,8 @@ namespace openvkl {
       float indexToObject[12] = {
           1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f};
 
+      box3i activeVoxelsBoundingBox = empty;
+
       /*
        * Level must be a number in [1, VKL_VDB_NUM_LEVELS-1].
        * The level also influences the node resolution. Constant
@@ -213,6 +217,11 @@ namespace openvkl {
       indexToObject[9]  = p0;
       indexToObject[10] = p1;
       indexToObject[11] = p2;
+    }
+
+    inline void  VdbVolumeBuffers::setActiveVoxelsBoundingBox(const box3i &bbox)
+    {
+      activeVoxelsBoundingBox = bbox;
     }
 
     inline size_t VdbVolumeBuffers::numNodes() const
@@ -460,6 +469,11 @@ namespace openvkl {
           vklNewData(device, 12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
       vklSetData(volume, "indexToObject", transformData);
       vklRelease(transformData);
+
+      if (!activeVoxelsBoundingBox.empty()) {
+        vklSetParam(
+            volume, "indexClippingBounds", VKL_BOX3I, &activeVoxelsBoundingBox);
+      }
 
       // Create the data buffer from our pointers.
       const size_t numNodes = level.size();

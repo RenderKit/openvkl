@@ -482,6 +482,14 @@ table below.
 
   vec3f     gridSpacing                      $(1, 1, 1)$                    size of the grid cells in object space
 
+  affine3f  indexToObject                    1, 0, 0,                       Defines the transformation from index
+                                             0, 1, 0,                       space to object space. In index space,
+                                             0, 0, 1,                       the grid is an axis-aligned regular
+                                             0, 0, 0                        grid, and grid cells have size (1,1,1).
+                                                                            This parameter takes precedence over
+                                                                            `gridOrigin` and `gridSpacing`, if
+                                                                            provided.
+
   uint32    temporalFormat                   `VKL_TEMPORAL_FORMAT_CONSTANT` The temporal format for this volume.
                                                                             Use `VKLTemporalFormat` for named 
                                                                             constants. 
@@ -839,15 +847,16 @@ following parameters:
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
   Type          Name                                   Default                         Description
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
-  float[]       indexToObject                          1, 0, 0,                        An array of 12 values of type `float`
-                                                       0, 1, 0,                        that define the transformation from
-                                                       0, 0, 1,                        index space to object space.
-                                                       0, 0, 0                         In index space, the grid is an
-                                                                                       axis-aligned regular grid, and leaf
-                                                                                       voxels have size (1,1,1).
-                                                                                       The first 9 values are interpreted
-                                                                                       as a row-major linear transformation
-                                                                                       matrix. The last 3 values are the
+  affine3f      indexToObject                          1, 0, 0,                        Defines the transformation from index
+  float[]                                              0, 1, 0,                        space to object space. In index space,
+                                                       0, 0, 1,                        the grid is an axis-aligned regular
+                                                       0, 0, 0                         grid, and leaf voxels have size (1,1,1).
+                                                                                       A `vkl_affine3f` can be provided;
+                                                                                       alternatively an array of 12 values of
+                                                                                       type `float` can be used, where the
+                                                                                       first 9 values are interpreted as a
+                                                                                       row-major linear transformation matrix,
+                                                                                       and the last 3 values are the
                                                                                        translation of the grid origin.
 
   uint32[]      node.format                                                            For each input node, the data format.

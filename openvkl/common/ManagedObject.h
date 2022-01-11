@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -28,6 +28,10 @@ namespace openvkl {
     ManagedObject() = default;
 
     virtual ~ManagedObject() override;
+
+    // returns if a parameter of the given type is present
+    template <typename T>
+    bool hasParamT(const char *name);
 
     // uses the provided default value if the parameter is not set
     template <typename T>
@@ -107,6 +111,22 @@ namespace openvkl {
   }
 
   // Inlined definitions //////////////////////////////////////////////////////
+
+  template <typename T>
+  inline bool ManagedObject::hasParamT(const char *name)
+  {
+    if (!hasParam(name)) {
+      return false;
+    }
+
+    Param *param = findParam(name);
+
+    if (param->data.is<T>()) {
+      return true;
+    }
+
+    return false;
+  }
 
   template <typename T>
   inline T ManagedObject::getParam(const char *name, T valIfNotFound)

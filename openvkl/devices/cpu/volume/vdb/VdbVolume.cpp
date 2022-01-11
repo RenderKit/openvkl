@@ -368,25 +368,6 @@ namespace openvkl {
       }
     }
 
-    /*
-     * Load an affine 4x3 matrix from the given object.
-     */
-    inline AffineSpace3f getParamAffineSpace3f(ManagedObject *obj,
-                                               const char *name)
-    {
-      Ref<const DataT<float>> dataIndexToObject =
-          obj->template getParamDataT<float>(name, nullptr);
-      AffineSpace3f a(one);
-      if (dataIndexToObject && dataIndexToObject->size() >= 12) {
-        const DataT<float> &i2w = *dataIndexToObject;
-        a.l                     = LinearSpace3f(vec3f(i2w[0], i2w[1], i2w[2]),
-                                                vec3f(i2w[3], i2w[4], i2w[5]),
-                                                vec3f(i2w[6], i2w[7], i2w[8]));
-        a.p                     = vec3f(i2w[9], i2w[10], i2w[11]);
-      }
-      return a;
-    }
-
     template <int W>
     void VdbVolume<W>::initIndexSpaceTransforms()
     {

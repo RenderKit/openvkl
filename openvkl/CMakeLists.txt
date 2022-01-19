@@ -1,4 +1,4 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 include(openvkl_ispc)
@@ -18,6 +18,7 @@ openvkl_add_library_ispc(${PROJECT_NAME} SHARED
   common/ispc_util.ispc
   common/logging.cpp
   common/ManagedObject.cpp
+  common/Traits.cpp
   common/VKLCommon.cpp
 
   ${DEF_FILE}

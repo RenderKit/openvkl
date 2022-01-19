@@ -230,7 +230,7 @@ counting for lifetime determination.  Objects are created with particular type's
 
 In general, modifiable parameters to objects are modified using `vklSet...`
 functions based on the type of the parameter being set. The parameter name is
-passed as a string. Below are all variants of `vklSet...`.
+passed as a string. Below are variants of `vklSet...`.
 
     void vklSetBool(VKLObject object, const char *name, int b);
     void vklSetFloat(VKLObject object, const char *name, float x);
@@ -240,6 +240,19 @@ passed as a string. Below are all variants of `vklSet...`.
     void vklSetData(VKLObject object, const char *name, VKLData data);
     void vklSetString(VKLObject object, const char *name, const char *s);
     void vklSetVoidPtr(VKLObject object, const char *name, void *v);
+
+A more generic parameter setter is also available, which allows setting
+parameters beyond the explicit types above:
+
+    void vklSetParam(VKLObject object,
+                     const char *name,
+                     VKLDataType dataType,
+                     const void *mem);
+
+Note that `mem` must always be a pointer _to_ the object, otherwise accidental
+type casting can occur. This is especially true for pointer types
+(`VKL_VOID_PTR` and `VKLObject` handles), as they will implicitly cast to `void\
+*`, but be incorrectly interpreted.
 
 After parameters have been set, `vklCommit` must be called on the object to make
 them take effect.

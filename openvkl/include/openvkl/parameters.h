@@ -1,4 +1,4 @@
-// Copyright 2019 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -17,6 +17,11 @@ OPENVKL_INTERFACE void vklSetVec3i(VKLObject object, const char *name, int x, in
 OPENVKL_INTERFACE void vklSetData(VKLObject object, const char *name, VKLData data);
 OPENVKL_INTERFACE void vklSetString(VKLObject object, const char *name, const char *s);
 OPENVKL_INTERFACE void vklSetVoidPtr(VKLObject object, const char *name, void *v);
+
+OPENVKL_INTERFACE void vklSetParam(VKLObject object,
+                                   const char *name,
+                                   VKLDataType dataType,
+                                   const void *mem);
 
 #ifdef __cplusplus
 }  // extern "C"

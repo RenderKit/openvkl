@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CPUDevice.h"
@@ -12,6 +12,98 @@
 
 namespace openvkl {
   namespace cpu_device {
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Parameter setting helpers //////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    using SetParamFcn = void(VKLObject, const char *, const void *);
+
+    template <typename T>
+    static void setParamOnObject(VKLObject _obj, const char *p, const T &v)
+    {
+      auto *obj = (ManagedObject *)_obj;
+      obj->setParam(p, v);
+    }
+
+#define declare_param_setter(TYPE)                                           \
+  {                                                                          \
+    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
+      setParamOnObject(o, p, *(TYPE *)v);                                    \
+    }                                                                        \
+  }
+
+#define declare_param_setter_object(TYPE)                                    \
+  {                                                                          \
+    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
+      ManagedObject *obj = *(TYPE *)v;                                       \
+      setParamOnObject(o, p, obj);                                           \
+    }                                                                        \
+  }
+
+#define declare_param_setter_string(TYPE)                                    \
+  {                                                                          \
+    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
+      const char *str = (const char *)v;                                     \
+      setParamOnObject(o, p, std::string(str));                              \
+    }                                                                        \
+  }
+
+    static std::map<VKLDataType, std::function<SetParamFcn>> setParamFcns = {
+        declare_param_setter(void *),
+        declare_param_setter(bool),
+        declare_param_setter_object(openvkl::ManagedObject *),
+        declare_param_setter_object(openvkl::Data *),
+        declare_param_setter_string(char *),
+        declare_param_setter_string(const char *),
+        declare_param_setter_string(const char[]),
+        declare_param_setter(char),
+        declare_param_setter(unsigned char),
+        declare_param_setter(rkcommon::math::vec2uc),
+        declare_param_setter(rkcommon::math::vec3uc),
+        declare_param_setter(rkcommon::math::vec4uc),
+        declare_param_setter(short),
+        declare_param_setter(unsigned short),
+        declare_param_setter(int32_t),
+        declare_param_setter(rkcommon::math::vec2i),
+        declare_param_setter(rkcommon::math::vec3i),
+        declare_param_setter(rkcommon::math::vec4i),
+        declare_param_setter(uint32_t),
+        declare_param_setter(rkcommon::math::vec2ui),
+        declare_param_setter(rkcommon::math::vec3ui),
+        declare_param_setter(rkcommon::math::vec4ui),
+        declare_param_setter(int64_t),
+        declare_param_setter(rkcommon::math::vec2l),
+        declare_param_setter(rkcommon::math::vec3l),
+        declare_param_setter(rkcommon::math::vec4l),
+        declare_param_setter(uint64_t),
+        declare_param_setter(rkcommon::math::vec2ul),
+        declare_param_setter(rkcommon::math::vec3ul),
+        declare_param_setter(rkcommon::math::vec4ul),
+        declare_param_setter(float),
+        declare_param_setter(rkcommon::math::vec2f),
+        declare_param_setter(rkcommon::math::vec3f),
+        declare_param_setter(rkcommon::math::vec4f),
+        declare_param_setter(double),
+        declare_param_setter(rkcommon::math::box1i),
+        declare_param_setter(rkcommon::math::box2i),
+        declare_param_setter(rkcommon::math::box3i),
+        declare_param_setter(rkcommon::math::box4i),
+        declare_param_setter(rkcommon::math::box1f),
+        declare_param_setter(rkcommon::math::box2f),
+        declare_param_setter(rkcommon::math::box3f),
+        declare_param_setter(rkcommon::math::box4f),
+        declare_param_setter(rkcommon::math::linear2f),
+        declare_param_setter(rkcommon::math::linear3f),
+        declare_param_setter(rkcommon::math::affine2f),
+        declare_param_setter(rkcommon::math::affine3f),
+    };
+
+#undef declare_param_setter
+
+    ///////////////////////////////////////////////////////////////////////////
+    // CPUDevice //////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
     bool CPUDevice<W>::supportsWidth(int width)
@@ -150,22 +242,19 @@ namespace openvkl {
     template <int W>
     void CPUDevice<W>::setBool(VKLObject object, const char *name, const bool b)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, b);
+      setObjectParam(object, name, VKL_BOOL, &b);
     }
 
     template <int W>
     void CPUDevice<W>::set1f(VKLObject object, const char *name, const float x)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, x);
+      setObjectParam(object, name, VKL_FLOAT, &x);
     }
 
     template <int W>
     void CPUDevice<W>::set1i(VKLObject object, const char *name, const int x)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, x);
+      setObjectParam(object, name, VKL_INT, &x);
     }
 
     template <int W>
@@ -173,8 +262,7 @@ namespace openvkl {
                                 const char *name,
                                 const vec3f &v)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, v);
+      setObjectParam(object, name, VKL_VEC3F, &v);
     }
 
     template <int W>
@@ -182,8 +270,7 @@ namespace openvkl {
                                 const char *name,
                                 const vec3i &v)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, v);
+      setObjectParam(object, name, VKL_VEC3I, &v);
     }
 
     template <int W>
@@ -191,9 +278,7 @@ namespace openvkl {
                                  const char *name,
                                  VKLObject setObject)
     {
-      ManagedObject *target = (ManagedObject *)object;
-      ManagedObject *value  = (ManagedObject *)setObject;
-      target->setParam(name, value);
+      setObjectParam(object, name, VKL_OBJECT, &setObject);
     }
 
     template <int W>
@@ -201,15 +286,27 @@ namespace openvkl {
                                  const char *name,
                                  const std::string &s)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, s);
+      setObjectParam(object, name, VKL_STRING, s.c_str());
     }
 
     template <int W>
     void CPUDevice<W>::setVoidPtr(VKLObject object, const char *name, void *v)
     {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->setParam(name, v);
+      setObjectParam(object, name, VKL_VOID_PTR, &v);
+    }
+
+    template <int W>
+    void CPUDevice<W>::setObjectParam(VKLObject object,
+                                      const char *name,
+                                      VKLDataType dataType,
+                                      const void *mem)
+    {
+      if (!setParamFcns.count(dataType)) {
+        throw std::runtime_error("cannot set parameter " + std::string(name) +
+                                 " for given data type");
+      }
+
+      setParamFcns[dataType](object, name, mem);
     }
 
     ///////////////////////////////////////////////////////////////////////////

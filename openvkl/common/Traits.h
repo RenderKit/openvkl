@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -12,6 +12,7 @@
 namespace openvkl {
 
   struct Data;
+  struct ManagedObject;
 
   // Public wide types for given widths
   template <int W>
@@ -134,6 +135,7 @@ namespace openvkl {
   VKLTYPEFOR_SPECIALIZATION(void *, VKL_VOID_PTR);
   VKLTYPEFOR_SPECIALIZATION(bool, VKL_BOOL);
   VKLTYPEFOR_SPECIALIZATION(VKLObject, VKL_OBJECT);
+  VKLTYPEFOR_SPECIALIZATION(openvkl::ManagedObject *, VKL_OBJECT);
   VKLTYPEFOR_SPECIALIZATION(VKLData, VKL_DATA);
   VKLTYPEFOR_SPECIALIZATION(openvkl::Data *, VKL_DATA);
   VKLTYPEFOR_SPECIALIZATION(VKLVolume, VKL_VOLUME);
@@ -180,5 +182,8 @@ namespace openvkl {
   VKLTYPEFOR_SPECIALIZATION(rkcommon::math::linear3f, VKL_LINEAR3F);
   VKLTYPEFOR_SPECIALIZATION(rkcommon::math::affine2f, VKL_AFFINE2F);
   VKLTYPEFOR_SPECIALIZATION(rkcommon::math::affine3f, VKL_AFFINE3F);
+
+#define VKLTYPEFOR_DEFINITION(type) \
+  constexpr VKLDataType VKLTypeFor<type>::value
 
 }  // namespace openvkl

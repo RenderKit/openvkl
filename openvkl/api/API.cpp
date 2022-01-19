@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/IteratorBase.h"
@@ -660,6 +660,16 @@ extern "C" void vklSetVoidPtr(VKLObject object, const char *name, void *v)
 {
   THROW_IF_NULL(name);
   deviceObj->setVoidPtr(object, name, v);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetParam(VKLObject object,
+                            const char *name,
+                            VKLDataType dataType,
+                            const void *mem) OPENVKL_CATCH_BEGIN_SAFE(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setObjectParam(object, name, dataType, mem);
 }
 OPENVKL_CATCH_END()
 

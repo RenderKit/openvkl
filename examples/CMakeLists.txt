@@ -1,4 +1,4 @@
-## Copyright 2019-2020 Intel Corporation
+## Copyright 2019-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## "Hello world" VKL tutorials ##
@@ -14,3 +14,7 @@ add_subdirectory(ispc)
 ## Interacive Examples ##
 
 add_subdirectory(interactive)
+
+## Minimal Console-based Examples ##
+
+add_subdirectory(minimal)

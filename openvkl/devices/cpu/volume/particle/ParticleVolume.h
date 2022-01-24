@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -23,9 +23,21 @@ namespace openvkl {
         static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNode),
                       "ParticleLeafNode incompatible with LeafNode");
 
-        nominalLength.x = -radius;
-        nominalLength.y = radius;
-        nominalLength.z = radius;
+        if (radius < 0.f) {
+          throw std::runtime_error("particle radii must all be >= 0");
+        } else if (radius == 0.f) {
+          // we require non-zero nominal lengths; note however this is only used
+          // in BVH construction / traversal; actual sampling will not consider
+          // this epsilon
+          const float epsilon = std::numeric_limits<float>::min();
+          nominalLength.x     = -epsilon;
+          nominalLength.y     = epsilon;
+          nominalLength.z     = epsilon;
+        } else {
+          nominalLength.x = -radius;
+          nominalLength.y = radius;
+          nominalLength.z = radius;
+        }
 
         // note that valueRange will be set separately in computeValueRanges()
       }

@@ -1,4 +1,4 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Global settings ##
@@ -95,17 +95,17 @@ option(BUILD_OPENVKL_BENCHMARKS
 
 option(BUILD_ISPC "Build the Intel SPMD Program Compiler or search in environment?" ON)
 if (BUILD_ISPC)
-  set(ISPC_VERSION "1.16.1")
+  set(ISPC_VERSION "1.17.0")
   set(ISPC_BASE_URL "https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}")
   if (APPLE)
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-macOS.tar.gz")
-    set(_ISPC_HASH "7dbce602d97227a9603aabfae6dc3b3aa24d1cd44f0ccfb5ae47ecd4d68e988e")
+    set(_ISPC_HASH "e7fdcdbd5c272955249148c452ccd7295d7cf77b35ca1dec377e72b49c847bff")
   elseif(WIN32)
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-windows.zip")
-    set(_ISPC_HASH "b34de2c36aff2afaa56b669ea41f9e614a045564ca74fc0b138e17ccea4880b7")
+    set(_ISPC_HASH "e9a7cc98f69357482985bcbf69fa006632cee7b3606069b4d5e16dc62092d660")
   else()
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-linux.tar.gz")
-    set(_ISPC_HASH "88db3d0461147c10ed81053a561ec87d3e14265227c03318f4fcaaadc831037f")
+    set(_ISPC_HASH "1ddd189e6b679ab269f8580fef4dd0143862c4e503d35c52d63c71721877f2ce")
   endif()
   set(ISPC_URL "${_ISPC_URL}" CACHE STRING "URL of the ISPC archive.")
   set(ISPC_HASH "${_ISPC_HASH}" CACHE STRING "SHA256 hash of the ISPC archive.")

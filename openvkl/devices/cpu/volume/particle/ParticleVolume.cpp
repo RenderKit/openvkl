@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ParticleVolume.h"
@@ -47,6 +47,10 @@ namespace openvkl {
       // positions, radii, and weights (if provided) must all be of the same
       // length
       const size_t numParticles = positions->size();
+
+      if (numParticles == 0) {
+        throw std::runtime_error("no particles provided");
+      }
 
       if (radii->size() != numParticles) {
         throw std::runtime_error(
@@ -160,6 +164,35 @@ namespace openvkl {
         primRadii[taskIndex] = radius;
       });
 
+      // filter out any prims with radius <= 0. note we need to leave other
+      // arrays such as primRadii unchanged, as we will not change primID values
+      // in this operation.
+      const bool haveZeroRadiiParticles = std::any_of(
+          primRadii.begin(), primRadii.end(), [](float r) { return r <= 0; });
+
+      if (haveZeroRadiiParticles) {
+        containers::AlignedVector<RTCBuildPrimitive> primsFiltered;
+        primsFiltered.reserve(numParticles);
+
+        std::copy_if(
+            prims.begin(),
+            prims.end(),
+            std::back_inserter(primsFiltered),
+            [&](RTCBuildPrimitive p) { return primRadii[p.primID] > 0; });
+
+        LogMessageStream(this->device.ptr, VKL_LOG_DEBUG)
+            << "filtered out " << prims.size() - primsFiltered.size() << " / "
+            << prims.size() << " particles with <= 0 radius" << std::endl;
+
+        if (primsFiltered.size() == 0) {
+          throw std::runtime_error("no particles with radius > 0 provided");
+        }
+
+        prims = primsFiltered;
+      }
+
+      numBVHParticles = prims.size();
+
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
         throw std::runtime_error("bvh creation failure");
@@ -212,13 +245,12 @@ namespace openvkl {
       const float uncertainty = 0.05f;
 
       // build vector of leaf nodes
-      const size_t numParticles = positions->size();
       std::vector<LeafNode *> leafNodes;
-      leafNodes.reserve(numParticles);
+      leafNodes.reserve(numBVHParticles);
 
       getLeafNodes(rtcRoot, leafNodes);
 
-      if (leafNodes.size() != numParticles) {
+      if (leafNodes.size() != numBVHParticles) {
         throw std::runtime_error("incorrect number of leaf nodes found");
       }
 

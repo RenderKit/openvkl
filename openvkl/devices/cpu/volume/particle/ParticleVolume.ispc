@@ -22,10 +22,7 @@ inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
 
   delta = objectCoordinates - position;
 
-  if (radius == 0.f) {
-    value = length(delta) == 0.f ? w : 0.f;
-    return;
-  } else if (length(delta) > radius * self->radiusSupportFactor) {
+  if (length(delta) > radius * self->radiusSupportFactor) {
     value = 0.f;
     return;
   }

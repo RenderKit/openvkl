@@ -23,21 +23,11 @@ namespace openvkl {
         static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNode),
                       "ParticleLeafNode incompatible with LeafNode");
 
-        if (radius < 0.f) {
-          throw std::runtime_error("particle radii must all be >= 0");
-        } else if (radius == 0.f) {
-          // we require non-zero nominal lengths; note however this is only used
-          // in BVH construction / traversal; actual sampling will not consider
-          // this epsilon
-          const float epsilon = std::numeric_limits<float>::min();
-          nominalLength.x     = -epsilon;
-          nominalLength.y     = epsilon;
-          nominalLength.z     = epsilon;
-        } else {
-          nominalLength.x = -radius;
-          nominalLength.y = radius;
-          nominalLength.z = radius;
-        }
+        assert(radius > 0.f);
+
+        nominalLength.x = -radius;
+        nominalLength.y = radius;
+        nominalLength.z = radius;
 
         // note that valueRange will be set separately in computeValueRanges()
       }
@@ -93,6 +83,10 @@ namespace openvkl {
       bool estimateValueRanges;
 
       Ref<const DataT<float>> background;
+
+      // number of particles included in the BVH, which will not include any
+      // zero-radius particles
+      size_t numBVHParticles{0};
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};

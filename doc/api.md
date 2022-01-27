@@ -1063,6 +1063,9 @@ radial basis function phi, for each particle that overlaps it. Gradients are
 similarly computed, based on the summed analytical contributions of each
 contributing particle.
 
+Particles with a radius less than or equal to zero are ignored. At least one
+valid particle (radius greater than zero) must be provided.
+
 The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the
 method in [1].

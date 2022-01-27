@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "ParameterGui.h"
@@ -265,6 +265,8 @@ namespace openvkl {
 
         ImGui::PushID(id.c_str());
 
+        changed |= ImGui::SliderFloat(
+            "intervalResolutionHint", &p.intervalResolutionHint, 0.f, 1.f);
         changed |=
             ImGui::SliderFloat("Sampling rate", &p.samplingRate, 0.01f, 4.f);
 
@@ -310,6 +312,8 @@ namespace openvkl {
 
         ImGui::PushID(id.c_str());
 
+        changed |= ImGui::SliderFloat(
+            "intervalResolutionHint", &p.intervalResolutionHint, 0.f, 1.f);
         changed |=
             ImGui::SliderFloat("Color scale", &p.intervalColorScale, 1.f, 32.f);
         changed |=

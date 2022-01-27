@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -10,6 +10,7 @@ namespace openvkl {
 
     struct RayMarchIteratorRendererParams
     {
+      float intervalResolutionHint{0.5f};
       float samplingRate{1.f};
     };
 

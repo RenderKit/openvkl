@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RayMarchIteratorRenderer.h"
@@ -29,6 +29,10 @@ namespace openvkl {
     {
       vklSetInt(
           intervalContext, "attributeIndex", rendererParams->attributeIndex);
+
+      vklSetFloat(intervalContext,
+                  "intervalResolutionHint",
+                  params->intervalResolutionHint);
 
       // set interval context value ranges based on transfer function positive
       // opacity intervals, if we have any

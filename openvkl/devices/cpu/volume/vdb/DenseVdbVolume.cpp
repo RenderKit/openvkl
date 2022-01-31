@@ -23,9 +23,8 @@ namespace openvkl {
       this->denseTemporallyUnstructuredIndices = temporallyUnstructuredIndices;
       this->denseTemporallyUnstructuredTimes   = temporallyUnstructuredTimes;
 
-      // for now, always assume vertex-centered representation to match legacy
-      // structuredRegular data interpretation
-      this->constantCellData = false;
+      this->constantCellData =
+          this->template getParam<bool>("cellCentered", false);
 
       VdbVolume<W>::commit();
     }

@@ -440,11 +440,12 @@ Finally, the value range of the volume for a given attribute can be queried:
 ### Structured Volumes
 
 Structured volumes only need to store the values of the samples, because their
-addresses in memory can be easily computed from a 3D position. The dimensions
-for all structured volume types are in units of vertices, not cells. For
-example, a volume with dimensions $(x, y, z)$ will have $(x-1, y-1, z-1)$ cells
-in each dimension. Voxel data provided is assumed vertex-centered, so $x*y*z$
-values must be provided.
+addresses in memory can be easily computed from a 3D position. Data can be
+provided either per cell or per vertex (the default), selectable via the
+`cellCentered` parameter. This parameter also affects the interpretation of
+the volume's dimensions, which will be in units of cells or vertices,
+respectively. A volume with $(x, y, z)$ vertices will have $(x-1, y-1, z-1)$
+cells.
 
 #### Structured Regular Volumes
 
@@ -456,10 +457,10 @@ table below.
   --------- -------------------------------- -----------------------------  ---------------------------------------
   Type      Name                             Default                        Description
   --------- -------------------------------- -----------------------------  ---------------------------------------
-  vec3i     dimensions                                                      number of voxels in each
+  vec3i     dimensions                                                      number of values in each
                                                                             dimension $(x, y, z)$
 
-  VKLData   data                                                            VKLData object(s) of voxel data,
+  VKLData   data                                                            VKLData object(s) of volume data,
   VKLData[]                                                                 supported types are:
 
                                                                             `VKL_UCHAR`
@@ -477,6 +478,9 @@ table below.
                                                                             Multiple attributes are supported
                                                                             through passing an array of VKLData
                                                                             objects.
+
+  bool      cellCentered                     false                          indicates if data is provided per cell
+                                                                            (true) or per vertex (false)
 
   vec3f     gridOrigin                       $(0, 0, 0)$                    origin of the grid in object space
 
@@ -558,7 +562,8 @@ Structured spherical volumes are also supported, which are created by passing a
 type string of `"structuredSpherical"` to `vklNewVolume`. The grid dimensions
 and parameters are defined in terms of radial distance ($r$), inclination angle
 ($\theta$), and azimuthal angle ($\phi$), conforming with the ISO convention for
-spherical coordinate systems. The coordinate system and parameters understood by
+spherical coordinate systems. Structured spherical volumes currently only
+support vertex-centered data. The coordinate system and parameters understood by
 structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
@@ -828,9 +833,9 @@ VDB leaf nodes are implicit in Open VKL: they are stored as pointers to user-pro
 
 ![Structure of `"vdb"` volumes in the default configuration][imgVdbStructure]
 
-VDB volumes interpret input data as constant cells (which are then potentially filtered).
-This is in contrast to `structuredRegular` volumes, which have a vertex-centered
-interpretation.
+VDB volumes interpret input data as constant cells (which are then potentially
+filtered). This is in contrast to `structuredRegular` volumes, which can have
+either a vertex-centered or cell-centered interpretation.
 
 The VDB implementation in Open VKL follows the following goals:
 

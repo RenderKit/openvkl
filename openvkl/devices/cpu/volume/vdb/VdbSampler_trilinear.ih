@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -187,7 +187,8 @@ inline void VdbSampler_computeVoxelValuesTrilinear_dense(
 
   // if the entire domain of the trilinear interpolation is in bounds, and other
   // constraints are satisfied, we can take a fast path.
-  const vec3ui domainOffset = make_vec3ui(ic.x, ic.y, ic.z);
+  const vec3ui domainOffset =
+      VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
 
   if (sampler->grid->denseTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT &&
       safe_32bit_indexing(sampler->grid->denseData[attributeIndex]) &&
@@ -248,7 +249,8 @@ inline void VdbSampler_computeVoxelValuesTrilinear_dense(
 
   // if the entire domain of the trilinear interpolation is in bounds, and other
   // constraints are satisfied, we can take a fast path.
-  const uniform vec3ui domainOffset = make_vec3ui(ic.x, ic.y, ic.z);
+  const uniform vec3ui domainOffset =
+      VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
 
   if (sampler->grid->denseTemporalFormat == VKL_TEMPORAL_FORMAT_CONSTANT &&
       safe_32bit_indexing(sampler->grid->denseData[attributeIndex]) &&

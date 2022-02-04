@@ -494,6 +494,12 @@ table below.
                                                                             `gridOrigin` and `gridSpacing`, if
                                                                             provided.
 
+  vec3i     indexOrigin                      $(0, 0, 0)$                    Defines the index space origin of the
+                                                                            volume. This translation is applied
+                                                                            before any (`gridOrigin`,
+                                                                            `gridSpacing`) or `indexToObject`
+                                                                            transformation.
+
   uint32    temporalFormat                   `VKL_TEMPORAL_FORMAT_CONSTANT` The temporal format for this volume.
                                                                             Use `VKLTemporalFormat` for named 
                                                                             constants. 

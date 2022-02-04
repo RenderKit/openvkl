@@ -179,6 +179,7 @@ namespace openvkl {
       // populated for dense volumes only on commit
       bool dense{false};
       vec3i denseDimensions;
+      vec3i denseIndexOrigin;
       std::vector<Ref<const Data>> denseData;
       VKLTemporalFormat denseTemporalFormat;
       int denseTemporallyStructuredNumTimesteps;

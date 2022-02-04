@@ -16,6 +16,7 @@ namespace openvkl {
 
       this->dense               = true;
       this->denseDimensions     = dimensions;
+      this->denseIndexOrigin    = indexOrigin;
       this->denseData           = attributesData;
       this->denseTemporalFormat = temporalFormat;
       this->denseTemporallyStructuredNumTimesteps =
@@ -75,7 +76,7 @@ namespace openvkl {
       std::vector<vec3i> leafOrigins;
 
       for (const auto &ijk : mis) {
-        leafOrigins.push_back(ijk * VKL_VDB_RES_LEAF);
+        leafOrigins.push_back(ijk * VKL_VDB_RES_LEAF + this->indexOrigin);
       }
 
       assert(leafOrigins.size() == this->numLeaves);
@@ -108,6 +109,8 @@ namespace openvkl {
       dimensions  = this->template getParam<vec3i>("dimensions");
       gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+
+      indexOrigin = this->template getParam<vec3i>("indexOrigin", vec3i(0));
 
       attributesData.clear();
 

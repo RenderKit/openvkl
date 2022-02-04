@@ -701,15 +701,18 @@ namespace openvkl {
         box3f indexBoundingBox;
 
         if (grid->dense) {
-          grid->rootOrigin = vec3i(0);
+          grid->rootOrigin = denseIndexOrigin;
 
           grid->activeSize = grid->denseDimensions;
 
           if (constantCellData) {
-            indexBoundingBox = box3f(vec3f(0.f), vec3f(grid->denseDimensions));
+            indexBoundingBox =
+                box3f(vec3f(grid->rootOrigin),
+                      vec3f(grid->rootOrigin + grid->denseDimensions));
           } else {
             indexBoundingBox =
-                box3f(vec3f(0.f), vec3f(grid->denseDimensions - 1));
+                box3f(vec3f(grid->rootOrigin),
+                      vec3f(grid->rootOrigin + grid->denseDimensions - 1));
           }
         } else {
           if (!constantCellData) {

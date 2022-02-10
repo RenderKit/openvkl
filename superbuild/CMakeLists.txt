@@ -68,7 +68,7 @@ option(INSTALL_IN_SEPARATE_DIRECTORIES
 )
 
 option(BUILD_DEPENDENCIES_ONLY
-  "Do not build Open VKL itself, only its dependencies" 
+  "Do not build Open VKL itself, only its dependencies"
   OFF
 )
 
@@ -85,8 +85,8 @@ option(BUILD_OPENVKL_BENCHMARKS
 ## ======================================================================== ##
 ## Build dependencies.
 ##
-## Use the BUILD_* options to enable or disable building in superbuild. If 
-## These options are OFF, then required dependencies must be available in the 
+## Use the BUILD_* options to enable or disable building in superbuild. If
+## These options are OFF, then required dependencies must be available in the
 ## environment.
 ##
 ## For most of the dependencies, you may override the *_URL and *_HASH
@@ -116,7 +116,7 @@ endif()
 option(BUILD_TBB "Build Intel Threading Building Blocks or search in environment?" ON)
 option(BUILD_TBB_FROM_SOURCE "Build Intel Threading Building Blocks from source or use pre-built version?" OFF)
 if (BUILD_TBB)
-  set(TBB_VERSION "2021.4.0" CACHE STRING "TBB version to download")
+  set(TBB_VERSION "2021.5.0" CACHE STRING "TBB version to download")
   if (BUILD_TBB_FROM_SOURCE)
     if (TBB_VERSION VERSION_LESS 2021)
       message(FATAL_ERROR "Only TBB 2021 and later are supported when building TBB from source")
@@ -124,7 +124,7 @@ if (BUILD_TBB)
 
     string(REGEX REPLACE "(^[0-9]+\.[0-9]+\.[0-9]+$)" "v\\1" TBB_ARCHIVE ${TBB_VERSION})
     set(_TBB_URL "https://github.com/oneapi-src/oneTBB/archive/refs/tags/${TBB_ARCHIVE}.zip")
-    set(_TBB_HASH "08ade531be2e4e904eb6bec8e01da51eb3b0e4e86738128eb2722b95e3fcb5e6")
+    set(_TBB_HASH "83ea786c964a384dd72534f9854b419716f412f9d43c0be88d41874763e7bb47")
   else()
     if (TBB_VERSION VERSION_LESS 2021)
       set(TBB_BASE_URL "https://github.com/oneapi-src/oneTBB/releases/download/v${TBB_VERSION}/tbb-${TBB_VERSION}")
@@ -133,15 +133,15 @@ if (BUILD_TBB)
     endif()
     if (APPLE)
       set(_TBB_URL "${TBB_BASE_URL}-mac.tgz")
-      set(_TBB_HASH "519d599939c41808d6b9170253b4c993b40d481f2c56b1a3cf390aea37ddb355")
+      set(_TBB_HASH "388c1c25314e3251e38c87ade2323af74cdaae2aec9b68e4c206d61c30ef9c33")
       set(TBB_LIB_SUBDIR "")
     elseif(WIN32)
       set(_TBB_URL "${TBB_BASE_URL}-win.zip")
-      set(_TBB_HASH "3868c557739a7a5b74c985571648c066167fd7a0a8c63bdac00a6cfeeb58037f")
+      set(_TBB_HASH "096c004c7079af89fe990bb259d58983b0ee272afa3a7ef0733875bfe09fcd8e")
       set(TBB_LIB_SUBDIR "intel64/vc14")
     else()
       set(_TBB_URL "${TBB_BASE_URL}-lin.tgz")
-      set(_TBB_HASH "f1d26b9f3741e5d573050eef2902fcd739d2913c990f4c879a310e543fc5ffd5")
+      set(_TBB_HASH "74861b1586d6936b620cdab6775175de46ad8b0b36fa6438135ecfb8fb5bdf98")
       set(TBB_LIB_SUBDIR "intel64/gcc4.8")
     endif()
   endif()
@@ -226,25 +226,25 @@ if (BUILD_OPENVDB)
     message(WARNING "Disabling OpenVDB support because the icc compiler version is too low (19.1 is required)")
     set(BUILD_OPENVDB OFF)
   else()
-    set(ILMBASE_VERSION "2.4.1")
+    set(ILMBASE_VERSION "2.5.7")
     set(ILMBASE_URL "https://github.com/AcademySoftwareFoundation/openexr/archive/v${ILMBASE_VERSION}.zip"
       CACHE STRING "URL of the IlmBase archive.")
-    set(ILMBASE_HASH "fd828641897f4ceb9277b61e3add25c3306adcb4670355ac7081d78cf7ee8f5f"
+    set(ILMBASE_HASH "95e2625dac696bcd8101b575cc7651f7c4d14faf9f196a2bedf5b9373b263d4f"
       CACHE STRING "SHA256 hash of the IlmBase archive.")
     include(dep_ilmbase)
 
     set(ZLIB_VERSION "1.2.11")
     set(ZLIB_URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz"
       CACHE STRING "URL of the zlib archive.")
-    set(ZLIB_HASH "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1" 
+    set(ZLIB_HASH "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 
-    set(BOOST_VERSION "1.77.0")
+    set(BOOST_VERSION "1.78.0")
     string(REPLACE "." "_" BOOST_FILE_BASE "${BOOST_VERSION}")
     set(BOOST_BASE_URL "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost")
     set(_BOOST_URL "${BOOST_BASE_URL}_${BOOST_FILE_BASE}.tar.gz")
-    set(_BOOST_HASH "5347464af5b14ac54bb945dc68f1dd7c56f0dad7262816b956138fc53bcc0131")
+    set(_BOOST_HASH "94ced8b72956591c4775ae2207a9763d3600b30d9d7446562c552f0a14a63be7")
     set(BOOST_URL "${_BOOST_URL}" CACHE STRING "URL of the boost archive.")
     set(BOOST_HASH "${_BOOST_HASH}" CACHE STRING "SHA256 hash of the boost archive.")
     include(dep_boost)

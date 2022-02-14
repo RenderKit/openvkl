@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "DenseVdbVolume.h"
@@ -16,6 +16,7 @@ namespace openvkl {
 
       this->dense               = true;
       this->denseDimensions     = dimensions;
+      this->denseIndexOrigin    = indexOrigin;
       this->denseData           = attributesData;
       this->denseTemporalFormat = temporalFormat;
       this->denseTemporallyStructuredNumTimesteps =
@@ -23,9 +24,8 @@ namespace openvkl {
       this->denseTemporallyUnstructuredIndices = temporallyUnstructuredIndices;
       this->denseTemporallyUnstructuredTimes   = temporallyUnstructuredTimes;
 
-      // for now, always assume vertex-centered representation to match legacy
-      // structuredRegular data interpretation
-      this->constantCellData = false;
+      this->constantCellData =
+          this->template getParam<bool>("cellCentered", false);
 
       VdbVolume<W>::commit();
     }
@@ -33,25 +33,19 @@ namespace openvkl {
     template <int W>
     void DenseVdbVolume<W>::initIndexSpaceTransforms()
     {
-      std::vector<float> i2w{gridSpacing.x,
-                             0,
-                             0,
-                             0,
-                             gridSpacing.y,
-                             0,
-                             0,
-                             0,
-                             gridSpacing.z,
-                             gridOrigin.x,
-                             gridOrigin.y,
-                             gridOrigin.z};
-
       AffineSpace3f i2o(one);
 
-      i2o.l = LinearSpace3f(vec3f(i2w[0], i2w[1], i2w[2]),
-                            vec3f(i2w[3], i2w[4], i2w[5]),
-                            vec3f(i2w[6], i2w[7], i2w[8]));
-      i2o.p = vec3f(i2w[9], i2w[10], i2w[11]);
+      // support indexToObject transformation (instead of gridOrigin,
+      // gridSpacing) if provided
+      if (this->template hasParamT<AffineSpace3f>("indexToObject") ||
+          this->template hasParamDataT<float>("indexToObject")) {
+        i2o = getParamAffineSpace3f(this, "indexToObject");
+      } else {
+        i2o.l = LinearSpace3f(vec3f(gridSpacing.x, 0.f, 0.f),
+                              vec3f(0.f, gridSpacing.y, 0.f),
+                              vec3f(0.f, 0.f, gridSpacing.z));
+        i2o.p = vec3f(gridOrigin.x, gridOrigin.y, gridOrigin.z);
+      }
 
       writeTransform(i2o, this->grid->indexToObject);
 
@@ -82,7 +76,7 @@ namespace openvkl {
       std::vector<vec3i> leafOrigins;
 
       for (const auto &ijk : mis) {
-        leafOrigins.push_back(ijk * VKL_VDB_RES_LEAF);
+        leafOrigins.push_back(ijk * VKL_VDB_RES_LEAF + this->indexOrigin);
       }
 
       assert(leafOrigins.size() == this->numLeaves);
@@ -115,6 +109,8 @@ namespace openvkl {
       dimensions  = this->template getParam<vec3i>("dimensions");
       gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
       gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+
+      indexOrigin = this->template getParam<vec3i>("indexOrigin", vec3i(0));
 
       attributesData.clear();
 

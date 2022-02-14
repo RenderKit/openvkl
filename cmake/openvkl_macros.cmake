@@ -1,4 +1,4 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(openvkl_add_library_ispc name type)
@@ -51,7 +51,8 @@ endmacro()
 macro(openvkl_configure_global_build_flags)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
      CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
-     CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+     CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
 
      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-strict-aliasing")
 
@@ -96,7 +97,8 @@ function(openvkl_get_compile_options_for_width WIDTH FLAGS)
 
   if(CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang" OR
      CMAKE_CXX_COMPILER_ID STREQUAL "Clang" OR
-     CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+     CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR
+     CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
 
     message(STATUS "detected Clang or GNU compiler")
 

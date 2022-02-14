@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -52,6 +52,8 @@ namespace openvkl {
                             float p0,
                             float p1,
                             float p2);
+
+      void setActiveVoxelsBoundingBox(const box3i &bbox);
 
       size_t numNodes() const;
 
@@ -109,8 +111,10 @@ namespace openvkl {
 
       /*
        * Create a VKLVolume from these buffers.
+       * If commit is true, the volume will be committed. Otherwise, the
+       * application will need to commit the volume before use.
        */
-      VKLVolume createVolume() const;
+      VKLVolume createVolume(bool commit = true) const;
 
       VKLDevice getVKLDevice() const;
 
@@ -128,8 +132,9 @@ namespace openvkl {
       /*
        * The grid transform (index space to object space).
        */
-      float indexToObject[12] = {
-          1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f, 1.f, 0.f, 0.f, 0.f};
+      AffineSpace3f indexToObject = AffineSpace3f(one);
+
+      box3i activeVoxelsBoundingBox = empty;
 
       /*
        * Level must be a number in [1, VKL_VDB_NUM_LEVELS-1].
@@ -199,18 +204,14 @@ namespace openvkl {
                                                    float p1,
                                                    float p2)
     {
-      indexToObject[0]  = l00;
-      indexToObject[1]  = l01;
-      indexToObject[2]  = l02;
-      indexToObject[3]  = l10;
-      indexToObject[4]  = l11;
-      indexToObject[5]  = l12;
-      indexToObject[6]  = l20;
-      indexToObject[7]  = l21;
-      indexToObject[8]  = l22;
-      indexToObject[9]  = p0;
-      indexToObject[10] = p1;
-      indexToObject[11] = p2;
+      indexToObject.l = LinearSpace3f(
+          vec3f(l00, l01, l02), vec3f(l10, l11, l12), vec3f(l20, l21, l22));
+      indexToObject.p = vec3f(p0, p1, p2);
+    }
+
+    inline void  VdbVolumeBuffers::setActiveVoxelsBoundingBox(const box3i &bbox)
+    {
+      activeVoxelsBoundingBox = bbox;
     }
 
     inline size_t VdbVolumeBuffers::numNodes() const
@@ -450,14 +451,16 @@ namespace openvkl {
       }
     }
 
-    inline VKLVolume VdbVolumeBuffers::createVolume() const
+    inline VKLVolume VdbVolumeBuffers::createVolume(bool commit) const
     {
       VKLVolume volume = vklNewVolume(device, "vdb");
 
-      VKLData transformData =
-          vklNewData(device, 12, VKL_FLOAT, indexToObject, VKL_DATA_DEFAULT);
-      vklSetData(volume, "indexToObject", transformData);
-      vklRelease(transformData);
+      vklSetParam(volume, "indexToObject", VKL_AFFINE3F, &indexToObject);
+
+      if (!activeVoxelsBoundingBox.empty()) {
+        vklSetParam(
+            volume, "indexClippingBounds", VKL_BOX3I, &activeVoxelsBoundingBox);
+      }
 
       // Create the data buffer from our pointers.
       const size_t numNodes = level.size();
@@ -543,7 +546,10 @@ namespace openvkl {
       vklSetData(volume, "node.data", dataData);
       vklRelease(dataData);
 
-      vklCommit(volume);
+      if (commit) {
+        vklCommit(volume);
+      }
+
       return volume;
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -29,6 +29,31 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     // These may be used in VdbVolume and derived classes
+
+    /*
+     * Load an affine 4x3 matrix from the given object.
+     */
+    inline AffineSpace3f getParamAffineSpace3f(ManagedObject *obj,
+                                               const char *name)
+    {
+      AffineSpace3f a(one);
+
+      if (obj->hasParamT<AffineSpace3f>(name)) {
+        a = obj->getParam<AffineSpace3f>(name);
+      } else {
+        Ref<const DataT<float>> dataIndexToObject =
+            obj->template getParamDataT<float>(name, nullptr);
+
+        if (dataIndexToObject && dataIndexToObject->size() >= 12) {
+          const DataT<float> &i2w = *dataIndexToObject;
+          a.l                     = LinearSpace3f(vec3f(i2w[0], i2w[1], i2w[2]),
+                              vec3f(i2w[3], i2w[4], i2w[5]),
+                              vec3f(i2w[6], i2w[7], i2w[8]));
+          a.p                     = vec3f(i2w[9], i2w[10], i2w[11]);
+        }
+      }
+      return a;
+    }
 
     /*
      * Store the given transformation in a format that our ISPC implementation
@@ -154,6 +179,7 @@ namespace openvkl {
       // populated for dense volumes only on commit
       bool dense{false};
       vec3i denseDimensions;
+      vec3i denseIndexOrigin;
       std::vector<Ref<const Data>> denseData;
       VKLTemporalFormat denseTemporalFormat;
       int denseTemporallyStructuredNumTimesteps;

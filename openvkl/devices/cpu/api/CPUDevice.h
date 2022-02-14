@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -322,6 +322,11 @@ namespace openvkl {
                      const char *name,
                      const std::string &s) override;
       void setVoidPtr(VKLObject object, const char *name, void *v) override;
+
+      void setObjectParam(VKLObject object,
+                          const char *name,
+                          VKLDataType dataType,
+                          const void *mem) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////

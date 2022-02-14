@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -304,10 +304,9 @@ inline uniform float VdbSampler_traverseAndSample_dense(
   assert(sampler);
   assert(sampler->grid);
   assert(sampler->grid->dense);
-  assert(sampler->grid->rootOrigin.x == 0 && sampler->grid->rootOrigin.y == 0 &&
-         sampler->grid->rootOrigin.z == 0);
 
-  const uniform vec3ui domainOffset = make_vec3ui(ic);
+  const uniform vec3ui domainOffset =
+      VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
   if (VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset)) {
     return sampler->denseLeafSample_uniform[attributeIndex](
         sampler->grid, attributeIndex, domainOffset, time);
@@ -324,10 +323,9 @@ inline float VdbSampler_traverseAndSample_dense(
   assert(sampler);
   assert(sampler->grid);
   assert(sampler->grid->dense);
-  assert(sampler->grid->rootOrigin.x == 0 && sampler->grid->rootOrigin.y == 0 &&
-         sampler->grid->rootOrigin.z == 0);
 
-  const vec3ui domainOffset = make_vec3ui(ic);
+  const vec3ui domainOffset =
+      VdbSampler_toDomainOffset(ic, sampler->grid->rootOrigin);
   if (VdbSampler_isInDomain(sampler->grid->activeSize, domainOffset)) {
     return sampler->denseLeafSample_varying[attributeIndex](
         sampler->grid, attributeIndex, domainOffset, time);

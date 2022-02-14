@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbVolume.h"
@@ -368,25 +368,6 @@ namespace openvkl {
       }
     }
 
-    /*
-     * Load an affine 4x3 matrix from the given object.
-     */
-    inline AffineSpace3f getParamAffineSpace3f(ManagedObject *obj,
-                                               const char *name)
-    {
-      Ref<const DataT<float>> dataIndexToObject =
-          obj->template getParamDataT<float>(name, nullptr);
-      AffineSpace3f a(one);
-      if (dataIndexToObject && dataIndexToObject->size() >= 12) {
-        const DataT<float> &i2w = *dataIndexToObject;
-        a.l                     = LinearSpace3f(vec3f(i2w[0], i2w[1], i2w[2]),
-                                                vec3f(i2w[3], i2w[4], i2w[5]),
-                                                vec3f(i2w[6], i2w[7], i2w[8]));
-        a.p                     = vec3f(i2w[9], i2w[10], i2w[11]);
-      }
-      return a;
-    }
-
     template <int W>
     void VdbVolume<W>::initIndexSpaceTransforms()
     {
@@ -720,15 +701,18 @@ namespace openvkl {
         box3f indexBoundingBox;
 
         if (grid->dense) {
-          grid->rootOrigin = vec3i(0);
+          grid->rootOrigin = denseIndexOrigin;
 
           grid->activeSize = grid->denseDimensions;
 
           if (constantCellData) {
-            indexBoundingBox = box3f(vec3f(0.f), vec3f(grid->denseDimensions));
+            indexBoundingBox =
+                box3f(vec3f(grid->rootOrigin),
+                      vec3f(grid->rootOrigin + grid->denseDimensions));
           } else {
             indexBoundingBox =
-                box3f(vec3f(0.f), vec3f(grid->denseDimensions - 1));
+                box3f(vec3f(grid->rootOrigin),
+                      vec3f(grid->rootOrigin + grid->denseDimensions - 1));
           }
         } else {
           if (!constantCellData) {
@@ -743,6 +727,16 @@ namespace openvkl {
           grid->activeSize = bbox.upper - grid->rootOrigin;
 
           indexBoundingBox = box3f(bbox);
+
+          // support an index-space clipping bounding box, which may clip
+          // portions of leaf nodes; this is primarily used for .vdb volumes
+          // with a restrictive active voxel bounding box
+          const box3i indexBoundingBoxI =
+              this->template getParam<box3i>("indexClippingBounds", empty);
+
+          if (!indexBoundingBoxI.empty()) {
+            indexBoundingBox = box3f(indexBoundingBoxI);
+          }
         }
 
         // The domain-space bounding box.

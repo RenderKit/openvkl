@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/vdb.h>
@@ -502,9 +502,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
 
         // voxel is only needed for non-dense case
         if (grid->dense) {
-          assert(grid->rootOrigin.x == 0 && grid->rootOrigin.y == 0 &&
-                 grid->rootOrigin.z == 0);
-          domainOffset = make_vec3ui(nodeOrigin.x, nodeOrigin.y, nodeOrigin.z);
+          domainOffset =
+              VdbSampler_toDomainOffset(nodeOrigin, grid->rootOrigin);
         } else {
           VdbSampler_traverse(&sampler, nodeOrigin, voxel, domainOffset);
         }

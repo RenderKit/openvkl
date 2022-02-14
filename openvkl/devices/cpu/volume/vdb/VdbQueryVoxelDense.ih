@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -128,8 +128,6 @@ inline void VdbIterator_queryVoxel_dense(
 
   desc.level = queryDepth;
 
-  assert(grid->rootOrigin.x == 0 && grid->rootOrigin.y == 0 &&
-         grid->rootOrigin.z == 0);
   const vec3ui domainOffset = make_vec3ui(x, y, z);
 
   if (!VdbIterator_isInDomain(grid->activeSize, domainOffset)) {

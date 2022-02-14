@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -22,6 +22,8 @@ namespace openvkl {
         // ISPC-side code assumes the same layout as LeafNode
         static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNode),
                       "ParticleLeafNode incompatible with LeafNode");
+
+        assert(radius > 0.f);
 
         nominalLength.x = -radius;
         nominalLength.y = radius;
@@ -81,6 +83,10 @@ namespace openvkl {
       bool estimateValueRanges;
 
       Ref<const DataT<float>> background;
+
+      // number of particles included in the BVH, which will not include any
+      // zero-radius particles
+      size_t numBVHParticles{0};
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};

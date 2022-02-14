@@ -1,6 +1,32 @@
 Version History
 ---------------
 
+### Open VKL 1.2.0
+
+-   Added `vklSetParam()` API function which can set parameters of any supported
+    type
+-   Structured regular volumes:
+    -   Added support for cell-centered data via the `cellCentered` parameter;
+        vertex-centered remains the default
+    -   Added support for more general transformations via the `indexToObject`
+        parameter
+    -   Added `indexOrigin` parameter which applies an index-space vec3i
+        translation
+-   VDB volumes:
+    -   Added `indexClippingBounds` parameter, which can restrict the active
+        voxel bounding box
+    -   The `indexToObject` parameter can now be provided as a `VKL_AFFINE3F`
+    -   Corrected bounding box computations in `InnerNode` observer
+-   Particle volumes:
+    -   Now ignoring particles with zero radius
+-   VDB utility library: added `commit` flag (default true) to volume creation
+    methods, allowing apps to set additional parameters before first commit
+-   Examples:
+    -   Added new set of minimal examples, which step through creation of basic
+        volume and isosurface renderers
+    -   Exposing `intervalResolutionHint` parameter in `vklExamples` application
+-   Superbuild updates to latest versions of dependencies
+
 ### Open VKL 1.1.0
 
 -   vklExamples improvements: asynchronous rendering, multiple viewports,

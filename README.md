@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v1.1.0 of Intel® Open VKL. For changes and new features
+This is release v1.2.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -32,6 +32,35 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 1.2.0
+
+  - Added `vklSetParam()` API function which can set parameters of any
+    supported type
+  - Structured regular volumes:
+      - Added support for cell-centered data via the `cellCentered`
+        parameter; vertex-centered remains the default
+      - Added support for more general transformations via the
+        `indexToObject` parameter
+      - Added `indexOrigin` parameter which applies an index-space vec3i
+        translation
+  - VDB volumes:
+      - Added `indexClippingBounds` parameter, which can restrict the
+        active voxel bounding box
+      - The `indexToObject` parameter can now be provided as a
+        `VKL_AFFINE3F`
+      - Corrected bounding box computations in `InnerNode` observer
+  - Particle volumes:
+      - Now ignoring particles with zero radius
+  - VDB utility library: added `commit` flag (default true) to volume
+    creation methods, allowing apps to set additional parameters before
+    first commit
+  - Examples:
+      - Added new set of minimal examples, which step through creation
+        of basic volume and isosurface renderers
+      - Exposing `intervalResolutionHint` parameter in `vklExamples`
+        application
+  - Superbuild updates to latest versions of dependencies
 
 ### Open VKL 1.1.0
 
@@ -576,8 +605,7 @@ and `vklNewVolume`.
 
 In general, modifiable parameters to objects are modified using
 `vklSet...` functions based on the type of the parameter being set. The
-parameter name is passed as a string. Below are all variants of
-`vklSet...`.
+parameter name is passed as a string. Below are variants of `vklSet...`.
 
 ``` cpp
 void vklSetBool(VKLObject object, const char *name, int b);
@@ -589,6 +617,21 @@ void vklSetData(VKLObject object, const char *name, VKLData data);
 void vklSetString(VKLObject object, const char *name, const char *s);
 void vklSetVoidPtr(VKLObject object, const char *name, void *v);
 ```
+
+A more generic parameter setter is also available, which allows setting
+parameters beyond the explicit types above:
+
+``` cpp
+void vklSetParam(VKLObject object,
+                 const char *name,
+                 VKLDataType dataType,
+                 const void *mem);
+```
+
+Note that `mem` must always be a pointer *to* the object, otherwise
+accidental type casting can occur. This is especially true for pointer
+types (`VKL_VOID_PTR` and `VKLObject` handles), as they will implicitly
+cast to `void\ *`, but be incorrectly interpreted.
 
 After parameters have been set, `vklCommit` must be called on the object
 to make them take effect.
@@ -763,11 +806,12 @@ vkl_range1f vklGetValueRange(VKLVolume volume, unsigned int attributeIndex);
 ### Structured Volumes
 
 Structured volumes only need to store the values of the samples, because
-their addresses in memory can be easily computed from a 3D position. The
-dimensions for all structured volume types are in units of vertices, not
-cells. For example, a volume with dimensions \((x, y, z)\) will have
-\((x-1, y-1, z-1)\) cells in each dimension. Voxel data provided is
-assumed vertex-centered, so \(x*y*z\) values must be provided.
+their addresses in memory can be easily computed from a 3D position.
+Data can be provided either per cell or per vertex (the default),
+selectable via the `cellCentered` parameter. This parameter also affects
+the interpretation of the volume’s dimensions, which will be in units of
+cells or vertices, respectively. A volume with \((x, y, z)\) vertices
+will have \((x-1, y-1, z-1)\) cells.
 
 #### Structured Regular Volumes
 
@@ -776,24 +820,27 @@ by passing a type string of `"structuredRegular"` to `vklNewVolume`. The
 parameters understood by structured regular volumes are summarized in
 the table below.
 
-| Type                  | Name                             | Default                        | Description                                                                                                                                                                                                                    |
-| :-------------------- | :------------------------------- | :----------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| vec3i                 | dimensions                       |                                | number of voxels in each dimension \((x, y, z)\)                                                                                                                                                                               |
-| VKLData VKLData\[\]   | data                             |                                | VKLData object(s) of voxel data, supported types are:                                                                                                                                                                          |
-|                       |                                  |                                | `VKL_UCHAR`                                                                                                                                                                                                                    |
-|                       |                                  |                                | `VKL_SHORT`                                                                                                                                                                                                                    |
-|                       |                                  |                                | `VKL_USHORT`                                                                                                                                                                                                                   |
-|                       |                                  |                                | `VKL_HALF`                                                                                                                                                                                                                     |
-|                       |                                  |                                | `VKL_FLOAT`                                                                                                                                                                                                                    |
-|                       |                                  |                                | `VKL_DOUBLE`                                                                                                                                                                                                                   |
-|                       |                                  |                                | Multiple attributes are supported through passing an array of VKLData objects.                                                                                                                                                 |
-| vec3f                 | gridOrigin                       | \((0, 0, 0)\)                  | origin of the grid in object space                                                                                                                                                                                             |
-| vec3f                 | gridSpacing                      | \((1, 1, 1)\)                  | size of the grid cells in object space                                                                                                                                                                                         |
-| uint32                | temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT` | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. Structured regular volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`. |
-| int                   | temporallyStructuredNumTimesteps |                                | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                        |
-| uint32\[\] uint64\[\] | temporallyUnstructuredIndices    |                                | For temporally unstructured variation, indices to `data` time series beginning per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                |
-| float\[\]             | temporallyUnstructuredTimes      |                                | For temporally unstructured variation, time values corresponding to values in `data`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                    |
-| float\[\]             | background                       | `VKL_BACKGROUND_UNDEFINED`     | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                    |
+| Type                  | Name                             | Default                            | Description                                                                                                                                                                                                                                |
+| :-------------------- | :------------------------------- | :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| vec3i                 | dimensions                       |                                    | number of values in each dimension \((x, y, z)\)                                                                                                                                                                                           |
+| VKLData VKLData\[\]   | data                             |                                    | VKLData object(s) of volume data, supported types are:                                                                                                                                                                                     |
+|                       |                                  |                                    | `VKL_UCHAR`                                                                                                                                                                                                                                |
+|                       |                                  |                                    | `VKL_SHORT`                                                                                                                                                                                                                                |
+|                       |                                  |                                    | `VKL_USHORT`                                                                                                                                                                                                                               |
+|                       |                                  |                                    | `VKL_HALF`                                                                                                                                                                                                                                 |
+|                       |                                  |                                    | `VKL_FLOAT`                                                                                                                                                                                                                                |
+|                       |                                  |                                    | `VKL_DOUBLE`                                                                                                                                                                                                                               |
+|                       |                                  |                                    | Multiple attributes are supported through passing an array of VKLData objects.                                                                                                                                                             |
+| bool                  | cellCentered                     | false                              | indicates if data is provided per cell (true) or per vertex (false)                                                                                                                                                                        |
+| vec3f                 | gridOrigin                       | \((0, 0, 0)\)                      | origin of the grid in object space                                                                                                                                                                                                         |
+| vec3f                 | gridSpacing                      | \((1, 1, 1)\)                      | size of the grid cells in object space                                                                                                                                                                                                     |
+| affine3f              | indexToObject                    | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | Defines the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and grid cells have size (1,1,1). This parameter takes precedence over `gridOrigin` and `gridSpacing`, if provided. |
+| vec3i                 | indexOrigin                      | \((0, 0, 0)\)                      | Defines the index space origin of the volume. This translation is applied before any (`gridOrigin`, `gridSpacing`) or `indexToObject` transformation.                                                                                      |
+| uint32                | temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT`     | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. Structured regular volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.             |
+| int                   | temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                    |
+| uint32\[\] uint64\[\] | temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, indices to `data` time series beginning per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                            |
+| float\[\]             | temporallyUnstructuredTimes      |                                    | For temporally unstructured variation, time values corresponding to values in `data`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                |
+| float\[\]             | background                       | `VKL_BACKGROUND_UNDEFINED`         | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                                |
 
 Configuration parameters for structured regular (`"structuredRegular"`)
 volumes.
@@ -829,9 +876,10 @@ Structured spherical volumes are also supported, which are created by
 passing a type string of `"structuredSpherical"` to `vklNewVolume`. The
 grid dimensions and parameters are defined in terms of radial distance
 (\(r\)), inclination angle (\(\theta\)), and azimuthal angle (\(\phi\)),
-conforming with the ISO convention for spherical coordinate systems. The
-coordinate system and parameters understood by structured spherical
-volumes are summarized below.
+conforming with the ISO convention for spherical coordinate systems.
+Structured spherical volumes currently only support vertex-centered
+data. The coordinate system and parameters understood by structured
+spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance
 (\(r\)), inclination angle (\(\theta\)), and azimuthal angle
@@ -1045,7 +1093,8 @@ configuration](https://openvkl.github.io/images/vdb_structure.png)
 
 VDB volumes interpret input data as constant cells (which are then
 potentially filtered). This is in contrast to `structuredRegular`
-volumes, which have a vertex-centered interpretation.
+volumes, which can have either a vertex-centered or cell-centered
+interpretation.
 
 The VDB implementation in Open VKL follows the following goals:
 
@@ -1060,18 +1109,19 @@ The VDB implementation in Open VKL follows the following goals:
 VDB volumes are created by passing the type string `"vdb"` to
 `vklNewVolume`, and have the following parameters:
 
-| Type        | Name                                  | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| :---------- | :------------------------------------ | :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| float\[\]   | indexToObject                         | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | An array of 12 values of type `float` that define the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). The first 9 values are interpreted as a row-major linear transformation matrix. The last 3 values are the translation of the grid origin.                                                                                                                                                                                         |
-| uint32\[\]  | node.format                           |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_DENSE_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                                                                                         |
-| uint32\[\]  | node.level                            |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                                                                                    |
-| vec3i\[\]   | node.origin                           |                                    | For each input node, the node origin index.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| VKLData\[\] | node.data                             |                                    | For each input node, the attribute data. Single-attribute volumes may have one array provided per node, while multi-attribute volumes require an array per attribute for each node. Nodes with format `VKL_FORMAT_TILE` are expected to have single-entry arrays per attribute. Nodes with format `VKL_FORMAT_DENSE_ZYX` are expected to have arrays with `vklVdbLevelNumVoxels(level[i])` entries per attribute. `VKL_HALF` and `VKL_FLOAT` data is currently supported; all nodes for a given attribute must be the same data type. |
-| uint32\[\]  | node.temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT`     | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. VDB volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                       |
-| int\[\]     | node.temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                                                                                                                                                                                                                                                                                                               |
-| VKLData\[\] | node.temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, beginning per voxel. Supported data types for each node are `VKL_UINT` and `VKL_ULONG`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                                  |
-| VKLData\[\] | node.temporallyUnstructuredTimes      |                                    | For temporally unstructured variation, time values corresponding to values in `node.data`. For each node, the data must be of type `VKL_FLOAT`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                 |
-| float\[\]   | background                            | `VKL_BACKGROUND_UNDEFINED`         | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Type               | Name                                  | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| :----------------- | :------------------------------------ | :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| affine3f float\[\] | indexToObject                         | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | Defines the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). A `vkl_affine3f` can be provided; alternatively an array of 12 values of type `float` can be used, where the first 9 values are interpreted as a row-major linear transformation matrix, and the last 3 values are the translation of the grid origin.                                                                                                                      |
+| uint32\[\]         | node.format                           |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_DENSE_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                                                                                         |
+| uint32\[\]         | node.level                            |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                                                                                    |
+| vec3i\[\]          | node.origin                           |                                    | For each input node, the node origin index.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| VKLData\[\]        | node.data                             |                                    | For each input node, the attribute data. Single-attribute volumes may have one array provided per node, while multi-attribute volumes require an array per attribute for each node. Nodes with format `VKL_FORMAT_TILE` are expected to have single-entry arrays per attribute. Nodes with format `VKL_FORMAT_DENSE_ZYX` are expected to have arrays with `vklVdbLevelNumVoxels(level[i])` entries per attribute. `VKL_HALF` and `VKL_FLOAT` data is currently supported; all nodes for a given attribute must be the same data type. |
+| uint32\[\]         | node.temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT`     | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. VDB volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                       |
+| int\[\]            | node.temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                                                                                                                                                                                                                                                                                                               |
+| VKLData\[\]        | node.temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, beginning per voxel. Supported data types for each node are `VKL_UINT` and `VKL_ULONG`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                                  |
+| VKLData\[\]        | node.temporallyUnstructuredTimes      |                                    | For temporally unstructured variation, time values corresponding to values in `node.data`. For each node, the data must be of type `VKL_FLOAT`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                 |
+| float\[\]          | background                            | `VKL_BACKGROUND_UNDEFINED`         | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| box3i              | indexClippingBounds                   |                                    | Clips the volume to the specified index-space bounding box. This is useful for volumes with dimensions that are not even multiples of the leaf node dimensions, or .vdb files with restrictive active voxel bounding boxes.                                                                                                                                                                                                                                                                                                           |
 
 Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -1187,6 +1237,9 @@ At each sample, the scalar field value is then computed as the sum of
 each radial basis function phi, for each particle that overlaps it.
 Gradients are similarly computed, based on the summed analytical
 contributions of each contributing particle.
+
+Particles with a radius less than or equal to zero are ignored. At least
+one valid particle (radius greater than zero) must be provided.
 
 The Open VKL implementation is similar to direct evaluation of samples
 in Reda et al.\[2\]. It uses an Embree-built BVH with a custom

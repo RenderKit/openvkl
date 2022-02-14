@@ -230,7 +230,7 @@ counting for lifetime determination.  Objects are created with particular type's
 
 In general, modifiable parameters to objects are modified using `vklSet...`
 functions based on the type of the parameter being set. The parameter name is
-passed as a string. Below are all variants of `vklSet...`.
+passed as a string. Below are variants of `vklSet...`.
 
     void vklSetBool(VKLObject object, const char *name, int b);
     void vklSetFloat(VKLObject object, const char *name, float x);
@@ -240,6 +240,19 @@ passed as a string. Below are all variants of `vklSet...`.
     void vklSetData(VKLObject object, const char *name, VKLData data);
     void vklSetString(VKLObject object, const char *name, const char *s);
     void vklSetVoidPtr(VKLObject object, const char *name, void *v);
+
+A more generic parameter setter is also available, which allows setting
+parameters beyond the explicit types above:
+
+    void vklSetParam(VKLObject object,
+                     const char *name,
+                     VKLDataType dataType,
+                     const void *mem);
+
+Note that `mem` must always be a pointer _to_ the object, otherwise accidental
+type casting can occur. This is especially true for pointer types
+(`VKL_VOID_PTR` and `VKLObject` handles), as they will implicitly cast to `void\
+*`, but be incorrectly interpreted.
 
 After parameters have been set, `vklCommit` must be called on the object to make
 them take effect.
@@ -427,11 +440,12 @@ Finally, the value range of the volume for a given attribute can be queried:
 ### Structured Volumes
 
 Structured volumes only need to store the values of the samples, because their
-addresses in memory can be easily computed from a 3D position. The dimensions
-for all structured volume types are in units of vertices, not cells. For
-example, a volume with dimensions $(x, y, z)$ will have $(x-1, y-1, z-1)$ cells
-in each dimension. Voxel data provided is assumed vertex-centered, so $x*y*z$
-values must be provided.
+addresses in memory can be easily computed from a 3D position. Data can be
+provided either per cell or per vertex (the default), selectable via the
+`cellCentered` parameter. This parameter also affects the interpretation of
+the volume's dimensions, which will be in units of cells or vertices,
+respectively. A volume with $(x, y, z)$ vertices will have $(x-1, y-1, z-1)$
+cells.
 
 #### Structured Regular Volumes
 
@@ -443,10 +457,10 @@ table below.
   --------- -------------------------------- -----------------------------  ---------------------------------------
   Type      Name                             Default                        Description
   --------- -------------------------------- -----------------------------  ---------------------------------------
-  vec3i     dimensions                                                      number of voxels in each
+  vec3i     dimensions                                                      number of values in each
                                                                             dimension $(x, y, z)$
 
-  VKLData   data                                                            VKLData object(s) of voxel data,
+  VKLData   data                                                            VKLData object(s) of volume data,
   VKLData[]                                                                 supported types are:
 
                                                                             `VKL_UCHAR`
@@ -465,9 +479,26 @@ table below.
                                                                             through passing an array of VKLData
                                                                             objects.
 
+  bool      cellCentered                     false                          indicates if data is provided per cell
+                                                                            (true) or per vertex (false)
+
   vec3f     gridOrigin                       $(0, 0, 0)$                    origin of the grid in object space
 
   vec3f     gridSpacing                      $(1, 1, 1)$                    size of the grid cells in object space
+
+  affine3f  indexToObject                    1, 0, 0,                       Defines the transformation from index
+                                             0, 1, 0,                       space to object space. In index space,
+                                             0, 0, 1,                       the grid is an axis-aligned regular
+                                             0, 0, 0                        grid, and grid cells have size (1,1,1).
+                                                                            This parameter takes precedence over
+                                                                            `gridOrigin` and `gridSpacing`, if
+                                                                            provided.
+
+  vec3i     indexOrigin                      $(0, 0, 0)$                    Defines the index space origin of the
+                                                                            volume. This translation is applied
+                                                                            before any (`gridOrigin`,
+                                                                            `gridSpacing`) or `indexToObject`
+                                                                            transformation.
 
   uint32    temporalFormat                   `VKL_TEMPORAL_FORMAT_CONSTANT` The temporal format for this volume.
                                                                             Use `VKLTemporalFormat` for named 
@@ -537,7 +568,8 @@ Structured spherical volumes are also supported, which are created by passing a
 type string of `"structuredSpherical"` to `vklNewVolume`. The grid dimensions
 and parameters are defined in terms of radial distance ($r$), inclination angle
 ($\theta$), and azimuthal angle ($\phi$), conforming with the ISO convention for
-spherical coordinate systems. The coordinate system and parameters understood by
+spherical coordinate systems. Structured spherical volumes currently only
+support vertex-centered data. The coordinate system and parameters understood by
 structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
@@ -807,9 +839,9 @@ VDB leaf nodes are implicit in Open VKL: they are stored as pointers to user-pro
 
 ![Structure of `"vdb"` volumes in the default configuration][imgVdbStructure]
 
-VDB volumes interpret input data as constant cells (which are then potentially filtered).
-This is in contrast to `structuredRegular` volumes, which have a vertex-centered
-interpretation.
+VDB volumes interpret input data as constant cells (which are then potentially
+filtered). This is in contrast to `structuredRegular` volumes, which can have
+either a vertex-centered or cell-centered interpretation.
 
 The VDB implementation in Open VKL follows the following goals:
 
@@ -826,15 +858,16 @@ following parameters:
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
   Type          Name                                   Default                         Description
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
-  float[]       indexToObject                          1, 0, 0,                        An array of 12 values of type `float`
-                                                       0, 1, 0,                        that define the transformation from
-                                                       0, 0, 1,                        index space to object space.
-                                                       0, 0, 0                         In index space, the grid is an
-                                                                                       axis-aligned regular grid, and leaf
-                                                                                       voxels have size (1,1,1).
-                                                                                       The first 9 values are interpreted
-                                                                                       as a row-major linear transformation
-                                                                                       matrix. The last 3 values are the
+  affine3f      indexToObject                          1, 0, 0,                        Defines the transformation from index
+  float[]                                              0, 1, 0,                        space to object space. In index space,
+                                                       0, 0, 1,                        the grid is an axis-aligned regular
+                                                       0, 0, 0                         grid, and leaf voxels have size (1,1,1).
+                                                                                       A `vkl_affine3f` can be provided;
+                                                                                       alternatively an array of 12 values of
+                                                                                       type `float` can be used, where the
+                                                                                       first 9 values are interpreted as a
+                                                                                       row-major linear transformation matrix,
+                                                                                       and the last 3 values are the
                                                                                        translation of the grid origin.
 
   uint32[]      node.format                                                            For each input node, the data format.
@@ -898,6 +931,14 @@ following parameters:
   float[]       background                             `VKL_BACKGROUND_UNDEFINED`      For each attribute, the value that is
                                                                                        returned when sampling an undefined
                                                                                        region outside the volume domain.
+
+  box3i         indexClippingBounds                                                    Clips the volume to the specified
+                                                                                       index-space bounding box. This is
+                                                                                       useful for volumes with dimensions that
+                                                                                       are not even multiples of the leaf node
+                                                                                       dimensions, or .vdb files with
+                                                                                       restrictive active voxel bounding
+                                                                                       boxes.
   ------------  -------------------------------------  ------------------------------  ---------------------------------------
   : Configuration parameters for VDB (`"vdb"`) volumes.
 
@@ -1032,6 +1073,9 @@ At each sample, the scalar field value is then computed as the sum of each
 radial basis function phi, for each particle that overlaps it. Gradients are
 similarly computed, based on the summed analytical contributions of each
 contributing particle.
+
+Particles with a radius less than or equal to zero are ignored. At least one
+valid particle (radius greater than zero) must be provided.
 
 The Open VKL implementation is similar to direct evaluation of samples in Reda
 et al.[2]. It uses an Embree-built BVH with a custom traversal, similar to the

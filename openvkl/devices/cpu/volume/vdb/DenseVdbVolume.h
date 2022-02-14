@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -26,6 +26,7 @@ namespace openvkl {
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
+      vec3i indexOrigin;
       std::vector<Ref<const Data>> attributesData;
       VKLTemporalFormat temporalFormat;
       int temporallyStructuredNumTimesteps;

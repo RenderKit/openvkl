@@ -205,10 +205,10 @@ namespace openvkl {
       arguments.maxBranchingFactor     = 2;
       arguments.maxDepth               = 1024;
       arguments.sahBlockSize           = 1;
-      arguments.minLeafSize            = 1;
-      arguments.maxLeafSize            = 1;  // our leaf nodes limited to 1 prim
-      arguments.traversalCost          = 1.0f;
-      arguments.intersectionCost       = 2.0f;
+      arguments.minLeafSize            = MAX_PRIMS_PER_LEAF;
+      arguments.maxLeafSize            = MAX_PRIMS_PER_LEAF;
+      arguments.traversalCost          = 0.01f;
+      arguments.intersectionCost       = 0.99f;
       arguments.bvh                    = rtcBVH;
       arguments.primitives             = prims.data();
       arguments.primitiveCount         = prims.size();
@@ -227,7 +227,7 @@ namespace openvkl {
       }
 
       if (rtcRoot->nominalLength.x < 0) {
-        auto &val = ((LeafNode *)rtcRoot)->bounds;
+        auto &val = ((ParticleLeafNode *)rtcRoot)->bounds;
         bounds    = box3f(val.lower, val.upper);
       } else {
         auto &vals = ((InnerNode *)rtcRoot)->bounds;
@@ -250,10 +250,6 @@ namespace openvkl {
 
       getLeafNodes(rtcRoot, leafNodes);
 
-      if (leafNodes.size() != numBVHParticles) {
-        throw std::runtime_error("incorrect number of leaf nodes found");
-      }
-
       // compute value ranges of leaf nodes in parallel
       std::unique_ptr<Sampler<W>> sampler(newSampler());
       sampler->commit();
@@ -264,8 +260,8 @@ namespace openvkl {
         const vfloatn<1> time             = {0.f};
 
         tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
-          LeafNode *leafNode         = leafNodes[leafNodeIndex];
-          const size_t particleIndex = leafNode->cellID;
+          ParticleLeafNode *leafNode =
+              static_cast<ParticleLeafNode *>(leafNodes[leafNodeIndex]);
 
           range1f computedValueRange(empty);
 
@@ -273,11 +269,14 @@ namespace openvkl {
           // constraints are consistently considered (e.g.
           // clampMaxCumulativeValue, radiusSupportFactor)
 
-          // initial estimate based sampling particle center
-          vfloatn<1> sample;
-          sampler->computeSample(
-              (*positions)[particleIndex], sample, attributeIndex, time);
-          computedValueRange.extend(sample[0]);
+          // initial estimate based sampling particle centers
+          for (uint64_t i = 0; i < leafNode->numCells; i++) {
+            const uint64_t particleIndex = leafNode->cellIDs[i];
+            vfloatn<1> sample;
+            sampler->computeSample(
+                (*positions)[particleIndex], sample, attributeIndex, time);
+            computedValueRange.extend(sample[0]);
+          }
 
           // sample over regular grid within leaf bounds to improve estimate
           const box3fa leafBounds = leafNode->bounds;
@@ -317,7 +316,8 @@ namespace openvkl {
         });
       } else {
         tasking::parallel_for(leafNodes.size(), [&](size_t leafNodeIndex) {
-          LeafNode *leafNode   = leafNodes[leafNodeIndex];
+          ParticleLeafNode *leafNode =
+              static_cast<ParticleLeafNode *>(leafNodes[leafNodeIndex]);
           leafNode->valueRange = range1f(0.f, clampMaxCumulativeValue);
         });
       }

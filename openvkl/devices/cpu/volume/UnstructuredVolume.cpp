@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "UnstructuredVolume.h"
@@ -38,7 +38,7 @@ namespace openvkl {
     static void dumpBVH(Node *root, int indent = 0)
     {
       if (root->nominalLength.x < 0) {
-        auto leaf = (LeafNode *)root;
+        auto leaf = (LeafNodeSingle *)root;
         tabIndent(indent);
         std::cerr << "id: " << leaf->cellID << " bounds: " << leaf->bounds
                   << " range: " << leaf->valueRange
@@ -321,7 +321,7 @@ namespace openvkl {
       arguments.createNode             = InnerNode::create;
       arguments.setNodeChildren        = InnerNode::setChildren;
       arguments.setNodeBounds          = InnerNode::setBounds;
-      arguments.createLeaf             = LeafNode::create;
+      arguments.createLeaf             = LeafNodeSingle::create;
       arguments.splitPrimitive         = nullptr;
       arguments.buildProgress          = nullptr;
       arguments.userPtr                = range.data();

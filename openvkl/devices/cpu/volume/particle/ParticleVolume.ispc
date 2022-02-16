@@ -86,11 +86,11 @@ inline varying float VKLParticleVolume_sample(
 
   float sampleResult = 0.f;
 
-  traverseEmbree(self->super.bvhRoot,
-                 sampler->volume,
-                 intersectAndSampleParticle,
-                 sampleResult,
-                 objectCoordinates);
+  traverseBVHMulti(self->super.bvhRoot,
+                   sampler->volume,
+                   intersectAndSampleParticle,
+                   sampleResult,
+                   objectCoordinates);
 
   return sampleResult;
 }
@@ -103,11 +103,11 @@ inline varying vec3f VKLParticleVolume_computeGradient(
 
   vec3f gradientResult = make_vec3f(0.f);
 
-  traverseEmbree(self->super.bvhRoot,
-                 sampler->volume,
-                 intersectAndGradientParticle,
-                 gradientResult,
-                 objectCoordinates);
+  traverseBVHMulti(self->super.bvhRoot,
+                   sampler->volume,
+                   intersectAndGradientParticle,
+                   gradientResult,
+                   objectCoordinates);
 
   return gradientResult;
 }

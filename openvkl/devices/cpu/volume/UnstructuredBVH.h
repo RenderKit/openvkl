@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -30,10 +30,16 @@ namespace openvkl {
     struct LeafNode : public Node
     {
       box3fa bounds;
+
+      LeafNode(const box3fa &bounds) : bounds(bounds) {}
+    };
+
+    struct LeafNodeSingle : public LeafNode
+    {
       uint64_t cellID;
 
-      LeafNode(unsigned id, const box3fa &bounds, const range1f &range)
-          : cellID(id), bounds(bounds)
+      LeafNodeSingle(uint64_t id, const box3fa &bounds, const range1f &range)
+          : cellID(id), LeafNode(bounds)
       {
         nominalLength   = bounds.upper - bounds.lower;
         nominalLength.x = -nominalLength.x;  // leaf
@@ -50,8 +56,26 @@ namespace openvkl {
         auto id    = (uint64_t(prims->geomID) << 32) | prims->primID;
         auto range = ((range1f *)userPtr)[id];
 
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(LeafNode), 16);
-        return (void *)new (ptr) LeafNode(id, *(const box3fa *)prims, range);
+        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(LeafNodeSingle), 16);
+        return (void *)new (ptr)
+            LeafNodeSingle(id, *(const box3fa *)prims, range);
+      }
+    };
+
+    struct LeafNodeMulti : public LeafNode
+    {
+      uint64_t numCells;
+      uint64_t *cellIDs;
+
+      LeafNodeMulti(uint64_t numCells,
+                    uint64_t *ids,
+                    const box3fa &bounds,
+                    const range1f &range)
+          : numCells(numCells), cellIDs(ids), LeafNode(bounds)
+      {
+        nominalLength   = bounds.upper - bounds.lower;
+        nominalLength.x = -nominalLength.x;  // leaf
+        valueRange      = range;
       }
     };
 

@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "AMRVolume.h"
@@ -25,17 +25,17 @@ namespace openvkl {
       vec3f gridSpacing;
     };
 
-    struct AMRLeafNode : public LeafNode
+    struct AMRLeafNode : public LeafNodeSingle
     {
       AMRLeafNode(unsigned id,
                   const box3fa &bounds,
                   const range1f &range,
                   const float cellWidth,
                   const vec3f &gridSpacing)
-          : LeafNode(id, bounds, range)
+          : LeafNodeSingle(id, bounds, range)
       {
-        // ISPC-side code assumes the same layout as LeafNode
-        static_assert(sizeof(AMRLeafNode) == sizeof(LeafNode),
+        // ISPC-side code assumes the same layout as LeafNodeSingle
+        static_assert(sizeof(AMRLeafNode) == sizeof(LeafNodeSingle),
                       "AMRLeafNode incompatible with LeafNode");
 
         nominalLength.x = -cellWidth * gridSpacing.x;

@@ -6,7 +6,6 @@
 #include "ParticleSampler.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
-#include "rkcommon/utility/multidim_index_sequence.h"
 
 #include <algorithm>
 
@@ -20,6 +19,41 @@ namespace openvkl {
       Device *device = reinterpret_cast<Device *>(userPtr);
       LogMessageStream(device, VKL_LOG_WARNING)
           << "error " << error << ": " << str << std::endl;
+    }
+
+    template <int W>
+    static range1f computeValueRangeOverBoundingBox(
+        std::shared_ptr<Sampler<W>> sampler,
+        unsigned int attributeIndex,
+        const box3fa &bounds,
+        int samplesPerDimension)
+    {
+      const std::vector<float> times(
+          samplesPerDimension * samplesPerDimension * samplesPerDimension, 0.f);
+
+      std::vector<vvec3fn<1>> objectCoordinates;
+      objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
+                                samplesPerDimension);
+
+      for (int i = 0; i < samplesPerDimension; i++) {
+        for (int j = 0; j < samplesPerDimension; j++) {
+          for (int k = 0; k < samplesPerDimension; k++) {
+            objectCoordinates.push_back(
+                bounds.lower + vec3f(i, j, k) / float(samplesPerDimension - 1) *
+                                   bounds.size());
+          }
+        }
+      }
+
+      std::vector<float> samples(objectCoordinates.size());
+      sampler->computeSampleN(objectCoordinates.size(),
+                              objectCoordinates.data(),
+                              samples.data(),
+                              attributeIndex,
+                              times.data());
+
+      auto minmax = std::minmax_element(samples.begin(), samples.end());
+      return range1f(*minmax.first, *minmax.second);
     }
 
     template <int W>
@@ -242,7 +276,7 @@ namespace openvkl {
       // this method computes an _estimate_ of value range; this fractional
       // uncertainty will be used to conservatively expand the computed ranges
       // This value also shows up in tests/particle_volume_interval_iterator.cpp
-      const float uncertainty = 0.05f;
+      const float uncertainty = 0.1f;
 
       // build vector of leaf nodes
       std::vector<LeafNode *> leafNodes;
@@ -251,7 +285,7 @@ namespace openvkl {
       getLeafNodes(rtcRoot, leafNodes);
 
       // compute value ranges of leaf nodes in parallel
-      std::unique_ptr<Sampler<W>> sampler(newSampler());
+      std::shared_ptr<Sampler<W>> sampler(newSampler());
       sampler->commit();
 
       if (estimateValueRanges) {
@@ -269,44 +303,37 @@ namespace openvkl {
           // constraints are consistently considered (e.g.
           // clampMaxCumulativeValue, radiusSupportFactor)
 
-          // initial estimate based sampling particle centers
           for (uint64_t i = 0; i < leafNode->numCells; i++) {
             const uint64_t particleIndex = leafNode->cellIDs[i];
-            vfloatn<1> sample;
-            sampler->computeSample(
-                (*positions)[particleIndex], sample, attributeIndex, time);
-            computedValueRange.extend(sample[0]);
+
+            // sample over regular grid within particle radius to improve
+            // estimate; the intent is to cover regions where particles may
+            // overlap
+            const vec3f particleCenter = (*positions)[particleIndex];
+            const float particleRadius = (*radii)[particleIndex];
+
+            box3fa particleBounds = empty;
+            particleBounds.extend(particleCenter -
+                                  radiusSupportFactor * vec3f(particleRadius));
+            particleBounds.extend(particleCenter +
+                                  radiusSupportFactor * vec3f(particleRadius));
+
+            // choose an odd value to cover particle center
+            const int samplesPerDimension = 5;
+
+            computedValueRange.extend(computeValueRangeOverBoundingBox(
+                sampler, attributeIndex, particleBounds, samplesPerDimension));
           }
 
-          // sample over regular grid within leaf bounds to improve estimate
+          // sample over regular grid within leaf bounds to improve estimate;
+          // this addresses contributions from particles in other overlapping
+          // leaf nodes
           const box3fa leafBounds = leafNode->bounds;
 
           const int samplesPerDimension = 10;
 
-          std::vector<vvec3fn<1>> objectCoordinates;
-          std::vector<float> times;
-          objectCoordinates.reserve(samplesPerDimension * samplesPerDimension *
-                                    samplesPerDimension);
-          times.reserve(samplesPerDimension);
-
-          multidim_index_sequence<3> mis{vec3i(samplesPerDimension)};
-
-          for (const auto &ijk : mis) {
-            objectCoordinates.push_back(
-                leafBounds.lower + vec3f(ijk) / float(samplesPerDimension - 1) *
-                                       leafBounds.size());
-            times.push_back(0.f);
-          }
-
-          std::vector<float> samples(objectCoordinates.size());
-          sampler->computeSampleN(objectCoordinates.size(),
-                                  objectCoordinates.data(),
-                                  samples.data(),
-                                  attributeIndex,
-                                  times.data());
-
-          auto minmax = std::minmax_element(samples.begin(), samples.end());
-          computedValueRange.extend(range1f(*minmax.first, *minmax.second));
+          computedValueRange.extend(computeValueRangeOverBoundingBox(
+              sampler, attributeIndex, leafBounds, samplesPerDimension));
 
           // apply uncertainty to computed value range
           computedValueRange.lower *= (1.f - uncertainty);

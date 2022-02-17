@@ -70,10 +70,22 @@ typedef bool (*intersectAndSamplePrim)(const void *uniform userData,
                                        float &result,
                                        vec3f pos);
 
+typedef bool (*intersectAndSamplePrimM)(const void *uniform userData,
+                                       uniform uint64 numIds,
+                                       uniform uint64 *uniform ids,
+                                       float &result,
+                                       vec3f pos);
+
 typedef bool (*intersectAndGradientPrim)(const void *uniform userData,
                                          uniform uint64 id,
                                          vec3f &result,
                                          vec3f pos);
+
+typedef bool (*intersectAndGradientPrimM)(const void *uniform userData,
+                                          uniform uint64 numIds,
+                                          uniform uint64 *uniform ids,
+                                          vec3f &result,
+                                          vec3f pos);
 
 void traverseBVHSingle(uniform Node *uniform root,
                        const void *uniform userPtr,
@@ -89,13 +101,13 @@ void traverseBVHSingle(uniform Node *uniform root,
 
 void traverseBVHMulti(uniform Node *uniform root,
                       const void *uniform userPtr,
-                      uniform intersectAndSamplePrim sampleFunc,
+                      uniform intersectAndSamplePrimM sampleFunc,
                       float &result,
                       const vec3f &pos);
 
 void traverseBVHMulti(uniform Node *uniform root,
                       const void *uniform userPtr,
-                      uniform intersectAndGradientPrim sampleFunc,
+                      uniform intersectAndGradientPrimM sampleFunc,
                       vec3f &result,
                       const vec3f &pos);
 

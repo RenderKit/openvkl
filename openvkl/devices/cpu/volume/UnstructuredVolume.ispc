@@ -81,8 +81,9 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
       if (isLeaf) {                                                            \
         uniform LeafNodeMulti *uniform leaf =                                  \
             (uniform LeafNodeMulti * uniform) node;                            \
-        for (uniform uint64 i = 0; i < leaf->numCells; i++) {                  \
-          if (userFunc(userPtr, leaf->cellIDs[i], result, samplePos))          \
+        if (pointInAABBTest(leaf->super.bounds, samplePos)) {                  \
+          if (userFunc(                                                        \
+                  userPtr, leaf->numCells, leaf->cellIDs, result, samplePos))  \
             return;                                                            \
         }                                                                      \
       } else {                                                                 \
@@ -122,8 +123,8 @@ template_traverseBVHSingle(intersectAndSamplePrim, float);
 
 template_traverseBVHSingle(intersectAndGradientPrim, vec3f);
 
-template_traverseBVHMulti(intersectAndSamplePrim, float);
-template_traverseBVHMulti(intersectAndGradientPrim, vec3f);
+template_traverseBVHMulti(intersectAndSamplePrimM, float);
+template_traverseBVHMulti(intersectAndGradientPrimM, vec3f);
 
 #undef template_traverseBVHSingle
 #undef template_traverseBVHMulti

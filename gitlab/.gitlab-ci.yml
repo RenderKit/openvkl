@@ -1,4 +1,4 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019-2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 variables:
@@ -143,6 +143,7 @@ non-interruptible-pipeline:
   <<: *master_release_devel_only
   stage: pre
   interruptible: false
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - echo this is a non-interruptible pipeline
   tags:

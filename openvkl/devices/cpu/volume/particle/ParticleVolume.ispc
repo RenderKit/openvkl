@@ -220,8 +220,9 @@ EXPORT_UNIQUE(VKLParticleSampler_Constructor, void *uniform _volume)
       uniform new UnstructuredSamplerBase;
   memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
 
-  sampler->super.volume                = (const Volume *uniform)_volume;
-  sampler->super.computeSample_varying = VKLParticleVolume_sample;
+  sampler->super.volume                  = (const Volume *uniform)_volume;
+  sampler->super.computeSample_varying   = VKLParticleVolume_sample;
+  sampler->super.computeGradient_varying = VKLParticleVolume_computeGradient;
 
   return sampler;
 }

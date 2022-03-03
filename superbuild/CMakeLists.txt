@@ -280,6 +280,9 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
 endif()
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
+  # needed to support multiple CMake options provided in a single quoted string
+  separate_arguments(OPENVKL_EXTRA_OPTIONS UNIX_COMMAND "${OPENVKL_EXTRA_OPTIONS}")
+
   ExternalProject_Add(openvkl
     PREFIX openvkl
     DOWNLOAD_COMMAND ""
@@ -302,6 +305,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       $<$<BOOL:${BUILD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB}>:-DRKCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_OPENVDB}>:-DOpenVDB_ROOT=${OPENVDB_PATH}>
+      ${OPENVKL_EXTRA_OPTIONS}
       ${OPENVKL_EXTRA_OPENVDB_OPTIONS}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF

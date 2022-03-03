@@ -203,6 +203,18 @@ build-centos7-icx-tbb2020:
     - export LDFLAGS="-static-intel"
     - gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
 
+build-centos7-icx-tbb2020-avx512_8:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
+  script:
+    - module load cmake
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
+    - gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
+
 build-centos8:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
@@ -363,6 +375,12 @@ test-functional-centos7-icx-tbb2020:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - build-centos7-icx-tbb2020
+
+test-functional-centos7-icx-tbb2020-avx512_8:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs:
+    - build-centos7-icx-tbb2020-avx512_8
 
 test-functional-centos8:
   <<: *test_functional_job_docker

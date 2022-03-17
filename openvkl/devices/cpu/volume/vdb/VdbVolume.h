@@ -176,6 +176,12 @@ namespace openvkl {
       Ref<const DataT<Data *>> leafUnstructuredIndices;
       Ref<const DataT<Data *>> leafUnstructuredTimes;
 
+      // optional: re-packed dense and tile node data in single contiguous
+      // arrays (per attribute) for improved performance, only for sparse
+      // volumes
+      Ref<const DataT<Data *>> nodesPackedDense;
+      Ref<const DataT<Data *>> nodesPackedTile;
+
       // populated for dense volumes only on commit
       bool dense{false};
       vec3i denseDimensions;

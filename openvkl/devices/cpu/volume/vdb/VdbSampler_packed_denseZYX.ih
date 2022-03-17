@@ -1,0 +1,187 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+
+// ---------------------------------------------------------------------------
+// Value range.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_computeValueRange_packed_denseZYX(voxelType) \
+  inline uniform box1f                                                         \
+      VdbSampler_computeValueRange_packed_denseZYX_##voxelType##_32(           \
+          const VdbGrid *uniform grid,                                         \
+          uniform uint64 leafIndex,                                            \
+          uniform uint32 attributeIndex,                                       \
+          const uniform vec2ui &xRange,                                        \
+          const uniform vec2ui &yRange,                                        \
+          const uniform vec2ui &zRange)                                        \
+  {                                                                            \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                   \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {               \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {             \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {           \
+          const uniform uint64 voxelIdx =                                      \
+              leafIndex * VKL_VDB_NUM_VOXELS_LEAF +                            \
+              __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);         \
+          assert(voxelIdx < ((uniform uint64)1) << 32);                        \
+          const uniform uint32 v32 = ((uniform uint32)voxelIdx);               \
+          extend(valueRange,                                                   \
+                 get_##voxelType##_compact(                                    \
+                     grid->nodesPackedDense[attributeIndex], v32));            \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+    return valueRange;                                                         \
+  }                                                                            \
+                                                                               \
+  inline uniform box1f                                                         \
+      VdbSampler_computeValueRange_packed_denseZYX_##voxelType##_64(           \
+          const VdbGrid *uniform grid,                                         \
+          uniform uint64 leafIndex,                                            \
+          uniform uint32 attributeIndex,                                       \
+          const uniform vec2ui &xRange,                                        \
+          const uniform vec2ui &yRange,                                        \
+          const uniform vec2ui &zRange)                                        \
+  {                                                                            \
+    uniform box1f valueRange = make_box1f(pos_inf, neg_inf);                   \
+    for (uniform unsigned int x = xRange.x; x < xRange.y; ++x) {               \
+      for (uniform unsigned int y = yRange.x; y < yRange.y; ++y) {             \
+        for (uniform unsigned int z = zRange.x; z < zRange.y; ++z) {           \
+          const uniform uint64 voxelIdx =                                      \
+              leafIndex * VKL_VDB_NUM_VOXELS_LEAF +                            \
+              __vkl_vdb_domain_offset_to_linear_uniform_leaf(x, y, z);         \
+          extend(valueRange,                                                   \
+                 get_##voxelType(grid->nodesPackedDense[attributeIndex],       \
+                                 voxelIdx));                                   \
+        }                                                                      \
+      }                                                                        \
+    }                                                                          \
+    return valueRange;                                                         \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_packed_denseZYX(half);
+__vkl_template_VdbSampler_computeValueRange_packed_denseZYX(float);
+
+#undef __vkl_template_VdbSampler_computeValueRange_packed_denseZYX
+
+// ---------------------------------------------------------------------------
+// Constant leaf sampling.
+// ---------------------------------------------------------------------------
+
+// Currently this approach is only used for temporally-constant, denseZYX leaf
+// nodes.
+
+#define __vkl_template_VdbSampler_sample_packed_denseZYX(voxelType)            \
+  /* for 32-bit addressing mode */                                             \
+  inline uniform float                                                         \
+      VdbSampler_sample_uniform_uniform_packed_denseZYX_##voxelType##_32(      \
+          const VdbGrid *uniform grid,                                         \
+          uniform vkl_uint64 leafIndex,                                        \
+          uniform vkl_uint32 attributeIndex,                                   \
+          const uniform vec3ui &offset,                                        \
+          uniform float /*time*/)                                              \
+  {                                                                            \
+    const uniform uint64 voxelIdx =                                            \
+        leafIndex * VKL_VDB_NUM_VOXELS_LEAF +                                  \
+        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                        \
+            offset.x, offset.y, offset.z);                                     \
+    assert(voxelIdx < ((uniform uint64)1) << 32);                              \
+    const uniform uint32 v32 = ((uniform uint32)voxelIdx);                     \
+                                                                               \
+    return get_##voxelType##_compact(grid->nodesPackedDense[attributeIndex],   \
+                                     v32);                                     \
+  }                                                                            \
+                                                                               \
+  inline float                                                                 \
+      VdbSampler_sample_uniform_varying_packed_denseZYX_##voxelType##_32(      \
+          const VdbGrid *uniform grid,                                         \
+          uniform vkl_uint64 leafIndex,                                        \
+          uniform vkl_uint32 attributeIndex,                                   \
+          const vec3ui &offset,                                                \
+          const float & /*time*/)                                              \
+  {                                                                            \
+    const uint64 voxelIdx = leafIndex * VKL_VDB_NUM_VOXELS_LEAF +              \
+                            __vkl_vdb_domain_offset_to_linear_varying_leaf(    \
+                                offset.x, offset.y, offset.z);                 \
+    assert(voxelIdx < ((uint64)1) << 32);                                      \
+    const uint32 v32 = ((varying uint32)voxelIdx);                             \
+                                                                               \
+    uniform uint32 uv32;                                                       \
+    if (reduce_equal(v32, &uv32)) {                                            \
+      return get_##voxelType##_compact(grid->nodesPackedDense[attributeIndex], \
+                                       uv32);                                  \
+    } else {                                                                   \
+      return get_##voxelType##_compact(grid->nodesPackedDense[attributeIndex], \
+                                       v32);                                   \
+    }                                                                          \
+  }                                                                            \
+                                                                               \
+  inline float                                                                 \
+      VdbSampler_sample_varying_varying_packed_denseZYX_##voxelType##_32(      \
+          const VdbGrid *uniform grid,                                         \
+          const vkl_uint64 &leafIndex,                                         \
+          const uniform vkl_uint32 &attributeIndex,                            \
+          const vec3ui &offset,                                                \
+          const float & /*time*/)                                              \
+  {                                                                            \
+    const uint64 voxelIdx = leafIndex * VKL_VDB_NUM_VOXELS_LEAF +              \
+                            __vkl_vdb_domain_offset_to_linear_varying_leaf(    \
+                                offset.x, offset.y, offset.z);                 \
+    assert(voxelIdx < ((uint64)1) << 32);                                      \
+    const uint32 v32 = ((uint32)voxelIdx);                                     \
+                                                                               \
+    return get_##voxelType##_compact(grid->nodesPackedDense[attributeIndex],   \
+                                     v32);                                     \
+  }                                                                            \
+                                                                               \
+  /* for 64-bit addressing mode */                                             \
+  inline uniform float                                                         \
+      VdbSampler_sample_uniform_uniform_packed_denseZYX_##voxelType##_64(      \
+          const VdbGrid *uniform grid,                                         \
+          uniform vkl_uint64 leafIndex,                                        \
+          uniform vkl_uint32 attributeIndex,                                   \
+          const uniform vec3ui &offset,                                        \
+          uniform float /*time*/)                                              \
+  {                                                                            \
+    const uniform uint64 voxelIdx =                                            \
+        leafIndex * VKL_VDB_NUM_VOXELS_LEAF +                                  \
+        __vkl_vdb_domain_offset_to_linear_uniform_leaf(                        \
+            offset.x, offset.y, offset.z);                                     \
+    return get_##voxelType(grid->nodesPackedDense[attributeIndex], voxelIdx);  \
+  }                                                                            \
+                                                                               \
+  inline float                                                                 \
+      VdbSampler_sample_uniform_varying_packed_denseZYX_##voxelType##_64(      \
+          const VdbGrid *uniform grid,                                         \
+          uniform vkl_uint64 leafIndex,                                        \
+          uniform vkl_uint32 attributeIndex,                                   \
+          const vec3ui &offset,                                                \
+          const float & /*time*/)                                              \
+  {                                                                            \
+    const uint64 voxelIdx = leafIndex * VKL_VDB_NUM_VOXELS_LEAF +              \
+                            __vkl_vdb_domain_offset_to_linear_varying_leaf(    \
+                                offset.x, offset.y, offset.z);                 \
+    return get_##voxelType(grid->nodesPackedDense[attributeIndex], voxelIdx);  \
+  }                                                                            \
+                                                                               \
+  inline float                                                                 \
+      VdbSampler_sample_varying_varying_packed_denseZYX_##voxelType##_64(      \
+          const VdbGrid *uniform grid,                                         \
+          const vkl_uint64 &leafIndex,                                         \
+          const uniform vkl_uint32 &attributeIndex,                            \
+          const vec3ui &offset,                                                \
+          const float & /*time*/)                                              \
+  {                                                                            \
+    const uint64 voxelIdx = leafIndex * VKL_VDB_NUM_VOXELS_LEAF +              \
+                            __vkl_vdb_domain_offset_to_linear_varying_leaf(    \
+                                offset.x, offset.y, offset.z);                 \
+    return get_##voxelType(grid->nodesPackedDense[attributeIndex], voxelIdx);  \
+  }
+
+__vkl_template_VdbSampler_sample_packed_denseZYX(half);
+__vkl_template_VdbSampler_sample_packed_denseZYX(float);
+
+#undef __vkl_template_VdbSampler_sample_packed_denseZYX

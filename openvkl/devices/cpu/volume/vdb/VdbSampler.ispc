@@ -413,18 +413,31 @@ VdbSampler_computeNodeValueRange(const VdbVolume *uniform volume,
 
     const uniform uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);
 
-    __vkl_vdb_leaf_handler(
-        return VdbSampler_computeValueRange,
-               voxelType,
-               vklVdbVoxelLeafGetFormat(voxel),
-               grid->allLeavesConstant,
-               vklVdbVoxelLeafGetTemporalFormat(voxel),
-               grid,
-               leafIndex,
-               vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),
-               rangeX,
-               rangeY,
-               rangeZ);
+    if (grid->nodesPackedDense) {
+      __vkl_vdb_packed_handler(return VdbSampler_computeValueRange_packed,
+                                      grid->packedAddressing32,
+                                      voxelType,
+                                      vklVdbVoxelLeafGetFormat(voxel),
+                                      grid,
+                                      leafIndex,
+                                      attributeIndex,
+                                      rangeX,
+                                      rangeY,
+                                      rangeZ);
+    } else {
+      __vkl_vdb_leaf_handler(
+          return VdbSampler_computeValueRange,
+                 voxelType,
+                 vklVdbVoxelLeafGetFormat(voxel),
+                 grid->allLeavesConstant,
+                 vklVdbVoxelLeafGetTemporalFormat(voxel),
+                 grid,
+                 leafIndex,
+                 vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),
+                 rangeX,
+                 rangeY,
+                 rangeZ);
+    }
   }
 }
 

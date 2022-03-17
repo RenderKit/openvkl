@@ -1,0 +1,124 @@
+// Copyright 2022 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+#include "VdbGrid.h"
+
+// ---------------------------------------------------------------------------
+// Value range.
+// ---------------------------------------------------------------------------
+
+#define __vkl_template_VdbSampler_computeValueRange_packed_tile(voxelType) \
+  inline uniform box1f                                                     \
+      VdbSampler_computeValueRange_packed_tile_##voxelType##_32(           \
+          const VdbGrid *uniform grid,                                     \
+          uniform uint64 leafIndex,                                        \
+          uniform uint32 attributeIndex,                                   \
+          const uniform vec2ui &xRange,                                    \
+          const uniform vec2ui &yRange,                                    \
+          const uniform vec2ui &zRange)                                    \
+  {                                                                        \
+    const uniform float v = get_##voxelType##_compact(                     \
+        grid->nodesPackedTile[attributeIndex], leafIndex);                 \
+    return make_box1f(v, v);                                               \
+  }                                                                        \
+                                                                           \
+  inline uniform box1f                                                     \
+      VdbSampler_computeValueRange_packed_tile_##voxelType##_64(           \
+          const VdbGrid *uniform grid,                                     \
+          uniform uint64 leafIndex,                                        \
+          uniform uint32 attributeIndex,                                   \
+          const uniform vec2ui &xRange,                                    \
+          const uniform vec2ui &yRange,                                    \
+          const uniform vec2ui &zRange)                                    \
+  {                                                                        \
+    const uniform float v =                                                \
+        get_##voxelType(grid->nodesPackedTile[attributeIndex], leafIndex); \
+    return make_box1f(v, v);                                               \
+  }
+
+__vkl_template_VdbSampler_computeValueRange_packed_tile(half);
+__vkl_template_VdbSampler_computeValueRange_packed_tile(float);
+
+#undef __vkl_template_VdbSampler_computeValueRange_packed_tile
+
+// ---------------------------------------------------------------------------
+// Constant leaf sampling.
+// ---------------------------------------------------------------------------
+
+// Currently this approach is only used for temporally-constant, tile leaf
+// nodes.
+
+#define __vkl_template_VdbSampler_sample_packed_tile(voxelType)                \
+  /* for 32-bit addressing mode */                                             \
+  inline uniform float                                                         \
+      VdbSampler_sample_uniform_uniform_packed_tile_##voxelType##_32(          \
+          const VdbGrid *uniform grid,                                         \
+          uniform vkl_uint64 leafIndex,                                        \
+          uniform vkl_uint32 attributeIndex,                                   \
+          const uniform vec3ui &offset,                                        \
+          uniform float /*time*/)                                              \
+  {                                                                            \
+    return get_##voxelType##_compact(grid->nodesPackedTile[attributeIndex],    \
+                                     leafIndex);                               \
+  }                                                                            \
+                                                                               \
+  inline float VdbSampler_sample_uniform_varying_packed_tile_##voxelType##_32( \
+      const VdbGrid *uniform grid,                                             \
+      uniform vkl_uint64 leafIndex,                                            \
+      uniform vkl_uint32 attributeIndex,                                       \
+      const vec3ui &offset,                                                    \
+      const float & /*time*/)                                                  \
+  {                                                                            \
+    return get_##voxelType##_compact(grid->nodesPackedTile[attributeIndex],    \
+                                     leafIndex);                               \
+  }                                                                            \
+                                                                               \
+  inline float VdbSampler_sample_varying_varying_packed_tile_##voxelType##_32( \
+      const VdbGrid *uniform grid,                                             \
+      const vkl_uint64 &leafIndex,                                             \
+      const uniform vkl_uint32 &attributeIndex,                                \
+      const vec3ui &offset,                                                    \
+      const float & /*time*/)                                                  \
+  {                                                                            \
+    return get_##voxelType##_compact(grid->nodesPackedTile[attributeIndex],    \
+                                     leafIndex);                               \
+  }                                                                            \
+                                                                               \
+  /* for 64-bit addressing mode */                                             \
+  inline uniform float                                                         \
+      VdbSampler_sample_uniform_uniform_packed_tile_##voxelType##_64(          \
+          const VdbGrid *uniform grid,                                         \
+          uniform vkl_uint64 leafIndex,                                        \
+          uniform vkl_uint32 attributeIndex,                                   \
+          const uniform vec3ui &offset,                                        \
+          uniform float /*time*/)                                              \
+  {                                                                            \
+    return get_##voxelType(grid->nodesPackedTile[attributeIndex], leafIndex);  \
+  }                                                                            \
+                                                                               \
+  inline float VdbSampler_sample_uniform_varying_packed_tile_##voxelType##_64( \
+      const VdbGrid *uniform grid,                                             \
+      uniform vkl_uint64 leafIndex,                                            \
+      uniform vkl_uint32 attributeIndex,                                       \
+      const vec3ui &offset,                                                    \
+      const float & /*time*/)                                                  \
+  {                                                                            \
+    return get_##voxelType(grid->nodesPackedTile[attributeIndex], leafIndex);  \
+  }                                                                            \
+                                                                               \
+  inline float VdbSampler_sample_varying_varying_packed_tile_##voxelType##_64( \
+      const VdbGrid *uniform grid,                                             \
+      const vkl_uint64 &leafIndex,                                             \
+      const uniform vkl_uint32 &attributeIndex,                                \
+      const vec3ui &offset,                                                    \
+      const float & /*time*/)                                                  \
+  {                                                                            \
+    return get_##voxelType(grid->nodesPackedTile[attributeIndex], leafIndex);  \
+  }
+
+__vkl_template_VdbSampler_sample_packed_tile(half);
+__vkl_template_VdbSampler_sample_packed_tile(float);
+
+#undef __vkl_template_VdbSampler_sample_packed_tile

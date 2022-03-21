@@ -1,7 +1,8 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
+#include "benchmark_env.h"
 #include "benchmark_suite/volume.h"
 #include "openvkl_testing.h"
 
@@ -27,8 +28,10 @@ struct StructuredMulti
 
   StructuredMulti()
   {
+    const int dim = getEnvBenchmarkVolumeDim();
+
     volume = std::unique_ptr<TestingStructuredVolumeMulti>(
-        generateMultiAttributeStructuredRegularVolume(vec3i(128),
+        generateMultiAttributeStructuredRegularVolume(vec3i(dim),
                                                       vec3f(0.f),
                                                       vec3f(1.f),
                                                       TemporalConfig(),

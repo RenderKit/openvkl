@@ -1,9 +1,10 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <random>
 #include "../common/simd.h"
 #include "benchmark/benchmark.h"
+#include "benchmark_env.h"
 #include "benchmark_suite/utility.h"
 #include "openvkl_testing.h"
 #include "rkcommon/utility/random.h"
@@ -25,9 +26,11 @@ using namespace rkcommon::utility;
 template <VKLUnstructuredCellType primType>
 static void scalarRandomSample(benchmark::State &state)
 {
+  const int dim = getEnvBenchmarkVolumeDim();
+
   std::unique_ptr<WaveletUnstructuredProceduralVolume> v(
       new WaveletUnstructuredProceduralVolume(
-          vec3i(128),
+          vec3i(dim),
           vec3f(0.f),
           vec3f(1.f),
           primType,
@@ -36,7 +39,7 @@ static void scalarRandomSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -64,9 +67,11 @@ BENCHMARK_ALL_PRIMS(scalarRandomSample);
 template <int W, VKLUnstructuredCellType primType>
 void vectorRandomSample(benchmark::State &state)
 {
+  const int dim = getEnvBenchmarkVolumeDim();
+
   std::unique_ptr<WaveletUnstructuredProceduralVolume> v(
       new WaveletUnstructuredProceduralVolume(
-          vec3i(128),
+          vec3i(dim),
           vec3f(0.f),
           vec3f(1.f),
           primType,
@@ -75,7 +80,7 @@ void vectorRandomSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -130,9 +135,11 @@ BENCHMARK_ALL_PRIMS(vectorRandomSample, 16)
 template <VKLUnstructuredCellType primType>
 static void scalarFixedSample(benchmark::State &state)
 {
+  const int dim = getEnvBenchmarkVolumeDim();
+
   std::unique_ptr<WaveletUnstructuredProceduralVolume> v(
       new WaveletUnstructuredProceduralVolume(
-          vec3i(128),
+          vec3i(dim),
           vec3f(0.f),
           vec3f(1.f),
           primType,
@@ -141,7 +148,7 @@ static void scalarFixedSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -164,9 +171,11 @@ BENCHMARK_ALL_PRIMS(scalarFixedSample)
 template <int W, VKLUnstructuredCellType primType>
 void vectorFixedSample(benchmark::State &state)
 {
+  const int dim = getEnvBenchmarkVolumeDim();
+
   std::unique_ptr<WaveletUnstructuredProceduralVolume> v(
       new WaveletUnstructuredProceduralVolume(
-          vec3i(128),
+          vec3i(dim),
           vec3f(0.f),
           vec3f(1.f),
           primType,
@@ -175,7 +184,7 @@ void vectorFixedSample(benchmark::State &state)
           state.range(2),
           primType == VKL_HEXAHEDRON ? state.range(3) : false));
 
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 

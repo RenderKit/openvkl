@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
+#include "benchmark_env.h"
 #include "benchmark_suite/volume.h"
 #include "openvkl_testing.h"
 
@@ -28,8 +29,10 @@ struct Vdb
 
   Vdb()
   {
+    const int dim = getEnvBenchmarkVolumeDim();
+
     volume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
-        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f));
+        getOpenVKLDevice(), vec3i(dim), vec3f(0.f), vec3f(1.f));
 
     vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);

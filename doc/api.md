@@ -181,7 +181,7 @@ previously.
 Basic data types
 ----------------
 
-Open VKL defines 3-component vectors of integer and vector types:
+Open VKL defines 3-component vectors of integer and float types:
 
     typedef struct
     {
@@ -225,8 +225,8 @@ Object model
 ------------
 
 Objects in Open VKL are exposed to the APIs as handles with internal reference
-counting for lifetime determination.  Objects are created with particular type's
-`vklNew...` API entry point. For example, `vklNewData` and `vklNewVolume`.
+counting for lifetime determination.  Objects are created with each particular
+type's `vklNew...` API entry point. For example, `vklNewData` and `vklNewVolume`.
 
 In general, modifiable parameters to objects are modified using `vklSet...`
 functions based on the type of the parameter being set. The parameter name is
@@ -417,7 +417,7 @@ Volume types
 ------------
 
 Open VKL currently supports structured volumes on regular and spherical grids;
-unstructured volumes with tetrahedral, wedge, pyramid, and hexaderal primitive
+unstructured volumes with tetrahedral, wedge, pyramid, and hexahedral primitive
 types; adaptive mesh refinement (AMR) volumes; sparse VDB volumes; and particle
 volumes.  Volumes are created with `vklNewVolume` with a device and appropriate
 type string:

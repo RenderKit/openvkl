@@ -684,7 +684,7 @@ namespace openvkl {
             "background", grid->numAttributes, VKL_BACKGROUND_UNDEFINED);
 
         CALL_ISPC(
-            Volume_setBackground, this->ispcEquivalent, background->data());
+            Volume_setBackground, this->getSh(), background->data());
 
         const uint64_t numLeafDataPointers =
             grid->numLeaves * static_cast<uint64_t>(grid->numAttributes);
@@ -1008,11 +1008,11 @@ namespace openvkl {
                      nodeToTileNodeIndex);
 
         CALL_ISPC(VdbVolume_setGrid,
-                  this->ispcEquivalent,
+                  this->getSh(),
                   reinterpret_cast<const ispc::VdbGrid *>(grid));
 
         computeValueRanges(
-            leafOffsets, *leafLevel, *leafFormat, this->ispcEquivalent, grid);
+            leafOffsets, *leafLevel, *leafFormat, this->getSh(), grid);
 
         // Aggregate value ranges for all attributes
         valueRanges.clear();

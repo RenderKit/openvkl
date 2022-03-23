@@ -11,6 +11,8 @@
 #include "Volume_ispc.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/box.h"
+#include "openvkl/common/StructShared.h"
+#include "VolumeShared.h"
 
 #define THROW_NOT_IMPLEMENTED                          \
   throw std::runtime_error(std::string(__FUNCTION__) + \
@@ -36,9 +38,9 @@ namespace openvkl {
     // Volume /////////////////////////////////////////////////////////////////
 
     template <int W>
-    struct Volume : public ManagedObject
+    struct Volume : public AddStructShared<ManagedObject, ispc::VolumeShared>
     {
-      Volume()                   = default;
+      Volume() {}  // not = default, due to ICC 19 compiler bug
       virtual ~Volume() override = default;
 
       static Volume *createInstance(Device *device, const std::string &type);
@@ -53,17 +55,15 @@ namespace openvkl {
 
       virtual range1f getValueRange(unsigned int attributeIndex) const = 0;
 
-      void *getISPCEquivalent() const;
-
       virtual Observer<W> *newObserver(const char *type)
       {
         return nullptr;
       }
 
      protected:
-      void *ispcEquivalent{nullptr};
-
       static ObjectFactory<Volume, VKL_VOLUME> volumeFactory;
+
+      bool SharedStructInitialized = false;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -81,12 +81,6 @@ namespace openvkl {
                                         FactoryFcn<Volume<W>> f)
     {
       volumeFactory.registerType(type, f);
-    }
-
-    template <int W>
-    inline void *Volume<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
     }
 
     template <int W>

@@ -31,7 +31,7 @@
  * This is used for both sampling and gradient computation!
  */
 inline void VdbSampler_computeVoxelValuesTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3i &ic,
     const float &time,
     const uniform uint32 attributeIndex,
@@ -177,7 +177,7 @@ template_computeVoxelValuesTrilinear_dense_fast_inner_32(double);
 #undef template_computeVoxelValuesTrilinear_dense_fast_inner_32
 
 inline void VdbSampler_computeVoxelValuesTrilinear_dense(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3i &ic,
     const float &time,
     const uniform uint32 attributeIndex,
@@ -239,7 +239,7 @@ inline void VdbSampler_computeVoxelValuesTrilinear_dense(
 }
 
 inline void VdbSampler_computeVoxelValuesTrilinear_dense(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3i &ic,
     const uniform float time,
     const uniform uint32 attributeIndex,
@@ -304,7 +304,7 @@ inline void VdbSampler_computeVoxelValuesTrilinear_dense(
  * Traverse for the eight corners required in trilinear interpolation.
  */
 inline void VdbSampler_traverseVoxelValuesTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3i &ic,
     uint64 *uniform voxel,         // Array of VKL_TARGET_WIDTH * 8 elements!
     vec3ui *uniform domainOffset)  // Array of VKL_TARGET_WIDTH * 8 elements!
@@ -327,7 +327,7 @@ inline void VdbSampler_traverseVoxelValuesTrilinear(
  * interpolation for given pre-traversed voxel and domain offset.
  */
 inline void VdbSampler_computeVoxelValuesTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uint64 *uniform voxel,  // Array of VKL_TARGET_WIDTH * 8 elements!
     const vec3ui *uniform
         domainOffset,  // Array of VKL_TARGET_WIDTH * 8 elements!
@@ -353,7 +353,7 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
  * The implementation is optimized to exploit SIMD.
  */
 inline varying float VdbSampler_interpolateTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -376,7 +376,7 @@ inline varying float VdbSampler_interpolateTrilinear(
 }
 
 inline varying float VdbSampler_interpolate_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -398,13 +398,13 @@ inline varying float VdbSampler_interpolate_denseTrilinear(
       lerp(delta.y, lerp(delta.z, s[4], s[5]), lerp(delta.z, s[6], s[7])));
 }
 
-inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
-                                            const vec3f &indexCoordinates,
-                                            const float &time,
-                                            const uniform uint32 M,
-                                            const uint32 *uniform
-                                                attributeIndices,
-                                            float *uniform samples)
+inline void VdbSampler_interpolateTrilinear(
+    const VdbSamplerShared *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -433,7 +433,7 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 M,
@@ -467,7 +467,7 @@ inline void VdbSampler_interpolate_denseTrilinear(
  * above if we know that there is only one query.
  */
 inline uniform float VdbSampler_interpolateTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 attributeIndex)
@@ -496,7 +496,7 @@ inline uniform float VdbSampler_interpolateTrilinear(
 }
 
 inline uniform float VdbSampler_interpolate_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 attributeIndex)
@@ -522,7 +522,7 @@ inline uniform float VdbSampler_interpolate_denseTrilinear(
 }
 
 inline void VdbSampler_interpolateTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 M,
@@ -569,7 +569,7 @@ inline void VdbSampler_interpolateTrilinear(
 }
 
 inline void VdbSampler_interpolate_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 M,
@@ -598,13 +598,13 @@ inline void VdbSampler_interpolate_denseTrilinear(
   }
 }
 
-inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
-                                            const uniform unsigned int N,
-                                            const vec3f *uniform
-                                                objectCoordinates,
-                                            const float *uniform times,
-                                            const uint32 uniform attributeIndex,
-                                            float *uniform samples)
+inline void VdbSampler_interpolateTrilinear(
+    const VdbSamplerShared *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uint32 uniform attributeIndex,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -618,7 +618,7 @@ inline void VdbSampler_interpolateTrilinear(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -637,7 +637,7 @@ inline void VdbSampler_interpolate_denseTrilinear(
 }
 
 inline void VdbSampler_interpolateTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -678,7 +678,7 @@ inline void VdbSampler_interpolateTrilinear(
 }
 
 inline void VdbSampler_interpolate_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -718,7 +718,7 @@ inline void VdbSampler_interpolate_denseTrilinear(
  * Gradients in trilinear fields.
  */
 inline vec3f VdbSampler_computeGradientTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -749,7 +749,7 @@ inline vec3f VdbSampler_computeGradientTrilinear(
 }
 
 inline vec3f VdbSampler_computeGradient_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -780,7 +780,7 @@ inline vec3f VdbSampler_computeGradient_denseTrilinear(
 }
 
 inline void VdbSampler_computeGradientTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -801,7 +801,7 @@ inline void VdbSampler_computeGradientTrilinear(
 }
 
 inline void VdbSampler_computeGradient_denseTrilinear(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,

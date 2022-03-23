@@ -6,50 +6,8 @@
 #include "../common/Data.ih"
 #include "rkcommon/math/vec.ih"
 #include "rkcommon/math/box.ih"
-
+#include "UnstructuredVolumeShared.h"
 #include "Volume.ih"
-
-typedef enum
-{
-  VKL_TETRAHEDRON = 10,
-  VKL_HEXAHEDRON = 12,
-  VKL_WEDGE = 13,
-  VKL_PYRAMID = 14
-} CellType;
-
-struct Node
-{
-  uniform vec3f nominalLength;
-  uniform box1f valueRange;
-  uniform int level;
-  uniform Node *uniform parent;
-};
-
-struct LeafNode
-{
-  uniform Node super;
-  uniform box3fa bounds;
-};
-
-struct LeafNodeSingle
-{
-  uniform LeafNode super;
-  uniform uint64 cellID;
-};
-
-struct LeafNodeMulti
-{
-  uniform LeafNode super;
-  uniform uint64 numCells;
-  uniform uint64 *uniform cellIDs;
-};
-
-struct InnerNode
-{
-  uniform Node super;
-  uniform box3fa bounds[2];
-  uniform Node *uniform children[2];
-};
 
 inline uniform Node *uniform sibling(uniform Node *uniform node)
 {
@@ -110,43 +68,6 @@ void traverseBVHMulti(uniform Node *uniform root,
                       uniform intersectAndGradientPrimM sampleFunc,
                       vec3f &result,
                       const vec3f &pos);
-
-struct VKLUnstructuredBase
-{
-  Volume super;
-
-  uniform box3f boundingBox;
-  uniform Node *uniform bvhRoot;
-};
-
-struct VKLUnstructuredVolume
-{
-  VKLUnstructuredBase super;
-
-  // vertex data
-  uniform Data1D vertex;
-  uniform Data1D vertexValue;  // attribute value at each vertex
-
-  // index data
-  uniform Data1D index;     // indices into vertices array
-  uniform bool index32Bit;  // true if index is 32-bit integer, false if 64-bit
-
-  // cell data
-  uniform Data1D cell;  // cell offsets in indices array
-  uniform bool
-      cell32Bit;  // true if cell offset is 32-bit integer, false if 64-bit
-  uniform uint32 cellSkipIds;  // skip indices when index array contain other
-                               // data e.g. size
-  uniform Data1D cellType;     // cell type array
-  uniform Data1D cellValue;    // attribute value at each cell
-
-  const vec3f *uniform faceNormals;
-  const float *uniform iterativeTolerance;
-
-  uniform vec3f gradientStep;
-
-  uniform bool hexIterative;
-};
 
 #define template_intersectRayCell(univary)         \
   univary box1f intersectRayCell_##univary(        \

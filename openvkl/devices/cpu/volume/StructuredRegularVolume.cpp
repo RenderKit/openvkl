@@ -12,12 +12,13 @@ namespace openvkl {
     {
       StructuredVolume<W>::commit();
 
-      if (!this->ispcEquivalent) {
-        this->ispcEquivalent = CALL_ISPC(SharedStructuredVolume_Constructor);
+      if (!this->SharedStructInitialized) {
+        CALL_ISPC(SharedStructuredVolume_Constructor, this->getSh());
+        this->SharedStructInitialized = true;
 
-        if (!this->ispcEquivalent) {
+        if (!this->SharedStructInitialied) {
           throw std::runtime_error(
-              "could not create ISPC-side object for StructuredRegularVolume");
+              "could not initialized device-side object for StructuredRegularVolume");
         }
       }
 
@@ -25,7 +26,7 @@ namespace openvkl {
           ispcs(this->attributesData);
 
       bool success = CALL_ISPC(SharedStructuredVolume_set,
-                               this->ispcEquivalent,
+                               this->getSh(),
                                ispcAttributesData.size(),
                                ispcAttributesData.data(),
                                this->temporallyStructuredNumTimesteps,
@@ -38,14 +39,14 @@ namespace openvkl {
                                (ispc::VKLFilter)this->filter);
 
       if (!success) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
-        this->ispcEquivalent = nullptr;
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
 
         throw std::runtime_error("failed to commit StructuredRegularVolume");
       }
 
       CALL_ISPC(
-          Volume_setBackground, this->ispcEquivalent, this->background->data());
+          Volume_setBackground, this->getSh(), this->background->data());
 
       // must be last
       this->buildAccelerator();

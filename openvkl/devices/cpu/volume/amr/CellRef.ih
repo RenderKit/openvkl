@@ -5,7 +5,6 @@
 
 // ours
 #include "AMR.ih"
-#include "AMRVolume.ih"
 
 /*! a reference to a given cell on a given level; this is what a 'node location' kernel will return */
 struct CellRef

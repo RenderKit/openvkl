@@ -1859,6 +1859,8 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
   boundingBox = self->boundingBox;
 }
 
+#include "StructuredSamplerShared.h"
+
 export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
                           uniform const int *uniform imask,
                           const void *uniform _sampler,
@@ -1867,7 +1869,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
                           const void *uniform _time,
                           void *uniform _samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -1889,7 +1893,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_uniform_export,
                           const void *uniform _time,
                           void *uniform _sample)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -1910,7 +1916,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sample_N_export,
                           const float *uniform time,
                           float *uniform samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -1931,7 +1939,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_export,
                           const void *uniform _time,
                           void *uniform _gradients)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -1956,7 +1966,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_gradient_N_export,
                           const float *uniform time,
                           vec3f *uniform gradients)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -1978,7 +1990,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_export,
                           const void *uniform _time,
                           float *uniform samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -2021,7 +2035,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_uniform_export,
                           const void *uniform _time,
                           float *uniform samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -2059,7 +2075,9 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
                           const float *uniform time,
                           float *uniform samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   const SharedStructuredVolume *uniform self =
       (const SharedStructuredVolume *uniform)sampler->volume;
 
@@ -2092,8 +2110,8 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
   }
 }
 
-export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Destructor,
-                                   void *uniform _self)
+export void EXPORT_UNIQUE(SharedStructuredVolume_Destructor,
+                          void *uniform _self)
 {
   uniform SharedStructuredVolume *uniform self =
       (uniform SharedStructuredVolume * uniform) _self;
@@ -2103,17 +2121,15 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Destructor,
   if (self->accelerator) {
     GridAccelerator_Destructor(self->accelerator);
   }
-
-  delete self;
 }
 
-export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_Constructor)
+export void EXPORT_UNIQUE(SharedStructuredVolume_Constructor,
+                          void *uniform _self)
 {
   uniform SharedStructuredVolume *uniform self =
-      uniform new uniform SharedStructuredVolume;
-  memset(self, 0, sizeof(uniform SharedStructuredVolume));
+      (uniform SharedStructuredVolume * uniform) _self;
 
-  return self;
+  memset(self, 0, sizeof(uniform SharedStructuredVolume));
 }
 
 export uniform bool EXPORT_UNIQUE(
@@ -2238,12 +2254,14 @@ export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_createAccelerator,
 // wrappers to enable setting old-style function pointers in the Volume
 // superclass; restricts to first attribute
 varying float computeSample_varying_0_iterator_wrapper(
-    const Sampler *uniform _sampler,
+    const SamplerShared *uniform _sampler,
     const varying vec3f &objectCoordinates,
     const uniform uint32 attributeIndex,
     const varying float &time)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   assert(sampler);
 
   return SharedStructuredVolume_computeSample_varying(
@@ -2255,12 +2273,14 @@ varying float computeSample_varying_0_iterator_wrapper(
 }
 
 uniform float computeSample_uniform_0_iterator_wrapper(
-    const Sampler *uniform _sampler,
+    const SamplerShared *uniform _sampler,
     const uniform vec3f &objectCoordinates,
     const uniform uint32 attributeIndex,
     const uniform float &time)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
   assert(sampler);
 
   return SharedStructuredVolume_computeSample_uniform(
@@ -2271,16 +2291,18 @@ uniform float computeSample_uniform_0_iterator_wrapper(
       time);
 }
 
-export Sampler *uniform EXPORT_UNIQUE(StructuredSampler_create,
-                                      const void *uniform _volume)
+export void EXPORT_UNIQUE(StructuredSampler_create,
+                          const void *uniform _volume,
+                          void *uniform _self)
 {
-  Sampler *uniform sampler       = CALL_ISPC(Sampler_create, _volume);
+  StructuredSamplerShared *uniform ssampler =
+      (StructuredSamplerShared * uniform) _self;
+  memset(ssampler, 0, sizeof(uniform StructuredSamplerShared));
+
+  SamplerShared *uniform sampler = &ssampler->super.super;
+  sampler->volume                = (const VolumeShared *uniform)_volume;
   sampler->computeSample_uniform = computeSample_uniform_0_iterator_wrapper;
   sampler->computeSample_varying = computeSample_varying_0_iterator_wrapper;
-  return sampler;
 }
 
-export void EXPORT_UNIQUE(StructuredSampler_destroy, void *uniform _sampler)
-{
-  CALL_ISPC(Sampler_destroy, _sampler);
-}
+export void EXPORT_UNIQUE(StructuredSampler_destroy, void *uniform _sampler) {}

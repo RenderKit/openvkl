@@ -31,7 +31,7 @@
  * is used when all sample locations are in the same leaf node.
  */
 inline void VdbSampler_sampleInner_@VKL_VDB_UNIVARY_IN@_@VKL_VDB_UNIVARY_OUT@_@VKL_VDB_LEVEL@(
-  const VdbSampler *uniform  sampler,
+  const VdbSamplerShared *uniform  sampler,
   const univary_in uint64    voxelOffset,
   const univary_out vec3ui  &domainOffset,
   univary_out uint64        &voxel)

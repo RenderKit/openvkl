@@ -1,9 +1,13 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "../../common/Data.ih"
 #include "../../common/export_util.h"
-#include "../UnstructuredSamplerBase.ih"
-#include "ParticleVolume.ih"
+#include "../UnstructuredSamplerShared.h"
+#include "../UnstructuredVolume.ih"
+#include "ParticleVolumeShared.h"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
 
 inline void getParticleContributionsGaussian(
     const VKLParticleVolume *uniform self,
@@ -103,7 +107,7 @@ static bool intersectAndGradientParticle(const void *uniform userData,
 }
 
 inline varying float VKLParticleVolume_sample(
-    const Sampler *uniform sampler,
+    const SamplerShared *uniform sampler,
     const varying vec3f &objectCoordinates,
     const uniform uint32 _attributeIndex,
     const varying float &_time)
@@ -126,8 +130,9 @@ inline varying float VKLParticleVolume_sample(
   return sampleResult;
 }
 
-inline varying vec3f VKLParticleVolume_computeGradient(
-    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
+inline varying vec3f
+VKLParticleVolume_computeGradient(const SamplerShared *uniform sampler,
+                                  const varying vec3f &objectCoordinates)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)sampler->volume;
@@ -149,14 +154,17 @@ export void EXPORT_UNIQUE(VKLParticleVolume_sample_export,
                           const void *uniform _objectCoordinates,
                           void *uniform _samples)
 {
+  const UnstructuredSamplerShared *uniform usampler =
+      (const UnstructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = &usampler->super.super;
+
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying float time             = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLParticleVolume_sample(
-        (const Sampler *uniform)_sampler, *objectCoordinates, 0, time);
+    *samples = VKLParticleVolume_sample(sampler, *objectCoordinates, 0, time);
   }
 }
 
@@ -166,30 +174,27 @@ export void EXPORT_UNIQUE(VKLParticleVolume_gradient_export,
                           const void *uniform _objectCoordinates,
                           void *uniform _gradients)
 {
+  const UnstructuredSamplerShared *uniform usampler =
+      (const UnstructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = &usampler->super.super;
+
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients = VKLParticleVolume_computeGradient(
-        (const Sampler *uniform)_sampler, *objectCoordinates);
+    *gradients = VKLParticleVolume_computeGradient(sampler, *objectCoordinates);
   }
 }
 
-export void *uniform EXPORT_UNIQUE(VKLParticleVolume_Constructor)
+export void EXPORT_UNIQUE(VKLParticleVolume_Constructor, void *uniform _self)
 {
   uniform VKLParticleVolume *uniform self =
-      uniform new uniform VKLParticleVolume;
+      (uniform VKLParticleVolume * uniform) _self;
   memset(self, 0, sizeof(uniform VKLParticleVolume));
-
-  return self;
 }
 
-export void EXPORT_UNIQUE(VKLParticleVolume_Destructor, void *uniform _self)
-{
-  VKLParticleVolume *uniform volume = (VKLParticleVolume * uniform) _self;
-  delete volume;
-}
+export void EXPORT_UNIQUE(VKLParticleVolume_Destructor, void *uniform _self) {}
 
 export void EXPORT_UNIQUE(VKLParticleVolume_set,
                           void *uniform _self,
@@ -213,23 +218,20 @@ export void EXPORT_UNIQUE(VKLParticleVolume_set,
   self->super.bvhRoot           = (uniform Node * uniform) bvhRoot;
 }
 
-export UnstructuredSamplerBase *uniform
-EXPORT_UNIQUE(VKLParticleSampler_Constructor, void *uniform _volume)
+export void EXPORT_UNIQUE(VKLParticleSampler_Constructor,
+                          void *uniform _volume,
+                          void *uniform _self)
 {
-  UnstructuredSamplerBase *uniform sampler =
-      uniform new UnstructuredSamplerBase;
-  memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
+  UnstructuredSamplerShared *uniform usampler =
+      (UnstructuredSamplerShared * uniform) _self;
+  memset(usampler, 0, sizeof(uniform UnstructuredSamplerShared));
+  SamplerShared *uniform sampler = &usampler->super.super;
 
-  sampler->super.volume                  = (const Volume *uniform)_volume;
-  sampler->super.computeSample_varying   = VKLParticleVolume_sample;
-  sampler->super.computeGradient_varying = VKLParticleVolume_computeGradient;
-
-  return sampler;
+  sampler->volume                  = (const VolumeShared *uniform)_volume;
+  sampler->computeSample_varying   = VKLParticleVolume_sample;
+  sampler->computeGradient_varying = VKLParticleVolume_computeGradient;
 }
 
 export void EXPORT_UNIQUE(VKLParticleSampler_Destructor, void *uniform _sampler)
 {
-  UnstructuredSamplerBase *uniform sampler =
-      (UnstructuredSamplerBase * uniform) _sampler;
-  delete sampler;
 }

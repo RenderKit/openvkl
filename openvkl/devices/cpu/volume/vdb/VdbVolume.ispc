@@ -1,7 +1,7 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbVolume.ih"
+#include "VdbVolumeShared.h"
 #include "common/export_util.h"
 
 /*
@@ -17,11 +17,10 @@ export void EXPORT_UNIQUE(VdbVolume__declare_types_dummy,
 /*
  * Factory for ISPC versions of the volume.
  */
-export void *uniform EXPORT_UNIQUE(VdbVolume_create)
+export void EXPORT_UNIQUE(VdbVolume_Constructor, void *uniform _self)
 {
-  VdbVolume *uniform self = uniform new uniform VdbVolume;
+  uniform VdbVolume *uniform self = (uniform VdbVolume * uniform) _self;
   memset(self, 0, sizeof(uniform VdbVolume));
-  return self;
 }
 
 /*
@@ -29,8 +28,6 @@ export void *uniform EXPORT_UNIQUE(VdbVolume_create)
  */
 export void EXPORT_UNIQUE(VdbVolume_destroy, void *uniform _self)
 {
-  VdbVolume *uniform volume = (VdbVolume * uniform) _self;
-  delete volume;
 }
 
 /*

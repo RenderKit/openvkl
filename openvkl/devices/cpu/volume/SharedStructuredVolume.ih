@@ -19,72 +19,7 @@ enum SharedStructuredVolumeGridType
   structured_spherical
 };
 
-typedef varying float (*uniform ComputeSampleInnerVaryingFunc)(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3f &clampedLocalCoordinates,
-    const uniform VKLFilter filter,
-    const uniform uint32 attributeIndex,
-    const varying float &times);
-
-typedef uniform float (*uniform ComputeSampleInnerUniformFunc)(
-    const SharedStructuredVolume *uniform self,
-    const uniform vec3f &clampedLocalCoordinates,
-    const uniform VKLFilter filter,
-    const uniform uint32 attributeIndex,
-    const uniform float& times);
-
-typedef varying vec3f (*uniform ComputeGradientVaryingFunc)(
-    const SharedStructuredVolume *uniform _self,
-    const varying vec3f &objectCoordinates,
-    const uniform VKLFilter filter,
-    const uniform uint32 attributeIndex,
-    const varying float &time);
-
-typedef varying range1f (*uniform ComputeVoxelRangeFunc)(
-    const SharedStructuredVolume *uniform self,
-    const varying vec3i &localCoordinates,
-    const uniform uint32 attributeIndex);
-
-struct SharedStructuredVolume
-{
-  Volume super;
-
-  uniform uint32 numAttributes;
-  Data1D *uniform attributesData;
-
-  uniform uint32 temporallyStructuredNumTimesteps;
-  uniform Data1D temporallyUnstructuredIndices;
-  uniform Data1D temporallyUnstructuredTimes;
-
-  uniform vec3i dimensions;
-
-  uniform SharedStructuredVolumeGridType gridType;
-  uniform vec3f gridOrigin;
-  uniform vec3f gridSpacing;
-
-  uniform box3f boundingBox;
-
-  uniform vec3f localCoordinatesUpperBound;
-
-  GridAccelerator *uniform accelerator;
-
-  // offsets, in voxels, for one step in x,y,z direction; ONLY valid if
-  // bytesPerSlice < 2G.
-  uniform uint32 voxelOfs_dx, voxelOfs_dy, voxelOfs_dz;
-
-  // This is only used by the legacy sample wrappers - remove once those 
-  // have disappeared.
-  VKLFilter filter;
-
-  // varying functions
-  ComputeVoxelRangeFunc *uniform computeVoxelRange;
-
-  ComputeSampleInnerVaryingFunc *uniform computeSamplesInner_varying;
-  ComputeGradientVaryingFunc computeGradient_varying;
-
-  // uniform functions
-  ComputeSampleInnerUniformFunc *uniform computeSamplesInner_uniform;
-};
+#include "StructuredVolumeShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Coordinate transformations for all supported structured volume types ///////

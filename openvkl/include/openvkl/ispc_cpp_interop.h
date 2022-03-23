@@ -18,7 +18,7 @@
 
 #define VKL_INTEROP_CONSTEXPR
 #define VKL_INTEROP_UNIFORM uniform
-
+#define VKL_INTEROP_VARYING varying
 #else  // defined(ISPC)
 
 #if defined(__cplusplus)
@@ -28,6 +28,7 @@
 #endif
 
 #define VKL_INTEROP_UNIFORM
+#define VKL_INTEROP_VARYING
 
 #endif  // defined(ISPC)
 

@@ -5,12 +5,7 @@
 
 #include "rkcommon/math/vec.ih"
 #include "../common/export_util.h"
-
-struct Volume
-{
-  // Background value, per attribute.
-  const float *uniform background;
-};
+#include "VolumeShared.h"
 
 export void EXPORT_UNIQUE(Volume_setBackground,
                           void *uniform _volume,

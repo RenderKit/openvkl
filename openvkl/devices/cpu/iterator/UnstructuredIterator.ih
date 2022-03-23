@@ -4,7 +4,7 @@
 #pragma once
 
 #include "Iterator.ih"
-#include "IteratorContext.ih"
+#include "IteratorContextShared.h"
 #include "DefaultIterator.ih"
 #include "../volume/UnstructuredSamplerBase.ih"
 #include "../volume/UnstructuredVolume.ih"

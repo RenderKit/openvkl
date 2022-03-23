@@ -7,20 +7,7 @@
 #include "ManagedObject.h"
 #include "Traits.h"
 #include "openvkl/openvkl.h"
-
-#ifndef __ISPC_STRUCT_Data1D__
-#define __ISPC_STRUCT_Data1D__
-namespace ispc {
-  struct Data1D
-  {
-    const uint8_t *addr;
-    uint64_t byteStride;
-    uint64_t numItems;
-    VKLDataType dataType;
-    bool compact;
-  };
-}  // namespace ispc
-#endif
+#include "DataShared.h"
 
 namespace openvkl {
 

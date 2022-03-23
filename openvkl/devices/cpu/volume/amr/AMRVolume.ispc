@@ -4,13 +4,13 @@
 // ours
 //#include "CellRef.ih"
 // #include "AMRCommon.h"
-#include "../UnstructuredSamplerBase.ih"
+#include "../UnstructuredSamplerShared.h"
 #include "AMR.ih"
-#include "AMRVolume.ih"
+#include "AMRVolumeShared.h"
 #include "common/export_util.h"
 #include "sampler/Sampler.ih"
 
-static vec3f AMRVolume_computeGradient(const Sampler *uniform sampler,
+static vec3f AMRVolume_computeGradient(const SamplerShared *uniform sampler,
                                        const varying vec3f &pos)
 {
   // Cast to the actual Volume subtype.
@@ -53,18 +53,13 @@ static vec3f AMRVolume_computeGradient(const Sampler *uniform sampler,
   return (gradient / gradientStep);
 }
 
-export void *uniform EXPORT_UNIQUE(AMRVolume_create, void *uniform cppE)
+export void EXPORT_UNIQUE(AMRVolume_Constructor, void *uniform _self)
 {
-  AMRVolume *uniform self = uniform new uniform AMRVolume;
+  uniform AMRVolume *uniform self = (uniform AMRVolume * uniform) _self;
   memset(self, 0, sizeof(uniform AMRVolume));
-  return self;
 }
 
-export void EXPORT_UNIQUE(AMRVolume_Destructor, void *uniform _self)
-{
-  AMRVolume *uniform volume = (AMRVolume * uniform) _self;
-  delete volume;
-}
+export void EXPORT_UNIQUE(AMRVolume_Destructor, void *uniform _self) {}
 
 export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
                           const void *uniform _self,
@@ -157,7 +152,9 @@ export void EXPORT_UNIQUE(AMRVolume_sample_export,
                           const void *uniform _objectCoordinates,
                           void *uniform _samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform)_sampler;
+  const UnstructuredSamplerShared *uniform usampler =
+      (const UnstructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = &usampler->super.super;
 
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
@@ -176,35 +173,33 @@ export void EXPORT_UNIQUE(AMRVolume_gradient_export,
                           const void *uniform _objectCoordinates,
                           void *uniform _gradients)
 {
+  const UnstructuredSamplerShared *uniform usampler =
+      (const UnstructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = &usampler->super.super;
+
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients = AMRVolume_computeGradient((const Sampler *uniform)_sampler,
-                                           *objectCoordinates);
+    *gradients = AMRVolume_computeGradient(sampler, *objectCoordinates);
   }
 }
 
-export UnstructuredSamplerBase *uniform EXPORT_UNIQUE(AMRSampler_create,
-                                                      void *uniform _volume)
+export void EXPORT_UNIQUE(AMRSampler_create,
+                          void *uniform _volume,
+                          void *uniform _sampler)
 {
-  UnstructuredSamplerBase *uniform sampler =
-      uniform new UnstructuredSamplerBase;
-  memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
+  UnstructuredSamplerShared *uniform usampler =
+      (UnstructuredSamplerShared * uniform) _sampler;
+  memset(usampler, 0, sizeof(uniform UnstructuredSamplerShared));
+  SamplerShared *uniform sampler = &usampler->super.super;
 
-  sampler->super.volume = (const Volume *uniform)_volume;
+  sampler->volume = (const VolumeShared *uniform)_volume;
 
   // computeSample functions set in AMR_install* functions
 
-  sampler->super.computeGradient_varying = AMRVolume_computeGradient;
-
-  return sampler;
+  sampler->computeGradient_varying = AMRVolume_computeGradient;
 }
 
-export void EXPORT_UNIQUE(AMRSampler_destroy, void *uniform _sampler)
-{
-  UnstructuredSamplerBase *uniform sampler =
-      (UnstructuredSamplerBase * uniform) _sampler;
-  delete sampler;
-}
+export void EXPORT_UNIQUE(AMRSampler_destroy, void *uniform _sampler) {}

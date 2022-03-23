@@ -579,11 +579,11 @@ inline vec3f VdbSampler_tricubicPolynomialGradient(
 
 // Note: These wrappers are necessary for two reasons; They help clean up the
 // code below, and also help avoid nested foreach errors!
-inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
-                                                       sampler,
-                                                   const uniform vec3i &ic,
-                                                   uint64 *uniform voxel,
-                                                   vec3ui *uniform domainOffset)
+inline void VdbSampler_traverseVoxelValuesTricubic(
+    const VdbSamplerShared *uniform sampler,
+    const uniform vec3i &ic,
+    uint64 *uniform voxel,
+    vec3ui *uniform domainOffset)
 {
   assert(!sampler->grid->dense);
 
@@ -598,11 +598,11 @@ inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
   });
 }
 
-inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
-                                                       sampler,
-                                                   const vec3i &ic,
-                                                   uint64 *uniform voxel,
-                                                   vec3ui *uniform domainOffset)
+inline void VdbSampler_traverseVoxelValuesTricubic(
+    const VdbSamplerShared *uniform sampler,
+    const vec3i &ic,
+    uint64 *uniform voxel,
+    vec3ui *uniform domainOffset)
 {
   assert(!sampler->grid->dense);
 
@@ -618,7 +618,7 @@ inline void VdbSampler_traverseVoxelValuesTricubic(const VdbSampler *uniform
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3i &ic,
     const uint64 *uniform voxel,
     const vec3ui *uniform domainOffset,
@@ -637,7 +637,7 @@ inline void VdbSampler_computeVoxelValuesTricubic(
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3i &ic,
     const uint64 *uniform voxel,
     const vec3ui *uniform domainOffset,
@@ -656,7 +656,7 @@ inline void VdbSampler_computeVoxelValuesTricubic(
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3i &ic,
     const uniform float time,
     const uniform uint32 attributeIndex,
@@ -671,7 +671,7 @@ inline void VdbSampler_computeVoxelValuesTricubic(
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic_dense(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3i &ic,
     const uniform float time,
     const uniform uint32 attributeIndex,
@@ -686,7 +686,7 @@ inline void VdbSampler_computeVoxelValuesTricubic_dense(
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3i &ic,
     const float &time,
     const uniform uint32 attributeIndex,
@@ -701,7 +701,7 @@ inline void VdbSampler_computeVoxelValuesTricubic(
 }
 
 inline void VdbSampler_computeVoxelValuesTricubic_dense(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3i &ic,
     const float &time,
     const uniform uint32 attributeIndex,
@@ -717,7 +717,7 @@ inline void VdbSampler_computeVoxelValuesTricubic_dense(
 
 // Single attribute uniform.
 inline uniform float VdbSampler_interpolateTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 attributeIndex)
@@ -742,7 +742,7 @@ inline uniform float VdbSampler_interpolateTricubic(
 }
 
 inline uniform float VdbSampler_interpolate_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 attributeIndex)
@@ -767,7 +767,8 @@ inline uniform float VdbSampler_interpolate_denseTricubic(
 }
 
 // Single attribute varying.
-inline float VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
+inline float VdbSampler_interpolateTricubic(const VdbSamplerShared *uniform
+                                                sampler,
                                             const vec3f &indexCoordinates,
                                             const float &time,
                                             const uniform uint32 attributeIndex)
@@ -793,7 +794,7 @@ inline float VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
 }
 
 inline float VdbSampler_interpolate_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -819,13 +820,13 @@ inline float VdbSampler_interpolate_denseTricubic(
 }
 
 // Single attribute stream.
-inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
-                                           const uniform unsigned int N,
-                                           const vec3f *uniform
-                                               objectCoordinates,
-                                           const float *uniform times,
-                                           const uint32 uniform attributeIndex,
-                                           float *uniform samples)
+inline void VdbSampler_interpolateTricubic(
+    const VdbSamplerShared *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uint32 uniform attributeIndex,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -839,7 +840,7 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -859,7 +860,7 @@ inline void VdbSampler_interpolate_denseTricubic(
 
 // Multi attribute uniform.
 inline void VdbSampler_interpolateTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 M,
@@ -895,7 +896,7 @@ inline void VdbSampler_interpolateTricubic(
 }
 
 inline void VdbSampler_interpolate_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 M,
@@ -927,13 +928,13 @@ inline void VdbSampler_interpolate_denseTricubic(
 }
 
 // Multi attribute varying.
-inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
-                                           const vec3f &indexCoordinates,
-                                           const float &time,
-                                           const uniform uint32 M,
-                                           const uint32 *uniform
-                                               attributeIndices,
-                                           float *uniform samples)
+inline void VdbSampler_interpolateTricubic(
+    const VdbSamplerShared *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -964,7 +965,7 @@ inline void VdbSampler_interpolateTricubic(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 M,
@@ -997,7 +998,7 @@ inline void VdbSampler_interpolate_denseTricubic(
 
 // Multi attribute stream.
 inline void VdbSampler_interpolateTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -1038,7 +1039,7 @@ inline void VdbSampler_interpolateTricubic(
 }
 
 inline void VdbSampler_interpolate_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -1076,7 +1077,7 @@ inline void VdbSampler_interpolate_denseTricubic(
 
 // Gradient varying.
 inline vec3f VdbSampler_computeGradientTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -1102,7 +1103,7 @@ inline vec3f VdbSampler_computeGradientTricubic(
 }
 
 inline vec3f VdbSampler_computeGradient_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -1129,7 +1130,7 @@ inline vec3f VdbSampler_computeGradient_denseTricubic(
 
 // Gradient stream.
 inline void VdbSampler_computeGradientTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -1150,7 +1151,7 @@ inline void VdbSampler_computeGradientTricubic(
 }
 
 inline void VdbSampler_computeGradient_denseTricubic(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,

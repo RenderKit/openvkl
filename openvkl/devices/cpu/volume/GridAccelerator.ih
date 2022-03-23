@@ -7,16 +7,10 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
+#include "GridAcceleratorShared.h"
+
 struct GridAcceleratorIterator;
 struct SharedStructuredVolume;
-
-struct GridAccelerator
-{
-  uniform vec3i bricksPerDimension;
-  uniform size_t cellCount;
-  box1f *uniform cellValueRanges;
-  SharedStructuredVolume *uniform volume;
-};
 
 GridAccelerator *uniform GridAccelerator_Constructor(void *uniform volume);
 

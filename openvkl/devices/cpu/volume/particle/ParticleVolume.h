@@ -6,10 +6,11 @@
 #include "../../common/export_util.h"
 #include "../UnstructuredBVH.h"
 #include "../UnstructuredVolume.h"
-#include "../Volume.h"
 #include "../common/Data.h"
 #include "../common/math.h"
+#include "ParticleVolumeShared.h"
 #include "ParticleVolume_ispc.h"
+#include "openvkl/common/StructShared.h"
 
 #define MAX_PRIMS_PER_LEAF VKL_TARGET_WIDTH
 
@@ -67,14 +68,14 @@ namespace openvkl {
     };
 
     template <int W>
-    struct ParticleVolume : public Volume<W>
+    struct ParticleVolume : public AddStructShared<UnstructuredVolumeBase<W>,
+                                                   ispc::VKLParticleVolume>
     {
       ~ParticleVolume();
 
       void commit() override;
 
       Sampler<W> *newSampler() override;
-
       box3f getBoundingBox() const override;
 
       unsigned int getNumAttributes() const override;

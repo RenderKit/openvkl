@@ -62,8 +62,9 @@ namespace openvkl {
     template <int W>
     UnstructuredVolume<W>::~UnstructuredVolume()
     {
-      if (this->ispcEquivalent) {
-        CALL_ISPC(VKLUnstructuredVolume_Destructor, this->ispcEquivalent);
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(VKLUnstructuredVolume_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
       }
 
       if (rtcBVH)
@@ -75,7 +76,7 @@ namespace openvkl {
     template <int W>
     void UnstructuredVolume<W>::commit()
     {
-      Volume<W>::commit();
+      UnstructuredVolumeBase<W>::commit();
 
       // hex method planar/nonplanar
 
@@ -202,15 +203,16 @@ namespace openvkl {
 
       computeOverlappingNodeMetadata(rtcRoot);
 
-      if (!this->ispcEquivalent) {
-        this->ispcEquivalent = CALL_ISPC(VKLUnstructuredVolume_Constructor);
+      if (!this->SharedStructInitialized) {
+        CALL_ISPC(VKLUnstructuredVolume_Constructor, this->getSh());
+        this->SharedStructInitialized = true;
       }
 
-      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
+      CALL_ISPC(Volume_setBackground, this->getSh(), background->data());
 
       CALL_ISPC(
           VKLUnstructuredVolume_set,
-          this->ispcEquivalent,
+          this->getSh(),
           (const ispc::box3f &)bounds,
           ispc(vertexPosition),
           index32Bit ? ispc(index32) : ispc(index64),
@@ -231,7 +233,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *UnstructuredVolume<W>::newSampler()
     {
-      return new UnstructuredSampler<W>(this);
+      return new UnstructuredSampler<W>(*this);
     }
 
     template <int W>

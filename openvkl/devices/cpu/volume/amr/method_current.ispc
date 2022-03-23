@@ -5,9 +5,9 @@
 #include "CellRef.ih"
 #include "DualCell.ih"
 #include "common/export_util.h"
-#include "sampler/Sampler.ih"
+#include "sampler/SamplerShared.h"
 
-varying float AMR_current(const Sampler *uniform self,
+varying float AMR_current(const SamplerShared *uniform self,
                           const varying vec3f &P,
                           const uniform uint32 _attributeIndex,
                           const varying float &_time)
@@ -33,6 +33,6 @@ varying float AMR_current(const Sampler *uniform self,
 
 export void EXPORT_UNIQUE(AMR_install_current, void *uniform _sampler)
 {
-  Sampler *uniform sampler       = (Sampler * uniform) _sampler;
+  SamplerShared *uniform sampler = (SamplerShared * uniform) _sampler;
   sampler->computeSample_varying = AMR_current;
 }

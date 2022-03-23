@@ -14,6 +14,8 @@
 #include "StructuredVolume.h"
 #include "Volume_ispc.h"
 #include "openvkl/VKLFilter.h"
+#include "../common/StructShared.h"
+#include "StructuredSamplerShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -23,12 +25,14 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory>
-    struct StructuredSampler : public SamplerBase<W,
-                                                  StructuredVolume,
-                                                  IntervalIteratorFactory,
-                                                  HitIteratorFactory>
+    struct StructuredSampler
+        : public AddStructShared<SamplerBase<W,
+                                             StructuredVolume,
+                                             IntervalIteratorFactory,
+                                             HitIteratorFactory>,
+                                 ispc::StructuredSamplerShared>
     {
-      StructuredSampler(StructuredVolume<W> *volume);
+      StructuredSampler(StructuredVolume<W> &volume);
       ~StructuredSampler() override;
 
       void commit() override;
@@ -89,7 +93,6 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
      protected:
-      using Sampler<W>::ispcEquivalent;
       using SamplerBase<W,
                         StructuredVolume,
                         IntervalIteratorFactory,
@@ -107,17 +110,16 @@ namespace openvkl {
               template <int>
               class HitIteratorFactory>
     inline StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        StructuredSampler(StructuredVolume<W> *volume)
-        : SamplerBase<W,
-                      StructuredVolume,
-                      IntervalIteratorFactory,
-                      HitIteratorFactory>(*volume),
-          filter(volume->getFilter()),
-          gradientFilter(volume->getGradientFilter())
+        StructuredSampler(StructuredVolume<W> &volume)
+        : AddStructShared<SamplerBase<W,
+                                      StructuredVolume,
+                                      IntervalIteratorFactory,
+                                      HitIteratorFactory>,
+                          ispc::StructuredSamplerShared>(volume),
+          filter(volume.getFilter()),
+          gradientFilter(volume.getGradientFilter())
     {
-      assert(volume);
-      ispcEquivalent =
-          CALL_ISPC(StructuredSampler_create, volume->getISPCEquivalent());
+      CALL_ISPC(StructuredSampler_create, volume.getSh(), this->getSh());
     }
 
     template <int W,
@@ -128,8 +130,7 @@ namespace openvkl {
     inline StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
         ~StructuredSampler()
     {
-      CALL_ISPC(StructuredSampler_destroy, ispcEquivalent);
-      ispcEquivalent = nullptr;
+      CALL_ISPC(StructuredSampler_destroy, this->getSh());
     }
 
     template <int W,
@@ -150,7 +151,7 @@ namespace openvkl {
           "gradientFilter", this->hasParam("filter") ? filter : gradientFilter);
 
       CALL_ISPC(Sampler_setFilters,
-                ispcEquivalent,
+                this->getSh(),
                 (ispc::VKLFilter)filter,
                 (ispc::VKLFilter)gradientFilter);
     }
@@ -170,7 +171,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertValidTime(time[0]);
       CALL_ISPC(SharedStructuredVolume_sample_uniform_export,
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 attributeIndex,
                 &time,
@@ -194,7 +195,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(SharedStructuredVolume_sample_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 attributeIndex,
                 &time,
@@ -217,7 +218,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_sample_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 attributeIndex,
@@ -242,7 +243,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(SharedStructuredVolume_gradient_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 attributeIndex,
                 time,
@@ -265,7 +266,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_gradient_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 attributeIndex,
@@ -289,7 +290,7 @@ namespace openvkl {
       assertValidAttributeIndices(volume, M, attributeIndices);
       assertValidTime(time[0]);
       CALL_ISPC(SharedStructuredVolume_sampleM_uniform_export,
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 M,
                 attributeIndices,
@@ -315,7 +316,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(SharedStructuredVolume_sampleM_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 M,
                 attributeIndices,
@@ -340,7 +341,7 @@ namespace openvkl {
       assertValidAttributeIndices(volume, M, attributeIndices);
       assertAllValidTimes(N, times);
       CALL_ISPC(SharedStructuredVolume_sampleM_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 M,

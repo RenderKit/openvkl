@@ -132,9 +132,9 @@ namespace openvkl {
     template <int W>
     IntervalIteratorContext<W>::~IntervalIteratorContext()
     {
-      if (this->ispcEquivalent) {
-        CALL_ISPC(IntervalIteratorContext_Destructor, this->ispcEquivalent);
-        this->ispcEquivalent = nullptr;
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(IntervalIteratorContext_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
       }
     }
 
@@ -172,17 +172,20 @@ namespace openvkl {
           mapToMaxIteratorDepth(*this, intervalResolutionHint);
       const bool elementaryCellIteration = (intervalResolutionHint == 1.f);
 
-      if (this->ispcEquivalent) {
-        CALL_ISPC(IntervalIteratorContext_Destructor, this->ispcEquivalent);
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(IntervalIteratorContext_Destructor, this->getSh());
       }
 
-      this->ispcEquivalent = CALL_ISPC(IntervalIteratorContext_Constructor,
-                                       this->getSampler().getISPCEquivalent(),
-                                       this->attributeIndex,
-                                       valueRanges.size(),
-                                       (const ispc::box1f *)valueRanges.data(),
-                                       maxIteratorDepth,
-                                       elementaryCellIteration);
+      CALL_ISPC(IntervalIteratorContext_Constructor,
+                this->getSampler().getSh(),
+                this->attributeIndex,
+                valueRanges.size(),
+                (const ispc::box1f *)valueRanges.data(),
+                maxIteratorDepth,
+                elementaryCellIteration,
+                this->getSh());
+
+      this->SharedStructInitialized = true;
     }
 
     template struct IntervalIteratorContext<VKL_TARGET_WIDTH>;
@@ -194,9 +197,9 @@ namespace openvkl {
     template <int W>
     HitIteratorContext<W>::~HitIteratorContext()
     {
-      if (this->ispcEquivalent) {
-        CALL_ISPC(HitIteratorContext_Destructor, this->ispcEquivalent);
-        this->ispcEquivalent = nullptr;
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(HitIteratorContext_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
       }
     }
 
@@ -234,16 +237,19 @@ namespace openvkl {
         maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
       }
 
-      if (this->ispcEquivalent) {
-        CALL_ISPC(HitIteratorContext_Destructor, this->ispcEquivalent);
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(HitIteratorContext_Destructor, this->getSh());
       }
 
-      this->ispcEquivalent = CALL_ISPC(HitIteratorContext_Constructor,
-                                       this->getSampler().getISPCEquivalent(),
-                                       this->attributeIndex,
-                                       values.size(),
-                                       (const float *)values.data(),
-                                       maxIteratorDepth);
+      CALL_ISPC(HitIteratorContext_Constructor,
+                this->getSampler().getSh(),
+                this->attributeIndex,
+                values.size(),
+                (const float *)values.data(),
+                maxIteratorDepth,
+                this->getSh());
+
+      this->SharedStructInitialized = true;
     }
 
     template struct HitIteratorContext<VKL_TARGET_WIDTH>;

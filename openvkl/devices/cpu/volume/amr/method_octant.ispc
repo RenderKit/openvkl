@@ -5,7 +5,7 @@
 #include "CellRef.ih"
 #include "DualCell.ih"
 #include "common/export_util.h"
-#include "sampler/Sampler.ih"
+#include "sampler/SamplerShared.h"
 
 #define DBG(a)
 
@@ -441,7 +441,7 @@ varying float doOctant(const AMR *uniform self,
   return lerp(O);
 }
 
-varying float AMR_octant(const Sampler *uniform self,
+varying float AMR_octant(const SamplerShared *uniform self,
                          const varying vec3f &P,
                          const uniform uint32 _attributeIndex,
                          const varying float &time)
@@ -462,6 +462,6 @@ varying float AMR_octant(const Sampler *uniform self,
 
 export void EXPORT_UNIQUE(AMR_install_octant, void *uniform _sampler)
 {
-  Sampler *uniform sampler       = (Sampler * uniform) _sampler;
+  SamplerShared *uniform sampler = (SamplerShared * uniform) _sampler;
   sampler->computeSample_varying = AMR_octant;
 }

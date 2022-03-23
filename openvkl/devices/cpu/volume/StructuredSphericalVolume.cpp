@@ -11,7 +11,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *StructuredSphericalVolume<W>::newSampler()
     {
-      return new StructuredSphericalSampler<W>(this);
+      return new StructuredSphericalSampler<W>(*this);
     }
 
     template <int W>
@@ -19,12 +19,13 @@ namespace openvkl {
     {
       StructuredVolume<W>::commit();
 
-      if (!this->ispcEquivalent) {
-        this->ispcEquivalent = CALL_ISPC(SharedStructuredVolume_Constructor);
+      if (!this->SharedStructInitialized) {
+        CALL_ISPC(SharedStructuredVolume_Constructor, this->getSh());
+        this->SharedStructInitialized = true;
 
-        if (!this->ispcEquivalent) {
+        if (!this->SharedStructInitialized) {
           throw std::runtime_error(
-              "could not create ISPC-side object for "
+              "could not initialize device-side object for "
               "StructuredSphericalVolume");
         }
       }
@@ -83,7 +84,7 @@ namespace openvkl {
           ispcs(this->attributesData);
 
       bool success = CALL_ISPC(SharedStructuredVolume_set,
-                               this->ispcEquivalent,
+                               this->getSh(),
                                ispcAttributesData.size(),
                                ispcAttributesData.data(),
                                this->temporallyStructuredNumTimesteps,
@@ -96,14 +97,14 @@ namespace openvkl {
                                (ispc::VKLFilter)this->filter);
 
       if (!success) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
-        this->ispcEquivalent = nullptr;
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
 
         throw std::runtime_error("failed to commit StructuredSphericalVolume");
       }
 
       CALL_ISPC(
-          Volume_setBackground, this->ispcEquivalent, this->background->data());
+          Volume_setBackground, this->getSh(), this->background->data());
 
       // must be last
       this->buildAccelerator();

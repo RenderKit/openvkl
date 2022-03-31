@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -20,7 +20,8 @@ namespace openvkl {
       static OpenVdbVolume *loadVdbFile(VKLDevice device,
                                         const std::string &filename,
                                         const std::string &field,
-                                        bool deferLeaves = false);
+                                        bool deferLeaves = false,
+                                        bool repackNodes = false);
 
       virtual ~OpenVdbVolume() {}
 
@@ -42,8 +43,9 @@ namespace openvkl {
       OpenVdbVolumeImpl(VKLDevice device,
                         const std::string &filename,
                         const std::string &field,
-                        bool deferLeaves = false)
-          : grid(device, filename, field, deferLeaves)
+                        bool deferLeaves = false,
+                        bool repackNodes = false)
+          : grid(device, filename, field, deferLeaves, repackNodes)
       {
       }
 
@@ -158,7 +160,8 @@ namespace openvkl {
         VKLDevice device,
         const std::string &filename,
         const std::string &field,
-        bool deferLeaves)
+        bool deferLeaves,
+        bool repackNodes)
     {
       openvdb::initialize();
 
@@ -177,9 +180,11 @@ namespace openvkl {
       openvdb::GridBase::Ptr baseGrid = file.readGridMetadata(field);
 
       if (baseGrid->valueType() == "float") {
-        return new OpenVdbFloatVolume(device, filename, field, deferLeaves);
+        return new OpenVdbFloatVolume(
+            device, filename, field, deferLeaves, repackNodes);
       } else if (baseGrid->valueType() == "vec3s") {
-        return new OpenVdbVec3sVolume(device, filename, field, deferLeaves);
+        return new OpenVdbVec3sVolume(
+            device, filename, field, deferLeaves, repackNodes);
       } else {
         throw std::runtime_error("unsupported OpenVDB grid type: " +
                                  baseGrid->valueType());
@@ -202,7 +207,8 @@ namespace openvkl {
       static OpenVdbVolume *loadVdbFile(VKLDevice device,
                                         const std::string &filename,
                                         const std::string &field,
-                                        bool deferLeaves = false)
+                                        bool deferLeaves = false,
+                                        bool repackNodes = false)
       {
         throw std::runtime_error(
             "You must compile with OpenVDB to use OpenVdbVolume");
@@ -219,7 +225,8 @@ namespace openvkl {
     {
       OpenVdbVolumeImpl(const std::string &filename,
                         const std::string &field,
-                        bool deferLeaves = false)
+                        bool deferLeaves = false,
+                        bool repackNodes = false)
       {
         throw std::runtime_error(
             "You must compile with OpenVDB to use OpenVdbVolumeImpl");

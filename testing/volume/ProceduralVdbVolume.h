@@ -92,6 +92,7 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
+          bool repackNodes                       = true,
           const TemporalConfig &temporalConfig   = TemporalConfig(),
           uint32_t numAttributes                 = 1,
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
@@ -459,6 +460,7 @@ namespace openvkl {
                             const vec3i &dimensions,
                             const vec3f &gridOrigin,
                             const vec3f &gridSpacing,
+                            bool repackNodes,
                             const TemporalConfig &temporalConfig,
                             uint32_t numAttributes,
                             VKLDataCreationFlags dataCreationFlags,
@@ -485,7 +487,7 @@ namespace openvkl {
 
       std::vector<VKLDataType> voxelTypes(numAttributes,
                                           getVKLDataType<VOXEL_TYPE>());
-      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes);
+      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes, repackNodes);
 
       buffers->setIndexToObject(gridSpacing.x,
                                 0,

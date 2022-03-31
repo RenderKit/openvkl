@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -81,6 +81,8 @@ namespace openvkl {
       std::vector<float> motionBlurUnstructuredTimeSamples{
           0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
       uint8_t motionBlurStructuredNumTimesteps{6};
+
+      bool vdbRepackNodes{false};
 
       void parseCommandLine(std::list<std::string> &args);
       static void usage();

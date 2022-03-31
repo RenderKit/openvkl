@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -15,8 +15,7 @@ TEST_CASE("VDB volume motion blur", "[volume_sampling]")
       TemporalConfig(TemporalConfig::Structured, 2),
       TemporalConfig(TemporalConfig::Structured, 4),
       TemporalConfig(TemporalConfig::Unstructured, 2),
-      TemporalConfig(std::vector<float>{0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})
-  };
+      TemporalConfig(std::vector<float>{0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f})};
 
   for (auto tc = 0; tc < temporalConfigs.size(); tc++) {
     std::stringstream sectionName;
@@ -24,11 +23,15 @@ TEST_CASE("VDB volume motion blur", "[volume_sampling]")
     DYNAMIC_SECTION(sectionName.str())
     {
       WaveletVdbVolumeFloat *volume = nullptr;
-      REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                                        128,
-                                                        vec3f(0.f),
-                                                        vec3f(1.f),
-                                                        temporalConfigs[tc]));
+      REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
+                          getOpenVKLDevice(),
+                          128,
+                          vec3f(0.f),
+                          vec3f(1.f),
+                          false /* repackNodes not supported with temporally
+                                   varying volumes */
+                          ,
+                          temporalConfigs[tc]));
       VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
       VKLSampler vklSampler = vklNewSampler(vklVolume);
       vklCommit(vklSampler);

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -80,34 +80,44 @@ TEST_CASE("VDB volume value range", "[value_range]")
 {
   initializeOpenVKL();
 
-  // half
+  for (const auto &repackNodes : {true, false}) {
+    std::stringstream sectionName;
+    sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-  SECTION("WaveletVdbVolumeHalf")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
-    REQUIRE(valueRange.upper >= valueRange.lower);
-    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
-            Approx(6.f).epsilon(0.001f));
-    REQUIRE_NOTHROW(delete volume);
-  }
+    DYNAMIC_SECTION(sectionName.str())
+    {
+      // half
 
-  // float
+      SECTION("WaveletVdbVolumeHalf")
+      {
+        WaveletVdbVolumeHalf *volume = nullptr;
+        range1f valueRange;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeHalf(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
+        REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
+        REQUIRE(valueRange.upper >= valueRange.lower);
+        REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
+                Approx(6.f).epsilon(0.001f));
+        REQUIRE_NOTHROW(delete volume);
+      }
 
-  SECTION("WaveletVdbVolumeFloat")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    range1f valueRange;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-    REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
-    REQUIRE(valueRange.upper >= valueRange.lower);
-    REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
-            Approx(6.f).epsilon(0.001f));
-    REQUIRE_NOTHROW(delete volume);
+      // float
+
+      SECTION("WaveletVdbVolumeFloat")
+      {
+        WaveletVdbVolumeFloat *volume = nullptr;
+        range1f valueRange;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeFloat(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
+        REQUIRE_NOTHROW(valueRange = volume->getComputedValueRange());
+        REQUIRE(valueRange.upper >= valueRange.lower);
+        REQUIRE(std::fabs((valueRange.upper - valueRange.lower)) ==
+                Approx(6.f).epsilon(0.001f));
+        REQUIRE_NOTHROW(delete volume);
+      }
+    }
   }
 
   shutdownOpenVKL();
@@ -117,246 +127,264 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
 
-  // half
+  for (const auto &repackNodes : {true, false}) {
+    std::stringstream sectionName;
+    sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-  SECTION("WaveletVdbVolumeHalf nearest")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
+    DYNAMIC_SECTION(sectionName.str())
+    {
+      // half
 
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
+      SECTION("WaveletVdbVolumeHalf nearest")
+      {
+        WaveletVdbVolumeHalf *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeHalf(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
 
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
 
-      const float proceduralValue =
-          volume->computeProceduralValue(objectCoordinates);
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
 
-      test_scalar_and_vector_sampling(
-          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
-    }
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
 
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
 
-  SECTION("WaveletVdbVolumeHalf trilinear")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
-
-      const float proceduralValue =
-          volume->computeProceduralValue(objectCoordinates);
-
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
-
-      test_scalar_and_vector_sampling(
-          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
-    }
-
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
-
-  SECTION("WaveletVdbVolumeHalf tricubic")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-
-    // tricubic support span; ignore coordinates here since they will
-    // interpolate with background
-    const int lowerSpan = 1;
-    const int upperSpan = 2;
-
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-
-      if (coordinate_in_boundary_span(
-              offsetWithStep, volume->getDimensions(), lowerSpan, upperSpan)) {
-        continue;
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
       }
 
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+      SECTION("WaveletVdbVolumeHalf trilinear")
+      {
+        WaveletVdbVolumeHalf *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeHalf(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
 
-      const float proceduralValue =
-          volume->computeProceduralValue(objectCoordinates);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
 
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      test_scalar_and_vector_sampling(
-          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
-    }
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
 
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
 
-  // float
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
 
-  SECTION("WaveletVdbVolumeFloat nearest")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
-
-      const float proceduralValue =
-          volume->computeProceduralValue(objectCoordinates);
-
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
-
-      test_scalar_and_vector_sampling(
-          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
-    }
-
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
-
-  SECTION("WaveletVdbVolumeFloat trilinear")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
-
-      const float proceduralValue =
-          volume->computeProceduralValue(objectCoordinates);
-
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
-
-      test_scalar_and_vector_sampling(
-          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
-    }
-
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
-
-  SECTION("WaveletVdbVolumeFloat tricubic")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-
-    // tricubic support span; ignore coordinates here since they will
-    // interpolate with background
-    const int lowerSpan = 1;
-    const int upperSpan = 2;
-
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-
-      if (coordinate_in_boundary_span(
-              offsetWithStep, volume->getDimensions(), lowerSpan, upperSpan)) {
-        continue;
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
       }
 
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+      SECTION("WaveletVdbVolumeHalf tricubic")
+      {
+        WaveletVdbVolumeHalf *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeHalf(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
 
-      const float proceduralValue =
-          volume->computeProceduralValue(objectCoordinates);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit(vklSampler);
+        const vec3i step(2);
 
-      INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                       << offsetWithStep.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+        // tricubic support span; ignore coordinates here since they will
+        // interpolate with background
+        const int lowerSpan = 1;
+        const int upperSpan = 2;
 
-      test_scalar_and_vector_sampling(
-          vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+
+          if (coordinate_in_boundary_span(offsetWithStep,
+                                          volume->getDimensions(),
+                                          lowerSpan,
+                                          upperSpan)) {
+            continue;
+          }
+
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
+
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
+
+      // float
+
+      SECTION("WaveletVdbVolumeFloat nearest")
+      {
+        WaveletVdbVolumeFloat *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeFloat(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
+
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
+
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
+
+      SECTION("WaveletVdbVolumeFloat trilinear")
+      {
+        WaveletVdbVolumeFloat *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeFloat(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
+
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
+
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
+
+      SECTION("WaveletVdbVolumeFloat tricubic")
+      {
+        WaveletVdbVolumeFloat *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeFloat(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
+
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+
+        // tricubic support span; ignore coordinates here since they will
+        // interpolate with background
+        const int lowerSpan = 1;
+        const int upperSpan = 2;
+
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+
+          if (coordinate_in_boundary_span(offsetWithStep,
+                                          volume->getDimensions(),
+                                          lowerSpan,
+                                          upperSpan)) {
+            continue;
+          }
+
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+          const float proceduralValue =
+              volume->computeProceduralValue(objectCoordinates);
+
+          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                           << offsetWithStep.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          test_scalar_and_vector_sampling(
+              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
     }
-
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
   }
 
   shutdownOpenVKL();
@@ -401,291 +429,308 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 {
   initializeOpenVKL();
 
-  // half
+  for (const auto &repackNodes : {true, false}) {
+    std::stringstream sectionName;
+    sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-  SECTION("WaveletVdbVolumeHalf nearest")
-  {
-    WaveletVdbVolumeHalf *volume = nullptr;
-    // use a smaller grid spacing to avoid overflow / precision issues for half
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
-                                                      128,
+    DYNAMIC_SECTION(sectionName.str())
+    {
+      // half
+
+      SECTION("WaveletVdbVolumeHalf nearest")
+      {
+        WaveletVdbVolumeHalf *volume = nullptr;
+        // use a smaller grid spacing to avoid overflow / precision issues for
+        // half
+        REQUIRE_NOTHROW(volume = new WaveletVdbVolumeHalf(getOpenVKLDevice(),
+                                                          128,
+                                                          vec3f(0.f),
+                                                          vec3f(0.01f),
+                                                          repackNodes));
+
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
+
+          INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          const vkl_vec3f vklGradient = vklComputeGradient(
+              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vec3f gradient = (const vec3f &)vklGradient;
+
+          REQUIRE(gradient.x == 0.f);
+          REQUIRE(gradient.y == 0.f);
+          REQUIRE(gradient.z == 0.f);
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
+
+      SECTION("XYZVdbVolumeHalf trilinear")
+      {
+        XYZVdbVolumeHalf *volume = nullptr;
+        const int dim            = 128;
+        // use a smaller grid spacing to avoid overflow / precision issues for
+        // half
+        REQUIRE_NOTHROW(volume = new XYZVdbVolumeHalf(getOpenVKLDevice(),
+                                                      dim,
                                                       vec3f(0.f),
-                                                      vec3f(0.01f)));
+                                                      vec3f(0.01f),
+                                                      repackNodes));
 
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          if (offset.x + 1 >= volume->getDimensions().x ||
+              offset.y + 1 >= volume->getDimensions().y ||
+              offset.z + 1 >= volume->getDimensions().z) {
+            continue;
+          }
 
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+          const auto offsetWithStep = offset * step;
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      const vkl_vec3f vklGradient =
-          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
-      const vec3f gradient = (const vec3f &)vklGradient;
+          INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
 
-      REQUIRE(gradient.x == 0.f);
-      REQUIRE(gradient.y == 0.f);
-      REQUIRE(gradient.z == 0.f);
-    }
+          const vkl_vec3f vklGradient = vklComputeGradient(
+              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vec3f gradient = (const vec3f &)vklGradient;
 
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
+          // compare to analytical gradient
+          const vec3f proceduralGradient =
+              volume->computeProceduralGradient(objectCoordinates);
 
-  SECTION("XYZVdbVolumeHalf trilinear")
-  {
-    XYZVdbVolumeHalf *volume = nullptr;
-    const int dim            = 128;
-    // use a smaller grid spacing to avoid overflow / precision issues for half
-    REQUIRE_NOTHROW(volume = new XYZVdbVolumeHalf(getOpenVKLDevice(),
-                                                  dim,
-                                                  vec3f(0.f),
-                                                  vec3f(0.01f)));
+          static constexpr float tolerance = 0.1f;
+          REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
+          REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
+          REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
+        }
 
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      if (offset.x + 1 >= volume->getDimensions().x ||
-          offset.y + 1 >= volume->getDimensions().y ||
-          offset.z + 1 >= volume->getDimensions().z) {
-        continue;
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
       }
 
-      const auto offsetWithStep = offset * step;
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+      SECTION("XYZVdbVolumeHalf tricubic")
+      {
+        XYZVdbVolumeHalf *volume = nullptr;
+        const int dim            = 128;
+        // use a smaller grid spacing to avoid overflow / precision issues for
+        // half
+        REQUIRE_NOTHROW(volume = new XYZVdbVolumeHalf(getOpenVKLDevice(),
+                                                      dim,
+                                                      vec3f(0.f),
+                                                      vec3f(0.01f),
+                                                      repackNodes));
 
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit(vklSampler);
+        const vec3i step(2);
 
-      const vkl_vec3f vklGradient =
-          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
-      const vec3f gradient = (const vec3f &)vklGradient;
+        // Gradient will be different around the border due to central
+        // differencing, so we discard the outer layer of voxels.
+        constexpr int filterRadius = 2;
+        multidim_index_sequence<3> mis(
+            (volume->getDimensions() - 2 * filterRadius) / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step + filterRadius;
+          if (offsetWithStep.x + filterRadius >= volume->getDimensions().x ||
+              offsetWithStep.y + filterRadius >= volume->getDimensions().y ||
+              offsetWithStep.z + filterRadius >= volume->getDimensions().z) {
+            continue;
+          }
 
-      // compare to analytical gradient
-      const vec3f proceduralGradient =
-          volume->computeProceduralGradient(objectCoordinates);
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      static constexpr float tolerance = 0.1f;
-      REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
-      REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
-      REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
-    }
+          INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
 
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
+          const vkl_vec3f vklGradient = vklComputeGradient(
+              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vec3f gradient = (const vec3f &)vklGradient;
 
-  SECTION("XYZVdbVolumeHalf tricubic")
-  {
-    XYZVdbVolumeHalf *volume = nullptr;
-    const int dim            = 128;
-    // use a smaller grid spacing to avoid overflow / precision issues for half
-    REQUIRE_NOTHROW(volume = new XYZVdbVolumeHalf(getOpenVKLDevice(),
-                                                  dim,
-                                                  vec3f(0.f),
-                                                  vec3f(0.01f)));
+          // compare to analytical gradient
+          const vec3f proceduralGradient =
+              volume->computeProceduralGradient(objectCoordinates);
 
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-    vklCommit(vklSampler);
-    const vec3i step(2);
+          static constexpr float tolerance = 0.1f;
+          REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
+          REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
+          REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
+        }
 
-    // Gradient will be different around the border due to central differencing,
-    // so we discard the outer layer of voxels.
-    constexpr int filterRadius = 2;
-    multidim_index_sequence<3> mis(
-        (volume->getDimensions() - 2 * filterRadius) / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step + filterRadius;
-      if (offsetWithStep.x + filterRadius >= volume->getDimensions().x ||
-          offsetWithStep.y + filterRadius >= volume->getDimensions().y ||
-          offsetWithStep.z + filterRadius >= volume->getDimensions().z) {
-        continue;
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
       }
 
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+      // float
 
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+      SECTION("WaveletVdbVolumeFloat")
+      {
+        WaveletVdbVolumeFloat *volume = nullptr;
+        REQUIRE_NOTHROW(
+            volume = new WaveletVdbVolumeFloat(
+                getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f), repackNodes));
 
-      const vkl_vec3f vklGradient =
-          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
-      const vec3f gradient = (const vec3f &)vklGradient;
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step;
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      // compare to analytical gradient
-      const vec3f proceduralGradient =
-          volume->computeProceduralGradient(objectCoordinates);
+          INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
 
-      static constexpr float tolerance = 0.1f;
-      REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
-      REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
-      REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
-    }
+          const vkl_vec3f vklGradient = vklComputeGradient(
+              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vec3f gradient = (const vec3f &)vklGradient;
 
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
+          REQUIRE(gradient.x == 0.f);
+          REQUIRE(gradient.y == 0.f);
+          REQUIRE(gradient.z == 0.f);
+        }
 
-  // float
-
-  SECTION("WaveletVdbVolumeFloat")
-  {
-    WaveletVdbVolumeFloat *volume = nullptr;
-    REQUIRE_NOTHROW(volume = new WaveletVdbVolumeFloat(
-                        getOpenVKLDevice(), 128, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step;
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
-
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
-
-      const vkl_vec3f vklGradient =
-          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
-      const vec3f gradient = (const vec3f &)vklGradient;
-
-      REQUIRE(gradient.x == 0.f);
-      REQUIRE(gradient.y == 0.f);
-      REQUIRE(gradient.z == 0.f);
-    }
-
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
-
-  SECTION("XYZVdbVolumeFloat trilinear")
-  {
-    XYZVdbVolumeFloat *volume = nullptr;
-    const int dim             = 128;
-    REQUIRE_NOTHROW(volume = new XYZVdbVolumeFloat(
-                        getOpenVKLDevice(), dim, vec3f(0.f), vec3f(1.f)));
-
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-    multidim_index_sequence<3> mis(volume->getDimensions() / step);
-    for (const auto &offset : mis) {
-      if (offset.x + 1 >= volume->getDimensions().x ||
-          offset.y + 1 >= volume->getDimensions().y ||
-          offset.z + 1 >= volume->getDimensions().z) {
-        continue;
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
       }
 
-      const auto offsetWithStep = offset * step;
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+      SECTION("XYZVdbVolumeFloat trilinear")
+      {
+        XYZVdbVolumeFloat *volume = nullptr;
+        const int dim             = 128;
+        REQUIRE_NOTHROW(
+            volume = new XYZVdbVolumeFloat(
+                getOpenVKLDevice(), dim, vec3f(0.f), vec3f(1.f), repackNodes));
 
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit(vklSampler);
+        const vec3i step(2);
+        multidim_index_sequence<3> mis(volume->getDimensions() / step);
+        for (const auto &offset : mis) {
+          if (offset.x + 1 >= volume->getDimensions().x ||
+              offset.y + 1 >= volume->getDimensions().y ||
+              offset.z + 1 >= volume->getDimensions().z) {
+            continue;
+          }
 
-      const vkl_vec3f vklGradient =
-          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
-      const vec3f gradient = (const vec3f &)vklGradient;
+          const auto offsetWithStep = offset * step;
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      // compare to analytical gradient
-      const vec3f proceduralGradient =
-          volume->computeProceduralGradient(objectCoordinates);
+          INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
 
-      static constexpr float tolerance = 0.1f;
-      REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
-      REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
-      REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
-    }
+          const vkl_vec3f vklGradient = vklComputeGradient(
+              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vec3f gradient = (const vec3f &)vklGradient;
 
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
-  }
+          // compare to analytical gradient
+          const vec3f proceduralGradient =
+              volume->computeProceduralGradient(objectCoordinates);
 
-  SECTION("XYZVdbVolumeFloat tricubic")
-  {
-    XYZVdbVolumeFloat *volume = nullptr;
-    const int dim             = 128;
-    REQUIRE_NOTHROW(volume = new XYZVdbVolumeFloat(
-                        getOpenVKLDevice(), dim, vec3f(0.f), vec3f(1.f)));
+          static constexpr float tolerance = 0.1f;
+          REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
+          REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
+          REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
+        }
 
-    VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-    VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-    vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-    vklCommit(vklSampler);
-    const vec3i step(2);
-
-    // Gradient will be different around the border due to central differencing,
-    // so we discard the outer layer of voxels.
-    constexpr int filterRadius = 2;
-    multidim_index_sequence<3> mis(
-        (volume->getDimensions() - 2 * filterRadius) / step);
-    for (const auto &offset : mis) {
-      const auto offsetWithStep = offset * step + filterRadius;
-      if (offsetWithStep.x + filterRadius >= volume->getDimensions().x ||
-          offsetWithStep.y + filterRadius >= volume->getDimensions().y ||
-          offsetWithStep.z + filterRadius >= volume->getDimensions().z) {
-        continue;
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
       }
 
-      const vec3f objectCoordinates =
-          volume->transformLocalToObjectCoordinates(offsetWithStep);
+      SECTION("XYZVdbVolumeFloat tricubic")
+      {
+        XYZVdbVolumeFloat *volume = nullptr;
+        const int dim             = 128;
+        REQUIRE_NOTHROW(
+            volume = new XYZVdbVolumeFloat(
+                getOpenVKLDevice(), dim, vec3f(0.f), vec3f(1.f), repackNodes));
 
-      INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
-      INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                  << objectCoordinates.y << " "
-                                  << objectCoordinates.z);
+        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+        VKLSampler vklSampler = vklNewSampler(vklVolume);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit(vklSampler);
+        const vec3i step(2);
 
-      const vkl_vec3f vklGradient =
-          vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
-      const vec3f gradient = (const vec3f &)vklGradient;
+        // Gradient will be different around the border due to central
+        // differencing, so we discard the outer layer of voxels.
+        constexpr int filterRadius = 2;
+        multidim_index_sequence<3> mis(
+            (volume->getDimensions() - 2 * filterRadius) / step);
+        for (const auto &offset : mis) {
+          const auto offsetWithStep = offset * step + filterRadius;
+          if (offsetWithStep.x + filterRadius >= volume->getDimensions().x ||
+              offsetWithStep.y + filterRadius >= volume->getDimensions().y ||
+              offsetWithStep.z + filterRadius >= volume->getDimensions().z) {
+            continue;
+          }
 
-      // compare to analytical gradient
-      const vec3f proceduralGradient =
-          volume->computeProceduralGradient(objectCoordinates);
+          const vec3f objectCoordinates =
+              volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-      static constexpr float tolerance = 0.1f;
-      REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
-      REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
-      REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
+          INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+          INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                      << objectCoordinates.y << " "
+                                      << objectCoordinates.z);
+
+          const vkl_vec3f vklGradient = vklComputeGradient(
+              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vec3f gradient = (const vec3f &)vklGradient;
+
+          // compare to analytical gradient
+          const vec3f proceduralGradient =
+              volume->computeProceduralGradient(objectCoordinates);
+
+          static constexpr float tolerance = 0.1f;
+          REQUIRE(gradient.x == Approx(proceduralGradient.x).margin(tolerance));
+          REQUIRE(gradient.y == Approx(proceduralGradient.y).margin(tolerance));
+          REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
+        }
+
+        REQUIRE_NOTHROW(delete volume);
+        vklRelease(vklSampler);
+      }
     }
-
-    REQUIRE_NOTHROW(delete volume);
-    vklRelease(vklSampler);
   }
 
   shutdownOpenVKL();
@@ -700,53 +745,58 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
 
   std::vector<float> strideFactors{0.f, 1.f, 1.5f, 2.f};
 
-  for (const auto &dcf : dataCreationFlags) {
-    for (const auto &strideFactor : strideFactors) {
-      std::stringstream sectionName;
-      sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
-                                              : "VKL_DATA_SHARED_BUFFER");
-      sectionName << ", stride factor: " << strideFactor;
+  for (const auto &repackNodes : {true, false}) {
+    for (const auto &dcf : dataCreationFlags) {
+      for (const auto &strideFactor : strideFactors) {
+        std::stringstream sectionName;
+        sectionName << (repackNodes ? "repackNodes=true, "
+                                    : "repackNodes=false, ");
+        sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
+                                                : "VKL_DATA_SHARED_BUFFER");
+        sectionName << ", stride factor: " << strideFactor;
 
-      // can't have duplicate section names at the same level
-      DYNAMIC_SECTION(sectionName.str())
-      {
-        WaveletVdbVolumeFloat *volume = nullptr;
-        REQUIRE_NOTHROW(
-            volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
-                                               128,
-                                               vec3f(0.f),
-                                               vec3f(1.f),
-                                               TemporalConfig(),
-                                               1,
-                                               dcf,
-                                               strideFactor * sizeof(float)));
+        // can't have duplicate section names at the same level
+        DYNAMIC_SECTION(sectionName.str())
+        {
+          WaveletVdbVolumeFloat *volume = nullptr;
+          REQUIRE_NOTHROW(
+              volume = new WaveletVdbVolumeFloat(getOpenVKLDevice(),
+                                                 128,
+                                                 vec3f(0.f),
+                                                 vec3f(1.f),
+                                                 repackNodes,
+                                                 TemporalConfig(),
+                                                 1,
+                                                 dcf,
+                                                 strideFactor * sizeof(float)));
 
-        VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
-        VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklCommit(vklSampler);
-        const vec3i step(2);
-        multidim_index_sequence<3> mis(volume->getDimensions() / step);
-        for (const auto &offset : mis) {
-          const auto offsetWithStep = offset * step;
+          VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
+          VKLSampler vklSampler = vklNewSampler(vklVolume);
+          vklCommit(vklSampler);
+          const vec3i step(2);
+          multidim_index_sequence<3> mis(volume->getDimensions() / step);
+          for (const auto &offset : mis) {
+            const auto offsetWithStep = offset * step;
 
-          const vec3f objectCoordinates =
-              volume->transformLocalToObjectCoordinates(offsetWithStep);
+            const vec3f objectCoordinates =
+                volume->transformLocalToObjectCoordinates(offsetWithStep);
 
-          const float proceduralValue =
-              volume->computeProceduralValue(objectCoordinates);
+            const float proceduralValue =
+                volume->computeProceduralValue(objectCoordinates);
 
-          INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
-                           << offsetWithStep.z);
-          INFO("objectCoordinates = " << objectCoordinates.x << " "
-                                      << objectCoordinates.y << " "
-                                      << objectCoordinates.z);
+            INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y
+                             << " " << offsetWithStep.z);
+            INFO("objectCoordinates = " << objectCoordinates.x << " "
+                                        << objectCoordinates.y << " "
+                                        << objectCoordinates.z);
 
-          test_scalar_and_vector_sampling(
-              vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+            test_scalar_and_vector_sampling(
+                vklSampler, objectCoordinates, proceduralValue, 1e-4f);
+          }
+
+          REQUIRE_NOTHROW(delete volume);
+          vklRelease(vklSampler);
         }
-
-        REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
       }
     }
   }

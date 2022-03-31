@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -177,7 +177,8 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
 
   std::vector<std::string> sectionNames{"structured volumes",
                                         "unstructured volumes",
-                                        "VDB volumes",
+                                        "VDB volumes (repackNodes=true)",
+                                        "VDB volumes (repackNodes=false)",
                                         "AMR volumes",
                                         "particle volumes"};
 
@@ -189,11 +190,11 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
   testingVolumes.push_back(std::make_shared<ZUnstructuredProceduralVolume>(
       dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
 
-  testingVolumes.push_back(
-      std::make_shared<ZVdbVolumeFloat>(getOpenVKLDevice(),
-                                        dimensions,
-                                        gridOrigin,
-                                        gridSpacing));
+  testingVolumes.push_back(std::make_shared<ZVdbVolumeFloat>(
+      getOpenVKLDevice(), dimensions, gridOrigin, gridSpacing, true));
+
+  testingVolumes.push_back(std::make_shared<ZVdbVolumeFloat>(
+      getOpenVKLDevice(), dimensions, gridOrigin, gridSpacing, false));
 
   testingVolumes.push_back(std::make_shared<ProceduralShellsAMRVolume<>>(
       dimensions, gridOrigin, gridSpacing));

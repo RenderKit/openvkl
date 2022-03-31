@@ -1,4 +1,4 @@
-// Copyright 2021 Intel Corporation
+// Copyright 2021-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VolumeParams.h"
@@ -49,6 +49,7 @@ namespace openvkl {
              "<FIELD> (-file only)\n"
              "\t-file <filename>\n"
              "\t-numParticles <N> (particle only)\n"
+             "\t-vdbRepackNodes 0 | 1 (vdb only)\n"
              "\t-background <BG VALUE>| undefined\n";
     }
 
@@ -90,6 +91,10 @@ namespace openvkl {
 
         else if (arg == "-numParticles") {
           numParticles = cmd::consume_1<int>(args, it);
+        }
+
+        else if (arg == "-vdbRepackNodes") {
+          vdbRepackNodes = cmd::consume_1<bool>(args, it);
         }
 
         else if (arg == "-gridOrigin") {
@@ -519,7 +524,8 @@ namespace openvkl {
             OpenVdbVolume::loadVdbFile(getOpenVKLDevice(),
                                        filename,
                                        fieldInFile,
-                                       false /* do not defer leaves. */));
+                                       false /* do not defer leaves. */,
+                                       vdbRepackNodes));
       }
 
       const TemporalConfig temporalConfig = createTemporalConfig();
@@ -531,6 +537,7 @@ namespace openvkl {
                                                   dimensions,
                                                   gridOrigin,
                                                   gridSpacing,
+                                                  vdbRepackNodes,
                                                   VKL_DATA_SHARED_BUFFER,
                                                   false));
         } else if (voxelType == VKL_FLOAT) {
@@ -539,6 +546,7 @@ namespace openvkl {
                                                    dimensions,
                                                    gridOrigin,
                                                    gridSpacing,
+                                                   vdbRepackNodes,
                                                    VKL_DATA_SHARED_BUFFER,
                                                    false));
         }
@@ -552,6 +560,7 @@ namespace openvkl {
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
+                                                         vdbRepackNodes,
                                                          temporalConfig,
                                                          numAttributes);
         } else if (field == "sphere") {
@@ -559,6 +568,7 @@ namespace openvkl {
                                                             dimensions,
                                                             gridOrigin,
                                                             gridSpacing,
+                                                            vdbRepackNodes,
                                                             temporalConfig,
                                                             numAttributes);
         } else {
@@ -566,6 +576,7 @@ namespace openvkl {
                                                              dimensions,
                                                              gridOrigin,
                                                              gridSpacing,
+                                                             vdbRepackNodes,
                                                              temporalConfig,
                                                              numAttributes);
         }
@@ -577,6 +588,7 @@ namespace openvkl {
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
+                                                          vdbRepackNodes,
                                                           temporalConfig,
                                                           numAttributes);
         } else if (field == "sphere") {
@@ -584,6 +596,7 @@ namespace openvkl {
                                                              dimensions,
                                                              gridOrigin,
                                                              gridSpacing,
+                                                             vdbRepackNodes,
                                                              temporalConfig,
                                                              numAttributes);
         } else {
@@ -592,6 +605,7 @@ namespace openvkl {
               dimensions,
               gridOrigin,
               gridSpacing,
+              vdbRepackNodes,
               temporalConfig,
               numAttributes);
         }

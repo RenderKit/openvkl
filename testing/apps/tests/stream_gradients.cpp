@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <cmath>
@@ -36,9 +36,13 @@ TEST_CASE("Stream gradients", "[volume_gradients]")
 
   SECTION("vdb")
   {
-    auto v = std::make_shared<WaveletVdbVolumeFloat>(
-        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f));
-    test_stream_gradients(v);
+    auto v1 = std::make_shared<WaveletVdbVolumeFloat>(
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f), true);
+    test_stream_gradients(v1);
+
+    auto v2 = std::make_shared<WaveletVdbVolumeFloat>(
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f), false);
+    test_stream_gradients(v2);
   }
 
   shutdownOpenVKL();

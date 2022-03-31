@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -137,56 +137,74 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
     SECTION("VDB volumes: single attribute")
     {
-      std::unique_ptr<ZVdbVolumeFloat> v(
-          new ZVdbVolumeFloat(getOpenVKLDevice(),
-                              dimensions,
-                              gridOrigin,
-                              gridSpacing));
+      for (const auto &repackNodes : {true, false}) {
+        std::stringstream sectionName;
+        sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+        DYNAMIC_SECTION(sectionName.str())
+        {
+          std::unique_ptr<ZVdbVolumeFloat> v(
+              new ZVdbVolumeFloat(getOpenVKLDevice(),
+                                  dimensions,
+                                  gridOrigin,
+                                  gridSpacing,
+                                  repackNodes));
 
-      const unsigned int attributeIndex = 0;
+          VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
-      scalar_hit_iteration(vklVolume,
-                           attributeIndex,
-                           0.f,
-                           defaultIsoValues,
-                           defaultExpectedTValues);
+          const unsigned int attributeIndex = 0;
+
+          scalar_hit_iteration(vklVolume,
+                               attributeIndex,
+                               0.f,
+                               defaultIsoValues,
+                               defaultExpectedTValues);
+        }
+      }
     }
 
     SECTION("VDB volumes: multi attribute")
     {
-      std::shared_ptr<ProceduralVdbVolumeMulti> v(
-          generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
-                                               dimensions,
-                                               gridOrigin,
-                                               gridSpacing,
-                                               VKL_DATA_DEFAULT,
-                                               true,
-                                               TemporalConfig()));
+      for (const auto &repackNodes : {true, false}) {
+        std::stringstream sectionName;
+        sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-      VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+        DYNAMIC_SECTION(sectionName.str())
+        {
+          std::shared_ptr<ProceduralVdbVolumeMulti> v(
+              generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                                   dimensions,
+                                                   gridOrigin,
+                                                   gridSpacing,
+                                                   repackNodes,
+                                                   VKL_DATA_DEFAULT,
+                                                   true,
+                                                   TemporalConfig()));
 
-      const unsigned int numAttributes = vklGetNumAttributes(vklVolume);
+          VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
 
-      // setup appropriate rays for the procedural volume
-      // note that we'll skip the first attribute and focus only on the x-, y-,
-      // and z- varying attributes
-      assert(numAttributes == 4);
-      std::vector<vkl_vec3f> origins{
-          {-1.f, 0.5f, 0.5f}, {0.5f, -1.f, 0.5f}, {0.5f, 0.5f, -1.f}};
+          const unsigned int numAttributes = vklGetNumAttributes(vklVolume);
 
-      std::vector<vkl_vec3f> directions{
-          {1.f, 0.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}};
+          // setup appropriate rays for the procedural volume
+          // note that we'll skip the first attribute and focus only on the
+          // x-, y-, and z- varying attributes
+          assert(numAttributes == 4);
+          std::vector<vkl_vec3f> origins{
+              {-1.f, 0.5f, 0.5f}, {0.5f, -1.f, 0.5f}, {0.5f, 0.5f, -1.f}};
 
-      for (unsigned int i = 1; i < numAttributes; i++) {
-        scalar_hit_iteration(vklVolume,
-                             i,
-                             0.f,
-                             defaultIsoValues,
-                             defaultExpectedTValues,
-                             origins[i - 1],
-                             directions[i - 1]);
+          std::vector<vkl_vec3f> directions{
+              {1.f, 0.f, 0.f}, {0.f, 1.f, 0.f}, {0.f, 0.f, 1.f}};
+
+          for (unsigned int i = 1; i < numAttributes; i++) {
+            scalar_hit_iteration(vklVolume,
+                                 i,
+                                 0.f,
+                                 defaultIsoValues,
+                                 defaultExpectedTValues,
+                                 origins[i - 1],
+                                 directions[i - 1]);
+          }
+        }
       }
     }
 

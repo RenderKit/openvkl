@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
@@ -31,8 +31,10 @@ struct Vdb
   {
     const int dim = getEnvBenchmarkVolumeDim();
 
+    const bool repackNodes = true;
+
     volume = rkcommon::make_unique<WaveletVdbVolumeFloat>(
-        getOpenVKLDevice(), vec3i(dim), vec3f(0.f), vec3f(1.f));
+        getOpenVKLDevice(), vec3i(dim), vec3f(0.f), vec3f(1.f), repackNodes);
 
     vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);

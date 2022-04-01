@@ -233,10 +233,10 @@ if (BUILD_OPENVDB)
       CACHE STRING "SHA256 hash of the IlmBase archive.")
     include(dep_ilmbase)
 
-    set(ZLIB_VERSION "1.2.11")
+    set(ZLIB_VERSION "1.2.12")
     set(ZLIB_URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz"
       CACHE STRING "URL of the zlib archive.")
-    set(ZLIB_HASH "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
+    set(ZLIB_HASH "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9"
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 

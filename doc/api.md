@@ -928,6 +928,28 @@ following parameters:
                                                                                        Only valid if `temporalFormat` is
                                                                                        `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
 
+  VKLData[]     nodesPackedDense                                                       Optionally provided instead of
+                                                                                       `node.data`, for each attribute a
+                                                                                       single array of all dense node data
+                                                                                       (`VKL_FORMAT_DENSE_ZYX` only) in a
+                                                                                       contiguous layout, provided in the
+                                                                                       same order as the corresponding
+                                                                                       `node.*` parameters. This packed
+                                                                                       layout may be more performant.
+                                                                                       Supported for temporally constant data
+                                                                                       only.
+
+  VKLData[]     nodesPackedTile                                                        Optionally provided instead of
+                                                                                       `node.data`, for each attribute a
+                                                                                       single array of all tile node data
+                                                                                       (`VKL_FORMAT_TILE` only) in a
+                                                                                       contiguous layout, provided in the
+                                                                                       same order as the corresponding
+                                                                                       `node.*` parameters. This packed
+                                                                                       layout may be more performant.
+                                                                                       Supported for temporally constant data
+                                                                                       only.
+
   float[]       background                             `VKL_BACKGROUND_UNDEFINED`      For each attribute, the value that is
                                                                                        returned when sampling an undefined
                                                                                        region outside the volume domain.
@@ -943,7 +965,9 @@ following parameters:
   : Configuration parameters for VDB (`"vdb"`) volumes.
 
 The level, origin, format, and data parameters must have the same size, and there must
-be at least one valid node or `commit()` will fail.
+be at least one valid node or `commit()` will fail. The `nodesPackedDense` and
+`nodesPackedTile` parameters may be provided instead of `node.data`; this packed data
+layout may provide better performance.
 
 VDB volumes support temporally structured and temporally unstructured temporal
 variation. See section 'Temporal Variation' for more detail.

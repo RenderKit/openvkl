@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -157,7 +157,7 @@ namespace openvkl {
       const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
       const size_t numLeafVoxels = vklVdbLevelNumVoxels(leafLevel);
 
-      buffers->reserve(numLeafNodes);
+      buffers->reserve(numLeafNodes, 0);
 
       for (int x = 0; x < numLeafNodesIn.x; ++x)
         for (int y = 0; y < numLeafNodesIn.y; ++y)

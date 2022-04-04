@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020-2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -509,7 +509,8 @@ namespace openvkl {
                                   static_cast<size_t>(numLeafNodesIn.y) *
                                   numLeafNodesIn.z;
 
-      buffers->reserve(numLeafNodes);
+      // this may over-allocate leaf node storage, if we happen to have tiles.
+      buffers->reserve(numLeafNodes, 0);
 
       valueRange = range1f();
       for (int x = 0; x < numLeafNodesIn.x; ++x) {

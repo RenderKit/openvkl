@@ -260,7 +260,8 @@ namespace openvkl {
        * If deferLeaves is true, then do not load leaf data but instead add
        * tiles. If repackNodes is true, node data will be re-arranged for a
        * more optimal memory layout; this option is incompatible with deferred
-       * leaf loading.
+       * leaf loading. Use the `usingSharedData()` method to determine if this
+       * object can be deleted after the VKLVolume is created.
        */
       OpenVdbGrid(VKLDevice device,
                   const std::string &path,
@@ -273,7 +274,9 @@ namespace openvkl {
        * If deferLeaves is true, then do not load leaf data but instead add
        * tiles. If repackNodes is true, node data will be re-arranged for a
        * more optimal memory layout; this option is incompatible with deferred
-       * leaf loading.
+       * leaf loading. Use the `usingSharedData()` method to determine if the
+       * provided OpenVDB grid pointer (and this object, which retains a copy of
+       * the grid pointer) can be deleted after the VKLVolume is created.
        */
       OpenVdbGrid(VKLDevice device,
                   typename openvdbNativeGrid::Ptr vdb,
@@ -309,6 +312,16 @@ namespace openvkl {
        * or load them all if maxTimeMS is 0.
        */
       void loadDeferred(size_t maxTimeMS);
+
+      /*
+       * Indicates if data provided from the OpenVDB file or OpenVDB grid
+       * pointer is being shared (without a copy made) with the created
+       * VKLVolume. If OpenVDB data is not being shared, then this object can be
+       * safely deleted after the VKLVolume is created; otherwise the OpenVDB
+       * data must be retained (either through retaining this object, or
+       * retaining the provided OpenVDB grid pointer).
+       */
+      bool usingSharedData() const;
 
       VKLDevice getVKLDevice() const;
 
@@ -444,6 +457,16 @@ namespace openvkl {
              (maxTimeMS == 0 ||
               chr::duration_cast<TimeUnit>(Clock::now() - start) <= maxTime)) {
         loadDeferredAt(0);
+      }
+    }
+
+    template <typename VdbFieldType>
+    inline bool OpenVdbGrid<VdbFieldType>::usingSharedData() const
+    {
+      if (buffers) {
+        return buffers->usingSharedData();
+      } else {
+        return false;
       }
     }
 

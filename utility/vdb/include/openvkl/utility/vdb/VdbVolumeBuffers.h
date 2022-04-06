@@ -122,6 +122,16 @@ namespace openvkl {
        */
       VKLVolume createVolume(bool commit = true) const;
 
+      /*
+       * Indicates if data provided to this object (via `addConstant()` or
+       * `makeConstant()`) is being shared (without a copy made) with the
+       * created VKLVolume. Note that if repackNodes is enabled, data may not be
+       * directly shared with Open VKL even if requested. If data is not being
+       * shared, any source data may be deleted; otherwise that source data must
+       * be retained as long as the VKLVolume is active.
+       */
+      bool usingSharedData() const;
+
       VKLDevice getVKLDevice() const;
 
      private:
@@ -204,6 +214,12 @@ namespace openvkl {
        */
       std::vector<std::vector<char>> repackedDenseNodes;
       std::vector<std::vector<char>> repackedTiles;
+
+      /*
+       * Whether data provided (via `addConstant()` or `makeConstant()` is being
+       * shared directly with the created VKLVolume.
+       */
+      bool isUsingSharedData = false;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -608,6 +624,10 @@ namespace openvkl {
       } else {
         // for default (not repacked) data
 
+        if (flags == VKL_DATA_SHARED_BUFFER) {
+          isUsingSharedData = true;
+        }
+
         if (data.at(nodeIndex))
           vklRelease(data.at(nodeIndex));
 
@@ -818,6 +838,11 @@ namespace openvkl {
       }
 
       return volume;
+    }
+
+    inline bool VdbVolumeBuffers::usingSharedData() const
+    {
+      return isUsingSharedData;
     }
 
     inline VKLDevice VdbVolumeBuffers::getVKLDevice() const

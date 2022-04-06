@@ -45,7 +45,8 @@ namespace openvkl {
                         const std::string &field,
                         bool deferLeaves = false,
                         bool repackNodes = false)
-          : grid(device, filename, field, deferLeaves, repackNodes)
+          : grid(device, filename, field, deferLeaves, repackNodes),
+            deferLeaves(deferLeaves)
       {
       }
 
@@ -143,10 +144,17 @@ namespace openvkl {
         }
 
         volume = grid.createVolume();
+
+        if (!deferLeaves && !grid.usingSharedData()) {
+          // can release underlying OpenVDB data, since it's not shared with
+          // Open VKL via shared buffers
+          grid = Grid();
+        }
       }
 
      private:
       Grid grid;
+      bool deferLeaves;
       uint64_t lastLoadMS{30};
       std::unique_ptr<rkcommon::tasking::AsyncTask<AsyncResult>> asyncLoader;
     };

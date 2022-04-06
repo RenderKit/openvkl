@@ -258,7 +258,7 @@ namespace openvkl {
 
       addLeaf(ptrs, byteStrides, leafValueRanges, nodeOrigin, 0);
 
-      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      if (!buffers->usingSharedData()) {
         leaves.clear();
       }
     }
@@ -334,7 +334,7 @@ namespace openvkl {
               nodeOrigin,
               static_cast<uint32_t>(temporalConfig.sampleTime.size()));
 
-      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      if (!buffers->usingSharedData()) {
         leaves.clear();
       }
     }
@@ -445,7 +445,7 @@ namespace openvkl {
         valueRange.extend(leafValueRange);
       }
 
-      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      if (!buffers->usingSharedData()) {
         leaves.clear();
         indices.clear();
         times.clear();
@@ -602,6 +602,8 @@ namespace openvkl {
         }
 
         volume = buffers->createVolume();
+
+        buffers.reset();
       }
     }
 

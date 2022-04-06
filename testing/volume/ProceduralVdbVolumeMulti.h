@@ -295,7 +295,7 @@ namespace openvkl {
               }
             }
 
-            if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+            if (!buffers->usingSharedData()) {
               leaves.clear();
             }
           }
@@ -371,6 +371,8 @@ namespace openvkl {
         }
 
         volume = buffers->createVolume();
+
+        buffers.reset();
       }
     }
 

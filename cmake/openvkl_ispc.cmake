@@ -1,4 +1,4 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)

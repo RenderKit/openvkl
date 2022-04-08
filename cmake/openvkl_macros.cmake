@@ -1,4 +1,4 @@
-## Copyright 2019-2022 Intel Corporation
+## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 macro(openvkl_add_library_ispc name type)

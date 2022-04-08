@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
@@ -69,7 +69,7 @@ int main()
   std::tie(maxIntervalSize16, maxHitSize16) = getMaxIteratorSizeIspc<16>();
 
   std::cout
-      << "// Copyright 2020-2021 Intel Corporation\n"
+      << "// Copyright 2020 Intel Corporation\n"
       << "// SPDX-License-Identifier: Apache-2.0\n"
       << "\n"
       << "#pragma once\n"

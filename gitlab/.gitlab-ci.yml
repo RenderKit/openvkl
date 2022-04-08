@@ -177,6 +177,18 @@ build-centos7-icc15:
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/build.sh
 
+build-centos7-icx:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
+  script:
+    - module load cmake
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
+    - gitlab/build.sh
+
 build-centos8:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
@@ -325,6 +337,12 @@ test-functional-centos7-icc:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   needs:
     - build-centos7-icc
+
+test-functional-centos7-icx:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs:
+    - build-centos7-icx
 
 test-functional-centos8:
   <<: *test_functional_job_docker
@@ -662,15 +680,16 @@ source-protex-scan:
 
 ## Release Jobs ##
 
-release-linux-icc:
+release-linux-icx:
   <<: *base_release_job
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
   script:
     - module load cmake
-    - module load intel/2019.4
-    - export CC=icc
-    - export CXX=icpc
-    - export CXXFLAGS="-static-intel -fPIC"
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
     - gitlab/release/linux.sh
   needs: []
   tags:
@@ -715,7 +734,7 @@ release-linux-test:
   tags:
     - docker
   needs:
-    - release-linux-icc
+    - release-linux-icx
 
 release-macOS-test:
   <<: *base_release_test_job
@@ -742,7 +761,7 @@ scan-bdba-bin:
   stage: scan-binaries
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   tags: [docker]
-  needs: [release-linux-icc, release-macOS, release-windows]
+  needs: [release-linux-icx, release-macOS, release-windows]
   script:
     - gitlab/bdba.sh "openvkl-*"
     - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "openvkl-*.pdf"
@@ -757,7 +776,7 @@ av:
   stage: scan-binaries
   tags: [docker]
   image: $DOCKER_REGISTRY/clamav:ubuntu20.04
-  needs: [release-linux-icc, release-macOS, release-windows]
+  needs: [release-linux-icx, release-macOS, release-windows]
   script:
     - freshclam | tee -a /tmp/av_scan.log
     - clamscan -va --max-filesize=1024M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log

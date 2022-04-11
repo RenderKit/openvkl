@@ -234,7 +234,7 @@ if (BUILD_OPENVDB)
     include(dep_ilmbase)
 
     set(ZLIB_VERSION "1.2.12")
-    set(ZLIB_URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz"
+    set(ZLIB_URL "https://www.zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz"
       CACHE STRING "URL of the zlib archive.")
     set(ZLIB_HASH "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9"
       CACHE STRING "SHA256 hash of the zlib archive.")

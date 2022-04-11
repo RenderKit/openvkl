@@ -110,6 +110,8 @@ stages:
 
 .job_template: &base_benchmark_job
   stage: benchmark
+  needs:
+    - build-centos7-icx
   script:
     - gitlab/run-benchmarks.sh
 
@@ -477,8 +479,6 @@ test-functional-windows-msvc15-TBB2020:
 .job_template: &manual_benchmark_x8280-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-x8280-1
 
@@ -505,8 +505,6 @@ examples-x8280-1:
 .job_template: &manual_benchmark_a-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-a-1
 
@@ -533,8 +531,6 @@ examples-a-1:
 .job_template: &manual_benchmark_adl-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-adl-1-perf
 
@@ -561,8 +557,6 @@ examples-adl-1:
 .job_template: &manual_benchmark_tgl-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-dg2-01-perf
 
@@ -592,8 +586,6 @@ benchmark-x8280-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-x8280-1
 
@@ -602,8 +594,6 @@ benchmark-a-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-a-1
 
@@ -612,8 +602,6 @@ benchmark-adl-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-adl-1-perf
 
@@ -622,8 +610,6 @@ benchmark-tgl-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-dg2-01-perf
 

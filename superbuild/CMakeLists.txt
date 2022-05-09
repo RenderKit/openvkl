@@ -153,10 +153,10 @@ endif()
 
 option(BUILD_RKCOMMON "Build rkcommon or search in environment?" ON)
 if (BUILD_RKCOMMON)
-  set(RKCOMMON_VERSION "v1.9.0" CACHE STRING "rkcommon version to download")
+  set(RKCOMMON_VERSION "v1.10.0" CACHE STRING "rkcommon version to download")
   set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_VERSION}.zip"
     CACHE STRING "URL of the rkcommon archive.")
-  set(RKCOMMON_HASH "54ef58226b5f2b6eb80091d806b94d563ce748a6c8d04db7836c20945fd99929"
+  set(RKCOMMON_HASH "eb968868b85254680c59ff3e091e9a7634d407cf0375d2b52840bf9044716a48"
     CACHE STRING "SHA256 hash of the rkcommon archive.")
   include(dep_rkcommon)
 endif()
@@ -196,7 +196,7 @@ if (BUILD_GLFW)
   set(GLFW_VERSION "3.2.1")
   set(GLFW_URL "https://github.com/glfw/glfw/archive/${GLFW_VERSION}.zip"
     CACHE STRING "URL of the GLFW source archive.")
-  set(GLFW_HASH "0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f" 
+  set(GLFW_HASH "0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f"
     CACHE STRING "SHA256 hash of the GLFW source archive.")
   include(dep_glfw)
 endif()
@@ -226,10 +226,10 @@ if (BUILD_OPENVDB)
     message(WARNING "Disabling OpenVDB support because the icc compiler version is too low (19.1 is required)")
     set(BUILD_OPENVDB OFF)
   else()
-    set(ILMBASE_VERSION "2.5.7")
+    set(ILMBASE_VERSION "2.5.8")
     set(ILMBASE_URL "https://github.com/AcademySoftwareFoundation/openexr/archive/v${ILMBASE_VERSION}.zip"
       CACHE STRING "URL of the IlmBase archive.")
-    set(ILMBASE_HASH "95e2625dac696bcd8101b575cc7651f7c4d14faf9f196a2bedf5b9373b263d4f"
+    set(ILMBASE_HASH "3eafee956ae36cad536497988df4bda88d811a602ad93630dbed38bb10b8a7e4"
       CACHE STRING "SHA256 hash of the IlmBase archive.")
     include(dep_ilmbase)
 
@@ -240,11 +240,11 @@ if (BUILD_OPENVDB)
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 
-    set(BOOST_VERSION "1.78.0")
+    set(BOOST_VERSION "1.79.0")
     string(REPLACE "." "_" BOOST_FILE_BASE "${BOOST_VERSION}")
     set(BOOST_BASE_URL "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost")
     set(_BOOST_URL "${BOOST_BASE_URL}_${BOOST_FILE_BASE}.tar.gz")
-    set(_BOOST_HASH "94ced8b72956591c4775ae2207a9763d3600b30d9d7446562c552f0a14a63be7")
+    set(_BOOST_HASH "273f1be93238a068aba4f9735a4a2b003019af067b9c183ed227780b8f36062c")
     set(BOOST_URL "${_BOOST_URL}" CACHE STRING "URL of the boost archive.")
     set(BOOST_HASH "${_BOOST_HASH}" CACHE STRING "SHA256 hash of the boost archive.")
     include(dep_boost)

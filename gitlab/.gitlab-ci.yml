@@ -251,6 +251,12 @@ build-ubuntu20.04:
   script:
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
+build-ubuntu22.04:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ubuntu:22.04-tgt-ubuntu-22
+  script:
+    - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
 build-arch:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:arch
@@ -411,6 +417,12 @@ test-functional-ubuntu20.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs:
     - build-ubuntu20.04
+
+test-functional-ubuntu22.04:
+  <<: *test_functional_job_docker_ubuntu
+  image: $DOCKER_REGISTRY/ubuntu:22.04-tgt-ubuntu-22
+  needs:
+    - build-ubuntu22.04
 
 test-functional-arch:
   <<: *test_functional_job_docker

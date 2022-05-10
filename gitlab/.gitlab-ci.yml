@@ -39,6 +39,7 @@ stages:
     - build/install
     - build/openvkl/build
   before_script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - git submodule sync
     - git submodule init
     - git submodule update
@@ -253,7 +254,7 @@ build-ubuntu20.04:
 
 build-ubuntu22.04:
   <<: *build_job_docker
-  image: $DOCKER_REGISTRY/ubuntu:22.04-tgt-ubuntu-22
+  image: $DOCKER_REGISTRY/ubuntu:22.04
   script:
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
@@ -420,7 +421,7 @@ test-functional-ubuntu20.04:
 
 test-functional-ubuntu22.04:
   <<: *test_functional_job_docker_ubuntu
-  image: $DOCKER_REGISTRY/ubuntu:22.04-tgt-ubuntu-22
+  image: $DOCKER_REGISTRY/ubuntu:22.04
   needs:
     - build-ubuntu22.04
 

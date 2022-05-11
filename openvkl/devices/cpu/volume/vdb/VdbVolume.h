@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -175,6 +175,12 @@ namespace openvkl {
       Ref<const DataT<int>> leafStructuredTimesteps;
       Ref<const DataT<Data *>> leafUnstructuredIndices;
       Ref<const DataT<Data *>> leafUnstructuredTimes;
+
+      // optional: re-packed dense and tile node data in single contiguous
+      // arrays (per attribute) for improved performance, only for sparse
+      // volumes
+      Ref<const DataT<Data *>> nodesPackedDense;
+      Ref<const DataT<Data *>> nodesPackedTile;
 
       // populated for dense volumes only on commit
       bool dense{false};

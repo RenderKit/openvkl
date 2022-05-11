@@ -1,7 +1,8 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
+#include "benchmark_env.h"
 #include "benchmark_suite/volume.h"
 #include "openvkl_testing.h"
 
@@ -26,12 +27,17 @@ struct Vdb
 
   Vdb()
   {
+    const int dim = getEnvBenchmarkVolumeDim();
+
+    const bool repackNodes = true;
+
     volume = std::unique_ptr<ProceduralVdbVolumeMulti>(
         generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
-                                             vec3i(128),
+                                             vec3i(dim),
                                              vec3f(0.f),
                                              vec3f(1.f),
-                                             VKL_DATA_SHARED_BUFFER,
+                                             repackNodes,
+                                             VKL_DATA_DEFAULT,
                                              true));
 
     if (Vdb::getNumAttributes() != volume->getNumAttributes()) {

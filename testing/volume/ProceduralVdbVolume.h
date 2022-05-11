@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -92,6 +92,7 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
+          bool repackNodes                       = true,
           const TemporalConfig &temporalConfig   = TemporalConfig(),
           uint32_t numAttributes                 = 1,
           VKLDataCreationFlags dataCreationFlags = VKL_DATA_DEFAULT,
@@ -257,7 +258,7 @@ namespace openvkl {
 
       addLeaf(ptrs, byteStrides, leafValueRanges, nodeOrigin, 0);
 
-      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      if (!buffers->usingSharedData()) {
         leaves.clear();
       }
     }
@@ -333,7 +334,7 @@ namespace openvkl {
               nodeOrigin,
               static_cast<uint32_t>(temporalConfig.sampleTime.size()));
 
-      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      if (!buffers->usingSharedData()) {
         leaves.clear();
       }
     }
@@ -444,7 +445,7 @@ namespace openvkl {
         valueRange.extend(leafValueRange);
       }
 
-      if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      if (!buffers->usingSharedData()) {
         leaves.clear();
         indices.clear();
         times.clear();
@@ -459,6 +460,7 @@ namespace openvkl {
                             const vec3i &dimensions,
                             const vec3f &gridOrigin,
                             const vec3f &gridSpacing,
+                            bool repackNodes,
                             const TemporalConfig &temporalConfig,
                             uint32_t numAttributes,
                             VKLDataCreationFlags dataCreationFlags,
@@ -485,7 +487,7 @@ namespace openvkl {
 
       std::vector<VKLDataType> voxelTypes(numAttributes,
                                           getVKLDataType<VOXEL_TYPE>());
-      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes);
+      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes, repackNodes);
 
       buffers->setIndexToObject(gridSpacing.x,
                                 0,
@@ -509,7 +511,8 @@ namespace openvkl {
                                   static_cast<size_t>(numLeafNodesIn.y) *
                                   numLeafNodesIn.z;
 
-      buffers->reserve(numLeafNodes);
+      // this may over-allocate leaf node storage, if we happen to have tiles.
+      buffers->reserve(numLeafNodes, 0);
 
       valueRange = range1f();
       for (int x = 0; x < numLeafNodesIn.x; ++x) {
@@ -599,6 +602,8 @@ namespace openvkl {
         }
 
         volume = buffers->createVolume();
+
+        buffers.reset();
       }
     }
 

@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Renderer_ispc.h"  // for Renderer_pixelsPerJob()
@@ -86,7 +86,9 @@ static void run_benchmark(benchmark::State &state,
                                        "-gridDimensions",
                                        std::to_string(volumeDimension),
                                        std::to_string(volumeDimension),
-                                       std::to_string(volumeDimension)};
+                                       std::to_string(volumeDimension),
+                                       "-vdbRepackNodes",
+                                       "1"};
 
   Scene scene;
   scene.parseCommandLine(args);

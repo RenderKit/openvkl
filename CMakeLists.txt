@@ -1,4 +1,4 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Global CMake options ##
@@ -19,7 +19,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ## Establish project ##
 
-project(openvkl VERSION 1.2.0 LANGUAGES C CXX)
+project(openvkl VERSION 1.3.0 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 

@@ -181,7 +181,7 @@ previously.
 Basic data types
 ----------------
 
-Open VKL defines 3-component vectors of integer and vector types:
+Open VKL defines 3-component vectors of integer and float types:
 
     typedef struct
     {
@@ -225,8 +225,8 @@ Object model
 ------------
 
 Objects in Open VKL are exposed to the APIs as handles with internal reference
-counting for lifetime determination.  Objects are created with particular type's
-`vklNew...` API entry point. For example, `vklNewData` and `vklNewVolume`.
+counting for lifetime determination.  Objects are created with each particular
+type's `vklNew...` API entry point. For example, `vklNewData` and `vklNewVolume`.
 
 In general, modifiable parameters to objects are modified using `vklSet...`
 functions based on the type of the parameter being set. The parameter name is
@@ -417,7 +417,7 @@ Volume types
 ------------
 
 Open VKL currently supports structured volumes on regular and spherical grids;
-unstructured volumes with tetrahedral, wedge, pyramid, and hexaderal primitive
+unstructured volumes with tetrahedral, wedge, pyramid, and hexahedral primitive
 types; adaptive mesh refinement (AMR) volumes; sparse VDB volumes; and particle
 volumes.  Volumes are created with `vklNewVolume` with a device and appropriate
 type string:
@@ -928,6 +928,28 @@ following parameters:
                                                                                        Only valid if `temporalFormat` is
                                                                                        `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.
 
+  VKLData[]     nodesPackedDense                                                       Optionally provided instead of
+                                                                                       `node.data`, for each attribute a
+                                                                                       single array of all dense node data
+                                                                                       (`VKL_FORMAT_DENSE_ZYX` only) in a
+                                                                                       contiguous layout, provided in the
+                                                                                       same order as the corresponding
+                                                                                       `node.*` parameters. This packed
+                                                                                       layout may be more performant.
+                                                                                       Supported for temporally constant data
+                                                                                       only.
+
+  VKLData[]     nodesPackedTile                                                        Optionally provided instead of
+                                                                                       `node.data`, for each attribute a
+                                                                                       single array of all tile node data
+                                                                                       (`VKL_FORMAT_TILE` only) in a
+                                                                                       contiguous layout, provided in the
+                                                                                       same order as the corresponding
+                                                                                       `node.*` parameters. This packed
+                                                                                       layout may be more performant.
+                                                                                       Supported for temporally constant data
+                                                                                       only.
+
   float[]       background                             `VKL_BACKGROUND_UNDEFINED`      For each attribute, the value that is
                                                                                        returned when sampling an undefined
                                                                                        region outside the volume domain.
@@ -943,7 +965,9 @@ following parameters:
   : Configuration parameters for VDB (`"vdb"`) volumes.
 
 The level, origin, format, and data parameters must have the same size, and there must
-be at least one valid node or `commit()` will fail.
+be at least one valid node or `commit()` will fail. The `nodesPackedDense` and
+`nodesPackedTile` parameters may be provided instead of `node.data`; this packed data
+layout may provide better performance.
 
 VDB volumes support temporally structured and temporally unstructured temporal
 variation. See section 'Temporal Variation' for more detail.

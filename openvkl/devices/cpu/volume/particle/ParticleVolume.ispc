@@ -1,24 +1,24 @@
-// Copyright 2020-2022 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../common/export_util.h"
 #include "../UnstructuredSamplerBase.ih"
 #include "ParticleVolume.ih"
 
-inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
-                                                self,
-                                            const uniform uint64 id,
-                                            const vec3f &objectCoordinates,
-                                            float &value,
-                                            vec3f &delta)
+inline void getParticleContributionsGaussian(
+    const VKLParticleVolume *uniform self,
+    const uint64 ids,
+    const uniform vec3f &objectCoordinates,
+    float &value,
+    vec3f &delta)
 {
-  const uniform vec3f position = get_vec3f(self->positions, id);
-  const uniform float radius   = get_float(self->radii, id);
+  const vec3f position = get_vec3f(self->positions, ids);
+  const float radius   = get_float(self->radii, ids);
 
-  uniform float w = 1.f;
+  float w = 1.f;
 
   if (isValid(self->weights))
-    w = get_float(self->weights, id);
+    w = get_float(self->weights, ids);
 
   delta = objectCoordinates - position;
 
@@ -31,18 +31,32 @@ inline void getParticleContributionGaussian(const VKLParticleVolume *uniform
 }
 
 static bool intersectAndSampleParticle(const void *uniform userData,
-                                       uniform uint64 id,
+                                       uniform uint64 numIds,
+                                       uniform uint64 *uniform ids,
                                        float &result,
                                        vec3f samplePos)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)userData;
 
-  float value;
-  vec3f delta;
-  getParticleContributionGaussian(self, id, samplePos, value, delta);
+  foreach_active(index)
+  {
+    uniform vec3f samplePosU = make_vec3f(extract(samplePos.x, index),
+                                          extract(samplePos.y, index),
+                                          extract(samplePos.z, index));
 
-  result += value;
+    uniform float resultU = 0.f;
+
+    foreach (i = 0 ... numIds) {
+      float value;
+      vec3f delta;
+      getParticleContributionsGaussian(self, ids[i], samplePosU, value, delta);
+
+      resultU += reduce_add(value);
+    }
+
+    result += resultU;
+  }
 
   if (self->clampMaxCumulativeValue > 0.f) {
     result = min(result, self->clampMaxCumulativeValue);
@@ -53,20 +67,37 @@ static bool intersectAndSampleParticle(const void *uniform userData,
 }
 
 static bool intersectAndGradientParticle(const void *uniform userData,
-                                         uniform uint64 id,
+                                         uniform uint64 numIds,
+                                         uniform uint64 *uniform ids,
                                          vec3f &result,
                                          vec3f samplePos)
 {
   const VKLParticleVolume *uniform self =
       (const VKLParticleVolume *uniform)userData;
 
-  float value;
-  vec3f delta;
-  getParticleContributionGaussian(self, id, samplePos, value, delta);
+  foreach_active(index)
+  {
+    uniform vec3f samplePosU = make_vec3f(extract(samplePos.x, index),
+                                          extract(samplePos.y, index),
+                                          extract(samplePos.z, index));
 
-  const uniform float radius = get_float(self->radii, id);
+    uniform vec3f resultU = make_vec3f(0.f);
 
-  result = result - delta * value / (radius * radius);
+    foreach (i = 0 ... numIds) {
+      float value;
+      vec3f delta;
+      getParticleContributionsGaussian(self, ids[i], samplePosU, value, delta);
+
+      const float radius = get_float(self->radii, ids[i]);
+
+      const vec3f g = delta * value / (radius * radius);
+
+      resultU = resultU -
+                make_vec3f(reduce_add(g.x), reduce_add(g.y), reduce_add(g.z));
+    }
+
+    result = result + resultU;
+  }
 
   return false;
 }
@@ -86,11 +117,11 @@ inline varying float VKLParticleVolume_sample(
 
   float sampleResult = 0.f;
 
-  traverseEmbree(self->super.bvhRoot,
-                 sampler->volume,
-                 intersectAndSampleParticle,
-                 sampleResult,
-                 objectCoordinates);
+  traverseBVHMulti(self->super.bvhRoot,
+                   sampler->volume,
+                   intersectAndSampleParticle,
+                   sampleResult,
+                   objectCoordinates);
 
   return sampleResult;
 }
@@ -99,15 +130,15 @@ inline varying vec3f VKLParticleVolume_computeGradient(
     const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
 {
   const VKLParticleVolume *uniform self =
-      (const VKLParticleVolume *uniform) sampler->volume;
+      (const VKLParticleVolume *uniform)sampler->volume;
 
   vec3f gradientResult = make_vec3f(0.f);
 
-  traverseEmbree(self->super.bvhRoot,
-                 sampler->volume,
-                 intersectAndGradientParticle,
-                 gradientResult,
-                 objectCoordinates);
+  traverseBVHMulti(self->super.bvhRoot,
+                   sampler->volume,
+                   intersectAndGradientParticle,
+                   gradientResult,
+                   objectCoordinates);
 
   return gradientResult;
 }
@@ -189,8 +220,9 @@ EXPORT_UNIQUE(VKLParticleSampler_Constructor, void *uniform _volume)
       uniform new UnstructuredSamplerBase;
   memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
 
-  sampler->super.volume                = (const Volume *uniform)_volume;
-  sampler->super.computeSample_varying = VKLParticleVolume_sample;
+  sampler->super.volume                  = (const Volume *uniform)_volume;
+  sampler->super.computeSample_varying   = VKLParticleVolume_sample;
+  sampler->super.computeGradient_varying = VKLParticleVolume_computeGradient;
 
   return sampler;
 }

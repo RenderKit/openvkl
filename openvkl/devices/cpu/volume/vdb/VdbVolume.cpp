@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "VdbVolume.h"
@@ -42,6 +42,8 @@ namespace openvkl {
         allocator.deallocate(grid->leafUnstructuredTimes);
         allocator.deallocate(grid->denseData);
         allocator.deallocate(grid->leafData);
+        allocator.deallocate(grid->nodesPackedDense);
+        allocator.deallocate(grid->nodesPackedTile);
         allocator.deallocate(grid);
       }
 
@@ -247,7 +249,9 @@ namespace openvkl {
                       const DataT<uint32_t> &leafTemporalFormat,
                       const std::vector<std::vector<uint64_t>> &binnedLeaves,
                       const std::vector<uint64_t> &capacity,
-                      VdbGrid *grid)
+                      VdbGrid *grid,
+                      std::map<size_t, size_t> &nodeToDenseNodeIndex,
+                      std::map<size_t, size_t> &nodeToTileNodeIndex)
     {
       assert(capacity[0] == 1);
       grid->levels[0].numNodes = 1;
@@ -293,7 +297,18 @@ namespace openvkl {
               } else {
                 if (format == VKL_FORMAT_TILE ||
                     format == VKL_FORMAT_DENSE_ZYX) {
-                  voxel = vklVdbVoxelMakeLeafPtr(idx, format, temporalFormat);
+                  if (nodeToDenseNodeIndex.empty() &&
+                      nodeToTileNodeIndex.empty()) {
+                    voxel = vklVdbVoxelMakeLeafPtr(idx, format, temporalFormat);
+                  } else {
+                    if (format == VKL_FORMAT_DENSE_ZYX) {
+                      voxel = vklVdbVoxelMakeLeafPtr(
+                          nodeToDenseNodeIndex[idx], format, temporalFormat);
+                    } else {
+                      voxel = vklVdbVoxelMakeLeafPtr(
+                          nodeToTileNodeIndex[idx], format, temporalFormat);
+                    }
+                  }
                 } else {
                   assert(false);
                 }
@@ -386,17 +401,34 @@ namespace openvkl {
     template <int W>
     void VdbVolume<W>::initLeafNodeData()
     {
-      leafData = this->template getParamDataT<Data *>("node.data");
+      if (this->template hasParamDataT<Data *>("node.data") &&
+          this->template hasParamDataT<Data *>("nodesPackedDense")) {
+        throw std::runtime_error(
+            "provide either node.data or nodesPackedDense / nodesPackedTile, "
+            "not both");
+      }
 
-      numLeaves = leafData->size();
-
-      if (numLeaves == 0) {
-        runtimeError("Vdb volumes must have at least one leaf node.");
+      if (this->template hasParamDataT<Data *>("node.data")) {
+        leafData = this->template getParamDataT<Data *>("node.data");
+      } else if (this->template hasParamDataT<Data *>("nodesPackedDense")) {
+        nodesPackedDense =
+            this->template getParamDataT<Data *>("nodesPackedDense");
+        nodesPackedTile =
+            this->template getParamDataT<Data *>("nodesPackedTile", nullptr);
+      } else {
+        throw std::runtime_error(
+            "node.data or nodesPackedDense / nodesPackedTile must be provided");
       }
 
       leafLevel  = this->template getParamDataT<uint32_t>("node.level");
       leafOrigin = this->template getParamDataT<vec3i>("node.origin");
       leafFormat = this->template getParamDataT<uint32_t>("node.format");
+
+      numLeaves = leafLevel->size();
+
+      if (numLeaves == 0) {
+        runtimeError("Vdb volumes must have at least one leaf node.");
+      }
 
       leafTemporalFormat = this->template getParamDataT<uint32_t>(
           "node.temporalFormat", nullptr);
@@ -610,27 +642,41 @@ namespace openvkl {
             grid->attributeTypes[i] = denseData[i]->dataType;
           }
         } else {
-          // We find how many attributes we have and their types based on the
-          // first node, and then simply enforce that all nodes must share this
-          // configuration.
-          VKLDataType leafDataType = getLeafDataType(leafData);
+          if (leafData) {
+            // We find how many attributes we have and their types based on the
+            // first node, and then simply enforce that all nodes must share
+            // this configuration.
+            VKLDataType leafDataType = getLeafDataType(leafData);
 
-          const bool multiAttrib = (leafDataType == VKL_DATA);
+            const bool multiAttrib = (leafDataType == VKL_DATA);
 
-          grid->numAttributes = multiAttrib ? (*leafData)[0]->size() : 1;
+            grid->numAttributes = multiAttrib ? (*leafData)[0]->size() : 1;
 
-          // Initialize the attribute type vector. Note that we again use the
-          // first node as a template.
-          grid->attributeTypes =
-              allocator.allocate<uint32_t>(grid->numAttributes);
+            // Initialize the attribute type vector. Note that we again use the
+            // first node as a template.
+            grid->attributeTypes =
+                allocator.allocate<uint32_t>(grid->numAttributes);
 
-          if (multiAttrib) {
+            if (multiAttrib) {
+              for (uint32_t i = 0; i < grid->numAttributes; ++i) {
+                grid->attributeTypes[i] =
+                    (*leafData)[0]->template as<Data *>()[i]->dataType;
+              }
+            } else {
+              grid->attributeTypes[0] = leafDataType;
+            }
+          } else if (nodesPackedDense) {
+            grid->numAttributes = nodesPackedDense->size();
+
+            grid->attributeTypes =
+                allocator.allocate<uint32_t>(grid->numAttributes);
+
             for (uint32_t i = 0; i < grid->numAttributes; ++i) {
-              grid->attributeTypes[i] =
-                  (*leafData)[0]->template as<Data *>()[i]->dataType;
+              grid->attributeTypes[i] = (*nodesPackedDense)[i]->dataType;
             }
           } else {
-            grid->attributeTypes[0] = leafDataType;
+            throw std::runtime_error(
+                "could not determine volume attributes and types");
           }
         }
 
@@ -647,12 +693,6 @@ namespace openvkl {
               "numLeaves * numAttributes in vdb volumes must be less than ",
               VKL_VDB_MAX_NUM_LEAF_DATA);
         }
-
-        grid->leafFormat =
-            reinterpret_cast<const VKLFormat *>(leafFormat->data());
-
-        grid->leafTemporalFormat = reinterpret_cast<const VKLTemporalFormat *>(
-            leafTemporalFormat->data());
 
         if (leafData && leafData->size() != grid->numLeaves) {
           runtimeError("node.data has incorrect size");
@@ -761,10 +801,38 @@ namespace openvkl {
           std::atomic_int allLeavesCompact(true);
           std::atomic_int allLeavesConstant(true);
 
-          grid->leafData = allocator.allocate<ispc::Data1D>(
-              grid->numLeaves * grid->numAttributes);
+          if (leafData) {
+            grid->leafData = allocator.allocate<ispc::Data1D>(
+                grid->numLeaves * grid->numAttributes);
+          }
 
-          const VKLDataType leafDataType = getLeafDataType(leafData);
+          if (nodesPackedDense) {
+            grid->nodesPackedDense =
+                allocator.allocate<ispc::Data1D>(grid->numAttributes);
+
+            for (uint32_t a = 0; a < grid->numAttributes; ++a) {
+              grid->nodesPackedDense[a] = (*nodesPackedDense)[a]->ispc;
+            }
+          } else {
+            grid->nodesPackedDense = nullptr;
+          }
+
+          if (nodesPackedTile) {
+            grid->nodesPackedTile =
+                allocator.allocate<ispc::Data1D>(grid->numAttributes);
+
+            for (uint32_t a = 0; a < grid->numAttributes; ++a) {
+              grid->nodesPackedTile[a] = (*nodesPackedTile)[a]->ispc;
+            }
+          } else {
+            grid->nodesPackedTile = nullptr;
+          }
+
+          // only used for non-packed leafData
+          VKLDataType leafDataType = VKL_UNKNOWN;
+          if (leafData) {
+            leafDataType = getLeafDataType(leafData);
+          }
 
           tasking::parallel_for(grid->numLeaves, [&](uint64_t i) {
             const uint32_t level = (*leafLevel)[i];
@@ -798,15 +866,17 @@ namespace openvkl {
                                    unstructuredIndices,
                                    unstructuredTimes);
 
-            const bool multiAttrib         = (leafDataType == VKL_DATA);
+            if (leafData) {
+              const bool multiAttrib = (leafDataType == VKL_DATA);
 
-            Data *const ld = (*leafData)[i];
-            allLeavesCompact &= static_cast<int>(
-                initNode(multiAttrib ? ld->template as<Data *>().data() : &ld,
-                         expectedNumDataElements,
-                         grid->attributeTypes,
-                         grid->numAttributes,
-                         grid->leafData + i * grid->numAttributes));
+              Data *const ld = (*leafData)[i];
+              allLeavesCompact &= static_cast<int>(
+                  initNode(multiAttrib ? ld->template as<Data *>().data() : &ld,
+                           expectedNumDataElements,
+                           grid->attributeTypes,
+                           grid->numAttributes,
+                           grid->leafData + i * grid->numAttributes));
+            }
 
             if (unstructuredIndices && unstructuredTimes) {
               assert(temporalFormat == VKL_TEMPORAL_FORMAT_UNSTRUCTURED);
@@ -820,6 +890,98 @@ namespace openvkl {
         } else {
           grid->allLeavesCompact  = false;
           grid->allLeavesConstant = false;
+        }
+
+        // For packed dense / tile node data: verify provided data sizes, set
+        // addressing mode, and generate mapping of nodeIndex ->
+        // [denseNodeIndex, tileNodeIndex]
+        std::map<size_t, size_t> nodeToDenseNodeIndex;
+        std::map<size_t, size_t> nodeToTileNodeIndex;
+
+        if (nodesPackedDense || nodesPackedTile) {
+          postLogMessage(this->device.ptr, VKL_LOG_DEBUG)
+              << "VDB: using packed dense / tile node layout";
+
+          grid->packedAddressing32 = true;
+
+          size_t currentPackedDenseIndex = 0;
+          size_t currentPackedTileIndex  = 0;
+
+          for (size_t n = 0; n < leafFormat->size(); n++) {
+            const VKLFormat format = static_cast<VKLFormat>((*leafFormat)[n]);
+
+            if (format == VKL_FORMAT_DENSE_ZYX) {
+              nodeToDenseNodeIndex[n] = currentPackedDenseIndex;
+              currentPackedDenseIndex++;
+            } else if (format == VKL_FORMAT_TILE) {
+              nodeToTileNodeIndex[n] = currentPackedTileIndex;
+              currentPackedTileIndex++;
+            } else {
+              throw std::runtime_error("unknown leaf format");
+            }
+
+            // only temporally constant data is supported for packed data
+            const VKLTemporalFormat temporalFormat =
+                static_cast<VKLTemporalFormat>((*leafTemporalFormat)[n]);
+
+            if (temporalFormat != VKL_TEMPORAL_FORMAT_CONSTANT) {
+              throw std::runtime_error(
+                  "only temporally constant data is supported for packed dense "
+                  "/ tile data");
+            }
+          }
+
+          // now verify sizes or provided packed data arrays
+          for (uint32_t a = 0; a < grid->numAttributes; a++) {
+            const VKLDataType attributeType =
+                static_cast<VKLDataType>(grid->attributeTypes[a]);
+
+            if (nodesPackedDense) {
+              if ((*nodesPackedDense)[a]->dataType != attributeType) {
+                throw std::runtime_error(
+                    "nodesPackedDense has inconsistent attribute type");
+              }
+
+              const size_t expectedNumElements =
+                  currentPackedDenseIndex *
+                  vklVdbLevelNumVoxels(VKL_VDB_NUM_LEVELS - 1);
+
+              if ((*nodesPackedDense)[a]->numItems != expectedNumElements) {
+                throw std::runtime_error(
+                    "nodesPackedDense has incorrect number of elements");
+              }
+
+              const size_t expectedNumBytes =
+                  expectedNumElements * sizeOf(attributeType);
+
+              // this is the ISPC data array limitation
+              if (expectedNumBytes >= ((uint64_t)1) << 31) {
+                grid->packedAddressing32 = false;
+              }
+            }
+
+            if (nodesPackedTile) {
+              if ((*nodesPackedTile)[a]->dataType != attributeType) {
+                throw std::runtime_error(
+                    "nodesPackedTile has inconsistent attribute type");
+              }
+
+              const size_t expectedNumElements = currentPackedTileIndex;
+
+              if ((*nodesPackedTile)[a]->numItems != expectedNumElements) {
+                throw std::runtime_error(
+                    "nodesPackedTile has incorrect number of elements");
+              }
+
+              const size_t expectedNumBytes =
+                  expectedNumElements * sizeOf(attributeType);
+
+              // this is the ISPC data array limitation
+              if (expectedNumBytes >= ((uint64_t)1) << 31) {
+                grid->packedAddressing32 = false;
+              }
+            }
+          }
         }
 
         // Build the data structure.
@@ -841,7 +1003,9 @@ namespace openvkl {
                      *leafTemporalFormat,
                      binnedLeaves,
                      capacity,
-                     grid);
+                     grid,
+                     nodeToDenseNodeIndex,
+                     nodeToTileNodeIndex);
 
         CALL_ISPC(VdbVolume_setGrid,
                   this->ispcEquivalent,

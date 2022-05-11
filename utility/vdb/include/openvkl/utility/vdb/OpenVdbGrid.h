@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -78,7 +78,10 @@ namespace openvkl {
                              size_t index,
                              const float *p)
     {
-      volumeBuffers.makeConstant(index, {(void *)p}, VKL_DATA_SHARED_BUFFER);
+      // only used for deferred loading, which is not supported for repackNodes
+      // mode; therefore nodeIndex == leafNodeIndex.
+      volumeBuffers.makeConstant(
+          index, index, {(void *)p}, VKL_DATA_SHARED_BUFFER);
     }
 
     inline void makeConstant(VdbVolumeBuffers &volumeBuffers,
@@ -86,6 +89,7 @@ namespace openvkl {
                              const openvdb::Vec3s *p)
     {
       volumeBuffers.makeConstant(
+          index,
           index,
           {(void *)(p->asPointer() + 0),
            (void *)(p->asPointer() + 1),
@@ -254,21 +258,30 @@ namespace openvkl {
       /*
        * Load the given file.
        * If deferLeaves is true, then do not load leaf data but instead add
-       * tiles.
+       * tiles. If repackNodes is true, node data will be re-arranged for a
+       * more optimal memory layout; this option is incompatible with deferred
+       * leaf loading. Use the `usingSharedData()` method to determine if this
+       * object can be deleted after the VKLVolume is created.
        */
       OpenVdbGrid(VKLDevice device,
                   const std::string &path,
                   const std::string &field,
-                  bool deferLeaves = false);
+                  bool deferLeaves = false,
+                  bool repackNodes = true);
 
       /*
        * Load the given grid.
        * If deferLeaves is true, then do not load leaf data but instead add
-       * tiles.
+       * tiles. If repackNodes is true, node data will be re-arranged for a
+       * more optimal memory layout; this option is incompatible with deferred
+       * leaf loading. Use the `usingSharedData()` method to determine if the
+       * provided OpenVDB grid pointer (and this object, which retains a copy of
+       * the grid pointer) can be deleted after the VKLVolume is created.
        */
       OpenVdbGrid(VKLDevice device,
                   typename openvdbNativeGrid::Ptr vdb,
-                  bool deferLeaves = false);
+                  bool deferLeaves = false,
+                  bool repackNodes = true);
 
       /*
        * Create a VKLVolume.
@@ -300,6 +313,16 @@ namespace openvkl {
        */
       void loadDeferred(size_t maxTimeMS);
 
+      /*
+       * Indicates if data provided from the OpenVDB file or OpenVDB grid
+       * pointer is being shared (without a copy made) with the created
+       * VKLVolume. If OpenVDB data is not being shared, then this object can be
+       * safely deleted after the VKLVolume is created; otherwise the OpenVDB
+       * data must be retained (either through retaining this object, or
+       * retaining the provided OpenVDB grid pointer).
+       */
+      bool usingSharedData() const;
+
       VKLDevice getVKLDevice() const;
 
      private:
@@ -321,9 +344,15 @@ namespace openvkl {
     inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(VKLDevice device,
                                                   const std::string &path,
                                                   const std::string &field,
-                                                  bool deferLeaves)
-        : buffers(new VdbVolumeBuffers(device, vklAttributeTypes))
+                                                  bool deferLeaves,
+                                                  bool repackNodes)
+        : buffers(new VdbVolumeBuffers(device, vklAttributeTypes, repackNodes))
     {
+      if (deferLeaves && repackNodes) {
+        throw std::runtime_error(
+            "cannot enable both deferLeaves and repackNodes");
+      }
+
       openvdb::initialize();  // Must initialize first! It's ok to do this
                               // multiple times.
 
@@ -341,8 +370,6 @@ namespace openvkl {
         throw std::runtime_error(std::string("Incorrect tree type: ") +
                                  grid->type());
 
-      // Preallocate memory for all leaves; this makes loading the tree much
-      // faster.
       typename openvdbNativeGrid::Ptr vdb =
           openvdb::gridPtrCast<openvdbNativeGrid>(grid);
       loadFromGrid(vdb, deferLeaves);
@@ -350,9 +377,17 @@ namespace openvkl {
 
     template <typename VdbFieldType>
     inline OpenVdbGrid<VdbFieldType>::OpenVdbGrid(
-        VKLDevice device, typename openvdbNativeGrid::Ptr vdb, bool deferLeaves)
-        : buffers(new VdbVolumeBuffers(device, vklAttributeTypes))
+        VKLDevice device,
+        typename openvdbNativeGrid::Ptr vdb,
+        bool deferLeaves,
+        bool repackNodes)
+        : buffers(new VdbVolumeBuffers(device, vklAttributeTypes, repackNodes))
     {
+      if (deferLeaves && repackNodes) {
+        throw std::runtime_error(
+            "cannot enable both deferLeaves and repackNodes");
+      }
+
       openvdb::initialize();
       grid = vdb;
       loadFromGrid(vdb, deferLeaves);
@@ -422,6 +457,16 @@ namespace openvkl {
              (maxTimeMS == 0 ||
               chr::duration_cast<TimeUnit>(Clock::now() - start) <= maxTime)) {
         loadDeferredAt(0);
+      }
+    }
+
+    template <typename VdbFieldType>
+    inline bool OpenVdbGrid<VdbFieldType>::usingSharedData() const
+    {
+      if (buffers) {
+        return buffers->usingSharedData();
+      } else {
+        return false;
       }
     }
 
@@ -496,9 +541,11 @@ namespace openvkl {
     inline void OpenVdbGrid<VdbFieldType>::loadFromGrid(
         typename openvdbNativeGrid::Ptr vdb, bool deferLeaves)
     {
-      const size_t numTiles  = vdb->tree().activeTileCount();
+      // Preallocate memory for all nodes; this makes loading the tree much
+      // faster.
       const size_t numLeaves = vdb->tree().leafCount();
-      buffers->reserve(numTiles + numLeaves);
+      const size_t numTiles  = vdb->tree().activeTileCount();
+      buffers->reserve(numLeaves, numTiles);
       if (deferLeaves)
         deferred.reserve(numLeaves);
 

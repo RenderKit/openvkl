@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include <array>
@@ -126,15 +126,21 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
       "randomized vectorized gradients varying calling width and masks: "
       "vdb volumes")
   {
-    std::unique_ptr<XYZVdbVolumeFloat> v(
-        new XYZVdbVolumeFloat(getOpenVKLDevice(),
-                              vec3i(128),
-                              vec3f(0.f),
-                              vec3f(1.f)));
+    // repackNodes = true
+    std::unique_ptr<XYZVdbVolumeFloat> v1(new XYZVdbVolumeFloat(
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f), true));
 
-    VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
+    VKLVolume volume1 = v1->getVKLVolume(getOpenVKLDevice());
 
-    randomized_vectorized_gradients(volume);
+    randomized_vectorized_gradients(volume1);
+
+    // repackedNodes = false
+    std::unique_ptr<XYZVdbVolumeFloat> v2(new XYZVdbVolumeFloat(
+        getOpenVKLDevice(), vec3i(128), vec3f(0.f), vec3f(1.f), false));
+
+    VKLVolume volume2 = v2->getVKLVolume(getOpenVKLDevice());
+
+    randomized_vectorized_gradients(volume2);
   }
 
   shutdownOpenVKL();

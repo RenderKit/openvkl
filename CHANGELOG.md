@@ -1,6 +1,19 @@
 Version History
 ---------------
 
+### Open VKL 1.3.0
+
+-   Added AVX512 8-wide CPU device mode, enabled via the
+    `OPENVKL_ISA_AVX512SKX_8_WIDE` CMake option
+-   VDB volumes: added support for packed / contiguous data layouts for
+    temporally constant volumes, which can provide improved performance
+    (`nodesPackedDense`, `nodesPackedTile` parameters)
+-   VDB utility library: added `repackNodes` flag to toggle usage of packed data
+    layouts
+-   Particle volumes: general memory efficiency and performance improvements
+-   Superbuild updates to latest versions of dependencies
+-   Minimum ISPC version is now v1.18.0
+
 ### Open VKL 1.2.0
 
 -   Added `vklSetParam()` API function which can set parameters of any supported

@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -24,6 +24,7 @@ namespace openvkl {
           const vec3i &dimensions,
           const vec3f &gridOrigin,
           const vec3f &gridSpacing,
+          bool repackNodes,
           const std::vector<std::shared_ptr<ProceduralVdbVolumeBase>>
               &attributeVolumes,
           VKLDataCreationFlags dataCreationFlags,
@@ -75,6 +76,7 @@ namespace openvkl {
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
+        bool repackNodes,
         const std::vector<std::shared_ptr<ProceduralVdbVolumeBase>>
             &attributeVolumes,
         VKLDataCreationFlags dataCreationFlags,
@@ -129,7 +131,7 @@ namespace openvkl {
             std::accumulate(voxelSizes.begin(), voxelSizes.begin() + a, 0));
       }
 
-      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes);
+      buffers = rkcommon::make_unique<Buffers>(device, voxelTypes, repackNodes);
 
       buffers->setIndexToObject(gridSpacing.x,
                                 0,
@@ -157,7 +159,7 @@ namespace openvkl {
       const uint32_t leafRes     = vklVdbLevelRes(leafLevel);
       const size_t numLeafVoxels = vklVdbLevelNumVoxels(leafLevel);
 
-      buffers->reserve(numLeafNodes);
+      buffers->reserve(numLeafNodes, 0);
 
       for (int x = 0; x < numLeafNodesIn.x; ++x)
         for (int y = 0; y < numLeafNodesIn.y; ++y)
@@ -293,7 +295,7 @@ namespace openvkl {
               }
             }
 
-            if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+            if (!buffers->usingSharedData()) {
               leaves.clear();
             }
           }
@@ -369,6 +371,8 @@ namespace openvkl {
         }
 
         volume = buffers->createVolume();
+
+        buffers.reset();
       }
     }
 
@@ -381,6 +385,7 @@ namespace openvkl {
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
+        bool repackNodes,
         VKLDataCreationFlags dataCreationFlags,
         bool useAOSLayout,
         TemporalConfig temporalConfig = TemporalConfig())
@@ -395,30 +400,35 @@ namespace openvkl {
                                                  dimensions,
                                                  gridOrigin,
                                                  gridSpacing,
+                                                 repackNodes,
                                                  temporalConfig));
 
       volumes.push_back(std::make_shared<XVdbVolumeHalf>(device,
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
+                                                         repackNodes,
                                                          temporalConfig));
 
       volumes.push_back(std::make_shared<YVdbVolumeHalf>(device,
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
+                                                         repackNodes,
                                                          temporalConfig));
 
       volumes.push_back(std::make_shared<ZVdbVolumeHalf>(device,
                                                          dimensions,
                                                          gridOrigin,
                                                          gridSpacing,
+                                                         repackNodes,
                                                          temporalConfig));
 
       return new ProceduralVdbVolumeMulti(device,
                                           dimensions,
                                           gridOrigin,
                                           gridSpacing,
+                                          repackNodes,
                                           volumes,
                                           dataCreationFlags,
                                           useAOSLayout);
@@ -429,6 +439,7 @@ namespace openvkl {
         const vec3i &dimensions,
         const vec3f &gridOrigin,
         const vec3f &gridSpacing,
+        bool repackNodes,
         VKLDataCreationFlags dataCreationFlags,
         bool useAOSLayout,
         TemporalConfig temporalConfig = TemporalConfig())
@@ -443,30 +454,35 @@ namespace openvkl {
                                                   dimensions,
                                                   gridOrigin,
                                                   gridSpacing,
+                                                  repackNodes,
                                                   temporalConfig));
 
       volumes.push_back(std::make_shared<XVdbVolumeFloat>(device,
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
+                                                          repackNodes,
                                                           temporalConfig));
 
       volumes.push_back(std::make_shared<YVdbVolumeFloat>(device,
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
+                                                          repackNodes,
                                                           temporalConfig));
 
       volumes.push_back(std::make_shared<ZVdbVolumeFloat>(device,
                                                           dimensions,
                                                           gridOrigin,
                                                           gridSpacing,
+                                                          repackNodes,
                                                           temporalConfig));
 
       return new ProceduralVdbVolumeMulti(device,
                                           dimensions,
                                           gridOrigin,
                                           gridSpacing,
+                                          repackNodes,
                                           volumes,
                                           dataCreationFlags,
                                           useAOSLayout);

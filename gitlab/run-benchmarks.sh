@@ -1,6 +1,6 @@
 #!/bin/bash -xe
 
-## Copyright 2020-2021 Intel Corporation
+## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 git log -1

@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v1.2.0 of Intel® Open VKL. For changes and new features
+This is release v1.3.0 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -32,6 +32,20 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 1.3.0
+
+  - Added AVX512 8-wide CPU device mode, enabled via the
+    `OPENVKL_ISA_AVX512SKX_8_WIDE` CMake option
+  - VDB volumes: added support for packed / contiguous data layouts for
+    temporally constant volumes, which can provide improved performance
+    (`nodesPackedDense`, `nodesPackedTile` parameters)
+  - VDB utility library: added `repackNodes` flag to toggle usage of
+    packed data layouts
+  - Particle volumes: general memory efficiency and performance
+    improvements
+  - Superbuild updates to latest versions of dependencies
+  - Minimum ISPC version is now v1.18.0
 
 ### Open VKL 1.2.0
 
@@ -550,7 +564,7 @@ variables described previously.
 
 ## Basic data types
 
-Open VKL defines 3-component vectors of integer and vector types:
+Open VKL defines 3-component vectors of integer and float types:
 
 ``` cpp
 typedef struct
@@ -600,8 +614,8 @@ typedef struct
 
 Objects in Open VKL are exposed to the APIs as handles with internal
 reference counting for lifetime determination. Objects are created with
-particular type’s `vklNew...` API entry point. For example, `vklNewData`
-and `vklNewVolume`.
+each particular type’s `vklNew...` API entry point. For example,
+`vklNewData` and `vklNewVolume`.
 
 In general, modifiable parameters to objects are modified using
 `vklSet...` functions based on the type of the parameter being set. The
@@ -775,7 +789,7 @@ called concurrently on the same object.
 
 Open VKL currently supports structured volumes on regular and spherical
 grids; unstructured volumes with tetrahedral, wedge, pyramid, and
-hexaderal primitive types; adaptive mesh refinement (AMR) volumes;
+hexahedral primitive types; adaptive mesh refinement (AMR) volumes;
 sparse VDB volumes; and particle volumes. Volumes are created with
 `vklNewVolume` with a device and appropriate type string:
 
@@ -1120,13 +1134,18 @@ VDB volumes are created by passing the type string `"vdb"` to
 | int\[\]            | node.temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                                                                                                                                                                                                                                                                                                               |
 | VKLData\[\]        | node.temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, beginning per voxel. Supported data types for each node are `VKL_UINT` and `VKL_ULONG`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                                  |
 | VKLData\[\]        | node.temporallyUnstructuredTimes      |                                    | For temporally unstructured variation, time values corresponding to values in `node.data`. For each node, the data must be of type `VKL_FLOAT`. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                                                                                                                                                                                                                                                                 |
+| VKLData\[\]        | nodesPackedDense                      |                                    | Optionally provided instead of `node.data`, for each attribute a single array of all dense node data (`VKL_FORMAT_DENSE_ZYX` only) in a contiguous layout, provided in the same order as the corresponding `node.*` parameters. This packed layout may be more performant. Supported for temporally constant data only.                                                                                                                                                                                                               |
+| VKLData\[\]        | nodesPackedTile                       |                                    | Optionally provided instead of `node.data`, for each attribute a single array of all tile node data (`VKL_FORMAT_TILE` only) in a contiguous layout, provided in the same order as the corresponding `node.*` parameters. This packed layout may be more performant. Supported for temporally constant data only.                                                                                                                                                                                                                     |
 | float\[\]          | background                            | `VKL_BACKGROUND_UNDEFINED`         | For each attribute, the value that is returned when sampling an undefined region outside the volume domain.                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | box3i              | indexClippingBounds                   |                                    | Clips the volume to the specified index-space bounding box. This is useful for volumes with dimensions that are not even multiples of the leaf node dimensions, or .vdb files with restrictive active voxel bounding boxes.                                                                                                                                                                                                                                                                                                           |
 
 Configuration parameters for VDB (`"vdb"`) volumes.
 
 The level, origin, format, and data parameters must have the same size,
-and there must be at least one valid node or `commit()` will fail.
+and there must be at least one valid node or `commit()` will fail. The
+`nodesPackedDense` and `nodesPackedTile` parameters may be provided
+instead of `node.data`; this packed data layout may provide better
+performance.
 
 VDB volumes support temporally structured and temporally unstructured
 temporal variation. See section ‘Temporal Variation’ for more detail.
@@ -2476,7 +2495,7 @@ before you can build Open VKL you need the following prerequisites:
     examples, you should also have some version of OpenGL.
 
   - Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.16.0 or
+    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.18.0 or
     later. Please obtain a release of ISPC from the [ISPC downloads
     page](https://ispc.github.io/downloads.html).
 

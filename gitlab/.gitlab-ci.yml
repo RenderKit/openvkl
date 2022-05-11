@@ -1,10 +1,10 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 variables:
   GIT_DEPTH: "15"
   KW_PROJECT_NAME: openvkl
-  OPENVKL_RELEASE_PACKAGE_VERSION: "1.2.0"
+  OPENVKL_RELEASE_PACKAGE_VERSION: "1.3.0"
   MACOSX_DEPLOYMENT_TARGET: "10.13"
 
 default:
@@ -39,6 +39,7 @@ stages:
     - build/install
     - build/openvkl/build
   before_script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - git submodule sync
     - git submodule init
     - git submodule update
@@ -110,6 +111,8 @@ stages:
 
 .job_template: &base_benchmark_job
   stage: benchmark
+  needs:
+    - build-centos7-icx
   script:
     - gitlab/run-benchmarks.sh
 
@@ -143,6 +146,7 @@ non-interruptible-pipeline:
   <<: *master_release_devel_only
   stage: pre
   interruptible: false
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   script:
     - echo this is a non-interruptible pipeline
   tags:
@@ -175,6 +179,42 @@ build-centos7-icc15:
     - export CXX=icpc
     - export CXXFLAGS="-static-intel -fPIC"
     - gitlab/build.sh
+
+build-centos7-icx:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
+  script:
+    - module load cmake
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
+    - gitlab/build.sh
+
+build-centos7-icx-tbb2020:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
+  script:
+    - module load cmake
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
+    - gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+
+build-centos7-icx-tbb2020-avx512_8:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
+  script:
+    - module load cmake
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
+    - gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
 
 build-centos8:
   <<: *build_job_docker
@@ -209,6 +249,12 @@ build-ubuntu18.04:
 build-ubuntu20.04:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
+  script:
+    - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+build-ubuntu22.04:
+  <<: *build_job_docker
+  image: $DOCKER_REGISTRY/ubuntu:22.04
   script:
     - gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
 
@@ -325,6 +371,24 @@ test-functional-centos7-icc:
   needs:
     - build-centos7-icc
 
+test-functional-centos7-icx:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs:
+    - build-centos7-icx
+
+test-functional-centos7-icx-tbb2020:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs:
+    - build-centos7-icx-tbb2020
+
+test-functional-centos7-icx-tbb2020-avx512_8:
+  <<: *test_functional_job_docker
+  image: $DOCKER_REGISTRY/ospray/docker-images:centos7
+  needs:
+    - build-centos7-icx-tbb2020-avx512_8
+
 test-functional-centos8:
   <<: *test_functional_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
@@ -354,6 +418,12 @@ test-functional-ubuntu20.04:
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu20.04
   needs:
     - build-ubuntu20.04
+
+test-functional-ubuntu22.04:
+  <<: *test_functional_job_docker_ubuntu
+  image: $DOCKER_REGISTRY/ubuntu:22.04
+  needs:
+    - build-ubuntu22.04
 
 test-functional-arch:
   <<: *test_functional_job_docker
@@ -458,8 +528,6 @@ test-functional-windows-msvc15-TBB2020:
 .job_template: &manual_benchmark_x8280-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-x8280-1
 
@@ -486,8 +554,6 @@ examples-x8280-1:
 .job_template: &manual_benchmark_a-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-a-1
 
@@ -514,8 +580,6 @@ examples-a-1:
 .job_template: &manual_benchmark_adl-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-adl-1-perf
 
@@ -542,8 +606,6 @@ examples-adl-1:
 .job_template: &manual_benchmark_tgl-1
   <<: *base_benchmark_job
   when: manual
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-dg2-01-perf
 
@@ -573,8 +635,6 @@ benchmark-x8280-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-x8280-1
 
@@ -583,8 +643,6 @@ benchmark-a-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-perf-a-1
 
@@ -593,8 +651,6 @@ benchmark-adl-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-adl-1-perf
 
@@ -603,8 +659,6 @@ benchmark-tgl-1-schedule:
   only:
     variables:
       - $RUN_SCHEDULE_BENCHMARKS
-  needs:
-    - build-centos7-icc
   tags:
     - vis-sdp-dg2-01-perf
 
@@ -661,15 +715,16 @@ source-protex-scan:
 
 ## Release Jobs ##
 
-release-linux-icc:
+release-linux-icx:
   <<: *base_release_job
-  image: $DOCKER_REGISTRY/ospray/docker-images:centos7-mod
+  image: $DOCKER_REGISTRY/centos:7    # enables modules and loads devtoolset-7
   script:
     - module load cmake
-    - module load intel/2019.4
-    - export CC=icc
-    - export CXX=icpc
-    - export CXXFLAGS="-static-intel -fPIC"
+    - module load intel/2022.1
+    - export CC=icx
+    - export CXX=icpx
+    - export CXXFLAGS="-fPIC -fp-model=precise"
+    - export LDFLAGS="-static-intel"
     - gitlab/release/linux.sh
   needs: []
   tags:
@@ -714,7 +769,7 @@ release-linux-test:
   tags:
     - docker
   needs:
-    - release-linux-icc
+    - release-linux-icx
 
 release-macOS-test:
   <<: *base_release_test_job
@@ -741,7 +796,7 @@ scan-bdba-bin:
   stage: scan-binaries
   image: $DOCKER_REGISTRY/ospray/docker-images:centos7
   tags: [docker]
-  needs: [release-linux-icc, release-macOS, release-windows]
+  needs: [release-linux-icx, release-macOS, release-windows]
   script:
     - gitlab/bdba.sh "openvkl-*"
     - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID bdba "openvkl-*.pdf"
@@ -756,7 +811,7 @@ av:
   stage: scan-binaries
   tags: [docker]
   image: $DOCKER_REGISTRY/clamav:ubuntu20.04
-  needs: [release-linux-icc, release-macOS, release-windows]
+  needs: [release-linux-icx, release-macOS, release-windows]
   script:
     - freshclam | tee -a /tmp/av_scan.log
     - clamscan -va --max-filesize=1024M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log

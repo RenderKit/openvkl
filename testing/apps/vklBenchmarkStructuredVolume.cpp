@@ -1,9 +1,10 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "benchmark/benchmark.h"
-#include "openvkl_testing.h"
+#include "benchmark_env.h"
 #include "benchmark_suite/volume.h"
+#include "openvkl_testing.h"
 
 using namespace openvkl::testing;
 using namespace rkcommon::utility;
@@ -27,8 +28,10 @@ struct Structured
 
   Structured()
   {
+    const int dim = getEnvBenchmarkVolumeDim();
+
     volume = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
-        vec3i(128), vec3f(0.f), vec3f(1.f));
+        vec3i(dim), vec3f(0.f), vec3f(1.f));
 
     vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
@@ -57,7 +60,6 @@ struct Structured
   VKLVolume vklVolume{nullptr};
   VKLSampler vklSampler{nullptr};
 };
-
 
 // based on BENCHMARK_MAIN() macro from benchmark.h
 int main(int argc, char **argv)

@@ -1,4 +1,4 @@
-## Copyright 2019-2022 Intel Corporation
+## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 ## Global settings ##
@@ -95,17 +95,17 @@ option(BUILD_OPENVKL_BENCHMARKS
 
 option(BUILD_ISPC "Build the Intel SPMD Program Compiler or search in environment?" ON)
 if (BUILD_ISPC)
-  set(ISPC_VERSION "1.17.0")
+  set(ISPC_VERSION "1.18.0")
   set(ISPC_BASE_URL "https://github.com/ispc/ispc/releases/download/v${ISPC_VERSION}")
   if (APPLE)
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-macOS.tar.gz")
-    set(_ISPC_HASH "e7fdcdbd5c272955249148c452ccd7295d7cf77b35ca1dec377e72b49c847bff")
+    set(_ISPC_HASH "d1435b541182406ff6b18446d31ecceef0eae3aed7654391ae676d3142e0000d")
   elseif(WIN32)
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-windows.zip")
-    set(_ISPC_HASH "e9a7cc98f69357482985bcbf69fa006632cee7b3606069b4d5e16dc62092d660")
+    set(_ISPC_HASH "9210bb2d9d3711367faccb37acf49966696132560b565471c1c6121f4924a17e")
   else()
     set(_ISPC_URL "${ISPC_BASE_URL}/ispc-v${ISPC_VERSION}-linux.tar.gz")
-    set(_ISPC_HASH "6acc5df75efdce437f79b1b6489be8567c6d009e19dcc4851b9b37012afce1f7")
+    set(_ISPC_HASH "6c379bb97962e9de7d24fd48b3f7e647dc42be898e9d187948220268c646b692")
   endif()
   set(ISPC_URL "${_ISPC_URL}" CACHE STRING "URL of the ISPC archive.")
   set(ISPC_HASH "${_ISPC_HASH}" CACHE STRING "SHA256 hash of the ISPC archive.")
@@ -153,10 +153,10 @@ endif()
 
 option(BUILD_RKCOMMON "Build rkcommon or search in environment?" ON)
 if (BUILD_RKCOMMON)
-  set(RKCOMMON_VERSION "v1.9.0" CACHE STRING "rkcommon version to download")
+  set(RKCOMMON_VERSION "v1.10.0" CACHE STRING "rkcommon version to download")
   set(RKCOMMON_URL "https://github.com/ospray/rkcommon/archive/${RKCOMMON_VERSION}.zip"
     CACHE STRING "URL of the rkcommon archive.")
-  set(RKCOMMON_HASH "54ef58226b5f2b6eb80091d806b94d563ce748a6c8d04db7836c20945fd99929"
+  set(RKCOMMON_HASH "eb968868b85254680c59ff3e091e9a7634d407cf0375d2b52840bf9044716a48"
     CACHE STRING "SHA256 hash of the rkcommon archive.")
   include(dep_rkcommon)
 endif()
@@ -196,7 +196,7 @@ if (BUILD_GLFW)
   set(GLFW_VERSION "3.2.1")
   set(GLFW_URL "https://github.com/glfw/glfw/archive/${GLFW_VERSION}.zip"
     CACHE STRING "URL of the GLFW source archive.")
-  set(GLFW_HASH "0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f" 
+  set(GLFW_HASH "0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f"
     CACHE STRING "SHA256 hash of the GLFW source archive.")
   include(dep_glfw)
 endif()
@@ -226,25 +226,25 @@ if (BUILD_OPENVDB)
     message(WARNING "Disabling OpenVDB support because the icc compiler version is too low (19.1 is required)")
     set(BUILD_OPENVDB OFF)
   else()
-    set(ILMBASE_VERSION "2.5.7")
+    set(ILMBASE_VERSION "2.5.8")
     set(ILMBASE_URL "https://github.com/AcademySoftwareFoundation/openexr/archive/v${ILMBASE_VERSION}.zip"
       CACHE STRING "URL of the IlmBase archive.")
-    set(ILMBASE_HASH "95e2625dac696bcd8101b575cc7651f7c4d14faf9f196a2bedf5b9373b263d4f"
+    set(ILMBASE_HASH "3eafee956ae36cad536497988df4bda88d811a602ad93630dbed38bb10b8a7e4"
       CACHE STRING "SHA256 hash of the IlmBase archive.")
     include(dep_ilmbase)
 
-    set(ZLIB_VERSION "1.2.11")
-    set(ZLIB_URL "https://www.zlib.net/zlib-${ZLIB_VERSION}.tar.gz"
+    set(ZLIB_VERSION "1.2.12")
+    set(ZLIB_URL "https://www.zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz"
       CACHE STRING "URL of the zlib archive.")
-    set(ZLIB_HASH "c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1"
+    set(ZLIB_HASH "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9"
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 
-    set(BOOST_VERSION "1.78.0")
+    set(BOOST_VERSION "1.79.0")
     string(REPLACE "." "_" BOOST_FILE_BASE "${BOOST_VERSION}")
     set(BOOST_BASE_URL "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost")
     set(_BOOST_URL "${BOOST_BASE_URL}_${BOOST_FILE_BASE}.tar.gz")
-    set(_BOOST_HASH "94ced8b72956591c4775ae2207a9763d3600b30d9d7446562c552f0a14a63be7")
+    set(_BOOST_HASH "273f1be93238a068aba4f9735a4a2b003019af067b9c183ed227780b8f36062c")
     set(BOOST_URL "${_BOOST_URL}" CACHE STRING "URL of the boost archive.")
     set(BOOST_HASH "${_BOOST_HASH}" CACHE STRING "SHA256 hash of the boost archive.")
     include(dep_boost)
@@ -280,6 +280,9 @@ if (INSTALL_IN_SEPARATE_DIRECTORIES)
 endif()
 
 if (NOT BUILD_DEPENDENCIES_ONLY)
+  # needed to support multiple CMake options provided in a single quoted string
+  separate_arguments(OPENVKL_EXTRA_OPTIONS UNIX_COMMAND "${OPENVKL_EXTRA_OPTIONS}")
+
   ExternalProject_Add(openvkl
     PREFIX openvkl
     DOWNLOAD_COMMAND ""
@@ -302,6 +305,7 @@ if (NOT BUILD_DEPENDENCIES_ONLY)
       $<$<BOOL:${BUILD_ISPC}>:-DISPC_EXECUTABLE=${ISPC_PATH}>
       $<$<BOOL:${BUILD_TBB}>:-DRKCOMMON_TBB_ROOT=${TBB_PATH}>
       $<$<BOOL:${BUILD_OPENVDB}>:-DOpenVDB_ROOT=${OPENVDB_PATH}>
+      ${OPENVKL_EXTRA_OPTIONS}
       ${OPENVKL_EXTRA_OPENVDB_OPTIONS}
     BUILD_COMMAND ${DEFAULT_BUILD_COMMAND}
     BUILD_ALWAYS OFF

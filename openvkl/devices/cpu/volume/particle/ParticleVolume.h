@@ -1,4 +1,4 @@
-// Copyright 2020-2022 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -11,23 +11,28 @@
 #include "../common/math.h"
 #include "ParticleVolume_ispc.h"
 
+#define MAX_PRIMS_PER_LEAF VKL_TARGET_WIDTH
+
 namespace openvkl {
   namespace cpu_device {
 
-    struct ParticleLeafNode : public LeafNode
+    struct ParticleLeafNode : public LeafNodeMulti
     {
-      ParticleLeafNode(unsigned id, const box3fa &bounds, const float &radius)
-          : LeafNode(id, bounds, empty)
+      ParticleLeafNode(uint64_t numCells,
+                       uint64_t *ids,
+                       const box3fa &bounds,
+                       const float &minRadius)
+          : LeafNodeMulti(numCells, ids, bounds, empty)
       {
         // ISPC-side code assumes the same layout as LeafNode
-        static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNode),
-                      "ParticleLeafNode incompatible with LeafNode");
+        static_assert(sizeof(ParticleLeafNode) == sizeof(LeafNodeMulti),
+                      "ParticleLeafNode incompatible with LeafNodeMulti");
 
-        assert(radius > 0.f);
+        assert(minRadius > 0.f);
 
-        nominalLength.x = -radius;
-        nominalLength.y = radius;
-        nominalLength.z = radius;
+        nominalLength.x = -minRadius;
+        nominalLength.y = minRadius;
+        nominalLength.z = minRadius;
 
         // note that valueRange will be set separately in computeValueRanges()
       }
@@ -37,14 +42,27 @@ namespace openvkl {
                           size_t numPrims,
                           void *userPtr)
       {
-        assert(numPrims == 1);
+        assert(numPrims > 0 && numPrims <= MAX_PRIMS_PER_LEAF);
 
-        auto id     = (uint64_t(prims->geomID) << 32) | prims->primID;
-        auto radius = ((float *)userPtr)[id];
+        uint64_t *ids = static_cast<uint64_t *>(
+            rtcThreadLocalAlloc(alloc, numPrims * sizeof(uint64_t), 16));
+        float minRadius = inf;
+        box3fa bounds   = empty;
+
+        for (size_t i = 0; i < numPrims; i++) {
+          const uint64_t id =
+              (uint64_t(prims[i].geomID) << 32) | prims[i].primID;
+          const float radius = ((float *)userPtr)[id];
+          const box3fa bound = *(const box3fa *)(&prims[i]);
+
+          ids[i]    = id;
+          minRadius = std::min(minRadius, radius);
+          bounds.extend(bound);
+        }
 
         void *ptr = rtcThreadLocalAlloc(alloc, sizeof(ParticleLeafNode), 16);
         return (void *)new (ptr)
-            ParticleLeafNode(id, *(const box3fa *)prims, radius);
+            ParticleLeafNode(numPrims, ids, bounds, minRadius);
       }
     };
 

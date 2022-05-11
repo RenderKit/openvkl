@@ -1,4 +1,4 @@
-// Copyright 2020-2021 Intel Corporation
+// Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 #pragma once
 
@@ -38,7 +38,7 @@ namespace api {
 
       // This is safe: Google benchmark guarantees that threads do not
       // start running until the start of the loop below.
-      if (state.thread_index == 0) {
+      if (state.thread_index() == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
@@ -55,19 +55,19 @@ namespace api {
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
         intervalIteratorSize = vklGetIntervalIteratorSize(intervalContext);
-        buffers.resize(intervalIteratorSize * state.threads);
+        buffers.resize(intervalIteratorSize * state.threads());
       }
 
       BENCHMARK_WARMUP_AND_RUN(({
         void *buffer =
-            buffers.data() + intervalIteratorSize * state.thread_index;
+            buffers.data() + intervalIteratorSize * state.thread_index();
         VKLIntervalIterator iterator = vklInitIntervalIterator(
             intervalContext, &origin, &direction, &tRange, time, buffer);
 
         benchmark::DoNotOptimize(iterator);
       }));
 
-      if (state.thread_index == 0)
+      if (state.thread_index() == 0)
         wrapper.reset();
 
       // enables rates in report output
@@ -100,7 +100,7 @@ namespace api {
       static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
-      if (state.thread_index == 0) {
+      if (state.thread_index() == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
@@ -120,7 +120,7 @@ namespace api {
         vkl_range1f tRange{0.f, 1000.f};
 
         intervalIteratorSize = vklGetIntervalIteratorSize(intervalContext);
-        buffers.resize(intervalIteratorSize * state.threads);
+        buffers.resize(intervalIteratorSize * state.threads());
       }
 
       VKLInterval interval;
@@ -128,7 +128,7 @@ namespace api {
 
       BENCHMARK_WARMUP_AND_RUN(({
         void *buffer =
-            buffers.data() + intervalIteratorSize * state.thread_index;
+            buffers.data() + intervalIteratorSize * state.thread_index();
         VKLIntervalIterator iterator = vklInitIntervalIterator(
             intervalContext, &origin, &direction, &tRange, time, buffer);
 
@@ -142,7 +142,7 @@ namespace api {
       }));
 
       // global teardown only in first thread
-      if (state.thread_index == 0)
+      if (state.thread_index() == 0)
         wrapper.reset();
 
       // enables rates in report output
@@ -175,7 +175,7 @@ namespace api {
       static size_t intervalIteratorSize{0};
       static std::vector<char> buffers;
 
-      if (state.thread_index == 0) {
+      if (state.thread_index() == 0) {
         wrapper              = rkcommon::make_unique<VolumeWrapper>();
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
@@ -192,13 +192,13 @@ namespace api {
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
         intervalIteratorSize = vklGetIntervalIteratorSize(intervalContext);
-        buffers.resize(intervalIteratorSize * state.threads);
+        buffers.resize(intervalIteratorSize * state.threads());
       }
 
       VKLInterval interval;
       BENCHMARK_WARMUP_AND_RUN(({
         void *buffer =
-            buffers.data() + intervalIteratorSize * state.thread_index;
+            buffers.data() + intervalIteratorSize * state.thread_index();
         VKLIntervalIterator iterator = vklInitIntervalIterator(
             intervalContext, &origin, &direction, &tRange, time, buffer);
 
@@ -213,7 +213,7 @@ namespace api {
         benchmark::DoNotOptimize(interval);
       }));
 
-      if (state.thread_index == 0)
+      if (state.thread_index() == 0)
         wrapper.reset();
 
       // enables rates in report output

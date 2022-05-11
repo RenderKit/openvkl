@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "UnstructuredIterator.ih"
@@ -235,6 +235,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
         uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;
 
         if (elementaryCellIteration) {
+          // only supported for leaf node's with one cell
           const VKLUnstructuredVolume *uniform volume =
               (const VKLUnstructuredVolume *uniform)
                   iterator->super.context->sampler->volume;
@@ -247,7 +248,7 @@ static box1f evalNodeStacklessV(const varying UnstructuredIterator *uniform
               valueRanges,
               node->valueRange,
               volume,
-              leaf->cellID,
+              ((uniform LeafNodeSingle * uniform) leaf)->cellID,
               intersectedTRange,
               in0);
         } else {

@@ -1,10 +1,10 @@
-## Copyright 2019-2021 Intel Corporation
+## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.16.0")
+set(ISPC_VERSION_WORKING "1.18.0")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -89,9 +89,11 @@ macro(openvkl_configure_ispc_isa)
     option(OPENVKL_ISA_AVX2 "Enables AVX2 ISA." ON)
     option(OPENVKL_ISA_AVX512KNL "Enables AVX512 ISA for Knights Landing." OFF)
     option(OPENVKL_ISA_AVX512SKX "Enables AVX512 ISA for Skylake." ON)
+    option(OPENVKL_ISA_AVX512SKX_8_WIDE "Enables AVX512 ISA for Skylake (8 wide)." OFF)
 
-    if (OPENVKL_ISA_AVX512KNL AND OPENVKL_ISA_AVX512SKX)
-      message(FATAL_ERROR "Only one AVX512 ISA may be enabled; choose either AVX512KNL or AVX512SKX")
+    if ((OPENVKL_ISA_AVX512KNL AND (OPENVKL_ISA_AVX512SKX OR OPENVKL_ISA_AVX512SKX_8_WIDE)) OR
+        (OPENVKL_ISA_AVX512SKX AND OPENVKL_ISA_AVX512SKX_8_WIDE))
+      message(FATAL_ERROR "Only one AVX512 ISA may be enabled; choose either AVX512KNL, AVX512SKX or AVX512SKX_8_WIDE")
     endif()
   else()
     option(OPENVKL_ISA_NEON "Enables NEON ISA." ON)
@@ -138,6 +140,12 @@ macro(openvkl_configure_ispc_isa)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512skx-i32x16)
     set(OPENVKL_ISPC_TARGET_LIST_16 ${OPENVKL_ISPC_TARGET_LIST_16} avx512skx-i32x16)
     message(STATUS "OpenVKL AVX512SKX ISA target enabled.")
+  endif()
+
+  if (OPENVKL_ISA_AVX512SKX_8_WIDE)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} avx512skx-i32x8)
+    set(OPENVKL_ISPC_TARGET_LIST_8 ${OPENVKL_ISPC_TARGET_LIST_8} avx512skx-i32x8)
+    message(STATUS "OpenVKL AVX512SKX_8_WIDE ISA target enabled.")
   endif()
 
   # if only one target is specified for a given width, add a second target to
@@ -250,7 +258,8 @@ macro (OPENVKL_ISPC_COMPILE)
     list(LENGTH ISPC_TARGETS NUM_TARGETS)
     if (NUM_TARGETS GREATER 1)
       foreach(target ${ISPC_TARGETS})
-        string(REPLACE "-i32x16" "" target ${target}) # strip avx512(knl|skx)-i32x16
+        string(REPLACE "-i32x8" "" target ${target}) # strip "-i32x8"
+        string(REPLACE "-i32x16" "" target ${target}) # strip "-i32x16"
         set(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
       endforeach()
     endif()

@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -65,10 +65,7 @@ struct VdbGrid
   bool allLeavesCompact;   // Do we only have compact (non strided) leaf data?
   bool allLeavesConstant;  // Are all leaf nodes temporally constant?
 
-  // Per-node data.
   vkl_uint32 *attributeTypes;  // Data type for each attribute.
-  const VKLFormat *leafFormat;
-  const VKLTemporalFormat *leafTemporalFormat;
 
   // Per-node data for sparse / non-dense volumes only.
   const vkl_int32 *leafStructuredTimesteps;
@@ -78,6 +75,12 @@ struct VdbGrid
   // Per-attribute data for sparse / non-dense volumes only: size [numLeaves *
   // numAttributes]
   Data1D *leafData;
+
+  // Optional: per-attribute node-packed data for sparse / non-dense volumes
+  // only: size [numAttributes]
+  bool packedAddressing32;
+  Data1D *nodesPackedDense;
+  Data1D *nodesPackedTile;
 
   // Parameters for dense volumes only.
   bool dense;

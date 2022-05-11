@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
@@ -8,6 +8,7 @@
 #include "VdbSampler.ih"
 #include "VdbSampler_denseHandler.ih"
 #include "VdbSampler_leafHandler.ih"
+#include "VdbSampler_packedHandler.ih"
 
 #include "openvkl_vdb/VdbSamplerDispatchInner.ih"
 
@@ -156,17 +157,31 @@ noinline void VdbSampler_traverse(const VdbSampler *uniform sampler,
       const uniform vkl_uint32 voxelType =                                     \
           sampler->grid->attributeTypes[attributeIndex];                       \
       const univaryVoxel uint64 leafIndex = vklVdbVoxelLeafGetIndex(voxel);    \
-      __vkl_vdb_leaf_handler(                                                  \
-          sample = VdbSampler_sample_##univaryVoxel##_##univaryOffset,         \
-          voxelType,                                                           \
-          vklVdbVoxelLeafGetFormat(voxel),                                     \
-          grid->allLeavesConstant,                                             \
-          vklVdbVoxelLeafGetTemporalFormat(voxel),                             \
-          grid,                                                                \
-          leafIndex,                                                           \
-          vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),             \
-          domainOffset,                                                        \
-          time)                                                                \
+      if (sampler->grid->nodesPackedDense) {                                   \
+        __vkl_vdb_packed_handler(                                              \
+            sample =                                                           \
+                VdbSampler_sample_##univaryVoxel##_##univaryOffset##_packed,   \
+            grid->packedAddressing32,                                          \
+            voxelType,                                                         \
+            vklVdbVoxelLeafGetFormat(voxel),                                   \
+            grid,                                                              \
+            leafIndex,                                                         \
+            attributeIndex,                                                    \
+            domainOffset,                                                      \
+            time)                                                              \
+      } else {                                                                 \
+        __vkl_vdb_leaf_handler(                                                \
+            sample = VdbSampler_sample_##univaryVoxel##_##univaryOffset,       \
+            voxelType,                                                         \
+            vklVdbVoxelLeafGetFormat(voxel),                                   \
+            grid->allLeavesConstant,                                           \
+            vklVdbVoxelLeafGetTemporalFormat(voxel),                           \
+            grid,                                                              \
+            leafIndex,                                                         \
+            vklVdbGetLeafDataIndex(grid, leafIndex, attributeIndex),           \
+            domainOffset,                                                      \
+            time)                                                              \
+      }                                                                        \
     } else if (vklVdbVoxelIsError(voxel)) {                                    \
       univaryVoxel uint8 level;                                                \
       univaryVoxel uint32 voxelOffset;                                         \

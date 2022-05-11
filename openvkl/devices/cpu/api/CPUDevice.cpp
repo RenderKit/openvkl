@@ -1,9 +1,10 @@
-// Copyright 2019-2022 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "CPUDevice.h"
 #include "../common/Data.h"
 #include "../common/export_util.h"
+#include "../common/ispc_isa.h"
 #include "../iterator/Iterator.h"
 #include "../observer/Observer.h"
 #include "../sampler/Sampler.h"
@@ -121,6 +122,13 @@ namespace openvkl {
     void CPUDevice<W>::commit()
     {
       Device::commit();
+
+      VKLISPCTarget target =
+          static_cast<VKLISPCTarget>(CALL_ISPC(ISPC_getTarget));
+
+      postLogMessage(this, VKL_LOG_DEBUG)
+          << "CPU device instantiated with width: " << getNativeSIMDWidth()
+          << ", ISA: " << stringForVKLISPCTarget(target);
     }
 
     template <int W>

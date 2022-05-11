@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
@@ -362,13 +362,22 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
     SECTION("VDB volumes")
     {
-      auto v =
-          rkcommon::make_unique<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
-                                                       dimensions,
-                                                       gridOrigin,
-                                                       gridSpacing);
+      for (const auto &repackNodes : {true, false}) {
+        std::stringstream sectionName;
+        sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-      scalar_single_attribute_interval_iterator_tests(v);
+        DYNAMIC_SECTION(sectionName.str())
+        {
+          auto v =
+              rkcommon::make_unique<WaveletVdbVolumeFloat>(getOpenVKLDevice(),
+                                                           dimensions,
+                                                           gridOrigin,
+                                                           gridSpacing,
+                                                           repackNodes);
+
+          scalar_single_attribute_interval_iterator_tests(v);
+        }
+      }
     }
   }
 
@@ -394,16 +403,25 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
     SECTION("VDB volumes")
     {
-      std::shared_ptr<ProceduralVdbVolumeMulti> v(
-          generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
-                                               dimensions,
-                                               gridOrigin,
-                                               gridSpacing,
-                                               VKL_DATA_DEFAULT,
-                                               true,
-                                               TemporalConfig()));
+      for (const auto &repackNodes : {true, false}) {
+        std::stringstream sectionName;
+        sectionName << (repackNodes ? "repackNodes=true" : "repackNodes=false");
 
-      scalar_multi_attribute_interval_iterator_tests(v);
+        DYNAMIC_SECTION(sectionName.str())
+        {
+          std::shared_ptr<ProceduralVdbVolumeMulti> v(
+              generateMultiAttributeVdbVolumeFloat(getOpenVKLDevice(),
+                                                   dimensions,
+                                                   gridOrigin,
+                                                   gridSpacing,
+                                                   repackNodes,
+                                                   VKL_DATA_DEFAULT,
+                                                   true,
+                                                   TemporalConfig()));
+
+          scalar_multi_attribute_interval_iterator_tests(v);
+        }
+      }
     }
   }
 

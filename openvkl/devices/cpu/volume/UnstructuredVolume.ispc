@@ -1,4 +1,4 @@
-// Copyright 2019-2021 Intel Corporation
+// Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
@@ -16,12 +16,12 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
   return t1 & t2 & t3 & t4 & t5 & t6;
 }
 
-#define template_traverseEmbree(userFuncType, resultType)                      \
-  inline void traverseEmbree(uniform Node *uniform root,                       \
-                             const void *uniform userPtr,                      \
-                             uniform userFuncType userFunc,                    \
-                             resultType &result,                               \
-                             const vec3f &samplePos)                           \
+#define template_traverseBVHSingle(userFuncType, resultType)                   \
+  inline void traverseBVHSingle(uniform Node *uniform root,                    \
+                                const void *uniform userPtr,                   \
+                                uniform userFuncType userFunc,                 \
+                                resultType &result,                            \
+                                const vec3f &samplePos)                        \
   {                                                                            \
     uniform Node *uniform node = root;                                         \
     uniform Node *uniform nodeStack[32]; /* xxx */                             \
@@ -30,9 +30,62 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
     while (1) {                                                                \
       uniform bool isLeaf = (node->nominalLength.x < 0);                       \
       if (isLeaf) {                                                            \
-        uniform LeafNode *uniform leaf = (uniform LeafNode * uniform) node;    \
-        if (userFunc(userPtr, leaf->cellID, result, samplePos))                \
-          return;                                                              \
+        uniform LeafNodeSingle *uniform leaf =                                 \
+            (uniform LeafNodeSingle * uniform) node;                           \
+        if (pointInAABBTest(leaf->super.bounds, samplePos)) {                  \
+          if (userFunc(userPtr, leaf->cellID, result, samplePos))              \
+            return;                                                            \
+        }                                                                      \
+      } else {                                                                 \
+        uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node; \
+        const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);         \
+        const bool in1 = pointInAABBTest(inner->bounds[1], samplePos);         \
+                                                                               \
+        if (any(in0)) {                                                        \
+          if (any(in1)) {                                                      \
+            nodeStack[stackPtr++] = inner->children[1];                        \
+            node                  = inner->children[0];                        \
+            continue;                                                          \
+          } else {                                                             \
+            node = inner->children[0];                                         \
+            continue;                                                          \
+          }                                                                    \
+        } else {                                                               \
+          if (any(in1)) {                                                      \
+            node = inner->children[1];                                         \
+            continue;                                                          \
+          } else {                                                             \
+            /* Do nothing, just pop. */                                        \
+          }                                                                    \
+        }                                                                      \
+      }                                                                        \
+      if (stackPtr == 0)                                                       \
+        return;                                                                \
+      node = nodeStack[--stackPtr];                                            \
+    }                                                                          \
+  }
+
+#define template_traverseBVHMulti(userFuncType, resultType)                    \
+  inline void traverseBVHMulti(uniform Node *uniform root,                     \
+                               const void *uniform userPtr,                    \
+                               uniform userFuncType userFunc,                  \
+                               resultType &result,                             \
+                               const vec3f &samplePos)                         \
+  {                                                                            \
+    uniform Node *uniform node = root;                                         \
+    uniform Node *uniform nodeStack[32]; /* xxx */                             \
+    uniform int stackPtr = 0;                                                  \
+                                                                               \
+    while (1) {                                                                \
+      uniform bool isLeaf = (node->nominalLength.x < 0);                       \
+      if (isLeaf) {                                                            \
+        uniform LeafNodeMulti *uniform leaf =                                  \
+            (uniform LeafNodeMulti * uniform) node;                            \
+        if (pointInAABBTest(leaf->super.bounds, samplePos)) {                  \
+          if (userFunc(                                                        \
+                  userPtr, leaf->numCells, leaf->cellIDs, result, samplePos))  \
+            return;                                                            \
+        }                                                                      \
       } else {                                                                 \
         uniform InnerNode *uniform inner = (uniform InnerNode * uniform) node; \
         const bool in0 = pointInAABBTest(inner->bounds[0], samplePos);         \
@@ -65,16 +118,21 @@ inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
 // #define USE_STACKLESS_TRAVERSAL
 
 #ifndef USE_STACKLESS_TRAVERSAL
-template_traverseEmbree(intersectAndSamplePrim, float);
+template_traverseBVHSingle(intersectAndSamplePrim, float);
 #endif
 
-template_traverseEmbree(intersectAndGradientPrim, vec3f);
-#undef template_traverseEmbree
+template_traverseBVHSingle(intersectAndGradientPrim, vec3f);
+
+template_traverseBVHMulti(intersectAndSamplePrimM, float);
+template_traverseBVHMulti(intersectAndGradientPrimM, vec3f);
+
+#undef template_traverseBVHSingle
+#undef template_traverseBVHMulti
 
 #ifdef USE_STACKLESS_TRAVERSAL
 // stackless traversal; this approach may be useful with traversal caches in the
 // future
-inline void traverseEmbree(uniform Node *uniform root,
+inline void traverseBVH(uniform Node *uniform root,
                            const void *uniform userPtr,
                            uniform intersectAndSamplePrim userFunc,
                            float &result,
@@ -1229,11 +1287,11 @@ inline varying float VKLUnstructuredVolume_sample(
 
   float results = self->super.super.background[0];
 
-  traverseEmbree(self->super.bvhRoot,
-                 self,
-                 intersectAndSampleCell,
-                 results,
-                 worldCoordinates);
+  traverseBVHSingle(self->super.bvhRoot,
+                    self,
+                    intersectAndSampleCell,
+                    results,
+                    worldCoordinates);
 
   return results;
 }

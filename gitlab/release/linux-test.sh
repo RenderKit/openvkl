@@ -2,6 +2,9 @@
 ## Copyright 2020 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+# abort on any error
+set -e
+
 ROOT_DIR=$PWD
 
 #### Extract release package ####
@@ -22,8 +25,12 @@ cmake ../examples/from_openvkl_install
 
 cmake --build .
 
-#### Run tutorial to verify functionality ###
+#### Run tutorial to verify functionality ####
 
 export LD_LIBRARY_PATH=${openvkl_DIR}/lib:${LD_LIBRARY_PATH}
 
 ./vklTutorial
+
+#### Run binaries from release package to verify functionality ####
+
+${openvkl_DIR}/bin/vklMinimal_06

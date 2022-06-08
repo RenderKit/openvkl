@@ -12,6 +12,11 @@ set(BOOST_CONF "./bootstrap.sh")
 set(BOOST_BUILD "./b2")
 set(BOOST_LINK "shared")
 
+if (WIN32)
+  set(BOOST_CONF "bootstrap.bat")
+  set(BOOST_BUILD "b2.exe")
+endif()
+
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
   set(BOOST_ARCH "arm")
 else()

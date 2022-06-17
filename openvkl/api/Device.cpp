@@ -3,13 +3,15 @@
 
 #include "Device.h"
 #include <sstream>
-#include "../common/objectFactory.h"
 #include "ispc_util_ispc.h"
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/StringManip.h"
 #include "rkcommon/utility/getEnvVar.h"
 
 namespace openvkl {
+
+  static ObjectFactory<Device, VKL_DEVICE> g_devicesFactory;
+
   namespace api {
 
     // helper functions
@@ -110,10 +112,14 @@ namespace openvkl {
         std::stringstream ss;
         ss << cpuDeviceName << "_" << requestedDeviceWidth;
 
-        return objectFactory<Device, VKL_DEVICE>(nullptr, ss.str());
+        return g_devicesFactory.createInstance(nullptr, ss.str());
       }
+      return g_devicesFactory.createInstance(nullptr, deviceName);
+    }
 
-      return objectFactory<Device, VKL_DEVICE>(nullptr, deviceName);
+    void Device::registerType(const std::string &type, FactoryFcn<Device> f)
+    {
+      g_devicesFactory.registerType(type, f);
     }
 
     void Device::commit()

@@ -5,6 +5,7 @@
 
 #include <functional>
 #include <string>
+#include "../common/ObjectFactory.h"
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
@@ -33,6 +34,7 @@ namespace openvkl {
       virtual ~Device() override = default;
 
       static Device *createDevice(const std::string &deviceName);
+      static void registerType(const std::string &type, FactoryFcn<Device> f);
 
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;

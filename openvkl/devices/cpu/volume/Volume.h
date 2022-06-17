@@ -4,8 +4,8 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
+#include "../common/ObjectFactory.h"
 #include "../common/export_util.h"
-#include "../common/objectFactory.h"
 #include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
 #include "Volume_ispc.h"
@@ -42,6 +42,8 @@ namespace openvkl {
       virtual ~Volume() override = default;
 
       static Volume *createInstance(Device *device, const std::string &type);
+      static void registerType(const std::string &type,
+                               FactoryFcn<Volume<W>> f);
 
       virtual Sampler<W> *newSampler() = 0;
 
@@ -60,6 +62,8 @@ namespace openvkl {
 
      protected:
       void *ispcEquivalent{nullptr};
+
+      static ObjectFactory<Volume, VKL_VOLUME> volumeFactory;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -68,7 +72,15 @@ namespace openvkl {
     inline Volume<W> *Volume<W>::createInstance(Device *device,
                                                 const std::string &type)
     {
-      return createInstanceHelper<Volume<W>, VKL_VOLUME>(device, type);
+      return createInstanceHelper<Volume<W>, VKL_VOLUME>(
+          device, type, volumeFactory);
+    }
+
+    template <int W>
+    inline void Volume<W>::registerType(const std::string &type,
+                                        FactoryFcn<Volume<W>> f)
+    {
+      volumeFactory.registerType(type, f);
     }
 
     template <int W>
@@ -76,6 +88,9 @@ namespace openvkl {
     {
       return ispcEquivalent;
     }
+
+    template <int W>
+    ObjectFactory<Volume<W>, VKL_VOLUME> Volume<W>::volumeFactory;
 
 #define VKL_REGISTER_VOLUME(InternalClass, external_name) \
   VKL_REGISTER_OBJECT(                                    \

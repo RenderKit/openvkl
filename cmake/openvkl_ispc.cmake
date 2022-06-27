@@ -311,3 +311,8 @@ macro (OPENVKL_ISPC_COMPILE)
     set(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
   endforeach()
 endmacro()
+
+if (NOT ISPCRT_FOUND)
+  set(ISPCRT_VERSION_REQUIRED "1.19.0")
+  find_package(ispcrt ${ISPCRT_VERSION_REQUIRED} REQUIRED)
+endif()

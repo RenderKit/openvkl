@@ -224,12 +224,14 @@ foreach(TARGET_WIDTH 4 8 16)
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
       $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
+      $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
   )
 
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
       $<BUILD_INTERFACE:rkcommon::rkcommon>
+      $<BUILD_INTERFACE:ispcrt::ispcrt>
     PRIVATE
       embree
       $<INSTALL_INTERFACE:rkcommon::rkcommon>

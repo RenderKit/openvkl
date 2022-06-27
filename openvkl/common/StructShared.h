@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <new>
 #include <type_traits>
+#include "ispcrt.hpp"
 
 namespace ispc {
 

@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Data.h"
+#include "BufferShared.h"
 #include "rkcommon/memory/malloc.h"
 
 namespace openvkl {
+
+  ispcrt::Context *g_ispcrtContext = nullptr;
 
   ispc::Data1D Data::emptyData1D;
 
@@ -36,7 +39,8 @@ namespace openvkl {
       const size_t naturalByteStride = sizeOf(dataType);
       const size_t numBytes          = numItems * naturalByteStride;
 
-      void *buffer = rkcommon::memory::alignedMalloc(numBytes + 16);
+      view = BufferSharedCreate(numBytes + 16);
+      void *buffer = ispcrtSharedPtr(view);
 
       if (buffer == nullptr) {
         throw std::bad_alloc();
@@ -52,9 +56,10 @@ namespace openvkl {
         }
       }
 
-      addr       = (char *)buffer;
+      addr = (char *)buffer;
       byteStride = naturalByteStride;
     } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
+      view = nullptr; //TODO add code to inspect and reuse and copy as required here
       addr = (char *)source;
     } else {
       throw std::runtime_error("VKLData: unknown data creation flags provided");
@@ -94,13 +99,14 @@ namespace openvkl {
 
     const size_t numBytes = numItems * byteStride;
 
-    void *buffer = rkcommon::memory::alignedMalloc(numBytes + 16);
+    view = BufferSharedCreate(numBytes + 16);
+    void *buffer = (char *)ispcrtSharedPtr(view);
 
     if (buffer == nullptr) {
       throw std::bad_alloc();
     }
 
-    addr = (char *)buffer;
+    addr = (char *)ispcrtSharedPtr(view);
 
     managedObjectType = VKL_DATA;
 
@@ -123,7 +129,7 @@ namespace openvkl {
     }
 
     if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
-      rkcommon::memory::alignedFree(addr);
+      BufferSharedDelete(view);
     }
   }
 

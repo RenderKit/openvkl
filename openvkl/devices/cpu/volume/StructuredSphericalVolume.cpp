@@ -17,10 +17,8 @@ namespace openvkl {
     template <int W>
     void StructuredSphericalVolume<W>::commit()
     {
-      StructuredVolume<W>::commit();
-
       if (!this->SharedStructInitialized) {
-        CALL_ISPC(SharedStructuredVolume_Constructor, this->getSh());
+        SharedStructuredVolume_Constructor(this->getSh());
         this->SharedStructInitialized = true;
 
         if (!this->SharedStructInitialized) {
@@ -29,6 +27,7 @@ namespace openvkl {
               "StructuredSphericalVolume");
         }
       }
+      StructuredVolume<W>::commit();
 
       // each object coordinate must correspond to a unique logical coordinate;
       // we therefore currently require:
@@ -83,21 +82,21 @@ namespace openvkl {
       std::vector<const ispc::Data1D *> ispcAttributesData =
           ispcs(this->attributesData);
 
-      bool success = CALL_ISPC(SharedStructuredVolume_set,
+      bool success = SharedStructuredVolume_set(
                                this->getSh(),
                                ispcAttributesData.size(),
                                ispcAttributesData.data(),
                                this->temporallyStructuredNumTimesteps,
                                ispc(this->temporallyUnstructuredIndices),
                                ispc(this->temporallyUnstructuredTimes),
-                               (const ispc::vec3i &)this->dimensions,
+                               this->dimensions,
                                ispc::structured_spherical,
-                               (const ispc::vec3f &)gridOriginRadians,
-                               (const ispc::vec3f &)gridSpacingRadians,
+                               gridOriginRadians,
+                               gridSpacingRadians,
                                (ispc::VKLFilter)this->filter);
 
       if (!success) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
+        SharedStructuredVolume_Destructor(this->getSh());
         this->SharedStructInitialized = false;
 
         throw std::runtime_error("failed to commit StructuredSphericalVolume");

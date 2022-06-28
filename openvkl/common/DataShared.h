@@ -20,7 +20,7 @@ namespace ispc {
 #ifdef __cplusplus
     VKLDataType dataType;
 #else
-  vkl_uint32 dataType;
+    vkl_uint32 dataType;
 #endif
     bool compact;
   };

@@ -8,6 +8,8 @@
 #include <type_traits>
 #include "ispcrt.hpp"
 
+#include "BufferShared.h"
+
 namespace ispc {
 
   // Shared structure members may use ispc specific types
@@ -24,7 +26,7 @@ namespace openvkl {
       derive from AddStructShared<cpp::Base, ispc::StructShared>
 
      We use multiple inheritance with a virtual base class, thus only a single
-     instance of structSharedPtr is present, which will be initialized first.
+     instance of structSharedView is present, which will be initialized first.
      StructSharedGet adds getSh returning the correctly typed pointer. It is
      derived from first to handle the memory allocation with the maximum size of
      the final StructShared. StructSharedGet does not have any data to ensure
@@ -32,34 +34,17 @@ namespace openvkl {
      the same).
   */
 
-  inline void *BufferSharedCreate(size_t size)
-  {
-    return malloc(size);
-  }
-
-  inline void BufferSharedDelete(void *ptr)
-  {
-    free(ptr);
-  }
-
   template <typename T>
-  T *BufferSharedCreate(size_t count, const T *data)
+  inline ISPCRTMemoryView StructSharedCreate()
   {
-    T *ptr = (T *)BufferSharedCreate(sizeof(T) * count);
-    if (data)
-      memcpy(ptr, data, sizeof(T) * count);
-    return ptr;
+    ISPCRTMemoryView view = BufferSharedCreate(sizeof(T));
+    new (ispcrtSharedPtr(view)) T;
+    return view;
   }
 
-  template <typename T>
-  inline T *StructSharedCreate()
+  struct StructSharedView
   {
-    return new (BufferSharedCreate(sizeof(T))) T;
-  }
-
-  struct StructSharedPtr
-  {
-    ~StructSharedPtr();
+    ~StructSharedView();
 
     template <typename, typename>
     friend struct StructSharedGet;
@@ -68,13 +53,13 @@ namespace openvkl {
     friend struct AddStructShared;
 
    private:
-    void *structSharedPtr{nullptr};
+    ISPCRTMemoryView structSharedView{nullptr};
   };
 
   template <typename T, typename>
   struct StructSharedGet
   {
-    StructSharedGet(void **);
+    StructSharedGet(ISPCRTMemoryView *);
     T *getSh() const;
   };
 
@@ -119,7 +104,7 @@ namespace openvkl {
   struct AddStructShared
       : public StructSharedGet<Struct, AddStructShared<Base, Struct>>,
         public Base,
-        public virtual StructSharedPtr
+        public virtual StructSharedView
   {
     using StructShared_t = Struct;
     using StructSharedGet<Struct, AddStructShared<Base, Struct>>::getSh;
@@ -131,7 +116,7 @@ namespace openvkl {
     template <typename... Args>
     AddStructShared(Args &&...args)
         : StructSharedGet<Struct, AddStructShared<Base, Struct>>(
-              &structSharedPtr),
+              &structSharedView),
           Base(std::forward<Args>(args)...)
     {
     }
@@ -139,22 +124,23 @@ namespace openvkl {
 
   // Inlined definitions ////////////////////////////////////////
 
-  inline StructSharedPtr::~StructSharedPtr()
+  inline StructSharedView::~StructSharedView()
   {
-    BufferSharedDelete(structSharedPtr);
+    BufferSharedDelete(structSharedView);
   }
 
   template <typename T, typename B>
-  StructSharedGet<T, B>::StructSharedGet(void **ptr)
+  StructSharedGet<T, B>::StructSharedGet(ISPCRTMemoryView *view)
   {
-    if (!*ptr)
-      *ptr = StructSharedCreate<T>();
+    if (!*view)
+      *view = StructSharedCreate<T>();
   }
 
   template <typename T, typename B>
   T *StructSharedGet<T, B>::getSh() const
   {
-    return static_cast<T *>(static_cast<const B *>(this)->structSharedPtr);
+    return static_cast<T *>(
+        ispcrtHostPtr(static_cast<const B *>(this)->structSharedView));
   }
 
   // Testing ////////////////////////////////////////////////////

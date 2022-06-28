@@ -118,7 +118,13 @@ namespace openvkl {
           filter(volume.getFilter()),
           gradientFilter(volume.getGradientFilter())
     {
-      CALL_ISPC(StructuredSampler_create, volume.getSh(), this->getSh());
+      ispc::StructuredSamplerShared * ssampler =
+          (ispc::StructuredSamplerShared * ) this->getSh();
+      memset(ssampler, 0, sizeof(ispc::StructuredSamplerShared));
+
+      ispc::SamplerShared *sampler = &ssampler->super.super;
+      sampler->volume                = (const ispc::VolumeShared *)volume.getSh();
+      CALL_ISPC(assignStructuredSamplerKernels, this->getSh());
     }
 
     template <int W,
@@ -129,7 +135,6 @@ namespace openvkl {
     inline StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
         ~StructuredSampler()
     {
-      CALL_ISPC(StructuredSampler_destroy, this->getSh());
     }
 
     template <int W,

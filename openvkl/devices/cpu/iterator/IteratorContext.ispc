@@ -58,11 +58,6 @@ export void EXPORT_UNIQUE(HitIteratorContext_Constructor,
       (uniform HitIteratorContext * uniform) _self;
 
   self->numValues = numValues;
-  self->values    = uniform new uniform float[numValues];
-
-  foreach (i = 0 ... numValues) {
-    self->values[i] = values[i];
-  }
 
   // superclass parameters
   self->super.super.sampler        = (const SamplerShared *uniform)sampler;
@@ -80,8 +75,6 @@ export void EXPORT_UNIQUE(HitIteratorContext_Destructor, void *uniform _self)
 {
   uniform HitIteratorContext *uniform self =
       (uniform HitIteratorContext * uniform) _self;
-
-  delete[] self->values;
 
   ValueRanges_Destructor(self->super.super.valueRanges);
 }

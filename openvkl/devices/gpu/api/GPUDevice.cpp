@@ -18,6 +18,15 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
+    GPUDevice<W>::~GPUDevice()
+    {
+      if (g_ispcrtContext && ispcrtOwned) {
+        delete g_ispcrtContext;
+        g_ispcrtContext = nullptr;
+      }
+    }
+
+    template <int W>
     bool GPUDevice<W>::supportsWidth(int width)
     {
       return width == W || width == 4 || width == 8 || width == 16;
@@ -33,6 +42,25 @@ namespace openvkl {
     void GPUDevice<W>::commit()
     {
       Device::commit();
+
+      const void *ispcContextAddr = getParam<const void*>("ispcContext", nullptr);
+      if (ispcContextAddr) {
+        if (g_ispcrtContext) {
+          if (ispcrtOwned) {
+            delete g_ispcrtContext;
+          }
+          postLogMessage(this, VKL_LOG_WARNING)
+                << "Changing a GPUDevice's ispcrtContext will lead to problems."
+                << "Do not commit a GPUDevice more than once.";
+        }
+        ispcrtOwned = false;
+        g_ispcrtContext = (ispcrt::Context*)ispcContextAddr;
+      } else {
+        if (!g_ispcrtContext) {
+          g_ispcrtContext = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
+          ispcrtOwned = true;
+        }
+      }
     }
 
     template <int W>

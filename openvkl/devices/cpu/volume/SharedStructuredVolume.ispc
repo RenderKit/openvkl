@@ -4,85 +4,10 @@
 #include "../common/export_util.h"
 #include "GridAccelerator.ih"
 #include "SharedStructuredVolume.ih"
+#include "StructuredSamplerShared.h"
 
 // #define PRINT_DEBUG_ENABLE
 #include "../common/print_debug.ih"
-
-inline void computeStructuredSphericalBoundingBox(
-    const SharedStructuredVolume *uniform self, uniform box3f &boundingBox)
-{
-  uniform box1f rRange = make_box1f(
-      self->gridOrigin.x,
-      self->gridOrigin.x + (self->dimensions.x - 1.f) * self->gridSpacing.x);
-
-  uniform box1f incRange = make_box1f(
-      self->gridOrigin.y,
-      self->gridOrigin.y + (self->dimensions.y - 1.f) * self->gridSpacing.y);
-
-  uniform box1f azRange = make_box1f(
-      self->gridOrigin.z,
-      self->gridOrigin.z + (self->dimensions.z - 1.f) * self->gridSpacing.z);
-
-  // reverse ranges in case of negative gridSpacing values
-  if (isEmpty(rRange)) {
-    rRange = make_box1f(rRange.upper, rRange.lower);
-  }
-
-  if (isEmpty(incRange)) {
-    incRange = make_box1f(incRange.upper, incRange.lower);
-  }
-
-  if (isEmpty(azRange)) {
-    azRange = make_box1f(azRange.upper, azRange.lower);
-  }
-
-  // critical values to test
-#define NUM_R_TEST_VALUES 2
-#define NUM_INCLINATION_TEST_VALUES 5
-#define NUM_AZIMUTH_TEST_VALUES 7
-
-  const uniform float rs[NUM_R_TEST_VALUES] = {rRange.lower, rRange.upper};
-
-  // inclination grid is guaranteed in [0, PI]
-  const uniform float inclinations[NUM_INCLINATION_TEST_VALUES] = {
-      0.f, 0.5f * PI, PI, incRange.lower, incRange.upper};
-
-  // azimuth grid is guaranteed in [0, 2*PI]
-  const uniform float azimuths[NUM_AZIMUTH_TEST_VALUES] = {
-      0.f, 0.5f * PI, PI, 1.5f * PI, 2.f * PI, azRange.lower, azRange.upper};
-
-  boundingBox = make_box3f_empty();
-
-  // iterate over critical values and extend bounding box
-  for (uniform int i = 0; i < NUM_R_TEST_VALUES; i++) {
-    for (uniform int j = 0; j < NUM_INCLINATION_TEST_VALUES; j++) {
-      for (uniform int k = 0; k < NUM_AZIMUTH_TEST_VALUES; k++) {
-        const uniform float r   = rs[i];
-        const uniform float inc = inclinations[j];
-        const uniform float az  = azimuths[k];
-
-        // skip values outside the grid
-        if (inc < incRange.lower || inc > incRange.upper ||
-            az < azRange.lower || az > azRange.upper) {
-          continue;
-        }
-
-        uniform float sinInc, cosInc;
-        sincos(inc, &sinInc, &cosInc);
-
-        uniform float sinAz, cosAz;
-        sincos(az, &sinAz, &cosAz);
-
-        uniform vec3f objectCoordinates;
-        objectCoordinates.x = r * sinInc * cosAz;
-        objectCoordinates.y = r * sinInc * sinAz;
-        objectCoordinates.z = r * cosInc;
-
-        boundingBox = box_extend(boundingBox, objectCoordinates);
-      }
-    }
-  }
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Macro helpers //////////////////////////////////////////////////////////////
@@ -1344,57 +1269,55 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Helper functions for handling multiple attributes //////////////////////////
+// wrappers to enable setting old-style function pointers in the Volume
+// superclass; restricts to first attribute
 ///////////////////////////////////////////////////////////////////////////////
-
-inline void destructAttributesStorage(SharedStructuredVolume *uniform self)
+varying float computeSample_varying_0_iterator_wrapper(
+    const SamplerShared *uniform _sampler,
+    const varying vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
+    const varying float &time)
 {
-  self->numAttributes = 0;
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
+  assert(sampler);
 
-  if (self->attributesData) {
-    delete[] self->attributesData;
-    self->attributesData = NULL;
-  }
-
-  if (self->computeVoxelRange) {
-    delete[] self->computeVoxelRange;
-    self->computeVoxelRange = NULL;
-  }
-
-  if (self->computeSamplesInner_varying) {
-    delete[] self->computeSamplesInner_varying;
-    self->computeSamplesInner_varying = NULL;
-  }
-
-  if (self->computeSamplesInner_uniform) {
-    delete[] self->computeSamplesInner_uniform;
-    self->computeSamplesInner_uniform = NULL;
-  }
+  return SharedStructuredVolume_computeSample_varying(
+      (const SharedStructuredVolume *uniform)sampler->volume,
+      objectCoordinates,
+      sampler->filter,
+      attributeIndex,
+      time);
 }
 
-inline void constructAttributesStorage(SharedStructuredVolume *uniform self,
-                                       const uniform uint32 numAttributes)
+uniform float computeSample_uniform_0_iterator_wrapper(
+    const SamplerShared *uniform _sampler,
+    const uniform vec3f &objectCoordinates,
+    const uniform uint32 attributeIndex,
+    const uniform float &time)
 {
-  self->numAttributes  = numAttributes;
-  self->attributesData = uniform new uniform Data1D[numAttributes];
+  const StructuredSamplerShared *uniform ssampler =
+      (const StructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
+  assert(sampler);
 
-  self->computeVoxelRange =
-      uniform new uniform ComputeVoxelRangeFunc[numAttributes];
-
-  self->computeSamplesInner_varying =
-      uniform new uniform ComputeSampleInnerVaryingFunc[numAttributes];
-
-  self->computeSamplesInner_uniform =
-      uniform new uniform ComputeSampleInnerUniformFunc[numAttributes];
+  return SharedStructuredVolume_computeSample_uniform(
+      (const SharedStructuredVolume *uniform)sampler->volume,
+      objectCoordinates,
+      sampler->filter,
+      attributeIndex,
+      time);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper functions for assigning sampling functions //////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-inline uniform bool assignTemporallyConstantSamplingFunctions(
-    SharedStructuredVolume *uniform self, const uniform uint32 attributeIndex)
+export uniform bool EXPORT_UNIQUE(assignTemporallyConstantSamplingFunctions,
+    void *uniform _self, const uniform uint32 attributeIndex)
 {
+  SharedStructuredVolume *uniform self = (SharedStructuredVolume *uniform) _self;
   assert(!(hasStructuredTimeData(self) || hasUnstructuredTimeData(self)));
 
   ComputeVoxelRangeFunc cvr            = NULL;
@@ -1542,9 +1465,10 @@ inline uniform bool assignTemporallyConstantSamplingFunctions(
   return true;
 }
 
-inline uniform bool assignTemporallyStructuredSamplingFunctions(
-    SharedStructuredVolume *uniform self, const uniform uint32 attributeIndex)
+export uniform bool EXPORT_UNIQUE(assignTemporallyStructuredSamplingFunctions,
+    void *uniform _self, const uniform uint32 attributeIndex)
 {
+  SharedStructuredVolume *uniform self = (SharedStructuredVolume *uniform) _self;
   assert(hasStructuredTimeData(self));
 
   ComputeVoxelRangeFunc cvr            = NULL;
@@ -1694,9 +1618,10 @@ inline uniform bool assignTemporallyStructuredSamplingFunctions(
   return true;
 }
 
-inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
-    SharedStructuredVolume *uniform self, const uniform uint32 attributeIndex)
+export uniform bool EXPORT_UNIQUE(assignTemporallyUnstructuredSamplingFunctions,
+    void *uniform _self, const uniform uint32 attributeIndex)
 {
+  SharedStructuredVolume *uniform self = (SharedStructuredVolume *uniform) _self;
   assert(hasUnstructuredTimeData(self));
 
   ComputeVoxelRangeFunc cvr            = NULL;
@@ -1845,6 +1770,26 @@ inline uniform bool assignTemporallyUnstructuredSamplingFunctions(
   return true;
 }
 
+export void EXPORT_UNIQUE(assignComputeGradientChecks, void *uniform _self) {
+ SharedStructuredVolume *uniform self = (SharedStructuredVolume *uniform) _self;
+ if (self->gridType == structured_regular)
+ {
+   self->computeGradient_varying = SharedStructuredVolume_computeGradient_bbox_checks;
+ } else if (self->gridType == structured_spherical) {
+   self->computeGradient_varying = SharedStructuredVolume_computeGradient_NaN_checks;
+ }
+}
+
+export void EXPORT_UNIQUE(assignStructuredSamplerKernels,
+                          void *uniform _self)
+{
+  StructuredSamplerShared *uniform ssampler =
+      (StructuredSamplerShared * uniform) _self;
+  SamplerShared *uniform sampler = &ssampler->super.super;
+  sampler->computeSample_uniform = computeSample_uniform_0_iterator_wrapper;
+  sampler->computeSample_varying = computeSample_varying_0_iterator_wrapper;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // SharedStructuredVolume exported functions //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -1858,8 +1803,6 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_getBoundingBox,
 
   boundingBox = self->boundingBox;
 }
-
-#include "StructuredSamplerShared.h"
 
 export void EXPORT_UNIQUE(SharedStructuredVolume_sample_export,
                           uniform const int *uniform imask,
@@ -2110,199 +2053,3 @@ export void EXPORT_UNIQUE(SharedStructuredVolume_sampleM_N_export,
   }
 }
 
-export void EXPORT_UNIQUE(SharedStructuredVolume_Destructor,
-                          void *uniform _self)
-{
-  uniform SharedStructuredVolume *uniform self =
-      (uniform SharedStructuredVolume * uniform) _self;
-
-  destructAttributesStorage(self);
-
-  if (self->accelerator) {
-    GridAccelerator_Destructor(self->accelerator);
-  }
-}
-
-export void EXPORT_UNIQUE(SharedStructuredVolume_Constructor,
-                          void *uniform _self)
-{
-  uniform SharedStructuredVolume *uniform self =
-      (uniform SharedStructuredVolume * uniform) _self;
-
-  memset(self, 0, sizeof(uniform SharedStructuredVolume));
-}
-
-export uniform bool EXPORT_UNIQUE(
-    SharedStructuredVolume_set,
-    void *uniform _self,
-    const uniform uint32 numAttributes,
-    const Data1D *uniform *uniform attributesData,
-    const uniform uint32 temporallyStructuredNumTimesteps,
-    const Data1D *uniform temporallyUnstructuredIndices,
-    const Data1D *uniform temporallyUnstructuredTimes,
-    const uniform vec3i &dimensions,
-    const uniform SharedStructuredVolumeGridType gridType,
-    const uniform vec3f &gridOrigin,
-    const uniform vec3f &gridSpacing,
-    const uniform VKLFilter filter)
-{
-  uniform SharedStructuredVolume *uniform self =
-      (uniform SharedStructuredVolume * uniform) _self;
-
-  destructAttributesStorage(self);
-  constructAttributesStorage(self, numAttributes);
-
-  for (uniform uint32 i = 0; i < numAttributes; i++) {
-    self->attributesData[i] = *(attributesData[i]);
-  }
-
-  self->temporallyStructuredNumTimesteps = temporallyStructuredNumTimesteps;
-
-  if (temporallyUnstructuredIndices) {
-    self->temporallyUnstructuredIndices = *(temporallyUnstructuredIndices);
-  } else {
-    self->temporallyUnstructuredIndices.addr     = NULL;
-    self->temporallyUnstructuredIndices.numItems = 0;
-  }
-  if (temporallyUnstructuredTimes) {
-    self->temporallyUnstructuredTimes = *(temporallyUnstructuredTimes);
-  } else {
-    self->temporallyUnstructuredTimes.addr     = NULL;
-    self->temporallyUnstructuredTimes.numItems = 0;
-  }
-
-  self->dimensions  = dimensions;
-  self->gridType    = gridType;
-  self->gridOrigin  = gridOrigin;
-  self->gridSpacing = gridSpacing;
-
-  if (self->gridType == structured_regular) {
-    self->boundingBox = make_box3f(
-        gridOrigin, gridOrigin + make_vec3f(dimensions - 1.f) * gridSpacing);
-
-    self->computeGradient_varying =
-        SharedStructuredVolume_computeGradient_bbox_checks;
-
-  } else if (self->gridType == structured_spherical) {
-    computeStructuredSphericalBoundingBox(self, self->boundingBox);
-
-    self->computeGradient_varying =
-        SharedStructuredVolume_computeGradient_NaN_checks;
-  } else {
-    print("#vkl:shared_structured_volume: unknown gridType\n");
-    return false;
-  }
-
-  self->localCoordinatesUpperBound =
-      nextafter(self->dimensions - 1, make_vec3i(0));
-
-  self->voxelOfs_dx = 1;
-  self->voxelOfs_dy = dimensions.x;
-  self->voxelOfs_dz = dimensions.x * dimensions.y;
-
-  self->filter = filter;
-
-  for (uniform uint32 i = 0; i < numAttributes; i++) {
-    uniform bool success = false;
-
-    if (hasStructuredTimeData(self)) {
-      success = assignTemporallyStructuredSamplingFunctions(self, i);
-      PRINT_DEBUG(
-          "#vkl:shared_structured_volume: attribute % temporally structured\n",
-          i);
-
-    } else if (hasUnstructuredTimeData(self)) {
-      success = assignTemporallyUnstructuredSamplingFunctions(self, i);
-      PRINT_DEBUG(
-          "#vkl:shared_structured_volume: attribute % temporally "
-          "unstructured\n",
-          i);
-
-    } else {
-      success = assignTemporallyConstantSamplingFunctions(self, i);
-      PRINT_DEBUG(
-          "#vkl:shared_structured_volume: attribute % temporally constant\n",
-          i);
-    }
-
-    if (!success) {
-      print(
-          "#vkl:shared_structured_volume: error assigning sampling "
-          "functions\n");
-      return false;
-    }
-  }
-
-  return true;
-}
-
-export void *uniform EXPORT_UNIQUE(SharedStructuredVolume_createAccelerator,
-                                   void *uniform _self)
-{
-  uniform SharedStructuredVolume *uniform self =
-      (uniform SharedStructuredVolume * uniform) _self;
-
-  if (self->accelerator) {
-    GridAccelerator_Destructor(self->accelerator);
-  }
-
-  self->accelerator = GridAccelerator_Constructor(self);
-
-  return self->accelerator;
-}
-
-// wrappers to enable setting old-style function pointers in the Volume
-// superclass; restricts to first attribute
-varying float computeSample_varying_0_iterator_wrapper(
-    const SamplerShared *uniform _sampler,
-    const varying vec3f &objectCoordinates,
-    const uniform uint32 attributeIndex,
-    const varying float &time)
-{
-  const StructuredSamplerShared *uniform ssampler =
-      (const StructuredSamplerShared *uniform)_sampler;
-  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
-  assert(sampler);
-
-  return SharedStructuredVolume_computeSample_varying(
-      (const SharedStructuredVolume *uniform)sampler->volume,
-      objectCoordinates,
-      sampler->filter,
-      attributeIndex,
-      time);
-}
-
-uniform float computeSample_uniform_0_iterator_wrapper(
-    const SamplerShared *uniform _sampler,
-    const uniform vec3f &objectCoordinates,
-    const uniform uint32 attributeIndex,
-    const uniform float &time)
-{
-  const StructuredSamplerShared *uniform ssampler =
-      (const StructuredSamplerShared *uniform)_sampler;
-  const SamplerShared *uniform sampler = (const SamplerShared *uniform)_sampler;
-  assert(sampler);
-
-  return SharedStructuredVolume_computeSample_uniform(
-      (const SharedStructuredVolume *uniform)sampler->volume,
-      objectCoordinates,
-      sampler->filter,
-      attributeIndex,
-      time);
-}
-
-export void EXPORT_UNIQUE(StructuredSampler_create,
-                          const void *uniform _volume,
-                          void *uniform _self)
-{
-  StructuredSamplerShared *uniform ssampler =
-      (StructuredSamplerShared * uniform) _self;
-  memset(ssampler, 0, sizeof(uniform StructuredSamplerShared));
-
-  SamplerShared *uniform sampler = &ssampler->super.super;
-  sampler->volume                = (const VolumeShared *uniform)_volume;
-  sampler->computeSample_uniform = computeSample_uniform_0_iterator_wrapper;
-  sampler->computeSample_varying = computeSample_varying_0_iterator_wrapper;
-}
-
-export void EXPORT_UNIQUE(StructuredSampler_destroy, void *uniform _sampler) {}

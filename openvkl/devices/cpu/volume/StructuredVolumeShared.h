@@ -51,6 +51,12 @@ typedef varying range1f (*uniform ComputeVoxelRangeFunc)(
 
 #endif  // __cplusplus
 
+  enum SharedStructuredVolumeGridType
+  {
+    structured_regular,
+    structured_spherical
+  };
+
   struct SharedStructuredVolume
   {
     VolumeShared super;

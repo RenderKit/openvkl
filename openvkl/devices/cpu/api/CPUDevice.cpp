@@ -11,6 +11,7 @@
 #include "../sampler/Sampler.h"
 #include "../volume/Volume.h"
 #include "CPUDevice_ispc.h"
+#include "../common/BufferShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -18,6 +19,15 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
     // CPUDevice //////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    CPUDevice<W>::~CPUDevice()
+    {
+      if (g_ispcrtContext) {
+        delete g_ispcrtContext;
+        g_ispcrtContext = nullptr;
+      }
+    }
 
     template <int W>
     bool CPUDevice<W>::supportsWidth(int width)
@@ -35,6 +45,10 @@ namespace openvkl {
     void CPUDevice<W>::commit()
     {
       Device::commit();
+
+      if (!g_ispcrtContext) {
+        g_ispcrtContext = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
+      }
 
       VKLISPCTarget target =
           static_cast<VKLISPCTarget>(CALL_ISPC(ISPC_getTarget));

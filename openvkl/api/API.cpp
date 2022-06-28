@@ -302,6 +302,16 @@ extern "C" void vklDeviceSetString(VKLDevice device,
 }
 OPENVKL_CATCH_END()
 
+extern "C" void vklDeviceSetVoidPtr(VKLDevice device,
+                                   const char *name,
+                                   const void *a)
+    OPENVKL_CATCH_BEGIN_SAFE(device)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setParam<const void*>(name, a);
+}
+OPENVKL_CATCH_END()
+
 extern "C" void vklCommitDevice(VKLDevice device)
     OPENVKL_CATCH_BEGIN_SAFE(device)
 {

@@ -6,24 +6,7 @@
 #include "../iterator/GridAcceleratorIterator.ih"
 #include "GridAccelerator.ih"
 #include "../math/box_utility.ih"
-
-// bit count used to represent the brick width in macrocells
-#define BRICK_WIDTH_BITCOUNT (4)
-
-// brick width in macrocells
-#define BRICK_WIDTH (1 << BRICK_WIDTH_BITCOUNT)
-
-// brick count in macrocells
-#define BRICK_CELL_COUNT (BRICK_WIDTH * BRICK_WIDTH * BRICK_WIDTH)
-
-// bit count used to represent the macrocell width in volume cells
-#define CELL_WIDTH_BITCOUNT (4)
-
-// macrocell width in volume cells
-#define CELL_WIDTH (1 << CELL_WIDTH_BITCOUNT)
-
-// reciprocal of macrocell width in volume cells
-#define RCP_CELL_WIDTH 1.f / CELL_WIDTH
+#include "GridAccelerator.h"
 
 #define template_GridAccelerator_getters(univary)                              \
   inline univary uint32 GridAccelerator_getCellIndex1D(                        \
@@ -157,46 +140,6 @@ inline void GridAccelerator_encodeBrick(GridAccelerator *uniform accelerator,
           accelerator, cellIndex1D, a, valueRange);
     }
   }
-}
-
-GridAccelerator *uniform GridAccelerator_Constructor(void *uniform _volume)
-{
-  SharedStructuredVolume *uniform volume =
-      (SharedStructuredVolume * uniform) _volume;
-
-  GridAccelerator *uniform accelerator = uniform new uniform GridAccelerator;
-
-  // cells per dimension after padding out the volume dimensions to the nearest
-  // cell
-  uniform vec3i cellsPerDimension =
-      (volume->dimensions + CELL_WIDTH - 1) / CELL_WIDTH;
-
-  // bricks per dimension after padding out the cell dimensions to the nearest
-  // brick
-  accelerator->bricksPerDimension =
-      (cellsPerDimension + BRICK_WIDTH - 1) / BRICK_WIDTH;
-
-  accelerator->cellCount = accelerator->bricksPerDimension.x *
-                           accelerator->bricksPerDimension.y *
-                           accelerator->bricksPerDimension.z * BRICK_CELL_COUNT;
-
-  accelerator->cellValueRanges =
-      (accelerator->cellCount > 0)
-          ? uniform new uniform box1f[accelerator->cellCount *
-                                      volume->numAttributes]
-          : NULL;
-
-  accelerator->volume = volume;
-
-  return accelerator;
-}
-
-void GridAccelerator_Destructor(GridAccelerator *uniform accelerator)
-{
-  if (accelerator->cellValueRanges)
-    delete[] accelerator->cellValueRanges;
-
-  delete accelerator;
 }
 
 #define cif_uniform if

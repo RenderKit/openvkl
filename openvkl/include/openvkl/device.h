@@ -34,6 +34,10 @@ OPENVKL_INTERFACE void vklDeviceSetString(VKLDevice device,
                                           const char *name,
                                           const char *s);
 
+OPENVKL_INTERFACE void vklDeviceSetVoidPtr(VKLDevice device,
+                                          const char *name,
+                                          const void *a);
+
 OPENVKL_INTERFACE void vklCommitDevice(VKLDevice device);
 
 OPENVKL_INTERFACE VKLError vklDeviceGetLastErrorCode(VKLDevice device);

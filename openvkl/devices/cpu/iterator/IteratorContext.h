@@ -4,7 +4,8 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
-#include "../common/StructShared.h"
+#include "openvkl/common/BufferShared.h"
+#include "openvkl/common/StructShared.h"
 #include "IteratorContextShared.h"
 
 using namespace rkcommon::math;
@@ -73,6 +74,8 @@ namespace openvkl {
       virtual ~IntervalIteratorContext();
 
       void commit() override;
+    protected:
+      std::unique_ptr<BufferShared<range1f>> rangesView;
     };
 
     ///////////////////////////////////////////////////////////////////////////
@@ -96,6 +99,8 @@ namespace openvkl {
       virtual ~HitIteratorContext();
 
       void commit() override;
+    private:
+      std::unique_ptr<BufferShared<float>> valuesView;
     };
 
   }  // namespace cpu_device

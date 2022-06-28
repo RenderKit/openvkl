@@ -21,7 +21,7 @@ namespace openvkl {
     struct GPUDevice : public AddDeviceAPIs
     {
       GPUDevice()           = default;
-      ~GPUDevice() override = default;
+      ~GPUDevice() override;
 
       bool supportsWidth(int width) override;
 
@@ -288,6 +288,10 @@ namespace openvkl {
           vvec3fn<OW> &gradients,
           unsigned int attributeIndex,
           const float *times);
+
+      //true if VKL established and thus needs to clean up ispcrt.
+      //false if the application owns and is responsible for it.
+      bool ispcrtOwned = true;
     };
 
   }  // namespace gpu_device

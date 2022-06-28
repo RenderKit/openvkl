@@ -21,7 +21,7 @@ namespace openvkl {
     struct CPUDevice : public AddDeviceAPIs
     {
       CPUDevice()           = default;
-      ~CPUDevice() override = default;
+      ~CPUDevice() override;
 
       bool supportsWidth(int width) override;
 

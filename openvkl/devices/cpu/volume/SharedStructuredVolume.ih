@@ -12,12 +12,6 @@
 struct GridAccelerator;
 struct SharedStructuredVolume;
 
-enum SharedStructuredVolumeGridType
-{
-  structured_regular,
-  structured_spherical
-};
-
 #include "StructuredVolumeShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////

@@ -8,6 +8,7 @@
 #include "Traits.h"
 #include "openvkl/openvkl.h"
 #include "DataShared.h"
+#include "ispcrt.hpp"
 
 namespace openvkl {
 
@@ -50,6 +51,7 @@ namespace openvkl {
     static ispc::Data1D emptyData1D;  // dummy, zero-initialized
 
    protected:
+    ISPCRTMemoryView view;
     char *addr;
   };
 

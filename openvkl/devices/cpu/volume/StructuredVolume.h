@@ -8,15 +8,39 @@
 #include "../common/math.h"
 #include "../common/temporal_data_verification.h"
 #include "GridAccelerator_ispc.h"
+#include "GridAcceleratorShared.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "Volume.h"
 #include "openvkl/VKLFilter.h"
 #include "rkcommon/tasking/parallel_for.h"
 #include "openvkl/common/StructShared.h"
 #include "StructuredVolumeShared.h"
+#include "GridAccelerator.h"
 
 namespace openvkl {
   namespace cpu_device {
+
+    void destructAttributesStorage(ispc::SharedStructuredVolume * self);
+
+    void constructAttributesStorage(ispc::SharedStructuredVolume * self,
+                                    const  uint32 numAttributes);
+    void SharedStructuredVolume_Destructor(void * _self);
+
+    void SharedStructuredVolume_Constructor(
+                              void * _self);
+
+    bool SharedStructuredVolume_set(
+      void * _self,
+      const  uint32 numAttributes,
+      const ispc::Data1D * * attributesData,
+      const  uint32 temporallyStructuredNumTimesteps,
+      const ispc::Data1D * temporallyUnstructuredIndices,
+      const ispc::Data1D * temporallyUnstructuredTimes,
+      const  vec3i &dimensions,
+      const  ispc::SharedStructuredVolumeGridType gridType,
+      const  vec3f &gridOrigin,
+      const  vec3f &gridSpacing,
+      const  ispc::VKLFilter filter);
 
     template <int W>
     struct StructuredVolume
@@ -47,19 +71,22 @@ namespace openvkl {
      protected:
       void buildAccelerator();
 
-      std::vector<range1f> valueRanges;
-
       // parameters set in commit()
       vec3i dimensions;
       vec3f gridOrigin;
       vec3f gridSpacing;
       std::vector<Ref<const Data>> attributesData;
+      std::unique_ptr<BufferShared<ispc::Data1D>> deviceAttributesData;
       int temporallyStructuredNumTimesteps;
       Ref<const Data> temporallyUnstructuredIndices;
       Ref<const DataT<float>> temporallyUnstructuredTimes;
       VKLFilter filter{VKL_FILTER_TRILINEAR};
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
       Ref<const DataT<float>> background;
+     private:
+      ISPCRTMemoryView m_accelerator = nullptr;
+      std::unique_ptr<BufferShared<range1f>> valueRanges;
+      std::unique_ptr<BufferShared<ispc::box1f>> cellValueRanges;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -67,9 +94,12 @@ namespace openvkl {
     template <int W>
     StructuredVolume<W>::~StructuredVolume()
     {
+      attributesData.clear();
       if (this->SharedStructInitialized) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
+        SharedStructuredVolume_Destructor(this->getSh());
       }
+      if (m_accelerator)
+        BufferSharedDelete(m_accelerator);
     }
 
     template <int W>
@@ -95,6 +125,13 @@ namespace openvkl {
       } else {
         throw std::runtime_error(this->toString() +
                                  ": missing required 'data' parameter");
+      }
+      size_t nA = attributesData.size();
+      this->getSh()->numAttributes = nA;
+      deviceAttributesData = make_buffer_shared_unique<ispc::Data1D>(nA);
+      this->getSh()->attributesData = deviceAttributesData->sharedPtr();
+      for (size_t i = 0; i < nA; i++) {
+        this->getSh()->attributesData[i] = *(ispc(attributesData[i]));
       }
 
       // motion blur data provided by user through 2 VKLData arrays
@@ -179,15 +216,43 @@ namespace openvkl {
         unsigned int attributeIndex) const
     {
       throwOnIllegalAttributeIndex(this, attributeIndex);
-      return valueRanges[attributeIndex];
+      return valueRanges->sharedPtr()[attributeIndex];
     }
 
     template <int W>
     inline void StructuredVolume<W>::buildAccelerator()
     {
-      void *accelerator = CALL_ISPC(SharedStructuredVolume_createAccelerator,
-                                    this->getSh());
+      if (m_accelerator)
+        BufferSharedDelete(m_accelerator);
+      m_accelerator = BufferSharedCreate(sizeof(ispc::GridAccelerator));
+      auto ga = static_cast<ispc::GridAccelerator *>(ispcrtHostPtr(m_accelerator));
 
+      // cells per dimension after padding out the volume dimensions to the nearest
+      // cell
+      vec3i cellsPerDimension = vec3i(
+          (this->getSh()->dimensions.x + CELL_WIDTH - 1) / CELL_WIDTH,
+          (this->getSh()->dimensions.y + CELL_WIDTH - 1) / CELL_WIDTH,
+          (this->getSh()->dimensions.z + CELL_WIDTH - 1) / CELL_WIDTH);
+
+      // bricks per dimension after padding out the cell dimensions to the nearest
+      // brick
+      ga->bricksPerDimension =
+          (cellsPerDimension + BRICK_WIDTH - 1) / BRICK_WIDTH;
+
+      ga->cellCount = ga->bricksPerDimension.x *
+                      ga->bricksPerDimension.y *
+                      ga->bricksPerDimension.z * BRICK_CELL_COUNT;
+
+      cellValueRanges = make_buffer_shared_unique<ispc::box1f>(ga->cellCount * this->getSh()->numAttributes);
+      ga->cellValueRanges =
+          (ga->cellCount > 0)
+              ? cellValueRanges->sharedPtr()
+              : nullptr;
+
+      ga->volume = this->getSh();
+      this->getSh()->accelerator = ga;
+
+      void *accelerator = ga;
       vec3i bricksPerDimension;
       bricksPerDimension.x =
           CALL_ISPC(GridAccelerator_getBricksPerDimension_x, accelerator);
@@ -202,14 +267,14 @@ namespace openvkl {
         CALL_ISPC(GridAccelerator_build, accelerator, taskIndex);
       });
 
-      valueRanges.resize(getNumAttributes());
+      valueRanges = make_buffer_shared_unique<range1f>(getNumAttributes());
 
       for (unsigned int a = 0; a < getNumAttributes(); a++) {
         CALL_ISPC(GridAccelerator_computeValueRange,
                   accelerator,
                   a,
-                  valueRanges[a].lower,
-                  valueRanges[a].upper);
+                  (valueRanges->sharedPtr()+a)->lower,
+                  (valueRanges->sharedPtr()+a)->upper);
       }
     }
 

@@ -213,9 +213,16 @@ namespace openvkl {
           mapToMaxIteratorDepth(*this, intervalResolutionHint);
       const bool elementaryCellIteration = (intervalResolutionHint == 1.f);
 
+      auto mySharedStruct = this->getSh();
+      ispc::ValueRanges &ssValueRanges = mySharedStruct->super.valueRanges;
+
       if (this->SharedStructInitialized) {
-        CALL_ISPC(IntervalIteratorContext_Destructor, this->getSh());
+        CALL_ISPC(IntervalIteratorContext_Destructor, mySharedStruct);
       }
+
+      ssValueRanges.numRanges = valueRanges.size();
+      this->rangesView = make_buffer_shared_unique<range1f>(valueRanges);
+      ssValueRanges.ranges = (ispc::box1f*)this->rangesView->sharedPtr();
 
       CALL_ISPC(IntervalIteratorContext_Constructor,
                 this->getSampler().getSh(),
@@ -289,9 +296,18 @@ namespace openvkl {
       maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
 #endif
 
+      auto mySharedStruct = this->getSh();
+      ispc::ValueRanges &ssValueRanges = mySharedStruct->super.super.valueRanges;
+
       if (this->SharedStructInitialized) {
-        CALL_ISPC(HitIteratorContext_Destructor, this->getSh());
+        CALL_ISPC(HitIteratorContext_Destructor, mySharedStruct);
       }
+
+      this->rangesView = make_buffer_shared_unique<range1f>(values.size());
+      ssValueRanges.ranges = (ispc::box1f*)this->rangesView->sharedPtr();
+
+      this->valuesView = make_buffer_shared_unique<float>(values);
+      mySharedStruct->values = this->valuesView->sharedPtr();
 
       CALL_ISPC(HitIteratorContext_Constructor,
                 this->getSampler().getSh(),

@@ -234,12 +234,6 @@ build-centos8-module-cmake:
     - docker
     - modules
 
-build-ubuntu16.04:
-  <<: *build_job_docker
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
-  script:
-    - gitlab/build.sh -G Ninja
-
 build-ubuntu18.04:
   <<: *build_job_docker
   image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu18.04
@@ -400,12 +394,6 @@ test-functional-centos8-module-cmake:
   image: $DOCKER_REGISTRY/ospray/docker-images:centos8
   needs:
     - build-centos8-module-cmake
-
-test-functional-ubuntu16.04:
-  <<: *test_functional_job_docker_ubuntu
-  image: $DOCKER_REGISTRY/ospray/docker-images:ubuntu16.04
-  needs:
-    - build-ubuntu16.04
 
 test-functional-ubuntu18.04:
   <<: *test_functional_job_docker_ubuntu

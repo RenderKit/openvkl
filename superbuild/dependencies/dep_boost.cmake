@@ -34,7 +34,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   URL_HASH SHA256=${BOOST_HASH}
   CONFIGURE_COMMAND ${BOOST_CONF}
   BUILD_COMMAND ${BOOST_BUILD} -d0 --with-system --with-iostreams --with-regex --layout=system
-    --prefix=${COMPONENT_PATH} variant=release threading=multi address-model=64
+    --prefix=${COMPONENT_PATH} variant=release threading=multi address-model=64 -s NO_ZSTD=1
     link=${BOOST_LINK} architecture=${BOOST_ARCH} install
   INSTALL_COMMAND ""
   BUILD_ALWAYS OFF

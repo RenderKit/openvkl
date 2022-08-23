@@ -99,6 +99,7 @@ stages:
   <<: *master_release_devel_only
   stage: release
   before_script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - git submodule sync
     - git submodule init
     - git submodule update
@@ -658,6 +659,7 @@ build-kw-scan:
   script:
     - gitlab/build-kw-scan.sh
   before_script:
+    - git config --global --add safe.directory $CI_PROJECT_DIR
     - git submodule sync
     - git submodule init
     - git submodule update

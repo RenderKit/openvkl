@@ -1,0 +1,483 @@
+## Copyright 2022 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: CI Linux Workflow
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-centos7:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:7
+      artifact-out: build-centos7
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh
+
+  test-centos7:
+    needs: build-centos7
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos7
+      image: centos:7
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-centos7-icc:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:7
+      artifact-out: build-centos7-icc
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        module load cmake
+        module load intel/2019.4
+        export CC=icc
+        export CXX=icpc
+        export CXXFLAGS="-static-intel -fPIC"
+        gitlab/build.sh
+
+  test-centos7-icc:
+    needs: build-centos7-icc
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos7-icc
+      image: centos:7
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-centos7-icc15:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      #ICC 2015 req. old GCC (<7.0?) this is why we're using old docker image
+      image: ospray/docker-images:centos7-mod
+      cmd: |
+        module load cmake
+        module load intel/2015
+        export CC=icc
+        export CXX=icpc
+        export CXXFLAGS="-static-intel -fPIC"
+        gitlab/build.sh
+
+  build-centos7-icx:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:7
+      artifact-out: build-centos7-icx
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        module load cmake
+        module load intel/2022.1
+        export CC=icx
+        export CXX=icpx
+        export CXXFLAGS="-fPIC -fp-model=precise"
+        export LDFLAGS="-static-intel"
+        gitlab/build.sh
+
+  test-centos7-icx:
+    needs: build-centos7-icx
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos7-icx
+      image: centos:7
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-centos7-icx-tbb2020:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:7
+      artifact-out: build-centos7-icx-tbb2020
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        module load cmake
+        module load intel/2022.1
+        export CC=icx
+        export CXX=icpx
+        export CXXFLAGS="-fPIC -fp-model=precise"
+        export LDFLAGS="-static-intel"
+        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+
+  test-centos7-icx-tbb2020:
+    needs: build-centos7-icx-tbb2020
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos7-icx-tbb2020
+      image: centos:7
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-centos7-icx-tbb2020-avx512_8:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:7
+      artifact-out: build-centos7-icx-tbb2020-avx512_8
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        module load cmake
+        module load intel/2022.1
+        export CC=icx
+        export CXX=icpx
+        export CXXFLAGS="-fPIC -fp-model=precise"
+        export LDFLAGS="-static-intel"
+        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH="" -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_AVX512SKX_8_WIDE=ON -DOPENVKL_ISA_AVX512SKX=OFF"
+
+  test-centos7-icx-tbb2020-avx512_8:
+    needs: build-centos7-icx-tbb2020-avx512_8
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos7-icx-tbb2020-avx512_8
+      image: centos:7
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-centos8:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:8
+      artifact-out: build-centos8
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -G Ninja
+
+  test-centos8:
+    needs: build-centos8
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos8
+      image: centos:8
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  # uses a newer CMake which allows OpenVDB to build
+  build-centos8-module-cmake:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: centos:8
+      artifact-out: build-centos8-module-cmake
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        module load cmake
+        gitlab/build.sh -G Ninja -D TBB_VERSION=2020.3 -D TBB_HASH=""
+
+  test-centos8-module-cmake:
+    needs: build-centos8-module-cmake
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos8-module-cmake
+      image: centos:8
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-ubuntu18_04:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ubuntu:18.04
+      artifact-out: build-ubuntu18_04
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+  build-ubuntu20_04:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ubuntu:20.04
+      artifact-out: build-ubuntu20_04
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+  build-ubuntu22_04:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ubuntu:22.04
+      artifact-out: build-ubuntu22_04
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+  test-ubuntu18_04:
+    needs: build-ubuntu18_04
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-ubuntu18_04
+      image: ubuntu:18.04
+      cmd: |
+        export LD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  test-ubuntu20_04:
+    needs: build-ubuntu20_04
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-ubuntu20_04
+      image: ubuntu:20.04
+      cmd: |
+        export LD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  test-ubuntu22_04:
+    needs: build-ubuntu22_04
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-ubuntu22_04
+      image: ubuntu:22.04
+      cmd: |
+        export LD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-arch:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-arch
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh
+
+  test-arch:
+    needs: build-arch
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-arch
+      image: ospray/docker-images:arch
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-arch-clang:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-arch-clang
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+  test-arch-clang:
+    needs: build-arch-clang
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-arch-clang
+      image: ospray/docker-images:arch
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-arch-address-sanitizer:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-arch-address-sanitizer
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        export CFLAGS=-fsanitize=address
+        export CXXFLAGS=-fsanitize=address
+        export LDFLAGS=-fsanitize=address
+        gitlab/build.sh -D BUILD_GLFW=OFF -D BUILD_OPENVDB=OFF
+
+  test-arch-address-sanitizer:
+    needs: build-arch-address-sanitizer
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-arch-address-sanitizer
+      image: ospray/docker-images:arch
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-arch-debug:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-arch-debug
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -D CMAKE_BUILD_TYPE=Debug -D BUILD_GLFW=OFF
+
+  test-arch-debug:
+    needs: build-arch-debug
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-arch-debug
+      image: ospray/docker-images:arch
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-arch-TBB2020:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-arch-TBB2020
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+
+  test-arch-TBB2020:
+    needs: build-arch-TBB2020
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-arch-TBB2020
+      image: ospray/docker-images:arch
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-arch-devel-rkdeps:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-arch-devel-rkdeps
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -D RKCOMMON_VERSION=devel -D RKCOMMON_HASH="" -D EMBREE_VERSION=devel -D EMBREE_HASH=""
+
+  test-arch-devel-rkdeps:
+    needs: build-arch-devel-rkdeps
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-arch-devel-rkdeps
+      image: ospray/docker-images:arch
+      cmd: |
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-linux-arch:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      submodules: true
+      image: ospray/docker-images:arch
+      artifact-out: build-linux-arch
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -G Ninja -D BUILD_GLFW=OFF
+
+  test-linux-arch:
+    needs: build-linux-arch
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      runs-on: '[ "Linux", "docker", "avx512" ]'
+      artifact-in: build-linux-arch
+      image: ospray/docker-images:arch
+      cmd: |
+        export LD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-from-install-centos7:
+    needs: build-centos7
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      artifact-in: build-centos7
+      image: centos:7
+      cmd: |
+        gitlab/build-from-install.sh
+
+  kw-build-scan-report:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/static_analysis.yml@main
+    with:
+      project: openvkl
+      submodules: true
+      prebuild: |
+        mkdir build
+        cd build
+        export LD_LIBRARY_PATH=`pwd`/install/lib:${LD_LIBRARY_PATH}
+        cmake -DBUILD_JOBS=`nproc` -DBUILD_DEPENDENCIES_ONLY=ON -DBUILD_GLFW=OFF "$@" ../superbuild
+        cmake --build .
+        mkdir openvkl_build
+        cd openvkl_build
+        DEP_INSTALL_DIR=`pwd`/../install
+        export rkcommon_DIR=$DEP_INSTALL_DIR
+        export embree_DIR=$DEP_INSTALL_DIR
+        cmake -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc -DBUILD_EXAMPLES=OFF -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR ../..
+      build: cmake --build ./build/openvkl_build

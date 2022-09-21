@@ -564,58 +564,6 @@ vdb-multi-a-1:
 examples-a-1:
   <<: [*manual_benchmark_a-1, *benchmark_select_examples]
 
-# vis-sdp-adl-1-perf
-
-.job_template: &manual_benchmark_adl-1
-  <<: *base_benchmark_job
-  when: manual
-  tags:
-    - vis-sdp-adl-1-perf
-
-all-adl-1:
-  <<: *manual_benchmark_adl-1
-
-structured-adl-1:
-  <<: [*manual_benchmark_adl-1, *benchmark_select_structured]
-
-structured-multi-adl-1:
-  <<: [*manual_benchmark_adl-1, *benchmark_select_structured-multi]
-
-vdb-adl-1:
-  <<: [*manual_benchmark_adl-1, *benchmark_select_vdb]
-
-vdb-multi-adl-1:
-  <<: [*manual_benchmark_adl-1, *benchmark_select_vdb-multi]
-
-examples-adl-1:
-  <<: [*manual_benchmark_adl-1, *benchmark_select_examples]
-
-# vis-sdp-dg2-01-perf
-
-.job_template: &manual_benchmark_tgl-1
-  <<: *base_benchmark_job
-  when: manual
-  tags:
-    - vis-sdp-dg2-01-perf
-
-all-tgl-1:
-  <<: *manual_benchmark_tgl-1
-
-structured-tgl-1:
-  <<: [*manual_benchmark_tgl-1, *benchmark_select_structured]
-
-structured-multi-tgl-1:
-  <<: [*manual_benchmark_tgl-1, *benchmark_select_structured-multi]
-
-vdb-tgl-1:
-  <<: [*manual_benchmark_tgl-1, *benchmark_select_vdb]
-
-vdb-multi-tgl-1:
-  <<: [*manual_benchmark_tgl-1, *benchmark_select_vdb-multi]
-
-examples-tgl-1:
-  <<: [*manual_benchmark_tgl-1, *benchmark_select_examples]
-
 # Benchmark jobs meant for scheduled (nightly, weekly, ...) builds.
 # The builds must define RUN_SCHEDULE_BENCHMARKS to run the job, and may use
 # environment variables to configure the benchmark behavior.
@@ -634,22 +582,6 @@ benchmark-a-1-schedule:
       - $RUN_SCHEDULE_BENCHMARKS
   tags:
     - vis-perf-a-1
-
-benchmark-adl-1-schedule:
-  <<: *base_benchmark_job
-  only:
-    variables:
-      - $RUN_SCHEDULE_BENCHMARKS
-  tags:
-    - vis-sdp-adl-1-perf
-
-benchmark-tgl-1-schedule:
-  <<: *base_benchmark_job
-  only:
-    variables:
-      - $RUN_SCHEDULE_BENCHMARKS
-  tags:
-    - vis-sdp-dg2-01-perf
 
 ## KW Jobs ##
 
@@ -795,6 +727,7 @@ scan-bdba-bin:
     paths:
       - openvkl-*.pdf
       - openvkl-*.csv
+  allow_failure: true
 
 av:
   <<: *master_release_devel_only
@@ -806,3 +739,4 @@ av:
     - freshclam | tee -a /tmp/av_scan.log
     - clamscan -va --max-filesize=1024M --max-scansize=1024M --alert-broken --alert-exceeds-max openvkl-* | tee -a /tmp/av_scan.log
     - gitlab/store-files.sh $CI_PROJECT_NAME $CI_PIPELINE_ID av /tmp/av_scan.log
+  allow_failure: true

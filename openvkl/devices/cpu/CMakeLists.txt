@@ -111,9 +111,10 @@ foreach(TARGET_WIDTH 4 8 16)
   target_link_libraries(${TARGET_NAME}
     PUBLIC
       openvkl
-      rkcommon::rkcommon
+      $<BUILD_INTERFACE:rkcommon::rkcommon>
     PRIVATE
       embree
+      $<INSTALL_INTERFACE:rkcommon::rkcommon>
   )
 
   openvkl_install_library(${TARGET_NAME})

@@ -6,13 +6,28 @@
 #include "../common/export_util.h"
 #include "../sampler/Sampler.h"
 #include "../volume/Volume.h"
-#include "../volume/vdb/VdbVolume.h"
-#include "../volume/vdb/DenseVdbVolume.h"
 #include "IteratorContext_ispc.h"
 #include "rkcommon/math/range.h"
-#include "../volume/UnstructuredVolume.h"
+
+#if OPENVKL_DEVICE_CPU_VDB
+#include "../volume/vdb/VdbVolume.h"
+#endif
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#include "../volume/vdb/DenseVdbVolume.h"
+#endif
+
+#if OPENVKL_DEVICE_CPU_AMR
 #include "../volume/amr/AMRVolume.h"
+#endif
+
+#if OPENVKL_DEVICE_CPU_PARTICLE
 #include "../volume/particle/ParticleVolume.h"
+#endif
+
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+#include "../volume/UnstructuredVolume.h"
+#endif
 
 namespace openvkl {
   namespace cpu_device {
@@ -34,6 +49,9 @@ namespace openvkl {
 
       const Volume<W> &volume = iteratorContext.getSampler().getVolume();
 
+      bool foundVolume = false;
+
+#if OPENVKL_DEVICE_CPU_VDB || OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
       if (dynamic_cast<const VdbVolume<W> *>(&volume)) {
         // handles both DenseVdbVolume (structuredRegular) and VdbVolume
 
@@ -45,27 +63,48 @@ namespace openvkl {
         assert(VKL_VDB_NUM_LEVELS == 4);
         hintToDepth.emplace_back(0.8f, 3);
 
-      } else if (dynamic_cast<const AMRVolume<W> *>(&volume) ||
-                 dynamic_cast<const ParticleVolume<W> *>(&volume) ||
-                 dynamic_cast<const UnstructuredVolume<W> *>(&volume)) {
+        foundVolume = true;
+      }
+#endif
+
+      bool isAMR          = false;
+      bool isParticle     = false;
+      bool isUnstructured = false;
+
+#if OPENVKL_DEVICE_CPU_AMR
+      isAMR = dynamic_cast<const AMRVolume<W> *>(&volume);
+#endif
+#if OPENVKL_DEVICE_CPU_PARTICLE
+      isParticle = dynamic_cast<const ParticleVolume<W> *>(&volume);
+#endif
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+      isUnstructured = dynamic_cast<const UnstructuredVolume<W> *>(&volume);
+#endif
+
+      if (isAMR || isParticle || isUnstructured) {
         // these volume types all use a BVH-based iterator
 
         // we should have these volume types inherit from a common base
         int bvhDepth = 0;
 
-        if (dynamic_cast<const AMRVolume<W> *>(&volume)) {
+#if OPENVKL_DEVICE_CPU_AMR
+        if (isAMR) {
           const auto *v = dynamic_cast<const AMRVolume<W> *>(&volume);
           bvhDepth      = v->getBvhDepth();
-        } else if (dynamic_cast<const ParticleVolume<W> *>(&volume)) {
+        }
+#endif
+#if OPENVKL_DEVICE_CPU_PARTICLE
+        if (isParticle) {
           const auto *v = dynamic_cast<const ParticleVolume<W> *>(&volume);
           bvhDepth      = v->getBvhDepth();
-        } else if (dynamic_cast<const UnstructuredVolume<W> *>(&volume)) {
+        }
+#endif
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+        if (isUnstructured) {
           const auto *v = dynamic_cast<const UnstructuredVolume<W> *>(&volume);
           bvhDepth      = v->getBvhDepth();
-        } else {
-          throw std::runtime_error(
-              "could not map intervalResolutionHint value");
         }
+#endif
 
         int defaultDepth              = bvhDepth > 6 ? 6 : bvhDepth / 2;
         const float defaultRangeBegin = 0.45f;
@@ -92,9 +131,11 @@ namespace openvkl {
 
         // mapping defined for intervalResolutionHint == 1
         hintToDepth.emplace_back(1.f, bvhDepth);
+
+        foundVolume = true;
       }
 
-      else {
+      if (!foundVolume) {
         // volume type does not support maxIteratorDepth parameter (result will
         // go unused)
         return 0;
@@ -227,6 +268,7 @@ namespace openvkl {
 
       const Volume<W> &volume = this->getSampler().getVolume();
 
+#if OPENVKL_DEVICE_CPU_VDB && OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
       if (dynamic_cast<const VdbVolume<W> *>(&volume) &&
           !dynamic_cast<const DenseVdbVolume<W> *>(&volume)) {
         // VdbVolume, but not DenseVdbVolume.
@@ -236,6 +278,16 @@ namespace openvkl {
       } else {
         maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
       }
+#elif OPENVKL_DEVICE_CPU_VDB
+      if (dynamic_cast<const VdbVolume<W> *>(&volume)) {
+        // VdbVolume (DenseVdbVolume not enabled here; see above comment)
+        maxIteratorDepth = mapToMaxIteratorDepth(*this, 1.f);
+      } else {
+        maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
+      }
+#else
+      maxIteratorDepth = mapToMaxIteratorDepth(*this, 0.5f);
+#endif
 
       if (this->SharedStructInitialized) {
         CALL_ISPC(HitIteratorContext_Destructor, this->getSh());

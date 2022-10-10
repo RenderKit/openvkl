@@ -16,7 +16,7 @@ namespace openvkl {
         CALL_ISPC(SharedStructuredVolume_Constructor, this->getSh());
         this->SharedStructInitialized = true;
 
-        if (!this->SharedStructInitialied) {
+        if (!this->SharedStructInitialized) {
           throw std::runtime_error(
               "could not initialized device-side object for StructuredRegularVolume");
         }
@@ -51,8 +51,9 @@ namespace openvkl {
       this->buildAccelerator();
     }
 
-    //VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
-    //                    CONCAT1(internal_structuredRegular_, VKL_TARGET_WIDTH))
+    // this is the old / legacy structured regular implementation!
+    VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(internal_structuredRegularLegacy_, VKL_TARGET_WIDTH))
 
   }  // namespace cpu_device
 }  // namespace openvkl

@@ -16,7 +16,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       submodules: true
-      runs-on: '[ "macOS", "build", "avx2" ]'
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
       artifact-out: build-macOS
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -27,7 +27,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "build", "avx2" ]'
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
       artifact-in: build-macOS
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
@@ -40,7 +40,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       submodules: true
-      runs-on: '[ "macOS", "build", "avx2" ]'
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
       artifact-out: build-macOS-TBB2020
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -51,7 +51,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "build", "avx2" ]'
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
       artifact-in: build-macOS-TBB2020
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib

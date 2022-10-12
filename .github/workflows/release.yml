@@ -33,6 +33,7 @@ jobs:
         export rkcommon_DIR=$DEP_INSTALL_DIR
         export embree_DIR=$DEP_INSTALL_DIR
         cmake -DISPC_EXECUTABLE=$DEP_INSTALL_DIR/bin/ispc -DBUILD_EXAMPLES=OFF -DRKCOMMON_TBB_ROOT=$DEP_INSTALL_DIR ../..
+        cd ../..
       build: cmake --build ./build/openvkl_build
 
 

@@ -47,7 +47,7 @@ jobs:
       artifact-out: release-linux
       artifact-path: ./*.gz
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
         module load cmake
         module load intel/2022.1
         export CC=icx
@@ -65,8 +65,8 @@ jobs:
       artifact-out: release-windows
       artifact-path: ./*.zip
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
         gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   release-macos:
@@ -78,7 +78,7 @@ jobs:
       artifact-out: release-macos
       artifact-path: ./*.zip
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
         gitlab/release/macos.sh
 
   release-linux-test:
@@ -90,7 +90,7 @@ jobs:
       image: centos:7
       artifact-in: release-linux
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
         gitlab/release/linux-test.sh
 
   release-windows-test:
@@ -101,8 +101,8 @@ jobs:
       runs-on: '[ "Windows" ]'
       artifact-in: release-windows
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
         gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   release-macos-test:
@@ -113,7 +113,7 @@ jobs:
       runs-on: '[ "macOS", "avx2", "x86_64" ]'
       artifact-in: release-macos
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
         gitlab/release/macos-test.sh
 
   binary-analysis:

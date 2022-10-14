@@ -1,0 +1,84 @@
+## Copyright 2022 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: CI Mac Workflow
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macOS:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      submodules: true
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      artifact-out: build-macOS
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh
+
+  test-macOS:
+    needs: build-macOS
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      artifact-in: build-macOS
+      cmd: |
+        export DYLD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-macOS-TBB2020:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      submodules: true
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      artifact-out: build-macOS-TBB2020
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -D TBB_VERSION=2020.3 -D TBB_HASH=""
+
+  test-macOS-TBB2020:
+    needs: build-macOS-TBB2020
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      artifact-in: build-macOS-TBB2020
+      cmd: |
+        export DYLD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-macOS-arm:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      submodules: true
+      runs-on: '[ "macOS", "build", "arm" ]'
+      artifact-out: build-macOS-arm
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -DBUILD_TBB_FROM_SOURCE=ON
+
+  test-macOS-arm:
+    needs: build-macOS-arm
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '[ "macOS", "build", "arm" ]'
+      artifact-in: build-macOS-arm
+      cmd: |
+        export DYLD_LIBRARY_PATH=./build/install/lib
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes

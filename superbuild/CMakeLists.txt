@@ -230,18 +230,18 @@ if (BUILD_OPENVDB)
       CACHE STRING "SHA256 hash of the IlmBase archive.")
     include(dep_ilmbase)
 
-    set(ZLIB_VERSION "1.2.12")
+    set(ZLIB_VERSION "1.2.13")
     set(ZLIB_URL "https://www.zlib.net/fossils/zlib-${ZLIB_VERSION}.tar.gz"
       CACHE STRING "URL of the zlib archive.")
-    set(ZLIB_HASH "91844808532e5ce316b3c010929493c0244f3d37593afd6de04f71821d5136d9"
+    set(ZLIB_HASH "b3a24de97a8fdbc835b9833169501030b8977031bcb54b3b3ac13740f846ab30"
       CACHE STRING "SHA256 hash of the zlib archive.")
     include(dep_zlib)
 
-    set(BOOST_VERSION "1.79.0")
+    set(BOOST_VERSION "1.80.0")
     string(REPLACE "." "_" BOOST_FILE_BASE "${BOOST_VERSION}")
     set(BOOST_BASE_URL "https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/boost")
     set(_BOOST_URL "${BOOST_BASE_URL}_${BOOST_FILE_BASE}.tar.gz")
-    set(_BOOST_HASH "273f1be93238a068aba4f9735a4a2b003019af067b9c183ed227780b8f36062c")
+    set(_BOOST_HASH "4b2136f98bdd1f5857f1c3dea9ac2018effe65286cf251534b6ae20cc45e1847")
     set(BOOST_URL "${_BOOST_URL}" CACHE STRING "URL of the boost archive.")
     set(BOOST_HASH "${_BOOST_HASH}" CACHE STRING "SHA256 hash of the boost archive.")
     include(dep_boost)
@@ -255,11 +255,11 @@ if (BUILD_OPENVDB)
       include(dep_blosc)
     endif()
 
-    set(OPENVDB_VERSION "9.0.0")
+    set(OPENVDB_VERSION "9.1.0")
     set(OPENVDB_BASE_URL "https://github.com/AcademySoftwareFoundation/openvdb/archive")
     set(OPENVDB_URL "${OPENVDB_BASE_URL}/v${OPENVDB_VERSION}.zip"
       CACHE STRING "URL of the OpenVDB archive.")
-    set(OPENVDB_HASH "631443144a1d584519e83d7e883ecf52ef6dd32260bf5435324b53453d2e095a"
+    set(OPENVDB_HASH "6a5e953e09828e371f8d05e20420ff182ed5149bfbcbdc92d9eca24f15093640"
       CACHE STRING "SHA256 hash of the OpenVDB archive.")
     include(dep_openvdb)
   endif()

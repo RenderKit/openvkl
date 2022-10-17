@@ -207,8 +207,7 @@ namespace openvkl {
         CALL_ISPC(VKLUnstructuredVolume_Constructor, this->getSh());
         this->SharedStructInitialized = true;
       }
-
-      CALL_ISPC(Volume_setBackground, this->getSh(), background->data());
+      this->setBackground(background->data());
 
       CALL_ISPC(
           VKLUnstructuredVolume_set,

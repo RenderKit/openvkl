@@ -142,7 +142,7 @@ namespace openvkl {
         this->SharedStructInitialized = true;
       }
 
-      CALL_ISPC(Volume_setBackground, this->getSh(), background->data());
+      this->setBackground(background->data());
 
       CALL_ISPC(VKLParticleVolume_set,
                 this->getSh(),

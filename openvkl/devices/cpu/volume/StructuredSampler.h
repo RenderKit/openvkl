@@ -12,7 +12,6 @@
 #include "StructuredRegularVolume.h"
 #include "StructuredSphericalVolume.h"
 #include "StructuredVolume.h"
-#include "Volume_ispc.h"
 #include "openvkl/VKLFilter.h"
 #include "../common/StructShared.h"
 #include "StructuredSamplerShared.h"

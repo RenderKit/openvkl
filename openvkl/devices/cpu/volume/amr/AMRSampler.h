@@ -10,7 +10,6 @@
 #include "AMRVolume.h"
 #include "AMRVolume_ispc.h"
 #include "Sampler_ispc.h"
-#include "Volume_ispc.h"
 #include "method_current_ispc.h"
 #include "method_finest_ispc.h"
 #include "method_octant_ispc.h"

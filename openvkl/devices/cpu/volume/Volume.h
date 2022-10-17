@@ -8,11 +8,10 @@
 #include "../common/export_util.h"
 #include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
-#include "Volume_ispc.h"
+#include "VolumeShared.h"
+#include "openvkl/common/StructShared.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/box.h"
-#include "openvkl/common/StructShared.h"
-#include "VolumeShared.h"
 
 #define THROW_NOT_IMPLEMENTED                          \
   throw std::runtime_error(std::string(__FUNCTION__) + \
@@ -64,9 +63,16 @@ namespace openvkl {
       static ObjectFactory<Volume, VKL_VOLUME> volumeFactory;
 
       bool SharedStructInitialized = false;
+
+      void setBackground(const float *background);
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+    template <int W>
+    inline void Volume<W>::setBackground(const float *background)
+    {
+      this->getSh()->background = background;
+    }
 
     template <int W>
     inline Volume<W> *Volume<W>::createInstance(Device *device,

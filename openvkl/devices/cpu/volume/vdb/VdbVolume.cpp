@@ -683,8 +683,7 @@ namespace openvkl {
         background = this->template getParamDataT<float>(
             "background", grid->numAttributes, VKL_BACKGROUND_UNDEFINED);
 
-        CALL_ISPC(
-            Volume_setBackground, this->getSh(), background->data());
+        this->setBackground(background->data());
 
         const uint64_t numLeafDataPointers =
             grid->numLeaves * static_cast<uint64_t>(grid->numAttributes);

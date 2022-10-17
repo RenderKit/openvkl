@@ -10,7 +10,6 @@
 #include "Sampler_ispc.h"
 #include "UnstructuredVolume.h"
 #include "UnstructuredVolume_ispc.h"
-#include "Volume_ispc.h"
 #include "openvkl/common/StructShared.h"
 #include "UnstructuredSamplerShared.h"
 

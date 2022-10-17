@@ -3,7 +3,6 @@
 
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
-#include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
 #include "common/ValueRanges.ih"
 

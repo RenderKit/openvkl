@@ -5,7 +5,6 @@
 
 #include "openvkl/VKLFilter.h"
 #include "openvkl/ispc_cpp_interop.h"
-#include "../volume/Volume.ih"
 #include "../common/export_util.h"
 
 #include "SamplerShared.h"

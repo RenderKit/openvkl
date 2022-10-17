@@ -99,8 +99,7 @@ namespace openvkl {
 
       if (data != nullptr)  // TODO: support data updates
       {
-        CALL_ISPC(
-            Volume_setBackground, this->getSh(), background->data());
+        this->setBackground(background->data());
         return;
       }
 
@@ -156,7 +155,7 @@ namespace openvkl {
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       spacing = gridSpacing;
 
-      CALL_ISPC(Volume_setBackground, this->getSh(), background->data());
+      this->setBackground(background->data());
 
       CALL_ISPC(AMRVolume_set,
                 this->getSh(),

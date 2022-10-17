@@ -4,7 +4,6 @@
 #pragma once
 
 #include "../common/Data.ih"
-#include "Volume.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "openvkl/VKLDataType.h"

@@ -7,7 +7,6 @@
 #include "rkcommon/math/vec.ih"
 #include "rkcommon/math/box.ih"
 #include "UnstructuredVolumeShared.h"
-#include "Volume.ih"
 
 inline uniform Node *uniform sibling(uniform Node *uniform node)
 {

@@ -11,7 +11,6 @@
 #include "ParticleVolume.h"
 #include "ParticleVolume_ispc.h"
 #include "Sampler_ispc.h"
-#include "Volume_ispc.h"
 #include "openvkl/common/StructShared.h"
 
 namespace openvkl {

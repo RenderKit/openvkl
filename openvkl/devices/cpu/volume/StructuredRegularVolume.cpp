@@ -45,8 +45,7 @@ namespace openvkl {
         throw std::runtime_error("failed to commit StructuredRegularVolume");
       }
 
-      CALL_ISPC(
-          Volume_setBackground, this->getSh(), this->background->data());
+      this->setBackground(this->background->data());
 
       // must be last
       this->buildAccelerator();

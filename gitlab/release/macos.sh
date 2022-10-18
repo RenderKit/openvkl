@@ -22,6 +22,8 @@ OPENVKL_PKG_BASE=openvkl-${OPENVKL_RELEASE_PACKAGE_VERSION}.x86_64.macos
 OPENVKL_BUILD_DIR=$ROOT_DIR/build_release
 OPENVKL_INSTALL_DIR=$ROOT_DIR/install_release/$OPENVKL_PKG_BASE
 
+MACOSX_DEPLOYMENT_TARGET="10.13"
+
 THREADS=`sysctl -n hw.logicalcpu`
 
 # to make sure we do not include nor link against wrong TBB

@@ -4,8 +4,8 @@
 #pragma once
 
 #include "../api/Device.h"
+#include "ObjectFactory.h"
 #include "VKLCommon.h"
-#include "objectFactory.h"
 #include "rkcommon/memory/IntrusivePtr.h"
 #include "rkcommon/memory/RefCount.h"
 #include "rkcommon/utility/ParameterizedObject.h"
@@ -68,7 +68,6 @@ namespace openvkl {
                                             size_t expectedSize,
                                             T valIfNotFound);
 
-
     // throws an error if the named Data parameter is present and not compact
     void requireParamDataIsCompact(const char *name);
 
@@ -87,14 +86,16 @@ namespace openvkl {
   };
 
   template <typename OPENVKL_CLASS, VKLDataType VKL_TYPE>
-  inline OPENVKL_CLASS *createInstanceHelper(Device *device,
-                                             const std::string &type)
+  inline OPENVKL_CLASS *createInstanceHelper(
+      Device *device,
+      const std::string &type,
+      ObjectFactory<OPENVKL_CLASS, VKL_TYPE> &factory)
   {
     static_assert(std::is_base_of<ManagedObject, OPENVKL_CLASS>::value,
                   "createInstanceHelper<>() is only for VKL classes, not"
                   " generic types!");
 
-    auto *object = objectFactory<OPENVKL_CLASS, VKL_TYPE>(device, type);
+    auto *object = factory.createInstance(device, type);
 
     // denote the subclass type in the ManagedObject base class.
     if (object) {

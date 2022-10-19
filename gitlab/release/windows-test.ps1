@@ -24,10 +24,14 @@ cmake -L `
 
 cmake --build . --config Release --target ALL_BUILD -- /m /nologo
 
-#### Run tutorial to verify functionality ###
+#### Run tutorial to verify functionality ####
 
 $env:PATH += ";$env:openvkl_DIR\bin"
 
 .\Release\vklTutorial.exe
+
+#### Run binaries from release package to verify functionality ####
+
+vklMinimal_06.exe
 
 exit $LASTEXITCODE

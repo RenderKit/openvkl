@@ -12,6 +12,11 @@ set(BOOST_CONF "./bootstrap.sh")
 set(BOOST_BUILD "./b2")
 set(BOOST_LINK "shared")
 
+if (WIN32)
+  set(BOOST_CONF "bootstrap.bat")
+  set(BOOST_BUILD "b2.exe")
+endif()
+
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm64|aarch64")
   set(BOOST_ARCH "arm")
 else()
@@ -29,7 +34,7 @@ ExternalProject_Add(${COMPONENT_NAME}
   URL_HASH SHA256=${BOOST_HASH}
   CONFIGURE_COMMAND ${BOOST_CONF}
   BUILD_COMMAND ${BOOST_BUILD} -d0 --with-system --with-iostreams --with-regex --layout=system
-    --prefix=${COMPONENT_PATH} variant=release threading=multi address-model=64
+    --prefix=${COMPONENT_PATH} variant=release threading=multi address-model=64 -s NO_ZSTD=1
     link=${BOOST_LINK} architecture=${BOOST_ARCH} install
   INSTALL_COMMAND ""
   BUILD_ALWAYS OFF

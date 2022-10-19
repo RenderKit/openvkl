@@ -17,9 +17,11 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+cmake_policy(SET CMP0074 NEW)
+
 ## Establish project ##
 
-project(openvkl VERSION 1.3.0 LANGUAGES C CXX)
+project(openvkl VERSION 1.3.1 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
@@ -52,6 +54,8 @@ find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
 
+# rkcommon includes FindTBB.cmake, needed by Embree
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${rkcommon_DIR})
 
 find_package(embree 3.13.1 REQUIRED)
 openvkl_create_embree_target()

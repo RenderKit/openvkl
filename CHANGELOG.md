@@ -1,6 +1,11 @@
 Version History
 ---------------
 
+### Open VKL 1.3.1
+
+-   Superbuild updates to latest versions of dependencies
+-   Note that the update to zlib v1.2.13 remedies CVE-2022-37434
+
 ### Open VKL 1.3.0
 
 -   Added AVX512 8-wide CPU device mode, enabled via the

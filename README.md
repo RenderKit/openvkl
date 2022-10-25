@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v1.3.0 of Intel® Open VKL. For changes and new features
+This is release v1.3.1 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -33,335 +33,327 @@ example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
 
+### Open VKL 1.3.1
+
+- Superbuild updates to latest versions of dependencies
+- Note that the update to zlib v1.2.13 remedies CVE-2022-37434
+
 ### Open VKL 1.3.0
 
-  - Added AVX512 8-wide CPU device mode, enabled via the
-    `OPENVKL_ISA_AVX512SKX_8_WIDE` CMake option
-  - VDB volumes: added support for packed / contiguous data layouts for
-    temporally constant volumes, which can provide improved performance
-    (`nodesPackedDense`, `nodesPackedTile` parameters)
-  - VDB utility library: added `repackNodes` flag to toggle usage of
-    packed data layouts
-  - Particle volumes: general memory efficiency and performance
-    improvements
-  - Superbuild updates to latest versions of dependencies
-  - Minimum ISPC version is now v1.18.0
+- Added AVX512 8-wide CPU device mode, enabled via the
+  `OPENVKL_ISA_AVX512SKX_8_WIDE` CMake option
+- VDB volumes: added support for packed / contiguous data layouts for
+  temporally constant volumes, which can provide improved performance
+  (`nodesPackedDense`, `nodesPackedTile` parameters)
+- VDB utility library: added `repackNodes` flag to toggle usage of
+  packed data layouts
+- Particle volumes: general memory efficiency and performance
+  improvements
+- Superbuild updates to latest versions of dependencies
+- Minimum ISPC version is now v1.18.0
 
 ### Open VKL 1.2.0
 
-  - Added `vklSetParam()` API function which can set parameters of any
-    supported type
-  - Structured regular volumes:
-      - Added support for cell-centered data via the `cellCentered`
-        parameter; vertex-centered remains the default
-      - Added support for more general transformations via the
-        `indexToObject` parameter
-      - Added `indexOrigin` parameter which applies an index-space vec3i
-        translation
-  - VDB volumes:
-      - Added `indexClippingBounds` parameter, which can restrict the
-        active voxel bounding box
-      - The `indexToObject` parameter can now be provided as a
-        `VKL_AFFINE3F`
-      - Corrected bounding box computations in `InnerNode` observer
-  - Particle volumes:
-      - Now ignoring particles with zero radius
-  - VDB utility library: added `commit` flag (default true) to volume
-    creation methods, allowing apps to set additional parameters before
-    first commit
-  - Examples:
-      - Added new set of minimal examples, which step through creation
-        of basic volume and isosurface renderers
-      - Exposing `intervalResolutionHint` parameter in `vklExamples`
-        application
-  - Superbuild updates to latest versions of dependencies
+- Added `vklSetParam()` API function which can set parameters of any
+  supported type
+- Structured regular volumes:
+  - Added support for cell-centered data via the `cellCentered`
+    parameter; vertex-centered remains the default
+  - Added support for more general transformations via the
+    `indexToObject` parameter
+  - Added `indexOrigin` parameter which applies an index-space vec3i
+    translation
+- VDB volumes:
+  - Added `indexClippingBounds` parameter, which can restrict the active
+    voxel bounding box
+  - The `indexToObject` parameter can now be provided as a
+    `VKL_AFFINE3F`
+  - Corrected bounding box computations in `InnerNode` observer
+- Particle volumes:
+  - Now ignoring particles with zero radius
+- VDB utility library: added `commit` flag (default true) to volume
+  creation methods, allowing apps to set additional parameters before
+  first commit
+- Examples:
+  - Added new set of minimal examples, which step through creation of
+    basic volume and isosurface renderers
+  - Exposing `intervalResolutionHint` parameter in `vklExamples`
+    application
+- Superbuild updates to latest versions of dependencies
 
 ### Open VKL 1.1.0
 
-  - vklExamples improvements: asynchronous rendering, multiple
-    viewports, docking, and more
-  - Fixed bug in `openvkl_utility_vdb` which could lead to crashes when
-    creating VDB volumes with temporally constant tiles
-  - Superbuild updates to latest versions of dependencies
-  - Minimum rkcommon version is now 1.8.0
+- vklExamples improvements: asynchronous rendering, multiple viewports,
+  docking, and more
+- Fixed bug in `openvkl_utility_vdb` which could lead to crashes when
+  creating VDB volumes with temporally constant tiles
+- Superbuild updates to latest versions of dependencies
+- Minimum rkcommon version is now 1.8.0
 
 ### Open VKL 1.0.1
 
-  - Fixed issue in `structuredRegular` and `vdb` interval iterators that
-    could lead to erroneous initial intervals for certain ray inputs
-  - Fixed handling of `intervalResolutionHint` interval iterator context
-    parameter for `amr`, `particle`, and `unstructured` volumes with
-    small numbers of cells / primitives
+- Fixed issue in `structuredRegular` and `vdb` interval iterators that
+  could lead to erroneous initial intervals for certain ray inputs
+- Fixed handling of `intervalResolutionHint` interval iterator context
+  parameter for `amr`, `particle`, and `unstructured` volumes with small
+  numbers of cells / primitives
 
 ### Open VKL 1.0.0
 
-  - The version 1.0 release marks long term API stability (until v2.0)
-  - Open VKL can now be built for ARM CPUs that support Neon
-  - Iterator API updates:
-      - Introducing interval and hit iterator contexts, which hold
-        iterator-specific configuration (eliminates value selector
-        objects)
-      - Interval and hit iteration is now supported on any volume
-        attribute
-      - Interval iterators now include a `time` parameter
-      - Interval iterators now support the `intervalResolutionHint`
-        parameter, replacing `maxIteratorDepth` and
-        `elementaryCellIteration`
-  - Supporting configurable background values; default is now
-    `VKL_BACKGROUND_UNDEFINED` (NaN) for all volume types
-  - `vklGetValueRange()` now supports all volume attributes
-  - Added ISPC-side API bindings for `vklGetNumAttributes()` and
-    `vklGetValueRange()`
-  - Structured regular volumes:
-      - Added support for tricubic filtering
-      - More accurate gradient computations respecting filter mode
-      - Hit iteration robustness improvements
-  - VDB volumes:
-      - Interval and hit iteration robustness improvements
-      - Corrected interval iterator `nominalDeltaT` computation for
-        non-normalized ray directions and non-uniform object-space grid
-        spacings
-      - Fixed bug which could cause incorrect value range computations
-        for temporally varying volumes
-  - vklExamples additions demonstrating:
-      - Multi-attribute interval / hit iteration
-      - Configurable background values
-      - Temporally varying volumes
-  - Superbuild updates to latest versions of dependencies
-  - Now requiring minimum versions:
-      - Embree 3.13.1
-      - rkcommon 1.7.0
-      - ISPC 1.16.0
+- The version 1.0 release marks long term API stability (until v2.0)
+- Open VKL can now be built for ARM CPUs that support Neon
+- Iterator API updates:
+  - Introducing interval and hit iterator contexts, which hold
+    iterator-specific configuration (eliminates value selector objects)
+  - Interval and hit iteration is now supported on any volume attribute
+  - Interval iterators now include a `time` parameter
+  - Interval iterators now support the `intervalResolutionHint`
+    parameter, replacing `maxIteratorDepth` and
+    `elementaryCellIteration`
+- Supporting configurable background values; default is now
+  `VKL_BACKGROUND_UNDEFINED` (NaN) for all volume types
+- `vklGetValueRange()` now supports all volume attributes
+- Added ISPC-side API bindings for `vklGetNumAttributes()` and
+  `vklGetValueRange()`
+- Structured regular volumes:
+  - Added support for tricubic filtering
+  - More accurate gradient computations respecting filter mode
+  - Hit iteration robustness improvements
+- VDB volumes:
+  - Interval and hit iteration robustness improvements
+  - Corrected interval iterator `nominalDeltaT` computation for
+    non-normalized ray directions and non-uniform object-space grid
+    spacings
+  - Fixed bug which could cause incorrect value range computations for
+    temporally varying volumes
+- vklExamples additions demonstrating:
+  - Multi-attribute interval / hit iteration
+  - Configurable background values
+  - Temporally varying volumes
+- Superbuild updates to latest versions of dependencies
+- Now requiring minimum versions:
+  - Embree 3.13.1
+  - rkcommon 1.7.0
+  - ISPC 1.16.0
 
 ### Open VKL 0.13.0
 
-  - Driver (now device) API changes:
-      - Renamed `VKLDriver` to `VKLDevice` and updated associated device
-        setup APIs
-      - Use of multiple concurrent devices is now supported; therefore
-        `vklNewVolume()` and `vklNewData()` now require a device handle
-      - Renamed the `ispc_device` module and `ispc` device to
-        `cpu_device` and `cpu`, respectively
-      - The `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment variable can
-        now be used to change the `cpu` device’s default SIMD width at
-        run time
-  - Added new `VKLTemporalFormat` enum used for temporally varying
-    volume parameterization
-  - VDB volumes:
-      - Support for temporally structured and temporally unstructured
-        (TUV) attribute data, which can be used for motion blurred
-        rendering
-      - Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter
-        type
-      - Added support for half precision float-point (FP16) attribute
-        data via `VKL_HALF` data type
-      - Added a new `InnerNode` observer and associated utility
-        functions which allows applications to introspect inner nodes of
-        the internal tree structure, including bounding boxes and value
-        ranges
-      - Renamed `VKL_FORMAT_CONSTANT_ZYX` to `VKL_FORMAT_DENSE_ZYX`
-  - Structured regular and spherical volumes:
-      - Added support for half precision float-point (FP16) attribute
-        data via `VKL_HALF` data type
-  - Unstructured volumes:
-      - Added support for elementary cell iteration via the
-        `elementaryCellIteration` parameter
-      - Robustness improvements for hit iteration
-  - AMR volumes:
-      - Improved interval iterator implementation, resolving issues with
-        returned interval `nominalDeltaT` values
-      - Interval iterators now support `maxIteratorDepth` parameter
-  - Interval and hit iteration performance improvements when multiple
-    values ranges / values are selected
-  - Added new temporal compression utilities which applications can use
-    for processing temporally unstructured attribute data
-  - vklExamples additions demonstrating:
-      - Motion blurred rendering on temporally structured and temporally
-        unstructured `vdb` volumes
-      - Tricubic filtering on `vdb` volumes
-      - Half-precision floating-point (FP16) support for
-        `structuredRegular`, `structuredSpherical`, and `vdb` volumes
-      - Elementary cell interval iteration on `unstructured` volumes
-      - Use of the `InnerNode` observer on `vdb` volumes
-  - Superbuild updates to:
-      - Embree 3.13.0
-      - rkcommon 1.6.1
-  - Minimum rkcommon version is now 1.6.1
+- Driver (now device) API changes:
+  - Renamed `VKLDriver` to `VKLDevice` and updated associated device
+    setup APIs
+  - Use of multiple concurrent devices is now supported; therefore
+    `vklNewVolume()` and `vklNewData()` now require a device handle
+  - Renamed the `ispc_device` module and `ispc` device to `cpu_device`
+    and `cpu`, respectively
+  - The `OPENVKL_CPU_DEVICE_DEFAULT_WIDTH` environment variable can now
+    be used to change the `cpu` device’s default SIMD width at run time
+- Added new `VKLTemporalFormat` enum used for temporally varying volume
+  parameterization
+- VDB volumes:
+  - Support for temporally structured and temporally unstructured (TUV)
+    attribute data, which can be used for motion blurred rendering
+  - Supporting tricubic filtering via `VKL_FILTER_TRICUBIC` filter type
+  - Added support for half precision float-point (FP16) attribute data
+    via `VKL_HALF` data type
+  - Added a new `InnerNode` observer and associated utility functions
+    which allows applications to introspect inner nodes of the internal
+    tree structure, including bounding boxes and value ranges
+  - Renamed `VKL_FORMAT_CONSTANT_ZYX` to `VKL_FORMAT_DENSE_ZYX`
+- Structured regular and spherical volumes:
+  - Added support for half precision float-point (FP16) attribute data
+    via `VKL_HALF` data type
+- Unstructured volumes:
+  - Added support for elementary cell iteration via the
+    `elementaryCellIteration` parameter
+  - Robustness improvements for hit iteration
+- AMR volumes:
+  - Improved interval iterator implementation, resolving issues with
+    returned interval `nominalDeltaT` values
+  - Interval iterators now support `maxIteratorDepth` parameter
+- Interval and hit iteration performance improvements when multiple
+  values ranges / values are selected
+- Added new temporal compression utilities which applications can use
+  for processing temporally unstructured attribute data
+- vklExamples additions demonstrating:
+  - Motion blurred rendering on temporally structured and temporally
+    unstructured `vdb` volumes
+  - Tricubic filtering on `vdb` volumes
+  - Half-precision floating-point (FP16) support for
+    `structuredRegular`, `structuredSpherical`, and `vdb` volumes
+  - Elementary cell interval iteration on `unstructured` volumes
+  - Use of the `InnerNode` observer on `vdb` volumes
+- Superbuild updates to:
+  - Embree 3.13.0
+  - rkcommon 1.6.1
+- Minimum rkcommon version is now 1.6.1
 
 ### Open VKL 0.12.1
 
-  - Fixed bug in VDB volume interval iterator implementation which could
-    lead to missed intervals or incorrect value ranges in returned
-    intervals
+- Fixed bug in VDB volume interval iterator implementation which could
+  lead to missed intervals or incorrect value ranges in returned
+  intervals
 
 ### Open VKL 0.12.0
 
-  - Added support for temporally varying volumes with associated API
-    changes for sampling, gradients, and hit iteration. This feature can
-    be used to enable motion blurred rendering
-  - Structured regular volumes:
-      - Support for temporally structured and temporally unstructured
-        (TUV) input data
-      - Improved `nominalDeltaT` for interval iteration
-      - Interval iterator robustness improvements for axis-aligned rays
-      - Sampling performance improvements
-  - VDB volumes:
-      - Multi-attribute support (including three-component float grids)
-      - Interval iterator robustness improvements for axis-aligned rays
-      - Performance improvements for scalar sampling
-      - Now restricting volumes to exactly four levels
-      - Allowing leaf nodes on the lowest level only
-  - Unstructured volumes:
-      - Improved `nominalDeltaT` for interval iteration
-  - `vdb_util` updates:
-      - Support for loading multi-attribute .vdb files (`float` and
-        `Vec3s` grids)
-      - Fix order of rotation matrix coefficients loaded from .vdb files
-  - vklExamples additions demonstrating:
-      - Motion blurred rendering on temporally structured and temporally
-        unstructured volumes (`structuredRegular` only)
-      - Support for `vdb` multi-attribute volumes
-      - Hit iterator time support
-  - Superbuild updates to:
-      - Embree 3.12.2
-      - rkcommon 1.6.0
-      - ISPC 1.15.0
-      - OpenVDB 8.0.0
-  - Minimum rkcommon version is now 1.6.0
+- Added support for temporally varying volumes with associated API
+  changes for sampling, gradients, and hit iteration. This feature can
+  be used to enable motion blurred rendering
+- Structured regular volumes:
+  - Support for temporally structured and temporally unstructured (TUV)
+    input data
+  - Improved `nominalDeltaT` for interval iteration
+  - Interval iterator robustness improvements for axis-aligned rays
+  - Sampling performance improvements
+- VDB volumes:
+  - Multi-attribute support (including three-component float grids)
+  - Interval iterator robustness improvements for axis-aligned rays
+  - Performance improvements for scalar sampling
+  - Now restricting volumes to exactly four levels
+  - Allowing leaf nodes on the lowest level only
+- Unstructured volumes:
+  - Improved `nominalDeltaT` for interval iteration
+- `vdb_util` updates:
+  - Support for loading multi-attribute .vdb files (`float` and `Vec3s`
+    grids)
+  - Fix order of rotation matrix coefficients loaded from .vdb files
+- vklExamples additions demonstrating:
+  - Motion blurred rendering on temporally structured and temporally
+    unstructured volumes (`structuredRegular` only)
+  - Support for `vdb` multi-attribute volumes
+  - Hit iterator time support
+- Superbuild updates to:
+  - Embree 3.12.2
+  - rkcommon 1.6.0
+  - ISPC 1.15.0
+  - OpenVDB 8.0.0
+- Minimum rkcommon version is now 1.6.0
 
 ### Open VKL 0.11.0
 
-  - Introduced API support for multi-attribute volumes, including APIs
-    for sampling multiple attributes simultaneously
-      - Initially only `structuredRegular` and `structuredSpherical`
-        volume types support multi-attribute data
-  - Iterator APIs now work on sampler objects rather than volumes,
-    supporting finer-grained configurability
-  - Observers can now be created for both volume and sampler objects
-      - `LeafNodeAccess` observers must now be created on sampler
-        objects
-  - Log and error callbacks now support a user pointer
-  - `vdb` volume interval iterators:
-      - Added support for elementary cell iteration when
-        `maxIteratorDepth` is set to `VKL_VDB_NUM_LEVELS`-1
-      - Up to 2x faster iteration
-  - `unstructured` and `particle` volume interval iterators:
-      - Improved interior empty space skipping behavior
-      - Added support for configurable iterator depth via the
-        `maxIteratorDepth` parameter
-  - Added support for filter modes in `structuredRegular` and
-    `structuredSpherical` volumes
-  - `amr` volumes now support `method` parameter on sampler objects
-  - Added new `interval_iterator_debug` renderer in `vklExamples` to
-    visualize interval iteration behavior
-  - Hit iterator accuracy improvements for `unstructured` volumes
-  - Fixed bugs in `amr` and `vdb` volume bounding box computations
-  - Fixed bug in `unstructured` volume gradient computations near empty
-    regions
-  - Minimum ISPC version is now v1.14.1
+- Introduced API support for multi-attribute volumes, including APIs for
+  sampling multiple attributes simultaneously
+  - Initially only `structuredRegular` and `structuredSpherical` volume
+    types support multi-attribute data
+- Iterator APIs now work on sampler objects rather than volumes,
+  supporting finer-grained configurability
+- Observers can now be created for both volume and sampler objects
+  - `LeafNodeAccess` observers must now be created on sampler objects
+- Log and error callbacks now support a user pointer
+- `vdb` volume interval iterators:
+  - Added support for elementary cell iteration when `maxIteratorDepth`
+    is set to `VKL_VDB_NUM_LEVELS`-1
+  - Up to 2x faster iteration
+- `unstructured` and `particle` volume interval iterators:
+  - Improved interior empty space skipping behavior
+  - Added support for configurable iterator depth via the
+    `maxIteratorDepth` parameter
+- Added support for filter modes in `structuredRegular` and
+  `structuredSpherical` volumes
+- `amr` volumes now support `method` parameter on sampler objects
+- Added new `interval_iterator_debug` renderer in `vklExamples` to
+  visualize interval iteration behavior
+- Hit iterator accuracy improvements for `unstructured` volumes
+- Fixed bugs in `amr` and `vdb` volume bounding box computations
+- Fixed bug in `unstructured` volume gradient computations near empty
+  regions
+- Minimum ISPC version is now v1.14.1
 
 ### Open VKL 0.10.0 (alpha)
 
-  - Added new `particle` volume type supporting Gaussian radial basis
-    functions
-  - Introduced `VKLSampler` objects allowing configuration of sampling
-    and gradient behavior
-  - Added stream-wide sampling and gradient APIs
-  - Introduced a new way to allocate iterators, giving the user more
-    freedom in choosing allocation schemes and reducing iterator size
-  - Added support for strided data arrays
-  - Added gradient implementations for `amr` and `vdb` volumes
-  - Hit iterator accuracy improvements for `amr`, `structuredSpherical`,
-    `unstructured`, and `vdb` volumes
-  - Up to 4x performance improvement for `structuredRegular` and
-    `structuredSpherical` sampling for volumes in the 1-2GB range
-  - Up to 2x performance improvement for `structuredRegular` interval
-    iteration
-  - Improved commit speed for `unstructured` volumes
-  - Improved value range computation in `vdb` volumes
-  - Improved isosurface shading in `vklExamples`
-  - Improved parameter validation across all volume types
-  - Aligned `VKLHit[4,8,16]` and `VKLInterval[4,8,16]` structs
-  - Added hit epsilon to `VKLHit[4,8,16]`
-  - Updated parameter names for `vdb` volumes
-  - Renamed `VKLVdbLeafFormat` to `VKLFormat`
-  - Fixed incorrect use of system-installed CMake in superbuild while
-    building dependencies
-  - Fixed various memory leaks
-  - Fixed crashes which could occur in `VdbVolume::cleanup()` and
-    `vklShutdown()`
-  - Moved from ospcommon to rkcommon v1.4.1
+- Added new `particle` volume type supporting Gaussian radial basis
+  functions
+- Introduced `VKLSampler` objects allowing configuration of sampling and
+  gradient behavior
+- Added stream-wide sampling and gradient APIs
+- Introduced a new way to allocate iterators, giving the user more
+  freedom in choosing allocation schemes and reducing iterator size
+- Added support for strided data arrays
+- Added gradient implementations for `amr` and `vdb` volumes
+- Hit iterator accuracy improvements for `amr`, `structuredSpherical`,
+  `unstructured`, and `vdb` volumes
+- Up to 4x performance improvement for `structuredRegular` and
+  `structuredSpherical` sampling for volumes in the 1-2GB range
+- Up to 2x performance improvement for `structuredRegular` interval
+  iteration
+- Improved commit speed for `unstructured` volumes
+- Improved value range computation in `vdb` volumes
+- Improved isosurface shading in `vklExamples`
+- Improved parameter validation across all volume types
+- Aligned `VKLHit[4,8,16]` and `VKLInterval[4,8,16]` structs
+- Added hit epsilon to `VKLHit[4,8,16]`
+- Updated parameter names for `vdb` volumes
+- Renamed `VKLVdbLeafFormat` to `VKLFormat`
+- Fixed incorrect use of system-installed CMake in superbuild while
+  building dependencies
+- Fixed various memory leaks
+- Fixed crashes which could occur in `VdbVolume::cleanup()` and
+  `vklShutdown()`
+- Moved from ospcommon to rkcommon v1.4.1
 
 ### Open VKL 0.9.0 (alpha)
 
-  - Added support for VDB sparse structured volumes (`"vdb"` volume
-    type)
-  - Added `vdb_util` library to simplify instantiation of VDB volumes,
-    and support loading of .vdb files using OpenVDB
-  - Added `VKLObserver` and associated APIs, which may used by volume
-    types to pass information back to the application
-      - A `LeafNodeAccess` observer is provided for VDB volumes to
-        support on-demand loading of leaf nodes
-  - Structured regular volumes:
-      - Up to 6x performance improvement for scalar iterator
-        initialization
-      - Up to 2x performance improvement for scalar iterator iteration
-  - General improvements to the CMake Superbuild for building Open VKL
-    and all associated dependencies
-  - Allowing instantiation of ISPC driver for any supported SIMD width
-    (in addition to the default automatically selected width)
-  - Volume type names are now camelCase (legacy snake\_case type names
-    are deprecated), impacting `structuredRegular` and
-    `structuredSpherical` volumes
-  - Enabling `flushDenormals` driver mode by default
-  - Aligning public `vkl_vvec3f[4,8,16]` and `vkl_vrange1f[4,8,16]`
-    types
-  - Added `VKL_LOG_NONE` log level
-  - Fixed bug in `vklExamples` which could lead to improper rendering on
-    macOS Catalina
-  - Fixed bug in unstructured volume interval iterator which could lead
-    to errors with some combinations of lane masks
-  - Now providing binary releases for Linux, macOS, and Windows
+- Added support for VDB sparse structured volumes (`"vdb"` volume type)
+- Added `vdb_util` library to simplify instantiation of VDB volumes, and
+  support loading of .vdb files using OpenVDB
+- Added `VKLObserver` and associated APIs, which may used by volume
+  types to pass information back to the application
+  - A `LeafNodeAccess` observer is provided for VDB volumes to support
+    on-demand loading of leaf nodes
+- Structured regular volumes:
+  - Up to 6x performance improvement for scalar iterator initialization
+  - Up to 2x performance improvement for scalar iterator iteration
+- General improvements to the CMake Superbuild for building Open VKL and
+  all associated dependencies
+- Allowing instantiation of ISPC driver for any supported SIMD width (in
+  addition to the default automatically selected width)
+- Volume type names are now camelCase (legacy snake_case type names are
+  deprecated), impacting `structuredRegular` and `structuredSpherical`
+  volumes
+- Enabling `flushDenormals` driver mode by default
+- Aligning public `vkl_vvec3f[4,8,16]` and `vkl_vrange1f[4,8,16]` types
+- Added `VKL_LOG_NONE` log level
+- Fixed bug in `vklExamples` which could lead to improper rendering on
+  macOS Catalina
+- Fixed bug in unstructured volume interval iterator which could lead to
+  errors with some combinations of lane masks
+- Now providing binary releases for Linux, macOS, and Windows
 
 ### Open VKL 0.8.0 (alpha)
 
-  - Added support for structured volumes on spherical grids
-    (`"structured_spherical"` volume type)
-  - Structured regular volumes:
-      - Up to 8x performance improvement for scalar (single-wide)
-        sampling
-      - Fixed hit iterator bug which could lead to isosurfacing
-        artifacts
-      - Renamed `voxelData` parameter to `data`
-  - Unstructured volumes:
-      - Up to 4x performance improvement for scalar (single-wide)
-        sampling
-      - Improved interval iterator implementation for more efficient
-        space skipping and tighter value bounds on returned intervals
-      - Now using Embree for BVH builds for faster build times / volume
-        commits
-      - Renamed `vertex.value` and `cell.value` parameters to
-        `vertex.data` and `cell.data`, respectively
-  - AMR volumes:
-      - renamed `block.cellWidth` parameter to `cellWidth`, and
-        clarified API documentation
-  - Added `vklGetValueRange()` API for querying volume value ranges
-  - Added new driver parameters, APIs, and environment variables
-    allowing user control of log levels, log / error output redirection,
-    number of threads, and other options
-  - `vklIterateHit[4,8,16]()` and `vklIterateInterval[4,8,16]()` calls
-    now only populate hit / interval data for active lanes
-  - Changed `VKLDataType` enum values for better forward compatibility
-  - ISPC-side hit and interval iterator objects must now be declared
-    `varying`
-  - More flexible ISA build configuration through `OPENVKL_MAX_ISA` and
-    `OPENVKL_ISA_*` CMake build options
-  - Minimum ospcommon version is now 1.1.0
+- Added support for structured volumes on spherical grids
+  (`"structured_spherical"` volume type)
+- Structured regular volumes:
+  - Up to 8x performance improvement for scalar (single-wide) sampling
+  - Fixed hit iterator bug which could lead to isosurfacing artifacts
+  - Renamed `voxelData` parameter to `data`
+- Unstructured volumes:
+  - Up to 4x performance improvement for scalar (single-wide) sampling
+  - Improved interval iterator implementation for more efficient space
+    skipping and tighter value bounds on returned intervals
+  - Now using Embree for BVH builds for faster build times / volume
+    commits
+  - Renamed `vertex.value` and `cell.value` parameters to `vertex.data`
+    and `cell.data`, respectively
+- AMR volumes:
+  - renamed `block.cellWidth` parameter to `cellWidth`, and clarified
+    API documentation
+- Added `vklGetValueRange()` API for querying volume value ranges
+- Added new driver parameters, APIs, and environment variables allowing
+  user control of log levels, log / error output redirection, number of
+  threads, and other options
+- `vklIterateHit[4,8,16]()` and `vklIterateInterval[4,8,16]()` calls now
+  only populate hit / interval data for active lanes
+- Changed `VKLDataType` enum values for better forward compatibility
+- ISPC-side hit and interval iterator objects must now be declared
+  `varying`
+- More flexible ISA build configuration through `OPENVKL_MAX_ISA` and
+  `OPENVKL_ISA_*` CMake build options
+- Minimum ospcommon version is now 1.1.0
 
 ### Open VKL 0.7.0 (alpha)
 
-  - Initial public alpha release, with support for structured,
-    unstructured, and AMR volumes.
+- Initial public alpha release, with support for structured,
+  unstructured, and AMR volumes.
 
 ## Support and Contact
 
@@ -431,7 +423,7 @@ to set parameters on the device. The following parameters are understood
 by all devices:
 
 | Type   | Name           | Description                                                                                                                                                       |
-| :----- | :------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:-------|:---------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | int    | logLevel       | logging level; valid values are `VKL_LOG_DEBUG`, `VKL_LOG_INFO`, `VKL_LOG_WARNING`, `VKL_LOG_ERROR` and `VKL_LOG_NONE`                                            |
 | string | logOutput      | convenience for setting where log messages go; valid values are `cout`, `cerr` and `none`                                                                         |
 | string | errorOutput    | convenience for setting where error messages go; valid values are `cout`, `cerr` and `none`                                                                       |
@@ -477,13 +469,13 @@ variables for easy changes to Open VKL’s behavior without needing to
 change the application (variables are prefixed by convention with
 “`OPENVKL_`”):
 
-| Variable                  | Description                                                                                                                                                       |
-| :------------------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| OPENVKL\_LOG\_LEVEL       | logging level; valid values are `debug`, `info`, `warning`, `error` and `none`                                                                                    |
-| OPENVKL\_LOG\_OUTPUT      | convenience for setting where log messages go; valid values are `cout`, `cerr` and `none`                                                                         |
-| OPENVKL\_ERROR\_OUTPUT    | convenience for setting where error messages go; valid values are `cout`, `cerr` and `none`                                                                       |
-| OPENVKL\_THREADS          | number of threads which Open VKL can use                                                                                                                          |
-| OPENVKL\_FLUSH\_DENORMALS | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register (default: 1); see Performance Recommendations section for details |
+| Variable                | Description                                                                                                                                                       |
+|:------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| OPENVKL_LOG_LEVEL       | logging level; valid values are `debug`, `info`, `warning`, `error` and `none`                                                                                    |
+| OPENVKL_LOG_OUTPUT      | convenience for setting where log messages go; valid values are `cout`, `cerr` and `none`                                                                         |
+| OPENVKL_ERROR_OUTPUT    | convenience for setting where error messages go; valid values are `cout`, `cerr` and `none`                                                                       |
+| OPENVKL_THREADS         | number of threads which Open VKL can use                                                                                                                          |
+| OPENVKL_FLUSH_DENORMALS | sets the `Flush to Zero` and `Denormals are Zero` mode of the MXCSR control and status register (default: 1); see Performance Recommendations section for details |
 
 Environment variables understood by all devices.
 
@@ -501,14 +493,14 @@ variable is ignored.
 
 The following errors are currently used by Open VKL:
 
-| Name                    | Description                                           |
-| :---------------------- | :---------------------------------------------------- |
-| VKL\_NO\_ERROR          | no error occurred                                     |
-| VKL\_UNKNOWN\_ERROR     | an unknown error occurred                             |
-| VKL\_INVALID\_ARGUMENT  | an invalid argument was specified                     |
-| VKL\_INVALID\_OPERATION | the operation is not allowed for the specified object |
-| VKL\_OUT\_OF\_MEMORY    | there is not enough memory to execute the command     |
-| VKL\_UNSUPPORTED\_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
+| Name                  | Description                                           |
+|:----------------------|:------------------------------------------------------|
+| VKL_NO_ERROR          | no error occurred                                     |
+| VKL_UNKNOWN_ERROR     | an unknown error occurred                             |
+| VKL_INVALID_ARGUMENT  | an invalid argument was specified                     |
+| VKL_INVALID_OPERATION | the operation is not allowed for the specified object |
+| VKL_OUT_OF_MEMORY     | there is not enough memory to execute the command     |
+| VKL_UNSUPPORTED_CPU   | the CPU is not supported (minimum ISA is SSE4.1)      |
 
 Possible error codes, i.e., valid named constants of type `VKLError`.
 
@@ -676,11 +668,12 @@ VKLData vklNewData(VKLDevice device,
                    size_t byteStride);
 ```
 
-Data objects can be created as Open VKL owned (`dataCreationFlags =
-VKL_DATA_DEFAULT`), in which the library will make a copy of the data
-for its use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`),
-which will try to use the passed pointer for usage. The library is
-allowed to copy data when a volume is committed.
+Data objects can be created as Open VKL owned
+(`dataCreationFlags = VKL_DATA_DEFAULT`), in which the library will make
+a copy of the data for its use, or shared
+(`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try to use
+the passed pointer for usage. The library is allowed to copy data when a
+volume is committed.
 
 The distance between consecutive elements in `source` is given in bytes
 with `byteStride`. If the provided `byteStride` is zero, then it will be
@@ -696,29 +689,29 @@ can be represented in Open VKL. The types accepted vary per volume; see
 the volume section for specifics. Valid constants are listed in the
 table below.
 
-| Type/Name                      | Description                                                                                  |
-| :----------------------------- | :------------------------------------------------------------------------------------------- |
-| VKL\_DEVICE                    | API device object reference                                                                  |
-| VKL\_DATA                      | data reference                                                                               |
-| VKL\_OBJECT                    | generic object reference                                                                     |
-| VKL\_VOLUME                    | volume object reference                                                                      |
-| VKL\_STRING                    | C-style zero-terminated character string                                                     |
-| VKL\_CHAR, VKL\_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
-| VKL\_UCHAR, VKL\_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                   |
-| VKL\_SHORT, VKL\_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
-| VKL\_USHORT, VKL\_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
-| VKL\_INT, VKL\_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                      |
-| VKL\_UINT, VKL\_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                    |
-| VKL\_LONG, VKL\_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                      |
-| VKL\_ULONG, VKL\_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                    |
-| VKL\_HALF, VKL\_VEC\[234\]H    | 16 bit half precision floating-point scalar and \[234\]-element vector (IEEE 754 `binary16`) |
-| VKL\_FLOAT, VKL\_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                     |
-| VKL\_DOUBLE, VKL\_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                     |
-| VKL\_BOX\[1234\]I              | 32 bit integer box (lower + upper bounds)                                                    |
-| VKL\_BOX\[1234\]F              | 32 bit single precision floating-point box (lower + upper bounds)                            |
-| VKL\_LINEAR\[23\]F             | 32 bit single precision floating-point linear transform (\[23\] vectors)                     |
-| VKL\_AFFINE\[23\]F             | 32 bit single precision floating-point affine transform (linear transform plus translation)  |
-| VKL\_VOID\_PTR                 | raw memory address                                                                           |
+| Type/Name                    | Description                                                                                  |
+|:-----------------------------|:---------------------------------------------------------------------------------------------|
+| VKL_DEVICE                   | API device object reference                                                                  |
+| VKL_DATA                     | data reference                                                                               |
+| VKL_OBJECT                   | generic object reference                                                                     |
+| VKL_VOLUME                   | volume object reference                                                                      |
+| VKL_STRING                   | C-style zero-terminated character string                                                     |
+| VKL_CHAR, VKL_VEC\[234\]C    | 8 bit signed character scalar and \[234\]-element vector                                     |
+| VKL_UCHAR, VKL_VEC\[234\]UC  | 8 bit unsigned character scalar and \[234\]-element vector                                   |
+| VKL_SHORT, VKL_VEC\[234\]S   | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL_USHORT, VKL_VEC\[234\]US | 16 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL_INT, VKL_VEC\[234\]I     | 32 bit signed integer scalar and \[234\]-element vector                                      |
+| VKL_UINT, VKL_VEC\[234\]UI   | 32 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL_LONG, VKL_VEC\[234\]L    | 64 bit signed integer scalar and \[234\]-element vector                                      |
+| VKL_ULONG, VKL_VEC\[234\]UL  | 64 bit unsigned integer scalar and \[234\]-element vector                                    |
+| VKL_HALF, VKL_VEC\[234\]H    | 16 bit half precision floating-point scalar and \[234\]-element vector (IEEE 754 `binary16`) |
+| VKL_FLOAT, VKL_VEC\[234\]F   | 32 bit single precision floating-point scalar and \[234\]-element vector                     |
+| VKL_DOUBLE, VKL_VEC\[234\]D  | 64 bit double precision floating-point scalar and \[234\]-element vector                     |
+| VKL_BOX\[1234\]I             | 32 bit integer box (lower + upper bounds)                                                    |
+| VKL_BOX\[1234\]F             | 32 bit single precision floating-point box (lower + upper bounds)                            |
+| VKL_LINEAR\[23\]F            | 32 bit single precision floating-point linear transform (\[23\] vectors)                     |
+| VKL_AFFINE\[23\]F            | 32 bit single precision floating-point affine transform (linear transform plus translation)  |
+| VKL_VOID_PTR                 | raw memory address                                                                           |
 
 Valid named constants for `VKLDataType`.
 
@@ -824,8 +817,8 @@ their addresses in memory can be easily computed from a 3D position.
 Data can be provided either per cell or per vertex (the default),
 selectable via the `cellCentered` parameter. This parameter also affects
 the interpretation of the volume’s dimensions, which will be in units of
-cells or vertices, respectively. A volume with \((x, y, z)\) vertices
-will have \((x-1, y-1, z-1)\) cells.
+cells or vertices, respectively. A volume with $(x, y, z)$ vertices will
+have $(x-1, y-1, z-1)$ cells.
 
 #### Structured Regular Volumes
 
@@ -835,8 +828,8 @@ parameters understood by structured regular volumes are summarized in
 the table below.
 
 | Type                  | Name                             | Default                            | Description                                                                                                                                                                                                                                |
-| :-------------------- | :------------------------------- | :--------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| vec3i                 | dimensions                       |                                    | number of values in each dimension \((x, y, z)\)                                                                                                                                                                                           |
+|:----------------------|:---------------------------------|:-----------------------------------|:-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| vec3i                 | dimensions                       |                                    | number of values in each dimension $(x, y, z)$                                                                                                                                                                                             |
 | VKLData VKLData\[\]   | data                             |                                    | VKLData object(s) of volume data, supported types are:                                                                                                                                                                                     |
 |                       |                                  |                                    | `VKL_UCHAR`                                                                                                                                                                                                                                |
 |                       |                                  |                                    | `VKL_SHORT`                                                                                                                                                                                                                                |
@@ -846,10 +839,10 @@ the table below.
 |                       |                                  |                                    | `VKL_DOUBLE`                                                                                                                                                                                                                               |
 |                       |                                  |                                    | Multiple attributes are supported through passing an array of VKLData objects.                                                                                                                                                             |
 | bool                  | cellCentered                     | false                              | indicates if data is provided per cell (true) or per vertex (false)                                                                                                                                                                        |
-| vec3f                 | gridOrigin                       | \((0, 0, 0)\)                      | origin of the grid in object space                                                                                                                                                                                                         |
-| vec3f                 | gridSpacing                      | \((1, 1, 1)\)                      | size of the grid cells in object space                                                                                                                                                                                                     |
+| vec3f                 | gridOrigin                       | $(0, 0, 0)$                        | origin of the grid in object space                                                                                                                                                                                                         |
+| vec3f                 | gridSpacing                      | $(1, 1, 1)$                        | size of the grid cells in object space                                                                                                                                                                                                     |
 | affine3f              | indexToObject                    | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | Defines the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and grid cells have size (1,1,1). This parameter takes precedence over `gridOrigin` and `gridSpacing`, if provided. |
-| vec3i                 | indexOrigin                      | \((0, 0, 0)\)                      | Defines the index space origin of the volume. This translation is applied before any (`gridOrigin`, `gridSpacing`) or `indexToObject` transformation.                                                                                      |
+| vec3i                 | indexOrigin                      | $(0, 0, 0)$                        | Defines the index space origin of the volume. This translation is applied before any (`gridOrigin`, `gridSpacing`) or `indexToObject` transformation.                                                                                      |
 | uint32                | temporalFormat                   | `VKL_TEMPORAL_FORMAT_CONSTANT`     | The temporal format for this volume. Use `VKLTemporalFormat` for named constants. Structured regular volumes support `VKL_TEMPORAL_FORMAT_CONSTANT`, `VKL_TEMPORAL_FORMAT_STRUCTURED`, and `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.             |
 | int                   | temporallyStructuredNumTimesteps |                                    | For temporally structured variation, number of timesteps per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_STRUCTURED`.                                                                                                    |
 | uint32\[\] uint64\[\] | temporallyUnstructuredIndices    |                                    | For temporally unstructured variation, indices to `data` time series beginning per voxel. Only valid if `temporalFormat` is `VKL_TEMPORAL_FORMAT_UNSTRUCTURED`.                                                                            |
@@ -868,7 +861,7 @@ The following additional parameters can be set both on
 parameters default to volume parameters.
 
 | Type | Name           | Default                | Description                                                                                                     |
-| :--- | :------------- | :--------------------- | :-------------------------------------------------------------------------------------------------------------- |
+|:-----|:---------------|:-----------------------|:----------------------------------------------------------------------------------------------------------------|
 | int  | filter         | `VKL_FILTER_TRILINEAR` | The filter used for reconstructing the field. Use `VKLFilter` for named constants.                              |
 | int  | gradientFilter | `filter`               | The filter used for reconstructing the field during gradient computations. Use `VKLFilter` for named constants. |
 
@@ -882,26 +875,26 @@ Structured regular volumes support the filter types
 for both `filter` and `gradientFilter`.
 
 Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`,
-gradients are always \((0, 0, 0)\).
+gradients are always $(0, 0, 0)$.
 
 #### Structured Spherical Volumes
 
 Structured spherical volumes are also supported, which are created by
 passing a type string of `"structuredSpherical"` to `vklNewVolume`. The
 grid dimensions and parameters are defined in terms of radial distance
-(\(r\)), inclination angle (\(\theta\)), and azimuthal angle (\(\phi\)),
+($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$),
 conforming with the ISO convention for spherical coordinate systems.
 Structured spherical volumes currently only support vertex-centered
 data. The coordinate system and parameters understood by structured
 spherical volumes are summarized below.
 
-![Structured spherical volume coordinate system: radial distance
-(\(r\)), inclination angle (\(\theta\)), and azimuthal angle
-(\(\phi\)).](https://openvkl.github.io/images/structured_spherical_coords.png)
+![Structured spherical volume coordinate system: radial distance ($r$),
+inclination angle ($\theta$), and azimuthal angle
+($\phi$).](https://openvkl.github.io/images/structured_spherical_coords.png)
 
 | Type                | Name        |          Default           | Description                                                                                                 |
-| :------------------ | :---------- | :------------------------: | :---------------------------------------------------------------------------------------------------------- |
-| vec3i               | dimensions  |                            | number of voxels in each dimension \((r, \theta, \phi)\)                                                    |
+|:--------------------|:------------|:--------------------------:|:------------------------------------------------------------------------------------------------------------|
+| vec3i               | dimensions  |                            | number of voxels in each dimension $(r, \theta, \phi)$                                                      |
 | VKLData VKLData\[\] | data        |                            | VKLData object(s) of voxel data, supported types are:                                                       |
 |                     |             |                            | `VKL_UCHAR`                                                                                                 |
 |                     |             |                            | `VKL_SHORT`                                                                                                 |
@@ -910,8 +903,8 @@ spherical volumes are summarized below.
 |                     |             |                            | `VKL_FLOAT`                                                                                                 |
 |                     |             |                            | `VKL_DOUBLE`                                                                                                |
 |                     |             |                            | Multiple attributes are supported through passing an array of VKLData objects.                              |
-| vec3f               | gridOrigin  |       \((0, 0, 0)\)        | origin of the grid in units of \((r, \theta, \phi)\); angles in degrees                                     |
-| vec3f               | gridSpacing |       \((1, 1, 1)\)        | size of the grid cells in units of \((r, \theta, \phi)\); angles in degrees                                 |
+| vec3f               | gridOrigin  |        $(0, 0, 0)$         | origin of the grid in units of $(r, \theta, \phi)$; angles in degrees                                       |
+| vec3f               | gridSpacing |        $(1, 1, 1)$         | size of the grid cells in units of $(r, \theta, \phi)$; angles in degrees                                   |
 | float\[\]           | background  | `VKL_BACKGROUND_UNDEFINED` | For each attribute, the value that is returned when sampling an undefined region outside the volume domain. |
 
 Configuration parameters for structured spherical
@@ -920,19 +913,19 @@ Configuration parameters for structured spherical
 These grid parameters support flexible specification of spheres,
 hemispheres, spherical shells, spherical wedges, and so forth. The grid
 extents (computed as
-\([gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing]\)) however
+$[gridOrigin, gridOrigin + (dimensions - 1) * gridSpacing]$) however
 must be constrained such that:
 
-  - \(r \geq 0\)
-  - \(0 \leq \theta \leq 180\)
-  - \(0 \leq \phi \leq 360\)
+- $r \geq 0$
+- $0 \leq \theta \leq 180$
+- $0 \leq \phi \leq 360$
 
 The following additional parameters can be set both on
 `"structuredSpherical"` volumes and their sampler objects. Sampler
 object parameters default to volume parameters.
 
 | Type | Name           | Default                | Description                                                                                                     |
-| :--- | :------------- | :--------------------- | :-------------------------------------------------------------------------------------------------------------- |
+|:-----|:---------------|:-----------------------|:----------------------------------------------------------------------------------------------------------------|
 | int  | filter         | `VKL_FILTER_TRILINEAR` | The filter used for reconstructing the field. Use `VKLFilter` for named constants.                              |
 | int  | gradientFilter | `filter`               | The filter used for reconstructing the field during gradient computations. Use `VKLFilter` for named constants. |
 
@@ -962,13 +955,13 @@ AMR volumes are created by passing the type string `"amr"` to
 `vklNewVolume`, and have the following parameters:
 
 | Type        | Name         | Default                    | Description                                                                                                                          |
-| :---------- | :----------- | :------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+|:------------|:-------------|:---------------------------|:-------------------------------------------------------------------------------------------------------------------------------------|
 | float\[\]   | cellWidth    |                            | \[data\] array of each level’s cell width                                                                                            |
 | box3i\[\]   | block.bounds |                            | \[data\] array of each block’s bounds (in voxels)                                                                                    |
 | int\[\]     | block.level  |                            | \[data\] array of each block’s refinement level                                                                                      |
 | VKLData\[\] | block.data   |                            | \[data\] array of each block’s VKLData object containing the actual scalar voxel data. Currently only `VKL_FLOAT` data is supported. |
-| vec3f       | gridOrigin   | \((0, 0, 0)\)              | origin of the grid in object space                                                                                                   |
-| vec3f       | gridSpacing  | \((1, 1, 1)\)              | size of the grid cells in object space                                                                                               |
+| vec3f       | gridOrigin   | $(0, 0, 0)$                | origin of the grid in object space                                                                                                   |
+| vec3f       | gridSpacing  | $(1, 1, 1)$                | size of the grid cells in object space                                                                                               |
 | float       | background   | `VKL_BACKGROUND_UNDEFINED` | The value that is returned when sampling an undefined region outside the volume domain.                                              |
 
 Configuration parameters for AMR (`"amr"`) volumes.
@@ -982,7 +975,7 @@ and their sampler objects. Sampler object parameters default to volume
 parameters.
 
 | Type           | Name   |           Default | Description                                            |
-| :------------- | :----- | ----------------: | :----------------------------------------------------- |
+|:---------------|:-------|------------------:|:-------------------------------------------------------|
 | `VKLAMRMethod` | method | `VKL_AMR_CURRENT` | `VKLAMRMethod` sampling method. Supported methods are: |
 |                |        |                   | `VKL_AMR_CURRENT`                                      |
 |                |        |                   | `VKL_AMR_FINEST`                                       |
@@ -995,14 +988,14 @@ Open VKL’s AMR implementation was designed to cover Berger-Colella \[1\]
 and Chombo \[2\] AMR data. The `method` parameter above determines the
 interpolation method used when sampling the volume.
 
-  - `VKL_AMR_CURRENT` finds the finest refinement level at that cell and
-    interpolates through this “current” level
-  - `VKL_AMR_FINEST` will interpolate at the closest existing cell in
-    the volume-wide finest refinement level regardless of the sample
-    cell’s level
-  - `VKL_AMR_OCTANT` interpolates through all available refinement
-    levels at that cell. This method avoids discontinuities at
-    refinement level boundaries at the cost of performance
+- `VKL_AMR_CURRENT` finds the finest refinement level at that cell and
+  interpolates through this “current” level
+- `VKL_AMR_FINEST` will interpolate at the closest existing cell in the
+  volume-wide finest refinement level regardless of the sample cell’s
+  level
+- `VKL_AMR_OCTANT` interpolates through all available refinement levels
+  at that cell. This method avoids discontinuities at refinement level
+  boundaries at the cost of performance
 
 Gradients are computed using finite differences, using the `method`
 defined on the sampler.
@@ -1056,9 +1049,9 @@ vertex.
 
 To maintain VTK data compatibility, the `index` array may be specified
 with cell sizes interleaved with vertex indices in the following format:
-\(n, id_1, ..., id_n, m, id_1, ..., id_m\). This alternative `index`
-array layout can be enabled through the `indexPrefixed` flag (in which
-case, the `cell.type` parameter should be omitted).
+$n, id_1, ..., id_n, m, id_1, ..., id_m$. This alternative `index` array
+layout can be enabled through the `indexPrefixed` flag (in which case,
+the `cell.type` parameter should be omitted).
 
 Gradients are computed using finite differences.
 
@@ -1066,7 +1059,7 @@ Unstructured volumes are created by passing the type string
 `"unstructured"` to `vklNewVolume`, and have the following parameters:
 
 | Type                    | Name               | Default                    | Description                                                                                                                                             |
-| :---------------------- | :----------------- | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|:------------------------|:-------------------|:---------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\]               | vertex.position    |                            | \[data\] array of vertex positions                                                                                                                      |
 | float\[\]               | vertex.data        |                            | \[data\] array of vertex data values to be sampled                                                                                                      |
 | uint32\[\] / uint64\[\] | index              |                            | \[data\] array of indices (into the vertex array(s)) that form cells                                                                                    |
@@ -1112,19 +1105,19 @@ interpretation.
 
 The VDB implementation in Open VKL follows the following goals:
 
-  - Efficient data structure traversal on vector architectures.
+- Efficient data structure traversal on vector architectures.
 
-  - Enable the use of industry-standard .vdb files created through the
-    OpenVDB library.
+- Enable the use of industry-standard .vdb files created through the
+  OpenVDB library.
 
-  - Compatibility with OpenVDB on a leaf data level, so that .vdb files
-    may be loaded with minimal overhead.
+- Compatibility with OpenVDB on a leaf data level, so that .vdb files
+  may be loaded with minimal overhead.
 
 VDB volumes are created by passing the type string `"vdb"` to
 `vklNewVolume`, and have the following parameters:
 
 | Type               | Name                                  | Default                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| :----------------- | :------------------------------------ | :--------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+|:-------------------|:--------------------------------------|:-----------------------------------|:--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | affine3f float\[\] | indexToObject                         | 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 | Defines the transformation from index space to object space. In index space, the grid is an axis-aligned regular grid, and leaf voxels have size (1,1,1). A `vkl_affine3f` can be provided; alternatively an array of 12 values of type `float` can be used, where the first 9 values are interpreted as a row-major linear transformation matrix, and the last 3 values are the translation of the grid origin.                                                                                                                      |
 | uint32\[\]         | node.format                           |                                    | For each input node, the data format. Currently supported are `VKL_FORMAT_TILE` for tiles, and `VKL_FORMAT_DENSE_ZYX` for nodes that are dense regular grids.                                                                                                                                                                                                                                                                                                                                                                         |
 | uint32\[\]         | node.level                            |                                    | For each input node, the level on which this node exists. Tiles may exist on levels \[1, `VKL_VDB_NUM_LEVELS-1`\], all other nodes may only exist on level `VKL_VDB_NUM_LEVELS-1`.                                                                                                                                                                                                                                                                                                                                                    |
@@ -1155,7 +1148,7 @@ their sampler objects (sampler object parameters default to volume
 parameters).
 
 | Type | Name             | Default                | Description                                                                                                     |
-| :--- | :--------------- | :--------------------- | :-------------------------------------------------------------------------------------------------------------- |
+|:-----|:-----------------|:-----------------------|:----------------------------------------------------------------------------------------------------------------|
 | int  | filter           | `VKL_FILTER_TRILINEAR` | The filter used for reconstructing the field. Use `VKLFilter` for named constants.                              |
 | int  | gradientFilter   | `filter`               | The filter used for reconstructing the field during gradient computations. Use `VKLFilter` for named constants. |
 | int  | maxSamplingDepth | `VKL_VDB_NUM_LEVELS`-1 | Do not descend further than to this depth during sampling.                                                      |
@@ -1166,7 +1159,7 @@ objects.
 VDB volume objects support the following observers:
 
 | Name      | Buffer Type | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| :-------- | ----------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:----------|-------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | InnerNode | float\[\]   | Return an array of bounding boxes, along with value ranges, of inner nodes in the data structure. The bounding box is given in object space. For a volume with M attributes, the entries in this array are (6+2\*M)-tuples `(minX, minY, minZ, maxX, maxY, maxZ, lower_0, upper_0, lower_1, upper_1, ...)`. This is in effect a low resolution representation of the volume. The InnerNode observer can be parametrized using `int maxDepth` to control the depth at which inner nodes are returned. Note that the observer will also return leaf nodes or tiles at lower levels if they exist. |
 
 Observers supported by VDB (`"vdb"`) volumes.
@@ -1174,7 +1167,7 @@ Observers supported by VDB (`"vdb"`) volumes.
 VDB sampler objects support the following observers:
 
 | Name           | Buffer Type | Description                                                                                                                                                                                                                                    |
-| :------------- | :---------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:---------------|:------------|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | LeafNodeAccess | uint32\[\]  | This observer returns an array with as many entries as input nodes were passed. If the input node i was accessed during traversal, then the ith entry in this array has a nonzero value. This can be used for on-demand loading of leaf nodes. |
 
 Observers supported by sampler objects created on VDB (`"vdb"`) volumes.
@@ -1186,39 +1179,39 @@ VDB volumes support the filter types `VKL_FILTER_NEAREST`,
 `gradientFilter`.
 
 Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`,
-gradients are always \((0, 0, 0)\).
+gradients are always $(0, 0, 0)$.
 
 #### Major differences to OpenVDB
 
-  - Open VKL implements sampling in ISPC, and can exploit wide SIMD
-    architectures.
+- Open VKL implements sampling in ISPC, and can exploit wide SIMD
+  architectures.
 
-  - VDB volumes in Open VKL are read-only once committed, and designed
-    for rendering only. Authoring or manipulating datasets is not in the
-    scope of this implementation.
+- VDB volumes in Open VKL are read-only once committed, and designed for
+  rendering only. Authoring or manipulating datasets is not in the scope
+  of this implementation.
 
-  - The only supported field types are `VKL_HALF` and `VKL_FLOAT` at
-    this point. Other field types may be supported in the future. Note
-    that multi-attribute volumes may be used to represent
-    multi-component (e.g. vector) fields.
+- The only supported field types are `VKL_HALF` and `VKL_FLOAT` at this
+  point. Other field types may be supported in the future. Note that
+  multi-attribute volumes may be used to represent multi-component
+  (e.g. vector) fields.
 
-  - The root level in Open VKL has a single node with resolution 64^3
-    (cp. \[1\]. OpenVDB uses a hash map, instead).
+- The root level in Open VKL has a single node with resolution 64^3
+  (cp. \[1\]. OpenVDB uses a hash map, instead).
 
-  - Open VKL supports four-level vdb volumes. The resolution of each
-    level can be configured at compile time using CMake variables.
-    
-      - `VKL_VDB_LOG_RESOLUTION_0` sets the base 2 logarithm of the root
-        level resolution. This variable defaults to 6, which means that
-        the root level has a resolution of \((2^6)^3 = 64^3\).
-      - `VKL_VDB_LOG_RESOLUTION_1` and `VKL_VDB_LOG_RESOLUTION_2`
-        default to 5 and 4, respectively. This matches the default Open
-        VDB resolution for inner levels.
-      - `VKL_VDB_LOG_RESOLUTION_3` set the base 2 logarithm of the leaf
-        level resolution, and defaults to 3. Therefore, leaf nodes have
-        a resolution of \(8^3\) voxels. Again, this matches the Open VDB
-        default. The default settings lead to a domain resolution of
-        \(2^18^3=262144^3\) voxels.
+- Open VKL supports four-level vdb volumes. The resolution of each level
+  can be configured at compile time using CMake variables.
+
+  - `VKL_VDB_LOG_RESOLUTION_0` sets the base 2 logarithm of the root
+    level resolution. This variable defaults to 6, which means that the
+    root level has a resolution of $(2^6)^3 = 64^3$.
+  - `VKL_VDB_LOG_RESOLUTION_1` and `VKL_VDB_LOG_RESOLUTION_2` default to
+    5 and 4, respectively. This matches the default Open VDB resolution
+    for inner levels.
+  - `VKL_VDB_LOG_RESOLUTION_3` set the base 2 logarithm of the leaf
+    level resolution, and defaults to 3. Therefore, leaf nodes have a
+    resolution of $8^3$ voxels. Again, this matches the Open VDB
+    default. The default settings lead to a domain resolution of
+    $2^18^3=262144^3$ voxels.
 
 #### Loading OpenVDB .vdb files
 
@@ -1268,7 +1261,7 @@ Particle volumes are created by passing the type string `"particle"` to
 `vklNewVolume`, and have the following parameters:
 
 | Type      | Name                    | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| :-------- | :---------------------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|:----------|:------------------------|:--------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | vec3f\[\] | particle.position       |         | \[data\] array of particle positions                                                                                                                                                                                                                                                                                                                                                                                                               |
 | float\[\] | particle.radius         |         | \[data\] array of particle radii                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | float\[\] | particle.weight         | null    | \[data\] (optional) array of particle weights, specifying the height of the kernel.                                                                                                                                                                                                                                                                                                                                                                |
@@ -1315,22 +1308,22 @@ Temporally structured variation is configured by setting
 volume expects an additional parameter
 `[node.]temporallyStructuredNumTimesteps`, which specifies how many time
 steps are provided for all voxels, and must be at least 2. A volume, or
-node, with \(N\) voxels expects \(N * temporallyStructuredNumTimesteps\)
+node, with $N$ voxels expects $N * temporallyStructuredNumTimesteps$
 values for each attribute. The values are assumed evenly spaced over
-times \([0, 1]\): \(\{0, 1/(N-1), ..., 1\}\)
+times $[0, 1]$: $\{0, 1/(N-1), ..., 1\}$
 
 Temporally unstructured variation supports differing time step counts
-and sample times per voxel. For \(N\) input voxels,
-`temporallyUnstructuredIndices` is an array of \(N+1\) indices. Voxel
-\(i\) has
-\(N_i = [temporallyUnstructuredIndices[i+1]-temporallyUnstructuredIndices[i])\)
-temporal samples starting at index \(temporallyUnstructuredIndices[i]\).
+and sample times per voxel. For $N$ input voxels,
+`temporallyUnstructuredIndices` is an array of $N+1$ indices. Voxel $i$
+has
+$N_i = [temporallyUnstructuredIndices[i+1]-temporallyUnstructuredIndices[i])$
+temporal samples starting at index $temporallyUnstructuredIndices[i]$.
 `temporallyUnstructuredTimes` specifies the times corresponding to the
 sample values; the time values for each voxel must be between zero and
-one and strictly increasing: \(t0 < t1 < ... < tN\). To return a value
-at sample time t, \(t0 <= t <= tN\), Open VKL will interpolate linearly
-from the two nearest time steps. Time values outside this range are
-clamped to \([t0, tN]\).
+one and strictly increasing: $t0 < t1 < ... < tN$. To return a value at
+sample time t, $t0 <= t <= tN$, Open VKL will interpolate linearly from
+the two nearest time steps. Time values outside this range are clamped
+to $[t0, tN]$.
 
 ## Sampler Objects
 
@@ -1582,11 +1575,11 @@ VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
 The parameters understood by interval iterator contexts are defined in
 the table below.
 
-| Type             | Name                   | Default       | Description                                                                                                                                                                                                                                                                               |
-| :--------------- | :--------------------- | :------------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| int              | attributeIndex         | 0             | Defines the volume attribute of interest.                                                                                                                                                                                                                                                 |
-| vkl\_range1f\[\] | valueRanges            | \[-inf, inf\] | Defines the value ranges of interest. Intervals not containing any of these values ranges may be skipped during iteration.                                                                                                                                                                |
-| float            | intervalResolutionHint | 0.5           | A value in the range \[0, 1\] affecting the resolution (size) of returned intervals. A value of 0 yields the lowest resolution (largest) intervals while 1 gives the highest resolution (smallest) intervals. This value is only a hint; it may not impact behavior for all volume types. |
+| Type            | Name                   | Default       | Description                                                                                                                                                                                                                                                                               |
+|:----------------|:-----------------------|:--------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| int             | attributeIndex         | 0             | Defines the volume attribute of interest.                                                                                                                                                                                                                                                 |
+| vkl_range1f\[\] | valueRanges            | \[-inf, inf\] | Defines the value ranges of interest. Intervals not containing any of these values ranges may be skipped during iteration.                                                                                                                                                                |
+| float           | intervalResolutionHint | 0.5           | A value in the range \[0, 1\] affecting the resolution (size) of returned intervals. A value of 0 yields the lowest resolution (largest) intervals while 1 gives the highest resolution (smallest) intervals. This value is only a hint; it may not impact behavior for all volume types. |
 
 Configuration parameters for interval iterator contexts.
 
@@ -1752,7 +1745,7 @@ The parameters understood by hit iterator contexts are defined in the
 table below.
 
 | Type      | Name           | Default | Description                               |
-| :-------- | :------------- | :------ | :---------------------------------------- |
+|:----------|:---------------|:--------|:------------------------------------------|
 | int       | attributeIndex | 0       | Defines the volume attribute of interest. |
 | float\[\] | values         |         | Defines the value(s) of interest.         |
 
@@ -1877,17 +1870,18 @@ lifted in the future.
 
 ## MXCSR control and status register
 
-It is strongly recommended to have the `Flush to Zero` and `Denormals
-are Zero` mode of the MXCSR control and status register enabled for each
-thread before calling the sampling, gradient, or interval API functions.
-Otherwise, under some circumstances special handling of denormalized
-floating point numbers can significantly reduce application and Open VKL
-performance. The device parameter `flushDenormals` or environment
-variable `OPENVKL_FLUSH_DENORMALS` can be used to toggle this mode; by
-default it is enabled. Alternatively, when using Open VKL together with
-the Intel® Threading Building Blocks, it is sufficient to execute the
-following code at the beginning of the application main thread (before
-the creation of the `tbb::task_scheduler_init` object):
+It is strongly recommended to have the `Flush to Zero` and
+`Denormals are Zero` mode of the MXCSR control and status register
+enabled for each thread before calling the sampling, gradient, or
+interval API functions. Otherwise, under some circumstances special
+handling of denormalized floating point numbers can significantly reduce
+application and Open VKL performance. The device parameter
+`flushDenormals` or environment variable `OPENVKL_FLUSH_DENORMALS` can
+be used to toggle this mode; by default it is enabled. Alternatively,
+when using Open VKL together with the Intel® Threading Building Blocks,
+it is sufficient to execute the following code at the beginning of the
+application main thread (before the creation of the
+`tbb::task_scheduler_init` object):
 
 ``` cpp
 #include <xmmintrin.h>
@@ -2046,12 +2040,12 @@ Simple tutorials can be found in the
 [`examples/`](https://github.com/openvkl/openvkl/tree/master/examples)
 directory. These are:
 
-  - [`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c):
-    usage of the C API
-  - [`vklTutorialISPC.cpp`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.cpp)
-    and
-    [`vklTutorialISPC.ispc`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.ispc)
-    : combined usage of the C and ISPC APIs
+- [`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c):
+  usage of the C API
+- [`vklTutorialISPC.cpp`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.cpp)
+  and
+  [`vklTutorialISPC.ispc`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.ispc)
+  : combined usage of the C and ISPC APIs
 
 ## Interactive examples
 
@@ -2485,26 +2479,26 @@ branch should always point to the latest tested bugfix release.
 Open VKL currently supports Linux, Mac OS X, and Windows. In addition,
 before you can build Open VKL you need the following prerequisites:
 
-  - You can clone the latest Open VKL sources via:
-    
-        git clone https://github.com/openvkl/openvkl.git
+- You can clone the latest Open VKL sources via:
 
-  - To build Open VKL you need [CMake](http://www.cmake.org), any form
-    of C++11 compiler (we recommend using GCC, but also support Clang
-    and MSVC), and standard Linux development tools. To build the
-    examples, you should also have some version of OpenGL.
+      git clone https://github.com/openvkl/openvkl.git
 
-  - Additionally you require a copy of the [Intel® Implicit SPMD Program
-    Compiler (Intel® ISPC)](http://ispc.github.io), version 1.18.0 or
-    later. Please obtain a release of ISPC from the [ISPC downloads
-    page](https://ispc.github.io/downloads.html).
+- To build Open VKL you need [CMake](http://www.cmake.org), any form of
+  C++11 compiler (we recommend using GCC, but also support Clang and
+  MSVC), and standard Linux development tools. To build the examples,
+  you should also have some version of OpenGL.
 
-  - Open VKL depends on the Intel RenderKit common library, rkcommon.
-    rkcommon is available at the [rkcommon GitHub
-    repository](https://github.com/ospray/rkcommon).
+- Additionally you require a copy of the [Intel® Implicit SPMD Program
+  Compiler (Intel® ISPC)](http://ispc.github.io), version 1.18.0 or
+  later. Please obtain a release of ISPC from the [ISPC downloads
+  page](https://ispc.github.io/downloads.html).
 
-  - Open VKL depends on Embree, which is available at the [Embree GitHub
-    repository](https://github.com/embree/embree).
+- Open VKL depends on the Intel RenderKit common library, rkcommon.
+  rkcommon is available at the [rkcommon GitHub
+  repository](https://github.com/ospray/rkcommon).
+
+- Open VKL depends on Embree, which is available at the [Embree GitHub
+  repository](https://github.com/embree/embree).
 
 Depending on your Linux distribution you can install these dependencies
 using `yum` or `apt-get`. Some of these packages might already be
@@ -2531,14 +2525,14 @@ subdirectory per dependency.
 
 CMake options to note (all have sensible defaults):
 
-  - `CMAKE_INSTALL_PREFIX` will be the root directory where everything
-    gets installed.
-  - `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
-  - `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all
-    libraries in separate or the same directory.
-  - `BUILD_TBB_FROM_SOURCE` specifies whether TBB should be built from
-    source or the releases on Gitub should be used. This must be ON when
-    compiling for ARM.
+- `CMAKE_INSTALL_PREFIX` will be the root directory where everything
+  gets installed.
+- `BUILD_JOBS` sets the number given to `make -j` for parallel builds.
+- `INSTALL_IN_SEPARATE_DIRECTORIES` toggles installation of all
+  libraries in separate or the same directory.
+- `BUILD_TBB_FROM_SOURCE` specifies whether TBB should be built from
+  source or the releases on Gitub should be used. This must be ON when
+  compiling for ARM.
 
 For the full set of options, run `ccmake [<VKL_ROOT>/superbuild]`.
 
@@ -2547,39 +2541,39 @@ For the full set of options, run `ccmake [<VKL_ROOT>/superbuild]`.
 Assuming the above prerequisites are all fulfilled, building Open VKL
 through CMake is easy:
 
-  - Create a build directory, and go into it
-    
-        mkdir openvkl/build
-        cd openvkl/build
-    
-    (We do recommend having separate build directories for different
-    configurations such as release, debug, etc.).
+- Create a build directory, and go into it
 
-  - The compiler CMake will use will default to whatever the `CC` and
-    `CXX` environment variables point to. Should you want to specify a
-    different compiler, run cmake manually while specifying the desired
-    compiler. The default compiler on most linux machines is `gcc`, but
-    it can be pointed to `clang` instead by executing the following:
-    
-        cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
-    
-    CMake will now use Clang instead of GCC. If you are ok with using
-    the default compiler on your system, then simply skip this step.
-    Note that the compiler variables cannot be changed after the first
-    `cmake` or `ccmake` run.
+      mkdir openvkl/build
+      cd openvkl/build
 
-  - Open the CMake configuration dialog
-    
-        ccmake ..
+  (We do recommend having separate build directories for different
+  configurations such as release, debug, etc.).
 
-  - Make sure to properly set build mode and enable the components you
-    need, etc.; then type ’c’onfigure and ’g’enerate. When back on the
-    command prompt, build it using
-    
-        make
+- The compiler CMake will use will default to whatever the `CC` and
+  `CXX` environment variables point to. Should you want to specify a
+  different compiler, run cmake manually while specifying the desired
+  compiler. The default compiler on most linux machines is `gcc`, but it
+  can be pointed to `clang` instead by executing the following:
 
-  - You should now have `libopenvkl.so` as well as the tutorial /
-    example applications.
+      cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+
+  CMake will now use Clang instead of GCC. If you are ok with using the
+  default compiler on your system, then simply skip this step. Note that
+  the compiler variables cannot be changed after the first `cmake` or
+  `ccmake` run.
+
+- Open the CMake configuration dialog
+
+      ccmake ..
+
+- Make sure to properly set build mode and enable the components you
+  need, etc.; then type ’c’onfigure and ’g’enerate. When back on the
+  command prompt, build it using
+
+      make
+
+- You should now have `libopenvkl.so` as well as the tutorial / example
+  applications.
 
 # Projects that make use of Open VKL
 
@@ -2590,13 +2584,13 @@ projects and related information.
 If you have a project that makes use of Open VKL and would like this to
 be listed here, please let us know.
 
-  - [Intel® OSPRay](http://www.ospray.org), a ray tracing based
-    rendering engine for high-fidelity visualization
+- [Intel® OSPRay](http://www.ospray.org), a ray tracing based rendering
+  engine for high-fidelity visualization
 
 # Projects that are closely related to Open VKL
 
-  - The [Intel® oneAPI Rendering
-    Toolkit](https://software.intel.com/en-us/rendering-framework)
+- The [Intel® oneAPI Rendering
+  Toolkit](https://software.intel.com/en-us/rendering-framework)
 
-  - The [Intel® Embree](http://embree.github.io) Ray Tracing Kernel
-    Framework
+- The [Intel® Embree](http://embree.github.io) Ray Tracing Kernel
+  Framework

@@ -5,7 +5,7 @@ name: Release Workflow
 on:
   push:
     branches:
-      - '*release*'
+      - '**release**'
       - 'devel'
       - 'master'
   workflow_dispatch:

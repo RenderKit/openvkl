@@ -2,6 +2,8 @@
 ## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
+MACOSX_DEPLOYMENT_TARGET="10.13"
+
 mkdir build
 cd build
 

@@ -8,6 +8,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -121,3 +122,4 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

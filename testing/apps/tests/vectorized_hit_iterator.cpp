@@ -169,6 +169,7 @@ void vector_hit_iteration_time_varying(
   }
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 {
   initializeOpenVKL();
@@ -672,3 +673,4 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
   shutdownOpenVKL();
 }
+#endif

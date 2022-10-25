@@ -9,6 +9,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Structured regular volume strides", "[volume_strides]")
 {
   initializeOpenVKL();
@@ -111,3 +112,4 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
 
   shutdownOpenVKL();
 }
+#endif

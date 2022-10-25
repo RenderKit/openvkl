@@ -30,6 +30,7 @@ void computed_vs_api_value_range(vec3i dimensions,
            apiValueRange.upper == computedValueRange.upper));
 }
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
 TEST_CASE("Unstructured volume value range", "[volume_value_range]")
 {
   initializeOpenVKL();
@@ -56,3 +57,4 @@ TEST_CASE("Unstructured volume value range", "[volume_value_range]")
 
   shutdownOpenVKL();
 }
+#endif

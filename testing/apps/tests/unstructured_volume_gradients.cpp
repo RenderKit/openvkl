@@ -21,7 +21,7 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
                                           primType,
                                           false));
 
-  VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
+  VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit(vklSampler);
 
@@ -54,6 +54,7 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
 TEST_CASE("Unstructured volume gradients", "[volume_gradients]")
 {
   initializeOpenVKL();
@@ -65,3 +66,4 @@ TEST_CASE("Unstructured volume gradients", "[volume_gradients]")
 
   shutdownOpenVKL();
 }
+#endif

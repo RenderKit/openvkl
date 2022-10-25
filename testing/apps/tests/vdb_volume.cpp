@@ -12,6 +12,7 @@ using openvkl::testing::TestingVdbTorusVolume;
 using openvkl::testing::WaveletVdbVolumeFloat;
 using openvkl::testing::XYZVdbVolumeFloat;
 
+#if OPENVKL_DEVICE_CPU_VDB
 TEST_CASE("VDB volume leaf validation", "[validation]")
 {
   initializeOpenVKL();
@@ -914,3 +915,4 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
 
   shutdownOpenVKL();
 }
+#endif

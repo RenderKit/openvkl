@@ -246,6 +246,10 @@ endforeach(TARGET_WIDTH)
 # shared library linking to all width-specific targets
 add_library(openvkl_module_cpu_device SHARED exports.cpp ${VKL_RESOURCE})
 
+target_compile_definitions(openvkl_module_cpu_device PUBLIC
+  ${OPTIONAL_VOLUME_DEFINITIONS}
+)
+
 foreach(TARGET_WIDTH 4 8 16)
   if (TARGET_WIDTH_ENABLED_${TARGET_WIDTH})
     target_compile_definitions(openvkl_module_cpu_device PUBLIC

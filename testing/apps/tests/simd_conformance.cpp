@@ -163,19 +163,40 @@ void max_iterator_size_conformance_test(VKLDevice device)
   size_t maxIntervalSize = 0;
   size_t maxHitSize      = 0;
 
-  for (const char *volumeType : {"amr",
-                                 "structuredRegular",
-                                 "structuredSpherical",
-                                 "particle",
-                                 "unstructured",
-                                 "vdb"}) {
-    VKLVolume volume   = vklNewVolume(device, volumeType);
+  std::vector<std::string> volumeTypes;
+
+#if OPENVKL_DEVICE_CPU_AMR
+  volumeTypes.push_back("amr");
+#endif
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+  volumeTypes.push_back("structuredRegular");
+#endif
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+  volumeTypes.push_back("structuredSpherical");
+#endif
+
+#if OPENVKL_DEVICE_CPU_PARTICLE
+  volumeTypes.push_back("particle");
+#endif
+
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+  volumeTypes.push_back("unstructured");
+#endif
+
+#if OPENVKL_DEVICE_CPU_VDB
+  volumeTypes.push_back("vdb");
+#endif
+
+  for (const auto &volumeType : volumeTypes) {
+    VKLVolume volume   = vklNewVolume(device, volumeType.c_str());
     VKLSampler sampler = vklNewSampler(volume);
     vklCommit(sampler);
     VKLIntervalIteratorContext intervalContext =
         vklNewIntervalIteratorContext(sampler);
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
-    maxIntervalSize = std::max<size_t>(
+    maxIntervalSize                  = std::max<size_t>(
         maxIntervalSize, vklGetIntervalIteratorSize(intervalContext));
     maxHitSize =
         std::max<size_t>(maxHitSize, vklGetHitIteratorSize(hitContext));
@@ -185,8 +206,19 @@ void max_iterator_size_conformance_test(VKLDevice device)
     vklRelease(volume);
   }
 
+#define ALL_VOLUMES_ENABLED                                 \
+  (OPENVKL_DEVICE_CPU_AMR && OPENVKL_DEVICE_CPU_PARTICLE && \
+   OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR &&                 \
+   OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL &&               \
+   OPENVKL_DEVICE_CPU_UNSTRUCTURED && OPENVKL_DEVICE_CPU_VDB)
+
+#if ALL_VOLUMES_ENABLED
   REQUIRE(maxIntervalSize == INTERVAL_MACRO);
   REQUIRE(maxHitSize == HIT_MACRO);
+#else
+  REQUIRE(maxIntervalSize <= INTERVAL_MACRO);
+  REQUIRE(maxHitSize <= HIT_MACRO);
+#endif
 }
 
 TEST_CASE("Max iterator size", "[simd_conformance]")

@@ -84,6 +84,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
   SECTION("scalar hit iteration")
   {
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
     SECTION("structured volumes: single attribute")
     {
       std::unique_ptr<ZProceduralVolume> v(
@@ -134,7 +135,9 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
                              directions[i - 1]);
       }
     }
+#endif
 
+#if OPENVKL_DEVICE_CPU_VDB
     SECTION("VDB volumes: single attribute")
     {
       for (const auto &repackNodes : {true, false}) {
@@ -207,7 +210,9 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
         }
       }
     }
+#endif
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
     SECTION(
         "structured volumes: isovalues at grid accelerator macrocell "
         "boundaries")
@@ -254,7 +259,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
                            reversedIsovalues,
                            defaultExpectedTValues,
                            vkl_vec3f{0.5f, 0.5f, 2.f},
-                           //vkl_vec3f{8.f, 8.f, 18.f},
+                           // vkl_vec3f{8.f, 8.f, 18.f},
                            vkl_vec3f{0.f, 0.f, -1.f});
     }
 
@@ -289,7 +294,9 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
         }
       }
     }
+#endif
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
     SECTION("unstructured volumes")
     {
       std::unique_ptr<ZUnstructuredProceduralVolume> v(
@@ -306,6 +313,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
                            defaultIsoValues,
                            defaultExpectedTValues);
     }
+#endif
   }
 
   shutdownOpenVKL();

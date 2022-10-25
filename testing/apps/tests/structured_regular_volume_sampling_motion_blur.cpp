@@ -168,6 +168,7 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   vklRelease(volume);
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Structured regular volume sampling with motion blur",
           "[volume_sampling]")
 {
@@ -232,3 +233,4 @@ TEST_CASE("Structured regular volume sampling with motion blur",
 
   shutdownOpenVKL();
 }
+#endif

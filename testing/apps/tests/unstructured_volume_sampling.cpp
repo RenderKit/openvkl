@@ -94,6 +94,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
 TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -188,3 +189,4 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

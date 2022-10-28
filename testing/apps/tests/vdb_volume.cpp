@@ -145,9 +145,9 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -170,7 +170,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("WaveletVdbVolumeHalf trilinear")
@@ -182,9 +182,9 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -207,7 +207,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("WaveletVdbVolumeHalf tricubic")
@@ -219,9 +219,9 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit2(vklSampler);
         const vec3i step(2);
 
         // tricubic support span; ignore coordinates here since they will
@@ -257,7 +257,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       // float
@@ -271,9 +271,9 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -296,7 +296,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("WaveletVdbVolumeFloat trilinear")
@@ -308,9 +308,9 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -333,7 +333,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("WaveletVdbVolumeFloat tricubic")
@@ -345,9 +345,9 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit2(vklSampler);
         const vec3i step(2);
 
         // tricubic support span; ignore coordinates here since they will
@@ -383,7 +383,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
     }
   }
@@ -402,9 +402,9 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
 
   VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-  vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-  vklCommit(vklSampler);
+  vklSetInt2(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+  vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+  vklCommit2(vklSampler);
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(vklSampler);
   vklCommit(intervalContext);
@@ -420,7 +420,7 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
           intervalContext, &origin, &direction, &tRange, time, buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
   REQUIRE_NOTHROW(vklRelease(intervalContext));
-  REQUIRE_NOTHROW(vklRelease(vklSampler));
+  REQUIRE_NOTHROW(vklRelease2(vklSampler));
   REQUIRE_NOTHROW(delete volume);
 
   shutdownOpenVKL();
@@ -451,9 +451,9 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -467,7 +467,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.z);
 
           const vkl_vec3f vklGradient = vklComputeGradient(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           REQUIRE(gradient.x == 0.f);
@@ -476,7 +476,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("XYZVdbVolumeHalf trilinear")
@@ -493,9 +493,9 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -515,7 +515,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.z);
 
           const vkl_vec3f vklGradient = vklComputeGradient(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -529,7 +529,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("XYZVdbVolumeHalf tricubic")
@@ -546,9 +546,9 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit2(vklSampler);
         const vec3i step(2);
 
         // Gradient will be different around the border due to central
@@ -573,7 +573,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.z);
 
           const vkl_vec3f vklGradient = vklComputeGradient(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -587,7 +587,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       // float
@@ -601,9 +601,9 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_NEAREST);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -617,7 +617,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.z);
 
           const vkl_vec3f vklGradient = vklComputeGradient(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           REQUIRE(gradient.x == 0.f);
@@ -626,7 +626,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("XYZVdbVolumeFloat trilinear")
@@ -639,9 +639,9 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRILINEAR);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklCommit2(vklSampler);
         const vec3i step(2);
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
@@ -661,7 +661,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.z);
 
           const vkl_vec3f vklGradient = vklComputeGradient(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -675,7 +675,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
 
       SECTION("XYZVdbVolumeFloat tricubic")
@@ -688,9 +688,9 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
-        vklCommit(vklSampler);
+        vklSetInt2(vklSampler, "filter", VKL_FILTER_TRICUBIC);
+        vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklCommit2(vklSampler);
         const vec3i step(2);
 
         // Gradient will be different around the border due to central
@@ -715,7 +715,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.z);
 
           const vkl_vec3f vklGradient = vklComputeGradient(
-              vklSampler, (const vkl_vec3f *)&objectCoordinates);
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -729,7 +729,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         }
 
         REQUIRE_NOTHROW(delete volume);
-        vklRelease(vklSampler);
+        vklRelease2(vklSampler);
       }
     }
   }
@@ -773,7 +773,7 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
 
           VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
           VKLSampler vklSampler = vklNewSampler(vklVolume);
-          vklCommit(vklSampler);
+          vklCommit2(vklSampler);
           const vec3i step(2);
           multidim_index_sequence<3> mis(volume->getDimensions() / step);
           for (const auto &offset : mis) {
@@ -796,7 +796,7 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
           }
 
           REQUIRE_NOTHROW(delete volume);
-          vklRelease(vklSampler);
+          vklRelease2(vklSampler);
         }
       }
     }
@@ -864,7 +864,7 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
     VKLVolume vklVolume = volume->getVKLVolume(getOpenVKLDevice());
 
     VKLSampler sampler = vklNewSampler(vklVolume);
-    vklCommit(sampler);
+    vklCommit2(sampler);
 
     VKLIntervalIteratorContext intervalContext =
         vklNewIntervalIteratorContext(sampler);
@@ -908,7 +908,7 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
     }
 
     vklRelease(intervalContext);
-    vklRelease(sampler);
+    vklRelease2(sampler);
 
     REQUIRE_NOTHROW(delete volume);
   }

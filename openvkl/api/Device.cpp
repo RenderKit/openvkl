@@ -3,6 +3,8 @@
 
 #include "Device.h"
 #include <sstream>
+#include "../common/Data.h"
+#include "../common/ManagedObject.h"
 #include "ispc_util_ispc.h"
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/StringManip.h"
@@ -201,6 +203,223 @@ namespace openvkl {
     bool Device::isCommitted()
     {
       return committed;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Parameter setting helpers //////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    using SetParamFcn = void(VKLObject, const char *, const void *);
+
+    template <typename T>
+    static void setParamOnObject(VKLObject _obj, const char *p, const T &v)
+    {
+      auto *obj = (ManagedObject *)_obj;
+      obj->setParam(p, v);
+    }
+
+#define declare_param_setter(TYPE)                                           \
+  {                                                                          \
+    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
+      setParamOnObject(o, p, *(TYPE *)v);                                    \
+    }                                                                        \
+  }
+
+#define declare_param_setter_object(TYPE)                                    \
+  {                                                                          \
+    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
+      ManagedObject *obj = *(TYPE *)v;                                       \
+      setParamOnObject(o, p, obj);                                           \
+    }                                                                        \
+  }
+
+#define declare_param_setter_string(TYPE)                                    \
+  {                                                                          \
+    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
+      const char *str = (const char *)v;                                     \
+      setParamOnObject(o, p, std::string(str));                              \
+    }                                                                        \
+  }
+
+    static std::map<VKLDataType, std::function<SetParamFcn>> setParamFcns = {
+        declare_param_setter(void *),
+        declare_param_setter(bool),
+        declare_param_setter_object(openvkl::ManagedObject *),
+        declare_param_setter_object(openvkl::Data *),
+        declare_param_setter_string(char *),
+        declare_param_setter_string(const char *),
+        declare_param_setter_string(const char[]),
+        declare_param_setter(char),
+        declare_param_setter(unsigned char),
+        declare_param_setter(rkcommon::math::vec2uc),
+        declare_param_setter(rkcommon::math::vec3uc),
+        declare_param_setter(rkcommon::math::vec4uc),
+        declare_param_setter(short),
+        declare_param_setter(unsigned short),
+        declare_param_setter(int32_t),
+        declare_param_setter(rkcommon::math::vec2i),
+        declare_param_setter(rkcommon::math::vec3i),
+        declare_param_setter(rkcommon::math::vec4i),
+        declare_param_setter(uint32_t),
+        declare_param_setter(rkcommon::math::vec2ui),
+        declare_param_setter(rkcommon::math::vec3ui),
+        declare_param_setter(rkcommon::math::vec4ui),
+        declare_param_setter(int64_t),
+        declare_param_setter(rkcommon::math::vec2l),
+        declare_param_setter(rkcommon::math::vec3l),
+        declare_param_setter(rkcommon::math::vec4l),
+        declare_param_setter(uint64_t),
+        declare_param_setter(rkcommon::math::vec2ul),
+        declare_param_setter(rkcommon::math::vec3ul),
+        declare_param_setter(rkcommon::math::vec4ul),
+        declare_param_setter(float),
+        declare_param_setter(rkcommon::math::vec2f),
+        declare_param_setter(rkcommon::math::vec3f),
+        declare_param_setter(rkcommon::math::vec4f),
+        declare_param_setter(double),
+        declare_param_setter(rkcommon::math::box1i),
+        declare_param_setter(rkcommon::math::box2i),
+        declare_param_setter(rkcommon::math::box3i),
+        declare_param_setter(rkcommon::math::box4i),
+        declare_param_setter(rkcommon::math::box1f),
+        declare_param_setter(rkcommon::math::box2f),
+        declare_param_setter(rkcommon::math::box3f),
+        declare_param_setter(rkcommon::math::box4f),
+        declare_param_setter(rkcommon::math::linear2f),
+        declare_param_setter(rkcommon::math::linear3f),
+        declare_param_setter(rkcommon::math::affine2f),
+        declare_param_setter(rkcommon::math::affine3f),
+    };
+
+#undef declare_param_setter
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Parameters /////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    void Device::setBool(VKLObject object, const char *name, const bool b)
+    {
+      setObjectParam(object, name, VKL_BOOL, &b);
+    }
+
+    void Device::set1f(VKLObject object, const char *name, const float x)
+    {
+      setObjectParam(object, name, VKL_FLOAT, &x);
+    }
+
+    void Device::set1i(VKLObject object, const char *name, const int x)
+    {
+      setObjectParam(object, name, VKL_INT, &x);
+    }
+
+    void Device::setVec3f(VKLObject object, const char *name, const vec3f &v)
+    {
+      setObjectParam(object, name, VKL_VEC3F, &v);
+    }
+
+    void Device::setVec3i(VKLObject object, const char *name, const vec3i &v)
+    {
+      setObjectParam(object, name, VKL_VEC3I, &v);
+    }
+
+    void Device::setObject(VKLObject object,
+                           const char *name,
+                           VKLObject setObject)
+    {
+      setObjectParam(object, name, VKL_OBJECT, &setObject);
+    }
+
+    void Device::setString(VKLObject object,
+                           const char *name,
+                           const std::string &s)
+    {
+      setObjectParam(object, name, VKL_STRING, s.c_str());
+    }
+
+    void Device::setVoidPtr(VKLObject object, const char *name, void *v)
+    {
+      setObjectParam(object, name, VKL_VOID_PTR, &v);
+    }
+
+    void Device::setObjectParam(VKLObject object,
+                                const char *name,
+                                VKLDataType dataType,
+                                const void *mem)
+    {
+      if (!setParamFcns.count(dataType)) {
+        throw std::runtime_error("cannot set parameter " + std::string(name) +
+                                 " for given data type");
+      }
+
+      setParamFcns[dataType](object, name, mem);
+    }
+
+    // new param setters //////////////////////////////////////////////////////
+
+    void Device::setBool(APIObject object2, const char *name, const bool b)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_BOOL, &b);
+    }
+
+    void Device::set1f(APIObject object2, const char *name, const float x)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_FLOAT, &x);
+    }
+
+    void Device::set1i(APIObject object2, const char *name, const int x)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_INT, &x);
+    }
+
+    void Device::setVec3f(APIObject object2, const char *name, const vec3f &v)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_VEC3F, &v);
+    }
+
+    void Device::setVec3i(APIObject object2, const char *name, const vec3i &v)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_VEC3I, &v);
+    }
+
+    void Device::setObject(APIObject object2,
+                           const char *name,
+                           VKLObject setObject)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_OBJECT, &setObject);
+    }
+
+    void Device::setString(APIObject object2,
+                           const char *name,
+                           const std::string &s)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_STRING, s.c_str());
+    }
+
+    void Device::setVoidPtr(APIObject object2, const char *name, void *v)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      setObjectParam(object, name, VKL_VOID_PTR, &v);
+    }
+
+    void Device::setObjectParam(APIObject object2,
+                                const char *name,
+                                VKLDataType dataType,
+                                const void *mem)
+    {
+      VKLObject object = static_cast<VKLObject>(object2.host);
+      if (!setParamFcns.count(dataType)) {
+        throw std::runtime_error("cannot set parameter " + std::string(name) +
+                                 " for given data type");
+      }
+
+      setParamFcns[dataType](object, name, mem);
     }
 
   }  // namespace api

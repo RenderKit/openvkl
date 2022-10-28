@@ -35,10 +35,10 @@ TEST_CASE("VDB volume motion blur", "[volume_sampling]")
                           temporalConfigs[tc]));
       VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
       VKLSampler vklSampler = vklNewSampler(vklVolume);
-      vklCommit(vklSampler);
+      vklCommit2(vklSampler);
 
       REQUIRE_NOTHROW(delete volume);
-      vklRelease(vklSampler);
+      vklRelease2(vklSampler);
     }
   }
 

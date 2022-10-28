@@ -193,7 +193,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklCommit(vklSampler);
+    vklCommit2(vklSampler);
 
     std::vector<float> isoValues;
 
@@ -285,7 +285,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     }
 
     vklRelease(hitContext);
-    vklRelease(vklSampler);
+    vklRelease2(vklSampler);
   }
 
   SECTION("vector hit iteration: time varying")
@@ -299,7 +299,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
       VKLSampler vklSampler = vklNewSampler(vklVolume);
-      vklCommit(vklSampler);
+      vklCommit2(vklSampler);
 
       std::vector<float> isoValues;
 
@@ -401,7 +401,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       }
 
       vklRelease(hitContext);
-      vklRelease(vklSampler);
+      vklRelease2(vklSampler);
     }
   }
 
@@ -412,7 +412,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklCommit(vklSampler);
+    vklCommit2(vklSampler);
 
     std::vector<float> isoValues;
 
@@ -668,7 +668,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
     }
 
     vklRelease(hitContext);
-    vklRelease(vklSampler);
+    vklRelease2(vklSampler);
   }
 
   shutdownOpenVKL();

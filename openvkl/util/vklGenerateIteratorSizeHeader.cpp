@@ -44,7 +44,7 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
 
       vklRelease(hitContext);
       vklRelease(intervalContext);
-      vklRelease(sampler);
+      vklRelease2(sampler);
       vklRelease(volume);
     }
   }

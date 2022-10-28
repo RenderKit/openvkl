@@ -22,6 +22,7 @@
 #endif
 
 using namespace rkcommon;
+using namespace rkcommon::math;
 
 namespace openvkl {
   namespace api {
@@ -47,8 +48,12 @@ namespace openvkl {
       virtual void commit();
       bool isCommitted();
 
+      // TODO: these to be removed
       virtual void commit(VKLObject object)  = 0;
       virtual void release(VKLObject object) = 0;
+
+      virtual void commit(APIObject object)  = 0;
+      virtual void release(APIObject object) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Device parameters (updated on commit()) //////////////////////////////
@@ -206,29 +211,35 @@ namespace openvkl {
       // Parameters ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual void setBool(VKLObject object,
-                           const char *name,
-                           const bool b)                                    = 0;
-      virtual void set1f(VKLObject object, const char *name, const float x) = 0;
-      virtual void set1i(VKLObject object, const char *name, const int x)   = 0;
-      virtual void setVec3f(VKLObject object,
-                            const char *name,
-                            const math::vec3f &v)                           = 0;
-      virtual void setVec3i(VKLObject object,
-                            const char *name,
-                            const math::vec3i &v)                           = 0;
-      virtual void setObject(VKLObject object,
-                             const char *name,
-                             VKLObject setObject)                           = 0;
-      virtual void setString(VKLObject object,
-                             const char *name,
-                             const std::string &s)                          = 0;
-      virtual void setVoidPtr(VKLObject object, const char *name, void *v)  = 0;
+      void setBool(VKLObject object, const char *name, const bool b);
+      void set1f(VKLObject object, const char *name, const float x);
+      void set1i(VKLObject object, const char *name, const int x);
+      void setVec3f(VKLObject object, const char *name, const vec3f &v);
+      void setVec3i(VKLObject object, const char *name, const vec3i &v);
+      void setObject(VKLObject object, const char *name, VKLObject setObject);
+      void setString(VKLObject object, const char *name, const std::string &s);
+      void setVoidPtr(VKLObject object, const char *name, void *v);
 
-      virtual void setObjectParam(VKLObject object,
-                                  const char *name,
-                                  VKLDataType dataType,
-                                  const void *mem) = 0;
+      void setObjectParam(VKLObject object,
+                          const char *name,
+                          VKLDataType dataType,
+                          const void *mem);
+
+      // param setters for APIObject //////////////////////////////////////////
+
+      void setBool(APIObject object, const char *name, const bool b);
+      void set1f(APIObject object, const char *name, const float x);
+      void set1i(APIObject object, const char *name, const int x);
+      void setVec3f(APIObject object, const char *name, const vec3f &v);
+      void setVec3i(APIObject object, const char *name, const vec3i &v);
+      void setObject(APIObject object, const char *name, VKLObject setObject);
+      void setString(APIObject object, const char *name, const std::string &s);
+      void setVoidPtr(APIObject object, const char *name, void *v);
+
+      void setObjectParam(APIObject object,
+                          const char *name,
+                          VKLDataType dataType,
+                          const void *mem);
 
       /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////
@@ -236,86 +247,18 @@ namespace openvkl {
 
       virtual VKLSampler newSampler(VKLVolume volume) = 0;
 
-#define __define_computeSampleN(WIDTH)                                       \
-  virtual void computeSample##WIDTH(const int *valid,                        \
-                                    VKLSampler sampler,                      \
-                                    const vvec3fn<WIDTH> &objectCoordinates, \
-                                    float *samples,                          \
-                                    unsigned int attributeIndex,             \
-                                    const float *times) = 0;
-
-      __define_computeSampleN(1);
-      __define_computeSampleN(4);
-      __define_computeSampleN(8);
-      __define_computeSampleN(16);
-
-#undef __define_computeSampleN
-
-      virtual void computeSampleN(VKLSampler sampler,
-                                  unsigned int N,
-                                  const vvec3fn<1> *objectCoordinates,
-                                  float *samples,
-                                  unsigned int attributeIndex,
-                                  const float *times) = 0;
-
-#define __define_computeSampleMN(WIDTH)                                       \
-  virtual void computeSampleM##WIDTH(const int *valid,                        \
-                                     VKLSampler sampler,                      \
-                                     const vvec3fn<WIDTH> &objectCoordinates, \
-                                     float *samples,                          \
-                                     unsigned int M,                          \
-                                     const unsigned int *attributeIndices,    \
-                                     const float *times) = 0;
-
-      __define_computeSampleMN(1);
-      __define_computeSampleMN(4);
-      __define_computeSampleMN(8);
-      __define_computeSampleMN(16);
-
-#undef __define_computeSampleMN
-
-      virtual void computeSampleMN(VKLSampler sampler,
-                                   unsigned int N,
-                                   const vvec3fn<1> *objectCoordinates,
-                                   float *samples,
-                                   unsigned int M,
-                                   const unsigned int *attributeIndices,
-                                   const float *times) = 0;
-
-#define __define_computeGradientN(WIDTH)                                       \
-  virtual void computeGradient##WIDTH(const int *valid,                        \
-                                      VKLSampler sampler,                      \
-                                      const vvec3fn<WIDTH> &objectCoordinates, \
-                                      vvec3fn<WIDTH> &gradients,               \
-                                      unsigned int attributeIndex,             \
-                                      const float *times) = 0;
-
-      __define_computeGradientN(1);
-      __define_computeGradientN(4);
-      __define_computeGradientN(8);
-      __define_computeGradientN(16);
-
-#undef __define_computeGradientN
-
-      virtual void computeGradientN(VKLSampler sampler,
-                                    unsigned int N,
-                                    const vvec3fn<1> *objectCoordinates,
-                                    vvec3fn<1> *gradients,
-                                    unsigned int attributeIndex,
-                                    const float *times) = 0;
-
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
       virtual VKLVolume newVolume(const char *type) = 0;
 
-      virtual math::box3f getBoundingBox(VKLVolume volume) = 0;
+      virtual box3f getBoundingBox(VKLVolume volume) = 0;
 
       virtual unsigned int getNumAttributes(VKLVolume volume) = 0;
 
-      virtual math::range1f getValueRange(VKLVolume volume,
-                                          unsigned int attributeIndex) = 0;
+      virtual range1f getValueRange(VKLVolume volume,
+                                    unsigned int attributeIndex) = 0;
 
      private:
       bool committed = false;

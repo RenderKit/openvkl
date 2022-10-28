@@ -154,7 +154,7 @@ namespace openvkl {
       while (vklIterateHit(iterator, &hit) && alpha < 0.99f) {
         const vec3f c = ray.org + hit.t * ray.dir;
         const vkl_vec3f grad =
-            vklComputeGradient(sampler,
+            vklComputeGradient(&sampler,
                                (vkl_vec3f *)&c,
                                rendererParams->attributeIndex,
                                rendererParams->time);

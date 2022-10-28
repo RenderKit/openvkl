@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include "openvkl/openvkl.h"
+#include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 void initializeOpenVKL();
 void shutdownOpenVKL();

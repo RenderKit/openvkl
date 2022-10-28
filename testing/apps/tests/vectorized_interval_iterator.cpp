@@ -36,7 +36,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   const unsigned int attributeIndex = 0;
 
@@ -1078,7 +1078,7 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
   }
 
   vklRelease(intervalContext);
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 
   shutdownOpenVKL();
 }

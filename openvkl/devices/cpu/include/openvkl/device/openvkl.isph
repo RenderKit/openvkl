@@ -1,16 +1,14 @@
-// Copyright 2020 Intel Corporation
+// Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
 #pragma once
 
-#include "common.isph"
-#include "volume.isph"
+#include <openvkl/common.isph>
 
-struct Sampler;
-typedef Sampler *uniform VKLSampler;
+typedef uniform APIObject VKLSampler;
 
 VKL_API void vklComputeSample4(const int *uniform valid,
-                               VKLSampler sampler,
+                               const VKLSampler *uniform sampler,
                                const varying struct vkl_vec3f *uniform
                                    objectCoordinates,
                                varying float *uniform samples,
@@ -18,7 +16,7 @@ VKL_API void vklComputeSample4(const int *uniform valid,
                                const varying float *uniform time);
 
 VKL_API void vklComputeSample8(const int *uniform valid,
-                               VKLSampler sampler,
+                               const VKLSampler *uniform sampler,
                                const varying struct vkl_vec3f *uniform
                                    objectCoordinates,
                                varying float *uniform samples,
@@ -26,7 +24,7 @@ VKL_API void vklComputeSample8(const int *uniform valid,
                                const varying float *uniform time);
 
 VKL_API void vklComputeSample16(const int *uniform valid,
-                                VKLSampler sampler,
+                                const VKLSampler *uniform sampler,
                                 const varying struct vkl_vec3f *uniform
                                     objectCoordinates,
                                 varying float *uniform samples,
@@ -34,10 +32,10 @@ VKL_API void vklComputeSample16(const int *uniform valid,
                                 const varying float *uniform time);
 
 VKL_FORCEINLINE varying float vklComputeSampleV(
-    VKLSampler sampler,
+    const VKLSampler *uniform sampler,
     const varying vkl_vec3f *uniform objectCoordinates,
     uniform unsigned int attributeIndex = 0,
-    const varying float *uniform time = NULL)
+    const varying float *uniform time   = NULL)
 {
   varying bool mask = __mask;
   unmasked
@@ -74,7 +72,7 @@ VKL_FORCEINLINE varying float vklComputeSampleV(
 }
 
 VKL_API void vklComputeGradient4(const int *uniform valid,
-                                 VKLSampler sampler,
+                                 const VKLSampler *uniform sampler,
                                  const varying struct vkl_vec3f *uniform
                                      objectCoordinates,
                                  varying vkl_vec3f *uniform gradients,
@@ -82,7 +80,7 @@ VKL_API void vklComputeGradient4(const int *uniform valid,
                                  const varying float *uniform time);
 
 VKL_API void vklComputeGradient8(const int *uniform valid,
-                                 VKLSampler sampler,
+                                 const VKLSampler *uniform sampler,
                                  const varying struct vkl_vec3f *uniform
                                      objectCoordinates,
                                  varying vkl_vec3f *uniform gradients,
@@ -90,7 +88,7 @@ VKL_API void vklComputeGradient8(const int *uniform valid,
                                  const varying float *uniform time);
 
 VKL_API void vklComputeGradient16(const int *uniform valid,
-                                  VKLSampler sampler,
+                                  const VKLSampler *uniform sampler,
                                   const varying struct vkl_vec3f *uniform
                                       objectCoordinates,
                                   varying vkl_vec3f *uniform gradients,
@@ -98,10 +96,10 @@ VKL_API void vklComputeGradient16(const int *uniform valid,
                                   const varying float *uniform time);
 
 VKL_FORCEINLINE varying vkl_vec3f
-vklComputeGradientV(VKLSampler sampler,
+vklComputeGradientV(const VKLSampler *uniform sampler,
                     const varying vkl_vec3f *uniform objectCoordinates,
                     uniform unsigned int attributeIndex = 0,
-                    const varying float *uniform time = NULL)
+                    const varying float *uniform time   = NULL)
 {
   varying bool mask = __mask;
   unmasked
@@ -138,7 +136,7 @@ vklComputeGradientV(VKLSampler sampler,
 }
 
 VKL_API void vklComputeSampleM4(const int *uniform valid,
-                                VKLSampler sampler,
+                                const VKLSampler *uniform sampler,
                                 const varying struct vkl_vec3f *uniform
                                     objectCoordinates,
                                 varying float *uniform samples,
@@ -147,7 +145,7 @@ VKL_API void vklComputeSampleM4(const int *uniform valid,
                                 const varying float *uniform time);
 
 VKL_API void vklComputeSampleM8(const int *uniform valid,
-                                VKLSampler sampler,
+                                const VKLSampler *uniform sampler,
                                 const varying struct vkl_vec3f *uniform
                                     objectCoordinates,
                                 varying float *uniform samples,
@@ -156,7 +154,7 @@ VKL_API void vklComputeSampleM8(const int *uniform valid,
                                 const varying float *uniform time);
 
 VKL_API void vklComputeSampleM16(const int *uniform valid,
-                                 VKLSampler sampler,
+                                 const VKLSampler *uniform sampler,
                                  const varying struct vkl_vec3f *uniform
                                      objectCoordinates,
                                  varying float *uniform samples,
@@ -165,7 +163,7 @@ VKL_API void vklComputeSampleM16(const int *uniform valid,
                                  const varying float *uniform time);
 
 VKL_FORCEINLINE void vklComputeSampleMV(
-    VKLSampler sampler,
+    const VKLSampler *uniform sampler,
     const varying vkl_vec3f *uniform objectCoordinates,
     varying float *uniform samples,
     uniform unsigned int M,

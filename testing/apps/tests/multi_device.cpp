@@ -60,7 +60,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
   VKLVolume vklVolume =
       deviceContext->proceduralVolume->getVKLVolume(deviceContext->device);
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   // first, gather object coordinates and procecural (truth) values
   const vec3i step(1);
@@ -104,7 +104,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
 
   for (size_t i = 0; i < objectCoordinates.size(); i++) {
     const float scalarSampledValue =
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
+        vklComputeSample(&vklSampler, (const vkl_vec3f *)&objectCoordinates[i]);
 
     success =
         success && (fabs(proceduralValues[i] - scalarSampledValue) <= tol);
@@ -113,7 +113,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
   // and finally test stream sampling
   std::vector<float> streamSamples(objectCoordinates.size());
 
-  vklComputeSampleN(vklSampler,
+  vklComputeSampleN(&vklSampler,
                     objectCoordinates.size(),
                     (const vkl_vec3f *)objectCoordinates.data(),
                     streamSamples.data());
@@ -122,7 +122,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
     success = success && (fabs(proceduralValues[i] - streamSamples[i]) <= tol);
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 
   return success;
 }

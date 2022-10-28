@@ -17,7 +17,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
                                          const std::vector<vec4f> particles)
 {
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   for (size_t i = 0; i < particles.size(); i++) {
     const vec4f &p = particles[i];
@@ -39,13 +39,13 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
     // if the particle radius is zero, then the sampled results should be zero
     const float referenceValue = zeroRadiusParticle ? 0.f : 1.f;
 
-    const float sampledValue = vklComputeSample(vklSampler, &p3);
+    const float sampledValue = vklComputeSample(&vklSampler, &p3);
     INFO("sampled = " << sampledValue)
 
     REQUIRE(referenceValue == sampledValue);
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE

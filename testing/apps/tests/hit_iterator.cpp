@@ -18,7 +18,7 @@ void scalar_hit_iteration(VKLVolume volume,
   vkl_range1f tRange{0.f, inf};
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLData valuesData = vklNewData(
       getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
@@ -61,7 +61,7 @@ void scalar_hit_iteration(VKLVolume volume,
   REQUIRE(hitCount == isoValues.size());
 
   vklRelease(hitContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 TEST_CASE("Hit iterator", "[hit_iterators]")

@@ -4,7 +4,6 @@
 #pragma once
 
 #include "common.isph"
-#include "sampler.isph"
 #include "max_iterator_size.h"
 
 struct IntervalIteratorContext;

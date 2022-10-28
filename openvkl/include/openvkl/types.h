@@ -53,6 +53,14 @@ typedef uint64_t vkl_uint64;
 // VKL_OBJECT
 // -----------------------------------------------------------------------------
 
+// TODO: eventually remove the VKLObject definition below, and rename APIObject
+// to VKLObject
+typedef struct __APIObject
+{
+  void *host;
+  void *device;
+} APIObject;
+
 #if defined(ISPC) || defined(__cplusplus)
 struct ManagedObject
 {

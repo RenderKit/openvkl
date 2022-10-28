@@ -35,14 +35,14 @@ struct Structured
 
     vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
-    vklSetInt(vklSampler, "filter", filter);
-    vklSetInt(vklSampler, "gradientFilter", filter);
-    vklCommit(vklSampler);
+    vklSetInt2(vklSampler, "filter", filter);
+    vklSetInt2(vklSampler, "gradientFilter", filter);
+    vklCommit2(vklSampler);
   }
 
   ~Structured()
   {
-    vklRelease(vklSampler);
+    vklRelease2(vklSampler);
     volume.reset();  // also releases the vklVolume handle
   }
 

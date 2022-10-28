@@ -5,6 +5,7 @@
 #include "framebuffer.h"
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 int main(int argc, char **argv)
 {
@@ -28,7 +29,7 @@ int main(int argc, char **argv)
   vklCommit(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   Framebuffer fb(64, 32);
 
@@ -44,13 +45,13 @@ int main(int argc, char **argv)
     for (int i = 0; i < numSteps; ++i)
     {
         const vkl_vec3f p = {fx, fy, i * tStep};
-        const Color c = transferFunction(vklComputeSample(sampler, &p));
+        const Color c = transferFunction(vklComputeSample(&sampler, &p));
 
         // We use the over operator to blend semi-transparent
         // "surfaces" together.
         color = over(color, c);
 
-        // Now we've created a very simple volume renderer using 
+        // Now we've created a very simple volume renderer using
         // Open VKL!
     }
     return color;
@@ -58,7 +59,7 @@ int main(int argc, char **argv)
 
   fb.drawToTerminal();
 
-  vklRelease(sampler);
+  vklRelease2(sampler);
   vklRelease(volume);
   vklReleaseDevice(device);
 

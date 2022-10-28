@@ -25,7 +25,7 @@ inline void sampling_on_vertices_vs_procedural_values_motion_blur(
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -73,7 +73,7 @@ inline void sampling_on_vertices_vs_procedural_values_motion_blur(
     }
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 // this tests temporally unstructured with varying time step counts per voxel;
@@ -135,8 +135,8 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   const float sampleTolerance = 0.f;
 
   VKLSampler vklSampler = vklNewSampler(volume);
-  vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
-  vklCommit(vklSampler);
+  vklSetInt2(vklSampler, "filter", VKL_FILTER_NEAREST);
+  vklCommit2(vklSampler);
 
   multidim_index_sequence<3> mis(dimensions);
 
@@ -164,7 +164,7 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
     }
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
   vklRelease(volume);
 }
 

@@ -176,7 +176,7 @@ namespace openvkl {
       const int samplesPerDimension = 100;
 
       VKLSampler sampler = vklNewSampler(volume);
-      vklCommit(sampler);
+      vklCommit2(sampler);
 
       for (int z = 0; z < samplesPerDimension; z++) {
         for (int y = 0; y < samplesPerDimension; y++) {
@@ -186,12 +186,12 @@ namespace openvkl {
                 vec3f(x, y, z) / float(samplesPerDimension - 1) * bounds.size();
 
             computedValueRange.extend(vklComputeSample(
-                sampler, (const vkl_vec3f *)&objectCoordinates));
+                &sampler, (const vkl_vec3f *)&objectCoordinates));
           }
         }
       };
 
-      vklRelease(sampler);
+      vklRelease2(sampler);
     }
 
     inline float ProceduralParticleVolume::computeProceduralValueImpl(

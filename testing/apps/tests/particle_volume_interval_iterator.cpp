@@ -22,7 +22,7 @@ void interval_iteration(size_t numParticles,
   VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   const unsigned int attributeIndex = 0;
 
@@ -95,7 +95,7 @@ void interval_iteration(size_t numParticles,
   REQUIRE(totalIntervals / static_cast<double>(N) > 0.9);
 
   vklRelease(intervalContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE

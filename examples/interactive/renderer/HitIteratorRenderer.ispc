@@ -102,7 +102,7 @@ export void HitIteratorRenderer_renderPixel(const void *uniform _params,
   while (vklIterateHitV(iterator, &hit) && alpha < 0.99f) {
     const vec3f c = ray.org + hit.t * ray.dir;
     const vkl_vec3f grad =
-        vklComputeGradientV(scene.sampler,
+        vklComputeGradientV(&scene.sampler,
                             (varying vkl_vec3f * uniform) & c,
                             scene.rendererParams.attributeIndex,
                             &time);

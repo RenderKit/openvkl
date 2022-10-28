@@ -30,7 +30,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions());
 
@@ -51,7 +51,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
                                 << objectCoordinates.z);
 
     const vkl_vec3f vklGradient =
-        vklComputeGradient(vklSampler, (const vkl_vec3f *)&objectCoordinates);
+        vklComputeGradient(&vklSampler, (const vkl_vec3f *)&objectCoordinates);
     const vec3f gradient = (const vec3f &)vklGradient;
 
     // compare to analytical gradient
@@ -63,7 +63,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
     REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || \

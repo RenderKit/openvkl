@@ -30,8 +30,11 @@ set(VKL_EXAMPLE_RENDERERS_SRC
   VolumeParams.cpp
 )
 
+get_target_property(CPU_DEVICE_INCLUDE_DIRS openvkl_module_cpu_device INTERFACE_INCLUDE_DIRECTORIES)
+include_directories_ispc(${CPU_DEVICE_INCLUDE_DIRS})
+
 openvkl_add_library_ispc(vkl_example_renderers STATIC
   ${VKL_EXAMPLE_RENDERERS_SRC}
 )
 target_include_directories(vkl_example_renderers PUBLIC ${ISPC_TARGET_DIR})
-target_link_libraries(vkl_example_renderers PUBLIC openvkl openvkl_testing rkcommon::rkcommon)
+target_link_libraries(vkl_example_renderers PUBLIC openvkl openvkl_testing_cpu rkcommon::rkcommon)

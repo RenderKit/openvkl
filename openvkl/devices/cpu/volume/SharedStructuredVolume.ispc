@@ -6,7 +6,7 @@
 #include "SharedStructuredVolume.ih"
 
 // #define PRINT_DEBUG_ENABLE
-#include "common/print_debug.ih"
+#include "../common/print_debug.ih"
 
 inline void computeStructuredSphericalBoundingBox(
     const SharedStructuredVolume *uniform self, uniform box3f &boundingBox)

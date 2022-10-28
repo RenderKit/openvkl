@@ -24,7 +24,4 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 find_package(openvkl REQUIRED)
 
 add_executable(vklTutorial ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
-target_link_libraries(vklTutorial openvkl::openvkl)
-
-add_executable(vklTutorialLinkCPUDevice ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorial.c)
-target_link_libraries(vklTutorialLinkCPUDevice openvkl::openvkl_module_cpu_device)
+target_link_libraries(vklTutorial openvkl::openvkl openvkl::openvkl_module_cpu_device)

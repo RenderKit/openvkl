@@ -21,7 +21,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   std::random_device rd;
   std::mt19937 eng(rd());
@@ -34,7 +34,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
   for (int i = 0; i < 1000; i++) {
     vec3f oc(dist(eng), dist(eng), dist(eng));
-    float sample = vklComputeSample(vklSampler, (const vkl_vec3f *)&oc);
+    float sample = vklComputeSample(&vklSampler, (const vkl_vec3f *)&oc);
 
     bool inside = true;
 
@@ -91,7 +91,7 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
     }
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_UNSTRUCTURED

@@ -49,7 +49,7 @@ void scalar_interval_continuity_with_no_value_ranges(
       (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
@@ -87,7 +87,7 @@ void scalar_interval_continuity_with_no_value_ranges(
   REQUIRE(intervalPrevious.tRange.upper == Approx(expectedTRange.upper));
 
   vklRelease(intervalContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 void scalar_interval_value_ranges_with_no_value_ranges(
@@ -101,7 +101,7 @@ void scalar_interval_value_ranges_with_no_value_ranges(
   const float time = 0.f;
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
@@ -140,7 +140,7 @@ void scalar_interval_value_ranges_with_no_value_ranges(
   }
 
   vklRelease(intervalContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 
   // make sure we had at least one interval...
   REQUIRE(intervalCount > 0);
@@ -159,7 +159,7 @@ void scalar_interval_value_ranges_with_value_ranges(
   const float time = 0.f;
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLData valueRangesData = vklNewData(
       getOpenVKLDevice(), valueRanges.size(), VKL_BOX1F, valueRanges.data());
@@ -221,7 +221,7 @@ void scalar_interval_value_ranges_with_value_ranges(
   REQUIRE(intervalCount >= valueRanges.size());
 
   vklRelease(intervalContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 void scalar_interval_nominalDeltaT(VKLVolume volume,
@@ -240,7 +240,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
                       << direction.z);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
@@ -269,7 +269,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
   REQUIRE(interval.nominalDeltaT == Approx(expectedNominalDeltaT));
 
   vklRelease(intervalContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 template <typename PROCEDURAL_VOLUME_TYPE>

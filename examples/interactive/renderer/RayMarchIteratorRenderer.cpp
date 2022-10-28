@@ -167,7 +167,7 @@ namespace openvkl {
 
           // get volume sample
           vec3f c      = ray.org + t * ray.dir;
-          float sample = vklComputeSample(scene.volume.getSampler(),
+          float sample = vklComputeSample(scene.volume.getSamplerPtr(),
                                           (vkl_vec3f *)&c,
                                           rendererParams->attributeIndex,
                                           rendererParams->time);

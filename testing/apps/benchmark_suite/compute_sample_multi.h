@@ -57,7 +57,7 @@ namespace api {
 
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<1>(&objectCoordinates);
-        vklComputeSampleM(sampler,
+        vklComputeSampleM(&sampler,
                           &objectCoordinates,
                           samples.data(),
                           M,
@@ -103,7 +103,7 @@ namespace api {
         gen.template getNextN<1>(&objectCoordinates);
         for (unsigned int a = 0; a < M; a++) {
           samples[a] = vklComputeSample(
-              sampler, &objectCoordinates, attributeIndices[a]);
+              &sampler, &objectCoordinates, attributeIndices[a]);
         }
       }));
 
@@ -129,7 +129,7 @@ namespace api {
                               const std::vector<unsigned int> &attributeIndices)
       {
         vklComputeSampleM4(reinterpret_cast<const int *>(&valid),
-                           sampler,
+                           &sampler,
                            reinterpret_cast<const vkl_vvec3f4 *>(&coord),
                            samples.data(),
                            M,
@@ -148,7 +148,7 @@ namespace api {
                               const std::vector<unsigned int> &attributeIndices)
       {
         vklComputeSampleM8(reinterpret_cast<const int *>(&valid),
-                           sampler,
+                           &sampler,
                            reinterpret_cast<const vkl_vvec3f8 *>(&coord),
                            samples.data(),
                            M,
@@ -167,7 +167,7 @@ namespace api {
                               const std::vector<unsigned int> &attributeIndices)
       {
         vklComputeSampleM16(reinterpret_cast<const int *>(&valid),
-                            sampler,
+                            &sampler,
                             reinterpret_cast<const vkl_vvec3f16 *>(&coord),
                             samples.data(),
                             M,
@@ -241,7 +241,7 @@ namespace api {
       {
         for (unsigned int a = 0; a < M; a++) {
           vklComputeSample4(reinterpret_cast<const int *>(&valid),
-                            sampler,
+                            &sampler,
                             reinterpret_cast<const vkl_vvec3f4 *>(&coord),
                             samples.data() + a * 4,
                             attributeIndices[a]);
@@ -261,7 +261,7 @@ namespace api {
       {
         for (unsigned int a = 0; a < M; a++) {
           vklComputeSample8(reinterpret_cast<const int *>(&valid),
-                            sampler,
+                            &sampler,
                             reinterpret_cast<const vkl_vvec3f8 *>(&coord),
                             samples.data() + a * 8,
                             attributeIndices[a]);
@@ -281,7 +281,7 @@ namespace api {
       {
         for (unsigned int a = 0; a < M; a++) {
           vklComputeSample16(reinterpret_cast<const int *>(&valid),
-                             sampler,
+                             &sampler,
                              reinterpret_cast<const vkl_vvec3f16 *>(&coord),
                              samples.data() + a * 16,
                              attributeIndices[a]);
@@ -371,7 +371,7 @@ namespace api {
 
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
-        vklComputeSampleMN(sampler,
+        vklComputeSampleMN(&sampler,
                            N,
                            objectCoordinates.data(),
                            samples.data(),
@@ -419,7 +419,7 @@ namespace api {
       BENCHMARK_WARMUP_AND_RUN(({
         gen.template getNextN<N>(objectCoordinates.data());
         for (unsigned int a = 0; a < M; a++) {
-          vklComputeSampleN(sampler,
+          vklComputeSampleN(&sampler,
                             N,
                             objectCoordinates.data(),
                             samples.data() + a * N,

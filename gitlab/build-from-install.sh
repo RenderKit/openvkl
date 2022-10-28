@@ -18,4 +18,3 @@ cmake \
 cmake --build .
 
 ./vklTutorial
-./vklTutorialLinkCPUDevice

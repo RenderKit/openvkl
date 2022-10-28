@@ -244,10 +244,19 @@ endforeach(TARGET_WIDTH)
 
 
 # shared library linking to all width-specific targets
-add_library(openvkl_module_cpu_device SHARED exports.cpp ${VKL_RESOURCE})
+add_library(openvkl_module_cpu_device SHARED
+  api/DeviceAPI.cpp
+  exports.cpp
+  ${VKL_RESOURCE}
+)
 
 target_compile_definitions(openvkl_module_cpu_device PUBLIC
   ${OPTIONAL_VOLUME_DEFINITIONS}
+)
+
+target_include_directories(openvkl_module_cpu_device INTERFACE
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include/openvkl/devices/cpu>
 )
 
 foreach(TARGET_WIDTH 4 8 16)
@@ -266,3 +275,11 @@ target_link_libraries(openvkl_module_cpu_device
 )
 
 openvkl_install_library(openvkl_module_cpu_device)
+
+install(DIRECTORY
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/openvkl
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/openvkl/devices/cpu
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "*.isph"
+)

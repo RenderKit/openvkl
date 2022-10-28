@@ -16,94 +16,6 @@ namespace openvkl {
   namespace cpu_device {
 
     ///////////////////////////////////////////////////////////////////////////
-    // Parameter setting helpers //////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    using SetParamFcn = void(VKLObject, const char *, const void *);
-
-    template <typename T>
-    static void setParamOnObject(VKLObject _obj, const char *p, const T &v)
-    {
-      auto *obj = (ManagedObject *)_obj;
-      obj->setParam(p, v);
-    }
-
-#define declare_param_setter(TYPE)                                           \
-  {                                                                          \
-    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
-      setParamOnObject(o, p, *(TYPE *)v);                                    \
-    }                                                                        \
-  }
-
-#define declare_param_setter_object(TYPE)                                    \
-  {                                                                          \
-    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
-      ManagedObject *obj = *(TYPE *)v;                                       \
-      setParamOnObject(o, p, obj);                                           \
-    }                                                                        \
-  }
-
-#define declare_param_setter_string(TYPE)                                    \
-  {                                                                          \
-    VKLTypeFor<TYPE>::value, [](VKLObject o, const char *p, const void *v) { \
-      const char *str = (const char *)v;                                     \
-      setParamOnObject(o, p, std::string(str));                              \
-    }                                                                        \
-  }
-
-    static std::map<VKLDataType, std::function<SetParamFcn>> setParamFcns = {
-        declare_param_setter(void *),
-        declare_param_setter(bool),
-        declare_param_setter_object(openvkl::ManagedObject *),
-        declare_param_setter_object(openvkl::Data *),
-        declare_param_setter_string(char *),
-        declare_param_setter_string(const char *),
-        declare_param_setter_string(const char[]),
-        declare_param_setter(char),
-        declare_param_setter(unsigned char),
-        declare_param_setter(rkcommon::math::vec2uc),
-        declare_param_setter(rkcommon::math::vec3uc),
-        declare_param_setter(rkcommon::math::vec4uc),
-        declare_param_setter(short),
-        declare_param_setter(unsigned short),
-        declare_param_setter(int32_t),
-        declare_param_setter(rkcommon::math::vec2i),
-        declare_param_setter(rkcommon::math::vec3i),
-        declare_param_setter(rkcommon::math::vec4i),
-        declare_param_setter(uint32_t),
-        declare_param_setter(rkcommon::math::vec2ui),
-        declare_param_setter(rkcommon::math::vec3ui),
-        declare_param_setter(rkcommon::math::vec4ui),
-        declare_param_setter(int64_t),
-        declare_param_setter(rkcommon::math::vec2l),
-        declare_param_setter(rkcommon::math::vec3l),
-        declare_param_setter(rkcommon::math::vec4l),
-        declare_param_setter(uint64_t),
-        declare_param_setter(rkcommon::math::vec2ul),
-        declare_param_setter(rkcommon::math::vec3ul),
-        declare_param_setter(rkcommon::math::vec4ul),
-        declare_param_setter(float),
-        declare_param_setter(rkcommon::math::vec2f),
-        declare_param_setter(rkcommon::math::vec3f),
-        declare_param_setter(rkcommon::math::vec4f),
-        declare_param_setter(double),
-        declare_param_setter(rkcommon::math::box1i),
-        declare_param_setter(rkcommon::math::box2i),
-        declare_param_setter(rkcommon::math::box3i),
-        declare_param_setter(rkcommon::math::box4i),
-        declare_param_setter(rkcommon::math::box1f),
-        declare_param_setter(rkcommon::math::box2f),
-        declare_param_setter(rkcommon::math::box3f),
-        declare_param_setter(rkcommon::math::box4f),
-        declare_param_setter(rkcommon::math::linear2f),
-        declare_param_setter(rkcommon::math::linear3f),
-        declare_param_setter(rkcommon::math::affine2f),
-        declare_param_setter(rkcommon::math::affine3f),
-    };
-
-#undef declare_param_setter
-
-    ///////////////////////////////////////////////////////////////////////////
     // CPUDevice //////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
@@ -146,6 +58,20 @@ namespace openvkl {
       managedObject->refDec();
     }
 
+    template <int W>
+    void CPUDevice<W>::commit(APIObject object)
+    {
+      ManagedObject *managedObject = static_cast<ManagedObject *>(object.host);
+      managedObject->commit();
+    }
+
+    template <int W>
+    void CPUDevice<W>::release(APIObject object)
+    {
+      ManagedObject *managedObject = static_cast<ManagedObject *>(object.host);
+      managedObject->refDec();
+    }
+
     ///////////////////////////////////////////////////////////////////////////
     // Data ///////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -177,7 +103,7 @@ namespace openvkl {
     template <int W>
     VKLObserver CPUDevice<W>::newObserver(VKLSampler sampler, const char *type)
     {
-      auto &object          = referenceFromHandle<Sampler<W>>(sampler);
+      auto &object          = referenceFromHandle<Sampler<W>>(sampler.host);
       Observer<W> *observer = object.newObserver(type);
       return (VKLObserver)observer;
     }
@@ -225,7 +151,7 @@ namespace openvkl {
     VKLIntervalIteratorContext CPUDevice<W>::newIntervalIteratorContext(
         VKLSampler sampler)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler.host);
       return (VKLIntervalIteratorContext)samplerObject
           .getIntervalIteratorFactory()
           .newContext(samplerObject);
@@ -239,83 +165,9 @@ namespace openvkl {
     VKLHitIteratorContext CPUDevice<W>::newHitIteratorContext(
         VKLSampler sampler)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler.host);
       return (VKLHitIteratorContext)samplerObject.getHitIteratorFactory()
           .newContext(samplerObject);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Parameters /////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    template <int W>
-    void CPUDevice<W>::setBool(VKLObject object, const char *name, const bool b)
-    {
-      setObjectParam(object, name, VKL_BOOL, &b);
-    }
-
-    template <int W>
-    void CPUDevice<W>::set1f(VKLObject object, const char *name, const float x)
-    {
-      setObjectParam(object, name, VKL_FLOAT, &x);
-    }
-
-    template <int W>
-    void CPUDevice<W>::set1i(VKLObject object, const char *name, const int x)
-    {
-      setObjectParam(object, name, VKL_INT, &x);
-    }
-
-    template <int W>
-    void CPUDevice<W>::setVec3f(VKLObject object,
-                                const char *name,
-                                const vec3f &v)
-    {
-      setObjectParam(object, name, VKL_VEC3F, &v);
-    }
-
-    template <int W>
-    void CPUDevice<W>::setVec3i(VKLObject object,
-                                const char *name,
-                                const vec3i &v)
-    {
-      setObjectParam(object, name, VKL_VEC3I, &v);
-    }
-
-    template <int W>
-    void CPUDevice<W>::setObject(VKLObject object,
-                                 const char *name,
-                                 VKLObject setObject)
-    {
-      setObjectParam(object, name, VKL_OBJECT, &setObject);
-    }
-
-    template <int W>
-    void CPUDevice<W>::setString(VKLObject object,
-                                 const char *name,
-                                 const std::string &s)
-    {
-      setObjectParam(object, name, VKL_STRING, s.c_str());
-    }
-
-    template <int W>
-    void CPUDevice<W>::setVoidPtr(VKLObject object, const char *name, void *v)
-    {
-      setObjectParam(object, name, VKL_VOID_PTR, &v);
-    }
-
-    template <int W>
-    void CPUDevice<W>::setObjectParam(VKLObject object,
-                                      const char *name,
-                                      VKLDataType dataType,
-                                      const void *mem)
-    {
-      if (!setParamFcns.count(dataType)) {
-        throw std::runtime_error("cannot set parameter " + std::string(name) +
-                                 " for given data type");
-      }
-
-      setParamFcns[dataType](object, name, mem);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -325,15 +177,19 @@ namespace openvkl {
     template <int W>
     VKLSampler CPUDevice<W>::newSampler(VKLVolume volume)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
-      return (VKLSampler)volumeObject.newSampler();
+      auto &volumeObject  = referenceFromHandle<Volume<W>>(volume);
+      Sampler<W> *sampler = volumeObject.newSampler();
+      VKLSampler s;
+      s.host   = static_cast<void *>(sampler);
+      s.device = static_cast<void *>(sampler->getSh());
+      return s;
     }
 
 #define __define_computeSampleN(WIDTH)                                      \
   template <int W>                                                          \
   void CPUDevice<W>::computeSample##WIDTH(                                  \
       const int *valid,                                                     \
-      VKLSampler sampler,                                                   \
+      const VKLSampler *sampler,                                            \
       const vvec3fn<WIDTH> &objectCoordinates,                              \
       float *samples,                                                       \
       unsigned int attributeIndex,                                          \
@@ -352,13 +208,13 @@ namespace openvkl {
     // support a fast path for scalar sampling
     template <int W>
     void CPUDevice<W>::computeSample1(const int *valid,
-                                      VKLSampler sampler,
+                                      const VKLSampler *sampler,
                                       const vvec3fn<1> &objectCoordinates,
                                       float *sample,
                                       unsigned int attributeIndex,
                                       const float *time)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
       vfloatn<1> timeW(time, 1);
       vfloatn<1> sampleW;
       samplerObject.computeSample(
@@ -367,14 +223,14 @@ namespace openvkl {
     }
 
     template <int W>
-    void CPUDevice<W>::computeSampleN(VKLSampler sampler,
+    void CPUDevice<W>::computeSampleN(const VKLSampler *sampler,
                                       unsigned int N,
                                       const vvec3fn<1> *objectCoordinates,
                                       float *samples,
                                       unsigned int attributeIndex,
                                       const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
       samplerObject.computeSampleN(
           N, objectCoordinates, samples, attributeIndex, times);
     }
@@ -383,7 +239,7 @@ namespace openvkl {
   template <int W>                                   \
   void CPUDevice<W>::computeSampleM##WIDTH(          \
       const int *valid,                              \
-      VKLSampler sampler,                            \
+      const VKLSampler *sampler,                     \
       const vvec3fn<WIDTH> &objectCoordinates,       \
       float *samples,                                \
       unsigned int M,                                \
@@ -408,21 +264,21 @@ namespace openvkl {
     // support a fast path for scalar sampling
     template <int W>
     void CPUDevice<W>::computeSampleM1(const int *valid,
-                                       VKLSampler sampler,
+                                       const VKLSampler *sampler,
                                        const vvec3fn<1> &objectCoordinates,
                                        float *samples,
                                        unsigned int M,
                                        const unsigned int *attributeIndices,
                                        const float *time)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
       vfloatn<1> timeW(time, 1);
       samplerObject.computeSampleM(
           objectCoordinates, samples, M, attributeIndices, timeW);
     }
 
     template <int W>
-    void CPUDevice<W>::computeSampleMN(VKLSampler sampler,
+    void CPUDevice<W>::computeSampleMN(const VKLSampler *sampler,
                                        unsigned int N,
                                        const vvec3fn<1> *objectCoordinates,
                                        float *samples,
@@ -430,7 +286,7 @@ namespace openvkl {
                                        const unsigned int *attributeIndices,
                                        const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
       samplerObject.computeSampleMN(
           N, objectCoordinates, samples, M, attributeIndices, times);
     }
@@ -439,7 +295,7 @@ namespace openvkl {
   template <int W>                                                            \
   void CPUDevice<W>::computeGradient##WIDTH(                                  \
       const int *valid,                                                       \
-      VKLSampler sampler,                                                     \
+      const VKLSampler *sampler,                                              \
       const vvec3fn<WIDTH> &objectCoordinates,                                \
       vvec3fn<WIDTH> &gradients,                                              \
       unsigned int attributeIndex,                                            \
@@ -457,14 +313,14 @@ namespace openvkl {
 #undef __define_computeGradientN
 
     template <int W>
-    void CPUDevice<W>::computeGradientN(VKLSampler sampler,
+    void CPUDevice<W>::computeGradientN(const VKLSampler *sampler,
                                         unsigned int N,
                                         const vvec3fn<1> *objectCoordinates,
                                         vvec3fn<1> *gradients,
                                         unsigned int attributeIndex,
                                         const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
       samplerObject.computeGradientN(
           N, objectCoordinates, gradients, attributeIndex, times);
     }
@@ -522,13 +378,13 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW < W), void>::type
     CPUDevice<W>::computeSampleAnyWidth(const int *valid,
-                                        VKLSampler sampler,
+                                        const VKLSampler *sampler,
                                         const vvec3fn<OW> &objectCoordinates,
                                         float *samples,
                                         unsigned int attributeIndex,
                                         const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
       vfloatn<W> tW(times, OW);
@@ -552,13 +408,13 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW == W), void>::type
     CPUDevice<W>::computeSampleAnyWidth(const int *valid,
-                                        VKLSampler sampler,
+                                        const VKLSampler *sampler,
                                         const vvec3fn<OW> &objectCoordinates,
                                         float *samples,
                                         unsigned int attributeIndex,
                                         const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vfloatn<W> tW(times, W);
 
@@ -579,13 +435,13 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW > W), void>::type
     CPUDevice<W>::computeSampleAnyWidth(const int *valid,
-                                        VKLSampler sampler,
+                                        const VKLSampler *sampler,
                                         const vvec3fn<OW> &objectCoordinates,
                                         float *samples,
                                         unsigned int attributeIndex,
                                         const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vfloatn<OW> tOW(times, OW);
 
@@ -615,14 +471,14 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW < W), void>::type
     CPUDevice<W>::computeSampleMAnyWidth(const int *valid,
-                                         VKLSampler sampler,
+                                         const VKLSampler *sampler,
                                          const vvec3fn<OW> &objectCoordinates,
                                          float *samples,
                                          unsigned int M,
                                          const unsigned int *attributeIndices,
                                          const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
       vfloatn<W> tW(times, OW);
@@ -650,14 +506,14 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW == W), void>::type
     CPUDevice<W>::computeSampleMAnyWidth(const int *valid,
-                                         VKLSampler sampler,
+                                         const VKLSampler *sampler,
                                          const vvec3fn<OW> &objectCoordinates,
                                          float *samples,
                                          unsigned int M,
                                          const unsigned int *attributeIndices,
                                          const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vfloatn<W> timesW(times, W);
 
@@ -673,14 +529,14 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW > W), void>::type
     CPUDevice<W>::computeSampleMAnyWidth(const int *valid,
-                                         VKLSampler sampler,
+                                         const VKLSampler *sampler,
                                          const vvec3fn<OW> &objectCoordinates,
                                          float *samples,
                                          unsigned int M,
                                          const unsigned int *attributeIndices,
                                          const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vfloatn<OW> tOW(times, OW);
 
@@ -713,13 +569,13 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW < W), void>::type
     CPUDevice<W>::computeGradientAnyWidth(const int *valid,
-                                          VKLSampler sampler,
+                                          const VKLSampler *sampler,
                                           const vvec3fn<OW> &objectCoordinates,
                                           vvec3fn<OW> &gradients,
                                           unsigned int attributeIndex,
                                           const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
       vfloatn<W> tW(times, OW);
@@ -747,13 +603,13 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW == W), void>::type
     CPUDevice<W>::computeGradientAnyWidth(const int *valid,
-                                          VKLSampler sampler,
+                                          const VKLSampler *sampler,
                                           const vvec3fn<OW> &objectCoordinates,
                                           vvec3fn<OW> &gradients,
                                           unsigned int attributeIndex,
                                           const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vfloatn<W> tW(times, W);
 
@@ -769,13 +625,13 @@ namespace openvkl {
     template <int OW>
     typename std::enable_if<(OW > W), void>::type
     CPUDevice<W>::computeGradientAnyWidth(const int *valid,
-                                          VKLSampler sampler,
+                                          const VKLSampler *sampler,
                                           const vvec3fn<OW> &objectCoordinates,
                                           vvec3fn<OW> &gradients,
                                           unsigned int attributeIndex,
                                           const float *times)
     {
-      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler);
+      auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler->host);
 
       vfloatn<OW> tOW(times, OW);
 

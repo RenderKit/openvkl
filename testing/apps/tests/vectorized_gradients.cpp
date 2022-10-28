@@ -26,7 +26,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
   std::array<int, 3> nativeWidths{4, 8, 16};
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   for (int width = 1; width < maxWidth; width++) {
     std::vector<vec3f> objectCoordinates(width);
@@ -50,21 +50,21 @@ void randomized_vectorized_gradients(VKLVolume volume)
       if (callingWidth == 4) {
         vkl_vvec3f4 gradients4;
         vklComputeGradient4(valid.data(),
-                            sampler,
+                            &sampler,
                             (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                             &gradients4);
         gradients = SOAtoAOS_vvec3f(gradients4);
       } else if (callingWidth == 8) {
         vkl_vvec3f8 gradients8;
         vklComputeGradient8(valid.data(),
-                            sampler,
+                            &sampler,
                             (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                             &gradients8);
         gradients = SOAtoAOS_vvec3f(gradients8);
       } else if (callingWidth == 16) {
         vkl_vvec3f16 gradients16;
         vklComputeGradient16(valid.data(),
-                             sampler,
+                             &sampler,
                              (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                              &gradients16);
         gradients = SOAtoAOS_vvec3f(gradients16);
@@ -74,7 +74,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
 
       for (int i = 0; i < width; i++) {
         vkl_vec3f gradientTruth = vklComputeGradient(
-            sampler, (const vkl_vec3f *)&objectCoordinates[i]);
+            &sampler, (const vkl_vec3f *)&objectCoordinates[i]);
 
         INFO("gradient = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);
@@ -89,7 +89,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
     }
   }
 
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 TEST_CASE("Vectorized gradients", "[volume_gradients]")

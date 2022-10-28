@@ -20,9 +20,9 @@ export void Scene_setVolume(void *uniform self, void *uniform volume)
   ((Scene * uniform) self)->volume = ((uniform VKLVolume)volume);
 }
 
-export void Scene_setSampler(void *uniform self, void *uniform sampler)
+export void Scene_setSampler(void *uniform self, const void *uniform sampler)
 {
-  ((Scene * uniform) self)->sampler = ((uniform VKLSampler)sampler);
+  ((Scene * uniform) self)->sampler = *((VKLSampler *uniform)sampler);
 }
 
 export void Scene_setCamera(void *uniform self,

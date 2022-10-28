@@ -108,7 +108,7 @@ export void RayMarchIteratorRenderer_renderPixel(
 
       // get volume sample
       vec3f c      = ray.org + t * ray.dir;
-      float sample = vklComputeSampleV(scene.sampler,
+      float sample = vklComputeSampleV(&scene.sampler,
                                        (varying vkl_vec3f * uniform) & c,
                                        scene.rendererParams.attributeIndex,
                                        &time);

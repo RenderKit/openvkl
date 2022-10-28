@@ -32,7 +32,7 @@ inline void scalar_sampling_on_vertices_vs_procedural_values(
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -50,9 +50,9 @@ inline void scalar_sampling_on_vertices_vs_procedural_values(
 
     vec3f offsetCoordinates = objectCoordinates + vec3f(0.1f);
     CHECK(
-        vklComputeSample(vklSampler, (const vkl_vec3f *)&(offsetCoordinates)) ==
+        vklComputeSample(&vklSampler, (const vkl_vec3f *)&(offsetCoordinates)) ==
         Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }

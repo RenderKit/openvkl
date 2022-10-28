@@ -5,7 +5,7 @@
 #include "SharedStructuredVolume.ih"
 #include "../iterator/GridAcceleratorIterator.ih"
 #include "GridAccelerator.ih"
-#include "math/box_utility.ih"
+#include "../math/box_utility.ih"
 
 // bit count used to represent the brick width in macrocells
 #define BRICK_WIDTH_BITCOUNT (4)

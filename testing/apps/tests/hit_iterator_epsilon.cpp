@@ -20,7 +20,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   VKLVolume volume   = testingVolume->getVKLVolume(getOpenVKLDevice());
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLData valuesData = vklNewData(
       getOpenVKLDevice(), isovalues.size(), VKL_FLOAT, isovalues.data());
@@ -55,7 +55,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   REQUIRE(hitCount > 0);
 
   vklRelease(hitContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 template <int W>
@@ -94,7 +94,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   VKLVolume volume   = testingVolume->getVKLVolume(getOpenVKLDevice());
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   VKLData valuesData = vklNewData(
       getOpenVKLDevice(), isovalues.size(), VKL_FLOAT, isovalues.data());
@@ -153,7 +153,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   REQUIRE(hitCount > 0);
 
   vklRelease(hitContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 TEST_CASE("Hit iterator epsilon", "[hit_iterators]")

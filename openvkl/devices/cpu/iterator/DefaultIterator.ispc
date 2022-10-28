@@ -4,7 +4,7 @@
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
 #include "DefaultIterator.ih"
-#include "common/ValueRanges.ih"
+#include "../common/ValueRanges.ih"
 
 // Ignore warning about exporting uniform-pointer-to-varying, as this is in
 // fact legal.

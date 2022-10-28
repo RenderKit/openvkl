@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.isph>
+#include <openvkl/device/openvkl.isph>
 
 export void demo_ispc(void *uniform _volume,
                       void *uniform _sampler,
@@ -11,7 +12,7 @@ export void demo_ispc(void *uniform _volume,
                       void *uniform _values)
 {
   uniform VKLVolume volume   = (uniform VKLVolume)_volume;
-  uniform VKLSampler sampler = (uniform VKLSampler)_sampler;
+  VKLSampler *uniform sampler = (VKLSampler *uniform)_sampler;
   uniform VKLIntervalIteratorContext intervalContext =
       (uniform VKLIntervalIteratorContext)_intervalContext;
   uniform VKLHitIteratorContext hitContext =

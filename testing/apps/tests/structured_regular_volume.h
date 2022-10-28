@@ -27,7 +27,7 @@ inline void sampling_on_vertices_vs_procedural_values(
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -54,7 +54,7 @@ inline void sampling_on_vertices_vs_procedural_values(
         vklSampler, objectCoordinates, proceduralValue, 1e-4f);
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 template <typename VOLUME_TYPE>

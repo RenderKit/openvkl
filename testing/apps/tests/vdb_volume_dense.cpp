@@ -132,12 +132,12 @@ static void sampling_gradient_equivalence(VKLVolume vklVolume1,
 
   for (const auto &filter : filters) {
     VKLSampler sampler1 = vklNewSampler(vklVolume1);
-    vklSetInt(sampler1, "filter", filter);
-    vklCommit(sampler1);
+    vklSetInt2(sampler1, "filter", filter);
+    vklCommit2(sampler1);
 
     VKLSampler sampler2 = vklNewSampler(vklVolume2);
-    vklSetInt(sampler2, "filter", filter);
-    vklCommit(sampler2);
+    vklSetInt2(sampler2, "filter", filter);
+    vklCommit2(sampler2);
 
     // assume bounding boxes match
     vkl_box3f bbox = vklGetBoundingBox(vklVolume1);
@@ -154,21 +154,21 @@ static void sampling_gradient_equivalence(VKLVolume vklVolume1,
     for (size_t i = 0; i < N; i++) {
       vkl_vec3f oc{distX(eng), distY(eng), distZ(eng)};
 
-      const float s1 = vklComputeSample(sampler1, &oc);
-      const float s2 = vklComputeSample(sampler2, &oc);
+      const float s1 = vklComputeSample(&sampler1, &oc);
+      const float s2 = vklComputeSample(&sampler2, &oc);
 
       requireEqualsHelper(s1, s2);
 
-      const vkl_vec3f g1 = vklComputeGradient(sampler1, &oc);
-      const vkl_vec3f g2 = vklComputeGradient(sampler2, &oc);
+      const vkl_vec3f g1 = vklComputeGradient(&sampler1, &oc);
+      const vkl_vec3f g2 = vklComputeGradient(&sampler2, &oc);
 
       requireEqualsHelper(g1.x, g2.x);
       requireEqualsHelper(g1.y, g2.y);
       requireEqualsHelper(g1.z, g2.z);
     }
 
-    vklRelease(sampler1);
-    vklRelease(sampler2);
+    vklRelease2(sampler1);
+    vklRelease2(sampler2);
   }
 }
 
@@ -189,10 +189,10 @@ static void iterator_equivalence(VKLVolume vklVolume1,
       vklNewData(getOpenVKLDevice(), ranges.size(), VKL_BOX1F, ranges.data());
 
   VKLSampler sampler1 = vklNewSampler(vklVolume1);
-  vklCommit(sampler1);
+  vklCommit2(sampler1);
 
   VKLSampler sampler2 = vklNewSampler(vklVolume2);
-  vklCommit(sampler2);
+  vklCommit2(sampler2);
 
   VKLIntervalIteratorContext context1 = vklNewIntervalIteratorContext(sampler1);
   vklSetData(context1, "valueRanges", rangesData);
@@ -271,8 +271,8 @@ static void iterator_equivalence(VKLVolume vklVolume1,
   REQUIRE(numIterations > 0);
 
   vklRelease(rangesData);
-  vklRelease(sampler1);
-  vklRelease(sampler2);
+  vklRelease2(sampler1);
+  vklRelease2(sampler2);
   vklRelease(context1);
   vklRelease(context2);
 }

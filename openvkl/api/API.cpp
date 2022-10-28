@@ -43,10 +43,26 @@ inline std::string getPidString()
     Device *deviceObj = deviceFrom(deviceSource); \
     try {
 
+#define OPENVKL_CATCH_BEGIN_SAFE2(deviceSource)                   \
+  {                                                               \
+    THROW_IF_NULL(deviceSource.host);                             \
+    openvkl::ManagedObject *managedObject =                       \
+        static_cast<openvkl::ManagedObject *>(deviceSource.host); \
+    Device *deviceObj = managedObject->device.ptr;                \
+    try {
+
 #define OPENVKL_CATCH_BEGIN_UNSAFE(deviceSource)  \
   {                                               \
     assert(deviceSource != nullptr);              \
     Device *deviceObj = deviceFrom(deviceSource); \
+    try {
+
+#define OPENVKL_CATCH_BEGIN_UNSAFE2(deviceSource)                 \
+  {                                                               \
+    assert(deviceSource.host != nullptr);                         \
+    openvkl::ManagedObject *managedObject =                       \
+        static_cast<openvkl::ManagedObject *>(deviceSource.host); \
+    Device *deviceObj = managedObject->device.ptr;                \
     try {
 
 #define OPENVKL_CATCH_END_NO_DEVICE(a)                                         \
@@ -92,6 +108,12 @@ inline Device *deviceFrom(VKLDevice device)
 inline void deviceAttach(Device *device, VKLObject object)
 {
   auto mo    = reinterpret_cast<openvkl::ManagedObject *>(object);
+  mo->device = device;
+}
+
+inline void deviceAttach(Device *device, APIObject object)
+{
+  auto mo    = reinterpret_cast<openvkl::ManagedObject *>(object.host);
   mo->device = device;
 }
 
@@ -170,7 +192,7 @@ OPENVKL_CATCH_END(nullptr)
 
 extern "C" VKLObserver vklNewSamplerObserver(VKLSampler sampler,
                                              const char *type)
-    OPENVKL_CATCH_BEGIN_SAFE(sampler)
+    OPENVKL_CATCH_BEGIN_SAFE2(sampler)
 {
   THROW_IF_NULL(type);
   VKLObserver observer = deviceObj->newObserver(sampler, type);
@@ -314,7 +336,19 @@ extern "C" void vklCommit(VKLObject object) OPENVKL_CATCH_BEGIN_SAFE(object)
 }
 OPENVKL_CATCH_END()
 
+extern "C" void vklCommit2(APIObject object) OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  deviceObj->commit(object);
+}
+OPENVKL_CATCH_END()
+
 extern "C" void vklRelease(VKLObject object) OPENVKL_CATCH_BEGIN_SAFE(object)
+{
+  deviceObj->release(object);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklRelease2(APIObject object) OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   deviceObj->release(object);
 }
@@ -333,7 +367,7 @@ OPENVKL_CATCH_END_NO_DEVICE()
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" VKLIntervalIteratorContext vklNewIntervalIteratorContext(
-    VKLSampler sampler) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    VKLSampler sampler) OPENVKL_CATCH_BEGIN_UNSAFE2(sampler)
 {
   VKLIntervalIteratorContext context =
       deviceObj->newIntervalIteratorContext(sampler);
@@ -460,7 +494,7 @@ __define_vklIterateIntervalN(16);
 ///////////////////////////////////////////////////////////////////////////////
 
 extern "C" VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    OPENVKL_CATCH_BEGIN_UNSAFE2(sampler)
 {
   VKLHitIteratorContext context = deviceObj->newHitIteratorContext(sampler);
   if (context == nullptr) {
@@ -673,6 +707,88 @@ extern "C" void vklSetParam(VKLObject object,
 }
 OPENVKL_CATCH_END()
 
+// New parameter setters for APIObject ////////////////////////////////////////
+
+extern "C" void vklSetBool2(APIObject object, const char *name, int b)
+    OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setBool(object, name, static_cast<bool>(b));
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetFloat2(APIObject object, const char *name, float x)
+    OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->set1f(object, name, x);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetVec3f2(APIObject object,
+                             const char *name,
+                             float x,
+                             float y,
+                             float z) OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setVec3f(object, name, vec3f(x, y, z));
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetInt2(APIObject object, const char *name, int x)
+    OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->set1i(object, name, x);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetVec3i2(APIObject object,
+                             const char *name,
+                             int x,
+                             int y,
+                             int z) OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setVec3i(object, name, vec3i(x, y, z));
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetData2(APIObject object, const char *name, VKLData data)
+    OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setObject(object, name, (VKLObject)data);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetString2(APIObject object, const char *name, const char *s)
+    OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setString(object, name, std::string(s));
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetVoidPtr2(APIObject object, const char *name, void *v)
+    OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setVoidPtr(object, name, v);
+}
+OPENVKL_CATCH_END()
+
+extern "C" void vklSetParam2(APIObject object,
+                             const char *name,
+                             VKLDataType dataType,
+                             const void *mem) OPENVKL_CATCH_BEGIN_SAFE2(object)
+{
+  THROW_IF_NULL(name);
+  deviceObj->setObjectParam(object, name, dataType, mem);
+}
+OPENVKL_CATCH_END()
+
 ///////////////////////////////////////////////////////////////////////////////
 // Sampler ////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -681,204 +797,13 @@ extern "C" VKLSampler vklNewSampler(VKLVolume volume)
     OPENVKL_CATCH_BEGIN_UNSAFE(volume)
 {
   VKLSampler sampler = deviceObj->newSampler(volume);
-  if (sampler == nullptr) {
+  if (sampler.host == nullptr || sampler.device == nullptr) {
     postLogMessage(deviceObj, VKL_LOG_ERROR) << "could not create sampler";
   }
   deviceAttach(deviceObj, sampler);
   return sampler;
 }
-OPENVKL_CATCH_END(nullptr)
-
-extern "C" float vklComputeSample(VKLSampler sampler,
-                                  const vkl_vec3f *objectCoordinates,
-                                  unsigned int attributeIndex,
-                                  float time)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
-{
-  constexpr int valid = 1;
-  float sample;
-  deviceObj->computeSample1(
-      &valid,
-      sampler,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      &sample,
-      attributeIndex,
-      &time);
-  return sample;
-}
-OPENVKL_CATCH_END(rkcommon::math::nan)
-
-#define __define_vklComputeSampleN(WIDTH)                             \
-  extern "C" void vklComputeSample##WIDTH(                            \
-      const int *valid,                                               \
-      VKLSampler sampler,                                             \
-      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      float *samples,                                                 \
-      unsigned int attributeIndex,                                    \
-      const float *times) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)         \
-  {                                                                   \
-    deviceObj->computeSample##WIDTH(                                  \
-        valid,                                                        \
-        sampler,                                                      \
-        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        samples,                                                      \
-        attributeIndex,                                               \
-        times);                                                       \
-  }                                                                   \
-  OPENVKL_CATCH_END()
-
-__define_vklComputeSampleN(4);
-__define_vklComputeSampleN(8);
-__define_vklComputeSampleN(16);
-
-#undef __define_vklComputeSampleN
-
-extern "C" void vklComputeSampleN(VKLSampler sampler,
-                                  unsigned int N,
-                                  const vkl_vec3f *objectCoordinates,
-                                  float *samples,
-                                  unsigned int attributeIndex,
-                                  const float *times)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
-{
-  deviceObj->computeSampleN(
-      sampler,
-      N,
-      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      samples,
-      attributeIndex,
-      times);
-}
-OPENVKL_CATCH_END()
-
-extern "C" void vklComputeSampleM(VKLSampler sampler,
-                                  const vkl_vec3f *objectCoordinates,
-                                  float *samples,
-                                  unsigned int M,
-                                  const unsigned int *attributeIndices,
-                                  float time)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
-{
-  constexpr int valid = 1;
-  deviceObj->computeSampleM1(
-      &valid,
-      sampler,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      samples,
-      M,
-      attributeIndices,
-      &time);
-}
-OPENVKL_CATCH_END()
-
-#define __define_vklComputeSampleMN(WIDTH)                            \
-  extern "C" void vklComputeSampleM##WIDTH(                           \
-      const int *valid,                                               \
-      VKLSampler sampler,                                             \
-      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      float *samples,                                                 \
-      unsigned int M,                                                 \
-      const unsigned int *attributeIndices,                           \
-      const float *times) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)         \
-  {                                                                   \
-    deviceObj->computeSampleM##WIDTH(                                 \
-        valid,                                                        \
-        sampler,                                                      \
-        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        samples,                                                      \
-        M,                                                            \
-        attributeIndices,                                             \
-        times);                                                       \
-  }                                                                   \
-  OPENVKL_CATCH_END()
-
-__define_vklComputeSampleMN(4);
-__define_vklComputeSampleMN(8);
-__define_vklComputeSampleMN(16);
-
-#undef __define_vklComputeSampleMN
-
-extern "C" void vklComputeSampleMN(VKLSampler sampler,
-                                   unsigned int N,
-                                   const vkl_vec3f *objectCoordinates,
-                                   float *samples,
-                                   unsigned int M,
-                                   const unsigned int *attributeIndices,
-                                   const float *times)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
-{
-  deviceObj->computeSampleMN(
-      sampler,
-      N,
-      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      samples,
-      M,
-      attributeIndices,
-      times);
-}
-OPENVKL_CATCH_END()
-
-extern "C" vkl_vec3f vklComputeGradient(VKLSampler sampler,
-                                        const vkl_vec3f *objectCoordinates,
-                                        unsigned int attributeIndex,
-                                        float time)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
-{
-  constexpr int valid = 1;
-  vkl_vec3f gradient;
-  deviceObj->computeGradient1(
-      &valid,
-      sampler,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      reinterpret_cast<vvec3fn<1> &>(gradient),
-      attributeIndex,
-      &time);
-  return gradient;
-}
-OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
-
-#define __define_vklComputeGradientN(WIDTH)                           \
-  extern "C" void vklComputeGradient##WIDTH(                          \
-      const int *valid,                                               \
-      VKLSampler sampler,                                             \
-      const vkl_vvec3f##WIDTH *objectCoordinates,                     \
-      vkl_vvec3f##WIDTH *gradients,                                   \
-      unsigned int attributeIndex,                                    \
-      const float *times) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)         \
-  {                                                                   \
-    deviceObj->computeGradient##WIDTH(                                \
-        valid,                                                        \
-        sampler,                                                      \
-        reinterpret_cast<const vvec3fn<WIDTH> &>(*objectCoordinates), \
-        reinterpret_cast<vvec3fn<WIDTH> &>(*gradients),               \
-        attributeIndex,                                               \
-        times);                                                       \
-  }                                                                   \
-  OPENVKL_CATCH_END()
-
-__define_vklComputeGradientN(4);
-__define_vklComputeGradientN(8);
-__define_vklComputeGradientN(16);
-
-#undef __define_vklComputeGradientN
-
-extern "C" void vklComputeGradientN(VKLSampler sampler,
-                                    unsigned int N,
-                                    const vkl_vec3f *objectCoordinates,
-                                    vkl_vec3f *gradients,
-                                    unsigned int attributeIndex,
-                                    const float *times)
-    OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
-{
-  deviceObj->computeGradientN(
-      sampler,
-      N,
-      reinterpret_cast<const vvec3fn<1> *>(objectCoordinates),
-      reinterpret_cast<vvec3fn<1> *>(gradients),
-      attributeIndex,
-      times);
-}
-OPENVKL_CATCH_END()
+OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Volume /////////////////////////////////////////////////////////////////////

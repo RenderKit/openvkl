@@ -70,7 +70,7 @@ if (BUILD_BENCHMARKS)
   target_link_libraries(vklBenchmark
   PRIVATE
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
     vkl_example_renderers
   )
 

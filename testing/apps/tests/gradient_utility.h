@@ -20,7 +20,7 @@ inline void test_scalar_and_vector_gradients(
     const float time                  = 0.f)
 {
   vkl_vec3f scalarGradientValue = vklComputeGradient(
-      sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
+      &sampler, (const vkl_vec3f *)&objectCoordinates, attributeIndex, time);
 
   REQUIRE(scalarGradientValue.x ==
           Approx(gradientTruth.x).margin(gradientTolerance));
@@ -47,7 +47,7 @@ inline void test_scalar_and_vector_gradients(
   float times_4[4]     = {time};
   vkl_vvec3f4 gradients_4;
   vklComputeGradient4(valid.data(),
-                      sampler,
+                      &sampler,
                       (const vkl_vvec3f4 *)objectCoordinatesSOA.data(),
                       &gradients_4,
                       attributeIndex,
@@ -57,7 +57,7 @@ inline void test_scalar_and_vector_gradients(
   float times_8[8]     = {time};
   vkl_vvec3f8 gradients_8;
   vklComputeGradient8(valid.data(),
-                      sampler,
+                      &sampler,
                       (const vkl_vvec3f8 *)objectCoordinatesSOA.data(),
                       &gradients_8,
                       attributeIndex,
@@ -67,7 +67,7 @@ inline void test_scalar_and_vector_gradients(
   vkl_vvec3f16 gradients_16;
   float times_16[16] = {time};
   vklComputeGradient16(valid.data(),
-                       sampler,
+                       &sampler,
                        (const vkl_vvec3f16 *)objectCoordinatesSOA.data(),
                        &gradients_16,
                        attributeIndex,
@@ -95,7 +95,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
 {
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   constexpr int filterRadius = 2;
   multidim_index_sequence<3> mis((v->getDimensions() - 2 * filterRadius) /
@@ -134,7 +134,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
     }
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
@@ -143,7 +143,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
 {
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   SECTION("randomized stream gradients")
   {
@@ -167,7 +167,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
         oc = vkl_vec3f{distX(eng), distY(eng), distZ(eng)};
       }
 
-      vklComputeGradientN(vklSampler,
+      vklComputeGradientN(&vklSampler,
                           N,
                           objectCoordinates.data(),
                           gradients.data(),
@@ -176,7 +176,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
 
       for (int i = 0; i < N; i++) {
         vkl_vec3f gradientTruth = vklComputeGradient(
-            vklSampler, &objectCoordinates[i], attributeIndex, time);
+            &vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("gradient = " << i + 1 << " / " << N);
         INFO("gradientTruth = " << gradientTruth.x << ", "
@@ -208,5 +208,5 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
       }
     }
   }
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 #include <stdio.h>
 
 #if defined(_MSC_VER)
@@ -14,7 +15,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   printf("demo of 1-wide API\n");
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -42,8 +43,8 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
   float time                  = 0.f;
-  float sample   = vklComputeSample(sampler, &coord, attributeIndex, time);
-  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex, time);
+  float sample   = vklComputeSample(&sampler, &coord, attributeIndex, time);
+  vkl_vec3f grad = vklComputeGradient(&sampler, &coord, attributeIndex, time);
   printf("\tsampling and gradient computation (first attribute)\n");
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -52,7 +53,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3];
-  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, time);
+  vklComputeSampleM(&sampler, &coord, samples, M, attributeIndices, time);
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
@@ -108,13 +109,8 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #else
     char buffer[vklGetIntervalIteratorSize(intervalContext)];
 #endif
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIterator(intervalContext,
-                                &rayOrigin,
-                                &rayDirection,
-                                &rayTRange,
-                                time,
-                                buffer);
+    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
+        intervalContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -150,12 +146,8 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #else
     char buffer[vklGetHitIteratorSize(hitContext)];
 #endif
-    VKLHitIterator hitIterator = vklInitHitIterator(hitContext,
-                                                    &rayOrigin,
-                                                    &rayDirection,
-                                                    &rayTRange,
-                                                    time,
-                                                    buffer);
+    VKLHitIterator hitIterator = vklInitHitIterator(
+        hitContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -176,7 +168,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 
   vklRelease(hitContext);
   vklRelease(intervalContext);
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 void demoVectorAPI(VKLVolume volume)
@@ -184,7 +176,7 @@ void demoVectorAPI(VKLVolume volume)
   printf("demo of 4-wide API (8- and 16- follow the same pattern)\n");
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   // structure-of-array layout
   vkl_vvec3f4 coord4;
@@ -206,8 +198,8 @@ void demoVectorAPI(VKLVolume volume)
   float time4[4]              = {0.f};
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex, time4);
-  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex, time4);
+  vklComputeSample4(valid, &sampler, &coord4, sample4, attributeIndex, time4);
+  vklComputeGradient4(valid, &sampler, &coord4, &grad4, attributeIndex, time4);
 
   printf("\n\tsampling and gradient computation (first attribute)\n");
 
@@ -222,7 +214,7 @@ void demoVectorAPI(VKLVolume volume)
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 4];
   vklComputeSampleM4(
-      valid, sampler, &coord4, samples, M, attributeIndices, time4);
+      valid, &sampler, &coord4, samples, M, attributeIndices, time4);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -239,7 +231,7 @@ void demoVectorAPI(VKLVolume volume)
 
   printf("\n");
 
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 void demoStreamAPI(VKLVolume volume)
@@ -247,7 +239,7 @@ void demoStreamAPI(VKLVolume volume)
   printf("demo of stream API\n");
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   // array-of-structure layout; arbitrary stream lengths are supported
   vkl_vec3f coord[5];
@@ -268,8 +260,8 @@ void demoStreamAPI(VKLVolume volume)
   float time[5]               = {0.f};
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
-  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex, time);
+  vklComputeSampleN(&sampler, 5, coord, sample, attributeIndex, time);
+  vklComputeGradientN(&sampler, 5, coord, grad, attributeIndex, time);
 
   for (int i = 0; i < 5; i++) {
     printf("\t\tsample[%d] = %f\n", i, sample[i]);
@@ -280,7 +272,7 @@ void demoStreamAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 5];
-  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices, time);
+  vklComputeSampleMN(&sampler, 5, coord, samples, M, attributeIndices, time);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -295,7 +287,7 @@ void demoStreamAPI(VKLVolume volume)
 
   printf("\n");
 
-  vklRelease(sampler);
+  vklRelease2(sampler);
 }
 
 int main()

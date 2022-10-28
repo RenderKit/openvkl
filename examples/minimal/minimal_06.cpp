@@ -5,6 +5,7 @@
 #include "framebuffer.h"
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 #if defined(_MSC_VER)
 #include <malloc.h>
@@ -32,7 +33,7 @@ int main(int argc, char **argv)
   vklCommit(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit(sampler);
+  vklCommit2(sampler);
 
   const float isovalues[]       = { -.6f, -.1f, .4f, .9f };
   VKLHitIteratorContext context = vklNewHitIteratorContext(sampler);
@@ -79,7 +80,7 @@ int main(int argc, char **argv)
   fb.drawToTerminal();
 
   vklRelease(context);
-  vklRelease(sampler);
+  vklRelease2(sampler);
   vklRelease(volume);
   vklReleaseDevice(device);
 

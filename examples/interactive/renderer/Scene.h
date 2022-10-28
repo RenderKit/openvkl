@@ -52,7 +52,12 @@ namespace openvkl {
 
       VKLSampler getSampler() const
       {
-        return vklSampler;
+        return *vklSampler;
+      }
+
+      const VKLSampler *getSamplerPtr() const
+      {
+        return vklSampler.get();
       }
 
       VolumeParams &getVolumeParams()
@@ -115,7 +120,7 @@ namespace openvkl {
       VKLVolume vklVolume{nullptr};
       box3f volumeBounds;
       unsigned int numAttributes{0};
-      VKLSampler vklSampler{nullptr};
+      std::unique_ptr<VKLSampler> vklSampler;
     };
 
     struct Scene

@@ -20,7 +20,7 @@ void gradients_at_particle_centers(size_t numParticles,
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit(vklSampler);
+  vklCommit2(vklSampler);
 
   const std::vector<vec4f> particles = v->getParticles();
 
@@ -33,7 +33,7 @@ void gradients_at_particle_centers(size_t numParticles,
                          << ", radius = " << p.w)
 
     const vkl_vec3f vklGradient =
-        vklComputeGradient(vklSampler, (const vkl_vec3f *)&p3);
+        vklComputeGradient(&vklSampler, (const vkl_vec3f *)&p3);
 
     const vec3f referenceGradient = v->computeProceduralGradient(p3);
 
@@ -43,7 +43,7 @@ void gradients_at_particle_centers(size_t numParticles,
     CHECK(vklGradient.z == Approx(referenceGradient.z).margin(margin));
   }
 
-  vklRelease(vklSampler);
+  vklRelease2(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE

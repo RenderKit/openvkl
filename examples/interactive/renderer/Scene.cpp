@@ -41,7 +41,7 @@ namespace openvkl {
     Volume::~Volume()
     {
       if (vklSampler) {
-        vklRelease(vklSampler);
+        vklRelease2(*vklSampler);
         vklSampler = nullptr;
       }
       vklVolume = nullptr;
@@ -68,7 +68,7 @@ namespace openvkl {
           auto newVolume = volumeParams.createVolume();
 
           if (vklSampler) {
-            vklRelease(vklSampler);
+            vklRelease2(*vklSampler);
             vklSampler = nullptr;
           }
 
@@ -80,12 +80,13 @@ namespace openvkl {
         }
 
         if (!vklSampler) {
-          vklSampler         = vklNewSampler(vklVolume);
+          vklSampler =
+              rkcommon::make_unique<VKLSampler>(vklNewSampler(vklVolume));
           samplerNeedsUpdate = true;
         }
 
         if (samplerNeedsUpdate) {
-          samplerParams.updateSampler(vklSampler);
+          samplerParams.updateSampler(*vklSampler);
         }
       } catch (const std::exception &e) {
         if (testingVolume) {

@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include "../../../api/Device.h"
 #include "../common/align.h"
 #include "../iterator/Iterator.h"
 #include "../sampler/Sampler.h"
+#include "AddDeviceAPIs.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -18,7 +18,7 @@ namespace openvkl {
     using EnableIf = typename std::enable_if<C, T>::type;
 
     template <int W>
-    struct CPUDevice : public api::Device
+    struct CPUDevice : public AddDeviceAPIs
     {
       CPUDevice()           = default;
       ~CPUDevice() override = default;
@@ -29,9 +29,12 @@ namespace openvkl {
 
       void commit() override;
 
+      // TODO: to be removed
       void commit(VKLObject object) override;
-
       void release(VKLObject object) override;
+
+      void commit(APIObject object) override;
+      void release(APIObject object) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Data /////////////////////////////////////////////////////////////////
@@ -303,32 +306,6 @@ namespace openvkl {
                                              int *result) const;
 
       /////////////////////////////////////////////////////////////////////////
-      // Parameters ///////////////////////////////////////////////////////////
-      /////////////////////////////////////////////////////////////////////////
-
-      void setBool(VKLObject object, const char *name, const bool b) override;
-      void set1f(VKLObject object, const char *name, const float x) override;
-      void set1i(VKLObject object, const char *name, const int x) override;
-      void setVec3f(VKLObject object,
-                    const char *name,
-                    const vec3f &v) override;
-      void setVec3i(VKLObject object,
-                    const char *name,
-                    const vec3i &v) override;
-      void setObject(VKLObject object,
-                     const char *name,
-                     VKLObject setObject) override;
-      void setString(VKLObject object,
-                     const char *name,
-                     const std::string &s) override;
-      void setVoidPtr(VKLObject object, const char *name, void *v) override;
-
-      void setObjectParam(VKLObject object,
-                          const char *name,
-                          VKLDataType dataType,
-                          const void *mem) override;
-
-      /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
@@ -336,7 +313,7 @@ namespace openvkl {
 
 #define __define_computeSampleN(WIDTH)                               \
   void computeSample##WIDTH(const int *valid,                        \
-                            VKLSampler sampler,                      \
+                            const VKLSampler *sampler,               \
                             const vvec3fn<WIDTH> &objectCoordinates, \
                             float *samples,                          \
                             unsigned int attributeIndex,             \
@@ -349,7 +326,7 @@ namespace openvkl {
 
 #undef __define_computeSampleN
 
-      void computeSampleN(VKLSampler sampler,
+      void computeSampleN(const VKLSampler *sampler,
                           unsigned int N,
                           const vvec3fn<1> *objectCoordinates,
                           float *samples,
@@ -358,7 +335,7 @@ namespace openvkl {
 
 #define __define_computeSampleMN(WIDTH)                               \
   void computeSampleM##WIDTH(const int *valid,                        \
-                             VKLSampler sampler,                      \
+                             const VKLSampler *sampler,               \
                              const vvec3fn<WIDTH> &objectCoordinates, \
                              float *samples,                          \
                              unsigned int M,                          \
@@ -372,7 +349,7 @@ namespace openvkl {
 
 #undef __define_computeSampleMN
 
-      void computeSampleMN(VKLSampler sampler,
+      void computeSampleMN(const VKLSampler *sampler,
                            unsigned int N,
                            const vvec3fn<1> *objectCoordinates,
                            float *samples,
@@ -382,7 +359,7 @@ namespace openvkl {
 
 #define __define_computeGradientN(WIDTH)                               \
   void computeGradient##WIDTH(const int *valid,                        \
-                              VKLSampler sampler,                      \
+                              const VKLSampler *sampler,               \
                               const vvec3fn<WIDTH> &objectCoordinates, \
                               vvec3fn<WIDTH> &gradients,               \
                               unsigned int attributeIndex,             \
@@ -395,7 +372,7 @@ namespace openvkl {
 
 #undef __define_computeGradientN
 
-      void computeGradientN(VKLSampler sampler,
+      void computeGradientN(const VKLSampler *sampler,
                             unsigned int N,
                             const vvec3fn<1> *objectCoordinates,
                             vvec3fn<1> *gradients,
@@ -419,7 +396,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeSampleAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int attributeIndex,
@@ -428,7 +405,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeSampleAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int attributeIndex,
@@ -437,7 +414,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeSampleAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int attributeIndex,
@@ -446,7 +423,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeSampleMAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int M,
@@ -456,7 +433,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeSampleMAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int M,
@@ -466,7 +443,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeSampleMAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           float *samples,
           unsigned int M,
@@ -476,7 +453,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
           unsigned int attributeIndex,
@@ -485,7 +462,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW == W), void>::type computeGradientAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
           unsigned int attributeIndex,
@@ -494,7 +471,7 @@ namespace openvkl {
       template <int OW>
       typename std::enable_if<(OW > W), void>::type computeGradientAnyWidth(
           const int *valid,
-          VKLSampler sampler,
+          const VKLSampler *sampler,
           const vvec3fn<OW> &objectCoordinates,
           vvec3fn<OW> &gradients,
           unsigned int attributeIndex,

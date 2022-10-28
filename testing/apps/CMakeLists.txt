@@ -11,7 +11,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkStructuredVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkStructuredVolume
@@ -26,7 +26,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkStructuredVolumeMulti
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkStructuredVolumeMulti
@@ -41,7 +41,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkUnstructuredVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkUnstructuredVolume
@@ -56,7 +56,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkVdbVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkVdbVolume
@@ -71,7 +71,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkVdbVolumeMulti
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkVdbVolumeMulti
@@ -86,7 +86,7 @@ if (BUILD_BENCHMARKS)
 
   target_link_libraries(vklBenchmarkParticleVolume
     benchmark
-    openvkl_testing
+    openvkl_testing_cpu
   )
 
   install(TARGETS vklBenchmarkParticleVolume
@@ -148,7 +148,7 @@ if (BUILD_TESTING)
 
   target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
 
-  target_link_libraries(vklTests PRIVATE openvkl_testing openvkl_module_cpu_device)
+  target_link_libraries(vklTests PRIVATE openvkl_testing_cpu)
 
   # Needed for SIMD conformance tests
   foreach(TARGET_NAME "openvkl_module_cpu_device_4"

@@ -43,7 +43,7 @@ namespace api {
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
         vklSampler           = vklNewSampler(vklVolume);
-        vklCommit(vklSampler);
+        vklCommit2(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
         vklCommit(intervalContext);
 
@@ -105,7 +105,7 @@ namespace api {
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
         vklSampler           = vklNewSampler(vklVolume);
-        vklCommit(vklSampler);
+        vklCommit2(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
         vklCommit(intervalContext);
 
@@ -180,7 +180,7 @@ namespace api {
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
         vklSampler           = vklNewSampler(vklVolume);
-        vklCommit(vklSampler);
+        vklCommit2(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
         vklCommit(intervalContext);
 

@@ -23,7 +23,7 @@ inline vkl_range1f computeIntervalValueRange(VKLSampler sampler,
                 origin.y + t * direction.y,
                 origin.z + t * direction.z};
 
-    float sample = vklComputeSample(sampler, &c, attributeIndex);
+    float sample = vklComputeSample(&sampler, &c, attributeIndex);
 
     sampledValueRange.lower = std::min(sampledValueRange.lower, sample);
     sampledValueRange.upper = std::max(sampledValueRange.upper, sample);

@@ -90,7 +90,7 @@ namespace openvkl {
           time = time + (randomNumbers2.x - 0.5f) * params->shutter;
         }
         time   = clamp(time, 0.f, 1.f);
-        sample = vklComputeSample(scene.volume.getSampler(),
+        sample = vklComputeSample(scene.volume.getSamplerPtr(),
                                   (const vkl_vec3f *)&c,
                                   rendererParams->attributeIndex,
                                   time);

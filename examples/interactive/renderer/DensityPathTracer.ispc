@@ -91,7 +91,7 @@ bool sampleWoodcock(const uniform DensityPathTracerParams &params,
       time = time + (randomNumbers2.x - 0.5f) * params.shutter;
     }
     time   = clamp(time, 0.f, 1.f);
-    sample = vklComputeSampleV(scene.sampler,
+    sample = vklComputeSampleV(&scene.sampler,
                                (varying vkl_vec3f * uniform) & c,
                                scene.rendererParams.attributeIndex,
                                &time);

@@ -39,14 +39,14 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
       VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
       maxIntervalSize = std::max<size_t>(
-          maxIntervalSize, vklGetIntervalIteratorSize(intervalContext));
+          maxIntervalSize, vklGetIntervalIteratorSize(&intervalContext));
       maxHitSize =
-          std::max<size_t>(maxHitSize, vklGetHitIteratorSize(hitContext));
+          std::max<size_t>(maxHitSize, vklGetHitIteratorSize(&hitContext));
 
-      vklRelease(hitContext);
-      vklRelease(intervalContext);
+      vklRelease2(hitContext);
+      vklRelease2(intervalContext);
       vklRelease2(sampler);
-      vklRelease(volume);
+      vklRelease2(volume);
     }
   }
 

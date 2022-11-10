@@ -90,10 +90,12 @@ namespace openvkl {
       // Observer /////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual VKLObserver newObserver(VKLVolume volume, const char *type)   = 0;
-      virtual VKLObserver newObserver(VKLSampler sampler, const char *type) = 0;
-      virtual const void *mapObserver(VKLObserver observer)                 = 0;
-      virtual void unmapObserver(VKLObserver observer)                      = 0;
+      virtual VKLObserver newVolumeObserver(VKLVolume volume,
+                                            const char *type)  = 0;
+      virtual VKLObserver newSamplerObserver(VKLSampler sampler,
+                                             const char *type) = 0;
+      virtual const void *mapObserver(VKLObserver observer)    = 0;
+      virtual void unmapObserver(VKLObserver observer)         = 0;
       virtual VKLDataType getObserverElementType(
           VKLObserver observer) const                                   = 0;
       virtual size_t getObserverElementSize(VKLObserver observer) const = 0;
@@ -108,7 +110,7 @@ namespace openvkl {
 
 #define __define_getIntervalIteratorSizeN(WIDTH) \
   virtual size_t getIntervalIteratorSize##WIDTH( \
-      VKLIntervalIteratorContext context) const = 0;
+      const VKLIntervalIteratorContext *context) const = 0;
 
       __define_getIntervalIteratorSizeN(1);
       __define_getIntervalIteratorSizeN(4);
@@ -118,7 +120,7 @@ namespace openvkl {
 #undef __define_getIntervalIteratorSizeN
 
       virtual VKLIntervalIterator initIntervalIterator1(
-          VKLIntervalIteratorContext context,
+          const VKLIntervalIteratorContext *context,
           const vvec3fn<1> &origin,
           const vvec3fn<1> &direction,
           const vrange1fn<1> &tRange,
@@ -128,7 +130,7 @@ namespace openvkl {
 #define __define_initIntervalIteratorN(WIDTH)                     \
   virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH( \
       const int *valid,                                           \
-      VKLIntervalIteratorContext context,                         \
+      const VKLIntervalIteratorContext *context,                  \
       const vvec3fn<WIDTH> &origin,                               \
       const vvec3fn<WIDTH> &direction,                            \
       const vrange1fn<WIDTH> &tRange,                             \
@@ -164,9 +166,9 @@ namespace openvkl {
       virtual VKLHitIteratorContext newHitIteratorContext(
           VKLSampler sampler) = 0;
 
-#define __define_getHitIteratorSizeN(WIDTH)                               \
-  virtual size_t getHitIteratorSize##WIDTH(VKLHitIteratorContext context) \
-      const = 0;
+#define __define_getHitIteratorSizeN(WIDTH) \
+  virtual size_t getHitIteratorSize##WIDTH( \
+      const VKLHitIteratorContext *context) const = 0;
 
       __define_getHitIteratorSizeN(1);
       __define_getHitIteratorSizeN(4);
@@ -175,17 +177,18 @@ namespace openvkl {
 
 #undef __define_getHitIteratorSizeN
 
-      virtual VKLHitIterator initHitIterator1(VKLHitIteratorContext context,
-                                              const vvec3fn<1> &origin,
-                                              const vvec3fn<1> &direction,
-                                              const vrange1fn<1> &tRange,
-                                              float time,
-                                              void *buffer) const = 0;
+      virtual VKLHitIterator initHitIterator1(
+          const VKLHitIteratorContext *context,
+          const vvec3fn<1> &origin,
+          const vvec3fn<1> &direction,
+          const vrange1fn<1> &tRange,
+          float time,
+          void *buffer) const = 0;
 
 #define __define_initHitIteratorN(WIDTH)                \
   virtual VKLHitIterator##WIDTH initHitIterator##WIDTH( \
       const int *valid,                                 \
-      VKLHitIteratorContext context,                    \
+      const VKLHitIteratorContext *context,             \
       const vvec3fn<WIDTH> &origin,                     \
       const vvec3fn<WIDTH> &direction,                  \
       const vrange1fn<WIDTH> &tRange,                   \

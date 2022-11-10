@@ -14,15 +14,7 @@
 #include "common.h"
 #include "device.h"
 
-#ifdef __cplusplus
-struct Volume : public ManagedObject
-{
-};
-#else
-typedef ManagedObject Volume;
-#endif
-
-typedef Volume *VKLVolume;
+typedef APIObject VKLVolume;
 
 // cell types definition for unstructured volumes, values are set to match VTK
 typedef enum
@@ -65,10 +57,12 @@ OPENVKL_INTERFACE vkl_range1f vklGetValueRange(
 // The below are primarily used to enable ISPC bindings, which cannot handle
 // returning structs by value.
 
-OPENVKL_INTERFACE void vklGetBoundingBoxRef(VKLVolume volume,
+OPENVKL_INTERFACE void vklGetBoundingBoxRef(const VKLVolume *volume,
                                             vkl_box3f *boundingBox);
 
-OPENVKL_INTERFACE void vklGetValueRangeRef(VKLVolume volume,
+OPENVKL_INTERFACE unsigned int vklGetNumAttributesRef(const VKLVolume *volume);
+
+OPENVKL_INTERFACE void vklGetValueRangeRef(const VKLVolume *volume,
                                            unsigned int attributeIndex,
                                            vkl_range1f *valueRange);
 

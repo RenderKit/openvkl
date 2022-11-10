@@ -122,53 +122,61 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    VKLObserver CPUDevice<W>::newObserver(VKLVolume volume, const char *type)
+    VKLObserver CPUDevice<W>::newVolumeObserver(VKLVolume volume,
+                                                const char *type)
     {
-      auto &object          = referenceFromHandle<Volume<W>>(volume);
+      auto &object          = referenceFromHandle<Volume<W>>(volume.host);
       Observer<W> *observer = object.newObserver(type);
-      return (VKLObserver)observer;
+      VKLObserver o;
+      o.host   = static_cast<void *>(observer);
+      o.device = nullptr;  // Observer has no shared struct
+      return o;
     }
 
     template <int W>
-    VKLObserver CPUDevice<W>::newObserver(VKLSampler sampler, const char *type)
+    VKLObserver CPUDevice<W>::newSamplerObserver(VKLSampler sampler,
+                                                 const char *type)
     {
       auto &object          = referenceFromHandle<Sampler<W>>(sampler.host);
       Observer<W> *observer = object.newObserver(type);
-      return (VKLObserver)observer;
+      VKLObserver o;
+      o.host   = static_cast<void *>(observer);
+      o.device = nullptr;  // Observer has no shared struct
+      return o;
     }
 
     template <int W>
     const void *CPUDevice<W>::mapObserver(VKLObserver observer)
     {
-      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer.host);
       return observerObject.map();
     }
 
     template <int W>
     void CPUDevice<W>::unmapObserver(VKLObserver observer)
     {
-      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer.host);
       observerObject.unmap();
     }
 
     template <int W>
     VKLDataType CPUDevice<W>::getObserverElementType(VKLObserver observer) const
     {
-      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer.host);
       return observerObject.getElementType();
     }
 
     template <int W>
     size_t CPUDevice<W>::getObserverElementSize(VKLObserver observer) const
     {
-      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer.host);
       return observerObject.getElementSize();
     }
 
     template <int W>
     size_t CPUDevice<W>::getObserverNumElements(VKLObserver observer) const
     {
-      auto &observerObject = referenceFromHandle<Observer<W>>(observer);
+      auto &observerObject = referenceFromHandle<Observer<W>>(observer.host);
       return observerObject.getNumElements();
     }
 
@@ -181,9 +189,12 @@ namespace openvkl {
         VKLSampler sampler)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler.host);
-      return (VKLIntervalIteratorContext)samplerObject
-          .getIntervalIteratorFactory()
-          .newContext(samplerObject);
+      IntervalIteratorContext<W> *iteratorContext =
+          samplerObject.getIntervalIteratorFactory().newContext(samplerObject);
+      VKLIntervalIteratorContext ic;
+      ic.host   = static_cast<void *>(iteratorContext);
+      ic.device = static_cast<void *>(iteratorContext->getSh());
+      return ic;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -195,8 +206,12 @@ namespace openvkl {
         VKLSampler sampler)
     {
       auto &samplerObject = referenceFromHandle<Sampler<W>>(sampler.host);
-      return (VKLHitIteratorContext)samplerObject.getHitIteratorFactory()
-          .newContext(samplerObject);
+      HitIteratorContext<W> *iteratorContext =
+          samplerObject.getHitIteratorFactory().newContext(samplerObject);
+      VKLHitIteratorContext ic;
+      ic.host   = static_cast<void *>(iteratorContext);
+      ic.device = static_cast<void *>(iteratorContext->getSh());
+      return ic;
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -206,7 +221,7 @@ namespace openvkl {
     template <int W>
     VKLSampler CPUDevice<W>::newSampler(VKLVolume volume)
     {
-      auto &volumeObject  = referenceFromHandle<Volume<W>>(volume);
+      auto &volumeObject  = referenceFromHandle<Volume<W>>(volume.host);
       Sampler<W> *sampler = volumeObject.newSampler();
       VKLSampler s;
       s.host   = static_cast<void *>(sampler);
@@ -374,20 +389,24 @@ namespace openvkl {
       std::stringstream ss;
       ss << type << "_" << W;
 
-      return (VKLVolume)Volume<W>::createInstance(this, ss.str());
+      Volume<W> *volume = Volume<W>::createInstance(this, ss.str());
+      VKLVolume v;
+      v.host   = static_cast<void *>(volume);
+      v.device = static_cast<void *>(volume->getSh());
+      return v;
     }
 
     template <int W>
     box3f CPUDevice<W>::getBoundingBox(VKLVolume volume)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume.host);
       return volumeObject.getBoundingBox();
     }
 
     template <int W>
     unsigned int CPUDevice<W>::getNumAttributes(VKLVolume volume)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume.host);
       return volumeObject.getNumAttributes();
     }
 
@@ -395,7 +414,7 @@ namespace openvkl {
     range1f CPUDevice<W>::getValueRange(VKLVolume volume,
                                         unsigned int attributeIndex)
     {
-      auto &volumeObject = referenceFromHandle<Volume<W>>(volume);
+      auto &volumeObject = referenceFromHandle<Volume<W>>(volume.host);
       return volumeObject.getValueRange(attributeIndex);
     }
 

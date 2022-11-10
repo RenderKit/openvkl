@@ -6,11 +6,8 @@
 #include "common.isph"
 #include "max_iterator_size.h"
 
-struct IntervalIteratorContext;
-typedef IntervalIteratorContext *uniform VKLIntervalIteratorContext;
-
-struct HitIteratorContext;
-typedef HitIteratorContext *uniform VKLHitIteratorContext;
+typedef uniform APIObject VKLIntervalIteratorContext;
+typedef uniform APIObject VKLHitIteratorContext;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterators /////////////////////////////////////////////////////////
@@ -20,16 +17,16 @@ struct IntervalIterator;
 typedef IntervalIterator *uniform VKLIntervalIterator;
 
 VKL_API uniform size_t
-vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
+vklGetIntervalIteratorSize4(const VKLIntervalIteratorContext *uniform context);
 
 VKL_API uniform size_t
-vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
+vklGetIntervalIteratorSize8(const VKLIntervalIteratorContext *uniform context);
 
 VKL_API uniform size_t
-vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
+vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *uniform context);
 
 VKL_FORCEINLINE uniform size_t
-vklGetIntervalIteratorSizeV(VKLIntervalIteratorContext context)
+vklGetIntervalIteratorSizeV(const VKLIntervalIteratorContext *uniform context)
 {
   varying bool mask = __mask;
   unmasked
@@ -54,7 +51,7 @@ struct VKLInterval
 
 VKL_API VKLIntervalIterator
 vklInitIntervalIterator4(const int *uniform valid,
-                         VKLIntervalIteratorContext context,
+                         const VKLIntervalIteratorContext *uniform context,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
@@ -63,7 +60,7 @@ vklInitIntervalIterator4(const int *uniform valid,
 
 VKL_API VKLIntervalIterator
 vklInitIntervalIterator8(const int *uniform valid,
-                         VKLIntervalIteratorContext context,
+                         const VKLIntervalIteratorContext *uniform context,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
@@ -72,7 +69,7 @@ vklInitIntervalIterator8(const int *uniform valid,
 
 VKL_API VKLIntervalIterator
 vklInitIntervalIterator16(const int *uniform valid,
-                          VKLIntervalIteratorContext context,
+                          const VKLIntervalIteratorContext *uniform context,
                           const varying vkl_vec3f *uniform origin,
                           const varying vkl_vec3f *uniform direction,
                           const varying vkl_range1f *uniform tRange,
@@ -80,7 +77,7 @@ vklInitIntervalIterator16(const int *uniform valid,
                           void *uniform buffer);
 
 VKL_FORCEINLINE VKLIntervalIterator
-vklInitIntervalIteratorV(VKLIntervalIteratorContext context,
+vklInitIntervalIteratorV(const VKLIntervalIteratorContext *uniform context,
                          const varying vkl_vec3f *uniform origin,
                          const varying vkl_vec3f *uniform direction,
                          const varying vkl_range1f *uniform tRange,
@@ -171,14 +168,17 @@ VKL_FORCEINLINE varying bool vklIterateIntervalV(
 struct HitIterator;
 typedef HitIterator *uniform VKLHitIterator;
 
-VKL_API uniform size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
+VKL_API uniform size_t
+vklGetHitIteratorSize4(const VKLHitIteratorContext *uniform context);
 
-VKL_API uniform size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
+VKL_API uniform size_t
+vklGetHitIteratorSize8(const VKLHitIteratorContext *uniform context);
 
-VKL_API uniform size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
+VKL_API uniform size_t
+vklGetHitIteratorSize16(const VKLHitIteratorContext *uniform context);
 
 VKL_FORCEINLINE uniform size_t
-vklGetHitIteratorSizeV(VKLHitIteratorContext context)
+vklGetHitIteratorSizeV(const VKLHitIteratorContext *uniform context)
 {
   varying bool mask = __mask;
   unmasked
@@ -203,7 +203,7 @@ struct VKLHit
 
 VKL_API VKLHitIterator
 vklInitHitIterator4(const int *uniform valid,
-                    VKLHitIteratorContext context,
+                    const VKLHitIteratorContext *uniform context,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
@@ -212,7 +212,7 @@ vklInitHitIterator4(const int *uniform valid,
 
 VKL_API VKLHitIterator
 vklInitHitIterator8(const int *uniform valid,
-                    VKLHitIteratorContext context,
+                    const VKLHitIteratorContext *uniform context,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,
@@ -221,7 +221,7 @@ vklInitHitIterator8(const int *uniform valid,
 
 VKL_API VKLHitIterator
 vklInitHitIterator16(const int *uniform valid,
-                     VKLHitIteratorContext context,
+                     const VKLHitIteratorContext *uniform context,
                      const varying vkl_vec3f *uniform origin,
                      const varying vkl_vec3f *uniform direction,
                      const varying vkl_range1f *uniform tRange,
@@ -229,7 +229,7 @@ vklInitHitIterator16(const int *uniform valid,
                      void *uniform buffer);
 
 VKL_FORCEINLINE VKLHitIterator
-vklInitHitIteratorV(VKLHitIteratorContext context,
+vklInitHitIteratorV(const VKLHitIteratorContext *uniform context,
                     const varying vkl_vec3f *uniform origin,
                     const varying vkl_vec3f *uniform direction,
                     const varying vkl_range1f *uniform tRange,

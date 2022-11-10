@@ -4,23 +4,11 @@
 #pragma once
 
 #include "common.h"
-#include "sampler.h"
 #include "max_iterator_size.h"
+#include "sampler.h"
 
-#ifdef __cplusplus
-struct IntervalIteratorContext : public ManagedObject
-{
-};
-struct HitIteratorContext : public ManagedObject
-{
-};
-#else
-typedef ManagedObject IntervalIteratorContext;
-typedef ManagedObject HitIteratorContext;
-#endif
-
-typedef IntervalIteratorContext *VKLIntervalIteratorContext;
-typedef HitIteratorContext *VKLHitIteratorContext;
+typedef APIObject VKLIntervalIteratorContext;
+typedef APIObject VKLHitIteratorContext;
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,16 +48,16 @@ typedef struct IntervalIterator16 *VKLIntervalIterator16;
  * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize(VKLIntervalIteratorContext context);
+size_t vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize4(VKLIntervalIteratorContext context);
+size_t vklGetIntervalIteratorSize4(const VKLIntervalIteratorContext *context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize8(VKLIntervalIteratorContext context);
+size_t vklGetIntervalIteratorSize8(const VKLIntervalIteratorContext *context);
 
 OPENVKL_INTERFACE
-size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
+size_t vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *context);
 
 /*
  * Initialize an interval iterator for the given volume.
@@ -91,17 +79,18 @@ size_t vklGetIntervalIteratorSize16(VKLIntervalIteratorContext context);
  * buffer. It however may be distinct from buffer.
  */
 OPENVKL_INTERFACE
-VKLIntervalIterator vklInitIntervalIterator(VKLIntervalIteratorContext context,
-                                            const vkl_vec3f *origin,
-                                            const vkl_vec3f *direction,
-                                            const vkl_range1f *tRange,
-                                            float time,
-                                            void *buffer);
+VKLIntervalIterator vklInitIntervalIterator(
+    const VKLIntervalIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer);
 
 OPENVKL_INTERFACE
 VKLIntervalIterator4 vklInitIntervalIterator4(
     const int *valid,
-    VKLIntervalIteratorContext context,
+    const VKLIntervalIteratorContext *context,
     const vkl_vvec3f4 *origin,
     const vkl_vvec3f4 *direction,
     const vkl_vrange1f4 *tRange,
@@ -111,7 +100,7 @@ VKLIntervalIterator4 vklInitIntervalIterator4(
 OPENVKL_INTERFACE
 VKLIntervalIterator8 vklInitIntervalIterator8(
     const int *valid,
-    VKLIntervalIteratorContext context,
+    const VKLIntervalIteratorContext *context,
     const vkl_vvec3f8 *origin,
     const vkl_vvec3f8 *direction,
     const vkl_vrange1f8 *tRange,
@@ -121,7 +110,7 @@ VKLIntervalIterator8 vklInitIntervalIterator8(
 OPENVKL_INTERFACE
 VKLIntervalIterator16 vklInitIntervalIterator16(
     const int *valid,
-    VKLIntervalIteratorContext context,
+    const VKLIntervalIteratorContext *context,
     const vkl_vvec3f16 *origin,
     const vkl_vvec3f16 *direction,
     const vkl_vrange1f16 *tRange,
@@ -206,16 +195,16 @@ typedef struct HitIterator16 *VKLHitIterator16;
  * given volume.
  */
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize(VKLHitIteratorContext context);
+size_t vklGetHitIteratorSize(const VKLHitIteratorContext *context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize4(VKLHitIteratorContext context);
+size_t vklGetHitIteratorSize4(const VKLHitIteratorContext *context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize8(VKLHitIteratorContext context);
+size_t vklGetHitIteratorSize8(const VKLHitIteratorContext *context);
 
 OPENVKL_INTERFACE
-size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
+size_t vklGetHitIteratorSize16(const VKLHitIteratorContext *context);
 
 /*
  * Initialize a hit iterator for the given volume.
@@ -238,7 +227,7 @@ size_t vklGetHitIteratorSize16(VKLHitIteratorContext context);
  */
 
 OPENVKL_INTERFACE
-VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
+VKLHitIterator vklInitHitIterator(const VKLHitIteratorContext *context,
                                   const vkl_vec3f *origin,
                                   const vkl_vec3f *direction,
                                   const vkl_range1f *tRange,
@@ -247,7 +236,7 @@ VKLHitIterator vklInitHitIterator(VKLHitIteratorContext context,
 
 OPENVKL_INTERFACE
 VKLHitIterator4 vklInitHitIterator4(const int *valid,
-                                    VKLHitIteratorContext context,
+                                    const VKLHitIteratorContext *context,
                                     const vkl_vvec3f4 *origin,
                                     const vkl_vvec3f4 *direction,
                                     const vkl_vrange1f4 *tRange,
@@ -256,7 +245,7 @@ VKLHitIterator4 vklInitHitIterator4(const int *valid,
 
 OPENVKL_INTERFACE
 VKLHitIterator8 vklInitHitIterator8(const int *valid,
-                                    VKLHitIteratorContext context,
+                                    const VKLHitIteratorContext *context,
                                     const vkl_vvec3f8 *origin,
                                     const vkl_vvec3f8 *direction,
                                     const vkl_vrange1f8 *tRange,
@@ -265,7 +254,7 @@ VKLHitIterator8 vklInitHitIterator8(const int *valid,
 
 OPENVKL_INTERFACE
 VKLHitIterator16 vklInitHitIterator16(const int *valid,
-                                      VKLHitIteratorContext context,
+                                      const VKLHitIteratorContext *context,
                                       const vkl_vvec3f16 *origin,
                                       const vkl_vvec3f16 *direction,
                                       const vkl_vrange1f16 *tRange,

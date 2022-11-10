@@ -129,7 +129,7 @@ namespace openvkl {
     VKLSampler GPUDevice<W>::newSampler(VKLVolume volume)
     {
       auto &volumeObject =
-          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume);
+          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume.host);
       openvkl::cpu_device::Sampler<W> *sampler = volumeObject.newSampler();
       VKLSampler s;
       s.host   = static_cast<void *>(sampler);
@@ -202,15 +202,19 @@ namespace openvkl {
       std::stringstream ss;
       ss << type << "_" << W;
 
-      return (VKLVolume)openvkl::cpu_device::Volume<W>::createInstance(
-          this, ss.str());
+      openvkl::cpu_device::Volume<W> *volume =
+          openvkl::cpu_device::Volume<W>::createInstance(this, ss.str());
+      VKLVolume v;
+      v.host   = static_cast<void *>(volume);
+      v.device = static_cast<void *>(volume->getSh());
+      return v;
     }
 
     template <int W>
     box3f GPUDevice<W>::getBoundingBox(VKLVolume volume)
     {
       auto &volumeObject =
-          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume);
+          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume.host);
       return volumeObject.getBoundingBox();
     }
 
@@ -218,7 +222,7 @@ namespace openvkl {
     unsigned int GPUDevice<W>::getNumAttributes(VKLVolume volume)
     {
       auto &volumeObject =
-          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume);
+          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume.host);
       return volumeObject.getNumAttributes();
     }
 
@@ -227,7 +231,7 @@ namespace openvkl {
                                         unsigned int attributeIndex)
     {
       auto &volumeObject =
-          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume);
+          referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume.host);
       return volumeObject.getValueRange(attributeIndex);
     }
 

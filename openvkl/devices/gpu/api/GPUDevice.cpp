@@ -20,7 +20,7 @@ namespace openvkl {
     template <int W>
     GPUDevice<W>::~GPUDevice()
     {
-      if (g_ispcrtContext && ispcrtOwned) {
+      if (g_ispcrtContext) {
         delete g_ispcrtContext;
         g_ispcrtContext = nullptr;
       }
@@ -43,24 +43,24 @@ namespace openvkl {
     {
       Device::commit();
 
-      const void *ispcContextAddr = getParam<const void*>("ispcContext", nullptr);
-      if (ispcContextAddr) {
-        if (g_ispcrtContext) {
-          if (ispcrtOwned) {
-            delete g_ispcrtContext;
-          }
-          postLogMessage(this, VKL_LOG_WARNING)
-                << "Changing a GPUDevice's ispcrtContext will lead to problems."
-                << "Do not commit a GPUDevice more than once.";
-        }
-        ispcrtOwned = false;
-        g_ispcrtContext = (ispcrt::Context*)ispcContextAddr;
-      } else {
-        if (!g_ispcrtContext) {
-          g_ispcrtContext = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
-          ispcrtOwned = true;
-        }
+      sycl::context *syclContext =
+          (sycl::context *)getParam<const void *>("syclContext", nullptr);
+
+      if (syclContext == nullptr) {
+        throw std::runtime_error(
+            "GPU device type can't be used without 'syclContext' param");
       }
+
+      // nativeContext is a pointer - it's owned by syclContext so no need to
+      // care about life cycle for this variable here.
+      ze_context_handle_t nativeContext =
+          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*syclContext);
+
+      if (g_ispcrtContext) {
+        delete g_ispcrtContext;
+      }
+      g_ispcrtContext =
+          new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
     }
 
     template <int W>

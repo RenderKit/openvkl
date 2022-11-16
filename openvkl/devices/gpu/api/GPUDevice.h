@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include <sycl/sycl.hpp>
 #include "../../cpu/common/align.h"
 #include "../../cpu/iterator/Iterator.h"
 #include "../../cpu/sampler/Sampler.h"
@@ -289,9 +290,6 @@ namespace openvkl {
           unsigned int attributeIndex,
           const float *times);
 
-      //true if VKL established and thus needs to clean up ispcrt.
-      //false if the application owns and is responsible for it.
-      bool ispcrtOwned = true;
     };
 
   }  // namespace gpu_device

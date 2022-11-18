@@ -62,7 +62,7 @@ namespace openvkl {
     };
 
     template <int W>
-    AMRVolume<W>::AMRVolume()
+    AMRVolume<W>::AMRVolume(Device *device) : AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>(device)
     {
       CALL_ISPC(AMRVolume_Constructor, this->getSh());
       this->SharedStructInitialized = true;
@@ -196,7 +196,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *AMRVolume<W>::newSampler()
     {
-      return new AMRSampler<W>(*this);
+      return new AMRSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>

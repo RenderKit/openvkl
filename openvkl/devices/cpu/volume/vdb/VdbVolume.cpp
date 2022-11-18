@@ -433,7 +433,7 @@ namespace openvkl {
       leafTemporalFormat = this->template getParamDataT<uint32_t>(
           "node.temporalFormat", nullptr);
       if (!leafTemporalFormat) {
-        leafTemporalFormat = new DataT<uint32_t>(
+        leafTemporalFormat = new DataT<uint32_t>(this->getDevice(),
             numLeaves, static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
         leafTemporalFormat->refDec();
       }
@@ -1051,7 +1051,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *VdbVolume<W>::newSampler()
     {
-      return new VdbSampler<W>(*this);
+      return new VdbSampler<W>(this->getDevice(), *this);
     }
 
     VKL_REGISTER_VOLUME(VdbVolume<VKL_TARGET_WIDTH>,

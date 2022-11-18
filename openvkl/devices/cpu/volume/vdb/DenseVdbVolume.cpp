@@ -65,7 +65,7 @@ namespace openvkl {
         runtimeError("Vdb volumes must have at least one leaf node.");
       }
 
-      this->leafLevel = new DataT<uint32_t>(
+      this->leafLevel = new DataT<uint32_t>(this->getDevice(),
           this->numLeaves, static_cast<uint32_t>(VKL_VDB_NUM_LEVELS - 1));
       this->leafLevel->refDec();
 
@@ -82,7 +82,8 @@ namespace openvkl {
       assert(leafOrigins.size() == this->numLeaves);
 
       // and leafOrigin data array
-      auto leafOriginTemp = new Data(leafOrigins.size(),
+      auto leafOriginTemp = new Data(this->getDevice(),
+                                     leafOrigins.size(),
                                      VKL_VEC3I,
                                      leafOrigins.data(),
                                      VKL_DATA_DEFAULT,
@@ -94,11 +95,11 @@ namespace openvkl {
       // the VDB dense path for traversal / sampling, but are encoded in the
       // leaf voxel data for the acceleration structure, which is still used in
       // iteration and other places.
-      this->leafFormat = new DataT<uint32_t>(
+      this->leafFormat = new DataT<uint32_t>(this->getDevice(),
           this->numLeaves, static_cast<uint32_t>(VKL_FORMAT_DENSE_ZYX));
       this->leafFormat->refDec();
 
-      this->leafTemporalFormat = new DataT<uint32_t>(
+      this->leafTemporalFormat = new DataT<uint32_t>(this->getDevice(),
           this->numLeaves, static_cast<uint32_t>(temporalFormat));
       this->leafTemporalFormat->refDec();
     }

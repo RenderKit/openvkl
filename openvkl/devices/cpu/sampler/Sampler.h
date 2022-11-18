@@ -10,7 +10,7 @@
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
-#include "../common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "SamplerShared.h"
 
 using namespace rkcommon;
@@ -70,7 +70,7 @@ namespace openvkl {
     template <int W>
     struct Sampler : public AddStructShared<ManagedObject, ispc::SamplerShared>
     {
-      Sampler() {}  // not = default, due to ICC 19 compiler bug
+      Sampler(Device *device) : AddStructShared<ManagedObject, ispc::SamplerShared>(device) {}  // not = default, due to ICC 19 compiler bug
       Sampler(Sampler &&) = delete;
       Sampler &operator=(Sampler &&) = delete;
       Sampler(const Sampler &)       = delete;
@@ -253,8 +253,8 @@ namespace openvkl {
     struct SamplerBase
         : public AddStructShared<Sampler<W>, ispc::SamplerBaseShared>
     {
-      explicit SamplerBase(VolumeT<W> &volume)
-          : AddStructShared<Sampler<W>, ispc::SamplerBaseShared>(),
+      explicit SamplerBase(Device *device, VolumeT<W> &volume)
+          : AddStructShared<Sampler<W>, ispc::SamplerBaseShared>(device),
             volume(&volume)
       {
       }

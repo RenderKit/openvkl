@@ -11,7 +11,7 @@
 #include "ParticleVolume.h"
 #include "ParticleVolume_ispc.h"
 #include "Sampler_ispc.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -27,7 +27,7 @@ namespace openvkl {
         : public AddStructShared<ParticleSamplerBase<W>,
                                  ispc::UnstructuredSamplerShared>
     {
-      ParticleSampler(ParticleVolume<W> &volume);
+      ParticleSampler(Device *device, ParticleVolume<W> &volume);
       ~ParticleSampler();
 
       void computeSampleV(const vintn<W> &valid,
@@ -61,9 +61,9 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline ParticleSampler<W>::ParticleSampler(ParticleVolume<W> &volume)
+    inline ParticleSampler<W>::ParticleSampler(Device *device, ParticleVolume<W> &volume)
         : AddStructShared<ParticleSamplerBase<W>,
-                          ispc::UnstructuredSamplerShared>(volume)
+                          ispc::UnstructuredSamplerShared>(device, volume)
     {
       CALL_ISPC(VKLParticleSampler_Constructor, volume.getSh(), this->getSh());
     }

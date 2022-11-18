@@ -5,19 +5,19 @@
 
 #include "ispcrt.hpp"
 #include <string.h>
+#include "../api/Device.h"
 
 namespace openvkl {
 
-extern OPENVKL_CORE_INTERFACE ispcrt::Context *g_ispcrtContext;
-
 // C version ////////////////////////////////////////////
 
-inline ISPCRTMemoryView BufferSharedCreate(size_t size)
+inline ISPCRTMemoryView BufferSharedCreate(Device *device, size_t size)
 {
+  ispcrt::Context *context = (ispcrt::Context*)device->getContext();
   ISPCRTNewMemoryViewFlags flags;
   flags.allocType = ISPCRT_ALLOC_TYPE_SHARED;
   return ispcrtNewMemoryViewForContext(
-      g_ispcrtContext->handle(), nullptr, size, &flags);
+      context->handle(), nullptr, size, &flags);
 }
 
 inline void BufferSharedDelete(ISPCRTMemoryView view)
@@ -31,36 +31,36 @@ template <typename T>
 struct BufferShared : public ispcrt::Array<T, ispcrt::AllocType::Shared>
 {
   using ispcrt::Array<T, ispcrt::AllocType::Shared>::sharedPtr;
-  BufferShared();
-  BufferShared(size_t size);
-  BufferShared(const std::vector<T> &v);
-  BufferShared(const T *data, size_t size);
+  BufferShared(Device *device);
+  BufferShared(Device *, size_t size);
+  BufferShared(Device *, const std::vector<T> &v);
+  BufferShared(Device *, const T *data, size_t size);
 };
 
 template <typename T>
-BufferShared<T>::BufferShared()
+BufferShared<T>::BufferShared(Device *device)
     : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-        *g_ispcrtContext)
+        *(ispcrt::Context*)device->getContext())
 {}
 
 template <typename T>
-BufferShared<T>::BufferShared(size_t size)
+BufferShared<T>::BufferShared(Device *device, size_t size)
     : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-        *g_ispcrtContext, size)
+        *(ispcrt::Context*)device->getContext(), size)
 {}
 
 template <typename T>
-BufferShared<T>::BufferShared(const std::vector<T> &v)
+BufferShared<T>::BufferShared(Device *device, const std::vector<T> &v)
     : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-        *g_ispcrtContext, v.size())
+        *(ispcrt::Context*)device->getContext(), v.size())
 {
   memcpy(sharedPtr(), v.data(), sizeof(T) * v.size());
 }
 
 template <typename T>
-BufferShared<T>::BufferShared(const T *data, size_t size)
+BufferShared<T>::BufferShared(Device *device, const T *data, size_t size)
     : ispcrt::Array<T, ispcrt::AllocType::Shared>(
-        *g_ispcrtContext, size)
+        *(ispcrt::Context*)device->getContext(), size)
 {
   memcpy(sharedPtr(), data, sizeof(T) * size);
 }

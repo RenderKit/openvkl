@@ -27,15 +27,22 @@ using namespace rkcommon::math;
 namespace openvkl {
   namespace api {
 
+    typedef struct {
+      void *allocatedBuffer;
+      void *privateManagement;
+    } memstate;
+
     struct OPENVKL_CORE_INTERFACE Device
         : public rkcommon::memory::RefCountedObject,
           public rkcommon::utility::ParameterizedObject
     {
       Device();
-      virtual ~Device() override = default;
+      Device(const Device &)            = delete;
+      Device &operator=(const Device &) = delete;
+      virtual ~Device() override        = default;
 
       static Device *createDevice(const std::string &deviceName);
-      static void registerType(const std::string &type, FactoryFcn<Device> f);
+      static void registerDevice(const std::string &type, FactoryDeviceFcn<Device> f);
 
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;
@@ -260,12 +267,20 @@ namespace openvkl {
       virtual range1f getValueRange(VKLVolume volume,
                                     unsigned int attributeIndex) = 0;
 
+
+      /////////////////////////////////////////////////////////////////////////
+      // Hardware facilities //////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      virtual memstate *allocateBytes(size_t numBytes) const = 0;
+      virtual void freeMemState(memstate *) const = 0;
+      virtual void *getContext() const = 0;
+
      private:
       bool committed = false;
     };
 
 #define VKL_REGISTER_DEVICE(InternalClass, external_name) \
-  VKL_REGISTER_OBJECT(                                    \
+  VKL_REGISTER_DEVICEOBJECT(                                    \
       ::openvkl::api::Device, device, InternalClass, external_name)
 
   }  // namespace api

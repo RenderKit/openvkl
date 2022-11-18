@@ -13,7 +13,7 @@
 #include "Volume.h"
 #include "openvkl/VKLFilter.h"
 #include "rkcommon/tasking/parallel_for.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "StructuredVolumeShared.h"
 #include "GridAccelerator.h"
 
@@ -46,6 +46,7 @@ namespace openvkl {
     struct StructuredVolume
         : public AddStructShared<Volume<W>, ispc::SharedStructuredVolume>
     {
+      StructuredVolume(Device *device) : AddStructShared<Volume<W>, ispc::SharedStructuredVolume>(device) {};
       ~StructuredVolume();
 
       virtual void commit() override;
@@ -128,7 +129,7 @@ namespace openvkl {
       }
       size_t nA = attributesData.size();
       this->getSh()->numAttributes = nA;
-      deviceAttributesData = make_buffer_shared_unique<ispc::Data1D>(nA);
+      deviceAttributesData = make_buffer_shared_unique<ispc::Data1D>(this->getDevice(), nA);
       this->getSh()->attributesData = deviceAttributesData->sharedPtr();
       for (size_t i = 0; i < nA; i++) {
         this->getSh()->attributesData[i] = *(ispc(attributesData[i]));
@@ -224,7 +225,7 @@ namespace openvkl {
     {
       if (m_accelerator)
         BufferSharedDelete(m_accelerator);
-      m_accelerator = BufferSharedCreate(sizeof(ispc::GridAccelerator));
+      m_accelerator = BufferSharedCreate(this->getDevice(), sizeof(ispc::GridAccelerator));
       auto ga = static_cast<ispc::GridAccelerator *>(ispcrtHostPtr(m_accelerator));
 
       // cells per dimension after padding out the volume dimensions to the nearest
@@ -243,7 +244,7 @@ namespace openvkl {
                       ga->bricksPerDimension.y *
                       ga->bricksPerDimension.z * BRICK_CELL_COUNT;
 
-      cellValueRanges = make_buffer_shared_unique<ispc::box1f>(ga->cellCount * this->getSh()->numAttributes);
+      cellValueRanges = make_buffer_shared_unique<ispc::box1f>(this->getDevice(), ga->cellCount * this->getSh()->numAttributes);
       ga->cellValueRanges =
           (ga->cellCount > 0)
               ? cellValueRanges->sharedPtr()
@@ -267,7 +268,7 @@ namespace openvkl {
         CALL_ISPC(GridAccelerator_build, accelerator, taskIndex);
       });
 
-      valueRanges = make_buffer_shared_unique<range1f>(getNumAttributes());
+      valueRanges = make_buffer_shared_unique<range1f>(this->getDevice(), getNumAttributes());
 
       for (unsigned int a = 0; a < getNumAttributes(); a++) {
         CALL_ISPC(GridAccelerator_computeValueRange,

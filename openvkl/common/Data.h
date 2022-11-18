@@ -8,7 +8,6 @@
 #include "Traits.h"
 #include "openvkl/openvkl.h"
 #include "DataShared.h"
-#include "ispcrt.hpp"
 
 namespace openvkl {
 
@@ -17,13 +16,14 @@ namespace openvkl {
 
   struct OPENVKL_CORE_INTERFACE Data : public ManagedObject
   {
-    Data(size_t numItems,
+    Data(Device * d,
+         size_t numItems,
          VKLDataType dataType,
          const void *source,
          VKLDataCreationFlags dataCreationFlags,
          size_t byteStride);
 
-    Data(size_t numItems, VKLDataType dataType);
+    Data(Device *d, size_t numItems, VKLDataType dataType);
 
     virtual ~Data() override;
 
@@ -51,7 +51,7 @@ namespace openvkl {
     static ispc::Data1D emptyData1D;  // dummy, zero-initialized
 
    protected:
-    ISPCRTMemoryView view;
+    api::memstate *view;
     char *addr;
   };
 
@@ -134,10 +134,10 @@ namespace openvkl {
     using value_type = T;
     using interator  = Iter1D<T>;
 
-    explicit DataT(size_t numItems) : Data(numItems, VKLTypeFor<T>::value) {}
+    explicit DataT(Device *d, size_t numItems) : Data(d, numItems, VKLTypeFor<T>::value) {}
 
-    DataT(size_t numItems, const T &value)
-        : Data(numItems, VKLTypeFor<T>::value)
+    DataT(Device *d, size_t numItems, const T &value)
+        : Data(d, numItems, VKLTypeFor<T>::value)
     {
       std::fill(reinterpret_cast<T *>(addr),
                 reinterpret_cast<T *>(addr + byteStride * numItems),
@@ -227,7 +227,7 @@ namespace openvkl {
     } catch (...) {
       // Fallback: expand scalar parameters into arrays!
       valIfNotFound = getParam<T>(name, valIfNotFound);
-      Ref<const DataT<T>> d = new DataT<T>(expectedSize, valIfNotFound);
+      Ref<const DataT<T>> d = new DataT<T>(getDevice(), expectedSize, valIfNotFound);
       d->refDec();
       return d;
     }

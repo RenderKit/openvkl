@@ -11,6 +11,7 @@ namespace openvkl {
     template <int W>
     struct DenseVdbVolume : public VdbVolume<W>
     {
+      DenseVdbVolume<W>(Device *device) : VdbVolume<W>(device) {};
       std::string toString() const override;
 
       void commit() override;

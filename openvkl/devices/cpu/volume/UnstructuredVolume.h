@@ -10,7 +10,7 @@
 #include "UnstructuredVolume_ispc.h"
 #include "UnstructuredVolumeBase.h"
 #include "UnstructuredVolumeShared.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -20,6 +20,7 @@ namespace openvkl {
         : public AddStructShared<UnstructuredVolumeBase<W>,
                                  ispc::VKLUnstructuredVolume>
     {
+      UnstructuredVolume(Device *device) : AddStructShared<UnstructuredVolumeBase<W>, ispc::VKLUnstructuredVolume>(device) {};
       ~UnstructuredVolume();
 
       std::string toString() const override;

@@ -10,8 +10,8 @@ namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    VdbSampler<W>::VdbSampler(VdbVolume<W> &volume)
-        : AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>(volume)
+    VdbSampler<W>::VdbSampler(Device *device, VdbVolume<W> &volume)
+        : AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>(device, volume)
     {
       CALL_ISPC(VdbSampler_create,
                 volume.getSh(),

@@ -9,7 +9,7 @@
 #include "rkcommon/memory/RefCount.h"
 #include "AMRVolumeShared.h"
 #include "../UnstructuredVolumeBase.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 using namespace rkcommon::memory;
 
@@ -20,7 +20,7 @@ namespace openvkl {
     struct AMRVolume
         : public AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>
     {
-      AMRVolume();
+      AMRVolume(Device *);
       ~AMRVolume() override;
 
       std::string toString() const override;

@@ -162,7 +162,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *ParticleVolume<W>::newSampler()
     {
-      return new ParticleSampler<W>(*this);
+      return new ParticleSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>

@@ -35,9 +35,9 @@ namespace openvkl {
   */
 
   template <typename T>
-  inline ISPCRTMemoryView StructSharedCreate()
+  inline ISPCRTMemoryView StructSharedCreate(Device *device)
   {
-    ISPCRTMemoryView view = BufferSharedCreate(sizeof(T));
+    ISPCRTMemoryView view = BufferSharedCreate(device, sizeof(T));
     new (ispcrtSharedPtr(view)) T;
     return view;
   }
@@ -59,7 +59,7 @@ namespace openvkl {
   template <typename T, typename>
   struct StructSharedGet
   {
-    StructSharedGet(ISPCRTMemoryView *);
+    StructSharedGet(Device *, ISPCRTMemoryView *);
     T *getSh() const;
   };
 
@@ -113,11 +113,12 @@ namespace openvkl {
                      typename get_super_or<Struct>::type>::value,
         "StructShared_t needs to have 'super' member of type "
         "Base::StructShared_t");
+
     template <typename... Args>
-    AddStructShared(Args &&...args)
+    AddStructShared(Device *device, Args &&...args)
         : StructSharedGet<Struct, AddStructShared<Base, Struct>>(
-              &structSharedView),
-          Base(std::forward<Args>(args)...)
+              device, &structSharedView),
+          Base(device, std::forward<Args>(args)...)
     {
     }
   };
@@ -130,10 +131,12 @@ namespace openvkl {
   }
 
   template <typename T, typename B>
-  StructSharedGet<T, B>::StructSharedGet(ISPCRTMemoryView *view)
+  StructSharedGet<T, B>::StructSharedGet(
+    Device *device, ISPCRTMemoryView *view)
   {
-    if (!*view)
-      *view = StructSharedCreate<T>();
+    if (!*view) {
+      *view = StructSharedCreate<T>(device);
+    }
   }
 
   template <typename T, typename B>

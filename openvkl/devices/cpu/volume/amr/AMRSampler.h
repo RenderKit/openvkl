@@ -13,7 +13,7 @@
 #include "method_current_ispc.h"
 #include "method_finest_ispc.h"
 #include "method_octant_ispc.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -28,7 +28,7 @@ namespace openvkl {
     struct AMRSampler : public AddStructShared<AMRSamplerBase<W>,
                                                ispc::UnstructuredSamplerShared>
     {
-      AMRSampler(AMRVolume<W> &volume);
+      AMRSampler(Device *, AMRVolume<W> &volume);
       ~AMRSampler() override;
 
       void commit() override;
@@ -64,9 +64,9 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline AMRSampler<W>::AMRSampler(AMRVolume<W> &volume)
+    inline AMRSampler<W>::AMRSampler(Device *device, AMRVolume<W> &volume)
         : AddStructShared<AMRSamplerBase<W>, ispc::UnstructuredSamplerShared>(
-              volume)
+              device, volume)
     {
       CALL_ISPC(AMRSampler_create, volume.getSh(), this->getSh());
     }

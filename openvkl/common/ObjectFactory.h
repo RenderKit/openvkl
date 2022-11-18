@@ -7,13 +7,16 @@
 #include "VKLCommon.h"
 #include "logging.h"
 #include "openvkl/VKLDataType.h"
+#include "../api/Device.h"
 
 namespace openvkl {
 
   // Function pointer type for creating a concrete instance of a subtype of
   // this class.
   template <typename T>
-  using FactoryFcn = T *(*)();
+  using FactoryFcn = T *(*)(Device*);
+  template <typename T>
+  using FactoryDeviceFcn = T *(*)();
 
   template <typename T, VKLDataType VKL_TYPE = VKL_UNKNOWN>
   struct ObjectFactory
@@ -21,9 +24,11 @@ namespace openvkl {
     T *createInstance(Device *device, const std::string &type);
 
     void registerType(const std::string &type, FactoryFcn<T> f);
+    void registerDevice(const std::string &type, FactoryDeviceFcn<T> f);
 
    private:
     std::map<std::string, FactoryFcn<T>> registry;
+    std::map<std::string, FactoryDeviceFcn<T>> deviceRegistry;
   };
 
   template <typename T, VKLDataType VKL_TYPE>
@@ -35,7 +40,10 @@ namespace openvkl {
     T *object = nullptr;
     if (registry.count(type) != 0) {
       // Create a concrete instance of the requested subtype.
-      object = (*registry[type])();
+      object = (*registry[type])(device);
+    } else if (deviceRegistry.count(type) != 0) {
+      // Create a concrete instance of the requested subtype.
+      object = (*deviceRegistry[type])();
     }
 
     if (object == nullptr) {
@@ -53,6 +61,13 @@ namespace openvkl {
                                                 FactoryFcn<T> f)
   {
     registry[type] = f;
+  }
+
+  template <typename T, VKLDataType VKL_TYPE>
+  void ObjectFactory<T, VKL_TYPE>::registerDevice(const std::string &type,
+                                                FactoryDeviceFcn<T> f)
+  {
+    deviceRegistry[type] = f;
   }
 
 }  // namespace openvkl

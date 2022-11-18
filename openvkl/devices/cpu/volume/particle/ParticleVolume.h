@@ -10,7 +10,7 @@
 #include "../common/math.h"
 #include "ParticleVolumeShared.h"
 #include "ParticleVolume_ispc.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 #define MAX_PRIMS_PER_LEAF VKL_TARGET_WIDTH
 
@@ -71,6 +71,7 @@ namespace openvkl {
     struct ParticleVolume : public AddStructShared<UnstructuredVolumeBase<W>,
                                                    ispc::VKLParticleVolume>
     {
+      ParticleVolume(Device *device) : AddStructShared<UnstructuredVolumeBase<W>, ispc::VKLParticleVolume>(device) {};
       ~ParticleVolume();
 
       void commit() override;

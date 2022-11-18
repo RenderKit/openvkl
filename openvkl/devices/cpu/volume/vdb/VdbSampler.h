@@ -10,7 +10,7 @@
 #include "VdbVolume.h"
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "VdbSamplerShared.h"
 
 namespace openvkl {
@@ -26,7 +26,7 @@ namespace openvkl {
     struct VdbSampler
         : public AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>
     {
-      explicit VdbSampler(VdbVolume<W> &volume);
+      explicit VdbSampler(Device *, VdbVolume<W> &volume);
       ~VdbSampler() override;
 
       void commit() override;

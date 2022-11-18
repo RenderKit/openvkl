@@ -162,7 +162,7 @@ namespace openvkl {
           }
         }
 
-        Data *d  = new Data(nCells,
+        Data *d  = new Data(this->getDevice(), nCells,
                            VKL_UCHAR,
                            generatedCellType.data(),
                            VKL_DATA_SHARED_BUFFER,
@@ -232,7 +232,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *UnstructuredVolume<W>::newSampler()
     {
-      return new UnstructuredSampler<W>(*this);
+      return new UnstructuredSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>

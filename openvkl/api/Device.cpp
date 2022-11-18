@@ -119,9 +119,9 @@ namespace openvkl {
       return g_devicesFactory.createInstance(nullptr, deviceName);
     }
 
-    void Device::registerType(const std::string &type, FactoryFcn<Device> f)
+    void Device::registerDevice(const std::string &type, FactoryDeviceFcn<Device> f)
     {
-      g_devicesFactory.registerType(type, f);
+      g_devicesFactory.registerDevice(type, f);
     }
 
     void Device::commit()

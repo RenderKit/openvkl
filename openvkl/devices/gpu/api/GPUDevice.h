@@ -280,6 +280,13 @@ namespace openvkl {
       range1f getValueRange(VKLVolume volume,
                             unsigned int attributeIndex) override;
 
+      /////////////////////////////////////////////////////////////////////////
+      // Hardware facilities //////////////////////////////////////////////////
+      /////////////////////////////////////////////////////////////////////////
+      virtual void *getContext() const override { return context; };
+      openvkl::api::memstate *allocateBytes(size_t numByte) const override;
+      void freeMemState(openvkl::api::memstate *) const override;
+
      private:
       template <int OW>
       typename std::enable_if<(OW < W), void>::type computeGradientAnyWidth(
@@ -290,6 +297,7 @@ namespace openvkl {
           unsigned int attributeIndex,
           const float *times);
 
+      void *context{nullptr};
     };
 
   }  // namespace gpu_device

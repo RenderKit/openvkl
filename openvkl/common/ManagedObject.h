@@ -26,6 +26,7 @@ namespace openvkl {
     using VKL_PTR = ManagedObject *;
 
     ManagedObject() = default;
+    ManagedObject(Device *device) : device(device) {};
 
     virtual ~ManagedObject() override;
 
@@ -83,6 +84,9 @@ namespace openvkl {
 
     // device this ManagedObject belongs to
     rkcommon::memory::IntrusivePtr<Device> device;
+
+    // convenience for the accessing the above controllably
+    Device * getDevice() const { return device.ptr; }
   };
 
   template <typename OPENVKL_CLASS, VKLDataType VKL_TYPE>

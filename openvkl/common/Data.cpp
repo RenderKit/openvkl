@@ -2,21 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "Data.h"
-#include "BufferShared.h"
+#include "../devices/common/BufferShared.h"
 #include "rkcommon/memory/malloc.h"
 
 namespace openvkl {
 
-  ispcrt::Context *g_ispcrtContext = nullptr;
-
   ispc::Data1D Data::emptyData1D;
 
-  Data::Data(size_t numItems,
+  Data::Data(Device *d,
+             size_t numItems,
              VKLDataType dataType,
              const void *source,
              VKLDataCreationFlags dataCreationFlags,
              size_t _byteStride)
-      : numItems(numItems),
+      : ManagedObject(d),
+        numItems(numItems),
         dataType(dataType),
         dataCreationFlags(dataCreationFlags),
         byteStride(_byteStride)
@@ -39,12 +39,12 @@ namespace openvkl {
       const size_t naturalByteStride = sizeOf(dataType);
       const size_t numBytes          = numItems * naturalByteStride;
 
-      view = BufferSharedCreate(numBytes + 16);
-      void *buffer = ispcrtSharedPtr(view);
-
-      if (buffer == nullptr) {
+      openvkl::api::memstate *m = this->device->allocateBytes(numBytes + 16);
+      if (m->allocatedBuffer == nullptr) {
         throw std::bad_alloc();
       }
+      view = m;
+      void *buffer = m->allocatedBuffer;
 
       if (byteStride == naturalByteStride) {
         memcpy(buffer, source, numBytes);
@@ -82,8 +82,9 @@ namespace openvkl {
     ispc.compact    = compact();
   }
 
-  Data::Data(size_t numItems, VKLDataType dataType)
-      : numItems(numItems),
+  Data::Data(Device *d, size_t numItems, VKLDataType dataType)
+      : ManagedObject(d),
+        numItems(numItems),
         dataType(dataType),
         dataCreationFlags(VKL_DATA_DEFAULT),
         byteStride(sizeOf(dataType))
@@ -99,14 +100,12 @@ namespace openvkl {
 
     const size_t numBytes = numItems * byteStride;
 
-    view = BufferSharedCreate(numBytes + 16);
-    void *buffer = (char *)ispcrtSharedPtr(view);
-
-    if (buffer == nullptr) {
+    openvkl::api::memstate *m = this->device->allocateBytes(numBytes + 16);
+    if (m->allocatedBuffer == nullptr) {
       throw std::bad_alloc();
     }
-
-    addr = (char *)ispcrtSharedPtr(view);
+    view = m;
+    addr = (char *)m->allocatedBuffer;
 
     managedObjectType = VKL_DATA;
 
@@ -129,7 +128,7 @@ namespace openvkl {
     }
 
     if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
-      BufferSharedDelete(view);
+      this->device->freeMemState(view);
     }
   }
 

@@ -4,8 +4,8 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
-#include "openvkl/common/BufferShared.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/BufferShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "IteratorContextShared.h"
 
 using namespace rkcommon::math;
@@ -24,7 +24,7 @@ namespace openvkl {
     struct IteratorContext
         : public AddStructShared<ManagedObject, ispc::IteratorContext>
     {
-      IteratorContext(const Sampler<W> &sampler);
+      IteratorContext(Device *device, const Sampler<W> &sampler);
 
       virtual ~IteratorContext();
 
@@ -41,8 +41,9 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline IteratorContext<W>::IteratorContext(const Sampler<W> &sampler)
-        : sampler(&sampler)
+    inline IteratorContext<W>::IteratorContext(Device *device, const Sampler<W> &sampler)
+        : AddStructShared<ManagedObject, ispc::IteratorContext>(device),
+          sampler(&sampler)
     {
     }
 
@@ -66,9 +67,9 @@ namespace openvkl {
         : public AddStructShared<IteratorContext<W>,
                                  ispc::IntervalIteratorContext>
     {
-      IntervalIteratorContext(const Sampler<W> &sampler)
+      IntervalIteratorContext(Device *device, const Sampler<W> &sampler)
           : AddStructShared<IteratorContext<W>, ispc::IntervalIteratorContext>(
-                sampler)
+                device, sampler)
       {
       }
       virtual ~IntervalIteratorContext();
@@ -90,9 +91,9 @@ namespace openvkl {
         : public AddStructShared<IntervalIteratorContext<W>,
                                  ispc::HitIteratorContext>
     {
-      HitIteratorContext(const Sampler<W> &sampler)
+      HitIteratorContext(Device *device, const Sampler<W> &sampler)
           : AddStructShared<IntervalIteratorContext<W>,
-                            ispc::HitIteratorContext>(sampler)
+                            ispc::HitIteratorContext>(device, sampler)
       {
       }
 

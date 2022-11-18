@@ -13,7 +13,7 @@
 #include "StructuredSphericalVolume.h"
 #include "StructuredVolume.h"
 #include "openvkl/VKLFilter.h"
-#include "../common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "StructuredSamplerShared.h"
 
 namespace openvkl {
@@ -31,7 +31,7 @@ namespace openvkl {
                                              HitIteratorFactory>,
                                  ispc::StructuredSamplerShared>
     {
-      StructuredSampler(StructuredVolume<W> &volume);
+      StructuredSampler(Device *device, StructuredVolume<W> &volume);
       ~StructuredSampler() override;
 
       void commit() override;
@@ -109,12 +109,12 @@ namespace openvkl {
               template <int>
               class HitIteratorFactory>
     inline StructuredSampler<W, IntervalIteratorFactory, HitIteratorFactory>::
-        StructuredSampler(StructuredVolume<W> &volume)
+        StructuredSampler(Device *device, StructuredVolume<W> &volume)
         : AddStructShared<SamplerBase<W,
                                       StructuredVolume,
                                       IntervalIteratorFactory,
                                       HitIteratorFactory>,
-                          ispc::StructuredSamplerShared>(volume),
+                          ispc::StructuredSamplerShared>(device, volume),
           filter(volume.getFilter()),
           gradientFilter(volume.getGradientFilter())
     {

@@ -476,6 +476,14 @@ namespace openvkl {
           vvec3fn<OW> &gradients,
           unsigned int attributeIndex,
           const float *times);
+
+    public:
+      virtual void *getContext() const override { return context; };
+      api::memstate *allocateBytes(size_t numBytes) const override;
+      void freeMemState(api::memstate *) const override;
+
+    private:
+      void *context{nullptr};
     };
 
     ////////////////////////////////////////////////////////////////////////////

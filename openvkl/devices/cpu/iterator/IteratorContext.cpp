@@ -221,7 +221,7 @@ namespace openvkl {
       }
 
       ssValueRanges.numRanges = valueRanges.size();
-      this->rangesView = make_buffer_shared_unique<range1f>(valueRanges);
+      this->rangesView = make_buffer_shared_unique<range1f>(this->getDevice(), valueRanges);
       ssValueRanges.ranges = (ispc::box1f*)this->rangesView->sharedPtr();
 
       CALL_ISPC(IntervalIteratorContext_Constructor,
@@ -303,10 +303,10 @@ namespace openvkl {
         CALL_ISPC(HitIteratorContext_Destructor, mySharedStruct);
       }
 
-      this->rangesView = make_buffer_shared_unique<range1f>(values.size());
+      this->rangesView = make_buffer_shared_unique<range1f>(this->getDevice(), values.size());
       ssValueRanges.ranges = (ispc::box1f*)this->rangesView->sharedPtr();
 
-      this->valuesView = make_buffer_shared_unique<float>(values);
+      this->valuesView = make_buffer_shared_unique<float>(this->getDevice(), values);
       mySharedStruct->values = this->valuesView->sharedPtr();
 
       CALL_ISPC(HitIteratorContext_Constructor,

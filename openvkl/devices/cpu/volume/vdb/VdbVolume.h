@@ -15,7 +15,7 @@
 #include "rkcommon/containers/aligned_allocator.h"
 #include "rkcommon/memory/RefCount.h"
 #include "VdbVolumeShared.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 
 using namespace rkcommon::memory;
 
@@ -90,7 +90,7 @@ namespace openvkl {
       VdbVolume(VdbVolume &&other)            = delete;
       VdbVolume &operator=(VdbVolume &&other) = delete;
 
-      VdbVolume();
+      VdbVolume(Device *device);
 
       ~VdbVolume() override;
 
@@ -212,7 +212,7 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    VdbVolume<W>::VdbVolume()
+    VdbVolume<W>::VdbVolume(Device *device) : AddStructShared<Volume<W>, ispc::VdbVolume>(device)
     {
       CALL_ISPC(VdbVolume_Constructor, this->getSh());
       this->SharedStructInitialized = true;

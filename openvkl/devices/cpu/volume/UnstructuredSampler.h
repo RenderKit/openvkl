@@ -10,7 +10,7 @@
 #include "Sampler_ispc.h"
 #include "UnstructuredVolume.h"
 #include "UnstructuredVolume_ispc.h"
-#include "openvkl/common/StructShared.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "UnstructuredSamplerShared.h"
 
 namespace openvkl {
@@ -27,7 +27,7 @@ namespace openvkl {
         : public AddStructShared<UnstructuredSamplerBase<W>,
                                  ispc::UnstructuredSamplerShared>
     {
-      UnstructuredSampler(UnstructuredVolume<W> &volume);
+      UnstructuredSampler(Device *, UnstructuredVolume<W> &volume);
       ~UnstructuredSampler() override;
 
       void computeSampleV(const vintn<W> &valid,
@@ -62,8 +62,8 @@ namespace openvkl {
 
     template <int W>
     inline UnstructuredSampler<W>::UnstructuredSampler(
-        UnstructuredVolume<W> &volume)
-        : AddStructShared<UnstructuredSamplerBase<W>, ispc::UnstructuredSamplerShared>(volume)
+        Device *device, UnstructuredVolume<W> &volume)
+        : AddStructShared<UnstructuredSamplerBase<W>, ispc::UnstructuredSamplerShared>(device, volume)
     {
       CALL_ISPC(
           VKLUnstructuredSampler_Constructor, volume.getSh(), this->getSh());

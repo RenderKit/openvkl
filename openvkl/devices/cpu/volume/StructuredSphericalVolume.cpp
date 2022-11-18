@@ -11,7 +11,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *StructuredSphericalVolume<W>::newSampler()
     {
-      return new StructuredSphericalSampler<W>(*this);
+      return new StructuredSphericalSampler<W>(this->getDevice(), *this);
     }
 
     template <int W>

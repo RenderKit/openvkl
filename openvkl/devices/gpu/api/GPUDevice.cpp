@@ -20,10 +20,24 @@ namespace openvkl {
     template <int W>
     GPUDevice<W>::~GPUDevice()
     {
-      if (g_ispcrtContext) {
-        delete g_ispcrtContext;
-        g_ispcrtContext = nullptr;
-      }
+      delete (ispcrt::Context*)context;
+    }
+
+    template <int W>
+    api::memstate * GPUDevice<W>::allocateBytes(size_t numBytes) const
+    {
+      api::memstate *container = new api::memstate;
+      container->privateManagement = (void*)BufferSharedCreate((Device*)this, numBytes + 16);
+      void *buffer = ispcrtSharedPtr((ISPCRTMemoryView)container->privateManagement);
+      container->allocatedBuffer = buffer;
+      return container;
+    }
+
+    template <int W>
+    void GPUDevice<W>::freeMemState(api::memstate *container) const
+    {
+       delete (int*)container->privateManagement;
+       delete container;
     }
 
     template <int W>
@@ -56,10 +70,10 @@ namespace openvkl {
       ze_context_handle_t nativeContext =
           sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*syclContext);
 
-      if (g_ispcrtContext) {
-        delete g_ispcrtContext;
+      if (context) {
+        delete (ispcrt::Context *)context;
       }
-      g_ispcrtContext =
+      context =
           new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
     }
 
@@ -103,7 +117,7 @@ namespace openvkl {
                                   size_t byteStride)
     {
       Data *data =
-          new Data(numItems, dataType, source, dataCreationFlags, byteStride);
+          new Data(this, numItems, dataType, source, dataCreationFlags, byteStride);
       return (VKLData)data;
     }
 
@@ -271,7 +285,7 @@ namespace openvkl {
 
 #define VKL_WRAP_VOLUME_REGISTRATION(internal_name)                          \
   extern "C" OPENVKL_DLLEXPORT openvkl::cpu_device::Volume<VKL_TARGET_WIDTH> \
-      *CONCAT1(openvkl_create_volume__, internal_name)();
+      *CONCAT1(openvkl_create_volume__, internal_name)(openvkl::api::Device *context);
 
 VKL_WRAP_DEVICE_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_gpu))
 
@@ -279,7 +293,7 @@ VKL_WRAP_VOLUME_REGISTRATION(
     VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy))
 
 #define VKL_REGISTER_DEVICE_FACTORY_FCN(internal_name, external_name) \
-  openvkl::Device::registerType(                                      \
+  openvkl::Device::registerDevice(                                    \
       TOSTRING(external_name),                                        \
       CONCAT1(openvkl_create_device__, internal_name))
 

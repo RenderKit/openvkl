@@ -321,7 +321,7 @@ namespace openvkl {
 
       ContextT<W> *newContext(const Sampler<W> &sampler) const override final
       {
-        return new ContextT<W>(sampler);
+        return new ContextT<W>(sampler.getDevice(), sampler);
       }
 
       IteratorBaseT<W> *constructV(const ContextBaseT<W> &context,

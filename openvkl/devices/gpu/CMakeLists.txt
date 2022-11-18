@@ -40,7 +40,6 @@ set(OPTIONAL_VOLUME_DEFINITIONS_ISPC ${OPTIONAL_VOLUME_DEFINITIONS})
 list(TRANSFORM OPTIONAL_VOLUME_DEFINITIONS_ISPC PREPEND "-D")
 
 # build only a single ISPC target (for width 4) for now
-set(TARGET_NAME "openvkl_module_gpu_device")
 set(TARGET_WIDTH 4)
 
 set(ISPC_TARGETS_OVERRIDE sse4 sse2) # multiple targets MUST be enabled due to ISPC name mangling issues
@@ -50,7 +49,7 @@ set(ISPC_DEFINITIONS
   ${OPTIONAL_VOLUME_DEFINITIONS_ISPC}
 )
 
-openvkl_add_library_ispc(${TARGET_NAME} SHARED
+openvkl_add_library_ispc(openvkl_module_gpu_device STATIC
   api/DeviceAPI.cpp
   api/GPUDevice.cpp
   ../cpu/iterator/DefaultIterator.cpp
@@ -66,7 +65,7 @@ openvkl_add_library_ispc(${TARGET_NAME} SHARED
 unset(ISPC_DEFINITIONS)
 unset(ISPC_TARGETS_OVERRIDE)
 
-target_compile_definitions(${TARGET_NAME} PUBLIC
+target_compile_definitions(openvkl_module_gpu_device PUBLIC
   "VKL_TARGET_WIDTH=${TARGET_WIDTH}"
   ${OPTIONAL_VOLUME_DEFINITIONS}
 )
@@ -77,16 +76,16 @@ separate_arguments(width_compile_options UNIX_COMMAND "${width_compile_options}"
 
 message(STATUS "using compile options for width ${TARGET_WIDTH}: ${width_compile_options}")
 
-target_compile_options(${TARGET_NAME} PRIVATE ${width_compile_options})
+target_compile_options(openvkl_module_gpu_device PRIVATE ${width_compile_options})
 
-target_include_directories(${TARGET_NAME}
+target_include_directories(openvkl_module_gpu_device
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
     $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>
     $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
 )
 
-target_link_libraries(${TARGET_NAME}
+target_link_libraries(openvkl_module_gpu_device
   PUBLIC
     openvkl
     $<BUILD_INTERFACE:rkcommon::rkcommon>

@@ -12,34 +12,6 @@ using namespace rkcommon::math;
 
 namespace openvkl {
 
-  VKLError loadLocalModule(const std::string &moduleName)
-  {
-    const std::string libName = "openvkl_module_" + moduleName;
-
-    rkcommon::loadLibrary(libName,
-                          reinterpret_cast<const void *>(&loadLocalModule));
-
-    std::string initSymName = "openvkl_init_module_" + moduleName;
-    void *initSym           = rkcommon::getSymbol(initSymName);
-    if (!initSym) {
-      throw std::runtime_error("#vkl:api: could not find module initializer " +
-                               initSymName);
-    }
-
-    void (*initMethod)() = (void (*)())initSym;
-
-    if (!initMethod)
-      return VKL_INVALID_ARGUMENT;
-
-    try {
-      initMethod();
-    } catch (...) {
-      return VKL_UNKNOWN_ERROR;
-    }
-
-    return VKL_NO_ERROR;
-  }
-
   std::string stringFor(VKLDataType type)
   {
     switch (type) {

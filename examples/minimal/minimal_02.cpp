@@ -5,13 +5,14 @@
 
 // We must include the openvkl header.
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 
 int main(int argc, char **argv)
 {
   // To initialize Open VKL, load the device module, which is essentially the
   // backend implementation. Our current release supports only "cpu_device",
   // which is highly optimized for vector CPU architectures.
-  vklLoadModule("cpu_device");
+  vklInit();
 
   // The device itself will be manage all resources. "cpu" is the default and
   // selects the native vector width for best performance.
@@ -23,8 +24,8 @@ int main(int argc, char **argv)
 
   Framebuffer fb(64, 32);
 
-  fb.generate([&](float fx, float fy) { 
-    return transferFunction(2*fx-1); 
+  fb.generate([&](float fx, float fy) {
+    return transferFunction(2*fx-1);
   });
   fb.drawToTerminal();
 

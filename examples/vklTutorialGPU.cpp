@@ -62,7 +62,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 
 int main()
 {
-  vklLoadModule("gpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("gpu_4");
   vklCommitDevice(device);

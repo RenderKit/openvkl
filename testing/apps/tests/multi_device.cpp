@@ -130,7 +130,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Multiple devices", "[multi_device]")
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   // create multiple devices and objects on those devices
   std::vector<std::shared_ptr<DeviceContext>> deviceContexts;

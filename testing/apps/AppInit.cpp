@@ -10,7 +10,7 @@ static VKLDevice device = nullptr;
 void initializeOpenVKL()
 {
   if (!device) {
-    vklLoadModule("cpu_device");
+    vklInit();
 
     device = vklNewDevice("cpu");
     vklCommitDevice(device);

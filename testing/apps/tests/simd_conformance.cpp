@@ -92,7 +92,7 @@ TEST_CASE("SIMD conformance", "[simd_conformance]")
   public_wide_types_conformance_test<8>();
   public_wide_types_conformance_test<16>();
 
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
@@ -223,7 +223,7 @@ void max_iterator_size_conformance_test(VKLDevice device)
 
 TEST_CASE("Max iterator size", "[simd_conformance]")
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);

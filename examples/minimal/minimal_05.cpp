@@ -9,7 +9,7 @@
 
 int main(int argc, char **argv)
 {
-  vklLoadModule("cpu_device");
+  vklInit();
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);
 

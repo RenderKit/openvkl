@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 #include <iostream>
 #include <vector>
 
@@ -13,7 +14,7 @@
 
 int main()
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);

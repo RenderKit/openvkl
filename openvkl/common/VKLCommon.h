@@ -55,9 +55,6 @@ namespace openvkl {
   using int8  = std::int8_t;
   using uint8 = std::uint8_t;
 
-  OPENVKL_CORE_INTERFACE VKLError
-  loadLocalModule(const std::string &moduleName);
-
   OPENVKL_CORE_INTERFACE std::string stringFor(VKLDataType type);
 
   OPENVKL_CORE_INTERFACE size_t sizeOf(VKLDataType type);

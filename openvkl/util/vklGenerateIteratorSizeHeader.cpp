@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 #include <algorithm>
 #include <cstdint>
 #include <iostream>
@@ -13,7 +14,7 @@ using std::size_t;
 template <int W>
 std::pair<size_t, size_t> getMaxIteratorSizeIspc()
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   std::ostringstream os;
   os << "cpu_" << W;

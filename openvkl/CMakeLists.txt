@@ -95,4 +95,4 @@ add_executable(vklGenerateIteratorSizeHeader
   util/vklGenerateIteratorSizeHeader.cpp
   ${VKL_RESOURCE})
 
-target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl)
+target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl openvkl_module_cpu_device)

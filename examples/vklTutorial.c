@@ -292,7 +292,7 @@ void demoStreamAPI(VKLVolume volume)
 
 int main()
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);

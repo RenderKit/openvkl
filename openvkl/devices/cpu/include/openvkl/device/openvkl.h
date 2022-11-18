@@ -19,6 +19,9 @@ typedef APIObject VKLSampler;
 extern "C" {
 #endif
 
+OPENVKL_INTERFACE
+void vklInit();
+
 // single attribute sampling
 
 OPENVKL_INTERFACE

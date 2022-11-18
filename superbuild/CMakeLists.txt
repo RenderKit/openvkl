@@ -113,6 +113,7 @@ if (BUILD_ISPC)
   include(dep_ispcrt)
 endif()
 
+option(BUILD_ISPCRT_GPU "Build the ISPC Runtime with GPU support?" OFF)
 
 option(BUILD_TBB "Build Intel Threading Building Blocks or search in environment?" ON)
 option(BUILD_TBB_FROM_SOURCE "Build Intel Threading Building Blocks from source or use pre-built version?" OFF)

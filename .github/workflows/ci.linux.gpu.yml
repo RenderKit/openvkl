@@ -1,0 +1,36 @@
+## Copyright 2022 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: CI GPU Linux Workflow
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  download-dpcpp-gfx:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/get_dpcpp_gfx_linux.yml@main
+    with:
+      dpcpp-version: sycl-nightly/20221001
+      gfx-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12317/artifacts/Linux/Ubuntu/22.04/Release
+
+  build-gpu-ubuntu22_04:
+    secrets: inherit
+    needs: download-dpcpp-gfx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      submodules: true
+      image: ubuntu:22.04
+      artifact-out: build-gpu-ubuntu22_04
+      artifact-path: ./build/install ./build/openvkl/build
+      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
+      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+                        -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON"

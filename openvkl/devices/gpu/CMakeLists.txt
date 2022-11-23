@@ -3,6 +3,7 @@
 
 include(openvkl_ispc)
 include(openvkl_macros)
+include(openvkl_dpcpp)
 
 include_directories_ispc(
   ${PROJECT_SOURCE_DIR}/openvkl/include
@@ -77,6 +78,8 @@ separate_arguments(width_compile_options UNIX_COMMAND "${width_compile_options}"
 message(STATUS "using compile options for width ${TARGET_WIDTH}: ${width_compile_options}")
 
 target_compile_options(openvkl_module_gpu_device PRIVATE ${width_compile_options})
+
+openvkl_add_sycl_target(openvkl_module_gpu_device)
 
 target_include_directories(openvkl_module_gpu_device
   PUBLIC

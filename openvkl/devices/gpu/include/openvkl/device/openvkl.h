@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <sycl/sycl.hpp>
+
 #ifdef __cplusplus
 #include <cstdint>
 #include <cstdlib>

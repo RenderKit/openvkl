@@ -2,69 +2,94 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include <openvkl/openvkl.h>
+
 #include <openvkl/device/openvkl.h>
-#include <stdio.h>
+#include <iostream>
+#include <iomanip>
 
-#if defined(_MSC_VER)
-#include <malloc.h>   // _malloca
-#include <windows.h>  // Sleep
-#endif
-
-void demoScalarAPI(VKLDevice device, VKLVolume volume)
+void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 {
-  printf("demo of 1-wide API\n");
+  std::cout << "demo of GPU API" << std::endl;
+
+  std::cout << std::fixed << std::setprecision(6);
 
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit2(sampler);
 
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
-  printf("\tbounding box\n");
-  printf("\t\tlower = %f %f %f\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
-  printf("\t\tupper = %f %f %f\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
+  std::cout << "\tbounding box" << std::endl;
+  std::cout << "\t\tlower = " << bbox.lower.x << " " << bbox.lower.y << " "
+            << bbox.lower.z << std::endl;
+  std::cout << "\t\tupper = " << bbox.upper.x << " " << bbox.upper.y << " "
+            << bbox.upper.z << std::endl
+            << std::endl;
 
   // number of attributes
   unsigned int numAttributes = vklGetNumAttributes(volume);
-  printf("\tnum attributes = %d\n\n", numAttributes);
+  std::cout << "\tnum attributes = " << numAttributes << std::endl;
 
   // value range for all attributes
   for (unsigned int i = 0; i < numAttributes; i++) {
     vkl_range1f valueRange = vklGetValueRange(volume, i);
-    printf("\tvalue range (attribute %u) = (%f %f)\n",
-           i,
-           valueRange.lower,
-           valueRange.upper);
+    std::cout << "\tvalue range (attribute " << i << ") = (" << valueRange.lower
+              << " " << valueRange.upper << ")" << std::endl;
   }
 
   // coordinate for sampling / gradients
   vkl_vec3f coord = {1.f, 2.f, 3.f};
-  printf("\n\tcoord = %f %f %f\n\n", coord.x, coord.y, coord.z);
+  std::cout << "\n\tcoord = " << coord.x << " " << coord.y << " " << coord.z
+            << std::endl
+            << std::endl;
 
-  // sample, gradient (first attribute)
-  unsigned int attributeIndex = 0;
-  float time                  = 0.f;
-  float sample   = vklComputeSample(&sampler, &coord, attributeIndex, time);
-  vkl_vec3f grad = vklComputeGradient(&sampler, &coord, attributeIndex, time);
-  printf("\tsampling and gradient computation (first attribute)\n");
-  printf("\t\tsample = %f\n", sample);
-  printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
+  const float time = 0.f;
 
-  // sample (multiple attributes)
-  unsigned int M                  = 3;
-  unsigned int attributeIndices[] = {0, 1, 2};
-  float samples[3];
-  vklComputeSampleM(&sampler, &coord, samples, M, attributeIndices, time);
-  printf("\tsampling (multiple attributes)\n");
-  printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
+  // This is USM Shared allocation - it's required when
+  // we want to pass result back from GPU
+  float *sample = sycl::malloc_shared<float>(1, syclQueue);
+
+  for (unsigned int attributeIndex = 0; attributeIndex < numAttributes;
+       attributeIndex++) {
+    syclQueue
+        .single_task([=]() {
+          *sample = vklComputeSample(&sampler, &coord, attributeIndex, time);
+        })
+        .wait();
+
+    std::cout << "\tsampling computation (attribute " << attributeIndex << ")"
+              << std::endl;
+    std::cout << "\t\tsample = " << *sample << std::endl;
+  }
+
+  // Freeing USM Shared memory
+  sycl::free(sample, syclQueue);
 
   vklRelease2(sampler);
 }
 
 int main()
 {
+  auto IntelGPUDeviceSelector = [](const sycl::device &device) {
+    using namespace sycl::info;
+    const std::string deviceName = device.get_info<device::name>();
+    bool match                   = device.is_gpu() &&
+                 (deviceName.find("Intel(R) Graphics") != std::string::npos) &&
+                 device.get_backend() == sycl::backend::ext_oneapi_level_zero;
+    return match;
+  };
+
+  sycl::queue syclQueue(IntelGPUDeviceSelector);
+  sycl::context syclContext = syclQueue.get_context();
+
+  std::cout << "Target SYCL device: "
+            << syclQueue.get_device().get_info<sycl::info::device::name>()
+            << std::endl
+            << std::endl;
+
   vklInit();
 
   VKLDevice device = vklNewDevice("gpu_4");
+  vklDeviceSetVoidPtr(device, "syclContext", static_cast<void *>(&syclContext));
   vklCommitDevice(device);
 
   const int dimensions[] = {128, 128, 128};
@@ -79,12 +104,7 @@ int main()
   vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
   vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
-  float *voxels = static_cast<float *>(malloc(numVoxels * sizeof(float)));
-
-  if (!voxels) {
-    printf("failed to allocate voxel memory!\n");
-    return 1;
-  }
+  std::vector<float> voxels(numVoxels);
 
   // volume attribute 0: x-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -93,8 +113,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)i;
 
-  VKLData data0 =
-      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data0 = vklNewData(
+      device, numVoxels, VKL_FLOAT, voxels.data(), VKL_DATA_DEFAULT, 0);
 
   // volume attribute 1: y-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -103,8 +123,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)j;
 
-  VKLData data1 =
-      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data1 = vklNewData(
+      device, numVoxels, VKL_FLOAT, voxels.data(), VKL_DATA_DEFAULT, 0);
 
   // volume attribute 2: z-grad
   for (int k = 0; k < dimensions[2]; k++)
@@ -113,8 +133,8 @@ int main()
         voxels[k * dimensions[0] * dimensions[1] + j * dimensions[2] + i] =
             (float)k;
 
-  VKLData data2 =
-      vklNewData(device, numVoxels, VKL_FLOAT, voxels, VKL_DATA_DEFAULT, 0);
+  VKLData data2 = vklNewData(
+      device, numVoxels, VKL_FLOAT, voxels.data(), VKL_DATA_DEFAULT, 0);
 
   VKLData attributes[] = {data0, data1, data2};
 
@@ -130,21 +150,13 @@ int main()
 
   vklCommit(volume);
 
-  demoScalarAPI(device, volume);
+  demoGpuAPI(syclQueue, device, volume);
 
   vklRelease(volume);
 
   vklReleaseDevice(device);
 
-  free(voxels);
-
-  printf("complete.\n");
-
-#if defined(_MSC_VER)
-  // On Windows, sleep for a few seconds so the terminal window doesn't close
-  // immediately.
-  Sleep(3000);
-#endif
+  std::cout << "complete." << std::endl;
 
   return 0;
 }

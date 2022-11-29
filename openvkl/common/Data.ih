@@ -4,9 +4,41 @@
 #pragma once
 
 #include "openvkl/VKLDataType.h"
+#include "DataShared.h"
+
+#ifdef ISPC
+
+#define VARYING_SUPPORT 1
+#define HALF_FLOAT_SUPPORT 1
+#define DOUBLE_SUPPORT 1
+
 #include "rkcommon/math/math.ih"
 #include "rkcommon/math/vec.ih"
-#include "DataShared.h"
+
+#else
+
+#define VARYING_SUPPORT 0
+#define HALF_FLOAT_SUPPORT 0
+#define DOUBLE_SUPPORT 0
+
+#include "../devices/cpu/volume/StructuredVolumeShared.h"
+#define uniform
+
+#endif
+
+
+#ifndef ISPC
+// In non-ISPC world we need to define ispc namespace
+namespace ispc {
+#endif
+
+#define process_hi28(univary) process_hi28_##univary
+#ifdef ISPC
+#define process_hi28_varying foreach_unique(hi in hi28)
+#define process_hi28_uniform uniform uint32 hi = hi28;
+#else
+#define process_hi28_ uint32 hi = hi28;
+#endif
 
 // in all inlined functions here, ok to pass-by-value, will be inlined and
 // optimized
@@ -30,10 +62,6 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data)
   const uniform uint64 maxBytes = (data.numItems - 1) * data.byteStride;
   return (maxBytes < (1ULL << 31));
 }
-
-#define process_hi28(univary) process_hi28_##univary
-#define process_hi28_varying foreach_unique(hi in hi28)
-#define process_hi28_uniform uniform uint32 hi = hi28;
 
 // T: user-requested type
 // retT: return type
@@ -96,15 +124,19 @@ inline uniform bool safe_32bit_indexing(const uniform Data1D data)
     return value;                                                                            \
   }
 
+#if VARYING_SUPPORT
 template_get(uint8, uint8, uint8, varying, );
 template_get(int16, int16, int16, varying, );
 template_get(uint16, uint16, uint16, varying, );
 template_get(uint32, uint32, uint32, varying, );
 template_get(uint64, uint64, uint64, varying, );
 template_get(float, float, float, varying, );
+#if DOUBLE_SUPPORT
 template_get(double, double, double, varying, );
+#endif
 template_get(vec3f, vec3f, vec3f, varying, );
 template_get(vec4f, vec4f, vec4f, varying, );
+#endif
 
 template_get(uint8, uint8, uint8, uniform, );
 template_get(int16, int16, int16, uniform, );
@@ -112,16 +144,24 @@ template_get(uint16, uint16, uint16, uniform, );
 template_get(uint32, uint32, uint32, uniform, );
 template_get(uint64, uint64, uint64, uniform, );
 template_get(float, float, float, uniform, );
+#if DOUBLE_SUPPORT
 template_get(double, double, double, uniform, );
+#endif
 template_get(vec3f, vec3f, vec3f, uniform, );
 template_get(vec4f, vec4f, vec4f, uniform, );
 
 // special case: half
+#if HALF_FLOAT_SUPPORT
+#if VARYING_SUPPORT
 template_get(half, float, unsigned int16, varying, half_to_float);
+#endif
 template_get(half, float, unsigned int16, uniform, half_to_float);
+#endif
 
 #undef template_get
 
+
+#if VARYING_SUPPORT
 // define wrappers that appropriately call the compact and strided getters. for
 // the uniform case, these will always use the strided path (which avoids the
 // conditional and is more performant). for the varying case, the compact or
@@ -154,6 +194,24 @@ template_get(half, float, unsigned int16, uniform, half_to_float);
     return data.compact ? get_##T##_compact(data, baseIndex64, offsetIndex32)  \
                         : get_##T##_strided(data, baseIndex64, offsetIndex32); \
   }
+#else
+
+#define template_get_wrapper(T, retT)                                          \
+  inline uniform retT get_##T(const uniform Data1D data,                       \
+                              const uniform uint32 index32)                    \
+  {                                                                            \
+    return get_##T##_strided(data, index32);                                   \
+  }                                                                            \
+                                                                               \
+  inline uniform retT get_##T(const uniform Data1D data,                       \
+                              const uniform uint64 baseIndex64,                \
+                              const uniform uint32 offsetIndex32)              \
+  {                                                                            \
+    return get_##T##_strided(data, baseIndex64, offsetIndex32);                \
+  }                                                                            \
+
+#endif
+
 
 template_get_wrapper(uint8, uint8);
 template_get_wrapper(int16, int16);
@@ -161,17 +219,21 @@ template_get_wrapper(uint16, uint16);
 template_get_wrapper(uint32, uint32);
 template_get_wrapper(uint64, uint64);
 template_get_wrapper(float, float);
+#if DOUBLE_SUPPORT
 template_get_wrapper(double, double);
+#endif
 template_get_wrapper(vec3f, vec3f);
 template_get_wrapper(vec4f, vec4f);
 
+#if HALF_FLOAT_SUPPORT
 // special case: half
 template_get_wrapper(half, float);
+#endif
 
 #undef template_get_wrapper
 
 // limited support for getters on _varying_ Data1D objects
-
+#if VARYING_SUPPORT
 #define template_get_special(T, retT, repT, convFunc)                        \
   inline varying retT get_##T##_compact(const uniform Data1D *varying data,  \
                                         const varying uint32 index32)        \
@@ -230,11 +292,26 @@ template_get_wrapper(half, float);
     assert(data.numItems > 0);                                               \
     return convFunc(*((const uniform repT *)data.addr));                     \
   }
+#else
+#define template_get_special(T, retT, repT, convFunc)                        \
+  inline uniform retT get_##T##_0(const uniform Data1D data)                 \
+  {                                                                          \
+    assert(data.numItems > 0);                                               \
+    return convFunc(*((const uniform repT *)data.addr));                     \
+  }
+#endif
 
 // these are required for sparse VDB motion blur cases.
+#if HALF_FLOAT_SUPPORT
 template_get_special(half, float, unsigned int16, half_to_float);
+#endif
 template_get_special(float, float, float, );
 
 template_get_special(uint32, uint32, uint32, );
 template_get_special(uint64, uint64, uint64, );
 #undef template_get_special
+
+#ifndef ISPC
+//close ISPC namespace
+}
+#endif

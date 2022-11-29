@@ -24,7 +24,8 @@ extern "C" {
 OPENVKL_INTERFACE
 void vklInit();
 
-OPENVKL_INTERFACE
+
+OPENVKL_INTERFACE SYCL_EXTERNAL
 float vklComputeSample(const VKLSampler *sampler,
                        const vkl_vec3f *objectCoordinates,
                        unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),

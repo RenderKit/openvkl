@@ -151,20 +151,19 @@ namespace openvkl {
   }
 
   bool SharedStructuredVolume_set(
-      void * _self,
-      const  uint32 numAttributes,
-      const ispc::Data1D * * attributesData,
-      const  uint32 temporallyStructuredNumTimesteps,
-      const ispc::Data1D * temporallyUnstructuredIndices,
-      const ispc::Data1D * temporallyUnstructuredTimes,
-      const  vec3i &dimensions,
-      const  ispc::SharedStructuredVolumeGridType gridType,
-      const  vec3f &gridOrigin,
-      const  vec3f &gridSpacing,
-      const  ispc::VKLFilter filter)
+      void *_self,
+      const uint32 numAttributes,
+      const ispc::Data1D **attributesData,
+      const uint32 temporallyStructuredNumTimesteps,
+      const ispc::Data1D *temporallyUnstructuredIndices,
+      const ispc::Data1D *temporallyUnstructuredTimes,
+      const vec3i &dimensions,
+      const ispc::SharedStructuredVolumeGridType gridType,
+      const vec3f &gridOrigin,
+      const vec3f &gridSpacing,
+      const ispc::VKLFilter filter)
   {
-    ispc::SharedStructuredVolume * self =
-        ( ispc::SharedStructuredVolume * ) _self;
+    ispc::SharedStructuredVolume *self = (ispc::SharedStructuredVolume *)_self;
 
     destructComputeFunctions(self);
     constructComputeFunctions(self, numAttributes);
@@ -184,14 +183,19 @@ namespace openvkl {
       self->temporallyUnstructuredTimes.numItems = 0;
     }
 
-    self->dimensions  = dimensions;
-    self->gridType    = gridType;
-    self->gridOrigin  = ispc::vec3f{gridOrigin.x, gridOrigin.y, gridOrigin.z};
-    self->gridSpacing = ispc::vec3f{gridSpacing.x, gridSpacing.y, gridSpacing.z};
+    self->dimensions = ispc::vec3i{dimensions.x, dimensions.y, dimensions.z};
+    self->gridType   = gridType;
+    self->gridOrigin = ispc::vec3f{gridOrigin.x, gridOrigin.y, gridOrigin.z};
+    self->gridSpacing =
+        ispc::vec3f{gridSpacing.x, gridSpacing.y, gridSpacing.z};
 
     if (self->gridType == ispc::structured_regular) {
-      vec3f gridUpper = gridOrigin + vec3f{dimensions.x-1.f, dimensions.y-1.f,dimensions.z-1.f} * gridSpacing;
-      self->boundingBox = {{gridOrigin.x,gridOrigin.y,gridOrigin.z},{gridUpper.x, gridUpper.y, gridUpper.z}};
+      vec3f gridUpper =
+          gridOrigin +
+          vec3f{dimensions.x - 1.f, dimensions.y - 1.f, dimensions.z - 1.f} *
+              gridSpacing;
+      self->boundingBox = {{gridOrigin.x, gridOrigin.y, gridOrigin.z},
+                           {gridUpper.x, gridUpper.y, gridUpper.z}};
 
       CALL_ISPC(assignComputeGradientChecks, self);
 
@@ -201,7 +205,7 @@ namespace openvkl {
       CALL_ISPC(assignComputeGradientChecks, self);
     }
 
-    vec3f lcubtmp = nextafter(self->dimensions - 1, vec3i{0,0,0});
+    vec3f lcubtmp = nextafter(dimensions - 1, vec3i{0, 0, 0});
     self->localCoordinatesUpperBound = {lcubtmp.x, lcubtmp.y, lcubtmp.z};
 
     self->voxelOfs_dx = 1;
@@ -210,13 +214,15 @@ namespace openvkl {
 
     self->filter = filter;
 
-    for ( uint32 i = 0; i < numAttributes; i++) {
-       bool success = false;
+    for (uint32 i = 0; i < numAttributes; i++) {
+      bool success = false;
 
       if (hasStructuredTimeData(self)) {
-        success = CALL_ISPC(assignTemporallyStructuredSamplingFunctions, self, i);
+        success =
+            CALL_ISPC(assignTemporallyStructuredSamplingFunctions, self, i);
       } else if (hasUnstructuredTimeData(self)) {
-        success = CALL_ISPC(assignTemporallyUnstructuredSamplingFunctions, self, i);
+        success =
+            CALL_ISPC(assignTemporallyUnstructuredSamplingFunctions, self, i);
       } else {
         success = CALL_ISPC(assignTemporallyConstantSamplingFunctions, self, i);
       }

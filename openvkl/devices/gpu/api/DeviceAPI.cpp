@@ -6,6 +6,9 @@
 #include "openvkl/common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
+#include "../include/openvkl/device/openvkl.h"
+#include "../compute/vklComputeSample.h"
+
 using namespace openvkl;
 using namespace openvkl::gpu_device;
 
@@ -64,24 +67,27 @@ extern "C" OPENVKL_DLLEXPORT void vklInit()
 // Sampler ////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" OPENVKL_DLLEXPORT float vklComputeSample(
+
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     unsigned int attributeIndex,
-    float time) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    float time)
 {
-  constexpr int valid = 1;
-  float sample;
-  deviceObj->computeSample1(
-      &valid,
-      sampler,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      &sample,
+  assert(sampler);
+  const ispc::SamplerShared *samplerShared =
+      static_cast<const ispc::SamplerShared *>(sampler->device);
+  const ispc::SharedStructuredVolume *sharedStructuredVolume =
+      reinterpret_cast<const ispc::SharedStructuredVolume *>(
+          samplerShared->volume);
+
+  return SharedStructuredVolume_computeSample_uniform(
+      sharedStructuredVolume,
+      *reinterpret_cast<const vec3f *>(objectCoordinates),
+      samplerShared->filter,
       attributeIndex,
-      &time);
-  return sample;
+      time);
 }
-OPENVKL_CATCH_END(rkcommon::math::nan)
 
 extern "C" OPENVKL_DLLEXPORT void vklComputeSampleM(
     const VKLSampler *sampler,

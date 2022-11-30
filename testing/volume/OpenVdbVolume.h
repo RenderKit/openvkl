@@ -57,8 +57,8 @@ namespace openvkl {
             asyncLoader->wait();
           const auto result = asyncLoader->get();
           asyncLoader.reset();
-          if (result.volume)
-            vklRelease(result.volume);
+          if (result.volume.host)
+            vklRelease2(result.volume);
         }
       }
 
@@ -70,7 +70,7 @@ namespace openvkl {
               new rkcommon::tasking::AsyncTask<AsyncResult>([=]() {
                 // Load remaining leaves, but use the usage buffer as guidance.
                 AsyncResult result;
-                result.volume = nullptr;
+                result.volume.host = nullptr;
 
                 rkcommon::utility::CodeTimer loadTimer;
                 loadTimer.start();
@@ -95,9 +95,9 @@ namespace openvkl {
         } else if (asyncLoader && asyncLoader->finished()) {
           AsyncResult result = asyncLoader->get();
           asyncLoader.reset();
-          if (result.volume) {
+          if (result.volume.host) {
             changed = true;
-            vklRelease(volume);
+            vklRelease2(volume);
 
             volume = result.volume;
 
@@ -122,7 +122,7 @@ namespace openvkl {
 
       VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
-        VKLObserver observer = nullptr;
+        VKLObserver observer;
         if (grid.numDeferred() > 0)
           observer = vklNewSamplerObserver(sampler, "LeafNodeAccess");
         return observer;
@@ -252,7 +252,7 @@ namespace openvkl {
 
       VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
-        return nullptr;
+        return APIObject{nullptr, nullptr};
       }
 
      protected:

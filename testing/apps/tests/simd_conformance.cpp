@@ -197,13 +197,13 @@ void max_iterator_size_conformance_test(VKLDevice device)
         vklNewIntervalIteratorContext(sampler);
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
     maxIntervalSize                  = std::max<size_t>(
-        maxIntervalSize, vklGetIntervalIteratorSize(intervalContext));
+        maxIntervalSize, vklGetIntervalIteratorSize(&intervalContext));
     maxHitSize =
-        std::max<size_t>(maxHitSize, vklGetHitIteratorSize(hitContext));
-    vklRelease(hitContext);
-    vklRelease(intervalContext);
+        std::max<size_t>(maxHitSize, vklGetHitIteratorSize(&hitContext));
+    vklRelease2(hitContext);
+    vklRelease2(intervalContext);
     vklRelease2(sampler);
-    vklRelease(volume);
+    vklRelease2(volume);
   }
 
 #define ALL_VOLUMES_ENABLED                                 \

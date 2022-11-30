@@ -29,7 +29,7 @@ namespace openvkl {
 
       Versioned<HitIteratorRendererParams> guiParams;
       Versioned<HitIteratorRendererParams> params;  // Used by the worker.
-      VKLHitIteratorContext hitContext{nullptr};    // Used by the worker.
+      std::unique_ptr<VKLHitIteratorContext> hitContext;  // Used by the worker.
 
      private:
       const Scene *scene{nullptr};

@@ -11,32 +11,32 @@ export void demo_ispc(void *uniform _volume,
                       void *uniform _ranges,
                       void *uniform _values)
 {
-  uniform VKLVolume volume   = (uniform VKLVolume)_volume;
-  VKLSampler *uniform sampler = (VKLSampler *uniform)_sampler;
-  uniform VKLIntervalIteratorContext intervalContext =
-      (uniform VKLIntervalIteratorContext)_intervalContext;
-  uniform VKLHitIteratorContext hitContext =
-      (uniform VKLHitIteratorContext)_hitContext;
+  VKLVolume *uniform volume   = (VKLVolume * uniform) _volume;
+  VKLSampler *uniform sampler = (VKLSampler * uniform) _sampler;
+  VKLIntervalIteratorContext *uniform intervalContext =
+      (VKLIntervalIteratorContext * uniform) _intervalContext;
+  VKLHitIteratorContext *uniform hitContext =
+      (VKLHitIteratorContext * uniform) _hitContext;
   vkl_range1f *uniform ranges = (vkl_range1f * uniform) _ranges;
   float *uniform values       = (float *uniform)_values;
 
   // bounding box
-  uniform vkl_box3f bbox = vklGetBoundingBox(volume);
+  uniform vkl_box3f bbox = vklGetBoundingBox(*volume);
   print("bounding box:\n");
   print("\tlower: % % %\n", bbox.lower.x, bbox.lower.y, bbox.lower.z);
   print("\tupper: % % %\n\n", bbox.upper.x, bbox.upper.y, bbox.upper.z);
 
   // number of attributes
-  uniform unsigned int numAttributes = vklGetNumAttributes(volume);
+  uniform unsigned int numAttributes = vklGetNumAttributes(*volume);
   print("num attributes = %\n\n", numAttributes);
 
   // value range for all attributes
   for (uniform unsigned int i = 0; i < numAttributes; i++) {
-    uniform vkl_range1f valueRange = vklGetValueRange(volume, i);
+    uniform vkl_range1f valueRange = vklGetValueRange(*volume, i);
     print("value range (attribute %) = (% %)\n",
-           i,
-           valueRange.lower,
-           valueRange.upper);
+          i,
+          valueRange.lower,
+          valueRange.upper);
   }
 
   // coordinates for sampling and gradients

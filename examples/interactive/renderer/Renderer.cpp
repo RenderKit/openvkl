@@ -206,7 +206,7 @@ namespace openvkl {
     {
       HostRenderer::beforeStart();
 
-      ispc::Scene_setVolume(ispcScene, scene.volume.getVolume());
+      ispc::Scene_setVolume(ispcScene, scene.volume.getVolumePtr());
       ispc::Scene_setSampler(ispcScene, scene.volume.getSamplerPtr());
     }
 

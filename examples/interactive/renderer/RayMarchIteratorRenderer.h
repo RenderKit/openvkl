@@ -29,8 +29,8 @@ namespace openvkl {
 
       Versioned<RayMarchIteratorRendererParams> guiParams;
       Versioned<RayMarchIteratorRendererParams> params;  // Used by the worker.
-      VKLIntervalIteratorContext intervalContext{
-          nullptr};  // Used by the worker.
+      std::unique_ptr<VKLIntervalIteratorContext>
+          intervalContext;  // Used by the worker.
 
      private:
       const Scene *scene{nullptr};

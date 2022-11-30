@@ -27,14 +27,14 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetData(hitContext, "values", valuesData);
+  vklSetData2(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit(hitContext);
+  vklCommit2(hitContext);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSize(&hitContext));
   VKLHitIterator iterator = vklInitHitIterator(
-      hitContext, &origin, &direction, &tRange, time, buffer.data());
+      &hitContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLHit hit;
   hit.epsilon = 0.f;
@@ -54,7 +54,7 @@ void scalar_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   REQUIRE(hitCount > 0);
 
-  vklRelease(hitContext);
+  vklRelease2(hitContext);
   vklRelease2(sampler);
 }
 
@@ -101,10 +101,10 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetData(hitContext, "values", valuesData);
+  vklSetData2(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit(hitContext);
+  vklCommit2(hitContext);
 
   std::vector<int> valid(W, 1);
 
@@ -112,9 +112,9 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
   // lanes
   valid[1] = 0;
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(&hitContext));
   VKLHitIteratorW iterator = vklInitHitIteratorW(valid.data(),
-                                                 hitContext,
+                                                 &hitContext,
                                                  (vkl_vvec3fW *)&origins,
                                                  (vkl_vvec3fW *)&directions,
                                                  (vkl_vrange1fW *)&tRanges,
@@ -152,7 +152,7 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
 
   REQUIRE(hitCount > 0);
 
-  vklRelease(hitContext);
+  vklRelease2(hitContext);
   vklRelease2(sampler);
 }
 

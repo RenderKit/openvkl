@@ -129,7 +129,7 @@ namespace openvkl {
                                          particles.data(),
                                          VKL_DATA_SHARED_BUFFER,
                                          sizeof(vec4f));
-      vklSetData(volume, "particle.position", positionsData);
+      vklSetData2(volume, "particle.position", positionsData);
       vklRelease(positionsData);
 
       VKLData radiiData = vklNewData(device,
@@ -138,21 +138,21 @@ namespace openvkl {
                                      &(particles.data()[0].w),
                                      VKL_DATA_SHARED_BUFFER,
                                      sizeof(vec4f));
-      vklSetData(volume, "particle.radius", radiiData);
+      vklSetData2(volume, "particle.radius", radiiData);
       vklRelease(radiiData);
 
       if (provideWeights) {
         VKLData weightsData =
             vklNewData(device, numParticles, VKL_FLOAT, weights.data());
-        vklSetData(volume, "particle.weight", weightsData);
+        vklSetData2(volume, "particle.weight", weightsData);
         vklRelease(weightsData);
       }
 
-      vklSetFloat(volume, "radiusSupportFactor", radiusSupportFactor);
-      vklSetFloat(volume, "clampMaxCumulativeValue", clampMaxCumulativeValue);
-      vklSetBool(volume, "estimateValueRanges", estimateValueRanges);
+      vklSetFloat2(volume, "radiusSupportFactor", radiusSupportFactor);
+      vklSetFloat2(volume, "clampMaxCumulativeValue", clampMaxCumulativeValue);
+      vklSetBool2(volume, "estimateValueRanges", estimateValueRanges);
 
-      vklCommit(volume);
+      vklCommit2(volume);
 
       // compute value range
 

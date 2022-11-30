@@ -54,13 +54,13 @@ void scalar_interval_continuity_with_no_value_ranges(
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
 
-  vklCommit(intervalContext);
+  vklCommit2(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+  std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, time, buffer.data());
+      &intervalContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLInterval intervalPrevious, intervalCurrent;
 
@@ -86,7 +86,7 @@ void scalar_interval_continuity_with_no_value_ranges(
   // last interval at expected ending
   REQUIRE(intervalPrevious.tRange.upper == Approx(expectedTRange.upper));
 
-  vklRelease(intervalContext);
+  vklRelease2(intervalContext);
   vklRelease2(sampler);
 }
 
@@ -106,13 +106,13 @@ void scalar_interval_value_ranges_with_no_value_ranges(
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
 
-  vklCommit(intervalContext);
+  vklCommit2(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+  std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, time, buffer.data());
+      &intervalContext, &origin, &direction, &tRange, time, buffer.data());
   VKLInterval interval;
 
   int intervalCount = 0;
@@ -139,7 +139,7 @@ void scalar_interval_value_ranges_with_no_value_ranges(
     intervalCount++;
   }
 
-  vklRelease(intervalContext);
+  vklRelease2(intervalContext);
   vklRelease2(sampler);
 
   // make sure we had at least one interval...
@@ -167,16 +167,16 @@ void scalar_interval_value_ranges_with_value_ranges(
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
 
-  vklSetData(intervalContext, "valueRanges", valueRangesData);
+  vklSetData2(intervalContext, "valueRanges", valueRangesData);
   vklRelease(valueRangesData);
 
-  vklCommit(intervalContext);
+  vklCommit2(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+  std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
   VKLIntervalIterator iterator = vklInitIntervalIterator(
-      intervalContext, &origin, &direction, &tRange, time, buffer.data());
+      &intervalContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLInterval interval;
 
@@ -220,7 +220,7 @@ void scalar_interval_value_ranges_with_value_ranges(
   // make sure we had appropriate number of intervals
   REQUIRE(intervalCount >= valueRanges.size());
 
-  vklRelease(intervalContext);
+  vklRelease2(intervalContext);
   vklRelease2(sampler);
 }
 
@@ -244,11 +244,11 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
-  vklCommit(intervalContext);
+  vklCommit2(intervalContext);
 
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+  std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
   VKLIntervalIterator iterator =
-      vklInitIntervalIterator(intervalContext,
+      vklInitIntervalIterator(&intervalContext,
                               &origin,
                               &(const vkl_vec3f &)direction,
                               &tRange,
@@ -268,7 +268,7 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
 
   REQUIRE(interval.nominalDeltaT == Approx(expectedNominalDeltaT));
 
-  vklRelease(intervalContext);
+  vklRelease2(intervalContext);
   vklRelease2(sampler);
 }
 

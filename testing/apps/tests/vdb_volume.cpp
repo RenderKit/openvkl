@@ -30,20 +30,20 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
         vklNewData(getOpenVKLDevice(), voxels.size(), VKL_FLOAT, voxels.data());
     uint32_t invLevel = vklVdbNumLevels();
     VKLData levelData = vklNewData(getOpenVKLDevice(), 1, VKL_UINT, &invLevel);
-    vklSetData(volume, "node.level", levelData);
+    vklSetData2(volume, "node.level", levelData);
     vklRelease(levelData);
     VKLData originData = vklNewData(getOpenVKLDevice(), 1, VKL_VEC3I, &origin);
-    vklSetData(volume, "node.origin", originData);
+    vklSetData2(volume, "node.origin", originData);
     vklRelease(originData);
     VKLData formatData = vklNewData(getOpenVKLDevice(), 1, VKL_UINT, &format);
-    vklSetData(volume, "node.format", formatData);
+    vklSetData2(volume, "node.format", formatData);
     vklRelease(formatData);
     VKLData dataData = vklNewData(getOpenVKLDevice(), 1, VKL_DATA, &data);
-    vklSetData(volume, "node.data", dataData);
+    vklSetData2(volume, "node.data", dataData);
     vklRelease(dataData);
     vklRelease(data);
 
-    vklCommit(volume);
+    vklCommit2(volume);
     REQUIRE(vklDeviceGetLastErrorCode(getOpenVKLDevice()) == 1);
     REQUIRE(std::string(vklDeviceGetLastErrorMsg(getOpenVKLDevice())) ==
             "invalid node level 4 for this vdb configuration");
@@ -53,26 +53,26 @@ TEST_CASE("VDB volume leaf validation", "[validation]")
   {
     VKLData data = vklNewData(getOpenVKLDevice(), 1, VKL_FLOAT, voxels.data());
     VKLData levelData = vklNewData(getOpenVKLDevice(), 1, VKL_UINT, &level);
-    vklSetData(volume, "node.level", levelData);
+    vklSetData2(volume, "node.level", levelData);
     vklRelease(levelData);
     VKLData originData = vklNewData(getOpenVKLDevice(), 1, VKL_VEC3I, &origin);
-    vklSetData(volume, "node.origin", originData);
+    vklSetData2(volume, "node.origin", originData);
     vklRelease(originData);
     VKLData formatData = vklNewData(getOpenVKLDevice(), 1, VKL_UINT, &format);
-    vklSetData(volume, "node.format", formatData);
+    vklSetData2(volume, "node.format", formatData);
     vklRelease(formatData);
     VKLData dataData = vklNewData(getOpenVKLDevice(), 1, VKL_DATA, &data);
-    vklSetData(volume, "node.data", dataData);
+    vklSetData2(volume, "node.data", dataData);
     vklRelease(dataData);
     vklRelease(data);
 
-    vklCommit(volume);
+    vklCommit2(volume);
     REQUIRE(vklDeviceGetLastErrorCode(getOpenVKLDevice()) == 1);
     REQUIRE(std::string(vklDeviceGetLastErrorMsg(getOpenVKLDevice()))
                 .find("Node data too small") != std::string::npos);
   }
 
-  vklRelease(volume);
+  vklRelease2(volume);
 
   shutdownOpenVKL();
 }
@@ -407,8 +407,8 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   vklCommit2(vklSampler);
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(vklSampler);
-  vklCommit(intervalContext);
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+  vklCommit2(intervalContext);
+  std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
   VKLIntervalIterator iterator;
   VKLInterval interval;
   vkl_vec3f origin{0, 0, -5.f};
@@ -417,9 +417,9 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
   const float time = 0.f;
   REQUIRE_NOTHROW(
       iterator = vklInitIntervalIterator(
-          intervalContext, &origin, &direction, &tRange, time, buffer.data()));
+          &intervalContext, &origin, &direction, &tRange, time, buffer.data()));
   REQUIRE_NOTHROW(vklIterateInterval(iterator, &interval));
-  REQUIRE_NOTHROW(vklRelease(intervalContext));
+  REQUIRE_NOTHROW(vklRelease2(intervalContext));
   REQUIRE_NOTHROW(vklRelease2(vklSampler));
   REQUIRE_NOTHROW(delete volume);
 
@@ -810,13 +810,13 @@ void vdb_special_case_interval_iterator(
     const vkl_vec3f &rayOrigin,
     const vkl_vec3f &rayDirection)
 {
-  std::vector<char> buffer(vklGetIntervalIteratorSize(intervalContext));
+  std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
 
   const vkl_range1f rayTRange = {0.f, inf};
   const float time            = 0.f;
 
   VKLIntervalIterator intervalIterator =
-      vklInitIntervalIterator(intervalContext,
+      vklInitIntervalIterator(&intervalContext,
                               &rayOrigin,
                               &rayDirection,
                               &rayTRange,
@@ -868,7 +868,7 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
 
     VKLIntervalIteratorContext intervalContext =
         vklNewIntervalIteratorContext(sampler);
-    vklCommit(intervalContext);
+    vklCommit2(intervalContext);
 
     // failure case found from OSPRay
     {
@@ -907,7 +907,7 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
       }
     }
 
-    vklRelease(intervalContext);
+    vklRelease2(intervalContext);
     vklRelease2(sampler);
 
     REQUIRE_NOTHROW(delete volume);

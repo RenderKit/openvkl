@@ -187,11 +187,11 @@ namespace openvkl {
     {
       volume = vklNewVolume(device, gridType.c_str());
 
-      vklSetVec3i(
+      vklSetVec3i2(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-      vklSetVec3f(
+      vklSetVec3f2(
           volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-      vklSetVec3f(
+      vklSetVec3f2(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
       voxels.resize(attributeVolumes.size());
@@ -289,7 +289,7 @@ namespace openvkl {
       for (const auto &d : attributesData) {
         vklRelease(d);
       }
-      vklSetData(volume, "data", data);
+      vklSetData2(volume, "data", data);
       vklRelease(data);
 
       switch (temporalConfig.type) {
@@ -297,7 +297,7 @@ namespace openvkl {
         break;
       }
       case TemporalConfig::Structured: {
-        vklSetInt(volume,
+        vklSetInt2(volume,
                   "temporallyStructuredNumTimesteps",
                   temporalConfig.sampleTime.size());
         break;
@@ -309,18 +309,18 @@ namespace openvkl {
                                        VKL_UINT,
                                        tuvIndex.data(),
                                        dataCreationFlags);
-        vklSetData(volume, "temporallyUnstructuredIndices", indexData);
+        vklSetData2(volume, "temporallyUnstructuredIndices", indexData);
         vklRelease(indexData);
 
         VKLData timeData = vklNewData(
             device, time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
-        vklSetData(volume, "temporallyUnstructuredTimes", timeData);
+        vklSetData2(volume, "temporallyUnstructuredTimes", timeData);
         vklRelease(timeData);
         break;
       }
       }
 
-      vklCommit(volume);
+      vklCommit2(volume);
 
       if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
         std::vector<std::vector<unsigned char>>().swap(voxels);

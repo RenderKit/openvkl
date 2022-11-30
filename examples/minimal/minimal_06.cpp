@@ -23,14 +23,14 @@ int main(int argc, char **argv)
   std::vector<float> voxels = createVoxels(res);
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i(volume, "dimensions", res, res, res);
+  vklSetVec3i2(volume, "dimensions", res, res, res);
   const float spacing = 1.f / static_cast<float>(res);
-  vklSetVec3f(volume, "gridSpacing", spacing, spacing, spacing);
+  vklSetVec3f2(volume, "gridSpacing", spacing, spacing, spacing);
   VKLData voxelData = vklNewData(
       device, voxels.size(), VKL_FLOAT, voxels.data(), VKL_DATA_SHARED_BUFFER);
-  vklSetData(volume, "data", voxelData);
+  vklSetData2(volume, "data", voxelData);
   vklRelease(voxelData);
-  vklCommit(volume);
+  vklCommit2(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit2(sampler);
@@ -38,15 +38,15 @@ int main(int argc, char **argv)
   const float isovalues[]       = { -.6f, -.1f, .4f, .9f };
   VKLHitIteratorContext context = vklNewHitIteratorContext(sampler);
   VKLData isovaluesData         = vklNewData(device, 4, VKL_FLOAT, isovalues);
-  vklSetData(context, "values", isovaluesData);
+  vklSetData2(context, "values", isovaluesData);
   vklRelease(isovaluesData);
-  vklCommit(context);
+  vklCommit2(context);
 
   Framebuffer fb(64, 32);
 
   // We will create iterators below, and we will need to know how much memory
   // to allocate.
-  const size_t iteratorSize = vklGetHitIteratorSize(context);
+  const size_t iteratorSize = vklGetHitIteratorSize(&context);
 
   fb.generate([&](float fx, float fy) {
     // Set up the ray, as iterators work on rays.
@@ -62,7 +62,7 @@ int main(int argc, char **argv)
 #endif
     // Initialize iterator into the buffer we just created.
     VKLHitIterator hitIterator = vklInitHitIterator(
-        context, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer);
+        &context, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer);
 
     // Loop over all ray-isosurface intersections along our ray.
     // vklIterateHit will return false when there
@@ -79,9 +79,9 @@ int main(int argc, char **argv)
 
   fb.drawToTerminal();
 
-  vklRelease(context);
+  vklRelease2(context);
   vklRelease2(sampler);
-  vklRelease(volume);
+  vklRelease2(volume);
   vklReleaseDevice(device);
 
   return 0;

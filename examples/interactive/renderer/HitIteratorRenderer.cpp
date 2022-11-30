@@ -28,7 +28,7 @@ namespace openvkl {
     template <class R>
     void HitIteratorRendererShared<R>::updateHitContext()
     {
-      vklSetInt(hitContext, "attributeIndex", rendererParams->attributeIndex);
+      vklSetInt2(*hitContext, "attributeIndex", rendererParams->attributeIndex);
 
       // if we have isovalues, set these values on the context
       VKLData valuesData = nullptr;
@@ -40,13 +40,13 @@ namespace openvkl {
                                 params->isoValues.data());
       }
 
-      vklSetData(hitContext, "values", valuesData);
+      vklSetData2(*hitContext, "values", valuesData);
 
       if (valuesData) {
         vklRelease(valuesData);
       }
 
-      vklCommit(hitContext);
+      vklCommit2(*hitContext);
     }
 
     template <class R>
@@ -54,7 +54,8 @@ namespace openvkl {
     {
       assert(!hitContext);
       VKLSampler sampler = scene->volume.getSampler();
-      hitContext         = vklNewHitIteratorContext(sampler);
+      hitContext         = rkcommon::make_unique<VKLHitIteratorContext>(
+          vklNewHitIteratorContext(sampler));
       updateHitContext();
     }
 
@@ -62,7 +63,7 @@ namespace openvkl {
     void HitIteratorRendererShared<R>::afterStop()
     {
       if (hitContext) {
-        vklRelease(hitContext);
+        vklRelease2(*hitContext);
         hitContext = nullptr;
       }
     }
@@ -129,11 +130,11 @@ namespace openvkl {
       tRange.upper = ray.t.upper;
 
       void *hitIteratorBuffer =
-          alloca(vklGetHitIteratorSize(shared->hitContext));
+          alloca(vklGetHitIteratorSize(shared->hitContext.get()));
       void *shadowHitIteratorBuffer =
-          alloca(vklGetHitIteratorSize(shared->hitContext));
+          alloca(vklGetHitIteratorSize(shared->hitContext.get()));
 
-      VKLHitIterator iterator = vklInitHitIterator(shared->hitContext,
+      VKLHitIterator iterator = vklInitHitIterator(shared->hitContext.get(),
                                                    (vkl_vec3f *)&ray.org,
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
@@ -144,7 +145,7 @@ namespace openvkl {
       const float surfaceAlpha = 0.6f;
       const float emission[]   = {1.f, 0.8f};
       const vec3f lightDir[]   = {normalize(vec3f(1.f, 1.f, 1.f)),
-                                normalize(vec3f(1.f, 1.f, -1.f))};
+                                  normalize(vec3f(1.f, 1.f, -1.f))};
 
       vec3f color(0.f);
       float alpha = 0.f;
@@ -181,7 +182,7 @@ namespace openvkl {
               tShadowRange.lower = hit.epsilon;
               tShadowRange.upper = inf;
               VKLHitIterator shadowIterator =
-                  vklInitHitIterator(shared->hitContext,
+                  vklInitHitIterator(shared->hitContext.get(),
                                      (vkl_vec3f *)&c,
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,
@@ -261,7 +262,7 @@ namespace openvkl {
       ispc::HitIteratorRenderer_renderPixel(
           ispcParams,
           ispcScene,
-          shared->hitContext,
+          shared->hitContext.get(),
           reinterpret_cast<const ispc::vec2i &>(resolution),
           offset,
           reinterpret_cast<ispc::vec4f *>(rgbas),

@@ -25,16 +25,16 @@ void scalar_hit_iteration(VKLVolume volume,
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetInt(hitContext, "attributeIndex", attributeIndex);
+  vklSetInt2(hitContext, "attributeIndex", attributeIndex);
 
-  vklSetData(hitContext, "values", valuesData);
+  vklSetData2(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit(hitContext);
+  vklCommit2(hitContext);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSize(&hitContext));
   VKLHitIterator iterator = vklInitHitIterator(
-      hitContext, &origin, &direction, &tRange, time, buffer.data());
+      &hitContext, &origin, &direction, &tRange, time, buffer.data());
 
   VKLHit hit;
 
@@ -60,7 +60,7 @@ void scalar_hit_iteration(VKLVolume volume,
 
   REQUIRE(hitCount == isoValues.size());
 
-  vklRelease(hitContext);
+  vklRelease2(hitContext);
   vklRelease2(sampler);
 }
 

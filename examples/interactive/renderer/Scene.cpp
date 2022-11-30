@@ -73,15 +73,16 @@ namespace openvkl {
           }
 
           testingVolume = std::move(newVolume);
-          vklVolume     = testingVolume->getVKLVolume(getOpenVKLDevice());
+          vklVolume     = rkcommon::make_unique<VKLVolume>(
+              testingVolume->getVKLVolume(getOpenVKLDevice()));
           reinterpret_cast<vkl_box3f &>(volumeBounds) =
-              vklGetBoundingBox(vklVolume);
-          numAttributes = vklGetNumAttributes(vklVolume);
+              vklGetBoundingBox(*vklVolume);
+          numAttributes = vklGetNumAttributes(*vklVolume);
         }
 
         if (!vklSampler) {
           vklSampler =
-              rkcommon::make_unique<VKLSampler>(vklNewSampler(vklVolume));
+              rkcommon::make_unique<VKLSampler>(vklNewSampler(*vklVolume));
           samplerNeedsUpdate = true;
         }
 

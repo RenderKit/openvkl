@@ -64,21 +64,21 @@ static VKLVolume vdbToStructuredRegular(openvdb::FloatGrid::Ptr grid)
   VKLVolume vklVolumeStructured =
       vklNewVolume(getOpenVKLDevice(), "structuredRegular");
 
-  vklSetBool(vklVolumeStructured, "cellCentered", true);
+  vklSetBool2(vklVolumeStructured, "cellCentered", true);
 
-  vklSetFloat(vklVolumeStructured, "background", 0.f);
+  vklSetFloat2(vklVolumeStructured, "background", 0.f);
 
-  vklSetVec3i(vklVolumeStructured,
-              "dimensions",
-              dimensions.x,
-              dimensions.y,
-              dimensions.z);
+  vklSetVec3i2(vklVolumeStructured,
+               "dimensions",
+               dimensions.x,
+               dimensions.y,
+               dimensions.z);
 
-  vklSetVec3i(vklVolumeStructured,
-              "indexOrigin",
-              indexOrigin.x,
-              indexOrigin.y,
-              indexOrigin.z);
+  vklSetVec3i2(vklVolumeStructured,
+               "indexOrigin",
+               indexOrigin.x,
+               indexOrigin.y,
+               indexOrigin.z);
 
   const auto &indexToObject = grid->transform().baseMap();
   if (!indexToObject->isLinear())
@@ -93,17 +93,17 @@ static VKLVolume vdbToStructuredRegular(openvdb::FloatGrid::Ptr grid)
                                          vec3f(i2o[8], i2o[9], i2o[10]));
   openvdbIndexToObject.p = vec3f(i2o[12], i2o[13], i2o[14]);
 
-  vklSetParam(vklVolumeStructured,
-              "indexToObject",
-              VKL_AFFINE3F,
-              &openvdbIndexToObject);
+  vklSetParam2(vklVolumeStructured,
+               "indexToObject",
+               VKL_AFFINE3F,
+               &openvdbIndexToObject);
 
   VKLData data =
       vklNewData(getOpenVKLDevice(), voxels.size(), VKL_FLOAT, voxels.data());
-  vklSetData(vklVolumeStructured, "data", data);
+  vklSetData2(vklVolumeStructured, "data", data);
   vklRelease(data);
 
-  vklCommit(vklVolumeStructured);
+  vklCommit2(vklVolumeStructured);
 
   return vklVolumeStructured;
 }
@@ -195,12 +195,12 @@ static void iterator_equivalence(VKLVolume vklVolume1,
   vklCommit2(sampler2);
 
   VKLIntervalIteratorContext context1 = vklNewIntervalIteratorContext(sampler1);
-  vklSetData(context1, "valueRanges", rangesData);
-  vklCommit(context1);
+  vklSetData2(context1, "valueRanges", rangesData);
+  vklCommit2(context1);
 
   VKLIntervalIteratorContext context2 = vklNewIntervalIteratorContext(sampler2);
-  vklSetData(context2, "valueRanges", rangesData);
-  vklCommit(context2);
+  vklSetData2(context2, "valueRanges", rangesData);
+  vklCommit2(context2);
 
   // assume bounding boxes match
   vkl_box3f bbox   = vklGetBoundingBox(vklVolume1);
@@ -219,23 +219,23 @@ static void iterator_equivalence(VKLVolume vklVolume1,
   // MSVC does not support variable length arrays, but provides a
   // safer version of alloca.
   char *buffer1 =
-      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(context1)));
+      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(&context1)));
   char *buffer2 =
-      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(context2)));
+      static_cast<char *>(_malloca(vklGetIntervalIteratorSize(&context2)));
 #else
   char *buffer1 =
-      static_cast<char *>(alloca(vklGetIntervalIteratorSize(context1)));
+      static_cast<char *>(alloca(vklGetIntervalIteratorSize(&context1)));
   char *buffer2 =
-      static_cast<char *>(alloca(vklGetIntervalIteratorSize(context2)));
+      static_cast<char *>(alloca(vklGetIntervalIteratorSize(&context2)));
 #endif
 
   size_t numIterations = 0;
 
   VKLIntervalIterator iterator1 = vklInitIntervalIterator(
-      context1, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer1);
+      &context1, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer1);
 
   VKLIntervalIterator iterator2 = vklInitIntervalIterator(
-      context2, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer2);
+      &context2, &rayOrigin, &rayDirection, &rayTRange, 0.f, buffer2);
 
   while (true) {
     VKLInterval interval1, interval2;
@@ -273,8 +273,8 @@ static void iterator_equivalence(VKLVolume vklVolume1,
   vklRelease(rangesData);
   vklRelease2(sampler1);
   vklRelease2(sampler2);
-  vklRelease(context1);
-  vklRelease(context2);
+  vklRelease2(context1);
+  vklRelease2(context2);
 }
 
 static void test_volume_equivalence(VKLVolume vklVolume1, VKLVolume vklVolume2)
@@ -303,11 +303,11 @@ static void test_volume_equivalence_rotation(VKLVolume vklVolume1,
       const AffineSpace3f rot =
           original * AffineSpace3f::rotate(axis, angleDeg * M_PI / 180.f);
 
-      vklSetParam(vklVolume1, "indexToObject", VKL_AFFINE3F, &rot);
-      vklCommit(vklVolume1);
+      vklSetParam2(vklVolume1, "indexToObject", VKL_AFFINE3F, &rot);
+      vklCommit2(vklVolume1);
 
-      vklSetParam(vklVolume2, "indexToObject", VKL_AFFINE3F, &rot);
-      vklCommit(vklVolume2);
+      vklSetParam2(vklVolume2, "indexToObject", VKL_AFFINE3F, &rot);
+      vklCommit2(vklVolume2);
 
       bounding_box_equivalence(vklVolume1, vklVolume2);
       sampling_gradient_equivalence(vklVolume1, vklVolume2);
@@ -338,8 +338,8 @@ TEST_CASE("VDB volume dense consistency", "[volume_sampling]")
 
     // VDB volumes use cell-centered data; therefore we must also on the
     // structuredRegular volume
-    vklSetBool(vklVolume2, "cellCentered", true);
-    vklCommit(vklVolume2);
+    vklSetBool2(vklVolume2, "cellCentered", true);
+    vklCommit2(vklVolume2);
 
     test_volume_equivalence(vklVolume1, vklVolume2);
     test_volume_equivalence_rotation(vklVolume1, vklVolume2);
@@ -383,8 +383,8 @@ TEST_CASE("VDB volume dense consistency", "[volume_sampling]")
         openvkl::utility::vdb::OpenVdbFloatGrid(getOpenVKLDevice(), grid);
     VKLVolume vklVolume1 = openvdbGrid.createVolume(false);
 
-    vklSetFloat(vklVolume1, "background", 0.f);
-    vklCommit(vklVolume1);
+    vklSetFloat2(vklVolume1, "background", 0.f);
+    vklCommit2(vklVolume1);
 
     // instantiate VKL `structuredRegular` volume
     VKLVolume vklVolume2 = vdbToStructuredRegular(grid);

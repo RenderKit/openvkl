@@ -97,7 +97,7 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
                                      particles.data(),
                                      VKL_DATA_SHARED_BUFFER,
                                      sizeof(vec4f));
-  vklSetData(volume, "particle.position", positionsData);
+  vklSetData2(volume, "particle.position", positionsData);
   vklRelease(positionsData);
 
   VKLData radiiData = vklNewData(getOpenVKLDevice(),
@@ -106,15 +106,15 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
                                  &(particles.data()[0].w),
                                  VKL_DATA_SHARED_BUFFER,
                                  sizeof(vec4f));
-  vklSetData(volume, "particle.radius", radiiData);
+  vklSetData2(volume, "particle.radius", radiiData);
   vklRelease(radiiData);
 
   const float radiusSupportFactor = 3.f;  // default
-  vklSetFloat(volume, "radiusSupportFactor", radiusSupportFactor);
+  vklSetFloat2(volume, "radiusSupportFactor", radiusSupportFactor);
 
-  vklSetFloat(volume, "background", 0.f);
+  vklSetFloat2(volume, "background", 0.f);
 
-  vklCommit(volume);
+  vklCommit2(volume);
 
   sampling_at_particle_centers(volume, particles);
 
@@ -129,7 +129,7 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
            boundingBox.upper.y == originParticleRadius * radiusSupportFactor &&
            boundingBox.upper.z == originParticleRadius * radiusSupportFactor));
 
-  vklRelease(volume);
+  vklRelease2(volume);
 
   shutdownOpenVKL();
 }

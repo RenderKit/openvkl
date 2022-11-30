@@ -22,9 +22,9 @@ int main()
   vkl_vec3i dimensions{128, 128, 128};
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
-  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3i2(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vklSetVec3f2(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f2(volume, "gridSpacing", 1, 1, 1);
 
   std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
 
@@ -66,10 +66,10 @@ int main()
   for (auto &attribute : attributes)
     vklRelease(attribute);
 
-  vklSetData(volume, "data", attributesData);
+  vklSetData2(volume, "data", attributesData);
   vklRelease(attributesData);
 
-  vklCommit(volume);
+  vklCommit2(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit2(sampler);
@@ -83,10 +83,10 @@ int main()
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetData(intervalContext, "valueRanges", rangesData);
+  vklSetData2(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
 
-  vklCommit(intervalContext);
+  vklCommit2(intervalContext);
 
   // hit iterator context setup
   float values[2] = {32, 96};
@@ -96,18 +96,18 @@ int main()
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetData(hitContext, "values", valuesData);
+  vklSetData2(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit(hitContext);
+  vklCommit2(hitContext);
 
   ispc::demo_ispc(
-      volume, &sampler, intervalContext, hitContext, ranges, values);
+      &volume, &sampler, &intervalContext, &hitContext, ranges, values);
 
-  vklRelease(hitContext);
-  vklRelease(intervalContext);
+  vklRelease2(hitContext);
+  vklRelease2(intervalContext);
   vklRelease2(sampler);
-  vklRelease(volume);
+  vklRelease2(volume);
 
   vklReleaseDevice(device);
 

@@ -17,16 +17,16 @@ int main(int argc, char **argv)
   std::vector<float> voxels = createVoxels(res);
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i(volume, "dimensions", res, res, res);
+  vklSetVec3i2(volume, "dimensions", res, res, res);
 
   const float spacing = 1.f / static_cast<float>(res);
-  vklSetVec3f(volume, "gridSpacing", spacing, spacing, spacing);
+  vklSetVec3f2(volume, "gridSpacing", spacing, spacing, spacing);
   VKLData voxelData = vklNewData(
       device, voxels.size(), VKL_FLOAT, voxels.data(), VKL_DATA_SHARED_BUFFER);
-  vklSetData(volume, "data", voxelData);
+  vklSetData2(volume, "data", voxelData);
   vklRelease(voxelData);
 
-  vklCommit(volume);
+  vklCommit2(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit2(sampler);
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
   fb.drawToTerminal();
 
   vklRelease2(sampler);
-  vklRelease(volume);
+  vklRelease2(volume);
   vklReleaseDevice(device);
 
   return 0;

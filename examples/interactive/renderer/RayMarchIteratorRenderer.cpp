@@ -27,12 +27,12 @@ namespace openvkl {
     template <class R>
     void RayMarchIteratorRendererShared<R>::updateIntervalContext()
     {
-      vklSetInt(
-          intervalContext, "attributeIndex", rendererParams->attributeIndex);
+      vklSetInt2(
+          *intervalContext, "attributeIndex", rendererParams->attributeIndex);
 
-      vklSetFloat(intervalContext,
-                  "intervalResolutionHint",
-                  params->intervalResolutionHint);
+      vklSetFloat2(*intervalContext,
+                   "intervalResolutionHint",
+                   params->intervalResolutionHint);
 
       // set interval context value ranges based on transfer function positive
       // opacity intervals, if we have any
@@ -48,13 +48,13 @@ namespace openvkl {
                                      valueRanges.data());
       }
 
-      vklSetData(intervalContext, "valueRanges", valueRangesData);
+      vklSetData2(*intervalContext, "valueRanges", valueRangesData);
 
       if (valueRangesData) {
         vklRelease(valueRangesData);
       }
 
-      vklCommit(intervalContext);
+      vklCommit2(*intervalContext);
     }
 
     template <class R>
@@ -62,7 +62,8 @@ namespace openvkl {
     {
       assert(!intervalContext);
       VKLSampler sampler = scene->volume.getSampler();
-      intervalContext    = vklNewIntervalIteratorContext(sampler);
+      intervalContext    = rkcommon::make_unique<VKLIntervalIteratorContext>(
+          vklNewIntervalIteratorContext(sampler));
       updateIntervalContext();
     }
 
@@ -70,7 +71,7 @@ namespace openvkl {
     void RayMarchIteratorRendererShared<R>::afterStop()
     {
       if (intervalContext) {
-        vklRelease(intervalContext);
+        vklRelease2(*intervalContext);
         intervalContext = nullptr;
       }
     }
@@ -134,10 +135,10 @@ namespace openvkl {
       tRange.upper = ray.t.upper;
 
       void *intervalIteratorBuffer =
-          alloca(vklGetIntervalIteratorSize(shared->intervalContext));
+          alloca(vklGetIntervalIteratorSize(shared->intervalContext.get()));
 
       VKLIntervalIterator iterator =
-          vklInitIntervalIterator(shared->intervalContext,
+          vklInitIntervalIterator(shared->intervalContext.get(),
                                   (vkl_vec3f *)&ray.org,
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,
@@ -246,7 +247,7 @@ namespace openvkl {
       ispc::RayMarchIteratorRenderer_renderPixel(
           ispcParams,
           ispcScene,
-          shared->intervalContext,
+          shared->intervalContext.get(),
           reinterpret_cast<const ispc::vec2i &>(resolution),
           offset,
           reinterpret_cast<ispc::vec4f *>(rgbas),

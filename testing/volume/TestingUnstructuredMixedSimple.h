@@ -140,30 +140,30 @@ namespace openvkl {
 
         VKLData cellData =
             vklNewData(device, cells.size(), VKL_UINT, cells.data());
-        vklSetData(volume, "cell.index", cellData);
+        vklSetData2(volume, "cell.index", cellData);
         vklRelease(cellData);
 
         VKLData celltypeData =
             vklNewData(device, cellTypes.size(), VKL_UCHAR, cellTypes.data());
-        vklSetData(volume, "cell.type", celltypeData);
+        vklSetData2(volume, "cell.type", celltypeData);
         vklRelease(celltypeData);
 
         VKLData valuesData = vklNewData(
             device, vertexValues.size(), VKL_FLOAT, vertexValues.data());
-        vklSetData(volume, "vertex.data", valuesData);
+        vklSetData2(volume, "vertex.data", valuesData);
         vklRelease(valuesData);
 
         VKLData vtxPositionsData =
             vklNewData(device, vertices.size(), VKL_VEC3F, vertices.data());
-        vklSetData(volume, "vertex.position", vtxPositionsData);
+        vklSetData2(volume, "vertex.position", vtxPositionsData);
         vklRelease(vtxPositionsData);
 
         VKLData topologyData =
             vklNewData(device, indices.size(), VKL_UINT, indices.data());
-        vklSetData(volume, "index", topologyData);
+        vklSetData2(volume, "index", topologyData);
         vklRelease(topologyData);
 
-        vklCommit(volume);
+        vklCommit2(volume);
 
         computedValueRange = computeValueRange(
             VKL_FLOAT, vertexValues.data(), vertexValues.size());

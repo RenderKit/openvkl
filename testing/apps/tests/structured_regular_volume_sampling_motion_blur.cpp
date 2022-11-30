@@ -85,9 +85,9 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   const vec3i dimensions(2);
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f);
-  vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vklSetVec3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-  vklSetVec3f(
+  vklSetVec3i2(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vklSetVec3f2(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+  vklSetVec3f2(
       volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
   std::vector<unsigned int> indices(9, 0);
@@ -122,15 +122,15 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   VKLData timesData =
       vklNewData(getOpenVKLDevice(), times.size(), VKL_FLOAT, times.data());
 
-  vklSetData(volume, "data", data);
-  vklSetData(volume, "temporallyUnstructuredIndices", indicesData);
-  vklSetData(volume, "temporallyUnstructuredTimes", timesData);
+  vklSetData2(volume, "data", data);
+  vklSetData2(volume, "temporallyUnstructuredIndices", indicesData);
+  vklSetData2(volume, "temporallyUnstructuredTimes", timesData);
 
   vklRelease(data);
   vklRelease(indicesData);
   vklRelease(timesData);
 
-  vklCommit(volume);
+  vklCommit2(volume);
 
   const float sampleTolerance = 0.f;
 
@@ -165,7 +165,7 @@ inline void sampling_on_vertices_vs_procedural_values_varying_TUV_data()
   }
 
   vklRelease2(vklSampler);
-  vklRelease(volume);
+  vklRelease2(volume);
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR

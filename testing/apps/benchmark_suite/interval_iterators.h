@@ -45,7 +45,7 @@ namespace api {
         vklSampler           = vklNewSampler(vklVolume);
         vklCommit2(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
-        vklCommit(intervalContext);
+        vklCommit2(intervalContext);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -54,7 +54,7 @@ namespace api {
         std::mt19937 eng(rd());
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
-        intervalIteratorSize = vklGetIntervalIteratorSize(intervalContext);
+        intervalIteratorSize = vklGetIntervalIteratorSize(&intervalContext);
         buffers.resize(intervalIteratorSize * state.threads());
       }
 
@@ -62,7 +62,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index();
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            intervalContext, &origin, &direction, &tRange, time, buffer);
+            &intervalContext, &origin, &direction, &tRange, time, buffer);
 
         benchmark::DoNotOptimize(iterator);
       }));
@@ -107,7 +107,7 @@ namespace api {
         vklSampler           = vklNewSampler(vklVolume);
         vklCommit2(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
-        vklCommit(intervalContext);
+        vklCommit2(intervalContext);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -119,7 +119,7 @@ namespace api {
         vkl_vec3f direction{0.f, 0.f, 1.f};
         vkl_range1f tRange{0.f, 1000.f};
 
-        intervalIteratorSize = vklGetIntervalIteratorSize(intervalContext);
+        intervalIteratorSize = vklGetIntervalIteratorSize(&intervalContext);
         buffers.resize(intervalIteratorSize * state.threads());
       }
 
@@ -130,7 +130,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index();
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            intervalContext, &origin, &direction, &tRange, time, buffer);
+            &intervalContext, &origin, &direction, &tRange, time, buffer);
 
         bool success = vklIterateInterval(iterator, &interval);
 
@@ -182,7 +182,7 @@ namespace api {
         vklSampler           = vklNewSampler(vklVolume);
         vklCommit2(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
-        vklCommit(intervalContext);
+        vklCommit2(intervalContext);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -191,7 +191,7 @@ namespace api {
         std::mt19937 eng(rd());
         origin = vkl_vec3f{distX(eng), distY(eng), -1.f};
 
-        intervalIteratorSize = vklGetIntervalIteratorSize(intervalContext);
+        intervalIteratorSize = vklGetIntervalIteratorSize(&intervalContext);
         buffers.resize(intervalIteratorSize * state.threads());
       }
 
@@ -200,7 +200,7 @@ namespace api {
         void *buffer =
             buffers.data() + intervalIteratorSize * state.thread_index();
         VKLIntervalIterator iterator = vklInitIntervalIterator(
-            intervalContext, &origin, &direction, &tRange, time, buffer);
+            &intervalContext, &origin, &direction, &tRange, time, buffer);
 
         vklIterateInterval(iterator, &interval);
 

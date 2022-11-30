@@ -35,10 +35,10 @@ void vector_hit_iteration(VKLSampler vklSampler,
 
   const int numActiveLanes = std::accumulate(valid.begin(), valid.end(), 0);
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(&hitContext));
   VKLHitIteratorW iterator =
       vklInitHitIteratorW(valid.data(),
-                          hitContext,
+                          &hitContext,
                           (const vkl_vvec3fW *)originsSOA.data(),
                           (const vkl_vvec3fW *)directionsSOA.data(),
                           (const vkl_vrange1fW *)tRangesSOA.data(),
@@ -104,10 +104,10 @@ void vector_hit_iteration_time_varying(
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
 
-  std::vector<char> buffer(vklGetHitIteratorSizeW(hitContext));
+  std::vector<char> buffer(vklGetHitIteratorSizeW(&hitContext));
   VKLHitIteratorW iterator =
       vklInitHitIteratorW(valid.data(),
-                          hitContext,
+                          &hitContext,
                           (const vkl_vvec3fW *)originsSOA.data(),
                           (const vkl_vvec3fW *)directionsSOA.data(),
                           (const vkl_vrange1fW *)tRangesSOA.data(),
@@ -206,10 +206,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
 
-    vklSetData(hitContext, "values", valuesData);
+    vklSetData2(hitContext, "values", valuesData);
     vklRelease(valuesData);
 
-    vklCommit(hitContext);
+    vklCommit2(hitContext);
 
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -284,7 +284,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       }
     }
 
-    vklRelease(hitContext);
+    vklRelease2(hitContext);
     vklRelease2(vklSampler);
   }
 
@@ -312,10 +312,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
       VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
 
-      vklSetData(hitContext, "values", valuesData);
+      vklSetData2(hitContext, "values", valuesData);
       vklRelease(valuesData);
 
-      vklCommit(hitContext);
+      vklCommit2(hitContext);
 
       vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -400,7 +400,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
       }
 
-      vklRelease(hitContext);
+      vklRelease2(hitContext);
       vklRelease2(vklSampler);
     }
   }
@@ -425,10 +425,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
 
-    vklSetData(hitContext, "values", valuesData);
+    vklSetData2(hitContext, "values", valuesData);
     vklRelease(valuesData);
 
-    vklCommit(hitContext);
+    vklCommit2(hitContext);
 
     // will be used to initialize all members of hit struct
     constexpr float initialHitValue = 999999.f;
@@ -473,10 +473,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         const std::vector<float> times(callingWidth, 0.f);
 
         if (callingWidth == 4) {
-          std::vector<char> buffer(vklGetHitIteratorSize4(hitContext));
+          std::vector<char> buffer(vklGetHitIteratorSize4(&hitContext));
           VKLHitIterator4 iterator =
               vklInitHitIterator4(valid.data(),
-                                  hitContext,
+                                  &hitContext,
                                   (const vkl_vvec3f4 *)originsSOA.data(),
                                   (const vkl_vvec3f4 *)directionsSOA.data(),
                                   (const vkl_vrange1f4 *)tRangesSOA.data(),
@@ -536,10 +536,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 8) {
-          std::vector<char> buffer(vklGetHitIteratorSize8(hitContext));
+          std::vector<char> buffer(vklGetHitIteratorSize8(&hitContext));
           VKLHitIterator8 iterator =
               vklInitHitIterator8(valid.data(),
-                                  hitContext,
+                                  &hitContext,
                                   (const vkl_vvec3f8 *)originsSOA.data(),
                                   (const vkl_vvec3f8 *)directionsSOA.data(),
                                   (const vkl_vrange1f8 *)tRangesSOA.data(),
@@ -599,10 +599,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
 
         else if (callingWidth == 16) {
-          std::vector<char> buffer(vklGetHitIteratorSize16(hitContext));
+          std::vector<char> buffer(vklGetHitIteratorSize16(&hitContext));
           VKLHitIterator16 iterator =
               vklInitHitIterator16(valid.data(),
-                                   hitContext,
+                                   &hitContext,
                                    (const vkl_vvec3f16 *)originsSOA.data(),
                                    (const vkl_vvec3f16 *)directionsSOA.data(),
                                    (const vkl_vrange1f16 *)tRangesSOA.data(),
@@ -667,7 +667,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       }
     }
 
-    vklRelease(hitContext);
+    vklRelease2(hitContext);
     vklRelease2(vklSampler);
   }
 

@@ -15,9 +15,9 @@ export void Scene_destroy(void *uniform self)
   delete ((Scene * uniform) self);
 }
 
-export void Scene_setVolume(void *uniform self, void *uniform volume)
+export void Scene_setVolume(void *uniform self, const void *uniform volume)
 {
-  ((Scene * uniform) self)->volume = ((uniform VKLVolume)volume);
+  ((Scene * uniform) self)->volume = *((VKLVolume *uniform)volume);
 }
 
 export void Scene_setSampler(void *uniform self, const void *uniform sampler)

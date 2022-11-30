@@ -192,15 +192,15 @@ namespace openvkl {
 
     inline void TestingVolume::release()
     {
-      if (volume) {
-        vklRelease(volume);
-        volume = nullptr;
+      if (volume.host) {
+        vklRelease2(volume);
+        volume.host = nullptr;
       }
     }
 
     inline VKLVolume TestingVolume::getVKLVolume(VKLDevice device)
     {
-      if (!volume) {
+      if (!volume.host) {
         generateVKLVolume(device);
       }
 

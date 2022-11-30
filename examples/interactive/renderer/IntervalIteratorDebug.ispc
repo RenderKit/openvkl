@@ -56,8 +56,8 @@ export void IntervalIteratorDebug_renderPixel(const void *uniform _params,
   const uniform IntervalIteratorDebugParams params =
       *((const IntervalIteratorDebugParams *uniform)_params);
   const uniform Scene &scene = *((const Scene *uniform)_scene);
-  uniform VKLIntervalIteratorContext intervalContext =
-      ((uniform VKLIntervalIteratorContext)_intervalContext);
+  VKLIntervalIteratorContext *uniform intervalContext =
+      ((VKLIntervalIteratorContext * uniform) _intervalContext);
 
   const uint32 pixelIdx = offset + programIndex;
   vec2i pixel;

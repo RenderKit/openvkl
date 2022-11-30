@@ -26,7 +26,7 @@ namespace openvkl {
     {
      public:
       Volume();
-      Volume(const Volume &) = delete;
+      Volume(const Volume &)            = delete;
       Volume &operator=(const Volume &) = delete;
       Volume(Volume &&other);
       Volume &operator=(Volume &&other);
@@ -37,7 +37,12 @@ namespace openvkl {
       // are fully hidden.
       VKLVolume getVolume() const
       {
-        return vklVolume;
+        return *vklVolume;
+      }
+
+      const VKLVolume *getVolumePtr() const
+      {
+        return vklVolume.get();
       }
 
       const box3f &getBounds() const
@@ -65,11 +70,13 @@ namespace openvkl {
         return volumeParams;
       }
 
-      void setVolumeDirty() {
+      void setVolumeDirty()
+      {
         volumeNeedsUpdate = true;
       }
 
-      bool volumeIsDirty() const {
+      bool volumeIsDirty() const
+      {
         return volumeNeedsUpdate;
       }
 
@@ -78,7 +85,8 @@ namespace openvkl {
         return samplerParams;
       }
 
-      void setSamplerDirty() {
+      void setSamplerDirty()
+      {
         samplerNeedsUpdate = true;
       }
 
@@ -117,7 +125,7 @@ namespace openvkl {
       bool samplerNeedsUpdate{true};
 
       std::unique_ptr<testing::TestingVolume> testingVolume;
-      VKLVolume vklVolume{nullptr};
+      std::unique_ptr<VKLVolume> vklVolume;
       box3f volumeBounds;
       unsigned int numAttributes{0};
       std::unique_ptr<VKLSampler> vklSampler;

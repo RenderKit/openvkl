@@ -52,8 +52,8 @@ export void HitIteratorRenderer_renderPixel(const void *uniform _params,
   const uniform HitIteratorRendererParams params =
       *((const HitIteratorRendererParams *uniform)_params);
   const uniform Scene &scene = *((const Scene *uniform)_scene);
-  uniform VKLHitIteratorContext hitContext =
-      ((uniform VKLHitIteratorContext)_hitContext);
+  VKLHitIteratorContext *uniform hitContext =
+      ((VKLHitIteratorContext * uniform) _hitContext);
 
   const uint32 pixelIdx = offset + programIndex;
   vec2i pixel;

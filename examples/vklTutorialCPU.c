@@ -66,12 +66,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
 
-  vklSetData(intervalContext, "valueRanges", rangesData);
+  vklSetData2(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
 
-  vklCommit(intervalContext);
+  vklCommit2(intervalContext);
 
   // hit iterator context setup
   float values[2] = {32, 96};
@@ -81,12 +81,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetInt(hitContext, "attributeIndex", attributeIndex);
+  vklSetInt2(hitContext, "attributeIndex", attributeIndex);
 
-  vklSetData(hitContext, "values", valuesData);
+  vklSetData2(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit(hitContext);
+  vklCommit2(hitContext);
 
   // ray definition for iterators
   vkl_vec3f rayOrigin    = {0, 1, 1};
@@ -105,12 +105,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetIntervalIteratorSize(intervalContext));
+    char *buffer = _malloca(vklGetIntervalIteratorSize(&intervalContext));
 #else
-    char buffer[vklGetIntervalIteratorSize(intervalContext)];
+    char buffer[vklGetIntervalIteratorSize(&intervalContext)];
 #endif
     VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
-        intervalContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
+        &intervalContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -142,12 +142,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetHitIteratorSize(hitContext));
+    char *buffer = _malloca(vklGetHitIteratorSize(&hitContext));
 #else
-    char buffer[vklGetHitIteratorSize(hitContext)];
+    char buffer[vklGetHitIteratorSize(&hitContext)];
 #endif
     VKLHitIterator hitIterator = vklInitHitIterator(
-        hitContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
+        &hitContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -166,8 +166,8 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #endif
   }
 
-  vklRelease(hitContext);
-  vklRelease(intervalContext);
+  vklRelease2(hitContext);
+  vklRelease2(intervalContext);
   vklRelease2(sampler);
 }
 
@@ -304,10 +304,10 @@ int main()
   const int numAttributes = 3;
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i(
+  vklSetVec3i2(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
-  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
-  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3f2(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f2(volume, "gridSpacing", 1, 1, 1);
 
   float *voxels = malloc(numVoxels * sizeof(float));
 
@@ -355,16 +355,16 @@ int main()
   vklRelease(data1);
   vklRelease(data2);
 
-  vklSetData(volume, "data", attributesData);
+  vklSetData2(volume, "data", attributesData);
   vklRelease(attributesData);
 
-  vklCommit(volume);
+  vklCommit2(volume);
 
   demoScalarAPI(device, volume);
   demoVectorAPI(volume);
   demoStreamAPI(volume);
 
-  vklRelease(volume);
+  vklRelease2(volume);
 
   vklReleaseDevice(device);
 

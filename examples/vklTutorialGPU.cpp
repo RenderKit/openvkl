@@ -99,10 +99,10 @@ int main()
   const int numAttributes = 3;
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i(
+  vklSetVec3i2(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
-  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
-  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3f2(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f2(volume, "gridSpacing", 1, 1, 1);
 
   std::vector<float> voxels(numVoxels);
 
@@ -145,14 +145,14 @@ int main()
   vklRelease(data1);
   vklRelease(data2);
 
-  vklSetData(volume, "data", attributesData);
+  vklSetData2(volume, "data", attributesData);
   vklRelease(attributesData);
 
-  vklCommit(volume);
+  vklCommit2(volume);
 
   demoGpuAPI(syclQueue, device, volume);
 
-  vklRelease(volume);
+  vklRelease2(volume);
 
   vklReleaseDevice(device);
 

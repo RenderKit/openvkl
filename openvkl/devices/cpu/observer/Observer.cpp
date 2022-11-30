@@ -7,7 +7,9 @@ namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    Observer<W>::Observer(ManagedObject &target) : target(&target)
+    Observer<W>::Observer(ManagedObject &target) :
+        ManagedObject(target.getDevice()),
+        target(&target)
     {
     }
 

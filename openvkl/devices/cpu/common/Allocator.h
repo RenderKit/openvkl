@@ -17,7 +17,7 @@ namespace openvkl {
     class Allocator : public ManagedObject
     {
      public:
-      Allocator()                  = default;
+      Allocator(Device *device) : ManagedObject(device) {};
       Allocator(const Allocator &) = delete;
       Allocator &operator=(const Allocator &) = delete;
       Allocator(Allocator &&)                 = delete;

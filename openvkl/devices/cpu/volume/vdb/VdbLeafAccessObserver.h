@@ -40,7 +40,7 @@ namespace openvkl {
       ObserverRegistry<W> &getRegistry();
 
      private:
-      Allocator allocator;
+      Allocator allocator{this->getDevice()};
       size_t size{0};
       vkl_uint32 *accessBuffer{nullptr};
     };

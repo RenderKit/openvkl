@@ -195,7 +195,7 @@ namespace openvkl {
       Ref<const DataT<float>> denseTemporallyUnstructuredTimes;
 
       VdbGrid *grid{nullptr};
-      Allocator allocator;
+      Allocator allocator{this->getDevice()};
 
       // Data can either be interpreted as constant cell data, or
       // vertex-centered data. Note that the vertex-centered interpretation is

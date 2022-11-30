@@ -38,7 +38,7 @@ namespace openvkl {
       void clear();
 
      private:
-      Allocator allocator;
+      Allocator allocator{this->getDevice()};
       size_t numFloats{0};
       size_t size{0};
       float *buffer{nullptr};

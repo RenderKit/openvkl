@@ -25,7 +25,6 @@ namespace openvkl {
   {
     using VKL_PTR = ManagedObject *;
 
-    ManagedObject() = default;
     ManagedObject(Device *device) : device(device) {};
 
     virtual ~ManagedObject() override;

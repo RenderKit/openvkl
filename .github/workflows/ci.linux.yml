@@ -33,7 +33,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icc:
     secrets: inherit
@@ -62,7 +62,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icx:
     secrets: inherit
@@ -92,7 +92,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icx-tbb2020:
     secrets: inherit
@@ -122,7 +122,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icx-tbb2020-avx512_8:
     secrets: inherit
@@ -152,7 +152,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos8:
     secrets: inherit
@@ -176,7 +176,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   # uses a newer CMake which allows OpenVDB to build
   build-centos8-module-cmake:
@@ -202,7 +202,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-ubuntu18_04:
     secrets: inherit
@@ -251,7 +251,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu20_04:
     needs: build-ubuntu20_04
@@ -264,7 +264,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu22_04:
     needs: build-ubuntu22_04
@@ -277,7 +277,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch:
     secrets: inherit
@@ -301,7 +301,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-clang:
     secrets: inherit
@@ -327,7 +327,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-address-sanitizer:
     secrets: inherit
@@ -354,7 +354,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-debug:
     secrets: inherit
@@ -378,7 +378,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-TBB2020:
     secrets: inherit
@@ -402,7 +402,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-devel-rkdeps:
     secrets: inherit
@@ -426,7 +426,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-linux-arch:
     secrets: inherit
@@ -452,7 +452,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-from-install-centos7:
     needs: build-centos7

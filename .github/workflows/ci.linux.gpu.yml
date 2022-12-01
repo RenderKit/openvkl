@@ -15,7 +15,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/get_dpcpp_gfx_linux.yml@main
     with:
-      dpcpp-version: sycl-nightly/20221001
+      dpcpp-version: sycl-nightly/20221124
       gfx-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12317/artifacts/Linux/Ubuntu/22.04/Release
 
   build-gpu-ubuntu22_04:
@@ -69,6 +69,7 @@ jobs:
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklTutorialGPU
+        ./bin/vklTestsGPU --durations yes
 
   test-dg2-ubuntu22_04:
     secrets: inherit
@@ -86,3 +87,4 @@ jobs:
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklTutorialGPU
+        ./bin/vklTestsGPU --durations yes

@@ -102,7 +102,7 @@ if (BUILD_TESTING)
     ${RKCOMMON_INCLUDE_DIRS}
   )
 
-  openvkl_add_executable_ispc(vklTests
+  openvkl_add_executable_ispc(vklTestsCPU
     vklTests.cpp
     tests/alignment.cpp
     tests/background_undefined.cpp
@@ -146,30 +146,37 @@ if (BUILD_TESTING)
     tests/multi_device.cpp
   )
 
-  target_include_directories(vklTests PRIVATE ${ISPC_TARGET_DIR})
+  target_include_directories(vklTestsCPU PRIVATE ${ISPC_TARGET_DIR})
 
-  target_link_libraries(vklTests PRIVATE openvkl_testing_cpu)
+  target_link_libraries(vklTestsCPU PRIVATE openvkl_testing_cpu)
 
   # Needed for SIMD conformance tests
   foreach(TARGET_NAME "openvkl_module_cpu_device_4"
                       "openvkl_module_cpu_device_8"
                       "openvkl_module_cpu_device_16")
     if (TARGET ${TARGET_NAME})
-      target_link_libraries(vklTests PRIVATE ${TARGET_NAME})
+      target_link_libraries(vklTestsCPU PRIVATE ${TARGET_NAME})
     endif()
   endforeach()
 
-  install(TARGETS vklTests
+  install(TARGETS vklTestsCPU
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   )
 
-  ## Expose tests to CTest ##
+  if (${OPENVKL_ENABLE_DEVICE_GPU})
+    openvkl_add_executable_ispc(vklTestsGPU
+      vklTests.cpp
+      tests/structured_regular_volume_sampling.cpp
+    )
+    target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 
-  add_test(NAME "simd_conformance"    COMMAND vklTests "[simd_conformance]")
-  add_test(NAME "interval_iterators"  COMMAND vklTests "[interval_iterators]")
-  add_test(NAME "hit_iterators"       COMMAND vklTests "[hit_iterators]")
-  add_test(NAME "volume_bounding_box" COMMAND vklTests "[volume_bounding_box]")
-  add_test(NAME "volume_gradients"    COMMAND vklTests "[volume_gradients]")
-  add_test(NAME "volume_sampling"     COMMAND vklTests "[volume_sampling]")
-  add_test(NAME "volume_value_range"  COMMAND vklTests "[volume_value_range]")
+    target_link_libraries(vklTestsGPU PRIVATE openvkl_testing_gpu)
+
+    # We need to disable catching signals to make USM Shared buffers on GPU work properly
+    target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS=1)
+
+    install(TARGETS vklTestsGPU
+      RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+  endif()
 endif()

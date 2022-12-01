@@ -8,7 +8,7 @@ echo Running tests
 
 set PATH=%PATH%;.\build\install\bin
 
-call .\build\install\bin\vklTutorial.exe
+call .\build\install\bin\vklTutorialCPU.exe
 call .\build\install\bin\vklTutorialISPC.exe
 call .\build\install\bin\vklTests.exe
 

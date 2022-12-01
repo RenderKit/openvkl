@@ -28,7 +28,7 @@ cmake --build . --config Release --target ALL_BUILD -- /m /nologo
 
 $env:PATH += ";$env:openvkl_DIR\bin"
 
-.\Release\vklTutorial.exe
+.\Release\vklTutorialCPU.exe
 
 #### Run binaries from release package to verify functionality ####
 

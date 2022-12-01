@@ -32,7 +32,7 @@ jobs:
       artifact-in: build-macOS
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -57,7 +57,7 @@ jobs:
       artifact-in: build-macOS-TBB2020
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -84,7 +84,7 @@ jobs:
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -111,6 +111,6 @@ jobs:
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes

@@ -31,7 +31,7 @@ jobs:
       artifact-in: build-centos7
       image: centos:7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -60,7 +60,7 @@ jobs:
       artifact-in: build-centos7-icc
       image: centos:7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -90,7 +90,7 @@ jobs:
       artifact-in: build-centos7-icx
       image: centos:7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -120,7 +120,7 @@ jobs:
       artifact-in: build-centos7-icx-tbb2020
       image: centos:7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -150,7 +150,7 @@ jobs:
       artifact-in: build-centos7-icx-tbb2020-avx512_8
       image: centos:7
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -174,7 +174,7 @@ jobs:
       artifact-in: build-centos8
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -200,7 +200,7 @@ jobs:
       artifact-in: build-centos8-module-cmake
       image: centos:8
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -249,7 +249,7 @@ jobs:
       image: ubuntu:18.04
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -262,7 +262,7 @@ jobs:
       image: ubuntu:20.04
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -275,7 +275,7 @@ jobs:
       image: ubuntu:22.04
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -299,7 +299,7 @@ jobs:
       artifact-in: build-arch
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -325,7 +325,7 @@ jobs:
       artifact-in: build-arch-clang
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -352,7 +352,7 @@ jobs:
       artifact-in: build-arch-address-sanitizer
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -376,7 +376,7 @@ jobs:
       artifact-in: build-arch-debug
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -400,7 +400,7 @@ jobs:
       artifact-in: build-arch-TBB2020
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -424,7 +424,7 @@ jobs:
       artifact-in: build-arch-devel-rkdeps
       image: ospray/docker-images:arch
       cmd: |
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
@@ -450,7 +450,7 @@ jobs:
       image: ospray/docker-images:arch
       cmd: |
         export LD_LIBRARY_PATH=./build/install/lib
-        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 

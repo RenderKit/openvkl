@@ -29,7 +29,7 @@ cmake --build .
 
 export LD_LIBRARY_PATH=${openvkl_DIR}/lib:${LD_LIBRARY_PATH}
 
-./vklTutorial
+./vklTutorialCPU
 
 #### Run binaries from release package to verify functionality ####
 

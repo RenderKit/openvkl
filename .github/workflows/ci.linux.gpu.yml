@@ -35,6 +35,24 @@ jobs:
         gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON"
 
+  test-build-from-install-ubuntu22_04-dg2:
+    needs: [ download-dpcpp-gfx, build-gpu-ubuntu22_04 ]
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      image: ubuntu:22.04
+      runs-on: '[ "Linux", "docker", "dg2" ]'
+      artifact-in: build-gpu-ubuntu22_04
+      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
+      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      options: --device=/dev/dri:/dev/dri
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+        export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
+        gitlab/build-from-install.sh
+
   test-pvc-ubuntu22_04:
     secrets: inherit
     needs: [ download-dpcpp-gfx, build-gpu-ubuntu22_04 ]

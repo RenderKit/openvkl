@@ -3,7 +3,10 @@
 
 #pragma once
 
-#include "openvkl/iterator.isph"
-
-// use public VKLHit struct internally
-typedef VKLHit Hit;
+// this should match the layout of VKLHit
+struct Hit
+{
+  float t;
+  float sample;
+  float epsilon;
+};

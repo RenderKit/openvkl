@@ -1,6 +1,7 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "../../../common/IteratorBase.h"
 #include "../common/simd.h"
 #include "AddDeviceAPIs.h"
 #include "openvkl/common/ManagedObject.h"
@@ -254,3 +255,213 @@ extern "C" OPENVKL_DLLEXPORT void vklComputeGradientN(
       times);
 }
 OPENVKL_CATCH_END()
+
+///////////////////////////////////////////////////////////////////////////////
+// Iterator helpers ///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// helpers for iterators. note that iterators are not managed objects, and that
+// we can't use std::is_convertible<> without augmenting the public (opaque)
+// iterator types
+template <typename IteratorT>
+typename std::enable_if<
+    std::is_same<IteratorT, IntervalIterator>::value ||
+        std::is_same<IteratorT, IntervalIterator4>::value ||
+        std::is_same<IteratorT, IntervalIterator8>::value ||
+        std::is_same<IteratorT, IntervalIterator16>::value ||
+        std::is_same<IteratorT, HitIterator>::value ||
+        std::is_same<IteratorT, HitIterator4>::value ||
+        std::is_same<IteratorT, HitIterator8>::value ||
+        std::is_same<IteratorT, HitIterator16>::value,
+    AddDeviceAPIs *>::type inline deviceFrom(IteratorT *it)
+{
+  return static_cast<AddDeviceAPIs *>(
+      reinterpret_cast<openvkl::IteratorBase *>(it)->device);
+}
+
+template <typename IteratorT>
+typename std::enable_if<
+    std::is_same<IteratorT, IntervalIterator>::value ||
+        std::is_same<IteratorT, IntervalIterator4>::value ||
+        std::is_same<IteratorT, IntervalIterator8>::value ||
+        std::is_same<IteratorT, IntervalIterator16>::value ||
+        std::is_same<IteratorT, HitIterator>::value ||
+        std::is_same<IteratorT, HitIterator4>::value ||
+        std::is_same<IteratorT, HitIterator8>::value ||
+        std::is_same<IteratorT, HitIterator16>::value,
+    void>::type inline deviceAttach(Device *device, IteratorT *it)
+{
+  auto itObj    = reinterpret_cast<openvkl::IteratorBase *>(it);
+  itObj->device = device;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Interval iterator //////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+#define OPENVKL_CATCH_BEGIN_ITER_UNSAFE(deviceSource)    \
+  {                                                      \
+    assert(deviceSource != nullptr);                     \
+    AddDeviceAPIs *deviceObj = deviceFrom(deviceSource); \
+    try {
+extern "C" VKLIntervalIterator vklInitIntervalIterator(
+    const VKLIntervalIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  auto it = deviceObj->initIntervalIterator1(
+      context,
+      reinterpret_cast<const vvec3fn<1> &>(*origin),
+      reinterpret_cast<const vvec3fn<1> &>(*direction),
+      reinterpret_cast<const vrange1fn<1> &>(*tRange),
+      time,
+      buffer);
+  deviceAttach(deviceObj, it);
+  return it;
+}
+OPENVKL_CATCH_END(nullptr)
+
+#define __define_vklInitIntervalIteratorN(WIDTH)                        \
+  extern "C" VKLIntervalIterator##WIDTH vklInitIntervalIterator##WIDTH( \
+      const int *valid,                                                 \
+      const VKLIntervalIteratorContext *context,                        \
+      const vkl_vvec3f##WIDTH *origin,                                  \
+      const vkl_vvec3f##WIDTH *direction,                               \
+      const vkl_vrange1f##WIDTH *tRange,                                \
+      const float *times,                                               \
+      void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)                 \
+  {                                                                     \
+    auto it = deviceObj->initIntervalIterator##WIDTH(                   \
+        valid,                                                          \
+        context,                                                        \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),              \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*direction),           \
+        reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),            \
+        times,                                                          \
+        buffer);                                                        \
+    deviceAttach(deviceObj, it);                                        \
+    return it;                                                          \
+  }                                                                     \
+  OPENVKL_CATCH_END(nullptr)
+
+__define_vklInitIntervalIteratorN(4);
+__define_vklInitIntervalIteratorN(8);
+__define_vklInitIntervalIteratorN(16);
+
+#undef __define_vklInitIntervalIteratorN
+
+extern "C" int vklIterateInterval(VKLIntervalIterator iterator,
+                                  VKLInterval *interval)
+    OPENVKL_CATCH_BEGIN_ITER_UNSAFE(iterator)
+{
+  int result;
+  deviceObj->iterateInterval1(
+      iterator, reinterpret_cast<vVKLIntervalN<1> &>(*interval), &result);
+  return result;
+}
+OPENVKL_CATCH_END(false)
+
+#define __define_vklIterateIntervalN(WIDTH)                  \
+  extern "C" void vklIterateInterval##WIDTH(                 \
+      const int *valid,                                      \
+      VKLIntervalIterator##WIDTH iterator,                   \
+      VKLInterval##WIDTH *interval,                          \
+      int *result) OPENVKL_CATCH_BEGIN_ITER_UNSAFE(iterator) \
+  {                                                          \
+    deviceObj->iterateInterval##WIDTH(                       \
+        valid,                                               \
+        iterator,                                            \
+        reinterpret_cast<vVKLIntervalN<WIDTH> &>(*interval), \
+        result);                                             \
+  }                                                          \
+  OPENVKL_CATCH_END()
+
+__define_vklIterateIntervalN(4);
+__define_vklIterateIntervalN(8);
+__define_vklIterateIntervalN(16);
+
+#undef __define_vklIterateIntervalN
+
+///////////////////////////////////////////////////////////////////////////////
+// Hit iterator ///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" VKLHitIterator vklInitHitIterator(
+    const VKLHitIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  auto it = deviceObj->initHitIterator1(
+      context,
+      reinterpret_cast<const vvec3fn<1> &>(*origin),
+      reinterpret_cast<const vvec3fn<1> &>(*direction),
+      reinterpret_cast<const vrange1fn<1> &>(*tRange),
+      time,
+      buffer);
+  deviceAttach(deviceObj, it);
+  return it;
+}
+OPENVKL_CATCH_END(nullptr)
+
+#define __define_vklInitHitIteratorN(WIDTH)                   \
+  extern "C" VKLHitIterator##WIDTH vklInitHitIterator##WIDTH( \
+      const int *valid,                                       \
+      const VKLHitIteratorContext *context,                   \
+      const vkl_vvec3f##WIDTH *origin,                        \
+      const vkl_vvec3f##WIDTH *direction,                     \
+      const vkl_vrange1f##WIDTH *tRange,                      \
+      const float *times,                                     \
+      void *buffer) OPENVKL_CATCH_BEGIN_UNSAFE(context)       \
+  {                                                           \
+    auto it = deviceObj->initHitIterator##WIDTH(              \
+        valid,                                                \
+        context,                                              \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*origin),    \
+        reinterpret_cast<const vvec3fn<WIDTH> &>(*direction), \
+        reinterpret_cast<const vrange1fn<WIDTH> &>(*tRange),  \
+        times,                                                \
+        buffer);                                              \
+    deviceAttach(deviceObj, it);                              \
+    return it;                                                \
+  }                                                           \
+  OPENVKL_CATCH_END(nullptr)
+
+__define_vklInitHitIteratorN(4);
+__define_vklInitHitIteratorN(8);
+__define_vklInitHitIteratorN(16);
+
+#undef __define_vklInitHitIteratorN
+
+extern "C" int vklIterateHit(VKLHitIterator iterator, VKLHit *hit)
+    OPENVKL_CATCH_BEGIN_ITER_UNSAFE(iterator)
+{
+  int result;
+  deviceObj->iterateHit1(
+      iterator, reinterpret_cast<vVKLHitN<1> &>(*hit), &result);
+  return result;
+}
+OPENVKL_CATCH_END(false)
+
+#define __define_vklIterateHitN(WIDTH)                                       \
+  extern "C" void vklIterateHit##WIDTH(const int *valid,                     \
+                                       VKLHitIterator##WIDTH iterator,       \
+                                       VKLHit##WIDTH *hit,                   \
+                                       int *result)                          \
+      OPENVKL_CATCH_BEGIN_ITER_UNSAFE(iterator)                              \
+  {                                                                          \
+    deviceObj->iterateHit##WIDTH(                                            \
+        valid, iterator, reinterpret_cast<vVKLHitN<WIDTH> &>(*hit), result); \
+  }                                                                          \
+  OPENVKL_CATCH_END()
+
+__define_vklIterateHitN(4);
+__define_vklIterateHitN(8);
+__define_vklIterateHitN(16);
+
+#undef __define_vklIterateHitN

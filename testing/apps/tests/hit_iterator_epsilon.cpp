@@ -4,6 +4,7 @@
 #include "../../external/catch.hpp"
 #include "../common/Traits.h"
 #include "../common/simd.h"
+#include "common/DeviceTraits.h"
 #include "openvkl_testing.h"
 
 using namespace rkcommon;
@@ -64,11 +65,11 @@ void vector_hit_epsilons(std::shared_ptr<TestingVolume> testingVolume,
                          const vkl_vec3f &origin = vkl_vec3f{0.5f, 0.5f, -1.f},
                          const vkl_vec3f &direction = vkl_vec3f{0.f, 0.f, 1.f})
 {
-  using VKLHitIteratorW       = typename vklPublicWideTypes<W>::VKLHitIteratorW;
-  using VKLHitW               = typename vklPublicWideTypes<W>::VKLHitW;
-  auto vklGetHitIteratorSizeW = vklPublicWideTypes<W>().vklGetHitIteratorSizeW;
-  auto vklInitHitIteratorW    = vklPublicWideTypes<W>().vklInitHitIteratorW;
-  auto vklIterateHitW         = vklPublicWideTypes<W>().vklIterateHitW;
+  using VKLHitIteratorW       = typename vklDeviceTypes<W>::VKLHitIteratorW;
+  using VKLHitW               = typename vklDeviceTypes<W>::VKLHitW;
+  auto vklGetHitIteratorSizeW = vklDeviceTypes<W>().vklGetHitIteratorSizeW;
+  auto vklInitHitIteratorW    = vklDeviceTypes<W>().vklInitHitIteratorW;
+  auto vklIterateHitW         = vklDeviceTypes<W>().vklIterateHitW;
 
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;

@@ -96,9 +96,14 @@ endif()
 
 # Functional tests
 if (BUILD_TESTING)
+
+  # reset includes used for CPU tests
+  set(ISPC_INCLUDE_DIR "")
+
   include_directories_ispc(
     ${PROJECT_SOURCE_DIR}/openvkl/include
     ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu
+    ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu/include
     ${RKCOMMON_INCLUDE_DIRS}
   )
 
@@ -164,6 +169,16 @@ if (BUILD_TESTING)
   )
 
   if (${OPENVKL_ENABLE_DEVICE_GPU})
+
+    # reset includes used for CPU tests
+    set(ISPC_INCLUDE_DIR "")
+
+    include_directories_ispc(
+      ${PROJECT_SOURCE_DIR}/openvkl/include
+      ${PROJECT_SOURCE_DIR}/openvkl/devices/gpu/include
+      ${RKCOMMON_INCLUDE_DIRS}
+    )
+
     openvkl_add_executable_ispc(vklTestsGPU
       vklTests.cpp
       tests/structured_regular_volume_sampling.cpp

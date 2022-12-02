@@ -6,7 +6,7 @@
 #include <type_traits>
 #include "../common/IteratorBase.h"
 #include "../common/align.h"
-#include "../common/simd.h"
+#include "../common/device_simd.h"
 #include "IteratorContext.h"
 #include "openvkl/openvkl.h"
 
@@ -30,10 +30,10 @@ namespace openvkl {
       /*
        * Disallow all kinds of copying to be on the safe side.
        */
-      Iterator(const Iterator &) = delete;
+      Iterator(const Iterator &)            = delete;
       Iterator &operator=(const Iterator &) = delete;
       Iterator(Iterator &&)                 = delete;
-      Iterator &operator=(Iterator &&) = delete;
+      Iterator &operator=(Iterator &&)      = delete;
 
       // WORKAROUND ICC 15: This destructor must be public!
       virtual ~Iterator() = default;

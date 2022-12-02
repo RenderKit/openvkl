@@ -7,6 +7,7 @@
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 #include "openvkl/openvkl.isph"
+#include "openvkl/device/openvkl.isph"
 
 export void delete_uniform(void *uniform ptr)
 {

@@ -27,7 +27,8 @@ using namespace rkcommon::math;
 namespace openvkl {
   namespace api {
 
-    typedef struct {
+    typedef struct
+    {
       void *allocatedBuffer;
       void *privateManagement;
     } memstate;
@@ -42,7 +43,8 @@ namespace openvkl {
       virtual ~Device() override        = default;
 
       static Device *createDevice(const std::string &deviceName);
-      static void registerDevice(const std::string &type, FactoryDeviceFcn<Device> f);
+      static void registerDevice(const std::string &type,
+                                 FactoryDeviceFcn<Device> f);
 
       // error tracking
       VKLError lastErrorCode       = VKL_NO_ERROR;
@@ -119,46 +121,6 @@ namespace openvkl {
 
 #undef __define_getIntervalIteratorSizeN
 
-      virtual VKLIntervalIterator initIntervalIterator1(
-          const VKLIntervalIteratorContext *context,
-          const vvec3fn<1> &origin,
-          const vvec3fn<1> &direction,
-          const vrange1fn<1> &tRange,
-          float time,
-          void *buffer) const = 0;
-
-#define __define_initIntervalIteratorN(WIDTH)                     \
-  virtual VKLIntervalIterator##WIDTH initIntervalIterator##WIDTH( \
-      const int *valid,                                           \
-      const VKLIntervalIteratorContext *context,                  \
-      const vvec3fn<WIDTH> &origin,                               \
-      const vvec3fn<WIDTH> &direction,                            \
-      const vrange1fn<WIDTH> &tRange,                             \
-      const float *times,                                         \
-      void *buffer) const = 0;
-
-      __define_initIntervalIteratorN(4);
-      __define_initIntervalIteratorN(8);
-      __define_initIntervalIteratorN(16);
-
-#undef __define_initIntervalIteratorN
-
-      virtual void iterateInterval1(VKLIntervalIterator iterator,
-                                    vVKLIntervalN<1> &interval,
-                                    int *result) const = 0;
-
-#define __define_iterateIntervalN(WIDTH)                                   \
-  virtual void iterateInterval##WIDTH(const int *valid,                    \
-                                      VKLIntervalIterator##WIDTH iterator, \
-                                      vVKLIntervalN<WIDTH> &interval,      \
-                                      int *result) const = 0;
-
-      __define_iterateIntervalN(4);
-      __define_iterateIntervalN(8);
-      __define_iterateIntervalN(16);
-
-#undef __define_iterateIntervalN
-
       /////////////////////////////////////////////////////////////////////////
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
@@ -176,46 +138,6 @@ namespace openvkl {
       __define_getHitIteratorSizeN(16);
 
 #undef __define_getHitIteratorSizeN
-
-      virtual VKLHitIterator initHitIterator1(
-          const VKLHitIteratorContext *context,
-          const vvec3fn<1> &origin,
-          const vvec3fn<1> &direction,
-          const vrange1fn<1> &tRange,
-          float time,
-          void *buffer) const = 0;
-
-#define __define_initHitIteratorN(WIDTH)                \
-  virtual VKLHitIterator##WIDTH initHitIterator##WIDTH( \
-      const int *valid,                                 \
-      const VKLHitIteratorContext *context,             \
-      const vvec3fn<WIDTH> &origin,                     \
-      const vvec3fn<WIDTH> &direction,                  \
-      const vrange1fn<WIDTH> &tRange,                   \
-      const float *times,                               \
-      void *buffer) const = 0;
-
-      __define_initHitIteratorN(4);
-      __define_initHitIteratorN(8);
-      __define_initHitIteratorN(16);
-
-#undef __define_initHitIteratorN
-
-      virtual void iterateHit1(VKLHitIterator iterator,
-                               vVKLHitN<1> &hit,
-                               int *result) const = 0;
-
-#define __define_iterateHitN(WIDTH)                              \
-  virtual void iterateHit##WIDTH(const int *valid,               \
-                                 VKLHitIterator##WIDTH iterator, \
-                                 vVKLHitN<WIDTH> &hit,           \
-                                 int *result) const = 0;
-
-      __define_iterateHitN(4);
-      __define_iterateHitN(8);
-      __define_iterateHitN(16);
-
-#undef __define_iterateHitN
 
       /////////////////////////////////////////////////////////////////////////
       // Parameters ///////////////////////////////////////////////////////////
@@ -270,20 +192,19 @@ namespace openvkl {
       virtual range1f getValueRange(VKLVolume volume,
                                     unsigned int attributeIndex) = 0;
 
-
       /////////////////////////////////////////////////////////////////////////
       // Hardware facilities //////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
       virtual memstate *allocateBytes(size_t numBytes) const = 0;
-      virtual void freeMemState(memstate *) const = 0;
-      virtual void *getContext() const = 0;
+      virtual void freeMemState(memstate *) const            = 0;
+      virtual void *getContext() const                       = 0;
 
      private:
       bool committed = false;
     };
 
 #define VKL_REGISTER_DEVICE(InternalClass, external_name) \
-  VKL_REGISTER_DEVICEOBJECT(                                    \
+  VKL_REGISTER_DEVICEOBJECT(                              \
       ::openvkl::api::Device, device, InternalClass, external_name)
 
   }  // namespace api

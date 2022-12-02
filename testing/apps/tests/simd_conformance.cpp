@@ -5,6 +5,8 @@
 #include "../../external/catch.hpp"
 #include "../common/Traits.h"
 #include "../common/simd.h"
+#include "common/DeviceTraits.h"
+#include "common/device_simd.h"
 #include "openvkl/common.h"
 #include "openvkl_testing.h"
 #include "simd_conformance_ispc.h"
@@ -20,8 +22,8 @@ void public_wide_types_conformance_test()
 
   using vkl_vvec3fW   = typename vklPublicWideTypes<W>::vkl_vvec3fW;
   using vkl_vrange1fW = typename vklPublicWideTypes<W>::vkl_vrange1fW;
-  using VKLIntervalW  = typename vklPublicWideTypes<W>::VKLIntervalW;
-  using VKLHitW       = typename vklPublicWideTypes<W>::VKLHitW;
+  using VKLIntervalW  = typename vklDeviceTypes<W>::VKLIntervalW;
+  using VKLHitW       = typename vklDeviceTypes<W>::VKLHitW;
 
   REQUIRE(sizeof(vvec3fn<W>) == sizeof(vkl_vvec3fW));
   REQUIRE(alignof(vvec3fn<W>) == alignof(vkl_vvec3fW));

@@ -86,16 +86,10 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
 
       VKLIntervalIteratorContext newIntervalIteratorContext(
-          VKLSampler sampler) override
-      {
-        throw std::runtime_error("not implemented");
-      }
+          VKLSampler sampler) override;
 
       size_t getIntervalIteratorSize1(
-          const VKLIntervalIteratorContext *context) const override
-      {
-        throw std::runtime_error("not implemented");
-      }
+          const VKLIntervalIteratorContext *context) const override;
 
 #define __define_getIntervalIteratorSizeN(WIDTH)                \
   size_t getIntervalIteratorSize##WIDTH(                        \

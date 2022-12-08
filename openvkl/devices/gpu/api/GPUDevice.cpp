@@ -9,6 +9,9 @@
 #include "../../cpu/volume/Volume.h"
 #include "../common/Data.h"
 #include "../common/ObjectFactory.h"
+#include "openvkl/devices/cpu/common/device_simd.h"
+
+#include "../../cpu/iterator/GridAcceleratorIterator.h"
 
 namespace openvkl {
   namespace gpu_device {
@@ -119,6 +122,31 @@ namespace openvkl {
       Data *data =
           new Data(this, numItems, dataType, source, dataCreationFlags, byteStride);
       return (VKLData)data;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Interval iterator //////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    VKLIntervalIteratorContext GPUDevice<W>::newIntervalIteratorContext(
+        VKLSampler sampler)
+    {
+        auto &samplerObject =
+            referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);
+        auto iteratorContext =
+            samplerObject.getIntervalIteratorFactory().newContext(samplerObject);
+        VKLIntervalIteratorContext ic;
+        ic.host   = static_cast<void *>(iteratorContext);
+        ic.device = static_cast<void *>(iteratorContext->getSh());
+        return ic;
+    }
+
+    template <int W>
+    size_t GPUDevice<W>::getIntervalIteratorSize1(
+            const VKLIntervalIteratorContext *context) const
+    {
+       return sizeof(openvkl::cpu_device::GridAcceleratorIntervalIterator<W>);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -314,4 +342,32 @@ extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_gpu_device()
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy),
       VKL_MAKE_TARGET_WIDTH_NAME(structuredRegular));
+}
+
+extern "C" OPENVKL_DLLEXPORT VKLIntervalIterator vklInitIntervalIterator(
+    const VKLIntervalIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer)
+{
+  openvkl::ManagedObject *managedObject =
+      static_cast<openvkl::ManagedObject *>(context->host);
+  openvkl::gpu_device::GPUDevice<4> *deviceObj = (openvkl::gpu_device::GPUDevice<4>*)managedObject->getDevice();
+  VKLIntervalIterator it = nullptr;
+  openvkl::vvec3fn<1> o{origin->x,origin->y,origin->z};
+  openvkl::vvec3fn<1> d{direction->x,direction->y,direction->z};
+  openvkl::vrange1fn<1> tR;
+  tR.lower = tRange->lower;
+  tR.upper = tRange->upper;
+  auto git = new
+      (openvkl::cpu_device::align<openvkl::cpu_device::GridAcceleratorIntervalIterator<4>>(buffer))
+       openvkl::cpu_device::GridAcceleratorIntervalIterator<4>(*(openvkl::cpu_device::IntervalIteratorContext<4>*)context->host);
+  git->initializeIntervalU(
+              o,
+              d,
+              tR,
+              time);
+  return (VKLIntervalIterator)git;
 }

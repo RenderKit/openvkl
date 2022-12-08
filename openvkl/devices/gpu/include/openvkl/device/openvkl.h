@@ -14,6 +14,7 @@
 #endif
 
 #include <openvkl/common.h>
+#include "../../../api/OpaqueStructs.h"
 
 typedef APIObject VKLSampler;
 
@@ -24,6 +25,9 @@ extern "C" {
 OPENVKL_INTERFACE
 void vklInit();
 
+///////////////////////////////////////////////////////////////////////////////
+// Sampling ///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
 OPENVKL_INTERFACE SYCL_EXTERNAL
 float vklComputeSample(const VKLSampler *sampler,
@@ -45,6 +49,29 @@ vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
                              unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
                              float time VKL_DEFAULT_VAL(= 0));
 
+///////////////////////////////////////////////////////////////////////////////
+// Interval iterators /////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+OPENVKL_INTERFACE SYCL_EXTERNAL
+VKLIntervalIterator vklInitIntervalIterator(
+    const VKLIntervalIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer);
+
+typedef struct
+{
+  vkl_range1f tRange;
+  vkl_range1f valueRange;
+  float nominalDeltaT;
+} VKLInterval;
+
+OPENVKL_INTERFACE SYCL_EXTERNAL
+int vklIterateInterval(VKLIntervalIterator iterator,
+                       VKLInterval *interval);
 #ifdef __cplusplus
 }  // extern "C"
 #endif

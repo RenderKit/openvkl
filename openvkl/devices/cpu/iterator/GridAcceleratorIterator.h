@@ -13,6 +13,13 @@ namespace openvkl {
     template <int W>
     struct GridAcceleratorIntervalIterator : public IntervalIterator<W>
     {
+
+      explicit GridAcceleratorIntervalIterator(const IntervalIteratorContext<W> &context)
+            : IntervalIterator<W>(context)
+      {
+        this->kernelStorage = (void*)ispcStorage;
+      }
+
       using IntervalIterator<W>::IntervalIterator;
 
       // Varying.

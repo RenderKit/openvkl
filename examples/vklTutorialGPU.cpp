@@ -36,6 +36,7 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
               << " " << valueRange.upper << ")" << std::endl;
   }
 
+  std::cout << "\tsampling" << std::endl;
   // coordinate for sampling / gradients
   vkl_vec3f coord = {1.f, 2.f, 3.f};
   std::cout << "\n\tcoord = " << coord.x << " " << coord.y << " " << coord.z
@@ -63,6 +64,74 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 
   // Freeing USM Shared memory
   sycl::free(sample, syclQueue);
+
+  std::cout << "\n\titeration" << std::endl;
+  // iterator
+  vkl_range1f ranges[2] = {{18, 20}, {50, 75}};
+  int num_ranges        = 2;
+  VKLData rangesData =
+      vklNewData(device, num_ranges, VKL_BOX1F, ranges, VKL_DATA_DEFAULT, 0);
+
+  VKLIntervalIteratorContext intervalContext = vklNewIntervalIteratorContext(sampler);
+  unsigned int attributeIndex = 0;
+  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetData2(intervalContext, "valueRanges", rangesData);
+  vklRelease(rangesData);
+
+  vklCommit2(intervalContext);
+
+  char *iteratorBuffer = sycl::malloc_shared<char>(vklGetIntervalIteratorSize(&intervalContext), syclQueue);
+  vkl_vec3f origin{-30.f,64.f,64.f};
+  vkl_vec3f direction{1.f,0.f,0.f};
+  vkl_range1f range{0.f,172.f};
+  VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
+              &intervalContext,
+              &origin, &direction, &range, time,
+              (void*)iteratorBuffer);
+
+  int sizeofVKLInterval = sizeof(VKLInterval);
+  int *numIntervals    = sycl::malloc_shared<int>(1, syclQueue);
+  *numIntervals = 0;
+  float *intervalsBuffer = sycl::malloc_shared<float>(99999*sizeofVKLInterval, syclQueue);
+  memset(intervalsBuffer, 0, 99999*sizeofVKLInterval);
+
+  syclQueue
+    .single_task([=]() {
+      int cnt = 0;
+      for (;;) {
+        VKLInterval interval;
+        int result = vklIterateInterval(intervalIterator, &interval);
+        if (!result) {
+          break;
+        }
+        intervalsBuffer[sizeofVKLInterval*cnt+0] = interval.tRange.lower;
+        intervalsBuffer[sizeofVKLInterval*cnt+1] = interval.tRange.upper;
+        intervalsBuffer[sizeofVKLInterval*cnt+2] = interval.valueRange.lower;
+        intervalsBuffer[sizeofVKLInterval*cnt+3] = interval.valueRange.upper;
+        intervalsBuffer[sizeofVKLInterval*cnt+4] = interval.nominalDeltaT;
+        cnt++;
+        if (cnt >= 99999)
+          break;
+      }
+      *numIntervals = cnt;
+    })
+    .wait();
+
+  for (int i = 0; i < *numIntervals; ++i)
+  {
+      printf(
+          "\t\ttRange (%f %f)\n\t\tvalueRange (%f %f)\n\t\tnominalDeltaT "
+          "%f\n\n",
+          intervalsBuffer[sizeofVKLInterval*i+0],
+          intervalsBuffer[sizeofVKLInterval*i+1],
+          intervalsBuffer[sizeofVKLInterval*i+2],
+          intervalsBuffer[sizeofVKLInterval*i+3],
+          intervalsBuffer[sizeofVKLInterval*i+4]);
+  }
+  sycl::free(numIntervals, syclQueue);
+  sycl::free(intervalsBuffer, syclQueue);
+  sycl::free(iteratorBuffer, syclQueue);
+  std::cout << "\t\tDone" << std::endl;
 
   vklRelease2(sampler);
 }

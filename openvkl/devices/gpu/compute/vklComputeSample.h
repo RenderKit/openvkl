@@ -10,6 +10,8 @@ using namespace rkcommon::math;
 #include "../../cpu/sampler/SamplerShared.h"
 #include "../../cpu/volume/StructuredVolumeShared.h"
 
+#include "common.h"
+
 #define template_SSV_sample_inner_uniform_32(dataType)                      \
   inline float SSV_sample_inner_##dataType##_uniform_32(                    \
       const ispc::SharedStructuredVolume *self,                             \
@@ -80,21 +82,6 @@ template_SSV_sample_inner_uniform_32(uint8);
 template_SSV_sample_inner_uniform_32(int16);
 template_SSV_sample_inner_uniform_32(uint16);
 template_SSV_sample_inner_uniform_32(float);
-
-inline vec3f make_vec3f_rkcommon(const ispc::vec3f &data)
-{
-  return *reinterpret_cast<vec3f *>((void *)&data);
-}
-
-inline void transformObjectToLocal_uniform_structured_regular(
-    const ispc::SharedStructuredVolume *self,
-    const vec3f &objectCoordinates,
-    vec3f &localCoordinates)
-{
-  localCoordinates =
-      1.f / make_vec3f_rkcommon(self->gridSpacing) *
-      (objectCoordinates - make_vec3f_rkcommon(self->gridOrigin));
-}
 
 inline float SharedStructuredVolume_computeSample_uniform(
     const ispc::SharedStructuredVolume *self,

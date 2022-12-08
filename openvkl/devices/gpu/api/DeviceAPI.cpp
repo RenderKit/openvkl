@@ -3,11 +3,13 @@
 
 #include "../common/simd.h"
 #include "AddDeviceAPIs.h"
+#include "openvkl/common/IteratorBase.h"
 #include "openvkl/common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
 #include "../include/openvkl/device/openvkl.h"
 #include "../compute/vklComputeSample.h"
+#include "../compute/vklIterateInterval.h"
 
 using namespace openvkl;
 using namespace openvkl::gpu_device;
@@ -66,7 +68,6 @@ extern "C" OPENVKL_DLLEXPORT void vklInit()
 ///////////////////////////////////////////////////////////////////////////////
 // Sampler ////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
     const VKLSampler *sampler,
@@ -127,3 +128,19 @@ vklComputeGradient(const VKLSampler *sampler,
   return gradient;
 }
 OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
+
+///////////////////////////////////////////////////////////////////////////////
+// Iterator////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
+        VKLIntervalIterator _iterator,
+        VKLInterval *_interval)
+{
+  int result = 0;
+  auto iterator = (openvkl::IteratorBase*)(_iterator);
+  void *ispcStorage = iterator->kernelStorage;
+  GridAcceleratorIterator_iterateInterval_uniform(ispcStorage, _interval, &result);
+  return result;
+}
+

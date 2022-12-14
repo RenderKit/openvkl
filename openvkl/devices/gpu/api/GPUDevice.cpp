@@ -9,9 +9,8 @@
 #include "../../cpu/volume/Volume.h"
 #include "../common/Data.h"
 #include "../common/ObjectFactory.h"
-#include "openvkl/devices/cpu/common/device_simd.h"
-
-#include "../../cpu/iterator/GridAcceleratorIterator.h"
+#include "../compute/vklComputeSample.h"
+#include "../compute/vklIterateInterval.h"
 
 namespace openvkl {
   namespace gpu_device {
@@ -23,15 +22,17 @@ namespace openvkl {
     template <int W>
     GPUDevice<W>::~GPUDevice()
     {
-      delete (ispcrt::Context*)context;
+      delete (ispcrt::Context *)context;
     }
 
     template <int W>
-    api::memstate * GPUDevice<W>::allocateBytes(size_t numBytes) const
+    api::memstate *GPUDevice<W>::allocateBytes(size_t numBytes) const
     {
       api::memstate *container = new api::memstate;
-      container->privateManagement = (void*)BufferSharedCreate((Device*)this, numBytes + 16);
-      void *buffer = ispcrtSharedPtr((ISPCRTMemoryView)container->privateManagement);
+      container->privateManagement =
+          (void *)BufferSharedCreate((Device *)this, numBytes + 16);
+      void *buffer =
+          ispcrtSharedPtr((ISPCRTMemoryView)container->privateManagement);
       container->allocatedBuffer = buffer;
       return container;
     }
@@ -39,8 +40,8 @@ namespace openvkl {
     template <int W>
     void GPUDevice<W>::freeMemState(api::memstate *container) const
     {
-       delete (int*)container->privateManagement;
-       delete container;
+      delete (int *)container->privateManagement;
+      delete container;
     }
 
     template <int W>
@@ -76,8 +77,7 @@ namespace openvkl {
       if (context) {
         delete (ispcrt::Context *)context;
       }
-      context =
-          new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
+      context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
     }
 
     template <int W>
@@ -119,8 +119,8 @@ namespace openvkl {
                                   VKLDataCreationFlags dataCreationFlags,
                                   size_t byteStride)
     {
-      Data *data =
-          new Data(this, numItems, dataType, source, dataCreationFlags, byteStride);
+      Data *data = new Data(
+          this, numItems, dataType, source, dataCreationFlags, byteStride);
       return (VKLData)data;
     }
 
@@ -132,21 +132,23 @@ namespace openvkl {
     VKLIntervalIteratorContext GPUDevice<W>::newIntervalIteratorContext(
         VKLSampler sampler)
     {
-        auto &samplerObject =
-            referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);
-        auto iteratorContext =
-            samplerObject.getIntervalIteratorFactory().newContext(samplerObject);
-        VKLIntervalIteratorContext ic;
-        ic.host   = static_cast<void *>(iteratorContext);
-        ic.device = static_cast<void *>(iteratorContext->getSh());
-        return ic;
+      auto &samplerObject =
+          referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);
+      auto iteratorContext =
+          samplerObject.getIntervalIteratorFactory().newContext(samplerObject);
+      VKLIntervalIteratorContext ic;
+      ic.host   = static_cast<void *>(iteratorContext);
+      ic.device = static_cast<void *>(iteratorContext->getSh());
+      return ic;
     }
 
     template <int W>
     size_t GPUDevice<W>::getIntervalIteratorSize1(
-            const VKLIntervalIteratorContext *context) const
+        const VKLIntervalIteratorContext *context) const
     {
-       return sizeof(openvkl::cpu_device::GridAcceleratorIntervalIterator<W>);
+      // the size includes extra padding, so that we can still use an unaligned
+      // buffer allocated by the application
+      return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -317,7 +319,8 @@ namespace openvkl {
 
 #define VKL_WRAP_VOLUME_REGISTRATION(internal_name)                          \
   extern "C" OPENVKL_DLLEXPORT openvkl::cpu_device::Volume<VKL_TARGET_WIDTH> \
-      *CONCAT1(openvkl_create_volume__, internal_name)(openvkl::api::Device *context);
+      *CONCAT1(openvkl_create_volume__,                                      \
+               internal_name)(openvkl::api::Device * context);
 
 VKL_WRAP_DEVICE_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_gpu))
 
@@ -342,32 +345,4 @@ extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_gpu_device()
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy),
       VKL_MAKE_TARGET_WIDTH_NAME(structuredRegular));
-}
-
-extern "C" OPENVKL_DLLEXPORT VKLIntervalIterator vklInitIntervalIterator(
-    const VKLIntervalIteratorContext *context,
-    const vkl_vec3f *origin,
-    const vkl_vec3f *direction,
-    const vkl_range1f *tRange,
-    float time,
-    void *buffer)
-{
-  openvkl::ManagedObject *managedObject =
-      static_cast<openvkl::ManagedObject *>(context->host);
-  openvkl::gpu_device::GPUDevice<4> *deviceObj = (openvkl::gpu_device::GPUDevice<4>*)managedObject->getDevice();
-  VKLIntervalIterator it = nullptr;
-  openvkl::vvec3fn<1> o{origin->x,origin->y,origin->z};
-  openvkl::vvec3fn<1> d{direction->x,direction->y,direction->z};
-  openvkl::vrange1fn<1> tR;
-  tR.lower = tRange->lower;
-  tR.upper = tRange->upper;
-  auto git = new
-      (openvkl::cpu_device::align<openvkl::cpu_device::GridAcceleratorIntervalIterator<4>>(buffer))
-       openvkl::cpu_device::GridAcceleratorIntervalIterator<4>(*(openvkl::cpu_device::IntervalIteratorContext<4>*)context->host);
-  git->initializeIntervalU(
-              o,
-              d,
-              tR,
-              time);
-  return (VKLIntervalIterator)git;
 }

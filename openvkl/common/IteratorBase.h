@@ -15,11 +15,6 @@ namespace openvkl {
 
     // WORKAROUND ICC 15: This destructor must be public!
     virtual ~IteratorBase() = default;
-
-    /*
-     * Accessor to internal kernel structs for DPCPP kernels.
-     */
-    void *kernelStorage{nullptr};
   };
 
 }  // namespace openvkl

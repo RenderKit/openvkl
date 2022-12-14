@@ -14,7 +14,6 @@
 #endif
 
 #include <openvkl/common.h>
-#include "../../../api/OpaqueStructs.h"
 
 typedef APIObject VKLSampler;
 
@@ -29,11 +28,11 @@ void vklInit();
 // Sampling ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-OPENVKL_INTERFACE SYCL_EXTERNAL
-float vklComputeSample(const VKLSampler *sampler,
-                       const vkl_vec3f *objectCoordinates,
-                       unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                       float time VKL_DEFAULT_VAL(= 0));
+OPENVKL_INTERFACE SYCL_EXTERNAL float vklComputeSample(
+    const VKLSampler *sampler,
+    const vkl_vec3f *objectCoordinates,
+    unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+    float time VKL_DEFAULT_VAL(= 0));
 
 OPENVKL_INTERFACE
 void vklComputeSampleM(const VKLSampler *sampler,
@@ -53,14 +52,16 @@ vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
 // Interval iterators /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-OPENVKL_INTERFACE SYCL_EXTERNAL
-VKLIntervalIterator vklInitIntervalIterator(
-    const VKLIntervalIteratorContext *context,
-    const vkl_vec3f *origin,
-    const vkl_vec3f *direction,
-    const vkl_range1f *tRange,
-    float time,
-    void *buffer);
+struct IntervalIterator;
+typedef struct IntervalIterator *VKLIntervalIterator;
+
+OPENVKL_INTERFACE SYCL_EXTERNAL VKLIntervalIterator
+vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
+                        const vkl_vec3f *origin,
+                        const vkl_vec3f *direction,
+                        const vkl_range1f *tRange,
+                        float time,
+                        void *buffer);
 
 typedef struct
 {
@@ -69,9 +70,9 @@ typedef struct
   float nominalDeltaT;
 } VKLInterval;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL
-int vklIterateInterval(VKLIntervalIterator iterator,
-                       VKLInterval *interval);
+OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateInterval(
+    VKLIntervalIterator iterator, VKLInterval *interval);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

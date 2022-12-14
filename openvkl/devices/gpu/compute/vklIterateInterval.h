@@ -1,6 +1,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 #include "../../cpu/volume/GridAccelerator.h"
 #include "../../cpu/volume/GridAcceleratorShared.h"
 
@@ -208,10 +210,10 @@ inline box3f GridAccelerator_getCellBounds(
   return (box3f{lower, upper});
 }
 
-bool GridAccelerator_nextCell(const ispc::GridAccelerator *accelerator,
-                              const GridAcceleratorIterator *iterator,
-                              vec3i &cellIndex,
-                              box1f &cellTRange)
+inline bool GridAccelerator_nextCell(const ispc::GridAccelerator *accelerator,
+                                     const GridAcceleratorIterator *iterator,
+                                     vec3i &cellIndex,
+                                     box1f &cellTRange)
 {
   ispc::SharedStructuredVolume *volume = accelerator->volume;
 
@@ -357,4 +359,50 @@ inline void GridAcceleratorIterator_iterateInterval_uniform(
   }
 
   *result = false;
+}
+
+// from GridAcceleratorIterator.ispc
+inline void GridAcceleratorIteratorU_Init(void *_self,
+                                          void *_context,
+                                          void *_origin,
+                                          void *_direction,
+                                          void *_tRange,
+                                          void *_time)
+{
+  GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
+
+  self->context   = (const ispc::IntervalIteratorContext *)_context;
+  self->origin    = *((vec3f *)_origin);
+  self->direction = *((vec3f *)_direction);
+  self->tRange    = *((box1f *)_tRange);
+  self->time      = *((float *)_time);
+
+  const ispc::SharedStructuredVolume *volume =
+      (const ispc::SharedStructuredVolume *)
+          self->context->super.sampler->volume;
+
+  self->boundingBoxTRange =
+      intersectBox(*((vec3f *)_origin),
+                   *((vec3f *)_direction),
+                   box3f{make_vec3f_rkcommon(volume->boundingBox.lower),
+                         make_vec3f_rkcommon(volume->boundingBox.upper)},
+                   self->tRange);
+
+  self->intervalState.currentCellIndex = vec3i{-1, -1, -1};
+
+#if 0
+    self->intervalState.nominalDeltaT =
+        reduce_min(volume->gridSpacing *
+                   rcp_safe(absf(self->direction))); /* in ray space */
+#else
+  float x   = volume->gridSpacing.x * divide_safe(std::abs(self->direction.x));
+  float y   = volume->gridSpacing.y * divide_safe(std::abs(self->direction.x));
+  float z   = volume->gridSpacing.x * divide_safe(std::abs(self->direction.x));
+  float min = x < y ? x : y;
+  self->intervalState.nominalDeltaT = min < z ? min : z;
+#endif
+
+  self->hitState.currentCellIndex  = vec3i{-1, -1, -1};
+  self->hitState.currentCellTRange = {std::numeric_limits<float>::infinity(),
+                                      -std::numeric_limits<float>::infinity()};
 }

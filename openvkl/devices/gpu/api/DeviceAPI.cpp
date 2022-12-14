@@ -3,13 +3,12 @@
 
 #include "../common/simd.h"
 #include "AddDeviceAPIs.h"
-#include "openvkl/common/IteratorBase.h"
 #include "openvkl/common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
-#include "../include/openvkl/device/openvkl.h"
 #include "../compute/vklComputeSample.h"
 #include "../compute/vklIterateInterval.h"
+#include "../include/openvkl/device/openvkl.h"
 
 using namespace openvkl;
 using namespace openvkl::gpu_device;
@@ -133,14 +132,40 @@ OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
 // Iterator////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
-        VKLIntervalIterator _iterator,
-        VKLInterval *_interval)
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT VKLIntervalIterator
+vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
+                        const vkl_vec3f *origin,
+                        const vkl_vec3f *direction,
+                        const vkl_range1f *tRange,
+                        float time,
+                        void *buffer)
 {
-  int result = 0;
-  auto iterator = (openvkl::IteratorBase*)(_iterator);
-  void *ispcStorage = iterator->kernelStorage;
-  GridAcceleratorIterator_iterateInterval_uniform(ispcStorage, _interval, &result);
-  return result;
+  // the provided buffer is guaranteed to be of size `space` below, but it may
+  // be unaligned. so, we'll move to an appropriately aligned address inside the
+  // provided buffer.
+  size_t space =
+      sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+
+  void *alignedBuffer = std::align(alignof(GridAcceleratorIterator),
+                                   sizeof(GridAcceleratorIterator),
+                                   buffer,
+                                   space);
+  assert(alignedBuffer);
+
+  GridAcceleratorIteratorU_Init(alignedBuffer,
+                                context->device,
+                                (void *)origin,
+                                (void *)direction,
+                                (void *)tRange,
+                                &time);
+
+  return (VKLIntervalIterator)alignedBuffer;
 }
 
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
+    VKLIntervalIterator iterator, VKLInterval *interval)
+{
+  int result = 0;
+  GridAcceleratorIterator_iterateInterval_uniform(iterator, interval, &result);
+  return result;
+}

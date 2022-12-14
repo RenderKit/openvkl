@@ -4,7 +4,6 @@
 #pragma once
 
 #include "../../../api/Device.h"
-#include "OpaqueStructs.h"
 
 namespace openvkl {
   namespace gpu_device {

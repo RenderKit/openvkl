@@ -1,6 +1,8 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#pragma once
+
 #include <rkcommon/common.h>
 #include <rkcommon/math/box.h>
 using namespace rkcommon::math;

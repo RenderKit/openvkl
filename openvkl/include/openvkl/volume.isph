@@ -22,9 +22,7 @@ VKL_API uniform unsigned int vklGetNumAttributesRef(
 
 VKL_FORCEINLINE uniform unsigned int vklGetNumAttributes(VKLVolume volume)
 {
-  uniform vkl_range1f result;
   return vklGetNumAttributesRef(&volume);
-  return result;
 }
 
 VKL_API void vklGetValueRangeRef(const VKLVolume *uniform volume,

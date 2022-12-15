@@ -50,10 +50,18 @@ namespace openvkl {
         float minRadius = inf;
         box3fa bounds   = empty;
 
+        userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
+
+        assert(is_aligned_for_type<AlignedVector<float> *>(uPS->payload));
+        AlignedVector<float> *aud =
+            static_cast<AlignedVector<float> *>(uPS->payload);
+
+        float *radii = aud->data();
+
         for (size_t i = 0; i < numPrims; i++) {
           const uint64_t id =
               (uint64_t(prims[i].geomID) << 32) | prims[i].primID;
-          const float radius = ((float *)userPtr)[id];
+          const float radius = radii[id];
           const box3fa bound = *(const box3fa *)(&prims[i]);
 
           ids[i]    = id;
@@ -61,7 +69,17 @@ namespace openvkl {
           bounds.extend(bound);
         }
 
+#if 0
         void *ptr = rtcThreadLocalAlloc(alloc, sizeof(ParticleLeafNode), 16);
+#else
+        auto mv   = BufferSharedCreate(uPS->device, sizeof(ParticleLeafNode));
+        void *ptr = ispcrtSharedPtr(mv);
+        uPS->memRefsGuard.lock();
+        uPS->memRefs.push_back((void *)mv);
+        uPS->memRefsGuard.unlock();
+#endif
+
+        assert(is_aligned_for_type<ParticleLeafNode>(ptr));
         return (void *)new (ptr)
             ParticleLeafNode(numPrims, ids, bounds, minRadius);
       }
@@ -71,7 +89,9 @@ namespace openvkl {
     struct ParticleVolume : public AddStructShared<UnstructuredVolumeBase<W>,
                                                    ispc::VKLParticleVolume>
     {
-      ParticleVolume(Device *device) : AddStructShared<UnstructuredVolumeBase<W>, ispc::VKLParticleVolume>(device) {};
+      ParticleVolume(Device *device)
+          : AddStructShared<UnstructuredVolumeBase<W>, ispc::VKLParticleVolume>(
+                device){};
       ~ParticleVolume();
 
       void commit() override;
@@ -112,6 +132,8 @@ namespace openvkl {
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
+      std::vector<void *> memRefs;
+      std::mutex memRefsGuard;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

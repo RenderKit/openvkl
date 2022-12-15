@@ -70,6 +70,12 @@ namespace openvkl {
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
         rtcReleaseDevice(rtcDevice);
+      if (memRefs.size()) {
+        for (auto var : memRefs) {
+          ISPCRTMemoryView view = static_cast<ISPCRTMemoryView>(var);
+          BufferSharedDelete(view);
+        }
+      }
     }
 
     template <int W>
@@ -137,22 +143,23 @@ namespace openvkl {
           throw std::runtime_error(
               "unstructured volume #cells does not match #cell.type");
       } else {
-        generatedCellType.resize(nCells);
+        generatedCellType =
+            make_buffer_shared_unique<uint8_t>(this->getDevice(), nCells);
 
         for (int i = 0; i < nCells; i++) {
           auto index = cell32Bit ? (*cellIndex32)[i] : (*cellIndex64)[i];
           switch (getVertexId(index)) {
           case 4:
-            generatedCellType[i] = VKL_TETRAHEDRON;
+            generatedCellType->sharedPtr()[i] = VKL_TETRAHEDRON;
             break;
           case 8:
-            generatedCellType[i] = VKL_HEXAHEDRON;
+            generatedCellType->sharedPtr()[i] = VKL_HEXAHEDRON;
             break;
           case 6:
-            generatedCellType[i] = VKL_WEDGE;
+            generatedCellType->sharedPtr()[i] = VKL_WEDGE;
             break;
           case 5:
-            generatedCellType[i] = VKL_PYRAMID;
+            generatedCellType->sharedPtr()[i] = VKL_PYRAMID;
             break;
           default:
             throw std::runtime_error(
@@ -161,9 +168,10 @@ namespace openvkl {
           }
         }
 
-        Data *d  = new Data(this->getDevice(), nCells,
+        Data *d  = new Data(this->getDevice(),
+                           nCells,
                            VKL_UCHAR,
-                           generatedCellType.data(),
+                           generatedCellType->sharedPtr(),
                            VKL_DATA_SHARED_BUFFER,
                            0);
         cellType = &(d->as<uint8_t>());
@@ -188,13 +196,12 @@ namespace openvkl {
       auto precompute =
           this->template getParam<bool>("precomputedNormals", false);
       if (precompute) {
-        if (faceNormals.empty()) {
+        if (!faceNormals || faceNormals->size() == 0) {
           calculateFaceNormals();
         }
       } else {
-        if (!faceNormals.empty()) {
-          faceNormals.clear();
-          faceNormals.shrink_to_fit();
+        if (faceNormals && faceNormals->size() != 0) {
+          faceNormals = make_buffer_shared_unique<vec3f>(this->getDevice(), 0);
         }
       }
 
@@ -213,24 +220,26 @@ namespace openvkl {
 
       this->setBackground(background->data());
 
-      CALL_ISPC(
-          VKLUnstructuredVolume_set,
-          this->getSh(),
-          (const ispc::box3f &)bounds,
-          ispc(vertexPosition),
-          index32Bit ? ispc(index32) : ispc(index64),
-          index32Bit,
-          ispc(vertexValue),
-          ispc(cellValue),
-          cell32Bit ? ispc(cellIndex32) : ispc(cellIndex64),
-          cell32Bit,
-          indexPrefixed,
-          ispc(cellType),
-          (void *)(rtcRoot),
-          faceNormals.empty() ? nullptr
-                              : (const ispc::vec3f *)faceNormals.data(),
-          iterativeTolerance.empty() ? nullptr : iterativeTolerance.data(),
-          hexIterative);
+      CALL_ISPC(VKLUnstructuredVolume_set,
+                this->getSh(),
+                (const ispc::box3f &)bounds,
+                ispc(vertexPosition),
+                index32Bit ? ispc(index32) : ispc(index64),
+                index32Bit,
+                ispc(vertexValue),
+                ispc(cellValue),
+                cell32Bit ? ispc(cellIndex32) : ispc(cellIndex64),
+                cell32Bit,
+                indexPrefixed,
+                ispc(cellType),
+                (void *)(rtcRoot),
+                (!faceNormals || faceNormals->size() == 0)
+                    ? nullptr
+                    : (const ispc::vec3f *)faceNormals->sharedPtr(),
+                (!iterativeTolerance || iterativeTolerance->size() == 0)
+                    ? nullptr
+                    : iterativeTolerance->sharedPtr(),
+                hexIterative);
     }
 
     template <int W>
@@ -285,8 +294,9 @@ namespace openvkl {
       }
       rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
 
-      containers::AlignedVector<RTCBuildPrimitive> prims;
-      containers::AlignedVector<range1f> range;
+      AlignedVector<RTCBuildPrimitive> prims;
+      AlignedVector<range1f> range;
+
       prims.resize(nCells);
       range.resize(nCells);
 
@@ -302,6 +312,8 @@ namespace openvkl {
         prims[taskIndex].primID  = taskIndex & 0xffffffff;
         range[taskIndex]         = range1f(bound.lower.w, bound.upper.w);
       });
+
+      userPtrStruct myUPS{&range, memRefs, memRefsGuard, this->getDevice()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
@@ -329,7 +341,7 @@ namespace openvkl {
       arguments.createLeaf             = LeafNodeSingle::create;
       arguments.splitPrimitive         = nullptr;
       arguments.buildProgress          = nullptr;
-      arguments.userPtr                = range.data();
+      arguments.userPtr                = &myUPS;
 
       rtcRoot = (Node *)rtcBuildBVH(&arguments);
       if (!rtcRoot) {
@@ -354,16 +366,17 @@ namespace openvkl {
     template <int W>
     void UnstructuredVolume<W>::calculateIterativeTolerance()
     {
-      iterativeTolerance.resize(nCells);
+      iterativeTolerance =
+          make_buffer_shared_unique<float>(this->getDevice(), nCells);
       const uint32_t wedgeEdges[9][2]   = {{0, 1},
-                                         {1, 2},
-                                         {2, 0},
-                                         {3, 4},
-                                         {4, 5},
-                                         {5, 3},
-                                         {0, 3},
-                                         {1, 4},
-                                         {2, 5}};
+                                           {1, 2},
+                                           {2, 0},
+                                           {3, 4},
+                                           {4, 5},
+                                           {5, 3},
+                                           {0, 3},
+                                           {1, 4},
+                                           {2, 5}};
       const uint32_t pyramidEdges[8][2] = {
           {0, 1}, {1, 2}, {2, 3}, {3, 0}, {0, 4}, {1, 4}, {2, 4}, {3, 4}};
       const uint32_t hexDiagonals[4][2] = {{0, 6}, {1, 7}, {2, 4}, {3, 5}};
@@ -408,7 +421,7 @@ namespace openvkl {
       const float determinantTolerance =
           1e-20 < .00001 * volumeBound ? 1e-20 : .00001 * volumeBound;
 
-      iterativeTolerance[cellId] = determinantTolerance;
+      iterativeTolerance->sharedPtr()[cellId] = determinantTolerance;
     }
 
     template <int W>
@@ -416,7 +429,8 @@ namespace openvkl {
     {
       // Allocate memory for normal vectors
       uint64_t numNormals = nCells * 6;
-      faceNormals.resize(numNormals);
+      faceNormals =
+          make_buffer_shared_unique<vec3f>(this->getDevice(), numNormals);
 
       // Define vertices order for normal calculation
       const uint32_t tetrahedronFaces[4][3] = {
@@ -468,7 +482,8 @@ namespace openvkl {
         const vec3f &v2 = (*vertexPosition)[vId2];
 
         // Calculate normal
-        faceNormals[cellId * 6 + i] = normalize(cross(v0 - v1, v2 - v1));
+        faceNormals->sharedPtr()[cellId * 6 + i] =
+            normalize(cross(v0 - v1, v2 - v1));
       }
     }
 

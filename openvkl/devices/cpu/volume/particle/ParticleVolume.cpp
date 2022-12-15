@@ -68,6 +68,12 @@ namespace openvkl {
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
         rtcReleaseDevice(rtcDevice);
+      if (memRefs.size()) {
+        for (auto var : memRefs) {
+          ISPCRTMemoryView view = static_cast<ISPCRTMemoryView>(var);
+          BufferSharedDelete(view);
+        }
+      }
     }
 
     template <int W>
@@ -182,8 +188,8 @@ namespace openvkl {
       }
       rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
 
-      containers::AlignedVector<RTCBuildPrimitive> prims;
-      containers::AlignedVector<float> primRadii;
+      AlignedVector<RTCBuildPrimitive> prims;
+      AlignedVector<float> primRadii;
 
       const size_t numParticles = positions->size();
 
@@ -215,7 +221,7 @@ namespace openvkl {
           primRadii.begin(), primRadii.end(), [](float r) { return r <= 0; });
 
       if (haveZeroRadiiParticles) {
-        containers::AlignedVector<RTCBuildPrimitive> primsFiltered;
+        AlignedVector<RTCBuildPrimitive> primsFiltered;
         primsFiltered.reserve(numParticles);
 
         std::copy_if(
@@ -236,6 +242,8 @@ namespace openvkl {
       }
 
       numBVHParticles = prims.size();
+
+      userPtrStruct myUPS{&primRadii, memRefs, memRefsGuard, this->getDevice()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
@@ -263,7 +271,7 @@ namespace openvkl {
       arguments.createLeaf             = ParticleLeafNode::create;
       arguments.splitPrimitive         = nullptr;
       arguments.buildProgress          = nullptr;
-      arguments.userPtr                = primRadii.data();
+      arguments.userPtr                = &myUPS;
 
       rtcRoot = (Node *)rtcBuildBVH(&arguments);
       if (!rtcRoot) {

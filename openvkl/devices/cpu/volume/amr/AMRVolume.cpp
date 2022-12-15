@@ -50,12 +50,30 @@ namespace openvkl {
       {
         assert(numPrims == 1);
 
-        auto id          = (uint64_t(prims->geomID) << 32) | prims->primID;
-        auto range       = ((AMRLeafNodeUserData *)userPtr)[id].range;
-        auto cellWidth   = ((AMRLeafNodeUserData *)userPtr)[id].cellWidth;
-        auto gridSpacing = ((AMRLeafNodeUserData *)userPtr)[id].gridSpacing;
+        userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
 
+        assert(is_aligned_for_type<AlignedVector<AMRLeafNodeUserData> *>(
+            uPS->payload));
+        AlignedVector<AMRLeafNodeUserData> *aud =
+            static_cast<AlignedVector<AMRLeafNodeUserData> *>(uPS->payload);
+
+        AMRLeafNodeUserData *myData = aud->data();
+        auto id          = (uint64_t(prims->geomID) << 32) | prims->primID;
+        auto range       = myData[id].range;
+        auto cellWidth   = myData[id].cellWidth;
+        auto gridSpacing = myData[id].gridSpacing;
+
+#if 0
         void *ptr = rtcThreadLocalAlloc(alloc, sizeof(AMRLeafNode), 16);
+#else
+        auto mv   = BufferSharedCreate(uPS->device, sizeof(AMRLeafNode));
+        void *ptr = ispcrtSharedPtr(mv);
+        uPS->memRefsGuard.lock();
+        uPS->memRefs.push_back((void *)mv);
+        uPS->memRefsGuard.unlock();
+#endif
+
+        assert(is_aligned_for_type<AMRLeafNode>(ptr));
         return (void *)new (ptr) AMRLeafNode(
             id, *(const box3fa *)prims, range, cellWidth, gridSpacing);
       }
@@ -86,6 +104,12 @@ namespace openvkl {
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
         rtcReleaseDevice(rtcDevice);
+      if (memRefs.size()) {
+        for (auto var : memRefs) {
+          ISPCRTMemoryView view = static_cast<ISPCRTMemoryView>(var);
+          BufferSharedDelete(view);
+        }
+      }
     }
 
     template <int W>
@@ -184,8 +208,7 @@ namespace openvkl {
       // parse the k-d tree to compute the voxel range of each leaf node.
       // This enables empty space skipping within the hierarchical structure
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
-        CALL_ISPC(
-            AMRVolume_computeValueRangeOfLeaf, this->getSh(), leafID);
+        CALL_ISPC(AMRVolume_computeValueRangeOfLeaf, this->getSh(), leafID);
       });
 
       // compute value range over the full volume
@@ -252,8 +275,9 @@ namespace openvkl {
       }
       rtcSetDeviceErrorFunction(rtcDevice, errorFunction, this->device.ptr);
 
-      containers::AlignedVector<RTCBuildPrimitive> prims;
-      containers::AlignedVector<AMRLeafNodeUserData> userData;
+      AlignedVector<RTCBuildPrimitive> prims;
+      AlignedVector<AMRLeafNodeUserData> userData;
+
       prims.resize(numLeaves);
       userData.resize(numLeaves);
 
@@ -276,6 +300,8 @@ namespace openvkl {
         userData[taskIndex].cellWidth   = leaf.brickList[0]->cellWidth;
         userData[taskIndex].gridSpacing = spacing;
       });
+
+      userPtrStruct myUPS{&userData, memRefs, memRefsGuard, this->getDevice()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {
@@ -303,7 +329,7 @@ namespace openvkl {
       arguments.createLeaf             = AMRLeafNode::create;
       arguments.splitPrimitive         = nullptr;
       arguments.buildProgress          = nullptr;
-      arguments.userPtr                = userData.data();
+      arguments.userPtr                = &myUPS;
 
       rtcRoot = (Node *)rtcBuildBVH(&arguments);
       if (!rtcRoot) {

@@ -4,12 +4,12 @@
 #pragma once
 
 #include "../UnstructuredBVH.h"
+#include "../UnstructuredVolumeBase.h"
 #include "../Volume.h"
 #include "AMRAccel.h"
-#include "rkcommon/memory/RefCount.h"
 #include "AMRVolumeShared.h"
-#include "../UnstructuredVolumeBase.h"
 #include "openvkl/devices/common/StructShared.h"
+#include "rkcommon/memory/RefCount.h"
 
 using namespace rkcommon::memory;
 
@@ -60,6 +60,8 @@ namespace openvkl {
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
+      std::vector<void *> memRefs;
+      std::mutex memRefsGuard;
 
       void buildBvh();
     };

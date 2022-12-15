@@ -7,9 +7,9 @@
 #include "../common/export_util.h"
 #include "../common/math.h"
 #include "UnstructuredBVH.h"
-#include "UnstructuredVolume_ispc.h"
 #include "UnstructuredVolumeBase.h"
 #include "UnstructuredVolumeShared.h"
+#include "UnstructuredVolume_ispc.h"
 #include "openvkl/devices/common/StructShared.h"
 
 namespace openvkl {
@@ -20,7 +20,9 @@ namespace openvkl {
         : public AddStructShared<UnstructuredVolumeBase<W>,
                                  ispc::VKLUnstructuredVolume>
     {
-      UnstructuredVolume(Device *device) : AddStructShared<UnstructuredVolumeBase<W>, ispc::VKLUnstructuredVolume>(device) {};
+      UnstructuredVolume(Device *device)
+          : AddStructShared<UnstructuredVolumeBase<W>,
+                            ispc::VKLUnstructuredVolume>(device){};
       ~UnstructuredVolume();
 
       std::string toString() const override;
@@ -83,15 +85,17 @@ namespace openvkl {
       bool hexIterative{false};
 
       // used only if an explicit cell type array is not provided
-      std::vector<uint8_t> generatedCellType;
+      std::unique_ptr<BufferShared<uint8_t>> generatedCellType;
 
-      std::vector<vec3f> faceNormals;
-      std::vector<float> iterativeTolerance;
+      std::unique_ptr<BufferShared<vec3f>> faceNormals;
+      std::unique_ptr<BufferShared<float>> iterativeTolerance;
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
+      std::vector<void *> memRefs;
+      std::mutex memRefsGuard;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

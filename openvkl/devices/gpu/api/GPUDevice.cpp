@@ -168,23 +168,6 @@ namespace openvkl {
     }
 
     template <int W>
-    void GPUDevice<W>::computeSample1(const int *valid,
-                                      const VKLSampler *sampler,
-                                      const vvec3fn<1> &objectCoordinates,
-                                      float *sample,
-                                      unsigned int attributeIndex,
-                                      const float *time)
-    {
-      auto &samplerObject =
-          referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler->host);
-      vfloatn<1> timeW(time, 1);
-      vfloatn<1> sampleW;
-      samplerObject.computeSample(
-          objectCoordinates, sampleW, attributeIndex, timeW);
-      *sample = sampleW[0];
-    }
-
-    template <int W>
     void GPUDevice<W>::computeSampleM1(const int *valid,
                                        const VKLSampler *sampler,
                                        const vvec3fn<1> &objectCoordinates,

@@ -14,13 +14,6 @@ namespace openvkl {
       // Sampler //////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
-      virtual void computeSample1(const int *valid,
-                                  const VKLSampler *sampler,
-                                  const vvec3fn<1> &objectCoordinates,
-                                  float *samples,
-                                  unsigned int attributeIndex,
-                                  const float *times) = 0;
-
       virtual void computeSampleM1(const int *valid,
                                    const VKLSampler *sampler,
                                    const vvec3fn<1> &objectCoordinates,

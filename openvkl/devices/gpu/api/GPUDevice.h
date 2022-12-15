@@ -138,13 +138,6 @@ namespace openvkl {
 
       VKLSampler newSampler(VKLVolume volume) override;
 
-      void computeSample1(const int *valid,
-                          const VKLSampler *sampler,
-                          const vvec3fn<1> &objectCoordinates,
-                          float *samples,
-                          unsigned int attributeIndex,
-                          const float *times) override;
-
       void computeSampleM1(const int *valid,
                            const VKLSampler *sampler,
                            const vvec3fn<1> &objectCoordinates,

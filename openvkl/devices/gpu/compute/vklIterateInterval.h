@@ -396,8 +396,8 @@ inline void GridAcceleratorIteratorU_Init(void *_self,
                    rcp_safe(absf(self->direction))); /* in ray space */
 #else
   float x   = volume->gridSpacing.x * divide_safe(std::abs(self->direction.x));
-  float y   = volume->gridSpacing.y * divide_safe(std::abs(self->direction.x));
-  float z   = volume->gridSpacing.x * divide_safe(std::abs(self->direction.x));
+  float y   = volume->gridSpacing.y * divide_safe(std::abs(self->direction.y));
+  float z   = volume->gridSpacing.z * divide_safe(std::abs(self->direction.z));
   float min = x < y ? x : y;
   self->intervalState.nominalDeltaT = min < z ? min : z;
 #endif

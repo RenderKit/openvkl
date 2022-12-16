@@ -182,6 +182,7 @@ if (BUILD_TESTING)
     openvkl_add_executable_ispc(vklTestsGPU
       vklTests.cpp
       tests/structured_regular_volume_sampling.cpp
+      tests/interval_iterator.cpp
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 

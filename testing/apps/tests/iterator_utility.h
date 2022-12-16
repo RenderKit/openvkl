@@ -11,7 +11,9 @@ inline vkl_range1f computeIntervalValueRange(VKLSampler sampler,
                                              const vkl_vec3f &direction,
                                              const vkl_range1f &tRange)
 {
-  vkl_range1f sampledValueRange{inf, neg_inf};
+  float infinity(std::numeric_limits<float>::infinity());
+  float neg_infinity(-std::numeric_limits<float>::infinity());
+  vkl_range1f sampledValueRange{infinity, neg_infinity};
 
   constexpr int numValueRangeSamples = 100;
 

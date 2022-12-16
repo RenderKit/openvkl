@@ -129,8 +129,16 @@ vklComputeGradient(const VKLSampler *sampler,
 OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
 
 ///////////////////////////////////////////////////////////////////////////////
-// Iterator////////////////////////////////////////////////////////////////////
+// Interval iterator///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
+vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
+{
+  // the size includes extra padding, so that we can still use an unaligned
+  // buffer allocated by the application
+  return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+}
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT VKLIntervalIterator
 vklInitIntervalIterator(const VKLIntervalIteratorContext *context,

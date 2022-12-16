@@ -55,6 +55,9 @@ vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
 struct IntervalIterator;
 typedef struct IntervalIterator *VKLIntervalIterator;
 
+OPENVKL_INTERFACE SYCL_EXTERNAL
+size_t vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
+
 OPENVKL_INTERFACE SYCL_EXTERNAL VKLIntervalIterator
 vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                         const vkl_vec3f *origin,

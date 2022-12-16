@@ -88,22 +88,6 @@ namespace openvkl {
       VKLIntervalIteratorContext newIntervalIteratorContext(
           VKLSampler sampler) override;
 
-      size_t getIntervalIteratorSize1(
-          const VKLIntervalIteratorContext *context) const override;
-
-#define __define_getIntervalIteratorSizeN(WIDTH)                \
-  size_t getIntervalIteratorSize##WIDTH(                        \
-      const VKLIntervalIteratorContext *context) const override \
-  {                                                             \
-    throw std::runtime_error("not implemented");                \
-  }
-
-      __define_getIntervalIteratorSizeN(4);
-      __define_getIntervalIteratorSizeN(8);
-      __define_getIntervalIteratorSizeN(16);
-
-#undef __define_getIntervalIteratorSizeN
-
       /////////////////////////////////////////////////////////////////////////
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
@@ -112,25 +96,6 @@ namespace openvkl {
       {
         throw std::runtime_error("not implemented");
       }
-
-      size_t getHitIteratorSize1(
-          const VKLHitIteratorContext *context) const override
-      {
-        throw std::runtime_error("not implemented");
-      }
-
-#define __define_getHitIteratorSizeN(WIDTH)                              \
-  size_t getHitIteratorSize##WIDTH(const VKLHitIteratorContext *context) \
-      const override                                                     \
-  {                                                                      \
-    throw std::runtime_error("not implemented");                         \
-  }
-
-      __define_getHitIteratorSizeN(4);
-      __define_getHitIteratorSizeN(8);
-      __define_getHitIteratorSizeN(16);
-
-#undef __define_getIntervalIteratorSizeN
 
       /////////////////////////////////////////////////////////////////////////
       // Sampler //////////////////////////////////////////////////////////////

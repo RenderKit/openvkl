@@ -215,7 +215,7 @@ namespace openvkl {
       __define_getHitIteratorSizeN(8);
       __define_getHitIteratorSizeN(16);
 
-#undef __define_getIntervalIteratorSizeN
+#undef __define_getHitIteratorSizeN
 
       //////////////////////////////////////////////////////////////////////////
 
@@ -480,12 +480,15 @@ namespace openvkl {
           unsigned int attributeIndex,
           const float *times);
 
-    public:
-      virtual void *getContext() const override { return context; };
+     public:
+      virtual void *getContext() const override
+      {
+        return context;
+      };
       api::memstate *allocateBytes(size_t numBytes) const override;
       void freeMemState(api::memstate *) const override;
 
-    private:
+     private:
       void *context{nullptr};
     };
 

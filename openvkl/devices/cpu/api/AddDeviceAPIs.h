@@ -88,6 +88,19 @@ namespace openvkl {
       // Interval iterator ////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
 
+      virtual size_t getIntervalIteratorSize1(
+          const VKLIntervalIteratorContext *context) const = 0;
+
+#define __define_getIntervalIteratorSizeN(WIDTH) \
+  virtual size_t getIntervalIteratorSize##WIDTH( \
+      const VKLIntervalIteratorContext *context) const = 0;
+
+      __define_getIntervalIteratorSizeN(4);
+      __define_getIntervalIteratorSizeN(8);
+      __define_getIntervalIteratorSizeN(16);
+
+#undef __define_getIntervalIteratorSizeN
+
       virtual VKLIntervalIterator initIntervalIterator1(
           const VKLIntervalIteratorContext *context,
           const vvec3fn<1> &origin,
@@ -131,6 +144,19 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
       // Hit iterator /////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
+
+      virtual size_t getHitIteratorSize1(
+          const VKLHitIteratorContext *context) const = 0;
+
+#define __define_getHitIteratorSizeN(WIDTH) \
+  virtual size_t getHitIteratorSize##WIDTH( \
+      const VKLHitIteratorContext *context) const = 0;
+
+      __define_getHitIteratorSizeN(4);
+      __define_getHitIteratorSizeN(8);
+      __define_getHitIteratorSizeN(16);
+
+#undef __define_getHitIteratorSizeN
 
       virtual VKLHitIterator initHitIterator1(
           const VKLHitIteratorContext *context,

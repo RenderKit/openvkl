@@ -13,6 +13,8 @@
 
 #include <openvkl/common.h>
 
+#include "max_iterator_size.h"
+
 typedef APIObject VKLSampler;
 
 #ifdef __cplusplus
@@ -172,6 +174,50 @@ typedef struct IntervalIterator8 *VKLIntervalIterator8;
 struct IntervalIterator16;
 typedef struct IntervalIterator16 *VKLIntervalIterator16;
 
+typedef struct
+{
+  vkl_range1f tRange;
+  vkl_range1f valueRange;
+  float nominalDeltaT;
+} VKLInterval;
+
+typedef struct VKL_ALIGN(16)
+{
+  vkl_vrange1f4 tRange;
+  vkl_vrange1f4 valueRange;
+  float nominalDeltaT[4];
+} VKLInterval4;
+
+typedef struct VKL_ALIGN(32)
+{
+  vkl_vrange1f8 tRange;
+  vkl_vrange1f8 valueRange;
+  float nominalDeltaT[8];
+} VKLInterval8;
+
+typedef struct VKL_ALIGN(64)
+{
+  vkl_vrange1f16 tRange;
+  vkl_vrange1f16 valueRange;
+  float nominalDeltaT[16];
+} VKLInterval16;
+
+/*
+ * Return the size, in bytes, required to store an interval iterator for the
+ * given volume.
+ */
+OPENVKL_INTERFACE
+size_t vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
+
+OPENVKL_INTERFACE
+size_t vklGetIntervalIteratorSize4(const VKLIntervalIteratorContext *context);
+
+OPENVKL_INTERFACE
+size_t vklGetIntervalIteratorSize8(const VKLIntervalIteratorContext *context);
+
+OPENVKL_INTERFACE
+size_t vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *context);
+
 /*
  * Initialize an interval iterator for the given volume.
  *
@@ -230,34 +276,6 @@ VKLIntervalIterator16 vklInitIntervalIterator16(
     const float *times,
     void *buffer);
 
-typedef struct
-{
-  vkl_range1f tRange;
-  vkl_range1f valueRange;
-  float nominalDeltaT;
-} VKLInterval;
-
-typedef struct VKL_ALIGN(16)
-{
-  vkl_vrange1f4 tRange;
-  vkl_vrange1f4 valueRange;
-  float nominalDeltaT[4];
-} VKLInterval4;
-
-typedef struct VKL_ALIGN(32)
-{
-  vkl_vrange1f8 tRange;
-  vkl_vrange1f8 valueRange;
-  float nominalDeltaT[8];
-} VKLInterval8;
-
-typedef struct VKL_ALIGN(64)
-{
-  vkl_vrange1f16 tRange;
-  vkl_vrange1f16 valueRange;
-  float nominalDeltaT[16];
-} VKLInterval16;
-
 // returns true while the iterator is still within the volume
 OPENVKL_INTERFACE
 int vklIterateInterval(VKLIntervalIterator iterator, VKLInterval *interval);
@@ -295,6 +313,50 @@ typedef struct HitIterator8 *VKLHitIterator8;
 
 struct HitIterator16;
 typedef struct HitIterator16 *VKLHitIterator16;
+
+typedef struct
+{
+  float t;
+  float sample;
+  float epsilon;
+} VKLHit;
+
+typedef struct VKL_ALIGN(16)
+{
+  float t[4];
+  float sample[4];
+  float epsilon[4];
+} VKLHit4;
+
+typedef struct VKL_ALIGN(32)
+{
+  float t[8];
+  float sample[8];
+  float epsilon[8];
+} VKLHit8;
+
+typedef struct VKL_ALIGN(64)
+{
+  float t[16];
+  float sample[16];
+  float epsilon[16];
+} VKLHit16;
+
+/*
+ * Return the size, in bytes, required to store a hit iterator for the
+ * given volume.
+ */
+OPENVKL_INTERFACE
+size_t vklGetHitIteratorSize(const VKLHitIteratorContext *context);
+
+OPENVKL_INTERFACE
+size_t vklGetHitIteratorSize4(const VKLHitIteratorContext *context);
+
+OPENVKL_INTERFACE
+size_t vklGetHitIteratorSize8(const VKLHitIteratorContext *context);
+
+OPENVKL_INTERFACE
+size_t vklGetHitIteratorSize16(const VKLHitIteratorContext *context);
 
 /*
  * Initialize a hit iterator for the given volume.
@@ -350,34 +412,6 @@ VKLHitIterator16 vklInitHitIterator16(const int *valid,
                                       const vkl_vrange1f16 *tRange,
                                       const float *times,
                                       void *buffer);
-
-typedef struct
-{
-  float t;
-  float sample;
-  float epsilon;
-} VKLHit;
-
-typedef struct VKL_ALIGN(16)
-{
-  float t[4];
-  float sample[4];
-  float epsilon[4];
-} VKLHit4;
-
-typedef struct VKL_ALIGN(32)
-{
-  float t[8];
-  float sample[8];
-  float epsilon[8];
-} VKLHit8;
-
-typedef struct VKL_ALIGN(64)
-{
-  float t[16];
-  float sample[16];
-  float epsilon[16];
-} VKLHit16;
 
 // returns true while the iterator is still within the volume
 OPENVKL_INTERFACE

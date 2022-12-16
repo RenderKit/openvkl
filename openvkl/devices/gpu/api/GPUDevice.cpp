@@ -142,15 +142,6 @@ namespace openvkl {
       return ic;
     }
 
-    template <int W>
-    size_t GPUDevice<W>::getIntervalIteratorSize1(
-        const VKLIntervalIteratorContext *context) const
-    {
-      // the size includes extra padding, so that we can still use an unaligned
-      // buffer allocated by the application
-      return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Sampler ////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////

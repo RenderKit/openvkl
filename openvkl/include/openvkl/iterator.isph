@@ -4,67 +4,6 @@
 #pragma once
 
 #include "common.isph"
-#include "max_iterator_size.h"
 
 typedef uniform APIObject VKLIntervalIteratorContext;
 typedef uniform APIObject VKLHitIteratorContext;
-
-///////////////////////////////////////////////////////////////////////////////
-// Interval iterators /////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-VKL_API uniform size_t
-vklGetIntervalIteratorSize4(const VKLIntervalIteratorContext *uniform context);
-
-VKL_API uniform size_t
-vklGetIntervalIteratorSize8(const VKLIntervalIteratorContext *uniform context);
-
-VKL_API uniform size_t
-vklGetIntervalIteratorSize16(const VKLIntervalIteratorContext *uniform context);
-
-VKL_FORCEINLINE uniform size_t
-vklGetIntervalIteratorSizeV(const VKLIntervalIteratorContext *uniform context)
-{
-  varying bool mask = __mask;
-  unmasked
-  {
-    varying int imask = mask ? -1 : 0;
-  }
-
-  if (sizeof(varying float) == 16)
-    return vklGetIntervalIteratorSize4(context);
-  else if (sizeof(varying float) == 32)
-    return vklGetIntervalIteratorSize8(context);
-  else if (sizeof(varying float) == 64)
-    return vklGetIntervalIteratorSize16(context);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Hit iterators //////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-VKL_API uniform size_t
-vklGetHitIteratorSize4(const VKLHitIteratorContext *uniform context);
-
-VKL_API uniform size_t
-vklGetHitIteratorSize8(const VKLHitIteratorContext *uniform context);
-
-VKL_API uniform size_t
-vklGetHitIteratorSize16(const VKLHitIteratorContext *uniform context);
-
-VKL_FORCEINLINE uniform size_t
-vklGetHitIteratorSizeV(const VKLHitIteratorContext *uniform context)
-{
-  varying bool mask = __mask;
-  unmasked
-  {
-    varying int imask = mask ? -1 : 0;
-  }
-
-  if (sizeof(varying float) == 16)
-    return vklGetHitIteratorSize4(context);
-  else if (sizeof(varying float) == 32)
-    return vklGetHitIteratorSize8(context);
-  else if (sizeof(varying float) == 64)
-    return vklGetHitIteratorSize16(context);
-}

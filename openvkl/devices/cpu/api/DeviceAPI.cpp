@@ -304,6 +304,39 @@ typename std::enable_if<
     assert(deviceSource != nullptr);                     \
     AddDeviceAPIs *deviceObj = deviceFrom(deviceSource); \
     try {
+
+extern "C" size_t vklGetIntervalIteratorSize(
+    const VKLIntervalIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getIntervalIteratorSize1(context);
+}
+OPENVKL_CATCH_END(0u)
+
+extern "C" size_t vklGetIntervalIteratorSize4(
+    const VKLIntervalIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getIntervalIteratorSize4(context);
+}
+OPENVKL_CATCH_END(0u)
+
+extern "C" size_t vklGetIntervalIteratorSize8(
+    const VKLIntervalIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getIntervalIteratorSize8(context);
+}
+OPENVKL_CATCH_END(0u)
+
+extern "C" size_t vklGetIntervalIteratorSize16(
+    const VKLIntervalIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getIntervalIteratorSize16(context);
+}
+OPENVKL_CATCH_END(0u)
+
 extern "C" VKLIntervalIterator vklInitIntervalIterator(
     const VKLIntervalIteratorContext *context,
     const vkl_vec3f *origin,
@@ -388,6 +421,34 @@ __define_vklIterateIntervalN(16);
 ///////////////////////////////////////////////////////////////////////////////
 // Hit iterator ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+extern "C" size_t vklGetHitIteratorSize(const VKLHitIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getHitIteratorSize1(context);
+}
+OPENVKL_CATCH_END(0u)
+
+extern "C" size_t vklGetHitIteratorSize4(const VKLHitIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getHitIteratorSize4(context);
+}
+OPENVKL_CATCH_END(0u)
+
+extern "C" size_t vklGetHitIteratorSize8(const VKLHitIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getHitIteratorSize8(context);
+}
+OPENVKL_CATCH_END(0u)
+
+extern "C" size_t vklGetHitIteratorSize16(const VKLHitIteratorContext *context)
+    OPENVKL_CATCH_BEGIN_UNSAFE(context)
+{
+  return deviceObj->getHitIteratorSize16(context);
+}
+OPENVKL_CATCH_END(0u)
 
 extern "C" VKLHitIterator vklInitHitIterator(
     const VKLHitIteratorContext *context,

@@ -6,52 +6,12 @@
 #include "openvkl/common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
-#include "../compute/vklComputeSample.h"
+#include "../compute/vklCompute.h"
 #include "../compute/vklIterators.h"
 #include "../include/openvkl/device/openvkl.h"
 
 using namespace openvkl;
 using namespace openvkl::gpu_device;
-
-///////////////////////////////////////////////////////////////////////////////
-// Macro helpers //////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-// Note that these are different than those in the top-level API.cpp
-
-#define OPENVKL_CATCH_BEGIN_UNSAFE(deviceSource)                      \
-  {                                                                   \
-    assert(deviceSource != nullptr);                                  \
-    openvkl::ManagedObject *managedObject =                           \
-        static_cast<openvkl::ManagedObject *>(deviceSource->host);    \
-    AddDeviceAPIs *deviceObj =                                        \
-        reinterpret_cast<AddDeviceAPIs *>(managedObject->device.ptr); \
-    try {
-#define OPENVKL_CATCH_END_NO_DEVICE(a)                                         \
-  }                                                                            \
-  catch (const std::bad_alloc &)                                               \
-  {                                                                            \
-    openvkl::handleError(deviceObj,                                            \
-                         VKL_OUT_OF_MEMORY,                                    \
-                         "Open VKL was unable to allocate memory");            \
-    return a;                                                                  \
-  }                                                                            \
-  catch (const std::exception &e)                                              \
-  {                                                                            \
-    openvkl::handleError(deviceObj, VKL_UNKNOWN_ERROR, e.what());              \
-    return a;                                                                  \
-  }                                                                            \
-  catch (...)                                                                  \
-  {                                                                            \
-    openvkl::handleError(                                                      \
-        deviceObj, VKL_UNKNOWN_ERROR, "an unrecognized exception was caught"); \
-    return a;                                                                  \
-  }                                                                            \
-  }
-
-#define OPENVKL_CATCH_END(a) \
-  assert(deviceObj);         \
-  OPENVKL_CATCH_END_NO_DEVICE(a)
 
 ///////////////////////////////////////////////////////////////////////////////
 // Device initialization //////////////////////////////////////////////////////
@@ -89,44 +49,47 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
       time);
 }
 
-extern "C" OPENVKL_DLLEXPORT void vklComputeSampleM(
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     float *samples,
     unsigned int M,
     const unsigned int *attributeIndices,
-    float time) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+    float time)
 {
-  constexpr int valid = 1;
-  deviceObj->computeSampleM1(
-      &valid,
-      sampler,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      samples,
+  assert(sampler);
+  const ispc::SamplerShared *samplerShared =
+      static_cast<const ispc::SamplerShared *>(sampler->device);
+
+  SharedStructuredVolume_sampleM_uniform(
+      samplerShared,
+      *reinterpret_cast<const vec3f *>(objectCoordinates),
       M,
       attributeIndices,
-      &time);
+      time,
+      samples);
 }
-OPENVKL_CATCH_END()
 
-extern "C" OPENVKL_DLLEXPORT vkl_vec3f
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT vkl_vec3f
 vklComputeGradient(const VKLSampler *sampler,
                    const vkl_vec3f *objectCoordinates,
                    unsigned int attributeIndex,
-                   float time) OPENVKL_CATCH_BEGIN_UNSAFE(sampler)
+                   float time)
 {
-  constexpr int valid = 1;
-  vkl_vec3f gradient;
-  deviceObj->computeGradient1(
-      &valid,
-      sampler,
-      reinterpret_cast<const vvec3fn<1> &>(*objectCoordinates),
-      reinterpret_cast<vvec3fn<1> &>(gradient),
+  assert(sampler);
+  const ispc::SamplerShared *samplerShared =
+      static_cast<const ispc::SamplerShared *>(sampler->device);
+  const ispc::SharedStructuredVolume *sharedStructuredVolume =
+      reinterpret_cast<const ispc::SharedStructuredVolume *>(
+          samplerShared->volume);
+
+  return SharedStructuredVolume_computeGradient_bbox_checks(
+      sharedStructuredVolume,
+      *reinterpret_cast<const vec3f *>(objectCoordinates),
+      samplerShared->filter,
       attributeIndex,
-      &time);
-  return gradient;
+      time);
 }
-OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
 
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterator //////////////////////////////////////////////////////////

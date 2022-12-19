@@ -6,7 +6,7 @@
 #include "../../cpu/volume/GridAccelerator.h"
 #include "../../cpu/volume/GridAcceleratorShared.h"
 
-#include "vklComputeSample.h"
+#include "vklCompute.h"
 
 #include <rkcommon/common.h>
 #include <rkcommon/math/box.h>

@@ -85,12 +85,43 @@ template_SSV_sample_inner_uniform_32(int16);
 template_SSV_sample_inner_uniform_32(uint16);
 template_SSV_sample_inner_uniform_32(float);
 
+inline float SSV_sample_inner_32_dispatch(
+    const ispc::SharedStructuredVolume *self,
+    const VKLDataType dataType,
+    const vec3f &clampedLocalCoordinates,
+    const VKLFilter filter,
+    const uint32_t attributeIndex,
+    const float time)
+
+{
+  switch (dataType) {
+  case VKL_UCHAR:
+    return SSV_sample_inner_uint8_uniform_32(
+        self, clampedLocalCoordinates, filter, attributeIndex, time);
+
+  case VKL_SHORT:
+    return SSV_sample_inner_int16_uniform_32(
+        self, clampedLocalCoordinates, filter, attributeIndex, time);
+
+  case VKL_USHORT:
+    return SSV_sample_inner_uint16_uniform_32(
+        self, clampedLocalCoordinates, filter, attributeIndex, time);
+
+  case VKL_FLOAT:
+    return SSV_sample_inner_float_uniform_32(
+        self, clampedLocalCoordinates, filter, attributeIndex, time);
+
+  default:
+    return -1.0f;
+  }
+}
+
 inline float SharedStructuredVolume_computeSample_uniform(
     const ispc::SharedStructuredVolume *self,
     const vec3f &objectCoordinates,
     const VKLFilter filter,
     const uint32_t attributeIndex,
-    const float &time)
+    const float time)
 {
   vec3f clampedLocalCoordinates;
 
@@ -115,24 +146,128 @@ inline float SharedStructuredVolume_computeSample_uniform(
             vec3f(0.0f),
             make_vec3f_rkcommon(self->localCoordinatesUpperBound));
 
-  switch (self->attributesData[attributeIndex].dataType) {
-  case VKL_UCHAR:
-    return SSV_sample_inner_uint8_uniform_32(
-        self, clampedLocalCoordinates, filter, attributeIndex, time);
+  return SSV_sample_inner_32_dispatch(
+      self,
+      self->attributesData[attributeIndex].dataType,
+      clampedLocalCoordinates,
+      filter,
+      attributeIndex,
+      time);
+}
 
-  case VKL_SHORT:
-    return SSV_sample_inner_int16_uniform_32(
-        self, clampedLocalCoordinates, filter, attributeIndex, time);
+inline void clampedLocalCoordinates_uniform(
+    const ispc::SharedStructuredVolume *self,
+    const vec3f &objectCoordinates,
+    vec3f &clampedLocalCoordinates,
+    bool &inBounds)
+{
+  inBounds = true;
 
-  case VKL_USHORT:
-    return SSV_sample_inner_uint16_uniform_32(
-        self, clampedLocalCoordinates, filter, attributeIndex, time);
+  transformObjectToLocal_uniform_structured_regular(
+      self, objectCoordinates, clampedLocalCoordinates);
 
-  case VKL_FLOAT:
-    return SSV_sample_inner_float_uniform_32(
-        self, clampedLocalCoordinates, filter, attributeIndex, time);
-
-  default:
-    return -1.0f;
+  if (clampedLocalCoordinates.x < 0.f ||
+      clampedLocalCoordinates.x > self->dimensions.x - 1.f ||
+      clampedLocalCoordinates.y < 0.f ||
+      clampedLocalCoordinates.y > self->dimensions.y - 1.f ||
+      clampedLocalCoordinates.z < 0.f ||
+      clampedLocalCoordinates.z > self->dimensions.z - 1.f) {
+    inBounds = false;
+    return;
   }
+
+  clampedLocalCoordinates =
+      clamp(clampedLocalCoordinates,
+            vec3f(0.0f),
+            make_vec3f_rkcommon(self->localCoordinatesUpperBound));
+}
+
+inline void SharedStructuredVolume_sampleM_uniform(
+    const ispc::SamplerShared *sampler,
+    const vec3f &objectCoordinates,
+    const uint32_t M,
+    const uint32_t *attributeIndices,
+    const float time,
+    float *samples)
+{
+  const ispc::SharedStructuredVolume *self =
+      reinterpret_cast<const ispc::SharedStructuredVolume *>(sampler->volume);
+
+  vec3f clampedLocalCoordinates;
+  bool inBounds;
+  clampedLocalCoordinates_uniform(
+      self, objectCoordinates, clampedLocalCoordinates, inBounds);
+
+  if (inBounds) {
+    for (uint32_t i = 0; i < M; i++) {
+      samples[i] = SSV_sample_inner_32_dispatch(
+          self,
+          self->attributesData[attributeIndices[i]].dataType,
+          clampedLocalCoordinates,
+          sampler->filter,
+          attributeIndices[i],
+          time);
+    }
+  } else {
+    for (uint32_t i = 0; i < M; i++) {
+      samples[i] = sampler->volume->background[i];
+    }
+  }
+}
+
+inline vkl_vec3f SharedStructuredVolume_computeGradient_bbox_checks(
+    const ispc::SharedStructuredVolume *self,
+    const vec3f &objectCoordinates,
+    const VKLFilter filter,
+    const uint32_t attributeIndex,
+    const float time)
+{
+  // gradient step in each dimension (object coordinates)
+  vec3f gradientStep = make_vec3f_rkcommon(self->gridSpacing);
+
+  // compute via forward or backward differences depending on volume boundary
+  const vec3f gradientExtent = objectCoordinates + gradientStep;
+
+  if (gradientExtent.x >= self->boundingBox.upper.x)
+    gradientStep.x *= -1.f;
+
+  if (gradientExtent.y >= self->boundingBox.upper.y)
+    gradientStep.y *= -1.f;
+
+  if (gradientExtent.z >= self->boundingBox.upper.z)
+    gradientStep.z *= -1.f;
+
+  vec3f gradient;
+
+  float sample = SharedStructuredVolume_computeSample_uniform(
+      self, objectCoordinates, filter, attributeIndex, time);
+
+  gradient.x = SharedStructuredVolume_computeSample_uniform(
+                   self,
+                   objectCoordinates + make_vec3f_rkcommon(ispc::vec3f{
+                                           gradientStep.x, 0.f, 0.f}),
+                   filter,
+                   attributeIndex,
+                   time) -
+               sample;
+  gradient.y = SharedStructuredVolume_computeSample_uniform(
+                   self,
+                   objectCoordinates + make_vec3f_rkcommon(ispc::vec3f{
+                                           0.f, gradientStep.y, 0.f}),
+                   filter,
+                   attributeIndex,
+                   time) -
+               sample;
+  gradient.z = SharedStructuredVolume_computeSample_uniform(
+                   self,
+                   objectCoordinates + make_vec3f_rkcommon(ispc::vec3f{
+                                           0.f, 0.f, gradientStep.z}),
+                   filter,
+                   attributeIndex,
+                   time) -
+               sample;
+
+  const vec3f result = gradient / gradientStep;
+
+  return vkl_vec3f{result.x, result.y, result.z};
 }

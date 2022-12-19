@@ -100,21 +100,6 @@ namespace openvkl {
 
       VKLSampler newSampler(VKLVolume volume) override;
 
-      void computeSampleM1(const int *valid,
-                           const VKLSampler *sampler,
-                           const vvec3fn<1> &objectCoordinates,
-                           float *samples,
-                           unsigned int M,
-                           const unsigned int *attributeIndices,
-                           const float *times) override;
-
-      void computeGradient1(const int *valid,
-                            const VKLSampler *sampler,
-                            const vvec3fn<1> &objectCoordinates,
-                            vvec3fn<1> &gradients,
-                            unsigned int attributeIndex,
-                            const float *times) override;
-
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////

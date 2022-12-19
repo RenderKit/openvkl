@@ -36,19 +36,19 @@ OPENVKL_INTERFACE SYCL_EXTERNAL float vklComputeSample(
     unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
     float time VKL_DEFAULT_VAL(= 0));
 
-OPENVKL_INTERFACE
-void vklComputeSampleM(const VKLSampler *sampler,
-                       const vkl_vec3f *objectCoordinates,
-                       float *samples,
-                       unsigned int M,
-                       const unsigned int *attributeIndices,
-                       float time VKL_DEFAULT_VAL(= 0));
+OPENVKL_INTERFACE SYCL_EXTERNAL void vklComputeSampleM(
+    const VKLSampler *sampler,
+    const vkl_vec3f *objectCoordinates,
+    float *samples,
+    unsigned int M,
+    const unsigned int *attributeIndices,
+    float time VKL_DEFAULT_VAL(= 0));
 
-OPENVKL_INTERFACE
-vkl_vec3f vklComputeGradient(const VKLSampler *sampler,
-                             const vkl_vec3f *objectCoordinates,
-                             unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                             float time VKL_DEFAULT_VAL(= 0));
+OPENVKL_INTERFACE SYCL_EXTERNAL vkl_vec3f
+vklComputeGradient(const VKLSampler *sampler,
+                   const vkl_vec3f *objectCoordinates,
+                   unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+                   float time VKL_DEFAULT_VAL(= 0));
 
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterators /////////////////////////////////////////////////////////

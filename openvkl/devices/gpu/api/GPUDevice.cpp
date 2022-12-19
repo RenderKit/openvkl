@@ -9,7 +9,7 @@
 #include "../../cpu/volume/Volume.h"
 #include "../common/Data.h"
 #include "../common/ObjectFactory.h"
-#include "../compute/vklComputeSample.h"
+#include "../compute/vklCompute.h"
 #include "../compute/vklIterators.h"
 
 namespace openvkl {
@@ -176,34 +176,6 @@ namespace openvkl {
       return s;
     }
 
-    template <int W>
-    void GPUDevice<W>::computeSampleM1(const int *valid,
-                                       const VKLSampler *sampler,
-                                       const vvec3fn<1> &objectCoordinates,
-                                       float *samples,
-                                       unsigned int M,
-                                       const unsigned int *attributeIndices,
-                                       const float *time)
-    {
-      auto &samplerObject =
-          referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler->host);
-      vfloatn<1> timeW(time, 1);
-      samplerObject.computeSampleM(
-          objectCoordinates, samples, M, attributeIndices, timeW);
-    }
-
-    template <int W>
-    void GPUDevice<W>::computeGradient1(const int *valid,
-                                        const VKLSampler *sampler,
-                                        const vvec3fn<1> &objectCoordinates,
-                                        vvec3fn<1> &gradients,
-                                        unsigned int attributeIndex,
-                                        const float *times)
-    {
-      computeGradientAnyWidth<1>(
-          valid, sampler, objectCoordinates, gradients, attributeIndex, times);
-    }
-
     ///////////////////////////////////////////////////////////////////////////
     // Volume /////////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
@@ -255,45 +227,6 @@ namespace openvkl {
       auto &volumeObject =
           referenceFromHandle<openvkl::cpu_device::Volume<W>>(volume.host);
       return volumeObject.getValueRange(attributeIndex);
-    }
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Private methods ////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////////////////
-
-    template <int W>
-    template <int OW>
-    typename std::enable_if<(OW < W), void>::type
-    GPUDevice<W>::computeGradientAnyWidth(const int *valid,
-                                          const VKLSampler *sampler,
-                                          const vvec3fn<OW> &objectCoordinates,
-                                          vvec3fn<OW> &gradients,
-                                          unsigned int attributeIndex,
-                                          const float *times)
-    {
-      auto &samplerObject =
-          referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler->host);
-
-      vvec3fn<W> ocW = static_cast<vvec3fn<W>>(objectCoordinates);
-      vfloatn<W> tW(times, OW);
-
-      vintn<W> validW;
-      for (int i = 0; i < W; i++)
-        validW[i] = i < OW ? valid[i] : 0;
-
-      ocW.fill_inactive_lanes(validW);
-      tW.fill_inactive_lanes(validW);
-
-      vvec3fn<W> gradientsW;
-
-      samplerObject.computeGradientV(
-          validW, ocW, gradientsW, attributeIndex, tW);
-
-      for (int i = 0; i < OW; i++) {
-        gradients.x[i] = gradientsW.x[i];
-        gradients.y[i] = gradientsW.y[i];
-        gradients.z[i] = gradientsW.z[i];
-      }
     }
 
     VKL_REGISTER_DEVICE(GPUDevice<VKL_TARGET_WIDTH>,

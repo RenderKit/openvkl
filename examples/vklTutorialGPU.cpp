@@ -44,30 +44,52 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
             << std::endl
             << std::endl;
 
-  const float time = 0.f;
+  // sample, gradient (first attribute)
+  const unsigned int attributeIndex = 0;
+  const float time                  = 0.f;
 
-  // This is USM Shared allocation - it's required when
-  // we want to pass result back from GPU
-  float *sample = sycl::malloc_shared<float>(1, syclQueue);
+  // USM shared allocations, required when we want to pass results back from GPU
+  float *sample   = sycl::malloc_shared<float>(1, syclQueue);
+  vkl_vec3f *grad = sycl::malloc_shared<vkl_vec3f>(1, syclQueue);
 
-  for (unsigned int attributeIndex = 0; attributeIndex < numAttributes;
-       attributeIndex++) {
-    syclQueue
-        .single_task([=]() {
-          *sample = vklComputeSample(&sampler, &coord, attributeIndex, time);
-        })
-        .wait();
+  syclQueue
+      .single_task([=]() {
+        *sample = vklComputeSample(&sampler, &coord, attributeIndex, time);
+        *grad   = vklComputeGradient(&sampler, &coord, attributeIndex, time);
+      })
+      .wait();
 
-    std::cout << "\tsampling computation (attribute " << attributeIndex << ")"
-              << std::endl;
-    std::cout << "\t\tsample = " << *sample << std::endl;
-  }
+  std::cout << "\tsampling and gradient computation (first attribute)"
+            << std::endl;
+  std::cout << "\t\tsample = " << *sample << std::endl;
+  std::cout << "\t\tgrad   = " << grad->x << " " << grad->y << " " << grad->z
+            << std::endl
+            << std::endl;
 
   sycl::free(sample, syclQueue);
+  sycl::free(grad, syclQueue);
 
-  std::cout << std::endl << "\tinterval iteration" << std::endl << std::endl;
+  // sample (multiple attributes)
+  const unsigned int M                  = 3;
+  const unsigned int attributeIndices[] = {0, 1, 2};
+
+  float *samples = sycl::malloc_shared<float>(M, syclQueue);
+
+  syclQueue
+      .single_task([=]() {
+        vklComputeSampleM(&sampler, &coord, samples, M, attributeIndices, time);
+      })
+      .wait();
+
+  std::cout << "\tsampling (multiple attributes)" << std::endl;
+  std::cout << "\t\tsamples = " << samples[0] << " " << samples[1] << " "
+            << samples[2] << std::endl;
+
+  sycl::free(samples, syclQueue);
 
   // interval iterator context setup
+  std::cout << std::endl << "\tinterval iteration" << std::endl << std::endl;
+
   std::vector<vkl_range1f> ranges{{10, 20}, {50, 75}};
   VKLData rangesData =
       vklNewData(device, ranges.size(), VKL_BOX1F, ranges.data());
@@ -159,10 +181,9 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   std::cout << std::endl << "\thit iteration" << std::endl << std::endl;
 
   // hit iterator context setup
-  float values[2] = {32.f, 96.f};
-  int num_values = 2;
-  VKLData valuesData =
-      vklNewData(device, num_values, VKL_FLOAT, values);
+  float values[2]    = {32.f, 96.f};
+  int num_values     = 2;
+  VKLData valuesData = vklNewData(device, num_values, VKL_FLOAT, values);
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
@@ -176,16 +197,15 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   // ray definition for iterators
   // see rayOrigin, Direction and TRange above
 
-  char *hitIteratorBuffer = sycl::malloc_device<char>(
-      vklGetHitIteratorSize(&hitContext), syclQueue);
+  char *hitIteratorBuffer =
+      sycl::malloc_device<char>(vklGetHitIteratorSize(&hitContext), syclQueue);
 
   int *numHits = sycl::malloc_shared<int>(1, syclQueue);
   *numHits     = 0;
 
   const size_t maxNumHits = 999;
 
-  VKLHit *hitBuffer =
-      sycl::malloc_shared<VKLHit>(maxNumHits, syclQueue);
+  VKLHit *hitBuffer = sycl::malloc_shared<VKLHit>(maxNumHits, syclQueue);
   memset(hitBuffer, 0, maxNumHits * sizeof(VKLHit));
 
   std::cout << "\thit iterator for values";
@@ -223,7 +243,7 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   for (int i = 0; i < *numHits; ++i) {
     std::cout << "\t\tt " << hitBuffer[i].t << std::endl;
     std::cout << "\t\tsample " << hitBuffer[i].sample << std::endl;
-    std::cout << "\t\tepsilon " << hitBuffer[i].epsilon<< std::endl
+    std::cout << "\t\tepsilon " << hitBuffer[i].epsilon << std::endl
               << std::endl;
   }
 

@@ -29,6 +29,9 @@ inline void test_scalar_and_vector_gradients(
   REQUIRE(scalarGradientValue.z ==
           Approx(gradientTruth.z).margin(gradientTolerance));
 
+// OpenVKL API functions used in below part of this function is now available
+// only for CPU device.
+#ifdef OPENVKL_TESTING_CPU
   // since vklComputeGradient() can have a specialized implementation separate
   // from vector gradients, check the vector APIs as well. we only need to
   // check for consistency with the scalar API result, as that has already
@@ -84,6 +87,7 @@ inline void test_scalar_and_vector_gradients(
   REQUIRE(scalarGradientValue.x == gradients_16.x[0]);
   REQUIRE(scalarGradientValue.y == gradients_16.y[0]);
   REQUIRE(scalarGradientValue.z == gradients_16.z[0]);
+#endif
 }
 
 // applicable to procedural structured and VDB volumes
@@ -137,6 +141,9 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
   vklRelease2(vklSampler);
 }
 
+// OpenVKL API functions used in this function is now available only for CPU
+// device.
+#ifdef OPENVKL_TESTING_CPU
 inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
                                   const unsigned int attributeIndex = 0,
                                   const float time                  = 0.f)
@@ -179,10 +186,10 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
             &vklSampler, &objectCoordinates[i], attributeIndex, time);
 
         INFO("gradient = " << i + 1 << " / " << N);
-        INFO("gradientTruth = " << gradientTruth.x << ", "
-                           << gradientTruth.y << ", " << gradientTruth.z);
-        INFO("gradients[i] = " << gradients[i].x << ", "
-                           << gradients[i].y << ", " << gradients[i].z);
+        INFO("gradientTruth = " << gradientTruth.x << ", " << gradientTruth.y
+                                << ", " << gradientTruth.z);
+        INFO("gradients[i] = " << gradients[i].x << ", " << gradients[i].y
+                               << ", " << gradients[i].z);
 
         // gradients may be NaN if out of bounds of the grid (e.g. for gradients
         // in the bounding box of a spherical volume but outside the grid)
@@ -210,3 +217,4 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
   }
   vklRelease2(vklSampler);
 }
+#endif

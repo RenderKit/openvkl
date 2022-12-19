@@ -5,6 +5,7 @@
 #include "openvkl_testing.h"
 #include "rkcommon/math/box.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
+#include "wrappers.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
@@ -32,26 +33,37 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
   VKLSampler vklSampler = vklNewSampler(vklVolume);
   vklCommit2(vklSampler);
 
-  multidim_index_sequence<3> mis(v->getDimensions());
+  // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+  const vec3i step = vec3i(8);
+#else
+  const vec3i step = vec3i(1);
+#endif
+
+  multidim_index_sequence<3> mis(v->getDimensions() / step);
 
   for (const auto &offset : mis) {
+    const auto offsetWithStep = offset * step;
+
     // optionally skip boundary vertices
-    if (skipBoundaries &&
-        (reduce_min(offset) == 0 || offset.x == dimensions.x - 1 ||
-         offset.y == dimensions.y - 1 || offset.z == dimensions.z - 1)) {
+    if (skipBoundaries && (reduce_min(offsetWithStep) == 0 ||
+                           offsetWithStep.x == dimensions.x - 1 ||
+                           offsetWithStep.y == dimensions.y - 1 ||
+                           offsetWithStep.z == dimensions.z - 1)) {
       continue;
     }
 
     const vec3f objectCoordinates =
-        v->transformLocalToObjectCoordinates(offset);
+        v->transformLocalToObjectCoordinates(offsetWithStep);
 
-    INFO("offset = " << offset.x << " " << offset.y << " " << offset.z);
+    INFO("offset = " << offsetWithStep.x << " " << offsetWithStep.y << " "
+                     << offsetWithStep.z);
     INFO("objectCoordinates = " << objectCoordinates.x << " "
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
 
-    const vkl_vec3f vklGradient =
-        vklComputeGradient(&vklSampler, (const vkl_vec3f *)&objectCoordinates);
+    const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+        &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0.f);
     const vec3f gradient = (const vec3f &)vklGradient;
 
     // compare to analytical gradient
@@ -67,12 +79,12 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || \
-    OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+    OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Structured volume gradients", "[volume_gradients]")
 {
   initializeOpenVKL();
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
   SECTION("XYZStructuredRegularVolume<float>")
   {
     scalar_gradients<XYZStructuredRegularVolume<float>>();

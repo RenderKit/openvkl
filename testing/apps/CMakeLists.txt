@@ -182,6 +182,8 @@ if (BUILD_TESTING)
     openvkl_add_executable_ispc(vklTestsGPU
       vklTests.cpp
       tests/structured_regular_volume_sampling.cpp
+      tests/structured_regular_volume_multi.cpp
+      tests/structured_volume_gradients.cpp
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
     )

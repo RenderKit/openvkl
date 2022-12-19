@@ -118,9 +118,6 @@ inline void test_scalar_and_vector_sampling(
 #endif
 }
 
-// OpenVKL API functions used in this function is now available only for CPU
-// device.
-#ifdef OPENVKL_TESTING_CPU
 inline void test_scalar_and_vector_sampling_multi(
     VKLSampler sampler,
     const vec3f &objectCoordinates,
@@ -131,18 +128,21 @@ inline void test_scalar_and_vector_sampling_multi(
 {
   std::vector<float> scalarSampledValues(attributeIndices.size());
 
-  vklComputeSampleM(&sampler,
-                    (const vkl_vec3f *)&objectCoordinates,
-                    scalarSampledValues.data(),
-                    attributeIndices.size(),
-                    attributeIndices.data(),
-                    time);
+  vklComputeSampleMWrapper(&sampler,
+                           (const vkl_vec3f *)&objectCoordinates,
+                           scalarSampledValues.data(),
+                           attributeIndices.size(),
+                           attributeIndices.data(),
+                           time);
 
   for (unsigned int a = 0; a < attributeIndices.size(); a++) {
     REQUIRE(scalarSampledValues[a] ==
             Approx(sampleTruths[a]).margin(sampleTolerance));
   }
 
+// OpenVKL API functions used in below part of this function is now available
+// only for CPU device.
+#ifdef OPENVKL_TESTING_CPU
   // since vklComputeSample() can have a specialized implementation separate
   // from vector sampling, check the vector APIs as well. we only need to
   // check for consistency with the scalar API result, as that has already
@@ -207,12 +207,9 @@ inline void test_scalar_and_vector_sampling_multi(
       }
     }
   }
-}
 #endif
+}
 
-// OpenVKL API functions used in this function is now available only for CPU
-// device.
-#ifdef OPENVKL_TESTING_CPU
 // applicable to procedural structured and VDB volumes
 template <typename VOLUME_TYPE>
 inline void sampling_on_vertices_vs_procedural_values_multi(
@@ -276,7 +273,6 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
 
   vklRelease2(vklSampler);
 }
-#endif
 
 // OpenVKL API functions used in this function is now available only for CPU
 // device.

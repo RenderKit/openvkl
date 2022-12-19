@@ -15,6 +15,8 @@
 
 #include <openvkl/common.h>
 
+#include "max_iterator_size.h"
+
 typedef APIObject VKLSampler;
 
 #ifdef __cplusplus

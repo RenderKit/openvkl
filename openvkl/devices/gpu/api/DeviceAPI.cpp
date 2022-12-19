@@ -129,8 +129,14 @@ vklComputeGradient(const VKLSampler *sampler,
 OPENVKL_CATCH_END(vkl_vec3f{rkcommon::math::nan})
 
 ///////////////////////////////////////////////////////////////////////////////
-// Interval iterator///////////////////////////////////////////////////////////
+// Interval iterator //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
+
+// for now, with just one volume (iterator) type we guarantee equality. later
+// this will be a >= check.
+static_assert(VKL_MAX_INTERVAL_ITERATOR_SIZE ==
+              sizeof(GridAcceleratorIterator) +
+                  alignof(GridAcceleratorIterator));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
@@ -177,3 +183,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
   GridAcceleratorIterator_iterateInterval_uniform(iterator, interval, &result);
   return result;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Hit iterator ///////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+// for now, with just one volume (iterator) type we guarantee equality. later
+// this will be a >= check.
+static_assert(VKL_MAX_HIT_ITERATOR_SIZE ==
+              sizeof(GridAcceleratorIterator) +
+                  alignof(GridAcceleratorIterator));

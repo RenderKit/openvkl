@@ -7,7 +7,7 @@
 #include "openvkl/openvkl.h"
 
 #include "../compute/vklComputeSample.h"
-#include "../compute/vklIterateInterval.h"
+#include "../compute/vklIterators.h"
 #include "../include/openvkl/device/openvkl.h"
 
 using namespace openvkl;
@@ -193,3 +193,46 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
 static_assert(VKL_MAX_HIT_ITERATOR_SIZE ==
               sizeof(GridAcceleratorIterator) +
                   alignof(GridAcceleratorIterator));
+
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
+vklGetHitIteratorSize(const VKLIntervalIteratorContext *context)
+{
+  // the size includes extra padding, so that we can still use an unaligned
+  // buffer allocated by the application
+  return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+}
+
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT VKLHitIterator
+vklInitHitIterator(const VKLHitIteratorContext *context,
+                   const vkl_vec3f *origin,
+                   const vkl_vec3f *direction,
+                   const vkl_range1f *tRange,
+                   float time,
+                   void *buffer)
+{
+  size_t space =
+      sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+
+  void *alignedBuffer = std::align(alignof(GridAcceleratorIterator),
+                                   sizeof(GridAcceleratorIterator),
+                                   buffer,
+                                   space);
+  assert(alignedBuffer);
+
+  GridAcceleratorIteratorU_Init(alignedBuffer,
+                                context->device,
+                                (void *)origin,
+                                (void *)direction,
+                                (void *)tRange,
+                                &time);
+
+  return (VKLHitIterator)alignedBuffer;
+}
+
+extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
+    VKLHitIterator iterator, VKLHit *hit)
+{
+  int result = 0;
+  GridAcceleratorIterator_iterateHit_uniform(iterator, hit, &result);
+  return result;
+}

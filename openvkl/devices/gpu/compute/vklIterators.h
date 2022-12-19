@@ -6,6 +6,8 @@
 #include "../../cpu/volume/GridAccelerator.h"
 #include "../../cpu/volume/GridAcceleratorShared.h"
 
+#include "vklComputeSample.h"
+
 #include <rkcommon/common.h>
 #include <rkcommon/math/box.h>
 using namespace rkcommon::math;
@@ -20,6 +22,15 @@ inline vec3i bitwise_AND(const vec3i &a, const int b)
   return {a.x & b, a.y & b, a.z & b};
 }
 
+// from Hit.ih
+// this should match the layout of VKLHit
+struct Hit
+{
+  float t;
+  float sample;
+  float epsilon;
+};
+
 // from Interval.ih
 struct Interval
 {
@@ -27,6 +38,7 @@ struct Interval
   box1f valueRange;
   float nominalDeltaT;
 };
+
 
 inline void resetInterval(Interval &interval)
 {
@@ -137,6 +149,52 @@ struct GridAcceleratorIterator
 };
 
 #include "../../cpu/volume/StructuredVolumeShared.h"
+
+// from GridAcceleratorIterator.ispc
+inline void GridAcceleratorIteratorU_Init(void *_self,
+                                          void *_context,
+                                          void *_origin,
+                                          void *_direction,
+                                          void *_tRange,
+                                          void *_time)
+{
+  GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
+
+  self->context   = (const ispc::IntervalIteratorContext *)_context;
+  self->origin    = *((vec3f *)_origin);
+  self->direction = *((vec3f *)_direction);
+  self->tRange    = *((box1f *)_tRange);
+  self->time      = *((float *)_time);
+
+  const ispc::SharedStructuredVolume *volume =
+      (const ispc::SharedStructuredVolume *)
+          self->context->super.sampler->volume;
+
+  self->boundingBoxTRange =
+      intersectBox(*((vec3f *)_origin),
+                   *((vec3f *)_direction),
+                   box3f{make_vec3f_rkcommon(volume->boundingBox.lower),
+                         make_vec3f_rkcommon(volume->boundingBox.upper)},
+                   self->tRange);
+
+  self->intervalState.currentCellIndex = vec3i{-1, -1, -1};
+
+#if 0
+    self->intervalState.nominalDeltaT =
+        reduce_min(volume->gridSpacing *
+                   rcp_safe(absf(self->direction))); /* in ray space */
+#else
+  float x   = volume->gridSpacing.x * divide_safe(std::abs(self->direction.x));
+  float y   = volume->gridSpacing.y * divide_safe(std::abs(self->direction.y));
+  float z   = volume->gridSpacing.z * divide_safe(std::abs(self->direction.z));
+  float min = x < y ? x : y;
+  self->intervalState.nominalDeltaT = min < z ? min : z;
+#endif
+
+  self->hitState.currentCellIndex  = vec3i{-1, -1, -1};
+  self->hitState.currentCellTRange = {std::numeric_limits<float>::infinity(),
+                                      -std::numeric_limits<float>::infinity()};
+}
 
 // from SharedStructuredVolume.ih
 inline void transformLocalToObject_uniform_structured_regular(
@@ -361,48 +419,178 @@ inline void GridAcceleratorIterator_iterateInterval_uniform(
   *result = false;
 }
 
+// from Iterator.ih
+
+/*
+ * Intersect isosurfaces along the given ray using Newton-Raphson iteration.
+ */
+inline bool intersectSurfacesNewton(
+    const ispc::SamplerShared *sampler,
+    const vec3f &origin,
+    const vec3f &direction,
+    const box1f &tRange,
+    const unsigned int attributeIndex,
+    const float &time,
+    const float step,
+    const int numValues,
+    const float * values,
+    Hit &hit)
+{
+  /* our bracketing sample t-values will always be in multiples of `step`,
+  to avoid artifacts / differences in hits between neighboring rays, or when
+  moving between macrocell boundaries, for example.
+
+  note that the current approach here takes only one Newton iteration, so
+  consistent bracketing is especially important for "smooth" results. */
+  const int minTIndex = floor(tRange.lower / step);
+  const int maxTIndex = ceil(tRange.upper / step);
+
+  float t0      = minTIndex * step;
+  float sample0 = SharedStructuredVolume_computeSample_uniform(
+      (const ispc::SharedStructuredVolume *)sampler->volume, origin + t0 * direction,
+      sampler->filter, attributeIndex, time);
+
+  float t;
+
+  for (int i = minTIndex; i < maxTIndex; i++) {
+    t = (i + 1) * step;
+
+    const float sample = SharedStructuredVolume_computeSample_uniform(
+          (const ispc::SharedStructuredVolume *)sampler->volume, origin + t * direction,
+           sampler->filter, attributeIndex, time);
+
+    float tHit    = std::numeric_limits<float>::infinity();
+    float epsilon = std::numeric_limits<float>::infinity();
+    float value   = std::numeric_limits<float>::infinity();
+
+    if (!isnan(sample0 + sample) && (sample != sample0)) {
+      for (int j = 0; j < numValues; j++) {
+        if ((values[j] - sample0) * (values[j] - sample) <= 0.f) {
+          const float rcpSamp = 1.f / (sample - sample0);
+          float tIso          = std::numeric_limits<float>::infinity();
+          if (!isnan(rcpSamp)) {
+            tIso = t0 + (values[j] - sample0) * rcpSamp * (t - t0);
+          }
+
+          if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) {
+            tHit    = tIso;
+            value   = values[j];
+            epsilon = step * 0.125f;
+          }
+        }
+      }
+
+      if (tHit < std::numeric_limits<float>::infinity()) {
+        hit.t       = tHit;
+        hit.sample  = value;
+        hit.epsilon = epsilon * length(direction); /* in object space */
+        return true;
+      }
+    }
+
+    t0      = t;
+    sample0 = sample;
+  }
+
+  return false;
+}
+
 // from GridAcceleratorIterator.ispc
-inline void GridAcceleratorIteratorU_Init(void *_self,
-                                          void *_context,
-                                          void *_origin,
-                                          void *_direction,
-                                          void *_tRange,
-                                          void *_time)
+
+inline void GridAcceleratorIterator_iterateHit_uniform(
+    const void *_self, const void *_hit, int *result)
 {
   GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
 
-  self->context   = (const ispc::IntervalIteratorContext *)_context;
-  self->origin    = *((vec3f *)_origin);
-  self->direction = *((vec3f *)_direction);
-  self->tRange    = *((box1f *)_tRange);
-  self->time      = *((float *)_time);
+  const ispc::HitIteratorContext * hitContext =
+      (const ispc::HitIteratorContext *)self->context;
+
+  Hit * hit = (Hit * ) _hit;
+
+  if (isempty1f(self->boundingBoxTRange)) {
+    *result = false;
+    return;
+  }
+
+  if (hitContext->numValues == 0) {
+    *result = false;
+    return;
+  }
 
   const ispc::SharedStructuredVolume *volume =
       (const ispc::SharedStructuredVolume *)
           self->context->super.sampler->volume;
 
-  self->boundingBoxTRange =
-      intersectBox(*((vec3f *)_origin),
-                   *((vec3f *)_direction),
-                   box3f{make_vec3f_rkcommon(volume->boundingBox.lower),
-                         make_vec3f_rkcommon(volume->boundingBox.upper)},
-                   self->tRange);
+  /* first iteration */
+  if (self->hitState.currentCellIndex.x == -1)
+  {
+    self->hitState.activeCell =
+        GridAccelerator_nextCell(volume->accelerator,
+                                 self,
+                                 self->hitState.currentCellIndex,
+                                 self->hitState.currentCellTRange);
+  }
 
-  self->intervalState.currentCellIndex = vec3i{-1, -1, -1};
+  // reduce_min volume->gridSpacing
+  const float x   = volume->gridSpacing.x;
+  const float y   = volume->gridSpacing.y;
+  const float z   = volume->gridSpacing.z;
+  const float min = x < y ? x : y;
+  const float step = min < z ? min : z;
 
-#if 0
-    self->intervalState.nominalDeltaT =
-        reduce_min(volume->gridSpacing *
-                   rcp_safe(absf(self->direction))); /* in ray space */
-#else
-  float x   = volume->gridSpacing.x * divide_safe(std::abs(self->direction.x));
-  float y   = volume->gridSpacing.y * divide_safe(std::abs(self->direction.y));
-  float z   = volume->gridSpacing.z * divide_safe(std::abs(self->direction.z));
-  float min = x < y ? x : y;
-  self->intervalState.nominalDeltaT = min < z ? min : z;
-#endif
+  while (self->hitState.activeCell) {
+    box1f cellValueRange {
+          std::numeric_limits<float>::infinity(),
+          -std::numeric_limits<float>::infinity()};
+    GridAccelerator_getCellValueRange(volume->accelerator,
+                                      self->hitState.currentCellIndex,
+                                      self->context->super.attributeIndex,
+                                      cellValueRange);
 
-  self->hitState.currentCellIndex  = vec3i{-1, -1, -1};
-  self->hitState.currentCellTRange = {std::numeric_limits<float>::infinity(),
-                                      -std::numeric_limits<float>::infinity()};
+    bool cellValueRangeOverlap =
+        valueRangesOverlap(self->context->super.valueRanges, cellValueRange);
+
+    if (cellValueRangeOverlap) {
+      bool foundHit =
+          intersectSurfacesNewton(self->context->super.sampler,
+                                  self->origin,
+                                  self->direction,
+                                  self->hitState.currentCellTRange,
+                                  self->context->super.attributeIndex,
+                                  self->time,
+                                  0.5f * step,
+                                  hitContext->numValues,
+                                  hitContext->values,
+                                  *hit);
+      if (foundHit) {
+        *result = true;
+        self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;
+
+        /* move to next cell if next t passes the cell boundary */
+        if (isempty1f(self->hitState.currentCellTRange)) {
+          self->hitState.activeCell =
+              GridAccelerator_nextCell(volume->accelerator,
+                                       self,
+                                       self->hitState.currentCellIndex,
+                                       self->hitState.currentCellTRange);
+
+          /* continue where we left off */
+          self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;
+        }
+
+        return;
+      }
+    }
+
+    /* if no hits are found, move to the next cell; if a hit is found we'll
+     stay in the cell to pursue other hits */
+    self->hitState.activeCell =
+        GridAccelerator_nextCell(volume->accelerator,
+                                 self,
+                                 self->hitState.currentCellIndex,
+                                 self->hitState.currentCellTRange);
+
+  }
+
+  *result = false;
 }

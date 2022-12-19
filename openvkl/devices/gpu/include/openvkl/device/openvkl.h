@@ -78,6 +78,34 @@ typedef struct
 OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateInterval(
     VKLIntervalIterator iterator, VKLInterval *interval);
 
+///////////////////////////////////////////////////////////////////////////////
+// Hit iterators //////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+struct HitIterator;
+typedef struct HitIterator *VKLHitIterator;
+
+  OPENVKL_INTERFACE SYCL_EXTERNAL
+size_t vklGetHitIteratorSize(const VKLHitIteratorContext *context);
+
+OPENVKL_INTERFACE SYCL_EXTERNAL
+VKLHitIterator vklInitHitIterator(const VKLHitIteratorContext *context,
+                                  const vkl_vec3f *origin,
+                                  const vkl_vec3f *direction,
+                                  const vkl_range1f *tRange,
+                                  float time,
+                                  void *buffer);
+
+typedef struct
+{
+  float t;
+  float sample;
+  float epsilon;
+} VKLHit;
+
+OPENVKL_INTERFACE SYCL_EXTERNAL
+int vklIterateHit(VKLHitIterator iterator, VKLHit *hit);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

@@ -10,7 +10,7 @@
 #include "../common/Data.h"
 #include "../common/ObjectFactory.h"
 #include "../compute/vklComputeSample.h"
-#include "../compute/vklIterateInterval.h"
+#include "../compute/vklIterators.h"
 
 namespace openvkl {
   namespace gpu_device {
@@ -137,6 +137,24 @@ namespace openvkl {
       auto iteratorContext =
           samplerObject.getIntervalIteratorFactory().newContext(samplerObject);
       VKLIntervalIteratorContext ic;
+      ic.host   = static_cast<void *>(iteratorContext);
+      ic.device = static_cast<void *>(iteratorContext->getSh());
+      return ic;
+    }
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Hit iterator ///////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
+
+    template <int W>
+    VKLHitIteratorContext GPUDevice<W>::newHitIteratorContext(
+        VKLSampler sampler)
+    {
+      auto &samplerObject =
+          referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);
+      auto iteratorContext =
+          samplerObject.getHitIteratorFactory().newContext(samplerObject);
+      VKLHitIteratorContext ic;
       ic.host   = static_cast<void *>(iteratorContext);
       ic.device = static_cast<void *>(iteratorContext->getSh());
       return ic;

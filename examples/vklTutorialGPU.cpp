@@ -65,7 +65,7 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 
   sycl::free(sample, syclQueue);
 
-  std::cout << std::endl << "\titeration" << std::endl << std::endl;
+  std::cout << std::endl << "\tinterval iteration" << std::endl << std::endl;
 
   // interval iterator context setup
   std::vector<vkl_range1f> ranges{{10, 20}, {50, 75}};
@@ -154,6 +154,85 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   sycl::free(intervalsBuffer, syclQueue);
 
   vklRelease2(intervalContext);
+
+  // hit iteration
+  std::cout << std::endl << "\thit iteration" << std::endl << std::endl;
+
+  // hit iterator context setup
+  float values[2] = {32.f, 96.f};
+  int num_values = 2;
+  VKLData valuesData =
+      vklNewData(device, num_values, VKL_FLOAT, values);
+
+  VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
+
+  vklSetInt2(hitContext, "attributeIndex", 0);
+
+  vklSetData2(hitContext, "values", rangesData);
+  vklRelease(rangesData);
+
+  vklCommit2(hitContext);
+
+  // ray definition for iterators
+  // see rayOrigin, Direction and TRange above
+
+  char *hitIteratorBuffer = sycl::malloc_device<char>(
+      vklGetHitIteratorSize(&hitContext), syclQueue);
+
+  int *numHits = sycl::malloc_shared<int>(1, syclQueue);
+  *numHits     = 0;
+
+  const size_t maxNumHits = 999;
+
+  VKLHit *hitBuffer =
+      sycl::malloc_shared<VKLHit>(maxNumHits, syclQueue);
+  memset(hitBuffer, 0, maxNumHits * sizeof(VKLHit));
+
+  std::cout << "\thit iterator for values";
+
+  for (const auto &r : values) {
+    std::cout << " " << r << " ";
+  }
+  std::cout << std::endl << std::endl;
+
+  syclQueue
+      .single_task([=]() {
+        VKLHitIterator hitIterator =
+            vklInitHitIterator(&hitContext,
+                               &rayOrigin,
+                               &rayDirection,
+                               &rayTRange,
+                               time,
+                               (void *)hitIteratorBuffer);
+
+        for (;;) {
+          VKLHit hit;
+          int result = vklIterateHit(hitIterator, &hit);
+          if (!result) {
+            break;
+          }
+          hitBuffer[*numHits] = hit;
+
+          *numHits = *numHits + 1;
+          if (*numHits >= maxNumHits)
+            break;
+        }
+      })
+      .wait();
+
+  for (int i = 0; i < *numHits; ++i) {
+    std::cout << "\t\tt " << hitBuffer[i].t << std::endl;
+    std::cout << "\t\tsample " << hitBuffer[i].sample << std::endl;
+    std::cout << "\t\tepsilon " << hitBuffer[i].epsilon<< std::endl
+              << std::endl;
+  }
+
+  sycl::free(hitIteratorBuffer, syclQueue);
+  sycl::free(numHits, syclQueue);
+  sycl::free(hitBuffer, syclQueue);
+
+  vklRelease2(hitContext);
+
   vklRelease2(sampler);
 }
 

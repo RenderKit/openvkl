@@ -3,6 +3,7 @@
 
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
+#include "wrappers.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
@@ -32,33 +33,58 @@ void scalar_hit_iteration(VKLVolume volume,
 
   vklCommit2(hitContext);
 
-  std::vector<char> buffer(vklGetHitIteratorSize(&hitContext));
-  VKLHitIterator iterator = vklInitHitIterator(
-      &hitContext, &origin, &direction, &tRange, time, buffer.data());
+  VKLHit *hitsBuffer   = allocate<VKLHit>(maxNumHits);
+  char *iteratorBuffer = allocate<char>(vklGetHitIteratorSize(&hitContext));
 
-  VKLHit hit;
+  int *hitCount = allocate<int>(1);
 
-  int hitCount = 0;
+  auto testIteratorFunc = [=]() {
+    VKLHitIterator iterator = vklInitHitIterator(&hitContext,
+                                                 &origin,
+                                                 &direction,
+                                                 &tRange,
+                                                 time,
+                                                 (void *)iteratorBuffer);
 
-  while (vklIterateHit(iterator, &hit)) {
-    INFO("hit t = " << hit.t << ", sample = " << hit.sample);
+    VKLHit hit;
+    while (vklIterateHit(iterator, &hit)) {
+      hitsBuffer[*hitCount] = hit;
 
-    if (hitCount >= isoValues.size()) {
-      WARN(
-          "found too many hits; this can occur at the volume boundaries when "
-          "interpolating with zero background values (instead of NaN), for "
-          "example");
-
-      break;
+      *hitCount += 1;
+      if (*hitCount >= maxNumHits) {
+        break;
+      }
     }
+  };
 
-    REQUIRE(hit.t == Approx(expectedTValues[hitCount]).margin(1e-3f));
-    REQUIRE(hit.sample == isoValues[hitCount]);
+  executeTestFunction(testIteratorFunc);
 
-    hitCount++;
+  deallocate(iteratorBuffer);
+
+  if (*hitCount >= maxNumHits) {
+    WARN("Hit iterations reached max number of hits: " << maxNumHits);
   }
 
-  REQUIRE(hitCount == isoValues.size());
+  if (*hitCount > isoValues.size()) {
+    WARN(
+        "found too many hits; this can occur at the volume boundaries when "
+        "interpolating with zero background values (instead of NaN), for "
+        "example");
+  }
+
+  for (int i = 0; i < *hitCount; i++) {
+    VKLHit hit = hitsBuffer[i];
+
+    INFO("hit t = " << hit.t << ", sample = " << hit.sample);
+
+    REQUIRE(hit.sample == isoValues[i]);
+    REQUIRE(hit.t == Approx(expectedTValues[i]).margin(1e-3f));
+  }
+
+  REQUIRE(*hitCount == isoValues.size());
+
+  deallocate(hitsBuffer);
+  deallocate(hitCount);
 
   vklRelease2(hitContext);
   vklRelease2(sampler);
@@ -84,7 +110,7 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
 
   SECTION("scalar hit iteration")
   {
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
     SECTION("structured volumes: single attribute")
     {
       std::unique_ptr<ZProceduralVolume> v(

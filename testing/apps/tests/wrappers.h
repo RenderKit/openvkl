@@ -8,6 +8,7 @@ namespace openvkl {
   namespace testing {
 
     static const size_t maxNumIntervals = 999;
+    static const size_t maxNumHits      = 999;
 
     template <class T>
     T *allocate(size_t elements)

@@ -299,9 +299,10 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
     std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
     std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-    const int maxN = 1024;
+    const std::vector<int> Ns{1,  2,  3,  4,  5,  6,  7,  8,   9,   10,  11,
+                              12, 13, 14, 15, 16, 32, 64, 128, 256, 512, 1024};
 
-    for (int N = 1; N < maxN; N++) {
+    for (const auto &N : Ns) {
       std::vector<vkl_vec3f> objectCoordinates(N);
       std::vector<float> times(N, time);
       std::vector<float> samples(N);
@@ -367,9 +368,10 @@ inline void test_stream_sampling_multi(
     std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
     std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
-    const int maxN = 1024;
+    const std::vector<int> Ns{1,  2,  3,  4,  5,  6,  7,  8,   9,   10,  11,
+                              12, 13, 14, 15, 16, 32, 64, 128, 256, 512, 1024};
 
-    for (int N = 1; N < maxN; N++) {
+    for (const auto &N : Ns) {
       std::vector<vkl_vec3f> objectCoordinates(N);
       std::vector<float> times(N, time);
       std::vector<float> samples(N * attributeIndices.size());

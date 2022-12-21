@@ -16,7 +16,7 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
   initializeOpenVKL();
 
-  const vec3i dimensions(128);
+  const vec3i dimensions(64);
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
@@ -25,7 +25,7 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
   const std::vector<bool> useAOSLayouts{true, false};
 
-  const vec3i step = vec3i(4);
+  const vec3i step = vec3i(8);
 
   for (const auto &repackNodes : {true, false}) {
     for (const auto &dcf : dataCreationFlags) {

@@ -62,6 +62,8 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu-ubuntu22_04
+      artifact-out: test-pvc-ubuntu22_04
+      artifact-path: ./build/install/*.pfm
       gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
       dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
       options: --device=/dev/dri:/dev/dri
@@ -81,6 +83,8 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu-ubuntu22_04
+      artifact-out: test-dg2-ubuntu22_04
+      artifact-path: ./build/install/*.pfm
       gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
       dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
       options: --device=/dev/dri:/dev/dri

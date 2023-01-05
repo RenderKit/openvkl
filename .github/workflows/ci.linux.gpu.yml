@@ -70,6 +70,7 @@ jobs:
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklTutorialGPU
         ./bin/vklTestsGPU --durations yes
+        ./bin/vklExamplesGPU -batch -printStats -spp 50 -framebufferSize 1024 1024
 
   test-dg2-ubuntu22_04:
     secrets: inherit
@@ -88,3 +89,4 @@ jobs:
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklTutorialGPU
         ./bin/vklTestsGPU --durations yes
+        ./bin/vklExamplesGPU -batch -printStats -spp 50 -framebufferSize 1024 1024

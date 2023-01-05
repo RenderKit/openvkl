@@ -23,7 +23,10 @@ void initializeOpenVKL()
   if (!device) {
     vklInit();
 #ifdef OPENVKL_TESTING_GPU
-    syclQueuePtr              = new sycl::queue(IntelGPUDeviceSelector);
+    syclQueuePtr = new sycl::queue(
+        IntelGPUDeviceSelector,
+        {sycl::property::queue::enable_profiling(), // We need it for profiling kernel execution times
+         sycl::property::queue::in_order()}); // By default sycl queues are out of order
     sycl::context syclContext = syclQueuePtr->get_context();
     std::cout << std::endl
               << "Target SYCL device: "

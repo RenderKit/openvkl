@@ -16,7 +16,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/get_dpcpp_gfx_linux.yml@main
     with:
       dpcpp-version: sycl-nightly/20221214
-      gfx-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12317/artifacts/Linux/Ubuntu/22.04/Release
+      gfx-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
 
   build-gpu-ubuntu22_04:
     secrets: inherit

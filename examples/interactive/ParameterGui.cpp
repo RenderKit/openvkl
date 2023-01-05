@@ -4,7 +4,15 @@
 #include "ParameterGui.h"
 #include "TransferFunctionWidget.h"
 
-#include "renderer/DensityPathTracer.h"
+#ifdef OPENVKL_TESTING_CPU
+#include "renderer/density_path_tracer/DensityPathTracer.h"
+#include "renderer/density_path_tracer/DensityPathTracerIspc.h"
+#endif
+
+#ifdef OPENVKL_TESTING_GPU
+#include "renderer/density_path_tracer/DensityPathTracerGpu.h"
+#endif
+
 #include "renderer/HitIteratorRenderer.h"
 #include "renderer/IntervalIteratorDebug.h"
 #include "renderer/RayMarchIteratorRenderer.h"
@@ -368,8 +376,15 @@ namespace openvkl {
     {
       std::unique_ptr<ParameterGui> gui;
 
+#ifdef OPENVKL_TESTING_GPU
+      mrg<DensityPathTracerGui, DensityPathTracerGpu>(
+          "density_pathtracer_gpu", renderer, gui);
+#endif
+
+#ifdef OPENVKL_TESTING_CPU
       mrg<DensityPathTracerGui, DensityPathTracer>(
           "density_pathtracer", renderer, gui);
+
       mrg<DensityPathTracerGui, DensityPathTracerIspc>(
           "density_pathtracer_ispc", renderer, gui);
 
@@ -387,7 +402,7 @@ namespace openvkl {
           "interval_iterator_debug", renderer, gui);
       mrg<IntervalIteratorDebugGui, IntervalIteratorDebugIspc>(
           "interval_iterator_debug_ispc", renderer, gui);
-
+#endif
       return gui;
     }
 

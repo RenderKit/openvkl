@@ -6,6 +6,8 @@
 #include <vector>
 #include "rkcommon/math/box.h"
 
+#define TRANSFER_FUNCTION_DEFAULT_NUM_SAMPLES 256
+
 namespace openvkl {
   namespace examples {
 

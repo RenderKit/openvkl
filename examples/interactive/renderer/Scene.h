@@ -142,6 +142,7 @@ namespace openvkl {
       // through the GUI.
       bool disableVSync{false};
       bool interactive{true};
+      bool printStats{false};
       unsigned batchModeSpp{1};
       std::vector<std::string> rendererTypes;
 

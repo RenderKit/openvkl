@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "Renderer.h"
+#include "RendererHost.h"
 
 namespace openvkl {
   namespace examples {

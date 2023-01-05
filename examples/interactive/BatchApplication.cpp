@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "BatchApplication.h"
-#include "renderer/Framebuffer.h"
 #include "renderer/Renderer.h"
 #include "renderer/Scene.h"
 #include "renderer/Scheduler.h"
+#include "renderer/framebuffer/Framebuffer.h"
 
 #include "rkcommon/utility/SaveImage.h"
 
@@ -19,7 +19,7 @@ namespace openvkl {
     void BatchApplication::run(Scene &scene)
     {
       if (scene.rendererTypes.empty()) {
-        scene.rendererTypes = {"density_path_tracer_ispc"};
+        scene.rendererTypes = {scene.supportedRendererTypes()[0]};
       }
 
       auto &scheduler = scene.scheduler;
@@ -54,6 +54,13 @@ namespace openvkl {
           std::cout << "\r" << i << " / " << scene.batchModeSpp << " spp"
                     << std::flush;
           scheduler.renderFrame(renderer);
+
+          if (scene.printStats) {
+            const auto &framebuffer =
+                renderer.getFramebuffer(resolution.x, resolution.y);
+            const auto &fb = framebuffer.getFrontBuffer();
+            fb.getStats().printToStdout();
+          }
         }
         scheduler.stop(renderer);
         std::cout << std::endl;
@@ -69,4 +76,3 @@ namespace openvkl {
 
   }  // namespace examples
 }  // namespace openvkl
-

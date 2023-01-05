@@ -3,7 +3,8 @@
 
 #include "InteractiveApplication.h"
 #include "RenderView.h"
-#include "renderer/DensityPathTracer.h"
+
+#include "renderer/Renderer.h"
 #include "renderer/Scene.h"
 
 #include <rkcommon/common.h>
@@ -102,7 +103,7 @@ namespace openvkl {
       scheduler = &scene.scheduler;
 
       if (scene.rendererTypes.empty()) {
-        scene.rendererTypes = {"density_pathtracer_ispc"};
+        scene.rendererTypes = {scene.supportedRendererTypes()[0]};
       }
 
       for (const auto &type : scene.supportedRendererTypes()) {

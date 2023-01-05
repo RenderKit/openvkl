@@ -3,15 +3,12 @@
 
 #pragma once
 
-#include "Framebuffer.h"
-#include "Ray.h"
+#include <atomic>
+#include <thread>
+
 #include "Scene.h"
 #include "Scheduler.h"
-
-#include <rkcommon/math/vec.h>
-#include <atomic>
-#include <mutex>
-#include <thread>
+#include "framebuffer/Framebuffer.h"
 
 namespace openvkl {
   namespace examples {
@@ -109,61 +106,5 @@ namespace openvkl {
       std::thread renderThread;
       std::atomic_bool run{false};
     };
-
-    /*
-     * A renderer based on the host.
-     * This base class expects the renderer to fill the front buffer
-     * in renderFrameImpl().
-     */
-    class HostRenderer : public Renderer
-    {
-     public:
-      HostRenderer(Scene &scene);
-      ~HostRenderer();
-
-      const Framebuffer &getFramebuffer(size_t w, size_t h) override final;
-
-     protected:
-      Framebuffer framebuffer;
-    };
-
-    /*
-     * A renderer based on the host, which does not use any vectorization.
-     */
-    class ScalarRenderer : public HostRenderer
-    {
-     public:
-      ScalarRenderer(Scene &scene);
-
-     protected:
-      void renderFrameImpl(bool clearFramebuffer) override final;
-      virtual void renderPixel(size_t seed,
-                               Ray &ray,
-                               vec4f &rgba,
-                               float &weight) const = 0;
-    };
-
-    /*
-     * A renderer based on the host, but using vectorization with ISPC.
-     */
-    class IspcRenderer : public HostRenderer
-    {
-     public:
-      IspcRenderer(Scene &scene);
-      ~IspcRenderer();
-      void beforeStart() override;
-      void beforeFrame(bool &needToClear) override;
-
-     protected:
-      void renderFrameImpl(bool clearFramebuffer) override final;
-      virtual void renderPixelBlock(const vec2i &resolution,
-                                    uint32_t block,
-                                    vec4f *rgbas,
-                                    float *weights) const = 0;
-
-     protected:
-      void *ispcScene{nullptr};
-    };
-
   }  // namespace examples
 }  // namespace openvkl

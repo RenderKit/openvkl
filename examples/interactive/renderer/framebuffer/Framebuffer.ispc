@@ -15,7 +15,8 @@ inline vec4f linearToSrgba(const vec4f &rgba)
 export void tonemap(uniform uint32 offset,
                     uniform uint32 size,
                     const float *uniform _weight,
-                    vec4f *uniform _rgba)
+                    const vec4f *uniform _rgba,
+                    vec4f *uniform _outputRgba)
 {
   const uint32 idx = offset + programIndex;
   if (idx >= size) {
@@ -32,6 +33,6 @@ export void tonemap(uniform uint32 offset,
     rgba = make_vec4f(0.f, 0.f, 0.f, 1.f);
   }
 
-  _rgba[idx] = rgba;
+  _outputRgba[idx] = rgba;
 }
 

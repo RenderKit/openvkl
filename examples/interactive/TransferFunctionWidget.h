@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include "renderer/TransferFunction.h"
+
 #include <GLFW/glfw3.h>
 #include <imgui.h>
 #include <imgui_internal.h>  // Push/PopDisabled
@@ -37,8 +39,8 @@ namespace openvkl {
       // getters for current transfer function data
       range1f getValueRange() const;
       void setValueRange(const range1f &range);
-      std::vector<vec4f> getSampledColorsAndOpacities(int numSamples = 256)
-        const;
+      std::vector<vec4f> getSampledColorsAndOpacities(
+          int numSamples = TRANSFER_FUNCTION_DEFAULT_NUM_SAMPLES) const;
 
      private:
       void loadDefaultMaps();

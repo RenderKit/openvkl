@@ -3,7 +3,16 @@
 
 #include "Scene.h"
 #include "CommandLine.h"
-#include "DensityPathTracer.h"
+
+#ifdef OPENVKL_TESTING_CPU
+#include "density_path_tracer/DensityPathTracer.h"
+#include "density_path_tracer/DensityPathTracerIspc.h"
+#endif
+
+#ifdef OPENVKL_TESTING_GPU
+#include "density_path_tracer/DensityPathTracerGpu.h"
+#endif
+
 #include "HitIteratorRenderer.h"
 #include "IntervalIteratorDebug.h"
 #include "RayMarchIteratorRenderer.h"
@@ -107,15 +116,21 @@ namespace openvkl {
     // -------------------------------------------------------------------------
     const std::vector<std::string> &Scene::supportedRendererTypes() const
     {
+      // First renderer type on this list will be default for Batch/Interactive app
+#ifdef OPENVKL_TESTING_CPU
       static const std::vector<std::string> types = {
-          "density_pathtracer",
           "density_pathtracer_ispc",
+          "density_pathtracer",
           "hit_iterator",
           "hit_iterator_ispc",
           "ray_march_iterator",
           "ray_march_iterator_ispc",
           "interval_iterator_debug",
           "interval_iterator_debug_ispc"};
+#endif
+#ifdef OPENVKL_TESTING_GPU
+      static const std::vector<std::string> types = {"density_pathtracer_gpu"};
+#endif
       return types;
     }
 
@@ -129,6 +144,12 @@ namespace openvkl {
     {
       std::unique_ptr<Renderer> ptr;
 
+#ifdef OPENVKL_TESTING_GPU
+      if(type == "density_pathtracer_gpu") {
+        ptr = rkcommon::make_unique<DensityPathTracerGpu>(*this);
+      }
+#endif
+#ifdef OPENVKL_TESTING_CPU
       if (type == "density_pathtracer") {
         ptr = rkcommon::make_unique<DensityPathTracer>(*this);
       } else if (type == "density_pathtracer_ispc") {
@@ -146,7 +167,7 @@ namespace openvkl {
       } else if (type == "ray_march_iterator_ispc") {
         ptr = rkcommon::make_unique<RayMarchIteratorRendererIspc>(*this);
       }
-
+#endif
       return ptr;
     }
 
@@ -175,6 +196,9 @@ namespace openvkl {
           } else if (arg == "-batch") {
             cmd::consume_0(args, it);
             interactive = false;
+          } else if (arg == "-printStats") {
+            cmd::consume_0(args, it);
+            printStats = true;
           } else if (arg == "-spp") {
             batchModeSpp = cmd::consume_1<unsigned>(args, it);
           } else if (arg == "-disable-vsync") {
@@ -217,6 +241,7 @@ namespace openvkl {
                   << "\n"
                      "\t-h, -help\n"
                      "\t-batch\n"
+                     "\t-printStats\n"
                      "\t-spp SPP (only in -batch mode)\n"
                      "\t-sync\n"
                      "\t-disable-vsync\n"

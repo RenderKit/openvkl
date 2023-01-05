@@ -11,7 +11,7 @@ namespace openvkl {
     template <int W>
     struct DenseVdbVolume : public VdbVolume<W>
     {
-      DenseVdbVolume<W>(Device *device) : VdbVolume<W>(device) {};
+      DenseVdbVolume<W>(Device *device);
       std::string toString() const override;
 
       void commit() override;
@@ -36,6 +36,17 @@ namespace openvkl {
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+
+    template <int W>
+    DenseVdbVolume<W>::DenseVdbVolume(Device *device) : VdbVolume<W>(device)
+    {
+      ispc::VdbVolume *self = static_cast<ispc::VdbVolume *>(this->getSh());
+
+      // should already be initialized in VdbVolume constructor
+      assert(this->SharedStructInitialized);
+
+      self->super.type = ispc::DeviceVolumeType::VOLUME_TYPE_STRUCTURED_REGULAR;
+    }
 
     template <int W>
     inline std::string DenseVdbVolume<W>::toString() const

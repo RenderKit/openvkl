@@ -63,7 +63,6 @@ namespace openvkl {
     UnstructuredVolume<W>::~UnstructuredVolume()
     {
       if (this->SharedStructInitialized) {
-        CALL_ISPC(VKLUnstructuredVolume_Destructor, this->getSh());
         this->SharedStructInitialized = false;
       }
 
@@ -204,9 +203,14 @@ namespace openvkl {
       computeOverlappingNodeMetadata(rtcRoot);
 
       if (!this->SharedStructInitialized) {
-        CALL_ISPC(VKLUnstructuredVolume_Constructor, this->getSh());
+        ispc::VKLUnstructuredVolume *self =
+            static_cast<ispc::VKLUnstructuredVolume *>(this->getSh());
+        memset(self, 0, sizeof(ispc::VKLUnstructuredVolume));
+        self->super.super.type =
+            ispc::DeviceVolumeType::VOLUME_TYPE_UNSTRUCTURED;
         this->SharedStructInitialized = true;
       }
+
       this->setBackground(background->data());
 
       CALL_ISPC(

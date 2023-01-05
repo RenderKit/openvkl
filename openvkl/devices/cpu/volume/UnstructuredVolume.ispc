@@ -1411,16 +1411,6 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_gradient_export,
   }
 }
 
-export void EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor,
-                          void *uniform _self)
-{
-  memset(_self, 0, sizeof(uniform VKLUnstructuredVolume));
-}
-
-export void EXPORT_UNIQUE(VKLUnstructuredVolume_Destructor, void *uniform _self)
-{
-}
-
 export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
                           void *uniform _self,
                           const uniform box3f &_bbox,

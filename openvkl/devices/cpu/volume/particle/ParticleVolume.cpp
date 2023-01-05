@@ -138,7 +138,15 @@ namespace openvkl {
       buildBvhAndCalculateBounds();
 
       if (!this->SharedStructInitialized) {
-        CALL_ISPC(VKLParticleVolume_Constructor, this->getSh());
+        ispc::VKLParticleVolume *self =
+            static_cast<ispc::VKLParticleVolume *>(this->getSh());
+
+        memset(self, 0, sizeof(ispc::VKLParticleVolume));
+
+        CALL_ISPC(VKLParticleVolume_Constructor, self);
+
+        self->super.super.type = ispc::DeviceVolumeType::VOLUME_TYPE_PARTICLE;
+
         this->SharedStructInitialized = true;
       }
 

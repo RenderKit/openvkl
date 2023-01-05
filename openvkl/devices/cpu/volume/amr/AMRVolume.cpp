@@ -62,9 +62,15 @@ namespace openvkl {
     };
 
     template <int W>
-    AMRVolume<W>::AMRVolume(Device *device) : AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>(device)
+    AMRVolume<W>::AMRVolume(Device *device)
+        : AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>(device)
     {
-      CALL_ISPC(AMRVolume_Constructor, this->getSh());
+      ispc::AMRVolume *self = static_cast<ispc::AMRVolume *>(this->getSh());
+
+      memset(self, 0, sizeof(ispc::AMRVolume));
+
+      CALL_ISPC(AMRVolume_Constructor, self);
+      self->super.super.type        = ispc::DeviceVolumeType::VOLUME_TYPE_AMR;
       this->SharedStructInitialized = true;
     }
 

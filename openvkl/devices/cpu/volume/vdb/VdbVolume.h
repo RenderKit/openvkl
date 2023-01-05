@@ -212,9 +212,17 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    VdbVolume<W>::VdbVolume(Device *device) : AddStructShared<Volume<W>, ispc::VdbVolume>(device)
+    VdbVolume<W>::VdbVolume(Device *device)
+        : AddStructShared<Volume<W>, ispc::VdbVolume>(device)
     {
-      CALL_ISPC(VdbVolume_Constructor, this->getSh());
+      ispc::VdbVolume *self = static_cast<ispc::VdbVolume *>(this->getSh());
+
+      memset(self, 0, sizeof(ispc::VdbVolume));
+
+      CALL_ISPC(VdbVolume_Constructor, self);
+
+      self->super.type = ispc::DeviceVolumeType::VOLUME_TYPE_VDB;
+
       this->SharedStructInitialized = true;
     }
 

@@ -11,14 +11,19 @@ namespace openvkl {
     void StructuredRegularVolume<W>::commit()
     {
       if (!this->SharedStructInitialized) {
-        SharedStructuredVolume_Constructor(this->getSh());
-        this->SharedStructInitialized = true;
+        ispc::SharedStructuredVolume *self =
+            static_cast<ispc::SharedStructuredVolume *>(this->getSh());
 
-        if (!this->SharedStructInitialized) {
-          throw std::runtime_error(
-              "could not initialized device-side object for StructuredRegularVolume");
-        }
+        memset(self, 0, sizeof(ispc::SharedStructuredVolume));
+
+        SharedStructuredVolume_Constructor(self);
+
+        self->super.type =
+            ispc::DeviceVolumeType::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY;
+
+        this->SharedStructInitialized = true;
       }
+
       StructuredVolume<W>::commit();
 
       std::vector<const ispc::Data1D *> ispcAttributesData =

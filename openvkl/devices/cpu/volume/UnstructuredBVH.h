@@ -20,18 +20,47 @@ namespace openvkl {
     // allocator used during embree BVH creation
     struct BvhBuildAllocator
     {
-      BvhBuildAllocator(Device *device) : device(device) {}
+      BvhBuildAllocator(Device *device, size_t preallocateBytes = 0)
+          : device(device)
+      {
+        preallocate = bool(preallocateBytes);
+
+        if (preallocate) {
+          ISPCRTMemoryView mv = BufferSharedCreate(device, preallocateBytes);
+          memRefs.push_back(mv);
+
+          preallocatePtr            = static_cast<char *>(ispcrtSharedPtr(mv));
+          preallocateBytesRemaining = preallocateBytes;
+        }
+      }
 
       template <typename T, typename... Args>
       T *newObject(Args &&...args)
       {
-        auto mv   = BufferSharedCreate(device.ptr, sizeof(T));
-        void *ptr = ispcrtSharedPtr(mv);
-        memRefsGuard.lock();
-        memRefs.push_back(mv);
-        memRefsGuard.unlock();
+        void *ptr = nullptr;
 
-        assert(is_aligned_for_type<T>(ptr));
+        if (preallocate) {
+          if (preallocateBytesRemaining < sizeof(T)) {
+            throw std::runtime_error(
+                "BvhBuildAllocator: not enough memory preallocated");
+          }
+
+          memRefsGuard.lock();
+          ptr = preallocatePtr;
+          preallocatePtr += sizeof(T);
+          preallocateBytesRemaining -= sizeof(T);
+          memRefsGuard.unlock();
+        } else {
+          auto mv = BufferSharedCreate(device.ptr, sizeof(T));
+          ptr     = ispcrtSharedPtr(mv);
+          memRefsGuard.lock();
+          memRefs.push_back(mv);
+          memRefsGuard.unlock();
+        }
+
+        if (!is_aligned_for_type<T>(ptr)) {
+          throw std::runtime_error("BvhBuildAllocator: alignment error");
+        }
 
         return new (ptr) T(std::forward<Args>(args)...);
       }
@@ -49,6 +78,11 @@ namespace openvkl {
 
       std::vector<ISPCRTMemoryView> memRefs;  // data to free eventually
       std::mutex memRefsGuard;                // thread safety for above
+
+      // only used when preallocateBytes != 0
+      bool preallocate;
+      char *preallocatePtr;
+      long long preallocateBytesRemaining;
     };
 
     // callback structured for embree BVH create allocators

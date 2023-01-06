@@ -307,7 +307,9 @@ namespace openvkl {
         range[taskIndex]         = range1f(bound.lower.w, bound.upper.w);
       });
 
-      bvhBuildAllocator = make_unique<BvhBuildAllocator>(this->getDevice());
+      // conservatively allocate all the space the BVH might need upfront
+      bvhBuildAllocator = make_unique<BvhBuildAllocator>(
+          this->getDevice(), sizeof(InnerNode) * (nCells * 2 - 1));
 
       userPtrStruct myUPS{range.data(), bvhBuildAllocator.get()};
 

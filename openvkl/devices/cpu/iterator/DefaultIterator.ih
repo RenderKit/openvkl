@@ -5,6 +5,7 @@
 
 #include "Iterator.ih"
 #include "IteratorContextShared.h"
+#include "IteratorShared.h"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
 
@@ -26,7 +27,8 @@ typedef void (*uniform IterateIntervalFunc)(
  */
 struct DefaultHitIteratorIntervalIterator
 {
-  const IntervalIteratorContext *uniform context;
+  uniform IntervalIteratorShared super;
+
   IterateIntervalFunc iterate;
   uniform bool elementaryCellIterationSupported;
 };
@@ -48,7 +50,7 @@ struct DefaultIntervalIterator
 
 struct DefaultHitIterator
 {
-  const HitIteratorContext *uniform context;
+  uniform HitIteratorShared super;
 
   vec3f origin;
   vec3f direction;

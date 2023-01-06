@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "../../cpu/iterator/IteratorShared.h"
 #include "../../cpu/volume/GridAccelerator.h"
 #include "../../cpu/volume/GridAcceleratorShared.h"
 #include "vklCompute.h"
@@ -131,7 +132,8 @@ struct GridAcceleratorIteratorHitState
 
 struct GridAcceleratorIterator
 {
-  const ispc::IntervalIteratorContext *context;
+  ispc::IntervalIteratorShared super;
+
   vec3f origin;
   vec3f direction;
   box1f tRange;
@@ -159,15 +161,15 @@ inline void GridAcceleratorIteratorU_Init(void *_self,
 {
   GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
 
-  self->context   = (const ispc::IntervalIteratorContext *)_context;
-  self->origin    = *((vec3f *)_origin);
-  self->direction = *((vec3f *)_direction);
-  self->tRange    = *((box1f *)_tRange);
-  self->time      = *((float *)_time);
+  self->super.context = (const ispc::IntervalIteratorContext *)_context;
+  self->origin        = *((vec3f *)_origin);
+  self->direction     = *((vec3f *)_direction);
+  self->tRange        = *((box1f *)_tRange);
+  self->time          = *((float *)_time);
 
   const ispc::SharedStructuredVolume *volume =
       (const ispc::SharedStructuredVolume *)
-          self->context->super.sampler->volume;
+          self->super.context->super.sampler->volume;
 
   self->boundingBoxTRange =
       intersectBox(*((vec3f *)_origin),
@@ -385,7 +387,7 @@ inline void GridAcceleratorIterator_iterateInterval_uniform(
 
   const ispc::SharedStructuredVolume *volume =
       (const ispc::SharedStructuredVolume *)
-          self->context->super.sampler->volume;
+          self->super.context->super.sampler->volume;
 
   while (GridAccelerator_nextCell(volume->accelerator,
                                   self,
@@ -398,11 +400,12 @@ inline void GridAcceleratorIterator_iterateInterval_uniform(
                                                    // posinf/neginf
     GridAccelerator_getCellValueRange(volume->accelerator,
                                       self->intervalState.currentCellIndex,
-                                      self->context->super.attributeIndex,
+                                      self->super.context->super.attributeIndex,
                                       cellValueRange);
     bool returnInterval = false;
 
-    if (valueRangesOverlap(self->context->super.valueRanges, cellValueRange)) {
+    if (valueRangesOverlap(self->super.context->super.valueRanges,
+                           cellValueRange)) {
       returnInterval = true;
     }
 
@@ -508,7 +511,7 @@ inline void GridAcceleratorIterator_iterateHit_uniform(const void *_self,
   GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
 
   const ispc::HitIteratorContext *hitContext =
-      (const ispc::HitIteratorContext *)self->context;
+      (const ispc::HitIteratorContext *)self->super.context;
 
   Hit *hit = (Hit *)_hit;
 
@@ -524,7 +527,7 @@ inline void GridAcceleratorIterator_iterateHit_uniform(const void *_self,
 
   const ispc::SharedStructuredVolume *volume =
       (const ispc::SharedStructuredVolume *)
-          self->context->super.sampler->volume;
+          self->super.context->super.sampler->volume;
 
   /* first iteration */
   if (self->hitState.currentCellIndex.x == -1) {
@@ -547,19 +550,19 @@ inline void GridAcceleratorIterator_iterateHit_uniform(const void *_self,
                          -std::numeric_limits<float>::infinity()};
     GridAccelerator_getCellValueRange(volume->accelerator,
                                       self->hitState.currentCellIndex,
-                                      self->context->super.attributeIndex,
+                                      self->super.context->super.attributeIndex,
                                       cellValueRange);
 
-    bool cellValueRangeOverlap =
-        valueRangesOverlap(self->context->super.valueRanges, cellValueRange);
+    bool cellValueRangeOverlap = valueRangesOverlap(
+        self->super.context->super.valueRanges, cellValueRange);
 
     if (cellValueRangeOverlap) {
       bool foundHit =
-          intersectSurfacesNewton(self->context->super.sampler,
+          intersectSurfacesNewton(self->super.context->super.sampler,
                                   self->origin,
                                   self->direction,
                                   self->hitState.currentCellTRange,
-                                  self->context->super.attributeIndex,
+                                  self->super.context->super.attributeIndex,
                                   self->time,
                                   0.5f * step,
                                   hitContext->numValues,

@@ -44,13 +44,13 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  self->super.context = (const IntervalIteratorContext *uniform)_context;
+  self->super.super.context = (const IntervalIteratorContext *uniform)_context;
   self->super.iterate = VdbIterator_iterateIntervalInternal;
   self->super.elementaryCellIterationSupported = false;
 
   const uniform VdbSamplerShared *uniform sampler =
       (const uniform VdbSamplerShared *uniform)(
-          self->super.context->super.sampler);
+          self->super.super.context->super.sampler);
   const uniform VdbGrid *uniform grid = sampler->grid;
 
   self->grid = grid;
@@ -85,7 +85,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
     ddaInit(rayOrg,
             rayDir,
             tRangeIntersected.lower,
-            self->super.context->super.maxIteratorDepth,
+            self->super.super.context->super.maxIteratorDepth,
             self->dda);
   }
 }
@@ -120,7 +120,7 @@ inline void VdbIterator_iterateIntervalInternal(
           self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
           self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
           self->dda.level,
-          self->super.context->super.attributeIndex,
+          self->super.super.context->super.attributeIndex,
           inputValueRanges,
           voxel);
     } else {
@@ -129,7 +129,7 @@ inline void VdbIterator_iterateIntervalInternal(
                              self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
                              self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
                              self->dda.level,
-                             self->super.context->super.attributeIndex,
+                             self->super.super.context->super.attributeIndex,
                              inputValueRanges,
                              voxel);
     }
@@ -170,7 +170,7 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
   VdbIterator_iterateIntervalInternal(imask,
                                       _self,
                                       _interval,
-                                      self->super.context->super.valueRanges,
+                                      self->super.super.context->super.valueRanges,
                                       false,
                                       _result);
 }

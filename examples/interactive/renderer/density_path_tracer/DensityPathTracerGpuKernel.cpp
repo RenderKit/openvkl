@@ -93,7 +93,7 @@ namespace openvkl {
         float sample    = 0.f;
         maxScatterIndex = max(scatterIndex, maxScatterIndex);
 
-        ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+        ray.t = intersectBox(ray.org, ray.dir, volumeBounds);
 
         // Information needed to render bounding box
         if (scatterIndex == 0 && !ray.t.empty()) {

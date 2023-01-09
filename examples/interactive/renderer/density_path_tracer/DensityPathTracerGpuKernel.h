@@ -68,7 +68,6 @@ namespace openvkl {
 
         this->frameId = frameId;
       }
-
       inline bool pixelOnScene(const unsigned int idx,
                                const unsigned int width,
                                const unsigned int height,
@@ -82,6 +81,21 @@ namespace openvkl {
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
+    inline range1f intersectBox(const vec3f &org,
+                                const vec3f &dir,
+                                const box3f &box)
+    {
+      const vec3f dirRecip = vec3f(sycl::native::recip(dir.x),
+                                   sycl::native::recip(dir.y),
+                                   sycl::native::recip(dir.z));
+
+      const auto mins = (box.lower - org) * dirRecip;
+      const auto maxs = (box.upper - org) * dirRecip;
+      return range1f(
+          reduce_max(vec_t<float, 4>(min(mins, maxs), 0)),
+          reduce_min(vec_t<float, 4>(max(mins, maxs),
+                                     std::numeric_limits<float>::infinity())));
+    }
 
     inline vec4f sampleTransferFunction(const TransferFunctionShared &tf,
                                         float value)

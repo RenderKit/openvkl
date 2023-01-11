@@ -109,44 +109,69 @@ namespace openvkl {
     }
 
     vec3f DensityPathTracer::integrate(RNG &rng,
-                                       Ray &ray,
+                                       const Ray &inputRay,
                                        int scatterIndex,
-                                       int &maxScatterIndex) const
+                                       int &maxScatterIndex,
+                                       bool &primaryRayIntersect) const
     {
-      vec3f Le        = vec3f(0.f);
-      maxScatterIndex = std::max<int>(scatterIndex, maxScatterIndex);
+      // Copy ray to local var since we're going to reuse ray object.
+      Ray ray = inputRay;
 
-      const box3f volumeBounds = scene.volume.getBounds();
-      ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+      vec3f Le(0.f);
+      vec3f sigmaSSample(0.f);
 
-      if (!ray.t.empty()) {
-        float t             = 0.f;
-        float sample        = 0.f;
+      for (int scatterIndex = 0; true; scatterIndex++) {
+        float sample    = 0.f;
+        maxScatterIndex = max(scatterIndex, maxScatterIndex);
+
+        const box3f volumeBounds = scene.volume.getBounds();
+        ray.t = intersectRayBox(ray.org, ray.dir, volumeBounds);
+
+        // Information needed to render bounding box
+        if (scatterIndex == 0 && !ray.t.empty()) {
+          primaryRayIntersect = true;
+        }
+
+        if (ray.t.empty()) {
+          break;
+        }
+
+        // where ray meet volumetric particle
+        float t = 0.f;
+
         float transmittance = 0.f;
+
         const bool haveEvent =
             sampleWoodcock(rng, ray, ray.t, t, sample, transmittance);
 
         if (!haveEvent) {
+          // No hit means that this is end of travel for this ray.
+          // For secondary ray we want to get some light from ambient.
           if (scatterIndex > 0) {
-            Le += transmittance * vec3f(params->ambientLightIntensity);
+            Le += (transmittance * vec3f(params->ambientLightIntensity)) *
+                  sigmaSSample;
           }
-        } else if (scatterIndex < params->maxNumScatters) {
-          const vec3f p = ray.org + t * ray.dir;
-
-          Ray scatteringRay;
-          scatteringRay.t   = range1f(0.f, inf);
-          scatteringRay.org = p;
-          scatteringRay.dir = uniformSampleSphere(1.f, rng.getFloats());
-
-          const vec3f inscatteredLe =
-              integrate(rng, scatteringRay, scatterIndex + 1, maxScatterIndex);
-
-          const vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
-          const vec3f sigmaSSample          = params->sigmaSScale *
-                                     vec3f(sampleColorAndOpacity) *
-                                     sampleColorAndOpacity.w;
-          Le = Le + sigmaSSample * inscatteredLe;
+          break;
         }
+
+        if (scatterIndex >= params->maxNumScatters) {
+          break;
+        }
+
+        // Compute simgaSSample for this particular hit which can be used in
+        // next scattered ray.
+        const vec4f sampleColorAndOpacity =
+            sampleTransferFunction(sample);
+
+        sigmaSSample = params->sigmaSScale * vec3f(sampleColorAndOpacity) *
+                       sampleColorAndOpacity.w;
+
+        // we need to generate seconday ray (reusing 'ray' object) from where
+        // it hit particle (t)
+        const vec3f p = ray.org + t * ray.dir;
+        ray.t         = range1f(0.f, std::numeric_limits<float>::infinity());
+        ray.org       = p;
+        ray.dir       = uniformSampleSphere(1.f, rng.getFloats());
       }
 
       return Le;
@@ -160,9 +185,10 @@ namespace openvkl {
     {
       RNG rng(frame, seed);
       int maxScatterIndex = 0;
-      vec3f color         = integrate(rng, ray, 0, maxScatterIndex);
+      bool primaryRayIntersect = false;
+      vec3f color         = integrate(rng, ray, 0, maxScatterIndex, primaryRayIntersect);
       float alpha         = maxScatterIndex > 0 ? 1.f : 0.f;
-      if (params->showBbox && !ray.t.empty()) {
+      if (params->showBbox && primaryRayIntersect) {
         const float bboxBlend = 0.2f;
         alpha                 = (1.f - bboxBlend) * alpha + bboxBlend * 1.f;
         color = (1.f - bboxBlend) * color + bboxBlend * vec3f(1.f);

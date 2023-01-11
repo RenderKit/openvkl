@@ -85,9 +85,8 @@ namespace openvkl {
       // Copy ray to local var since we're going to reuse ray object.
       Ray ray = *inputRay;
 
-      int scatterIndex = 0;
       vec3f Le(0.f);
-      vec3f sigmaSSample;
+      vec3f sigmaSSample(0.f);
 
       for (int scatterIndex = 0; true; scatterIndex++) {
         float sample    = 0.f;

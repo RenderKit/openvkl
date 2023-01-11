@@ -40,9 +40,10 @@ namespace openvkl {
                           float &transmittance) const;
 
       vec3f integrate(RNG &rng,
-                      Ray &ray,
+                      const Ray &inputRay,
                       int scatterIndex,
-                      int &maxScatterIndex) const;
+                      int &maxScatterIndex,
+                      bool &primaryRayIntersect) const;
 
      private:
       Versioned<DensityPathTracerParams> guiParams;

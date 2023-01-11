@@ -66,8 +66,8 @@ bool sampleWoodcock(const uniform DensityPathTracerParams &params,
                     float &sample,
                     float &transmittance)
 {
-  t                    = ray.tnear;
-  const float sigmaMax = params.sigmaTScale;
+  t                            = ray.tnear;
+  const uniform float sigmaMax = params.sigmaTScale;
 
   if (sigmaMax <= 0.f) {
     transmittance = 1.f;
@@ -114,49 +114,70 @@ bool sampleWoodcock(const uniform DensityPathTracerParams &params,
 vec3f integrate(const uniform DensityPathTracerParams &params,
                 const uniform Scene &scene,
                 RandomTEA &rng,
-                Ray &ray,
-                int scatterIndex,
-                int &maxScatterIndex)
+                const Ray &inputRay,
+                int &maxScatterIndex,
+                bool &primaryRayIntersect)
 {
-  vec3f Le        = make_vec3f(0.f);
-  maxScatterIndex = max(maxScatterIndex, scatterIndex);
+  // Copy ray to local var since we're going to reuse ray object.
+  Ray ray = inputRay;
 
-  uniform vkl_box3f volumeBounds = vklGetBoundingBox(scene.volume);
-  const box3f *uniform bb =
-      (const uniform struct box3f *uniform) & volumeBounds;
-  intersectBox(ray, *bb, ray.tnear, ray.tfar);
+  vec3f Le           = make_vec3f(0.f);
+  vec3f sigmaSSample = make_vec3f(0.f);
 
-  if (ray.tnear <= ray.tfar) {
+  for (uniform int scatterIndex = 0; true; scatterIndex++) {
+    float sample    = 0.f;
+    maxScatterIndex = max(maxScatterIndex, scatterIndex);
+
+    uniform vkl_box3f volumeBounds = vklGetBoundingBox(scene.volume);
+    const box3f *uniform bb =
+        (const uniform struct box3f *uniform) & volumeBounds;
+    intersectBox(ray, *bb, ray.tnear, ray.tfar);
+
+    // Information needed to render bounding box
+    if (scatterIndex == 0 && ray.tnear <= ray.tfar) {
+      primaryRayIntersect = true;
+    }
+
+    if (!(ray.tnear <= ray.tfar)) {
+      break;
+    }
+
+    // where ray meet volumetric particle
     float t             = 0.f;
-    float sample        = 0.f;
     float transmittance = 0.f;
     const bool haveEvent =
         sampleWoodcock(params, scene, rng, ray, t, sample, transmittance);
+
     if (!haveEvent) {
+      // No hit means that this is end of travel for this ray.
+      // For secondary ray we want to get some light from ambient.
       if (scatterIndex > 0) {
-        Le = Le + transmittance * make_vec3f(params.ambientLightIntensity);
+        Le = Le + (transmittance * make_vec3f(params.ambientLightIntensity)) *
+                      sigmaSSample;
       }
-    } else if (scatterIndex < params.maxNumScatters) {
-      const vec3f p = ray.org + t * ray.dir;
-
-      Ray scatteringRay;
-      scatteringRay.tnear = 0.f;
-      scatteringRay.tfar  = inf;
-      scatteringRay.org   = p;
-      scatteringRay.dir = uniformSampleSphere(1.f, RandomTEA__getFloats(&rng));
-
-      const vec3f inscatteredLe = integrate(
-          params, scene, rng, scatteringRay, scatterIndex + 1, maxScatterIndex);
-
-      const vec4f sampleColorAndOpacity =
-          TransferFunction_sample(scene.transferFunction, sample);
-      const vec3f sigmaSSample = params.sigmaSScale *
-                                 make_vec3f(sampleColorAndOpacity) *
-                                 sampleColorAndOpacity.w;
-      Le = Le + sigmaSSample * inscatteredLe;
+      break;
     }
-  }
 
+    if (scatterIndex >= params.maxNumScatters) {
+      break;
+    }
+
+    // Compute simgaSSample for this particular hit which can be used in
+    // next scattered ray.
+    const vec4f sampleColorAndOpacity =
+        TransferFunction_sample(scene.transferFunction, sample);
+
+    sigmaSSample = params.sigmaSScale * make_vec3f(sampleColorAndOpacity) *
+                   sampleColorAndOpacity.w;
+
+    // we need to generate seconday ray (reusing 'ray' object) from where
+    // it hit particle (t)
+    const vec3f p = ray.org + t * ray.dir;
+    ray.tnear     = 0.f;
+    ray.tfar      = inf;
+    ray.org       = p;
+    ray.dir       = uniformSampleSphere(1.f, RandomTEA__getFloats(&rng));
+  }
   return Le;
 }
 
@@ -189,11 +210,13 @@ export void DensityPathTracer_renderPixel(const void *uniform _params,
   Ray ray;
   Camera_createRay(scene.camera, resolution, pixelf, ray);
 
-  int maxScatterIndex = 0;
-  vec3f color         = integrate(params, scene, rng, ray, 0, maxScatterIndex);
-  float alpha         = (maxScatterIndex > 0 ? 1.f : 0.f);
+  int maxScatterIndex      = 0;
+  bool primaryRayIntersect = false;
+  vec3f color =
+      integrate(params, scene, rng, ray, maxScatterIndex, primaryRayIntersect);
+  float alpha = (maxScatterIndex > 0 ? 1.f : 0.f);
 
-  if (params.showBbox && (ray.tnear < ray.tfar)) {
+  if (params.showBbox && primaryRayIntersect) {
     const uniform float bboxBlend = 0.2f;
     alpha                         = (1.f - bboxBlend) * alpha + bboxBlend * 1.f;
     color = (1.f - bboxBlend) * color + bboxBlend * make_vec3f(1.f);

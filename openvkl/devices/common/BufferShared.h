@@ -16,8 +16,10 @@ namespace openvkl {
     ispcrt::Context *context = (ispcrt::Context *)device->getContext();
     ISPCRTNewMemoryViewFlags flags;
     flags.allocType = ISPCRT_ALLOC_TYPE_SHARED;
-    return ispcrtNewMemoryViewForContext(
-        context->handle(), nullptr, size, &flags);
+    flags.smHint    = ISPCRT_SM_HOST_WRITE_DEVICE_READ;
+    auto view =
+        ispcrtNewMemoryViewForContext(context->handle(), nullptr, size, &flags);
+    return view;
   }
 
   inline void BufferSharedDelete(ISPCRTMemoryView view)

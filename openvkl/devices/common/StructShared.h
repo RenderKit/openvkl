@@ -54,6 +54,10 @@ namespace openvkl {
 
    private:
     ISPCRTMemoryView structSharedView{nullptr};
+
+    // we must keep the underlying device, which contains the ispcrt::Context,
+    // active as long as this view is active
+    rkcommon::memory::IntrusivePtr<Device> structSharedDevice;
   };
 
   template <typename T, typename>
@@ -120,6 +124,7 @@ namespace openvkl {
               device, &structSharedView),
           Base(device, std::forward<Args>(args)...)
     {
+      structSharedDevice = device;
     }
   };
 

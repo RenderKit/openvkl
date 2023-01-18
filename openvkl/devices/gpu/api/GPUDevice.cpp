@@ -252,6 +252,9 @@ VKL_WRAP_DEVICE_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_gpu))
 VKL_WRAP_VOLUME_REGISTRATION(
     VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy))
 
+VKL_WRAP_VOLUME_REGISTRATION(
+    VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredSpherical))
+
 #define VKL_REGISTER_DEVICE_FACTORY_FCN(internal_name, external_name) \
   openvkl::Device::registerDevice(                                    \
       TOSTRING(external_name),                                        \
@@ -270,4 +273,8 @@ extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_gpu_device()
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy),
       VKL_MAKE_TARGET_WIDTH_NAME(structuredRegular));
+
+  VKL_REGISTER_VOLUME_FACTORY_FCN(
+      VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredSpherical),
+      VKL_MAKE_TARGET_WIDTH_NAME(structuredSpherical));
 }

@@ -41,7 +41,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
   const ispc::DeviceVolumeType volumeType = samplerShared->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case ispc::VOLUME_TYPE_STRUCTURED_SPHERICAL: {
     const ispc::SharedStructuredVolume *v =
         reinterpret_cast<const ispc::SharedStructuredVolume *>(
             samplerShared->volume);
@@ -76,6 +77,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
 
   switch (volumeType) {
   case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case ispc::VOLUME_TYPE_STRUCTURED_SPHERICAL:
     SharedStructuredVolume_sampleM_uniform(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
@@ -103,7 +105,8 @@ vklComputeGradient(const VKLSampler *sampler,
   const ispc::DeviceVolumeType volumeType = samplerShared->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case ispc::VOLUME_TYPE_STRUCTURED_SPHERICAL: {
     const ispc::SharedStructuredVolume *v =
         reinterpret_cast<const ispc::SharedStructuredVolume *>(
             samplerShared->volume);

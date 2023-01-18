@@ -129,7 +129,7 @@ inline float SharedStructuredVolume_computeSample_uniform(
    * using the above clampedLocalCoordinates_univary() function
    * produces more efficient code; clampedLocalCoordinates_univary()
    * is still used for multi-attribute sampling functions... */
-  transformObjectToLocal_uniform_structured_regular(
+  transformObjectToLocal_uniform_dispatch(
       self, objectCoordinates, clampedLocalCoordinates);
 
   if (clampedLocalCoordinates.x < 0.f ||
@@ -163,7 +163,7 @@ inline void clampedLocalCoordinates_uniform(
 {
   inBounds = true;
 
-  transformObjectToLocal_uniform_structured_regular(
+  transformObjectToLocal_uniform_dispatch(
       self, objectCoordinates, clampedLocalCoordinates);
 
   if (clampedLocalCoordinates.x < 0.f ||

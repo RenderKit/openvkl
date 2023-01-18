@@ -33,6 +33,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icc:
@@ -62,6 +63,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icx:
@@ -92,6 +94,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icx-tbb2020:
@@ -122,6 +125,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos7-icx-tbb2020-avx512_8:
@@ -152,6 +156,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-centos8:
@@ -176,6 +181,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   # uses a newer CMake which allows OpenVDB to build
@@ -202,6 +208,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-ubuntu18_04:
@@ -251,6 +258,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu20_04:
@@ -264,6 +272,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   test-ubuntu22_04:
@@ -277,6 +286,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch:
@@ -301,6 +311,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-clang:
@@ -327,6 +338,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-address-sanitizer:
@@ -354,6 +366,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-debug:
@@ -378,6 +391,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-TBB2020:
@@ -402,6 +416,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-arch-devel-rkdeps:
@@ -426,6 +441,7 @@ jobs:
       cmd: |
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-linux-arch:
@@ -452,6 +468,7 @@ jobs:
         export LD_LIBRARY_PATH=./build/install/lib
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
         ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-from-install-centos7:

@@ -138,7 +138,8 @@ namespace openvkl {
                                                "particle"};
 #endif
 #ifdef OPENVKL_TESTING_GPU
-        static std::vector<std::string> sup = {"structuredRegular"};
+        static std::vector<std::string> sup = {"structuredRegular",
+                                               "structuredSpherical"};
 #endif
         return sup;
       };

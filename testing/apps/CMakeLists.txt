@@ -183,7 +183,10 @@ if (BUILD_TESTING)
       vklTests.cpp
       tests/structured_regular_volume_sampling.cpp
       tests/structured_regular_volume_multi.cpp
+      tests/structured_spherical_volume_sampling.cpp
+      tests/structured_spherical_volume_bounding_box.cpp
       tests/structured_volume_gradients.cpp
+      tests/structured_volume_value_range.cpp
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
     )

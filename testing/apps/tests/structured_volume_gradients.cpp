@@ -96,7 +96,7 @@ TEST_CASE("Structured volume gradients", "[volume_gradients]")
   }
 #endif
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL || defined(OPENVKL_TESTING_GPU)
   SECTION("XYZStructuredSphericalVolume<float>")
   {
     scalar_gradients<XYZStructuredSphericalVolume<float>>();

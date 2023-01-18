@@ -3,6 +3,16 @@
 
 #pragma once
 
+#ifdef OPENVKL_TESTING_CPU
+#define HALF_FLOAT_SUPPORT 1
+#define DOUBLE_SUPPORT 1
+#endif
+
+#ifdef OPENVKL_TESTING_GPU
+#define HALF_FLOAT_SUPPORT 0
+#define DOUBLE_SUPPORT 0
+#endif
+
 #include "apps/AppInit.h"
 #include "volume/OpenVdbVolume.h"
 #include "volume/ProceduralParticleVolume.h"

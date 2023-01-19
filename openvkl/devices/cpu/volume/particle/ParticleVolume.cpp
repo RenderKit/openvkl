@@ -68,12 +68,6 @@ namespace openvkl {
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
         rtcReleaseDevice(rtcDevice);
-      if (memRefs.size()) {
-        for (auto var : memRefs) {
-          ISPCRTMemoryView view = static_cast<ISPCRTMemoryView>(var);
-          BufferSharedDelete(view);
-        }
-      }
     }
 
     template <int W>
@@ -243,7 +237,9 @@ namespace openvkl {
 
       numBVHParticles = prims.size();
 
-      userPtrStruct myUPS{&primRadii, memRefs, memRefsGuard, this->getDevice()};
+      bvhBuildAllocator = make_unique<BvhBuildAllocator>(this->getDevice());
+
+      userPtrStruct myUPS{&primRadii, bvhBuildAllocator.get()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {

@@ -63,18 +63,7 @@ namespace openvkl {
         auto cellWidth   = myData[id].cellWidth;
         auto gridSpacing = myData[id].gridSpacing;
 
-#if 0
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(AMRLeafNode), 16);
-#else
-        auto mv   = BufferSharedCreate(uPS->device, sizeof(AMRLeafNode));
-        void *ptr = ispcrtSharedPtr(mv);
-        uPS->memRefsGuard.lock();
-        uPS->memRefs.push_back((void *)mv);
-        uPS->memRefsGuard.unlock();
-#endif
-
-        assert(is_aligned_for_type<AMRLeafNode>(ptr));
-        return (void *)new (ptr) AMRLeafNode(
+        return uPS->allocator->newObject<AMRLeafNode>(
             id, *(const box3fa *)prims, range, cellWidth, gridSpacing);
       }
     };
@@ -104,12 +93,6 @@ namespace openvkl {
         rtcReleaseBVH(rtcBVH);
       if (rtcDevice)
         rtcReleaseDevice(rtcDevice);
-      if (memRefs.size()) {
-        for (auto var : memRefs) {
-          ISPCRTMemoryView view = static_cast<ISPCRTMemoryView>(var);
-          BufferSharedDelete(view);
-        }
-      }
     }
 
     template <int W>
@@ -301,7 +284,9 @@ namespace openvkl {
         userData[taskIndex].gridSpacing = spacing;
       });
 
-      userPtrStruct myUPS{&userData, memRefs, memRefsGuard, this->getDevice()};
+      bvhBuildAllocator = make_unique<BvhBuildAllocator>(this->getDevice());
+
+      userPtrStruct myUPS{&userData, bvhBuildAllocator.get()};
 
       rtcBVH = rtcNewBVH(rtcDevice);
       if (!rtcBVH) {

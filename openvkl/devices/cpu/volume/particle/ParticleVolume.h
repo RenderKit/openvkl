@@ -69,19 +69,8 @@ namespace openvkl {
           bounds.extend(bound);
         }
 
-#if 0
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(ParticleLeafNode), 16);
-#else
-        auto mv   = BufferSharedCreate(uPS->device, sizeof(ParticleLeafNode));
-        void *ptr = ispcrtSharedPtr(mv);
-        uPS->memRefsGuard.lock();
-        uPS->memRefs.push_back((void *)mv);
-        uPS->memRefsGuard.unlock();
-#endif
-
-        assert(is_aligned_for_type<ParticleLeafNode>(ptr));
-        return (void *)new (ptr)
-            ParticleLeafNode(numPrims, ids, bounds, minRadius);
+        return uPS->allocator->newObject<ParticleLeafNode>(
+            numPrims, ids, bounds, minRadius);
       }
     };
 
@@ -132,8 +121,7 @@ namespace openvkl {
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
-      std::vector<void *> memRefs;
-      std::mutex memRefsGuard;
+      std::unique_ptr<BvhBuildAllocator> bvhBuildAllocator;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

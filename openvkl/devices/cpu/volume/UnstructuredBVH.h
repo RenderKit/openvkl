@@ -17,13 +17,45 @@ using rkcommon::containers::AlignedVector;
 namespace openvkl {
   namespace cpu_device {
 
+    // allocator used during embree BVH creation
+    struct BvhBuildAllocator
+    {
+      BvhBuildAllocator(Device *device) : device(device) {}
+
+      template <typename T, typename... Args>
+      T *newObject(Args &&...args)
+      {
+        auto mv   = BufferSharedCreate(device.ptr, sizeof(T));
+        void *ptr = ispcrtSharedPtr(mv);
+        memRefsGuard.lock();
+        memRefs.push_back(mv);
+        memRefsGuard.unlock();
+
+        assert(is_aligned_for_type<T>(ptr));
+
+        return new (ptr) T(std::forward<Args>(args)...);
+      }
+
+      virtual ~BvhBuildAllocator()
+      {
+        for (auto mv : memRefs) {
+          BufferSharedDelete(mv);
+        }
+      }
+
+     private:
+      // device to allocate within
+      rkcommon::memory::IntrusivePtr<Device> device;
+
+      std::vector<ISPCRTMemoryView> memRefs;  // data to free eventually
+      std::mutex memRefsGuard;                // thread safety for above
+    };
+
     // callback structured for embree BVH create allocators
     struct userPtrStruct
     {
-      void *payload;                 // varies dependent on subclass
-      std::vector<void *> &memRefs;  // data to free eventually
-      std::mutex &memRefsGuard;      // thread safety for above
-      Device *device;                // device to allocate within
+      void *payload;  // varies dependent on subclass
+      BvhBuildAllocator *allocator;
     };
 
     // BVH definitions ////////////////////////////////////////////////////////
@@ -70,25 +102,13 @@ namespace openvkl {
         auto id            = (uint64_t(prims->geomID) << 32) | prims->primID;
         userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
 
-        assert(is_aligned_for_type<AlignedVector<range1f>>(uPS->payload));
-        AlignedVector<range1f> *ranges =
-            static_cast<AlignedVector<range1f> *>(uPS->payload);
+        assert(is_aligned_for_type<range1f *>(uPS->payload));
+        range1f *ranges = static_cast<range1f *>(uPS->payload);
 
-        auto range = (*ranges)[id];
+        auto range = ranges[id];
 
-#if 0
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(LeafNodeSingle), 16);
-#else
-        auto mv   = BufferSharedCreate(uPS->device, sizeof(LeafNodeSingle));
-        void *ptr = ispcrtSharedPtr(mv);
-        uPS->memRefsGuard.lock();
-        uPS->memRefs.push_back((void *)mv);
-        uPS->memRefsGuard.unlock();
-#endif
-
-        assert(is_aligned_for_type<LeafNodeSingle>(ptr));
-        return static_cast<void *>(
-            new (ptr) LeafNodeSingle(id, *(const box3fa *)prims, range));
+        return uPS->allocator->newObject<LeafNodeSingle>(
+            id, *(const box3fa *)prims, range);
       }
     };
 
@@ -125,19 +145,8 @@ namespace openvkl {
                           void *userPtr)
       {
         assert(numChildren == 2);
-#if 0
-        void *ptr = rtcThreadLocalAlloc(alloc, sizeof(InnerNode), 16);
-#else
         userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
-        auto mv            = BufferSharedCreate(uPS->device, sizeof(InnerNode));
-        void *ptr          = ispcrtSharedPtr(mv);
-        uPS->memRefsGuard.lock();
-        uPS->memRefs.push_back((void *)mv);
-        uPS->memRefsGuard.unlock();
-#endif
-
-        assert(is_aligned_for_type<InnerNode>(ptr));
-        return static_cast<void *>(new (ptr) InnerNode);
+        return uPS->allocator->newObject<InnerNode>();
       }
 
       static void setChildren(void *nodePtr,

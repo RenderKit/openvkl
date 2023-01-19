@@ -60,8 +60,7 @@ namespace openvkl {
       RTCDevice rtcDevice{0};
       Node *rtcRoot{nullptr};
       int bvhDepth{0};
-      std::vector<void *> memRefs;
-      std::mutex memRefsGuard;
+      std::unique_ptr<BvhBuildAllocator> bvhBuildAllocator;
 
       void buildBvh();
     };

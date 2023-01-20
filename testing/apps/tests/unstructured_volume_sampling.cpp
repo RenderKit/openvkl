@@ -81,9 +81,9 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
     INFO("sample = " << sample);
 
     if (delta <= 0.f) {
-      CHECK((inside && sample == Approx(0.5).margin(1e-4f)));
+      REQUIRE((inside && sample == Approx(0.5).margin(1e-4f)));
     } else if (delta > 0.f && delta > tolerance) {
-      CHECK((!inside && std::isnan(sample)));
+      REQUIRE((!inside && std::isnan(sample)));
     } else {
       // delta > 0 && delta <= tolerance
       WARN("ignoring test failure due to convergence tolerance (delta = "

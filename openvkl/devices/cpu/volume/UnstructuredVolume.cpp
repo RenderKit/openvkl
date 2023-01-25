@@ -372,7 +372,7 @@ namespace openvkl {
       tasking::parallel_for(nCells, [&](uint64_t taskIndex) {
         switch ((*cellType)[taskIndex]) {
         case VKL_HEXAHEDRON:
-          if (!hexIterative)
+          if (hexIterative)
             calculateTolerance(taskIndex, hexDiagonals, 4);
           break;
         case VKL_WEDGE:

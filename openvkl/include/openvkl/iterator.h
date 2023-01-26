@@ -6,8 +6,17 @@
 #include "common.h"
 #include "sampler.h"
 
+#ifdef __cplusplus
+struct VKLIntervalIteratorContext : public APIObject
+{
+};
+struct VKLHitIteratorContext : public APIObject
+{
+};
+#else
 typedef APIObject VKLIntervalIteratorContext;
 typedef APIObject VKLHitIteratorContext;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

@@ -66,8 +66,8 @@ struct StructuredMulti
   }
 
   std::unique_ptr<TestingStructuredVolumeMulti> volume;
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume;
+  VKLSampler vklSampler;
 };
 
 // based on BENCHMARK_MAIN() macro from benchmark.h

@@ -127,7 +127,7 @@ extern "C" VKLData vklNewData(VKLDevice device,
       numItems, dataType, source, dataCreationFlags, byteStride);
   return data;
 }
-OPENVKL_CATCH_END(nullptr)
+OPENVKL_CATCH_END(VKLData())
 
 ///////////////////////////////////////////////////////////////////////////////
 // Observer ///////////////////////////////////////////////////////////////////
@@ -138,11 +138,11 @@ extern "C" VKLObserver vklNewVolumeObserver(VKLVolume volume, const char *type)
 {
   THROW_IF_NULL(type);
   VKLObserver observer = deviceObj->newVolumeObserver(volume, type);
-  if (observer.host == nullptr)  // note: no device pointer for observers
+  if (!observer)
     throw std::runtime_error(std::string("unsupported observer type: ") + type);
   return observer;
 }
-OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
+OPENVKL_CATCH_END(VKLObserver())
 
 extern "C" VKLObserver vklNewSamplerObserver(VKLSampler sampler,
                                              const char *type)
@@ -150,11 +150,11 @@ extern "C" VKLObserver vklNewSamplerObserver(VKLSampler sampler,
 {
   THROW_IF_NULL(type);
   VKLObserver observer = deviceObj->newSamplerObserver(sampler, type);
-  if (observer.host == nullptr)  // note: no device pointer for observers
+  if (!observer)
     throw std::runtime_error(std::string("unsupported observer type: ") + type);
   return observer;
 }
-OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
+OPENVKL_CATCH_END(VKLObserver())
 
 extern "C" const void *vklMapObserver(VKLObserver observer)
     OPENVKL_CATCH_BEGIN_SAFE2(observer)
@@ -334,13 +334,13 @@ extern "C" VKLIntervalIteratorContext vklNewIntervalIteratorContext(
 {
   VKLIntervalIteratorContext context =
       deviceObj->newIntervalIteratorContext(sampler);
-  if (context.host == nullptr || context.device == nullptr) {
+  if (!context) {
     postLogMessage(deviceObj, VKL_LOG_ERROR)
         << "could not create interval iterator context";
   }
   return context;
 }
-OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
+OPENVKL_CATCH_END(VKLIntervalIteratorContext())
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hit iterator ///////////////////////////////////////////////////////////////
@@ -350,13 +350,13 @@ extern "C" VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler)
     OPENVKL_CATCH_BEGIN_UNSAFE2(sampler)
 {
   VKLHitIteratorContext context = deviceObj->newHitIteratorContext(sampler);
-  if (context.host == nullptr || context.device == nullptr) {
+  if (!context) {
     postLogMessage(deviceObj, VKL_LOG_ERROR)
         << "could not create hit iterator context";
   }
   return context;
 }
-OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
+OPENVKL_CATCH_END(VKLHitIteratorContext())
 
 ///////////////////////////////////////////////////////////////////////////////
 // Parameters /////////////////////////////////////////////////////////////////
@@ -532,12 +532,12 @@ extern "C" VKLSampler vklNewSampler(VKLVolume volume)
     OPENVKL_CATCH_BEGIN_UNSAFE2(volume)
 {
   VKLSampler sampler = deviceObj->newSampler(volume);
-  if (sampler.host == nullptr || sampler.device == nullptr) {
+  if (!sampler) {
     postLogMessage(deviceObj, VKL_LOG_ERROR) << "could not create sampler";
   }
   return sampler;
 }
-OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
+OPENVKL_CATCH_END(VKLSampler())
 
 ///////////////////////////////////////////////////////////////////////////////
 // Volume /////////////////////////////////////////////////////////////////////
@@ -553,13 +553,13 @@ extern "C" VKLVolume vklNewVolume(VKLDevice device, const char *type)
   }
 
   VKLVolume volume = deviceObj->newVolume(type);
-  if (volume.host == nullptr || volume.device == nullptr) {
+  if (!volume) {
     postLogMessage(deviceObj, VKL_LOG_ERROR)
         << "could not create volume '" << type << "'";
   }
   return volume;
 }
-OPENVKL_CATCH_END((APIObject{nullptr, nullptr}))
+OPENVKL_CATCH_END(VKLVolume())
 
 extern "C" vkl_box3f vklGetBoundingBox(VKLVolume volume)
     OPENVKL_CATCH_BEGIN_UNSAFE2(volume)

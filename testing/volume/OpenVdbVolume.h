@@ -57,7 +57,7 @@ namespace openvkl {
             asyncLoader->wait();
           const auto result = asyncLoader->get();
           asyncLoader.reset();
-          if (result.volume.host)
+          if (result.volume)
             vklRelease2(result.volume);
         }
       }
@@ -70,7 +70,7 @@ namespace openvkl {
               new rkcommon::tasking::AsyncTask<AsyncResult>([=]() {
                 // Load remaining leaves, but use the usage buffer as guidance.
                 AsyncResult result;
-                result.volume.host = nullptr;
+                result.volume = VKLVolume();
 
                 rkcommon::utility::CodeTimer loadTimer;
                 loadTimer.start();
@@ -95,7 +95,7 @@ namespace openvkl {
         } else if (asyncLoader && asyncLoader->finished()) {
           AsyncResult result = asyncLoader->get();
           asyncLoader.reset();
-          if (result.volume.host) {
+          if (result.volume) {
             changed = true;
             vklRelease2(volume);
 
@@ -131,7 +131,7 @@ namespace openvkl {
      protected:
       struct AsyncResult
       {
-        VKLVolume volume{nullptr};
+        VKLVolume volume;
         uint64_t loadMS{0};    // The time it took to load leaves.
         uint64_t commitMS{0};  // The time it took to commit.
       };
@@ -252,7 +252,7 @@ namespace openvkl {
 
       VKLObserver newLeafAccessObserver(VKLSampler sampler) const override
       {
-        return APIObject{nullptr, nullptr};
+        return VKLObserver();
       }
 
      protected:

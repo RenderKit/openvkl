@@ -15,8 +15,6 @@
 
 #include "max_iterator_size.h"
 
-typedef APIObject VKLSampler;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

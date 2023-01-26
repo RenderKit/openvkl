@@ -31,7 +31,7 @@ namespace openvkl {
       vklSetInt2(*hitContext, "attributeIndex", rendererParams->attributeIndex);
 
       // if we have isovalues, set these values on the context
-      VKLData valuesData = nullptr;
+      VKLData valuesData;
 
       if (!params->isoValues.empty()) {
         valuesData = vklNewData(getOpenVKLDevice(),

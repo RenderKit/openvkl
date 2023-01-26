@@ -50,8 +50,8 @@ struct Particle
   }
 
   std::unique_ptr<ProceduralParticleVolume> volume;
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume;
+  VKLSampler vklSampler;
 };
 
 // based on BENCHMARK_MAIN() macro from benchmark.h

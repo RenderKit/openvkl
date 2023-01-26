@@ -57,8 +57,8 @@ struct Structured
   }
 
   std::unique_ptr<WaveletStructuredRegularVolume<float>> volume;
-  VKLVolume vklVolume{nullptr};
-  VKLSampler vklSampler{nullptr};
+  VKLVolume vklVolume;
+  VKLSampler vklSampler;
 };
 
 // based on BENCHMARK_MAIN() macro from benchmark.h

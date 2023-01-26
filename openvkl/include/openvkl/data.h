@@ -27,14 +27,12 @@ extern "C" {
 #endif
 
 #ifdef __cplusplus
-struct Data : public ManagedObject
+struct VKLData : public APIObject
 {
 };
 #else
-typedef ManagedObject Data;
+typedef APIObject VKLData;
 #endif
-
-typedef Data *VKLData;
 
 OPENVKL_INTERFACE VKLData vklNewData(VKLDevice device,
                                      size_t numItems,

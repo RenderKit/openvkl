@@ -14,7 +14,13 @@
 #include "common.h"
 #include "device.h"
 
+#ifdef __cplusplus
+struct VKLVolume : public APIObject
+{
+};
+#else
 typedef APIObject VKLVolume;
+#endif
 
 // cell types definition for unstructured volumes, values are set to match VTK
 typedef enum

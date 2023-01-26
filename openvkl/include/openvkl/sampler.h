@@ -14,7 +14,13 @@
 #include "common.h"
 #include "volume.h"
 
+#ifdef __cplusplus
+struct VKLSampler : public APIObject
+{
+};
+#else
 typedef APIObject VKLSampler;
+#endif
 
 #ifdef __cplusplus
 extern "C" {

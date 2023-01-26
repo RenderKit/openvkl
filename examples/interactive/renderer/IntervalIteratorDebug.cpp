@@ -34,7 +34,7 @@ namespace openvkl {
 
       // set interval context value ranges based on transfer function positive
       // opacity intervals, if we have any
-      VKLData valueRangesData = nullptr;
+      VKLData valueRangesData;
 
       const std::vector<range1f> valueRanges =
           rendererParams->transferFunction.getPositiveOpacityValueRanges();

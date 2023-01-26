@@ -53,27 +53,23 @@ typedef uint64_t vkl_uint64;
 // VKL_OBJECT
 // -----------------------------------------------------------------------------
 
-// TODO: eventually remove the VKLObject definition below, and rename APIObject
-// to VKLObject
+// TODO: rename this struct to VKLObject once full conversion is done
 typedef struct __APIObject
 {
+#ifdef __cplusplus
+  __APIObject() : host(nullptr), device(nullptr) {}
+
+  operator bool() const
+  {
+    return (host != nullptr);
+  }
+#endif
+
   void *host;
   void *device;
 } APIObject;
 
-#if defined(ISPC) || defined(__cplusplus)
-struct ManagedObject
-{
-};
-#else
-typedef void ManagedObject;
-#endif
-
-#if defined(ISPC)
-typedef ManagedObject *uniform VKLObject;
-#else
-typedef ManagedObject *VKLObject;
-#endif
+typedef APIObject VKLObject;
 
 // -----------------------------------------------------------------------------
 // VKL_CHAR

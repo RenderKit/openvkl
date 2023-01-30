@@ -245,7 +245,6 @@ namespace openvkl {
         declare_param_setter(void *),
         declare_param_setter(bool),
         declare_param_setter_object(openvkl::ManagedObject *),
-        declare_param_setter_object(openvkl::Data *),
         declare_param_setter_string(char *),
         declare_param_setter_string(const char *),
         declare_param_setter_string(const char[]),
@@ -324,7 +323,7 @@ namespace openvkl {
 
     void Device::setObject(VKLObject object,
                            const char *name,
-                           VKLObject setObject)
+                           ManagedObject *setObject)
     {
       setObjectParam(object, name, VKL_OBJECT, &setObject);
     }
@@ -413,13 +412,13 @@ namespace openvkl {
                                 VKLDataType dataType,
                                 const void *mem)
     {
-      VKLObject object = static_cast<VKLObject>(object2.host);
+      ManagedObject *mo = static_cast<ManagedObject *>(object.host);
       if (!setParamFcns.count(dataType)) {
         throw std::runtime_error("cannot set parameter " + std::string(name) +
                                  " for given data type");
       }
 
-      setParamFcns[dataType](object, name, mem);
+      setParamFcns[dataType](mo, name, mem);
     }
 
   }  // namespace api

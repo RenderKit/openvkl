@@ -60,13 +60,6 @@ inline std::string getPidString()
         static_cast<openvkl::ManagedObject *>(deviceSource.host); \
     Device *deviceObj = managedObject->device.ptr;                \
     try {
-#define OPENVKL_CATCH_BEGIN_UNSAFE3(deviceSource)                  \
-  {                                                                \
-    assert(deviceSource != nullptr);                               \
-    openvkl::ManagedObject *managedObject =                        \
-        static_cast<openvkl::ManagedObject *>(deviceSource->host); \
-    Device *deviceObj = managedObject->device.ptr;                 \
-    try {
 #define OPENVKL_CATCH_END_NO_DEVICE(a)                                         \
   }                                                                            \
   catch (const std::bad_alloc &)                                               \
@@ -96,11 +89,6 @@ inline std::string getPidString()
 ///////////////////////////////////////////////////////////////////////////////
 // Device helpers /////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-inline Device *deviceFrom(VKLObject object)
-{
-  return reinterpret_cast<openvkl::ManagedObject *>(object)->device.ptr;
-}
 
 inline Device *deviceFrom(VKLDevice device)
 {
@@ -494,7 +482,7 @@ extern "C" void vklSetData2(APIObject object, const char *name, VKLData data)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
-  deviceObj->setObject(object, name, (VKLObject)data);
+  deviceObj->setObject(object, name, static_cast<ManagedObject *>(data.host));
 }
 OPENVKL_CATCH_END()
 

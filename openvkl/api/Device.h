@@ -142,7 +142,9 @@ namespace openvkl {
       void set1i(APIObject object, const char *name, const int x);
       void setVec3f(APIObject object, const char *name, const vec3f &v);
       void setVec3i(APIObject object, const char *name, const vec3i &v);
-      void setObject(APIObject object, const char *name, VKLObject setObject);
+      void setObject(APIObject object,
+                     const char *name,
+                     ManagedObject *setObject);
       void setString(APIObject object, const char *name, const std::string &s);
       void setVoidPtr(APIObject object, const char *name, void *v);
 

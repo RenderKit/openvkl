@@ -112,9 +112,14 @@ namespace openvkl {
                                   VKLDataCreationFlags dataCreationFlags,
                                   size_t byteStride)
     {
-      Data *data =
-          new Data(this, numItems, dataType, source, dataCreationFlags, byteStride);
-      return (VKLData)data;
+      Data *data = new Data(
+          this, numItems, dataType, source, dataCreationFlags, byteStride);
+
+      VKLData d;
+      d.host   = data;
+      d.device = nullptr;
+
+      return d;
     }
 
     ///////////////////////////////////////////////////////////////////////////

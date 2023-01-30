@@ -121,7 +121,12 @@ namespace openvkl {
     {
       Data *data = new Data(
           this, numItems, dataType, source, dataCreationFlags, byteStride);
-      return (VKLData)data;
+
+      VKLData d;
+      d.host   = data;
+      d.device = nullptr;
+
+      return d;
     }
 
     ///////////////////////////////////////////////////////////////////////////

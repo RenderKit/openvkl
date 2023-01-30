@@ -31,7 +31,14 @@ namespace openvkl {
 
     // compute stride if requested
     if (byteStride == 0) {
-      byteStride = sizeOf(dataType);
+      if (isManagedObject(dataType)) {
+        // sizeOf(dataType) represents the _stored_ byte stride (we store only
+        // ManagedObject *), but the source byte stride is for the full
+        // user-provided APIObject(s)
+        byteStride = sizeof(APIObject);
+      } else {
+        byteStride = sizeOf(dataType);
+      }
     }
 
     if (dataCreationFlags == VKL_DATA_DEFAULT) {
@@ -46,13 +53,23 @@ namespace openvkl {
       view = m;
       void *buffer = m->allocatedBuffer;
 
-      if (byteStride == naturalByteStride) {
-        memcpy(buffer, source, numBytes);
-      } else {
+      if (isManagedObject(dataType)) {
+        // the user provided an array of APIObjects, but we'll only populate
+        // with the host-side ManagedObject * (the host pointer)
         for (size_t i = 0; i < numItems; i++) {
           const char *src = (const char *)source + i * byteStride;
           char *dst       = (char *)buffer + i * naturalByteStride;
           memcpy(dst, src, sizeOf(dataType));
+        }
+      } else {
+        if (byteStride == naturalByteStride) {
+          memcpy(buffer, source, numBytes);
+        } else {
+          for (size_t i = 0; i < numItems; i++) {
+            const char *src = (const char *)source + i * byteStride;
+            char *dst       = (char *)buffer + i * naturalByteStride;
+            memcpy(dst, src, sizeOf(dataType));
+          }
         }
       }
 

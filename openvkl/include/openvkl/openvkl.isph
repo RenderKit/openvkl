@@ -6,7 +6,6 @@
 #include "VKLBackgroundUndefined.h"
 #include "VKLFormat.h"
 #include "common.isph"
-#include "device.isph"
 #include "iterator.isph"
 #include "sampler.isph"
 #include "version.h"

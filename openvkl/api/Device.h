@@ -57,10 +57,6 @@ namespace openvkl {
       virtual void commit();
       bool isCommitted();
 
-      // TODO: these to be removed
-      virtual void commit(VKLObject object)  = 0;
-      virtual void release(VKLObject object) = 0;
-
       virtual void commit(APIObject object)  = 0;
       virtual void release(APIObject object) = 0;
 
@@ -120,22 +116,6 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
       // Parameters ///////////////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
-
-      void setBool(VKLObject object, const char *name, const bool b);
-      void set1f(VKLObject object, const char *name, const float x);
-      void set1i(VKLObject object, const char *name, const int x);
-      void setVec3f(VKLObject object, const char *name, const vec3f &v);
-      void setVec3i(VKLObject object, const char *name, const vec3i &v);
-      void setObject(VKLObject object, const char *name, VKLObject setObject);
-      void setString(VKLObject object, const char *name, const std::string &s);
-      void setVoidPtr(VKLObject object, const char *name, void *v);
-
-      void setObjectParam(VKLObject object,
-                          const char *name,
-                          VKLDataType dataType,
-                          const void *mem);
-
-      // param setters for APIObject //////////////////////////////////////////
 
       void setBool(APIObject object, const char *name, const bool b);
       void set1f(APIObject object, const char *name, const float x);

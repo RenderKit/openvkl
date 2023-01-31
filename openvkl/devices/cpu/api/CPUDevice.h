@@ -29,10 +29,6 @@ namespace openvkl {
 
       void commit() override;
 
-      // TODO: to be removed
-      void commit(VKLObject object) override;
-      void release(VKLObject object) override;
-
       void commit(APIObject object) override;
       void release(APIObject object) override;
 

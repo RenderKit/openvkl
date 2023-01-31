@@ -81,20 +81,6 @@ namespace openvkl {
     }
 
     template <int W>
-    void GPUDevice<W>::commit(VKLObject object)
-    {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->commit();
-    }
-
-    template <int W>
-    void GPUDevice<W>::release(VKLObject object)
-    {
-      ManagedObject *managedObject = (ManagedObject *)object;
-      managedObject->refDec();
-    }
-
-    template <int W>
     void GPUDevice<W>::commit(APIObject object)
     {
       ManagedObject *managedObject = static_cast<ManagedObject *>(object.host);

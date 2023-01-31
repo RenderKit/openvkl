@@ -46,13 +46,9 @@ OPENVKL_INTERFACE const char *vklDeviceGetLastErrorMsg(VKLDevice device);
 
 OPENVKL_INTERFACE int vklGetNativeSIMDWidth(VKLDevice device);
 
-// TODO: to be removed
-OPENVKL_INTERFACE void vklCommit(VKLObject object);
-OPENVKL_INTERFACE void vklRelease(VKLObject object);
+OPENVKL_INTERFACE void vklCommit(APIObject object);
 
-OPENVKL_INTERFACE void vklCommit2(APIObject object);
-
-OPENVKL_INTERFACE void vklRelease2(APIObject object);
+OPENVKL_INTERFACE void vklRelease(APIObject object);
 
 OPENVKL_INTERFACE void vklReleaseDevice(VKLDevice device);
 

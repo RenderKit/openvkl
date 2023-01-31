@@ -15,11 +15,11 @@
 #include "volume.h"
 
 #ifdef __cplusplus
-struct VKLSampler : public APIObject
+struct VKLSampler : public VKLObject
 {
 };
 #else
-typedef APIObject VKLSampler;
+typedef VKLObject VKLSampler;
 #endif
 
 #ifdef __cplusplus

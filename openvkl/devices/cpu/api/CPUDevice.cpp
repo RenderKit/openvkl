@@ -74,14 +74,14 @@ namespace openvkl {
     }
 
     template <int W>
-    void CPUDevice<W>::commit(APIObject object)
+    void CPUDevice<W>::commit(VKLObject object)
     {
       ManagedObject *managedObject = static_cast<ManagedObject *>(object.host);
       managedObject->commit();
     }
 
     template <int W>
-    void CPUDevice<W>::release(APIObject object)
+    void CPUDevice<W>::release(VKLObject object)
     {
       ManagedObject *managedObject = static_cast<ManagedObject *>(object.host);
       managedObject->refDec();

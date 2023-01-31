@@ -281,13 +281,13 @@ extern "C" int vklGetNativeSIMDWidth(VKLDevice device)
 }
 OPENVKL_CATCH_END(0)
 
-extern "C" void vklCommit(APIObject object) OPENVKL_CATCH_BEGIN_SAFE2(object)
+extern "C" void vklCommit(VKLObject object) OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   deviceObj->commit(object);
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklRelease(APIObject object) OPENVKL_CATCH_BEGIN_SAFE2(object)
+extern "C" void vklRelease(VKLObject object) OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   deviceObj->release(object);
 }
@@ -338,7 +338,7 @@ OPENVKL_CATCH_END(VKLHitIteratorContext())
 // Parameters /////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-extern "C" void vklSetBool(APIObject object, const char *name, int b)
+extern "C" void vklSetBool(VKLObject object, const char *name, int b)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
@@ -346,7 +346,7 @@ extern "C" void vklSetBool(APIObject object, const char *name, int b)
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetFloat(APIObject object, const char *name, float x)
+extern "C" void vklSetFloat(VKLObject object, const char *name, float x)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
@@ -354,7 +354,7 @@ extern "C" void vklSetFloat(APIObject object, const char *name, float x)
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetVec3f(APIObject object,
+extern "C" void vklSetVec3f(VKLObject object,
                             const char *name,
                             float x,
                             float y,
@@ -365,7 +365,7 @@ extern "C" void vklSetVec3f(APIObject object,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetInt(APIObject object, const char *name, int x)
+extern "C" void vklSetInt(VKLObject object, const char *name, int x)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
@@ -373,7 +373,7 @@ extern "C" void vklSetInt(APIObject object, const char *name, int x)
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetVec3i(APIObject object,
+extern "C" void vklSetVec3i(VKLObject object,
                             const char *name,
                             int x,
                             int y,
@@ -384,7 +384,7 @@ extern "C" void vklSetVec3i(APIObject object,
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetData(APIObject object, const char *name, VKLData data)
+extern "C" void vklSetData(VKLObject object, const char *name, VKLData data)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
@@ -392,7 +392,7 @@ extern "C" void vklSetData(APIObject object, const char *name, VKLData data)
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetString(APIObject object, const char *name, const char *s)
+extern "C" void vklSetString(VKLObject object, const char *name, const char *s)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
@@ -400,7 +400,7 @@ extern "C" void vklSetString(APIObject object, const char *name, const char *s)
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetVoidPtr(APIObject object, const char *name, void *v)
+extern "C" void vklSetVoidPtr(VKLObject object, const char *name, void *v)
     OPENVKL_CATCH_BEGIN_SAFE2(object)
 {
   THROW_IF_NULL(name);
@@ -408,7 +408,7 @@ extern "C" void vklSetVoidPtr(APIObject object, const char *name, void *v)
 }
 OPENVKL_CATCH_END()
 
-extern "C" void vklSetParam(APIObject object,
+extern "C" void vklSetParam(VKLObject object,
                             const char *name,
                             VKLDataType dataType,
                             const void *mem) OPENVKL_CATCH_BEGIN_SAFE2(object)

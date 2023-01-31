@@ -53,11 +53,10 @@ typedef uint64_t vkl_uint64;
 // VKL_OBJECT
 // -----------------------------------------------------------------------------
 
-// TODO: rename this struct to VKLObject once full conversion is done
-typedef struct __APIObject
+typedef struct __VKLObject
 {
 #ifdef __cplusplus
-  __APIObject() : host(nullptr), device(nullptr) {}
+  __VKLObject() : host(nullptr), device(nullptr) {}
 
   operator bool() const
   {
@@ -67,9 +66,7 @@ typedef struct __APIObject
 
   void *host;
   void *device;
-} APIObject;
-
-typedef APIObject VKLObject;
+} VKLObject;
 
 // -----------------------------------------------------------------------------
 // VKL_CHAR

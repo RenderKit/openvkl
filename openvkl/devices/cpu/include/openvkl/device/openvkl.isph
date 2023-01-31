@@ -11,7 +11,7 @@
 // Sampling ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-typedef uniform APIObject VKLSampler;
+typedef uniform VKLObject VKLSampler;
 
 VKL_API void vklComputeSample4(const int *uniform valid,
                                const VKLSampler *uniform sampler,

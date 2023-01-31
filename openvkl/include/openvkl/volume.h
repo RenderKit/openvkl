@@ -15,11 +15,11 @@
 #include "device.h"
 
 #ifdef __cplusplus
-struct VKLVolume : public APIObject
+struct VKLVolume : public VKLObject
 {
 };
 #else
-typedef APIObject VKLVolume;
+typedef VKLObject VKLVolume;
 #endif
 
 // cell types definition for unstructured volumes, values are set to match VTK

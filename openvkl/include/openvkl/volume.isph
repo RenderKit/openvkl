@@ -5,7 +5,7 @@
 
 #include "common.isph"
 
-typedef uniform APIObject VKLVolume;
+typedef uniform VKLObject VKLVolume;
 
 VKL_API void vklGetBoundingBoxRef(const VKLVolume *uniform volume,
                                   vkl_box3f *uniform boundingBox);

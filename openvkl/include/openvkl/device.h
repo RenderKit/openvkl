@@ -46,9 +46,9 @@ OPENVKL_INTERFACE const char *vklDeviceGetLastErrorMsg(VKLDevice device);
 
 OPENVKL_INTERFACE int vklGetNativeSIMDWidth(VKLDevice device);
 
-OPENVKL_INTERFACE void vklCommit(APIObject object);
+OPENVKL_INTERFACE void vklCommit(VKLObject object);
 
-OPENVKL_INTERFACE void vklRelease(APIObject object);
+OPENVKL_INTERFACE void vklRelease(VKLObject object);
 
 OPENVKL_INTERFACE void vklReleaseDevice(VKLDevice device);
 

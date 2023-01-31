@@ -18,11 +18,11 @@
 // Observers provide an interface for receiving data back from OpenVKL.
 
 #ifdef __cplusplus
-struct VKLObserver : public APIObject
+struct VKLObserver : public VKLObject
 {
 };
 #else
-typedef APIObject VKLObserver;
+typedef VKLObject VKLObserver;
 #endif
 
 #ifdef __cplusplus

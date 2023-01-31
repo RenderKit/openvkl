@@ -34,8 +34,8 @@ namespace openvkl {
       if (isManagedObject(dataType)) {
         // sizeOf(dataType) represents the _stored_ byte stride (we store only
         // ManagedObject *), but the source byte stride is for the full
-        // user-provided APIObject(s)
-        byteStride = sizeof(APIObject);
+        // user-provided VKLObject(s)
+        byteStride = sizeof(VKLObject);
       } else {
         byteStride = sizeOf(dataType);
       }
@@ -54,7 +54,7 @@ namespace openvkl {
       void *buffer = m->allocatedBuffer;
 
       if (isManagedObject(dataType)) {
-        // the user provided an array of APIObjects, but we'll only populate
+        // the user provided an array of VKLObjects, but we'll only populate
         // with the host-side ManagedObject * (the host pointer)
         for (size_t i = 0; i < numItems; i++) {
           const char *src = (const char *)source + i * byteStride;

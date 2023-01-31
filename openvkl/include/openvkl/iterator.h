@@ -7,15 +7,15 @@
 #include "sampler.h"
 
 #ifdef __cplusplus
-struct VKLIntervalIteratorContext : public APIObject
+struct VKLIntervalIteratorContext : public VKLObject
 {
 };
-struct VKLHitIteratorContext : public APIObject
+struct VKLHitIteratorContext : public VKLObject
 {
 };
 #else
-typedef APIObject VKLIntervalIteratorContext;
-typedef APIObject VKLHitIteratorContext;
+typedef VKLObject VKLIntervalIteratorContext;
+typedef VKLObject VKLHitIteratorContext;
 #endif
 
 #ifdef __cplusplus

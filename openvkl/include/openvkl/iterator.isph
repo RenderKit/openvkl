@@ -5,5 +5,5 @@
 
 #include "common.isph"
 
-typedef uniform APIObject VKLIntervalIteratorContext;
-typedef uniform APIObject VKLHitIteratorContext;
+typedef uniform VKLObject VKLIntervalIteratorContext;
+typedef uniform VKLObject VKLHitIteratorContext;

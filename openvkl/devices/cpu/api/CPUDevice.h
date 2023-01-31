@@ -29,8 +29,8 @@ namespace openvkl {
 
       void commit() override;
 
-      void commit(APIObject object) override;
-      void release(APIObject object) override;
+      void commit(VKLObject object) override;
+      void release(VKLObject object) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Data /////////////////////////////////////////////////////////////////

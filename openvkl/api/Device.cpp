@@ -300,51 +300,51 @@ namespace openvkl {
     // Parameters /////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////////////////
 
-    void Device::setBool(APIObject object, const char *name, const bool b)
+    void Device::setBool(VKLObject object, const char *name, const bool b)
     {
       setObjectParam(object, name, VKL_BOOL, &b);
     }
 
-    void Device::set1f(APIObject object, const char *name, const float x)
+    void Device::set1f(VKLObject object, const char *name, const float x)
     {
       setObjectParam(object, name, VKL_FLOAT, &x);
     }
 
-    void Device::set1i(APIObject object, const char *name, const int x)
+    void Device::set1i(VKLObject object, const char *name, const int x)
     {
       setObjectParam(object, name, VKL_INT, &x);
     }
 
-    void Device::setVec3f(APIObject object, const char *name, const vec3f &v)
+    void Device::setVec3f(VKLObject object, const char *name, const vec3f &v)
     {
       setObjectParam(object, name, VKL_VEC3F, &v);
     }
 
-    void Device::setVec3i(APIObject object, const char *name, const vec3i &v)
+    void Device::setVec3i(VKLObject object, const char *name, const vec3i &v)
     {
       setObjectParam(object, name, VKL_VEC3I, &v);
     }
 
-    void Device::setObject(APIObject object,
+    void Device::setObject(VKLObject object,
                            const char *name,
                            ManagedObject *setObject)
     {
       setObjectParam(object, name, VKL_OBJECT, &setObject);
     }
 
-    void Device::setString(APIObject object,
+    void Device::setString(VKLObject object,
                            const char *name,
                            const std::string &s)
     {
       setObjectParam(object, name, VKL_STRING, s.c_str());
     }
 
-    void Device::setVoidPtr(APIObject object, const char *name, void *v)
+    void Device::setVoidPtr(VKLObject object, const char *name, void *v)
     {
       setObjectParam(object, name, VKL_VOID_PTR, &v);
     }
 
-    void Device::setObjectParam(APIObject object,
+    void Device::setObjectParam(VKLObject object,
                                 const char *name,
                                 VKLDataType dataType,
                                 const void *mem)

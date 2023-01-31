@@ -235,7 +235,7 @@ static_assert(VKL_MAX_HIT_ITERATOR_SIZE ==
                   alignof(GridAcceleratorIterator));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
-vklGetHitIteratorSize(const VKLIntervalIteratorContext *context)
+vklGetHitIteratorSize(const VKLHitIteratorContext *context)
 {
   assert(context);
   const ispc::IteratorContext *ic =

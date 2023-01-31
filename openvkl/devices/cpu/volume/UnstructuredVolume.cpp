@@ -307,9 +307,10 @@ namespace openvkl {
         range[taskIndex]         = range1f(bound.lower.w, bound.upper.w);
       });
 
-      // conservatively allocate all the space the BVH might need upfront
+      // use a chunking allocator, with chunk size of 0.01 * nCells
       bvhBuildAllocator = make_unique<BvhBuildAllocator>(
-          this->getDevice(), sizeof(InnerNode) * (nCells * 2 - 1));
+          this->getDevice(),
+          std::max(size_t(0.01f * nCells), size_t(1)) * sizeof(InnerNode));
 
       userPtrStruct myUPS{range.data(), bvhBuildAllocator.get()};
 

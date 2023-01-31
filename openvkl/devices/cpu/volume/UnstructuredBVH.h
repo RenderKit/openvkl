@@ -20,42 +20,39 @@ namespace openvkl {
     // allocator used during embree BVH creation
     struct BvhBuildAllocator
     {
-      BvhBuildAllocator(Device *device, size_t preallocateBytes = 0)
-          : device(device)
+      BvhBuildAllocator(Device *device, size_t chunkAllocationBytes = 0)
+          : device(device), chunkAllocationBytes(chunkAllocationBytes)
       {
-        preallocate = bool(preallocateBytes);
-
-        if (preallocate) {
-          ISPCRTMemoryView mv = BufferSharedCreate(device, preallocateBytes);
-          memRefs.push_back(mv);
-
-          preallocatePtr            = static_cast<char *>(ispcrtSharedPtr(mv));
-          preallocateBytesRemaining = preallocateBytes;
-        }
       }
+
+      BvhBuildAllocator(const BvhBuildAllocator &)            = delete;
+      BvhBuildAllocator &operator=(const BvhBuildAllocator &) = delete;
 
       template <typename T, typename... Args>
       T *newObject(Args &&...args)
       {
         void *ptr = nullptr;
 
-        if (preallocate) {
-          if (preallocateBytesRemaining < sizeof(T)) {
-            throw std::runtime_error(
-                "BvhBuildAllocator: not enough memory preallocated");
+        if (chunkAllocationBytes) {
+          assert(chunkAllocationBytes >= sizeof(T));
+
+          memGuard.lock();
+
+          if (chunkBytesRemaining < sizeof(T)) {
+            allocateNewChunk();
           }
 
-          memRefsGuard.lock();
-          ptr = preallocatePtr;
-          preallocatePtr += sizeof(T);
-          preallocateBytesRemaining -= sizeof(T);
-          memRefsGuard.unlock();
+          ptr = chunkPtr;
+          chunkPtr += sizeof(T);
+          chunkBytesRemaining -= sizeof(T);
+
+          memGuard.unlock();
         } else {
           auto mv = BufferSharedCreate(device.ptr, sizeof(T));
           ptr     = ispcrtSharedPtr(mv);
-          memRefsGuard.lock();
+          memGuard.lock();
           memRefs.push_back(mv);
-          memRefsGuard.unlock();
+          memGuard.unlock();
         }
 
         if (!is_aligned_for_type<T>(ptr)) {
@@ -76,13 +73,31 @@ namespace openvkl {
       // device to allocate within
       rkcommon::memory::IntrusivePtr<Device> device;
 
-      std::vector<ISPCRTMemoryView> memRefs;  // data to free eventually
-      std::mutex memRefsGuard;                // thread safety for above
+      // thread safety for memory operations
+      std::mutex memGuard;
 
-      // only used when preallocateBytes != 0
-      bool preallocate;
-      char *preallocatePtr;
-      long long preallocateBytesRemaining;
+      // data to free eventually
+      std::vector<ISPCRTMemoryView> memRefs;
+
+      // how many bytes to allocate per "chunk", if 0 then no chunking
+      // allocation is used
+      size_t chunkAllocationBytes;
+
+      // only used when chunkAllocationBytes != 0
+      char *chunkPtr                = nullptr;
+      long long chunkBytesRemaining = 0;
+
+      void allocateNewChunk()
+      {
+        // memGuard should already be locked!
+
+        ISPCRTMemoryView mv =
+            BufferSharedCreate(device.ptr, chunkAllocationBytes);
+        memRefs.push_back(mv);
+
+        chunkPtr            = static_cast<char *>(ispcrtSharedPtr(mv));
+        chunkBytesRemaining = chunkAllocationBytes;
+      }
     };
 
     // callback structured for embree BVH create allocators

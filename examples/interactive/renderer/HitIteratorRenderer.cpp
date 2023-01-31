@@ -28,7 +28,7 @@ namespace openvkl {
     template <class R>
     void HitIteratorRendererShared<R>::updateHitContext()
     {
-      vklSetInt2(*hitContext, "attributeIndex", rendererParams->attributeIndex);
+      vklSetInt(*hitContext, "attributeIndex", rendererParams->attributeIndex);
 
       // if we have isovalues, set these values on the context
       VKLData valuesData;
@@ -40,13 +40,13 @@ namespace openvkl {
                                 params->isoValues.data());
       }
 
-      vklSetData2(*hitContext, "values", valuesData);
+      vklSetData(*hitContext, "values", valuesData);
 
       if (valuesData) {
         vklRelease(valuesData);
       }
 
-      vklCommit2(*hitContext);
+      vklCommit(*hitContext);
     }
 
     template <class R>
@@ -63,7 +63,7 @@ namespace openvkl {
     void HitIteratorRendererShared<R>::afterStop()
     {
       if (hitContext) {
-        vklRelease2(*hitContext);
+        vklRelease(*hitContext);
         hitContext = nullptr;
       }
     }

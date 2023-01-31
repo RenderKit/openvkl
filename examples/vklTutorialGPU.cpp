@@ -14,7 +14,7 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   std::cout << std::fixed << std::setprecision(6);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -97,12 +97,12 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", 0);
+  vklSetInt(intervalContext, "attributeIndex", 0);
 
-  vklSetData2(intervalContext, "valueRanges", rangesData);
+  vklSetData(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   // ray definition for iterators
   vkl_vec3f rayOrigin{0.f, 1.f, 1.f};
@@ -175,7 +175,7 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   sycl::free(numIntervals, syclQueue);
   sycl::free(intervalsBuffer, syclQueue);
 
-  vklRelease2(intervalContext);
+  vklRelease(intervalContext);
 
   // hit iteration
   std::cout << std::endl << "\thit iteration" << std::endl << std::endl;
@@ -187,12 +187,12 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetInt2(hitContext, "attributeIndex", 0);
+  vklSetInt(hitContext, "attributeIndex", 0);
 
-  vklSetData2(hitContext, "values", rangesData);
+  vklSetData(hitContext, "values", rangesData);
   vklRelease(rangesData);
 
-  vklCommit2(hitContext);
+  vklCommit(hitContext);
 
   // ray definition for iterators
   // see rayOrigin, Direction and TRange above
@@ -251,9 +251,9 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   sycl::free(numHits, syclQueue);
   sycl::free(hitBuffer, syclQueue);
 
-  vklRelease2(hitContext);
+  vklRelease(hitContext);
 
-  vklRelease2(sampler);
+  vklRelease(sampler);
 }
 
 int main()
@@ -288,10 +288,10 @@ int main()
   const int numAttributes = 3;
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i2(
+  vklSetVec3i(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
-  vklSetVec3f2(volume, "gridOrigin", 0, 0, 0);
-  vklSetVec3f2(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
   std::vector<float> voxels(numVoxels);
 
@@ -331,14 +331,14 @@ int main()
   vklRelease(data1);
   vklRelease(data2);
 
-  vklSetData2(volume, "data", attributesData);
+  vklSetData(volume, "data", attributesData);
   vklRelease(attributesData);
 
-  vklCommit2(volume);
+  vklCommit(volume);
 
   demoGpuAPI(syclQueue, device, volume);
 
-  vklRelease2(volume);
+  vklRelease(volume);
 
   vklReleaseDevice(device);
 

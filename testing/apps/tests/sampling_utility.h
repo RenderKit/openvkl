@@ -223,9 +223,9 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklSetInt2(vklSampler, "filter", filter);
-  vklSetInt2(vklSampler, "gradientFilter", filter);
-  vklCommit2(vklSampler);
+  vklSetInt(vklSampler, "filter", filter);
+  vklSetInt(vklSampler, "gradientFilter", filter);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -271,7 +271,7 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
                                           attributeIndices);
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 // OpenVKL API functions used in this function is now available only for CPU
@@ -283,7 +283,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
 {
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   std::stringstream sectionName;
   sectionName << "randomized stream sampling, attribute " << attributeIndex;
@@ -338,7 +338,7 @@ inline void test_stream_sampling(std::shared_ptr<TestingVolume> v,
     }
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 #endif
 
@@ -352,7 +352,7 @@ inline void test_stream_sampling_multi(
 {
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   std::stringstream sectionName;
   sectionName << "randomized stream sampling, multi-attribute";
@@ -416,6 +416,6 @@ inline void test_stream_sampling_multi(
     }
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 #endif

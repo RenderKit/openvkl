@@ -20,7 +20,7 @@ void gradients_at_particle_centers(size_t numParticles,
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   const std::vector<vec4f> particles = v->getParticles();
 
@@ -43,7 +43,7 @@ void gradients_at_particle_centers(size_t numParticles,
     CHECK(vklGradient.z == Approx(referenceGradient.z).margin(margin));
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE

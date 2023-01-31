@@ -29,7 +29,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -59,7 +59,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
         vklSampler, objectCoordinates, proceduralValue, 1e-3f);
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL || defined(OPENVKL_TESTING_GPU)

@@ -17,7 +17,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
                                          const std::vector<vec4f> particles)
 {
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   for (size_t i = 0; i < particles.size(); i++) {
     const vec4f &p = particles[i];
@@ -45,7 +45,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
     REQUIRE(referenceValue == sampledValue);
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE
@@ -97,7 +97,7 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
                                      particles.data(),
                                      VKL_DATA_SHARED_BUFFER,
                                      sizeof(vec4f));
-  vklSetData2(volume, "particle.position", positionsData);
+  vklSetData(volume, "particle.position", positionsData);
   vklRelease(positionsData);
 
   VKLData radiiData = vklNewData(getOpenVKLDevice(),
@@ -106,15 +106,15 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
                                  &(particles.data()[0].w),
                                  VKL_DATA_SHARED_BUFFER,
                                  sizeof(vec4f));
-  vklSetData2(volume, "particle.radius", radiiData);
+  vklSetData(volume, "particle.radius", radiiData);
   vklRelease(radiiData);
 
   const float radiusSupportFactor = 3.f;  // default
-  vklSetFloat2(volume, "radiusSupportFactor", radiusSupportFactor);
+  vklSetFloat(volume, "radiusSupportFactor", radiusSupportFactor);
 
-  vklSetFloat2(volume, "background", 0.f);
+  vklSetFloat(volume, "background", 0.f);
 
-  vklCommit2(volume);
+  vklCommit(volume);
 
   sampling_at_particle_centers(volume, particles);
 
@@ -129,7 +129,7 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
            boundingBox.upper.y == originParticleRadius * radiusSupportFactor &&
            boundingBox.upper.z == originParticleRadius * radiusSupportFactor));
 
-  vklRelease2(volume);
+  vklRelease(volume);
 
   shutdownOpenVKL();
 }

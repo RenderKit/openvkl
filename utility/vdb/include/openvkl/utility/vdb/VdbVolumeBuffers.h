@@ -670,10 +670,10 @@ namespace openvkl {
     {
       VKLVolume volume = vklNewVolume(device, "vdb");
 
-      vklSetParam2(volume, "indexToObject", VKL_AFFINE3F, &indexToObject);
+      vklSetParam(volume, "indexToObject", VKL_AFFINE3F, &indexToObject);
 
       if (!activeVoxelsBoundingBox.empty()) {
-        vklSetParam2(
+        vklSetParam(
             volume, "indexClippingBounds", VKL_BOX3I, &activeVoxelsBoundingBox);
       }
 
@@ -688,25 +688,25 @@ namespace openvkl {
       assert(level.size() == numNodes);
       VKLData levelData = vklNewData(
           device, numNodes, VKL_UINT, level.data(), VKL_DATA_DEFAULT);
-      vklSetData2(volume, "node.level", levelData);
+      vklSetData(volume, "node.level", levelData);
       vklRelease(levelData);
 
       assert(origin.size() == numNodes);
       VKLData originData = vklNewData(
           device, numNodes, VKL_VEC3I, origin.data(), VKL_DATA_DEFAULT);
-      vklSetData2(volume, "node.origin", originData);
+      vklSetData(volume, "node.origin", originData);
       vklRelease(originData);
 
       assert(format.size() == numNodes);
       VKLData formatData = vklNewData(
           device, numNodes, VKL_UINT, format.data(), VKL_DATA_DEFAULT);
-      vklSetData2(volume, "node.format", formatData);
+      vklSetData(volume, "node.format", formatData);
       vklRelease(formatData);
 
       assert(temporalFormat.size() == numNodes);
       VKLData temporalFormatData = vklNewData(
           device, numNodes, VKL_UINT, temporalFormat.data(), VKL_DATA_DEFAULT);
-      vklSetData2(volume, "node.temporalFormat", temporalFormatData);
+      vklSetData(volume, "node.temporalFormat", temporalFormatData);
       vklRelease(temporalFormatData);
 
       assert(temporallyStructuredNumTimesteps.size() == numNodes);
@@ -716,7 +716,7 @@ namespace openvkl {
                      VKL_INT,
                      temporallyStructuredNumTimesteps.data(),
                      VKL_DATA_DEFAULT);
-      vklSetData2(volume,
+      vklSetData(volume,
                  "node.temporallyStructuredNumTimesteps",
                  temporallyStructuredNumTimestepsData);
       vklRelease(temporallyStructuredNumTimestepsData);
@@ -728,7 +728,7 @@ namespace openvkl {
                      VKL_DATA,
                      temporallyUnstructuredIndices.data(),
                      VKL_DATA_DEFAULT);
-      vklSetData2(volume,
+      vklSetData(volume,
                  "node.temporallyUnstructuredIndices",
                  temporallyUnstructuredIndicesData);
       vklRelease(temporallyUnstructuredIndicesData);
@@ -745,7 +745,7 @@ namespace openvkl {
                      VKL_DATA,
                      temporallyUnstructuredTimes.data(),
                      VKL_DATA_DEFAULT);
-      vklSetData2(volume,
+      vklSetData(volume,
                  "node.temporallyUnstructuredTimes",
                  temporallyUnstructuredTimesData);
       vklRelease(temporallyUnstructuredTimesData);
@@ -784,7 +784,7 @@ namespace openvkl {
                                         VKL_DATA,
                                         repackedDenseNodesData.data(),
                                         VKL_DATA_DEFAULT);
-          vklSetData2(volume, "nodesPackedDense", dataData);
+          vklSetData(volume, "nodesPackedDense", dataData);
           vklRelease(dataData);
 
           for (const auto &d : repackedDenseNodesData) {
@@ -817,7 +817,7 @@ namespace openvkl {
                                         VKL_DATA,
                                         repackedTilesData.data(),
                                         VKL_DATA_DEFAULT);
-          vklSetData2(volume, "nodesPackedTile", dataData);
+          vklSetData(volume, "nodesPackedTile", dataData);
           vklRelease(dataData);
 
           for (const auto &d : repackedTilesData) {
@@ -829,12 +829,12 @@ namespace openvkl {
         assert(data.size() == numNodes);
         VKLData dataData = vklNewData(
             device, numNodes, VKL_DATA, data.data(), VKL_DATA_DEFAULT);
-        vklSetData2(volume, "node.data", dataData);
+        vklSetData(volume, "node.data", dataData);
         vklRelease(dataData);
       }
 
       if (commit) {
-        vklCommit2(volume);
+        vklCommit(volume);
       }
 
       return volume;

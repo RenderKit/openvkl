@@ -38,14 +38,14 @@ struct Vdb
 
     vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
-    vklSetInt2(vklSampler, "filter", filter);
-    vklSetInt2(vklSampler, "gradientFilter", filter);
-    vklCommit2(vklSampler);
+    vklSetInt(vklSampler, "filter", filter);
+    vklSetInt(vklSampler, "gradientFilter", filter);
+    vklCommit(vklSampler);
   }
 
   ~Vdb()
   {
-    vklRelease2(vklSampler);
+    vklRelease(vklSampler);
     volume.reset();  // also releases the vklVolume handle
   }
 

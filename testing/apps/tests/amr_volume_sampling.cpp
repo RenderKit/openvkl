@@ -16,7 +16,7 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
 
   VKLVolume vklVolume = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   std::vector<vec3f> offsets;
   offsets.emplace_back(0.0f);
@@ -52,7 +52,7 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
         Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_AMR

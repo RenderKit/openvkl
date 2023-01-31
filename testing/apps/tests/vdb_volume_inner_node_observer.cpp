@@ -51,9 +51,9 @@ inline void inner_node_tests(VKLVolume vklVolume, vec3i dimensions)
   const unsigned int numAttributes = vklGetNumAttributes(vklVolume);
 
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklSetInt2(vklSampler, "filter", VKL_FILTER_NEAREST);
-  vklSetInt2(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
-  vklCommit2(vklSampler);
+  vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
+  vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
+  vklCommit(vklSampler);
 
   // the inner node observer returns _child_ nodes of nodes at the specified
   // maxDepth. so innerNodes requested at maxDepth=0 will be at level=1, etc.
@@ -125,7 +125,7 @@ inline void inner_node_tests(VKLVolume vklVolume, vec3i dimensions)
     }
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_VDB

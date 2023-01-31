@@ -50,7 +50,7 @@ namespace openvkl {
     Volume::~Volume()
     {
       if (vklSampler) {
-        vklRelease2(*vklSampler);
+        vklRelease(*vklSampler);
         vklSampler = nullptr;
       }
       vklVolume = nullptr;
@@ -77,7 +77,7 @@ namespace openvkl {
           auto newVolume = volumeParams.createVolume();
 
           if (vklSampler) {
-            vklRelease2(*vklSampler);
+            vklRelease(*vklSampler);
             vklSampler = nullptr;
           }
 

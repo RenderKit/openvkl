@@ -25,7 +25,7 @@ inline void gradients_on_vertices_vs_procedural_values_motion_blur(
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -63,7 +63,7 @@ inline void gradients_on_vertices_vs_procedural_values_motion_blur(
     }
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 // this tests temporally unstructured with varying time step counts per voxel;
@@ -75,9 +75,9 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
   const vec3i dimensions(3);
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f);
-  vklSetVec3i2(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vklSetVec3f2(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-  vklSetVec3f2(
+  vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vklSetVec3f(volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
+  vklSetVec3f(
       volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
   std::vector<unsigned int> indices(28, 0);
@@ -112,20 +112,20 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
   VKLData timesData =
       vklNewData(getOpenVKLDevice(), times.size(), VKL_FLOAT, times.data());
 
-  vklSetData2(volume, "data", data);
-  vklSetData2(volume, "temporallyUnstructuredIndices", indicesData);
-  vklSetData2(volume, "temporallyUnstructuredTimes", timesData);
+  vklSetData(volume, "data", data);
+  vklSetData(volume, "temporallyUnstructuredIndices", indicesData);
+  vklSetData(volume, "temporallyUnstructuredTimes", timesData);
 
   vklRelease(data);
   vklRelease(indicesData);
   vklRelease(timesData);
 
-  vklCommit2(volume);
+  vklCommit(volume);
 
   const float sampleTolerance = 0.005f;
 
   VKLSampler vklSampler = vklNewSampler(volume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(dimensions);
 
@@ -151,8 +151,8 @@ inline void gradients_on_vertices_vs_procedural_values_varying_TUV_data()
     }
   }
 
-  vklRelease2(vklSampler);
-  vklRelease2(volume);
+  vklRelease(vklSampler);
+  vklRelease(volume);
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR

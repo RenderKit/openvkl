@@ -135,11 +135,11 @@ namespace openvkl {
 
       generateVoxels(voxels, time, tuvIndex);
 
-      vklSetVec3i2(
+      vklSetVec3i(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-      vklSetVec3f2(
+      vklSetVec3f(
           volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-      vklSetVec3f2(
+      vklSetVec3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
 
       size_t totalNumValues = 0;
@@ -162,7 +162,7 @@ namespace openvkl {
                                   voxels.data(),
                                   dataCreationFlags,
                                   byteStride);
-        vklSetData2(volume, "data", data);
+        vklSetData(volume, "data", data);
         vklRelease(data);
         break;
       }
@@ -185,9 +185,9 @@ namespace openvkl {
                                   voxels.data(),
                                   dataCreationFlags,
                                   byteStride);
-        vklSetData2(volume, "data", data);
+        vklSetData(volume, "data", data);
         vklRelease(data);
-        vklSetInt2(volume,
+        vklSetInt(volume,
                   "temporallyStructuredNumTimesteps",
                   temporalConfig.sampleTime.size());
         break;
@@ -210,7 +210,7 @@ namespace openvkl {
                                   voxels.data(),
                                   dataCreationFlags,
                                   byteStride);
-        vklSetData2(volume, "data", data);
+        vklSetData(volume, "data", data);
         vklRelease(data);
 
         VKLData indexData = vklNewData(device,
@@ -218,19 +218,19 @@ namespace openvkl {
                                        VKL_UINT,
                                        tuvIndex.data(),
                                        dataCreationFlags);
-        vklSetData2(volume, "temporallyUnstructuredIndices", indexData);
+        vklSetData(volume, "temporallyUnstructuredIndices", indexData);
         vklRelease(indexData);
 
         VKLData timeData = vklNewData(
             device, time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
-        vklSetData2(volume, "temporallyUnstructuredTimes", timeData);
+        vklSetData(volume, "temporallyUnstructuredTimes", timeData);
         vklRelease(timeData);
 
         break;
       }
       }
 
-      vklCommit2(volume);
+      vklCommit(volume);
 
       computedValueRange =
           computeValueRange(voxelType, voxels.data(), totalNumValues);

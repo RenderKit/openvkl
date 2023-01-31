@@ -266,13 +266,13 @@ namespace openvkl {
           cells.size(),
           std::is_same<idxType, uint32_t>::value ? VKL_UINT : VKL_ULONG,
           cells.data());
-      vklSetData2(volume, "cell.index", cellData);
+      vklSetData(volume, "cell.index", cellData);
       vklRelease(cellData);
 
       if (!indexPrefix) {
         VKLData celltypeData =
             vklNewData(device, cellType.size(), VKL_UCHAR, cellType.data());
-        vklSetData2(volume, "cell.type", celltypeData);
+        vklSetData(volume, "cell.type", celltypeData);
         vklRelease(celltypeData);
       }
 
@@ -282,12 +282,12 @@ namespace openvkl {
                                       values.data(),
                                       dataCreationFlags,
                                       byteStride);
-      vklSetData2(volume, cellValued ? "cell.data" : "vertex.data", valuesData);
+      vklSetData(volume, cellValued ? "cell.data" : "vertex.data", valuesData);
       vklRelease(valuesData);
 
       VKLData vtxPositionsData = vklNewData(
           device, vtxPositions.size(), VKL_VEC3F, vtxPositions.data());
-      vklSetData2(volume, "vertex.position", vtxPositionsData);
+      vklSetData(volume, "vertex.position", vtxPositionsData);
       vklRelease(vtxPositionsData);
 
       VKLData topologyData = vklNewData(
@@ -295,14 +295,14 @@ namespace openvkl {
           topology.size(),
           std::is_same<idxType, uint32_t>::value ? VKL_UINT : VKL_ULONG,
           topology.data());
-      vklSetData2(volume, "index", topologyData);
+      vklSetData(volume, "index", topologyData);
       vklRelease(topologyData);
 
-      vklSetBool2(volume, "indexPrefixed", indexPrefix);
-      vklSetBool2(volume, "precomputedNormals", precomputedNormals);
-      vklSetBool2(volume, "hexIterative", hexIterative);
+      vklSetBool(volume, "indexPrefixed", indexPrefix);
+      vklSetBool(volume, "precomputedNormals", precomputedNormals);
+      vklSetBool(volume, "hexIterative", hexIterative);
 
-      vklCommit2(volume);
+      vklCommit(volume);
 
       computedValueRange = computeValueRange(
           VKL_FLOAT, values.data(), valueDimensions.long_product());

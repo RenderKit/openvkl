@@ -193,7 +193,7 @@ namespace openvkl {
     inline void TestingVolume::release()
     {
       if (volume) {
-        vklRelease2(volume);
+        vklRelease(volume);
         volume = VKLVolume();
       }
     }

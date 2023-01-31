@@ -34,8 +34,8 @@ namespace openvkl {
         std::vector<InnerNode> nodes;
 
         VKLObserver observer = vklNewVolumeObserver(volume, "InnerNode");
-        vklSetInt2(observer, "maxDepth", maxDepth);
-        vklCommit2(observer);
+        vklSetInt(observer, "maxDepth", maxDepth);
+        vklCommit(observer);
 
         const float *buffer =
             static_cast<const float *>(vklMapObserver(observer));
@@ -63,7 +63,7 @@ namespace openvkl {
           }
         }
         vklUnmapObserver(observer);
-        vklRelease2(observer);
+        vklRelease(observer);
 
         return nodes;
       }

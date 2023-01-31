@@ -179,10 +179,10 @@ namespace openvkl {
 
       volume = vklNewVolume(device, "amr");
 
-      vklSetData2(volume, "block.data", blockDataData);
-      vklSetData2(volume, "block.bounds", blockBoundsData);
-      vklSetData2(volume, "block.level", refinementLevelsData);
-      vklSetData2(volume, "cellWidth", cellWidthsData);
+      vklSetData(volume, "block.data", blockDataData);
+      vklSetData(volume, "block.bounds", blockBoundsData);
+      vklSetData(volume, "block.level", refinementLevelsData);
+      vklSetData(volume, "cellWidth", cellWidthsData);
 
       vklRelease(blockDataData);
       vklRelease(blockBoundsData);
@@ -192,7 +192,7 @@ namespace openvkl {
       for (auto &d : blockData)
         vklRelease(d);
 
-      vklCommit2(volume);
+      vklCommit(volume);
 
       for (const auto &bdv : blockDataVectors)
         computedValueRange.extend(

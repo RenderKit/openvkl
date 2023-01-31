@@ -43,9 +43,9 @@ namespace api {
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
         vklSampler           = vklNewSampler(vklVolume);
-        vklCommit2(vklSampler);
+        vklCommit(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
-        vklCommit2(intervalContext);
+        vklCommit(intervalContext);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -105,9 +105,9 @@ namespace api {
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
         vklSampler           = vklNewSampler(vklVolume);
-        vklCommit2(vklSampler);
+        vklCommit(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
-        vklCommit2(intervalContext);
+        vklCommit(intervalContext);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
@@ -180,9 +180,9 @@ namespace api {
         vklVolume            = wrapper->getVolume();
         const vkl_box3f bbox = vklGetBoundingBox(vklVolume);
         vklSampler           = vklNewSampler(vklVolume);
-        vklCommit2(vklSampler);
+        vklCommit(vklSampler);
         intervalContext = vklNewIntervalIteratorContext(vklSampler);
-        vklCommit2(intervalContext);
+        vklCommit(intervalContext);
 
         std::uniform_real_distribution<float> distX(bbox.lower.x, bbox.upper.x);
         std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);

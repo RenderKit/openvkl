@@ -23,7 +23,7 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions());
 
@@ -51,7 +51,7 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
     REQUIRE(gradient.z == Approx(proceduralGradient.z).epsilon(1e-4f));
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_UNSTRUCTURED

@@ -36,16 +36,16 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   const unsigned int attributeIndex = 0;
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(vklSampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -531,10 +531,10 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
     VKLData valueRangesData = vklNewData(
         getOpenVKLDevice(), valueRanges.size(), VKL_BOX1F, valueRanges.data());
 
-    vklSetData2(intervalContext, "valueRanges", valueRangesData);
+    vklSetData(intervalContext, "valueRanges", valueRangesData);
     vklRelease(valueRangesData);
 
-    vklCommit2(intervalContext);
+    vklCommit(intervalContext);
 
     for (int width = 1; width < maxWidth; width++) {
       std::vector<vec3f> origins(width);
@@ -1077,8 +1077,8 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   }
 
-  vklRelease2(intervalContext);
-  vklRelease2(vklSampler);
+  vklRelease(intervalContext);
+  vklRelease(vklSampler);
 
   shutdownOpenVKL();
 }

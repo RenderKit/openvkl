@@ -29,12 +29,12 @@ int main(int argc, char **argv)
 
   // We have to set a few parameters on the volume.
   // First, Open VKL needs to know the extent of the volume:
-  vklSetVec3i2(volume, "dimensions", res, res, res);
+  vklSetVec3i(volume, "dimensions", res, res, res);
 
   // By default, the volume assumes a voxel size of 1. Scale it so the
   // domain is [0, 1].
   const float spacing = 1.f / static_cast<float>(res);
-  vklSetVec3f2(volume, "gridSpacing", spacing, spacing, spacing);
+  vklSetVec3f(volume, "gridSpacing", spacing, spacing, spacing);
 
   // Open VKL has a concept of typed Data objects. That's how we pass data
   // buffers to a device. We create a shared buffer here to avoid copying
@@ -46,16 +46,16 @@ int main(int argc, char **argv)
   // as Open VKL has a reference counting mechanism and will keep track
   // internally.
   // Note this is a shared buffer, so we have to keep voxels around.
-  vklSetData2(volume, "data", voxelData);
+  vklSetData(volume, "data", voxelData);
   vklRelease(voxelData);
 
   // Finally, commit. This may build acceleration structures, etc.
-  vklCommit2(volume);
+  vklCommit(volume);
 
   // Instead of drawing the field directly into our framebuffer, we will instead
   // sample the volume we just created. To do that, we need a sampler object.
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   Framebuffer fb(64, 32);
 
@@ -68,8 +68,8 @@ int main(int argc, char **argv)
   fb.drawToTerminal();
 
   // Release the volume to clean up!
-  vklRelease2(sampler);
-  vklRelease2(volume);
+  vklRelease(sampler);
+  vklRelease(volume);
   vklReleaseDevice(device);
 
   return 0;

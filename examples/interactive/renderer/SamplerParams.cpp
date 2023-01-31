@@ -47,10 +47,10 @@ namespace openvkl {
 
     void SamplerParams::updateSampler(VKLSampler sampler) const
     {
-      vklSetInt2(sampler, "filter", filter);
-      vklSetInt2(sampler, "gradientFilter", gradientFilter);
-      vklSetInt2(sampler, "maxSamplingDepth", maxSamplingDepth);
-      vklCommit2(sampler);
+      vklSetInt(sampler, "filter", filter);
+      vklSetInt(sampler, "gradientFilter", gradientFilter);
+      vklSetInt(sampler, "maxSamplingDepth", maxSamplingDepth);
+      vklCommit(sampler);
     }
 
   }  // namespace examples

@@ -58,7 +58,7 @@ namespace openvkl {
           const auto result = asyncLoader->get();
           asyncLoader.reset();
           if (result.volume)
-            vklRelease2(result.volume);
+            vklRelease(result.volume);
         }
       }
 
@@ -97,7 +97,7 @@ namespace openvkl {
           asyncLoader.reset();
           if (result.volume) {
             changed = true;
-            vklRelease2(volume);
+            vklRelease(volume);
 
             volume = result.volume;
 

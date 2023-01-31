@@ -22,16 +22,16 @@ void interval_iteration(size_t numParticles,
   VKLVolume volume = v->getVKLVolume(getOpenVKLDevice());
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   const unsigned int attributeIndex = 0;
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   const vkl_box3f bbox = vklGetBoundingBox(volume);
 
@@ -94,8 +94,8 @@ void interval_iteration(size_t numParticles,
   // Not all rays hit something, but most of them should.
   REQUIRE(totalIntervals / static_cast<double>(N) > 0.9);
 
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE

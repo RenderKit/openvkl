@@ -194,7 +194,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklCommit2(vklSampler);
+    vklCommit(vklSampler);
 
     std::vector<float> isoValues;
 
@@ -207,10 +207,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
 
-    vklSetData2(hitContext, "values", valuesData);
+    vklSetData(hitContext, "values", valuesData);
     vklRelease(valuesData);
 
-    vklCommit2(hitContext);
+    vklCommit(hitContext);
 
     vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -285,8 +285,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       }
     }
 
-    vklRelease2(hitContext);
-    vklRelease2(vklSampler);
+    vklRelease(hitContext);
+    vklRelease(vklSampler);
   }
 
   SECTION("vector hit iteration: time varying")
@@ -300,7 +300,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
       VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
       VKLSampler vklSampler = vklNewSampler(vklVolume);
-      vklCommit2(vklSampler);
+      vklCommit(vklSampler);
 
       std::vector<float> isoValues;
 
@@ -313,10 +313,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
       VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
 
-      vklSetData2(hitContext, "values", valuesData);
+      vklSetData(hitContext, "values", valuesData);
       vklRelease(valuesData);
 
-      vklCommit2(hitContext);
+      vklCommit(hitContext);
 
       vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -401,8 +401,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
         }
       }
 
-      vklRelease2(hitContext);
-      vklRelease2(vklSampler);
+      vklRelease(hitContext);
+      vklRelease(vklSampler);
     }
   }
 
@@ -413,7 +413,7 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
     VKLSampler vklSampler = vklNewSampler(vklVolume);
-    vklCommit2(vklSampler);
+    vklCommit(vklSampler);
 
     std::vector<float> isoValues;
 
@@ -426,10 +426,10 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
 
     VKLHitIteratorContext hitContext = vklNewHitIteratorContext(vklSampler);
 
-    vklSetData2(hitContext, "values", valuesData);
+    vklSetData(hitContext, "values", valuesData);
     vklRelease(valuesData);
 
-    vklCommit2(hitContext);
+    vklCommit(hitContext);
 
     // will be used to initialize all members of hit struct
     constexpr float initialHitValue = 999999.f;
@@ -668,8 +668,8 @@ TEST_CASE("Vectorized hit iterator", "[hit_iterators]")
       }
     }
 
-    vklRelease2(hitContext);
-    vklRelease2(vklSampler);
+    vklRelease(hitContext);
+    vklRelease(vklSampler);
   }
 
   shutdownOpenVKL();

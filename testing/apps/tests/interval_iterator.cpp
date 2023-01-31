@@ -50,14 +50,14 @@ void scalar_interval_continuity_with_no_value_ranges(
       (const vec3f &)origin, (const vec3f &)direction, boundingBox);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   VKLInterval *intervalsBuffer = allocate<VKLInterval>(maxNumIntervals);
 
@@ -121,8 +121,8 @@ void scalar_interval_continuity_with_no_value_ranges(
   deallocate(intervalsBuffer);
   deallocate(intervalCount);
 
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
 }
 
 void scalar_interval_value_ranges_with_no_value_ranges(
@@ -136,14 +136,14 @@ void scalar_interval_value_ranges_with_no_value_ranges(
   const float time = 0.f;
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   VKLInterval *intervalsBuffer         = allocate<VKLInterval>(maxNumIntervals);
   vkl_range1f *sampledValueRangeBuffer = allocate<vkl_range1f>(maxNumIntervals);
@@ -207,8 +207,8 @@ void scalar_interval_value_ranges_with_no_value_ranges(
   deallocate(intervalsBuffer);
   deallocate(sampledValueRangeBuffer);
 
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
 
   // make sure we had at least one interval...
   REQUIRE(*intervalCount > 0);
@@ -229,7 +229,7 @@ void scalar_interval_value_ranges_with_value_ranges(
   const float time = 0.f;
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   VKLData valueRangesData = vklNewData(
       getOpenVKLDevice(), valueRanges.size(), VKL_BOX1F, valueRanges.data());
@@ -237,12 +237,12 @@ void scalar_interval_value_ranges_with_value_ranges(
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
-  vklSetData2(intervalContext, "valueRanges", valueRangesData);
+  vklSetData(intervalContext, "valueRanges", valueRangesData);
   vklRelease(valueRangesData);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   VKLInterval *intervalsBuffer         = allocate<VKLInterval>(maxNumIntervals);
   vkl_range1f *sampledValueRangeBuffer = allocate<vkl_range1f>(maxNumIntervals);
@@ -322,8 +322,8 @@ void scalar_interval_value_ranges_with_value_ranges(
   deallocate(sampledValueRangeBuffer);
   deallocate(intervalCount);
 
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
 }
 
 void scalar_interval_nominalDeltaT(VKLVolume volume,
@@ -342,11 +342,11 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
                       << direction.z);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   char *iteratorBuffer =
       allocate<char>(vklGetIntervalIteratorSize(&intervalContext));
@@ -381,8 +381,8 @@ void scalar_interval_nominalDeltaT(VKLVolume volume,
   deallocate(gotInterval);
   deallocate(interval);
 
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
 }
 
 template <typename PROCEDURAL_VOLUME_TYPE>

@@ -146,16 +146,16 @@ namespace openvkl {
 
       volume = vklNewVolume(device, "amr");
 
-      vklSetVec3i2(
+      vklSetVec3i(
           volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-      vklSetVec3f2(
+      vklSetVec3f(
           volume, "gridOrigin", gridOrigin.x, gridOrigin.y, gridOrigin.z);
-      vklSetVec3f2(
+      vklSetVec3f(
           volume, "gridSpacing", gridSpacing.x, gridSpacing.y, gridSpacing.z);
-      vklSetData2(volume, "block.data", blockDataData);
-      vklSetData2(volume, "block.bounds", boundsData);
-      vklSetData2(volume, "block.level", levelsData);
-      vklSetData2(volume, "cellWidth", widthsData);
+      vklSetData(volume, "block.data", blockDataData);
+      vklSetData(volume, "block.bounds", boundsData);
+      vklSetData(volume, "block.level", levelsData);
+      vklSetData(volume, "cellWidth", widthsData);
 
       vklRelease(blockDataData);
       vklRelease(boundsData);
@@ -165,7 +165,7 @@ namespace openvkl {
       for (auto &d : blockData)
         vklRelease(d);
 
-      vklCommit2(volume);
+      vklCommit(volume);
 
       for (const auto &bv : blockValues)
         computedValueRange.extend(

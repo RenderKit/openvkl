@@ -99,7 +99,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
 {
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   constexpr int filterRadius = 2;
   multidim_index_sequence<3> mis((v->getDimensions() - 2 * filterRadius) /
@@ -138,7 +138,7 @@ inline void gradients_on_vertices_vs_procedural_values_multi(
     }
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 // OpenVKL API functions used in this function is now available only for CPU
@@ -150,7 +150,7 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
 {
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   SECTION("randomized stream gradients")
   {
@@ -216,6 +216,6 @@ inline void test_stream_gradients(std::shared_ptr<TestingVolume> v,
       }
     }
   }
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 #endif

@@ -30,12 +30,12 @@ struct Particle
 
     vklVolume  = volume->getVKLVolume(getOpenVKLDevice());
     vklSampler = vklNewSampler(vklVolume);
-    vklCommit2(vklSampler);
+    vklCommit(vklSampler);
   }
 
   ~Particle()
   {
-    vklRelease2(vklSampler);
+    vklRelease(vklSampler);
     volume.reset();  // also releases the vklVolume handle
   }
 

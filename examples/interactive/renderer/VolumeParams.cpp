@@ -225,8 +225,8 @@ namespace openvkl {
 
       if (testingVolume) {
         VKLVolume vklVolume = testingVolume->getVKLVolume(getOpenVKLDevice());
-        vklSetFloat2(vklVolume, "background", pp.background);
-        vklCommit2(vklVolume);
+        vklSetFloat(vklVolume, "background", pp.background);
+        vklCommit(vklVolume);
       }
 
       return testingVolume;

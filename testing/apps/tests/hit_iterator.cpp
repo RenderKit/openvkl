@@ -19,19 +19,19 @@ void scalar_hit_iteration(VKLVolume volume,
   vkl_range1f tRange{0.f, inf};
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   VKLData valuesData = vklNewData(
       getOpenVKLDevice(), isoValues.size(), VKL_FLOAT, isoValues.data());
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetInt2(hitContext, "attributeIndex", attributeIndex);
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
 
-  vklSetData2(hitContext, "values", valuesData);
+  vklSetData(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit2(hitContext);
+  vklCommit(hitContext);
 
   VKLHit *hitsBuffer   = allocate<VKLHit>(maxNumHits);
   char *iteratorBuffer = allocate<char>(vklGetHitIteratorSize(&hitContext));
@@ -86,8 +86,8 @@ void scalar_hit_iteration(VKLVolume volume,
   deallocate(hitsBuffer);
   deallocate(hitCount);
 
-  vklRelease2(hitContext);
-  vklRelease2(sampler);
+  vklRelease(hitContext);
+  vklRelease(sampler);
 }
 
 TEST_CASE("Hit iterator", "[hit_iterators]")

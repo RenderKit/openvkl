@@ -41,7 +41,7 @@ static void scalarRandomSample(benchmark::State &state)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -59,7 +59,7 @@ static void scalarRandomSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(scalarRandomSample);
@@ -82,7 +82,7 @@ void vectorRandomSample(benchmark::State &state)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -127,7 +127,7 @@ void vectorRandomSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(vectorRandomSample, 4)
@@ -152,7 +152,7 @@ static void scalarFixedSample(benchmark::State &state)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -165,7 +165,7 @@ static void scalarFixedSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations());
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(scalarFixedSample)
@@ -188,7 +188,7 @@ void vectorFixedSample(benchmark::State &state)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -230,7 +230,7 @@ void vectorFixedSample(benchmark::State &state)
 
   // enables rates in report output
   state.SetItemsProcessed(state.iterations() * W);
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 BENCHMARK_ALL_PRIMS(vectorFixedSample, 4)

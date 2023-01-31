@@ -21,7 +21,7 @@ void sampling_at_particle_centers(size_t numParticles,
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   const std::vector<vec4f> particles = v->getParticles();
 
@@ -41,7 +41,7 @@ void sampling_at_particle_centers(size_t numParticles,
         vklSampler, vec3f(p.x, p.y, p.z), referenceValue, 1e-6f);
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 void sampling_at_random_points(size_t numParticles,
@@ -57,7 +57,7 @@ void sampling_at_random_points(size_t numParticles,
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   vkl_box3f bbox = vklGetBoundingBox(vklVolume);
 
@@ -78,7 +78,7 @@ void sampling_at_random_points(size_t numParticles,
         vklSampler, objectCoordinates, referenceValue, 1e-6f);
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_PARTICLE

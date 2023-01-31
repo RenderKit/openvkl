@@ -15,7 +15,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   printf("demo of 1-wide API\n");
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -66,12 +66,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetInt2(intervalContext, "attributeIndex", attributeIndex);
+  vklSetInt(intervalContext, "attributeIndex", attributeIndex);
 
-  vklSetData2(intervalContext, "valueRanges", rangesData);
+  vklSetData(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   // hit iterator context setup
   float values[2] = {32, 96};
@@ -81,12 +81,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetInt2(hitContext, "attributeIndex", attributeIndex);
+  vklSetInt(hitContext, "attributeIndex", attributeIndex);
 
-  vklSetData2(hitContext, "values", valuesData);
+  vklSetData(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit2(hitContext);
+  vklCommit(hitContext);
 
   // ray definition for iterators
   vkl_vec3f rayOrigin    = {0, 1, 1};
@@ -166,9 +166,9 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #endif
   }
 
-  vklRelease2(hitContext);
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
+  vklRelease(hitContext);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
 }
 
 void demoVectorAPI(VKLVolume volume)
@@ -176,7 +176,7 @@ void demoVectorAPI(VKLVolume volume)
   printf("demo of 4-wide API (8- and 16- follow the same pattern)\n");
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   // structure-of-array layout
   vkl_vvec3f4 coord4;
@@ -231,7 +231,7 @@ void demoVectorAPI(VKLVolume volume)
 
   printf("\n");
 
-  vklRelease2(sampler);
+  vklRelease(sampler);
 }
 
 void demoStreamAPI(VKLVolume volume)
@@ -239,7 +239,7 @@ void demoStreamAPI(VKLVolume volume)
   printf("demo of stream API\n");
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   // array-of-structure layout; arbitrary stream lengths are supported
   vkl_vec3f coord[5];
@@ -287,7 +287,7 @@ void demoStreamAPI(VKLVolume volume)
 
   printf("\n");
 
-  vklRelease2(sampler);
+  vklRelease(sampler);
 }
 
 int main()
@@ -304,10 +304,10 @@ int main()
   const int numAttributes = 3;
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i2(
+  vklSetVec3i(
       volume, "dimensions", dimensions[0], dimensions[1], dimensions[2]);
-  vklSetVec3f2(volume, "gridOrigin", 0, 0, 0);
-  vklSetVec3f2(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
   float *voxels = malloc(numVoxels * sizeof(float));
 
@@ -355,16 +355,16 @@ int main()
   vklRelease(data1);
   vklRelease(data2);
 
-  vklSetData2(volume, "data", attributesData);
+  vklSetData(volume, "data", attributesData);
   vklRelease(attributesData);
 
-  vklCommit2(volume);
+  vklCommit(volume);
 
   demoScalarAPI(device, volume);
   demoVectorAPI(volume);
   demoStreamAPI(volume);
 
-  vklRelease2(volume);
+  vklRelease(volume);
 
   vklReleaseDevice(device);
 

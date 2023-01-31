@@ -18,7 +18,7 @@ void test_vectorized_sampling()
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   SECTION("randomized vectorized sampling varying calling width and masks")
   {
@@ -90,7 +90,7 @@ void test_vectorized_sampling()
       }
     }
   }
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 TEST_CASE("Vectorized sampling", "[volume_sampling]")

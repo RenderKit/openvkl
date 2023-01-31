@@ -60,7 +60,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
   VKLVolume vklVolume =
       deviceContext->proceduralVolume->getVKLVolume(deviceContext->device);
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   // first, gather object coordinates and procecural (truth) values
   const vec3i step(1);
@@ -122,7 +122,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
     success = success && (fabs(proceduralValues[i] - streamSamples[i]) <= tol);
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 
   return success;
 }

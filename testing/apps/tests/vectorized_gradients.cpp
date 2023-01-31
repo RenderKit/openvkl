@@ -26,7 +26,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
   std::array<int, 3> nativeWidths{4, 8, 16};
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   for (int width = 1; width < maxWidth; width++) {
     std::vector<vec3f> objectCoordinates(width);
@@ -89,7 +89,7 @@ void randomized_vectorized_gradients(VKLVolume volume)
     }
   }
 
-  vklRelease2(sampler);
+  vklRelease(sampler);
 }
 
 TEST_CASE("Vectorized gradients", "[volume_gradients]")

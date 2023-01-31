@@ -129,7 +129,7 @@ namespace openvkl {
                                          particles.data(),
                                          VKL_DATA_SHARED_BUFFER,
                                          sizeof(vec4f));
-      vklSetData2(volume, "particle.position", positionsData);
+      vklSetData(volume, "particle.position", positionsData);
       vklRelease(positionsData);
 
       VKLData radiiData = vklNewData(device,
@@ -138,21 +138,21 @@ namespace openvkl {
                                      &(particles.data()[0].w),
                                      VKL_DATA_SHARED_BUFFER,
                                      sizeof(vec4f));
-      vklSetData2(volume, "particle.radius", radiiData);
+      vklSetData(volume, "particle.radius", radiiData);
       vklRelease(radiiData);
 
       if (provideWeights) {
         VKLData weightsData =
             vklNewData(device, numParticles, VKL_FLOAT, weights.data());
-        vklSetData2(volume, "particle.weight", weightsData);
+        vklSetData(volume, "particle.weight", weightsData);
         vklRelease(weightsData);
       }
 
-      vklSetFloat2(volume, "radiusSupportFactor", radiusSupportFactor);
-      vklSetFloat2(volume, "clampMaxCumulativeValue", clampMaxCumulativeValue);
-      vklSetBool2(volume, "estimateValueRanges", estimateValueRanges);
+      vklSetFloat(volume, "radiusSupportFactor", radiusSupportFactor);
+      vklSetFloat(volume, "clampMaxCumulativeValue", clampMaxCumulativeValue);
+      vklSetBool(volume, "estimateValueRanges", estimateValueRanges);
 
-      vklCommit2(volume);
+      vklCommit(volume);
 
       // compute value range
 
@@ -176,7 +176,7 @@ namespace openvkl {
       const int samplesPerDimension = 100;
 
       VKLSampler sampler = vklNewSampler(volume);
-      vklCommit2(sampler);
+      vklCommit(sampler);
 
       for (int z = 0; z < samplesPerDimension; z++) {
         for (int y = 0; y < samplesPerDimension; y++) {
@@ -191,7 +191,7 @@ namespace openvkl {
         }
       };
 
-      vklRelease2(sampler);
+      vklRelease(sampler);
     }
 
     inline float ProceduralParticleVolume::computeProceduralValueImpl(

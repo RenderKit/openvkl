@@ -23,24 +23,24 @@ int main(int argc, char **argv)
   std::vector<float> voxels = createVoxels(res);
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i2(volume, "dimensions", res, res, res);
+  vklSetVec3i(volume, "dimensions", res, res, res);
   const float spacing = 1.f / static_cast<float>(res);
-  vklSetVec3f2(volume, "gridSpacing", spacing, spacing, spacing);
+  vklSetVec3f(volume, "gridSpacing", spacing, spacing, spacing);
   VKLData voxelData = vklNewData(
       device, voxels.size(), VKL_FLOAT, voxels.data(), VKL_DATA_SHARED_BUFFER);
-  vklSetData2(volume, "data", voxelData);
+  vklSetData(volume, "data", voxelData);
   vklRelease(voxelData);
-  vklCommit2(volume);
+  vklCommit(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   const float isovalues[]       = { -.6f, -.1f, .4f, .9f };
   VKLHitIteratorContext context = vklNewHitIteratorContext(sampler);
   VKLData isovaluesData         = vklNewData(device, 4, VKL_FLOAT, isovalues);
-  vklSetData2(context, "values", isovaluesData);
+  vklSetData(context, "values", isovaluesData);
   vklRelease(isovaluesData);
-  vklCommit2(context);
+  vklCommit(context);
 
   Framebuffer fb(64, 32);
 
@@ -79,9 +79,9 @@ int main(int argc, char **argv)
 
   fb.drawToTerminal();
 
-  vklRelease2(context);
-  vklRelease2(sampler);
-  vklRelease2(volume);
+  vklRelease(context);
+  vklRelease(sampler);
+  vklRelease(volume);
   vklReleaseDevice(device);
 
   return 0;

@@ -32,7 +32,7 @@ inline void scalar_sampling_on_vertices_vs_procedural_values(
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   multidim_index_sequence<3> mis(v->getDimensions() / step);
 
@@ -54,5 +54,5 @@ inline void scalar_sampling_on_vertices_vs_procedural_values(
         Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }

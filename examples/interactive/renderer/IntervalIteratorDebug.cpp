@@ -25,10 +25,10 @@ namespace openvkl {
     template <class R>
     void IntervalIteratorDebugShared<R>::updateIntervalContext()
     {
-      vklSetInt2(
+      vklSetInt(
           *intervalContext, "attributeIndex", rendererParams->attributeIndex);
 
-      vklSetFloat2(*intervalContext,
+      vklSetFloat(*intervalContext,
                    "intervalResolutionHint",
                    params->intervalResolutionHint);
 
@@ -46,13 +46,13 @@ namespace openvkl {
                                      valueRanges.data());
       }
 
-      vklSetData2(*intervalContext, "valueRanges", valueRangesData);
+      vklSetData(*intervalContext, "valueRanges", valueRangesData);
 
       if (valueRangesData) {
         vklRelease(valueRangesData);
       }
 
-      vklCommit2(*intervalContext);
+      vklCommit(*intervalContext);
     }
 
     template <class R>
@@ -69,7 +69,7 @@ namespace openvkl {
     void IntervalIteratorDebugShared<R>::afterStop()
     {
       if (intervalContext) {
-        vklRelease2(*intervalContext);
+        vklRelease(*intervalContext);
         intervalContext = nullptr;
       }
     }

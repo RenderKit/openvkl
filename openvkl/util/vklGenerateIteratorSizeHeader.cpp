@@ -43,10 +43,10 @@ std::pair<size_t, size_t> getMaxIteratorSizeIspc()
       maxHitSize =
           std::max<size_t>(maxHitSize, vklGetHitIteratorSize(&hitContext));
 
-      vklRelease2(hitContext);
-      vklRelease2(intervalContext);
-      vklRelease2(sampler);
-      vklRelease2(volume);
+      vklRelease(hitContext);
+      vklRelease(intervalContext);
+      vklRelease(sampler);
+      vklRelease(volume);
     }
   }
 

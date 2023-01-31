@@ -31,7 +31,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
 
   VKLVolume vklVolume   = v->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklCommit2(vklSampler);
+  vklCommit(vklSampler);
 
   // For GPU limit number of iterations
 #ifdef OPENVKL_TESTING_GPU
@@ -75,7 +75,7 @@ void scalar_gradients(float tolerance = 0.1f, bool skipBoundaries = true)
     REQUIRE(gradient.z == Approx(proceduralGradient.z).margin(tolerance));
   }
 
-  vklRelease2(vklSampler);
+  vklRelease(vklSampler);
 }
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || \

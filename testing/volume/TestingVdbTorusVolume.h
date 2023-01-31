@@ -185,12 +185,12 @@ namespace openvkl {
 
         VKLData levelData =
             vklNewData(device, level.size(), VKL_UINT, level.data());
-        vklSetData2(volume, "node.level", levelData);
+        vklSetData(volume, "node.level", levelData);
         vklRelease(levelData);
 
         VKLData originData =
             vklNewData(device, origin.size(), VKL_VEC3I, origin.data());
-        vklSetData2(volume, "node.origin", originData);
+        vklSetData(volume, "node.origin", originData);
         vklRelease(originData);
 
         VKLData dataData =
@@ -198,16 +198,16 @@ namespace openvkl {
         for (auto &d : data) {
           vklRelease(d);
         }
-        vklSetData2(volume, "node.data", dataData);
+        vklSetData(volume, "node.data", dataData);
         vklRelease(dataData);
 
         std::vector<uint32_t> format(data.size(), VKL_FORMAT_DENSE_ZYX);
         VKLData formatData =
             vklNewData(device, format.size(), VKL_UINT, format.data());
-        vklSetData2(volume, "node.format", formatData);
+        vklSetData(volume, "node.format", formatData);
         vklRelease(formatData);
 
-        vklCommit2(volume);
+        vklCommit(volume);
       };
 
       range1f getComputedValueRange() const

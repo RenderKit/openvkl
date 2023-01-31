@@ -22,9 +22,9 @@ int main()
   vkl_vec3i dimensions{128, 128, 128};
 
   VKLVolume volume = vklNewVolume(device, "structuredRegular");
-  vklSetVec3i2(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
-  vklSetVec3f2(volume, "gridOrigin", 0, 0, 0);
-  vklSetVec3f2(volume, "gridSpacing", 1, 1, 1);
+  vklSetVec3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+  vklSetVec3f(volume, "gridOrigin", 0, 0, 0);
+  vklSetVec3f(volume, "gridSpacing", 1, 1, 1);
 
   std::vector<float> voxels(dimensions.x * dimensions.y * dimensions.z);
 
@@ -66,13 +66,13 @@ int main()
   for (auto &attribute : attributes)
     vklRelease(attribute);
 
-  vklSetData2(volume, "data", attributesData);
+  vklSetData(volume, "data", attributesData);
   vklRelease(attributesData);
 
-  vklCommit2(volume);
+  vklCommit(volume);
 
   VKLSampler sampler = vklNewSampler(volume);
-  vklCommit2(sampler);
+  vklCommit(sampler);
 
   // interval iterator context setup
   vkl_range1f ranges[2] = {{10, 20}, {50, 75}};
@@ -83,10 +83,10 @@ int main()
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(sampler);
 
-  vklSetData2(intervalContext, "valueRanges", rangesData);
+  vklSetData(intervalContext, "valueRanges", rangesData);
   vklRelease(rangesData);
 
-  vklCommit2(intervalContext);
+  vklCommit(intervalContext);
 
   // hit iterator context setup
   float values[2] = {32, 96};
@@ -96,18 +96,18 @@ int main()
 
   VKLHitIteratorContext hitContext = vklNewHitIteratorContext(sampler);
 
-  vklSetData2(hitContext, "values", valuesData);
+  vklSetData(hitContext, "values", valuesData);
   vklRelease(valuesData);
 
-  vklCommit2(hitContext);
+  vklCommit(hitContext);
 
   ispc::demo_ispc(
       &volume, &sampler, &intervalContext, &hitContext, ranges, values);
 
-  vklRelease2(hitContext);
-  vklRelease2(intervalContext);
-  vklRelease2(sampler);
-  vklRelease2(volume);
+  vklRelease(hitContext);
+  vklRelease(intervalContext);
+  vklRelease(sampler);
+  vklRelease(volume);
 
   vklReleaseDevice(device);
 

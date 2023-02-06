@@ -15,13 +15,13 @@ set(VKL_EXAMPLE_RENDERERS_SRC_CPU
   ArcballCamera.cpp
   framebuffer/BufferCpu.cpp
   framebuffer/Framebuffer.ispc
-  IntervalIteratorDebug.cpp
-  IntervalIteratorDebug.ispc
+  interval_iterator_debug/IntervalIteratorDebug.cpp
+  interval_iterator_debug/IntervalIteratorDebug.ispc
   Renderer.ispc
-  HitIteratorRenderer.cpp
-  HitIteratorRenderer.ispc
-  RayMarchIteratorRenderer.cpp
-  RayMarchIteratorRenderer.ispc
+  hit_iterator_renderer/HitIteratorRenderer.cpp
+  hit_iterator_renderer/HitIteratorRenderer.ispc
+  ray_march_iterator/RayMarchIterator.cpp
+  ray_march_iterator/RayMarchIterator.ispc
   Renderer.cpp
   RendererHost.cpp
   RendererParams.cpp
@@ -46,6 +46,12 @@ if (${OPENVKL_ENABLE_DEVICE_GPU})
   set(VKL_EXAMPLE_RENDERERS_SRC_GPU
     density_path_tracer/DensityPathTracerGpu.cpp
     density_path_tracer/DensityPathTracerGpuKernel.cpp
+    hit_iterator_renderer/HitIteratorRendererGpu.cpp
+    hit_iterator_renderer/HitIteratorRendererGpuKernel.cpp
+    interval_iterator_debug/IntervalIteratorDebugGpu.cpp
+    interval_iterator_debug/IntervalIteratorDebugGpuKernel.cpp
+    ray_march_iterator/RayMarchIteratorGpu.cpp
+    ray_march_iterator/RayMarchIteratorGpuKernel.cpp
     framebuffer/BufferGpu.cpp
     ArcballCamera.cpp
     RendererGpu.cpp

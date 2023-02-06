@@ -81,7 +81,7 @@ namespace openvkl {
      protected:
       void renderFrame()
       {
-        bool clearFramebuffer = false;
+        bool clearFramebuffer = isClearFramebufferFlagSet();
         beforeFrame(clearFramebuffer);
         renderFrameImpl(clearFramebuffer);
         afterFrame();
@@ -96,8 +96,18 @@ namespace openvkl {
       virtual void renderFrameImpl(bool clearFramebuffer) = 0;
 
       vec4f sampleTransferFunction(float value) const;
+      void setClearFramebufferFlag()
+      {
+        clearFramebufferFlag = true;
+      }
 
      private:
+      bool isClearFramebufferFlagSet(const bool newState=false)
+      {
+        const bool clearFramebuffer = clearFramebufferFlag.load();
+        clearFramebufferFlag = newState;
+        return clearFramebuffer;
+      }
       friend class Scheduler;
       friend class Scheduler::Synchronous;
       friend class Scheduler::Asynchronous;
@@ -105,6 +115,7 @@ namespace openvkl {
       // Used from the asynchronous scheduler
       std::thread renderThread;
       std::atomic_bool run{false};
+      std::atomic_bool clearFramebufferFlag{false};
     };
   }  // namespace examples
 }  // namespace openvkl

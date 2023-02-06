@@ -7,15 +7,18 @@
 #ifdef OPENVKL_TESTING_CPU
 #include "density_path_tracer/DensityPathTracer.h"
 #include "density_path_tracer/DensityPathTracerIspc.h"
+#include "hit_iterator_renderer/HitIteratorRenderer.h"
+#include "interval_iterator_debug/IntervalIteratorDebug.h"
+#include "ray_march_iterator/RayMarchIterator.h"
 #endif
 
 #ifdef OPENVKL_TESTING_GPU
 #include "density_path_tracer/DensityPathTracerGpu.h"
+#include "hit_iterator_renderer/HitIteratorRendererGpu.h"
+#include "interval_iterator_debug/IntervalIteratorDebugGpu.h"
+#include "ray_march_iterator/RayMarchIteratorGpu.h"
 #endif
 
-#include "HitIteratorRenderer.h"
-#include "IntervalIteratorDebug.h"
-#include "RayMarchIteratorRenderer.h"
 #include "Renderer.h"
 
 #include <algorithm>
@@ -116,20 +119,25 @@ namespace openvkl {
     // -------------------------------------------------------------------------
     const std::vector<std::string> &Scene::supportedRendererTypes() const
     {
-      // First renderer type on this list will be default for Batch/Interactive app
+      // First renderer type on this list will be default for Batch/Interactive
+      // app
 #ifdef OPENVKL_TESTING_CPU
       static const std::vector<std::string> types = {
           "density_pathtracer_ispc",
           "density_pathtracer",
-          "hit_iterator",
-          "hit_iterator_ispc",
+          "hit_iterator_renderer",
+          "hit_iterator_renderer_ispc",
           "ray_march_iterator",
           "ray_march_iterator_ispc",
           "interval_iterator_debug",
           "interval_iterator_debug_ispc"};
 #endif
 #ifdef OPENVKL_TESTING_GPU
-      static const std::vector<std::string> types = {"density_pathtracer_gpu"};
+      static const std::vector<std::string> types = {
+          "density_pathtracer_gpu",
+          "hit_iterator_renderer_gpu",
+          "ray_march_iterator_gpu",
+          "interval_iterator_debug_gpu"};
 #endif
       return types;
     }
@@ -145,8 +153,14 @@ namespace openvkl {
       std::unique_ptr<Renderer> ptr;
 
 #ifdef OPENVKL_TESTING_GPU
-      if(type == "density_pathtracer_gpu") {
+      if (type == "density_pathtracer_gpu") {
         ptr = rkcommon::make_unique<DensityPathTracerGpu>(*this);
+      } else if (type == "ray_march_iterator_gpu") {
+        ptr = rkcommon::make_unique<RayMarchIteratorGpu>(*this);
+      } else if (type == "interval_iterator_debug_gpu") {
+        ptr = rkcommon::make_unique<IntervalIteratorDebugGpu>(*this);
+      } else if (type == "hit_iterator_renderer_gpu") {
+        ptr = rkcommon::make_unique<HitIteratorRendererGpu>(*this);
       }
 #endif
 #ifdef OPENVKL_TESTING_CPU
@@ -154,18 +168,18 @@ namespace openvkl {
         ptr = rkcommon::make_unique<DensityPathTracer>(*this);
       } else if (type == "density_pathtracer_ispc") {
         ptr = rkcommon::make_unique<DensityPathTracerIspc>(*this);
-      } else if (type == "hit_iterator") {
+      } else if (type == "hit_iterator_renderer") {
         ptr = rkcommon::make_unique<HitIteratorRenderer>(*this);
-      } else if (type == "hit_iterator_ispc") {
+      } else if (type == "hit_iterator_renderer_ispc") {
         ptr = rkcommon::make_unique<HitIteratorRendererIspc>(*this);
       } else if (type == "interval_iterator_debug") {
         ptr = rkcommon::make_unique<IntervalIteratorDebug>(*this);
       } else if (type == "interval_iterator_debug_ispc") {
         ptr = rkcommon::make_unique<IntervalIteratorDebugIspc>(*this);
       } else if (type == "ray_march_iterator") {
-        ptr = rkcommon::make_unique<RayMarchIteratorRenderer>(*this);
+        ptr = rkcommon::make_unique<RayMarchIterator>(*this);
       } else if (type == "ray_march_iterator_ispc") {
-        ptr = rkcommon::make_unique<RayMarchIteratorRendererIspc>(*this);
+        ptr = rkcommon::make_unique<RayMarchIteratorIspc>(*this);
       }
 #endif
       return ptr;
@@ -250,7 +264,7 @@ namespace openvkl {
         const auto &types = supportedRendererTypes();
         for (auto it = types.begin(); it != types.end(); ++it) {
           if (it != types.begin()) {
-            std::cerr << "| ";
+            std::cerr << " | ";
           }
           std::cerr << *it;
         }

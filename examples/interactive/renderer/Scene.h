@@ -57,11 +57,13 @@ namespace openvkl {
 
       VKLSampler getSampler() const
       {
+        assert(vklSampler);
         return *vklSampler;
       }
 
       const VKLSampler *getSamplerPtr() const
       {
+        assert(vklSampler);
         return vklSampler.get();
       }
 

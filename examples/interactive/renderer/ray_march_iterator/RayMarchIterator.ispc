@@ -1,42 +1,42 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Ray.ih"
-#include "Scene.ih"
+#include "../Ray.ih"
+#include "../Scene.ih"
 
 #include "openvkl/openvkl.isph"
 
 #include <rkcommon/math/box.ih>
 #include <rkcommon/math/vec.ih>
 
-struct RayMarchIteratorRendererParams
+struct RayMarchIteratorParams
 {
   float samplingRate;
 };
 
-export void *uniform RayMarchIteratorRendererParams_create()
+export void *uniform RayMarchIteratorParams_create()
 {
-  RayMarchIteratorRendererParams *uniform params =
-      uniform new RayMarchIteratorRendererParams;
-  memset(params, 0, sizeof(uniform RayMarchIteratorRendererParams));
+  RayMarchIteratorParams *uniform params =
+      uniform new RayMarchIteratorParams;
+  memset(params, 0, sizeof(uniform RayMarchIteratorParams));
   return params;
 }
 
-export void RayMarchIteratorRendererParams_destroy(void *uniform self)
+export void RayMarchIteratorParams_destroy(void *uniform self)
 {
-  delete ((RayMarchIteratorRendererParams * uniform) self);
+  delete ((RayMarchIteratorParams * uniform) self);
 }
 
-export void RayMarchIteratorRendererParams_set(void *uniform self,
+export void RayMarchIteratorParams_set(void *uniform self,
                                                uniform float samplingRate)
 {
-  RayMarchIteratorRendererParams *uniform params =
-      ((RayMarchIteratorRendererParams * uniform) self);
+  RayMarchIteratorParams *uniform params =
+      ((RayMarchIteratorParams * uniform) self);
 
   params->samplingRate = samplingRate;
 }
 
-export void RayMarchIteratorRenderer_renderPixel(
+export void RayMarchIterator_renderPixel(
     const void *uniform _params,
     const void *uniform _scene,
     void *uniform _intervalContext,
@@ -45,8 +45,8 @@ export void RayMarchIteratorRenderer_renderPixel(
     vec4f *uniform rgbas,
     float *uniform weights)
 {
-  const uniform RayMarchIteratorRendererParams params =
-      *((const RayMarchIteratorRendererParams *uniform)_params);
+  const uniform RayMarchIteratorParams params =
+      *((const RayMarchIteratorParams *uniform)_params);
   const uniform Scene &scene = *((const Scene *uniform)_scene);
   VKLIntervalIteratorContext *uniform intervalContext =
       ((VKLIntervalIteratorContext * uniform) _intervalContext);

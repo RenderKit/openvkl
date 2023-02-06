@@ -3,35 +3,27 @@
 
 #pragma once
 
-#include "RendererHost.h"
+#include "../RendererHost.h"
+#include "RayMarchIteratorParams.h"
 
 namespace openvkl {
   namespace examples {
 
-    struct IntervalIteratorDebugParams
-    {
-      float intervalResolutionHint{0.5f};
-      float intervalColorScale{4.f};
-      float intervalOpacity{0.25f};
-      bool firstIntervalOnly{false};
-      bool showIntervalBorders{false};
-    };
-
     template <class R>
-    struct IntervalIteratorDebugShared
+    struct RayMarchIteratorShared
     {
-      IntervalIteratorDebugShared(const Scene *scene,
-                                  const RendererParams *rendererParams,
-                                  const Scheduler *scheduler);
-      ~IntervalIteratorDebugShared();
+      RayMarchIteratorShared(const Scene *scene,
+                                     const RendererParams *rendererParams,
+                                     const Scheduler *scheduler);
+      ~RayMarchIteratorShared();
 
       void updateIntervalContext();
       void beforeStart();
       void afterStop();
       void beforeFrame(bool &needToClear);
 
-      Versioned<IntervalIteratorDebugParams> guiParams;
-      Versioned<IntervalIteratorDebugParams> params;  // Used by the worker.
+      Versioned<RayMarchIteratorParams> guiParams;
+      Versioned<RayMarchIteratorParams> params;  // Used by the worker.
       std::unique_ptr<VKLIntervalIteratorContext>
           intervalContext;  // Used by the worker.
 
@@ -44,17 +36,17 @@ namespace openvkl {
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class IntervalIteratorDebug final : public ScalarRenderer
+    class RayMarchIterator final : public ScalarRenderer
     {
      public:
-      IntervalIteratorDebug(Scene &scene);
-      ~IntervalIteratorDebug();
+      RayMarchIterator(Scene &scene);
+      ~RayMarchIterator();
 
       void beforeStart() override final;
       void afterStop() override final;
       void beforeFrame(bool &needToClear) override final;
 
-      Versioned<IntervalIteratorDebugParams> &getGuiParams() {
+      Versioned<RayMarchIteratorParams> &getGuiParams() {
         return shared->guiParams;
       }
 
@@ -65,24 +57,24 @@ namespace openvkl {
                        float &weight) const override final;
 
      private:
-      using Shared = IntervalIteratorDebugShared<IntervalIteratorDebug>;
+      using Shared = RayMarchIteratorShared<RayMarchIterator>;
       std::unique_ptr<Shared> shared;
     };
 
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class IntervalIteratorDebugIspc final : public IspcRenderer
+    class RayMarchIteratorIspc final : public IspcRenderer
     {
      public:
-      IntervalIteratorDebugIspc(Scene &scene);
-      ~IntervalIteratorDebugIspc();
+      RayMarchIteratorIspc(Scene &scene);
+      ~RayMarchIteratorIspc();
 
       void beforeStart() override final;
       void afterStop() override final;
       void beforeFrame(bool &needToClear) override final;
 
-      Versioned<IntervalIteratorDebugParams> &getGuiParams() {
+      Versioned<RayMarchIteratorParams> &getGuiParams() {
         return shared->guiParams;
       }
 
@@ -93,7 +85,8 @@ namespace openvkl {
                             float *weights) const override final;
 
      private:
-      using Shared = IntervalIteratorDebugShared<IntervalIteratorDebugIspc>;
+      using Shared =
+          RayMarchIteratorShared<RayMarchIteratorIspc>;
       std::unique_ptr<Shared> shared;
       void *ispcParams{nullptr};
     };

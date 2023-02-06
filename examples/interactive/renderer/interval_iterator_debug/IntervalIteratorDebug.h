@@ -3,33 +3,29 @@
 
 #pragma once
 
-#include <memory>
-#include "RendererHost.h"
+#include "IntervalIteratorDebugParams.h"
+#include "../RendererHost.h"
 
 namespace openvkl {
   namespace examples {
 
-    struct HitIteratorRendererParams
-    {
-      std::vector<float> isoValues{-1.f, 0.f, 1.f};
-    };
-
     template <class R>
-    struct HitIteratorRendererShared
+    struct IntervalIteratorDebugShared
     {
-      HitIteratorRendererShared(const Scene *scene,
-                                const RendererParams *rendererParams,
-                                const Scheduler *scheduler);
-      ~HitIteratorRendererShared();
+      IntervalIteratorDebugShared(const Scene *scene,
+                                  const RendererParams *rendererParams,
+                                  const Scheduler *scheduler);
+      ~IntervalIteratorDebugShared();
 
-      void updateHitContext();
+      void updateIntervalContext();
       void beforeStart();
       void afterStop();
       void beforeFrame(bool &needToClear);
 
-      Versioned<HitIteratorRendererParams> guiParams;
-      Versioned<HitIteratorRendererParams> params;  // Used by the worker.
-      std::unique_ptr<VKLHitIteratorContext> hitContext;  // Used by the worker.
+      Versioned<IntervalIteratorDebugParams> guiParams;
+      Versioned<IntervalIteratorDebugParams> params;  // Used by the worker.
+      std::unique_ptr<VKLIntervalIteratorContext>
+          intervalContext;  // Used by the worker.
 
      private:
       const Scene *scene{nullptr};
@@ -40,16 +36,17 @@ namespace openvkl {
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class HitIteratorRenderer final : public ScalarRenderer
+    class IntervalIteratorDebug final : public ScalarRenderer
     {
      public:
-      HitIteratorRenderer(Scene &scene);
-      ~HitIteratorRenderer();
+      IntervalIteratorDebug(Scene &scene);
+      ~IntervalIteratorDebug();
+
       void beforeStart() override final;
       void afterStop() override final;
       void beforeFrame(bool &needToClear) override final;
 
-      Versioned<HitIteratorRendererParams> &getGuiParams() {
+      Versioned<IntervalIteratorDebugParams> &getGuiParams() {
         return shared->guiParams;
       }
 
@@ -60,24 +57,24 @@ namespace openvkl {
                        float &weight) const override final;
 
      private:
-      using Shared = HitIteratorRendererShared<HitIteratorRenderer>;
+      using Shared = IntervalIteratorDebugShared<IntervalIteratorDebug>;
       std::unique_ptr<Shared> shared;
     };
 
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class HitIteratorRendererIspc final : public IspcRenderer
+    class IntervalIteratorDebugIspc final : public IspcRenderer
     {
      public:
-      HitIteratorRendererIspc(Scene &scene);
-      ~HitIteratorRendererIspc();
+      IntervalIteratorDebugIspc(Scene &scene);
+      ~IntervalIteratorDebugIspc();
 
       void beforeStart() override final;
       void afterStop() override final;
       void beforeFrame(bool &needToClear) override final;
 
-      Versioned<HitIteratorRendererParams> &getGuiParams() {
+      Versioned<IntervalIteratorDebugParams> &getGuiParams() {
         return shared->guiParams;
       }
 
@@ -88,10 +85,11 @@ namespace openvkl {
                             float *weights) const override final;
 
      private:
-      using Shared = HitIteratorRendererShared<HitIteratorRendererIspc>;
+      using Shared = IntervalIteratorDebugShared<IntervalIteratorDebugIspc>;
       std::unique_ptr<Shared> shared;
       void *ispcParams{nullptr};
     };
 
   }  // namespace examples
 }  // namespace openvkl
+

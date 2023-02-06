@@ -3,34 +3,29 @@
 
 #pragma once
 
-#include "RendererHost.h"
+#include <memory>
+#include "HitIteratorRendererParams.h"
+#include "../RendererHost.h"
 
 namespace openvkl {
   namespace examples {
 
-    struct RayMarchIteratorRendererParams
-    {
-      float intervalResolutionHint{0.5f};
-      float samplingRate{1.f};
-    };
-
     template <class R>
-    struct RayMarchIteratorRendererShared
+    struct HitIteratorRendererShared
     {
-      RayMarchIteratorRendererShared(const Scene *scene,
-                                     const RendererParams *rendererParams,
-                                     const Scheduler *scheduler);
-      ~RayMarchIteratorRendererShared();
+      HitIteratorRendererShared(const Scene *scene,
+                                const RendererParams *rendererParams,
+                                const Scheduler *scheduler);
+      ~HitIteratorRendererShared();
 
-      void updateIntervalContext();
+      void updateHitContext();
       void beforeStart();
       void afterStop();
       void beforeFrame(bool &needToClear);
 
-      Versioned<RayMarchIteratorRendererParams> guiParams;
-      Versioned<RayMarchIteratorRendererParams> params;  // Used by the worker.
-      std::unique_ptr<VKLIntervalIteratorContext>
-          intervalContext;  // Used by the worker.
+      Versioned<HitIteratorRendererParams> guiParams;
+      Versioned<HitIteratorRendererParams> params;  // Used by the worker.
+      std::unique_ptr<VKLHitIteratorContext> hitContext;  // Used by the worker.
 
      private:
       const Scene *scene{nullptr};
@@ -41,17 +36,16 @@ namespace openvkl {
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class RayMarchIteratorRenderer final : public ScalarRenderer
+    class HitIteratorRenderer final : public ScalarRenderer
     {
      public:
-      RayMarchIteratorRenderer(Scene &scene);
-      ~RayMarchIteratorRenderer();
-
+      HitIteratorRenderer(Scene &scene);
+      ~HitIteratorRenderer();
       void beforeStart() override final;
       void afterStop() override final;
       void beforeFrame(bool &needToClear) override final;
 
-      Versioned<RayMarchIteratorRendererParams> &getGuiParams() {
+      Versioned<HitIteratorRendererParams> &getGuiParams() {
         return shared->guiParams;
       }
 
@@ -62,24 +56,24 @@ namespace openvkl {
                        float &weight) const override final;
 
      private:
-      using Shared = RayMarchIteratorRendererShared<RayMarchIteratorRenderer>;
+      using Shared = HitIteratorRendererShared<HitIteratorRenderer>;
       std::unique_ptr<Shared> shared;
     };
 
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class RayMarchIteratorRendererIspc final : public IspcRenderer
+    class HitIteratorRendererIspc final : public IspcRenderer
     {
      public:
-      RayMarchIteratorRendererIspc(Scene &scene);
-      ~RayMarchIteratorRendererIspc();
+      HitIteratorRendererIspc(Scene &scene);
+      ~HitIteratorRendererIspc();
 
       void beforeStart() override final;
       void afterStop() override final;
       void beforeFrame(bool &needToClear) override final;
 
-      Versioned<RayMarchIteratorRendererParams> &getGuiParams() {
+      Versioned<HitIteratorRendererParams> &getGuiParams() {
         return shared->guiParams;
       }
 
@@ -90,12 +84,10 @@ namespace openvkl {
                             float *weights) const override final;
 
      private:
-      using Shared =
-          RayMarchIteratorRendererShared<RayMarchIteratorRendererIspc>;
+      using Shared = HitIteratorRendererShared<HitIteratorRendererIspc>;
       std::unique_ptr<Shared> shared;
       void *ispcParams{nullptr};
     };
 
   }  // namespace examples
 }  // namespace openvkl
-

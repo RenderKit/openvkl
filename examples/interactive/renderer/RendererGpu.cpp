@@ -2,27 +2,47 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "RendererGpu.h"
+#include "density_path_tracer/DensityPathTracerGpuKernel.h"
+#include "hit_iterator_renderer/HitIteratorRendererGpuKernel.h"
+#include "interval_iterator_debug/IntervalIteratorDebugGpuKernel.h"
+#include "ray_march_iterator/RayMarchIteratorGpuKernel.h"
 
 namespace openvkl {
   namespace examples {
-    RendererGpu::RendererGpu(Scene &scene) : Renderer{scene}
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::RendererGpu(Scene &scene)
+        : Renderer{scene}
     {
       syclQueue = getSyclQueue();
+      gpuKernelRendererDevice =
+          sycl::malloc_device<TRendererGpuKernelSubtype>(1, syclQueue);
+      gpuKernelRendererHost =
+          sycl::malloc_host<TRendererGpuKernelSubtype>(1, syclQueue);
     }
 
-    RendererGpu::~RendererGpu()
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::~RendererGpu()
     {
       deallocateBuffers();
+
+      sycl::free(gpuKernelRendererDevice, syclQueue);
+      gpuKernelRendererDevice = nullptr;
+
+      sycl::free(gpuKernelRendererHost, syclQueue);
+      gpuKernelRendererHost = nullptr;
     }
 
-    void RendererGpu::reallocateBuffers(size_t width, size_t height)
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    void RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::reallocateBuffers(
+        size_t width, size_t height)
     {
       deallocateBuffers();
       rayBuffer     = sycl::malloc_device<Ray>(width * height, syclQueue);
       rayBufferHost = sycl::malloc_host<Ray>(width * height, syclQueue);
     }
 
-    void RendererGpu::deallocateBuffers()
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    void RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::deallocateBuffers()
     {
       sycl::free(rayBuffer, syclQueue);
       rayBuffer = nullptr;
@@ -31,7 +51,21 @@ namespace openvkl {
       rayBufferHost = nullptr;
     }
 
-    const Framebuffer &RendererGpu::getFramebuffer(size_t width, size_t height)
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    void RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::onBufferResize(
+        const size_t width, const size_t height)
+    {
+      framebuffer.resize(width, height);
+      reallocateBuffers(width, height);
+
+      // Set clear framebuffer flag so buffer
+      // will be cleared in next renderFrame.
+      setClearFramebufferFlag();
+    }
+
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    const Framebuffer &RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::getFramebuffer(
+        size_t width, size_t height)
     {
       // Note: This is all in the main thread, so no need to lock any parameters
       // here.
@@ -46,19 +80,16 @@ namespace openvkl {
 
       if (resolutionChanged) {
         scheduler.stop(*this);
-        framebuffer.resize(width, height);
-        reallocateBuffers(width, height);
+        onBufferResize(width, height);
         scheduler.start(*this);
-        // Trigger render frame after resizing buffer
-        // with clearFramebuffer flag set to true.
-        renderFrameImpl(true);
       }
 
       return framebuffer;
     }
 
-    sycl::event RendererGpu::invokeGpuRayGeneration(const unsigned int width,
-                                                    const unsigned int height)
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    sycl::event RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::invokeGpuRayGeneration(
+        const unsigned int width, const unsigned int height)
     {
       rkcommon::tasking::parallel_in_blocks_of<16>(
           width * height, [&](size_t ib, size_t ie) {
@@ -76,7 +107,15 @@ namespace openvkl {
           rayBuffer, rayBufferHost, sizeof(Ray) * width * height);
     }
 
-    void RendererGpu::renderFrameImpl(bool clearFramebuffer)
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    void RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::afterFrame()
+    {
+      ++frameId;
+    }
+
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    void RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::renderFrameImpl(
+        bool clearFramebuffer)
     {
       const auto startFrame = Stats::Clock::now();
       if (scheduler.workerMustTerminate(*this)) {
@@ -117,5 +156,11 @@ namespace openvkl {
         fBuf.getStats().renderTime = endRenderPixel - startRenderPixel;
       });
     }
+
+    template class RendererGpu<RayMarchIteratorGpuKernel, RayMarchIteratorParams>;
+    template class RendererGpu<DensityPathTracerGpuKernel, DensityPathTracerParams>;
+    template class RendererGpu<HitIteratorRendererGpuKernel, HitIteratorRendererParams>;
+    template class RendererGpu<IntervalIteratorDebugGpuKernel, IntervalIteratorDebugParams>;
+
   }  // namespace examples
 }  // namespace openvkl

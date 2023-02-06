@@ -7,15 +7,18 @@
 #ifdef OPENVKL_TESTING_CPU
 #include "renderer/density_path_tracer/DensityPathTracer.h"
 #include "renderer/density_path_tracer/DensityPathTracerIspc.h"
+#include "renderer/hit_iterator_renderer/HitIteratorRenderer.h"
+#include "renderer/interval_iterator_debug/IntervalIteratorDebug.h"
+#include "renderer/ray_march_iterator/RayMarchIterator.h"
 #endif
 
 #ifdef OPENVKL_TESTING_GPU
 #include "renderer/density_path_tracer/DensityPathTracerGpu.h"
+#include "renderer/hit_iterator_renderer/HitIteratorRendererGpu.h"
+#include "renderer/interval_iterator_debug/IntervalIteratorDebugGpu.h"
+#include "renderer/ray_march_iterator/RayMarchIteratorGpu.h"
 #endif
 
-#include "renderer/HitIteratorRenderer.h"
-#include "renderer/IntervalIteratorDebug.h"
-#include "renderer/RayMarchIteratorRenderer.h"
 #include "renderer/Renderer.h"
 #include "renderer/Scene.h"
 #include "renderer/Scheduler.h"
@@ -257,12 +260,12 @@ namespace openvkl {
 
     // -------------------------------------------------------------------------
 
-    class RayMarchIteratorRendererGui : public ParameterGui
+    class RayMarchIteratorGui : public ParameterGui
     {
      public:
-      using P = RayMarchIteratorRendererParams;
+      using P = RayMarchIteratorParams;
 
-      RayMarchIteratorRendererGui(const std::string &id, Versioned<P> *params)
+      RayMarchIteratorGui(const std::string &id, Versioned<P> *params)
           : id{id}, params{params}
       {
       }
@@ -379,6 +382,12 @@ namespace openvkl {
 #ifdef OPENVKL_TESTING_GPU
       mrg<DensityPathTracerGui, DensityPathTracerGpu>(
           "density_pathtracer_gpu", renderer, gui);
+      mrg<RayMarchIteratorGui, RayMarchIteratorGpu>(
+          "ray_march_iterator_gpu", renderer, gui);
+      mrg<IntervalIteratorDebugGui, IntervalIteratorDebugGpu>(
+          "interval_iterator_debug_gpu", renderer, gui);
+      mrg<HitIteratorRendererGui, HitIteratorRendererGpu>(
+          "hit_iterator_gpu", renderer, gui);
 #endif
 
 #ifdef OPENVKL_TESTING_CPU
@@ -389,13 +398,13 @@ namespace openvkl {
           "density_pathtracer_ispc", renderer, gui);
 
       mrg<HitIteratorRendererGui, HitIteratorRenderer>(
-          "hit_iterator", renderer, gui);
+          "hit_iterator_renderer", renderer, gui);
       mrg<HitIteratorRendererGui, HitIteratorRendererIspc>(
-          "hit_iterator_ispc", renderer, gui);
+          "hit_iterator_renderer_ispc", renderer, gui);
 
-      mrg<RayMarchIteratorRendererGui, RayMarchIteratorRenderer>(
+      mrg<RayMarchIteratorGui, RayMarchIterator>(
           "ray_march_iterator", renderer, gui);
-      mrg<RayMarchIteratorRendererGui, RayMarchIteratorRendererIspc>(
+      mrg<RayMarchIteratorGui, RayMarchIteratorIspc>(
           "ray_march_iterator_ispc", renderer, gui);
 
       mrg<IntervalIteratorDebugGui, IntervalIteratorDebug>(
@@ -721,10 +730,11 @@ namespace openvkl {
         ImGui::SetNextItemOpen(true, ImGuiCond_FirstUseEver);
         if (ImGui::CollapsingHeader("Sampler", 0)) {
           ImGui::PushDisabled(volumeParams.volumeType != "vdb");
-          changed |= ImGui::SliderInt("Maximum Sampling Depth##maxSamplingDepth",
-                                     &p.maxSamplingDepth,
-                                     0,
-                                     VKL_VDB_NUM_LEVELS-1);
+          changed |=
+              ImGui::SliderInt("Maximum Sampling Depth##maxSamplingDepth",
+                               &p.maxSamplingDepth,
+                               0,
+                               VKL_VDB_NUM_LEVELS - 1);
           ImGui::PopDisabled();
           ImGui::PushDisabled(supFilters.empty());
           changed |= imgui::comboBox("Sampling Filter##samplingFilter",

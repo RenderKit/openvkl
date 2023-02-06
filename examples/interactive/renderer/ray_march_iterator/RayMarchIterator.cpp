@@ -1,8 +1,8 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "RayMarchIteratorRenderer.h"
-#include "RayMarchIteratorRenderer_ispc.h"
+#include "RayMarchIterator.h"
+#include "RayMarchIterator_ispc.h"
 
 namespace openvkl {
   namespace examples {
@@ -10,7 +10,7 @@ namespace openvkl {
     // -------------------------------------------------------------------------
 
     template <class R>
-    RayMarchIteratorRendererShared<R>::RayMarchIteratorRendererShared(
+    RayMarchIteratorShared<R>::RayMarchIteratorShared(
         const Scene *scene,
         const RendererParams *rendererParams,
         const Scheduler *scheduler)
@@ -19,13 +19,13 @@ namespace openvkl {
     }
 
     template <class R>
-    RayMarchIteratorRendererShared<R>::~RayMarchIteratorRendererShared()
+    RayMarchIteratorShared<R>::~RayMarchIteratorShared()
     {
       assert(!intervalContext);
     }
 
     template <class R>
-    void RayMarchIteratorRendererShared<R>::updateIntervalContext()
+    void RayMarchIteratorShared<R>::updateIntervalContext()
     {
       vklSetInt(
           *intervalContext, "attributeIndex", rendererParams->attributeIndex);
@@ -58,7 +58,7 @@ namespace openvkl {
     }
 
     template <class R>
-    void RayMarchIteratorRendererShared<R>::beforeStart()
+    void RayMarchIteratorShared<R>::beforeStart()
     {
       assert(!intervalContext);
       VKLSampler sampler = scene->volume.getSampler();
@@ -68,7 +68,7 @@ namespace openvkl {
     }
 
     template <class R>
-    void RayMarchIteratorRendererShared<R>::afterStop()
+    void RayMarchIteratorShared<R>::afterStop()
     {
       if (intervalContext) {
         vklRelease(*intervalContext);
@@ -77,7 +77,7 @@ namespace openvkl {
     }
 
     template <class R>
-    void RayMarchIteratorRendererShared<R>::beforeFrame(bool &needToClear)
+    void RayMarchIteratorShared<R>::beforeFrame(bool &needToClear)
     {
       scheduler->locked(guiParams, [&]() {
         needToClear |= params.updateIfChanged(guiParams);
@@ -92,37 +92,37 @@ namespace openvkl {
 
     // -------------------------------------------------------------------------
 
-    RayMarchIteratorRenderer::RayMarchIteratorRenderer(Scene &scene)
+    RayMarchIterator::RayMarchIterator(Scene &scene)
         : ScalarRenderer{scene},
           shared{rkcommon::make_unique<Shared>(
               &scene, &*rendererParams, &scheduler)}
     {
     }
 
-    RayMarchIteratorRenderer::~RayMarchIteratorRenderer()
+    RayMarchIterator::~RayMarchIterator()
     {
       scheduler.stop(*this);  // Causes interval context to be cleared.
     }
 
-    void RayMarchIteratorRenderer::beforeStart()
+    void RayMarchIterator::beforeStart()
     {
       ScalarRenderer::beforeStart();
       shared->beforeStart();
     }
 
-    void RayMarchIteratorRenderer::afterStop()
+    void RayMarchIterator::afterStop()
     {
       ScalarRenderer::afterStop();
       shared->afterStop();
     }
 
-    void RayMarchIteratorRenderer::beforeFrame(bool &needToClear)
+    void RayMarchIterator::beforeFrame(bool &needToClear)
     {
       ScalarRenderer::beforeFrame(needToClear);
       shared->beforeFrame(needToClear);
     }
 
-    void RayMarchIteratorRenderer::renderPixel(size_t seed,
+    void RayMarchIterator::renderPixel(size_t seed,
                                                Ray &ray,
                                                vec4f &rgba,
                                                float &weight) const
@@ -200,51 +200,51 @@ namespace openvkl {
 
     // -------------------------------------------------------------------------
 
-    RayMarchIteratorRendererIspc::RayMarchIteratorRendererIspc(Scene &scene)
+    RayMarchIteratorIspc::RayMarchIteratorIspc(Scene &scene)
         : IspcRenderer{scene},
           shared{rkcommon::make_unique<Shared>(
               &scene, &*rendererParams, &scheduler)}
     {
-      ispcParams = ispc::RayMarchIteratorRendererParams_create();
+      ispcParams = ispc::RayMarchIteratorParams_create();
     }
 
-    RayMarchIteratorRendererIspc::~RayMarchIteratorRendererIspc()
+    RayMarchIteratorIspc::~RayMarchIteratorIspc()
     {
       scheduler.stop(*this);  // Causes interval context to be cleared.
 
-      ispc::RayMarchIteratorRendererParams_destroy(ispcParams);
+      ispc::RayMarchIteratorParams_destroy(ispcParams);
       ispcParams = nullptr;
     }
 
-    void RayMarchIteratorRendererIspc::beforeStart()
+    void RayMarchIteratorIspc::beforeStart()
     {
       IspcRenderer::beforeStart();
       shared->beforeStart();
     }
 
-    void RayMarchIteratorRendererIspc::afterStop()
+    void RayMarchIteratorIspc::afterStop()
     {
       IspcRenderer::afterStop();
       shared->afterStop();
     }
 
-    void RayMarchIteratorRendererIspc::beforeFrame(bool &needToClear)
+    void RayMarchIteratorIspc::beforeFrame(bool &needToClear)
     {
       IspcRenderer::beforeFrame(needToClear);
       shared->beforeFrame(needToClear);
 
       if (needToClear) {
-        ispc::RayMarchIteratorRendererParams_set(ispcParams,
+        ispc::RayMarchIteratorParams_set(ispcParams,
                                                  shared->params->samplingRate);
       }
     }
 
-    void RayMarchIteratorRendererIspc::renderPixelBlock(const vec2i &resolution,
+    void RayMarchIteratorIspc::renderPixelBlock(const vec2i &resolution,
                                                         uint32_t offset,
                                                         vec4f *rgbas,
                                                         float *weights) const
     {
-      ispc::RayMarchIteratorRenderer_renderPixel(
+      ispc::RayMarchIterator_renderPixel(
           ispcParams,
           ispcScene,
           shared->intervalContext.get(),

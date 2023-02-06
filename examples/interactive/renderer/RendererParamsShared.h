@@ -3,6 +3,10 @@
 
 #pragma once
 
+// This is only needed for getting TRANSFER_FUNCTION_DEFAULT_NUM_SAMPLES
+// definition
+#include "TransferFunction.h"
+
 namespace openvkl {
   namespace examples {
 

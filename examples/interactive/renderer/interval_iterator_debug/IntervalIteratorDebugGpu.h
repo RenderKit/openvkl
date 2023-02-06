@@ -3,10 +3,9 @@
 
 #pragma once
 
-#include "../Random.h"
 #include "../RendererGpu.h"
-#include "DensityPathTracerGpuKernel.h"
-#include "DensityPathTracerParams.h"
+#include "IntervalIteratorDebugGpuKernel.h"
+#include "IntervalIteratorDebugParams.h"
 
 namespace openvkl {
   namespace examples {
@@ -14,12 +13,12 @@ namespace openvkl {
     // Note: This renderer stops itself in the destructor, so it should never
     //       call virtual functions in derived classes in the render loop.
     //       We use final to ensure whoever tries to derive is aware of this.
-    class DensityPathTracerGpu final
-        : public RendererGpu<DensityPathTracerGpuKernel, DensityPathTracerParams>
+    class IntervalIteratorDebugGpu final
+        : public RendererGpu<IntervalIteratorDebugGpuKernel, IntervalIteratorDebugParams>
     {
      public:
-      DensityPathTracerGpu(Scene &scene);
-      ~DensityPathTracerGpu();
+      IntervalIteratorDebugGpu(Scene &scene);
+      ~IntervalIteratorDebugGpu();
       void beforeFrame(bool &needToClear) override final;
 
      protected:
@@ -30,8 +29,17 @@ namespace openvkl {
           const bool clearFramebuffer) override final;
 
      private:
+      void onBufferResize(const size_t width,
+                          const size_t height) override final;
       void setKernelObjectAttributes(
-          DensityPathTracerGpuKernel *gpuKernelRenderer) override final;
+          IntervalIteratorDebugGpuKernel *gpuKernelRenderer) override final;
+      void updateIntervalContext();
+      void reallocateBuffers(const size_t width, const size_t height);
+      void deallocateBuffers();
+
+      VKLIntervalIteratorContext intervalContext;
+      char *iteratorBuffer{nullptr};
+      size_t iteratorSize{0};
     };
 
   }  // namespace examples

@@ -62,8 +62,7 @@ namespace openvkl {
                                   rendererParams.attributeIndex,
                                   time);
 
-        vec4f sampleColorAndOpacity =
-            sampleTransferFunction(rendererParams.transferFunction, sample);
+        vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
 
         // sigmaT must be mono-chromatic for Woodcock sampling
         const float sigmaTSample = sigmaMax * sampleColorAndOpacity.w;
@@ -127,8 +126,7 @@ namespace openvkl {
 
         // Compute simgaSSample for this particular hit which can be used in
         // next scattered ray.
-        const vec4f sampleColorAndOpacity =
-            sampleTransferFunction(rendererParams.transferFunction, sample);
+        const vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
 
         sigmaSSample = params.sigmaSScale * vec3f(sampleColorAndOpacity) *
                        sampleColorAndOpacity.w;
@@ -168,6 +166,19 @@ namespace openvkl {
       rgba.z += color.z;
       rgba.w += alpha;
       weight += 1.f;
+    }
+
+    void DensityPathTracerGpuKernel::setObjectAttributes(
+        const VKLSampler sampler,
+        const box3f volumeBounds,
+        const RendererParams &rendererParams,
+        const DensityPathTracerParams &params,
+        const unsigned int frameId)
+    {
+      RendererGpuKernel::setObjectAttributes(
+          sampler, volumeBounds, rendererParams);
+      this->params  = params;
+      this->frameId = frameId;
     }
 
   }  // namespace examples

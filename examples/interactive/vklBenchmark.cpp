@@ -188,13 +188,13 @@ int main(int argc, char **argv)
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / scalar,
-                                  "hit_iterator",
+                                  "hit_iterator_renderer",
                                   vec2i(1024),
                                   512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / ispc,
-                                  "hit_iterator_ispc",
+                                  "hit_iterator_renderer_ispc",
                                   vec2i(1024),
                                   512);
 
@@ -225,13 +225,13 @@ int main(int argc, char **argv)
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   hit_iterator / 512 / scalar,
-                                  "hit_iterator",
+                                  "hit_iterator_renderer",
                                   vec2i(1024),
                                   512);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_vdb,
                                   hit_iterator / 512 / ispc,
-                                  "hit_iterator_ispc",
+                                  "hit_iterator_renderer_ispc",
                                   vec2i(1024),
                                   512);
 
@@ -262,13 +262,13 @@ int main(int argc, char **argv)
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   hit_iterator / 128 / scalar,
-                                  "hit_iterator",
+                                  "hit_iterator_renderer",
                                   vec2i(1024),
                                   128);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_unstructured_hex,
                                   hit_iterator / 128 / ispc,
-                                  "hit_iterator_ispc",
+                                  "hit_iterator_renderer_ispc",
                                   vec2i(1024),
                                   128);
 

@@ -72,7 +72,10 @@ jobs:
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklTutorialGPU
         ./bin/vklTestsGPU --durations yes
-        ./bin/vklExamplesGPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer density_pathtracer_gpu -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer hit_iterator_renderer_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer interval_iterator_debug_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
 
   test-dg2-ubuntu22_04:
     secrets: inherit
@@ -93,4 +96,7 @@ jobs:
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklTutorialGPU
         ./bin/vklTestsGPU --durations yes
-        ./bin/vklExamplesGPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer density_pathtracer_gpu -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer hit_iterator_renderer_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
+        ./bin/vklExamplesGPU -renderer interval_iterator_debug_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024

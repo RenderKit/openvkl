@@ -12,7 +12,6 @@
 #include "../../cpu/iterator/IteratorContextShared.h"
 #include "../../cpu/volume/GridAccelerator.h"
 #include "../../cpu/volume/GridAcceleratorShared.h"
-#include "vklCompute.h"
 
 #include "common.h"
 

@@ -322,7 +322,8 @@ TEST_CASE("Hit iterator", "[hit_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED && !defined(OPENVKL_TESTING_GPU)
+    //Todo: mbk iterators aren't done yet for unstructured
     SECTION("unstructured volumes")
     {
       std::unique_ptr<ZUnstructuredProceduralVolume> v(

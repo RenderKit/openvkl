@@ -6,10 +6,10 @@
 
 #include "../common/ValueRanges.ih"
 #include "UnstructuredIterator.ih"
-#include "common/export_util.h"
-#include "common/print_debug.ih"
-#include "math/box_utility.ih"
-#include "volume/UnstructuredVolume.ih"
+#include "../common/export_util.h"
+#include "../common/print_debug.ih"
+#include "../math/box_utility.ih"
+#include "../volume/UnstructuredVolume.ih"
 
 // Ignore warning about exporting uniform-pointer-to-varying, as this is in
 // fact legal.

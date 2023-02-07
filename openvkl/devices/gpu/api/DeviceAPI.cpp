@@ -10,9 +10,11 @@ using namespace ispc;
 #include "openvkl/common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
-#include "../compute/vklCompute.h"
-#include "../compute/vklIterators.h"
 #include "../include/openvkl/device/openvkl.h"
+
+#include "../compute/vklCompute.h"
+#include "../compute/vklComputeUnstructured.h"
+#include "../compute/vklIterators.h"
 
 using namespace openvkl;
 using namespace openvkl::gpu_device;
@@ -58,6 +60,11 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         time);
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    return UnstructuredVolume_sample(
+        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
   default:
     assert(false);
     return -1.f;
@@ -89,6 +96,16 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         time,
         samples);
     break;
+
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    UnstructuredVolume_sampleM(
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        M,
+        attributeIndices,
+        samples);
+    break;
+  }
 
   default:
     assert(false);

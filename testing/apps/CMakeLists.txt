@@ -188,6 +188,7 @@ if (BUILD_TESTING)
       tests/structured_spherical_volume_bounding_box.cpp
       tests/structured_volume_gradients.cpp
       tests/structured_volume_value_range.cpp
+      tests/unstructured_volume_sampling.cpp
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
     )

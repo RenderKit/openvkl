@@ -34,7 +34,8 @@ void scalar_sampling_test_prim_geometry(VKLUnstructuredCellType primType,
 
   for (int i = 0; i < 1000; i++) {
     vec3f oc(dist(eng), dist(eng), dist(eng));
-    float sample = vklComputeSample(&vklSampler, (const vkl_vec3f *)&oc);
+    float sample =
+        vklComputeSampleWrapper(&vklSampler, (const vkl_vec3f *)&oc, 0, 0);
 
     bool inside = true;
 
@@ -99,10 +100,15 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
 
+#ifdef OPENVKL_TESTING_GPU
+  const auto dim = vec3i(32);
+#else
+  const auto dim = vec3i(128);
+#endif
+
   SECTION("hexahedron")
   {
-    scalar_sampling_on_vertices_vs_procedural_values(vec3i(128),
-                                                     VKL_HEXAHEDRON);
+    scalar_sampling_on_vertices_vs_procedural_values(dim, VKL_HEXAHEDRON);
 
     for (int i = 0; i < 16; i++) {
       bool cellValued         = i & 8;
@@ -131,8 +137,7 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 
   SECTION("tetrahedron")
   {
-    scalar_sampling_on_vertices_vs_procedural_values(vec3i(128),
-                                                     VKL_TETRAHEDRON);
+    scalar_sampling_on_vertices_vs_procedural_values(dim, VKL_TETRAHEDRON);
 
     for (int i = 0; i < 8; i++) {
       bool cellValued         = i & 4;
@@ -151,7 +156,7 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 
   SECTION("wedge")
   {
-    scalar_sampling_on_vertices_vs_procedural_values(vec3i(128), VKL_WEDGE);
+    scalar_sampling_on_vertices_vs_procedural_values(dim, VKL_WEDGE);
 
     for (int i = 0; i < 8; i++) {
       bool cellValued         = i & 4;
@@ -170,7 +175,7 @@ TEST_CASE("Unstructured volume sampling", "[volume_sampling]")
 
   SECTION("pyramid")
   {
-    scalar_sampling_on_vertices_vs_procedural_values(vec3i(128), VKL_PYRAMID);
+    scalar_sampling_on_vertices_vs_procedural_values(dim, VKL_PYRAMID);
 
     for (int i = 0; i < 8; i++) {
       bool cellValued         = i & 4;

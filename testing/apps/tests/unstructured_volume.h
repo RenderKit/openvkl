@@ -6,6 +6,7 @@
 #include "../../external/catch.hpp"
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
+#include "wrappers.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
@@ -49,9 +50,10 @@ inline void scalar_sampling_on_vertices_vs_procedural_values(
                                 << objectCoordinates.z);
 
     vec3f offsetCoordinates = objectCoordinates + vec3f(0.1f);
-    CHECK(
-        vklComputeSample(&vklSampler, (const vkl_vec3f *)&(offsetCoordinates)) ==
-        Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
+
+    REQUIRE(vklComputeSampleWrapper(
+                &vklSampler, (const vkl_vec3f *)&offsetCoordinates, 0, 0) ==
+            Approx(v->computeProceduralValue(objectCoordinates)).margin(1e-4f));
   }
 
   vklRelease(vklSampler);

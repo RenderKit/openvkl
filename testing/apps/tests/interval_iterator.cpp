@@ -467,7 +467,8 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED && !defined(OPENVKL_TESTING_GPU)
+    //Todo: mbk no unstructured iterator yet.
     SECTION("unstructured volumes")
     {
       auto v = rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(

@@ -10,6 +10,12 @@ include_directories_ispc(
 )
 
 # sources common to multiple volume types
+set(SOURCES_COMMON_AMR_PARTICLE_UNSTRUCTURED
+  ../cpu/iterator/UnstructuredIterator.cpp
+  ../cpu/iterator/UnstructuredIterator.ispc
+  ../cpu/volume/UnstructuredVolume.ispc
+)
+
 set(SOURCES_COMMON_STRUCTURED_REGULAR_LEGACY_SPHERICAL
   ../cpu/iterator/GridAcceleratorIterator.cpp
   ../cpu/iterator/GridAcceleratorIterator.ispc
@@ -28,6 +34,10 @@ set(SOURCES_STRUCTURED_SPHERICAL
   ../cpu/volume/StructuredSphericalVolume.cpp
 )
 
+set(SOURCES_UNSTRUCTURED
+  ../cpu/volume/UnstructuredVolume.cpp
+)
+
 # generate source file additions for optional volume types
 list(APPEND OPTIONAL_VOLUME_SOURCES)
 list(APPEND OPTIONAL_VOLUME_DEFINITIONS "")
@@ -39,7 +49,11 @@ list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_L
 list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_STRUCTURED_SPHERICAL})
 list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL=1")
 
+list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_UNSTRUCTURED})
+list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_UNSTRUCTURED=1")
+
 # common source files
+list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_COMMON_AMR_PARTICLE_UNSTRUCTURED})
 list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_COMMON_STRUCTURED_REGULAR_LEGACY_SPHERICAL})
 
 # definitions for ISPC components

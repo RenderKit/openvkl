@@ -190,8 +190,8 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 
   vklSetInt(hitContext, "attributeIndex", 0);
 
-  vklSetData(hitContext, "values", rangesData);
-  vklRelease(rangesData);
+  vklSetData(hitContext, "values", valuesData);
+  vklRelease(valuesData);
 
   vklCommit(hitContext);
 

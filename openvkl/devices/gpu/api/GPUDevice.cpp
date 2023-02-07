@@ -11,6 +11,7 @@
 #include "../common/ObjectFactory.h"
 #include "../compute/vklCompute.h"
 #include "../compute/vklIterators.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 namespace openvkl {
   namespace gpu_device {
@@ -61,23 +62,42 @@ namespace openvkl {
     {
       Device::commit();
 
-      sycl::context *syclContext =
-          (sycl::context *)getParam<const void *>("syclContext", nullptr);
-
-      if (syclContext == nullptr) {
-        throw std::runtime_error(
-            "GPU device type can't be used without 'syclContext' param");
-      }
-
-      // nativeContext is a pointer - it's owned by syclContext so no need to
-      // care about life cycle for this variable here.
-      ze_context_handle_t nativeContext =
-          sycl::get_native<sycl::backend::ext_oneapi_level_zero>(*syclContext);
+      // the env var OPENVKL_GPU_DEVICE_DEBUG_USE_CPU is intended for debug
+      // purposes only, and forces the Open VKL GPU device to use the CPU
+      // instead.
+      const bool useCpu =
+          rkcommon::utility::getEnvVar<int>("OPENVKL_GPU_DEVICE_DEBUG_USE_CPU")
+              .value_or(0);
 
       if (context) {
         delete (ispcrt::Context *)context;
+        context = nullptr;
       }
-      context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
+
+      if (useCpu) {
+        postLogMessage(this, VKL_LOG_INFO)
+            << "GPU device: using CPU backend (enabled via env var: "
+               "OPENVKL_GPU_DEVICE_DEBUG_USE_CPU=1)";
+
+        context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
+
+      } else {
+        sycl::context *syclContext =
+            (sycl::context *)getParam<const void *>("syclContext", nullptr);
+
+        if (syclContext == nullptr) {
+          throw std::runtime_error(
+              "GPU device type can't be used without 'syclContext' param");
+        }
+
+        // nativeContext is a pointer - it's owned by syclContext so no need to
+        // care about life cycle for this variable here.
+        ze_context_handle_t nativeContext =
+            sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
+                *syclContext);
+
+        context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
+      }
     }
 
     template <int W>

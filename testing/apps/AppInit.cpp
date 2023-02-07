@@ -4,6 +4,7 @@
 #include "AppInit.h"
 // rkcommon
 #include "rkcommon/common.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 static VKLDevice device = nullptr;
 
@@ -23,10 +24,20 @@ void initializeOpenVKL()
   if (!device) {
     vklInit();
 #ifdef OPENVKL_TESTING_GPU
+
+    // the env var OPENVKL_GPU_DEVICE_DEBUG_USE_CPU is intended for debug
+    // purposes only, and forces the Open VKL GPU device to use the CPU
+    // instead.
+    const bool useCpu =
+        rkcommon::utility::getEnvVar<int>("OPENVKL_GPU_DEVICE_DEBUG_USE_CPU")
+            .value_or(0);
+
     syclQueuePtr = new sycl::queue(
-        IntelGPUDeviceSelector,
-        {sycl::property::queue::enable_profiling(), // We need it for profiling kernel execution times
-         sycl::property::queue::in_order()}); // By default sycl queues are out of order
+        useCpu ? sycl::cpu_selector_v : IntelGPUDeviceSelector,
+        {sycl::property::queue::enable_profiling(),  // We need it for profiling
+                                                     // kernel execution times
+         sycl::property::queue::in_order()});  // By default sycl queues are out
+                                               // of order
     sycl::context syclContext = syclQueuePtr->get_context();
     std::cout << std::endl
               << "Target SYCL device: "

@@ -6,6 +6,7 @@
 #include <openvkl/device/openvkl.h>
 #include <iomanip>
 #include <iostream>
+#include "rkcommon/utility/getEnvVar.h"
 
 void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 {
@@ -264,10 +265,18 @@ int main()
     bool match                   = device.is_gpu() &&
                  (deviceName.find("Intel(R) Graphics") != std::string::npos) &&
                  device.get_backend() == sycl::backend::ext_oneapi_level_zero;
-    return match;
+    return match ? 1 : -1;
   };
 
-  sycl::queue syclQueue(IntelGPUDeviceSelector);
+  // the env var OPENVKL_GPU_DEVICE_DEBUG_USE_CPU is intended for debug
+  // purposes only, and forces the Open VKL GPU device to use the CPU
+  // instead.
+  const bool useCpu =
+      rkcommon::utility::getEnvVar<int>("OPENVKL_GPU_DEVICE_DEBUG_USE_CPU")
+          .value_or(0);
+
+  sycl::queue syclQueue(useCpu ? sycl::cpu_selector_v : IntelGPUDeviceSelector);
+  
   sycl::context syclContext = syclQueue.get_context();
 
   std::cout << "Target SYCL device: "

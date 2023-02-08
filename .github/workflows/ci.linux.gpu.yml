@@ -76,6 +76,7 @@ jobs:
         ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
         ./bin/vklExamplesGPU -renderer hit_iterator_renderer_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
         ./bin/vklExamplesGPU -renderer interval_iterator_debug_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
+        ./bin/vklBenchmarkGPU
 
   test-dg2-ubuntu22_04:
     secrets: inherit
@@ -100,3 +101,4 @@ jobs:
         ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
         ./bin/vklExamplesGPU -renderer hit_iterator_renderer_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
         ./bin/vklExamplesGPU -renderer interval_iterator_debug_gpu -batch -printStats -spp 2 -framebufferSize 1024 1024
+        ./bin/vklBenchmarkGPU

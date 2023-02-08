@@ -112,12 +112,10 @@ namespace openvkl {
     void HitIteratorRendererGpuKernel::setObjectAttributes(
         const VKLSampler sampler,
         const box3f volumeBounds,
-        const RendererParams &rendererParams,
-        const HitIteratorRendererParams &params)
+        const RendererParams &rendererParams)
     {
       RendererGpuKernel::setObjectAttributes(
           sampler, volumeBounds, rendererParams);
-      this->params = params;
     }
 
   }  // namespace examples

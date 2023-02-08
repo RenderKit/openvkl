@@ -44,6 +44,10 @@ namespace openvkl {
 
       TRendererGpuKernelSubtype *prepareGpuKernelObject()
       {
+        // We need to make sure that we class of the object we want to copy
+        // is trivially copyable since we're using memcpy for that.
+        static_assert(std::is_trivially_copyable<TRendererGpuKernelSubtype>());
+
         // Possible optimization - not all renderers have these params
         // changed for each frame so we don't need to copy this object
         // on each frame.

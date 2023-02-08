@@ -91,8 +91,7 @@ namespace openvkl {
     {
       gpuKernelRenderer->setObjectAttributes(scene.volume.getSampler(),
                                              scene.volume.getBounds(),
-                                             *rendererParams,
-                                             *params);
+                                             *rendererParams);
     }
 
     sycl::event HitIteratorRendererGpu::invokeGpuRenderPixel(

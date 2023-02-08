@@ -303,12 +303,11 @@ int main(int argc, char **argv)
                                   windowDimension,
                                   defaultVolumeDimension);
 
-  // TODO: seeing crash on GPU with this renderer
-  /*BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
+  BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   hit_iterator / 512 / gpu,
                                   "hit_iterator_renderer_gpu",
                                   windowDimension,
-                                  defaultVolumeDimension);*/
+                                  defaultVolumeDimension);
 
   BENCHMARK_CAPTURE_IF_COMPATIBLE(render_wavelet_structured_regular,
                                   ray_march_iterator / 512 / gpu,

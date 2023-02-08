@@ -15,14 +15,10 @@ namespace openvkl {
 
     class HitIteratorRendererGpuKernel final : public RendererGpuKernel
     {
-     private:
-      HitIteratorRendererParams params;
-
      public:
       void setObjectAttributes(const VKLSampler sampler,
                                const box3f volumeBounds,
-                               const RendererParams &rendererParams,
-                               const HitIteratorRendererParams &params);
+                               const RendererParams &rendererParams);
 
 
       SYCL_EXTERNAL void renderPixel(

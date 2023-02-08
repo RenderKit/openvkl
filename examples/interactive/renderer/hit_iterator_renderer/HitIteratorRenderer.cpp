@@ -52,7 +52,11 @@ namespace openvkl {
     template <class R>
     void HitIteratorRendererShared<R>::beforeStart()
     {
-      assert(!hitContext);
+      if (hitContext) {
+        vklRelease(*hitContext);
+        hitContext = nullptr;
+      }
+      
       VKLSampler sampler = scene->volume.getSampler();
       hitContext         = rkcommon::make_unique<VKLHitIteratorContext>(
           vklNewHitIteratorContext(sampler));

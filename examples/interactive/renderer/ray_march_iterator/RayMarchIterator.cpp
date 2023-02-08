@@ -60,7 +60,11 @@ namespace openvkl {
     template <class R>
     void RayMarchIteratorShared<R>::beforeStart()
     {
-      assert(!intervalContext);
+      if (intervalContext) {
+        vklRelease(*intervalContext);
+        intervalContext = nullptr;
+      }
+
       VKLSampler sampler = scene->volume.getSampler();
       intervalContext    = rkcommon::make_unique<VKLIntervalIteratorContext>(
           vklNewIntervalIteratorContext(sampler));

@@ -41,7 +41,7 @@ namespace openvkl {
     template <int W>
     void GPUDevice<W>::freeMemState(api::memstate *container) const
     {
-      delete (int *)container->privateManagement;
+      BufferSharedDelete((ISPCRTMemoryView)container->privateManagement);
       delete container;
     }
 

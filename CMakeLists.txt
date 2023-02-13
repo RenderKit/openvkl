@@ -57,7 +57,7 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
 # rkcommon includes FindTBB.cmake, needed by Embree
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${rkcommon_DIR})
 
-find_package(embree 3.13.1 REQUIRED)
+find_package(embree 4.0.0 REQUIRED)
 openvkl_create_embree_target()
 
 ## Build library, examples, and tests ##

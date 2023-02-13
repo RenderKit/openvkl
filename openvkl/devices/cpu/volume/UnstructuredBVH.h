@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include "../common/math.h"
-#include "embree3/rtcore.h"
+#include "embree4/rtcore.h"
 #include "rkcommon/tasking/parallel_for.h"
 
 namespace openvkl {

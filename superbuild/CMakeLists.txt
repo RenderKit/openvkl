@@ -193,10 +193,10 @@ endif()
 
 option(BUILD_GLFW "Build glfw or search in environment?" ON)
 if (BUILD_GLFW)
-  set(GLFW_VERSION "3.2.1")
+  set(GLFW_VERSION "3.3.8")
   set(GLFW_URL "https://github.com/glfw/glfw/archive/${GLFW_VERSION}.zip"
     CACHE STRING "URL of the GLFW source archive.")
-  set(GLFW_HASH "0c623f65a129c424d0fa45591694fde3719ad4a0955d4835182fda71b255446f"
+  set(GLFW_HASH "8106e1a432305a8780b986c24922380df6a009a96b2ca590392cb0859062c8ff"
     CACHE STRING "SHA256 hash of the GLFW source archive.")
   include(dep_glfw)
 endif()

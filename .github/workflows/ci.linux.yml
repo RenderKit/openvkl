@@ -62,21 +62,6 @@ jobs:
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
-  build-centos7-icc15:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      submodules: true
-      #ICC 2015 req. old GCC (<7.0?) this is why we're using old docker image
-      image: ospray/docker-images:centos7-mod
-      cmd: |
-        module load cmake
-        module load intel/2015
-        export CC=icc
-        export CXX=icpc
-        export CXXFLAGS="-static-intel -fPIC"
-        gitlab/build.sh
-
   build-centos7-icx:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main

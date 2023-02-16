@@ -15,6 +15,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
       artifact-out: build-macOS
@@ -39,6 +40,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
       artifact-out: build-macOS-TBB2020
@@ -63,6 +65,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "macOS", "build", "arm" ]'
       artifact-out: build-macOS-arm

@@ -11,24 +11,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  download-dpcpp-gfx:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/get_dpcpp_gfx_linux.yml@main
-    with:
-      dpcpp-version: sycl-nightly/20221214
-      gfx-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
 
   build-gpu-ubuntu22_04:
     secrets: inherit
-    needs: download-dpcpp-gfx
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       submodules: true
       image: ubuntu:22.04
       artifact-out: build-gpu-ubuntu22_04
       artifact-path: ./build/install ./build/openvkl/build
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      dpcpp-version: sycl-nightly/20221214
+      gfx-driver-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
       cmd: |
         export CC=clang
         export CXX=clang++
@@ -36,15 +29,15 @@ jobs:
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON"
 
   test-build-from-install-ubuntu22_04-dg2:
-    needs: [ download-dpcpp-gfx, build-gpu-ubuntu22_04 ]
+    needs: [ build-gpu-ubuntu22_04 ]
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu-ubuntu22_04
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      dpcpp-version: sycl-nightly/20221214
+      gfx-driver-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export CC=clang
@@ -55,7 +48,7 @@ jobs:
 
   test-pvc-ubuntu22_04:
     secrets: inherit
-    needs: [ download-dpcpp-gfx, build-gpu-ubuntu22_04 ]
+    needs: [ build-gpu-ubuntu22_04 ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       submodules: true
@@ -64,8 +57,8 @@ jobs:
       artifact-in: build-gpu-ubuntu22_04
       artifact-out: test-pvc-ubuntu22_04
       artifact-path: ./build/install/*.pfm
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      dpcpp-version: sycl-nightly/20221214
+      gfx-driver-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -80,7 +73,7 @@ jobs:
 
   test-dg2-ubuntu22_04:
     secrets: inherit
-    needs: [ download-dpcpp-gfx, build-gpu-ubuntu22_04 ]
+    needs: [ build-gpu-ubuntu22_04 ]
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       submodules: true
@@ -89,8 +82,8 @@ jobs:
       artifact-in: build-gpu-ubuntu22_04
       artifact-out: test-dg2-ubuntu22_04
       artifact-path: ./build/install/*.pfm
-      gfx-path: ${{ needs.download-dpcpp-gfx.outputs.gfx-path }}
-      dpcpp-path: ${{ needs.download-dpcpp-gfx.outputs.dpcpp-path }}
+      dpcpp-version: sycl-nightly/20221214
+      gfx-driver-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install

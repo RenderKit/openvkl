@@ -57,6 +57,7 @@ jobs:
       artifact-in: build-gpu-ubuntu22_04
       artifact-out: test-pvc-ubuntu22_04
       artifact-path: ./build/install/*.pfm
+      artifact-on-failure: true
       dpcpp-version: sycl-nightly/20221214
       gfx-driver-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
       options: --device=/dev/dri:/dev/dri
@@ -82,6 +83,7 @@ jobs:
       artifact-in: build-gpu-ubuntu22_04
       artifact-out: test-dg2-ubuntu22_04
       artifact-path: ./build/install/*.pfm
+      artifact-on-failure: true
       dpcpp-version: sycl-nightly/20221214
       gfx-driver-version: gfx-driver-builds/ci/master/gfx-driver-ci-master-12953/artifacts/Linux/Ubuntu/22.04/Release
       options: --device=/dev/dri:/dev/dri

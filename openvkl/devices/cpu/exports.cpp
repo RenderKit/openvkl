@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "api/CPUDevice.h"
-#include "openvkl/common/ManagedObject.h"
+#include "../common/ManagedObject.h"
+#include "../common/VKLCommon.h"
 
 // For Windows in particular, we need registered object creation functions
 // available in the top level module library, as exports from dependencies will
@@ -27,14 +28,26 @@ VKL_WRAP_MODULE_REGISTRATION(cpu_device_16)
 extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_cpu_device()
 {
 #if VKL_TARGET_WIDTH_ENABLED_4
-  openvkl_init_module_cpu_device_4();
+  try {
+    openvkl::loadLocalModule("cpu_device_4");
+  } catch (const std::exception &e) {
+    openvkl::postLogMessage(nullptr, e.what(), VKL_LOG_ERROR);
+  }
 #endif
 
 #if VKL_TARGET_WIDTH_ENABLED_8
-  openvkl_init_module_cpu_device_8();
+  try {
+    openvkl::loadLocalModule("cpu_device_8");
+  } catch (const std::exception &e) {
+    openvkl::postLogMessage(nullptr, e.what(), VKL_LOG_ERROR);
+  }
 #endif
 
 #if VKL_TARGET_WIDTH_ENABLED_16
-  openvkl_init_module_cpu_device_16();
+  try {
+    openvkl::loadLocalModule("cpu_device_16");
+  } catch (const std::exception &e) {
+    openvkl::postLogMessage(nullptr, e.what(), VKL_LOG_ERROR);
+  }
 #endif
 }

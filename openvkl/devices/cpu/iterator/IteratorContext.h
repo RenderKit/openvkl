@@ -4,7 +4,7 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
-#include "openvkl/common/StructShared.h"
+#include "../common/StructShared.h"
 #include "IteratorContextShared.h"
 
 using namespace rkcommon::math;

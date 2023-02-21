@@ -29,6 +29,20 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(openvkl_macros)
 include(openvkl_ispc)
 
+## Version header ##
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/openvkl/include/${PROJECT_NAME}/version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
+  @ONLY
+)
+
+include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME})
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+)
+
 ## openvkl specific configuration ##
 
 option(BUILD_EXAMPLES "Build example applications." ON)

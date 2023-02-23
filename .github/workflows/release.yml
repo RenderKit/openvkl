@@ -77,7 +77,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      runs-on: '[ "macOS", "sign", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "sign", "x86_64" ]'
       artifact-out: release-macos
       artifact-path: ./*.zip
       cmd: |
@@ -113,7 +113,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: release-macos
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="1.4.0"

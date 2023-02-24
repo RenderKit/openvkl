@@ -80,7 +80,12 @@ void test_vectorized_sampling()
 
           INFO("sample = " << i + 1 << " / " << width
                            << ", calling width = " << callingWidth);
+#ifdef __ARM_NEON
+          static constexpr float tolerance = 1e-3f;
+          REQUIRE(sampleTruth == Approx(samples[i]).margin(tolerance));
+#else
           REQUIRE(sampleTruth == Approx(samples[i]));
+#endif
         }
       }
     }

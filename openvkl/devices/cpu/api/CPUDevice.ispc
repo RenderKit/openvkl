@@ -14,7 +14,7 @@ export uniform int32 EXPORT_UNIQUE(ISPC_getProgramCount)
 export uniform uint32 EXPORT_UNIQUE(ISPC_getTarget)
 {
 #if defined(ISPC_TARGET_NEON)
-  return VKL_ISPC_TARGET_NEON;
+  return VKL_ISPC_TARGET_NEON;  // same for both NEON and NEON2X
 #elif defined(ISPC_TARGET_SSE2)
   return VKL_ISPC_TARGET_SSE2;
 #elif defined(ISPC_TARGET_SSE4)

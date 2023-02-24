@@ -33,7 +33,7 @@ inline std::string stringForVKLISPCTarget(VKLISPCTarget target)
 {
   switch (target) {
   case VKL_ISPC_TARGET_NEON:
-    return "NEON";
+    return "NEON";  // same for both NEON and NEON2X
   case VKL_ISPC_TARGET_SSE2:
     return "SSE2";
   case VKL_ISPC_TARGET_SSE4:

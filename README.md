@@ -1,6 +1,6 @@
 # Intel® Open Volume Kernel Library
 
-This is release v1.3.1 of Intel® Open VKL. For changes and new features
+This is release v1.3.2 of Intel® Open VKL. For changes and new features
 see the [changelog](CHANGELOG.md). Visit http://www.openvkl.org for more
 information.
 
@@ -32,6 +32,14 @@ In addition to the volume kernels, Open VKL provides tutorials and
 example renderers to demonstrate how to best use the Open VKL API.
 
 ## Version History
+
+### Open VKL 1.3.2
+
+- Move to and require latest versions of RenderKit dependencies: Embree
+  v4.0.0 and rkcommon v1.11.0
+- ARM support: expose ISPC neon-i32x8 target via OPENVKL_ISA_NEON2X
+  CMake option
+- Superbuild updates to latest versions of dependencies
 
 ### Open VKL 1.3.1
 

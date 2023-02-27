@@ -14,7 +14,7 @@ auto IntelGPUDeviceSelector      = [](const sycl::device &device) {
   using namespace sycl::info;
   const std::string deviceName = device.get_info<device::name>();
   bool match                   = device.is_gpu() &&
-               (deviceName.find("Intel(R) Graphics") != std::string::npos) &&
+               device.get_info<sycl::info::device::vendor_id>() == 0x8086 &&
                device.get_backend() == sycl::backend::ext_oneapi_level_zero;
   return match ? 1 : -1;
 };

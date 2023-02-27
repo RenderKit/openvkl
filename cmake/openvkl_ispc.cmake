@@ -97,8 +97,8 @@ macro(openvkl_configure_ispc_isa)
     endif()
   else()
     # only one Neon target can be enabled; default to NEON2X
-    option(OPENVKL_ISA_NEON "Enables NEON ISA." OFF)
-    option(OPENVKL_ISA_NEON2X "Enables NEON2X ISA." ON)
+    option(OPENVKL_ISA_NEON "Enables NEON ISA." ON)
+    option(OPENVKL_ISA_NEON2X "Enables NEON2X ISA." OFF)
 
     if (OPENVKL_ISA_NEON AND OPENVKL_ISA_NEON2X)
       message(FATAL_ERROR "Only one Neon ISA may be enabled; choose either NEON or NEON2X")

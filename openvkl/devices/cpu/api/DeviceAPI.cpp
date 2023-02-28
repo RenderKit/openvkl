@@ -4,7 +4,7 @@
 #include "../../../common/IteratorBase.h"
 #include "../common/simd.h"
 #include "AddDeviceAPIs.h"
-#include "openvkl/common/ManagedObject.h"
+#include "../common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
 using namespace openvkl;

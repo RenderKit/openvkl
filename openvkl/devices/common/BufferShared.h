@@ -5,7 +5,7 @@
 
 #include <string.h>
 #include "../api/Device.h"
-#include "ispcrt.hpp"
+#include "ispcrt/ispcrt.hpp"
 
 namespace openvkl {
 

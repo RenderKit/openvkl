@@ -28,26 +28,14 @@ VKL_WRAP_MODULE_REGISTRATION(cpu_device_16)
 extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_cpu_device()
 {
 #if VKL_TARGET_WIDTH_ENABLED_4
-  try {
-    openvkl::loadLocalModule("cpu_device_4");
-  } catch (const std::exception &e) {
-    openvkl::postLogMessage(nullptr, e.what(), VKL_LOG_ERROR);
-  }
+  openvkl_init_module_cpu_device_4();
 #endif
 
 #if VKL_TARGET_WIDTH_ENABLED_8
-  try {
-    openvkl::loadLocalModule("cpu_device_8");
-  } catch (const std::exception &e) {
-    openvkl::postLogMessage(nullptr, e.what(), VKL_LOG_ERROR);
-  }
+  openvkl_init_module_cpu_device_8();
 #endif
 
 #if VKL_TARGET_WIDTH_ENABLED_16
-  try {
-    openvkl::loadLocalModule("cpu_device_16");
-  } catch (const std::exception &e) {
-    openvkl::postLogMessage(nullptr, e.what(), VKL_LOG_ERROR);
-  }
+  openvkl_init_module_cpu_device_16();
 #endif
 }

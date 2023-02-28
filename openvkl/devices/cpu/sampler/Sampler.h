@@ -10,7 +10,7 @@
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
-#include "openvkl/devices/common/StructShared.h"
+#include "../../common/StructShared.h"
 #include "SamplerShared.h"
 
 using namespace rkcommon;

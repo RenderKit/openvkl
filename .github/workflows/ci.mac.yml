@@ -88,7 +88,8 @@ jobs:
         export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
         ./build/openvkl/build/vklTutorialCPU
         ./build/openvkl/build/vklTutorialISPC
-        ./build/openvkl/build/vklTests --durations yes
+        ./build/openvkl/build/vklExamplesCPU -batch -printStats -spp 50 -framebufferSize 1024 1024
+        ./build/openvkl/build/vklTestsCPU --durations yes
 
   build-macOS-arm-neon2x:
     secrets: inherit

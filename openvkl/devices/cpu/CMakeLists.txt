@@ -1,7 +1,6 @@
 ## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-include(openvkl_ispc)
 include(openvkl_macros)
 
 include_directories_ispc(
@@ -274,6 +273,8 @@ target_include_directories(openvkl_module_cpu_device
 target_link_libraries(openvkl_module_cpu_device
   PUBLIC
     openvkl
+  PRIVATE
+    ${ACTIVE_WIDTH_TARGETS}
 )
 
 openvkl_install_library(openvkl_module_cpu_device)

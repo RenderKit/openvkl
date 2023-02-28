@@ -102,6 +102,7 @@ if (BUILD_TESTING)
 
   include_directories_ispc(
     ${PROJECT_SOURCE_DIR}/openvkl/include
+    ${PROJECT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu
     ${PROJECT_SOURCE_DIR}/openvkl/devices/cpu/include
     ${RKCOMMON_INCLUDE_DIRS}

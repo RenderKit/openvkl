@@ -1,8 +1,6 @@
 ## Copyright 2019 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-include(openvkl_ispc)
-
 if(WIN32)
   set(DEF_FILE common/ispc_defs.def)
 endif()

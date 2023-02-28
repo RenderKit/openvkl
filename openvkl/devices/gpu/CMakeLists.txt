@@ -1,7 +1,6 @@
 ## Copyright 2022 Intel Corporation
 ## SPDX-License-Identifier: Apache-2.0
 
-include(openvkl_ispc)
 include(openvkl_macros)
 include(openvkl_dpcpp)
 

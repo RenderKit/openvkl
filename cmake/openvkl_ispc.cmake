@@ -4,7 +4,7 @@
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.18.0")
+set(ISPC_VERSION_WORKING "1.19.0" "1.18.0")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)

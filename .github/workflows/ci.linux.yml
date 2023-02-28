@@ -15,6 +15,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:7
       artifact-out: build-centos7
@@ -38,6 +39,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:7
       artifact-out: build-centos7-icc
@@ -62,25 +64,11 @@ jobs:
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
-  build-centos7-icc15:
-    secrets: inherit
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
-    with:
-      submodules: true
-      #ICC 2015 req. old GCC (<7.0?) this is why we're using old docker image
-      image: ospray/docker-images:centos7-mod
-      cmd: |
-        module load cmake
-        module load intel/2015
-        export CC=icc
-        export CXX=icpc
-        export CXXFLAGS="-static-intel -fPIC"
-        gitlab/build.sh
-
   build-centos7-icx:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:7
       artifact-out: build-centos7-icx
@@ -110,6 +98,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:7
       artifact-out: build-centos7-icx-tbb2020
@@ -139,6 +128,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:7
       artifact-out: build-centos7-icx-tbb2020-avx512_8
@@ -168,6 +158,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:8
       artifact-out: build-centos8
@@ -192,6 +183,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: centos:8
       artifact-out: build-centos8-module-cmake
@@ -216,6 +208,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ubuntu:18.04
       artifact-out: build-ubuntu18_04
@@ -227,6 +220,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ubuntu:20.04
       artifact-out: build-ubuntu20_04
@@ -238,6 +232,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ubuntu:22.04
       artifact-out: build-ubuntu22_04
@@ -288,6 +283,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-arch
@@ -311,6 +307,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-arch-clang
@@ -336,6 +333,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-arch-address-sanitizer
@@ -362,6 +360,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-arch-debug
@@ -385,6 +384,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-arch-TBB2020
@@ -408,6 +408,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-arch-devel-rkdeps
@@ -431,6 +432,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: ospray/docker-images:arch
       artifact-out: build-linux-arch

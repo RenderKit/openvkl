@@ -13,7 +13,7 @@ static HMODULE libgl;
 
 static void open_libgl(void)
 {
-	libgl = LoadLibraryA("opengl32.dll");
+	libgl = LoadLibraryExA("opengl32.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
 }
 
 static void close_libgl(void)

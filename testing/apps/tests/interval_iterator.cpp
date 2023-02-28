@@ -344,6 +344,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
     SECTION("structured volumes")
     {
       auto v = rkcommon::make_unique<WaveletStructuredRegularVolume<float>>(
@@ -351,7 +352,9 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
       scalar_single_attribute_interval_iterator_tests(v);
     }
+#endif
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
     SECTION("unstructured volumes")
     {
       auto v = rkcommon::make_unique<WaveletUnstructuredProceduralVolume>(
@@ -359,7 +362,9 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
       scalar_single_attribute_interval_iterator_tests(v);
     }
+#endif
 
+#if OPENVKL_DEVICE_CPU_VDB
     SECTION("VDB volumes")
     {
       for (const auto &repackNodes : {true, false}) {
@@ -379,6 +384,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
         }
       }
     }
+#endif
   }
 
   SECTION("multi attribute interval iteration")
@@ -388,6 +394,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
     SECTION("structured volumes")
     {
       std::shared_ptr<TestingStructuredVolumeMulti> v(
@@ -400,7 +407,9 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
 
       scalar_multi_attribute_interval_iterator_tests(v);
     }
+#endif
 
+#if OPENVKL_DEVICE_CPU_VDB
     SECTION("VDB volumes")
     {
       for (const auto &repackNodes : {true, false}) {
@@ -423,8 +432,10 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
         }
       }
     }
+#endif
   }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
   SECTION("structured volumes: interval nominalDeltaT")
   {
     // use a different volume to facilitate nominalDeltaT tests
@@ -498,6 +509,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
       }
     }
   }
+#endif
 
   shutdownOpenVKL();
 }

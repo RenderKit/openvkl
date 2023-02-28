@@ -7,6 +7,7 @@
 using namespace openvkl::testing;
 using openvkl::testing::WaveletVdbVolumeFloat;
 
+#if OPENVKL_DEVICE_CPU_VDB
 TEST_CASE("VDB volume motion blur", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -43,3 +44,4 @@ TEST_CASE("VDB volume motion blur", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

@@ -10,6 +10,8 @@
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/math/vec.h"
+#include "../common/StructShared.h"
+#include "SamplerShared.h"
 
 using namespace rkcommon;
 
@@ -66,9 +68,9 @@ namespace openvkl {
     class Volume;
 
     template <int W>
-    struct Sampler : public ManagedObject
+    struct Sampler : public AddStructShared<ManagedObject, ispc::SamplerShared>
     {
-      Sampler()           = default;
+      Sampler() {}  // not = default, due to ICC 19 compiler bug
       Sampler(Sampler &&) = delete;
       Sampler &operator=(Sampler &&) = delete;
       Sampler(const Sampler &)       = delete;
@@ -150,10 +152,6 @@ namespace openvkl {
       virtual const IteratorFactory<W, HitIterator, HitIteratorContext>
           &getHitIteratorFactory() const = 0;
 
-      void *getISPCEquivalent() const;
-
-     protected:
-      void *ispcEquivalent{nullptr};
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -239,12 +237,6 @@ namespace openvkl {
       }
     }
 
-    template <int W>
-    void *Sampler<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
-    }
-
     ///////////////////////////////////////////////////////////////////////////
 
     // SamplerBase is the base class for all concrete sampler types.
@@ -258,9 +250,14 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory>
-    struct SamplerBase : public Sampler<W>
+    struct SamplerBase
+        : public AddStructShared<Sampler<W>, ispc::SamplerBaseShared>
     {
-      explicit SamplerBase(VolumeT<W> &volume) : volume(&volume) {}
+      explicit SamplerBase(VolumeT<W> &volume)
+          : AddStructShared<Sampler<W>, ispc::SamplerBaseShared>(),
+            volume(&volume)
+      {
+      }
 
       VolumeT<W> &getVolume() override
       {

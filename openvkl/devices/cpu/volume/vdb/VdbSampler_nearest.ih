@@ -13,7 +13,7 @@
 // for vertex-centered data, we need to offset the index coordinate by one half
 // voxel for correct results.
 inline uniform float VdbSampler_getNearestIndexOffset(
-    const VdbSampler *uniform sampler)
+    const VdbSamplerShared *uniform sampler)
 {
   return sampler->grid->constantCellData ? 0.f : 0.5f;
 }
@@ -22,7 +22,8 @@ inline uniform float VdbSampler_getNearestIndexOffset(
  * Nearest neighbor interpolation is the fastest version, but also gives
  * blocky results. This should be good for indirect light etc.
  */
-inline float VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
+inline float VdbSampler_interpolateNearest(const VdbSamplerShared *uniform
+                                               sampler,
                                            const vec3f &indexCoordinates,
                                            const float &time,
                                            const uniform uint32 attributeIndex)
@@ -39,7 +40,7 @@ inline float VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
 }
 
 inline float VdbSampler_interpolate_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -55,13 +56,13 @@ inline float VdbSampler_interpolate_denseNearest(
   return VdbSampler_traverseAndSample_dense(sampler, ic, time, attributeIndex);
 }
 
-inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
-                                          const vec3f &indexCoordinates,
-                                          const float &time,
-                                          const uniform uint32 M,
-                                          const uint32 *uniform
-                                              attributeIndices,
-                                          float *uniform samples)
+inline void VdbSampler_interpolateNearest(
+    const VdbSamplerShared *uniform sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -84,7 +85,7 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 M,
@@ -108,7 +109,7 @@ inline void VdbSampler_interpolate_denseNearest(
 }
 
 inline uniform float VdbSampler_interpolateNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 attributeIndex)
@@ -125,7 +126,7 @@ inline uniform float VdbSampler_interpolateNearest(
 }
 
 inline uniform float VdbSampler_interpolate_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 attributeIndex)
@@ -141,13 +142,13 @@ inline uniform float VdbSampler_interpolate_denseNearest(
   return VdbSampler_traverseAndSample_dense(sampler, ic, time, attributeIndex);
 }
 
-inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
-                                          const uniform vec3f &indexCoordinates,
-                                          const uniform float time,
-                                          const uniform uint32 M,
-                                          const uint32 *uniform
-                                              attributeIndices,
-                                          float *uniform samples)
+inline void VdbSampler_interpolateNearest(
+    const VdbSamplerShared *uniform sampler,
+    const uniform vec3f &indexCoordinates,
+    const uniform float time,
+    const uniform uint32 M,
+    const uint32 *uniform attributeIndices,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -168,7 +169,7 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform vec3f &indexCoordinates,
     const uniform float time,
     const uniform uint32 M,
@@ -189,13 +190,13 @@ inline void VdbSampler_interpolate_denseNearest(
   }
 }
 
-inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
-                                          const uniform unsigned int N,
-                                          const vec3f *uniform
-                                              objectCoordinates,
-                                          const float *uniform times,
-                                          const uint32 uniform attributeIndex,
-                                          float *uniform samples)
+inline void VdbSampler_interpolateNearest(
+    const VdbSamplerShared *uniform sampler,
+    const uniform unsigned int N,
+    const vec3f *uniform objectCoordinates,
+    const float *uniform times,
+    const uint32 uniform attributeIndex,
+    float *uniform samples)
 {
   assert(!sampler->grid->dense);
 
@@ -215,7 +216,7 @@ inline void VdbSampler_interpolateNearest(const VdbSampler *uniform sampler,
 }
 
 inline void VdbSampler_interpolate_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -240,7 +241,7 @@ inline void VdbSampler_interpolate_denseNearest(
 }
 
 inline void VdbSampler_interpolateNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -275,7 +276,7 @@ inline void VdbSampler_interpolateNearest(
 }
 
 inline void VdbSampler_interpolate_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -310,7 +311,7 @@ inline void VdbSampler_interpolate_denseNearest(
  * say everywhere...)
  */
 inline vec3f VdbSampler_computeGradientNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -321,7 +322,7 @@ inline vec3f VdbSampler_computeGradientNearest(
 }
 
 inline vec3f VdbSampler_computeGradient_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     const vec3f &indexCoordinates,
     const float &time,
     const uniform uint32 attributeIndex)
@@ -332,7 +333,7 @@ inline vec3f VdbSampler_computeGradient_denseNearest(
 }
 
 inline void VdbSampler_computeGradientNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,
@@ -347,7 +348,7 @@ inline void VdbSampler_computeGradientNearest(
 }
 
 inline void VdbSampler_computeGradient_denseNearest(
-    const VdbSampler *uniform sampler,
+    const VdbSamplerShared *uniform sampler,
     uniform unsigned int N,
     const vec3f *uniform objectCoordinates,
     const float *uniform times,

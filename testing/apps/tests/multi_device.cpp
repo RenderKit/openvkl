@@ -127,6 +127,7 @@ bool test_sampling(const std::shared_ptr<DeviceContext> deviceContext)
   return success;
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Multiple devices", "[multi_device]")
 {
   vklLoadModule("cpu_device");
@@ -199,3 +200,4 @@ TEST_CASE("Multiple devices", "[multi_device]")
 
   REQUIRE(threadedTestFailures == 0);
 }
+#endif

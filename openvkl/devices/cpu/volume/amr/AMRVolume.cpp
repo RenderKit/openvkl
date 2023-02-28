@@ -64,14 +64,16 @@ namespace openvkl {
     template <int W>
     AMRVolume<W>::AMRVolume()
     {
-      this->ispcEquivalent = CALL_ISPC(AMRVolume_create, this);
+      CALL_ISPC(AMRVolume_Constructor, this->getSh());
+      this->SharedStructInitialized = true;
     }
 
     template <int W>
     AMRVolume<W>::~AMRVolume()
     {
-      if (this->ispcEquivalent) {
-        CALL_ISPC(AMRVolume_Destructor, this->ispcEquivalent);
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(AMRVolume_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
       }
 
       if (rtcBVH)
@@ -97,8 +99,7 @@ namespace openvkl {
 
       if (data != nullptr)  // TODO: support data updates
       {
-        CALL_ISPC(
-            Volume_setBackground, this->ispcEquivalent, background->data());
+        this->setBackground(background->data());
         return;
       }
 
@@ -154,17 +155,17 @@ namespace openvkl {
           this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
       spacing = gridSpacing;
 
-      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
+      this->setBackground(background->data());
 
       CALL_ISPC(AMRVolume_set,
-                this->ispcEquivalent,
+                this->getSh(),
                 (ispc::box3f &)bounds,
                 samplingStep,
                 (const ispc::vec3f &)gridOrigin,
                 (const ispc::vec3f &)gridSpacing);
 
       CALL_ISPC(AMRVolume_setAMR,
-                this->ispcEquivalent,
+                this->getSh(),
                 accel->node.size(),
                 &accel->node[0],
                 accel->leaf.size(),
@@ -178,7 +179,7 @@ namespace openvkl {
       // This enables empty space skipping within the hierarchical structure
       tasking::parallel_for(accel->leaf.size(), [&](size_t leafID) {
         CALL_ISPC(
-            AMRVolume_computeValueRangeOfLeaf, this->ispcEquivalent, leafID);
+            AMRVolume_computeValueRangeOfLeaf, this->getSh(), leafID);
       });
 
       // compute value range over the full volume
@@ -189,13 +190,13 @@ namespace openvkl {
       // need to do this after value ranges are known
       buildBvh();
 
-      CALL_ISPC(AMRVolume_setBvh, this->ispcEquivalent, (void *)(rtcRoot));
+      CALL_ISPC(AMRVolume_setBvh, this->getSh(), (void *)(rtcRoot));
     }
 
     template <int W>
     Sampler<W> *AMRVolume<W>::newSampler()
     {
-      return new AMRSampler<W>(this);
+      return new AMRSampler<W>(*this);
     }
 
     template <int W>

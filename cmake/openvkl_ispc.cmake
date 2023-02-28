@@ -4,7 +4,7 @@
 option(OPENVKL_ISPC_FAST_MATH "enable ISPC fast-math optimizations" OFF)
 
 # ISPC versions to look for, in decending order (newest first)
-set(ISPC_VERSION_WORKING "1.18.0")
+set(ISPC_VERSION_WORKING "1.19.0" "1.18.0")
 list(GET ISPC_VERSION_WORKING -1 ISPC_VERSION_REQUIRED)
 
 if (NOT ISPC_EXECUTABLE)
@@ -96,7 +96,13 @@ macro(openvkl_configure_ispc_isa)
       message(FATAL_ERROR "Only one AVX512 ISA may be enabled; choose either AVX512KNL, AVX512SKX or AVX512SKX_8_WIDE")
     endif()
   else()
+    # only one Neon target can be enabled; default to NEON2X
     option(OPENVKL_ISA_NEON "Enables NEON ISA." ON)
+    option(OPENVKL_ISA_NEON2X "Enables NEON2X ISA." OFF)
+
+    if (OPENVKL_ISA_NEON AND OPENVKL_ISA_NEON2X)
+      message(FATAL_ERROR "Only one Neon ISA may be enabled; choose either NEON or NEON2X")
+    endif()
   endif()
 
   # generate final ISPC target lists; both a full list of all targets, and lists
@@ -116,6 +122,12 @@ macro(openvkl_configure_ispc_isa)
     set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} neon-i32x4)
     set(OPENVKL_ISPC_TARGET_LIST_4 ${OPENVKL_ISPC_TARGET_LIST_4} neon-i32x4)
     message(STATUS "OpenVKL NEON ISA target enabled.")
+  endif()
+
+  if (OPENVKL_ISA_NEON2X)
+    set(OPENVKL_ISPC_TARGET_LIST ${OPENVKL_ISPC_TARGET_LIST} neon-i32x8)
+    set(OPENVKL_ISPC_TARGET_LIST_8 ${OPENVKL_ISPC_TARGET_LIST_8} neon-i32x8)
+    message(STATUS "OpenVKL NEON2X ISA target enabled.")
   endif()
 
   if (OPENVKL_ISA_AVX)

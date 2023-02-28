@@ -7,6 +7,9 @@
 #include "../Volume.h"
 #include "AMRAccel.h"
 #include "rkcommon/memory/RefCount.h"
+#include "AMRVolumeShared.h"
+#include "../UnstructuredVolumeBase.h"
+#include "openvkl/common/StructShared.h"
 
 using namespace rkcommon::memory;
 
@@ -14,7 +17,8 @@ namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    struct AMRVolume : public Volume<W>
+    struct AMRVolume
+        : public AddStructShared<UnstructuredVolumeBase<W>, ispc::AMRVolume>
     {
       AMRVolume();
       ~AMRVolume() override;

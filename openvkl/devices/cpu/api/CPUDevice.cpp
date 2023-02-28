@@ -828,6 +828,8 @@ VKL_WRAP_VOLUME_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_amr))
 VKL_WRAP_VOLUME_REGISTRATION(
     VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegular))
 VKL_WRAP_VOLUME_REGISTRATION(
+    VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy))
+VKL_WRAP_VOLUME_REGISTRATION(
     VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredSpherical))
 VKL_WRAP_VOLUME_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_unstructured))
 VKL_WRAP_VOLUME_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_vdb))
@@ -849,34 +851,56 @@ extern "C" OPENVKL_DLLEXPORT void CONCAT1(openvkl_init_module_cpu_device_,
   VKL_REGISTER_DEVICE_FACTORY_FCN(VKL_MAKE_TARGET_WIDTH_NAME(internal_cpu),
                                   VKL_MAKE_TARGET_WIDTH_NAME(cpu));
 
+#if OPENVKL_DEVICE_CPU_AMR
   VKL_REGISTER_VOLUME_FACTORY_FCN(VKL_MAKE_TARGET_WIDTH_NAME(internal_amr),
                                   VKL_MAKE_TARGET_WIDTH_NAME(amr));
+#endif
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegular),
       VKL_MAKE_TARGET_WIDTH_NAME(structuredRegular));
+#endif
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY
+  VKL_REGISTER_VOLUME_FACTORY_FCN(
+      VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy),
+      VKL_MAKE_TARGET_WIDTH_NAME(structuredRegular));
+#endif
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredSpherical),
       VKL_MAKE_TARGET_WIDTH_NAME(structuredSpherical));
+#endif
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_unstructured),
       VKL_MAKE_TARGET_WIDTH_NAME(unstructured));
+#endif
 
+#if OPENVKL_DEVICE_CPU_VDB
   VKL_REGISTER_VOLUME_FACTORY_FCN(VKL_MAKE_TARGET_WIDTH_NAME(internal_vdb),
                                   VKL_MAKE_TARGET_WIDTH_NAME(vdb));
+#endif
 
+#if OPENVKL_DEVICE_CPU_PARTICLE
   VKL_REGISTER_VOLUME_FACTORY_FCN(VKL_MAKE_TARGET_WIDTH_NAME(internal_particle),
                                   VKL_MAKE_TARGET_WIDTH_NAME(particle));
+#endif
 
   // support deprecated snake case names (a warning will be triggered if these
   // are used)
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegular),
       VKL_MAKE_TARGET_WIDTH_NAME(structured_regular));
+#endif
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredSpherical),
       VKL_MAKE_TARGET_WIDTH_NAME(structured_spherical));
+#endif
 }

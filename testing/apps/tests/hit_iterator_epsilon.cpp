@@ -175,31 +175,42 @@ TEST_CASE("Hit iterator epsilon", "[hit_iterators]")
     isovalues.push_back(f);
   }
 
-  std::vector<std::string> sectionNames{"structured volumes",
-                                        "unstructured volumes",
-                                        "VDB volumes (repackNodes=true)",
-                                        "VDB volumes (repackNodes=false)",
-                                        "AMR volumes",
-                                        "particle volumes"};
+  std::vector<std::string> sectionNames;
 
   std::vector<std::shared_ptr<TestingVolume>> testingVolumes;
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+  sectionNames.push_back("structured volumes");
   testingVolumes.push_back(
       std::make_shared<ZProceduralVolume>(dimensions, gridOrigin, gridSpacing));
+#endif
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
+  sectionNames.push_back("unstructured volumes");
   testingVolumes.push_back(std::make_shared<ZUnstructuredProceduralVolume>(
       dimensions, gridOrigin, gridSpacing, VKL_HEXAHEDRON, false));
+#endif
 
+#if OPENVKL_DEVICE_CPU_VDB
+  sectionNames.push_back("VDB volumes (repackNodes=true)");
   testingVolumes.push_back(std::make_shared<ZVdbVolumeFloat>(
       getOpenVKLDevice(), dimensions, gridOrigin, gridSpacing, true));
 
+  sectionNames.push_back("VDB volumes (repackNodes=false)");
   testingVolumes.push_back(std::make_shared<ZVdbVolumeFloat>(
       getOpenVKLDevice(), dimensions, gridOrigin, gridSpacing, false));
+#endif
 
+#if OPENVKL_DEVICE_CPU_AMR
+  sectionNames.push_back("AMR volumes");
   testingVolumes.push_back(std::make_shared<ProceduralShellsAMRVolume<>>(
       dimensions, gridOrigin, gridSpacing));
+#endif
 
+#if OPENVKL_DEVICE_CPU_PARTICLE
+  sectionNames.push_back("particle volumes");
   testingVolumes.push_back(std::make_shared<ProceduralParticleVolume>(1000));
+#endif
 
   if (sectionNames.size() != testingVolumes.size()) {
     throw std::runtime_error("test configuration error");

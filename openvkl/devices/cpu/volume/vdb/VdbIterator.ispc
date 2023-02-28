@@ -4,7 +4,7 @@
 #include "VdbGrid.h"
 #include "VdbIterator.ih"
 #include "VdbQueryVoxelDense.ih"
-#include "VdbSampler.ih"
+#include "VdbSamplerShared.h"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
 #include "rkcommon/math/math.ih"
@@ -48,8 +48,9 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
   self->super.iterate = VdbIterator_iterateIntervalInternal;
   self->super.elementaryCellIterationSupported = false;
 
-  const uniform VdbSampler *uniform sampler =
-      (const uniform VdbSampler *uniform)(self->super.context->sampler);
+  const uniform VdbSamplerShared *uniform sampler =
+      (const uniform VdbSamplerShared *uniform)(
+          self->super.context->super.sampler);
   const uniform VdbGrid *uniform grid = sampler->grid;
 
   self->grid = grid;
@@ -84,7 +85,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
     ddaInit(rayOrg,
             rayDir,
             tRangeIntersected.lower,
-            self->super.context->maxIteratorDepth,
+            self->super.context->super.maxIteratorDepth,
             self->dda);
   }
 }
@@ -119,7 +120,7 @@ inline void VdbIterator_iterateIntervalInternal(
           self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
           self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
           self->dda.level,
-          self->super.context->attributeIndex,
+          self->super.context->super.attributeIndex,
           inputValueRanges,
           voxel);
     } else {
@@ -128,7 +129,7 @@ inline void VdbIterator_iterateIntervalInternal(
                              self->dda.idx[DDA_STATE_Y_OFFSET(self->dda.level)],
                              self->dda.idx[DDA_STATE_Z_OFFSET(self->dda.level)],
                              self->dda.level,
-                             self->super.context->attributeIndex,
+                             self->super.context->super.attributeIndex,
                              inputValueRanges,
                              voxel);
     }
@@ -169,7 +170,7 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
   VdbIterator_iterateIntervalInternal(imask,
                                       _self,
                                       _interval,
-                                      self->super.context->valueRanges,
+                                      self->super.context->super.valueRanges,
                                       false,
                                       _result);
 }

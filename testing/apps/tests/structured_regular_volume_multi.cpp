@@ -11,6 +11,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Structured regular volume multiple attributes",
           "[volume_multi_attributes]")
 {
@@ -67,3 +68,4 @@ TEST_CASE("Structured regular volume multiple attributes",
 
   shutdownOpenVKL();
 }
+#endif

@@ -16,6 +16,12 @@ ExternalProject_Add(${COMPONENT_NAME}
   BINARY_DIR ${COMPONENT_NAME}/build
   URL ${GLFW_URL}
   URL_HASH SHA256=${GLFW_HASH}
+  # `patch` is not available on all systems, so use `git apply` instead. Note
+  # that we initialize a Git repo in the GLFW download directory to allow the
+  # Git patching approach to work. Also note that we don't want to actually
+  # check out the GLFW Git repo, since we want our GLFW_HASH security checks
+  # to still function correctly.
+  PATCH_COMMAND git init -q . && git apply -v -p1 < ${CMAKE_CURRENT_SOURCE_DIR}/dependencies/glfw.patch
   CMAKE_ARGS
     -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
     -DCMAKE_INSTALL_PREFIX:PATH=${COMPONENT_PATH}

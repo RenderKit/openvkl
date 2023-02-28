@@ -1,0 +1,76 @@
+## Copyright 2022 Intel Corporation
+## SPDX-License-Identifier: Apache-2.0
+
+name: Benchmark
+
+on:
+  schedule:
+    - cron: '30 1 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+### BUILD JOBS ###
+  build-centos7-icx:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      image: centos:7
+      artifact-out: build-centos7-icx
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        module load cmake
+        module load intel/2022.1
+        export CC=icx
+        export CXX=icpx
+        export CXXFLAGS="-fPIC -fp-model=precise"
+        export LDFLAGS="-static-intel"
+        gitlab/build.sh
+
+### Benchmarks ###
+
+  benchmark-x8280-1:
+    needs: build-centos7-icx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-x8280-1"]'
+      cmd: |
+        gitlab/run-benchmarks.sh
+      artifact-in: build-centos7-icx
+
+  benchmark-x8380-1:
+    if: github.event_name != 'schedule'
+    needs: build-centos7-icx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-x8380-1"]'
+      cmd: |
+        gitlab/run-benchmarks.sh
+      artifact-in: build-centos7-icx
+
+  benchmark-a3970x-1:
+    if: github.event_name != 'schedule'
+    needs: build-centos7-icx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-a3970x-1"]'
+      cmd: |
+        gitlab/run-benchmarks.sh
+      artifact-in: build-centos7-icx
+
+  benchmark-i9-12900k-1:
+    if: github.event_name != 'schedule'
+    needs: build-centos7-icx
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/perf.yml@main
+    with:
+      runs-on: '["vis-perf-i9-12900k-1"]'
+      cmd: |
+        gitlab/run-benchmarks.sh
+      artifact-in: build-centos7-icx
+

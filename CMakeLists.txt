@@ -21,13 +21,27 @@ cmake_policy(SET CMP0074 NEW)
 
 ## Establish project ##
 
-project(openvkl VERSION 1.3.1 LANGUAGES C CXX)
+project(openvkl VERSION 1.3.2 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 include(openvkl_macros)
 include(openvkl_ispc)
+
+## Version header ##
+
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/openvkl/include/${PROJECT_NAME}/version.h.in
+  ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
+  @ONLY
+)
+
+include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME})
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
+)
 
 ## openvkl specific configuration ##
 
@@ -49,7 +63,7 @@ openvkl_configure_build_type()
 openvkl_configure_global_build_flags()
 openvkl_configure_ispc_isa()
 
-set(RKCOMMON_VERSION_REQUIRED 1.8.0)
+set(RKCOMMON_VERSION_REQUIRED 1.11.0)
 find_package(rkcommon ${RKCOMMON_VERSION_REQUIRED} REQUIRED)
 get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
   INTERFACE_INCLUDE_DIRECTORIES)
@@ -57,7 +71,7 @@ get_target_property(RKCOMMON_INCLUDE_DIRS rkcommon::rkcommon
 # rkcommon includes FindTBB.cmake, needed by Embree
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${rkcommon_DIR})
 
-find_package(embree 3.13.1 REQUIRED)
+find_package(embree 4.0.0 REQUIRED)
 openvkl_create_embree_target()
 
 ## Build library, examples, and tests ##

@@ -48,6 +48,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_PARTICLE
 TEST_CASE("Particle volume radius", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -132,3 +133,4 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

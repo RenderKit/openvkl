@@ -28,6 +28,7 @@ void computed_vs_api_value_range(vec3i dimensions)
            apiValueRange.upper == computedValueRange.upper));
 }
 
+#if OPENVKL_DEVICE_CPU_AMR
 TEST_CASE("AMR volume value range", "[volume_value_range]")
 {
   initializeOpenVKL();
@@ -36,3 +37,4 @@ TEST_CASE("AMR volume value range", "[volume_value_range]")
 
   shutdownOpenVKL();
 }
+#endif

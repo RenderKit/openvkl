@@ -128,6 +128,7 @@ inline void inner_node_tests(VKLVolume vklVolume, vec3i dimensions)
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_VDB
 TEST_CASE("VDB volume inner node observer", "[volume_observers]")
 {
   initializeOpenVKL();
@@ -181,3 +182,4 @@ TEST_CASE("VDB volume inner node observer", "[volume_observers]")
 
   shutdownOpenVKL();
 }
+#endif

@@ -2,32 +2,35 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
-#include "IteratorContext.ih"
+
+#include "../common/ValueRanges.ih"
+#define __ISPC_STRUCT_box1f__
+#define __ISPC_STRUCT_ValueRanges__
+#include "IteratorContextShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterator context //////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-export void *uniform EXPORT_UNIQUE(IntervalIteratorContext_Constructor,
-                                   void *uniform sampler,
-                                   const uniform uint32 attributeIndex,
-                                   const uniform int numValueRanges,
-                                   const box1f *uniform valueRanges,
-                                   const uniform uint32 maxIteratorDepth,
-                                   const uniform bool elementaryCellIteration)
+export void EXPORT_UNIQUE(IntervalIteratorContext_Constructor,
+                          void *uniform sampler,
+                          const uniform uint32 attributeIndex,
+                          const uniform int numValueRanges,
+                          const box1f *uniform valueRanges,
+                          const uniform uint32 maxIteratorDepth,
+                          const uniform bool elementaryCellIteration,
+                          void *uniform _self)
 {
   uniform IntervalIteratorContext *uniform self =
-      uniform new uniform IntervalIteratorContext;
+      (uniform IntervalIteratorContext * uniform) _self;
 
-  self->sampler        = (const Sampler *uniform)sampler;
-  self->attributeIndex = attributeIndex;
+  self->super.sampler        = (const SamplerShared *uniform)sampler;
+  self->super.attributeIndex = attributeIndex;
 
-  ValueRanges_Constructor(self->valueRanges, numValueRanges, valueRanges);
+  ValueRanges_Constructor(self->super.valueRanges, numValueRanges, valueRanges);
 
-  self->maxIteratorDepth = maxIteratorDepth;
-  self->elementaryCellIteration = elementaryCellIteration;
-
-  return self;
+  self->super.maxIteratorDepth        = maxIteratorDepth;
+  self->super.elementaryCellIteration = elementaryCellIteration;
 }
 
 export void EXPORT_UNIQUE(IntervalIteratorContext_Destructor,
@@ -36,24 +39,23 @@ export void EXPORT_UNIQUE(IntervalIteratorContext_Destructor,
   uniform IntervalIteratorContext *uniform self =
       (uniform IntervalIteratorContext * uniform) _self;
 
-  ValueRanges_Destructor(self->valueRanges);
-
-  delete self;
+  ValueRanges_Destructor(self->super.valueRanges);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hit iterator context ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-export void *uniform EXPORT_UNIQUE(HitIteratorContext_Constructor,
-                                   void *uniform sampler,
-                                   const uniform uint32 attributeIndex,
-                                   const uniform int numValues,
-                                   const float *uniform values,
-                                   const uniform uint32 maxIteratorDepth)
+export void EXPORT_UNIQUE(HitIteratorContext_Constructor,
+                          void *uniform sampler,
+                          const uniform uint32 attributeIndex,
+                          const uniform int numValues,
+                          const float *uniform values,
+                          const uniform uint32 maxIteratorDepth,
+                          void *uniform _self)
 {
   uniform HitIteratorContext *uniform self =
-      uniform new uniform HitIteratorContext;
+      (uniform HitIteratorContext * uniform) _self;
 
   self->numValues = numValues;
   self->values    = uniform new uniform float[numValues];
@@ -63,17 +65,15 @@ export void *uniform EXPORT_UNIQUE(HitIteratorContext_Constructor,
   }
 
   // superclass parameters
-  self->super.sampler        = (const Sampler *uniform)sampler;
-  self->super.attributeIndex = attributeIndex;
+  self->super.super.sampler        = (const SamplerShared *uniform)sampler;
+  self->super.super.attributeIndex = attributeIndex;
 
-  ValueRanges_Constructor(self->super.valueRanges, numValues, values);
+  ValueRanges_Constructor(self->super.super.valueRanges, numValues, values);
 
-  self->super.maxIteratorDepth = maxIteratorDepth;
+  self->super.super.maxIteratorDepth = maxIteratorDepth;
 
   // always attempt to use elementary cell iteration for hit iteration
-  self->super.elementaryCellIteration = true;
-
-  return self;
+  self->super.super.elementaryCellIteration = true;
 }
 
 export void EXPORT_UNIQUE(HitIteratorContext_Destructor, void *uniform _self)
@@ -83,7 +83,5 @@ export void EXPORT_UNIQUE(HitIteratorContext_Destructor, void *uniform _self)
 
   delete[] self->values;
 
-  ValueRanges_Destructor(self->super.valueRanges);
-
-  delete self;
+  ValueRanges_Destructor(self->super.super.valueRanges);
 }

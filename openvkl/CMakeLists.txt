@@ -79,21 +79,10 @@ install(FILES
   ${PROJECT_SOURCE_DIR}/CHANGELOG.md
   DESTINATION ${CMAKE_INSTALL_DOCDIR})
 
-## Version header ##
-
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/${PROJECT_NAME}/version.h.in
-  ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
-  @ONLY
-)
-
+# needed for build-time generated version.h
 target_include_directories(${PROJECT_NAME}
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}>
-)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/${PROJECT_NAME}/version.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
 
 ## Add OpenVKL devices ##

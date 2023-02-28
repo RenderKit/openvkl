@@ -315,6 +315,7 @@ static void test_volume_equivalence_rotation(VKLVolume vklVolume1,
   }
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR && OPENVKL_DEVICE_CPU_VDB
 TEST_CASE("VDB volume dense consistency", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -398,3 +399,4 @@ TEST_CASE("VDB volume dense consistency", "[volume_sampling]")
   }
 #endif
 }
+#endif

@@ -88,6 +88,7 @@ void test_bounding_box(const vec3i &dimensions,
   }
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
 TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
 {
   initializeOpenVKL();
@@ -160,3 +161,4 @@ TEST_CASE("Structured spherical volume bounding box", "[volume_bounding_box]")
 
   shutdownOpenVKL();
 }
+#endif

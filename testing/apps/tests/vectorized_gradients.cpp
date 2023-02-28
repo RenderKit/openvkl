@@ -96,6 +96,7 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
 {
   initializeOpenVKL();
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
   SECTION(
       "randomized vectorized gradients varying calling width and masks: "
       "structured volumes")
@@ -108,7 +109,9 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
 
     randomized_vectorized_gradients(volume);
   }
+#endif
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
   SECTION(
       "randomized vectorized gradients varying calling width and masks: "
       "unstructured volumes")
@@ -121,7 +124,9 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
 
     randomized_vectorized_gradients(volume);
   }
+#endif
 
+#if OPENVKL_DEVICE_CPU_VDB
   SECTION(
       "randomized vectorized gradients varying calling width and masks: "
       "vdb volumes")
@@ -142,6 +147,7 @@ TEST_CASE("Vectorized gradients", "[volume_gradients]")
 
     randomized_vectorized_gradients(volume2);
   }
+#endif
 
   shutdownOpenVKL();
 }

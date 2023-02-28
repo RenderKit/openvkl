@@ -11,6 +11,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
+#if OPENVKL_DEVICE_CPU_VDB
 TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
   initializeOpenVKL();
@@ -119,3 +120,4 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
   shutdownOpenVKL();
 }
+#endif

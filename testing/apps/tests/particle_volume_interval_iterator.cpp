@@ -98,6 +98,7 @@ void interval_iteration(size_t numParticles,
   vklRelease(sampler);
 }
 
+#if OPENVKL_DEVICE_CPU_PARTICLE
 TEST_CASE("Particle volume interval iterator", "[interval_iterators]")
 {
   initializeOpenVKL();
@@ -121,3 +122,4 @@ TEST_CASE("Particle volume interval iterator", "[interval_iterators]")
 
   shutdownOpenVKL();
 }
+#endif

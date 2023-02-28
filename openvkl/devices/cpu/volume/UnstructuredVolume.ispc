@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../common/export_util.h"
-#include "UnstructuredSamplerBase.ih"
+#include "UnstructuredSamplerShared.h"
 #include "UnstructuredVolume.ih"
 
 inline bool pointInAABBTest(const uniform box3fa &box, const vec3f &point)
@@ -133,10 +133,10 @@ template_traverseBVHMulti(intersectAndGradientPrimM, vec3f);
 // stackless traversal; this approach may be useful with traversal caches in the
 // future
 inline void traverseBVH(uniform Node *uniform root,
-                           const void *uniform userPtr,
-                           uniform intersectAndSamplePrim userFunc,
-                           float &result,
-                           const vec3f &samplePos)
+                        const void *uniform userPtr,
+                        uniform intersectAndSamplePrim userFunc,
+                        float &result,
+                        const vec3f &samplePos)
 {
   uniform Node *uniform node = root;
   uniform uint32 bitstack    = 0;
@@ -1276,7 +1276,7 @@ template_intersectRayCell(varying);
 #undef template_intersectRayCell
 
 inline varying float VKLUnstructuredVolume_sample(
-    const Sampler *uniform sampler,
+    const SamplerShared *uniform sampler,
     const varying vec3f &worldCoordinates,
     const uniform uint32 _attributeIndex,
     const varying float &_time)
@@ -1296,8 +1296,9 @@ inline varying float VKLUnstructuredVolume_sample(
   return results;
 }
 
-inline varying vec3f VKLUnstructuredVolume_computeGradient(
-    const Sampler *uniform sampler, const varying vec3f &objectCoordinates)
+inline varying vec3f
+VKLUnstructuredVolume_computeGradient(const SamplerShared *uniform sampler,
+                                      const varying vec3f &objectCoordinates)
 {
   // Cast to the actual Volume subtype.
   const VKLUnstructuredVolume *uniform self =
@@ -1313,7 +1314,8 @@ inline varying vec3f VKLUnstructuredVolume_computeGradient(
   // boundaries (as determined by NaN sample values outside any volume cell)
   vec3f gradient;
 
-  float sample = VKLUnstructuredVolume_sample(sampler, objectCoordinates, 0, time);
+  float sample =
+      VKLUnstructuredVolume_sample(sampler, objectCoordinates, 0, time);
 
   gradient.x = VKLUnstructuredVolume_sample(
                    sampler,
@@ -1376,14 +1378,17 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_sample_export,
                           const void *uniform _objectCoordinates,
                           void *uniform _samples)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform) _sampler;
+  const UnstructuredSamplerShared *uniform usampler =
+      (const UnstructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = &usampler->super.super;
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying float time             = 0.f;
     varying float *uniform samples = (varying float *uniform)_samples;
 
-    *samples = VKLUnstructuredVolume_sample(sampler, *objectCoordinates, 0, time);
+    *samples =
+        VKLUnstructuredVolume_sample(sampler, *objectCoordinates, 0, time);
   }
 }
 
@@ -1393,30 +1398,27 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_gradient_export,
                           const void *uniform _objectCoordinates,
                           void *uniform _gradients)
 {
-  const Sampler *uniform sampler = (const Sampler *uniform) _sampler;
+  const UnstructuredSamplerShared *uniform usampler =
+      (const UnstructuredSamplerShared *uniform)_sampler;
+  const SamplerShared *uniform sampler = &usampler->super.super;
   if (imask[programIndex]) {
     const varying vec3f *uniform objectCoordinates =
         (const varying vec3f *uniform)_objectCoordinates;
     varying vec3f *uniform gradients = (varying vec3f * uniform) _gradients;
 
-    *gradients = VKLUnstructuredVolume_computeGradient(sampler, *objectCoordinates);
+    *gradients =
+        VKLUnstructuredVolume_computeGradient(sampler, *objectCoordinates);
   }
 }
 
-export void *uniform EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor)
+export void EXPORT_UNIQUE(VKLUnstructuredVolume_Constructor,
+                          void *uniform _self)
 {
-  uniform VKLUnstructuredVolume *uniform self =
-      uniform new uniform VKLUnstructuredVolume;
-  memset(self, 0, sizeof(uniform VKLUnstructuredVolume));
-
-  return self;
+  memset(_self, 0, sizeof(uniform VKLUnstructuredVolume));
 }
 
 export void EXPORT_UNIQUE(VKLUnstructuredVolume_Destructor, void *uniform _self)
 {
-  VKLUnstructuredVolume *uniform volume =
-      (VKLUnstructuredVolume * uniform) _self;
-  delete volume;
 }
 
 export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
@@ -1459,28 +1461,25 @@ export void EXPORT_UNIQUE(VKLUnstructuredVolume_set,
       make_vec3f(0.01f * reduce_min(self->super.boundingBox.upper -
                                     self->super.boundingBox.lower));
 
-  self->super.bvhRoot          = (uniform Node * uniform) bvhRoot;
+  self->super.bvhRoot = (uniform Node * uniform) bvhRoot;
 }
 
-export UnstructuredSamplerBase *uniform
-EXPORT_UNIQUE(VKLUnstructuredSampler_Constructor, void *uniform _volume)
+export void EXPORT_UNIQUE(VKLUnstructuredSampler_Constructor,
+                          void *uniform _volume,
+                          void *uniform _self)
 {
-  UnstructuredSamplerBase *uniform sampler =
-      uniform new UnstructuredSamplerBase;
-  memset(sampler, 0, sizeof(uniform UnstructuredSamplerBase));
+  UnstructuredSamplerShared *uniform usampler =
+      (UnstructuredSamplerShared * uniform) _self;
+  memset(usampler, 0, sizeof(uniform UnstructuredSamplerShared));
 
-  sampler->super.volume                = (const Volume *uniform)_volume;
-  sampler->super.computeSample_varying = VKLUnstructuredVolume_sample;
-  sampler->super.computeGradient_varying =
-      VKLUnstructuredVolume_computeGradient;
+  SamplerShared *uniform sampler = &usampler->super.super;
 
-  return sampler;
+  sampler->volume                  = (const VolumeShared *uniform)_volume;
+  sampler->computeSample_varying   = VKLUnstructuredVolume_sample;
+  sampler->computeGradient_varying = VKLUnstructuredVolume_computeGradient;
 }
 
 export void EXPORT_UNIQUE(VKLUnstructuredSampler_Destructor,
                           void *uniform _sampler)
 {
-  UnstructuredSamplerBase *uniform sampler =
-      (UnstructuredSamplerBase * uniform) _sampler;
-  delete sampler;
 }

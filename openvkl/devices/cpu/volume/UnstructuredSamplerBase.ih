@@ -5,5 +5,5 @@
 
 struct UnstructuredSamplerBase
 {
-  Sampler super;
+  SamplerShared super;
 };

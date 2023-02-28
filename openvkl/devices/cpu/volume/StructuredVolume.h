@@ -12,12 +12,15 @@
 #include "Volume.h"
 #include "openvkl/VKLFilter.h"
 #include "rkcommon/tasking/parallel_for.h"
+#include "openvkl/common/StructShared.h"
+#include "StructuredVolumeShared.h"
 
 namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    struct StructuredVolume : public Volume<W>
+    struct StructuredVolume
+        : public AddStructShared<Volume<W>, ispc::SharedStructuredVolume>
     {
       ~StructuredVolume();
 
@@ -64,8 +67,8 @@ namespace openvkl {
     template <int W>
     StructuredVolume<W>::~StructuredVolume()
     {
-      if (this->ispcEquivalent) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
       }
     }
 
@@ -159,7 +162,7 @@ namespace openvkl {
     {
       ispc::box3f bb;
       CALL_ISPC(
-          SharedStructuredVolume_getBoundingBox, this->ispcEquivalent, bb);
+          SharedStructuredVolume_getBoundingBox, this->getSh(), bb);
 
       return box3f(vec3f(bb.lower.x, bb.lower.y, bb.lower.z),
                    vec3f(bb.upper.x, bb.upper.y, bb.upper.z));
@@ -183,7 +186,7 @@ namespace openvkl {
     inline void StructuredVolume<W>::buildAccelerator()
     {
       void *accelerator = CALL_ISPC(SharedStructuredVolume_createAccelerator,
-                                    this->ispcEquivalent);
+                                    this->getSh());
 
       vec3i bricksPerDimension;
       bricksPerDimension.x =

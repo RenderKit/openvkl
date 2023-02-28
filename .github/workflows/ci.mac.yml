@@ -15,8 +15,9 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-out: build-macOS
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -27,7 +28,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: build-macOS
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
@@ -39,8 +40,9 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-out: build-macOS-TBB2020
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
@@ -51,7 +53,7 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "build", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: build-macOS-TBB2020
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
@@ -59,26 +61,56 @@ jobs:
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes
 
-  build-macOS-arm:
+  build-macOS-arm-neon:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "macOS", "build", "arm" ]'
-      artifact-out: build-macOS-arm
+      artifact-out: build-macOS-arm-neon
       artifact-path: ./build/install ./build/openvkl/build
       cmd: |
-        gitlab/build.sh -DBUILD_TBB_FROM_SOURCE=ON
+        gitlab/build.sh -DBUILD_TBB_FROM_SOURCE=ON -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_NEON=ON -DOPENVKL_ISA_NEON2X=OFF"
 
-  test-macOS-arm:
-    needs: build-macOS-arm
+
+  test-macOS-arm-neon:
+    needs: build-macOS-arm-neon
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       runs-on: '[ "macOS", "build", "arm" ]'
-      artifact-in: build-macOS-arm
+      artifact-in: build-macOS-arm-neon
       cmd: |
         export DYLD_LIBRARY_PATH=./build/install/lib
+        export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
+        ./build/openvkl/build/vklTutorial
+        ./build/openvkl/build/vklTutorialISPC
+        ./build/openvkl/build/vklTests --durations yes
+
+  build-macOS-arm-neon2x:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      runs-on: '[ "macOS", "build", "arm" ]'
+      artifact-out: build-macOS-arm-neon2x
+      artifact-path: ./build/install ./build/openvkl/build
+      cmd: |
+        gitlab/build.sh -DBUILD_TBB_FROM_SOURCE=ON -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ISA_NEON=OFF -DOPENVKL_ISA_NEON2X=ON"
+
+
+  test-macOS-arm-neon2x:
+    needs: build-macOS-arm-neon2x
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
+    with:
+      runs-on: '[ "macOS", "build", "arm" ]'
+      artifact-in: build-macOS-arm-neon2x
+      cmd: |
+        export DYLD_LIBRARY_PATH=./build/install/lib
+        export OPENVKL_LOG_LEVEL=debug # gives prints of current ISA and SIMD width
         ./build/openvkl/build/vklTutorial
         ./build/openvkl/build/vklTutorialISPC
         ./build/openvkl/build/vklTests --durations yes

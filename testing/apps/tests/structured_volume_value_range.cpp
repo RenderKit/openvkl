@@ -38,46 +38,82 @@ void computed_vs_api_value_range(vec3i dimensions = vec3i(128))
            apiValueRange.upper == computedValueRange.upper));
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || \
+    OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
 TEST_CASE("Structured volume value range", "[volume_value_range]")
 {
   initializeOpenVKL();
 
-  SECTION("unsigned char")
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+  SECTION("structuredRegular")
   {
-    computed_vs_api_value_range<WaveletStructuredRegularVolumeUChar>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolumeUChar>();
-  }
+    SECTION("unsigned char")
+    {
+      computed_vs_api_value_range<WaveletStructuredRegularVolumeUChar>();
+    }
 
-  SECTION("short")
-  {
-    computed_vs_api_value_range<WaveletStructuredRegularVolumeShort>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolumeShort>();
-  }
+    SECTION("short")
+    {
+      computed_vs_api_value_range<WaveletStructuredRegularVolumeShort>();
+    }
 
-  SECTION("unsigned short")
-  {
-    computed_vs_api_value_range<WaveletStructuredRegularVolumeUShort>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolumeUShort>();
-  }
+    SECTION("unsigned short")
+    {
+      computed_vs_api_value_range<WaveletStructuredRegularVolumeUShort>();
+    }
 
-  SECTION("half")
-  {
-    computed_vs_api_value_range<WaveletStructuredRegularVolumeHalf>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolumeHalf>();
-  }
+    SECTION("half")
+    {
+      computed_vs_api_value_range<WaveletStructuredRegularVolumeHalf>();
+    }
 
-  SECTION("float")
-  {
-    computed_vs_api_value_range<WaveletStructuredRegularVolumeFloat>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolumeFloat>();
-  }
+    SECTION("float")
+    {
+      computed_vs_api_value_range<WaveletStructuredRegularVolumeFloat>();
+    }
 
-  SECTION("double")
-  {
-    computed_vs_api_value_range<WaveletStructuredRegularVolumeDouble>();
-    computed_vs_api_value_range<WaveletStructuredSphericalVolumeDouble>();
+    SECTION("double")
+    {
+      computed_vs_api_value_range<WaveletStructuredRegularVolumeDouble>();
+    }
   }
+#endif
+
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
+  SECTION("structuredSpherical")
+  {
+    SECTION("unsigned char")
+    {
+      computed_vs_api_value_range<WaveletStructuredSphericalVolumeUChar>();
+    }
+
+    SECTION("short")
+    {
+      computed_vs_api_value_range<WaveletStructuredSphericalVolumeShort>();
+    }
+
+    SECTION("unsigned short")
+    {
+      computed_vs_api_value_range<WaveletStructuredSphericalVolumeUShort>();
+    }
+
+    SECTION("half")
+    {
+      computed_vs_api_value_range<WaveletStructuredSphericalVolumeHalf>();
+    }
+
+    SECTION("float")
+    {
+      computed_vs_api_value_range<WaveletStructuredSphericalVolumeFloat>();
+    }
+
+    SECTION("double")
+    {
+      computed_vs_api_value_range<WaveletStructuredSphericalVolumeDouble>();
+    }
+  }
+#endif
 
   shutdownOpenVKL();
 }
-
+#endif

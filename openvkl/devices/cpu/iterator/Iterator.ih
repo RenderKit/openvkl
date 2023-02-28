@@ -6,24 +6,25 @@
 #include "../common/Hit.ih"
 #include "../common/Interval.ih"
 #include "../sampler/Sampler.ih"
+#include "openvkl/iterator.isph"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/math.ih"
-#include "openvkl/iterator.isph"
 
 /*
  * Intersect isosurfaces along the given ray using Newton-Raphson iteration.
  */
 #define template_intersectSurfacesNewton(univary)                              \
-  inline univary bool intersectSurfacesNewton(const Sampler *uniform sampler,  \
-                                        const univary vec3f &origin,           \
-                                        const univary vec3f &direction,        \
-                                        const univary box1f &tRange,           \
-                                        const uniform uint32 attributeIndex,   \
-                                        const univary float &time,             \
-                                        const uniform float step,              \
-                                        const uniform int numValues,           \
-                                        const float *uniform values,           \
-                                        univary Hit &hit)                      \
+  inline univary bool intersectSurfacesNewton(                                 \
+      const SamplerShared *uniform sampler,                                    \
+      const univary vec3f &origin,                                             \
+      const univary vec3f &direction,                                          \
+      const univary box1f &tRange,                                             \
+      const uniform uint32 attributeIndex,                                     \
+      const univary float &time,                                               \
+      const uniform float step,                                                \
+      const uniform int numValues,                                             \
+      const float *uniform values,                                             \
+      univary Hit &hit)                                                        \
   {                                                                            \
     /* our bracketing sample t-values will always be in multiples of `step`,   \
     to avoid artifacts / differences in hits between neighboring rays, or when \
@@ -34,23 +35,17 @@
     const univary int minTIndex = floor(tRange.lower / step);                  \
     const univary int maxTIndex = ceil(tRange.upper / step);                   \
                                                                                \
-    univary float t0 = minTIndex * step;                                       \
-    univary float sample0 =                                                    \
-        sampler->computeSample_##univary(sampler,                              \
-                                         origin + t0 * direction,              \
-                                         attributeIndex,                       \
-                                         time);                                \
+    univary float t0      = minTIndex * step;                                  \
+    univary float sample0 = sampler->computeSample_##univary(                  \
+        sampler, origin + t0 * direction, attributeIndex, time);               \
                                                                                \
     univary float t;                                                           \
                                                                                \
     for (univary int i = minTIndex; i < maxTIndex; i++) {                      \
       t = (i + 1) * step;                                                      \
                                                                                \
-      const univary float sample =                                             \
-          sampler->computeSample_##univary(sampler,                            \
-                                           origin + t * direction,             \
-                                           attributeIndex,                     \
-                                           time);                              \
+      const univary float sample = sampler->computeSample_##univary(           \
+          sampler, origin + t * direction, attributeIndex, time);              \
                                                                                \
       univary float tHit    = inf;                                             \
       univary float epsilon = inf;                                             \
@@ -96,13 +91,13 @@ template_intersectSurfacesNewton(varying);
  * Intersect isosurfaces along the given ray using bisection method.
  */
 
-static const uniform float BISECT_T_TOL_ABS = 1e-6f;
-static const uniform float BISECT_T_TOL_FACTOR = 0.01f;
-static const uniform float BISECT_VALUE_TOL = 1e-6f;
+static const uniform float BISECT_T_TOL_ABS           = 1e-6f;
+static const uniform float BISECT_T_TOL_FACTOR        = 0.01f;
+static const uniform float BISECT_VALUE_TOL           = 1e-6f;
 static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
 
 #define template_intersectSurfacesBisection(univary)                            \
-  inline univary float bisect(const Sampler *uniform sampler,                   \
+  inline univary float bisect(const SamplerShared *uniform sampler,             \
                               const univary vec3f &origin,                      \
                               const univary vec3f &direction,                   \
                               const uniform uint32 attributeIndex,              \
@@ -129,16 +124,13 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
         break;                                                                  \
       }                                                                         \
                                                                                 \
-      univary float sampleMid =                                                 \
-          sampler->computeSample_##univary(sampler,                             \
-                                           origin + tMid * direction,           \
-                                           attributeIndex,                      \
-                                           time);                               \
+      univary float sampleMid = sampler->computeSample_##univary(               \
+          sampler, origin + tMid * direction, attributeIndex, time);            \
                                                                                 \
       /* sampling at boundaries between unstructured cells can rarely lead to   \
       NaN values (indicating outside of cell) due to numerical issues; in this  \
-      case we know we have already bracketed an isovalue, so return the nearest \
-      result */                                                                 \
+      case we know we have already bracketed an isovalue, so return the         \
+      nearest result */                                                         \
       if (isnan(sampleMid)) {                                                   \
         if (abs(isovalue - sample0) < abs(isovalue - sample)) {                 \
           return t0;                                                            \
@@ -170,7 +162,7 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
   }                                                                             \
                                                                                 \
   inline univary bool intersectSurfacesBisection(                               \
-      const Sampler *uniform sampler,                                           \
+      const SamplerShared *uniform sampler,                                     \
       const univary vec3f &origin,                                              \
       const univary vec3f &direction,                                           \
       const univary box1f &tRange,                                              \
@@ -183,23 +175,17 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
   {                                                                             \
     assert(tRange.lower < tRange.upper);                                        \
                                                                                 \
-    univary float t0 = tRange.lower;                                            \
-    univary float sample0 =                                                     \
-        sampler->computeSample_##univary(sampler,                               \
-                                         origin + t0 * direction,               \
-                                         attributeIndex,                        \
-                                         time);                                 \
+    univary float t0      = tRange.lower;                                       \
+    univary float sample0 = sampler->computeSample_##univary(                   \
+        sampler, origin + t0 * direction, attributeIndex, time);                \
                                                                                 \
     {                                                                           \
       univary int iters = 0;                                                    \
-      while (iters < BISECT_MAX_BACKTRACK_ITERS &&                              \
-             isnan(sample0) && t0 < tRange.upper) {                             \
+      while (iters < BISECT_MAX_BACKTRACK_ITERS && isnan(sample0) &&            \
+             t0 < tRange.upper) {                                               \
         t0 += max(1e-5f, 1e-5f * step);                                         \
-        sample0 =                                                               \
-          sampler->computeSample_##univary(sampler,                             \
-                                           origin + t0 * direction,             \
-                                           attributeIndex,                      \
-                                           time);                               \
+        sample0 = sampler->computeSample_##univary(                             \
+            sampler, origin + t0 * direction, attributeIndex, time);            \
         iters++;                                                                \
       }                                                                         \
     }                                                                           \
@@ -207,25 +193,19 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
     univary float t;                                                            \
                                                                                 \
     while (t0 < tRange.upper) {                                                 \
-      const univary float h = min(step, tRange.upper-t0);                       \
-      t = t0 + h;                                                               \
-      univary float sample =                                                    \
-          sampler->computeSample_##univary(sampler,                             \
-                                           origin + t * direction,              \
-                                           attributeIndex,                      \
-                                           time);                               \
+      const univary float h = min(step, tRange.upper - t0);                     \
+      t                     = t0 + h;                                           \
+      univary float sample  = sampler->computeSample_##univary(                 \
+          sampler, origin + t * direction, attributeIndex, time);               \
       univary float ts = t;                                                     \
                                                                                 \
       {                                                                         \
         univary int iters = 0;                                                  \
-        while (iters < BISECT_MAX_BACKTRACK_ITERS &&                            \
-               isnan(sample) && ts > t0) {                                      \
+        while (iters < BISECT_MAX_BACKTRACK_ITERS && isnan(sample) &&           \
+               ts > t0) {                                                       \
           ts -= max(1e-5f, 1e-5f * step);                                       \
-          sample =                                                              \
-            sampler->computeSample_##univary(sampler,                           \
-                                             origin + ts * direction,           \
-                                             attributeIndex,                    \
-                                             time);                             \
+          sample = sampler->computeSample_##univary(                            \
+              sampler, origin + ts * direction, attributeIndex, time);          \
           iters++;                                                              \
         }                                                                       \
       }                                                                         \
@@ -238,29 +218,28 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
         /* hit at bracket entrance */                                           \
         if (abs(sample0 - values[i]) < BISECT_VALUE_TOL) {                      \
           if (t0 < tHit && t0 <= tRange.upper) {                                \
-              tHit    = t0;                                                     \
-              value   = values[i];                                              \
-              epsilon = 0.125f * step;                                          \
+            tHit    = t0;                                                       \
+            value   = values[i];                                                \
+            epsilon = 0.125f * step;                                            \
           }                                                                     \
-        }                                                                       \
-        /* hit inside bracket */                                                \
+        } /* hit inside bracket */                                              \
         else if (!isnan(sample0 + sample) &&                                    \
                  (values[i] - sample0) * (values[i] - sample) < 0.f) {          \
           /* we have bracketed a crossing; bisect */                            \
           univary float error;                                                  \
-          univary float tIso = bisect(sampler,                                  \
-                                      origin,                                   \
-                                      direction,                                \
-                                      attributeIndex,                           \
-                                      time,                                     \
-                                      t0,                                       \
-                                      sample0,                                  \
-                                      ts,                                       \
-                                      sample,                                   \
-                                      values[i],                                \
-                                      min(BISECT_T_TOL_ABS,                     \
-                                          BISECT_T_TOL_FACTOR *h),              \
-                                      error);                                   \
+          univary float tIso =                                                  \
+              bisect(sampler,                                                   \
+                     origin,                                                    \
+                     direction,                                                 \
+                     attributeIndex,                                            \
+                     time,                                                      \
+                     t0,                                                        \
+                     sample0,                                                   \
+                     ts,                                                        \
+                     sample,                                                    \
+                     values[i],                                                 \
+                     min(BISECT_T_TOL_ABS, BISECT_T_TOL_FACTOR * h),            \
+                     error);                                                    \
                                                                                 \
           if (tIso < tHit && tIso <= tRange.upper) {                            \
             tHit    = tIso;                                                     \
@@ -269,12 +248,13 @@ static const uniform float BISECT_MAX_BACKTRACK_ITERS = 10;
           }                                                                     \
         }                                                                       \
                                                                                 \
-        /* check hit at tRange upper limit, after any bisection has occurred */ \
+        /* check hit at tRange upper limit, after any bisection has occurred    \
+         */                                                                     \
         if (t == tRange.upper && abs(sample - values[i]) < BISECT_VALUE_TOL) {  \
           if (ts < tHit && ts <= tRange.upper) {                                \
-              tHit    = ts;                                                     \
-              value   = values[i];                                              \
-              epsilon = 0.125f * step;                                          \
+            tHit    = ts;                                                       \
+            value   = values[i];                                                \
+            epsilon = 0.125f * step;                                            \
           }                                                                     \
         }                                                                       \
       }                                                                         \

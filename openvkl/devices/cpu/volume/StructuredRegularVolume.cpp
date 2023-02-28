@@ -12,12 +12,13 @@ namespace openvkl {
     {
       StructuredVolume<W>::commit();
 
-      if (!this->ispcEquivalent) {
-        this->ispcEquivalent = CALL_ISPC(SharedStructuredVolume_Constructor);
+      if (!this->SharedStructInitialized) {
+        CALL_ISPC(SharedStructuredVolume_Constructor, this->getSh());
+        this->SharedStructInitialized = true;
 
-        if (!this->ispcEquivalent) {
+        if (!this->SharedStructInitialized) {
           throw std::runtime_error(
-              "could not create ISPC-side object for StructuredRegularVolume");
+              "could not initialized device-side object for StructuredRegularVolume");
         }
       }
 
@@ -25,7 +26,7 @@ namespace openvkl {
           ispcs(this->attributesData);
 
       bool success = CALL_ISPC(SharedStructuredVolume_set,
-                               this->ispcEquivalent,
+                               this->getSh(),
                                ispcAttributesData.size(),
                                ispcAttributesData.data(),
                                this->temporallyStructuredNumTimesteps,
@@ -38,21 +39,21 @@ namespace openvkl {
                                (ispc::VKLFilter)this->filter);
 
       if (!success) {
-        CALL_ISPC(SharedStructuredVolume_Destructor, this->ispcEquivalent);
-        this->ispcEquivalent = nullptr;
+        CALL_ISPC(SharedStructuredVolume_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
 
         throw std::runtime_error("failed to commit StructuredRegularVolume");
       }
 
-      CALL_ISPC(
-          Volume_setBackground, this->ispcEquivalent, this->background->data());
+      this->setBackground(this->background->data());
 
       // must be last
       this->buildAccelerator();
     }
 
-    //VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
-    //                    CONCAT1(internal_structuredRegular_, VKL_TARGET_WIDTH))
+    // this is the old / legacy structured regular implementation!
+    VKL_REGISTER_VOLUME(StructuredRegularVolume<VKL_TARGET_WIDTH>,
+                        CONCAT1(internal_structuredRegularLegacy_, VKL_TARGET_WIDTH))
 
   }  // namespace cpu_device
 }  // namespace openvkl

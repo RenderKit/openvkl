@@ -11,7 +11,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *StructuredVolume<W>::newSampler()
     {
-      return new StructuredRegularSampler<W>(this);
+      return new StructuredRegularSampler<W>(*this);
     }
 
     template struct StructuredVolume<VKL_TARGET_WIDTH>;

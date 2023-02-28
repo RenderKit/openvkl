@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../iterator/DefaultIterator.ih"
-#include "../../iterator/IteratorContext.ih"
+#include "../../iterator/IteratorContextShared.h"
 #include "Dda.ih"
 #include "VdbGrid.h"
 

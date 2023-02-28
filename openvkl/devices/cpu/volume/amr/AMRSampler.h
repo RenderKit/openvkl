@@ -6,13 +6,14 @@
 #include "../../common/export_util.h"
 #include "../../iterator/UnstructuredIterator.h"
 #include "../../sampler/Sampler.h"
+#include "../UnstructuredSamplerShared.h"
 #include "AMRVolume.h"
 #include "AMRVolume_ispc.h"
 #include "Sampler_ispc.h"
-#include "Volume_ispc.h"
 #include "method_current_ispc.h"
 #include "method_finest_ispc.h"
 #include "method_octant_ispc.h"
+#include "openvkl/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -24,9 +25,10 @@ namespace openvkl {
                                        UnstructuredHitIteratorFactory>;
 
     template <int W>
-    struct AMRSampler : public AMRSamplerBase<W>
+    struct AMRSampler : public AddStructShared<AMRSamplerBase<W>,
+                                               ispc::UnstructuredSamplerShared>
     {
-      AMRSampler(AMRVolume<W> *volume);
+      AMRSampler(AMRVolume<W> &volume);
       ~AMRSampler() override;
 
       void commit() override;
@@ -56,26 +58,23 @@ namespace openvkl {
                             const float *time) const override final;
 
      protected:
-      using Sampler<W>::ispcEquivalent;
       using AMRSamplerBase<W>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline AMRSampler<W>::AMRSampler(AMRVolume<W> *volume)
-        : AMRSamplerBase<W>(*volume)
+    inline AMRSampler<W>::AMRSampler(AMRVolume<W> &volume)
+        : AddStructShared<AMRSamplerBase<W>, ispc::UnstructuredSamplerShared>(
+              volume)
     {
-      assert(volume);
-      ispcEquivalent =
-          CALL_ISPC(AMRSampler_create, volume->getISPCEquivalent());
+      CALL_ISPC(AMRSampler_create, volume.getSh(), this->getSh());
     }
 
     template <int W>
     inline AMRSampler<W>::~AMRSampler()
     {
-      CALL_ISPC(AMRSampler_destroy, ispcEquivalent);
-      ispcEquivalent = nullptr;
+      CALL_ISPC(AMRSampler_destroy, this->getSh());
     }
 
     template <int W>
@@ -83,13 +82,13 @@ namespace openvkl {
     {
       const VKLAMRMethod amrMethod = (VKLAMRMethod)(
           this->template getParam<int>("method", volume->getAMRMethod()));
-
+      ispc::SamplerShared *ss = &(this->getSh()->super.super);
       if (amrMethod == VKL_AMR_CURRENT)
-        CALL_ISPC(AMR_install_current, ispcEquivalent);
+        CALL_ISPC(AMR_install_current, ss);
       else if (amrMethod == VKL_AMR_FINEST)
-        CALL_ISPC(AMR_install_finest, ispcEquivalent);
+        CALL_ISPC(AMR_install_finest, ss);
       else if (amrMethod == VKL_AMR_OCTANT)
-        CALL_ISPC(AMR_install_octant, ispcEquivalent);
+        CALL_ISPC(AMR_install_octant, ss);
       else
         throw std::runtime_error("AMRSampler: illegal method specified");
     }
@@ -106,7 +105,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(AMRVolume_sample_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 &samples);
     }
@@ -122,7 +121,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, time);
       CALL_ISPC(Sampler_sample_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 samples);
@@ -140,7 +139,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(AMRVolume_gradient_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 &gradients);
     }
@@ -156,7 +155,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, time);
       CALL_ISPC(Sampler_gradient_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);

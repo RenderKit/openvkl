@@ -16,7 +16,8 @@ namespace openvkl {
   {
     const std::string libName = "openvkl_module_" + moduleName;
 
-    rkcommon::loadLibrary(libName);
+    rkcommon::loadLibrary(libName,
+                          reinterpret_cast<const void *>(&loadLocalModule));
 
     std::string initSymName = "openvkl_init_module_" + moduleName;
     void *initSym           = rkcommon::getSymbol(initSymName);

@@ -46,6 +46,7 @@ void gradients_at_particle_centers(size_t numParticles,
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_PARTICLE
 TEST_CASE("Particle volume gradients", "[volume_gradients]")
 {
   initializeOpenVKL();
@@ -69,3 +70,4 @@ TEST_CASE("Particle volume gradients", "[volume_gradients]")
 
   shutdownOpenVKL();
 }
+#endif

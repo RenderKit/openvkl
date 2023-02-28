@@ -3,8 +3,8 @@
 
 #include "../common/export_util.h"
 #include "../math/box_utility.ih"
-#include "../volume/Volume.ih"
 #include "DefaultIterator.ih"
+#include "common/ValueRanges.ih"
 
 // Ignore warning about exporting uniform-pointer-to-varying, as this is in
 // fact legal.
@@ -127,7 +127,7 @@ export void EXPORT_UNIQUE(DefaultIntervalIterator_iterateInterval,
       imask,
       _self,
       _interval,
-      self->super.context->valueRanges,
+      self->super.context->super.valueRanges,
       false,
       _result);
 }
@@ -203,7 +203,7 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     intervalIterator->iterate((const int *uniform) & needInterval,
                               self->intervalIteratorState,
                               &self->currentInterval,
-                              self->context->super.valueRanges,
+                              self->context->super.super.valueRanges,
                               elementaryCellIteration,
                               (int *uniform) & haveInterval);
 
@@ -230,11 +230,11 @@ export void EXPORT_UNIQUE(DefaultHitIterator_iterateHit,
     varying Hit *uniform hit = (varying Hit * uniform) _hit;
     hit->t                   = inf;
     bool foundHit =
-        intersectSurfacesBisection(self->context->super.sampler,
+        intersectSurfacesBisection(self->context->super.super.sampler,
                                    self->origin,
                                    self->direction,
                                    self->currentInterval.tRange,
-                                   self->context->super.attributeIndex,
+                                   self->context->super.super.attributeIndex,
                                    self->time,
                                    self->currentInterval.nominalDeltaT,
                                    self->context->numValues,

@@ -3,29 +3,4 @@
 
 #pragma once
 
-#include "VdbGrid.h"
-#include "sampler/Sampler.ih"
-
-typedef varying float (*uniform DenseLeafSamplingVaryingFunc)(
-    const VdbGrid *uniform grid,
-    uniform uint32 attributeIndex,
-    const varying vec3ui &offset,
-    const varying float &time);
-
-typedef uniform float (*uniform DenseLeafSamplingUniformFunc)(
-    const VdbGrid *uniform grid,
-    uniform uint32 attributeIndex,
-    const uniform vec3ui &offset,
-    uniform float time);
-
-struct VdbSampler
-{
-  Sampler super;
-
-  const VdbGrid *uniform grid;
-  const void *uniform leafAccessObservers;
-  vkl_uint32 maxSamplingDepth;
-
-  DenseLeafSamplingVaryingFunc *uniform denseLeafSample_varying;
-  DenseLeafSamplingUniformFunc *uniform denseLeafSample_uniform;
-};
+#include "VdbSamplerShared.h"

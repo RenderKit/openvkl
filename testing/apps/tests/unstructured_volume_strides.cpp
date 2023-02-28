@@ -3,6 +3,7 @@
 
 #include "unstructured_volume.h"
 
+#if OPENVKL_DEVICE_CPU_UNSTRUCTURED
 TEST_CASE("Unstructured volume strides", "[volume_strides]")
 {
   initializeOpenVKL();
@@ -62,3 +63,4 @@ TEST_CASE("Unstructured volume strides", "[volume_strides]")
 
   shutdownOpenVKL();
 }
+#endif

@@ -62,6 +62,7 @@ void sampling_on_interior_vertices_vs_procedural_values(vec3i dimensions,
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_SPHERICAL
 TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -163,3 +164,4 @@ TEST_CASE("Structured spherical volume sampling", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

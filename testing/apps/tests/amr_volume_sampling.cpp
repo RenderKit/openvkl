@@ -55,6 +55,7 @@ void amr_sampling_at_shell_boundaries(vec3i dimensions, vec3i step = vec3i(1))
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_AMR
 TEST_CASE("AMR volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -66,3 +67,4 @@ TEST_CASE("AMR volume sampling", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

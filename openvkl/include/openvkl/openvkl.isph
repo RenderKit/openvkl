@@ -9,4 +9,5 @@
 #include "device.isph"
 #include "iterator.isph"
 #include "sampler.isph"
+#include "version.h"
 #include "volume.isph"

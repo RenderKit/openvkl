@@ -41,13 +41,14 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Linux", "docker" ]'
       image: centos:7
       artifact-out: release-linux
       artifact-path: ./*.gz
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
         module load cmake
         module load intel/2022.1
         export CC=icx
@@ -60,25 +61,27 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "NAS", "build" ]'
       artifact-out: release-windows
       artifact-path: ./*.zip
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
         gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   release-macos:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      runs-on: '[ "macOS", "sign", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "sign", "x86_64" ]'
       artifact-out: release-macos
       artifact-path: ./*.zip
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
         gitlab/release/macos.sh
 
   release-linux-test:
@@ -90,7 +93,7 @@ jobs:
       image: centos:7
       artifact-in: release-linux
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
         gitlab/release/linux-test.sh
 
   release-windows-test:
@@ -101,8 +104,8 @@ jobs:
       runs-on: '[ "Windows" ]'
       artifact-in: release-windows
       cmd: |
-        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
-        $OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        $env:OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
+        $OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
         gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
 
   release-macos-test:
@@ -110,10 +113,10 @@ jobs:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
-      runs-on: '[ "macOS", "avx2", "x86_64" ]'
+      runs-on: '[ "macOS", "build", "x86_64" ]'
       artifact-in: release-macos
       cmd: |
-        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.1"
+        export OPENVKL_RELEASE_PACKAGE_VERSION="1.3.2"
         gitlab/release/macos-test.sh
 
   binary-analysis:

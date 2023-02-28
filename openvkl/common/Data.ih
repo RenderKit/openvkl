@@ -6,15 +6,7 @@
 #include "openvkl/VKLDataType.h"
 #include "rkcommon/math/math.ih"
 #include "rkcommon/math/vec.ih"
-
-struct Data1D
-{
-  const uint8 *addr;
-  uint64 byteStride;
-  uint64 numItems;
-  uint32 dataType;
-  bool compact;
-};
+#include "DataShared.h"
 
 // in all inlined functions here, ok to pass-by-value, will be inlined and
 // optimized

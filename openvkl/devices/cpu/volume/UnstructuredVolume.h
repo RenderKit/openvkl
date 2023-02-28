@@ -8,13 +8,17 @@
 #include "../common/math.h"
 #include "UnstructuredBVH.h"
 #include "UnstructuredVolume_ispc.h"
-#include "Volume.h"
+#include "UnstructuredVolumeBase.h"
+#include "UnstructuredVolumeShared.h"
+#include "openvkl/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    struct UnstructuredVolume : public Volume<W>
+    struct UnstructuredVolume
+        : public AddStructShared<UnstructuredVolumeBase<W>,
+                                 ispc::VKLUnstructuredVolume>
     {
       ~UnstructuredVolume();
 

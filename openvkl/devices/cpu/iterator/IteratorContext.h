@@ -4,6 +4,8 @@
 #pragma once
 
 #include "../common/ManagedObject.h"
+#include "../common/StructShared.h"
+#include "IteratorContextShared.h"
 
 using namespace rkcommon::math;
 
@@ -18,7 +20,8 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    struct IteratorContext : public ManagedObject
+    struct IteratorContext
+        : public AddStructShared<ManagedObject, ispc::IteratorContext>
     {
       IteratorContext(const Sampler<W> &sampler);
 
@@ -26,15 +29,12 @@ namespace openvkl {
 
       virtual void commit() = 0;
 
-      void *getISPCEquivalent() const;
-
       const Sampler<W> &getSampler() const;
 
      protected:
       Ref<const Sampler<W>> sampler;
       int attributeIndex = 0;
-
-      void *ispcEquivalent{nullptr};
+      bool SharedStructInitialized = false;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -48,13 +48,6 @@ namespace openvkl {
     template <int W>
     inline IteratorContext<W>::~IteratorContext()
     {
-      assert(!ispcEquivalent);  // Detect leaks in derived classes if possible.
-    }
-
-    template <int W>
-    inline void *IteratorContext<W>::getISPCEquivalent() const
-    {
-      return ispcEquivalent;
     }
 
     template <int W>
@@ -68,13 +61,15 @@ namespace openvkl {
     ///////////////////////////////////////////////////////////////////////////
 
     template <int W>
-    struct IntervalIteratorContext : public IteratorContext<W>
+    struct IntervalIteratorContext
+        : public AddStructShared<IteratorContext<W>,
+                                 ispc::IntervalIteratorContext>
     {
       IntervalIteratorContext(const Sampler<W> &sampler)
-          : IteratorContext<W>(sampler)
+          : AddStructShared<IteratorContext<W>, ispc::IntervalIteratorContext>(
+                sampler)
       {
       }
-
       virtual ~IntervalIteratorContext();
 
       void commit() override;
@@ -88,10 +83,13 @@ namespace openvkl {
     // iteration is often implemented using interval iteration, and we would
     // like to use the same context for that purpose.
     template <int W>
-    struct HitIteratorContext : public IntervalIteratorContext<W>
+    struct HitIteratorContext
+        : public AddStructShared<IntervalIteratorContext<W>,
+                                 ispc::HitIteratorContext>
     {
       HitIteratorContext(const Sampler<W> &sampler)
-          : IntervalIteratorContext<W>(sampler)
+          : AddStructShared<IntervalIteratorContext<W>,
+                            ispc::HitIteratorContext>(sampler)
       {
       }
 

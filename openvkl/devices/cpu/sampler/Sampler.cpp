@@ -10,7 +10,6 @@ namespace openvkl {
     template <int W>
     Sampler<W>::~Sampler()
     {
-      assert(!ispcEquivalent); // Detect leaks in derived classes if possible.
     }
 
     template <int W>

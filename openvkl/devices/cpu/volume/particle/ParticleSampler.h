@@ -7,10 +7,11 @@
 #include "../../common/export_util.h"
 #include "../../iterator/UnstructuredIterator.h"
 #include "../../sampler/Sampler.h"
+#include "../UnstructuredSamplerShared.h"
 #include "ParticleVolume.h"
 #include "ParticleVolume_ispc.h"
 #include "Sampler_ispc.h"
-#include "Volume_ispc.h"
+#include "openvkl/common/StructShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -22,9 +23,11 @@ namespace openvkl {
                                             UnstructuredHitIteratorFactory>;
 
     template <int W>
-    struct ParticleSampler : public ParticleSamplerBase<W>
+    struct ParticleSampler
+        : public AddStructShared<ParticleSamplerBase<W>,
+                                 ispc::UnstructuredSamplerShared>
     {
-      ParticleSampler(ParticleVolume<W> *volume);
+      ParticleSampler(ParticleVolume<W> &volume);
       ~ParticleSampler();
 
       void computeSampleV(const vintn<W> &valid,
@@ -52,26 +55,23 @@ namespace openvkl {
                             const float *times) const override final;
 
      protected:
-      using Sampler<W>::ispcEquivalent;
       using ParticleSamplerBase<W>::volume;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline ParticleSampler<W>::ParticleSampler(ParticleVolume<W> *volume)
-        : ParticleSamplerBase<W>(*volume)
+    inline ParticleSampler<W>::ParticleSampler(ParticleVolume<W> &volume)
+        : AddStructShared<ParticleSamplerBase<W>,
+                          ispc::UnstructuredSamplerShared>(volume)
     {
-      assert(volume);
-      ispcEquivalent = CALL_ISPC(VKLParticleSampler_Constructor,
-                                 volume->getISPCEquivalent());
+      CALL_ISPC(VKLParticleSampler_Constructor, volume.getSh(), this->getSh());
     }
 
     template <int W>
     inline ParticleSampler<W>::~ParticleSampler()
     {
-      CALL_ISPC(VKLParticleSampler_Destructor, ispcEquivalent);
-      ispcEquivalent = nullptr;
+      CALL_ISPC(VKLParticleSampler_Destructor, this->getSh());
     }
 
     template <int W>
@@ -86,7 +86,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(VKLParticleVolume_sample_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 &samples);
     }
@@ -102,7 +102,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, times);
       CALL_ISPC(Sampler_sample_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 samples);
@@ -120,7 +120,7 @@ namespace openvkl {
       assertValidTimes(valid, time);
       CALL_ISPC(VKLParticleVolume_gradient_export,
                 static_cast<const int *>(valid),
-                ispcEquivalent,
+                this->getSh(),
                 &objectCoordinates,
                 &gradients);
     }
@@ -136,7 +136,7 @@ namespace openvkl {
       assert(attributeIndex < volume->getNumAttributes());
       assertAllValidTimes(N, times);
       CALL_ISPC(Sampler_gradient_N_export,
-                ispcEquivalent,
+                this->getSh(),
                 N,
                 (ispc::vec3f *)objectCoordinates,
                 (ispc::vec3f *)gradients);

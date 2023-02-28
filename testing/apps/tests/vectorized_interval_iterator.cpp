@@ -11,6 +11,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
 TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 {
   initializeOpenVKL();
@@ -1081,3 +1082,4 @@ TEST_CASE("Vectorized interval iterator", "[interval_iterators]")
 
   shutdownOpenVKL();
 }
+#endif

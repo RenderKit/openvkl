@@ -3,13 +3,13 @@
 
 #include "Sampler.ih"
 
-export Sampler *uniform EXPORT_UNIQUE(Sampler_create,
-                                      const void* uniform _volume)
+export void EXPORT_UNIQUE(Sampler_create,
+                          const void* uniform _volume,
+                          void* uniform _sampler)
 {
-  Sampler *uniform sampler = uniform new Sampler;
-  memset(sampler, 0, sizeof(uniform Sampler));
-  sampler->volume = (const Volume *uniform) _volume;
-  return sampler;
+  SamplerShared *uniform sampler = (SamplerShared *uniform)_sampler;
+  memset(sampler, 0, sizeof(uniform SamplerShared));
+  sampler->volume = (const VolumeShared *uniform) _volume;
 }
 
 export void EXPORT_UNIQUE(Sampler_setFilters,
@@ -17,7 +17,7 @@ export void EXPORT_UNIQUE(Sampler_setFilters,
                           uniform VKLFilter filter,
                           uniform VKLFilter gradientFilter)
 {
-  Sampler *uniform sampler = (Sampler *uniform)_sampler;
+  SamplerShared *uniform sampler = (SamplerShared *uniform)_sampler;
   sampler->filter = filter;
   sampler->gradientFilter = gradientFilter;
 }
@@ -25,7 +25,7 @@ export void EXPORT_UNIQUE(Sampler_setFilters,
 export void EXPORT_UNIQUE(Sampler_destroy,
                           void *uniform _sampler)
 {
-  Sampler *uniform sampler = (Sampler *uniform)_sampler;
+  SamplerShared *uniform sampler = (SamplerShared *uniform)_sampler;
   delete sampler;
 }
 
@@ -37,7 +37,7 @@ export void EXPORT_UNIQUE(Sampler_sample_N_export,
                           const vec3f *uniform objectCoordinates,
                           float *uniform samples)
 {
-  Sampler *uniform self = (Sampler * uniform) _self;
+  SamplerShared *uniform self = (SamplerShared * uniform) _self;
 
   varying float time = 0.f;
 
@@ -53,7 +53,7 @@ export void EXPORT_UNIQUE(Sampler_gradient_N_export,
                           const vec3f *uniform objectCoordinates,
                           vec3f *uniform gradients)
 {
-  Sampler *uniform self = (Sampler * uniform) _self;
+  SamplerShared *uniform self = (SamplerShared * uniform) _self;
 
   foreach (i = 0 ... N) {
     varying vec3f oc = objectCoordinates[i];

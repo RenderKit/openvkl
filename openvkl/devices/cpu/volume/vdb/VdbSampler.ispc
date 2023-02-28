@@ -3,9 +3,10 @@
 
 #include <openvkl/vdb.h>
 #include "VdbGrid.h"
-#include "VdbSampler.ih"
+#include "../../sampler/Sampler.ih"
+#include "VdbSamplerShared.h"
 #include "VdbSampler_filter.ih"
-#include "VdbVolume.ih"
+#include "VdbVolumeShared.h"
 #include "common/export_util.h"
 
 // ---------------------------------------------------------------------------
@@ -21,7 +22,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
                           void *uniform _samples)
 {
   if (imask[programIndex]) {
-    const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+    const VdbSamplerShared *uniform sampler =
+        (const VdbSamplerShared *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
 
@@ -35,14 +37,14 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample,
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
     if (sampler->grid->dense) {
-      __vkl_switch_filter(sampler->super.filter,
+      __vkl_switch_filter(sampler->super.super.filter,
                           *sample = VdbSampler_interpolate_dense,
                           sampler,
                           indexCoordinates,
                           *time,
                           attributeIndex);
     } else {
-      __vkl_switch_filter(sampler->super.filter,
+      __vkl_switch_filter(sampler->super.super.filter,
                           *sample = VdbSampler_interpolate,
                           sampler,
                           indexCoordinates,
@@ -59,7 +61,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
                           const uniform uint32 attributeIndex,
                           void *uniform _samples)
 {
-  const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+  const VdbSamplerShared *uniform sampler =
+      (const VdbSamplerShared *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
 
@@ -72,14 +75,14 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_uniform,
       xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
   if (sampler->grid->dense) {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         *sample = VdbSampler_interpolate_dense,
                         sampler,
                         indexCoordinates,
                         *time,
                         attributeIndex);
   } else {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         *sample = VdbSampler_interpolate,
                         sampler,
                         indexCoordinates,
@@ -96,12 +99,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
                           const uniform uint32 attributeIndex,
                           float *uniform samples)
 {
-  const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+  const VdbSamplerShared *uniform sampler =
+      (const VdbSamplerShared *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
 
   if (sampler->grid->dense) {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         VdbSampler_interpolate_dense,
                         sampler,
                         N,
@@ -110,7 +114,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSample_stream,
                         attributeIndex,
                         samples);
   } else {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         VdbSampler_interpolate,
                         sampler,
                         N,
@@ -131,7 +135,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
                           float *uniform samples)
 {
   if (imask[programIndex]) {
-    const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+    const VdbSamplerShared *uniform sampler =
+        (const VdbSamplerShared *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
 
@@ -143,7 +148,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
         xfmPoint(sampler->grid->objectToIndex, *objectCoordinates);
 
     if (sampler->grid->dense) {
-      __vkl_switch_filter(sampler->super.filter,
+      __vkl_switch_filter(sampler->super.super.filter,
                           VdbSampler_interpolate_dense,
                           sampler,
                           indexCoordinates,
@@ -152,7 +157,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM,
                           attributeIndices,
                           samples);
     } else {
-      __vkl_switch_filter(sampler->super.filter,
+      __vkl_switch_filter(sampler->super.super.filter,
                           VdbSampler_interpolate,
                           sampler,
                           indexCoordinates,
@@ -172,7 +177,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_uniform,
                           const uint32 *uniform attributeIndices,
                           float *uniform samples)
 {
-  const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+  const VdbSamplerShared *uniform sampler =
+      (const VdbSamplerShared *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
 
@@ -185,7 +191,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_uniform,
   const float *uniform time = (const float *uniform)_time;
 
   if (sampler->grid->dense) {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         VdbSampler_interpolate_dense,
                         sampler,
                         indexCoordinates,
@@ -194,7 +200,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_uniform,
                         attributeIndices,
                         samples);
   } else {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         VdbSampler_interpolate,
                         sampler,
                         indexCoordinates,
@@ -214,12 +220,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_stream,
                           const uint32 *uniform attributeIndices,
                           float *uniform samples)
 {
-  const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+  const VdbSamplerShared *uniform sampler =
+      (const VdbSamplerShared *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
 
   if (sampler->grid->dense) {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         VdbSampler_interpolate_dense,
                         sampler,
                         N,
@@ -229,7 +236,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeSampleM_stream,
                         attributeIndices,
                         samples);
   } else {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         VdbSampler_interpolate,
                         sampler,
                         N,
@@ -254,7 +261,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
                           void *uniform _gradients)
 {
   if (imask[programIndex]) {
-    const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+    const VdbSamplerShared *uniform sampler =
+        (const VdbSamplerShared *uniform)_sampler;
     assert(sampler);
     assert(sampler->grid);
 
@@ -269,14 +277,14 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient,
     vec3f gradient;
 
     if (sampler->grid->dense) {
-      __vkl_switch_filter(sampler->super.gradientFilter,
+      __vkl_switch_filter(sampler->super.super.gradientFilter,
                           gradient = VdbSampler_computeGradient_dense,
                           sampler,
                           indexCoordinates,
                           *time,
                           attributeIndex);
     } else {
-      __vkl_switch_filter(sampler->super.gradientFilter,
+      __vkl_switch_filter(sampler->super.super.gradientFilter,
                           gradient = VdbSampler_computeGradient,
                           sampler,
                           indexCoordinates,
@@ -297,12 +305,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
                           const uniform uint32 attributeIndex,
                           vec3f *uniform gradients)
 {
-  const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+  const VdbSamplerShared *uniform sampler =
+      (const VdbSamplerShared *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
 
   if (sampler->grid->dense) {
-    __vkl_switch_filter(sampler->super.gradientFilter,
+    __vkl_switch_filter(sampler->super.super.gradientFilter,
                         VdbSampler_computeGradient_dense,
                         sampler,
                         N,
@@ -311,7 +320,7 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
                         attributeIndex,
                         gradients);
   } else {
-    __vkl_switch_filter(sampler->super.gradientFilter,
+    __vkl_switch_filter(sampler->super.super.gradientFilter,
                         VdbSampler_computeGradient,
                         sampler,
                         N,
@@ -327,12 +336,13 @@ export void EXPORT_UNIQUE(VdbSampler_computeGradient_stream,
 // -----------------------------------------------------------------------------
 
 float VdbSampler_iterator_computeSample_varying(
-    const Sampler *uniform _sampler,
+    const SamplerShared *uniform _sampler,
     const varying vec3f &objectCoordinates,
     const uniform uint32 attributeIndex,
     const varying float &time)
 {
-  const VdbSampler *uniform sampler = (const VdbSampler *uniform)_sampler;
+  const VdbSamplerShared *uniform sampler =
+      (const VdbSamplerShared *uniform)_sampler;
   assert(sampler);
   assert(sampler->grid);
 
@@ -342,14 +352,14 @@ float VdbSampler_iterator_computeSample_varying(
   float sample = 0.f;
 
   if (sampler->grid->dense) {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         sample = VdbSampler_interpolate_dense,
                         sampler,
                         indexCoordinates,
                         time,
                         attributeIndex);
   } else {
-    __vkl_switch_filter(sampler->super.filter,
+    __vkl_switch_filter(sampler->super.super.filter,
                         sample = VdbSampler_interpolate,
                         sampler,
                         indexCoordinates,
@@ -486,8 +496,8 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
   range->lower = pos_inf;
   range->upper = neg_inf;
 
-  uniform VdbSampler sampler;
-  memset(&sampler, 0, sizeof(uniform VdbSampler));
+  uniform VdbSamplerShared sampler;
+  memset(&sampler, 0, sizeof(uniform VdbSamplerShared));
   sampler.grid             = (const VdbGrid *uniform)_grid;
   sampler.maxSamplingDepth = VKL_VDB_NUM_LEVELS - 1;
 
@@ -547,24 +557,23 @@ export void EXPORT_UNIQUE(VdbSampler_computeValueRange,
 // Construction.
 // -----------------------------------------------------------------------------
 
-export void *uniform
-EXPORT_UNIQUE(VdbSampler_create,
-              const void *uniform _volume,
-              const void *uniform leafAccessObservers)
+export void EXPORT_UNIQUE(VdbSampler_create,
+                          const void *uniform _volume,
+                          const void *uniform leafAccessObservers,
+                          void *uniform _sampler)
 {
-  VdbSampler *uniform sampler = uniform new VdbSampler;
-  memset(sampler, 0, sizeof(uniform VdbSampler));
+  VdbSamplerShared *uniform sampler = (VdbSamplerShared * uniform) _sampler;
+  memset(sampler, 0, sizeof(uniform VdbSamplerShared));
 
   // Generic sampler interface - this is used by iterators.
   const VdbVolume *uniform volume = (const VdbVolume *uniform)_volume;
-  sampler->super.volume           = &volume->super;
+  sampler->super.super.volume     = &volume->super;
 
   // Our internal sampling interface. The sampler object is passed into the
   // inner loop.
   const VdbVolume *uniform vdbVolume = (const VdbVolume *uniform)volume;
   sampler->grid                      = volume->grid;
   sampler->leafAccessObservers       = leafAccessObservers;
-  return sampler;
 }
 
 export void EXPORT_UNIQUE(VdbSampler_set,
@@ -573,11 +582,11 @@ export void EXPORT_UNIQUE(VdbSampler_set,
                           uniform VKLFilter gradientFilter,
                           uniform vkl_uint32 maxSamplingDepth)
 {
-  VdbSampler *uniform sampler = (VdbSampler * uniform) _sampler;
+  VdbSamplerShared *uniform sampler = (VdbSamplerShared * uniform) _sampler;
   CALL_ISPC(Sampler_setFilters, &sampler->super, filter, gradientFilter);
 
   // For hit iterators.
-  sampler->super.computeSample_varying =
+  sampler->super.super.computeSample_varying =
       VdbSampler_iterator_computeSample_varying;
 
   sampler->maxSamplingDepth = maxSamplingDepth;
@@ -620,7 +629,7 @@ export void EXPORT_UNIQUE(VdbSampler_set,
 
 export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler)
 {
-  VdbSampler *uniform sampler = (VdbSampler * uniform) _sampler;
+  VdbSamplerShared *uniform sampler = (VdbSamplerShared * uniform) _sampler;
 
   if (sampler->denseLeafSample_varying) {
     delete[] sampler->denseLeafSample_varying;
@@ -629,6 +638,4 @@ export void EXPORT_UNIQUE(VdbSampler_destroy, void *uniform _sampler)
   if (sampler->denseLeafSample_uniform) {
     delete[] sampler->denseLeafSample_uniform;
   }
-
-  delete sampler;
 }

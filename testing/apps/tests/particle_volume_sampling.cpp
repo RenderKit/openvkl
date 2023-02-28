@@ -81,6 +81,7 @@ void sampling_at_random_points(size_t numParticles,
   vklRelease(vklSampler);
 }
 
+#if OPENVKL_DEVICE_CPU_PARTICLE
 TEST_CASE("Particle volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -105,3 +106,4 @@ TEST_CASE("Particle volume sampling", "[volume_sampling]")
 
   shutdownOpenVKL();
 }
+#endif

@@ -59,8 +59,9 @@ namespace openvkl {
     template <int W>
     ParticleVolume<W>::~ParticleVolume()
     {
-      if (this->ispcEquivalent) {
-        CALL_ISPC(VKLParticleVolume_Destructor, this->ispcEquivalent);
+      if (this->SharedStructInitialized) {
+        CALL_ISPC(VKLParticleVolume_Destructor, this->getSh());
+        this->SharedStructInitialized = false;
       }
 
       if (rtcBVH)
@@ -136,14 +137,15 @@ namespace openvkl {
 
       buildBvhAndCalculateBounds();
 
-      if (!this->ispcEquivalent) {
-        this->ispcEquivalent = CALL_ISPC(VKLParticleVolume_Constructor);
+      if (!this->SharedStructInitialized) {
+        CALL_ISPC(VKLParticleVolume_Constructor, this->getSh());
+        this->SharedStructInitialized = true;
       }
 
-      CALL_ISPC(Volume_setBackground, this->ispcEquivalent, background->data());
+      this->setBackground(background->data());
 
       CALL_ISPC(VKLParticleVolume_set,
-                this->ispcEquivalent,
+                this->getSh(),
                 (const ispc::box3f &)bounds,
                 ispc(positions),
                 ispc(radii),
@@ -160,7 +162,7 @@ namespace openvkl {
     template <int W>
     Sampler<W> *ParticleVolume<W>::newSampler()
     {
-      return new ParticleSampler<W>(this);
+      return new ParticleSampler<W>(*this);
     }
 
     template <int W>

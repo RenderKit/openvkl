@@ -10,6 +10,8 @@
 #include "VdbVolume.h"
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
+#include "openvkl/common/StructShared.h"
+#include "VdbSamplerShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -21,7 +23,8 @@ namespace openvkl {
                                        VdbHitIteratorFactory>;
 
     template <int W>
-    struct VdbSampler : public VdbSamplerBase<W>
+    struct VdbSampler
+        : public AddStructShared<VdbSamplerBase<W>, ispc::VdbSamplerShared>
     {
       explicit VdbSampler(VdbVolume<W> &volume);
       ~VdbSampler() override;
@@ -89,7 +92,6 @@ namespace openvkl {
       }
 
      private:
-      using Sampler<W>::ispcEquivalent;
       using VdbSamplerBase<W>::volume;
 
       ObserverRegistry<W> leafAccessObservers;

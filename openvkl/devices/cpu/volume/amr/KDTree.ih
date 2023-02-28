@@ -3,13 +3,7 @@
 
 #pragma once
 
-/*! ispc equivalent of the c++-side kdtree that we build over the
-    boxes */
-struct KDTreeNode
-{
-  uint32 dim_and_ofs;
-  uint32 pos_or_numItems;
-};
+#include "KDTreeShared.h"
 
 inline uint32 getDim(const KDTreeNode & node)
 {

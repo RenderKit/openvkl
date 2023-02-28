@@ -21,7 +21,7 @@ cmake_policy(SET CMP0074 NEW)
 
 ## Establish project ##
 
-project(openvkl VERSION 1.3.2 LANGUAGES C CXX)
+project(openvkl VERSION 1.4.0 LANGUAGES C CXX)
 
 ## Add openvkl specific macros ##
 

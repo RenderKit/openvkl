@@ -6,7 +6,7 @@
 #include <cstdlib>
 #include <new>
 #include <type_traits>
-#include "ispcrt/ispcrt.hpp"
+#include "ispcrt.hpp"
 
 #include "BufferShared.h"
 

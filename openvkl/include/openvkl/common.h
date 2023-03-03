@@ -43,3 +43,24 @@ __define_wide_types(16, 64);
 // Force expansion on two tokens and concatenate them.
 #define __vkl_concat(A, B) __vkl_concat_impl(A, B)
 #define __vkl_concat_impl(A, B) A##B
+
+// ignore warnings in clang for returning VKLObject-derived types; these are
+// standard layout types (verified by static_assert in types.h) which are legal
+// to return via C linkage.
+#ifdef _WIN32
+
+#define NOWARN_C_LINKAGE_PUSH      \
+  __pragma(clang diagnostic push); \
+  __pragma(clang diagnostic ignored "-Wreturn-type-c-linkage");
+
+#define NOWARN_C_LINKAGE_POP __pragma(clang diagnostic pop);
+
+#else
+
+#define NOWARN_C_LINKAGE_PUSH       \
+  _Pragma("clang diagnostic push"); \
+  _Pragma("clang diagnostic ignored \"-Wreturn-type-c-linkage\"");
+
+#define NOWARN_C_LINKAGE_POP _Pragma("clang diagnostic pop");
+
+#endif

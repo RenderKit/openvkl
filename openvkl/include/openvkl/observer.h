@@ -29,6 +29,8 @@ typedef VKLObject VKLObserver;
 extern "C" {
 #endif
 
+NOWARN_C_LINKAGE_PUSH
+
 // Create a new observer of the given type.
 // Triggers the error handler and returns NULL on error.
 OPENVKL_INTERFACE
@@ -36,6 +38,8 @@ VKLObserver vklNewVolumeObserver(VKLVolume volume, const char *type);
 
 OPENVKL_INTERFACE
 VKLObserver vklNewSamplerObserver(VKLSampler volume, const char *type);
+
+NOWARN_C_LINKAGE_POP
 
 // Map an observer.
 // Returns a pointer to the observer data buffer.

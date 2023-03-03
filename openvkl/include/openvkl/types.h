@@ -68,6 +68,13 @@ typedef struct __VKLObject
   void *device;
 } VKLObject;
 
+#ifdef __cplusplus
+#include <type_traits>
+
+static_assert(std::is_standard_layout<VKLObject>::value,
+              "VKLObject must be standard layout for C linkage");
+#endif
+
 // -----------------------------------------------------------------------------
 // VKL_CHAR
 // -----------------------------------------------------------------------------

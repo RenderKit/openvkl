@@ -22,6 +22,8 @@ typedef VKLObject VKLHitIteratorContext;
 extern "C" {
 #endif
 
+NOWARN_C_LINKAGE_PUSH
+
 /*
  * Interval iterators require a context.
  */
@@ -33,6 +35,8 @@ VKLIntervalIteratorContext vklNewIntervalIteratorContext(VKLSampler sampler);
  */
 OPENVKL_INTERFACE
 VKLHitIteratorContext vklNewHitIteratorContext(VKLSampler sampler);
+
+NOWARN_C_LINKAGE_POP
 
 #ifdef __cplusplus
 }  // extern "C"

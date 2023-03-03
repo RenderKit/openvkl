@@ -26,7 +26,9 @@ typedef VKLObject VKLSampler;
 extern "C" {
 #endif
 
+NOWARN_C_LINKAGE_PUSH
 OPENVKL_INTERFACE VKLSampler vklNewSampler(VKLVolume volume);
+NOWARN_C_LINKAGE_POP
 
 #ifdef __cplusplus
 }  // extern "C"

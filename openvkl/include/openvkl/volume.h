@@ -49,8 +49,10 @@ typedef enum
 extern "C" {
 #endif
 
+NOWARN_C_LINKAGE_PUSH
 OPENVKL_INTERFACE
 VKLVolume vklNewVolume(VKLDevice device, const char *type);
+NOWARN_C_LINKAGE_POP
 
 OPENVKL_INTERFACE
 vkl_box3f vklGetBoundingBox(VKLVolume volume);

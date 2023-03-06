@@ -1,6 +1,12 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "Traits.h"
 
 namespace openvkl {
@@ -52,4 +58,4 @@ namespace openvkl {
   VKLTYPEFOR_DEFINITION(rkcommon::math::linear3f);
   VKLTYPEFOR_DEFINITION(rkcommon::math::affine2f);
   VKLTYPEFOR_DEFINITION(rkcommon::math::affine3f);
-}
+}  // namespace openvkl

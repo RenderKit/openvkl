@@ -1,7 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <algorithm>
 #include <atomic>
 #include <cstring>
@@ -11,11 +16,14 @@
 #include "../../common/temporal_data_verification.h"
 #include "../common/logging.h"
 #include "VdbInnerNodeObserver.h"
+#include "VdbVolume.h"
 #include "openvkl/vdb.h"
 #include "rkcommon/math/AffineSpace.h"
 #include "rkcommon/memory/malloc.h"
 #include "rkcommon/tasking/AsyncTask.h"
 #include "rkcommon/tasking/parallel_for.h"
+
+using namespace rkcommon::memory;
 
 #include "VdbSampler.h"
 #include "VdbSampler_ispc.h"
@@ -433,8 +441,10 @@ namespace openvkl {
       leafTemporalFormat = this->template getParamDataT<uint32_t>(
           "node.temporalFormat", nullptr);
       if (!leafTemporalFormat) {
-        leafTemporalFormat = new DataT<uint32_t>(this->getDevice(),
-            numLeaves, static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
+        leafTemporalFormat = new DataT<uint32_t>(
+            this->getDevice(),
+            numLeaves,
+            static_cast<uint32_t>(VKL_TEMPORAL_FORMAT_CONSTANT));
         leafTemporalFormat->refDec();
       }
 

@@ -1,14 +1,19 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "UnstructuredIterator.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/export_util.h"
 #include "../common/math.h"
 #include "../volume/UnstructuredSampler.h"
 #include "../volume/UnstructuredVolume.h"
 #include "../volume/Volume.h"
+#include "UnstructuredIterator.h"
 #include "UnstructuredIterator_ispc.h"
-#include "rkcommon/math/box.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -54,8 +59,10 @@ namespace openvkl {
 
     template class UnstructuredIntervalIterator<VKL_TARGET_WIDTH>;
 
-    __vkl_verify_max_interval_iterator_size(UnstructuredIntervalIterator<VKL_TARGET_WIDTH>)
-    __vkl_verify_max_hit_iterator_size(UnstructuredHitIterator<VKL_TARGET_WIDTH>)
+    __vkl_verify_max_interval_iterator_size(
+        UnstructuredIntervalIterator<VKL_TARGET_WIDTH>)
+        __vkl_verify_max_hit_iterator_size(
+            UnstructuredHitIterator<VKL_TARGET_WIDTH>)
 
   }  // namespace cpu_device
 }  // namespace openvkl

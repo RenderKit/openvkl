@@ -14,10 +14,9 @@
 #include "VdbVolume_ispc.h"
 #include "rkcommon/containers/aligned_allocator.h"
 #include "rkcommon/memory/RefCount.h"
+
 #include "VdbVolumeShared.h"
 #include "openvkl/devices/common/StructShared.h"
-
-using namespace rkcommon::memory;
 
 namespace openvkl {
   namespace cpu_device {
@@ -43,7 +42,7 @@ namespace openvkl {
       if (obj->hasParamT<AffineSpace3f>(name)) {
         a = obj->getParam<AffineSpace3f>(name);
       } else {
-        Ref<const DataT<float>> dataIndexToObject =
+        rkcommon::memory::Ref<const DataT<float>> dataIndexToObject =
             obj->template getParamDataT<float>(name, nullptr);
 
         if (dataIndexToObject && dataIndexToObject->size() >= 12) {
@@ -85,7 +84,7 @@ namespace openvkl {
     template <int W>
     struct VdbVolume : public AddStructShared<Volume<W>, ispc::VdbVolume>
     {
-      VdbVolume(const VdbVolume &) = delete;
+      VdbVolume(const VdbVolume &)            = delete;
       VdbVolume &operator=(const VdbVolume &) = delete;
       VdbVolume(VdbVolume &&other)            = delete;
       VdbVolume &operator=(VdbVolume &&other) = delete;
@@ -167,32 +166,33 @@ namespace openvkl {
 
       // populated in initLeafNodeData()
       size_t numLeaves;
-      Ref<const DataT<uint32_t>> leafLevel;
-      Ref<const DataT<vec3i>> leafOrigin;
-      Ref<const DataT<uint32_t>> leafFormat;
-      Ref<const DataT<uint32_t>> leafTemporalFormat;
+      rkcommon::memory::Ref<const DataT<uint32_t>> leafLevel;
+      rkcommon::memory::Ref<const DataT<vec3i>> leafOrigin;
+      rkcommon::memory::Ref<const DataT<uint32_t>> leafFormat;
+      rkcommon::memory::Ref<const DataT<uint32_t>> leafTemporalFormat;
 
       // populated in initLeafNodeData(), only for sparse (non-dense) volumes
-      Ref<const DataT<Data *>> leafData;
-      Ref<const DataT<int>> leafStructuredTimesteps;
-      Ref<const DataT<Data *>> leafUnstructuredIndices;
-      Ref<const DataT<Data *>> leafUnstructuredTimes;
+      rkcommon::memory::Ref<const DataT<Data *>> leafData;
+      rkcommon::memory::Ref<const DataT<int>> leafStructuredTimesteps;
+      rkcommon::memory::Ref<const DataT<Data *>> leafUnstructuredIndices;
+      rkcommon::memory::Ref<const DataT<Data *>> leafUnstructuredTimes;
 
       // optional: re-packed dense and tile node data in single contiguous
       // arrays (per attribute) for improved performance, only for sparse
       // volumes
-      Ref<const DataT<Data *>> nodesPackedDense;
-      Ref<const DataT<Data *>> nodesPackedTile;
+      rkcommon::memory::Ref<const DataT<Data *>> nodesPackedDense;
+      rkcommon::memory::Ref<const DataT<Data *>> nodesPackedTile;
 
       // populated for dense volumes only on commit
       bool dense{false};
       vec3i denseDimensions;
       vec3i denseIndexOrigin;
-      std::vector<Ref<const Data>> denseData;
+      std::vector<rkcommon::memory::Ref<const Data>> denseData;
       VKLTemporalFormat denseTemporalFormat;
       int denseTemporallyStructuredNumTimesteps;
-      Ref<const Data> denseTemporallyUnstructuredIndices;
-      Ref<const DataT<float>> denseTemporallyUnstructuredTimes;
+      rkcommon::memory::Ref<const Data> denseTemporallyUnstructuredIndices;
+      rkcommon::memory::Ref<const DataT<float>>
+          denseTemporallyUnstructuredTimes;
 
       VdbGrid *grid{nullptr};
       Allocator allocator{this->getDevice()};
@@ -206,7 +206,7 @@ namespace openvkl {
       VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
       uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

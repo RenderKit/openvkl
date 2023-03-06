@@ -4,8 +4,6 @@
 #pragma once
 
 #include "../iterator/Iterator.ih"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 
 #include "GridAcceleratorShared.h"
 

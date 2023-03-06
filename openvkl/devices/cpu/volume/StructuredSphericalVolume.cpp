@@ -1,8 +1,18 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "StructuredSphericalVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+#include "GridAccelerator_ispc.h"
+#include "SharedStructuredVolume_ispc.h"
+
 #include "../common/export_util.h"
+#include "StructuredSphericalVolume.h"
+
 #include "StructuredSampler.h"
 
 namespace openvkl {
@@ -86,18 +96,18 @@ namespace openvkl {
       std::vector<const ispc::Data1D *> ispcAttributesData =
           ispcs(this->attributesData);
 
-      bool success = SharedStructuredVolume_set(
-                               this->getSh(),
-                               ispcAttributesData.size(),
-                               ispcAttributesData.data(),
-                               this->temporallyStructuredNumTimesteps,
-                               ispc(this->temporallyUnstructuredIndices),
-                               ispc(this->temporallyUnstructuredTimes),
-                               this->dimensions,
-                               ispc::structured_spherical,
-                               gridOriginRadians,
-                               gridSpacingRadians,
-                               (ispc::VKLFilter)this->filter);
+      bool success =
+          SharedStructuredVolume_set(this->getSh(),
+                                     ispcAttributesData.size(),
+                                     ispcAttributesData.data(),
+                                     this->temporallyStructuredNumTimesteps,
+                                     ispc(this->temporallyUnstructuredIndices),
+                                     ispc(this->temporallyUnstructuredTimes),
+                                     this->dimensions,
+                                     ispc::structured_spherical,
+                                     gridOriginRadians,
+                                     gridSpacingRadians,
+                                     (ispc::VKLFilter)this->filter);
 
       if (!success) {
         SharedStructuredVolume_Destructor(this->getSh());

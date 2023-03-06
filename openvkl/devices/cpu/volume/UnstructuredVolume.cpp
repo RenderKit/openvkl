@@ -1,12 +1,20 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "UnstructuredVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <algorithm>
 #include "../common/Data.h"
 #include "UnstructuredSampler.h"
+#include "UnstructuredVolume.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
+
+using namespace rkcommon::memory;
 
 // Map cell type to its vertices count
 inline uint32_t getVerticesCount(uint8_t cellType)

@@ -1,14 +1,21 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Device.h"
-#include <sstream>
-#include "../common/Data.h"
-#include "../common/ManagedObject.h"
-#include "ispc_util_ispc.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "rkcommon/tasking/tasking_system_init.h"
 #include "rkcommon/utility/StringManip.h"
 #include "rkcommon/utility/getEnvVar.h"
+
+#include <sstream>
+#include "../common/Data.h"
+#include "../common/ManagedObject.h"
+#include "Device.h"
+#include "ispc_util_ispc.h"
 
 namespace openvkl {
 

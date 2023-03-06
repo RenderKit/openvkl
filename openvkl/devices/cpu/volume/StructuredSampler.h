@@ -10,11 +10,11 @@
 #include "Sampler_ispc.h"
 #include "SharedStructuredVolume_ispc.h"
 #include "StructuredRegularVolume.h"
+#include "StructuredSamplerShared.h"
 #include "StructuredSphericalVolume.h"
 #include "StructuredVolume.h"
 #include "openvkl/VKLFilter.h"
 #include "openvkl/devices/common/StructShared.h"
-#include "StructuredSamplerShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -118,12 +118,12 @@ namespace openvkl {
           filter(volume.getFilter()),
           gradientFilter(volume.getGradientFilter())
     {
-      ispc::StructuredSamplerShared * ssampler =
-          (ispc::StructuredSamplerShared * ) this->getSh();
+      ispc::StructuredSamplerShared *ssampler =
+          (ispc::StructuredSamplerShared *)this->getSh();
       memset(ssampler, 0, sizeof(ispc::StructuredSamplerShared));
 
       ispc::SamplerShared *sampler = &ssampler->super.super;
-      sampler->volume                = (const ispc::VolumeShared *)volume.getSh();
+      sampler->volume              = (const ispc::VolumeShared *)volume.getSh();
       CALL_ISPC(assignStructuredSamplerKernels, this->getSh());
     }
 

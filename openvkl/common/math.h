@@ -4,12 +4,8 @@
 #pragma once
 
 #include <cmath>
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
 
 namespace openvkl {
-
-  using namespace rkcommon::math;
 
   inline std::pair<float, float> intersectBox(const vec3f &origin,
                                               const vec3f &direction,

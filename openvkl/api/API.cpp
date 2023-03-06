@@ -1,14 +1,18 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/IteratorBase.h"
 #include "../common/ManagedObject.h"
 #include "../common/logging.h"
 #include "../common/simd.h"
 #include "Device.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/OnScopeExit.h"
 
@@ -17,8 +21,6 @@
 #endif
 
 using namespace openvkl;
-
-using namespace rkcommon::math;
 
 inline std::string getPidString()
 {

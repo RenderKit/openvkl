@@ -1,7 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "CPUDevice.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/Data.h"
 #include "../common/ObjectFactory.h"
 #include "../common/export_util.h"
@@ -10,6 +15,7 @@
 #include "../observer/Observer.h"
 #include "../sampler/Sampler.h"
 #include "../volume/Volume.h"
+#include "CPUDevice.h"
 #include "CPUDevice_ispc.h"
 #include "openvkl/devices/common/BufferShared.h"
 
@@ -23,24 +29,24 @@ namespace openvkl {
     template <int W>
     CPUDevice<W>::~CPUDevice()
     {
-      delete (ispcrt::Context*) context;
+      delete (ispcrt::Context *)context;
     }
 
     template <int W>
-    api::memstate * CPUDevice<W>::allocateBytes(size_t numBytes) const
+    api::memstate *CPUDevice<W>::allocateBytes(size_t numBytes) const
     {
-      api::memstate *container = new api::memstate;
-      void *buffer = (char *)new char[numBytes];
+      api::memstate *container     = new api::memstate;
+      void *buffer                 = (char *)new char[numBytes];
       container->privateManagement = nullptr;
-      container->allocatedBuffer = buffer;
+      container->allocatedBuffer   = buffer;
       return container;
     }
 
     template <int W>
     void CPUDevice<W>::freeMemState(api::memstate *container) const
     {
-       delete[] (char*)container->allocatedBuffer;
-       delete container;
+      delete[](char *) container->allocatedBuffer;
+      delete container;
     }
 
     template <int W>
@@ -62,7 +68,7 @@ namespace openvkl {
 
       if (!context) {
         auto _context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
-        context = (void*) _context;
+        context       = (void *)_context;
       }
 
       VKLISPCTarget target =
@@ -715,7 +721,8 @@ namespace openvkl {
 
 #define VKL_WRAP_VOLUME_REGISTRATION(internal_name)                          \
   extern "C" OPENVKL_DLLEXPORT openvkl::cpu_device::Volume<VKL_TARGET_WIDTH> \
-      *CONCAT1(openvkl_create_volume__, internal_name)(openvkl::api::Device* device);
+      *CONCAT1(openvkl_create_volume__,                                      \
+               internal_name)(openvkl::api::Device * device);
 
 VKL_WRAP_DEVICE_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_cpu))
 
@@ -731,7 +738,7 @@ VKL_WRAP_VOLUME_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_vdb))
 VKL_WRAP_VOLUME_REGISTRATION(VKL_MAKE_TARGET_WIDTH_NAME(internal_particle))
 
 #define VKL_REGISTER_DEVICE_FACTORY_FCN(internal_name, external_name) \
-  openvkl::Device::registerDevice(                                      \
+  openvkl::Device::registerDevice(                                    \
       TOSTRING(external_name),                                        \
       CONCAT1(openvkl_create_device__, internal_name))
 

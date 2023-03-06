@@ -7,24 +7,24 @@
 
 #ifdef __cplusplus
 namespace ispc {
-#endif // __cplusplus
+#endif  // __cplusplus
 
-struct Node
-{
-  VKL_INTEROP_UNIFORM vec3f nominalLength;
-  VKL_INTEROP_UNIFORM box1f valueRange;
-  VKL_INTEROP_UNIFORM int level;
-  VKL_INTEROP_UNIFORM Node *VKL_INTEROP_UNIFORM parent;
-};
+  struct Node
+  {
+    VKL_INTEROP_UNIFORM vec3f nominalLength;
+    VKL_INTEROP_UNIFORM box1f valueRange;
+    VKL_INTEROP_UNIFORM int level;
+    VKL_INTEROP_UNIFORM Node *VKL_INTEROP_UNIFORM parent;
+  };
 
-struct VKLUnstructuredBase
-{
-  VolumeShared super;
+  struct VKLUnstructuredBase
+  {
+    VolumeShared super;
 
-  VKL_INTEROP_UNIFORM box3f boundingBox;
-  VKL_INTEROP_UNIFORM Node *VKL_INTEROP_UNIFORM bvhRoot;
-};
+    VKL_INTEROP_UNIFORM box3f boundingBox;
+    VKL_INTEROP_UNIFORM Node *VKL_INTEROP_UNIFORM bvhRoot;
+  };
 
 #ifdef __cplusplus
 }
-#endif // __cplusplus
+#endif  // __cplusplus

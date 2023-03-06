@@ -3,8 +3,6 @@
 
 #pragma once
 
-#include "VdbGrid.h"
-
 #include "openvkl/ispc_cpp_interop.h"
 
 #include "../../sampler/SamplerShared.h"

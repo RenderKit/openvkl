@@ -1,6 +1,9 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "Sampler.ih"
 
 export void EXPORT_UNIQUE(Sampler_create,

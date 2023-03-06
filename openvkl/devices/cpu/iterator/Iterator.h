@@ -7,10 +7,10 @@
 #include "../common/IteratorBase.h"
 #include "../common/align.h"
 #include "../common/device_simd.h"
-#include "IteratorContext.h"
 #include "openvkl/openvkl.h"
 
-using namespace rkcommon;
+#include "../common/ValueRangesShared.h"
+#include "IteratorContext.h"
 
 #define __varying_ispc_type(TypeName) \
   ispc::__vkl_concat(__vkl_concat(v, VKL_TARGET_WIDTH), _varying_##TypeName)

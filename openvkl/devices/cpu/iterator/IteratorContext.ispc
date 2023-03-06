@@ -1,11 +1,12 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../common/export_util.h"
 
 #include "../common/ValueRanges.ih"
-#define __ISPC_STRUCT_box1f__
-#define __ISPC_STRUCT_ValueRanges__
 #include "IteratorContextShared.h"
 
 ///////////////////////////////////////////////////////////////////////////////

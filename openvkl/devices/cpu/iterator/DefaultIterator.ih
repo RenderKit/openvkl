@@ -6,8 +6,6 @@
 #include "Iterator.ih"
 #include "IteratorContextShared.h"
 #include "IteratorShared.h"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 
 struct IntervalIteratorContext;
 struct ValueRanges;

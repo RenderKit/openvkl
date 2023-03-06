@@ -1,9 +1,12 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include <openvkl/vdb.h>
-#include "VdbGrid.h"
 #include "../../sampler/Sampler.ih"
+#include "VdbGrid.h"
 #include "VdbSamplerShared.h"
 #include "VdbSampler_filter.ih"
 #include "VdbVolumeShared.h"

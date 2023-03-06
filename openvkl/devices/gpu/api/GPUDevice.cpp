@@ -1,7 +1,11 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "GPUDevice.h"
+#include "rkcommon/math/AffineSpace.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+using namespace ispc;
+
 #include "../../cpu/common/export_util.h"
 #include "../../cpu/common/ispc_isa.h"
 #include "../../cpu/iterator/Iterator.h"
@@ -11,6 +15,7 @@
 #include "../common/ObjectFactory.h"
 #include "../compute/vklCompute.h"
 #include "../compute/vklIterators.h"
+#include "GPUDevice.h"
 #include "rkcommon/utility/getEnvVar.h"
 
 namespace openvkl {

@@ -3,14 +3,12 @@
 
 #pragma once
 
+#include "../volume/VolumeShared.h"
 #include "openvkl/VKLFilter.h"
 #include "openvkl/ispc_cpp_interop.h"
-#include "../volume/VolumeShared.h"
 
 #ifdef __cplusplus
 namespace ispc {
-#else
-#include "rkcommon/math/vec.ih"
 #endif  // __cplusplus
 
 #ifndef __ISPC_STRUCT_SamplerShared__

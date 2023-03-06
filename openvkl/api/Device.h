@@ -9,8 +9,6 @@
 #include "../common/VKLCommon.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/box.h"
-#include "rkcommon/math/vec.h"
 #include "rkcommon/memory/IntrusivePtr.h"
 #include "rkcommon/utility/ArrayView.h"
 #include "rkcommon/utility/ParameterizedObject.h"
@@ -20,9 +18,6 @@
 #else
 #define LOG_LEVEL_DEFAULT VKL_LOG_DEBUG
 #endif
-
-using namespace rkcommon;
-using namespace rkcommon::math;
 
 namespace openvkl {
   namespace api {

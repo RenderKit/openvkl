@@ -1,9 +1,15 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
+#include "../common/export_util.h"
 #include "ObserverRegistry.h"
 #include "ObserverRegistry_ispc.h"
-#include "../common/export_util.h"
 
 namespace openvkl {
   namespace cpu_device {

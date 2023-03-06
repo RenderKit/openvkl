@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include "../common/ManagedObject.h"
 #include "../../common/BufferShared.h"
 #include "../../common/StructShared.h"
-#include "IteratorContextShared.h"
+#include "../common/ManagedObject.h"
 
-using namespace rkcommon::math;
+#include "../common/ValueRangesShared.h"
+#include "IteratorContextShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -33,15 +33,16 @@ namespace openvkl {
       const Sampler<W> &getSampler() const;
 
      protected:
-      Ref<const Sampler<W>> sampler;
-      int attributeIndex = 0;
+      rkcommon::memory::Ref<const Sampler<W>> sampler;
+      int attributeIndex           = 0;
       bool SharedStructInitialized = false;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline IteratorContext<W>::IteratorContext(Device *device, const Sampler<W> &sampler)
+    inline IteratorContext<W>::IteratorContext(Device *device,
+                                               const Sampler<W> &sampler)
         : AddStructShared<ManagedObject, ispc::IteratorContext>(device),
           sampler(&sampler)
     {
@@ -75,7 +76,8 @@ namespace openvkl {
       virtual ~IntervalIteratorContext();
 
       void commit() override;
-    protected:
+
+     protected:
       std::unique_ptr<BufferShared<range1f>> rangesView;
     };
 
@@ -100,7 +102,8 @@ namespace openvkl {
       virtual ~HitIteratorContext();
 
       void commit() override;
-    private:
+
+     private:
       std::unique_ptr<BufferShared<float>> valuesView;
     };
 

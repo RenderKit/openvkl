@@ -3,24 +3,24 @@
 
 #pragma once
 
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
-
 inline bool isempty1f(const box1f &box)
 {
   return box.upper <= box.lower;
 }
 
+#ifdef ISPC
 inline uniform bool isempty1f(const uniform box1f &box)
 {
   return box.upper <= box.lower;
 }
+#endif
 
 inline bool overlaps1f(const box1f &box1, const box1f &box2)
 {
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
 }
 
+#ifdef ISPC
 inline bool overlaps1f(const uniform box1f &box1, const box1f &box2)
 {
   return box1.upper >= box2.lower && box1.lower <= box2.upper;
@@ -57,6 +57,7 @@ inline uniform bool overlapsAny1f(const uniform box1f &r,
 
   return false;
 }
+#endif
 
 inline box1f intersectBox(const vec3f &origin,
                           const vec3f &direction,
@@ -73,6 +74,7 @@ inline box1f intersectBox(const vec3f &origin,
   return result;
 }
 
+#ifdef ISPC
 inline box1f intersectBox(const vec3f &origin,
                           const vec3f &direction,
                           const uniform box3f &box,
@@ -102,3 +104,4 @@ inline uniform box1f intersectBox(const uniform vec3f &origin,
 
   return result;
 }
+#endif

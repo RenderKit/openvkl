@@ -5,8 +5,6 @@
 
 #include "../VolumeShared.h"
 
-#include "VdbGrid.h"
-
 #ifdef __cplusplus
 namespace ispc {
 #endif  // __cplusplus

@@ -5,7 +5,6 @@
 
 #include "Traits.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/vec.h"
 #include "rkcommon/platform.h"
 
 namespace openvkl {
@@ -192,7 +191,7 @@ namespace openvkl {
     {
     }
 
-    vvec3fn<W>(const rkcommon::math::vec3f &v)
+    vvec3fn<W>(const vec3f &v)
     {
       static_assert(W == 1, "vec3f constructor only valid for W=1");
       x[0] = v.x;

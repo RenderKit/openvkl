@@ -1,6 +1,9 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../common/export_util.h"
 #include "UnstructuredSamplerShared.h"
 #include "UnstructuredVolume.ih"

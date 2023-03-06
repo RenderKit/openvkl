@@ -1,9 +1,15 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "api/CPUDevice.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/ManagedObject.h"
 #include "../common/VKLCommon.h"
+#include "api/CPUDevice.h"
 
 // For Windows in particular, we need registered object creation functions
 // available in the top level module library, as exports from dependencies will

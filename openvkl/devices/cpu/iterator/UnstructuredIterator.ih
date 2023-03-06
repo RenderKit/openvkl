@@ -8,8 +8,6 @@
 #include "DefaultIterator.ih"
 #include "../volume/UnstructuredSamplerBase.ih"
 #include "../volume/UnstructuredVolume.ih"
-#include "rkcommon/math/box.ih"
-#include "rkcommon/math/vec.ih"
 
 struct UnstructuredTraversalStatePublic
 {

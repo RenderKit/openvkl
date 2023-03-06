@@ -11,8 +11,6 @@
 #include "openvkl/devices/common/StructShared.h"
 #include "rkcommon/memory/RefCount.h"
 
-using namespace rkcommon::memory;
-
 namespace openvkl {
   namespace cpu_device {
 
@@ -41,10 +39,10 @@ namespace openvkl {
       std::unique_ptr<amr::AMRData> data;
       std::unique_ptr<amr::AMRAccel> accel;
 
-      Ref<const DataT<Data *>> blockDataData;
-      Ref<const DataT<box3i>> blockBoundsData;
-      Ref<const DataT<int>> refinementLevelsData;
-      Ref<const DataT<float>> cellWidthsData;
+      rkcommon::memory::Ref<const DataT<Data *>> blockDataData;
+      rkcommon::memory::Ref<const DataT<box3i>> blockBoundsData;
+      rkcommon::memory::Ref<const DataT<int>> refinementLevelsData;
+      rkcommon::memory::Ref<const DataT<float>> cellWidthsData;
       VKLDataType voxelType;
       range1f valueRange{empty};
       box3f bounds;
@@ -53,7 +51,7 @@ namespace openvkl {
 
       VKLAMRMethod amrMethod{VKL_AMR_CURRENT};
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
 
       // for interval iteration
       RTCBVH rtcBVH{0};

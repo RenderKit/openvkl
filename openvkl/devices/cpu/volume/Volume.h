@@ -11,13 +11,10 @@
 #include "VolumeShared.h"
 #include "openvkl/devices/common/StructShared.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/box.h"
 
 #define THROW_NOT_IMPLEMENTED                          \
   throw std::runtime_error(std::string(__FUNCTION__) + \
                            " not implemented in this volume!")
-
-using namespace rkcommon;
 
 namespace openvkl {
   namespace cpu_device {

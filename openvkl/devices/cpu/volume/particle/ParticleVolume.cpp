@@ -1,9 +1,15 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "ParticleVolume.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../common/Data.h"
 #include "ParticleSampler.h"
+#include "ParticleVolume.h"
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
 

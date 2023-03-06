@@ -1,9 +1,9 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-// ours
-//#include "CellRef.ih"
-// #include "AMRCommon.h"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../UnstructuredSamplerShared.h"
 #include "AMR.ih"
 #include "AMRVolumeShared.h"

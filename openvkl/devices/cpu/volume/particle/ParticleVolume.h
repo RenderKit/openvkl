@@ -104,14 +104,14 @@ namespace openvkl {
       box3f bounds{empty};
       range1f valueRange{empty};
 
-      Ref<const DataT<vec3f>> positions;
-      Ref<const DataT<float>> radii;
-      Ref<const DataT<float>> weights;
+      rkcommon::memory::Ref<const DataT<vec3f>> positions;
+      rkcommon::memory::Ref<const DataT<float>> radii;
+      rkcommon::memory::Ref<const DataT<float>> weights;
       float radiusSupportFactor;
       float clampMaxCumulativeValue;
       bool estimateValueRanges;
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
 
       // number of particles included in the BVH, which will not include any
       // zero-radius particles

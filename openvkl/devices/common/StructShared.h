@@ -136,8 +136,7 @@ namespace openvkl {
   }
 
   template <typename T, typename B>
-  StructSharedGet<T, B>::StructSharedGet(
-    Device *device, ISPCRTMemoryView *view)
+  StructSharedGet<T, B>::StructSharedGet(Device *device, ISPCRTMemoryView *view)
   {
     if (!*view) {
       *view = StructSharedCreate<T>(device);
@@ -166,7 +165,7 @@ struct ShouldPass3 : public AddStructShared<ShouldPass2, D2> {};
 //struct ShouldFail1 : public AddStructShared<ShouldPass3, D2> {};
 //struct ShouldFail2 : public AddStructShared<ShouldPass2, B> {};
 //struct ShouldFail3 : public AddStructShared<ShouldPass3, D1> {};
-    // clang-format on
+    //  clang-format on
   }  // namespace test
 
 }  // namespace openvkl

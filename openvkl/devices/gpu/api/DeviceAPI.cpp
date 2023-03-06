@@ -1,7 +1,11 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "../common/simd.h"
+#include "rkcommon/math/AffineSpace.ih"
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+using namespace ispc;
+
 #include "AddDeviceAPIs.h"
 #include "openvkl/common/ManagedObject.h"
 #include "openvkl/openvkl.h"
@@ -35,17 +39,16 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
     float time)
 {
   assert(sampler);
-  const ispc::SamplerShared *samplerShared =
-      static_cast<const ispc::SamplerShared *>(sampler->device);
+  const SamplerShared *samplerShared =
+      static_cast<const SamplerShared *>(sampler->device);
 
-  const ispc::DeviceVolumeType volumeType = samplerShared->volume->type;
+  const DeviceVolumeType volumeType = samplerShared->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-  case ispc::VOLUME_TYPE_STRUCTURED_SPHERICAL: {
-    const ispc::SharedStructuredVolume *v =
-        reinterpret_cast<const ispc::SharedStructuredVolume *>(
-            samplerShared->volume);
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    const SharedStructuredVolume *v =
+        reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
 
     return SharedStructuredVolume_computeSample_uniform(
         v,
@@ -70,14 +73,14 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
     float time)
 {
   assert(sampler);
-  const ispc::SamplerShared *samplerShared =
-      static_cast<const ispc::SamplerShared *>(sampler->device);
+  const SamplerShared *samplerShared =
+      static_cast<const SamplerShared *>(sampler->device);
 
-  const ispc::DeviceVolumeType volumeType = samplerShared->volume->type;
+  const DeviceVolumeType volumeType = samplerShared->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-  case ispc::VOLUME_TYPE_STRUCTURED_SPHERICAL:
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL:
     SharedStructuredVolume_sampleM_uniform(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
@@ -99,17 +102,16 @@ vklComputeGradient(const VKLSampler *sampler,
                    float time)
 {
   assert(sampler);
-  const ispc::SamplerShared *samplerShared =
-      static_cast<const ispc::SamplerShared *>(sampler->device);
+  const SamplerShared *samplerShared =
+      static_cast<const SamplerShared *>(sampler->device);
 
-  const ispc::DeviceVolumeType volumeType = samplerShared->volume->type;
+  const DeviceVolumeType volumeType = samplerShared->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-  case ispc::VOLUME_TYPE_STRUCTURED_SPHERICAL: {
-    const ispc::SharedStructuredVolume *v =
-        reinterpret_cast<const ispc::SharedStructuredVolume *>(
-            samplerShared->volume);
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    const SharedStructuredVolume *v =
+        reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
 
     return SharedStructuredVolume_computeGradient_bbox_checks(
         v,
@@ -139,13 +141,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
 {
   assert(context);
-  const ispc::IteratorContext *ic =
-      static_cast<const ispc::IteratorContext *>(context->device);
+  const IteratorContext *ic =
+      static_cast<const IteratorContext *>(context->device);
 
-  const ispc::DeviceVolumeType volumeType = ic->sampler->volume->type;
+  const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
     // the size includes extra padding, so that we can still use an unaligned
     // buffer allocated by the application
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
@@ -165,13 +167,13 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                         void *buffer)
 {
   assert(context);
-  const ispc::IteratorContext *ic =
-      static_cast<const ispc::IteratorContext *>(context->device);
+  const IteratorContext *ic =
+      static_cast<const IteratorContext *>(context->device);
 
-  const ispc::DeviceVolumeType volumeType = ic->sampler->volume->type;
+  const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
     // the provided buffer is guaranteed to be of size `space` below, but it may
     // be unaligned. so, we'll move to an appropriately aligned address inside
     // the provided buffer.
@@ -204,14 +206,14 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     VKLIntervalIterator iterator, VKLInterval *interval)
 {
   assert(iterator);
-  const ispc::IntervalIteratorShared *iter =
-      reinterpret_cast<const ispc::IntervalIteratorShared *>(iterator);
+  const IntervalIteratorShared *iter =
+      reinterpret_cast<const IntervalIteratorShared *>(iterator);
 
-  const ispc::DeviceVolumeType volumeType =
+  const DeviceVolumeType volumeType =
       iter->context->super.sampler->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
     int result = 0;
     GridAcceleratorIterator_iterateInterval_uniform(
         iterator, interval, &result);
@@ -238,13 +240,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context)
 {
   assert(context);
-  const ispc::IteratorContext *ic =
-      static_cast<const ispc::IteratorContext *>(context->device);
+  const IteratorContext *ic =
+      static_cast<const IteratorContext *>(context->device);
 
-  const ispc::DeviceVolumeType volumeType = ic->sampler->volume->type;
+  const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
     // the size includes extra padding, so that we can still use an unaligned
     // buffer allocated by the application
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
@@ -264,13 +266,13 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
                    void *buffer)
 {
   assert(context);
-  const ispc::IteratorContext *ic =
-      static_cast<const ispc::IteratorContext *>(context->device);
+  const IteratorContext *ic =
+      static_cast<const IteratorContext *>(context->device);
 
-  const ispc::DeviceVolumeType volumeType = ic->sampler->volume->type;
+  const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
     size_t space =
         sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
 
@@ -300,14 +302,14 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     VKLHitIterator iterator, VKLHit *hit)
 {
   assert(iterator);
-  const ispc::IntervalIteratorShared *iter =
-      reinterpret_cast<const ispc::IntervalIteratorShared *>(iterator);
+  const IntervalIteratorShared *iter =
+      reinterpret_cast<const IntervalIteratorShared *>(iterator);
 
-  const ispc::DeviceVolumeType volumeType =
+  const DeviceVolumeType volumeType =
       iter->context->super.sampler->volume->type;
 
   switch (volumeType) {
-  case ispc::VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
     int result = 0;
     GridAcceleratorIterator_iterateHit_uniform(iterator, hit, &result);
     return result;

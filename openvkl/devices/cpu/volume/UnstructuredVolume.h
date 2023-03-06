@@ -65,19 +65,19 @@ namespace openvkl {
       box3f bounds{empty};
       range1f valueRange{empty};
 
-      Ref<const DataT<vec3f>> vertexPosition;
-      Ref<const DataT<float>> vertexValue;
+      rkcommon::memory::Ref<const DataT<vec3f>> vertexPosition;
+      rkcommon::memory::Ref<const DataT<float>> vertexValue;
 
-      Ref<const DataT<uint32_t>> index32;
-      Ref<const DataT<uint64_t>> index64;
+      rkcommon::memory::Ref<const DataT<uint32_t>> index32;
+      rkcommon::memory::Ref<const DataT<uint64_t>> index64;
 
-      Ref<const DataT<uint32_t>> cellIndex32;
-      Ref<const DataT<uint64_t>> cellIndex64;
+      rkcommon::memory::Ref<const DataT<uint32_t>> cellIndex32;
+      rkcommon::memory::Ref<const DataT<uint64_t>> cellIndex64;
 
-      Ref<const DataT<float>> cellValue;
-      Ref<const DataT<uint8_t>> cellType;
+      rkcommon::memory::Ref<const DataT<float>> cellValue;
+      rkcommon::memory::Ref<const DataT<uint8_t>> cellType;
 
-      Ref<const DataT<float>> background;
+      rkcommon::memory::Ref<const DataT<float>> background;
 
       bool index32Bit{false};
       bool cell32Bit{false};

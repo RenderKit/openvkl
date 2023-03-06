@@ -1,12 +1,15 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "iterator/GridAcceleratorIterator.ih"
-#include "common/Interval.ih"
-#include "common/Hit.ih"
 #include "rkcommon/math/box.ih"
 #include "rkcommon/math/vec.ih"
+
+#include "common/Hit.ih"
+#include "common/Interval.ih"
+#include "iterator/GridAcceleratorIterator.ih"
+
 #include "openvkl/openvkl.isph"
+
 #include "openvkl/device/openvkl.isph"
 
 export void delete_uniform(void *uniform ptr)

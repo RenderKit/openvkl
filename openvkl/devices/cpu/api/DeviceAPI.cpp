@@ -1,10 +1,16 @@
 // Copyright 2022 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../../../common/IteratorBase.h"
+#include "../common/ManagedObject.h"
 #include "../common/simd.h"
 #include "AddDeviceAPIs.h"
-#include "../common/ManagedObject.h"
 #include "openvkl/openvkl.h"
 
 using namespace openvkl;
@@ -304,7 +310,6 @@ typename std::enable_if<
     assert(deviceSource != nullptr);                     \
     AddDeviceAPIs *deviceObj = deviceFrom(deviceSource); \
     try {
-
 extern "C" size_t vklGetIntervalIteratorSize(
     const VKLIntervalIteratorContext *context)
     OPENVKL_CATCH_BEGIN_UNSAFE(context)

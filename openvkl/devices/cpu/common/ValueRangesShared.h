@@ -7,14 +7,16 @@
 namespace ispc {
 #endif  // __cplusplus
 
-struct ValueRanges
-{
-  int numRanges;
-  box1f *ranges;
-  box1f rangesMinMax;
-};
+#ifndef __ISPC_STRUCT_ValueRanges__
+#define __ISPC_STRUCT_ValueRanges__
+  struct ValueRanges
+  {
+    int numRanges;
+    box1f *ranges;
+    box1f rangesMinMax;
+  };
+#endif
 
 #ifdef __cplusplus
 }
 #endif  // __cplusplus
-

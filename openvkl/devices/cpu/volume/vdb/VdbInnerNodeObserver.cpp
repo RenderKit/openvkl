@@ -1,9 +1,15 @@
 // Copyright 2021 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "VdbInnerNodeObserver.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include <atomic>
 #include "VdbGrid.h"
+#include "VdbInnerNodeObserver.h"
 #include "VdbVolume.h"
 #include "rkcommon/tasking/parallel_for.h"
 

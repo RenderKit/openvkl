@@ -1,12 +1,16 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
 #include "../common/export_util.h"
 #include "SharedStructuredVolume.ih"
+
 #include "../iterator/GridAcceleratorIterator.ih"
-#include "GridAccelerator.ih"
 #include "../math/box_utility.ih"
 #include "GridAccelerator.h"
+#include "GridAccelerator.ih"
 
 #define template_GridAccelerator_getters(univary)                              \
   inline univary uint32 GridAccelerator_getCellIndex1D(                        \
@@ -84,20 +88,20 @@ inline void GridAccelerator_computeCellValueRange(
            j = 0 ... CELL_WIDTH + 1,
            i = 0 ... CELL_WIDTH + 1) {
     const vec3i localCoordinates = make_vec3i(cellIndex.x * CELL_WIDTH + i,
-                                        cellIndex.y * CELL_WIDTH + j,
-                                        cellIndex.z * CELL_WIDTH + k);
+                                              cellIndex.y * CELL_WIDTH + j,
+                                              cellIndex.z * CELL_WIDTH + k);
 
     const range1f voxelRange = volume->computeVoxelRange[attributeIndex](
         volume, min(volume->dimensions - 1, localCoordinates), attributeIndex);
 
     if (!isnan(voxelRange.lower)) {
       extend(valueRange, voxelRange.lower);
-      cellEmpty        = false;
+      cellEmpty = false;
     }
 
     if (!isnan(voxelRange.upper)) {
       extend(valueRange, voxelRange.upper);
-      cellEmpty        = false;
+      cellEmpty = false;
     }
   }
 

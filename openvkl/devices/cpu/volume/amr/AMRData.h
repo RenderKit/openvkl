@@ -5,9 +5,6 @@
 
 #include "../common/Data.h"
 #include "../common/math.h"
-#include "rkcommon/math/box.h"
-
-using namespace rkcommon;
 
 namespace openvkl {
   namespace cpu_device {

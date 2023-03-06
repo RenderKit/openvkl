@@ -9,11 +9,9 @@
 #include "../iterator/IteratorContext.h"
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
-#include "rkcommon/math/vec.h"
+
 #include "../../common/StructShared.h"
 #include "SamplerShared.h"
-
-using namespace rkcommon;
 
 namespace openvkl {
   namespace cpu_device {
@@ -291,7 +289,7 @@ namespace openvkl {
       }
 
      protected:
-      Ref<VolumeT<W>> volume;
+      rkcommon::memory::Ref<VolumeT<W>> volume;
       IntervalIteratorFactory<W> intervalIteratorFactory;
       HitIteratorFactory<W> hitIteratorFactory;
     };

@@ -3,11 +3,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-#include "rkcommon/math/box.h"
-#else
-#include "rkcommon/math/box.ih"
-#endif
 // ospray
 #include "../common/DataShared.h"
 #include "openvkl/VKLDataType.h"

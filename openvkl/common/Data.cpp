@@ -1,8 +1,14 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
-#include "Data.h"
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../devices/common/BufferShared.h"
+#include "Data.h"
 #include "rkcommon/memory/malloc.h"
 
 namespace openvkl {
@@ -50,7 +56,7 @@ namespace openvkl {
       if (m->allocatedBuffer == nullptr) {
         throw std::bad_alloc();
       }
-      view = m;
+      view         = m;
       void *buffer = m->allocatedBuffer;
 
       if (isManagedObject(dataType)) {
@@ -73,10 +79,11 @@ namespace openvkl {
         }
       }
 
-      addr = (char *)buffer;
+      addr       = (char *)buffer;
       byteStride = naturalByteStride;
     } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
-      view = nullptr; //TODO add code to inspect and reuse and copy as required here
+      view = nullptr;  // TODO add code to inspect and reuse and copy as
+                       // required here
       addr = (char *)source;
     } else {
       throw std::runtime_error("VKLData: unknown data creation flags provided");

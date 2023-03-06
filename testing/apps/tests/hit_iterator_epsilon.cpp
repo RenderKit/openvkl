@@ -1,13 +1,18 @@
 // Copyright 2020 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/AffineSpace.h"
+#include "rkcommon/math/box.h"
+#include "rkcommon/math/vec.h"
+using namespace rkcommon;
+using namespace rkcommon::math;
+
 #include "../../external/catch.hpp"
 #include "../common/Traits.h"
 #include "../common/simd.h"
 #include "common/DeviceTraits.h"
 #include "openvkl_testing.h"
 
-using namespace rkcommon;
 using namespace openvkl;
 using namespace openvkl::testing;
 

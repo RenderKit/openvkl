@@ -9,8 +9,6 @@
 #include "VdbGrid.h"
 #include "VdbIterator_ispc.h"
 
-using namespace rkcommon;
-
 namespace openvkl {
   namespace cpu_device {
 

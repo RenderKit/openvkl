@@ -1,6 +1,10 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+#include "../common/ValueRanges.ih"
 #include "UnstructuredIterator.ih"
 #include "common/export_util.h"
 #include "common/print_debug.ih"
@@ -48,12 +52,12 @@ export void EXPORT_UNIQUE(UnstructuredIterator_Initialize,
       (varying UnstructuredIterator * uniform) _self;
 
   self->super.super.context = (const IntervalIteratorContext *uniform)_context;
-  self->super.iterate = UnstructuredIterator_iterateIntervalInternal;
+  self->super.iterate       = UnstructuredIterator_iterateIntervalInternal;
   self->super.elementaryCellIterationSupported =
       elementaryCellIterationSupported;
 
-  self->sampler =
-      (UnstructuredSamplerBase * uniform)(self->super.super.context->super.sampler);
+  self->sampler   = (UnstructuredSamplerBase *
+                   uniform)(self->super.super.context->super.sampler);
   self->origin    = *((varying vec3f * uniform) _origin);
   self->direction = *((varying vec3f * uniform) _direction);
   self->tRange    = *((varying box1f * uniform) _tRange);

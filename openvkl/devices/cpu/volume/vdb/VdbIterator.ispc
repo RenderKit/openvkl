@@ -1,17 +1,20 @@
 // Copyright 2019 Intel Corporation
 // SPDX-License-Identifier: Apache-2.0
 
+#include "rkcommon/math/box.ih"
+#include "rkcommon/math/vec.ih"
+
+#include "../../common/ValueRanges.ih"
 #include "VdbGrid.h"
 #include "VdbIterator.ih"
 #include "VdbQueryVoxelDense.ih"
 #include "VdbSamplerShared.h"
 #include "common/export_util.h"
 #include "math/box_utility.ih"
-#include "rkcommon/math/math.ih"
 
 // Generated headers.
-#include "openvkl_vdb/VdbQueryVoxel_0.ih"
 #include "openvkl_vdb/HDDA_0.ih"
+#include "openvkl_vdb/VdbQueryVoxel_0.ih"
 
 // Ignore warning about exporting uniform-pointer-to-varying, as this is in
 // fact legal.
@@ -45,7 +48,7 @@ export void EXPORT_UNIQUE(VdbIterator_Initialize,
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
   self->super.super.context = (const IntervalIteratorContext *uniform)_context;
-  self->super.iterate = VdbIterator_iterateIntervalInternal;
+  self->super.iterate       = VdbIterator_iterateIntervalInternal;
   self->super.elementaryCellIterationSupported = false;
 
   const uniform VdbSamplerShared *uniform sampler =
@@ -167,10 +170,11 @@ export void EXPORT_UNIQUE(VdbIterator_iterateInterval,
 
   varying VdbIterator *uniform self = (varying VdbIterator * uniform) _self;
 
-  VdbIterator_iterateIntervalInternal(imask,
-                                      _self,
-                                      _interval,
-                                      self->super.super.context->super.valueRanges,
-                                      false,
-                                      _result);
+  VdbIterator_iterateIntervalInternal(
+      imask,
+      _self,
+      _interval,
+      self->super.super.context->super.valueRanges,
+      false,
+      _result);
 }

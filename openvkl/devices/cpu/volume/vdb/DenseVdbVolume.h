@@ -28,11 +28,11 @@ namespace openvkl {
       vec3f gridOrigin;
       vec3f gridSpacing;
       vec3i indexOrigin;
-      std::vector<Ref<const Data>> attributesData;
+      std::vector<rkcommon::memory::Ref<const Data>> attributesData;
       VKLTemporalFormat temporalFormat;
       int temporallyStructuredNumTimesteps;
-      Ref<const Data> temporallyUnstructuredIndices;
-      Ref<const DataT<float>> temporallyUnstructuredTimes;
+      rkcommon::memory::Ref<const Data> temporallyUnstructuredIndices;
+      rkcommon::memory::Ref<const DataT<float>> temporallyUnstructuredTimes;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////

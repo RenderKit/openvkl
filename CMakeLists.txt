@@ -42,6 +42,8 @@ configure_file(
 
 include_directories_ispc(${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME})
 
+include(GNUInstallDirs)
+
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/version.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${PROJECT_NAME}
 )
@@ -51,7 +53,6 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/openvkl/include/${PROJECT_NAME}/versio
 option(BUILD_EXAMPLES "Build example applications." ON)
 option(BUILD_BENCHMARKS "Build benchmark applications." OFF)
 
-include(GNUInstallDirs)
 include(CTest) # Adds 'BUILD_TESTING' variable
 
 if (BUILD_TESTING)

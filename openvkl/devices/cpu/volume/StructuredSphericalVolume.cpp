@@ -31,6 +31,10 @@ namespace openvkl {
         ispc::SharedStructuredVolume *self =
             static_cast<ispc::SharedStructuredVolume *>(this->getSh());
 
+        static_assert(
+            std::is_trivially_copyable<ispc::SharedStructuredVolume>::value,
+            "ispc::SharedStructuredVolume must be a POD type.");
+
         memset(self, 0, sizeof(ispc::SharedStructuredVolume));
 
         SharedStructuredVolume_Constructor(self);

@@ -147,6 +147,10 @@ namespace openvkl {
         ispc::VKLParticleVolume *self =
             static_cast<ispc::VKLParticleVolume *>(this->getSh());
 
+        static_assert(
+            std::is_trivially_copyable<ispc::VKLParticleVolume>::value,
+            "ispc::VKLParticleVolume must be a POD type.");
+
         memset(self, 0, sizeof(ispc::VKLParticleVolume));
 
         CALL_ISPC(VKLParticleVolume_Constructor, self);

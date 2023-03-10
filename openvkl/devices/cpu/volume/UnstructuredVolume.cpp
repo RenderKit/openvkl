@@ -214,6 +214,11 @@ namespace openvkl {
       if (!this->SharedStructInitialized) {
         ispc::VKLUnstructuredVolume *self =
             static_cast<ispc::VKLUnstructuredVolume *>(this->getSh());
+
+        static_assert(
+            std::is_trivially_copyable<ispc::VKLUnstructuredVolume>::value,
+            "ispc::VKLUnstructuredVolume must be a POD type.");
+
         memset(self, 0, sizeof(ispc::VKLUnstructuredVolume));
         self->super.super.type =
             ispc::DeviceVolumeType::VOLUME_TYPE_UNSTRUCTURED;

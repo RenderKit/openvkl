@@ -68,7 +68,6 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
 #endif
   }
 
-#ifdef OPENVKL_TESTING_CPU
   // these are necessarily longer-running tests, so should maybe be split out
   // into a "large" test suite later.
   SECTION("64/32-bit addressing")
@@ -136,7 +135,6 @@ TEST_CASE("Structured regular volume sampling", "[volume_sampling]")
     }
 #endif
   }
-#endif
 
   shutdownOpenVKL();
 }

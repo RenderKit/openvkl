@@ -12,105 +12,104 @@
 
 namespace ispc {
 
-#define template_SSV_sample_inner_uniform_32(dataType)                      \
-  inline float SSV_sample_inner_##dataType##_uniform_32(                    \
-      const SharedStructuredVolume *self,                                   \
-      const vec3f &clampedLocalCoordinates,                                 \
-      const VKLFilter filter,                                               \
-      const uint32_t attributeIndex,                                        \
-      const float &_time)                                                   \
-  {                                                                         \
-    const Data1D voxelData = self->attributesData[attributeIndex];          \
-                                                                            \
-    /* lower corner of the box straddling the voxels to be interpolated. */ \
-    const vec3i voxelIndex_0 = vec3i(clampedLocalCoordinates.x,             \
-                                     clampedLocalCoordinates.y,             \
-                                     clampedLocalCoordinates.z);            \
-                                                                            \
-    const uint32_t voxelOfs = voxelIndex_0.x * self->voxelOfs_dx +          \
-                              voxelIndex_0.y * self->voxelOfs_dy +          \
-                              voxelIndex_0.z * self->voxelOfs_dz;           \
-                                                                            \
-    float val = 0.f;                                                        \
-    switch (filter) {                                                       \
-    case VKL_FILTER_TRICUBIC:                                               \
-      break;                                                                \
-    case VKL_FILTER_NEAREST: {                                              \
-      val = get_##dataType(voxelData, voxelOfs);                            \
-      break;                                                                \
-    }                                                                       \
-    case VKL_FILTER_TRILINEAR: {                                            \
-      /* fractional coordinates within the lower corner voxel used during   \
-       * interpolation. */                                                  \
-      const vec3f frac =                                                    \
-          clampedLocalCoordinates -                                         \
-          vec3f(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z);            \
-                                                                            \
-      const uint64_t ofs000 = 0;                                            \
-      const uint64_t ofs001 = self->voxelOfs_dx;                            \
-                                                                            \
-      const float val000 = get_##dataType(voxelData, ofs000, voxelOfs);     \
-      const float val001 = get_##dataType(voxelData, ofs001, voxelOfs);     \
-      const float val00  = val000 + frac.x * (val001 - val000);             \
-                                                                            \
-      const uint64_t ofs010 = self->voxelOfs_dy;                            \
-      const uint64_t ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;        \
-      const float val010    = get_##dataType(voxelData, ofs010, voxelOfs);  \
-      const float val011    = get_##dataType(voxelData, ofs011, voxelOfs);  \
-      const float val01     = val010 + frac.x * (val011 - val010);          \
-                                                                            \
-      const uint64_t ofs100 = self->voxelOfs_dz;                            \
-      const uint64_t ofs101 = ofs100 + ofs001;                              \
-      const float val100    = get_##dataType(voxelData, ofs100, voxelOfs);  \
-      const float val101    = get_##dataType(voxelData, ofs101, voxelOfs);  \
-      const float val10     = val100 + frac.x * (val101 - val100);          \
-                                                                            \
-      const uint64_t ofs110 = ofs100 + ofs010;                              \
-      const uint64_t ofs111 = ofs100 + ofs011;                              \
-      const float val110    = get_##dataType(voxelData, ofs110, voxelOfs);  \
-      const float val111    = get_##dataType(voxelData, ofs111, voxelOfs);  \
-      const float val11     = val110 + frac.x * (val111 - val110);          \
-                                                                            \
-      const float val0 = val00 + frac.y * (val01 - val00);                  \
-      const float val1 = val10 + frac.y * (val11 - val10);                  \
-                                                                            \
-      val = val0 + frac.z * (val1 - val0);                                  \
-      break;                                                                \
-    }                                                                       \
-    }                                                                       \
-                                                                            \
-    return val;                                                             \
+#define template_SSV_sample_inner_uniform(dataType)                          \
+  inline float SSV_sample_inner_##dataType##_uniform(                        \
+      const SharedStructuredVolume *self,                                    \
+      const vec3f &clampedLocalCoordinates,                                  \
+      const VKLFilter filter,                                                \
+      const uint32_t attributeIndex,                                         \
+      const float &_time)                                                    \
+  {                                                                          \
+    const Data1D voxelData = self->attributesData[attributeIndex];           \
+                                                                             \
+    /* lower corner of the box straddling the voxels to be interpolated. */  \
+    const vec3i voxelIndex_0 = vec3i(clampedLocalCoordinates.x,              \
+                                     clampedLocalCoordinates.y,              \
+                                     clampedLocalCoordinates.z);             \
+                                                                             \
+    const uint64_t voxelOfs = voxelIndex_0.x * (uint64_t)self->voxelOfs_dx + \
+                              voxelIndex_0.y * (uint64_t)self->voxelOfs_dy + \
+                              voxelIndex_0.z * (uint64_t)self->voxelOfs_dz;  \
+                                                                             \
+    float val = 0.f;                                                         \
+    switch (filter) {                                                        \
+    case VKL_FILTER_TRICUBIC:                                                \
+      break;                                                                 \
+    case VKL_FILTER_NEAREST: {                                               \
+      val = get_##dataType(voxelData, voxelOfs);                             \
+      break;                                                                 \
+    }                                                                        \
+    case VKL_FILTER_TRILINEAR: {                                             \
+      /* fractional coordinates within the lower corner voxel used during    \
+       * interpolation. */                                                   \
+      const vec3f frac =                                                     \
+          clampedLocalCoordinates -                                          \
+          vec3f(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z);             \
+                                                                             \
+      const uint64_t ofs000 = 0;                                             \
+      const uint64_t ofs001 = self->voxelOfs_dx;                             \
+                                                                             \
+      const float val000 = get_##dataType(voxelData, ofs000 + voxelOfs);     \
+      const float val001 = get_##dataType(voxelData, ofs001 + voxelOfs);     \
+      const float val00  = val000 + frac.x * (val001 - val000);              \
+                                                                             \
+      const uint64_t ofs010 = self->voxelOfs_dy;                             \
+      const uint64_t ofs011 = self->voxelOfs_dy + self->voxelOfs_dx;         \
+      const float val010    = get_##dataType(voxelData, ofs010 + voxelOfs);  \
+      const float val011    = get_##dataType(voxelData, ofs011 + voxelOfs);  \
+      const float val01     = val010 + frac.x * (val011 - val010);           \
+                                                                             \
+      const uint64_t ofs100 = self->voxelOfs_dz;                             \
+      const uint64_t ofs101 = ofs100 + ofs001;                               \
+      const float val100    = get_##dataType(voxelData, ofs100 + voxelOfs);  \
+      const float val101    = get_##dataType(voxelData, ofs101 + voxelOfs);  \
+      const float val10     = val100 + frac.x * (val101 - val100);           \
+                                                                             \
+      const uint64_t ofs110 = ofs100 + ofs010;                               \
+      const uint64_t ofs111 = ofs100 + ofs011;                               \
+      const float val110    = get_##dataType(voxelData, ofs110 + voxelOfs);  \
+      const float val111    = get_##dataType(voxelData, ofs111 + voxelOfs);  \
+      const float val11     = val110 + frac.x * (val111 - val110);           \
+                                                                             \
+      const float val0 = val00 + frac.y * (val01 - val00);                   \
+      const float val1 = val10 + frac.y * (val11 - val10);                   \
+                                                                             \
+      val = val0 + frac.z * (val1 - val0);                                   \
+      break;                                                                 \
+    }                                                                        \
+    }                                                                        \
+                                                                             \
+    return val;                                                              \
   }
 
-  template_SSV_sample_inner_uniform_32(uint8);
-  template_SSV_sample_inner_uniform_32(int16);
-  template_SSV_sample_inner_uniform_32(uint16);
-  template_SSV_sample_inner_uniform_32(float);
+  template_SSV_sample_inner_uniform(uint8);
+  template_SSV_sample_inner_uniform(int16);
+  template_SSV_sample_inner_uniform(uint16);
+  template_SSV_sample_inner_uniform(float);
 
-  inline float SSV_sample_inner_32_dispatch(
-      const SharedStructuredVolume *self,
-      const vkl_uint32 dataType,
-      const vec3f &clampedLocalCoordinates,
-      const VKLFilter filter,
-      const uint32_t attributeIndex,
-      const float time)
+  inline float SSV_sample_inner_dispatch(const SharedStructuredVolume *self,
+                                         const vkl_uint32 dataType,
+                                         const vec3f &clampedLocalCoordinates,
+                                         const VKLFilter filter,
+                                         const uint32_t attributeIndex,
+                                         const float time)
 
   {
     switch (dataType) {
     case VKL_UCHAR:
-      return SSV_sample_inner_uint8_uniform_32(
+      return SSV_sample_inner_uint8_uniform(
           self, clampedLocalCoordinates, filter, attributeIndex, time);
 
     case VKL_SHORT:
-      return SSV_sample_inner_int16_uniform_32(
+      return SSV_sample_inner_int16_uniform(
           self, clampedLocalCoordinates, filter, attributeIndex, time);
 
     case VKL_USHORT:
-      return SSV_sample_inner_uint16_uniform_32(
+      return SSV_sample_inner_uint16_uniform(
           self, clampedLocalCoordinates, filter, attributeIndex, time);
 
     case VKL_FLOAT:
-      return SSV_sample_inner_float_uniform_32(
+      return SSV_sample_inner_float_uniform(
           self, clampedLocalCoordinates, filter, attributeIndex, time);
 
     default:
@@ -146,7 +145,7 @@ namespace ispc {
     clampedLocalCoordinates = clamp(
         clampedLocalCoordinates, vec3f(0.0f), self->localCoordinatesUpperBound);
 
-    return SSV_sample_inner_32_dispatch(
+    return SSV_sample_inner_dispatch(
         self,
         self->attributesData[attributeIndex].dataType,
         clampedLocalCoordinates,
@@ -198,7 +197,7 @@ namespace ispc {
 
     if (inBounds) {
       for (uint32_t i = 0; i < M; i++) {
-        samples[i] = SSV_sample_inner_32_dispatch(
+        samples[i] = SSV_sample_inner_dispatch(
             self,
             self->attributesData[attributeIndices[i]].dataType,
             clampedLocalCoordinates,
@@ -266,4 +265,4 @@ namespace ispc {
 
     return vkl_vec3f{result.x, result.y, result.z};
   }
-}  // namespace device
+}  // namespace ispc

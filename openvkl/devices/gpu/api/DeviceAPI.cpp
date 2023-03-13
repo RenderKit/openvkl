@@ -138,6 +138,11 @@ vklComputeGradient(const VKLSampler *sampler,
         time);
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    return UnstructuredVolume_computeGradient(
+        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
   default:
     assert(false);
     return vkl_vec3f{-1.f, -1.f, -1.f};

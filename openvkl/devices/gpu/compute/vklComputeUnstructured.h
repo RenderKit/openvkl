@@ -783,4 +783,68 @@ namespace ispc {
     }
   }
 
+  inline vkl_vec3f UnstructuredVolume_computeGradient(
+      const SamplerShared *sampler, const vec3f &objectCoordinates)
+  {
+    // Cast to the actual Volume subtype.
+    const VKLUnstructuredVolume *self =
+        (const VKLUnstructuredVolume *)sampler->volume;
+
+    // gradient step in each dimension (object coordinates)
+    vec3f gradientStep = self->gradientStep;
+
+    // compute via forward or backward differences depending on volume / cell
+    // boundaries (as determined by NaN sample values outside any volume cell)
+    vec3f gradient;
+
+    float sample = UnstructuredVolume_sample(sampler, objectCoordinates);
+
+    gradient.x =
+        UnstructuredVolume_sample(
+            sampler, objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f)) -
+        sample;
+    gradient.y =
+        UnstructuredVolume_sample(
+            sampler, objectCoordinates + vec3f(0.f, gradientStep.y, 0.f)) -
+        sample;
+    gradient.z =
+        UnstructuredVolume_sample(
+            sampler, objectCoordinates + vec3f(0.f, 0.f, gradientStep.z)) -
+        sample;
+
+    if (isnan(gradient.x)) {
+      gradientStep.x *= -1.f;
+
+      gradient.x =
+          UnstructuredVolume_sample(
+              sampler,
+              objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f)) -
+          sample;
+    }
+
+    if (isnan(gradient.y)) {
+      gradientStep.y *= -1.f;
+
+      gradient.y =
+          UnstructuredVolume_sample(
+              sampler,
+              objectCoordinates + vec3f(0.f, gradientStep.y, 0.f)) -
+          sample;
+    }
+
+    if (isnan(gradient.z)) {
+      gradientStep.z *= -1.f;
+
+      gradient.z =
+          UnstructuredVolume_sample(
+              sampler,
+              objectCoordinates + vec3f(0.f, 0.f, gradientStep.z)) -
+          sample;
+    }
+
+    return vkl_vec3f{gradient.x / gradientStep.x,
+                     gradient.y / gradientStep.y,
+                     gradient.z / gradientStep.z};
+  }
+
 }  // namespace ispc

@@ -5,14 +5,20 @@
 #include "openvkl_testing.h"
 #include "rkcommon/math/box.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
+#include "wrappers.h"
 
 using namespace rkcommon;
 using namespace openvkl::testing;
 
 void xyz_scalar_gradients(VKLUnstructuredCellType primType)
 {
-  const vec3i dimensions(128);
-  const float boundingBoxSize = 128.f;
+#ifdef OPENVKL_TESTING_GPU
+  const auto dimensions = vec3i(32);
+#else
+  const auto dimensions = vec3i(128);
+#endif
+
+  const float boundingBoxSize = float(dimensions.x);
 
   std::unique_ptr<XYZUnstructuredProceduralVolume> v(
       new XYZUnstructuredProceduralVolume(dimensions,
@@ -36,8 +42,8 @@ void xyz_scalar_gradients(VKLUnstructuredCellType primType)
                                 << objectCoordinates.y << " "
                                 << objectCoordinates.z);
 
-    const vkl_vec3f vklGradient =
-        vklComputeGradient(&vklSampler, (const vkl_vec3f *)&objectCoordinates);
+    const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+        &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
     const vec3f gradient = (const vec3f &)vklGradient;
 
     // compare to analytical gradient

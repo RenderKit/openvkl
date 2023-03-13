@@ -21,10 +21,9 @@ jobs:
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
       install-gfx-driver: false
+      level-zero-version: public/1.9.4
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
-        source .github/scripts/install-l0-loader.sh
-
         export CC=clang
         export CXX=clang++
         gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
@@ -40,11 +39,10 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
+      level-zero-version: public/1.9.4
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        source .github/scripts/install-l0-loader.sh
-
         export CC=clang
         export CXX=clang++
         export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH

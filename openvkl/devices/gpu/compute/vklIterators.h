@@ -6,65 +6,19 @@
 #include <rkcommon/math/box.ih>
 #include <rkcommon/math/math.ih>
 
-#include "../../cpu/iterator/IteratorShared.h"
-
 #include "../../cpu/common/ValueRangesShared.h"
 #include "../../cpu/iterator/IteratorContextShared.h"
+#include "../../cpu/iterator/IteratorShared.h"
+#include "../../cpu/math/box_utility.ih"
 #include "../../cpu/volume/GridAccelerator.h"
 #include "../../cpu/volume/GridAcceleratorShared.h"
-
-#include "common.h"
-
-#include "../../cpu/math/box_utility.ih"
+#include "../../cpu/volume/StructuredVolumeShared.h"
 #include "../common/Data.ih"
 
+#include "common.h"
+#include "iterator_common.h"
+
 namespace ispc {
-
-  // from Hit.ih
-  // this should match the layout of VKLHit
-  struct Hit
-  {
-    float t;
-    float sample;
-    float epsilon;
-  };
-
-  // from Interval.ih
-  struct Interval
-  {
-    box1f tRange;
-    box1f valueRange;
-    float nominalDeltaT;
-  };
-
-  inline void resetInterval(Interval &interval)
-  {
-    interval.tRange.lower     = 1.f;
-    interval.tRange.upper     = -1.f;
-    interval.valueRange.lower = 0.f;
-    interval.valueRange.upper = 0.f;
-    interval.nominalDeltaT    = 0.f;
-  }
-
-#include "../../cpu/iterator/IteratorContextShared.h"
-
-  // from ValueRanges.ih
-  inline bool valueRangesOverlap(const ValueRanges &valueRanges, const box1f &r)
-  {
-    if (valueRanges.numRanges == 0) {
-      return true;
-    }
-
-    if (overlaps1f(valueRanges.rangesMinMax, r)) {
-      for (int i = 0; i < valueRanges.numRanges; i++) {
-        if (overlaps1f(valueRanges.ranges[i], r)) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
 
   // from GridAcceleratorIterator.ih
   struct GridAcceleratorIteratorIntervalState
@@ -98,8 +52,6 @@ namespace ispc {
     // hit iterator state
     GridAcceleratorIteratorHitState hitState;
   };
-
-#include "../../cpu/volume/StructuredVolumeShared.h"
 
   // from GridAcceleratorIterator.ispc
   inline void GridAcceleratorIteratorU_Init(void *_self,
@@ -203,7 +155,7 @@ namespace ispc {
               (float)((index.z + 1) << CELL_WIDTH_BITCOUNT)},
         upper);
 
-    return (box3f{lower, upper});
+    return box3f(lower, upper);
   }
 
   inline bool GridAccelerator_nextCell(const GridAccelerator *accelerator,
@@ -532,4 +484,4 @@ namespace ispc {
 
     *result = false;
   }
-}  // namespace device
+}  // namespace ispc

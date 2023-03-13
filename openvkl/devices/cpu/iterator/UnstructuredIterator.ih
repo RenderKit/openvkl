@@ -21,15 +21,6 @@ struct UnstructuredTraversalState
   uint32 bitstack;
 };
 
-inline uniform UnstructuredTraversalState make_UnstructuredTraversalState(
-    uniform Node *uniform node, const uniform uint32 bitstack)
-{
-  uniform UnstructuredTraversalState uts;
-  uts.node     = node;
-  uts.bitstack = bitstack;
-  return uts;
-}
-
 struct UnstructuredIterator
 {
   uniform DefaultHitIteratorIntervalIterator super;

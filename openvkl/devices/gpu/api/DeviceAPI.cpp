@@ -14,6 +14,7 @@ using namespace ispc;
 
 #include "../compute/vklCompute.h"
 #include "../compute/vklComputeUnstructured.h"
+#include "../compute/vklIterateUnstructured.h"
 #include "../compute/vklIterators.h"
 
 using namespace openvkl;
@@ -174,6 +175,9 @@ vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
     // buffer allocated by the application
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
 
+  case VOLUME_TYPE_UNSTRUCTURED:
+    return sizeof(UnstructuredIterator) + alignof(UnstructuredIterator);
+
   default:
     assert(false);
     return 0;
@@ -218,6 +222,30 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    size_t space = sizeof(UnstructuredIterator) + alignof(UnstructuredIterator);
+
+    void *alignedBuffer = std::align(alignof(UnstructuredIterator),
+                                     sizeof(UnstructuredIterator),
+                                     buffer,
+                                     space);
+    assert(alignedBuffer);
+
+    // We use the same iterator implementation for both unstructured and
+    // particle volumes. However, only unstructured volumes support elementary
+    // cell iteration.
+    constexpr bool elementaryCellIterationSupported = true;
+
+    UnstructuredIterator_Initialize(alignedBuffer,
+                                    context->device,
+                                    (void *)origin,
+                                    (void *)direction,
+                                    (void *)tRange,
+                                    elementaryCellIterationSupported);
+
+    return (VKLIntervalIterator)alignedBuffer;
+  }
+
   default:
     assert(false);
     return nullptr;
@@ -239,6 +267,12 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     int result = 0;
     GridAcceleratorIterator_iterateInterval_uniform(
         iterator, interval, &result);
+    return result;
+  }
+
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    int result = 0;
+    UnstructuredIterator_iterateInterval(iterator, interval, &result);
     return result;
   }
 

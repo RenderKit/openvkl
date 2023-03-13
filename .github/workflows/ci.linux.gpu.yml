@@ -82,7 +82,7 @@ jobs:
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-pvc
-      artifact-path: ./build/install/*.pfm
+      artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
       options: --device=/dev/dri:/dev/dri
@@ -129,7 +129,7 @@ jobs:
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-dg2
-      artifact-path: ./build/install/*.pfm
+      artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
       options: --device=/dev/dri:/dev/dri

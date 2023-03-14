@@ -31,6 +31,26 @@ jobs:
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
 
+  build-gpu-suse:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      submodules: true
+      image: opensuse/leap:15.3
+      artifact-out: build-gpu-suse
+      artifact-path: ./build/install ./build/openvkl/build
+      install-gfx-driver: false
+      level-zero-version: public/1.9.4
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+                        -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
+                           -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
+                           -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
+
+
   test-build-from-install-dg2:
     needs: [ build-gpu ]
     secrets: inherit

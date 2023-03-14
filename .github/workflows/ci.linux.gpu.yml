@@ -70,7 +70,7 @@ jobs:
 
         echo "### Run again with chunking allocator enabled in ISPCRT"
         ISPCRT_MEM_POOL=1 ./bin/vklTutorialGPU
-        ISPCRT_MEM_POOL=1 ./bin/vklTestsGPU --durations yes
+        ISPCRT_MEM_POOL=1 ./bin/vklTestsGPU --durations yes exclude:'Multiple devices'
 
   test-examples-pvc:
     secrets: inherit
@@ -117,7 +117,7 @@ jobs:
 
         echo "### Run again with chunking allocator enabled in ISPCRT"
         ISPCRT_MEM_POOL=1 ./bin/vklTutorialGPU
-        ISPCRT_MEM_POOL=1 ./bin/vklTestsGPU --durations yes
+        ISPCRT_MEM_POOL=1 ./bin/vklTestsGPU --durations yes exclude:'Multiple devices'
 
   test-examples-dg2:
     secrets: inherit

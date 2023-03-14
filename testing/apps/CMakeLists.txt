@@ -192,6 +192,7 @@ if (BUILD_TESTING)
       tests/unstructured_volume_sampling.cpp
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
+      tests/multi_device.cpp
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 

@@ -26,7 +26,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON -D BUILD_EMBREE_SYCL=ON \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
@@ -45,7 +45,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON \
+        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON -D BUILD_EMBREE_SYCL=ON \
                         -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"

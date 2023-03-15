@@ -8,7 +8,15 @@
 #include <vector>
 #include "../../common/BufferShared.h"
 #include "../common/math.h"
+
+// While we build the Open VKL GPU device with -fsycl, we want to use Embree in
+// non-SYCL mode.
+#define SYCL_LANGUAGE_VERSION_COPY SYCL_LANGUAGE_VERSION
+#undef SYCL_LANGUAGE_VERSION
 #include "embree4/rtcore.h"
+#define SYCL_LANGUAGE_VERSION SYCL_LANGUAGE_VERSION_COPY
+#undef SYCL_LANGUAGE_VERSION_COPY
+
 #include "rkcommon/containers/AlignedVector.h"
 #include "rkcommon/tasking/parallel_for.h"
 

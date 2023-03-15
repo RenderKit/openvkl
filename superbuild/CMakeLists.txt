@@ -166,6 +166,7 @@ endif()
 # Embree can either be build from source or downloaded as binaries.
 option(BUILD_EMBREE "Build Intel Embree or search in environment?" ON)
 option(BUILD_EMBREE_FROM_SOURCE "Build Embree from source or use pre-built version? (Only used when BUILD_EMBREE=ON)" ON)
+option(BUILD_EMBREE_SYCL "Build Intel Embree with SYCL support?" OFF)
 if (BUILD_EMBREE)
   set(EMBREE_VERSION "v4.0.0" CACHE STRING "Embree version to download")
   if (BUILD_EMBREE_FROM_SOURCE)

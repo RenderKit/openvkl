@@ -3,8 +3,6 @@
 
 #pragma once
 
-#define M_PI_FLOAT M_PI ## f
-
 namespace ispc {
 
   inline void transformObjectToLocal_uniform_structured_regular(
@@ -34,7 +32,7 @@ namespace ispc {
     /* the above returns [-PI, PI], while our azimuth grid convention is [0,
      * 2*PI] */
     if (azimuth < 0.f) {
-      azimuth += 2.f * M_PI_FLOAT;
+      azimuth += 2.f * M_PI;
     }
 
     localCoordinates.x = (1.f / self->gridSpacing.x) * (r - self->gridOrigin.x);

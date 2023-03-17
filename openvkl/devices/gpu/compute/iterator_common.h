@@ -8,16 +8,7 @@
 
 namespace ispc {
 
-  // from Hit.ih
-  // this should match the layout of VKLHit
-  struct Hit
-  {
-    float t;
-    float sample;
-    float epsilon;
-  };
-
-  // from Interval.ih
+  // from Interval.ih; we use this instead of VKLInterval for box1f types
   struct Interval
   {
     box1f tRange;

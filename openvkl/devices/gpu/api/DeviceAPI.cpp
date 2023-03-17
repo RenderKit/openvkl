@@ -212,12 +212,13 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                                      space);
     assert(alignedBuffer);
 
-    GridAcceleratorIteratorU_Init(alignedBuffer,
-                                  context->device,
-                                  (void *)origin,
-                                  (void *)direction,
-                                  (void *)tRange,
-                                  &time);
+    GridAcceleratorIteratorU_Init(
+        reinterpret_cast<GridAcceleratorIterator *>(alignedBuffer),
+        reinterpret_cast<const IntervalIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange),
+        &time);
 
     return (VKLIntervalIterator)alignedBuffer;
   }
@@ -338,12 +339,13 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
                                      space);
     assert(alignedBuffer);
 
-    GridAcceleratorIteratorU_Init(alignedBuffer,
-                                  context->device,
-                                  (void *)origin,
-                                  (void *)direction,
-                                  (void *)tRange,
-                                  &time);
+    GridAcceleratorIteratorU_Init(
+        reinterpret_cast<GridAcceleratorIterator *>(alignedBuffer),
+        reinterpret_cast<const IntervalIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange),
+        &time);
 
     return (VKLHitIterator)alignedBuffer;
   }
@@ -358,16 +360,17 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     VKLHitIterator iterator, VKLHit *hit)
 {
   assert(iterator);
-  const IntervalIteratorShared *iter =
-      reinterpret_cast<const IntervalIteratorShared *>(iterator);
+  const HitIteratorShared *iter =
+      reinterpret_cast<const HitIteratorShared *>(iterator);
 
   const DeviceVolumeType volumeType =
-      iter->context->super.sampler->volume->type;
+      iter->context->super.super.sampler->volume->type;
 
   switch (volumeType) {
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
     int result = 0;
-    GridAcceleratorIterator_iterateHit_uniform(iterator, hit, &result);
+    GridAcceleratorIterator_iterateHit_uniform(
+        reinterpret_cast<GridAcceleratorIterator *>(iterator), hit, &result);
     return result;
   }
 

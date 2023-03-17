@@ -54,29 +54,26 @@ namespace ispc {
   };
 
   // from GridAcceleratorIterator.ispc
-  inline void GridAcceleratorIteratorU_Init(void *_self,
-                                            void *_context,
-                                            void *_origin,
-                                            void *_direction,
-                                            void *_tRange,
-                                            void *_time)
+  inline void GridAcceleratorIteratorU_Init(
+      GridAcceleratorIterator *self,
+      const IntervalIteratorContext *context,
+      const vec3f *origin,
+      const vec3f *direction,
+      const box1f *tRange,
+      const float *time)
   {
-    GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
-
-    self->super.context = (const IntervalIteratorContext *)_context;
-    self->origin        = *((vec3f *)_origin);
-    self->direction     = *((vec3f *)_direction);
-    self->tRange        = *((box1f *)_tRange);
-    self->time          = *((float *)_time);
+    self->super.context = context;
+    self->origin        = *origin;
+    self->direction     = *direction;
+    self->tRange        = *tRange;
+    self->time          = *time;
 
     const SharedStructuredVolume *volume =
         (const SharedStructuredVolume *)
             self->super.context->super.sampler->volume;
 
-    self->boundingBoxTRange = intersectBox(*((vec3f *)_origin),
-                                           *((vec3f *)_direction),
-                                           volume->boundingBox,
-                                           self->tRange);
+    self->boundingBoxTRange = intersectBox(
+        self->origin, self->direction, volume->boundingBox, self->tRange);
 
     self->intervalState.currentCellIndex = vec3i{-1, -1, -1};
 
@@ -159,7 +156,7 @@ namespace ispc {
   }
 
   inline bool GridAccelerator_nextCell(const GridAccelerator *accelerator,
-                                       const GridAcceleratorIterator *iterator,
+                                       GridAcceleratorIterator *iterator,
                                        vec3i &cellIndex,
                                        box1f &cellTRange)
   {
@@ -320,7 +317,7 @@ namespace ispc {
                                       const float step,
                                       const int numValues,
                                       const float *values,
-                                      Hit &hit)
+                                      VKLHit &hit)
   {
     /* our bracketing sample t-values will always be in multiples of `step`,
     to avoid artifacts / differences in hits between neighboring rays, or when
@@ -389,16 +386,11 @@ namespace ispc {
 
   // from GridAcceleratorIterator.ispc
 
-  inline void GridAcceleratorIterator_iterateHit_uniform(const void *_self,
-                                                         const void *_hit,
-                                                         int *result)
+  inline void GridAcceleratorIterator_iterateHit_uniform(
+      GridAcceleratorIterator *self, VKLHit *hit, int *result)
   {
-    GridAcceleratorIterator *self = (GridAcceleratorIterator *)_self;
-
     const HitIteratorContext *hitContext =
         (const HitIteratorContext *)self->super.context;
-
-    Hit *hit = (Hit *)_hit;
 
     if (isempty1f(self->boundingBoxTRange)) {
       *result = false;

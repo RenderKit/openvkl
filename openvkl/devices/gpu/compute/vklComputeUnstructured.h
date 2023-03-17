@@ -817,8 +817,7 @@ namespace ispc {
 
       gradient.x =
           UnstructuredVolume_sample(
-              sampler,
-              objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f)) -
+              sampler, objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f)) -
           sample;
     }
 
@@ -827,8 +826,7 @@ namespace ispc {
 
       gradient.y =
           UnstructuredVolume_sample(
-              sampler,
-              objectCoordinates + vec3f(0.f, gradientStep.y, 0.f)) -
+              sampler, objectCoordinates + vec3f(0.f, gradientStep.y, 0.f)) -
           sample;
     }
 
@@ -837,8 +835,7 @@ namespace ispc {
 
       gradient.z =
           UnstructuredVolume_sample(
-              sampler,
-              objectCoordinates + vec3f(0.f, 0.f, gradientStep.z)) -
+              sampler, objectCoordinates + vec3f(0.f, 0.f, gradientStep.z)) -
           sample;
     }
 

@@ -21,13 +21,13 @@ namespace ispc {
     uint32_t bitstack;
   };
 
-  struct UnstructuredIterator
+  struct UnstructuredIntervalIterator
   {
     // DefaultHitIteratorIntervalIterator super;
     IntervalIteratorShared super;
     bool elementaryCellIterationSupported;
 
-    SamplerShared *sampler;
+    const SamplerShared *sampler;
     vec3f origin;
     vec3f direction;
     box1f tRange;
@@ -72,12 +72,12 @@ namespace ispc {
     const vec3f v1 = p1 - origin;
     const vec3f v2 = p2 - origin;
 
-    /* calculate triangle edges */
+    // calculate triangle edges
     const vec3f e0 = v2 - v0;
     const vec3f e1 = v0 - v1;
     const vec3f e2 = v1 - v2;
 
-    /* perform edge tests */
+    // perform edge tests
     const float U = dot(cross(e0, v2 + v0), direction);
     const float V = dot(cross(e1, v0 + v1), direction);
     const float W = dot(cross(e2, v1 + v2), direction);
@@ -89,7 +89,7 @@ namespace ispc {
         const vec3f Ng  = stable_tri_normal(e0, e1, e2);
         const float den = 2.f * dot(Ng, direction);
 
-        /* perform depth test */
+        // perform depth test
         if (den != 0.f) {
           const float T           = 2.f * dot(v0, Ng);
           intersectedTRange.lower = rcp(den) * T;
@@ -106,7 +106,7 @@ namespace ispc {
         const vec3f Ng  = stable_tri_normal(e0, e1, e2);
         const float den = 2.f * dot(Ng, direction);
 
-        /* perform depth test */
+        // perform depth test
         if (den != 0.f) {
           const float T           = 2.f * dot(v0, Ng);
           intersectedTRange.upper = rcp(den) * T;
@@ -123,7 +123,8 @@ namespace ispc {
                                const box1f &rangeLimit,
                                const VKLUnstructuredVolume *volume,
                                const uint64 cellID)
-  { /* // Get cell offset in index buffer */
+  {
+    // Get cell offset in index buffer
     const uint64 cOffset = getCellOffset(volume, cellID);
 
     const uint64 planes[4][3] = {{cOffset + 2, cOffset + 0, cOffset + 1},
@@ -165,7 +166,8 @@ namespace ispc {
                                  const box1f &rangeLimit,
                                  const VKLUnstructuredVolume *volume,
                                  const uint64 cellID)
-  { /* // Get cell offset in index buffer */
+  {
+    // Get cell offset in index buffer
     const uint64 cOffset = getCellOffset(volume, cellID);
 
     const uint64 planes[8][3] = {{cOffset + 2, cOffset + 0, cOffset + 1},
@@ -211,7 +213,8 @@ namespace ispc {
                                    const box1f &rangeLimit,
                                    const VKLUnstructuredVolume *volume,
                                    const uint64 cellID)
-  { /* // Get cell offset in index buffer */
+  {
+    // Get cell offset in index buffer
     const uint64 cOffset = getCellOffset(volume, cellID);
 
     const uint64 planes[6][3] = {{cOffset + 3, cOffset + 0, cOffset + 1},
@@ -387,7 +390,7 @@ namespace ispc {
     isIntersected = !(intersectedTRange.upper <= intersectedTRange.lower);
   }
 
-  inline box1f evalNodeStacklessV(const UnstructuredIterator *iterator,
+  inline box1f evalNodeStacklessV(const UnstructuredIntervalIterator *iterator,
                                   const ValueRanges &valueRanges,
                                   const bool elementaryCellIteration,
                                   Node *node,
@@ -543,23 +546,21 @@ namespace ispc {
   // API entrypoints /////////////////////////////////////////////////////////
   ////////////////////////////////////////////////////////////////////////////
 
-  inline void UnstructuredIterator_Initialize(
-      void *_self,
-      void *_context,
-      void *_origin,
-      void *_direction,
-      void *_tRange,
+  inline void UnstructuredIntervalIterator_Init(
+      UnstructuredIntervalIterator *self,
+      const IntervalIteratorContext *context,
+      const vec3f *origin,
+      const vec3f *direction,
+      const box1f *tRange,
       const bool elementaryCellIterationSupported)
   {
-    UnstructuredIterator *self = (UnstructuredIterator *)_self;
-
-    self->super.context = (const IntervalIteratorContext *)_context;
+    self->super.context                    = context;
     self->elementaryCellIterationSupported = elementaryCellIterationSupported;
 
-    self->sampler   = (SamplerShared *)(self->super.context->super.sampler);
-    self->origin    = *((vec3f *)_origin);
-    self->direction = *((vec3f *)_direction);
-    self->tRange    = *((box1f *)_tRange);
+    self->sampler   = self->super.context->super.sampler;
+    self->origin    = *origin;
+    self->direction = *direction;
+    self->tRange    = *tRange;
 
     const VKLUnstructuredBase *volume =
         (const VKLUnstructuredBase *)self->super.context->super.sampler->volume;
@@ -568,19 +569,13 @@ namespace ispc {
     self->traversalState.bitstack = 0;
   }
 
-  inline void UnstructuredIterator_iterateIntervalInternal(
-      void *_self,
-      void *_interval,
+  inline void UnstructuredIntervalIterator_iterateInternal(
+      UnstructuredIntervalIterator *self,
+      Interval *interval,
       const ValueRanges &valueRanges,
       const bool elementaryCellIteration,
-      int *_result)
+      int *result)
   {
-    UnstructuredIterator *self = (UnstructuredIterator *)_self;
-
-    Interval *interval = (Interval *)_interval;
-
-    int *result = (int *)_result;
-
     UnstructuredTraversalState hitState;
     hitState.node     = NULL;
     hitState.bitstack = 0;
@@ -636,12 +631,9 @@ namespace ispc {
     }
   }
 
-  inline void UnstructuredIterator_iterateInterval(void *_self,
-                                                   void *_interval,
-                                                   int *_result)
+  inline void UnstructuredIntervalIterator_iterate(
+      UnstructuredIntervalIterator *self, Interval *interval, int *result)
   {
-    UnstructuredIterator *self = (UnstructuredIterator *)_self;
-
     // We specify elementaryCellIteration in the call here, as it may
     // be toggled for public API interval iteration via a sampler parameter.
     // It is however typically enabled by default in hit iteration (if
@@ -651,13 +643,13 @@ namespace ispc {
     // Also, some volume types use the unstructured iterator but do not support
     // elementary cell intersections; in those case elementary iteration will
     // not be used.
-    UnstructuredIterator_iterateIntervalInternal(
-        _self,
-        _interval,
+    UnstructuredIntervalIterator_iterateInternal(
+        self,
+        interval,
         self->super.context->super.valueRanges,
         self->elementaryCellIterationSupported &&
             self->super.context->super.elementaryCellIteration,
-        _result);
+        result);
   }
 
 }  // namespace ispc

@@ -10,7 +10,7 @@
 #include "VdbSamplerShared.h"
 #include "VdbSampler_filter.ih"
 #include "VdbVolumeShared.h"
-#include "common/export_util.h"
+#include "../../common/export_util.h"
 
 // ---------------------------------------------------------------------------
 // Sampling.

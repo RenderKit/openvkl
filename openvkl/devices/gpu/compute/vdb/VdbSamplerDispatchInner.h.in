@@ -1,0 +1,51 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+// ---------------------------------------------------------------------------
+// Dispatch to inner nodes.
+//
+// Note: We generate files VdbSamplerDispatchInner_<level>.ih from this
+//       template using CMake.
+// ---------------------------------------------------------------------------
+
+#include "VdbSampleInner_uniform_uniform_@VKL_VDB_LEVEL@.h"
+
+#if (@VKL_VDB_NEXT_LEVEL@ >= VKL_VDB_NUM_LEVELS)
+#error "VdbSamplerDispatchInner.h generated for too many levels."
+#endif
+
+#if (@VKL_VDB_NEXT_LEVEL@+1) < VKL_VDB_NUM_LEVELS
+  #include "VdbSamplerDispatchInner_@VKL_VDB_NEXT_LEVEL@.h"
+#endif
+
+/*
+ * Dispatch to the correct implementation of sampleInner based on whether all
+ * lanes are looking at the same voxel.
+ *
+ * Returns the voxel containing domainOffset.
+ *
+ * The first version is still uniform, but will detect if it must split up
+ * into varying traversal.
+ */
+inline void VdbSampler_dispatchInner_uniform_uniform_@VKL_VDB_LEVEL@(
+  const VdbSamplerShared * sampler,
+  const  uint64            nodeIndex,
+  const  vec3ui           &domainOffset,
+  uint64                  &voxel)
+{
+  assert(nodeIndex < sampler->grid->levels[@VKL_VDB_LEVEL@].numNodes);
+  const  uint64 voxelIdx =
+    __vkl_vdb_domain_offset_to_linear_uniform_@VKL_VDB_LEVEL@(domainOffset.x,
+                                                              domainOffset.y,
+                                                              domainOffset.z);
+  const uint64 nodeVoxelOffset = nodeIndex * VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@;
+  assert(voxelIdx < VKL_VDB_NUM_VOXELS_@VKL_VDB_LEVEL@);
+
+  VdbSampler_sampleInner_uniform_uniform_@VKL_VDB_LEVEL@(
+    sampler,
+    nodeVoxelOffset + voxelIdx,
+    domainOffset,
+    voxel);
+}

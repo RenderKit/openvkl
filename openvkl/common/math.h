@@ -15,8 +15,11 @@ namespace openvkl {
     const vec3f mins = (box.lower - origin) * rcp(direction);
     const vec3f maxs = (box.upper - origin) * rcp(direction);
 
-    return {reduce_max(vec4f{min(mins, maxs), rangeLimit.lower}),
-            reduce_min(vec4f{max(mins, maxs), rangeLimit.upper})};
+    const vec3f min1 = min(mins, maxs);
+    const vec3f max1 = max(mins, maxs);
+
+    return {reduce_max(vec4f{min1.x, min1.y, min1.z, rangeLimit.lower}),
+            reduce_min(vec4f{max1.x, max1.y, max1.z, rangeLimit.upper})};
   }
 
   inline vec3f nextafter(const vec3i &a, const vec3i &b)

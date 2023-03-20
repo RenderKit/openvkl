@@ -14,6 +14,7 @@ using namespace ispc;
 
 #include "../compute/vklCompute.h"
 #include "../compute/vklComputeUnstructured.h"
+#include "../compute/vklComputeVdb.h"
 #include "../compute/vklIterateDefault.h"
 #include "../compute/vklIterateUnstructured.h"
 #include "../compute/vklIterators.h"
@@ -22,6 +23,17 @@ using namespace ispc;
 
 using namespace openvkl;
 using namespace openvkl::gpu_device;
+
+///////////////////////////////////////////////////////////////////////////////
+// Helpers ////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
+inline void assertValidTime(const float time)
+{
+#ifndef NDEBUG
+  assert(time >= 0.f && time <= 1.0f);
+#endif
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Device initialization //////////////////////////////////////////////////////
@@ -72,6 +84,20 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
   case VOLUME_TYPE_PARTICLE: {
     return VKLParticleVolume_sample(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
+  case VOLUME_TYPE_VDB: {
+    assert(attributeIndex <
+           reinterpret_cast<const VdbSamplerShared *>(sampler->device)
+               ->grid->numAttributes);
+#ifndef NDEBUG
+    assertValidTime(time);
+#endif
+    return VdbSampler_computeSample_uniform(
+        reinterpret_cast<const VdbSamplerShared *>(sampler->device),
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        time,
+        attributeIndex);
   }
 
   default:
@@ -125,6 +151,23 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
     break;
   }
 
+  case VOLUME_TYPE_VDB: {
+#ifndef NDEBUG
+    for (unsigned int i = 0; i < M; i++)
+      assert(attributeIndices[i] <
+             reinterpret_cast<const VdbSamplerShared *>(sampler->device)
+                 ->grid->numAttributes);
+    assertValidTime(time);
+#endif
+    return VdbSampler_computeSampleM_uniform(
+        reinterpret_cast<const VdbSamplerShared *>(sampler->device),
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        time,
+        M,
+        attributeIndices,
+        samples);
+  }
+
   default:
     assert(false);
   }
@@ -164,6 +207,20 @@ vklComputeGradient(const VKLSampler *sampler,
   case VOLUME_TYPE_UNSTRUCTURED: {
     return UnstructuredVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
+  case VOLUME_TYPE_VDB: {
+    assert(attributeIndex <
+           reinterpret_cast<const VdbSamplerShared *>(sampler->device)
+               ->grid->numAttributes);
+#ifndef NDEBUG
+    assertValidTime(time);
+#endif
+    return VdbSampler_computeGradient_uniform(
+        reinterpret_cast<const VdbSamplerShared *>(sampler->device),
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        time,
+        attributeIndex);
   }
 
   default:

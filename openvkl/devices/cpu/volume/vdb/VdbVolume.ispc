@@ -6,7 +6,7 @@
 
 #include "VdbGridShared.h"
 #include "VdbVolumeShared.h"
-#include "common/export_util.h"
+#include "../../common/export_util.h"
 
 /*
  * This is a dummy export to make sure ISPC generates code

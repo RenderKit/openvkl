@@ -9,8 +9,8 @@
 #include "VdbIterator.ih"
 #include "VdbQueryVoxelDense.ih"
 #include "VdbSamplerShared.h"
-#include "common/export_util.h"
-#include "math/box_utility.ih"
+#include "../../common/export_util.h"
+#include "../../math/box_utility.ih"
 
 // Generated headers.
 #include "openvkl_vdb/HDDA_0.ih"

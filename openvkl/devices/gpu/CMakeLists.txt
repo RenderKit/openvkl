@@ -16,6 +16,17 @@ set(SOURCES_COMMON_AMR_PARTICLE_UNSTRUCTURED
   ../cpu/volume/UnstructuredVolume.ispc
 )
 
+set(SOURCES_COMMON_STRUCTURED_REGULAR_VDB
+  ../cpu/volume/vdb/VdbVolume.cpp
+  ../cpu/volume/vdb/VdbVolume.ispc
+  ../cpu/volume/vdb/VdbSampler.cpp
+  ../cpu/volume/vdb/VdbSampler.ispc
+  ../cpu/volume/vdb/VdbInnerNodeObserver.cpp
+  ../cpu/volume/vdb/VdbIterator.cpp
+  ../cpu/volume/vdb/VdbIterator.ispc
+  ../cpu/volume/vdb/VdbLeafAccessObserver.cpp
+)
+
 set(SOURCES_COMMON_STRUCTURED_REGULAR_LEGACY_SPHERICAL
   ../cpu/iterator/GridAcceleratorIterator.cpp
   ../cpu/iterator/GridAcceleratorIterator.ispc
@@ -60,9 +71,12 @@ list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_UNSTRUCTURED=1")
 list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_PARTICLE})
 list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_PARTICLE=1")
 
+# VDB volume type uses common sources only: SOURCES_COMMON_STRUCTURED_REGULAR_VDB
+list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_VDB=1")
 
 # common source files
 list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_COMMON_AMR_PARTICLE_UNSTRUCTURED})
+list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_COMMON_STRUCTURED_REGULAR_VDB})
 list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_COMMON_STRUCTURED_REGULAR_LEGACY_SPHERICAL})
 
 # definitions for ISPC components
@@ -86,6 +100,9 @@ openvkl_add_library_ispc(openvkl_module_gpu_device STATIC
   ../cpu/iterator/DefaultIterator.ispc
   ../cpu/iterator/IteratorContext.cpp
   ../cpu/iterator/IteratorContext.ispc
+  ../cpu/observer/Observer.cpp
+  ../cpu/observer/ObserverRegistry.cpp
+  ../cpu/observer/ObserverRegistry.ispc
   ../cpu/sampler/Sampler.cpp
   ../cpu/sampler/Sampler.ispc
   ${OPTIONAL_VOLUME_SOURCES}

@@ -259,6 +259,11 @@ function(openvkl_vdb_generate_topology)
       include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.ih
     )
 
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/gpu/compute/vdb/VdbSamplerDispatchInner.h.in
+      include/${PROJECT_NAME}_vdb/VdbSamplerDispatchInner${VKL_VDB_POSTFIX}.h
+    )
+
     # Generate uniform, varying, and univary traversal.
     # a) We know all queries are in the same leaf node. Fully uniform traversal.
     set(VKL_VDB_UNIVARY_IN "uniform")
@@ -266,6 +271,11 @@ function(openvkl_vdb_generate_topology)
     configure_file(
       ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/cpu/volume/vdb/VdbSampleInner.ih.in
       include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.ih
+    )
+
+    configure_file(
+      ${PROJECT_SOURCE_DIR}/${PROJECT_NAME}/devices/gpu/compute/vdb/VdbSampleInner.h.in
+      include/${PROJECT_NAME}_vdb/VdbSampleInner_${VKL_VDB_UNIVARY_IN}_${VKL_VDB_UNIVARY_OUT}_${VKL_VDB_LEVEL}.h
     )
     # b) All lanes are not in the same subtree.
     set(VKL_VDB_UNIVARY_IN "varying")

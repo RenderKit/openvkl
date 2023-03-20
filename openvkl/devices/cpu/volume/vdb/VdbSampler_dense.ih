@@ -4,7 +4,7 @@
 #pragma once
 
 #include "VdbGrid.h"
-#include "common/temporal_data_interpolation.ih"
+#include "../../common/temporal_data_interpolation.ih"
 
 // ---------------------------------------------------------------------------
 // Helpers.

@@ -141,6 +141,7 @@ namespace openvkl {
         static std::vector<std::string> sup = {"structuredRegular",
                                                "structuredSpherical",
                                                "unstructured",
+                                               "vdb",
                                                "particle"};
 #endif
         return sup;

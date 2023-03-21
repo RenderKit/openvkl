@@ -46,23 +46,54 @@ void interval_iteration(size_t numParticles,
 
   const vkl_vec3f direction{0.f, 0.f, 1.f};
   const vkl_range1f tRange{0.f, inf};
-  const float time = 0.f;
-
-  const size_t N        = 1000;
+  const float time      = 0.f;
   size_t totalIntervals = 0;
+
+#if defined(OPENVKL_TESTING_GPU)
+  const size_t N = 100;
+#else
+  const size_t N = 1000;
+#endif
+
+  // Allocate buffers (USM shared buffers in GPU case)
+  int *intervalCount           = allocate<int>(1);
+  VKLInterval *intervalsBuffer = allocate<VKLInterval>(maxNumIntervals);
+  char *iteratorBuffer =
+      allocate<char>(vklGetIntervalIteratorSize(&intervalContext));
 
   for (size_t i = 0; i < N; i++) {
     vkl_vec3f origin{distX(eng), distY(eng), z};
 
-    std::vector<char> buffer(vklGetIntervalIteratorSize(&intervalContext));
-    VKLIntervalIterator iterator = vklInitIntervalIterator(
-        &intervalContext, &origin, &direction, &tRange, time, buffer.data());
+    *intervalCount = 0;
 
-    VKLInterval interval;
+    auto testIteratorFunc = [=]() {
+      VKLIntervalIterator intervalIterator =
+          vklInitIntervalIterator(&intervalContext,
+                                  &origin,
+                                  &direction,
+                                  &tRange,
+                                  time,
+                                  (void *)iteratorBuffer);
 
-    int intervalCount = 0;
+      VKLInterval interval;
+      while (vklIterateInterval(intervalIterator, &interval)) {
+        intervalsBuffer[*intervalCount] = interval;
+        *intervalCount += 1;
+        if (*intervalCount >= maxNumIntervals) {
+          break;
+        }
+      }
+    };
 
-    while (vklIterateInterval(iterator, &interval)) {
+    executeTestFunction(testIteratorFunc);
+
+    if (*intervalCount >= maxNumIntervals) {
+      WARN("Interval iterations reached max number of intervals: "
+           << maxNumIntervals);
+    }
+
+    for (size_t y = 0; y < *intervalCount; y++) {
+      VKLInterval interval = intervalsBuffer[y];
       INFO("interval tRange = "
            << interval.tRange.lower << ", " << interval.tRange.upper
            << " valueRange = " << interval.valueRange.lower << ", "
@@ -84,12 +115,14 @@ void interval_iteration(size_t numParticles,
               interval.valueRange.lower * (1 - uncertainty));
       REQUIRE(sampledValueRange.upper <=
               interval.valueRange.upper * (1 + uncertainty));
-
-      intervalCount++;
     }
-
-    totalIntervals += intervalCount;
+    totalIntervals += *intervalCount;
   }
+
+  // Dealocate buffers (USM shared buffers in GPU case)
+  deallocate(iteratorBuffer);
+  deallocate(intervalsBuffer);
+  deallocate(intervalCount);
 
   // Not all rays hit something, but most of them should.
   REQUIRE(totalIntervals / static_cast<double>(N) > 0.9);
@@ -98,7 +131,7 @@ void interval_iteration(size_t numParticles,
   vklRelease(sampler);
 }
 
-#if OPENVKL_DEVICE_CPU_PARTICLE
+#if OPENVKL_DEVICE_CPU_PARTICLE || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Particle volume interval iterator", "[interval_iterators]")
 {
   initializeOpenVKL();

@@ -604,7 +604,7 @@ namespace ispc {
 
     box1f retRange = evalNodeStacklessV(self,
                                         valueRanges,
-                                        false /*elementaryCellIteration*/,
+                                        elementaryCellIteration,
                                         volume->bvhRoot,
                                         0,
                                         box1f(inf, inf),

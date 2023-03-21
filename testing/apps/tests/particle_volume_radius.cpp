@@ -38,8 +38,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
 
     // if the particle radius is zero, then the sampled results should be zero
     const float referenceValue = zeroRadiusParticle ? 0.f : 1.f;
-
-    const float sampledValue = vklComputeSample(&vklSampler, &p3);
+    const float sampledValue = vklComputeSampleWrapper(&vklSampler, &p3, 0, 0);
     INFO("sampled = " << sampledValue)
 
     REQUIRE(referenceValue == sampledValue);
@@ -48,7 +47,7 @@ static void sampling_at_particle_centers(VKLVolume vklVolume,
   vklRelease(vklSampler);
 }
 
-#if OPENVKL_DEVICE_CPU_PARTICLE
+#if OPENVKL_DEVICE_CPU_PARTICLE || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Particle volume radius", "[volume_sampling]")
 {
   initializeOpenVKL();
@@ -95,7 +94,11 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
                                      numParticles,
                                      VKL_VEC3F,
                                      particles.data(),
+#if defined(OPENVKL_TESTING_GPU)
+                                     VKL_DATA_DEFAULT,
+#else
                                      VKL_DATA_SHARED_BUFFER,
+#endif
                                      sizeof(vec4f));
   vklSetData(volume, "particle.position", positionsData);
   vklRelease(positionsData);
@@ -104,7 +107,11 @@ TEST_CASE("Particle volume radius", "[volume_sampling]")
                                  numParticles,
                                  VKL_FLOAT,
                                  &(particles.data()[0].w),
+#if defined(OPENVKL_TESTING_GPU)
+                                 VKL_DATA_DEFAULT,
+#else
                                  VKL_DATA_SHARED_BUFFER,
+#endif
                                  sizeof(vec4f));
   vklSetData(volume, "particle.radius", radiiData);
   vklRelease(radiiData);

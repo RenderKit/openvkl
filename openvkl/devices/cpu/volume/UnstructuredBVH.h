@@ -70,6 +70,40 @@ namespace openvkl {
         return new (ptr) T(std::forward<Args>(args)...);
       }
 
+      template <typename T>
+      T *newBuffer(size_t num)
+      {
+        void *ptr = nullptr;
+
+        if (chunkAllocationBytes) {
+          assert(chunkAllocationBytes >= num * sizeof(T));
+
+          memGuard.lock();
+
+          if (chunkBytesRemaining < num * sizeof(T)) {
+            allocateNewChunk();
+          }
+
+          ptr = chunkPtr;
+          chunkPtr += num * sizeof(T);
+          chunkBytesRemaining -= num * sizeof(T);
+
+          memGuard.unlock();
+        } else {
+          auto mv = BufferSharedCreate(device.ptr, num * sizeof(T));
+          ptr     = ispcrtSharedPtr(mv);
+          memGuard.lock();
+          memRefs.push_back(mv);
+          memGuard.unlock();
+        }
+
+        if (!is_aligned_for_type<T>(ptr)) {
+          throw std::runtime_error("BvhBuildAllocator: alignment error");
+        }
+
+        return (T *)ptr;
+      }
+
       virtual ~BvhBuildAllocator()
       {
         for (auto mv : memRefs) {

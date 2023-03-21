@@ -4,17 +4,17 @@
 #pragma once
 
 #include <map>
+#include "../api/Device.h"
 #include "VKLCommon.h"
 #include "logging.h"
 #include "openvkl/VKLDataType.h"
-#include "../api/Device.h"
 
 namespace openvkl {
 
   // Function pointer type for creating a concrete instance of a subtype of
   // this class.
   template <typename T>
-  using FactoryFcn = T *(*)(Device*);
+  using FactoryFcn = T *(*)(Device *);
   template <typename T>
   using FactoryDeviceFcn = T *(*)();
 
@@ -65,7 +65,7 @@ namespace openvkl {
 
   template <typename T, VKLDataType VKL_TYPE>
   void ObjectFactory<T, VKL_TYPE>::registerDevice(const std::string &type,
-                                                FactoryDeviceFcn<T> f)
+                                                  FactoryDeviceFcn<T> f)
   {
     deviceRegistry[type] = f;
   }

@@ -53,7 +53,7 @@ void computed_vs_api_value_range(size_t numParticles,
   }
 }
 
-#if OPENVKL_DEVICE_CPU_PARTICLE
+#if OPENVKL_DEVICE_CPU_PARTICLE || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Particle volume value range", "[volume_value_range]")
 {
   initializeOpenVKL();

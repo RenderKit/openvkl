@@ -67,7 +67,11 @@ void sampling_at_random_points(size_t numParticles,
   std::uniform_real_distribution<float> distY(bbox.lower.y, bbox.upper.y);
   std::uniform_real_distribution<float> distZ(bbox.lower.z, bbox.upper.z);
 
+#if defined(OPENVKL_TESTING_GPU)
+  const size_t N = 200;
+#else
   const size_t N = 10000;
+#endif
 
   for (size_t i = 0; i < N; i++) {
     const vec3f objectCoordinates(distX(eng), distY(eng), distZ(eng));
@@ -81,7 +85,7 @@ void sampling_at_random_points(size_t numParticles,
   vklRelease(vklSampler);
 }
 
-#if OPENVKL_DEVICE_CPU_PARTICLE
+#if OPENVKL_DEVICE_CPU_PARTICLE || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Particle volume sampling", "[volume_sampling]")
 {
   initializeOpenVKL();

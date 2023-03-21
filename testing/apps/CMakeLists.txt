@@ -193,6 +193,11 @@ if (BUILD_TESTING)
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
       tests/multi_device.cpp
+      tests/particle_volume_gradients.cpp
+      tests/particle_volume_interval_iterator.cpp
+      tests/particle_volume_radius.cpp
+      tests/particle_volume_sampling.cpp
+      tests/particle_volume_value_range.cpp
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 

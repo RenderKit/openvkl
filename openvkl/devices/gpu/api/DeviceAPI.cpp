@@ -18,6 +18,8 @@ using namespace ispc;
 #include "../compute/vklIterateUnstructured.h"
 #include "../compute/vklIterators.h"
 
+#include "../compute/vklComputeParticle.h"
+
 using namespace openvkl;
 using namespace openvkl::gpu_device;
 
@@ -67,6 +69,11 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
   }
 
+  case VOLUME_TYPE_PARTICLE: {
+    return VKLParticleVolume_sample(
+        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
   default:
     assert(false);
     return -1.f;
@@ -96,6 +103,15 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         M,
         attributeIndices,
         time,
+        samples);
+    break;
+
+  case VOLUME_TYPE_PARTICLE:
+    UnstructuredVolume_sampleM(
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        M,
+        attributeIndices,
         samples);
     break;
 
@@ -140,6 +156,11 @@ vklComputeGradient(const VKLSampler *sampler,
         time);
   }
 
+  case VOLUME_TYPE_PARTICLE: {
+    return VKLParticleVolume_computeGradient(
+        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
   case VOLUME_TYPE_UNSTRUCTURED: {
     return UnstructuredVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
@@ -176,6 +197,7 @@ vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
 
+  case VOLUME_TYPE_PARTICLE:
   case VOLUME_TYPE_UNSTRUCTURED:
     return sizeof(UnstructuredIntervalIterator) +
            alignof(UnstructuredIntervalIterator);
@@ -225,6 +247,7 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
+  case VOLUME_TYPE_PARTICLE:
   case VOLUME_TYPE_UNSTRUCTURED: {
     size_t space = sizeof(UnstructuredIntervalIterator) +
                    alignof(UnstructuredIntervalIterator);
@@ -238,7 +261,8 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     // We use the same iterator implementation for both unstructured and
     // particle volumes. However, only unstructured volumes support elementary
     // cell iteration.
-    constexpr bool elementaryCellIterationSupported = true;
+    const bool elementaryCellIterationSupported =
+        (volumeType == VOLUME_TYPE_UNSTRUCTURED);
 
     UnstructuredIntervalIterator_Init(
         reinterpret_cast<UnstructuredIntervalIterator *>(alignedBuffer),
@@ -275,6 +299,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     return result;
   }
 
+  case VOLUME_TYPE_PARTICLE:
   case VOLUME_TYPE_UNSTRUCTURED: {
     int result = 0;
     UnstructuredIntervalIterator_iterate(
@@ -295,10 +320,12 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
 ///////////////////////////////////////////////////////////////////////////////
 
 static_assert(VKL_MAX_HIT_ITERATOR_SIZE ==
-              std::max(sizeof(GridAcceleratorIterator) +
-                           alignof(GridAcceleratorIterator),
-                       sizeof(UnstructuredHitIterator) +
-                           alignof(UnstructuredHitIterator)));
+              std::max(std::max(sizeof(GridAcceleratorIterator) +
+                                    alignof(GridAcceleratorIterator),
+                                sizeof(UnstructuredHitIterator) +
+                                    alignof(UnstructuredHitIterator)),
+                       sizeof(ParticleHitIterator) +
+                           alignof(ParticleHitIterator)));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context)
@@ -315,6 +342,9 @@ vklGetHitIteratorSize(const VKLHitIteratorContext *context)
   switch (volumeType) {
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+
+  case VOLUME_TYPE_PARTICLE:
+    return sizeof(ParticleHitIterator) + alignof(ParticleHitIterator);
 
   case VOLUME_TYPE_UNSTRUCTURED:
     return sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
@@ -361,6 +391,25 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
+  case VOLUME_TYPE_PARTICLE: {
+    size_t space = sizeof(ParticleHitIterator) + alignof(ParticleHitIterator);
+
+    void *alignedBuffer = std::align(alignof(ParticleHitIterator),
+                                     sizeof(ParticleHitIterator),
+                                     buffer,
+                                     space);
+    assert(alignedBuffer);
+
+    ParticleHitIterator_Init(
+        reinterpret_cast<ParticleHitIterator *>(alignedBuffer),
+        reinterpret_cast<const HitIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange));
+
+    return (VKLHitIterator)alignedBuffer;
+  }
+
   case VOLUME_TYPE_UNSTRUCTURED: {
     size_t space =
         sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
@@ -402,6 +451,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     int result = 0;
     GridAcceleratorIterator_iterateHit_uniform(
         reinterpret_cast<GridAcceleratorIterator *>(iterator), hit, &result);
+    return result;
+  }
+
+  case VOLUME_TYPE_PARTICLE: {
+    int result = 0;
+    ParticleHitIterator_iterateHit(
+        reinterpret_cast<ParticleHitIterator *>(iterator), hit, &result);
     return result;
   }
 

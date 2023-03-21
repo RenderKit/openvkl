@@ -45,12 +45,12 @@ namespace openvkl {
       {
         assert(numPrims > 0 && numPrims <= MAX_PRIMS_PER_LEAF);
 
-        uint64_t *ids = static_cast<uint64_t *>(
-            rtcThreadLocalAlloc(alloc, numPrims * sizeof(uint64_t), 16));
         float minRadius = inf;
         box3fa bounds   = empty;
 
         userPtrStruct *uPS = static_cast<userPtrStruct *>(userPtr);
+
+        uint64_t *ids = uPS->allocator->newBuffer<uint64_t>(numPrims);
 
         assert(is_aligned_for_type<AlignedVector<float> *>(uPS->payload));
         AlignedVector<float> *aud =

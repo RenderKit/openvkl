@@ -33,7 +33,7 @@ void gradients_at_particle_centers(size_t numParticles,
                          << ", radius = " << p.w)
 
     const vkl_vec3f vklGradient =
-        vklComputeGradient(&vklSampler, (const vkl_vec3f *)&p3);
+        vklComputeGradientWrapper(&vklSampler, (const vkl_vec3f *)&p3, 0, 0);
 
     const vec3f referenceGradient = v->computeProceduralGradient(p3);
 
@@ -46,7 +46,7 @@ void gradients_at_particle_centers(size_t numParticles,
   vklRelease(vklSampler);
 }
 
-#if OPENVKL_DEVICE_CPU_PARTICLE
+#if OPENVKL_DEVICE_CPU_PARTICLE || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Particle volume gradients", "[volume_gradients]")
 {
   initializeOpenVKL();

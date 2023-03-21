@@ -140,7 +140,8 @@ namespace openvkl {
 #ifdef OPENVKL_TESTING_GPU
         static std::vector<std::string> sup = {"structuredRegular",
                                                "structuredSpherical",
-                                               "unstructured"};
+                                               "unstructured",
+                                               "particle"};
 #endif
         return sup;
       };

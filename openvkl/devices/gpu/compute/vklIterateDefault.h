@@ -6,11 +6,13 @@
 #include <type_traits>
 
 // for unstructured interval iterator
+#include "vklComputeParticle.h"
 #include "vklIterateUnstructured.h"
 
 namespace ispc {
 
-  template <typename IntervalIteratorType>
+  template <typename IntervalIteratorType,
+            bool elementaryCellIterationSupported>
   struct DefaultHitIterator
   {
     HitIteratorShared hitIteratorShared;
@@ -29,8 +31,11 @@ namespace ispc {
   // Hit iterator struct definitions ////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////
 
-  typedef DefaultHitIterator<UnstructuredIntervalIterator>
+  typedef DefaultHitIterator<UnstructuredIntervalIterator, true>
       UnstructuredHitIterator;
+
+  typedef DefaultHitIterator<UnstructuredIntervalIterator, false>
+      ParticleHitIterator;
 
   ///////////////////////////////////////////////////////////////////////////
   // Templated hit iterator implementation //////////////////////////////////
@@ -260,6 +265,8 @@ namespace ispc {
 
     // We enable elementary cell iteration for more robust bracketing intervals,
     // if the underlying interval iterator supports it.
+    // e.g. this value should be `true` for unstructured volumes and `false`
+    // for all other volume types.
     constexpr bool elementaryCellIteration =
         std::is_same<HitIteratorType, UnstructuredHitIterator>::value;
 
@@ -330,5 +337,15 @@ namespace ispc {
           UnstructuredHitIterator,
           UnstructuredIntervalIterator_iterateInternal,
           UnstructuredVolume_sample>;
+
+  constexpr auto ParticleHitIterator_Init =
+      &DefaultHitIterator_Init<ParticleHitIterator,
+                               UnstructuredIntervalIterator_Init>;
+
+  constexpr auto ParticleHitIterator_iterateHit =
+      &DefaultHitIterator_iterateHit<
+          ParticleHitIterator,
+          UnstructuredIntervalIterator_iterateInternal,
+          VKLParticleVolume_sample>;
 
 }  // namespace ispc

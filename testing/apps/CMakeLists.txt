@@ -190,6 +190,9 @@ if (BUILD_TESTING)
       tests/structured_volume_value_range.cpp
       tests/unstructured_volume_gradients.cpp
       tests/unstructured_volume_sampling.cpp
+      tests/vdb_volume.cpp
+      tests/vdb_volume_multi.cpp
+      tests/vdb_volume_motion_blur.cpp  
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
       tests/multi_device.cpp

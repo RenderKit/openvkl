@@ -5,6 +5,7 @@
 #include "openvkl_testing.h"
 #include "rkcommon/utility/multidim_index_sequence.h"
 #include "sampling_utility.h"
+#include "wrappers.h"
 
 using namespace openvkl;
 
@@ -12,7 +13,7 @@ using openvkl::testing::TestingVdbTorusVolume;
 using openvkl::testing::WaveletVdbVolumeFloat;
 using openvkl::testing::XYZVdbVolumeFloat;
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("VDB volume leaf validation", "[validation]")
 {
   initializeOpenVKL();
@@ -87,8 +88,8 @@ TEST_CASE("VDB volume value range", "[value_range]")
 
     DYNAMIC_SECTION(sectionName.str())
     {
-      // half
-
+      // half (not supported on GPU)
+#if !defined(OPENVKL_TESTING_GPU)
       SECTION("WaveletVdbVolumeHalf")
       {
         WaveletVdbVolumeHalf *volume = nullptr;
@@ -102,6 +103,7 @@ TEST_CASE("VDB volume value range", "[value_range]")
                 Approx(6.f).epsilon(0.001f));
         REQUIRE_NOTHROW(delete volume);
       }
+#endif
 
       // float
 
@@ -134,8 +136,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
     DYNAMIC_SECTION(sectionName.str())
     {
-      // half
-
+      // half (not supported on GPU)
+#if !defined(OPENVKL_TESTING_GPU)
       SECTION("WaveletVdbVolumeHalf nearest")
       {
         WaveletVdbVolumeHalf *volume = nullptr;
@@ -148,7 +150,14 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           const auto offsetWithStep = offset * step;
@@ -185,7 +194,14 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           const auto offsetWithStep = offset * step;
@@ -222,7 +238,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
 
         // tricubic support span; ignore coordinates here since they will
         // interpolate with background
@@ -259,6 +281,7 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         REQUIRE_NOTHROW(delete volume);
         vklRelease(vklSampler);
       }
+#endif
 
       // float
 
@@ -274,7 +297,14 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           const auto offsetWithStep = offset * step;
@@ -311,7 +341,14 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           const auto offsetWithStep = offset * step;
@@ -348,7 +385,13 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
 
         // tricubic support span; ignore coordinates here since they will
         // interpolate with background
@@ -436,8 +479,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
     DYNAMIC_SECTION(sectionName.str())
     {
-      // half
-
+      // half (not supported on GPU)
+#if !defined(OPENVKL_TESTING_GPU)
       SECTION("WaveletVdbVolumeHalf nearest")
       {
         WaveletVdbVolumeHalf *volume = nullptr;
@@ -454,7 +497,14 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           const auto offsetWithStep = offset * step;
@@ -466,8 +516,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.y << " "
                                       << objectCoordinates.z);
 
-          const vkl_vec3f vklGradient = vklComputeGradient(
-              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           REQUIRE(gradient.x == 0.f);
@@ -496,7 +546,14 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           if (offset.x + 1 >= volume->getDimensions().x ||
@@ -514,8 +571,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.y << " "
                                       << objectCoordinates.z);
 
-          const vkl_vec3f vklGradient = vklComputeGradient(
-              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -549,7 +606,13 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
 
         // Gradient will be different around the border due to central
         // differencing, so we discard the outer layer of voxels.
@@ -572,8 +635,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.y << " "
                                       << objectCoordinates.z);
 
-          const vkl_vec3f vklGradient = vklComputeGradient(
-              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -589,6 +652,7 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         REQUIRE_NOTHROW(delete volume);
         vklRelease(vklSampler);
       }
+#endif
 
       // float
 
@@ -604,7 +668,14 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_NEAREST);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_NEAREST);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           const auto offsetWithStep = offset * step;
@@ -616,8 +687,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.y << " "
                                       << objectCoordinates.z);
 
-          const vkl_vec3f vklGradient = vklComputeGradient(
-              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           REQUIRE(gradient.x == 0.f);
@@ -642,7 +713,14 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
+
         multidim_index_sequence<3> mis(volume->getDimensions() / step);
         for (const auto &offset : mis) {
           if (offset.x + 1 >= volume->getDimensions().x ||
@@ -660,8 +738,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.y << " "
                                       << objectCoordinates.z);
 
-          const vkl_vec3f vklGradient = vklComputeGradient(
-              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -691,7 +769,13 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
         vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
         vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
         vklCommit(vklSampler);
-        const vec3i step(2);
+
+        // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+        const vec3i step = vec3i(8);
+#else
+        const vec3i step = vec3i(2);
+#endif
 
         // Gradient will be different around the border due to central
         // differencing, so we discard the outer layer of voxels.
@@ -714,8 +798,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
                                       << objectCoordinates.y << " "
                                       << objectCoordinates.z);
 
-          const vkl_vec3f vklGradient = vklComputeGradient(
-              &vklSampler, (const vkl_vec3f *)&objectCoordinates);
+          const vkl_vec3f vklGradient = vklComputeGradientWrapper(
+              &vklSampler, (const vkl_vec3f *)&objectCoordinates, 0, 0);
           const vec3f gradient = (const vec3f &)vklGradient;
 
           // compare to analytical gradient
@@ -741,8 +825,12 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
 {
   initializeOpenVKL();
 
+#if defined(OPENVKL_TESTING_GPU)
+  std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT};
+#else
   std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT,
                                                       VKL_DATA_SHARED_BUFFER};
+#endif
 
   std::vector<float> strideFactors{0.f, 1.f, 1.5f, 2.f};
 
@@ -774,7 +862,14 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
           VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
           VKLSampler vklSampler = vklNewSampler(vklVolume);
           vklCommit(vklSampler);
-          const vec3i step(2);
+
+          // For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+          const vec3i step = vec3i(8);
+#else
+          const vec3i step = vec3i(2);
+#endif
+
           multidim_index_sequence<3> mis(volume->getDimensions() / step);
           for (const auto &offset : mis) {
             const auto offsetWithStep = offset * step;
@@ -852,6 +947,7 @@ void vdb_special_case_interval_iterator(
   REQUIRE(numIntervalsFound > 0);
 }
 
+#if !defined(OPENVKL_TESTING_GPU)
 TEST_CASE("VDB volume special cases", "[interval_iterators]")
 {
   initializeOpenVKL();
@@ -915,4 +1011,6 @@ TEST_CASE("VDB volume special cases", "[interval_iterators]")
 
   shutdownOpenVKL();
 }
+#endif
+
 #endif

@@ -477,7 +477,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
     SECTION("VDB volumes")
     {
       for (const auto &repackNodes : {true, false}) {
@@ -503,9 +503,20 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
   SECTION("multi attribute interval iteration")
   {
     // for a unit cube physical grid [(0,0,0), (1,1,1)]
+
+#if defined(OPENVKL_TESTING_GPU)
+    // TODO: for multi-attribute VDB volumes with repackedNodes=false, we appear
+    // to exceed a limit in number of SYCL allocations. So reduce dimensions
+    // (and therefore number of allocations) to work around this. See internal
+    // issue #782.
+    const vec3i dimensions(64);
+    const vec3f gridSpacing(1.f / (64.f - 1.f));
+#else
     const vec3i dimensions(128);
-    const vec3f gridOrigin(0.f);
     const vec3f gridSpacing(1.f / (128.f - 1.f));
+#endif
+
+    const vec3f gridOrigin(0.f);
 
 #if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
     SECTION("structured volumes")
@@ -522,7 +533,7 @@ TEST_CASE("Interval iterator", "[interval_iterators]")
     }
 #endif
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
     SECTION("VDB volumes")
     {
       for (const auto &repackNodes : {true, false}) {

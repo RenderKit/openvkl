@@ -11,7 +11,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
-#if OPENVKL_DEVICE_CPU_VDB
+#if OPENVKL_DEVICE_CPU_VDB || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 {
   initializeOpenVKL();
@@ -20,12 +20,21 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
+#if defined(OPENVKL_TESTING_GPU)
+  const std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT};
+#else
   const std::vector<VKLDataCreationFlags> dataCreationFlags{
       VKL_DATA_DEFAULT, VKL_DATA_SHARED_BUFFER};
+#endif
 
   const std::vector<bool> useAOSLayouts{true, false};
 
+// For GPU limit number of iterations
+#ifdef OPENVKL_TESTING_GPU
+  const vec3i step = vec3i(16);
+#else
   const vec3i step = vec3i(8);
+#endif
 
   for (const auto &repackNodes : {true, false}) {
     for (const auto &dcf : dataCreationFlags) {
@@ -56,6 +65,8 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
             upperSpan = 2;
           }
 
+#if !defined(OPENVKL_TESTING_GPU)
+          // not supported on GPU
           DYNAMIC_SECTION(std::string("half ") + sectionName.str())
           {
             std::shared_ptr<ProceduralVdbVolumeMulti> v(
@@ -85,6 +96,7 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
             test_stream_sampling_multi(v, attributeIndices);
           }
+#endif
 
           DYNAMIC_SECTION(std::string("float ") + sectionName.str())
           {
@@ -104,14 +116,19 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
 
             for (unsigned int i = 0; i < v->getNumAttributes(); i++) {
               computed_vs_api_value_range(v, i);
+
+#if !defined(OPENVKL_TESTING_GPU)
               test_stream_sampling(v, i);
               test_stream_gradients(v, i);
+#endif
             }
 
             std::vector<unsigned int> attributeIndices(v->getNumAttributes());
             std::iota(attributeIndices.begin(), attributeIndices.end(), 0);
 
+#if !defined(OPENVKL_TESTING_GPU)
             test_stream_sampling_multi(v, attributeIndices);
+#endif
           }
         }
       }

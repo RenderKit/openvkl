@@ -84,6 +84,10 @@ jobs:
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
+        # Enable persistent JIT cache
+        export SYCL_CACHE_PERSISTENT=1
+        export SYCL_CACHE_DIR=./jit_cache
+
         echo "### Run without chunking allocator enabled in ISPCRT"
         ./bin/vklTutorialGPU
         ./bin/vklTestsGPU --durations yes
@@ -110,6 +114,10 @@ jobs:
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
+        # Enable persistent JIT cache
+        export SYCL_CACHE_PERSISTENT=1
+        export SYCL_CACHE_DIR=./jit_cache
+
         echo "### Run without chunking allocator enabled in ISPCRT"
         $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
 
@@ -130,6 +138,10 @@ jobs:
       cmd: |
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+
+        # Enable persistent JIT cache
+        export SYCL_CACHE_PERSISTENT=1
+        export SYCL_CACHE_DIR=./jit_cache
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         ./bin/vklTutorialGPU
@@ -156,6 +168,10 @@ jobs:
       cmd: |
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+
+        # Enable persistent JIT cache
+        export SYCL_CACHE_PERSISTENT=1
+        export SYCL_CACHE_DIR=./jit_cache
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
@@ -212,5 +228,9 @@ jobs:
       cmd: |
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+
+        # Enable persistent JIT cache
+        export SYCL_CACHE_PERSISTENT=1
+        export SYCL_CACHE_DIR=./jit_cache
 
         $GITHUB_WORKSPACE/.github/scripts/run-examples-big-volume-tests.sh

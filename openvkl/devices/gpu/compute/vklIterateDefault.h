@@ -5,9 +5,10 @@
 
 #include <type_traits>
 
-// for unstructured interval iterator
+// for interval iterator implementations, which the DefaultHitIterator uses
 #include "vklComputeParticle.h"
 #include "vklIterateUnstructured.h"
+#include "vklIterateVdb.h"
 
 namespace ispc {
 
@@ -19,6 +20,15 @@ namespace ispc {
 
     // The interval iterator that we use.
     IntervalIteratorType intervalIteratorState;
+
+    // These may be duplicated with IntervalIteratorType, but having them here
+    // elegantly handles divergence in interval iterator implementations (some
+    // of which don't store these directly).
+    vec3f origin;
+    vec3f direction;
+
+    // The time of hit.
+    float time;
 
     // Current iteration state.
     Interval currentInterval;
@@ -37,6 +47,8 @@ namespace ispc {
   typedef DefaultHitIterator<UnstructuredIntervalIterator, false>
       ParticleHitIterator;
 
+  typedef DefaultHitIterator<VdbIntervalIterator, true> VdbHitIterator;
+
   ///////////////////////////////////////////////////////////////////////////
   // Templated hit iterator implementation //////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////
@@ -46,19 +58,36 @@ namespace ispc {
                                       const HitIteratorContext *context,
                                       const vec3f *origin,
                                       const vec3f *direction,
-                                      const box1f *tRange)
+                                      const box1f *tRange,
+                                      const float &time)
   {
     self->hitIteratorShared.context = context;
 
-    // elementary cell iteration supported for unstructured, but not other
-    // volume types
-    IntervalIteratorInitFunc(
-        &self->intervalIteratorState,
-        &self->hitIteratorShared.context->super,
-        origin,
-        direction,
-        tRange,
-        std::is_same<HitIteratorType, UnstructuredHitIterator>::value);
+    self->origin    = *origin;
+    self->direction = *direction;
+    self->time      = time;
+
+    if constexpr (std::is_same<HitIteratorType,
+                               UnstructuredHitIterator>::value ||
+                  std::is_same<HitIteratorType, ParticleHitIterator>::value) {
+      // elementary cell iteration supported for unstructured, but not other
+      // volume types
+      IntervalIteratorInitFunc(
+          &self->intervalIteratorState,
+          &self->hitIteratorShared.context->super,
+          origin,
+          direction,
+          tRange,
+          std::is_same<HitIteratorType, UnstructuredHitIterator>::value);
+    } else if constexpr (std::is_same<HitIteratorType, VdbHitIterator>::value) {
+      IntervalIteratorInitFunc(&self->intervalIteratorState,
+                               &self->hitIteratorShared.context->super,
+                               origin,
+                               direction,
+                               tRange);
+    } else {
+      assert(false);
+    }
 
     self->lastHitOffsetT = neg_inf;
 
@@ -76,6 +105,8 @@ namespace ispc {
   inline float bisect(const SamplerShared *sampler,
                       const vec3f &origin,
                       const vec3f &direction,
+                      const float &time,
+                      const uint32_t &attributeIndex,
                       float t0,
                       float sample0,
                       float t,
@@ -98,7 +129,8 @@ namespace ispc {
         break;
       }
 
-      const float sampleMid = SamplingFunc(sampler, origin + tMid * direction);
+      const float sampleMid = SamplingFunc(
+          sampler, origin + tMid * direction, time, attributeIndex);
 
       // sampling at boundaries between unstructured cells can rarely lead to
       // NaN values (indicating outside of cell) due to numerical issues; in
@@ -135,19 +167,21 @@ namespace ispc {
   }
 
   template <auto SamplingFunc>
-  inline bool intersectSurfacesBisection(
-      const SamplerShared *sampler,
-      const UnstructuredIntervalIterator *intervalIterator,
-      const Interval &interval,
-      const int numValues,
-      const float *values,
-      VKLHit &hit)
+  inline bool intersectSurfacesBisection(const SamplerShared *sampler,
+                                         const vec3f &origin,
+                                         const vec3f &direction,
+                                         const float &time,
+                                         const uint32_t &attributeIndex,
+                                         const Interval &interval,
+                                         const int numValues,
+                                         const float *values,
+                                         VKLHit &hit)
   {
     assert(interval.tRange.lower < interval.tRange.upper);
 
-    float t0      = interval.tRange.lower;
-    float sample0 = SamplingFunc(
-        sampler, intervalIterator->origin + t0 * intervalIterator->direction);
+    float t0 = interval.tRange.lower;
+    float sample0 =
+        SamplingFunc(sampler, origin + t0 * direction, time, attributeIndex);
 
     {
       int iters = 0;
@@ -156,8 +190,7 @@ namespace ispc {
              t0 < interval.tRange.upper) {
         t0 += max(1e-5f, 1e-5f * interval.nominalDeltaT);
         sample0 = SamplingFunc(
-            sampler,
-            intervalIterator->origin + t0 * intervalIterator->direction);
+            sampler, origin + t0 * direction, time, attributeIndex);
         iters++;
       }
     }
@@ -167,8 +200,8 @@ namespace ispc {
     while (t0 < interval.tRange.upper) {
       const float h = min(interval.nominalDeltaT, interval.tRange.upper - t0);
       t             = t0 + h;
-      float sample  = SamplingFunc(
-          sampler, intervalIterator->origin + t * intervalIterator->direction);
+      float sample =
+          SamplingFunc(sampler, origin + t * direction, time, attributeIndex);
       float ts = t;
 
       {
@@ -177,8 +210,7 @@ namespace ispc {
         while (iters < BISECT_MAX_BACKTRACK_ITERS && isnan(sample) && ts > t0) {
           ts -= max(1e-5f, 1e-5f * interval.nominalDeltaT);
           sample = SamplingFunc(
-              sampler,
-              intervalIterator->origin + ts * intervalIterator->direction);
+              sampler, origin + ts * direction, time, attributeIndex);
           iters++;
         }
       }
@@ -201,8 +233,10 @@ namespace ispc {
           float error;
           const float tIso = bisect<SamplingFunc>(
               sampler,
-              intervalIterator->origin,
-              intervalIterator->direction,
+              origin,
+              direction,
+              time,
+              attributeIndex,
               t0,
               sample0,
               ts,
@@ -230,10 +264,9 @@ namespace ispc {
       }
 
       if (tHit < inf) {
-        hit.t      = tHit;
-        hit.sample = value;
-        hit.epsilon =
-            epsilon * length(intervalIterator->direction);  // in object space
+        hit.t       = tHit;
+        hit.sample  = value;
+        hit.epsilon = epsilon * length(direction);  // in object space
         return true;
       }
 
@@ -275,12 +308,24 @@ namespace ispc {
       int haveInterval       = !needInterval;
 
       if (needInterval) {
-        IntervalIteratorIterateFunc(
-            &self->intervalIteratorState,
-            &self->currentInterval,
-            self->hitIteratorShared.context->super.super.valueRanges,
-            elementaryCellIteration,
-            &haveInterval);
+        if constexpr (std::is_same<HitIteratorType,
+                                   UnstructuredHitIterator>::value ||
+                      std::is_same<HitIteratorType,
+                                   ParticleHitIterator>::value) {
+          IntervalIteratorIterateFunc(
+              &self->intervalIteratorState,
+              &self->currentInterval,
+              self->hitIteratorShared.context->super.super.valueRanges,
+              elementaryCellIteration,
+              &haveInterval);
+        } else if constexpr (std::is_same<HitIteratorType,
+                                          VdbHitIterator>::value) {
+          IntervalIteratorIterateFunc(&self->intervalIteratorState,
+                                      &self->currentInterval,
+                                      &haveInterval);
+        } else {
+          assert(false);
+        }
       }
 
       // We've found a new interval, but it's possible the last hit may have
@@ -306,7 +351,10 @@ namespace ispc {
       hit->t        = inf;
       bool foundHit = intersectSurfacesBisection<SamplingFunc>(
           self->hitIteratorShared.context->super.super.sampler,
-          &self->intervalIteratorState,
+          self->origin,
+          self->direction,
+          self->time,
+          self->hitIteratorShared.context->super.super.attributeIndex,
           self->currentInterval,
           self->hitIteratorShared.context->numValues,
           self->hitIteratorShared.context->values,
@@ -328,6 +376,7 @@ namespace ispc {
   // Volume-specific hit iterator API entry points //////////////////////////
   ///////////////////////////////////////////////////////////////////////////
 
+  // Unstructured
   constexpr auto UnstructuredHitIterator_Init =
       &DefaultHitIterator_Init<UnstructuredHitIterator,
                                UnstructuredIntervalIterator_Init>;
@@ -338,6 +387,7 @@ namespace ispc {
           UnstructuredIntervalIterator_iterateInternal,
           UnstructuredVolume_sample>;
 
+  // Particle
   constexpr auto ParticleHitIterator_Init =
       &DefaultHitIterator_Init<ParticleHitIterator,
                                UnstructuredIntervalIterator_Init>;
@@ -347,5 +397,14 @@ namespace ispc {
           ParticleHitIterator,
           UnstructuredIntervalIterator_iterateInternal,
           VKLParticleVolume_sample>;
+
+  // VDB
+  constexpr auto VdbHitIterator_Init =
+      &DefaultHitIterator_Init<VdbHitIterator, VdbIntervalIterator_Init>;
+
+  constexpr auto VdbHitIterator_iterateHit =
+      &DefaultHitIterator_iterateHit<VdbHitIterator,
+                                     VdbIntervalIterator_iterate,
+                                     VdbSampler_computeSample_uniform>;
 
 }  // namespace ispc

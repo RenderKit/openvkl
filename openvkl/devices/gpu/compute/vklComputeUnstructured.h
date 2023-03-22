@@ -753,7 +753,9 @@ namespace ispc {
   ////////////////////////////////////////////////////////////////////////////
 
   inline float UnstructuredVolume_sample(const SamplerShared *sampler,
-                                         const vec3f &objectCoordinates)
+                                         const vec3f &objectCoordinates,
+                                         const float &_time,
+                                         const uint32_t &_attributeIndex)
   {
     const VKLUnstructuredVolume *self =
         (const VKLUnstructuredVolume *)sampler->volume;
@@ -779,7 +781,8 @@ namespace ispc {
       // single attribute
       assert(attributeIndices[i] == 0);
 
-      samples[i] = UnstructuredVolume_sample(sampler, objectCoordinates);
+      samples[i] =
+          UnstructuredVolume_sample(sampler, objectCoordinates, 0.f, 0);
     }
   }
 
@@ -797,46 +800,59 @@ namespace ispc {
     // boundaries (as determined by NaN sample values outside any volume cell)
     vec3f gradient;
 
-    float sample = UnstructuredVolume_sample(sampler, objectCoordinates);
+    float sample =
+        UnstructuredVolume_sample(sampler, objectCoordinates, 0.f, 0);
 
-    gradient.x =
-        UnstructuredVolume_sample(
-            sampler, objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f)) -
-        sample;
-    gradient.y =
-        UnstructuredVolume_sample(
-            sampler, objectCoordinates + vec3f(0.f, gradientStep.y, 0.f)) -
-        sample;
-    gradient.z =
-        UnstructuredVolume_sample(
-            sampler, objectCoordinates + vec3f(0.f, 0.f, gradientStep.z)) -
-        sample;
+    gradient.x = UnstructuredVolume_sample(
+                     sampler,
+                     objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f),
+                     0.f,
+                     0) -
+                 sample;
+    gradient.y = UnstructuredVolume_sample(
+                     sampler,
+                     objectCoordinates + vec3f(0.f, gradientStep.y, 0.f),
+                     0.f,
+                     0) -
+                 sample;
+    gradient.z = UnstructuredVolume_sample(
+                     sampler,
+                     objectCoordinates + vec3f(0.f, 0.f, gradientStep.z),
+                     0.f,
+                     0) -
+                 sample;
 
     if (isnan(gradient.x)) {
       gradientStep.x *= -1.f;
 
-      gradient.x =
-          UnstructuredVolume_sample(
-              sampler, objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f)) -
-          sample;
+      gradient.x = UnstructuredVolume_sample(
+                       sampler,
+                       objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f),
+                       0.f,
+                       0) -
+                   sample;
     }
 
     if (isnan(gradient.y)) {
       gradientStep.y *= -1.f;
 
-      gradient.y =
-          UnstructuredVolume_sample(
-              sampler, objectCoordinates + vec3f(0.f, gradientStep.y, 0.f)) -
-          sample;
+      gradient.y = UnstructuredVolume_sample(
+                       sampler,
+                       objectCoordinates + vec3f(0.f, gradientStep.y, 0.f),
+                       0.f,
+                       0) -
+                   sample;
     }
 
     if (isnan(gradient.z)) {
       gradientStep.z *= -1.f;
 
-      gradient.z =
-          UnstructuredVolume_sample(
-              sampler, objectCoordinates + vec3f(0.f, 0.f, gradientStep.z)) -
-          sample;
+      gradient.z = UnstructuredVolume_sample(
+                       sampler,
+                       objectCoordinates + vec3f(0.f, 0.f, gradientStep.z),
+                       0.f,
+                       0) -
+                   sample;
     }
 
     return vkl_vec3f{gradient.x / gradientStep.x,

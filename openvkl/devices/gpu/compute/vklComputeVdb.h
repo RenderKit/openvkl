@@ -15,13 +15,17 @@ namespace ispc {
 
 #include "vdb/VdbSampler_filter.h"
 
-  inline float VdbSampler_computeSample_uniform(const VdbSamplerShared *sampler,
-                                                const vec3f &objectCoordinates,
-                                                const float &time,
-                                                const uint32 &attributeIndex)
+  inline float VdbSampler_computeSample_uniform(
+      const SamplerShared *samplerShared,
+      const vec3f &objectCoordinates,
+      const float &time,
+      const uint32 &attributeIndex)
   {
     assert(sampler);
     assert(sampler->grid);
+
+    const VdbSamplerShared *sampler =
+        reinterpret_cast<const VdbSamplerShared *>(samplerShared);
 
     const vec3f indexCoordinates = openvkl::cpu_device::xfmPoint(
         sampler->grid->objectToIndex, objectCoordinates);

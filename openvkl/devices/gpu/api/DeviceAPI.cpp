@@ -79,12 +79,18 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
 
   case VOLUME_TYPE_UNSTRUCTURED: {
     return UnstructuredVolume_sample(
-        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        0.f,
+        0);
   }
 
   case VOLUME_TYPE_PARTICLE: {
     return VKLParticleVolume_sample(
-        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        0.f,
+        0);
   }
 
   case VOLUME_TYPE_VDB: {
@@ -95,7 +101,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
     assertValidTime(time);
 #endif
     return VdbSampler_computeSample_uniform(
-        reinterpret_cast<const VdbSamplerShared *>(sampler->device),
+        reinterpret_cast<const SamplerShared *>(sampler->device),
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         time,
         attributeIndex);
@@ -287,9 +293,9 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
 
   switch (volumeType) {
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
-    // the provided buffer is guaranteed to be of size `space` below, but it may
-    // be unaligned. so, we'll move to an appropriately aligned address inside
-    // the provided buffer.
+    // the provided buffer is guaranteed to be of size `space` below, but it
+    // may be unaligned. so, we'll move to an appropriately aligned address
+    // inside the provided buffer.
     size_t space =
         sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
 
@@ -411,12 +417,14 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
 ///////////////////////////////////////////////////////////////////////////////
 
 static_assert(VKL_MAX_HIT_ITERATOR_SIZE ==
-              std::max(std::max(sizeof(GridAcceleratorIterator) +
-                                    alignof(GridAcceleratorIterator),
-                                sizeof(UnstructuredHitIterator) +
-                                    alignof(UnstructuredHitIterator)),
-                       sizeof(ParticleHitIterator) +
-                           alignof(ParticleHitIterator)));
+              std::max(sizeof(GridAcceleratorIterator) +
+                           alignof(GridAcceleratorIterator),
+                       std::max(sizeof(UnstructuredHitIterator) +
+                                    alignof(UnstructuredHitIterator),
+                                std::max(sizeof(ParticleHitIterator) +
+                                             alignof(ParticleHitIterator),
+                                         sizeof(VdbHitIterator) +
+                                             alignof(VdbHitIterator)))));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context)
@@ -439,6 +447,9 @@ vklGetHitIteratorSize(const VKLHitIteratorContext *context)
 
   case VOLUME_TYPE_UNSTRUCTURED:
     return sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
+
+  case VOLUME_TYPE_VDB:
+    return sizeof(VdbHitIterator) + alignof(VdbHitIterator);
 
   default:
     assert(false);
@@ -496,7 +507,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
         reinterpret_cast<const HitIteratorContext *>(context->device),
         reinterpret_cast<const vec3f *>(origin),
         reinterpret_cast<const vec3f *>(direction),
-        reinterpret_cast<const box1f *>(tRange));
+        reinterpret_cast<const box1f *>(tRange),
+        time);
 
     return (VKLHitIterator)alignedBuffer;
   }
@@ -516,7 +528,26 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
         reinterpret_cast<const HitIteratorContext *>(context->device),
         reinterpret_cast<const vec3f *>(origin),
         reinterpret_cast<const vec3f *>(direction),
-        reinterpret_cast<const box1f *>(tRange));
+        reinterpret_cast<const box1f *>(tRange),
+        time);
+
+    return (VKLHitIterator)alignedBuffer;
+  }
+
+  case VOLUME_TYPE_VDB: {
+    size_t space = sizeof(VdbHitIterator) + alignof(VdbHitIterator);
+
+    void *alignedBuffer = std::align(
+        alignof(VdbHitIterator), sizeof(VdbHitIterator), buffer, space);
+    assert(alignedBuffer);
+
+    VdbHitIterator_Init(
+        reinterpret_cast<VdbHitIterator *>(alignedBuffer),
+        reinterpret_cast<const HitIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange),
+        time);
 
     return (VKLHitIterator)alignedBuffer;
   }
@@ -556,6 +587,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     int result = 0;
     UnstructuredHitIterator_iterateHit(
         reinterpret_cast<UnstructuredHitIterator *>(iterator), hit, &result);
+    return result;
+  }
+
+  case VOLUME_TYPE_VDB: {
+    int result = 0;
+    VdbHitIterator_iterateHit(
+        reinterpret_cast<VdbHitIterator *>(iterator), hit, &result);
     return result;
   }
 

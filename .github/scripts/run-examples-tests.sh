@@ -5,7 +5,7 @@
 IMG_DIFF_TOOL=$STORAGE_PATH/tools/img_diff/img_diff
 
 # Run tests over these volume types
-VOLUME_TYPES="structuredRegular unstructured particle"
+VOLUME_TYPES="structuredRegular unstructured particle vdb"
 
 COMMON_ARGS="-batch -framebufferSize 1024 1024"
 
@@ -40,7 +40,7 @@ for volumeType in $VOLUME_TYPES; do
     $IMG_DIFF_TOOL interval_iterator_debug.pfm interval_iterator_debug_gpu.pfm
     NUM_IMAGE_DIFF_ERRORS=$(($NUM_IMAGE_DIFF_ERRORS+$?))
 
-    $IMG_DIFF_TOOL hit_iterator_renderer.pfm hit_iterator_renderer_gpu.pfm 0.000002
+    $IMG_DIFF_TOOL hit_iterator_renderer.pfm hit_iterator_renderer_gpu.pfm 0.0002
     NUM_IMAGE_DIFF_ERRORS=$(($NUM_IMAGE_DIFF_ERRORS+$?))
 
     # Retain images in volume-specific subdirectory

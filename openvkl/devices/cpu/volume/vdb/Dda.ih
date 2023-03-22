@@ -77,9 +77,16 @@ inline vec3f intersect_planes(const vec3f &rayOrg,
   const float tz = (planes.z - rayOrg.z) * rayInvDir.z;
 
   // Do not intersect planes the origin is on!
+#if defined(ISPC)
   return make_vec3f(select((planes.x == rayOrg.x || isnan(tx)), inf, tx),
                     select((planes.y == rayOrg.y || isnan(ty)), inf, ty),
                     select((planes.z == rayOrg.z || isnan(tz)), inf, tz));
+#else
+  return make_vec3f((planes.x == rayOrg.x || isnan(tx)) ? inf : tx,
+                    (planes.y == rayOrg.y || isnan(ty)) ? inf : ty,
+                    (planes.z == rayOrg.z || isnan(tz)) ? inf : tz);
+
+#endif
 }
 
 /*
@@ -94,7 +101,9 @@ inline void clampOffsetToCell(
 {
   // We may map a voxel coordinate to the origin of a voxel with resolution
   // logVoxelRes using this simple mask because resolutions are powers of two.
+#if defined(ISPC)
   assert(popcnt(resolution) == 1);
+#endif
   const uniform int mask = ~((resolution)-1);
   x                      = x & mask;
   y                      = y & mask;
@@ -109,7 +118,9 @@ inline void clampOffsetToCellVarying(
 {
   // We may map a voxel coordinate to the origin of a voxel with resolution
   // logVoxelRes using this simple mask because resolutions are powers of two.
+#if defined(ISPC)
   assert(popcnt(resolution) == 1);
+#endif
   const int mask = ~((resolution)-1);
   x              = x & mask;
   y              = y & mask;
@@ -143,8 +154,12 @@ inline void ddaInit(const vec3f &rayOrg,  // ray in index space.
   const vec3i sgnNonNegative =
       make_vec3i(((int)(sgn.x >= 0)), ((int)(sgn.y >= 0)), ((int)(sgn.z >= 0)));
 
+#if defined(ISPC)
   dda.level = clamp(level, 0u, ((uniform uint32)DDA_STATE_MAX_NUM_LEVELS - 1));
-  dda.t = tMin;
+#else
+  dda.level = clamp((int)level, 0, ((int)DDA_STATE_MAX_NUM_LEVELS - 1));
+#endif
+  dda.t      = tMin;
   dda.rayOrg = rayOrg;
   dda.rayDir = rayDir;
 

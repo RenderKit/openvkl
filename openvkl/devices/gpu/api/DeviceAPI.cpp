@@ -17,6 +17,7 @@ using namespace ispc;
 #include "../compute/vklComputeVdb.h"
 #include "../compute/vklIterateDefault.h"
 #include "../compute/vklIterateUnstructured.h"
+#include "../compute/vklIterateVdb.h"
 #include "../compute/vklIterators.h"
 
 #include "../compute/vklComputeParticle.h"
@@ -236,8 +237,10 @@ vklComputeGradient(const VKLSampler *sampler,
 static_assert(VKL_MAX_INTERVAL_ITERATOR_SIZE ==
               std::max(sizeof(GridAcceleratorIterator) +
                            alignof(GridAcceleratorIterator),
-                       sizeof(UnstructuredIntervalIterator) +
-                           alignof(UnstructuredIntervalIterator)));
+                       std::max(sizeof(UnstructuredIntervalIterator) +
+                                    alignof(UnstructuredIntervalIterator),
+                                sizeof(VdbIntervalIterator) +
+                                    alignof(VdbIntervalIterator))));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
@@ -258,6 +261,9 @@ vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
   case VOLUME_TYPE_UNSTRUCTURED:
     return sizeof(UnstructuredIntervalIterator) +
            alignof(UnstructuredIntervalIterator);
+
+  case VOLUME_TYPE_VDB:
+    return sizeof(VdbIntervalIterator) + alignof(VdbIntervalIterator);
 
   default:
     assert(false);
@@ -332,6 +338,25 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
+  case VOLUME_TYPE_VDB: {
+    size_t space = sizeof(VdbIntervalIterator) + alignof(VdbIntervalIterator);
+
+    void *alignedBuffer = std::align(alignof(VdbIntervalIterator),
+                                     sizeof(VdbIntervalIterator),
+                                     buffer,
+                                     space);
+    assert(alignedBuffer);
+
+    VdbIntervalIterator_Init(
+        reinterpret_cast<VdbIntervalIterator *>(alignedBuffer),
+        reinterpret_cast<const IntervalIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange));
+
+    return (VKLIntervalIterator)alignedBuffer;
+  }
+
   default:
     assert(false);
     return nullptr;
@@ -361,6 +386,15 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     int result = 0;
     UnstructuredIntervalIterator_iterate(
         reinterpret_cast<UnstructuredIntervalIterator *>(iterator),
+        reinterpret_cast<Interval *>(interval),
+        &result);
+    return result;
+  }
+
+  case VOLUME_TYPE_VDB: {
+    int result = 0;
+    VdbIntervalIterator_iterate(
+        reinterpret_cast<VdbIntervalIterator *>(iterator),
         reinterpret_cast<Interval *>(interval),
         &result);
     return result;

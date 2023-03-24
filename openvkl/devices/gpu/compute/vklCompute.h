@@ -121,8 +121,8 @@ namespace ispc {
       const SharedStructuredVolume *self,
       const vec3f &objectCoordinates,
       const VKLFilter filter,
-      const uint32_t attributeIndex,
-      const float time)
+      const uint32_t &attributeIndex,
+      const float &time)
   {
     vec3f clampedLocalCoordinates;
 
@@ -152,6 +152,19 @@ namespace ispc {
         filter,
         attributeIndex,
         time);
+  }
+
+  // Wrapper for making unified sampling funtion for hit iterator
+  inline float SharedStructuredVolume_computeSample(
+      const SamplerShared *sampler,
+      const vec3f &objectCoordinates,
+      const float &time,
+      const uint32_t &attributeIndex)
+  {
+    const SharedStructuredVolume *v =
+        reinterpret_cast<const SharedStructuredVolume *>(sampler->volume);
+    return SharedStructuredVolume_computeSample_uniform(
+        v, objectCoordinates, sampler->filter, attributeIndex, time);
   }
 
   inline void clampedLocalCoordinates_uniform(
@@ -265,4 +278,87 @@ namespace ispc {
 
     return vkl_vec3f{result.x, result.y, result.z};
   }
+
+  inline vkl_vec3f SharedStructuredVolume_computeGradient_NaN_checks(
+      const SharedStructuredVolume *self,
+      const vec3f &objectCoordinates,
+      const VKLFilter filter,
+      const uint32 attributeIndex,
+      const float &time)
+  {
+    // gradient step in each dimension (object coordinates)
+    vec3f gradientStep = self->gridSpacing;
+
+    // compute via forward or backward differences depending on volume boundary
+    // (as determined by NaN sample values outside the boundary)
+    const vec3f gradientExtent = objectCoordinates + gradientStep;
+
+    vec3f gradient;
+
+    float sample = SharedStructuredVolume_computeSample_uniform(
+        self, objectCoordinates, filter, attributeIndex, time);
+
+    gradient.x = SharedStructuredVolume_computeSample_uniform(
+                     self,
+                     objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
+                     filter,
+                     attributeIndex,
+                     time) -
+                 sample;
+    gradient.y = SharedStructuredVolume_computeSample_uniform(
+                     self,
+                     objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
+                     filter,
+                     attributeIndex,
+                     time) -
+                 sample;
+    gradient.z = SharedStructuredVolume_computeSample_uniform(
+                     self,
+                     objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
+                     VKL_FILTER_TRILINEAR,
+                     attributeIndex,
+                     time) -
+                 sample;
+
+    if (isnan(gradient.x)) {
+      gradientStep.x *= -1.f;
+
+      gradient.x = SharedStructuredVolume_computeSample_uniform(
+                       self,
+                       objectCoordinates + make_vec3f(gradientStep.x, 0.f, 0.f),
+                       filter,
+                       attributeIndex,
+                       time) -
+                   sample;
+    }
+
+    if (isnan(gradient.y)) {
+      gradientStep.y *= -1.f;
+
+      gradient.y = SharedStructuredVolume_computeSample_uniform(
+                       self,
+                       objectCoordinates + make_vec3f(0.f, gradientStep.y, 0.f),
+                       filter,
+                       attributeIndex,
+                       time) -
+                   sample;
+    }
+
+    if (isnan(gradient.z)) {
+      gradientStep.z *= -1.f;
+
+      gradient.z = SharedStructuredVolume_computeSample_uniform(
+                       self,
+                       objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
+                       filter,
+                       attributeIndex,
+                       time) -
+                   sample;
+    }
+
+    const vec3f result = gradient / gradientStep;
+
+    return vkl_vec3f{result.x, result.y, result.z};
+  }
+
 }  // namespace ispc

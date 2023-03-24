@@ -62,6 +62,9 @@ namespace openvkl {
 
       // must be last
       this->buildAccelerator();
+
+      // value range for first attribute only, to support interval iterators
+      this->getSh()->valueRange0 = this->getValueRange(0);
     }
 
     // this is the old / legacy structured regular implementation!

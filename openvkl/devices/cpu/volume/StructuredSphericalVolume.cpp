@@ -124,6 +124,9 @@ namespace openvkl {
 
       // must be last
       this->buildAccelerator();
+
+      // value range for first attribute only, to support interval iterators
+      this->getSh()->valueRange0 = this->getValueRange(0);
     }
 
     VKL_REGISTER_VOLUME(StructuredSphericalVolume<VKL_TARGET_WIDTH>,

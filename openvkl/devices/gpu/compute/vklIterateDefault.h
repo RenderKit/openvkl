@@ -12,6 +12,17 @@
 
 namespace ispc {
 
+  struct DefaultIntervalIterator
+  {
+    IntervalIteratorShared intervalIteratorShared;
+
+    box1f valueRange;  // value range of the full volume
+    float nominalIntervalLength;
+
+    box1f boundingBoxTRange;
+    Interval currentInterval;
+  };
+
   template <typename IntervalIteratorType,
             bool elementaryCellIterationSupported>
   struct DefaultHitIterator
@@ -41,6 +52,9 @@ namespace ispc {
   // Hit iterator struct definitions ////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////
 
+  typedef DefaultHitIterator<DefaultIntervalIterator, false>
+      SphericalHitIterator;
+
   typedef DefaultHitIterator<UnstructuredIntervalIterator, true>
       UnstructuredHitIterator;
 
@@ -69,7 +83,8 @@ namespace ispc {
 
     if constexpr (std::is_same<HitIteratorType,
                                UnstructuredHitIterator>::value ||
-                  std::is_same<HitIteratorType, ParticleHitIterator>::value) {
+                  std::is_same<HitIteratorType, ParticleHitIterator>::value ||
+                  std::is_same<HitIteratorType, SphericalHitIterator>::value) {
       // elementary cell iteration supported for unstructured, but not other
       // volume types
       IntervalIteratorInitFunc(
@@ -311,7 +326,9 @@ namespace ispc {
         if constexpr (std::is_same<HitIteratorType,
                                    UnstructuredHitIterator>::value ||
                       std::is_same<HitIteratorType,
-                                   ParticleHitIterator>::value) {
+                                   ParticleHitIterator>::value ||
+                      std::is_same<HitIteratorType,
+                                   SphericalHitIterator>::value) {
           IntervalIteratorIterateFunc(
               &self->intervalIteratorState,
               &self->currentInterval,
@@ -372,9 +389,89 @@ namespace ispc {
     }
   }
 
+  inline void DefaultIntervalIterator_Init(
+      DefaultIntervalIterator *self,
+      const IntervalIteratorContext *context,
+      const vec3f *origin,
+      const vec3f *direction,
+      const box1f *tRange,
+      const bool unused)
+  {
+    self->intervalIteratorShared.context = context;
+
+    SharedStructuredVolume *volume =
+        (SharedStructuredVolume *)(context->super.sampler->volume);
+
+    const box3f boundingBox = volume->boundingBox;
+    self->valueRange        = volume->valueRange0;
+    self->boundingBoxTRange =
+        intersectBox(*origin, *direction, boundingBox, *tRange);
+
+    // compute a nominal interval length as a fraction of the largest bounding
+    // box dimension, in ray space
+    float bbMaxDimension = reduce_max(boundingBox.upper - boundingBox.lower);
+    self->nominalIntervalLength =
+        0.1f * bbMaxDimension * rcp(length(*direction));
+
+    resetInterval(self->currentInterval);
+  }
+
+  inline void DefaultIntervalIterator_iterateIntervalInternal(
+      DefaultIntervalIterator *self,
+      Interval *interval,
+      const ValueRanges &valueRanges2,
+      const bool elementaryCellIteration,
+      int *result)
+  {
+    if (isempty1f(self->boundingBoxTRange)) {
+      *result = false;
+      return;
+    }
+
+    ValueRanges valueRanges =
+        self->intervalIteratorShared.context->super.valueRanges;
+
+    if (!valueRangesOverlap(valueRanges, self->valueRange)) {
+      *result = false;
+      return;
+    }
+
+    Interval nextInterval;
+
+    nextInterval.tRange.lower =
+        max(self->currentInterval.tRange.upper, self->boundingBoxTRange.lower);
+    nextInterval.tRange.upper =
+        min(nextInterval.tRange.lower + self->nominalIntervalLength,
+            self->boundingBoxTRange.upper);
+
+    if (nextInterval.tRange.upper <= nextInterval.tRange.lower) {
+      *result = false;
+      return;
+    }
+
+    // conservatively use the volume value range
+    nextInterval.valueRange    = self->valueRange;
+    nextInterval.nominalDeltaT = 0.25f * self->nominalIntervalLength;
+
+    self->currentInterval = nextInterval;
+    *interval             = nextInterval;
+    *result               = true;
+  }
+
   ///////////////////////////////////////////////////////////////////////////
   // Volume-specific hit iterator API entry points //////////////////////////
   ///////////////////////////////////////////////////////////////////////////
+
+  // structuredSpherical
+  constexpr auto SphericalHitIterator_Init =
+      &DefaultHitIterator_Init<SphericalHitIterator,
+                               DefaultIntervalIterator_Init>;
+
+  constexpr auto SphericalHitIterator_iterateHit =
+      &DefaultHitIterator_iterateHit<
+          SphericalHitIterator,
+          DefaultIntervalIterator_iterateIntervalInternal,
+          SharedStructuredVolume_computeSample>;
 
   // Unstructured
   constexpr auto UnstructuredHitIterator_Init =

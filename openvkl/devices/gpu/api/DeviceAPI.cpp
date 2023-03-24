@@ -193,12 +193,23 @@ vklComputeGradient(const VKLSampler *sampler,
   const DeviceVolumeType volumeType = samplerShared->volume->type;
 
   switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
     const SharedStructuredVolume *v =
         reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
 
     return SharedStructuredVolume_computeGradient_bbox_checks(
+        v,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        samplerShared->filter,
+        attributeIndex,
+        time);
+  }
+
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    const SharedStructuredVolume *v =
+        reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
+
+    return SharedStructuredVolume_computeGradient_NaN_checks(
         v,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         samplerShared->filter,
@@ -240,13 +251,15 @@ vklComputeGradient(const VKLSampler *sampler,
 // Interval iterator //////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static_assert(VKL_MAX_INTERVAL_ITERATOR_SIZE ==
-              std::max(sizeof(GridAcceleratorIterator) +
-                           alignof(GridAcceleratorIterator),
-                       std::max(sizeof(UnstructuredIntervalIterator) +
-                                    alignof(UnstructuredIntervalIterator),
-                                sizeof(VdbIntervalIterator) +
-                                    alignof(VdbIntervalIterator))));
+static_assert(
+    VKL_MAX_INTERVAL_ITERATOR_SIZE ==
+    std::max(sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator),
+             std::max(sizeof(DefaultIntervalIterator) +
+                          alignof(DefaultIntervalIterator),
+                      std::max(sizeof(UnstructuredIntervalIterator) +
+                                   alignof(UnstructuredIntervalIterator),
+                               sizeof(VdbIntervalIterator) +
+                                   alignof(VdbIntervalIterator)))));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
@@ -262,6 +275,9 @@ vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
   switch (volumeType) {
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL:
+    return sizeof(DefaultIntervalIterator) + alignof(DefaultIntervalIterator);
 
   case VOLUME_TYPE_PARTICLE:
   case VOLUME_TYPE_UNSTRUCTURED:
@@ -312,6 +328,27 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
         reinterpret_cast<const vec3f *>(direction),
         reinterpret_cast<const box1f *>(tRange),
         &time);
+
+    return (VKLIntervalIterator)alignedBuffer;
+  }
+
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    size_t space =
+        sizeof(DefaultIntervalIterator) + alignof(DefaultIntervalIterator);
+
+    void *alignedBuffer = std::align(alignof(DefaultIntervalIterator),
+                                     sizeof(DefaultIntervalIterator),
+                                     buffer,
+                                     space);
+    assert(alignedBuffer);
+
+    DefaultIntervalIterator_Init(
+        reinterpret_cast<DefaultIntervalIterator *>(alignedBuffer),
+        reinterpret_cast<const IntervalIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange),
+        false);
 
     return (VKLIntervalIterator)alignedBuffer;
   }
@@ -387,6 +424,17 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     return result;
   }
 
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    int result = 0;
+    DefaultIntervalIterator_iterateIntervalInternal(
+        reinterpret_cast<DefaultIntervalIterator *>(iterator),
+        reinterpret_cast<Interval *>(interval),
+        iter->context->super.valueRanges,
+        false,
+        &result);
+    return result;
+  }
+
   case VOLUME_TYPE_PARTICLE:
   case VOLUME_TYPE_UNSTRUCTURED: {
     int result = 0;
@@ -416,15 +464,17 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
 // Hit iterator ///////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-static_assert(VKL_MAX_HIT_ITERATOR_SIZE ==
-              std::max(sizeof(GridAcceleratorIterator) +
-                           alignof(GridAcceleratorIterator),
-                       std::max(sizeof(UnstructuredHitIterator) +
-                                    alignof(UnstructuredHitIterator),
-                                std::max(sizeof(ParticleHitIterator) +
-                                             alignof(ParticleHitIterator),
-                                         sizeof(VdbHitIterator) +
-                                             alignof(VdbHitIterator)))));
+static_assert(
+    VKL_MAX_HIT_ITERATOR_SIZE ==
+    std::max(sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator),
+             std::max(sizeof(SphericalHitIterator) +
+                          alignof(SphericalHitIterator),
+                      std::max(sizeof(UnstructuredHitIterator) +
+                                   alignof(UnstructuredHitIterator),
+                               std::max(sizeof(ParticleHitIterator) +
+                                            alignof(ParticleHitIterator),
+                                        sizeof(VdbHitIterator) +
+                                            alignof(VdbHitIterator))))));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context)
@@ -435,12 +485,15 @@ vklGetHitIteratorSize(const VKLHitIteratorContext *context)
 
   const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
-  // the sizes below include extra padding, so that we can still use unaligned
-  // buffers allocated by the application
+  // the sizes below include extra padding, so that we can still
+  // use unaligned buffers allocated by the application
 
   switch (volumeType) {
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
     return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL:
+    return sizeof(SphericalHitIterator) + alignof(SphericalHitIterator);
 
   case VOLUME_TYPE_PARTICLE:
     return sizeof(ParticleHitIterator) + alignof(ParticleHitIterator);
@@ -489,6 +542,26 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
         reinterpret_cast<const vec3f *>(direction),
         reinterpret_cast<const box1f *>(tRange),
         &time);
+
+    return (VKLHitIterator)alignedBuffer;
+  }
+
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    size_t space = sizeof(SphericalHitIterator) + alignof(SphericalHitIterator);
+
+    void *alignedBuffer = std::align(alignof(SphericalHitIterator),
+                                     sizeof(SphericalHitIterator),
+                                     buffer,
+                                     space);
+    assert(alignedBuffer);
+
+    SphericalHitIterator_Init(
+        reinterpret_cast<SphericalHitIterator *>(alignedBuffer),
+        reinterpret_cast<const HitIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange),
+        time);
 
     return (VKLHitIterator)alignedBuffer;
   }
@@ -573,6 +646,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     int result = 0;
     GridAcceleratorIterator_iterateHit_uniform(
         reinterpret_cast<GridAcceleratorIterator *>(iterator), hit, &result);
+    return result;
+  }
+
+  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+    int result = 0;
+    SphericalHitIterator_iterateHit(
+        reinterpret_cast<SphericalHitIterator *>(iterator), hit, &result);
     return result;
   }
 

@@ -148,7 +148,8 @@ namespace openvkl {
       // create the AMR data structure. This creates the logical blocks, which
       // contain the actual data and block-level metadata, such as cell width
       // and refinement level
-      data = make_unique<amr::AMRData>(*blockBoundsData,
+      data = make_unique<amr::AMRData>(this->getDevice(),
+                                       *blockBoundsData,
                                        *refinementLevelsData,
                                        *cellWidthsData,
                                        *blockDataData);
@@ -157,7 +158,7 @@ namespace openvkl {
       // representation of the blocks in the AMRData object. In short, blocks at
       // the highest refinement level (i.e. with the most detail) are leaf
       // nodes, and parents have progressively lower resolution
-      accel = make_unique<amr::AMRAccel>(*data);
+      accel = make_unique<amr::AMRAccel>(this->getDevice(), *data);
 
       float coarsestCellWidth =
           *std::max_element(cellWidthsData->begin(), cellWidthsData->end());

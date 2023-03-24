@@ -129,21 +129,12 @@ namespace openvkl {
       // types.
       static const std::vector<std::string> &supportedVolumeTypes()
       {
-#ifdef OPENVKL_TESTING_CPU
         static std::vector<std::string> sup = {"structuredRegular",
                                                "structuredSpherical",
                                                "unstructured",
                                                "amr",
                                                "vdb",
                                                "particle"};
-#endif
-#ifdef OPENVKL_TESTING_GPU
-        static std::vector<std::string> sup = {"structuredRegular",
-                                               "structuredSpherical",
-                                               "unstructured",
-                                               "vdb",
-                                               "particle"};
-#endif
         return sup;
       };
 

@@ -7,8 +7,8 @@
 #include "AMRVolume.ih"
 #include "CellRef.ih"
 #include "DualCell.ih"
-#include "common/export_util.h"
-#include "sampler/SamplerShared.h"
+#include "../../common/export_util.h"
+#include "../../sampler/SamplerShared.h"
 
 #define DBG(a)
 

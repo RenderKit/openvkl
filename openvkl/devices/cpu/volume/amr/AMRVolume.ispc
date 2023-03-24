@@ -7,8 +7,8 @@
 #include "../UnstructuredSamplerShared.h"
 #include "AMR.ih"
 #include "AMRVolumeShared.h"
-#include "common/export_util.h"
-#include "sampler/Sampler.ih"
+#include "../../common/export_util.h"
+#include "../../sampler/Sampler.ih"
 
 static vec3f AMRVolume_computeGradient(const SamplerShared *uniform sampler,
                                        const varying vec3f &pos)
@@ -71,10 +71,10 @@ export void EXPORT_UNIQUE(AMRVolume_computeValueRangeOfLeaf,
   AMRLeaf *uniform leaf   = amr->leaf + leafID;
   AMRBrick *uniform brick = leaf->brickList[0];
 
-  assert(brick->value->dataType == VKL_FLOAT);
+  assert(brick->value.dataType == VKL_FLOAT);
 
-  for (uniform uint64 i = 0; i < brick->value->numItems; i++) {
-    extend(leaf->valueRange, get_float(*(brick->value), i));
+  for (uniform uint64 i = 0; i < brick->value.numItems; i++) {
+    extend(leaf->valueRange, get_float(brick->value, i));
   }
 }
 

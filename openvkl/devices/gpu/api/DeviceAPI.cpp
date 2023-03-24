@@ -13,6 +13,7 @@ using namespace ispc;
 #include "../include/openvkl/device/openvkl.h"
 
 #include "../compute/vklCompute.h"
+#include "../compute/vklComputeAMR.h"
 #include "../compute/vklComputeUnstructured.h"
 #include "../compute/vklComputeVdb.h"
 #include "../compute/vklIterateDefault.h"
@@ -93,6 +94,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         0);
   }
 
+  case VOLUME_TYPE_AMR: {
+    return AMRVolume_sample(samplerShared,
+                            *reinterpret_cast<const vec3f *>(objectCoordinates),
+                            0.f,
+                            0);
+  }
+
   case VOLUME_TYPE_VDB: {
     assert(attributeIndex <
            reinterpret_cast<const VdbSamplerShared *>(sampler->device)
@@ -139,6 +147,15 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         samples);
     break;
 
+  case VOLUME_TYPE_UNSTRUCTURED:
+    UnstructuredVolume_sampleM(
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        M,
+        attributeIndices,
+        samples);
+    break;
+
   case VOLUME_TYPE_PARTICLE:
     UnstructuredVolume_sampleM(
         samplerShared,
@@ -148,15 +165,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         samples);
     break;
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
-    UnstructuredVolume_sampleM(
-        samplerShared,
-        *reinterpret_cast<const vec3f *>(objectCoordinates),
-        M,
-        attributeIndices,
-        samples);
+  case VOLUME_TYPE_AMR:
+    AMRVolume_sampleM(samplerShared,
+                      *reinterpret_cast<const vec3f *>(objectCoordinates),
+                      M,
+                      attributeIndices,
+                      samples);
     break;
-  }
 
   case VOLUME_TYPE_VDB: {
 #ifndef NDEBUG
@@ -217,13 +232,18 @@ vklComputeGradient(const VKLSampler *sampler,
         time);
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    return UnstructuredVolume_computeGradient(
+        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+  }
+
   case VOLUME_TYPE_PARTICLE: {
     return VKLParticleVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
-    return UnstructuredVolume_computeGradient(
+  case VOLUME_TYPE_AMR: {
+    return AMRVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
   }
 
@@ -279,8 +299,9 @@ vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context)
   case VOLUME_TYPE_STRUCTURED_SPHERICAL:
     return sizeof(DefaultIntervalIterator) + alignof(DefaultIntervalIterator);
 
-  case VOLUME_TYPE_PARTICLE:
   case VOLUME_TYPE_UNSTRUCTURED:
+  case VOLUME_TYPE_PARTICLE:
+  case VOLUME_TYPE_AMR:
     return sizeof(UnstructuredIntervalIterator) +
            alignof(UnstructuredIntervalIterator);
 
@@ -353,8 +374,9 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED:
   case VOLUME_TYPE_PARTICLE:
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  case VOLUME_TYPE_AMR: {
     size_t space = sizeof(UnstructuredIntervalIterator) +
                    alignof(UnstructuredIntervalIterator);
 
@@ -435,8 +457,9 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     return result;
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED:
   case VOLUME_TYPE_PARTICLE:
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  case VOLUME_TYPE_AMR: {
     int result = 0;
     UnstructuredIntervalIterator_iterate(
         reinterpret_cast<UnstructuredIntervalIterator *>(iterator),
@@ -466,15 +489,17 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
 
 static_assert(
     VKL_MAX_HIT_ITERATOR_SIZE ==
-    std::max(sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator),
-             std::max(sizeof(SphericalHitIterator) +
-                          alignof(SphericalHitIterator),
-                      std::max(sizeof(UnstructuredHitIterator) +
-                                   alignof(UnstructuredHitIterator),
-                               std::max(sizeof(ParticleHitIterator) +
-                                            alignof(ParticleHitIterator),
-                                        sizeof(VdbHitIterator) +
-                                            alignof(VdbHitIterator))))));
+    std::max(
+        sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator),
+        std::max(sizeof(SphericalHitIterator) + alignof(SphericalHitIterator),
+                 std::max(sizeof(UnstructuredHitIterator) +
+                              alignof(UnstructuredHitIterator),
+                          std::max(sizeof(ParticleHitIterator) +
+                                       alignof(ParticleHitIterator),
+                                   std::max(sizeof(AMRHitIterator) +
+                                                alignof(AMRHitIterator),
+                                            sizeof(VdbHitIterator) +
+                                                alignof(VdbHitIterator)))))));
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context)
@@ -495,11 +520,14 @@ vklGetHitIteratorSize(const VKLHitIteratorContext *context)
   case VOLUME_TYPE_STRUCTURED_SPHERICAL:
     return sizeof(SphericalHitIterator) + alignof(SphericalHitIterator);
 
+  case VOLUME_TYPE_UNSTRUCTURED:
+    return sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
+
   case VOLUME_TYPE_PARTICLE:
     return sizeof(ParticleHitIterator) + alignof(ParticleHitIterator);
 
-  case VOLUME_TYPE_UNSTRUCTURED:
-    return sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
+  case VOLUME_TYPE_AMR:
+    return sizeof(AMRHitIterator) + alignof(AMRHitIterator);
 
   case VOLUME_TYPE_VDB:
     return sizeof(VdbHitIterator) + alignof(VdbHitIterator);
@@ -566,6 +594,27 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    size_t space =
+        sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
+
+    void *alignedBuffer = std::align(alignof(UnstructuredHitIterator),
+                                     sizeof(UnstructuredHitIterator),
+                                     buffer,
+                                     space);
+    assert(alignedBuffer);
+
+    UnstructuredHitIterator_Init(
+        reinterpret_cast<UnstructuredHitIterator *>(alignedBuffer),
+        reinterpret_cast<const HitIteratorContext *>(context->device),
+        reinterpret_cast<const vec3f *>(origin),
+        reinterpret_cast<const vec3f *>(direction),
+        reinterpret_cast<const box1f *>(tRange),
+        time);
+
+    return (VKLHitIterator)alignedBuffer;
+  }
+
   case VOLUME_TYPE_PARTICLE: {
     size_t space = sizeof(ParticleHitIterator) + alignof(ParticleHitIterator);
 
@@ -586,18 +635,15 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
-    size_t space =
-        sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
+  case VOLUME_TYPE_AMR: {
+    size_t space = sizeof(AMRHitIterator) + alignof(AMRHitIterator);
 
-    void *alignedBuffer = std::align(alignof(UnstructuredHitIterator),
-                                     sizeof(UnstructuredHitIterator),
-                                     buffer,
-                                     space);
+    void *alignedBuffer = std::align(
+        alignof(AMRHitIterator), sizeof(AMRHitIterator), buffer, space);
     assert(alignedBuffer);
 
-    UnstructuredHitIterator_Init(
-        reinterpret_cast<UnstructuredHitIterator *>(alignedBuffer),
+    AMRHitIterator_Init(
+        reinterpret_cast<AMRHitIterator *>(alignedBuffer),
         reinterpret_cast<const HitIteratorContext *>(context->device),
         reinterpret_cast<const vec3f *>(origin),
         reinterpret_cast<const vec3f *>(direction),
@@ -656,6 +702,13 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     return result;
   }
 
+  case VOLUME_TYPE_UNSTRUCTURED: {
+    int result = 0;
+    UnstructuredHitIterator_iterateHit(
+        reinterpret_cast<UnstructuredHitIterator *>(iterator), hit, &result);
+    return result;
+  }
+
   case VOLUME_TYPE_PARTICLE: {
     int result = 0;
     ParticleHitIterator_iterateHit(
@@ -663,10 +716,10 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
     return result;
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  case VOLUME_TYPE_AMR: {
     int result = 0;
-    UnstructuredHitIterator_iterateHit(
-        reinterpret_cast<UnstructuredHitIterator *>(iterator), hit, &result);
+    AMRHitIterator_iterateHit(
+        reinterpret_cast<AMRHitIterator *>(iterator), hit, &result);
     return result;
   }
 

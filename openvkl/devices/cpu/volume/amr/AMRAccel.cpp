@@ -15,7 +15,14 @@ namespace openvkl {
     namespace amr {
 
       /*! constructor that constructs the actual accel from the amr data */
-      AMRAccel::AMRAccel(const AMRData &input)
+      AMRAccel::AMRAccel(Device *device, const AMRData &input)
+          : levelAllocator(device),
+            level(levelAllocator),
+            nodeAllocator(device),
+            node(nodeAllocator),
+            leafAllocator(device),
+            leaf(leafAllocator),
+            brickListAllocator(device)
       {
         box3f bounds = empty;
         std::vector<const AMRData::Brick *> brickVec;
@@ -41,9 +48,6 @@ namespace openvkl {
       /*! destructor that frees all allocated memory */
       AMRAccel::~AMRAccel()
       {
-        for (auto &l : leaf)
-          delete[] l.brickList;
-
         leaf.clear();
         node.clear();
       }
@@ -58,7 +62,8 @@ namespace openvkl {
 
         AMRAccel::Leaf newLeaf;
         newLeaf.bounds    = bounds;
-        newLeaf.brickList = new const AMRData::Brick *[brick.size() + 1];
+
+        newLeaf.brickList = brickListAllocator.allocate(brick.size() + 1);
 
         // create leaf list, and sort it
         std::copy(brick.begin(), brick.end(), newLeaf.brickList);

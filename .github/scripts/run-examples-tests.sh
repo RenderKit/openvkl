@@ -5,13 +5,18 @@
 IMG_DIFF_TOOL=$STORAGE_PATH/tools/img_diff/img_diff
 
 # Run tests over these volume types
-VOLUME_TYPES="structuredRegular structuredSpherical unstructured particle vdb"
+VOLUME_TYPES="structuredRegular structuredSpherical unstructured particle amr vdb"
 
 COMMON_ARGS="-batch -framebufferSize 1024 1024"
 
 # Count errors across all image diffs, and use this as the final exit code
 # Note: $IMG_DIFF_TOOL should return only exit codes >0 for this to be robust.
 NUM_IMAGE_DIFF_ERRORS=0
+
+# LargeGrf mode required for AMR sampling
+export PrintDebugSettings=1
+export NEOReadDebugKeys=1 
+export ForceLargeGrfCompilationMode=1
 
 for volumeType in $VOLUME_TYPES; do
 

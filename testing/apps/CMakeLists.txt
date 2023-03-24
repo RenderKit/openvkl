@@ -201,6 +201,8 @@ if (BUILD_TESTING)
       tests/particle_volume_radius.cpp
       tests/particle_volume_sampling.cpp
       tests/particle_volume_value_range.cpp
+      tests/amr_volume_sampling.cpp
+      tests/amr_volume_value_range.cpp  
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 

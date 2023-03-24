@@ -54,6 +54,18 @@ set(SOURCES_PARTICLE
   ../cpu/volume/particle/ParticleVolume.ispc
 )
 
+set(SOURCES_AMR
+  ../cpu/volume/amr/AMRAccel.cpp
+  ../cpu/volume/amr/AMRData.cpp
+  ../cpu/volume/amr/AMRVolume.cpp
+  ../cpu/volume/amr/AMRVolume.ispc
+  ../cpu/volume/amr/CellRef.ispc
+  ../cpu/volume/amr/DualCell.ispc
+  ../cpu/volume/amr/method_current.ispc
+  ../cpu/volume/amr/method_finest.ispc
+  ../cpu/volume/amr/method_octant.ispc
+)
+
 # generate source file additions for optional volume types
 list(APPEND OPTIONAL_VOLUME_SOURCES)
 list(APPEND OPTIONAL_VOLUME_DEFINITIONS "")
@@ -73,6 +85,9 @@ list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_PARTICLE=1")
 
 # VDB volume type uses common sources only: SOURCES_COMMON_STRUCTURED_REGULAR_VDB
 list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_VDB=1")
+
+list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_AMR})
+list(APPEND OPTIONAL_VOLUME_DEFINITIONS "OPENVKL_DEVICE_CPU_AMR=1")
 
 # common source files
 list(APPEND OPTIONAL_VOLUME_SOURCES ${SOURCES_COMMON_AMR_PARTICLE_UNSTRUCTURED})

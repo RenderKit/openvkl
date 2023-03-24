@@ -23,7 +23,7 @@ namespace openvkl {
         this->box       = info.box;
         this->level     = info.level;
         this->cellWidth = info.cellWidth;
-        this->value     = ispc(data);
+        this->value     = *ispc(data);
         this->dims      = this->box.size() + vec3i(1);
         this->f_dims    = vec3f(this->dims);
 
@@ -36,10 +36,12 @@ namespace openvkl {
 
       /*! this structure defines only the format of the INPUT of amr
         data - ie, what we get from the scene graph or applicatoin */
-      AMRData::AMRData(const DataT<box3i> &blockBounds,
+      AMRData::AMRData(Device *device,
+                       const DataT<box3i> &blockBounds,
                        const DataT<int> &refinementLevels,
                        const DataT<float> &cellWidths,
                        const DataT<Data *> &blockDataData)
+          : allocator(device), brick(allocator)
       {
         size_t numBricks = blockBounds.size();
 

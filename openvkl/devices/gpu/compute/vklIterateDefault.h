@@ -6,6 +6,7 @@
 #include <type_traits>
 
 // for interval iterator implementations, which the DefaultHitIterator uses
+#include "vklComputeAMR.h"
 #include "vklComputeParticle.h"
 #include "vklIterateUnstructured.h"
 #include "vklIterateVdb.h"
@@ -60,6 +61,9 @@ namespace ispc {
 
   typedef DefaultHitIterator<UnstructuredIntervalIterator, false>
       ParticleHitIterator;
+
+  typedef DefaultHitIterator<UnstructuredIntervalIterator, false>
+      AMRHitIterator;
 
   typedef DefaultHitIterator<VdbIntervalIterator, true> VdbHitIterator;
 
@@ -494,6 +498,16 @@ namespace ispc {
           ParticleHitIterator,
           UnstructuredIntervalIterator_iterateInternal,
           VKLParticleVolume_sample>;
+
+  // AMR
+  constexpr auto AMRHitIterator_Init =
+      &DefaultHitIterator_Init<AMRHitIterator,
+                               UnstructuredIntervalIterator_Init>;
+
+  constexpr auto AMRHitIterator_iterateHit = &DefaultHitIterator_iterateHit<
+      AMRHitIterator,
+      UnstructuredIntervalIterator_iterateInternal,
+      AMRVolume_sample>;
 
   // VDB
   constexpr auto VdbHitIterator_Init =

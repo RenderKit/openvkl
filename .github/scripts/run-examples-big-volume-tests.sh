@@ -7,10 +7,13 @@
 
 IMG_DIFF_TOOL=$STORAGE_PATH/tools/img_diff/img_diff
 
-
 # Run it on single tile (disable implicit scaling)
 export NEOReadDebugKeys=1
 export EnableImplicitScaling=0
+
+# Enable persistent JIT cache
+export SYCL_CACHE_PERSISTENT=1
+export SYCL_CACHE_DIR=./jit_cache
 
 # dim = 2048^3*sizeof(float) for float give us 32GB of vol. size
 dim=2048

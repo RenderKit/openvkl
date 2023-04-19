@@ -9,6 +9,10 @@ VOLUME_TYPES="structuredRegular structuredSpherical unstructured particle amr vd
 
 COMMON_ARGS="-batch -framebufferSize 1024 1024"
 
+# Enable persistent JIT cache
+export SYCL_CACHE_PERSISTENT=1
+export SYCL_CACHE_DIR=./jit_cache
+
 # Count errors across all image diffs, and use this as the final exit code
 # Note: $IMG_DIFF_TOOL should return only exit codes >0 for this to be robust.
 NUM_IMAGE_DIFF_ERRORS=0

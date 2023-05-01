@@ -23,12 +23,14 @@ namespace openvkl {
       return cartesian(phi, sinTheta, cosTheta);
     }
 
-    bool DensityPathTracerGpuKernel::sampleWoodcock(RandomTEA &rng,
-                                                    const Ray &ray,
-                                                    const range1f &hits,
-                                                    float &t,
-                                                    float &sample,
-                                                    float &transmittance) const
+    bool DensityPathTracerGpuKernel::sampleWoodcock(
+        RandomTEA &rng,
+        const Ray &ray,
+        const range1f &hits,
+        float &t,
+        float &sample,
+        float &transmittance,
+        const VKLFeatureFlags featureFlags) const
     {
       t                    = hits.lower;
       const float sigmaMax = params.sigmaTScale;
@@ -60,7 +62,8 @@ namespace openvkl {
         sample = vklComputeSample(&sampler,
                                   (const vkl_vec3f *)&c,
                                   rendererParams.attributeIndex,
-                                  time);
+                                  time,
+                                  featureFlags);
 
         vec4f sampleColorAndOpacity = sampleTransferFunction(sample);
 
@@ -76,10 +79,12 @@ namespace openvkl {
       return true;
     }
 
-    vec3f DensityPathTracerGpuKernel::integrate(RNG &rng,
-                                                const Ray *inputRay,
-                                                int &maxScatterIndex,
-                                                bool &primaryRayIntersect) const
+    vec3f DensityPathTracerGpuKernel::integrate(
+        RNG &rng,
+        const Ray *inputRay,
+        int &maxScatterIndex,
+        bool &primaryRayIntersect,
+        const VKLFeatureFlags featureFlags) const
     {
       // Copy ray to local var since we're going to reuse ray object.
       Ray ray = *inputRay;
@@ -107,8 +112,8 @@ namespace openvkl {
 
         float transmittance = 0.f;
 
-        const bool haveEvent =
-            sampleWoodcock(rng, ray, ray.t, t, sample, transmittance);
+        const bool haveEvent = sampleWoodcock(
+            rng, ray, ray.t, t, sample, transmittance, featureFlags);
 
         if (!haveEvent) {
           // No hit means that this is end of travel for this ray.
@@ -146,13 +151,15 @@ namespace openvkl {
         const unsigned int seed,
         const Ray *ray,
         vec4f &rgba,
-        float &weight) const
+        float &weight,
+        const VKLFeatureFlags featureFlags) const
 
     {
       RNG rng(frameId, seed);
       int maxScatterIndex      = 0;
       bool primaryRayIntersect = false;
-      vec3f color = integrate(rng, ray, maxScatterIndex, primaryRayIntersect);
+      vec3f color              = integrate(
+          rng, ray, maxScatterIndex, primaryRayIntersect, featureFlags);
 
       float alpha = maxScatterIndex > 0 ? 1.f : 0.f;
       if (params.showBbox && primaryRayIntersect) {

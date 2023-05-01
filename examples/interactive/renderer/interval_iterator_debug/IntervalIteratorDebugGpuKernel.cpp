@@ -12,7 +12,8 @@ namespace openvkl {
         vec4f &rgba,
         float &weight,
         void *intervalIteratorBuffer,
-        const VKLIntervalIteratorContext intervalContext) const
+        const VKLIntervalIteratorContext intervalContext,
+        const VKLFeatureFlags featureFlags) const
 
     {
       Ray ray = *inputRay;
@@ -28,7 +29,8 @@ namespace openvkl {
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,
                                   rendererParams.time,
-                                  intervalIteratorBuffer);
+                                  intervalIteratorBuffer,
+                                  featureFlags);
 
       VKLInterval interval;
       int intervalCount = 0;
@@ -36,7 +38,8 @@ namespace openvkl {
       vec3f color(0.f);
       float alpha = 0.f;
 
-      while (vklIterateInterval(iterator, &interval) && alpha < 0.99f) {
+      while (vklIterateInterval(iterator, &interval, featureFlags) &&
+             alpha < 0.99f) {
         intervalCount++;
 
         const float dt = interval.tRange.upper - interval.tRange.lower;

@@ -13,7 +13,8 @@ namespace openvkl {
         float &weight,
         void *hitIteratorBuffer,
         void *shadowHitIteratorBuffer,
-        const VKLHitIteratorContext hitContext) const
+        const VKLHitIteratorContext hitContext,
+        const VKLFeatureFlags featureFlags) const
 
     {
       Ray ray = *inputRay;
@@ -28,7 +29,8 @@ namespace openvkl {
                                                    (vkl_vec3f *)&ray.dir,
                                                    &tRange,
                                                    rendererParams.time,
-                                                   hitIteratorBuffer);
+                                                   hitIteratorBuffer,
+                                                   featureFlags);
 
       VKLHit hit;
       const float surfaceAlpha         = 0.6f;
@@ -43,12 +45,13 @@ namespace openvkl {
       vec3f color(0.f);
       float alpha = 0.f;
 
-      while (vklIterateHit(iterator, &hit) && alpha < 0.99f) {
+      while (vklIterateHit(iterator, &hit, featureFlags) && alpha < 0.99f) {
         const vec3f c        = ray.org + hit.t * ray.dir;
         const vkl_vec3f grad = vklComputeGradient(&sampler,
                                                   (vkl_vec3f *)&c,
                                                   rendererParams.attributeIndex,
-                                                  rendererParams.time);
+                                                  rendererParams.time,
+                                                  featureFlags);
 
         const ispc::vec3f N_ispc =
             ispc::normalize(ispc::make_vec3f(grad.x, grad.y, grad.z));
@@ -85,8 +88,9 @@ namespace openvkl {
                                      (vkl_vec3f *)&wo,
                                      &tShadowRange,
                                      rendererParams.time,
-                                     shadowHitIteratorBuffer);
-              if (!vklIterateHit(shadowIterator, &shadowHit)) {
+                                     shadowHitIteratorBuffer,
+                                     featureFlags);
+              if (!vklIterateHit(shadowIterator, &shadowHit, featureFlags)) {
                 illum += abs(co) * emission[i];  // Lambertian surface shading.
               }
             }

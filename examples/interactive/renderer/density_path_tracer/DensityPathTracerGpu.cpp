@@ -6,6 +6,12 @@
 namespace openvkl {
   namespace examples {
 
+    // required for specialization constants
+    static_assert(std::is_trivially_copyable<VKLFeatureFlags>::value);
+
+    constexpr static sycl::specialization_id<VKLFeatureFlags> samplerSpecId{
+        VKL_FEATURE_FLAG_ALL};
+
     DensityPathTracerGpu::DensityPathTracerGpu(Scene &scene)
         : RendererGpu{scene}
     {
@@ -55,7 +61,7 @@ namespace openvkl {
       DensityPathTracerGpuKernel *gpuKernelRendererDevice =
           prepareGpuKernelObject();
 
-      auto gpuKernelFunction = [=](auto idx) {
+      auto gpuKernelFunction = [=](auto idx, sycl::kernel_handler kh) {
         bool skipPixelRendering = gpuKernelRendererDevice->bufferPreprocessing(
             clearFramebuffer, idx, width, height, rgbaBuffer, weightBuffer);
 
@@ -67,10 +73,21 @@ namespace openvkl {
         vec4f *rgba    = &rgbaBuffer[idx];
         float *weight  = &weightBuffer[idx];
 
-        gpuKernelRendererDevice->renderPixel(idx, ray, *rgba, *weight);
+        const VKLFeatureFlags featureFlags =
+            kh.get_specialization_constant<samplerSpecId>();
+
+        gpuKernelRendererDevice->renderPixel(
+            idx, ray, *rgba, *weight, featureFlags);
       };
 
-      return syclQueue.parallel_for(width * height, gpuKernelFunction);
+      VKLFeatureFlags requiredFeatures =
+          vklGetFeatureFlags(getScene().volume.getSampler());
+
+      return syclQueue.submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
+
+        cgh.parallel_for(width * height, gpuKernelFunction);
+      });
     }
   }  // namespace examples
 }  // namespace openvkl

@@ -20,15 +20,14 @@ namespace openvkl {
                                const box3f volumeBounds,
                                const RendererParams &rendererParams);
 
-
-      SYCL_EXTERNAL void renderPixel(
-          const unsigned int seed,
-          const Ray *inputRay,
-          vec4f &rgba,
-          float &weight,
-          void *hitIteratorBuffer,
-          void *shadowHitIteratorBuffer,
-          const VKLHitIteratorContext hitContext) const;
+      SYCL_EXTERNAL void renderPixel(const unsigned int seed,
+                                     const Ray *inputRay,
+                                     vec4f &rgba,
+                                     float &weight,
+                                     void *hitIteratorBuffer,
+                                     void *shadowHitIteratorBuffer,
+                                     const VKLHitIteratorContext hitContext,
+                                     const VKLFeatureFlags featureFlags) const;
     };
 
   }  // namespace examples

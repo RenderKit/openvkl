@@ -12,7 +12,8 @@ namespace openvkl {
         vec4f &rgba,
         float &weight,
         void *intervalIteratorBuffer,
-        const VKLIntervalIteratorContext intervalContext) const
+        const VKLIntervalIteratorContext intervalContext,
+        const VKLFeatureFlags featureFlags) const
 
     {
       Ray ray = *inputRay;
@@ -28,14 +29,16 @@ namespace openvkl {
                                   (vkl_vec3f *)&ray.dir,
                                   &tRange,
                                   rendererParams.time,
-                                  intervalIteratorBuffer);
+                                  intervalIteratorBuffer,
+                                  featureFlags);
 
       VKLInterval interval;
 
       vec3f color(0.f);
       float alpha = 0.f;
 
-      while (vklIterateInterval(iterator, &interval) && alpha < 0.99f) {
+      while (vklIterateInterval(iterator, &interval, featureFlags) &&
+             alpha < 0.99f) {
         const float nominalSamplingDt =
             interval.nominalDeltaT / params.samplingRate;
 
@@ -57,7 +60,8 @@ namespace openvkl {
           float sample = vklComputeSample(&sampler,
                                           (vkl_vec3f *)&c,
                                           rendererParams.attributeIndex,
-                                          rendererParams.time);
+                                          rendererParams.time,
+                                          featureFlags);
 
           // map through transfer function
           vec4f sampleColorAndOpacity = sampleTransferFunction(sample);

@@ -29,7 +29,8 @@ namespace openvkl {
           vec4f &rgba,
           float &weight,
           void *intervalIteratorBuffer,
-          const VKLIntervalIteratorContext intervalContext) const;
+          const VKLIntervalIteratorContext intervalContext,
+          const VKLFeatureFlags featureFlags) const;
     };
   }  // namespace examples
 }  // namespace openvkl

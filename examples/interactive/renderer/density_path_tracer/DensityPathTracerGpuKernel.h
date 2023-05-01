@@ -21,14 +21,16 @@ namespace openvkl {
       vec3f integrate(RNG &rng,
                       const Ray *inputRay,
                       int &maxScatterIndex,
-                      bool &primaryRayIntersect) const;
+                      bool &primaryRayIntersect,
+                      const VKLFeatureFlags featureFlags) const;
 
       bool sampleWoodcock(RandomTEA &rng,
                           const Ray &ray,
                           const range1f &hits,
                           float &t,
                           float &sample,
-                          float &transmittance) const;
+                          float &transmittance,
+                          const VKLFeatureFlags featureFlags) const;
 
      public:
       void setObjectAttributes(const VKLSampler sampler,
@@ -40,7 +42,8 @@ namespace openvkl {
       SYCL_EXTERNAL void renderPixel(const unsigned int seed,
                                      const Ray *ray,
                                      vec4f &rgba,
-                                     float &weight) const;
+                                     float &weight,
+                                     const VKLFeatureFlags featureFlags) const;
     };
   }  // namespace examples
 }  // namespace openvkl

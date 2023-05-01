@@ -6,6 +6,12 @@
 namespace openvkl {
   namespace examples {
 
+    // required for specialization constants
+    static_assert(std::is_trivially_copyable<VKLFeatureFlags>::value);
+
+    constexpr static sycl::specialization_id<VKLFeatureFlags> samplerSpecId{
+        VKL_FEATURE_FLAG_ALL};
+
     HitIteratorRendererGpu::HitIteratorRendererGpu(Scene &scene)
         : RendererGpu{scene}
     {
@@ -89,9 +95,8 @@ namespace openvkl {
     void HitIteratorRendererGpu::setKernelObjectAttributes(
         HitIteratorRendererGpuKernel *gpuKernelRenderer)
     {
-      gpuKernelRenderer->setObjectAttributes(scene.volume.getSampler(),
-                                             scene.volume.getBounds(),
-                                             *rendererParams);
+      gpuKernelRenderer->setObjectAttributes(
+          scene.volume.getSampler(), scene.volume.getBounds(), *rendererParams);
     }
 
     sycl::event HitIteratorRendererGpu::invokeGpuRenderPixel(
@@ -116,7 +121,7 @@ namespace openvkl {
       const VKLHitIteratorContext _hitContext = hitContext;
       const size_t _iteratorSize              = iteratorSize;
 
-      auto gpuKernelFunction = [=](unsigned int idx) {
+      auto gpuKernelFunction = [=](unsigned int idx, sycl::kernel_handler kh) {
         bool skipPixelRendering = gpuKernelRendererDevice->bufferPreprocessing(
             clearFramebuffer, idx, width, height, rgbaBuffer, weightBuffer);
 
@@ -128,6 +133,9 @@ namespace openvkl {
         vec4f *rgba    = &rgbaBuffer[idx];
         float *weight  = &weightBuffer[idx];
 
+        const VKLFeatureFlags featureFlags =
+            kh.get_specialization_constant<samplerSpecId>();
+
         gpuKernelRendererDevice->renderPixel(
             idx,
             ray,
@@ -135,10 +143,18 @@ namespace openvkl {
             *weight,
             _hitIteratorBuffer + idx * _iteratorSize,
             _shadowHitIteratorBuffer + idx * _iteratorSize,
-            _hitContext);
+            _hitContext,
+            featureFlags);
       };
 
-      return syclQueue.parallel_for(width * height, gpuKernelFunction);
+      VKLFeatureFlags requiredFeatures =
+          vklGetFeatureFlags(getScene().volume.getSampler());
+
+      return syclQueue.submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
+
+        cgh.parallel_for(width * height, gpuKernelFunction);
+      });
     }
 
   }  // namespace examples

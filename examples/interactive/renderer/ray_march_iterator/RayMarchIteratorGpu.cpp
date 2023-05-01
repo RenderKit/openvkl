@@ -6,6 +6,12 @@
 namespace openvkl {
   namespace examples {
 
+    // required for specialization constants
+    static_assert(std::is_trivially_copyable<VKLFeatureFlags>::value);
+
+    constexpr static sycl::specialization_id<VKLFeatureFlags> samplerSpecId{
+        VKL_FEATURE_FLAG_ALL};
+
     RayMarchIteratorGpu::RayMarchIteratorGpu(Scene &scene) : RendererGpu{scene}
     {
       intervalContext =
@@ -120,7 +126,7 @@ namespace openvkl {
       const VKLIntervalIteratorContext _intervalContext = intervalContext;
       const size_t _iteratorSize                        = iteratorSize;
 
-      auto gpuKernelFunction = [=](unsigned int idx) {
+      auto gpuKernelFunction = [=](unsigned int idx, sycl::kernel_handler kh) {
         bool skipPixelRendering = gpuKernelRendererDevice->bufferPreprocessing(
             clearFramebuffer, idx, width, height, rgbaBuffer, weightBuffer);
 
@@ -132,15 +138,27 @@ namespace openvkl {
         vec4f *rgba    = &rgbaBuffer[idx];
         float *weight  = &weightBuffer[idx];
 
+        const VKLFeatureFlags featureFlags =
+            kh.get_specialization_constant<samplerSpecId>();
+
         gpuKernelRendererDevice->renderPixel(
             idx,
             ray,
             *rgba,
             *weight,
             _iteratorBuffer + idx * _iteratorSize,
-            _intervalContext);
+            _intervalContext,
+            featureFlags);
       };
-      return syclQueue.parallel_for(width * height, gpuKernelFunction);
+
+      VKLFeatureFlags requiredFeatures =
+          vklGetFeatureFlags(getScene().volume.getSampler());
+
+      return syclQueue.submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
+
+        cgh.parallel_for(width * height, gpuKernelFunction);
+      });
     }
 
   }  // namespace examples

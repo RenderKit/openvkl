@@ -76,6 +76,8 @@ namespace openvkl {
 
       virtual ~Sampler();
 
+      virtual VKLFeatureFlags getFeatureFlags() const = 0;
+
       // single attribute /////////////////////////////////////////////////////
 
       // samplers can optionally define a scalar sampling method; if not

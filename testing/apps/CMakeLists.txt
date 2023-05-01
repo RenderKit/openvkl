@@ -150,6 +150,7 @@ if (BUILD_TESTING)
     tests/particle_volume_radius.cpp
     tests/particle_volume_interval_iterator.cpp
     tests/multi_device.cpp
+    tests/feature_flags.cpp
   )
 
   target_include_directories(vklTestsCPU PRIVATE ${ISPC_TARGET_DIR})
@@ -203,6 +204,7 @@ if (BUILD_TESTING)
       tests/particle_volume_value_range.cpp
       tests/amr_volume_sampling.cpp
       tests/amr_volume_value_range.cpp  
+      tests/feature_flags.cpp
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
 

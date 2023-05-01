@@ -8,19 +8,20 @@
 #include "../iterator/UnstructuredIterator.h"
 #include "../sampler/Sampler.h"
 #include "Sampler_ispc.h"
+#include "UnstructuredSamplerShared.h"
 #include "UnstructuredVolume.h"
 #include "UnstructuredVolume_ispc.h"
 #include "openvkl/devices/common/StructShared.h"
-#include "UnstructuredSamplerShared.h"
 
 namespace openvkl {
   namespace cpu_device {
 
     template <int W>
-    using UnstructuredSamplerBase = SamplerBase<W,
-                             UnstructuredVolume,
-                             UnstructuredIntervalIteratorFactory,
-                             UnstructuredHitIteratorFactory>;
+    using UnstructuredSamplerBase =
+        SamplerBase<W,
+                    UnstructuredVolume,
+                    UnstructuredIntervalIteratorFactory,
+                    UnstructuredHitIteratorFactory>;
 
     template <int W>
     struct UnstructuredSampler
@@ -29,6 +30,8 @@ namespace openvkl {
     {
       UnstructuredSampler(Device *, UnstructuredVolume<W> &volume);
       ~UnstructuredSampler() override;
+
+      VKLFeatureFlags getFeatureFlags() const override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -63,7 +66,8 @@ namespace openvkl {
     template <int W>
     inline UnstructuredSampler<W>::UnstructuredSampler(
         Device *device, UnstructuredVolume<W> &volume)
-        : AddStructShared<UnstructuredSamplerBase<W>, ispc::UnstructuredSamplerShared>(device, volume)
+        : AddStructShared<UnstructuredSamplerBase<W>,
+                          ispc::UnstructuredSamplerShared>(device, volume)
     {
       CALL_ISPC(
           VKLUnstructuredSampler_Constructor, volume.getSh(), this->getSh());
@@ -73,6 +77,12 @@ namespace openvkl {
     inline UnstructuredSampler<W>::~UnstructuredSampler()
     {
       CALL_ISPC(VKLUnstructuredSampler_Destructor, this->getSh());
+    }
+
+    template <int W>
+    inline VKLFeatureFlags UnstructuredSampler<W>::getFeatureFlags() const
+    {
+      return VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME;
     }
 
     template <int W>

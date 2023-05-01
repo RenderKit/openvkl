@@ -226,6 +226,15 @@ namespace openvkl {
       return s;
     }
 
+    template <int W>
+    VKLFeatureFlags CPUDevice<W>::getFeatureFlags(VKLSampler sampler)
+    {
+      auto &samplerObject =
+          referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);
+
+      return samplerObject.getFeatureFlags();
+    }
+
 #define __define_computeSampleN(WIDTH)                                      \
   template <int W>                                                          \
   void CPUDevice<W>::computeSample##WIDTH(                                  \

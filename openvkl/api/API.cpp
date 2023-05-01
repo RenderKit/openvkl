@@ -435,6 +435,14 @@ extern "C" VKLSampler vklNewSampler(VKLVolume volume)
 }
 OPENVKL_CATCH_END(VKLSampler())
 
+extern "C" VKLFeatureFlags vklGetFeatureFlags(VKLSampler sampler)
+    OPENVKL_CATCH_BEGIN_UNSAFE2(sampler)
+{
+  VKLFeatureFlags featureFlags = deviceObj->getFeatureFlags(sampler);
+  return featureFlags;
+}
+OPENVKL_CATCH_END(VKL_FEATURE_FLAG_ALL)
+
 ///////////////////////////////////////////////////////////////////////////////
 // Volume /////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////

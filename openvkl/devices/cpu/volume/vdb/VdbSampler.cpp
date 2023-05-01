@@ -59,6 +59,14 @@ namespace openvkl {
     }
 
     template <int W>
+    VKLFeatureFlags VdbSampler<W>::getFeatureFlags() const
+    {
+      return this->getSh()->grid->dense
+                 ? VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME
+                 : VKL_FEATURE_FLAG_VDB_VOLUME;
+    }
+
+    template <int W>
     void VdbSampler<W>::computeSample(const vvec3fn<1> &objectCoordinates,
                                       vfloatn<1> &samples,
                                       unsigned int attributeIndex,

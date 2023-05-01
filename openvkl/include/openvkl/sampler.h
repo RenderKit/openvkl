@@ -30,6 +30,9 @@ NOWARN_C_LINKAGE_PUSH
 OPENVKL_INTERFACE VKLSampler vklNewSampler(VKLVolume volume);
 NOWARN_C_LINKAGE_POP
 
+OPENVKL_INTERFACE
+VKLFeatureFlags vklGetFeatureFlags(VKLSampler sampler);
+
 #ifdef __cplusplus
 }  // extern "C"
 #endif

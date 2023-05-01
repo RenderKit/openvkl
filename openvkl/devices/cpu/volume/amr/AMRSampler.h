@@ -33,6 +33,8 @@ namespace openvkl {
 
       void commit() override;
 
+      VKLFeatureFlags getFeatureFlags() const override;
+
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples,
@@ -80,8 +82,9 @@ namespace openvkl {
     template <int W>
     inline void AMRSampler<W>::commit()
     {
-      const VKLAMRMethod amrMethod = (VKLAMRMethod)(
-          this->template getParam<int>("method", volume->getAMRMethod()));
+      const VKLAMRMethod amrMethod =
+          (VKLAMRMethod)(this->template getParam<int>("method",
+                                                      volume->getAMRMethod()));
       ispc::SamplerShared *ss = &(this->getSh()->super.super);
       if (amrMethod == VKL_AMR_CURRENT)
         CALL_ISPC(AMR_install_current, ss);
@@ -91,6 +94,12 @@ namespace openvkl {
         CALL_ISPC(AMR_install_octant, ss);
       else
         throw std::runtime_error("AMRSampler: illegal method specified");
+    }
+
+    template <int W>
+    inline VKLFeatureFlags AMRSampler<W>::getFeatureFlags() const
+    {
+      return VKL_FEATURE_FLAG_AMR_VOLUME;
     }
 
     template <int W>

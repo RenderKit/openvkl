@@ -7,11 +7,11 @@
 #include "../../sampler/Sampler.h"
 #include "../common/simd.h"
 #include "VdbGrid.h"
+#include "VdbSamplerShared.h"
 #include "VdbVolume.h"
+#include "openvkl/devices/common/StructShared.h"
 #include "openvkl/openvkl.h"
 #include "openvkl/vdb.h"
-#include "openvkl/devices/common/StructShared.h"
-#include "VdbSamplerShared.h"
 
 namespace openvkl {
   namespace cpu_device {
@@ -30,6 +30,8 @@ namespace openvkl {
       ~VdbSampler() override;
 
       void commit() override;
+
+      VKLFeatureFlags getFeatureFlags() const override;
 
       // single attribute /////////////////////////////////////////////////////
 

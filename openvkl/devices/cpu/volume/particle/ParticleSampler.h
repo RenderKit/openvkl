@@ -30,6 +30,8 @@ namespace openvkl {
       ParticleSampler(Device *device, ParticleVolume<W> &volume);
       ~ParticleSampler();
 
+      VKLFeatureFlags getFeatureFlags() const override;
+
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
                           vfloatn<W> &samples,
@@ -61,7 +63,8 @@ namespace openvkl {
     // Inlined definitions ////////////////////////////////////////////////////
 
     template <int W>
-    inline ParticleSampler<W>::ParticleSampler(Device *device, ParticleVolume<W> &volume)
+    inline ParticleSampler<W>::ParticleSampler(Device *device,
+                                               ParticleVolume<W> &volume)
         : AddStructShared<ParticleSamplerBase<W>,
                           ispc::UnstructuredSamplerShared>(device, volume)
     {
@@ -72,6 +75,12 @@ namespace openvkl {
     inline ParticleSampler<W>::~ParticleSampler()
     {
       CALL_ISPC(VKLParticleSampler_Destructor, this->getSh());
+    }
+
+    template <int W>
+    inline VKLFeatureFlags ParticleSampler<W>::getFeatureFlags() const
+    {
+      return VKL_FEATURE_FLAG_PARTICLE_VOLUME;
     }
 
     template <int W>

@@ -310,6 +310,8 @@ namespace openvkl {
 
       VKLSampler newSampler(VKLVolume volume) override;
 
+      VKLFeatureFlags getFeatureFlags(VKLSampler sampler) override;
+
 #define __define_computeSampleN(WIDTH)                               \
   void computeSample##WIDTH(const int *valid,                        \
                             const VKLSampler *sampler,               \

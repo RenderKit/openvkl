@@ -56,7 +56,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     unsigned int attributeIndex,
-    float time)
+    float time,
+    const VKLFeatureFlags featureFlags)
 {
   assert(sampler);
   const SamplerShared *samplerShared =
@@ -64,9 +65,10 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
 
   const DeviceVolumeType volumeType = samplerShared->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  if ((volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+       featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) ||
+      (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+       featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME)) {
     const SharedStructuredVolume *v =
         reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
 
@@ -78,7 +80,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         time);
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  else if (volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+           featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     return UnstructuredVolume_sample(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
@@ -86,7 +89,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         0);
   }
 
-  case VOLUME_TYPE_PARTICLE: {
+  else if (volumeType == VOLUME_TYPE_PARTICLE &&
+           featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) {
     return VKLParticleVolume_sample(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
@@ -94,14 +98,16 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         0);
   }
 
-  case VOLUME_TYPE_AMR: {
+  else if (volumeType == VOLUME_TYPE_AMR &&
+           featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     return AMRVolume_sample(samplerShared,
                             *reinterpret_cast<const vec3f *>(objectCoordinates),
                             0.f,
                             0);
   }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     assert(attributeIndex <
            reinterpret_cast<const VdbSamplerShared *>(sampler->device)
                ->grid->numAttributes);
@@ -115,7 +121,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         attributeIndex);
   }
 
-  default:
+  else {
     assert(false);
     return -1.f;
   }
@@ -127,7 +133,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
     float *samples,
     unsigned int M,
     const unsigned int *attributeIndices,
-    float time)
+    float time,
+    const VKLFeatureFlags featureFlags)
 {
   assert(sampler);
   const SamplerShared *samplerShared =
@@ -135,9 +142,10 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
 
   const DeviceVolumeType volumeType = samplerShared->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL:
+  if ((volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+       featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) ||
+      (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+       featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME)) {
     SharedStructuredVolume_sampleM_uniform(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
@@ -145,35 +153,39 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         attributeIndices,
         time,
         samples);
-    break;
+  }
 
-  case VOLUME_TYPE_UNSTRUCTURED:
+  else if (volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+           featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     UnstructuredVolume_sampleM(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         M,
         attributeIndices,
         samples);
-    break;
+  }
 
-  case VOLUME_TYPE_PARTICLE:
+  else if (volumeType == VOLUME_TYPE_PARTICLE &&
+           featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) {
     UnstructuredVolume_sampleM(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         M,
         attributeIndices,
         samples);
-    break;
+  }
 
-  case VOLUME_TYPE_AMR:
+  else if (volumeType == VOLUME_TYPE_AMR &&
+           featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     AMRVolume_sampleM(samplerShared,
                       *reinterpret_cast<const vec3f *>(objectCoordinates),
                       M,
                       attributeIndices,
                       samples);
-    break;
+  }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
 #ifndef NDEBUG
     for (unsigned int i = 0; i < M; i++)
       assert(attributeIndices[i] <
@@ -190,7 +202,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         samples);
   }
 
-  default:
+  else {
     assert(false);
   }
 }
@@ -199,7 +211,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT vkl_vec3f
 vklComputeGradient(const VKLSampler *sampler,
                    const vkl_vec3f *objectCoordinates,
                    unsigned int attributeIndex,
-                   float time)
+                   float time,
+                   const VKLFeatureFlags featureFlags)
 {
   assert(sampler);
   const SamplerShared *samplerShared =
@@ -207,8 +220,8 @@ vklComputeGradient(const VKLSampler *sampler,
 
   const DeviceVolumeType volumeType = samplerShared->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+      featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
     const SharedStructuredVolume *v =
         reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
 
@@ -220,7 +233,8 @@ vklComputeGradient(const VKLSampler *sampler,
         time);
   }
 
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  else if (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+           featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME) {
     const SharedStructuredVolume *v =
         reinterpret_cast<const SharedStructuredVolume *>(samplerShared->volume);
 
@@ -232,22 +246,26 @@ vklComputeGradient(const VKLSampler *sampler,
         time);
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  else if (volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+           featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     return UnstructuredVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
   }
 
-  case VOLUME_TYPE_PARTICLE: {
+  else if (volumeType == VOLUME_TYPE_PARTICLE &&
+           featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) {
     return VKLParticleVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
   }
 
-  case VOLUME_TYPE_AMR: {
+  else if (volumeType == VOLUME_TYPE_AMR &&
+           featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     return AMRVolume_computeGradient(
         samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
   }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     assert(attributeIndex <
            reinterpret_cast<const VdbSamplerShared *>(sampler->device)
                ->grid->numAttributes);
@@ -261,7 +279,7 @@ vklComputeGradient(const VKLSampler *sampler,
         attributeIndex);
   }
 
-  default:
+  else {
     assert(false);
     return vkl_vec3f{-1.f, -1.f, -1.f};
   }
@@ -320,7 +338,8 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                         const vkl_vec3f *direction,
                         const vkl_range1f *tRange,
                         float time,
-                        void *buffer)
+                        void *buffer,
+                        const VKLFeatureFlags featureFlags)
 {
   assert(context);
   const IteratorContext *ic =
@@ -328,8 +347,8 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
 
   const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+      featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
     // the provided buffer is guaranteed to be of size `space` below, but it
     // may be unaligned. so, we'll move to an appropriately aligned address
     // inside the provided buffer.
@@ -353,7 +372,8 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  else if (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+           featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME) {
     size_t space =
         sizeof(DefaultIntervalIterator) + alignof(DefaultIntervalIterator);
 
@@ -374,9 +394,12 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED:
-  case VOLUME_TYPE_PARTICLE:
-  case VOLUME_TYPE_AMR: {
+  else if ((volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+            featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) ||
+           (volumeType == VOLUME_TYPE_PARTICLE &&
+            featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) ||
+           (volumeType == VOLUME_TYPE_AMR &&
+            featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME)) {
     size_t space = sizeof(UnstructuredIntervalIterator) +
                    alignof(UnstructuredIntervalIterator);
 
@@ -403,7 +426,8 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     size_t space = sizeof(VdbIntervalIterator) + alignof(VdbIntervalIterator);
 
     void *alignedBuffer = std::align(alignof(VdbIntervalIterator),
@@ -422,14 +446,16 @@ vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
     return (VKLIntervalIterator)alignedBuffer;
   }
 
-  default:
+  else {
     assert(false);
     return nullptr;
   }
 }
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
-    VKLIntervalIterator iterator, VKLInterval *interval)
+    VKLIntervalIterator iterator,
+    VKLInterval *interval,
+    const VKLFeatureFlags featureFlags)
 {
   assert(iterator);
   const IntervalIteratorShared *iter =
@@ -438,15 +464,16 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
   const DeviceVolumeType volumeType =
       iter->context->super.sampler->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+      featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
     int result = 0;
     GridAcceleratorIterator_iterateInterval_uniform(
         iterator, interval, &result);
     return result;
   }
 
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  else if (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+           featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME) {
     int result = 0;
     DefaultIntervalIterator_iterateIntervalInternal(
         reinterpret_cast<DefaultIntervalIterator *>(iterator),
@@ -457,9 +484,12 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     return result;
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED:
-  case VOLUME_TYPE_PARTICLE:
-  case VOLUME_TYPE_AMR: {
+  else if ((volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+            featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) ||
+           (volumeType == VOLUME_TYPE_PARTICLE &&
+            featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) ||
+           (volumeType == VOLUME_TYPE_AMR &&
+            featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME)) {
     int result = 0;
     UnstructuredIntervalIterator_iterate(
         reinterpret_cast<UnstructuredIntervalIterator *>(iterator),
@@ -468,7 +498,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     return result;
   }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     int result = 0;
     VdbIntervalIterator_iterate(
         reinterpret_cast<VdbIntervalIterator *>(iterator),
@@ -477,7 +508,7 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
     return result;
   }
 
-  default:
+  else {
     assert(false);
     return false;
   }
@@ -544,7 +575,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
                    const vkl_vec3f *direction,
                    const vkl_range1f *tRange,
                    float time,
-                   void *buffer)
+                   void *buffer,
+                   const VKLFeatureFlags featureFlags)
 {
   assert(context);
   const IteratorContext *ic =
@@ -552,8 +584,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
 
   const DeviceVolumeType volumeType = ic->sampler->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+      featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
     size_t space =
         sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
 
@@ -574,7 +606,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  else if (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+           featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME) {
     size_t space = sizeof(SphericalHitIterator) + alignof(SphericalHitIterator);
 
     void *alignedBuffer = std::align(alignof(SphericalHitIterator),
@@ -594,7 +627,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  else if (volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+           featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     size_t space =
         sizeof(UnstructuredHitIterator) + alignof(UnstructuredHitIterator);
 
@@ -615,7 +649,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_PARTICLE: {
+  else if (volumeType == VOLUME_TYPE_PARTICLE &&
+           featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) {
     size_t space = sizeof(ParticleHitIterator) + alignof(ParticleHitIterator);
 
     void *alignedBuffer = std::align(alignof(ParticleHitIterator),
@@ -635,7 +670,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_AMR: {
+  else if (volumeType == VOLUME_TYPE_AMR &&
+           featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     size_t space = sizeof(AMRHitIterator) + alignof(AMRHitIterator);
 
     void *alignedBuffer = std::align(
@@ -653,7 +689,8 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     size_t space = sizeof(VdbHitIterator) + alignof(VdbHitIterator);
 
     void *alignedBuffer = std::align(
@@ -671,14 +708,14 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
     return (VKLHitIterator)alignedBuffer;
   }
 
-  default:
+  else {
     assert(false);
     return nullptr;
   }
 }
 
 extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
-    VKLHitIterator iterator, VKLHit *hit)
+    VKLHitIterator iterator, VKLHit *hit, const VKLFeatureFlags featureFlags)
 {
   assert(iterator);
   const HitIteratorShared *iter =
@@ -687,50 +724,55 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
   const DeviceVolumeType volumeType =
       iter->context->super.super.sampler->volume->type;
 
-  switch (volumeType) {
-  case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY: {
+  if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
+      featureFlags & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
     int result = 0;
     GridAcceleratorIterator_iterateHit_uniform(
         reinterpret_cast<GridAcceleratorIterator *>(iterator), hit, &result);
     return result;
   }
 
-  case VOLUME_TYPE_STRUCTURED_SPHERICAL: {
+  else if (volumeType == VOLUME_TYPE_STRUCTURED_SPHERICAL &&
+           featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME) {
     int result = 0;
     SphericalHitIterator_iterateHit(
         reinterpret_cast<SphericalHitIterator *>(iterator), hit, &result);
     return result;
   }
 
-  case VOLUME_TYPE_UNSTRUCTURED: {
+  else if (volumeType == VOLUME_TYPE_UNSTRUCTURED &&
+           featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     int result = 0;
     UnstructuredHitIterator_iterateHit(
         reinterpret_cast<UnstructuredHitIterator *>(iterator), hit, &result);
     return result;
   }
 
-  case VOLUME_TYPE_PARTICLE: {
+  else if (volumeType == VOLUME_TYPE_PARTICLE &&
+           featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) {
     int result = 0;
     ParticleHitIterator_iterateHit(
         reinterpret_cast<ParticleHitIterator *>(iterator), hit, &result);
     return result;
   }
 
-  case VOLUME_TYPE_AMR: {
+  else if (volumeType == VOLUME_TYPE_AMR &&
+           featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     int result = 0;
     AMRHitIterator_iterateHit(
         reinterpret_cast<AMRHitIterator *>(iterator), hit, &result);
     return result;
   }
 
-  case VOLUME_TYPE_VDB: {
+  else if (volumeType == VOLUME_TYPE_VDB &&
+           featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     int result = 0;
     VdbHitIterator_iterateHit(
         reinterpret_cast<VdbHitIterator *>(iterator), hit, &result);
     return result;
   }
 
-  default:
+  else {
     assert(false);
     return false;
   }

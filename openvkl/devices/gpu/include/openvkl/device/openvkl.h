@@ -32,7 +32,8 @@ OPENVKL_INTERFACE SYCL_EXTERNAL float vklComputeSample(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-    float time VKL_DEFAULT_VAL(= 0));
+    float time VKL_DEFAULT_VAL(= 0),
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
 OPENVKL_INTERFACE SYCL_EXTERNAL void vklComputeSampleM(
     const VKLSampler *sampler,
@@ -40,13 +41,15 @@ OPENVKL_INTERFACE SYCL_EXTERNAL void vklComputeSampleM(
     float *samples,
     unsigned int M,
     const unsigned int *attributeIndices,
-    float time VKL_DEFAULT_VAL(= 0));
+    float time VKL_DEFAULT_VAL(= 0),
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
-OPENVKL_INTERFACE SYCL_EXTERNAL vkl_vec3f
-vklComputeGradient(const VKLSampler *sampler,
-                   const vkl_vec3f *objectCoordinates,
-                   unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
-                   float time VKL_DEFAULT_VAL(= 0));
+OPENVKL_INTERFACE SYCL_EXTERNAL vkl_vec3f vklComputeGradient(
+    const VKLSampler *sampler,
+    const vkl_vec3f *objectCoordinates,
+    unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
+    float time VKL_DEFAULT_VAL(= 0),
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
 ///////////////////////////////////////////////////////////////////////////////
 // Interval iterators /////////////////////////////////////////////////////////
@@ -55,16 +58,17 @@ vklComputeGradient(const VKLSampler *sampler,
 struct IntervalIterator;
 typedef struct IntervalIterator *VKLIntervalIterator;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL
-size_t vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
+OPENVKL_INTERFACE SYCL_EXTERNAL size_t
+vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
 
-OPENVKL_INTERFACE SYCL_EXTERNAL VKLIntervalIterator
-vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
-                        const vkl_vec3f *origin,
-                        const vkl_vec3f *direction,
-                        const vkl_range1f *tRange,
-                        float time,
-                        void *buffer);
+OPENVKL_INTERFACE SYCL_EXTERNAL VKLIntervalIterator vklInitIntervalIterator(
+    const VKLIntervalIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer,
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
 typedef struct
 {
@@ -74,7 +78,9 @@ typedef struct
 } VKLInterval;
 
 OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateInterval(
-    VKLIntervalIterator iterator, VKLInterval *interval);
+    VKLIntervalIterator iterator,
+    VKLInterval *interval,
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
 ///////////////////////////////////////////////////////////////////////////////
 // Hit iterators //////////////////////////////////////////////////////////////
@@ -83,16 +89,17 @@ OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateInterval(
 struct HitIterator;
 typedef struct HitIterator *VKLHitIterator;
 
-  OPENVKL_INTERFACE SYCL_EXTERNAL
-size_t vklGetHitIteratorSize(const VKLHitIteratorContext *context);
+OPENVKL_INTERFACE SYCL_EXTERNAL size_t
+vklGetHitIteratorSize(const VKLHitIteratorContext *context);
 
-OPENVKL_INTERFACE SYCL_EXTERNAL
-VKLHitIterator vklInitHitIterator(const VKLHitIteratorContext *context,
-                                  const vkl_vec3f *origin,
-                                  const vkl_vec3f *direction,
-                                  const vkl_range1f *tRange,
-                                  float time,
-                                  void *buffer);
+OPENVKL_INTERFACE SYCL_EXTERNAL VKLHitIterator vklInitHitIterator(
+    const VKLHitIteratorContext *context,
+    const vkl_vec3f *origin,
+    const vkl_vec3f *direction,
+    const vkl_range1f *tRange,
+    float time,
+    void *buffer,
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
 typedef struct
 {
@@ -101,8 +108,10 @@ typedef struct
   float epsilon;
 } VKLHit;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL
-int vklIterateHit(VKLHitIterator iterator, VKLHit *hit);
+OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateHit(
+    VKLHitIterator iterator,
+    VKLHit *hit,
+    const VKLFeatureFlags featureFlags VKL_DEFAULT_VAL(= VKL_FEATURE_FLAG_ALL));
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -19,7 +19,8 @@ namespace ispc {
       const SamplerShared *samplerShared,
       const vec3f &objectCoordinates,
       const float &time,
-      const uint32 &attributeIndex)
+      const uint32 &attributeIndex,
+      const VKLFeatureFlags featureFlags)
   {
     assert(sampler);
     assert(sampler->grid);
@@ -32,22 +33,25 @@ namespace ispc {
 
     float sample = 0.f;
 
-    __vkl_switch_filter(sampler->super.super.filter,
-                        sample = VdbSampler_interpolate,
-                        sampler,
-                        indexCoordinates,
-                        time,
-                        attributeIndex);
+    __vkl_switch_sample_filter_ff(sampler->super.super.filter,
+                                  featureFlags,
+                                  sample = VdbSampler_interpolate,
+                                  sampler,
+                                  indexCoordinates,
+                                  time,
+                                  attributeIndex);
 
     return sample;
   }
 
-  inline void VdbSampler_computeSampleM_uniform(const VdbSamplerShared *sampler,
-                                                const vec3f &objectCoordinates,
-                                                const float &time,
-                                                const uint32 M,
-                                                const uint32 *attributeIndices,
-                                                float *samples)
+  inline void VdbSampler_computeSampleM_uniform(
+      const VdbSamplerShared *sampler,
+      const vec3f &objectCoordinates,
+      const float &time,
+      const uint32 M,
+      const uint32 *attributeIndices,
+      float *samples,
+      const VKLFeatureFlags featureFlags)
   {
     assert(sampler);
     assert(sampler->grid);
@@ -55,21 +59,23 @@ namespace ispc {
     const vec3f indexCoordinates = openvkl::cpu_device::xfmPoint(
         sampler->grid->objectToIndex, objectCoordinates);
 
-    __vkl_switch_filter(sampler->super.super.filter,
-                        VdbSampler_interpolate,
-                        sampler,
-                        indexCoordinates,
-                        time,
-                        M,
-                        attributeIndices,
-                        samples);
+    __vkl_switch_sample_filter_ff(sampler->super.super.filter,
+                                  featureFlags,
+                                  VdbSampler_interpolate,
+                                  sampler,
+                                  indexCoordinates,
+                                  time,
+                                  M,
+                                  attributeIndices,
+                                  samples);
   }
 
   inline vkl_vec3f VdbSampler_computeGradient_uniform(
       const VdbSamplerShared *sampler,
       const vec3f &objectCoordinates,
       const float &time,
-      const uint32 &attributeIndex)
+      const uint32 &attributeIndex,
+      const VKLFeatureFlags featureFlags)
   {
     assert(sampler);
     assert(sampler->grid);
@@ -79,12 +85,13 @@ namespace ispc {
 
     vec3f gradient = 0.f;
 
-    __vkl_switch_filter(sampler->super.super.gradientFilter,
-                        gradient = VdbSampler_computeGradient,
-                        sampler,
-                        indexCoordinates,
-                        time,
-                        attributeIndex);
+    __vkl_switch_gradient_filter_ff(sampler->super.super.gradientFilter,
+                                    featureFlags,
+                                    gradient = VdbSampler_computeGradient,
+                                    sampler,
+                                    indexCoordinates,
+                                    time,
+                                    attributeIndex);
 
     // Note: xfmNormal takes inverse!
     gradient =

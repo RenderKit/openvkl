@@ -61,9 +61,53 @@ namespace openvkl {
     template <int W>
     VKLFeatureFlags VdbSampler<W>::getFeatureFlags() const
     {
-      return this->getSh()->grid->dense
-                 ? VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME
-                 : VKL_FEATURE_FLAG_VDB_VOLUME;
+      VKLFeatureFlags ff = VKL_FEATURE_FLAG_NONE;
+
+      if (this->getSh()->grid->dense) {
+        ff |= VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME;
+      } else {
+        ff |= VKL_FEATURE_FLAG_VDB_VOLUME;
+      }
+
+      VKLFilter sampleFilter = this->getSh()->super.super.filter;
+
+      switch (sampleFilter) {
+      case VKL_FILTER_NEAREST:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_NEAREST;
+        break;
+
+      case VKL_FILTER_TRILINEAR:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_TRILINEAR;
+        break;
+
+      case VKL_FILTER_TRICUBIC:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_TRICUBIC;
+        break;
+
+      default:
+        assert(false);
+      }
+
+      VKLFilter gradientFilter = this->getSh()->super.super.gradientFilter;
+
+      switch (gradientFilter) {
+      case VKL_FILTER_NEAREST:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_NEAREST;
+        break;
+
+      case VKL_FILTER_TRILINEAR:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_TRILINEAR;
+        break;
+
+      case VKL_FILTER_TRICUBIC:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_TRICUBIC;
+        break;
+
+      default:
+        assert(false);
+      }
+
+      return ff;
     }
 
     template <int W>

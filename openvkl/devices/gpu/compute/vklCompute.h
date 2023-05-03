@@ -159,7 +159,8 @@ namespace ispc {
       const SamplerShared *sampler,
       const vec3f &objectCoordinates,
       const float &time,
-      const uint32_t &attributeIndex)
+      const uint32_t &attributeIndex,
+      const VKLFeatureFlags _featureFlags)
   {
     const SharedStructuredVolume *v =
         reinterpret_cast<const SharedStructuredVolume *>(sampler->volume);

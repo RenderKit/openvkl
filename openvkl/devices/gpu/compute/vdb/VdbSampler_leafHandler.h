@@ -64,13 +64,10 @@
                                           half,                                \
                                           __VA_ARGS__)                         \
   } else*/                                                                     \
-  if (dataType == VKL_FLOAT) {                                                 \
-    __vkl_vdb_leaf_handler_temporalFormat(handler,                             \
-                                          leafFormat,                          \
-                                          allLeavesConstant,                   \
-                                          leafTemporalFormat,                  \
-                                          float,                               \
-                                          __VA_ARGS__)                         \
-  } else {                                                                     \
-    assert(false);                                                             \
-  }
+  assert(dataType == VKL_FLOAT);                                               \
+  __vkl_vdb_leaf_handler_temporalFormat(handler,                               \
+                                        leafFormat,                            \
+                                        allLeavesConstant,                     \
+                                        leafTemporalFormat,                    \
+                                        float,                                 \
+                                        __VA_ARGS__)

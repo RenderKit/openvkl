@@ -135,7 +135,8 @@ namespace ispc {
   inline float VKLParticleVolume_sample(const SamplerShared *sampler,
                                         const vec3f &objectCoordinates,
                                         const float &_time,
-                                        const uint32_t &_attributeIndex)
+                                        const uint32_t &_attributeIndex,
+                                        const VKLFeatureFlags _featureFlags)
   {
     const VKLParticleVolume *self = (const VKLParticleVolume *)sampler->volume;
 
@@ -170,7 +171,8 @@ namespace ispc {
                                         const vec3f &objectCoordinates,
                                         const uint32_t M,
                                         const uint32_t *attributeIndices,
-                                        float *samples)
+                                        float *samples,
+                                        const VKLFeatureFlags _featureFlags)
   {
     const VKLParticleVolume *self = (const VKLParticleVolume *)sampler->volume;
 
@@ -179,7 +181,8 @@ namespace ispc {
       // single attribute
       assert(attributeIndices[i] == 0);
 
-      samples[i] = VKLParticleVolume_sample(sampler, objectCoordinates, 0.f, 0);
+      samples[i] = VKLParticleVolume_sample(
+          sampler, objectCoordinates, 0.f, 0, _featureFlags);
     }
   }
 

@@ -86,7 +86,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         0.f,
-        0);
+        0,
+        featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_PARTICLE &&
@@ -95,7 +96,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         samplerShared,
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         0.f,
-        0);
+        0,
+        featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_AMR &&
@@ -103,7 +105,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
     return AMRVolume_sample(samplerShared,
                             *reinterpret_cast<const vec3f *>(objectCoordinates),
                             0.f,
-                            0);
+                            0,
+                            featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_VDB &&
@@ -118,7 +121,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT float vklComputeSample(
         reinterpret_cast<const SamplerShared *>(sampler->device),
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         time,
-        attributeIndex);
+        attributeIndex,
+        featureFlags);
   }
 
   else {
@@ -162,7 +166,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         M,
         attributeIndices,
-        samples);
+        samples,
+        featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_PARTICLE &&
@@ -172,7 +177,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         M,
         attributeIndices,
-        samples);
+        samples,
+        featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_AMR &&
@@ -181,7 +187,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
                       *reinterpret_cast<const vec3f *>(objectCoordinates),
                       M,
                       attributeIndices,
-                      samples);
+                      samples,
+                      featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_VDB &&
@@ -199,7 +206,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT void vklComputeSampleM(
         time,
         M,
         attributeIndices,
-        samples);
+        samples,
+        featureFlags);
   }
 
   else {
@@ -249,7 +257,9 @@ vklComputeGradient(const VKLSampler *sampler,
   else if (volumeType == VOLUME_TYPE_UNSTRUCTURED &&
            featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     return UnstructuredVolume_computeGradient(
-        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_PARTICLE &&
@@ -261,7 +271,9 @@ vklComputeGradient(const VKLSampler *sampler,
   else if (volumeType == VOLUME_TYPE_AMR &&
            featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     return AMRVolume_computeGradient(
-        samplerShared, *reinterpret_cast<const vec3f *>(objectCoordinates));
+        samplerShared,
+        *reinterpret_cast<const vec3f *>(objectCoordinates),
+        featureFlags);
   }
 
   else if (volumeType == VOLUME_TYPE_VDB &&
@@ -276,7 +288,8 @@ vklComputeGradient(const VKLSampler *sampler,
         reinterpret_cast<const VdbSamplerShared *>(sampler->device),
         *reinterpret_cast<const vec3f *>(objectCoordinates),
         time,
-        attributeIndex);
+        attributeIndex,
+        featureFlags);
   }
 
   else {
@@ -736,7 +749,10 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
            featureFlags & VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME) {
     int result = 0;
     SphericalHitIterator_iterateHit(
-        reinterpret_cast<SphericalHitIterator *>(iterator), hit, &result);
+        reinterpret_cast<SphericalHitIterator *>(iterator),
+        hit,
+        &result,
+        featureFlags);
     return result;
   }
 
@@ -744,7 +760,10 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
            featureFlags & VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME) {
     int result = 0;
     UnstructuredHitIterator_iterateHit(
-        reinterpret_cast<UnstructuredHitIterator *>(iterator), hit, &result);
+        reinterpret_cast<UnstructuredHitIterator *>(iterator),
+        hit,
+        &result,
+        featureFlags);
     return result;
   }
 
@@ -752,23 +771,30 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
            featureFlags & VKL_FEATURE_FLAG_PARTICLE_VOLUME) {
     int result = 0;
     ParticleHitIterator_iterateHit(
-        reinterpret_cast<ParticleHitIterator *>(iterator), hit, &result);
+        reinterpret_cast<ParticleHitIterator *>(iterator),
+        hit,
+        &result,
+        featureFlags);
     return result;
   }
 
   else if (volumeType == VOLUME_TYPE_AMR &&
            featureFlags & VKL_FEATURE_FLAG_AMR_VOLUME) {
     int result = 0;
-    AMRHitIterator_iterateHit(
-        reinterpret_cast<AMRHitIterator *>(iterator), hit, &result);
+    AMRHitIterator_iterateHit(reinterpret_cast<AMRHitIterator *>(iterator),
+                              hit,
+                              &result,
+                              featureFlags);
     return result;
   }
 
   else if (volumeType == VOLUME_TYPE_VDB &&
            featureFlags & VKL_FEATURE_FLAG_VDB_VOLUME) {
     int result = 0;
-    VdbHitIterator_iterateHit(
-        reinterpret_cast<VdbHitIterator *>(iterator), hit, &result);
+    VdbHitIterator_iterateHit(reinterpret_cast<VdbHitIterator *>(iterator),
+                              hit,
+                              &result,
+                              featureFlags);
     return result;
   }
 

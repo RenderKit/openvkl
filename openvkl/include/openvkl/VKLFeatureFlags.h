@@ -7,6 +7,7 @@ typedef enum __VKLFeatureFlags
 {
   VKL_FEATURE_FLAG_NONE = 0,
 
+  // volume type
   VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME   = 1 << 0,
   VKL_FEATURE_FLAG_STRUCTURED_SPHERICAL_VOLUME = 1 << 1,
   VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME         = 1 << 2,
@@ -14,5 +15,32 @@ typedef enum __VKLFeatureFlags
   VKL_FEATURE_FLAG_AMR_VOLUME                  = 1 << 4,
   VKL_FEATURE_FLAG_VDB_VOLUME                  = 1 << 5,
 
+  // filter (for sampling)
+  VKL_FEATURE_FLAG_SAMPLE_FILTER_NEAREST   = 1 << 6,
+  VKL_FEATURE_FLAG_SAMPLE_FILTER_TRILINEAR = 1 << 7,
+  VKL_FEATURE_FLAG_SAMPLE_FILTER_TRICUBIC  = 1 << 8,
+
+  // filter (for gradients)
+  VKL_FEATURE_FLAG_GRADIENT_FILTER_NEAREST   = 1 << 9,
+  VKL_FEATURE_FLAG_GRADIENT_FILTER_TRILINEAR = 1 << 10,
+  VKL_FEATURE_FLAG_GRADIENT_FILTER_TRICUBIC  = 1 << 11,
+
   VKL_FEATURE_FLAG_ALL = 0xffffffff,
 } VKLFeatureFlags;
+
+#ifdef __cplusplus
+
+// convenience oeprators for working with the above
+inline VKLFeatureFlags operator|(VKLFeatureFlags a, VKLFeatureFlags b)
+{
+  return static_cast<VKLFeatureFlags>(static_cast<int>(a) |
+                                      static_cast<int>(b));
+}
+
+inline VKLFeatureFlags &operator|=(VKLFeatureFlags &a, VKLFeatureFlags b)
+{
+  return reinterpret_cast<VKLFeatureFlags &>(reinterpret_cast<int &>(a) |=
+                                             static_cast<int>(b));
+}
+
+#endif

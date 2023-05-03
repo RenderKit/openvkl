@@ -132,7 +132,8 @@ namespace ispc {
                       float sample,
                       const float &isovalue,
                       const float &tol,
-                      float &error)
+                      float &error,
+                      const VKLFeatureFlags featureFlags)
   {
     constexpr int maxIter = 10;
 
@@ -148,8 +149,11 @@ namespace ispc {
         break;
       }
 
-      const float sampleMid = SamplingFunc(
-          sampler, origin + tMid * direction, time, attributeIndex);
+      const float sampleMid = SamplingFunc(sampler,
+                                           origin + tMid * direction,
+                                           time,
+                                           attributeIndex,
+                                           featureFlags);
 
       // sampling at boundaries between unstructured cells can rarely lead to
       // NaN values (indicating outside of cell) due to numerical issues; in
@@ -194,13 +198,14 @@ namespace ispc {
                                          const Interval &interval,
                                          const int numValues,
                                          const float *values,
-                                         VKLHit &hit)
+                                         VKLHit &hit,
+                                         const VKLFeatureFlags featureFlags)
   {
     assert(interval.tRange.lower < interval.tRange.upper);
 
-    float t0 = interval.tRange.lower;
-    float sample0 =
-        SamplingFunc(sampler, origin + t0 * direction, time, attributeIndex);
+    float t0      = interval.tRange.lower;
+    float sample0 = SamplingFunc(
+        sampler, origin + t0 * direction, time, attributeIndex, featureFlags);
 
     {
       int iters = 0;
@@ -208,8 +213,11 @@ namespace ispc {
       while (iters < BISECT_MAX_BACKTRACK_ITERS && isnan(sample0) &&
              t0 < interval.tRange.upper) {
         t0 += max(1e-5f, 1e-5f * interval.nominalDeltaT);
-        sample0 = SamplingFunc(
-            sampler, origin + t0 * direction, time, attributeIndex);
+        sample0 = SamplingFunc(sampler,
+                               origin + t0 * direction,
+                               time,
+                               attributeIndex,
+                               featureFlags);
         iters++;
       }
     }
@@ -219,8 +227,8 @@ namespace ispc {
     while (t0 < interval.tRange.upper) {
       const float h = min(interval.nominalDeltaT, interval.tRange.upper - t0);
       t             = t0 + h;
-      float sample =
-          SamplingFunc(sampler, origin + t * direction, time, attributeIndex);
+      float sample  = SamplingFunc(
+          sampler, origin + t * direction, time, attributeIndex, featureFlags);
       float ts = t;
 
       {
@@ -228,8 +236,11 @@ namespace ispc {
 
         while (iters < BISECT_MAX_BACKTRACK_ITERS && isnan(sample) && ts > t0) {
           ts -= max(1e-5f, 1e-5f * interval.nominalDeltaT);
-          sample = SamplingFunc(
-              sampler, origin + ts * direction, time, attributeIndex);
+          sample = SamplingFunc(sampler,
+                                origin + ts * direction,
+                                time,
+                                attributeIndex,
+                                featureFlags);
           iters++;
         }
       }
@@ -262,7 +273,8 @@ namespace ispc {
               sample,
               values[i],
               min(BISECT_T_TOL_ABS, BISECT_T_TOL_FACTOR * h),
-              error);
+              error,
+              featureFlags);
 
           if (tIso < tHit && tIso <= interval.tRange.upper) {
             tHit    = tIso;
@@ -301,7 +313,8 @@ namespace ispc {
             auto SamplingFunc>
   inline void DefaultHitIterator_iterateHit(HitIteratorType *self,
                                             VKLHit *hit,
-                                            int *result)
+                                            int *result,
+                                            const VKLFeatureFlags featureFlags)
   {
     *result = false;
 
@@ -379,7 +392,8 @@ namespace ispc {
           self->currentInterval,
           self->hitIteratorShared.context->numValues,
           self->hitIteratorShared.context->values,
-          *hit);
+          *hit,
+          featureFlags);
 
       *result = foundHit;
 

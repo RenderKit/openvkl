@@ -3,11 +3,16 @@
 
 #pragma once
 
+#include <iterator>
 #include <vector>
 // openvkl
 #include "TestingVolume.h"
 // rkcommon
 #include "rkcommon/math/range.h"
+
+#ifdef OPENVKL_TESTING_GPU
+#include "../apps/TestingAllocatorStl.h"
+#endif
 
 namespace openvkl {
   namespace testing {
@@ -28,6 +33,13 @@ namespace openvkl {
       virtual void generateVoxels(std::vector<unsigned char> &voxels,
                                   std::vector<float> &time,
                                   std::vector<uint32_t> &tuvIndex) const = 0;
+
+#ifdef OPENVKL_TESTING_GPU
+      // convenience method when populating USM buffers
+      void generateVoxels(UsmVector<unsigned char> &voxels,
+                          UsmVector<float> &time,
+                          UsmVector<uint32_t> &tuvIndex) const;
+#endif
 
      protected:
       TestingStructuredVolume(
@@ -57,6 +69,19 @@ namespace openvkl {
       std::vector<unsigned char> voxels;
       std::vector<float> time;
       std::vector<uint32_t> tuvIndex;
+
+#ifdef OPENVKL_TESTING_GPU
+      // the below are only used for GPU, and only when using shared (USM)
+      // buffers
+      TestingAllocatorStl<unsigned char> allocatorVoxels;
+      UsmVector<unsigned char> usmVoxels;
+
+      TestingAllocatorStl<float> allocatorTime;
+      UsmVector<float> usmTime;
+
+      TestingAllocatorStl<uint32_t> allocatorTuvIndex;
+      UsmVector<uint32_t> usmTuvIndex;
+#endif
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -78,6 +103,24 @@ namespace openvkl {
           voxelType(voxelType),
           dataCreationFlags(dataCreationFlags),
           byteStride(_byteStride)
+#ifdef OPENVKL_TESTING_GPU
+          ,
+          // we only the allocators for shared buffers; for default buffers
+          // initialize them on a dummy queue so we don't force SYCL setup if
+          // not necessary
+          allocatorVoxels(dataCreationFlags == VKL_DATA_SHARED_BUFFER
+                              ? getSyclQueue()
+                              : sycl::queue()),
+          allocatorTime(dataCreationFlags == VKL_DATA_SHARED_BUFFER
+                            ? getSyclQueue()
+                            : sycl::queue()),
+          allocatorTuvIndex(dataCreationFlags == VKL_DATA_SHARED_BUFFER
+                                ? getSyclQueue()
+                                : sycl::queue()),
+          usmVoxels(allocatorVoxels),
+          usmTime(allocatorTime),
+          usmTuvIndex(allocatorTuvIndex)
+#endif
     {
       if (byteStride == 0) {
         byteStride = sizeOfVKLDataType(voxelType);
@@ -129,6 +172,27 @@ namespace openvkl {
       return temporalConfig;
     }
 
+#ifdef OPENVKL_TESTING_GPU
+    inline void TestingStructuredVolume::generateVoxels(
+        UsmVector<unsigned char> &voxels,
+        UsmVector<float> &time,
+        UsmVector<uint32_t> &tuvIndex) const
+    {
+      std::vector<unsigned char> tempVoxels;
+      std::vector<float> tempTime;
+      std::vector<uint32_t> tempTuvIndex;
+
+      generateVoxels(tempVoxels, tempTime, tempTuvIndex);
+
+      std::copy(
+          tempVoxels.begin(), tempVoxels.end(), std::back_inserter(voxels));
+      std::copy(tempTime.begin(), tempTime.end(), std::back_inserter(time));
+      std::copy(tempTuvIndex.begin(),
+                tempTuvIndex.end(),
+                std::back_inserter(tuvIndex));
+    }
+#endif
+
     inline void TestingStructuredVolume::generateVKLVolume(VKLDevice device)
     {
       volume = vklNewVolume(device, gridType.c_str());
@@ -156,12 +220,37 @@ namespace openvkl {
           throw std::runtime_error(
               "unexpected TUV index data for temporally constant volume");
 
+#ifdef OPENVKL_TESTING_GPU
+        VKLData data;
+
+        if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
+          // for testing, we'll make a local USM copy from host memory, then
+          // pass that as a shared buffer to VKL
+          std::copy(
+              voxels.begin(), voxels.end(), std::back_inserter(usmVoxels));
+
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            usmVoxels.data(),
+                            dataCreationFlags,
+                            byteStride);
+        } else {
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            voxels.data(),
+                            dataCreationFlags,
+                            byteStride);
+        }
+#else
         VKLData data = vklNewData(device,
                                   totalNumValues,
                                   voxelType,
                                   voxels.data(),
                                   dataCreationFlags,
                                   byteStride);
+#endif
         vklSetData(volume, "data", data);
         vklRelease(data);
         break;
@@ -179,12 +268,37 @@ namespace openvkl {
           throw std::runtime_error(
               "unexpected TUV index data for temporally structured volume");
 
+#ifdef OPENVKL_TESTING_GPU
+        VKLData data;
+
+        if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
+          // for testing, we'll make a local USM copy from host memory, then
+          // pass that as a shared buffer to VKL
+          std::copy(
+              voxels.begin(), voxels.end(), std::back_inserter(usmVoxels));
+
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            usmVoxels.data(),
+                            dataCreationFlags,
+                            byteStride);
+        } else {
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            voxels.data(),
+                            dataCreationFlags,
+                            byteStride);
+        }
+#else
         VKLData data = vklNewData(device,
                                   totalNumValues,
                                   voxelType,
                                   voxels.data(),
                                   dataCreationFlags,
                                   byteStride);
+#endif
         vklSetData(volume, "data", data);
         vklRelease(data);
         vklSetInt(volume,
@@ -204,25 +318,81 @@ namespace openvkl {
         if (time.size() != totalNumValues)
           throw std::runtime_error("generated time data has incorrect size");
 
+#ifdef OPENVKL_TESTING_GPU
+        VKLData data;
+        VKLData indexData;
+        VKLData timeData;
+
+        if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
+          // for testing, we'll make a local USM copy from host memory, then
+          // pass that as a shared buffer to VKL
+          std::copy(
+              voxels.begin(), voxels.end(), std::back_inserter(usmVoxels));
+          std::copy(tuvIndex.begin(),
+                    tuvIndex.end(),
+                    std::back_inserter(usmTuvIndex));
+          std::copy(time.begin(), time.end(), std::back_inserter(usmTime));
+
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            usmVoxels.data(),
+                            dataCreationFlags,
+                            byteStride);
+
+          indexData = vklNewData(device,
+                                 usmTuvIndex.size(),
+                                 VKL_UINT,
+                                 usmTuvIndex.data(),
+                                 dataCreationFlags);
+
+          timeData = vklNewData(device,
+                                usmTime.size(),
+                                VKL_FLOAT,
+                                usmTime.data(),
+                                dataCreationFlags);
+
+        } else {
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            voxels.data(),
+                            dataCreationFlags,
+                            byteStride);
+
+          indexData = vklNewData(device,
+                                 tuvIndex.size(),
+                                 VKL_UINT,
+                                 tuvIndex.data(),
+                                 dataCreationFlags);
+
+          timeData = vklNewData(
+              device, time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
+        }
+#else
         VKLData data = vklNewData(device,
                                   totalNumValues,
                                   voxelType,
                                   voxels.data(),
                                   dataCreationFlags,
                                   byteStride);
-        vklSetData(volume, "data", data);
-        vklRelease(data);
 
         VKLData indexData = vklNewData(device,
                                        tuvIndex.size(),
                                        VKL_UINT,
                                        tuvIndex.data(),
                                        dataCreationFlags);
-        vklSetData(volume, "temporallyUnstructuredIndices", indexData);
-        vklRelease(indexData);
 
         VKLData timeData = vklNewData(
             device, time.size(), VKL_FLOAT, time.data(), dataCreationFlags);
+#endif
+
+        vklSetData(volume, "data", data);
+        vklRelease(data);
+
+        vklSetData(volume, "temporallyUnstructuredIndices", indexData);
+        vklRelease(indexData);
+
         vklSetData(volume, "temporallyUnstructuredTimes", timeData);
         vklRelease(timeData);
 

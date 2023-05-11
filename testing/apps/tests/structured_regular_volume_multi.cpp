@@ -21,14 +21,8 @@ TEST_CASE("Structured regular volume multiple attributes",
   const vec3f gridOrigin(0.f);
   const vec3f gridSpacing(1.f / (128.f - 1.f));
 
-#ifdef OPENVKL_TESTING_GPU
-  // For GPU we must use VKL_DATA_DEFAULT. To use VKL_DATA_SHARED_BUFFER we
-  // would need to have buffers in USM Shared memory.
-  const std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT};
-#else
   const std::vector<VKLDataCreationFlags> dataCreationFlags{
       VKL_DATA_DEFAULT, VKL_DATA_SHARED_BUFFER};
-#endif
 
   const std::vector<bool> useAOSLayouts{true, false};
 

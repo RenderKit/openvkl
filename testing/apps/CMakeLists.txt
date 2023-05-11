@@ -184,6 +184,7 @@ if (BUILD_TESTING)
     openvkl_add_executable_ispc(vklTestsGPU
       vklTests.cpp
       tests/structured_regular_volume_sampling.cpp
+      tests/structured_regular_volume_strides.cpp
       tests/structured_regular_volume_multi.cpp
       tests/structured_spherical_volume_sampling.cpp
       tests/structured_spherical_volume_bounding_box.cpp

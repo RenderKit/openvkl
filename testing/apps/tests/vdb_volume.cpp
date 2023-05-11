@@ -832,7 +832,7 @@ TEST_CASE("VDB volume strides", "[volume_strides]")
                                                       VKL_DATA_SHARED_BUFFER};
 #endif
 
-  std::vector<float> strideFactors{0.f, 1.f, 1.5f, 2.f};
+  std::vector<float> strideFactors{0.f, 1.f, 2.f, 3.f};
 
   for (const auto &repackNodes : {true, false}) {
     for (const auto &dcf : dataCreationFlags) {

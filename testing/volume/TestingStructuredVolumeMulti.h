@@ -63,9 +63,18 @@ namespace openvkl {
       bool useAOSLayout;
 
       // data may need to be retained for shared data buffers
+#ifdef OPENVKL_TESTING_GPU
+      // the below are only used for GPU. for simplicity we always use USM
+      // buffers, even though they're technically only required when using
+      // shared data buffers.
+      UsmVector<UsmVector<unsigned char>> voxels;
+      UsmVector<float> time;
+      UsmVector<uint32_t> tuvIndex;
+#else
       std::vector<std::vector<unsigned char>> voxels;
       std::vector<float> time;
       std::vector<uint32_t> tuvIndex;
+#endif
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -255,7 +264,9 @@ namespace openvkl {
         }
 
         if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+#ifndef OPENVKL_TESTING_GPU
           std::vector<unsigned char>().swap(v);
+#endif
         }
 
       } else {
@@ -279,7 +290,9 @@ namespace openvkl {
           attributesData.push_back(attributeData);
 
           if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+#ifndef OPENVKL_TESTING_GPU
             std::vector<unsigned char>().swap(voxels[i]);
+#endif
           }
         }
       }
@@ -323,9 +336,11 @@ namespace openvkl {
       vklCommit(volume);
 
       if (dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+#ifndef OPENVKL_TESTING_GPU
         std::vector<std::vector<unsigned char>>().swap(voxels);
         std::vector<float>().swap(time);
         std::vector<uint32_t>().swap(tuvIndex);
+#endif
       }
 
       // value range computation occurs during volume generation; we'll rely on

@@ -9,7 +9,7 @@
 using namespace rkcommon;
 using namespace openvkl::testing;
 
-#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR
+#if OPENVKL_DEVICE_CPU_STRUCTURED_REGULAR || defined(OPENVKL_TESTING_GPU)
 TEST_CASE("Structured regular volume strides", "[volume_strides]")
 {
   initializeOpenVKL();
@@ -17,7 +17,9 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
   std::vector<VKLDataCreationFlags> dataCreationFlags{VKL_DATA_DEFAULT,
                                                       VKL_DATA_SHARED_BUFFER};
 
-  std::vector<float> strideFactors{1.5f, 2.f};
+  // fractional stride factors are not allowed, as this would break alignment
+  // requirement on the underlying arrays
+  std::vector<float> strideFactors{2.f, 3.f};
 
   for (const auto &dcf : dataCreationFlags) {
     for (const auto &strideFactor : strideFactors) {
@@ -49,11 +51,13 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
                 dcf, strideFactor);
           }
 
+#if HALF_FLOAT_SUPPORT
           SECTION("half")
           {
             test_32bit_addressing<WaveletStructuredRegularVolumeHalf>(
                 dcf, strideFactor);
           }
+#endif
 
           SECTION("float")
           {
@@ -61,11 +65,13 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
                 dcf, strideFactor);
           }
 
+#if DOUBLE_SUPPORT
           SECTION("double")
           {
             test_32bit_addressing<WaveletStructuredRegularVolumeDouble>(
                 dcf, strideFactor);
           }
+#endif
         }
 
         SECTION("64/32-bit addressing")
@@ -88,11 +94,13 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
                 dcf, strideFactor);
           }
 
+#if HALF_FLOAT_SUPPORT
           SECTION("half")
           {
             test_64_32bit_addressing<WaveletStructuredRegularVolumeHalf>(
                 dcf, strideFactor);
           }
+#endif
 
           SECTION("float")
           {
@@ -100,11 +108,13 @@ TEST_CASE("Structured regular volume strides", "[volume_strides]")
                 dcf, strideFactor);
           }
 
+#if DOUBLE_SUPPORT
           SECTION("double")
           {
             test_64_32bit_addressing<WaveletStructuredRegularVolumeDouble>(
                 dcf, strideFactor);
           }
+#endif
         }
       }
     }

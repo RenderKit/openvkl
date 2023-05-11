@@ -74,6 +74,7 @@ namespace openvkl {
   OPENVKL_CORE_INTERFACE std::string stringFor(VKLDataType type);
 
   OPENVKL_CORE_INTERFACE size_t sizeOf(VKLDataType type);
+  OPENVKL_CORE_INTERFACE size_t alignOf(VKLDataType type);
 
   OPENVKL_CORE_INTERFACE bool isManagedObject(VKLDataType type);
 

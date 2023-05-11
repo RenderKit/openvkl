@@ -82,9 +82,16 @@ namespace openvkl {
       addr       = (char *)buffer;
       byteStride = naturalByteStride;
     } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
-      view = nullptr;  // TODO add code to inspect and reuse and copy as
-                       // required here
+      // view is not needed for shared buffers
+      // TODO: add code to verify provided buffer is in USM
+      view = nullptr;
       addr = (char *)source;
+
+      if (byteStride % alignOf(dataType) != 0) {
+        LogMessageStream(d, VKL_LOG_WARNING)
+            << "VKLData: byteStride for shared buffer will require unaligned "
+               "accesses";
+      }
     } else {
       throw std::runtime_error("VKLData: unknown data creation flags provided");
     }

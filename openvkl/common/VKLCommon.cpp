@@ -157,140 +157,145 @@ namespace openvkl {
     throw std::runtime_error(error.str());
   }
 
-  size_t sizeOf(VKLDataType type)
-  {
-    switch (type) {
-    case VKL_DEVICE:
-    case VKL_VOID_PTR:
-    case VKL_OBJECT:
-    case VKL_DATA:
-    case VKL_VOLUME:
-    case VKL_STRING:
-      return sizeof(void *);
-    case VKL_BOOL:
-      return sizeof(bool);
-    case VKL_CHAR:
-      return sizeof(int8);
-    case VKL_VEC2C:
-      return sizeof(vec2c);
-    case VKL_VEC3C:
-      return sizeof(vec3c);
-    case VKL_VEC4C:
-      return sizeof(vec4c);
-    case VKL_UCHAR:
-      return sizeof(uint8);
-    case VKL_VEC2UC:
-      return sizeof(vec2uc);
-    case VKL_VEC3UC:
-      return sizeof(vec3uc);
-    case VKL_VEC4UC:
-      return sizeof(vec4uc);
-    case VKL_SHORT:
-      return sizeof(int16);
-    case VKL_VEC2S:
-      return sizeof(vec2s);
-    case VKL_VEC3S:
-      return sizeof(vec3s);
-    case VKL_VEC4S:
-      return sizeof(vec4s);
-    case VKL_USHORT:
-      return sizeof(uint16);
-    case VKL_VEC2US:
-      return sizeof(vec2us);
-    case VKL_VEC3US:
-      return sizeof(vec3us);
-    case VKL_VEC4US:
-      return sizeof(vec4us);
-    case VKL_INT:
-      return sizeof(int32);
-    case VKL_VEC2I:
-      return sizeof(vec2i);
-    case VKL_VEC3I:
-      return sizeof(vec3i);
-    case VKL_VEC4I:
-      return sizeof(vec4i);
-    case VKL_UINT:
-      return sizeof(uint32);
-    case VKL_VEC2UI:
-      return sizeof(vec2ui);
-    case VKL_VEC3UI:
-      return sizeof(vec3ui);
-    case VKL_VEC4UI:
-      return sizeof(vec4ui);
-    case VKL_LONG:
-      return sizeof(int64);
-    case VKL_VEC2L:
-      return sizeof(vec2l);
-    case VKL_VEC3L:
-      return sizeof(vec3l);
-    case VKL_VEC4L:
-      return sizeof(vec4l);
-    case VKL_ULONG:
-      return sizeof(uint64);
-    case VKL_VEC2UL:
-      return sizeof(vec2ul);
-    case VKL_VEC3UL:
-      return sizeof(vec3ul);
-    case VKL_VEC4UL:
-      return sizeof(vec4ul);
-    case VKL_HALF:
-      return sizeof(uint16);
-    case VKL_VEC2H:
-      return sizeof(vec2us);
-    case VKL_VEC3H:
-      return sizeof(vec3us);
-    case VKL_VEC4H:
-      return sizeof(vec4us);
-    case VKL_FLOAT:
-      return sizeof(float);
-    case VKL_VEC2F:
-      return sizeof(vec2f);
-    case VKL_VEC3F:
-      return sizeof(vec3f);
-    case VKL_VEC4F:
-      return sizeof(vec4f);
-    case VKL_DOUBLE:
-      return sizeof(double);
-    case VKL_VEC2D:
-      return sizeof(vec2d);
-    case VKL_VEC3D:
-      return sizeof(vec3d);
-    case VKL_VEC4D:
-      return sizeof(vec4d);
-    case VKL_BOX1I:
-      return sizeof(box1i);
-    case VKL_BOX2I:
-      return sizeof(box2i);
-    case VKL_BOX3I:
-      return sizeof(box3i);
-    case VKL_BOX4I:
-      return sizeof(box4i);
-    case VKL_BOX1F:
-      return sizeof(box1f);
-    case VKL_BOX2F:
-      return sizeof(box2f);
-    case VKL_BOX3F:
-      return sizeof(box3f);
-    case VKL_BOX4F:
-      return sizeof(box4f);
-    case VKL_LINEAR2F:
-      return sizeof(linear2f);
-    case VKL_LINEAR3F:
-      return sizeof(linear3f);
-    case VKL_AFFINE2F:
-      return sizeof(affine2f);
-    case VKL_AFFINE3F:
-      return sizeof(affine3f);
-    case VKL_UNKNOWN:
-    default:
-      break;
-    };
-
-    std::stringstream error;
-    error << __FILE__ << ":" << __LINE__ << ": unknown VKLDataType "
-          << (int)type;
-    throw std::runtime_error(error.str());
+#define template_dataType_op(funcName, opFunc)                       \
+  size_t funcName(VKLDataType type)                                  \
+  {                                                                  \
+    switch (type) {                                                  \
+    case VKL_DEVICE:                                                 \
+    case VKL_VOID_PTR:                                               \
+    case VKL_OBJECT:                                                 \
+    case VKL_DATA:                                                   \
+    case VKL_VOLUME:                                                 \
+    case VKL_STRING:                                                 \
+      return opFunc(void *);                                         \
+    case VKL_BOOL:                                                   \
+      return opFunc(bool);                                           \
+    case VKL_CHAR:                                                   \
+      return opFunc(int8);                                           \
+    case VKL_VEC2C:                                                  \
+      return opFunc(vec2c);                                          \
+    case VKL_VEC3C:                                                  \
+      return opFunc(vec3c);                                          \
+    case VKL_VEC4C:                                                  \
+      return opFunc(vec4c);                                          \
+    case VKL_UCHAR:                                                  \
+      return opFunc(uint8);                                          \
+    case VKL_VEC2UC:                                                 \
+      return opFunc(vec2uc);                                         \
+    case VKL_VEC3UC:                                                 \
+      return opFunc(vec3uc);                                         \
+    case VKL_VEC4UC:                                                 \
+      return opFunc(vec4uc);                                         \
+    case VKL_SHORT:                                                  \
+      return opFunc(int16);                                          \
+    case VKL_VEC2S:                                                  \
+      return opFunc(vec2s);                                          \
+    case VKL_VEC3S:                                                  \
+      return opFunc(vec3s);                                          \
+    case VKL_VEC4S:                                                  \
+      return opFunc(vec4s);                                          \
+    case VKL_USHORT:                                                 \
+      return opFunc(uint16);                                         \
+    case VKL_VEC2US:                                                 \
+      return opFunc(vec2us);                                         \
+    case VKL_VEC3US:                                                 \
+      return opFunc(vec3us);                                         \
+    case VKL_VEC4US:                                                 \
+      return opFunc(vec4us);                                         \
+    case VKL_INT:                                                    \
+      return opFunc(int32);                                          \
+    case VKL_VEC2I:                                                  \
+      return opFunc(vec2i);                                          \
+    case VKL_VEC3I:                                                  \
+      return opFunc(vec3i);                                          \
+    case VKL_VEC4I:                                                  \
+      return opFunc(vec4i);                                          \
+    case VKL_UINT:                                                   \
+      return opFunc(uint32);                                         \
+    case VKL_VEC2UI:                                                 \
+      return opFunc(vec2ui);                                         \
+    case VKL_VEC3UI:                                                 \
+      return opFunc(vec3ui);                                         \
+    case VKL_VEC4UI:                                                 \
+      return opFunc(vec4ui);                                         \
+    case VKL_LONG:                                                   \
+      return opFunc(int64);                                          \
+    case VKL_VEC2L:                                                  \
+      return opFunc(vec2l);                                          \
+    case VKL_VEC3L:                                                  \
+      return opFunc(vec3l);                                          \
+    case VKL_VEC4L:                                                  \
+      return opFunc(vec4l);                                          \
+    case VKL_ULONG:                                                  \
+      return opFunc(uint64);                                         \
+    case VKL_VEC2UL:                                                 \
+      return opFunc(vec2ul);                                         \
+    case VKL_VEC3UL:                                                 \
+      return opFunc(vec3ul);                                         \
+    case VKL_VEC4UL:                                                 \
+      return opFunc(vec4ul);                                         \
+    case VKL_HALF:                                                   \
+      return opFunc(uint16);                                         \
+    case VKL_VEC2H:                                                  \
+      return opFunc(vec2us);                                         \
+    case VKL_VEC3H:                                                  \
+      return opFunc(vec3us);                                         \
+    case VKL_VEC4H:                                                  \
+      return opFunc(vec4us);                                         \
+    case VKL_FLOAT:                                                  \
+      return opFunc(float);                                          \
+    case VKL_VEC2F:                                                  \
+      return opFunc(vec2f);                                          \
+    case VKL_VEC3F:                                                  \
+      return opFunc(vec3f);                                          \
+    case VKL_VEC4F:                                                  \
+      return opFunc(vec4f);                                          \
+    case VKL_DOUBLE:                                                 \
+      return opFunc(double);                                         \
+    case VKL_VEC2D:                                                  \
+      return opFunc(vec2d);                                          \
+    case VKL_VEC3D:                                                  \
+      return opFunc(vec3d);                                          \
+    case VKL_VEC4D:                                                  \
+      return opFunc(vec4d);                                          \
+    case VKL_BOX1I:                                                  \
+      return opFunc(box1i);                                          \
+    case VKL_BOX2I:                                                  \
+      return opFunc(box2i);                                          \
+    case VKL_BOX3I:                                                  \
+      return opFunc(box3i);                                          \
+    case VKL_BOX4I:                                                  \
+      return opFunc(box4i);                                          \
+    case VKL_BOX1F:                                                  \
+      return opFunc(box1f);                                          \
+    case VKL_BOX2F:                                                  \
+      return opFunc(box2f);                                          \
+    case VKL_BOX3F:                                                  \
+      return opFunc(box3f);                                          \
+    case VKL_BOX4F:                                                  \
+      return opFunc(box4f);                                          \
+    case VKL_LINEAR2F:                                               \
+      return opFunc(linear2f);                                       \
+    case VKL_LINEAR3F:                                               \
+      return opFunc(linear3f);                                       \
+    case VKL_AFFINE2F:                                               \
+      return opFunc(affine2f);                                       \
+    case VKL_AFFINE3F:                                               \
+      return opFunc(affine3f);                                       \
+    case VKL_UNKNOWN:                                                \
+    default:                                                         \
+      break;                                                         \
+    };                                                               \
+                                                                     \
+    std::stringstream error;                                         \
+    error << __FILE__ << ":" << __LINE__ << ": unknown VKLDataType " \
+          << (int)type;                                              \
+    throw std::runtime_error(error.str());                           \
   }
+
+  template_dataType_op(sizeOf, sizeof);
+  template_dataType_op(alignOf, alignof);
+#undef template_dataType_op
 
   bool isManagedObject(VKLDataType type)
   {

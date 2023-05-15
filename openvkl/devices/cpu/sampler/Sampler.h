@@ -9,6 +9,7 @@
 #include "../iterator/IteratorContext.h"
 #include "../observer/Observer.h"
 #include "openvkl/openvkl.h"
+#include "rkcommon/utility/getEnvVar.h"
 
 #include "../../common/StructShared.h"
 #include "SamplerShared.h"
@@ -152,6 +153,11 @@ namespace openvkl {
       virtual const IteratorFactory<W, HitIterator, HitIteratorContext>
           &getHitIteratorFactory() const = 0;
 
+     protected:
+      /*
+       * Return if specialization constants (feature flags) should be disabled.
+       */
+      bool isSpecConstsDisabled() const;
     };
 
     // Inlined definitions ////////////////////////////////////////////////////
@@ -235,6 +241,14 @@ namespace openvkl {
         for (unsigned int i = 0; i < N; i++)
           samples[i * M + a] = samplesN[i];
       }
+    }
+
+    template <int W>
+    inline bool Sampler<W>::isSpecConstsDisabled() const
+    {
+      return bool(rkcommon::utility::getEnvVar<int>(
+                      "OPENVKL_GPU_DEVICE_DEBUG_DISABLE_SPEC_CONST")
+                      .value_or(0));
     }
 
     ///////////////////////////////////////////////////////////////////////////

@@ -80,6 +80,10 @@ namespace openvkl {
     template <int W>
     inline VKLFeatureFlags ParticleSampler<W>::getFeatureFlags() const
     {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
       return VKL_FEATURE_FLAG_PARTICLE_VOLUME;
     }
 

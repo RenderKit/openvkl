@@ -99,6 +99,10 @@ namespace openvkl {
     template <int W>
     inline VKLFeatureFlags AMRSampler<W>::getFeatureFlags() const
     {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
       return VKL_FEATURE_FLAG_AMR_VOLUME;
     }
 

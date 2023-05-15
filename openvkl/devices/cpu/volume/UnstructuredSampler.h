@@ -82,6 +82,10 @@ namespace openvkl {
     template <int W>
     inline VKLFeatureFlags UnstructuredSampler<W>::getFeatureFlags() const
     {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
       return VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME;
     }
 

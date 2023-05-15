@@ -186,6 +186,10 @@ namespace openvkl {
                                              featureFlags>::getFeatureFlags()
         const
     {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
       return featureFlags;
     }
 

@@ -61,6 +61,10 @@ namespace openvkl {
     template <int W>
     VKLFeatureFlags VdbSampler<W>::getFeatureFlags() const
     {
+      if (this->isSpecConstsDisabled()) {
+        return VKL_FEATURE_FLAG_ALL;
+      }
+
       VKLFeatureFlags ff = VKL_FEATURE_FLAG_NONE;
 
       if (this->getSh()->grid->dense) {

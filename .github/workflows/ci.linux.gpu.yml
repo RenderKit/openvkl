@@ -60,7 +60,7 @@ jobs:
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
       level-zero-version: public/1.9.4
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export CC=clang
@@ -78,7 +78,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -104,7 +104,7 @@ jobs:
       artifact-out: test-examples-pvc
       artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -125,7 +125,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -151,7 +151,7 @@ jobs:
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -172,7 +172,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -188,7 +188,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -207,7 +207,7 @@ jobs:
       artifact-out: test-examples-big-volume-pvc
       artifact-path: ./build/install/*.pfm
       artifact-on-failure: true
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-internal.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install

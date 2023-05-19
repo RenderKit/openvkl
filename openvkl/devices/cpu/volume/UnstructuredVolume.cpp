@@ -8,6 +8,7 @@ using namespace rkcommon;
 using namespace rkcommon::math;
 
 #include <algorithm>
+#include <set>
 #include "../common/Data.h"
 #include "UnstructuredSampler.h"
 #include "UnstructuredVolume.h"
@@ -178,6 +179,26 @@ namespace openvkl {
                            0);
         cellType = &(d->as<uint8_t>());
         d->refDec();
+      }
+
+      // determine cell types present in the volume, and set cell type feature
+      // flags as appropriate
+      std::set<uint8_t> cellTypeSet((*cellType).begin(), (*cellType).end());
+
+      cellTypeFeatureFlags = VKL_FEATURE_FLAG_NONE;
+
+      for (const auto &c : cellTypeSet) {
+        if (c == VKL_TETRAHEDRON) {
+          cellTypeFeatureFlags |= VKL_FEATURE_FLAG_HAS_CELL_TYPE_TETRAHEDRON;
+        } else if (c == VKL_HEXAHEDRON) {
+          cellTypeFeatureFlags |= VKL_FEATURE_FLAG_HAS_CELL_TYPE_HEXAHEDRON;
+        } else if (c == VKL_WEDGE) {
+          cellTypeFeatureFlags |= VKL_FEATURE_FLAG_HAS_CELL_TYPE_WEDGE;
+        } else if (c == VKL_PYRAMID) {
+          cellTypeFeatureFlags |= VKL_FEATURE_FLAG_HAS_CELL_TYPE_PYRAMID;
+        } else {
+          throw std::runtime_error("encountered unknown cell type");
+        }
       }
 
       hexIterative = this->template getParam<bool>("hexIterative", false);

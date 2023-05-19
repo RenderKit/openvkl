@@ -43,6 +43,8 @@ namespace openvkl {
 
       int getBvhDepth() const;
 
+      VKLFeatureFlags getCellTypeFeatureFlags() const;
+
      private:
       void buildBvhAndCalculateBounds();
 
@@ -89,6 +91,8 @@ namespace openvkl {
 
       std::unique_ptr<BufferShared<vec3f>> faceNormals;
       std::unique_ptr<BufferShared<float>> iterativeTolerance;
+
+      VKLFeatureFlags cellTypeFeatureFlags{VKL_FEATURE_FLAG_NONE};
 
       RTCBVH rtcBVH{0};
       RTCDevice rtcDevice{0};
@@ -148,6 +152,13 @@ namespace openvkl {
     inline uint64_t UnstructuredVolume<W>::getVertexId(uint64_t id) const
     {
       return index32Bit ? (*index32)[id] : (*index64)[id];
+    }
+
+    template <int W>
+    inline VKLFeatureFlags UnstructuredVolume<W>::getCellTypeFeatureFlags()
+        const
+    {
+      return cellTypeFeatureFlags;
     }
 
   }  // namespace cpu_device

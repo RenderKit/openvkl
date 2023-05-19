@@ -86,7 +86,8 @@ namespace openvkl {
         return VKL_FEATURE_FLAG_ALL;
       }
 
-      return VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME;
+      return VKL_FEATURE_FLAG_UNSTRUCTURED_VOLUME |
+             volume->getCellTypeFeatureFlags();
     }
 
     template <int W>

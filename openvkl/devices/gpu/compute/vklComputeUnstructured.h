@@ -667,29 +667,38 @@ namespace ispc {
   inline bool intersectAndSampleCell(const void *userData,
                                      uint64_t id,
                                      float &result,
-                                     vec3f samplePos)
+                                     vec3f samplePos,
+                                     const VKLFeatureFlags featureFlags)
   {
     bool hit = false;
 
     const VKLUnstructuredVolume *self = (const VKLUnstructuredVolume *)userData;
 
-    switch (get_uint8(self->cellType, id)) {
-    case VKL_TETRAHEDRON:
+    const uint8_t cellType = get_uint8(self->cellType, id);
+
+    if (cellType == VKL_TETRAHEDRON &&
+        featureFlags & VKL_FEATURE_FLAG_HAS_CELL_TYPE_TETRAHEDRON) {
       hit = intersectAndSampleTet(userData, id, false, result, samplePos);
-      break;
-    case VKL_HEXAHEDRON:
-      if (!self->hexIterative)
+
+    } else if (cellType == VKL_HEXAHEDRON &&
+               featureFlags & VKL_FEATURE_FLAG_HAS_CELL_TYPE_HEXAHEDRON) {
+      if (!self->hexIterative) {
         hit = intersectAndSampleHexFast(userData, id, result, samplePos);
-      else
+      } else {
         hit = intersectAndSampleHexIterative(
             userData, id, false, result, samplePos);
-      break;
-    case VKL_WEDGE:
+      }
+
+    } else if (cellType == VKL_WEDGE &&
+               featureFlags & VKL_FEATURE_FLAG_HAS_CELL_TYPE_WEDGE) {
       hit = intersectAndSampleWedge(userData, id, false, result, samplePos);
-      break;
-    case VKL_PYRAMID:
+
+    } else if (cellType == VKL_PYRAMID &&
+               featureFlags & VKL_FEATURE_FLAG_HAS_CELL_TYPE_PYRAMID) {
       hit = intersectAndSamplePyramid(userData, id, false, result, samplePos);
-      break;
+
+    } else {
+      assert(false);
     }
 
     // Return true if samplePos is inside the cell
@@ -703,7 +712,8 @@ namespace ispc {
   inline void traverseBVHSingle(Node *const root,
                                 const void *userPtr,
                                 float &result,
-                                const vec3f &samplePos)
+                                const vec3f &samplePos,
+                                const VKLFeatureFlags featureFlags)
   {
     Node *node = root;
     Node *nodeStack[32];
@@ -714,7 +724,7 @@ namespace ispc {
         LeafNodeSingle *leaf = (LeafNodeSingle *)node;
         if (pointInAABBTest(leaf->super.bounds, samplePos)) {
           if (intersectAndSampleCell(
-                  userPtr, leaf->cellID, result, samplePos)) {
+                  userPtr, leaf->cellID, result, samplePos, featureFlags)) {
             return;
           }
         }
@@ -756,14 +766,15 @@ namespace ispc {
                                          const vec3f &objectCoordinates,
                                          const float &_time,
                                          const uint32_t &_attributeIndex,
-                                         const VKLFeatureFlags _featureFlags)
+                                         const VKLFeatureFlags featureFlags)
   {
     const VKLUnstructuredVolume *self =
         (const VKLUnstructuredVolume *)sampler->volume;
 
     float results = self->super.super.background[0];
 
-    traverseBVHSingle(self->super.bvhRoot, self, results, objectCoordinates);
+    traverseBVHSingle(
+        self->super.bvhRoot, self, results, objectCoordinates, featureFlags);
 
     return results;
   }
@@ -773,7 +784,7 @@ namespace ispc {
                                          const uint32_t M,
                                          const uint32_t *attributeIndices,
                                          float *samples,
-                                         const VKLFeatureFlags _featureFlags)
+                                         const VKLFeatureFlags featureFlags)
   {
     const VKLUnstructuredVolume *self =
         (const VKLUnstructuredVolume *)sampler->volume;
@@ -784,14 +795,14 @@ namespace ispc {
       assert(attributeIndices[i] == 0);
 
       samples[i] = UnstructuredVolume_sample(
-          sampler, objectCoordinates, 0.f, 0, _featureFlags);
+          sampler, objectCoordinates, 0.f, 0, featureFlags);
     }
   }
 
   inline vkl_vec3f UnstructuredVolume_computeGradient(
       const SamplerShared *sampler,
       const vec3f &objectCoordinates,
-      const VKLFeatureFlags _featureFlags)
+      const VKLFeatureFlags featureFlags)
   {
     // Cast to the actual Volume subtype.
     const VKLUnstructuredVolume *self =
@@ -805,28 +816,28 @@ namespace ispc {
     vec3f gradient;
 
     float sample = UnstructuredVolume_sample(
-        sampler, objectCoordinates, 0.f, 0, _featureFlags);
+        sampler, objectCoordinates, 0.f, 0, featureFlags);
 
     gradient.x = UnstructuredVolume_sample(
                      sampler,
                      objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f),
                      0.f,
                      0,
-                     _featureFlags) -
+                     featureFlags) -
                  sample;
     gradient.y = UnstructuredVolume_sample(
                      sampler,
                      objectCoordinates + vec3f(0.f, gradientStep.y, 0.f),
                      0.f,
                      0,
-                     _featureFlags) -
+                     featureFlags) -
                  sample;
     gradient.z = UnstructuredVolume_sample(
                      sampler,
                      objectCoordinates + vec3f(0.f, 0.f, gradientStep.z),
                      0.f,
                      0,
-                     _featureFlags) -
+                     featureFlags) -
                  sample;
 
     if (isnan(gradient.x)) {
@@ -837,7 +848,7 @@ namespace ispc {
                        objectCoordinates + vec3f(gradientStep.x, 0.f, 0.f),
                        0.f,
                        0,
-                       _featureFlags) -
+                       featureFlags) -
                    sample;
     }
 
@@ -849,7 +860,7 @@ namespace ispc {
                        objectCoordinates + vec3f(0.f, gradientStep.y, 0.f),
                        0.f,
                        0,
-                       _featureFlags) -
+                       featureFlags) -
                    sample;
     }
 
@@ -861,7 +872,7 @@ namespace ispc {
                        objectCoordinates + vec3f(0.f, 0.f, gradientStep.z),
                        0.f,
                        0,
-                       _featureFlags) -
+                       featureFlags) -
                    sample;
     }
 

@@ -35,13 +35,14 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
     const vec3i &ic,
     const float &time,
     const uint32 attributeIndex,
+    const VKLFeatureFlags featureFlags,
     float *sample)  // Array of 8 elements!
 {
   assert(!sampler->grid->dense);
 
   __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
-    sample[tgtIdx] =
-        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
+    sample[tgtIdx] = VdbSampler_traverseAndSample(
+        sampler, icDisp, timeDisp, attributeIndex, featureFlags);
   });
 }
 
@@ -52,7 +53,8 @@ inline void VdbSampler_computeVoxelValuesTrilinear(
 inline float VdbSampler_interpolateTrilinear(const VdbSamplerShared *sampler,
                                              const vec3f &indexCoordinates,
                                              const float time,
-                                             const uint32 attributeIndex)
+                                             const uint32 attributeIndex,
+                                             const VKLFeatureFlags featureFlags)
 {
   assert(!sampler->grid->dense);
 
@@ -63,8 +65,8 @@ inline float VdbSampler_interpolateTrilinear(const VdbSamplerShared *sampler,
   float sample[8];
 
   __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
-    sample[tgtIdx] =
-        VdbSampler_traverseAndSample(sampler, icDisp, timeDisp, attributeIndex);
+    sample[tgtIdx] = VdbSampler_traverseAndSample(
+        sampler, icDisp, timeDisp, attributeIndex, featureFlags);
   });
 
   const vec3f delta = indexCoordinates - make_vec3f(ic);
@@ -82,6 +84,7 @@ inline void VdbSampler_interpolateTrilinear(const VdbSamplerShared *sampler,
                                             const float time,
                                             const uint32 M,
                                             const uint32 *attributeIndices,
+                                            const VKLFeatureFlags featureFlags,
                                             float *samples)
 {
   assert(!sampler->grid->dense);
@@ -109,8 +112,12 @@ inline void VdbSampler_interpolateTrilinear(const VdbSamplerShared *sampler,
     __vkl_stencil_dispatch_uniform(TRILINEAR, ic, time, {
       const uint64 voxelV        = voxel[tgtIdx];
       const vec3ui domainOffsetV = domainOffset[tgtIdx];
-      sample[tgtIdx]             = VdbSampler_sample(
-          sampler, voxelV, domainOffsetV, timeDisp, attributeIndices[a]);
+      sample[tgtIdx]             = VdbSampler_sample(sampler,
+                                         voxelV,
+                                         domainOffsetV,
+                                         timeDisp,
+                                         attributeIndices[a],
+                                         featureFlags);
     });
 
     samples[a] = lerp(delta.x,
@@ -130,7 +137,8 @@ inline vec3f VdbSampler_computeGradientTrilinear(
     const VdbSamplerShared *sampler,
     const vec3f &indexCoordinates,
     const float &time,
-    const uint32 attributeIndex)
+    const uint32 attributeIndex,
+    const VKLFeatureFlags featureFlags)
 {
   assert(!sampler->grid->dense);
 
@@ -139,7 +147,8 @@ inline vec3f VdbSampler_computeGradientTrilinear(
                               floor(indexCoordinates.z));
   const vec3f delta = indexCoordinates - make_vec3f(ic);
   float s[8];
-  VdbSampler_computeVoxelValuesTrilinear(sampler, ic, time, attributeIndex, s);
+  VdbSampler_computeVoxelValuesTrilinear(
+      sampler, ic, time, attributeIndex, featureFlags, s);
 
   vec3f gradient;
   gradient.x = lerp(delta.y,

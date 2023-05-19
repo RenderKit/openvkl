@@ -111,6 +111,8 @@ namespace openvkl {
         assert(false);
       }
 
+      ff |= volume->getTemporalFeatureFlags();
+
       return ff;
     }
 

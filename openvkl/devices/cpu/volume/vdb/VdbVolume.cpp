@@ -1016,6 +1016,27 @@ namespace openvkl {
                      nodeToDenseNodeIndex,
                      nodeToTileNodeIndex);
 
+        // Compute feature flags for the temporal formats.
+        std::set<uint32_t> temporalFormatSet((*leafTemporalFormat).begin(),
+                                             (*leafTemporalFormat).end());
+
+        temporalFeatureFlags = VKL_FEATURE_FLAG_NONE;
+
+        for (const auto &t : temporalFormatSet) {
+          if (t == VKL_TEMPORAL_FORMAT_CONSTANT) {
+            temporalFeatureFlags |=
+                VKL_FEATURE_FLAG_HAS_TEMPORAL_FORMAT_CONSTANT;
+          } else if (t == VKL_TEMPORAL_FORMAT_STRUCTURED) {
+            temporalFeatureFlags |=
+                VKL_FEATURE_FLAG_HAS_TEMPORAL_FORMAT_STRUCTURED;
+          } else if (t == VKL_TEMPORAL_FORMAT_UNSTRUCTURED) {
+            temporalFeatureFlags |=
+                VKL_FEATURE_FLAG_HAS_TEMPORAL_FORMAT_UNSTRUCTURED;
+          } else {
+            throw std::runtime_error("encountered unknown temporal format");
+          }
+        }
+
         CALL_ISPC(VdbVolume_setGrid,
                   this->getSh(),
                   reinterpret_cast<const ispc::VdbGrid *>(grid));

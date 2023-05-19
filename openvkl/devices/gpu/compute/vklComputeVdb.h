@@ -39,7 +39,8 @@ namespace ispc {
                                   sampler,
                                   indexCoordinates,
                                   time,
-                                  attributeIndex);
+                                  attributeIndex,
+                                  featureFlags);
 
     return sample;
   }
@@ -67,6 +68,7 @@ namespace ispc {
                                   time,
                                   M,
                                   attributeIndices,
+                                  featureFlags,
                                   samples);
   }
 
@@ -91,7 +93,8 @@ namespace ispc {
                                     sampler,
                                     indexCoordinates,
                                     time,
-                                    attributeIndex);
+                                    attributeIndex,
+                                    featureFlags);
 
     // Note: xfmNormal takes inverse!
     gradient =

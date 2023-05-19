@@ -82,7 +82,8 @@ inline float VdbSampler_sample_inner(const VdbSamplerShared *sampler,
                                      const uint64 &voxel,
                                      const vec3ui &domainOffset,
                                      const float &time,
-                                     const uint32 attributeIndex)
+                                     const uint32 attributeIndex,
+                                     const VKLFeatureFlags featureFlags)
 {
   assert(!sampler->grid->dense);
   float sample        = 0.f;
@@ -106,6 +107,7 @@ inline float VdbSampler_sample_inner(const VdbSamplerShared *sampler,
     } else {
       __vkl_vdb_leaf_handler(
           sample = VdbSampler_sample_uniform_uniform,
+          featureFlags,
           voxelType,
           openvkl::cpu_device::vklVdbVoxelLeafGetFormat(voxel),
           grid->allLeavesConstant,
@@ -139,12 +141,13 @@ inline float VdbSampler_sample(const VdbSamplerShared *sampler,
                                const uint64 voxel,
                                const vec3ui &domainOffset,
                                const float time,
-                               const uint32 attributeIndex)
+                               const uint32 attributeIndex,
+                               const VKLFeatureFlags featureFlags)
 {
   assert(!sampler->grid->dense);
 
   return VdbSampler_sample_inner(
-      sampler, voxel, domainOffset, time, attributeIndex);
+      sampler, voxel, domainOffset, time, attributeIndex, featureFlags);
 }
 
 // ---------------------------------------------------------------------------
@@ -157,7 +160,8 @@ inline float VdbSampler_sample(const VdbSamplerShared *sampler,
 inline float VdbSampler_traverseAndSample(const VdbSamplerShared *sampler,
                                           const vec3i &ic,
                                           const float time,
-                                          const uint32 attributeIndex)
+                                          const uint32 attributeIndex,
+                                          const VKLFeatureFlags featureFlags)
 {
   assert(sampler);
   assert(sampler->grid);
@@ -173,7 +177,7 @@ inline float VdbSampler_traverseAndSample(const VdbSamplerShared *sampler,
     VdbSampler_dispatchInner_uniform_uniform_0(
         sampler, 0ul, leafOrigin, voxelU);
     return VdbSampler_sample_inner(
-        sampler, voxelU, domainOffset, time, attributeIndex);
+        sampler, voxelU, domainOffset, time, attributeIndex, featureFlags);
   }
 
   return sampler->super.super.volume->background[attributeIndex];

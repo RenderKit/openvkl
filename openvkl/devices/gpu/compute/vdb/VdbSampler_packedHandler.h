@@ -28,19 +28,11 @@
     break;                                                                     \
   }
 
-#define __vkl_vdb_packed_handler_dataType(                 \
-    handler, dataType, leafFormat, postfix, ...)           \
-  /* Not currently supported on GPU:                       \
-  if (dataType == VKL_HALF) {                              \
-    __vkl_vdb_packed_handler_format(                       \
-        handler, leafFormat, half_##postfix, __VA_ARGS__)  \
-  } else*/                                                 \
-  if (dataType == VKL_FLOAT) {                             \
-    __vkl_vdb_packed_handler_format(                       \
-        handler, leafFormat, float_##postfix, __VA_ARGS__) \
-  } else {                                                 \
-    assert(false);                                         \
-  }
+#define __vkl_vdb_packed_handler_dataType(       \
+    handler, dataType, leafFormat, postfix, ...) \
+  assert(dataType == VKL_FLOAT);                 \
+  __vkl_vdb_packed_handler_format(               \
+      handler, leafFormat, float_##postfix, __VA_ARGS__)
 
 #define __vkl_vdb_packed_handler(                       \
     handler, addressing32, dataType, leafFormat, ...)   \

@@ -25,7 +25,8 @@ inline float VdbSampler_getNearestIndexOffset(const VdbSamplerShared *sampler)
 inline float VdbSampler_interpolateNearest(const VdbSamplerShared *sampler,
                                            const vec3f &indexCoordinates,
                                            const float time,
-                                           const uint32 attributeIndex)
+                                           const uint32 attributeIndex,
+                                           const VKLFeatureFlags featureFlags)
 {
   assert(!sampler->grid->dense);
 
@@ -35,7 +36,8 @@ inline float VdbSampler_interpolateNearest(const VdbSamplerShared *sampler,
                               floor(indexCoordinates.y + offset),
                               floor(indexCoordinates.z + offset));
 
-  return VdbSampler_traverseAndSample(sampler, ic, time, attributeIndex);
+  return VdbSampler_traverseAndSample(
+      sampler, ic, time, attributeIndex, featureFlags);
 }
 
 inline void VdbSampler_interpolateNearest(const VdbSamplerShared *sampler,
@@ -43,6 +45,7 @@ inline void VdbSampler_interpolateNearest(const VdbSamplerShared *sampler,
                                           const float time,
                                           const uint32 M,
                                           const uint32 *attributeIndices,
+                                          const VKLFeatureFlags featureFlags,
                                           float *samples)
 {
   assert(!sampler->grid->dense);
@@ -59,7 +62,7 @@ inline void VdbSampler_interpolateNearest(const VdbSamplerShared *sampler,
 
   for (unsigned int a = 0; a < M; a++) {
     samples[a] = VdbSampler_sample(
-        sampler, voxel, domainOffset, time, attributeIndices[a]);
+        sampler, voxel, domainOffset, time, attributeIndices[a], featureFlags);
   }
 }
 
@@ -67,10 +70,12 @@ inline void VdbSampler_interpolateNearest(const VdbSamplerShared *sampler,
  * Gradients in piecewise constant fields are zero (almost everywhere, we'll
  * say everywhere...)
  */
-inline vec3f VdbSampler_computeGradientNearest(const VdbSamplerShared *sampler,
-                                               const vec3f &indexCoordinates,
-                                               const float &time,
-                                               const uint32 attributeIndex)
+inline vec3f VdbSampler_computeGradientNearest(
+    const VdbSamplerShared *sampler,
+    const vec3f &indexCoordinates,
+    const float &time,
+    const uint32 attributeIndex,
+    const VKLFeatureFlags featureFlags)
 {
   assert(!sampler->grid->dense);
 

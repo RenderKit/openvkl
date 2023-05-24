@@ -20,8 +20,7 @@ jobs:
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
-      install-gfx-driver: false
-      level-zero-version: public/1.9.4
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         export CC=clang
@@ -39,8 +38,7 @@ jobs:
       image: opensuse/leap:15.3
       artifact-out: build-gpu-suse
       artifact-path: ./build/install ./build/openvkl/build
-      install-gfx-driver: false
-      level-zero-version: public/1.9.4
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         export CC=clang
@@ -59,13 +57,13 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      level-zero-version: public/1.9.4
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export CC=clang
         export CXX=clang++
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:/usr/local/lib:$LD_LIBRARY_PATH
         export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
         gitlab/build-from-install.sh
 
@@ -78,11 +76,12 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         ./bin/vklTutorialGPU
@@ -104,11 +103,12 @@ jobs:
       artifact-out: test-examples-pvc
       artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
@@ -125,11 +125,12 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         ./bin/vklTutorialGPU
@@ -151,11 +152,12 @@ jobs:
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
@@ -172,11 +174,12 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
         ./bin/vklBenchmarkGPU --benchmark_repetitions=5 --benchmark_min_time=10
 
   perf-pvc:
@@ -188,11 +191,12 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
         ./bin/vklBenchmarkGPU --benchmark_repetitions=5 --benchmark_min_time=10
 
   test-examples-big-volume-pvc:
@@ -207,10 +211,11 @@ jobs:
       artifact-out: test-examples-big-volume-pvc
       artifact-path: ./build/install/*.pfm
       artifact-on-failure: true
+      level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
 
         $GITHUB_WORKSPACE/.github/scripts/run-examples-big-volume-tests.sh

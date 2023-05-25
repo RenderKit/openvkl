@@ -6,7 +6,6 @@
 #include "VKLBackgroundUndefined.h"
 #include "VKLDataType.h"
 #include "VKLError.h"
-#include "VKLFeatureFlags.h"
 #include "VKLFilter.h"
 #include "VKLFormat.h"
 #include "VKLLogLevel.h"

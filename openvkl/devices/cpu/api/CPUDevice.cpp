@@ -227,7 +227,7 @@ namespace openvkl {
     }
 
     template <int W>
-    VKLFeatureFlags CPUDevice<W>::getFeatureFlags(VKLSampler sampler)
+    VKLFeatureFlagsInternal CPUDevice<W>::getFeatureFlags(VKLSampler sampler)
     {
       auto &samplerObject =
           referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);

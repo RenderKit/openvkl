@@ -31,7 +31,7 @@ namespace openvkl {
 
       void commit() override;
 
-      VKLFeatureFlags getFeatureFlags() const override;
+      VKLFeatureFlagsInternal getFeatureFlags() const override;
 
       // single attribute /////////////////////////////////////////////////////
 

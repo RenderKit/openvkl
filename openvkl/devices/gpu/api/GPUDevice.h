@@ -96,7 +96,7 @@ namespace openvkl {
 
       VKLSampler newSampler(VKLVolume volume) override;
 
-      VKLFeatureFlags getFeatureFlags(VKLSampler sampler) override;
+      VKLFeatureFlagsInternal getFeatureFlags(VKLSampler sampler) override;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////

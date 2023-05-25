@@ -193,7 +193,7 @@ namespace openvkl {
     }
 
     template <int W>
-    VKLFeatureFlags GPUDevice<W>::getFeatureFlags(VKLSampler sampler)
+    VKLFeatureFlagsInternal GPUDevice<W>::getFeatureFlags(VKLSampler sampler)
     {
       auto &samplerObject =
           referenceFromHandle<openvkl::cpu_device::Sampler<W>>(sampler.host);

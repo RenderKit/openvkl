@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "../../external/catch.hpp"
+#include "../common/VKLFeatureFlagsInternal.h"
 #include "openvkl_testing.h"
 
 using namespace rkcommon;

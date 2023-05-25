@@ -31,7 +31,7 @@ namespace openvkl {
       UnstructuredSampler(Device *, UnstructuredVolume<W> &volume);
       ~UnstructuredSampler() override;
 
-      VKLFeatureFlags getFeatureFlags() const override;
+      VKLFeatureFlagsInternal getFeatureFlags() const override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -80,7 +80,8 @@ namespace openvkl {
     }
 
     template <int W>
-    inline VKLFeatureFlags UnstructuredSampler<W>::getFeatureFlags() const
+    inline VKLFeatureFlagsInternal UnstructuredSampler<W>::getFeatureFlags()
+        const
     {
       if (this->isSpecConstsDisabled()) {
         return VKL_FEATURE_FLAG_ALL;

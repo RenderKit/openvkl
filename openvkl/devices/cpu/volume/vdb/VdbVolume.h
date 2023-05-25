@@ -153,7 +153,7 @@ namespace openvkl {
         return maxSamplingDepth;
       }
 
-      VKLFeatureFlags getTemporalFeatureFlags() const
+      VKLFeatureFlagsInternal getTemporalFeatureFlags() const
       {
         return temporalFeatureFlags;
       }
@@ -199,7 +199,7 @@ namespace openvkl {
       rkcommon::memory::Ref<const DataT<float>>
           denseTemporallyUnstructuredTimes;
 
-      VKLFeatureFlags temporalFeatureFlags{VKL_FEATURE_FLAG_NONE};
+      VKLFeatureFlagsInternal temporalFeatureFlags{VKL_FEATURE_FLAG_NONE};
 
       VdbGrid *grid{nullptr};
       Allocator allocator{this->getDevice()};

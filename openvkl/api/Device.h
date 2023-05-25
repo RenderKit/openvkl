@@ -7,6 +7,7 @@
 #include <string>
 #include "../common/ObjectFactory.h"
 #include "../common/VKLCommon.h"
+#include "../common/VKLFeatureFlagsInternal.h"
 #include "../common/simd.h"
 #include "openvkl/openvkl.h"
 #include "rkcommon/memory/IntrusivePtr.h"
@@ -134,7 +135,7 @@ namespace openvkl {
 
       virtual VKLSampler newSampler(VKLVolume volume) = 0;
 
-      virtual VKLFeatureFlags getFeatureFlags(VKLSampler sampler) = 0;
+      virtual VKLFeatureFlagsInternal getFeatureFlags(VKLSampler sampler) = 0;
 
       /////////////////////////////////////////////////////////////////////////
       // Volume ///////////////////////////////////////////////////////////////

@@ -59,13 +59,13 @@ namespace openvkl {
     }
 
     template <int W>
-    VKLFeatureFlags VdbSampler<W>::getFeatureFlags() const
+    VKLFeatureFlagsInternal VdbSampler<W>::getFeatureFlags() const
     {
       if (this->isSpecConstsDisabled()) {
         return VKL_FEATURE_FLAG_ALL;
       }
 
-      VKLFeatureFlags ff = VKL_FEATURE_FLAG_NONE;
+      VKLFeatureFlagsInternal ff = VKL_FEATURE_FLAG_NONE;
 
       if (this->getSh()->grid->dense) {
         ff |= VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME;

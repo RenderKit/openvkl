@@ -3,7 +3,10 @@
 
 #pragma once
 
-typedef enum __VKLFeatureFlags
+#include <type_traits>
+#include "openvkl/openvkl.h"
+
+enum VKLFeatureFlagsInternal : uint64_t
 {
   VKL_FEATURE_FLAG_NONE = 0,
 
@@ -36,22 +39,27 @@ typedef enum __VKLFeatureFlags
   VKL_FEATURE_FLAG_HAS_CELL_TYPE_WEDGE       = 1 << 17,
   VKL_FEATURE_FLAG_HAS_CELL_TYPE_PYRAMID     = 1 << 18,
 
-  VKL_FEATURE_FLAG_ALL = 0xffffffff,
-} VKLFeatureFlags;
+  VKL_FEATURE_FLAG_ALL = 0xffffffffffffffff,
+};
 
-#ifdef __cplusplus
+static_assert(std::is_same<std::underlying_type<VKLFeatureFlagsInternal>::type,
+                           uint64_t>::value,
+              "VKLFeatureFlagsInternal incompatible with VKLFeatureFlags");
+
+static_assert(uint64_t(VKL_FEATURE_FLAGS_DEFAULT) == VKL_FEATURE_FLAG_ALL,
+              "VKL_FEATURE_FLAGS_DEFAULT should match VKL_FEATURE_FLAG_ALL");
 
 // convenience oeprators for working with the above
-inline VKLFeatureFlags operator|(VKLFeatureFlags a, VKLFeatureFlags b)
+inline VKLFeatureFlagsInternal operator|(VKLFeatureFlagsInternal a,
+                                         VKLFeatureFlagsInternal b)
 {
-  return static_cast<VKLFeatureFlags>(static_cast<int>(a) |
-                                      static_cast<int>(b));
+  return static_cast<VKLFeatureFlagsInternal>(static_cast<int>(a) |
+                                              static_cast<int>(b));
 }
 
-inline VKLFeatureFlags &operator|=(VKLFeatureFlags &a, VKLFeatureFlags b)
+inline VKLFeatureFlagsInternal &operator|=(VKLFeatureFlagsInternal &a,
+                                           VKLFeatureFlagsInternal b)
 {
-  return reinterpret_cast<VKLFeatureFlags &>(reinterpret_cast<int &>(a) |=
-                                             static_cast<int>(b));
+  return reinterpret_cast<VKLFeatureFlagsInternal &>(
+      reinterpret_cast<int &>(a) |= static_cast<int>(b));
 }
-
-#endif

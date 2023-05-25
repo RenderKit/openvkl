@@ -33,7 +33,7 @@ namespace openvkl {
 
       void commit() override;
 
-      VKLFeatureFlags getFeatureFlags() const override;
+      VKLFeatureFlagsInternal getFeatureFlags() const override;
 
       void computeSampleV(const vintn<W> &valid,
                           const vvec3fn<W> &objectCoordinates,
@@ -97,7 +97,7 @@ namespace openvkl {
     }
 
     template <int W>
-    inline VKLFeatureFlags AMRSampler<W>::getFeatureFlags() const
+    inline VKLFeatureFlagsInternal AMRSampler<W>::getFeatureFlags() const
     {
       if (this->isSpecConstsDisabled()) {
         return VKL_FEATURE_FLAG_ALL;

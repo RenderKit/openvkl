@@ -24,7 +24,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     struct StructuredSampler
         : public AddStructShared<SamplerBase<W,
                                              StructuredVolume,
@@ -37,7 +37,7 @@ namespace openvkl {
 
       void commit() override;
 
-      VKLFeatureFlags getFeatureFlags() const override;
+      VKLFeatureFlagsInternal getFeatureFlags() const override;
 
       // single attribute /////////////////////////////////////////////////////
 
@@ -111,7 +111,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -140,7 +140,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline StructuredSampler<W,
                              IntervalIteratorFactory,
                              HitIteratorFactory,
@@ -153,7 +153,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<W,
                                   IntervalIteratorFactory,
                                   HitIteratorFactory,
@@ -179,12 +179,12 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
-    inline VKLFeatureFlags StructuredSampler<W,
-                                             IntervalIteratorFactory,
-                                             HitIteratorFactory,
-                                             featureFlags>::getFeatureFlags()
-        const
+              VKLFeatureFlagsInternal featureFlags>
+    inline VKLFeatureFlagsInternal
+    StructuredSampler<W,
+                      IntervalIteratorFactory,
+                      HitIteratorFactory,
+                      featureFlags>::getFeatureFlags() const
     {
       if (this->isSpecConstsDisabled()) {
         return VKL_FEATURE_FLAG_ALL;
@@ -198,7 +198,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -223,7 +223,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -250,7 +250,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -277,7 +277,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -304,7 +304,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -331,7 +331,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -358,7 +358,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,
@@ -387,7 +387,7 @@ namespace openvkl {
               class IntervalIteratorFactory,
               template <int>
               class HitIteratorFactory,
-              VKLFeatureFlags featureFlags>
+              VKLFeatureFlagsInternal featureFlags>
     inline void StructuredSampler<
         W,
         IntervalIteratorFactory,

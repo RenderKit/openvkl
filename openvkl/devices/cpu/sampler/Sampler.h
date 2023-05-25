@@ -77,7 +77,7 @@ namespace openvkl {
 
       virtual ~Sampler();
 
-      virtual VKLFeatureFlags getFeatureFlags() const = 0;
+      virtual VKLFeatureFlagsInternal getFeatureFlags() const = 0;
 
       // single attribute /////////////////////////////////////////////////////
 

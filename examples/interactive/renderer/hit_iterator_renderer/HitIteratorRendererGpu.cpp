@@ -10,7 +10,7 @@ namespace openvkl {
     static_assert(std::is_trivially_copyable<VKLFeatureFlags>::value);
 
     constexpr static sycl::specialization_id<VKLFeatureFlags> samplerSpecId{
-        VKL_FEATURE_FLAG_ALL};
+        VKL_FEATURE_FLAGS_DEFAULT};
 
     HitIteratorRendererGpu::HitIteratorRendererGpu(Scene &scene)
         : RendererGpu{scene}

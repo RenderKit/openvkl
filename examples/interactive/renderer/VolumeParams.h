@@ -100,7 +100,7 @@ namespace openvkl {
           0.f, 0.15f, 0.3f, 0.65f, 0.9f, 1.0f};
       uint8_t motionBlurStructuredNumTimesteps{6};
 
-      bool vdbRepackNodes{false};
+      bool vdbRepackNodes{true};
 
       void parseCommandLine(std::list<std::string> &args);
       static void usage();

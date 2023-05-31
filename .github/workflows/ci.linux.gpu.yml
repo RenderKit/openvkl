@@ -48,6 +48,38 @@ jobs:
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON"
 
+  build-gpu-rel-with-dbg-info:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      submodules: true
+      image: ubuntu:22.04
+      level-zero-version: public/1.9.9
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON -D BUILD_EMBREE_SYCL=ON \
+                        -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
+                           -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
+                           -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
+                           -D CMAKE_BUILD_TYPE=RelWithDebInfo"
+  build-gpu-debug:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      submodules: true
+      image: ubuntu:22.04
+      level-zero-version: public/1.9.9
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      cmd: |
+        export CC=clang
+        export CXX=clang++
+        gitlab/build.sh -D BUILD_OPENVDB=OFF -D BUILD_ISPCRT_GPU=ON -D BUILD_EMBREE_SYCL=ON \
+                        -D OPENVKL_EXTRA_OPTIONS="-DOPENVKL_ENABLE_DEVICE_GPU=ON \
+                           -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
+                           -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
+                           -D CMAKE_BUILD_TYPE=Debug"
 
   test-build-from-install-dg2:
     needs: [ build-gpu ]
@@ -63,7 +95,7 @@ jobs:
       cmd: |
         export CC=clang
         export CXX=clang++
-        export LD_LIBRARY_PATH=`pwd`/build/install/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
         export PATH=`pwd`/build/install/bin:`pwd`/build/install:$PATH
         gitlab/build-from-install.sh
 
@@ -81,7 +113,7 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         ./bin/vklTutorialGPU
@@ -108,7 +140,7 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
@@ -130,7 +162,7 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         ./bin/vklTutorialGPU
@@ -157,7 +189,7 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
         echo "### Run without chunking allocator enabled in ISPCRT"
         $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
@@ -179,7 +211,7 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklBenchmarkGPU --benchmark_repetitions=5 --benchmark_min_time=10
 
   perf-pvc:
@@ -196,7 +228,7 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
         ./bin/vklBenchmarkGPU --benchmark_repetitions=5 --benchmark_min_time=10
 
   test-examples-big-volume-pvc:
@@ -216,6 +248,6 @@ jobs:
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:/usr/local/lib:$LD_LIBRARY_PATH
+        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
 
         $GITHUB_WORKSPACE/.github/scripts/run-examples-big-volume-tests.sh

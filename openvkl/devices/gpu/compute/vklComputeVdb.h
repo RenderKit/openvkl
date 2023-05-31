@@ -22,11 +22,12 @@ namespace ispc {
       const uint32 &attributeIndex,
       const VKLFeatureFlags featureFlags)
   {
-    assert(sampler);
-    assert(sampler->grid);
+    assert(samplerShared);
 
     const VdbSamplerShared *sampler =
         reinterpret_cast<const VdbSamplerShared *>(samplerShared);
+
+    assert(sampler->grid);
 
     const vec3f indexCoordinates = openvkl::cpu_device::xfmPoint(
         sampler->grid->objectToIndex, objectCoordinates);

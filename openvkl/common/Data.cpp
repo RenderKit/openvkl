@@ -83,9 +83,47 @@ namespace openvkl {
       byteStride = naturalByteStride;
     } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
       // view is not needed for shared buffers
-      // TODO: add code to verify provided buffer is in USM
       view = nullptr;
       addr = (char *)source;
+
+      ispcrt::Context *ispcrtContext =
+          static_cast<ispcrt::Context *>(device->getContext());
+
+      ISPCRTDevice ispcrtDevice =
+          ispcrtGetDeviceFromContext(ispcrtContext->handle(), 0);
+
+      // we must validate that shared buffers for GPU devices were allocated
+      // properly
+      if (ispcrtGetDeviceType(ispcrtDevice) == ISPCRT_DEVICE_TYPE_GPU) {
+        ISPCRTAllocationType allocationType =
+            ispcrtGetMemoryAllocType(ispcrtDevice, (void *)source);
+
+        switch (allocationType) {
+        case ISPCRT_ALLOC_TYPE_SHARED:
+          // all good.
+          break;
+
+        case ISPCRT_ALLOC_TYPE_HOST:
+        case ISPCRT_ALLOC_TYPE_DEVICE:
+          throw std::runtime_error(
+              "VKLData: shared data buffers must be allocated in USM shared "
+              "memory for GPU-based devices");
+          break;
+
+        case ISPCRT_ALLOC_TYPE_UNKNOWN: {
+          static bool warnedOnce = false;
+          if (!warnedOnce) {
+            LogMessageStream(d, VKL_LOG_WARNING)
+                << "VKLData: could not verify allocation type for shared data "
+                   "buffer on GPU-based device";
+            warnedOnce = true;
+          }
+          break;
+        }
+        }
+      }
+
+      ispcrtRelease(ispcrtDevice);
 
       if (byteStride % alignOf(dataType) != 0) {
         LogMessageStream(d, VKL_LOG_WARNING)

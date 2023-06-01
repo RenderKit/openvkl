@@ -1,0 +1,11 @@
+// Copyright 2023 Intel Corporation
+// SPDX-License-Identifier: Apache-2.0
+
+#pragma once
+
+typedef vkl_uint64 VKLFeatureFlags;
+
+#define VKL_FEATURE_FLAGS_NONE 0
+
+// equivalent to all feature flags enabled
+#define VKL_FEATURE_FLAGS_DEFAULT -1

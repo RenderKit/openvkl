@@ -30,7 +30,9 @@ NOWARN_C_LINKAGE_PUSH
 OPENVKL_INTERFACE VKLSampler vklNewSampler(VKLVolume volume);
 NOWARN_C_LINKAGE_POP
 
-typedef uint64_t VKLFeatureFlags;
+typedef vkl_uint64 VKLFeatureFlags;
+
+#define VKL_FEATURE_FLAGS_NONE 0
 
 // equivalent to all feature flags enabled
 #define VKL_FEATURE_FLAGS_DEFAULT -1

@@ -67,12 +67,14 @@ namespace openvkl {
 
       VKLFeatureFlagsInternal ff = VKL_FEATURE_FLAG_NONE;
 
+      // volume type
       if (this->getSh()->grid->dense) {
         ff |= VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME;
       } else {
         ff |= VKL_FEATURE_FLAG_VDB_VOLUME;
       }
 
+      // sampling filter
       VKLFilter sampleFilter = this->getSh()->super.super.filter;
 
       switch (sampleFilter) {
@@ -92,6 +94,7 @@ namespace openvkl {
         assert(false);
       }
 
+      // gradient filter
       VKLFilter gradientFilter = this->getSh()->super.super.gradientFilter;
 
       switch (gradientFilter) {
@@ -111,7 +114,15 @@ namespace openvkl {
         assert(false);
       }
 
+      // temporal mode
       ff |= volume->getTemporalFeatureFlags();
+
+      // VDB-specific
+      if (this->getSh()->grid->nodesPackedDense) {
+        ff |= VKL_FEATURE_FLAG_VDB_NODES_PACKED;
+      } else {
+        ff |= VKL_FEATURE_FLAG_VDB_NODES_NOT_PACKED;
+      }
 
       return ff;
     }

@@ -93,7 +93,9 @@ inline float VdbSampler_sample_inner(const VdbSamplerShared *sampler,
     const vkl_uint32 voxelType = sampler->grid->attributeTypes[attributeIndex];
     const uint64 leafIndex =
         openvkl::cpu_device::vklVdbVoxelLeafGetIndex(voxel);
-    if (sampler->grid->nodesPackedDense) {
+    if ((featureFlags & VKL_FEATURE_FLAG_VDB_NODES_PACKED &&
+         !(featureFlags & VKL_FEATURE_FLAG_VDB_NODES_NOT_PACKED)) ||
+        sampler->grid->nodesPackedDense) {
       __vkl_vdb_packed_handler(
           sample = VdbSampler_sample_uniform_uniform_packed,
           grid->packedAddressing32,

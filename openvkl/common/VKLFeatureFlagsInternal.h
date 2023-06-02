@@ -39,6 +39,10 @@ enum VKLFeatureFlagsInternal : uint64_t
   VKL_FEATURE_FLAG_HAS_CELL_TYPE_WEDGE       = 1 << 17,
   VKL_FEATURE_FLAG_HAS_CELL_TYPE_PYRAMID     = 1 << 18,
 
+  // for VDB volumes only
+  VKL_FEATURE_FLAG_VDB_NODES_PACKED     = 1 << 19,
+  VKL_FEATURE_FLAG_VDB_NODES_NOT_PACKED = 1 << 20,
+
   VKL_FEATURE_FLAG_ALL = 0xffffffffffffffff,
 };
 

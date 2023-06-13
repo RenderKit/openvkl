@@ -10,6 +10,7 @@
 #include "vklComputeParticle.h"
 #include "vklIterateUnstructured.h"
 #include "vklIterateVdb.h"
+#include "vklIterators.h"
 
 namespace ispc {
 
@@ -53,6 +54,9 @@ namespace ispc {
   // Hit iterator struct definitions ////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////////////
 
+  typedef DefaultHitIterator<GridAcceleratorIterator, false>
+      StructuredRegularLegacyHitIterator;
+
   typedef DefaultHitIterator<DefaultIntervalIterator, false>
       SphericalHitIterator;
 
@@ -86,9 +90,21 @@ namespace ispc {
     self->time      = time;
 
     if constexpr (std::is_same<HitIteratorType,
-                               UnstructuredHitIterator>::value ||
-                  std::is_same<HitIteratorType, ParticleHitIterator>::value ||
-                  std::is_same<HitIteratorType, SphericalHitIterator>::value) {
+                               StructuredRegularLegacyHitIterator>::value) {
+      IntervalIteratorInitFunc(&self->intervalIteratorState,
+                               &self->hitIteratorShared.context->super,
+                               origin,
+                               direction,
+                               tRange,
+                               &time);
+    }
+
+    else if constexpr (std::is_same<HitIteratorType,
+                                    SphericalHitIterator>::value ||
+                       std::is_same<HitIteratorType,
+                                    UnstructuredHitIterator>::value ||
+                       std::is_same<HitIteratorType,
+                                    ParticleHitIterator>::value) {
       // elementary cell iteration supported for unstructured, but not other
       // volume types
       IntervalIteratorInitFunc(
@@ -98,12 +114,14 @@ namespace ispc {
           direction,
           tRange,
           std::is_same<HitIteratorType, UnstructuredHitIterator>::value);
+
     } else if constexpr (std::is_same<HitIteratorType, VdbHitIterator>::value) {
       IntervalIteratorInitFunc(&self->intervalIteratorState,
                                &self->hitIteratorShared.context->super,
                                origin,
                                direction,
                                tRange);
+
     } else {
       assert(false);
     }
@@ -341,22 +359,27 @@ namespace ispc {
 
       if (needInterval) {
         if constexpr (std::is_same<HitIteratorType,
+                                   SphericalHitIterator>::value ||
+                      std::is_same<HitIteratorType,
                                    UnstructuredHitIterator>::value ||
                       std::is_same<HitIteratorType,
-                                   ParticleHitIterator>::value ||
-                      std::is_same<HitIteratorType,
-                                   SphericalHitIterator>::value) {
+                                   ParticleHitIterator>::value) {
           IntervalIteratorIterateFunc(
               &self->intervalIteratorState,
               &self->currentInterval,
               self->hitIteratorShared.context->super.super.valueRanges,
               elementaryCellIteration,
               &haveInterval);
-        } else if constexpr (std::is_same<HitIteratorType,
+
+        } else if constexpr (std::is_same<
+                                 HitIteratorType,
+                                 StructuredRegularLegacyHitIterator>::value ||
+                             std::is_same<HitIteratorType,
                                           VdbHitIterator>::value) {
           IntervalIteratorIterateFunc(&self->intervalIteratorState,
                                       &self->currentInterval,
                                       &haveInterval);
+
         } else {
           assert(false);
         }
@@ -479,6 +502,17 @@ namespace ispc {
   ///////////////////////////////////////////////////////////////////////////
   // Volume-specific hit iterator API entry points //////////////////////////
   ///////////////////////////////////////////////////////////////////////////
+
+  // structuredRegularLegacy
+  constexpr auto StructuredRegularLegacyHitIterator_Init =
+      &DefaultHitIterator_Init<StructuredRegularLegacyHitIterator,
+                               GridAcceleratorIteratorU_Init>;
+
+  constexpr auto StructuredRegularLegacyHitIterator_iterateHit =
+      &DefaultHitIterator_iterateHit<
+          StructuredRegularLegacyHitIterator,
+          GridAcceleratorIterator_iterateInterval_uniform,
+          SharedStructuredVolume_computeSample>;
 
   // structuredSpherical
   constexpr auto SphericalHitIterator_Init =

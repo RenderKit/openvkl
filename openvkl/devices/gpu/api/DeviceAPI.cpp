@@ -537,7 +537,8 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateInterval(
 static_assert(
     VKL_MAX_HIT_ITERATOR_SIZE ==
     std::max(
-        sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator),
+        sizeof(StructuredRegularLegacyHitIterator) +
+            alignof(StructuredRegularLegacyHitIterator),
         std::max(sizeof(SphericalHitIterator) + alignof(SphericalHitIterator),
                  std::max(sizeof(UnstructuredHitIterator) +
                               alignof(UnstructuredHitIterator),
@@ -562,7 +563,8 @@ vklGetHitIteratorSize(const VKLHitIteratorContext *context)
 
   switch (volumeType) {
   case VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY:
-    return sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+    return sizeof(StructuredRegularLegacyHitIterator) +
+           alignof(StructuredRegularLegacyHitIterator);
 
   case VOLUME_TYPE_STRUCTURED_SPHERICAL:
     return sizeof(SphericalHitIterator) + alignof(SphericalHitIterator);
@@ -605,22 +607,23 @@ vklInitHitIterator(const VKLHitIteratorContext *context,
 
   if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
       ff & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
-    size_t space =
-        sizeof(GridAcceleratorIterator) + alignof(GridAcceleratorIterator);
+    size_t space = sizeof(StructuredRegularLegacyHitIterator) +
+                   alignof(StructuredRegularLegacyHitIterator);
 
-    void *alignedBuffer = std::align(alignof(GridAcceleratorIterator),
-                                     sizeof(GridAcceleratorIterator),
-                                     buffer,
-                                     space);
+    void *alignedBuffer =
+        std::align(alignof(StructuredRegularLegacyHitIterator),
+                   sizeof(StructuredRegularLegacyHitIterator),
+                   buffer,
+                   space);
     assert(alignedBuffer);
 
-    GridAcceleratorIteratorU_Init(
-        reinterpret_cast<GridAcceleratorIterator *>(alignedBuffer),
-        reinterpret_cast<const IntervalIteratorContext *>(context->device),
+    StructuredRegularLegacyHitIterator_Init(
+        reinterpret_cast<StructuredRegularLegacyHitIterator *>(alignedBuffer),
+        reinterpret_cast<const HitIteratorContext *>(context->device),
         reinterpret_cast<const vec3f *>(origin),
         reinterpret_cast<const vec3f *>(direction),
         reinterpret_cast<const box1f *>(tRange),
-        &time);
+        time);
 
     return (VKLHitIterator)alignedBuffer;
   }
@@ -747,8 +750,11 @@ extern "C" SYCL_EXTERNAL OPENVKL_DLLEXPORT int vklIterateHit(
   if (volumeType == VOLUME_TYPE_STRUCTURED_REGULAR_LEGACY &&
       ff & VKL_FEATURE_FLAG_STRUCTURED_REGULAR_VOLUME) {
     int result = 0;
-    GridAcceleratorIterator_iterateHit_uniform(
-        reinterpret_cast<GridAcceleratorIterator *>(iterator), hit, &result);
+    StructuredRegularLegacyHitIterator_iterateHit(
+        reinterpret_cast<StructuredRegularLegacyHitIterator *>(iterator),
+        hit,
+        &result,
+        ff);
     return result;
   }
 

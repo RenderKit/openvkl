@@ -27,13 +27,6 @@ namespace ispc {
     float nominalDeltaT;  // constant for all intervals
   };
 
-  struct GridAcceleratorIteratorHitState
-  {
-    bool activeCell;
-    vec3i currentCellIndex;
-    box1f currentCellTRange;
-  };
-
   struct GridAcceleratorIterator
   {
     IntervalIteratorShared super;
@@ -48,9 +41,6 @@ namespace ispc {
 
     // interval iterator state
     GridAcceleratorIteratorIntervalState intervalState;
-
-    // hit iterator state
-    GridAcceleratorIteratorHitState hitState;
   };
 
   // from GridAcceleratorIterator.ispc
@@ -80,8 +70,6 @@ namespace ispc {
     self->intervalState.nominalDeltaT =
         reduce_min(volume->gridSpacing *
                    rcp_safe(absf(self->direction))); /* in ray space */
-
-    self->hitState.currentCellIndex = vec3i{-1, -1, -1};
   }
 
   // from SharedStructuredVolume.ih
@@ -303,177 +291,4 @@ namespace ispc {
     *result = false;
   }
 
-  // from Iterator.ih
-
-  /*
-   * Intersect isosurfaces along the given ray using Newton-Raphson iteration.
-   */
-  inline bool intersectSurfacesNewton(const SamplerShared *sampler,
-                                      const vec3f &origin,
-                                      const vec3f &direction,
-                                      const box1f &tRange,
-                                      const unsigned int attributeIndex,
-                                      const float &time,
-                                      const float step,
-                                      const int numValues,
-                                      const float *values,
-                                      VKLHit &hit)
-  {
-    /* our bracketing sample t-values will always be in multiples of `step`,
-    to avoid artifacts / differences in hits between neighboring rays, or when
-    moving between macrocell boundaries, for example.
-
-    note that the current approach here takes only one Newton iteration, so
-    consistent bracketing is especially important for "smooth" results. */
-    const int minTIndex = floor(tRange.lower / step);
-    const int maxTIndex = ceil(tRange.upper / step);
-
-    float t0      = minTIndex * step;
-    float sample0 = SharedStructuredVolume_computeSample_uniform(
-        (const SharedStructuredVolume *)sampler->volume,
-        origin + t0 * direction,
-        sampler->filter,
-        attributeIndex,
-        time);
-
-    float t;
-
-    for (int i = minTIndex; i < maxTIndex; i++) {
-      t = (i + 1) * step;
-
-      const float sample = SharedStructuredVolume_computeSample_uniform(
-          (const SharedStructuredVolume *)sampler->volume,
-          origin + t * direction,
-          sampler->filter,
-          attributeIndex,
-          time);
-
-      float tHit    = pos_inf;
-      float epsilon = pos_inf;
-      float value   = pos_inf;
-
-      if (!isnan(sample0 + sample) && (sample != sample0)) {
-        for (int j = 0; j < numValues; j++) {
-          if ((values[j] - sample0) * (values[j] - sample) <= 0.f) {
-            const float rcpSamp = rcp(sample - sample0);
-            float tIso          = pos_inf;
-            if (!isnan(rcpSamp)) {
-              tIso = t0 + (values[j] - sample0) * rcpSamp * (t - t0);
-            }
-
-            if (tIso < tHit && tIso >= tRange.lower && tIso <= tRange.upper) {
-              tHit    = tIso;
-              value   = values[j];
-              epsilon = step * 0.125f;
-            }
-          }
-        }
-
-        if (tHit < pos_inf) {
-          hit.t       = tHit;
-          hit.sample  = value;
-          hit.epsilon = epsilon * length(direction); /* in object space */
-          return true;
-        }
-      }
-
-      t0      = t;
-      sample0 = sample;
-    }
-
-    return false;
-  }
-
-  // from GridAcceleratorIterator.ispc
-
-  inline void GridAcceleratorIterator_iterateHit_uniform(
-      GridAcceleratorIterator *self, VKLHit *hit, int *result)
-  {
-    const HitIteratorContext *hitContext =
-        (const HitIteratorContext *)self->super.context;
-
-    if (isempty1f(self->boundingBoxTRange)) {
-      *result = false;
-      return;
-    }
-
-    if (hitContext->numValues == 0) {
-      *result = false;
-      return;
-    }
-
-    const SharedStructuredVolume *volume =
-        (const SharedStructuredVolume *)
-            self->super.context->super.sampler->volume;
-
-    /* first iteration */
-    if (self->hitState.currentCellIndex.x == -1) {
-      self->hitState.activeCell =
-          GridAccelerator_nextCell(volume->accelerator,
-                                   self,
-                                   self->hitState.currentCellIndex,
-                                   self->hitState.currentCellTRange);
-    }
-
-    // reduce_min volume->gridSpacing
-    const float x    = volume->gridSpacing.x;
-    const float y    = volume->gridSpacing.y;
-    const float z    = volume->gridSpacing.z;
-    const float min  = x < y ? x : y;
-    const float step = min < z ? min : z;
-
-    while (self->hitState.activeCell) {
-      box1f cellValueRange;
-      GridAccelerator_getCellValueRange(
-          volume->accelerator,
-          self->hitState.currentCellIndex,
-          self->super.context->super.attributeIndex,
-          cellValueRange);
-
-      bool cellValueRangeOverlap = valueRangesOverlap(
-          self->super.context->super.valueRanges, cellValueRange);
-
-      if (cellValueRangeOverlap) {
-        bool foundHit =
-            intersectSurfacesNewton(self->super.context->super.sampler,
-                                    self->origin,
-                                    self->direction,
-                                    self->hitState.currentCellTRange,
-                                    self->super.context->super.attributeIndex,
-                                    self->time,
-                                    0.5f * step,
-                                    hitContext->numValues,
-                                    hitContext->values,
-                                    *hit);
-        if (foundHit) {
-          *result                                = true;
-          self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;
-
-          /* move to next cell if next t passes the cell boundary */
-          if (isempty1f(self->hitState.currentCellTRange)) {
-            self->hitState.activeCell =
-                GridAccelerator_nextCell(volume->accelerator,
-                                         self,
-                                         self->hitState.currentCellIndex,
-                                         self->hitState.currentCellTRange);
-
-            /* continue where we left off */
-            self->hitState.currentCellTRange.lower = hit->t + hit->epsilon;
-          }
-
-          return;
-        }
-      }
-
-      /* if no hits are found, move to the next cell; if a hit is found we'll
-       stay in the cell to pursue other hits */
-      self->hitState.activeCell =
-          GridAccelerator_nextCell(volume->accelerator,
-                                   self,
-                                   self->hitState.currentCellIndex,
-                                   self->hitState.currentCellTRange);
-    }
-
-    *result = false;
-  }
 }  // namespace ispc

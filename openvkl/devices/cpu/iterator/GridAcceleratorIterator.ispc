@@ -230,7 +230,7 @@ export void EXPORT_UNIQUE(GridAcceleratorIteratorV_iterateInterval,
                                                                              \
     if (cellValueRangeOverlap) {                                             \
       univary bool foundHit =                                                \
-          intersectSurfacesNewton(self->super.context->super.sampler,        \
+          intersectSurfacesBisection(self->super.context->super.sampler,     \
                                   self->origin,                              \
                                   self->direction,                           \
                                   self->hitState.currentCellTRange,          \

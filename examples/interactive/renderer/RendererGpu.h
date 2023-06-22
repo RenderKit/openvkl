@@ -24,6 +24,7 @@ namespace openvkl {
       ~RendererGpu();
       void renderFrameImpl(bool clearFramebuffer) override final;
       const Framebuffer &getFramebuffer(size_t w, size_t h) override final;
+      const void resizeFramebuffer(size_t w, size_t h) override final;
       Versioned<TRenderParamsType> &getGuiParams()
       {
         return guiParams;

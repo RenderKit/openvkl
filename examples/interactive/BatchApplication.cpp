@@ -41,15 +41,17 @@ namespace openvkl {
         }
 
         Renderer &renderer = *(rendererPtr.get());
-        // This call will resize the framebuffer to our desired output
+
+        // This call will resize empty framebuffer to our desired output
         // resolution.
-        renderer.getFramebuffer(resolution.x, resolution.y);
+        renderer.resizeFramebuffer(resolution.x, resolution.y);
 
         const std::string filename = type + ".pfm";
 
         std::cout << "Rendering with " << type << " ..." << std::endl;
 
         scheduler.start(renderer);
+
         for (unsigned i = 0; i < scene.batchModeSpp; ++i) {
           std::cout << "\r" << i << " / " << scene.batchModeSpp << " spp"
                     << std::flush;

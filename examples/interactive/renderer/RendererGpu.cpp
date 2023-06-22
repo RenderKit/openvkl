@@ -64,6 +64,14 @@ namespace openvkl {
     }
 
     template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
+    const void RendererGpu<TRendererGpuKernelSubtype,
+                           TRenderParamsType>::resizeFramebuffer(size_t w,
+                                                                 size_t h)
+    {
+      onBufferResize(w, h);
+    }
+
+    template <typename TRendererGpuKernelSubtype, typename TRenderParamsType>
     const Framebuffer &RendererGpu<TRendererGpuKernelSubtype, TRenderParamsType>::getFramebuffer(
         size_t width, size_t height)
     {

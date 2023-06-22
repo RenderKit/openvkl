@@ -113,9 +113,9 @@ static void run_benchmark(benchmark::State &state,
 
   Renderer &renderer = *(rendererPtr.get());
 
-  // This call will resize the framebuffer to our desired output
+  // This call will resize empty framebuffer to our desired output
   // resolution.
-  renderer.getFramebuffer(resolution.x, resolution.y);
+  renderer.resizeFramebuffer(resolution.x, resolution.y);
 
   scheduler.start(renderer);
   for (auto _ : state) {

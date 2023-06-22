@@ -34,6 +34,8 @@ namespace openvkl {
         return scene;
       }
 
+      virtual const void resizeFramebuffer(size_t w, size_t h) = 0;
+
       /*
        * Retrieve the current framebuffer, either in raw form or as an
        * Open GL texture handle.

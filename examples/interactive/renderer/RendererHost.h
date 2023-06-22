@@ -23,6 +23,7 @@ namespace openvkl {
       ~RendererHost();
 
       const Framebuffer &getFramebuffer(size_t w, size_t h) override final;
+      const void resizeFramebuffer(size_t w, size_t h) override final;
 
      protected:
       FramebufferCpu framebuffer;

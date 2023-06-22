@@ -12,6 +12,11 @@ namespace openvkl {
 
     RendererHost::~RendererHost() {}
 
+    const void RendererHost::resizeFramebuffer(size_t w, size_t h)
+    {
+      framebuffer.resize(w, h);
+    }
+
     const Framebuffer &RendererHost::getFramebuffer(size_t w, size_t h)
     {
       // Note: This is all in the main thread, so no need to lock any parameters
@@ -32,8 +37,8 @@ namespace openvkl {
         scheduler.stop(*this);
         framebuffer.resize(width, height);
         scheduler.start(*this);
-        // Trigger render frame after resizing buffer
-        // with clearFramebuffer flag set to true.
+        //  Trigger render frame after resizing buffer
+        //  with clearFramebuffer flag set to true.
         renderFrameImpl(true);
       }
 

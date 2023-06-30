@@ -17,15 +17,17 @@ export SYCL_CACHE_DIR=./jit_cache
 # Note: $IMG_DIFF_TOOL should return only exit codes >0 for this to be robust.
 NUM_IMAGE_DIFF_ERRORS=0
 
-# LargeGrf mode required for AMR sampling
-export PrintDebugSettings=1
-export NEOReadDebugKeys=1 
-export ForceLargeGrfCompilationMode=1
-
 for volumeType in $VOLUME_TYPES; do
-
     ./bin/vklExamplesGPU -renderer density_pathtracer_gpu $COMMON_ARGS -volumeType $volumeType -spp 50
-    ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu $COMMON_ARGS -volumeType $volumeType -spp 2
+    # LargeGrf mode required for AMR sampling
+    if [ "$volumeType" == "amr" ]; then
+        export PrintDebugSettings=1
+        export NEOReadDebugKeys=1
+        export ForceLargeGrfCompilationMode=1
+        $LARGE_GRF_ENV_FLAGS ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu $COMMON_ARGS -volumeType $volumeType -spp 2
+    else
+        ./bin/vklExamplesGPU -renderer ray_march_iterator_gpu $COMMON_ARGS -volumeType $volumeType -spp 2
+    fi
     ./bin/vklExamplesGPU -renderer interval_iterator_debug_gpu $COMMON_ARGS -volumeType $volumeType -spp 2
     ./bin/vklExamplesGPU -renderer hit_iterator_renderer_gpu $COMMON_ARGS -volumeType $volumeType -spp 2
 

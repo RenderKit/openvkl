@@ -109,7 +109,7 @@ jobs:
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
       level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -136,7 +136,7 @@ jobs:
       artifact-path: ./build/install/*/*.pfm
       artifact-on-failure: true
       level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install
@@ -197,40 +197,6 @@ jobs:
         echo "### Run again with chunking allocator enabled in ISPCRT"
         ISPCRT_MEM_POOL=1 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
 
-  perf-dg2:
-    secrets: inherit
-    needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    with:
-      submodules: true
-      image: ubuntu:22.04
-      runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
-      options: --device=/dev/dri:/dev/dri
-      cmd: |
-        cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-        ./bin/vklBenchmarkGPU --benchmark_repetitions=5 --benchmark_min_time=10
-
-  perf-pvc:
-    secrets: inherit
-    needs: [ build-gpu ]
-    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
-    with:
-      submodules: true
-      image: ubuntu:22.04
-      runs-on: '[ "Linux", "docker", "pvc" ]'
-      artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
-      options: --device=/dev/dri:/dev/dri
-      cmd: |
-        cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-        ./bin/vklBenchmarkGPU --benchmark_repetitions=5 --benchmark_min_time=10
-
   test-examples-big-volume-pvc:
     secrets: inherit
     needs: [ build-gpu ]
@@ -244,7 +210,7 @@ jobs:
       artifact-path: ./build/install/*.pfm
       artifact-on-failure: true
       level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env  .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install

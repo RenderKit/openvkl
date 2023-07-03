@@ -203,7 +203,6 @@ if (BUILD_GLFW)
   include(dep_glfw)
 endif()
 
-
 # We always build or download OpenVDB and all its dependencies if OpenVDB is
 # enabled, and to not attempt to find them in the environment.
 set(BUILD_OPENVDB_DEFAULT ON)

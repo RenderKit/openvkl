@@ -194,7 +194,7 @@ if (BUILD_TESTING)
       tests/unstructured_volume_sampling.cpp
       tests/vdb_volume.cpp
       tests/vdb_volume_multi.cpp
-      tests/vdb_volume_motion_blur.cpp  
+      tests/vdb_volume_motion_blur.cpp
       tests/hit_iterator.cpp
       tests/interval_iterator.cpp
       tests/multi_device.cpp
@@ -204,7 +204,7 @@ if (BUILD_TESTING)
       tests/particle_volume_sampling.cpp
       tests/particle_volume_value_range.cpp
       tests/amr_volume_sampling.cpp
-      tests/amr_volume_value_range.cpp  
+      tests/amr_volume_value_range.cpp
       tests/feature_flags.cpp
     )
     target_include_directories(vklTestsGPU PRIVATE ${ISPC_TARGET_DIR})
@@ -213,6 +213,7 @@ if (BUILD_TESTING)
 
     # We need to disable catching signals to make USM Shared buffers on GPU work properly
     target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_POSIX_SIGNALS=1)
+    target_compile_definitions(vklTestsGPU PRIVATE CATCH_CONFIG_NO_WINDOWS_SEH=1)
 
     install(TARGETS vklTestsGPU
       RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

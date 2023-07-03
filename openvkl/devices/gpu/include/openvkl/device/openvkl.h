@@ -21,14 +21,13 @@
 extern "C" {
 #endif
 
-OPENVKL_INTERFACE
-void vklInit();
+OPENVKL_INTERFACE void vklInit();
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sampling ///////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-OPENVKL_INTERFACE SYCL_EXTERNAL float vklComputeSample(
+SYCL_EXTERNAL float vklComputeSample(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
@@ -36,7 +35,7 @@ OPENVKL_INTERFACE SYCL_EXTERNAL float vklComputeSample(
     const VKLFeatureFlags featureFlags
         VKL_DEFAULT_VAL(= VKL_FEATURE_FLAGS_DEFAULT));
 
-OPENVKL_INTERFACE SYCL_EXTERNAL void vklComputeSampleM(
+SYCL_EXTERNAL void vklComputeSampleM(
     const VKLSampler *sampler,
     const vkl_vec3f *objectCoordinates,
     float *samples,
@@ -46,7 +45,7 @@ OPENVKL_INTERFACE SYCL_EXTERNAL void vklComputeSampleM(
     const VKLFeatureFlags featureFlags
         VKL_DEFAULT_VAL(= VKL_FEATURE_FLAGS_DEFAULT));
 
-OPENVKL_INTERFACE SYCL_EXTERNAL vkl_vec3f
+SYCL_EXTERNAL vkl_vec3f
 vklComputeGradient(const VKLSampler *sampler,
                    const vkl_vec3f *objectCoordinates,
                    unsigned int attributeIndex VKL_DEFAULT_VAL(= 0),
@@ -61,10 +60,10 @@ vklComputeGradient(const VKLSampler *sampler,
 struct IntervalIterator;
 typedef struct IntervalIterator *VKLIntervalIterator;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL size_t
+SYCL_EXTERNAL size_t
 vklGetIntervalIteratorSize(const VKLIntervalIteratorContext *context);
 
-OPENVKL_INTERFACE SYCL_EXTERNAL VKLIntervalIterator
+SYCL_EXTERNAL VKLIntervalIterator
 vklInitIntervalIterator(const VKLIntervalIteratorContext *context,
                         const vkl_vec3f *origin,
                         const vkl_vec3f *direction,
@@ -81,7 +80,7 @@ typedef struct
   float nominalDeltaT;
 } VKLInterval;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateInterval(
+SYCL_EXTERNAL int vklIterateInterval(
     VKLIntervalIterator iterator,
     VKLInterval *interval,
     const VKLFeatureFlags featureFlags
@@ -94,10 +93,10 @@ OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateInterval(
 struct HitIterator;
 typedef struct HitIterator *VKLHitIterator;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL size_t
+SYCL_EXTERNAL size_t
 vklGetHitIteratorSize(const VKLHitIteratorContext *context);
 
-OPENVKL_INTERFACE SYCL_EXTERNAL VKLHitIterator
+SYCL_EXTERNAL VKLHitIterator
 vklInitHitIterator(const VKLHitIteratorContext *context,
                    const vkl_vec3f *origin,
                    const vkl_vec3f *direction,
@@ -114,7 +113,7 @@ typedef struct
   float epsilon;
 } VKLHit;
 
-OPENVKL_INTERFACE SYCL_EXTERNAL int vklIterateHit(
+SYCL_EXTERNAL int vklIterateHit(
     VKLHitIterator iterator,
     VKLHit *hit,
     const VKLFeatureFlags featureFlags

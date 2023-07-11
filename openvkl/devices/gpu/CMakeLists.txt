@@ -9,61 +9,65 @@ include_directories_ispc(
   ${RKCOMMON_INCLUDE_DIRS}
 )
 
+# directory of device implementations; we avoid relative paths since some CMake
+# macros have difficult with such paths.
+set(DEVICE_ROOT_DIR ${PROJECT_SOURCE_DIR}/openvkl/devices)
+
 # sources common to multiple volume types
 set(SOURCES_COMMON_AMR_PARTICLE_UNSTRUCTURED
-  ../cpu/iterator/UnstructuredIterator.cpp
-  ../cpu/iterator/UnstructuredIterator.ispc
-  ../cpu/volume/UnstructuredVolume.ispc
+  ${DEVICE_ROOT_DIR}/cpu/iterator/UnstructuredIterator.cpp
+  ${DEVICE_ROOT_DIR}/cpu/iterator/UnstructuredIterator.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/UnstructuredVolume.ispc
 )
 
 set(SOURCES_COMMON_STRUCTURED_REGULAR_VDB
-  ../cpu/volume/vdb/VdbVolume.cpp
-  ../cpu/volume/vdb/VdbVolume.ispc
-  ../cpu/volume/vdb/VdbSampler.cpp
-  ../cpu/volume/vdb/VdbSampler.ispc
-  ../cpu/volume/vdb/VdbInnerNodeObserver.cpp
-  ../cpu/volume/vdb/VdbIterator.cpp
-  ../cpu/volume/vdb/VdbIterator.ispc
-  ../cpu/volume/vdb/VdbLeafAccessObserver.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbVolume.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbSampler.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbSampler.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbInnerNodeObserver.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbIterator.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbIterator.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/vdb/VdbLeafAccessObserver.cpp
 )
 
 set(SOURCES_COMMON_STRUCTURED_REGULAR_LEGACY_SPHERICAL
-  ../cpu/iterator/GridAcceleratorIterator.cpp
-  ../cpu/iterator/GridAcceleratorIterator.ispc
-  ../cpu/iterator/GridAcceleratorIteratorSize.ispc
-  ../cpu/volume/GridAccelerator.ispc
-  ../cpu/volume/SharedStructuredVolume.ispc
-  ../cpu/volume/StructuredVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/iterator/GridAcceleratorIterator.cpp
+  ${DEVICE_ROOT_DIR}/cpu/iterator/GridAcceleratorIterator.ispc
+  ${DEVICE_ROOT_DIR}/cpu/iterator/GridAcceleratorIteratorSize.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/GridAccelerator.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/SharedStructuredVolume.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/StructuredVolume.cpp
 )
 
 # source files per volume type
 set(SOURCES_STRUCTURED_REGULAR_LEGACY
-  ../cpu/volume/StructuredRegularVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/StructuredRegularVolume.cpp
 )
 
 set(SOURCES_STRUCTURED_SPHERICAL
-  ../cpu/volume/StructuredSphericalVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/StructuredSphericalVolume.cpp
 )
 
 set(SOURCES_UNSTRUCTURED
-  ../cpu/volume/UnstructuredVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/UnstructuredVolume.cpp
 )
 
 set(SOURCES_PARTICLE
-  ../cpu/volume/particle/ParticleVolume.cpp
-  ../cpu/volume/particle/ParticleVolume.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/particle/ParticleVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/particle/ParticleVolume.ispc
 )
 
 set(SOURCES_AMR
-  ../cpu/volume/amr/AMRAccel.cpp
-  ../cpu/volume/amr/AMRData.cpp
-  ../cpu/volume/amr/AMRVolume.cpp
-  ../cpu/volume/amr/AMRVolume.ispc
-  ../cpu/volume/amr/CellRef.ispc
-  ../cpu/volume/amr/DualCell.ispc
-  ../cpu/volume/amr/method_current.ispc
-  ../cpu/volume/amr/method_finest.ispc
-  ../cpu/volume/amr/method_octant.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/AMRAccel.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/AMRData.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/AMRVolume.cpp
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/AMRVolume.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/CellRef.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/DualCell.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/method_current.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/method_finest.ispc
+  ${DEVICE_ROOT_DIR}/cpu/volume/amr/method_octant.ispc
 )
 
 # generate source file additions for optional volume types
@@ -111,15 +115,15 @@ set(ISPC_DEFINITIONS
 openvkl_add_library_ispc(openvkl_module_gpu_device STATIC
   api/DeviceAPI.cpp
   api/GPUDevice.cpp
-  ../cpu/iterator/DefaultIterator.cpp
-  ../cpu/iterator/DefaultIterator.ispc
-  ../cpu/iterator/IteratorContext.cpp
-  ../cpu/iterator/IteratorContext.ispc
-  ../cpu/observer/Observer.cpp
-  ../cpu/observer/ObserverRegistry.cpp
-  ../cpu/observer/ObserverRegistry.ispc
-  ../cpu/sampler/Sampler.cpp
-  ../cpu/sampler/Sampler.ispc
+  ${DEVICE_ROOT_DIR}/cpu/iterator/DefaultIterator.cpp
+  ${DEVICE_ROOT_DIR}/cpu/iterator/DefaultIterator.ispc
+  ${DEVICE_ROOT_DIR}/cpu/iterator/IteratorContext.cpp
+  ${DEVICE_ROOT_DIR}/cpu/iterator/IteratorContext.ispc
+  ${DEVICE_ROOT_DIR}/cpu/observer/Observer.cpp
+  ${DEVICE_ROOT_DIR}/cpu/observer/ObserverRegistry.cpp
+  ${DEVICE_ROOT_DIR}/cpu/observer/ObserverRegistry.ispc
+  ${DEVICE_ROOT_DIR}/cpu/sampler/Sampler.cpp
+  ${DEVICE_ROOT_DIR}/cpu/sampler/Sampler.ispc
   ${OPTIONAL_VOLUME_SOURCES}
   ${VKL_RESOURCE}
 )

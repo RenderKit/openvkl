@@ -64,6 +64,7 @@ jobs:
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR=OFF \
                            -DOPENVKL_DEVICE_CPU_STRUCTURED_REGULAR_LEGACY=ON \
                            -D CMAKE_BUILD_TYPE=RelWithDebInfo"
+
   build-gpu-debug:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
@@ -112,16 +113,10 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-
-        echo "### Run without chunking allocator enabled in ISPCRT"
-        ./bin/vklTutorialGPU
-        ./bin/vklTestsGPU --durations yes
-
-        echo "### Run again with chunking allocator enabled in ISPCRT"
-        ISPCRT_MEM_POOL=1 ./bin/vklTutorialGPU
-        ISPCRT_MEM_POOL=1 ./bin/vklTestsGPU --durations yes exclude:'Multiple devices'
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+        cd ./build/install/bin
+        ./vklTutorialGPU
+        ./vklTestsGPU --durations yes
 
   test-examples-pvc:
     secrets: inherit
@@ -133,20 +128,15 @@ jobs:
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-pvc
-      artifact-path: ./build/install/*/*.pfm
+      artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
       level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-
-        echo "### Run without chunking allocator enabled in ISPCRT"
-        $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
-
-        echo "### Run again with chunking allocator enabled in ISPCRT"
-        ISPCRT_MEM_POOL=1 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+        cd ./build/install/bin
+        python3 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.py $STORAGE_PATH/tools/img-diff/dist_linux/img_diff
 
   test-dg2:
     secrets: inherit
@@ -161,16 +151,10 @@ jobs:
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-
-        echo "### Run without chunking allocator enabled in ISPCRT"
-        ./bin/vklTutorialGPU
-        ./bin/vklTestsGPU --durations yes
-
-        echo "### Run again with chunking allocator enabled in ISPCRT"
-        ISPCRT_MEM_POOL=1 ./bin/vklTutorialGPU
-        ISPCRT_MEM_POOL=1 ./bin/vklTestsGPU --durations yes exclude:'Multiple devices'
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+        cd ./build/install/bin
+        ./vklTutorialGPU
+        ./vklTestsGPU --durations yes
 
   test-examples-dg2:
     secrets: inherit
@@ -182,20 +166,15 @@ jobs:
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
       artifact-out: test-examples-dg2
-      artifact-path: ./build/install/*/*.pfm
+      artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
       level-zero-version: public/1.9.9
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
-        cd ./build/install
-        export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-
-        echo "### Run without chunking allocator enabled in ISPCRT"
-        $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
-
-        echo "### Run again with chunking allocator enabled in ISPCRT"
-        ISPCRT_MEM_POOL=1 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.sh
+        export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
+        cd ./build/install/bin
+        python3 $GITHUB_WORKSPACE/.github/scripts/run-examples-tests.py $STORAGE_PATH/tools/img-diff/dist_linux/img_diff
 
   test-examples-big-volume-pvc:
     secrets: inherit
@@ -215,5 +194,4 @@ jobs:
       cmd: |
         cd ./build/install
         export LD_LIBRARY_PATH=`pwd`/lib:$LD_LIBRARY_PATH
-
         $GITHUB_WORKSPACE/.github/scripts/run-examples-big-volume-tests.sh

@@ -72,7 +72,10 @@ namespace openvkl {
         const auto &fb = framebuffer.getFrontBuffer();
         std::cout << "Writing " << filename << " ..." << std::endl;
         rkcommon::utility::writePFM(
-            filename, fb.getWidth(), fb.getHeight(), fb.getRgba());
+            filename,
+            fb.getWidth(),
+            fb.getHeight(),
+            reinterpret_cast<const vec3fa *>(fb.getRgba()));
       }
     }
 

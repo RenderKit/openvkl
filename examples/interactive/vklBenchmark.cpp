@@ -131,8 +131,10 @@ static void run_benchmark(benchmark::State &state,
 
   const auto &framebuffer = renderer.getFramebuffer(resolution.x, resolution.y);
   const auto &fb          = framebuffer.getFrontBuffer();
-  rkcommon::utility::writePFM(
-      os.str(), fb.getWidth(), fb.getHeight(), fb.getRgba());
+  rkcommon::utility::writePFM(os.str(),
+                              fb.getWidth(),
+                              fb.getHeight(),
+                              reinterpret_cast<const vec3fa *>(fb.getRgba()));
 }
 
 static void render_wavelet_structured_regular(benchmark::State &state,

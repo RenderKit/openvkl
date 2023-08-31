@@ -11,5 +11,8 @@ void initializeOpenVKL();
 void shutdownOpenVKL();
 VKLDevice getOpenVKLDevice();
 #ifdef OPENVKL_TESTING_GPU
-sycl::queue getSyclQueue();
+sycl::queue &getSyclQueue();
+
+void setUseDeviceOnlySharedBuffers(bool enabled);
+bool getUseDeviceOnlySharedBuffers();
 #endif

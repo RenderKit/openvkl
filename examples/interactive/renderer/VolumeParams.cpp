@@ -50,6 +50,9 @@ namespace openvkl {
              "\t-file <filename>\n"
              "\t-numParticles <N> (particle only)\n"
              "\t-vdbRepackNodes 0 | 1 (vdb only)\n"
+#ifdef OPENVKL_TESTING_GPU
+             "\t-deviceOnlySharedBuffers (structuredRegular only)\n"
+#endif
              "\t-background <BG VALUE>| undefined\n";
     }
 
@@ -96,6 +99,12 @@ namespace openvkl {
         else if (arg == "-vdbRepackNodes") {
           vdbRepackNodes = cmd::consume_1<bool>(args, it);
         }
+#ifdef OPENVKL_TESTING_GPU
+        else if (arg == "-deviceOnlySharedBuffers") {
+          cmd::consume_0(args, it);
+          deviceOnlySharedBuffers = true;
+        }
+#endif
 
         else if (arg == "-gridOrigin") {
           std::tie(gridOrigin.x, gridOrigin.y, gridOrigin.z) =
@@ -194,6 +203,14 @@ namespace openvkl {
         throw std::runtime_error("invalid voxelType " +
                                  voxelTypeToString(voxelType));
       }
+
+#ifdef OPENVKL_TESTING_GPU
+      if (deviceOnlySharedBuffers && volumeType != "structuredRegular") {
+        throw std::runtime_error(
+            "-deviceOnlySharedBuffers option is only supported for "
+            "structuredRegular volumes");
+      }
+#endif
     }
 
     std::unique_ptr<testing::TestingVolume> VolumeParams::createVolume() const
@@ -202,6 +219,10 @@ namespace openvkl {
       // having to make this function non-const.
       VolumeParams pp = *this;
       pp.validate();
+
+#ifdef OPENVKL_TESTING_GPU
+      setUseDeviceOnlySharedBuffers(deviceOnlySharedBuffers);
+#endif
 
       std::unique_ptr<testing::TestingVolume> testingVolume;
 

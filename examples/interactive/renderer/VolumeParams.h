@@ -102,6 +102,12 @@ namespace openvkl {
 
       bool vdbRepackNodes{true};
 
+#ifdef OPENVKL_TESTING_GPU
+      // if enabled, enables shared data buffers with USM device-only
+      // allocations
+      bool deviceOnlySharedBuffers{false};
+#endif
+
       void parseCommandLine(std::list<std::string> &args);
       static void usage();
 

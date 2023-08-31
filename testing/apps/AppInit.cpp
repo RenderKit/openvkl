@@ -72,12 +72,26 @@ VKLDevice getOpenVKLDevice()
 {
   return device;
 }
+
 #ifdef OPENVKL_TESTING_GPU
-sycl::queue getSyclQueue()
+sycl::queue &getSyclQueue()
 {
   if (!syclQueuePtr) {
     throw std::runtime_error("syclQueuePtr is not initialized");
   }
   return *syclQueuePtr;
 }
+
+static bool useDeviceOnlySharedBuffers = false;
+
+void setUseDeviceOnlySharedBuffers(bool enabled)
+{
+  useDeviceOnlySharedBuffers = enabled;
+}
+
+bool getUseDeviceOnlySharedBuffers()
+{
+  return useDeviceOnlySharedBuffers;
+}
+
 #endif

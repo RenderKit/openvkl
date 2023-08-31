@@ -20,6 +20,7 @@ namespace openvkl {
     struct TestingStructuredVolume : public TestingVolume
     {
       TestingStructuredVolume() = delete;
+      ~TestingStructuredVolume();
 
       range1f getComputedValueRange() const override;
 
@@ -81,6 +82,9 @@ namespace openvkl {
 
       TestingAllocatorStl<uint32_t> allocatorTuvIndex;
       UsmVector<uint32_t> usmTuvIndex;
+
+      // for GPU using device-only shared buffers
+      unsigned char *deviceOnly_data = nullptr;
 #endif
     };
 
@@ -129,6 +133,21 @@ namespace openvkl {
       if (byteStride < sizeOfVKLDataType(voxelType)) {
         throw std::runtime_error("byteStride must be >= size of voxel type");
       }
+    }
+
+    inline TestingStructuredVolume::~TestingStructuredVolume()
+    {
+#ifdef OPENVKL_TESTING_GPU
+      if (deviceOnly_data) {
+        try {
+          sycl::free(deviceOnly_data, getSyclQueue());
+          deviceOnly_data = nullptr;
+        } catch (...) {
+          // shutdownOpenVKL() may have already been called, destroying the SYCL
+          // queue
+        }
+      }
+#endif
     }
 
     inline range1f TestingStructuredVolume::getComputedValueRange() const
@@ -223,7 +242,28 @@ namespace openvkl {
 #ifdef OPENVKL_TESTING_GPU
         VKLData data;
 
-        if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
+        if (getUseDeviceOnlySharedBuffers()) {
+          auto queue = getSyclQueue();
+
+          if (deviceOnly_data) {
+            sycl::free(deviceOnly_data, queue);
+            deviceOnly_data = nullptr;
+          }
+
+          deviceOnly_data =
+              sycl::malloc_device<unsigned char>(voxels.size(), queue);
+
+          queue.memcpy(deviceOnly_data, voxels.data(), voxels.size());
+
+          data = vklNewData(device,
+                            totalNumValues,
+                            voxelType,
+                            deviceOnly_data,
+                            VKL_DATA_SHARED_BUFFER,
+                            byteStride);
+        }
+
+        else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
           // for testing, we'll make a local USM copy from host memory, then
           // pass that as a shared buffer to VKL
           std::copy(
@@ -235,6 +275,7 @@ namespace openvkl {
                             usmVoxels.data(),
                             dataCreationFlags,
                             byteStride);
+
         } else {
           data = vklNewData(device,
                             totalNumValues,

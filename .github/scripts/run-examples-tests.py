@@ -72,6 +72,7 @@ class OpenVKLTestCase:
     volume_type:str = None
     max_mse:float = None
     spp:int = None
+    extra_gpu_args:str = None
 
     __gpu_exit_code:int = None
     __gpu_output:Output = None
@@ -82,11 +83,12 @@ class OpenVKLTestCase:
     __diff_exit_code:int = None
     __diff_output:Output = None
 
-    def __init__(self, renderer : str, volume_type : str):
+    def __init__(self, renderer : str, volume_type : str, extra_gpu_args : str = ''):
         self.renderer = renderer
         self.volume_type = volume_type
         self.max_mse = 0.000001
         self.spp = 2
+        self.extra_gpu_args = extra_gpu_args
 
         # For this particular case we need to set higher MSE treshold
         if renderer == "hit_iterator_renderer" and volume_type == "structuredRegular":
@@ -116,7 +118,7 @@ class OpenVKLTestCase:
         return "-batch -framebufferSize 1024 1024"
 
     def get_name(self) -> str:
-        return "%s-%s" % (self.renderer, self.volume_type)
+        return "%s-%s%s" % (self.renderer, self.volume_type, self.extra_gpu_args)
 
     def get_result(self) -> int:
         return self.__gpu_exit_code + self.__cpu_exit_code + self.__diff_exit_code
@@ -147,7 +149,7 @@ class OpenVKLTestCase:
         timeout = 60
 
         # Execute GPU example
-        gpu_run_cmd = "%s -renderer %s_gpu %s -volumeType %s -spp %d" % (self.__get_example_gpu_binary_string(), self.renderer, self.__get_common_params(), self.volume_type, self.spp)
+        gpu_run_cmd = "%s -renderer %s_gpu %s -volumeType %s -spp %d %s" % (self.__get_example_gpu_binary_string(), self.renderer, self.__get_common_params(), self.volume_type, self.spp, self.extra_gpu_args)
         self.__print_debug("## Executing: '%s', with timeout: %d" % (gpu_run_cmd, timeout))
         self.__gpu_exit_code, self.__gpu_output = TestCommandTool().run(gpu_run_cmd, timeout)
 
@@ -160,11 +162,11 @@ class OpenVKLTestCase:
         # so all images can be stored in the same directory. That way we can avoid overriding output image
         # by different volume types executions.
         src_gpu_file_path = os.path.join(os.getcwd(), "%s_gpu.pfm" % self.renderer)
-        dst_gpu_file_path = os.path.join(os.getcwd(), "%s-%s-gpu.pfm" % (self.renderer, self.volume_type))
+        dst_gpu_file_path = os.path.join(os.getcwd(), "%s-gpu.pfm" % (self.get_name()))
         os.rename(src_gpu_file_path, dst_gpu_file_path)
 
         src_cpu_file_path = os.path.join(os.getcwd(), "%s.pfm" % self.renderer)
-        dst_cpu_file_path = os.path.join(os.getcwd(), "%s-%s-cpu.pfm" % (self.renderer, self.volume_type))
+        dst_cpu_file_path = os.path.join(os.getcwd(), "%s-cpu.pfm" % (self.get_name()))
         os.rename(src_cpu_file_path, dst_cpu_file_path)
 
         # Calculate difference between GPU & CPU generated image
@@ -190,21 +192,24 @@ def main():
         for volume_type in volume_type_list:
             test_cases.append(OpenVKLTestCase(renderer, volume_type))
 
+            if volume_type == "structuredRegular":
+                test_cases.append(OpenVKLTestCase(renderer, volume_type, "-deviceOnlySharedBuffers"))
+
     # execute test cases
     for test_case in test_cases:
         test_case.execute(img_diff_tool_path)
 
     # print summary & analyze results
     print()
-    print("################################ SUMMARY ################################")
+    print("######################################### SUMMARY ##########################################")
     print()
 
     failed_test_cases = []
     # For any more advanced table formatting external library should be used
     # or external class should be created.
-    fixed_width_row_format = "%-5s %-7s %-45s %s"
+    fixed_width_row_format = "%-5s %-7s %-65s %s"
     print(fixed_width_row_format % ("####", "Result", "Test case name", "MSE value"))
-    print("------------------------------------------------------------------------")
+    print("--------------------------------------------------------------------------------------------")
     for test_case in test_cases:
         result = test_case.get_result()
         if result != 0:

@@ -21,11 +21,14 @@ namespace openvkl {
          VKLDataType dataType,
          const void *source,
          VKLDataCreationFlags dataCreationFlags,
-         size_t byteStride);
+         size_t byteStride,
+         bool ownSharedBuffer = false);
 
     Data(Device *d, size_t numItems, VKLDataType dataType);
 
     virtual ~Data() override;
+
+    rkcommon::memory::Ref<const Data> hostAccessible() const;
 
     virtual std::string toString() const override;
 
@@ -51,8 +54,14 @@ namespace openvkl {
     static ispc::Data1D emptyData1D;  // dummy, zero-initialized
 
    protected:
-    api::memstate *view;
+    api::memstate *memstate;
     char *addr;
+
+    // transfer ownership of the shared buffer? if so, we will free the memory
+    // on destruction. this flag is only available for internal usages -- not
+    // the public API. the shared buffer in this case must be allocated with
+    // new[].
+    const bool ownSharedBuffer = false;
   };
 
   // Inlined definitions //////////////////////////////////////////////////////

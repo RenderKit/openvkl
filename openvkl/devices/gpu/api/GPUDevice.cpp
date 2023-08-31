@@ -32,6 +32,26 @@ namespace openvkl {
     }
 
     template <int W>
+    AllocType GPUDevice<W>::getAllocationType(const void *ptr) const
+    {
+      sycl::usm::alloc allocType = sycl::get_pointer_type(ptr, syclContext);
+
+      switch (allocType) {
+      case sycl::usm::alloc::host:
+        return OPENVKL_ALLOC_TYPE_HOST;
+
+      case sycl::usm::alloc::device:
+        return OPENVKL_ALLOC_TYPE_DEVICE;
+
+      case sycl::usm::alloc::shared:
+        return OPENVKL_ALLOC_TYPE_SHARED;
+
+      default:
+        return OPENVKL_ALLOC_TYPE_UNKNOWN;
+      }
+    }
+
+    template <int W>
     api::memstate *GPUDevice<W>::allocateBytes(size_t numBytes) const
     {
       api::memstate *container = new api::memstate;
@@ -48,6 +68,45 @@ namespace openvkl {
     {
       BufferSharedDelete((ISPCRTMemoryView)container->privateManagement);
       delete container;
+    }
+
+    template <int W>
+    char *GPUDevice<W>::copyDeviceBufferToHost(size_t numItems,
+                                               VKLDataType dataType,
+                                               const void *source,
+                                               size_t byteStride)
+    {
+      // verify pointer type
+      sycl::usm::alloc allocType = sycl::get_pointer_type(source, syclContext);
+
+      if (allocType != sycl::usm::alloc::device) {
+        throw std::runtime_error("GPUDevice: pointer is NOT a device pointer");
+      }
+
+      // get device from pointer
+      sycl::device syclDevice;
+
+      try {
+        syclDevice = sycl::get_pointer_device(source, syclContext);
+      } catch (std::exception &e) {
+        throw std::runtime_error(
+            "could not determine SYCL device used for 'source'");
+      }
+
+      sycl::queue queue = sycl::queue(syclDevice);
+
+      char *destination = new char[numItems * sizeOf(dataType)];
+
+      const bool isCompact = byteStride == sizeOf(dataType);
+
+      if (isCompact) {
+        queue.memcpy(destination, source, numItems * sizeof(dataType));
+        queue.wait();
+      } else {
+        throw std::runtime_error("not implemented");
+      }
+
+      return destination;
     }
 
     template <int W>
@@ -87,19 +146,22 @@ namespace openvkl {
         context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_CPU);
 
       } else {
-        sycl::context *syclContext =
+        sycl::context *c =
             (sycl::context *)getParam<const void *>("syclContext", nullptr);
 
-        if (syclContext == nullptr) {
+        if (c == nullptr) {
           throw std::runtime_error(
-              "GPU device type can't be used without 'syclContext' param");
+              "GPU device type can't be used without 'syclContext' parameter");
         }
+
+        // SYCL contexts are normally stored in the application by-value, so
+        // save a copy here in case it disappears from the application's stack
+        syclContext = *c;
 
         // nativeContext is a pointer - it's owned by syclContext so no need to
         // care about life cycle for this variable here.
         ze_context_handle_t nativeContext =
-            sycl::get_native<sycl::backend::ext_oneapi_level_zero>(
-                *syclContext);
+            sycl::get_native<sycl::backend::ext_oneapi_level_zero>(syclContext);
 
         context = new ispcrt::Context(ISPCRT_DEVICE_TYPE_GPU, nativeContext);
       }

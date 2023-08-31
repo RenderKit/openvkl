@@ -21,6 +21,22 @@
 #endif
 
 namespace openvkl {
+
+  enum DeviceType
+  {
+    OPENVKL_DEVICE_TYPE_UNKNOWN = 0,
+    OPENVKL_DEVICE_TYPE_CPU,
+    OPENVKL_DEVICE_TYPE_GPU,
+  };
+
+  enum AllocType
+  {
+    OPENVKL_ALLOC_TYPE_UNKNOWN = 0,
+    OPENVKL_ALLOC_TYPE_HOST,
+    OPENVKL_ALLOC_TYPE_DEVICE,
+    OPENVKL_ALLOC_TYPE_SHARED,
+  };
+
   namespace api {
 
     typedef struct
@@ -153,9 +169,23 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
       // Hardware facilities //////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
+
+      virtual DeviceType getDeviceType() const = 0;
+
+      virtual AllocType getAllocationType(const void *ptr) const = 0;
+
+      virtual void *getContext() const = 0;
+
       virtual memstate *allocateBytes(size_t numBytes) const = 0;
       virtual void freeMemState(memstate *) const            = 0;
-      virtual void *getContext() const                       = 0;
+
+      virtual char *copyDeviceBufferToHost(size_t numItems,
+                                           VKLDataType dataType,
+                                           const void *source,
+                                           size_t byteStride)
+      {
+        throw std::runtime_error("not implemented for this device");
+      }
 
      private:
       bool committed = false;

@@ -71,6 +71,16 @@ namespace openvkl {
      protected:
       void buildAccelerator();
 
+      // during acceleration structure builds, we need host-accessible data.
+      // these functions ensure we have host-accessible data during build, but
+      // revert to existing (e.g. device-only) data afterward.
+      void preHostBuild();
+      void postHostBuild();
+
+      // temporary state associated with [pre,post]HostBuild()
+      std::vector<rkcommon::memory::Ref<const Data>> host_attributesData;
+      std::unique_ptr<BufferShared<ispc::Data1D>> host_deviceAttributesData;
+
       // parameters set in commit()
       vec3i dimensions;
       vec3f gridOrigin;
@@ -223,6 +233,8 @@ namespace openvkl {
     template <int W>
     inline void StructuredVolume<W>::buildAccelerator()
     {
+      preHostBuild();
+
       if (m_accelerator)
         BufferSharedDelete(m_accelerator);
       m_accelerator =
@@ -278,6 +290,36 @@ namespace openvkl {
                   (valueRanges->sharedPtr() + a)->lower,
                   (valueRanges->sharedPtr() + a)->upper);
       }
+
+      postHostBuild();
+    }
+
+    template <int W>
+    inline void StructuredVolume<W>::preHostBuild()
+    {
+      host_deviceAttributesData = make_buffer_shared_unique<ispc::Data1D>(
+          this->getDevice(), attributesData.size());
+
+      for (auto &data : attributesData) {
+        host_attributesData.push_back(data->hostAccessible());
+      }
+
+      this->getSh()->attributesData = host_deviceAttributesData->sharedPtr();
+      for (size_t i = 0; i < attributesData.size(); i++) {
+        this->getSh()->attributesData[i] = *(ispc(host_attributesData[i]));
+      }
+    }
+
+    template <int W>
+    inline void StructuredVolume<W>::postHostBuild()
+    {
+      this->getSh()->attributesData = deviceAttributesData->sharedPtr();
+      for (size_t i = 0; i < attributesData.size(); i++) {
+        this->getSh()->attributesData[i] = *(ispc(attributesData[i]));
+      }
+
+      host_attributesData.clear();
+      host_deviceAttributesData.reset();
     }
 
   }  // namespace cpu_device

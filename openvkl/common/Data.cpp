@@ -20,12 +20,14 @@ namespace openvkl {
              VKLDataType dataType,
              const void *source,
              VKLDataCreationFlags dataCreationFlags,
-             size_t _byteStride)
+             size_t _byteStride,
+             bool ownSharedBuffer)
       : ManagedObject(d),
         numItems(numItems),
         dataType(dataType),
         dataCreationFlags(dataCreationFlags),
-        byteStride(_byteStride)
+        byteStride(_byteStride),
+        ownSharedBuffer(ownSharedBuffer)
   {
     if (numItems == 0) {
       throw std::out_of_range("VKLData: numItems must be positive");
@@ -33,6 +35,11 @@ namespace openvkl {
 
     if (!source) {
       throw std::runtime_error("VKLData: source cannot be NULL");
+    }
+
+    if (ownSharedBuffer && dataCreationFlags != VKL_DATA_SHARED_BUFFER) {
+      throw std::runtime_error(
+          "VKLData: ownSharedBuffer is only compatible with shared buffers");
     }
 
     // compute stride if requested
@@ -56,7 +63,7 @@ namespace openvkl {
       if (m->allocatedBuffer == nullptr) {
         throw std::bad_alloc();
       }
-      view         = m;
+      memstate     = m;
       void *buffer = m->allocatedBuffer;
 
       if (isManagedObject(dataType)) {
@@ -82,35 +89,33 @@ namespace openvkl {
       addr       = (char *)buffer;
       byteStride = naturalByteStride;
     } else if (dataCreationFlags == VKL_DATA_SHARED_BUFFER) {
-      // view is not needed for shared buffers
-      view = nullptr;
-      addr = (char *)source;
-
-      ispcrt::Context *ispcrtContext =
-          static_cast<ispcrt::Context *>(device->getContext());
-
-      ISPCRTDevice ispcrtDevice =
-          ispcrtGetDeviceFromContext(ispcrtContext->handle(), 0);
+      // memstate is not needed for shared buffers
+      memstate = nullptr;
+      addr     = (char *)source;
 
       // we must validate that shared buffers for GPU devices were allocated
-      // properly
-      if (ispcrtGetDeviceType(ispcrtDevice) == ISPCRT_DEVICE_TYPE_GPU) {
-        ISPCRTAllocationType allocationType =
-            ispcrtGetMemoryAllocType(ispcrtDevice, (void *)source);
+      // properly. however, bypass these checks for "owned" buffers.
+      if (!ownSharedBuffer &&
+          device->getDeviceType() == OPENVKL_DEVICE_TYPE_GPU) {
+        AllocType allocationType = device->getAllocationType(source);
 
         switch (allocationType) {
-        case ISPCRT_ALLOC_TYPE_SHARED:
+        case OPENVKL_ALLOC_TYPE_SHARED:
           // all good.
           break;
 
-        case ISPCRT_ALLOC_TYPE_HOST:
-        case ISPCRT_ALLOC_TYPE_DEVICE:
+        case OPENVKL_ALLOC_TYPE_HOST:
           throw std::runtime_error(
-              "VKLData: shared data buffers must be allocated in USM shared "
-              "memory for GPU-based devices");
+              "VKLData: host buffer provided, but need USM buffer for GPU "
+              "support");
           break;
 
-        case ISPCRT_ALLOC_TYPE_UNKNOWN: {
+        case OPENVKL_ALLOC_TYPE_DEVICE:
+          LogMessageStream(d, VKL_LOG_DEBUG)
+              << "VKLData: shared data buffer provided with device-only memory";
+          break;
+
+        case OPENVKL_ALLOC_TYPE_UNKNOWN: {
           static bool warnedOnce = false;
           if (!warnedOnce) {
             LogMessageStream(d, VKL_LOG_WARNING)
@@ -121,9 +126,10 @@ namespace openvkl {
           break;
         }
         }
+      } else if (ownSharedBuffer) {
+        LogMessageStream(d, VKL_LOG_DEBUG)
+            << "VKLData: got owned shared buffer -- not performing checks";
       }
-
-      ispcrtRelease(ispcrtDevice);
 
       if (byteStride % alignOf(dataType) != 0) {
         LogMessageStream(d, VKL_LOG_WARNING)
@@ -173,8 +179,8 @@ namespace openvkl {
     if (m->allocatedBuffer == nullptr) {
       throw std::bad_alloc();
     }
-    view = m;
-    addr = (char *)m->allocatedBuffer;
+    memstate = m;
+    addr     = (char *)m->allocatedBuffer;
 
     managedObjectType = VKL_DATA;
 
@@ -197,7 +203,48 @@ namespace openvkl {
     }
 
     if (!(dataCreationFlags & VKL_DATA_SHARED_BUFFER)) {
-      this->device->freeMemState(view);
+      this->device->freeMemState(memstate);
+    } else if ((dataCreationFlags & VKL_DATA_SHARED_BUFFER) &&
+               ownSharedBuffer) {
+      LogMessageStream(this->device.ptr, VKL_LOG_DEBUG)
+          << "VKLData: deleting ownSharedBuffer";
+      delete[] addr;
+    }
+  }
+
+  rkcommon::memory::Ref<const Data> Data::hostAccessible() const
+  {
+    if (device->getDeviceType() == OPENVKL_DEVICE_TYPE_GPU &&
+        device->getAllocationType(addr) == OPENVKL_ALLOC_TYPE_DEVICE) {
+      // create new data object, with host-only copy of data
+      // this will be a new refcounted object, which will be destructed and have
+      // its memory freed automatically
+
+      LogMessageStream(this->device.ptr, VKL_LOG_DEBUG)
+          << "VKLData: copying data to host-accessible Data object";
+
+      char *hostBuffer = this->device->copyDeviceBufferToHost(
+          numItems, dataType, addr, byteStride);
+
+      // create new Data object, which will _own_ the hostBuffer above (and
+      // delete it on destruction)
+      Data *d = new Data(this->device.ptr,
+                         numItems,
+                         dataType,
+                         hostBuffer,
+                         VKL_DATA_SHARED_BUFFER,
+                         sizeOf(dataType),
+                         true);
+
+      rkcommon::memory::Ref<const Data> ref(d);
+
+      // since there is no app handle
+      ref->refDec();
+
+      return ref;
+
+    } else {
+      return this;
     }
   }
 

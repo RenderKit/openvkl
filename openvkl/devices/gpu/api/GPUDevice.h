@@ -114,12 +114,26 @@ namespace openvkl {
       /////////////////////////////////////////////////////////////////////////
       // Hardware facilities //////////////////////////////////////////////////
       /////////////////////////////////////////////////////////////////////////
-      virtual void *getContext() const override
+
+      DeviceType getDeviceType() const override
+      {
+        return OPENVKL_DEVICE_TYPE_GPU;
+      }
+
+      AllocType getAllocationType(const void *ptr) const override;
+
+      void *getContext() const override
       {
         return context;
       };
+
       openvkl::api::memstate *allocateBytes(size_t numByte) const override;
       void freeMemState(openvkl::api::memstate *) const override;
+
+      char *copyDeviceBufferToHost(size_t numItems,
+                                   VKLDataType dataType,
+                                   const void *source,
+                                   size_t byteStride) override;
 
      private:
       template <int OW>
@@ -132,6 +146,7 @@ namespace openvkl {
           const float *times);
 
       void *context{nullptr};
+      sycl::context syclContext;
     };
 
   }  // namespace gpu_device

@@ -479,10 +479,22 @@ namespace openvkl {
           const float *times);
 
      public:
-      virtual void *getContext() const override
+      DeviceType getDeviceType() const override
+      {
+        return OPENVKL_DEVICE_TYPE_CPU;
+      }
+
+      AllocType getAllocationType(const void *ptr) const override
+      {
+        // just assume host for CPU
+        return OPENVKL_ALLOC_TYPE_HOST;
+      }
+
+      void *getContext() const override
       {
         return context;
       };
+
       api::memstate *allocateBytes(size_t numBytes) const override;
       void freeMemState(api::memstate *) const override;
 

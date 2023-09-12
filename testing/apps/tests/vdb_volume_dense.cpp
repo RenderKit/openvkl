@@ -128,7 +128,7 @@ static void sampling_gradient_equivalence(VKLVolume vklVolume1,
 {
   // we'll test under different filter modes
   const std::vector<VKLFilter> filters = {
-      VKL_FILTER_NEAREST, VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC};
+      VKL_FILTER_NEAREST, VKL_FILTER_LINEAR, VKL_FILTER_CUBIC};
 
   for (const auto &filter : filters) {
     VKLSampler sampler1 = vklNewSampler(vklVolume1);

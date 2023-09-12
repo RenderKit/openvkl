@@ -33,13 +33,13 @@ namespace ispc {
                                                                              \
     float val = 0.f;                                                         \
     switch (filter) {                                                        \
-    case VKL_FILTER_TRICUBIC:                                                \
+    case VKL_FILTER_CUBIC:                                                   \
       break;                                                                 \
     case VKL_FILTER_NEAREST: {                                               \
       val = get_##dataType(voxelData, voxelOfs);                             \
       break;                                                                 \
     }                                                                        \
-    case VKL_FILTER_TRILINEAR: {                                             \
+    case VKL_FILTER_LINEAR: {                                                \
       /* fractional coordinates within the lower corner voxel used during    \
        * interpolation. */                                                   \
       const vec3f frac =                                                     \
@@ -316,7 +316,7 @@ namespace ispc {
     gradient.z = SharedStructuredVolume_computeSample_uniform(
                      self,
                      objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
-                     VKL_FILTER_TRILINEAR,
+                     VKL_FILTER_LINEAR,
                      attributeIndex,
                      time) -
                  sample;

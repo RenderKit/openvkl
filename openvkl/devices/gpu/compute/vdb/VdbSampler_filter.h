@@ -17,9 +17,9 @@
   {                                                                     \
     if (IS_SAMPLE_FILTER_NEAREST(FilterEnum, FeatureFlags)) {           \
       F##Nearest(__VA_ARGS__);                                          \
-    } else if (IS_SAMPLE_FILTER_TRILINEAR(FilterEnum, FeatureFlags)) {  \
+    } else if (IS_SAMPLE_FILTER_LINEAR(FilterEnum, FeatureFlags)) {     \
       F##Trilinear(__VA_ARGS__);                                        \
-    } else if (IS_SAMPLE_FILTER_TRICUBIC(FilterEnum, FeatureFlags)) {   \
+    } else if (IS_SAMPLE_FILTER_CUBIC(FilterEnum, FeatureFlags)) {      \
       F##Tricubic(__VA_ARGS__);                                         \
     } else {                                                            \
       assert(false);                                                    \
@@ -30,9 +30,9 @@
   {                                                                       \
     if (IS_GRADIENT_FILTER_NEAREST(FilterEnum, FeatureFlags)) {           \
       F##Nearest(__VA_ARGS__);                                            \
-    } else if (IS_GRADIENT_FILTER_TRILINEAR(FilterEnum, FeatureFlags)) {  \
+    } else if (IS_GRADIENT_FILTER_LINEAR(FilterEnum, FeatureFlags)) {     \
       F##Trilinear(__VA_ARGS__);                                          \
-    } else if (IS_GRADIENT_FILTER_TRICUBIC(FilterEnum, FeatureFlags)) {   \
+    } else if (IS_GRADIENT_FILTER_CUBIC(FilterEnum, FeatureFlags)) {      \
       F##Tricubic(__VA_ARGS__);                                           \
     } else {                                                              \
       assert(false);                                                      \

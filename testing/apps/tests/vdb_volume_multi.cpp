@@ -39,7 +39,7 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
   for (const auto &repackNodes : {true, false}) {
     for (const auto &dcf : dataCreationFlags) {
       for (const auto &aos : useAOSLayouts) {
-        for (auto filter : {VKL_FILTER_TRILINEAR, VKL_FILTER_TRICUBIC}) {
+        for (auto filter : {VKL_FILTER_LINEAR, VKL_FILTER_CUBIC}) {
           std::stringstream sectionName;
           sectionName << (repackNodes ? "repackNodes=true"
                                       : "repackNodes=false");
@@ -47,9 +47,9 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
           sectionName << (dcf == VKL_DATA_DEFAULT ? "VKL_DATA_DEFAULT"
                                                   : "VKL_DATA_SHARED_BUFFER");
           sectionName << " ";
-          sectionName << (filter == VKL_FILTER_TRILINEAR
-                              ? "VKL_FILTER_TRILINEAR"
-                              : "VKL_FILTER_TRICUBIC");
+          sectionName << (filter == VKL_FILTER_LINEAR
+                              ? "VKL_FILTER_LINEAR"
+                              : "VKL_FILTER_CUBIC");
           sectionName << " ";
           sectionName << (aos == true ? "AOS layout" : "SOA layout");
 
@@ -58,9 +58,9 @@ TEST_CASE("VDB volume multiple attributes", "[volume_multi_attributes]")
           int lowerSpan = 0;
           int upperSpan = 0;
 
-          if (filter == VKL_FILTER_TRILINEAR) {
+          if (filter == VKL_FILTER_LINEAR) {
             upperSpan = 1;
-          } else if (filter == VKL_FILTER_TRICUBIC) {
+          } else if (filter == VKL_FILTER_CUBIC) {
             lowerSpan = 1;
             upperSpan = 2;
           }

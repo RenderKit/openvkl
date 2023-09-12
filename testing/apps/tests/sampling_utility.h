@@ -217,7 +217,7 @@ inline void sampling_on_vertices_vs_procedural_values_multi(
     vec3i step       = vec3i(1),
     int lowerSpan    = 0,
     int upperSpan    = 0,
-    VKLFilter filter = VKL_FILTER_TRILINEAR)
+    VKLFilter filter = VKL_FILTER_LINEAR)
 {
   const float sampleTolerance = 1e-4f;
 

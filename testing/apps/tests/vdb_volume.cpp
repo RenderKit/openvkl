@@ -191,8 +191,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_LINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_LINEAR);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -235,8 +235,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_CUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_CUBIC);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -338,8 +338,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_LINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_LINEAR);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -382,8 +382,8 @@ TEST_CASE("VDB volume sampling", "[volume_sampling]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_CUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_CUBIC);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -445,8 +445,8 @@ TEST_CASE("VDB volume interval iterator", "[volume_sampling]")
 
   VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
   VKLSampler vklSampler = vklNewSampler(vklVolume);
-  vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-  vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+  vklSetInt(vklSampler, "filter", VKL_FILTER_LINEAR);
+  vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_LINEAR);
   vklCommit(vklSampler);
   VKLIntervalIteratorContext intervalContext =
       vklNewIntervalIteratorContext(vklSampler);
@@ -543,8 +543,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_LINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_LINEAR);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -603,8 +603,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_CUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_CUBIC);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -710,8 +710,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRILINEAR);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRILINEAR);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_LINEAR);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_LINEAR);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations
@@ -766,8 +766,8 @@ TEST_CASE("VDB volume gradients", "[volume_gradients]")
 
         VKLVolume vklVolume   = volume->getVKLVolume(getOpenVKLDevice());
         VKLSampler vklSampler = vklNewSampler(vklVolume);
-        vklSetInt(vklSampler, "filter", VKL_FILTER_TRICUBIC);
-        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_TRICUBIC);
+        vklSetInt(vklSampler, "filter", VKL_FILTER_CUBIC);
+        vklSetInt(vklSampler, "gradientFilter", VKL_FILTER_CUBIC);
         vklCommit(vklSampler);
 
         // For GPU limit number of iterations

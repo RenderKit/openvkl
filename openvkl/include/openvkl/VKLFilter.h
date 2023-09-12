@@ -18,9 +18,9 @@ enum VKLFilter
   VKL_FILTER_NEAREST = 0,
   // Read the eight voxels surrounding the sample position, and
   // interpolate trilinearly.
-  VKL_FILTER_TRILINEAR = 100,
+  VKL_FILTER_LINEAR = 100,
   // Tricubic interpolation.
-  VKL_FILTER_TRICUBIC = 200,
+  VKL_FILTER_CUBIC = 200,
 };
 
 

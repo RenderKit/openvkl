@@ -372,7 +372,7 @@ template_sample(uniform);
       val = get_##type(voxelData, voxelOfs);                                 \
       break;                                                                 \
     }                                                                        \
-    case VKL_FILTER_TRILINEAR: {                                             \
+    case VKL_FILTER_LINEAR: {                                                \
       /* fractional coordinates within the lower corner voxel used during    \
        * interpolation. */                                                   \
       const univary vec3f frac =                                             \
@@ -438,7 +438,7 @@ declare_all_voxel_types_univary(template_sample_inner_32);
           self, attributeIndex, 0, timeOfs, time);                          \
       break;                                                                \
     }                                                                       \
-    case VKL_FILTER_TRILINEAR: {                                            \
+    case VKL_FILTER_LINEAR: {                                               \
       /* fractional coordinates within the lower corner voxel used during   \
        * interpolation. */                                                  \
       const univary vec3f frac =                                            \
@@ -534,7 +534,7 @@ declare_all_voxel_types_univary(template_sample_inner_TUV_32);
             interpolant * get_##type(voxelData, nextOfs);                     \
       break;                                                                  \
     }                                                                         \
-    case VKL_FILTER_TRILINEAR: {                                              \
+    case VKL_FILTER_LINEAR: {                                                 \
       /* fractional coordinates within the lower corner voxel used during     \
        * interpolation. */                                                    \
       const univary vec3f frac =                                              \
@@ -625,7 +625,7 @@ declare_all_voxel_types_univary(template_sample_inner_MB_32);
         ret = get_##type(voxelData, sliceOfs, voxelOfs);                     \
         break;                                                               \
       }                                                                      \
-      case VKL_FILTER_TRILINEAR: {                                           \
+      case VKL_FILTER_LINEAR: {                                              \
         /* fractional coordinates within the lower corner voxel used during  \
          * interpolation. */                                                 \
         const univary vec3f frac =                                           \
@@ -703,7 +703,7 @@ declare_all_voxel_types_univary(template_sample_inner_64_32);
             self, attributeIndex, sliceOfs, timeOfs, time);                   \
         break;                                                                \
       }                                                                       \
-      case VKL_FILTER_TRILINEAR: {                                            \
+      case VKL_FILTER_LINEAR: {                                               \
         /* fractional coordinates within the lower corner voxel used during   \
          * interpolation. */                                                  \
         const univary vec3f frac =                                            \
@@ -806,7 +806,7 @@ declare_all_voxel_types_univary(template_sample_inner_TUV_64_32);
             interpolant * get_##type(voxelData, sliceOfs, nextOfs);           \
         break;                                                                \
       }                                                                       \
-      case VKL_FILTER_TRILINEAR: {                                            \
+      case VKL_FILTER_LINEAR: {                                               \
         /* fractional coordinates within the lower corner voxel used during   \
          * interpolation. */                                                  \
         const univary vec3f frac =                                            \
@@ -904,7 +904,7 @@ declare_all_voxel_types_univary(template_sample_inner_MB_64_32);
       val = get_##type(voxelData, voxelOfs_0);                                  \
       break;                                                                    \
     }                                                                           \
-    case VKL_FILTER_TRILINEAR: {                                                \
+    case VKL_FILTER_LINEAR: {                                                   \
       /* fractional coordinates within the lower corner voxel used during       \
        interpolation. */                                                        \
       const univary vec3f frac =                                                \
@@ -974,7 +974,7 @@ declare_all_voxel_types_univary(template_sample_inner_64);
           self, attributeIndex, timeOfs, time);                             \
       break;                                                                \
     }                                                                       \
-    case VKL_FILTER_TRILINEAR: {                                            \
+    case VKL_FILTER_LINEAR: {                                               \
       /* fractional coordinates within the lower corner voxel used during   \
        * interpolation. */                                                  \
       const univary vec3f frac =                                            \
@@ -1073,7 +1073,7 @@ declare_all_voxel_types_univary(template_sample_inner_TUV_64);
             interpolant * get_##type(voxelData, nextOfs);                     \
       break;                                                                  \
     }                                                                         \
-    case VKL_FILTER_TRILINEAR: {                                              \
+    case VKL_FILTER_LINEAR: {                                                 \
       /* fractional coordinates within the lower corner voxel used during     \
        * interpolation. */                                                    \
       const univary vec3f frac =                                              \
@@ -1224,7 +1224,7 @@ inline varying vec3f SharedStructuredVolume_computeGradient_NaN_checks(
   gradient.z = SharedStructuredVolume_computeSample_varying(
                    self,
                    objectCoordinates + make_vec3f(0.f, 0.f, gradientStep.z),
-                   VKL_FILTER_TRILINEAR,
+                   VKL_FILTER_LINEAR,
                    attributeIndex,
                    time) -
                sample;

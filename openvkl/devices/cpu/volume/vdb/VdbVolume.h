@@ -209,8 +209,8 @@ namespace openvkl {
       // only legal for the dense configuration.
       bool constantCellData{true};
 
-      VKLFilter filter{VKL_FILTER_TRILINEAR};
-      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      VKLFilter filter{VKL_FILTER_LINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_LINEAR};
       uint32_t maxSamplingDepth{VKL_VDB_NUM_LEVELS - 1};
 
       rkcommon::memory::Ref<const DataT<float>> background;

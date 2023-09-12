@@ -23,15 +23,15 @@ inline constexpr const char *toString<VKL_FILTER_NEAREST>()
 }
 
 template <>
-inline constexpr const char *toString<VKL_FILTER_TRILINEAR>()
+inline constexpr const char *toString<VKL_FILTER_LINEAR>()
 {
-  return "VKL_FILTER_TRILINEAR";
+  return "VKL_FILTER_LINEAR";
 }
 
 template <>
-inline constexpr const char *toString<VKL_FILTER_TRICUBIC>()
+inline constexpr const char *toString<VKL_FILTER_CUBIC>()
 {
-  return "VKL_FILTER_TRICUBIC";
+  return "VKL_FILTER_CUBIC";
 }
 
 /*

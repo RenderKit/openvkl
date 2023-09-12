@@ -542,7 +542,7 @@ parameters.
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+  int           filter            `VKL_FILTER_LINEAR`    The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
@@ -556,7 +556,7 @@ parameters.
 ##### Reconstruction filters
 
 Structured regular volumes support the filter types `VKL_FILTER_NEAREST`,
-`VKL_FILTER_TRILINEAR`, and `VKL_FILTER_TRICUBIC` for both `filter` and
+`VKL_FILTER_LINEAR`, and `VKL_FILTER_CUBIC` for both `filter` and
 `gradientFilter`.
 
 Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
@@ -627,7 +627,7 @@ parameters.
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+  int           filter            `VKL_FILTER_LINEAR`    The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
@@ -978,7 +978,7 @@ objects (sampler object parameters default to volume parameters).
   ------------  ----------------  ---------------------- ---------------------------------------
   Type          Name              Default                Description
   ------------  ----------------  ---------------------- ---------------------------------------
-  int           filter            `VKL_FILTER_TRILINEAR` The filter used for reconstructing the
+  int           filter            `VKL_FILTER_LINEAR`    The filter used for reconstructing the
                                                          field. Use `VKLFilter` for named
                                                          constants.
 
@@ -1027,8 +1027,8 @@ VDB sampler objects support the following observers:
 
 #### Reconstruction filters
 
-VDB volumes support the filter types `VKL_FILTER_NEAREST`, `VKL_FILTER_TRILINEAR`,
-and `VKL_FILTER_TRICUBIC` for both `filter` and `gradientFilter`.
+VDB volumes support the filter types `VKL_FILTER_NEAREST`, `VKL_FILTER_LINEAR`,
+and `VKL_FILTER_CUBIC` for both `filter` and `gradientFilter`.
 
 Note that when `gradientFilter` is set to `VKL_FILTER_NEAREST`, gradients are
 always $(0, 0, 0)$.

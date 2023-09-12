@@ -73,7 +73,7 @@ int main(int argc, char **argv)
   initializeOpenVKL();
 
   registerVolumeBenchmarks<Structured<VKL_FILTER_NEAREST>>();
-  registerVolumeBenchmarks<Structured<VKL_FILTER_TRILINEAR>>();
+  registerVolumeBenchmarks<Structured<VKL_FILTER_LINEAR>>();
 
   ::benchmark::Initialize(&argc, argv);
   if (::benchmark::ReportUnrecognizedArguments(argc, argv))

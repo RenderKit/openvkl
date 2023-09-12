@@ -90,8 +90,8 @@ namespace openvkl {
       int temporallyStructuredNumTimesteps;
       rkcommon::memory::Ref<const Data> temporallyUnstructuredIndices;
       rkcommon::memory::Ref<const DataT<float>> temporallyUnstructuredTimes;
-      VKLFilter filter{VKL_FILTER_TRILINEAR};
-      VKLFilter gradientFilter{VKL_FILTER_TRILINEAR};
+      VKLFilter filter{VKL_FILTER_LINEAR};
+      VKLFilter gradientFilter{VKL_FILTER_LINEAR};
       rkcommon::memory::Ref<const DataT<float>> background;
 
      private:

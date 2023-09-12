@@ -82,12 +82,12 @@ namespace openvkl {
         ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_NEAREST;
         break;
 
-      case VKL_FILTER_TRILINEAR:
-        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_TRILINEAR;
+      case VKL_FILTER_LINEAR:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_LINEAR;
         break;
 
-      case VKL_FILTER_TRICUBIC:
-        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_TRICUBIC;
+      case VKL_FILTER_CUBIC:
+        ff |= VKL_FEATURE_FLAG_SAMPLE_FILTER_CUBIC;
         break;
 
       default:
@@ -102,12 +102,12 @@ namespace openvkl {
         ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_NEAREST;
         break;
 
-      case VKL_FILTER_TRILINEAR:
-        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_TRILINEAR;
+      case VKL_FILTER_LINEAR:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_LINEAR;
         break;
 
-      case VKL_FILTER_TRICUBIC:
-        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_TRICUBIC;
+      case VKL_FILTER_CUBIC:
+        ff |= VKL_FEATURE_FLAG_GRADIENT_FILTER_CUBIC;
         break;
 
       default:

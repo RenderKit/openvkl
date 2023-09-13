@@ -45,7 +45,7 @@ jobs:
       submodules: true
       level-zero-version: public/1.9.9
       runs-on: '[ "Windows", "dg2" ]'
-      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-internal.env
+      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
       cmd: |
         cd ./build/install/bin
@@ -62,7 +62,7 @@ jobs:
       submodules: true
       level-zero-version: public/1.9.9
       runs-on: '[ "Windows", "dg2" ]'
-      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-internal.env
+      env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm

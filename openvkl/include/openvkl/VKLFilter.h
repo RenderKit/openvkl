@@ -5,9 +5,9 @@
 
 #include "ispc_cpp_interop.h"
 
-// ========================================================================== //
-// An enum that represents the different filter types available in vdb volumes.
-// ========================================================================== //
+// ======================================================================== //
+// An enum that represents the different filter types available in volumes.
+// ======================================================================== //
 enum VKLFilter
 #if __cplusplus >= 201103L
 : vkl_uint32

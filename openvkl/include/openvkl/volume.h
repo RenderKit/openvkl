@@ -36,8 +36,8 @@ typedef enum
 
 // AMR volume interpolation methods
 typedef enum
-# if __cplusplus >= 201103L
-: uint8_t
+#if __cplusplus >= 201103L
+    : uint32_t
 #endif
 {
   VKL_AMR_CURRENT,

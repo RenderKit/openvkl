@@ -574,9 +574,9 @@ structured spherical volumes are summarized below.
 
 ![Structured spherical volume coordinate system: radial distance ($r$), inclination angle ($\theta$), and azimuthal angle ($\phi$).][imgStructuredSphericalCoords]
 
-  --------- ----------------------- -------------------------- -----------------------------------
+  --------- ----------------------- -------------------------- ---------------------------------------
   Type      Name                        Default                Description
-  --------- ----------------------- -------------------------- -----------------------------------
+  --------- ----------------------- -------------------------- ---------------------------------------
   vec3i     dimensions                                         number of voxels in each
                                                                dimension $(r, \theta, \phi)$
 
@@ -602,13 +602,16 @@ structured spherical volumes are summarized below.
   vec3f     gridOrigin              $(0, 0, 0)$                origin of the grid in units of
                                                                $(r, \theta, \phi)$; angles in degrees
 
-  vec3f     gridSpacing             $(1, 1, 1)$                size of the grid cells in units of
-                                                               $(r, \theta, \phi)$; angles in degrees
+  vec3f     gridSpacing             $(1, \theta_0, \phi_0)$    size of the grid cells in units of
+                                                               $(r, \theta, \phi)$; angles in degrees.
+                                                               The defaults \theta_0 and \phi_0 are
+                                                               such that the volume occupies a full
+                                                               sphere.
 
   float[]   background              `VKL_BACKGROUND_UNDEFINED` For each attribute, the value that is
                                                                returned when sampling an undefined
                                                                region outside the volume domain.
-  --------- ----------------------- -------------------------- -----------------------------------
+  --------- ----------------------- -------------------------- ---------------------------------------
   : Configuration parameters for structured spherical (`"structuredSpherical"`) volumes.
 
 These grid parameters support flexible specification of spheres, hemispheres,

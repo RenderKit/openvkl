@@ -47,6 +47,17 @@ namespace openvkl {
 
       StructuredVolume<W>::commit();
 
+      // generate default value for gridSpacing, based on the volume dimensions
+      constexpr float epsilon = std::numeric_limits<float>::epsilon();
+
+      const vec3f defaultGridSpacing =
+          vec3f(1.f,
+                180.f / (this->dimensions.y - 1) - epsilon,
+                360.f / (this->dimensions.z - 1) - epsilon);
+
+      this->gridSpacing =
+          this->template getParam<vec3f>("gridSpacing", defaultGridSpacing);
+
       // each object coordinate must correspond to a unique logical coordinate;
       // we therefore currently require:
       // - radius >= 0

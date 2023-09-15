@@ -35,6 +35,9 @@ namespace openvkl {
 
       StructuredVolume<W>::commit();
 
+      this->gridSpacing =
+          this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+
       std::vector<const ispc::Data1D *> ispcAttributesData =
           ispcs(this->attributesData);
 

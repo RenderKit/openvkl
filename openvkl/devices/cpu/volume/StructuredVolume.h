@@ -116,9 +116,12 @@ namespace openvkl {
     template <int W>
     inline void StructuredVolume<W>::commit()
     {
-      dimensions  = this->template getParam<vec3i>("dimensions");
-      gridOrigin  = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
-      gridSpacing = this->template getParam<vec3f>("gridSpacing", vec3f(1.f));
+      dimensions = this->template getParam<vec3i>("dimensions");
+      gridOrigin = this->template getParam<vec3f>("gridOrigin", vec3f(0.f));
+
+      // gridSpacing defaults are different between structuredRegular and
+      // structuredSpherical; therefore the parameter is handled in those
+      // derived classes.
 
       attributesData.clear();
 

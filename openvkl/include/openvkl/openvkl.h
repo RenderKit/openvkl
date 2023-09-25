@@ -15,7 +15,6 @@
 #include "data.h"
 #include "device.h"
 #include "iterator.h"
-#include "module.h"
 #include "observer.h"
 #include "parameters.h"
 #include "sampler.h"

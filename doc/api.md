@@ -17,11 +17,15 @@ example, and this documentation should be enough to figure it out.
 Device initialization and shutdown
 ----------------------------------
 
-To use the API, one of the implemented backends must be loaded.  Currently the
-only one that exists is the CPU device. To load the module that implements the
-CPU device:
+To use the API, one of the implemented backends must be linked at compile time.
+Currently both a CPU and GPU device are available. To link the CPU device within
+CMake, use for example:
 
-    vklLoadModule("cpu_device");
+    target_link_libraries(myApp PRIVATE openvkl openvkl_module_cpu_device)
+
+The application code must then first initialize Open VKL:
+
+    vklInit();
 
 The device then needs to be instantiated:
 

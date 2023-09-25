@@ -1,6 +1,33 @@
 Version History
 ---------------
 
+### Open VKL 2.0.0
+
+-   This Open VKL release adds support for Intel® Arc™ GPUs, Intel® Data Center
+GPU Flex Series and Intel® Data Center GPU Max Series through SYCL.
+    -   The SYCL support of Open VKL is in beta phase. Current functionality,
+    quality, and GPU performance may not reflect that of the final product.
+    -   Open VKL CPU support in this release remains at Gold level,
+    incorporating the same quality and performance as previous releases.
+-   API changes:
+    -   Handle types are now passed by pointer in the following APIs:
+        -   `vklComputeSample*()`
+        -   `vklComputeGradient*()`
+        -   `vklGet*IteratorSize*()`
+        -   `vklInit*Iterator*()`
+        -   `vklIterate*()`
+    -   `vklLoadModule()` has been removed; compile-time linkage to an Open VKL
+        device implementation (`cpu` or `gpu`) is now required
+    -   Added `vklInit()` API, which must be called to initialize the library
+    -   `VKL_FILTER_[TRILINEAR,TRICUBIC]` are renamed to
+        `VKL_FILTER_[LINEAR,CUBIC]`
+    -   `VKLAMRMethod` enum is now `uint32_t`
+    -   `structuredSpherical` volumes: the `gridSpacing` default now results in
+        the volume occupying a full sphere
+-   Added new examples demonstrating GPU usage: `vklExamplesGPU` and
+    `vklTutorialGPU`
+-   Superbuild updates to latest versions of dependencies
+
 ### Open VKL 1.3.2
 
 -   Move to and require latest versions of RenderKit dependencies: Embree v4.0.0

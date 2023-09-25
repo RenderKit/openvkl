@@ -11,11 +11,12 @@ Simple tutorials can be found in the
 [`examples/`](https://github.com/openvkl/openvkl/tree/master/examples)
 directory. These are:
 
-* [`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c): usage of the C API
+* [`vklTutorialCPU.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorialCPU.c): usage of the C API with a CPU device
 * [`vklTutorialISPC.cpp`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.cpp)
   and
   [`vklTutorialISPC.ispc`](https://github.com/openvkl/openvkl/blob/master/examples/ispc/vklTutorialISPC.ispc)
-  : combined usage of the C and ISPC APIs
+  : combined usage of the C and ISPC APIs with a CPU device
+* [`vklTutorialGPU.cpp`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorialGPU.cpp): usage of the SYCL API with a GPU device
 
 Interactive examples
 --------------------
@@ -37,12 +38,12 @@ vklTutorial source
 ------------------
 
 For quick reference, the contents of
-[`vklTutorial.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorial.c)
+[`vklTutorialCPU.c`](https://github.com/openvkl/openvkl/blob/master/examples/vklTutorialCPU.c)
 are shown below.
 
 ``` cpp
-
 #include <openvkl/openvkl.h>
+#include <openvkl/device/openvkl.h>
 #include <stdio.h>
 
 #if defined(_MSC_VER)
@@ -83,8 +84,8 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   // sample, gradient (first attribute)
   unsigned int attributeIndex = 0;
   float time                  = 0.f;
-  float sample   = vklComputeSample(sampler, &coord, attributeIndex, time);
-  vkl_vec3f grad = vklComputeGradient(sampler, &coord, attributeIndex, time);
+  float sample   = vklComputeSample(&sampler, &coord, attributeIndex, time);
+  vkl_vec3f grad = vklComputeGradient(&sampler, &coord, attributeIndex, time);
   printf("\tsampling and gradient computation (first attribute)\n");
   printf("\t\tsample = %f\n", sample);
   printf("\t\tgrad   = %f %f %f\n\n", grad.x, grad.y, grad.z);
@@ -93,7 +94,7 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3];
-  vklComputeSampleM(sampler, &coord, samples, M, attributeIndices, time);
+  vklComputeSampleM(&sampler, &coord, samples, M, attributeIndices, time);
   printf("\tsampling (multiple attributes)\n");
   printf("\t\tsamples = %f %f %f\n\n", samples[0], samples[1], samples[2]);
 
@@ -145,17 +146,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetIntervalIteratorSize(intervalContext));
+    char *buffer = _malloca(vklGetIntervalIteratorSize(&intervalContext));
 #else
-    char buffer[vklGetIntervalIteratorSize(intervalContext)];
+    char buffer[vklGetIntervalIteratorSize(&intervalContext)];
 #endif
-    VKLIntervalIterator intervalIterator =
-        vklInitIntervalIterator(intervalContext,
-                                &rayOrigin,
-                                &rayDirection,
-                                &rayTRange,
-                                time,
-                                buffer);
+    VKLIntervalIterator intervalIterator = vklInitIntervalIterator(
+        &intervalContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
 
     printf("\n\tinterval iterator for value ranges {%f %f} {%f %f}\n",
            ranges[0].lower,
@@ -187,16 +183,12 @@ void demoScalarAPI(VKLDevice device, VKLVolume volume)
 #if defined(_MSC_VER)
     // MSVC does not support variable length arrays, but provides a
     // safer version of alloca.
-    char *buffer = _malloca(vklGetHitIteratorSize(hitContext));
+    char *buffer = _malloca(vklGetHitIteratorSize(&hitContext));
 #else
-    char buffer[vklGetHitIteratorSize(hitContext)];
+    char buffer[vklGetHitIteratorSize(&hitContext)];
 #endif
-    VKLHitIterator hitIterator = vklInitHitIterator(hitContext,
-                                                    &rayOrigin,
-                                                    &rayDirection,
-                                                    &rayTRange,
-                                                    time,
-                                                    buffer);
+    VKLHitIterator hitIterator = vklInitHitIterator(
+        &hitContext, &rayOrigin, &rayDirection, &rayTRange, time, buffer);
 
     printf("\thit iterator for values %f %f\n", values[0], values[1]);
 
@@ -247,8 +239,8 @@ void demoVectorAPI(VKLVolume volume)
   float time4[4]              = {0.f};
   float sample4[4];
   vkl_vvec3f4 grad4;
-  vklComputeSample4(valid, sampler, &coord4, sample4, attributeIndex, time4);
-  vklComputeGradient4(valid, sampler, &coord4, &grad4, attributeIndex, time4);
+  vklComputeSample4(valid, &sampler, &coord4, sample4, attributeIndex, time4);
+  vklComputeGradient4(valid, &sampler, &coord4, &grad4, attributeIndex, time4);
 
   printf("\n\tsampling and gradient computation (first attribute)\n");
 
@@ -263,7 +255,7 @@ void demoVectorAPI(VKLVolume volume)
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 4];
   vklComputeSampleM4(
-      valid, sampler, &coord4, samples, M, attributeIndices, time4);
+      valid, &sampler, &coord4, samples, M, attributeIndices, time4);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -309,8 +301,8 @@ void demoStreamAPI(VKLVolume volume)
   float time[5]               = {0.f};
   float sample[5];
   vkl_vec3f grad[5];
-  vklComputeSampleN(sampler, 5, coord, sample, attributeIndex, time);
-  vklComputeGradientN(sampler, 5, coord, grad, attributeIndex, time);
+  vklComputeSampleN(&sampler, 5, coord, sample, attributeIndex, time);
+  vklComputeGradientN(&sampler, 5, coord, grad, attributeIndex, time);
 
   for (int i = 0; i < 5; i++) {
     printf("\t\tsample[%d] = %f\n", i, sample[i]);
@@ -321,7 +313,7 @@ void demoStreamAPI(VKLVolume volume)
   unsigned int M                  = 3;
   unsigned int attributeIndices[] = {0, 1, 2};
   float samples[3 * 5];
-  vklComputeSampleMN(sampler, 5, coord, samples, M, attributeIndices, time);
+  vklComputeSampleMN(&sampler, 5, coord, samples, M, attributeIndices, time);
 
   printf("\n\tsampling (multiple attributes)\n");
 
@@ -341,7 +333,7 @@ void demoStreamAPI(VKLVolume volume)
 
 int main()
 {
-  vklLoadModule("cpu_device");
+  vklInit();
 
   VKLDevice device = vklNewDevice("cpu");
   vklCommitDevice(device);

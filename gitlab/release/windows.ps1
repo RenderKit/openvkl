@@ -40,6 +40,7 @@ cd $OPENVKL_BUILD_DIR
 $env:rkcommon_DIR = $DEP_INSTALL_DIR
 $env:embree_DIR = $DEP_INSTALL_DIR
 $env:glfw3_DIR = $DEP_INSTALL_DIR
+$env:ispcrt_DIR = $DEP_INSTALL_DIR
 
 # set release settings
 cmake -L `

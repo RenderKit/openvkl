@@ -89,8 +89,12 @@ add_subdirectory(devices)
 
 ## Utilities
 
-add_executable(vklGenerateIteratorSizeHeader
-  util/vklGenerateIteratorSizeHeader.cpp
-  ${VKL_RESOURCE})
+option(BUILD_UTIL_ITERATOR_SIZE_HEADER "Build vklGenerateIteratorSizeHeader utility." OFF)
 
-target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl openvkl_module_cpu_device)
+if (BUILD_UTIL_ITERATOR_SIZE_HEADER)
+  add_executable(vklGenerateIteratorSizeHeader
+    util/vklGenerateIteratorSizeHeader.cpp
+    ${VKL_RESOURCE})
+
+  target_link_libraries(vklGenerateIteratorSizeHeader PRIVATE openvkl openvkl_module_cpu_device)
+endif()

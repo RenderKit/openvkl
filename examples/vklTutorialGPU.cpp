@@ -7,6 +7,12 @@
 #include <iomanip>
 #include <iostream>
 
+// setup specialization constant for feature flags
+static_assert(std::is_trivially_copyable<VKLFeatureFlags>::value);
+
+constexpr static sycl::specialization_id<VKLFeatureFlags> samplerSpecId{
+    VKL_FEATURE_FLAGS_DEFAULT};
+
 void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 {
   std::cout << "demo of GPU API" << std::endl;
@@ -15,6 +21,9 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
 
   VKLSampler sampler = vklNewSampler(volume);
   vklCommit(sampler);
+
+  // feature flags improve performance on GPU, as well as JIT times
+  const VKLFeatureFlags requiredFeatures = vklGetFeatureFlags(sampler);
 
   // bounding box
   vkl_box3f bbox = vklGetBoundingBox(volume);
@@ -53,9 +62,18 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   vkl_vec3f *grad = sycl::malloc_shared<vkl_vec3f>(1, syclQueue);
 
   syclQueue
-      .single_task([=]() {
-        *sample = vklComputeSample(&sampler, &coord, attributeIndex, time);
-        *grad   = vklComputeGradient(&sampler, &coord, attributeIndex, time);
+      .submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
+
+        cgh.single_task([=](sycl::kernel_handler kh) {
+          const VKLFeatureFlags featureFlags =
+              kh.get_specialization_constant<samplerSpecId>();
+
+          *sample = vklComputeSample(
+              &sampler, &coord, attributeIndex, time, featureFlags);
+          *grad = vklComputeGradient(
+              &sampler, &coord, attributeIndex, time, featureFlags);
+        });
       })
       .wait();
 
@@ -76,8 +94,21 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   float *samples = sycl::malloc_shared<float>(M, syclQueue);
 
   syclQueue
-      .single_task([=]() {
-        vklComputeSampleM(&sampler, &coord, samples, M, attributeIndices, time);
+      .submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
+
+        cgh.single_task([=](sycl::kernel_handler kh) {
+          const VKLFeatureFlags featureFlags =
+              kh.get_specialization_constant<samplerSpecId>();
+
+          vklComputeSampleM(&sampler,
+                            &coord,
+                            samples,
+                            M,
+                            attributeIndices,
+                            time,
+                            featureFlags);
+        });
       })
       .wait();
 
@@ -137,27 +168,36 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   std::cout << std::endl << std::endl;
 
   syclQueue
-      .single_task([=]() {
-        VKLIntervalIterator intervalIterator =
-            vklInitIntervalIterator(&intervalContext,
-                                    &rayOrigin,
-                                    &rayDirection,
-                                    &rayTRange,
-                                    time,
-                                    (void *)iteratorBuffer);
+      .submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
 
-        for (;;) {
-          VKLInterval interval;
-          int result = vklIterateInterval(intervalIterator, &interval);
-          if (!result) {
-            break;
+        cgh.single_task([=](sycl::kernel_handler kh) {
+          const VKLFeatureFlags featureFlags =
+              kh.get_specialization_constant<samplerSpecId>();
+
+          VKLIntervalIterator intervalIterator =
+              vklInitIntervalIterator(&intervalContext,
+                                      &rayOrigin,
+                                      &rayDirection,
+                                      &rayTRange,
+                                      time,
+                                      (void *)iteratorBuffer,
+                                      featureFlags);
+
+          for (;;) {
+            VKLInterval interval;
+            int result =
+                vklIterateInterval(intervalIterator, &interval, featureFlags);
+            if (!result) {
+              break;
+            }
+            intervalsBuffer[*numIntervals] = interval;
+
+            *numIntervals = *numIntervals + 1;
+            if (*numIntervals >= maxNumIntervals)
+              break;
           }
-          intervalsBuffer[*numIntervals] = interval;
-
-          *numIntervals = *numIntervals + 1;
-          if (*numIntervals >= maxNumIntervals)
-            break;
-        }
+        });
       })
       .wait();
 
@@ -216,27 +256,35 @@ void demoGpuAPI(sycl::queue &syclQueue, VKLDevice device, VKLVolume volume)
   std::cout << std::endl << std::endl;
 
   syclQueue
-      .single_task([=]() {
-        VKLHitIterator hitIterator =
-            vklInitHitIterator(&hitContext,
-                               &rayOrigin,
-                               &rayDirection,
-                               &rayTRange,
-                               time,
-                               (void *)hitIteratorBuffer);
+      .submit([=](sycl::handler &cgh) {
+        cgh.set_specialization_constant<samplerSpecId>(requiredFeatures);
 
-        for (;;) {
-          VKLHit hit;
-          int result = vklIterateHit(hitIterator, &hit);
-          if (!result) {
-            break;
+        cgh.single_task([=](sycl::kernel_handler kh) {
+          const VKLFeatureFlags featureFlags =
+              kh.get_specialization_constant<samplerSpecId>();
+
+          VKLHitIterator hitIterator =
+              vklInitHitIterator(&hitContext,
+                                 &rayOrigin,
+                                 &rayDirection,
+                                 &rayTRange,
+                                 time,
+                                 (void *)hitIteratorBuffer,
+                                 featureFlags);
+
+          for (;;) {
+            VKLHit hit;
+            int result = vklIterateHit(hitIterator, &hit, featureFlags);
+            if (!result) {
+              break;
+            }
+            hitBuffer[*numHits] = hit;
+
+            *numHits = *numHits + 1;
+            if (*numHits >= maxNumHits)
+              break;
           }
-          hitBuffer[*numHits] = hit;
-
-          *numHits = *numHits + 1;
-          if (*numHits >= maxNumHits)
-            break;
-        }
+        });
       })
       .wait();
 

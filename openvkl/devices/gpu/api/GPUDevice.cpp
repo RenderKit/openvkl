@@ -365,6 +365,13 @@ extern "C" OPENVKL_DLLEXPORT void openvkl_init_module_gpu_device()
   VKL_REGISTER_DEVICE_FACTORY_FCN(VKL_MAKE_TARGET_WIDTH_NAME(internal_gpu),
                                   VKL_MAKE_TARGET_WIDTH_NAME(gpu));
 
+  // on GPU, we still build the C++ code with a templated width, but we only
+  // build _one_ device library (instead of several like for the CPU device).
+  // Given this, also register this device as "gpu" without a width suffix,
+  // allowing vklNewDevice("gpu") to work.
+  VKL_REGISTER_DEVICE_FACTORY_FCN(VKL_MAKE_TARGET_WIDTH_NAME(internal_gpu),
+                                  gpu);
+
   VKL_REGISTER_VOLUME_FACTORY_FCN(
       VKL_MAKE_TARGET_WIDTH_NAME(internal_structuredRegularLegacy),
       VKL_MAKE_TARGET_WIDTH_NAME(structuredRegular));

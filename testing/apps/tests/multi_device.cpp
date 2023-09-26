@@ -166,7 +166,7 @@ TEST_CASE("Multiple devices", "[multi_device]")
     sycl::queue syclQueue(syclDevice);
     sycl::context syclContext = syclQueue.get_context();
 
-    VKLDevice device = vklNewDevice("gpu_4");
+    VKLDevice device = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
         device, "syclContext", static_cast<void *>(&syclContext));
 #else

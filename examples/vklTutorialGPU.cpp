@@ -286,7 +286,7 @@ int main()
 
   vklInit();
 
-  VKLDevice device = vklNewDevice("gpu_4");
+  VKLDevice device = vklNewDevice("gpu");
   vklDeviceSetVoidPtr(device, "syclContext", static_cast<void *>(&syclContext));
   vklCommitDevice(device);
 

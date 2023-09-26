@@ -44,7 +44,7 @@ void initializeOpenVKL()
               << syclQueuePtr->get_device().get_info<sycl::info::device::name>()
               << std::endl
               << std::endl;
-    device = vklNewDevice("gpu_4");
+    device = vklNewDevice("gpu");
     vklDeviceSetVoidPtr(
         device, "syclContext", static_cast<void *>(&syclContext));
 #endif

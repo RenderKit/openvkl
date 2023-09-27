@@ -16,7 +16,6 @@ macro(openvkl_add_library_ispc name type)
   openvkl_ispc_compile(${ISPC_SOURCES})
   unset(ISPC_TARGET_NAME)
   add_library(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES} ${VKL_RESOURCE})
-  target_link_libraries(${name} PRIVATE ispcrt::ispcrt)
 endmacro()
 
 macro(openvkl_add_executable_ispc name)

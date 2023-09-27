@@ -32,7 +32,9 @@ target_include_directories(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME}
   PUBLIC
-    $<BUILD_INTERFACE:rkcommon::rkcommon>)
+    $<BUILD_INTERFACE:rkcommon::rkcommon>
+  PRIVATE
+    ispcrt::ispcrt)
 
 set(VKL_VDB_LOG_RESOLUTION_0 "6" CACHE STRING
   "Base 2 logarithm of the root level resolution in vdb volumes.")

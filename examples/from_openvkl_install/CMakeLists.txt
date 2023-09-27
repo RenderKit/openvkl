@@ -33,14 +33,6 @@ if (TARGET openvkl::openvkl_module_cpu_device)
 endif()
 
 if (TARGET openvkl::openvkl_module_gpu_device)
-  find_package(rkcommon REQUIRED)
-  find_package(ispcrt REQUIRED)
-
-  # rkcommon includes FindTBB.cmake, needed by Embree
-  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${rkcommon_DIR})
-
-  find_package(embree REQUIRED)
-
   add_executable(vklTutorialGPU ${CMAKE_CURRENT_SOURCE_DIR}/../vklTutorialGPU.cpp)
   target_link_libraries(vklTutorialGPU PRIVATE openvkl::openvkl openvkl::openvkl_module_gpu_device)
 endif()

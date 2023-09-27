@@ -18,7 +18,7 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      level-zero-version: public/1.9.9
+      level-zero-version: public/1.12.0  # It's needed to build ISPCRT
       runs-on: '[ "Windows", "build" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env
       artifact-out: build-windows-gpu
@@ -43,7 +43,6 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      level-zero-version: public/1.9.9
       runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu
@@ -60,7 +59,6 @@ jobs:
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
-      level-zero-version: public/1.9.9
       runs-on: '[ "Windows", "dg2" ]'
       env-from-files: ./.github/deps/dpcpp-sycl-nightly.env ./.github/deps/gfx-windows-public.env
       artifact-in: build-windows-gpu

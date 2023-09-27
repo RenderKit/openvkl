@@ -82,7 +82,7 @@ jobs:
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
-      level-zero-version: public/1.9.9
+      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         export CC=clang
@@ -101,8 +101,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "vis-perf-dg2-01" ]'
       artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       setup-benny: true
       cmd: |
@@ -118,8 +117,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "vis-perf-spr-pvc-01" ]'
       artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       setup-benny: true
       cmd: |

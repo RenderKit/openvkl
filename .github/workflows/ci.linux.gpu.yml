@@ -20,7 +20,7 @@ jobs:
       image: ubuntu:22.04
       artifact-out: build-gpu
       artifact-path: ./build/install ./build/openvkl/build
-      level-zero-version: public/1.9.9
+      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
@@ -37,7 +37,7 @@ jobs:
     with:
       submodules: true
       image: ubuntu:22.04
-      level-zero-version: public/1.9.9
+      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
@@ -55,7 +55,7 @@ jobs:
     with:
       submodules: true
       image: ubuntu:22.04
-      level-zero-version: public/1.9.9
+      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
       cmd: |
         module load cmake/3.25.3
@@ -75,8 +75,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         module load cmake/3.25.3
@@ -95,8 +94,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "pvc" ]'
       artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
@@ -116,8 +114,7 @@ jobs:
       artifact-out: test-examples-pvc
       artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
@@ -133,8 +130,7 @@ jobs:
       image: ubuntu:22.04
       runs-on: '[ "Linux", "docker", "dg2" ]'
       artifact-in: build-gpu
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
@@ -154,8 +150,7 @@ jobs:
       artifact-out: test-examples-dg2
       artifact-path: ./build/install/bin/*.pfm
       artifact-on-failure: true
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         export LD_LIBRARY_PATH=`pwd`/build/install/lib:$LD_LIBRARY_PATH
@@ -174,8 +169,7 @@ jobs:
       artifact-out: test-examples-big-volume-pvc
       artifact-path: ./build/install/*.pfm
       artifact-on-failure: true
-      level-zero-version: public/1.9.9
-      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-ubuntu22-cr.env  .github/env/pvc-runtime-options.env
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env  .github/env/pvc-runtime-options.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
         cd ./build/install

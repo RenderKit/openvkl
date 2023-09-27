@@ -58,6 +58,24 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/release/linux.sh
 
+  release-linux_sycl:
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      force-delete: true    # guarantees .gitattributes are respected in working dir
+      submodules: true
+      image: rockylinux:8.7
+      artifact-out: release-linux_sycl
+      artifact-path: ./*.gz
+      level-zero-version: public/1.12.0 # It's needed to build ISPCRT
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env
+      cmd: |
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        module load cmake/3.25.3
+        export CC=clang
+        export CXX=clang++
+        gitlab/release/linux_sycl.sh
+
   release-windows:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
@@ -96,6 +114,21 @@ jobs:
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         gitlab/release/linux-test.sh
+
+  release-linux_sycl-test:
+    needs: release-linux_sycl
+    secrets: inherit
+    uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
+    with:
+      image: ubuntu:22.04 
+      runs-on: '[ "Linux", "docker", "dg2" ]'
+      artifact-in: release-linux_sycl
+      env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
+      options: --device=/dev/dri:/dev/dri
+      cmd: |
+        export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
+        module load cmake/3.25.3
+        gitlab/release/linux_sycl-test.sh
 
   release-windows-test:
     needs: release-windows

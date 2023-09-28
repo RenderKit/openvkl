@@ -83,7 +83,7 @@ cp -P $DEP_INSTALL_DIR/lib/lib*.a* $INSTALL_LIB_DIR
 # copy SYCL runtime dependencies
 SYCL_BIN_FILE=`which clang`
 SYCL_BIN_DIR=`dirname ${SYCL_BIN_FILE}`
-SYCL_LIB_DIR="${SYCL_BIN_DIR}../lib/"
+SYCL_LIB_DIR="${SYCL_BIN_DIR}/../lib"
 
 cp ${SYCL_LIB_DIR}/libsycl.so* $INSTALL_LIB_DIR
 cp ${SYCL_LIB_DIR}/libpi_level_zero.so $INSTALL_LIB_DIR

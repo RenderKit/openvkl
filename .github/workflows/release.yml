@@ -38,7 +38,7 @@ jobs:
         cd ../..
       build: cmake --build ./build/openvkl_build
 
-  release-linux:
+  linux:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
@@ -46,7 +46,7 @@ jobs:
       submodules: true
       runs-on: '[ "Linux", "docker" ]'
       image: centos:7
-      artifact-out: release-linux
+      artifact-out: linux
       artifact-path: ./*.gz
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
@@ -58,14 +58,14 @@ jobs:
         export LDFLAGS="-static-intel"
         gitlab/release/linux.sh
 
-  release-linux_sycl:
+  linux_sycl:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       image: rockylinux:8.7
-      artifact-out: release-linux_sycl
+      artifact-out: linux_sycl
       artifact-path: ./*.gz
       level-zero-version: public/1.12.0 # It's needed to build ISPCRT
       env-from-files: .github/deps/dpcpp-sycl-nightly.env
@@ -76,53 +76,53 @@ jobs:
         export CXX=clang++
         gitlab/release/linux_sycl.sh
 
-  release-windows:
+  windows:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Windows", "NAS", "build" ]'
-      artifact-out: release-windows
+      artifact-out: windows
       artifact-path: ./*.zip
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         gitlab/release/windows.ps1 "Visual Studio 15 2017 Win64" "v141"
 
-  release-macos:
+  macos:
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "macOS", "sign", "x86_64" ]'
-      artifact-out: release-macos
+      artifact-out: macos
       artifact-path: ./*.zip
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         gitlab/release/macos.sh
 
-  release-linux-test:
-    needs: release-linux
+  linux-test:
+    needs: linux
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       runs-on: '[ "Linux", "docker" ]'
       image: centos:7
-      artifact-in: release-linux
+      artifact-in: linux
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         gitlab/release/linux-test.sh
 
-  release-linux_sycl-test:
-    needs: release-linux_sycl
+  linux_sycl-test:
+    needs: linux_sycl
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       image: ubuntu:22.04 
       runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: release-linux_sycl
+      artifact-in: linux_sycl
       env-from-files: .github/deps/dpcpp-sycl-nightly.env .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
@@ -130,14 +130,14 @@ jobs:
         module load cmake/3.25.3
         gitlab/release/linux_sycl-test.sh
 
-  release-linux_sycl-test_run_only:
-    needs: release-linux_sycl
+  linux_sycl-test_run_only:
+    needs: linux_sycl
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker_gpu.yml@main
     with:
       image: ubuntu:22.04 
       runs-on: '[ "Linux", "docker", "dg2" ]'
-      artifact-in: release-linux_sycl
+      artifact-in: linux_sycl
       env-from-files: .github/deps/gfx-linux-public.env
       options: --device=/dev/dri:/dev/dri
       cmd: |
@@ -145,53 +145,53 @@ jobs:
         module load cmake/3.25.3
         gitlab/release/linux_sycl-test_run_only.sh
 
-  release-windows-test:
-    needs: release-windows
+  windows-test:
+    needs: windows
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/windows.yml@main
     with:
       runs-on: '[ "Windows" ]'
-      artifact-in: release-windows
+      artifact-in: windows
       cmd: |
         $env:OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         $OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         gitlab/release/windows-test.ps1 "Visual Studio 15 2017 Win64" "v141"
 
-  release-macos-test:
-    needs: release-macos
+  macos-test:
+    needs: macos
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/macos.yml@main
     with:
       runs-on: '[ "macOS", "build", "x86_64" ]'
-      artifact-in: release-macos
+      artifact-in: macos
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
         gitlab/release/macos-test.sh
 
   binary-analysis:
     needs:
-      - release-linux
-      - release-macos
-      - release-windows
+      - linux
+      - macos
+      - windows
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/binary_analysis.yml@main
     with:
       project: openvkl
-      artifact-in-linux: release-linux
-      artifact-in-macos: release-macos
-      artifact-in-windows: release-windows
+      artifact-in-linux: linux
+      artifact-in-macos: macos
+      artifact-in-windows: windows
       path: "*.zip *.gz"
 
   antivirus-scan:
     needs:
-      - release-linux
-      - release-macos
-      - release-windows
+      - linux
+      - macos
+      - windows
     secrets: inherit
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/antivirus_scan.yml@main
     with:
       project: openvkl
-      artifact-in-linux: release-linux
-      artifact-in-macos: release-macos
-      artifact-in-windows: release-windows
+      artifact-in-linux: linux
+      artifact-in-macos: macos
+      artifact-in-windows: windows
       path: "*.zip *.gz"

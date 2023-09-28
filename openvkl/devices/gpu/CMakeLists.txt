@@ -153,30 +153,12 @@ target_include_directories(openvkl_module_gpu_device
     $<BUILD_INTERFACE:${ISPCRT_INCLUDE_DIR}>
 )
 
-# this library only exists for transitive shared library dependencies. we do it
-# this way so we don't have explicit dependencies in the CMake configuration 
-# (as would happen when linking these directly with a static lib).
-add_library(openvkl_module_gpu_device_deps SHARED openvkl_module_gpu_device_deps.cpp)
-
-target_link_libraries(openvkl_module_gpu_device_deps
-  PUBLIC
-    $<BUILD_INTERFACE:openvkl>
-    $<BUILD_INTERFACE:rkcommon::rkcommon>
-    $<BUILD_INTERFACE:ispcrt::ispcrt>
-    $<BUILD_INTERFACE:embree>
-)
-
-# needed to resolve static library linking order / traversal issues
-target_link_options(openvkl_module_gpu_device BEFORE 
-  PUBLIC
-    "LINKER:--copy-dt-needed-entries"
-)
-
 target_link_libraries(openvkl_module_gpu_device
   PUBLIC
     openvkl
-  PRIVATE
-    openvkl_module_gpu_device_deps
+    $<BUILD_INTERFACE:rkcommon::rkcommon>
+    $<BUILD_INTERFACE:ispcrt::ispcrt>
+    $<BUILD_INTERFACE:embree>
 )
 
 target_compile_definitions(openvkl_module_gpu_device PUBLIC
@@ -191,7 +173,6 @@ target_include_directories(openvkl_module_gpu_device
   INTERFACE $<BUILD_INTERFACE:${ISPC_TARGET_DIR}>)
 
 openvkl_install_library(openvkl_module_gpu_device)
-openvkl_install_library(openvkl_module_gpu_device_deps)
 
 install(DIRECTORY
   ${CMAKE_CURRENT_SOURCE_DIR}/include/openvkl

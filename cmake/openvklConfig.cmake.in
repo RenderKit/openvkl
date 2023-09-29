@@ -39,15 +39,34 @@ endif()
 if (TARGET openvkl::openvkl_module_gpu_device)
 
   if (WIN32)
-    file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*.lib)
-    file(GLOB_RECURSE ISPCRT_LIBRARY ${LIBRARY_PATH_PREFIX}ispcrt.lib)
-    file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*.lib)
-    file(GLOB_RECURSE TBB_LIBRARY ${LIBRARY_PATH_PREFIX}tbb.lib)
+    set(LIB_SUFFIX lib)
   else()
-    file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*)
-    file(GLOB_RECURSE ISPCRT_LIBRARY ${LIBRARY_PATH_PREFIX}ispcrt.*)
-    file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*)
-    file(GLOB_RECURSE TBB_LIBRARY ${LIBRARY_PATH_PREFIX}tbb.*)
+    # on other platforms need to handle libs like librkcommon.so.1
+    set(LIB_SUFFIX *)
+  endif()
+
+  if (TARGET rkcommon::rkcommon)
+    set(RKCOMMON_LIBRARY rkcommon::rkcommon)
+  else()
+    file(GLOB_RECURSE RKCOMMON_LIBRARY ${LIBRARY_PATH_PREFIX}rkcommon*.${LIB_SUFFIX})
+  endif()
+
+  if (TARGET ispcrt::ispcrt)
+    set(ISPCRT_LIBRARY ispcrt::ispcrt)
+  else()
+    file(GLOB_RECURSE ISPCRT_LIBRARY ${LIBRARY_PATH_PREFIX}ispcrt.${LIB_SUFFIX})
+  endif()
+
+  if (TARGET embree)
+    set(EMBREE_LIBRARY embree)
+  else()
+    file(GLOB_RECURSE EMBREE_LIBRARY ${LIBRARY_PATH_PREFIX}embree*.${LIB_SUFFIX})
+  endif()
+
+  if (TARGET TBB::tbb AND TARGET TBB::tbbmalloc)
+    set (TBB_LIBRARY TBB::tbb TBB::tbbmalloc)
+  else()
+    file(GLOB_RECURSE TBB_LIBRARY ${LIBRARY_PATH_PREFIX}tbb.${LIB_SUFFIX})
   endif()
 
   # Add missing targets to libraries

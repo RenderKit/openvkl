@@ -21,16 +21,16 @@ directory. These are:
 Interactive examples
 --------------------
 
-Open VKL also ships with an interactive example application,
-[`vklExamples`](https://github.com/openvkl/openvkl/blob/master/examples/interactive/vklExamples.cpp).
-This interactive viewer demonstrates multiple example renderers including a path
+Open VKL also ships with interactive example applications,
+[`vklExamples[CPU,GPU]`](https://github.com/openvkl/openvkl/blob/master/examples/interactive/vklExamples.cpp).
+The interactive viewer demonstrates multiple example renderers including a path
 tracer, isosurface renderer (using hit iterators), and ray marcher. The viewer
 UI supports switching between renderers interactively.
 
-Each renderer has both a C++ and ISPC implementation showing recommended API
-usage. These implementations are available in the
-[`examples/interactive/renderers/`](https://github.com/openvkl/openvkl/tree/master/examples/interactive/renderers)
-directory.
+For CPU, each renderer has both a C++ and ISPC implementation showing
+recommended API usage. These implementations are available in the
+[`examples/interactive/renderer/`](https://github.com/openvkl/openvkl/tree/master/examples/interactive/renderer)
+directory. On GPU, the example renderers are written in SYCL.
 
 ![`vklExamples` interactive example application][imgVklExamples]
 

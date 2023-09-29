@@ -317,9 +317,10 @@ Large data is passed to Open VKL via a `VKLData` handle created with
 
 Data objects can be created as Open VKL owned (`dataCreationFlags =
 VKL_DATA_DEFAULT`), in which the library will make a copy of the data for its
-use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try
-to use the passed pointer for usage.  The library is allowed to copy data when
-a volume is committed.
+use, or shared (`dataCreationFlags = VKL_DATA_SHARED_BUFFER`), which will try to
+use the passed pointer for usage.  The library is allowed to copy data when a
+volume is committed. Note that for the `gpu` device, shared data buffers only
+support source data from USM shared allocations.
 
 The distance between consecutive elements in `source` is given in bytes with
 `byteStride`. If the provided `byteStride` is zero, then it will be determined

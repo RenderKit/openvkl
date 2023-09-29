@@ -17,10 +17,12 @@ cd build_from_release
 
 cmake --version
 
+# CMAKE_SUPPRESS_REGENERATION=ON works around a Ninja issue specific to our runners.
 cmake -L `
   -G Ninja `
   -D CMAKE_CXX_COMPILER=clang++ -D CMAKE_C_COMPILER=clang `
   -D CMAKE_BUILD_TYPE=Release `
+  -D CMAKE_SUPPRESS_REGENERATION=ON `
   ../examples/from_openvkl_install
 
 cmake --build . --config Release --verbose

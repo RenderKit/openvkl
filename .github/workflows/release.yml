@@ -45,7 +45,7 @@ jobs:
       force-delete: true    # guarantees .gitattributes are respected in working dir
       submodules: true
       runs-on: '[ "Linux", "docker" ]'
-      image: centos:7
+      image: rockylinux:8.7
       artifact-out: linux
       artifact-path: ./*.gz
       cmd: |
@@ -129,7 +129,7 @@ jobs:
     uses: intel-innersource/libraries.devops.renderkit.workflows/.github/workflows/docker.yml@main
     with:
       runs-on: '[ "Linux", "docker" ]'
-      image: centos:7
+      image: rockylinux:8.7
       artifact-in: linux
       cmd: |
         export OPENVKL_RELEASE_PACKAGE_VERSION="2.0.0"
